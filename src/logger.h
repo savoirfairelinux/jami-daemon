@@ -102,9 +102,9 @@ public:
         , linefeed_ {linefeed}
     {}
 
-    Logger()              = delete;
+    Logger() = delete;
     Logger(const Logger&) = delete;
-    Logger(Logger&&)      = default;
+    Logger(Logger&&) = default;
 
     ~Logger() { log(level_, file_, line_, linefeed_, "%s", os_.str().c_str()); }
 

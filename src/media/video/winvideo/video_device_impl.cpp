@@ -133,7 +133,7 @@ VideoDeviceImpl::setup()
         }
 
         IBindCtx* bind_ctx = NULL;
-        LPOLESTR olestr    = NULL;
+        LPOLESTR olestr = NULL;
 
         hr = CreateBindCtx(0, &bind_ctx);
         if (hr != S_OK) {
@@ -221,10 +221,10 @@ VideoDeviceImpl::setup()
             continue;
         }
         auto videoInfo = (VIDEOINFOHEADER*) pmt->pbFormat;
-        auto size      = jami::video::VideoSize(videoInfo->bmiHeader.biWidth,
+        auto size = jami::video::VideoSize(videoInfo->bmiHeader.biWidth,
                                            videoInfo->bmiHeader.biHeight);
         // use 1e7 / MinFrameInterval to get maximum fps
-        auto rate    = jami::video::FrameRate(1e7, pSCC.MinFrameInterval);
+        auto rate = jami::video::FrameRate(1e7, pSCC.MinFrameInterval);
         auto bitrate = videoInfo->dwBitRate;
         // Only add configurations with positive bitrates.
         if (bitrate == 0)
@@ -238,7 +238,7 @@ VideoDeviceImpl::setup()
             auto key = std::make_pair(size, rate);
             if (bitrate > bitrateList[key]) {
                 bitrateList[key] = bitrate;
-                capMap_[size]    = pmt;
+                capMap_[size] = pmt;
             }
             continue;
         }
@@ -246,7 +246,7 @@ VideoDeviceImpl::setup()
         sizeList_.emplace_back(size);
         rateList_[size].emplace_back(rate);
         bitrateList[std::make_pair(size, rate)] = bitrate;
-        capMap_[size]                           = pmt;
+        capMap_[size] = pmt;
     }
 }
 
@@ -261,17 +261,17 @@ VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
 
-    params.name   = name;
-    params.input  = id;
+    params.name = name;
+    params.input = id;
     params.format = "dshow";
 
     AM_MEDIA_TYPE* pmt;
     HRESULT hr = cInterface->streamConf_->GetFormat(&pmt);
     if (SUCCEEDED(hr)) {
         if (pmt->formattype == FORMAT_VideoInfo) {
-            auto videoInfo   = (VIDEOINFOHEADER*) pmt->pbFormat;
-            params.width     = videoInfo->bmiHeader.biWidth;
-            params.height    = videoInfo->bmiHeader.biHeight;
+            auto videoInfo = (VIDEOINFOHEADER*) pmt->pbFormat;
+            params.width = videoInfo->bmiHeader.biWidth;
+            params.height = videoInfo->bmiHeader.biHeight;
             params.framerate = {1e7, static_cast<double>(videoInfo->AvgTimePerFrame)};
         }
     }
@@ -323,7 +323,7 @@ VideoDevice::VideoDevice(const std::string& path,
                          const std::vector<std::map<std::string, std::string>>&)
     : deviceImpl_(new VideoDeviceImpl(path))
 {
-    id_  = path;
+    id_ = path;
     name = deviceImpl_->name;
 }
 

@@ -114,7 +114,7 @@ private:
 class TrustStore
 {
 public:
-    TrustStore()               = default;
+    TrustStore() = default;
     TrustStore(TrustStore&& o) = default;
     TrustStore& operator=(TrustStore&& o) = default;
 

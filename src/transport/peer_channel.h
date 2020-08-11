@@ -34,7 +34,7 @@ public:
     {
         std::lock_guard<std::mutex> lk(o.mutex_);
         stream_ = std::move(o.stream_);
-        stop_   = o.stop_;
+        stop_ = o.stop_;
         o.cv_.notify_all();
     }
 

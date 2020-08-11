@@ -151,25 +151,25 @@ public:
 
     void setLocalPublishedAudioPort(int port)
     {
-        localAudioDataPort_    = port;
+        localAudioDataPort_ = port;
         localAudioControlPort_ = port + 1;
     }
 
     void setLocalPublishedAudioPorts(int audio_port, int control_port)
     {
-        localAudioDataPort_    = audio_port;
+        localAudioDataPort_ = audio_port;
         localAudioControlPort_ = control_port;
     }
 
     void setLocalPublishedVideoPort(int port)
     {
-        localVideoDataPort_    = port;
+        localVideoDataPort_ = port;
         localVideoControlPort_ = port + 1;
     }
 
     void setLocalPublishedVideoPorts(int video_port, int control_port)
     {
-        localVideoDataPort_    = video_port;
+        localVideoDataPort_ = video_port;
         localVideoControlPort_ = control_port;
     }
 

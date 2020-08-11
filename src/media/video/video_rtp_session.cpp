@@ -54,8 +54,8 @@ static constexpr unsigned MAX_SIZE_HISTO_JITTER {50};
 static constexpr unsigned MAX_SIZE_HISTO_DELAY {25};
 static constexpr unsigned MAX_REMB_DEC {1};
 
-constexpr auto DELAY_AFTER_RESTART  = std::chrono::milliseconds(1000);
-constexpr auto EXPIRY_TIME_RTCP     = std::chrono::seconds(2);
+constexpr auto DELAY_AFTER_RESTART = std::chrono::milliseconds(1000);
+constexpr auto EXPIRY_TIME_RTCP = std::chrono::seconds(2);
 constexpr auto DELAY_AFTER_REMB_INC = std::chrono::seconds(2);
 constexpr auto DELAY_AFTER_REMB_DEC = std::chrono::milliseconds(500);
 
@@ -133,11 +133,11 @@ VideoRtpSession::startSender()
         // be sure to not send any packets before saving last RTP seq value
         socketPair_->stopSendOp();
 
-        auto codecVideo  = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
+        auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
         auto autoQuality = codecVideo->isAutoQualityEnabled;
 
         send_.linkableHW = conference_ == nullptr;
-        send_.bitrate    = videoBitrateInfo_.videoBitrateCurrent;
+        send_.bitrate = videoBitrateInfo_.videoBitrateCurrent;
 
         if (socketPair_)
             initSeqVal_ = socketPair_->lastSeqValOut();
@@ -161,8 +161,8 @@ VideoRtpSession::startSender()
             send_.enabled = false;
         }
         lastMediaRestart_ = clock::now();
-        last_REMB_inc_    = clock::now();
-        last_REMB_dec_    = clock::now();
+        last_REMB_inc_ = clock::now();
+        last_REMB_dec_ = clock::now();
         if (autoQuality and not rtcpCheckerThread_.isRunning())
             rtcpCheckerThread_.start();
         else if (not autoQuality and rtcpCheckerThread_.isRunning())
@@ -394,11 +394,11 @@ VideoRtpSession::exitConference()
 bool
 VideoRtpSession::check_RCTP_Info_RR(RTCPInfo& rtcpi)
 {
-    auto rtcpInfoVect      = socketPair_->getRtcpRR();
-    unsigned totalLost     = 0;
-    unsigned totalJitter   = 0;
+    auto rtcpInfoVect = socketPair_->getRtcpRR();
+    unsigned totalLost = 0;
+    unsigned totalJitter = 0;
     unsigned nbDropNotNull = 0;
-    auto vectSize          = rtcpInfoVect.size();
+    auto vectSize = rtcpInfoVect.size();
 
     if (vectSize != 0) {
         for (const auto& it : rtcpInfoVect) {
@@ -410,9 +410,9 @@ VideoRtpSession::check_RCTP_Info_RR(RTCPInfo& rtcpi)
         rtcpi.packetLoss = nbDropNotNull ? (float) (100 * totalLost) / (256.0 * nbDropNotNull) : 0;
         // Jitter is expressed in timestamp unit -> convert to milliseconds
         // https://stackoverflow.com/questions/51956520/convert-jitter-from-rtp-timestamp-unit-to-millisseconds
-        rtcpi.jitter    = (totalJitter / vectSize / 90000.0f) * 1000;
+        rtcpi.jitter = (totalJitter / vectSize / 90000.0f) * 1000;
         rtcpi.nb_sample = vectSize;
-        rtcpi.latency   = socketPair_->getLastLatency();
+        rtcpi.latency = socketPair_->getLastLatency();
         return true;
     }
     return false;
@@ -424,9 +424,9 @@ VideoRtpSession::check_RCTP_Info_REMB(uint64_t* br)
     auto rtcpInfoVect = socketPair_->getRtcpREMB();
 
     if (!rtcpInfoVect.empty()) {
-        auto pkt  = rtcpInfoVect.back();
+        auto pkt = rtcpInfoVect.back();
         auto temp = cc->parseREMB(pkt);
-        *br       = (temp >> 10) | ((temp << 6) & 0xff00) | ((temp << 16) & 0x30000);
+        *br = (temp >> 10) | ((temp << 6) & 0xff00) | ((temp << 16) & 0x30000);
         return true;
     }
     return false;
@@ -486,7 +486,7 @@ void
 VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
 {
     // If bitrate has changed, let time to receive fresh RTCP packets
-    auto now          = clock::now();
+    auto now = clock::now();
     auto restartTimer = now - lastMediaRestart_;
     if (restartTimer < DELAY_AFTER_RESTART) {
         return;
@@ -497,9 +497,9 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
         return;
     }
 
-    auto pondLoss   = getPonderateLoss(rtcpi->packetLoss);
+    auto pondLoss = getPonderateLoss(rtcpi->packetLoss);
     auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
-    int newBitrate  = oldBitrate;
+    int newBitrate = oldBitrate;
 
     // JAMI_DBG("[AutoAdapt] pond loss: %f%, last loss: %f%", pondLoss, rtcpi->packetLoss);
 
@@ -713,20 +713,20 @@ void
 VideoRtpSession::delayMonitor(int gradient, int deltaT)
 {
     float estimation = cc->kalmanFilter(gradient);
-    float thresh     = cc->get_thresh();
+    float thresh = cc->get_thresh();
 
     // JAMI_WARN("gradient:%d, estimation:%f, thresh:%f", gradient, estimation, thresh);
 
     cc->update_thresh(estimation, deltaT);
 
     BandwidthUsage bwState = cc->get_bw_state(estimation, thresh);
-    auto now               = clock::now();
+    auto now = clock::now();
 
     if (bwState == BandwidthUsage::bwOverusing) {
         auto remb_timer_dec = now - last_REMB_dec_;
         if ((not remb_dec_cnt_) or (remb_timer_dec > DELAY_AFTER_REMB_DEC)) {
             last_REMB_dec_ = now;
-            remb_dec_cnt_  = 0;
+            remb_dec_cnt_ = 0;
         }
 
         // Limit REMB decrease to MAX_REMB_DEC every DELAY_AFTER_REMB_DEC ms
@@ -734,9 +734,9 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
             remb_dec_cnt_++;
             JAMI_WARN("[BandwidthAdapt] Detected reception bandwidth overuse");
             uint8_t* buf = nullptr;
-            uint64_t br  = 0x6803; // Decrease 3
-            auto v       = cc->createREMB(br);
-            buf          = &v[0];
+            uint64_t br = 0x6803; // Decrease 3
+            auto v = cc->createREMB(br);
+            buf = &v[0];
             socketPair_->writeData(buf, v.size());
             last_REMB_inc_ = clock::now();
         }
@@ -744,9 +744,9 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
         auto remb_timer_inc = now - last_REMB_inc_;
         if (remb_timer_inc > DELAY_AFTER_REMB_INC) {
             uint8_t* buf = nullptr;
-            uint64_t br  = 0x7378; // INcrease
-            auto v       = cc->createREMB(br);
-            buf          = &v[0];
+            uint64_t br = 0x7378; // INcrease
+            auto v = cc->createREMB(br);
+            buf = &v[0];
             socketPair_->writeData(buf, v.size());
             last_REMB_inc_ = clock::now();
         }

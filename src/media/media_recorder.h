@@ -151,10 +151,10 @@ private:
 
     bool hasAudio_ {false};
     bool hasVideo_ {false};
-    int videoIdx_     = -1;
-    int audioIdx_     = -1;
+    int videoIdx_ = -1;
+    int audioIdx_ = -1;
     bool isRecording_ = false;
-    bool audioOnly_   = false;
+    bool audioOnly_ = false;
 
     std::condition_variable cv_;
     std::atomic_bool interrupted_ {false};

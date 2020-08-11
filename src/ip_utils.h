@@ -75,7 +75,7 @@ public:
         : IpAddr(AF_UNSPEC)
     {}
     IpAddr(const IpAddr&) = default;
-    IpAddr(IpAddr&&)      = default;
+    IpAddr(IpAddr&&) = default;
     IpAddr& operator=(const IpAddr&) = default;
     IpAddr& operator=(IpAddr&&) = default;
 

@@ -55,7 +55,7 @@ Conference::Conference()
             std::unique_lock<std::mutex> lk(shared->videoToCallMtx_);
             for (const auto& info : infos) {
                 std::string uri = "local";
-                auto it         = shared->videoToCall_.find(info.source);
+                auto it = shared->videoToCall_.find(info.source);
                 if (it == shared->videoToCall_.end())
                     it = shared->videoToCall_.emplace_hint(it, info.source, std::string());
                 // If not local
@@ -275,7 +275,7 @@ Conference::getDisplayNames() const
     result.reserve(participants_.size());
 
     for (const auto& p : participants_) {
-        auto details   = Manager::instance().getCallDetails(p);
+        auto details = Manager::instance().getCallDetails(p);
         const auto tmp = details["DISPLAY_NAME"];
         result.emplace_back(tmp.empty() ? details["PEER_NUMBER"] : tmp);
     }

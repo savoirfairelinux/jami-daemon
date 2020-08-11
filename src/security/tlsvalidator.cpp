@@ -236,16 +236,16 @@ TlsValidator::TlsValidator(const std::string& certificate,
 {
     std::vector<uint8_t> certificate_raw;
     try {
-        certificate_raw       = fileutils::loadFile(certificatePath_);
+        certificate_raw = fileutils::loadFile(certificatePath_);
         certificateFileFound_ = true;
     } catch (const std::exception& e) {
     }
 
     if (not certificate_raw.empty()) {
         try {
-            x509crt_            = std::make_shared<dht::crypto::Certificate>(certificate_raw);
+            x509crt_ = std::make_shared<dht::crypto::Certificate>(certificate_raw);
             certificateContent_ = x509crt_->getPacked();
-            certificateFound_   = true;
+            certificateFound_ = true;
         } catch (const std::exception& e) {
         }
     }
@@ -253,14 +253,14 @@ TlsValidator::TlsValidator(const std::string& certificate,
     try {
         auto privateKeyContent = fileutils::loadFile(privateKeyPath_);
         dht::crypto::PrivateKey key_tmp(privateKeyContent, privatekeyPasswd);
-        privateKeyFound_    = true;
+        privateKeyFound_ = true;
         privateKeyPassword_ = not privatekeyPasswd.empty();
-        privateKeyMatch_    = key_tmp.getPublicKey().getId() == x509crt_->getId();
+        privateKeyMatch_ = key_tmp.getPublicKey().getId() == x509crt_->getId();
     } catch (const dht::crypto::DecryptError& d) {
         // If we encounter a DecryptError, it means the private key exists and is encrypted,
         // otherwise we would get some other exception.
         JAMI_WARN("decryption error: %s", d.what());
-        privateKeyFound_    = true;
+        privateKeyFound_ = true;
         privateKeyPassword_ = true;
     } catch (const std::exception& e) {
         JAMI_WARN("creation failed: %s", e.what());
@@ -270,9 +270,9 @@ TlsValidator::TlsValidator(const std::string& certificate,
 TlsValidator::TlsValidator(const std::vector<uint8_t>& certificate_raw)
 {
     try {
-        x509crt_            = std::make_shared<dht::crypto::Certificate>(certificate_raw);
+        x509crt_ = std::make_shared<dht::crypto::Certificate>(certificate_raw);
         certificateContent_ = x509crt_->getPacked();
-        certificateFound_   = true;
+        certificateFound_ = true;
     } catch (const std::exception& e) {
         throw TlsValidatorException("Can't load certificate");
     }
@@ -284,7 +284,7 @@ TlsValidator::TlsValidator(const std::shared_ptr<dht::crypto::Certificate>& crt)
     try {
         if (not crt)
             throw std::invalid_argument("Certificate must be set");
-        x509crt_            = crt;
+        x509crt_ = crt;
         certificateContent_ = x509crt_->getPacked();
     } catch (const std::exception& e) {
         throw TlsValidatorException("Can't load certificate");
@@ -469,7 +469,7 @@ TlsValidator::compareToCa()
     gnutls_x509_trust_list_init(&trust, 0);
 
     auto root_cas = CertificateStore::instance().getTrustedCertificates();
-    auto err      = gnutls_x509_trust_list_add_cas(trust, root_cas.data(), root_cas.size(), 0);
+    auto err = gnutls_x509_trust_list_add_cas(trust, root_cas.data(), root_cas.size(), 0);
     if (err)
         JAMI_WARN("gnutls_x509_trust_list_add_cas failed: %s", gnutls_strerror(err));
 
@@ -492,7 +492,7 @@ TlsValidator::compareToCa()
 
     // build the certificate chain
     auto crts = x509crt_->getChain();
-    err       = gnutls_x509_trust_list_verify_crt2(trust,
+    err = gnutls_x509_trust_list_verify_crt2(trust,
                                              crts.data(),
                                              crts.size(),
                                              nullptr,
@@ -914,7 +914,7 @@ TlsValidator::privateKeyDirectoryPermissions()
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
 #ifndef _MSC_VER
-    auto path       = std::unique_ptr<char, decltype(free)&>(strdup(privateKeyPath_.c_str()), free);
+    auto path = std::unique_ptr<char, decltype(free)&>(strdup(privateKeyPath_.c_str()), free);
     const char* dir = dirname(path.get());
 #else
     char* dir;
@@ -1142,7 +1142,7 @@ TlsValidator::CheckResult
 TlsValidator::getPublicSignature()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err           = gnutls_x509_crt_get_signature(x509crt_->cert, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_signature(x509crt_->cert, copy_buffer, &resultSize);
     return checkBinaryError(err, copy_buffer, resultSize);
 }
 
@@ -1171,7 +1171,7 @@ TlsValidator::getSerialNumber()
     // gnutls_x509_crl_iter_crt_serial
     // gnutls_x509_crt_get_authority_key_gn_serial
     size_t resultSize = sizeof(copy_buffer);
-    int err           = gnutls_x509_crt_get_serial(x509crt_->cert, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_serial(x509crt_->cert, copy_buffer, &resultSize);
     return checkBinaryError(err, copy_buffer, resultSize);
 }
 
@@ -1218,7 +1218,7 @@ TlsValidator::getCN()
 {
     // TODO split, cache
     size_t resultSize = sizeof(copy_buffer);
-    int err           = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert,
+    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert,
                                             GNUTLS_OID_X520_COMMON_NAME,
                                             0,
                                             0,
@@ -1235,7 +1235,7 @@ TlsValidator::getN()
 {
     // TODO split, cache
     size_t resultSize = sizeof(copy_buffer);
-    int err           = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert,
+    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert,
                                             GNUTLS_OID_X520_NAME,
                                             0,
                                             0,
@@ -1252,7 +1252,7 @@ TlsValidator::getO()
 {
     // TODO split, cache
     size_t resultSize = sizeof(copy_buffer);
-    int err           = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert,
+    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert,
                                             GNUTLS_OID_X520_ORGANIZATION_NAME,
                                             0,
                                             0,
@@ -1288,7 +1288,7 @@ TlsValidator::CheckResult
 TlsValidator::getMd5Fingerprint()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err           = gnutls_x509_crt_get_fingerprint(x509crt_->cert,
+    int err = gnutls_x509_crt_get_fingerprint(x509crt_->cert,
                                               GNUTLS_DIG_MD5,
                                               copy_buffer,
                                               &resultSize);
@@ -1304,7 +1304,7 @@ TlsValidator::CheckResult
 TlsValidator::getSha1Fingerprint()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err           = gnutls_x509_crt_get_fingerprint(x509crt_->cert,
+    int err = gnutls_x509_crt_get_fingerprint(x509crt_->cert,
                                               GNUTLS_DIG_SHA1,
                                               copy_buffer,
                                               &resultSize);
@@ -1335,7 +1335,7 @@ TlsValidator::CheckResult
 TlsValidator::getIssuerDN()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err           = gnutls_x509_crt_get_issuer_dn(x509crt_->cert, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_issuer_dn(x509crt_->cert, copy_buffer, &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 

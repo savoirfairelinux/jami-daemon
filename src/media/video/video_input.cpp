@@ -52,7 +52,7 @@ extern "C" {
 namespace jami {
 namespace video {
 
-static constexpr unsigned default_grab_width  = 640;
+static constexpr unsigned default_grab_width = 640;
 static constexpr unsigned default_grab_height = 480;
 
 VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
@@ -258,7 +258,7 @@ VideoInput::configureFilePlayback(const std::string&,
         [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); }, this);
     decoder->emulateRate();
 
-    decoder_     = std::move(decoder);
+    decoder_ = std::move(decoder);
     playingFile_ = true;
     loop_.start();
 
@@ -293,7 +293,7 @@ VideoInput::createDecoder()
     while (!ready && !isStopped_) {
         // Retry to open the video till the input is opened
         auto ret = decoder->openInput(decOpts_);
-        ready    = ret >= 0;
+        ready = ret >= 0;
         if (ret < 0 && -ret != EBUSY) {
             JAMI_ERR("Could not open input \"%s\" with status %i", decOpts_.input.c_str(), ret);
             foundDecOpts(decOpts_);
@@ -323,10 +323,10 @@ VideoInput::createDecoder()
 
     decoder->decode(); // Populate AVCodecContext fields
 
-    decOpts_.width     = decoder->getWidth();
-    decOpts_.height    = decoder->getHeight();
+    decOpts_.width = decoder->getWidth();
+    decOpts_.height = decoder->getHeight();
     decOpts_.framerate = decoder->getFps();
-    AVPixelFormat fmt  = decoder->getPixelFormat();
+    AVPixelFormat fmt = decoder->getPixelFormat();
     if (fmt != AV_PIX_FMT_NONE) {
         decOpts_.pixel_format = av_get_pix_fmt_name(fmt);
     } else {
@@ -366,7 +366,7 @@ VideoInput::stopInput()
 void
 VideoInput::clearOptions()
 {
-    decOpts_     = {};
+    decOpts_ = {};
     emulateRate_ = false;
 }
 
@@ -398,7 +398,7 @@ VideoInput::initX11(std::string display)
     size_t space = display.find(' ');
 
     clearOptions();
-    decOpts_.format    = "x11grab";
+    decOpts_.format = "x11grab";
     decOpts_.framerate = 25;
 
     if (space != std::string::npos) {
@@ -407,13 +407,13 @@ VideoInput::initX11(std::string display)
         unsigned w, h;
         iss >> w >> sep >> h;
         // round to 8 pixel block
-        decOpts_.width  = round2pow(w, 3);
+        decOpts_.width = round2pow(w, 3);
         decOpts_.height = round2pow(h, 3);
-        decOpts_.input  = display.erase(space);
+        decOpts_.input = display.erase(space);
     } else {
         decOpts_.input = display;
         // decOpts_.video_size = "vga";
-        decOpts_.width  = default_grab_width;
+        decOpts_.width = default_grab_width;
         decOpts_.height = default_grab_height;
     }
 
@@ -426,21 +426,21 @@ VideoInput::initAVFoundation(const std::string& display)
     size_t space = display.find(' ');
 
     clearOptions();
-    decOpts_.format       = "avfoundation";
+    decOpts_.format = "avfoundation";
     decOpts_.pixel_format = "nv12";
-    decOpts_.name         = "Capture screen 0";
-    decOpts_.input        = "Capture screen 0";
-    decOpts_.framerate    = 30;
+    decOpts_.name = "Capture screen 0";
+    decOpts_.input = "Capture screen 0";
+    decOpts_.framerate = 30;
 
     if (space != std::string::npos) {
         std::istringstream iss(display.substr(space + 1));
         char sep;
         unsigned w, h;
         iss >> w >> sep >> h;
-        decOpts_.width  = round2pow(w, 3);
+        decOpts_.width = round2pow(w, 3);
         decOpts_.height = round2pow(h, 3);
     } else {
-        decOpts_.width  = default_grab_width;
+        decOpts_.width = default_grab_width;
         decOpts_.height = default_grab_height;
     }
     return true;
@@ -451,8 +451,8 @@ VideoInput::initGdiGrab(const std::string& params)
 {
     size_t space = params.find(' ');
     clearOptions();
-    decOpts_.format    = "gdigrab";
-    decOpts_.input     = "desktop";
+    decOpts_.format = "gdigrab";
+    decOpts_.input = "desktop";
     decOpts_.framerate = 30;
 
     if (space != std::string::npos) {
@@ -460,14 +460,14 @@ VideoInput::initGdiGrab(const std::string& params)
         char sep;
         unsigned w, h;
         iss >> w >> sep >> h;
-        decOpts_.width  = round2pow(w, 3);
+        decOpts_.width = round2pow(w, 3);
         decOpts_.height = round2pow(h, 3);
 
         size_t plus = params.find('+');
         std::istringstream dss(params.substr(plus + 1, space - plus));
         dss >> decOpts_.offset_x >> sep >> decOpts_.offset_y;
     } else {
-        decOpts_.width  = default_grab_width;
+        decOpts_.width = default_grab_width;
         decOpts_.height = default_grab_height;
     }
 
@@ -477,7 +477,7 @@ VideoInput::initGdiGrab(const std::string& params)
 bool
 VideoInput::initFile(std::string path)
 {
-    size_t dot      = path.find_last_of('.');
+    size_t dot = path.find_last_of('.');
     std::string ext = dot == std::string::npos ? "" : path.substr(dot + 1);
 
     /* File exists? */
@@ -490,22 +490,22 @@ VideoInput::initFile(std::string path)
     // FIXME the way this is done is hackish, but it can't be done in createDecoder because that
     // would break the promise returned in switchInput
     DeviceParams p;
-    p.input  = path;
-    p.name   = path;
+    p.input = path;
+    p.name = path;
     auto dec = std::make_unique<MediaDecoder>();
     if (dec->openInput(p) < 0 || dec->setupVideo() < 0) {
         return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
     }
 
     clearOptions();
-    emulateRate_   = true;
+    emulateRate_ = true;
     decOpts_.input = path;
-    decOpts_.name  = path;
-    decOpts_.loop  = "1";
+    decOpts_.name = path;
+    decOpts_.loop = "1";
 
     // Force 1fps for static image
     if (ext == "jpeg" || ext == "jpg" || ext == "png") {
-        decOpts_.format    = "image2";
+        decOpts_.format = "image2";
         decOpts_.framerate = 1;
     } else {
         JAMI_WARN("Guessing file type for %s", path.c_str());
@@ -528,7 +528,7 @@ VideoInput::switchInput(const std::string& resource)
     }
 
     currentResource_ = resource;
-    decOptsFound_    = false;
+    decOptsFound_ = false;
 
     std::promise<DeviceParams> p;
     foundDecOpts_.swap(p);

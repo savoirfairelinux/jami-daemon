@@ -62,7 +62,7 @@ AudioFile::AudioFile(const std::string& fileName, unsigned int sampleRate)
     , updatePlaybackScale_(0)
 {
     const auto& format = getFormat();
-    auto buf           = std::make_unique<AudioBuffer>(0, format);
+    auto buf = std::make_unique<AudioBuffer>(0, format);
     Resampler r {};
     auto decoder = std::make_unique<MediaDecoder>(
         [this, &r, &format, &buf](const std::shared_ptr<MediaFrame>& frame) mutable {
@@ -70,7 +70,7 @@ AudioFile::AudioFile(const std::string& fileName, unsigned int sampleRate)
         });
     DeviceParams dev;
     dev.input = fileName;
-    dev.name  = fileName;
+    dev.name = fileName;
 
     if (decoder->openInput(dev) < 0)
         throw AudioFileException("File could not be opened: " + fileName);

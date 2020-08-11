@@ -87,7 +87,7 @@ AccountManager::parseAnnounce(const std::string& announceBase64,
 {
     auto announce_val = std::make_shared<dht::Value>();
     try {
-        auto announce                       = base64::decode(announceBase64);
+        auto announce = base64::decode(announceBase64);
         msgpack::object_handle announce_msg = msgpack::unpack((const char*) announce.data(),
                                                               announce.size());
         announce_val->msgpack_unpack(announce_msg.get());
@@ -131,7 +131,7 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
 
     // match certificate chain
     auto contactList = std::make_unique<ContactList>(accountCertificate, path_, onChange);
-    auto result      = contactList->isValidAccountDevice(*identity.second);
+    auto result = contactList->isValidAccountDevice(*identity.second);
     if (not result) {
         JAMI_ERR("[Auth] can't use identity: device certificate chain can't be verified: %s",
                  result.toString().c_str());
@@ -171,16 +171,16 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
 
     onChange_ = std::move(onChange);
 
-    auto info      = std::make_unique<AccountInfo>();
+    auto info = std::make_unique<AccountInfo>();
     info->identity = identity;
     info->contacts = std::move(contactList);
     info->contacts->load();
-    info->accountId  = id;
-    info->deviceId   = identity.first->getPublicKey().getId().toString();
-    info->announce   = std::move(announce);
+    info->accountId = id;
+    info->deviceId = identity.first->getPublicKey().getId().toString();
+    info->announce = std::move(announce);
     info->ethAccount = root["eth"].asString();
-    info->username   = username;
-    info_            = std::move(info);
+    info->username = username;
+    info_ = std::move(info);
 
     JAMI_DBG("[Auth] Device %s receipt checked successfully for account %s",
              info_->deviceId.c_str(),

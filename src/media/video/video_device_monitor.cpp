@@ -163,7 +163,7 @@ giveUniqueName(VideoDevice& dev, const vector<VideoDevice>& devices)
 {
     std::string suffix;
     uint64_t number = 2;
-    auto unique     = true;
+    auto unique = true;
     for (;; unique = static_cast<bool>(++number)) {
         for (const auto& s : devices)
             unique &= static_cast<bool>(s.name.compare(dev.name + suffix));
@@ -303,9 +303,9 @@ VideoDeviceMonitor::unserialize(const YAML::Node& in)
     }
 
     // Restore the default device if present, or select the first one
-    const string prefId  = preferences_.empty() ? "" : preferences_[0].id;
+    const string prefId = preferences_.empty() ? "" : preferences_[0].id;
     const string firstId = devices_.empty() ? "" : devices_[0].getDeviceId();
-    const auto devIter   = findDeviceById(prefId);
+    const auto devIter = findDeviceById(prefId);
     if (devIter != devices_.end()) {
         defaultDevice_ = devIter->getDeviceId();
     } else {

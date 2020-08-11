@@ -51,12 +51,12 @@ void
 SystemCodecContainer::initCodecConfig()
 {
 #ifdef ENABLE_VIDEO
-    auto minH264        = SystemCodecInfo::DEFAULT_H264_MIN_QUALITY;
-    auto maxH264        = SystemCodecInfo::DEFAULT_H264_MAX_QUALITY;
-    auto minH265        = SystemCodecInfo::DEFAULT_H264_MIN_QUALITY;
-    auto maxH265        = SystemCodecInfo::DEFAULT_H264_MAX_QUALITY;
-    auto minVP8         = SystemCodecInfo::DEFAULT_VP8_MIN_QUALITY;
-    auto maxVP8         = SystemCodecInfo::DEFAULT_VP8_MAX_QUALITY;
+    auto minH264 = SystemCodecInfo::DEFAULT_H264_MIN_QUALITY;
+    auto maxH264 = SystemCodecInfo::DEFAULT_H264_MAX_QUALITY;
+    auto minH265 = SystemCodecInfo::DEFAULT_H264_MIN_QUALITY;
+    auto maxH265 = SystemCodecInfo::DEFAULT_H264_MAX_QUALITY;
+    auto minVP8 = SystemCodecInfo::DEFAULT_VP8_MIN_QUALITY;
+    auto maxVP8 = SystemCodecInfo::DEFAULT_VP8_MAX_QUALITY;
     auto defaultBitrate = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
 #endif
     availableCodecList_ = {
@@ -211,7 +211,7 @@ SystemCodecContainer::checkInstalledCodecs()
     std::stringstream dec_ss;
 
     for (const auto& codecIt : availableCodecList_) {
-        codecId   = (AVCodecID) codecIt->avcodecId;
+        codecId = (AVCodecID) codecIt->avcodecId;
         codecName = codecIt->name;
         codecType = codecIt->codecType;
 

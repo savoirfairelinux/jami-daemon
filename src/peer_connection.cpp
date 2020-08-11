@@ -62,13 +62,13 @@ init_crt(gnutls_session_t session, dht::crypto::Certificate& crt)
 
     // Store verification status
     unsigned int status = 0;
-    auto ret            = gnutls_certificate_verify_peers2(session, &status);
+    auto ret = gnutls_certificate_verify_peers2(session, &status);
     if (ret < 0 or (status & GNUTLS_CERT_SIGNATURE_FAILURE) != 0) {
         return GNUTLS_E_CERTIFICATE_ERROR;
     }
 
     unsigned int cert_list_size = 0;
-    auto cert_list              = gnutls_certificate_get_peers(session, &cert_list_size);
+    auto cert_list = gnutls_certificate_get_peers(session, &cert_list_size);
     if (cert_list == nullptr) {
         return GNUTLS_E_CERTIFICATE_ERROR;
     }
@@ -283,7 +283,7 @@ TcpSocketEndpoint::waitForData(std::chrono::milliseconds timeout, std::error_cod
 {
     for (;;) {
         struct timeval tv;
-        tv.tv_sec  = timeout.count() / 1000;
+        tv.tv_sec = timeout.count() / 1000;
         tv.tv_usec = (timeout.count() % 1000) * 1000;
 
         fd_set read_fds;
@@ -387,7 +387,7 @@ IceSocketEndpoint::write(const ValueType* buf, std::size_t len, std::error_code&
         if (!ice_->isRunning())
             return 0;
         auto res = 0;
-        res      = ice_->send(compId_, reinterpret_cast<const unsigned char*>(buf), len);
+        res = ice_->send(compId_, reinterpret_cast<const unsigned char*>(buf), len);
         if (res < 0) {
             ec.assign(errno, std::generic_category());
         } else {
@@ -490,7 +490,7 @@ public:
         {
             std::lock_guard<std::mutex> lk(cbMtx_);
             onStateChangeCb_ = {};
-            onReadyCb_       = {};
+            onReadyCb_ = {};
         }
         tls.reset();
     }
@@ -692,7 +692,7 @@ enum class CtrlMsgType {
 struct CtrlMsg
 {
     virtual CtrlMsgType type() const = 0;
-    virtual ~CtrlMsg()               = default;
+    virtual ~CtrlMsg() = default;
 };
 
 struct StopCtrlMsg final : CtrlMsg
@@ -782,7 +782,7 @@ private:
         if (stream_list.empty())
             return;
         const auto& item = std::begin(stream_list);
-        auto& stream     = *item;
+        auto& stream = *item;
         try {
             if (callable(stream))
                 return;

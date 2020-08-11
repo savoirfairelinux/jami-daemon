@@ -58,48 +58,48 @@ class Task;
 
 namespace Conf {
 // SIP specific configuration keys
-const char* const BIND_ADDRESS_KEY                 = "bindAddress";
-const char* const INTERFACE_KEY                    = "interface";
-const char* const PORT_KEY                         = "port";
-const char* const PUBLISH_ADDR_KEY                 = "publishAddr";
-const char* const PUBLISH_PORT_KEY                 = "publishPort";
-const char* const SAME_AS_LOCAL_KEY                = "sameasLocal";
-const char* const DTMF_TYPE_KEY                    = "dtmfType";
-const char* const SERVICE_ROUTE_KEY                = "serviceRoute";
-const char* const PRESENCE_ENABLED_KEY             = "presenceEnabled";
-const char* const PRESENCE_PUBLISH_SUPPORTED_KEY   = "presencePublishSupported";
+const char* const BIND_ADDRESS_KEY = "bindAddress";
+const char* const INTERFACE_KEY = "interface";
+const char* const PORT_KEY = "port";
+const char* const PUBLISH_ADDR_KEY = "publishAddr";
+const char* const PUBLISH_PORT_KEY = "publishPort";
+const char* const SAME_AS_LOCAL_KEY = "sameasLocal";
+const char* const DTMF_TYPE_KEY = "dtmfType";
+const char* const SERVICE_ROUTE_KEY = "serviceRoute";
+const char* const PRESENCE_ENABLED_KEY = "presenceEnabled";
+const char* const PRESENCE_PUBLISH_SUPPORTED_KEY = "presencePublishSupported";
 const char* const PRESENCE_SUBSCRIBE_SUPPORTED_KEY = "presenceSubscribeSupported";
-const char* const PRESENCE_STATUS_KEY              = "presenceStatus";
-const char* const PRESENCE_NOTE_KEY                = "presenceNote";
+const char* const PRESENCE_STATUS_KEY = "presenceStatus";
+const char* const PRESENCE_NOTE_KEY = "presenceNote";
 
 // TODO: write an object to store tls params which implement serializable
-const char* const TLS_KEY            = "tls";
-const char* const TLS_PORT_KEY       = "tlsPort";
-const char* const CERTIFICATE_KEY    = "certificate";
-const char* const CALIST_KEY         = "calist";
-const char* const CIPHERS_KEY        = "ciphers";
-const char* const TLS_ENABLE_KEY     = "enable";
-const char* const METHOD_KEY         = "method";
-const char* const TIMEOUT_KEY        = "timeout";
-const char* const TLS_PASSWORD_KEY   = "password";
-const char* const PRIVATE_KEY_KEY    = "privateKey";
+const char* const TLS_KEY = "tls";
+const char* const TLS_PORT_KEY = "tlsPort";
+const char* const CERTIFICATE_KEY = "certificate";
+const char* const CALIST_KEY = "calist";
+const char* const CIPHERS_KEY = "ciphers";
+const char* const TLS_ENABLE_KEY = "enable";
+const char* const METHOD_KEY = "method";
+const char* const TIMEOUT_KEY = "timeout";
+const char* const TLS_PASSWORD_KEY = "password";
+const char* const PRIVATE_KEY_KEY = "privateKey";
 const char* const REQUIRE_CERTIF_KEY = "requireCertif";
-const char* const SERVER_KEY         = "server";
-const char* const VERIFY_CLIENT_KEY  = "verifyClient";
-const char* const VERIFY_SERVER_KEY  = "verifyServer";
+const char* const SERVER_KEY = "server";
+const char* const VERIFY_CLIENT_KEY = "verifyClient";
+const char* const VERIFY_SERVER_KEY = "verifyServer";
 
-const char* const STUN_ENABLED_KEY      = "stunEnabled";
-const char* const STUN_SERVER_KEY       = "stunServer";
-const char* const TURN_ENABLED_KEY      = "turnEnabled";
-const char* const TURN_SERVER_KEY       = "turnServer";
+const char* const STUN_ENABLED_KEY = "stunEnabled";
+const char* const STUN_SERVER_KEY = "stunServer";
+const char* const TURN_ENABLED_KEY = "turnEnabled";
+const char* const TURN_SERVER_KEY = "turnServer";
 const char* const TURN_SERVER_UNAME_KEY = "turnServerUserName";
-const char* const TURN_SERVER_PWD_KEY   = "turnServerPassword";
+const char* const TURN_SERVER_PWD_KEY = "turnServerPassword";
 const char* const TURN_SERVER_REALM_KEY = "turnServerRealm";
-const char* const CRED_KEY              = "credential";
-const char* const AUDIO_PORT_MIN_KEY    = "audioPortMin";
-const char* const AUDIO_PORT_MAX_KEY    = "audioPortMax";
-const char* const VIDEO_PORT_MIN_KEY    = "videoPortMin";
-const char* const VIDEO_PORT_MAX_KEY    = "videoPortMax";
+const char* const CRED_KEY = "credential";
+const char* const AUDIO_PORT_MIN_KEY = "audioPortMin";
+const char* const AUDIO_PORT_MAX_KEY = "audioPortMax";
+const char* const VIDEO_PORT_MIN_KEY = "videoPortMin";
+const char* const VIDEO_PORT_MAX_KEY = "videoPortMax";
 } // namespace Conf
 
 typedef std::vector<pj_ssl_cipher> CipherArray;
@@ -141,7 +141,7 @@ public:
     virtual std::shared_ptr<SIPCall> newIncomingCall(
         const std::string& from,
         const std::map<std::string, std::string>& details = {},
-        const std::shared_ptr<SipTransport>&              = nullptr)
+        const std::shared_ptr<SipTransport>& = nullptr)
         = 0;
 
     virtual bool isStunEnabled() const { return false; }
@@ -283,7 +283,7 @@ public:
     std::vector<DRing::Message> getLastMessages(const uint64_t& base_timestamp) override
     {
         std::lock_guard<std::mutex> lck(mutexLastMessages_);
-        auto it    = lastMessages_.begin();
+        auto it = lastMessages_.begin();
         size_t num = lastMessages_.size();
         while (it != lastMessages_.end() and it->received <= base_timestamp) {
             num--;
@@ -328,7 +328,7 @@ protected:
     virtual std::map<std::string, std::string> getVolatileAccountDetails() const override;
 
     virtual void setRegistrationState(RegistrationState state,
-                                      unsigned code                 = 0,
+                                      unsigned code = 0,
                                       const std::string& detail_str = {}) override;
 
     im::MessageEngine messageEngine_;
@@ -436,7 +436,7 @@ protected:
         {
             if (port_)
                 releasePort(port_);
-            port_   = o.port_;
+            port_ = o.port_;
             o.port_ = 0;
             return *this;
         }

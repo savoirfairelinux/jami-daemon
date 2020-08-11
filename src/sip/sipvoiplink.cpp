@@ -218,7 +218,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     }
 
     const auto& account_id = account->getAccountID();
-    pjsip_msg_body* body   = rdata->msg_info.msg->body;
+    pjsip_msg_body* body = rdata->msg_info.msg->body;
 
     if (method->id == PJSIP_OTHER_METHOD) {
         pj_str_t* str = &method->name;
@@ -231,8 +231,8 @@ transaction_request_cb(pjsip_rx_data* rdata)
                 int urgentCount {0};
 
                 std::string sp = std::string(static_cast<char*>(body->data));
-                auto pos       = sp.find("Voice-Message: ");
-                sp             = sp.substr(pos);
+                auto pos = sp.find("Voice-Message: ");
+                sp = sp.substr(pos);
 
                 int ret = sscanf(sp.c_str(),
                                  "Voice-Message: %d/%d (%d/",
@@ -255,7 +255,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
             auto payloads = im::parseSipMessage(rdata->msg_info.msg);
             if (payloads.size() > 0) {
                 constexpr pj_str_t STR_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR("Message-ID");
-                auto* msgId                       = (pjsip_generic_string_hdr*)
+                auto* msgId = (pjsip_generic_string_hdr*)
                     pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &STR_MESSAGE_ID, nullptr);
                 std::string id = {};
                 if (!msgId) {
@@ -620,10 +620,10 @@ SIPVoIPLink::SIPVoIPLink()
     TRY(pjsip_100rel_init_module(endpt_));
 
     // Initialize and register ring module
-    mod_ua_.name           = pj_str((char*) PACKAGE);
-    mod_ua_.id             = -1;
-    mod_ua_.priority       = PJSIP_MOD_PRIORITY_APPLICATION;
-    mod_ua_.on_rx_request  = &transaction_request_cb;
+    mod_ua_.name = pj_str((char*) PACKAGE);
+    mod_ua_.id = -1;
+    mod_ua_.priority = PJSIP_MOD_PRIORITY_APPLICATION;
+    mod_ua_.on_rx_request = &transaction_request_cb;
     mod_ua_.on_rx_response = &transaction_response_cb;
     TRY(pjsip_endpt_register_module(endpt_, &mod_ua_));
 
@@ -737,7 +737,7 @@ SIPVoIPLink::guessAccount(const std::string& userName,
         if (match == MatchRank::FULL) {
             return account;
         } else if (match > best) {
-            best   = match;
+            best = match;
             result = account;
         }
     }
@@ -752,7 +752,7 @@ SIPVoIPLink::guessAccount(const std::string& userName,
         if (match == MatchRank::FULL) {
             return account;
         } else if (match > best) {
-            best   = match;
+            best = match;
             result = account;
         } else if (!IP2IPAccount && account->isIP2IP()) {
             // Allow IP2IP calls if an account exists for this type of calls
@@ -837,8 +837,8 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
     decltype(pjsip_transaction::status_code) status_code;
 
     if (ev->type != PJSIP_EVENT_TX_MSG) {
-        const auto tsx              = ev->body.tsx_state.tsx;
-        status_code                 = tsx ? tsx->status_code : PJSIP_SC_NOT_FOUND;
+        const auto tsx = ev->body.tsx_state.tsx;
+        status_code = tsx ? tsx->status_code : PJSIP_SC_NOT_FOUND;
         const pj_str_t* description = pjsip_get_status_text(status_code);
 
         JAMI_DBG("[call:%s] INVITE@%p state changed to %d (%s): cause=%d, tsx@%p status %d (%.*s)",
@@ -922,7 +922,7 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
         return;
 
     const auto& account = call->getSIPAccount();
-    auto family         = pj_AF_INET();
+    auto family = pj_AF_INET();
     // FIXME : for now, use the same address family as the SIP transport
     if (auto dlg = inv->dlg) {
         if (dlg->tp_sel.type == PJSIP_TPSELECTOR_TRANSPORT) {
@@ -1020,7 +1020,7 @@ sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status)
     }
 
     // Fetch SDP data from request
-    const auto localSDP  = get_active_local_sdp(inv);
+    const auto localSDP = get_active_local_sdp(inv);
     const auto remoteSDP = get_active_remote_sdp(inv);
 
     // Update our SDP manager
@@ -1041,7 +1041,7 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
     /*
      * Incoming INFO request for media control.
      */
-    constexpr pj_str_t STR_APPLICATION       = CONST_PJ_STR("application");
+    constexpr pj_str_t STR_APPLICATION = CONST_PJ_STR("application");
     constexpr pj_str_t STR_MEDIA_CONTROL_XML = CONST_PJ_STR("media_control+xml");
 
     if (body->len and pj_stricmp(&body->content_type.type, &STR_APPLICATION) == 0
@@ -1050,7 +1050,7 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
 
         /* Apply and answer the INFO request */
         pj_strset(&control_st, (char*) body->data, body->len);
-        static constexpr pj_str_t PICT_FAST_UPDATE   = CONST_PJ_STR("picture_fast_update");
+        static constexpr pj_str_t PICT_FAST_UPDATE = CONST_PJ_STR("picture_fast_update");
         static constexpr pj_str_t DEVICE_ORIENTATION = CONST_PJ_STR("device_orientation");
 
         if (pj_strstr(&control_st, &PICT_FAST_UPDATE)) {
@@ -1282,10 +1282,10 @@ SIPVoIPLink::resolveSrvName(const std::string& name,
     pj_ssize_t name_size;
     const auto n = name.rfind(':');
     if (n != std::string::npos) {
-        port      = std::atoi(name.c_str() + n + 1);
+        port = std::atoi(name.c_str() + n + 1);
         name_size = n;
     } else {
-        port      = 0;
+        port = 0;
         name_size = name.size();
     }
     JAMI_DBG("try to resolve '%s' (port: %u)", name.c_str(), port);
@@ -1347,7 +1347,7 @@ SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport* transport,
 
     // Initialize the sip address with the hostname
     const auto pjMachineName = pj_gethostname();
-    addr                     = std::string(pjMachineName->ptr, pjMachineName->slen);
+    addr = std::string(pjMachineName->ptr, pjMachineName->slen);
 
     // Update address and port with active transport
     RETURN_IF_NULL(transport,

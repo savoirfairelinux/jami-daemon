@@ -55,7 +55,7 @@ Recordable::toggleRecording()
     }
 
     if (!recording_) {
-        std::time_t t  = std::time(nullptr);
+        std::time_t t = std::time(nullptr);
         auto startTime = *std::localtime(&t);
         std::stringstream ss;
         auto dir = Manager::instance().audioPreference.getRecordPath();

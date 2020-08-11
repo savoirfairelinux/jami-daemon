@@ -56,7 +56,7 @@ static constexpr std::chrono::seconds ICE_READY_TIMEOUT {10};
 static constexpr std::chrono::seconds ICE_INIT_TIMEOUT {10};
 static constexpr std::chrono::seconds ICE_NEGOTIATION_TIMEOUT {10};
 
-using Clock       = std::chrono::system_clock;
+using Clock = std::chrono::system_clock;
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
 
 //==============================================================================
@@ -68,8 +68,8 @@ template<typename CT>
 class Timeout
 {
 public:
-    using clock      = CT;
-    using duration   = typename CT::duration;
+    using clock = CT;
+    using duration = typename CT::duration;
     using time_point = typename CT::time_point;
 
     explicit Timeout(const duration& delay)
@@ -95,8 +95,8 @@ class PeerConnectionMsg : public dht::EncryptedValue<PeerConnectionMsg>
 {
 public:
     static constexpr const dht::ValueType& TYPE = dht::ValueType::USER_DATA;
-    static constexpr uint32_t protocol_version  = 0x01000002; ///< Supported protocol
-    static constexpr const char* key_prefix     = "peer:"; ///< base to compute the DHT listen key
+    static constexpr uint32_t protocol_version = 0x01000002; ///< Supported protocol
+    static constexpr const char* key_prefix = "peer:";       ///< base to compute the DHT listen key
 
     dht::Value::Id id = dht::Value::INVALID_ID;
     uint32_t protocol {protocol_version}; ///< Protocol identification. First bit reserved to
@@ -308,7 +308,7 @@ public:
     {
         if (responseReceived_)
             return;
-        response_         = std::move(response);
+        response_ = std::move(response);
         responseReceived_ = true;
         responseCV_.notify_all();
     }
@@ -322,12 +322,12 @@ private:
         // TODO remove publicAddresses in the future and only use the iceMsg
         // For now it's here for compability with old version
         auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-        auto acc                  = parent_.account.lock();
+        auto acc = parent_.account.lock();
         if (!acc)
             return;
-        auto ice_config      = acc->getIceOptions();
+        auto ice_config = acc->getIceOptions();
         ice_config.tcpEnable = true;
-        auto ice             = iceTransportFactory.createTransport(acc->getAccountID().c_str(),
+        auto ice = iceTransportFactory.createTransport(acc->getAccountID().c_str(),
                                                        1,
                                                        false,
                                                        ice_config);
@@ -350,7 +350,7 @@ private:
 
         // Prepare connection request as a DHT message
         PeerConnectionMsg request;
-        request.id        = waitId_; /* Random id for the message unicity */
+        request.id = waitId_; /* Random id for the message unicity */
         request.addresses = {icemsg.str()};
         request.addresses.insert(request.addresses.end(),
                                  publicAddresses_.begin(),
@@ -462,7 +462,7 @@ private:
                 return false;
             } else if (state == tls::TlsSessionState::ESTABLISHED) {
                 // Connected!
-                connected_  = true;
+                connected_ = true;
                 connection_ = std::make_unique<PeerConnection>([this] { cancel(); },
                                                                peer_.toString(),
                                                                std::move(tls_ep_));
@@ -592,9 +592,9 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
             // P2P File transfer. We received an ice SDP message:
             JAMI_DBG() << acc << "[CNX] receiving ICE session request";
             auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-            auto ice_config           = acc->getIceOptions();
-            ice_config.tcpEnable      = true;
-            ice_config.onRecvReady    = [iceReady]() {
+            auto ice_config = acc->getIceOptions();
+            ice_config.tcpEnable = true;
+            ice_config.onRecvReady = [iceReady]() {
                 auto& ir = *iceReady;
                 std::lock_guard<std::mutex> lk {ir.mtx};
                 ir.ready = true;
@@ -722,7 +722,7 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                 return false;
             } else if (state == tls::TlsSessionState::ESTABLISHED) {
                 // Connected!
-                auto peer_h     = idx.first.toString();
+                auto peer_h = idx.first.toString();
                 auto connection = std::make_unique<PeerConnection>([] {},
                                                                    peer_h,
                                                                    std::move(
@@ -928,7 +928,7 @@ DhtPeerConnector::requestConnection(
                     auto outgoingTransfers = shared->channeledOutgoing_.find(tid);
                     if (outgoingTransfers != shared->channeledOutgoing_.end()) {
                         auto& currentTransfers = outgoingTransfers->second;
-                        auto it                = currentTransfers.begin();
+                        auto it = currentTransfers.begin();
                         while (it != currentTransfers.end()) {
                             auto& transfer = *it;
                             if (transfer && transfer->peer() == peer)

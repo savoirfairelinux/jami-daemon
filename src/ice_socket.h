@@ -68,7 +68,7 @@ public:
         = 1280; // Size in bytes of MTU for IPv6 capable networks
     static constexpr uint16_t IPV6_HEADER_SIZE = 40; // Size in bytes of IPv6 packet header
     static constexpr uint16_t IPV4_HEADER_SIZE = 20; // Size in bytes of IPv4 packet header
-    static constexpr uint16_t UDP_HEADER_SIZE  = 8;  // Size in bytes of UDP header
+    static constexpr uint16_t UDP_HEADER_SIZE = 8;   // Size in bytes of UDP header
 
     IceSocketTransport(std::shared_ptr<IceTransport>& ice, int comp_id, bool reliable = false)
         : compId_ {comp_id}

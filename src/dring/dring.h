@@ -34,9 +34,9 @@ namespace DRing {
 
 /* flags for initialization */
 enum InitFlag {
-    DRING_FLAG_DEBUG       = 1 << 0,
+    DRING_FLAG_DEBUG = 1 << 0,
     DRING_FLAG_CONSOLE_LOG = 1 << 1,
-    DRING_FLAG_AUTOANSWER  = 1 << 2,
+    DRING_FLAG_AUTOANSWER = 1 << 2,
 };
 
 /**

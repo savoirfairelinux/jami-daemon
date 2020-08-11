@@ -199,10 +199,10 @@ private:
 
     std::shared_ptr<MediaDemuxer> demuxer_;
 
-    AVCodec* inputDecoder_      = nullptr;
+    AVCodec* inputDecoder_ = nullptr;
     AVCodecContext* decoderCtx_ = nullptr;
-    AVStream* avStream_         = nullptr;
-    bool emulateRate_           = false;
+    AVStream* avStream_ = nullptr;
+    bool emulateRate_ = false;
     int64_t startTime_;
     int64_t lastTimestamp_ {0};
 

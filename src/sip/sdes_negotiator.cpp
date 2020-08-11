@@ -122,10 +122,10 @@ SdesNegotiator::parse(const std::vector<std::string>& attributes)
 
         if (std::regex_search(sdesLine.at(2), sm_keyParamsPattern, keyParamsPattern)) {
             srtpKeyMethod = sm_keyParamsPattern[1];
-            srtpKeyInfo   = sm_keyParamsPattern[2];
-            lifetime      = sm_keyParamsPattern[5];
-            mkiValue      = sm_keyParamsPattern[6];
-            mkiLength     = sm_keyParamsPattern[7];
+            srtpKeyInfo = sm_keyParamsPattern[2];
+            lifetime = sm_keyParamsPattern[5];
+            mkiValue = sm_keyParamsPattern[6];
+            mkiLength = sm_keyParamsPattern[7];
 
         } else {
             throw ParseError("No Matching Found in Key-params Attribute");

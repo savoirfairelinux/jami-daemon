@@ -89,7 +89,7 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
                 framePtr = std::static_pointer_cast<VideoFrame>(m);
             AVFrameSideData* sideData = av_frame_get_side_data(framePtr->pointer(),
                                                                AV_FRAME_DATA_DISPLAYMATRIX);
-            int angle                 = sideData
+            int angle = sideData
                             ? -av_display_rotation_get(reinterpret_cast<int32_t*>(sideData->data))
                             : 0;
             if (angle != rotation_) {
@@ -99,7 +99,7 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
                                                                        framePtr->height(),
                                                                        framePtr->format(),
                                                                        true);
-                rotation_            = angle;
+                rotation_ = angle;
             }
             if (videoRotationFilter_) {
                 videoRotationFilter_->feedInput(framePtr->pointer(), ROTATION_FILTER_INPUT_NAME);
@@ -154,15 +154,15 @@ MediaRecorder::setPath(const std::string& path)
 void
 MediaRecorder::setMetadata(const std::string& title, const std::string& desc)
 {
-    title_       = title;
+    title_ = title;
     description_ = desc;
 }
 
 int
 MediaRecorder::startRecording()
 {
-    std::time_t t   = std::time(nullptr);
-    startTime_      = *std::localtime(&t);
+    std::time_t t = std::time(nullptr);
+    startTime_ = *std::localtime(&t);
     startTimeStamp_ = av_gettime();
 
     encoder_.reset(new MediaEncoder);
@@ -229,7 +229,7 @@ MediaRecorder::addStream(const MediaStream& ms)
                                                  ms](const std::shared_ptr<MediaFrame>& frame) {
                                                     onFrame(ms.name, frame);
                                                 });
-    auto p   = streams_.insert(std::make_pair(ms.name, std::move(ptr)));
+    auto p = streams_.insert(std::make_pair(ms.name, std::move(ptr)));
     if (p.second) {
         JAMI_DBG() << "Recorder input #" << streams_.size() << ": " << ms;
         if (ms.isVideo)
@@ -405,7 +405,7 @@ MediaRecorder::setupVideoOutput()
 
     // vp8 supports only yuv420p
     videoFilter_.reset(new MediaFilter);
-    int ret     = -1;
+    int ret = -1;
     int streams = peer.isValid() + local.isValid();
     switch (streams) {
     case 1: {
@@ -422,7 +422,7 @@ MediaRecorder::setupVideoOutput()
     }
 
     if (ret >= 0) {
-        encoderStream         = videoFilter_->getOutputParams();
+        encoderStream = videoFilter_->getOutputParams();
         encoderStream.bitrate = Manager::instance().videoPreferences.getRecordQuality();
         JAMI_DBG() << "Recorder output: " << encoderStream;
     } else {
@@ -443,11 +443,11 @@ MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers,
         v << "[" << local.name << "] fps=30, format=pix_fmts=yuv420p";
         break;
     case 1: {
-        auto p                        = peers[0];
+        auto p = peers[0];
         const constexpr int minHeight = 720;
-        const auto newFps             = std::max(p.frameRate, local.frameRate);
-        const bool needScale          = (p.height < minHeight);
-        const int newHeight           = (needScale ? minHeight : p.height);
+        const auto newFps = std::max(p.frameRate, local.frameRate);
+        const bool needScale = (p.height < minHeight);
+        const int newHeight = (needScale ? minHeight : p.height);
 
         // NOTE -2 means preserve aspect ratio and have the new number be even
         if (needScale)
@@ -493,7 +493,7 @@ MediaRecorder::setupAudioOutput()
 
     // resample to common audio format, so any player can play the file
     audioFilter_.reset(new MediaFilter);
-    int ret     = -1;
+    int ret = -1;
     int streams = peer.isValid() + local.isValid();
     switch (streams) {
     case 1: {
@@ -565,7 +565,7 @@ MediaRecorder::reset()
     }
     streams_.clear();
     videoIdx_ = audioIdx_ = -1;
-    audioOnly_            = false;
+    audioOnly_ = false;
     videoFilter_.reset();
     audioFilter_.reset();
     encoder_.reset();

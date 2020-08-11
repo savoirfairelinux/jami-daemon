@@ -97,22 +97,22 @@ CoreLayer::initAudioLayerIO()
     JAMI_DBG("INIT AUDIO IO");
 
     // get capture divice
-    auto captureList            = getDeviceList(true);
+    auto captureList = getDeviceList(true);
     AudioDeviceID inputDeviceID = captureList[indexIn_].id_;
     // get playback device
-    auto playbackList              = getDeviceList(false);
+    auto playbackList = getDeviceList(false);
     AudioDeviceID playbackDeviceID = playbackList[indexOut_].id_;
 
-    AudioUnitScope outputBus       = 0;
-    AudioUnitScope inputBus        = 1;
+    AudioUnitScope outputBus = 0;
+    AudioUnitScope inputBus = 1;
     AudioComponentDescription desc = {0};
-    desc.componentType             = kAudioUnitType_Output;
+    desc.componentType = kAudioUnitType_Output;
     // kAudioOutputUnitProperty_EnableIO is ON and read-only
     // for input and output SCOPE on this subtype
-    desc.componentSubType      = kAudioUnitSubType_VoiceProcessingIO;
+    desc.componentSubType = kAudioUnitSubType_VoiceProcessingIO;
     desc.componentManufacturer = kAudioUnitManufacturer_Apple;
-    desc.componentFlags        = 0;
-    desc.componentFlagsMask    = 0;
+    desc.componentFlags = 0;
+    desc.componentFlagsMask = 0;
 
     auto comp = AudioComponentFindNext(nullptr, &desc);
     if (comp == nullptr) {
@@ -124,7 +124,7 @@ CoreLayer::initAudioLayerIO()
 
     // set capture device
     UInt32 size = sizeof(inputDeviceID);
-    auto error  = AudioUnitSetProperty(ioUnit_,
+    auto error = AudioUnitSetProperty(ioUnit_,
                                       kAudioOutputUnitProperty_CurrentDevice,
                                       kAudioUnitScope_Global,
                                       inputBus,
@@ -144,7 +144,7 @@ CoreLayer::initAudioLayerIO()
     }
 
     // set playback device
-    size  = sizeof(playbackDeviceID);
+    size = sizeof(playbackDeviceID);
     error = AudioUnitSetProperty(ioUnit_,
                                  kAudioOutputUnitProperty_CurrentDevice,
                                  kAudioUnitScope_Global,
@@ -241,7 +241,7 @@ CoreLayer::initAudioLayerIO()
     // Input buffer setup. Note that ioData is empty and we have to store data
     // in another buffer.
     UInt32 bufferSizeFrames = 0;
-    size                    = sizeof(UInt32);
+    size = sizeof(UInt32);
     checkErr(AudioUnitGetProperty(ioUnit_,
                                   kAudioDevicePropertyBufferFrameSize,
                                   kAudioUnitScope_Global,
@@ -252,19 +252,19 @@ CoreLayer::initAudioLayerIO()
     UInt32 bufferSizeBytes = bufferSizeFrames * sizeof(Float32);
     size = offsetof(AudioBufferList, mBuffers) + (sizeof(AudioBuffer) * info.mChannelsPerFrame);
     rawBuff_.reset(new Byte[size + bufferSizeBytes * info.mChannelsPerFrame]);
-    captureBuff_                 = reinterpret_cast<::AudioBufferList*>(rawBuff_.get());
+    captureBuff_ = reinterpret_cast<::AudioBufferList*>(rawBuff_.get());
     captureBuff_->mNumberBuffers = info.mChannelsPerFrame;
 
     auto bufferBasePtr = rawBuff_.get() + size;
     for (UInt32 i = 0; i < captureBuff_->mNumberBuffers; ++i) {
         captureBuff_->mBuffers[i].mNumberChannels = 1;
-        captureBuff_->mBuffers[i].mDataByteSize   = bufferSizeBytes;
-        captureBuff_->mBuffers[i].mData           = bufferBasePtr + bufferSizeBytes * i;
+        captureBuff_->mBuffers[i].mDataByteSize = bufferSizeBytes;
+        captureBuff_->mBuffers[i].mData = bufferBasePtr + bufferSizeBytes * i;
     }
 
     // Input callback setup.
     AURenderCallbackStruct inputCall;
-    inputCall.inputProc       = inputCallback;
+    inputCall.inputProc = inputCallback;
     inputCall.inputProcRefCon = this;
 
     checkErr(AudioUnitSetProperty(ioUnit_,
@@ -276,7 +276,7 @@ CoreLayer::initAudioLayerIO()
 
     // Output callback setup.
     AURenderCallbackStruct callback;
-    callback.inputProc       = outputCallback;
+    callback.inputProc = outputCallback;
     callback.inputProcRefCon = this;
 
     checkErr(AudioUnitSetProperty(ioUnit_,
@@ -373,9 +373,9 @@ CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
                  UInt32 inNumberFrames,
                  AudioBufferList* ioData)
 {
-    auto format         = audioFormat_;
-    format.sample_rate  = outSampleRate_;
-    format.nb_channels  = outChannelsPerFrame_;
+    auto format = audioFormat_;
+    format.sample_rate = outSampleRate_;
+    format.nb_channels = outChannelsPerFrame_;
     format.sampleFormat = AV_SAMPLE_FMT_FLTP;
     if (auto toPlay = getPlayback(format, inNumberFrames)) {
         for (int i = 0; i < format.nb_channels; ++i) {
@@ -425,9 +425,9 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
                              inNumberFrames,
                              captureBuff_));
 
-    auto format         = audioInputFormat_;
+    auto format = audioInputFormat_;
     format.sampleFormat = AV_SAMPLE_FMT_FLTP;
-    auto inBuff         = std::make_shared<AudioFrame>(format, inNumberFrames);
+    auto inBuff = std::make_shared<AudioFrame>(format, inNumberFrames);
     if (isCaptureMuted_) {
         libav_utils::fillWithSilence(inBuff->pointer());
     } else {
@@ -475,7 +475,7 @@ CoreLayer::getDeviceList(bool getCapture) const
         AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &theAddress, 0, nullptr, &propsize));
 
     std::size_t nDevices = propsize / sizeof(AudioDeviceID);
-    auto devids          = std::vector<AudioDeviceID>(nDevices);
+    auto devids = std::vector<AudioDeviceID>(nDevices);
 
     __Verify_noErr(AudioObjectGetPropertyData(kAudioObjectSystemObject,
                                               &theAddress,

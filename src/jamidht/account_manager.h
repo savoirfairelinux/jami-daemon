@@ -68,11 +68,11 @@ dynamic_unique_cast(std::unique_ptr<From>&& p)
 class AccountManager
 {
 public:
-    using AsyncUser        = std::function<void(AccountManager&)>;
-    using OnAsync          = std::function<void(AsyncUser&&)>;
+    using AsyncUser = std::function<void(AccountManager&)>;
+    using OnAsync = std::function<void(AsyncUser&&)>;
     using OnChangeCallback = ContactList::OnChangeCallback;
-    using clock            = std::chrono::system_clock;
-    using time_point       = clock::time_point;
+    using clock = std::chrono::system_clock;
+    using time_point = clock::time_point;
 
     AccountManager(const std::string& path, OnAsync&& onAsync, const std::string& nameServer)
         : path_(path)
@@ -93,9 +93,9 @@ public:
                                                    std::vector<uint8_t>&& receipt_signature)>;
 
     using AuthFailureCallback = std::function<void(AuthError error, const std::string& message)>;
-    using DeviceSyncCallback  = std::function<void(DeviceSync&& syncData)>;
-    using CertRequest         = std::future<std::unique_ptr<dht::crypto::CertificateRequest>>;
-    using PrivateKey          = std::shared_future<std::shared_ptr<dht::crypto::PrivateKey>>;
+    using DeviceSyncCallback = std::function<void(DeviceSync&& syncData)>;
+    using CertRequest = std::future<std::unique_ptr<dht::crypto::CertificateRequest>>;
+    using PrivateKey = std::shared_future<std::shared_ptr<dht::crypto::PrivateKey>>;
 
     CertRequest buildRequest(PrivateKey fDeviceKey);
 
@@ -163,7 +163,7 @@ public:
 
     const std::map<dht::InfoHash, KnownDevice>& getKnownDevices() const;
     bool foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt,
-                            const std::string& name     = {},
+                            const std::string& name = {},
                             const time_point& last_sync = time_point::min());
     // bool removeAccountDevice(const dht::InfoHash& device);
     void setAccountDeviceName(/*const dht::InfoHash& device,  */ const std::string& name);
@@ -223,11 +223,11 @@ public:
                                                      const std::string& deviceId);
 
     // Name resolver
-    using LookupCallback       = NameDirectory::LookupCallback;
-    using SearchResult         = NameDirectory::SearchResult;
-    using SearchCallback       = NameDirectory::SearchCallback;
+    using LookupCallback = NameDirectory::LookupCallback;
+    using SearchResult = NameDirectory::SearchResult;
+    using SearchCallback = NameDirectory::SearchCallback;
     using RegistrationCallback = NameDirectory::RegistrationCallback;
-    using SearchResponse       = NameDirectory::Response;
+    using SearchResponse = NameDirectory::Response;
 
     virtual void lookupUri(const std::string& name,
                            const std::string& defaultServer,

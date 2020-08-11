@@ -68,12 +68,12 @@ Mapping&
 Mapping::operator=(Mapping&& other) noexcept
 {
     if (this != &other) {
-        portExternal_       = other.portExternal_;
+        portExternal_ = other.portExternal_;
         other.portExternal_ = 0;
-        portInternal_       = other.portInternal_;
+        portInternal_ = other.portInternal_;
         other.portInternal_ = 0;
-        type_               = other.type_;
-        description_        = std::move(other.description_);
+        type_ = other.type_;
+        description_ = std::move(other.description_);
 #if HAVE_LIBNATPMP
         renewal_ = other.renewal_;
 #endif

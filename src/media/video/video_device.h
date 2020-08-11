@@ -121,7 +121,7 @@ public:
                 continue;
             if (s.second > max_size.second
                 || (s.second == max_size.second && s.first > max_size.first)) {
-                max_size      = s;
+                max_size = s;
                 max_size_rate = max_rate;
             }
         }
@@ -129,7 +129,7 @@ public:
             std::stringstream video_size;
             video_size << max_size.first << "x" << max_size.second;
             settings.video_size = video_size.str();
-            settings.framerate  = jami::to_string(max_size_rate.real());
+            settings.framerate = jami::to_string(max_size_rate.real());
             JAMI_WARN("Default video settings: %s, %s FPS",
                       settings.video_size.c_str(),
                       settings.framerate.c_str());
@@ -145,11 +145,11 @@ public:
     {
         auto params = getDeviceParams();
         VideoSettings settings;
-        settings.name       = name.empty() ? params.name : name;
-        settings.id         = params.input;
-        settings.channel    = params.channel_name;
+        settings.name = name.empty() ? params.name : name;
+        settings.id = params.input;
+        settings.channel = params.channel_name;
         settings.video_size = sizeToString(params.width, params.height);
-        settings.framerate  = jami::to_string(params.framerate.real());
+        settings.framerate = jami::to_string(params.framerate.real());
         return settings;
     }
 
@@ -163,13 +163,13 @@ public:
     void applySettings(VideoSettings settings)
     {
         DeviceParams params {};
-        params.name         = settings.name;
-        params.input        = settings.id;
+        params.name = settings.name;
+        params.input = settings.id;
         params.channel_name = settings.channel;
-        auto size           = sizeFromString(settings.channel, settings.video_size);
-        params.width        = size.first;
-        params.height       = size.second;
-        params.framerate    = rateFromString(settings.channel, size, settings.framerate);
+        auto size = sizeFromString(settings.channel, settings.video_size);
+        params.width = size.first;
+        params.height = size.second;
+        params.framerate = rateFromString(settings.channel, size, settings.framerate);
         setDeviceParams(params);
     }
 
@@ -217,11 +217,11 @@ private:
         if (rate_val == 0)
             rate_val = 30;
         double closest_dist = std::numeric_limits<double>::max();
-        auto rate_list      = getRateList(channel, size);
+        auto rate_list = getRateList(channel, size);
         for (const auto& r : rate_list) {
             double dist = std::fabs(r.real() - rate_val);
             if (dist < closest_dist) {
-                closest      = r;
+                closest = r;
                 closest_dist = dist;
             }
         }

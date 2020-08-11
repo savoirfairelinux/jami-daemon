@@ -148,13 +148,13 @@ void
 Resampler::resample(const AudioBuffer& dataIn, AudioBuffer& dataOut)
 {
     auto inputFrame = dataIn.toAVFrame();
-    auto input      = inputFrame->pointer();
+    auto input = inputFrame->pointer();
     AudioFrame resampled;
-    auto output            = resampled.pointer();
-    output->sample_rate    = dataOut.getSampleRate();
+    auto output = resampled.pointer();
+    output->sample_rate = dataOut.getSampleRate();
     output->channel_layout = av_get_default_channel_layout(dataOut.channels());
-    output->channels       = dataOut.channels();
-    output->format         = AV_SAMPLE_FMT_S16;
+    output->channels = dataOut.channels();
+    output->format = AV_SAMPLE_FMT_S16;
 
     if (resample(input, output) < 0)
         return;

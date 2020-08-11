@@ -76,7 +76,7 @@ void
 AlsaThread::start()
 {
     running_ = true;
-    thread_  = std::thread(&AlsaThread::run, this);
+    thread_ = std::thread(&AlsaThread::run, this);
 }
 
 void
@@ -262,7 +262,7 @@ AlsaLayer::stopStream()
     closePlaybackStream();
 
     playbackHandle_ = nullptr;
-    captureHandle_  = nullptr;
+    captureHandle_ = nullptr;
     ringtoneHandle_ = nullptr;
 
     /* Flush the ring buffers */
@@ -292,7 +292,7 @@ void
 AlsaLayer::stopCaptureStream()
 {
     if (captureHandle_ && ALSA_CALL(snd_pcm_drop(captureHandle_), "couldn't stop capture") >= 0) {
-        is_capture_running_  = false;
+        is_capture_running_ = false;
         is_capture_prepared_ = false;
     }
 }
@@ -323,7 +323,7 @@ AlsaLayer::stopPlaybackStream()
 
     if (playbackHandle_ and is_playback_running_) {
         if (ALSA_CALL(snd_pcm_drop(playbackHandle_), "Couldn't stop playback") >= 0) {
-            is_playback_running_  = false;
+            is_playback_running_ = false;
             is_playback_prepared_ = false;
         }
     }
@@ -377,12 +377,12 @@ AlsaLayer::alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format)
     snd_pcm_hw_params_alloca(&hwparams);
 
     const unsigned RING_ALSA_PERIOD_SIZE = 160;
-    const unsigned RING_ALSA_NB_PERIOD   = 8;
+    const unsigned RING_ALSA_NB_PERIOD = 8;
     const unsigned RING_ALSA_BUFFER_SIZE = RING_ALSA_PERIOD_SIZE * RING_ALSA_NB_PERIOD;
 
     snd_pcm_uframes_t period_size = RING_ALSA_PERIOD_SIZE;
     snd_pcm_uframes_t buffer_size = RING_ALSA_BUFFER_SIZE;
-    unsigned int periods          = RING_ALSA_NB_PERIOD;
+    unsigned int periods = RING_ALSA_NB_PERIOD;
 
     snd_pcm_uframes_t period_size_min = 0;
     snd_pcm_uframes_t period_size_max = 0;
@@ -401,7 +401,7 @@ AlsaLayer::alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format)
 
     // TODO: use snd_pcm_query_chmaps or similar to get hardware channel num
     audioFormat_.nb_channels = 2;
-    format.nb_channels       = 2;
+    format.nb_channels = 2;
     TRY(snd_pcm_hw_params_set_channels_near(HW, &format.nb_channels), "channel count");
 
     snd_pcm_hw_params_get_buffer_size_min(hwparams, &buffer_size_min);
@@ -527,7 +527,7 @@ AlsaLayer::read(unsigned frames)
     }
 
     auto ret = std::make_unique<AudioFrame>(audioInputFormat_, frames);
-    int err  = snd_pcm_readi(captureHandle_, ret->pointer()->data[0], frames);
+    int err = snd_pcm_readi(captureHandle_, ret->pointer()->data[0], frames);
 
     if (err >= 0) {
         ret->pointer()->nb_samples = err;
@@ -738,7 +738,7 @@ AlsaLayer::capture()
         return;
 
     const int framesPerBufferAlsa = 2048;
-    toGetFrames                   = std::min(framesPerBufferAlsa, toGetFrames);
+    toGetFrames = std::min(framesPerBufferAlsa, toGetFrames);
     if (auto r = read(toGetFrames)) {
         putRecorded(std::move(r));
     } else

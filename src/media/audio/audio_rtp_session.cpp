@@ -77,7 +77,7 @@ AudioRtpSession::startSender()
         JAMI_WARN("Restarting audio sender");
 
     // sender sets up input correctly, we just keep a reference in case startSender is called
-    audioInput_    = jami::getAudioInput(callID_);
+    audioInput_ = jami::getAudioInput(callID_);
     auto newParams = audioInput_->switchInput(input_);
     try {
         if (newParams.valid()

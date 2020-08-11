@@ -27,7 +27,7 @@ namespace upnp {
 
 IGD::IGD(IpAddr&& localIp, IpAddr&& publicIp)
 {
-    localIp_  = std::move(localIp);
+    localIp_ = std::move(localIp);
     publicIp_ = std::move(publicIp);
 }
 
@@ -62,7 +62,7 @@ Mapping
 IGD::getMapping(in_port_t externalPort, upnp::PortType type) const
 {
     auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
-    auto it       = mapList.find(externalPort);
+    auto it = mapList.find(externalPort);
     if (it != mapList.end()) {
         if (it->first == externalPort) {
             return Mapping(it->second.getPortExternal(),
@@ -79,7 +79,7 @@ IGD::getNbOfUsers(const in_port_t externalPort, upnp::PortType type)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
     auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
-    auto it       = mapList.find(externalPort);
+    auto it = mapList.find(externalPort);
     if (it != mapList.end())
         return it->second.users;
     return 0;
@@ -111,7 +111,7 @@ IGD::incrementNbOfUsers(const in_port_t externalPort, upnp::PortType type)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
     auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
-    auto it       = mapList.find(externalPort);
+    auto it = mapList.find(externalPort);
     if (it != mapList.end()) {
         it->second.users++;
         JAMI_DBG("IGD: Incrementing the number of users for %s to %u",
@@ -145,7 +145,7 @@ IGD::decrementNbOfUsers(const in_port_t externalPort, upnp::PortType type)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
     auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
-    auto it       = mapList.find(externalPort);
+    auto it = mapList.find(externalPort);
     if (it != mapList.end()) {
         if (it->second.users > 1) {
             it->second.users--;

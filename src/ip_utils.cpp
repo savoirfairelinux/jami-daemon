@@ -137,9 +137,9 @@ ip_utils::getHostName(char* out, size_t out_len)
     if (localSock == INVALID_SOCKET)
         return -1;
     /* Get the interface configuration information... */
-    ifConf.ifc_len           = (int) sizeof szBuffer;
+    ifConf.ifc_len = (int) sizeof szBuffer;
     ifConf.ifc_ifcu.ifcu_buf = (caddr_t) szBuffer;
-    nResult                  = ioctl(localSock, SIOCGIFCONF, &ifConf);
+    nResult = ioctl(localSock, SIOCGIFCONF, &ifConf);
     if (nResult < 0) {
         close(localSock);
         return -1;
@@ -341,11 +341,11 @@ ip_utils::getInterfaceAddr(const std::string& interface, pj_uint16_t family)
 
     switch (result->ai_family) {
         sockaddr_ipv4 = (struct sockaddr_in*) result->ai_addr;
-        addr          = sockaddr_ipv4->sin_addr;
+        addr = sockaddr_ipv4->sin_addr;
         break;
     case AF_INET6:
         sockaddr_ipv6 = (struct sockaddr_in6*) result->ai_addr;
-        addr          = sockaddr_ipv6->sin6_addr;
+        addr = sockaddr_ipv6->sin6_addr;
         break;
     default:
         break;
@@ -461,7 +461,7 @@ IpAddr::isLoopback() const
     switch (addr.addr.sa_family) {
     case AF_INET: {
         auto addr_host = ntohl(addr.ipv4.sin_addr.s_addr);
-        uint8_t b1     = (uint8_t)(addr_host >> 24);
+        uint8_t b1 = (uint8_t)(addr_host >> 24);
         return b1 == 127;
     }
     case AF_INET6:

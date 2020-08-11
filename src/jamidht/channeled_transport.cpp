@@ -61,7 +61,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
     pj_ansi_snprintf(base.obj_name, PJ_MAX_OBJ_NAME, "chan%p", &base);
     base.endpt = endpt;
     base.tpmgr = pjsip_endpt_get_tpmgr(endpt);
-    base.pool  = pool_.get();
+    base.pool = pool_.get();
 
     if (pj_atomic_create(pool_.get(), 0, &base.ref_cnt) != PJ_SUCCESS)
         throw std::runtime_error("Can't create PJSIP atomic.");
@@ -70,10 +70,10 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
         throw std::runtime_error("Can't create PJSIP mutex.");
 
     pj_sockaddr_cp(&base.key.rem_addr, remote_.pjPtr());
-    base.key.type  = tp_type;
-    auto reg_type  = static_cast<pjsip_transport_type_e>(tp_type);
+    base.key.type = tp_type;
+    auto reg_type = static_cast<pjsip_transport_type_e>(tp_type);
     base.type_name = const_cast<char*>(pjsip_transport_get_type_name(reg_type));
-    base.flag      = pjsip_transport_get_flag_from_type(reg_type);
+    base.flag = pjsip_transport_get_flag_from_type(reg_type);
     base.info = static_cast<char*>(pj_pool_alloc(pool_.get(), sip_utils::TRANSPORT_INFO_LENGTH));
 
     auto remote_addr = remote_.toString();
@@ -83,7 +83,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
                      base.type_name,
                      remote_addr.c_str());
     base.addr_len = remote_.getLength();
-    base.dir      = PJSIP_TP_DIR_NONE;
+    base.dir = PJSIP_TP_DIR_NONE;
 
     // Set initial local address
     pj_sockaddr_cp(&base.local_addr, local_.pjPtr());
@@ -123,18 +123,18 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
 
     // Init rdata_
     std::memset(&rdata_, 0, sizeof(pjsip_rx_data));
-    rxPool_                     = sip_utils::smart_alloc_pool(endpt,
+    rxPool_ = sip_utils::smart_alloc_pool(endpt,
                                           "channeled.rxPool",
                                           PJSIP_POOL_RDATA_LEN,
                                           PJSIP_POOL_RDATA_LEN);
-    rdata_.tp_info.pool         = rxPool_.get();
-    rdata_.tp_info.transport    = &base;
-    rdata_.tp_info.tp_data      = this;
+    rdata_.tp_info.pool = rxPool_.get();
+    rdata_.tp_info.transport = &base;
+    rdata_.tp_info.tp_data = this;
     rdata_.tp_info.op_key.rdata = &rdata_;
     pj_ioqueue_op_key_init(&rdata_.tp_info.op_key.op_key, sizeof(pj_ioqueue_op_key_t));
-    rdata_.pkt_info.src_addr     = base.key.rem_addr;
+    rdata_.pkt_info.src_addr = base.key.rem_addr;
     rdata_.pkt_info.src_addr_len = sizeof(rdata_.pkt_info.src_addr);
-    auto rem_addr                = &base.key.rem_addr;
+    auto rem_addr = &base.key.rem_addr;
     pj_sockaddr_print(rem_addr, rdata_.pkt_info.src_name, sizeof(rdata_.pkt_info.src_name), 0);
     rdata_.pkt_info.src_port = pj_sockaddr_get_port(rem_addr);
 
@@ -303,8 +303,8 @@ ChanneledSIPTransport::send(pjsip_tx_data* tdata,
     }
 
     // Asynchronous sending
-    tdata->op_key.tdata    = tdata;
-    tdata->op_key.token    = token;
+    tdata->op_key.tdata = tdata;
+    tdata->op_key.token = token;
     tdata->op_key.callback = callback;
     txQueue_.push_back(tdata);
     scheduler_.run([this] { handleEvents(); });

@@ -183,7 +183,7 @@ public:
 
 private:
     NON_COPYABLE(SocketPair);
-    using clock      = std::chrono::steady_clock;
+    using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
     int readCallback(uint8_t* buf, int buf_size);

@@ -29,13 +29,13 @@
 #include <list>
 
 namespace jami {
-using MediaHandlerPtr     = std::unique_ptr<MediaHandler>;
+using MediaHandlerPtr = std::unique_ptr<MediaHandler>;
 using CallMediaHandlerPtr = std::unique_ptr<CallMediaHandler>;
-using AVSubjectSPtr       = std::weak_ptr<Observable<AVFrame*>>;
+using AVSubjectSPtr = std::weak_ptr<Observable<AVFrame*>>;
 
 struct MediaHandlerToggled
 {
-    std::string name  = "";
+    std::string name = "";
     std::string state = "false";
 };
 
@@ -141,12 +141,12 @@ public:
             if (pair.second && getCallHandlerId(pair.second) == id) {
                 pair.first = toggle;
                 if (pair.first) {
-                    mediaHandlerToggled_.name  = id;
+                    mediaHandlerToggled_.name = id;
                     mediaHandlerToggled_.state = "true";
                     listAvailableSubjects(pair.second);
                 } else {
                     pair.second->detach();
-                    mediaHandlerToggled_.name  = "";
+                    mediaHandlerToggled_.name = "";
                     mediaHandlerToggled_.state = "false";
                 }
             }

@@ -109,7 +109,7 @@ PortAudioLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) co
     auto deviceList = pimpl_->getDeviceByType(type);
 
     int numDevices = 0;
-    numDevices     = deviceList.size();
+    numDevices = deviceList.size();
     if (numDevices < 0) {
         JAMI_ERR("PortAudioLayer error : %s", Pa_GetErrorText(numDevices));
     } else {
@@ -367,11 +367,11 @@ openStreamDevice(PaStream** stream,
                  PaStreamCallback* callback,
                  void* user_data)
 {
-    auto is_out      = direction == Direction::Output;
+    auto is_out = direction == Direction::Output;
     auto device_info = Pa_GetDeviceInfo(device);
 
     PaStreamParameters params;
-    params.device       = device;
+    params.device = device;
     params.channelCount = is_out ? device_info->maxOutputChannels : device_info->maxInputChannels;
     params.sampleFormat = paInt16;
     params.suggestedLatency = is_out ? device_info->defaultLowOutputLatency
@@ -398,21 +398,21 @@ openFullDuplexStream(PaStream** stream,
                      PaStreamCallback* callback,
                      void* user_data)
 {
-    auto input_device_info  = Pa_GetDeviceInfo(inputDeviceIndex);
+    auto input_device_info = Pa_GetDeviceInfo(inputDeviceIndex);
     auto output_device_info = Pa_GetDeviceInfo(ouputDeviceIndex);
 
     PaStreamParameters inputParams;
-    inputParams.device                    = inputDeviceIndex;
-    inputParams.channelCount              = input_device_info->maxInputChannels;
-    inputParams.sampleFormat              = paInt16;
-    inputParams.suggestedLatency          = input_device_info->defaultLowInputLatency;
+    inputParams.device = inputDeviceIndex;
+    inputParams.channelCount = input_device_info->maxInputChannels;
+    inputParams.sampleFormat = paInt16;
+    inputParams.suggestedLatency = input_device_info->defaultLowInputLatency;
     inputParams.hostApiSpecificStreamInfo = nullptr;
 
     PaStreamParameters outputParams;
-    outputParams.device                    = ouputDeviceIndex;
-    outputParams.channelCount              = output_device_info->maxOutputChannels;
-    outputParams.sampleFormat              = paInt16;
-    outputParams.suggestedLatency          = output_device_info->defaultLowOutputLatency;
+    outputParams.device = ouputDeviceIndex;
+    outputParams.channelCount = output_device_info->maxOutputChannels;
+    outputParams.sampleFormat = paInt16;
+    outputParams.suggestedLatency = output_device_info->defaultLowOutputLatency;
     outputParams.hostApiSpecificStreamInfo = nullptr;
 
     auto err = Pa_OpenStream(stream,
@@ -435,7 +435,7 @@ PortAudioLayer::PortAudioLayerImpl::initStream(PortAudioLayer& parent)
     parent.dcblocker_.reset();
 
     auto apiIndex = Pa_GetDefaultHostApi();
-    auto apiInfo  = Pa_GetHostApiInfo(apiIndex);
+    auto apiInfo = Pa_GetHostApiInfo(apiIndex);
     JAMI_DBG() << "Initializing Portaudio streams using: " << apiInfo->name;
 
     JAMI_DBG("Open PortAudio Full-duplex input/output stream");
@@ -566,7 +566,7 @@ PortAudioLayer::PortAudioLayerImpl::paInputCallback(PortAudioLayer& parent,
         return paContinue;
     }
 
-    auto inBuff  = std::make_shared<AudioFrame>(parent.audioInputFormat_, framesPerBuffer);
+    auto inBuff = std::make_shared<AudioFrame>(parent.audioInputFormat_, framesPerBuffer);
     auto nFrames = framesPerBuffer * parent.audioInputFormat_.nb_channels;
     if (parent.isCaptureMuted_)
         libav_utils::fillWithSilence(inBuff->pointer());

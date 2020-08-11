@@ -36,14 +36,14 @@ UPnPIGD::UPnPIGD(std::string&& UDN,
                  IpAddr&& publicIp)
     : IGD(std::move(localIp), std::move(publicIp))
 {
-    UDN_          = std::move(UDN);
-    baseURL_      = std::move(baseURL);
+    UDN_ = std::move(UDN);
+    baseURL_ = std::move(baseURL);
     friendlyName_ = std::move(friendlyName);
-    serviceType_  = std::move(serviceType);
-    serviceId_    = std::move(serviceId);
-    locationURL_  = std::move(locationURL);
-    controlURL_   = std::move(controlURL);
-    eventSubURL_  = std::move(eventSubURL);
+    serviceType_ = std::move(serviceType);
+    serviceId_ = std::move(serviceId);
+    locationURL_ = std::move(locationURL);
+    controlURL_ = std::move(controlURL);
+    eventSubURL_ = std::move(eventSubURL);
 }
 
 bool

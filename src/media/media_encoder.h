@@ -137,9 +137,9 @@ private:
 
     std::vector<AVCodecContext*> encoders_;
     AVFormatContext* outputCtx_ = nullptr;
-    AVIOContext* ioCtx_         = nullptr;
-    int currentStreamIdx_       = -1;
-    unsigned sent_samples       = 0;
+    AVIOContext* ioCtx_ = nullptr;
+    int currentStreamIdx_ = -1;
+    unsigned sent_samples = 0;
     bool initialized_ {false};
     bool fileIO_ {false};
     unsigned int currentVideoCodecID_ {0};

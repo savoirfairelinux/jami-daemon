@@ -72,7 +72,7 @@ AudioFrameResizer::setFormat(const AudioFormat& format, int size)
             JAMI_WARN("Discarding %d samples", discarded);
         av_audio_fifo_free(queue_);
         format_ = format;
-        queue_  = av_audio_fifo_alloc(format.sampleFormat, format.nb_channels, frameSize_);
+        queue_ = av_audio_fifo_alloc(format.sampleFormat, format.nb_channels, frameSize_);
     }
 }
 
@@ -91,7 +91,7 @@ void
 AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
 {
     int ret = 0;
-    auto f  = frame->pointer();
+    auto f = frame->pointer();
     AudioFormat format(f->sample_rate, f->channels, (AVSampleFormat) f->format);
     if (format != format_) {
         JAMI_ERR() << "Expected " << format_ << ", but got "

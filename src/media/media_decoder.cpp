@@ -69,7 +69,7 @@ MediaDemuxer::~MediaDemuxer()
 int
 MediaDemuxer::openInput(const DeviceParams& params)
 {
-    inputParams_           = params;
+    inputParams_ = params;
     AVInputFormat* iformat = av_find_input_format(params.format.c_str());
 
     if (!iformat && !params.format.empty())
@@ -189,7 +189,7 @@ MediaDemuxer::setInterruptCallback(int (*cb)(void*), void* opaque)
 {
     if (cb) {
         inputCtx_->interrupt_callback.callback = cb;
-        inputCtx_->interrupt_callback.opaque   = opaque;
+        inputCtx_->interrupt_callback.opaque = opaque;
     } else {
         inputCtx_->interrupt_callback.callback = 0;
     }
@@ -447,7 +447,7 @@ MediaDecoder::setupStream()
                                                              decoderCtx_->height,
                                                              CODEC_DECODER);
         for (const auto& it : APIs) {
-            accel_   = std::make_unique<video::HardwareAccel>(it); // save accel
+            accel_ = std::make_unique<video::HardwareAccel>(it); // save accel
             auto ret = accel_->initAPI(false, nullptr);
             if (ret < 0) {
                 accel_.reset();
@@ -456,7 +456,7 @@ MediaDecoder::setupStream()
             if (prepareDecoderContext() < 0)
                 return -1; // failed
             accel_->setDetails(decoderCtx_);
-            decoderCtx_->opaque  = accel_.get();
+            decoderCtx_->opaque = accel_.get();
             decoderCtx_->pix_fmt = accel_->getFormat();
             if (avcodec_open2(decoderCtx_, inputDecoder_, &options_) < 0) {
                 // Failed to open codec
@@ -539,7 +539,7 @@ DecodeStatus
 MediaDecoder::decode(AVPacket& packet)
 {
     int frameFinished = 0;
-    auto ret          = avcodec_send_packet(decoderCtx_, &packet);
+    auto ret = avcodec_send_packet(decoderCtx_, &packet);
     if (ret < 0 && ret != AVERROR(EAGAIN)) {
 #ifdef RING_ACCEL
         if (accel_) {
@@ -558,7 +558,7 @@ MediaDecoder::decode(AVPacket& packet)
                  ? std::static_pointer_cast<MediaFrame>(std::make_shared<VideoFrame>())
                  : std::static_pointer_cast<MediaFrame>(std::make_shared<AudioFrame>());
     auto frame = f->pointer();
-    ret        = avcodec_receive_frame(decoderCtx_, frame);
+    ret = avcodec_receive_frame(decoderCtx_, frame);
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
         return DecodeStatus::DecodeError;
     }
@@ -570,16 +570,16 @@ MediaDecoder::decode(AVPacket& packet)
         if (!frame->channel_layout)
             frame->channel_layout = av_get_default_channel_layout(frame->channels);
 
-        frame->format        = (AVPixelFormat) correctPixFmt(frame->format);
+        frame->format = (AVPixelFormat) correctPixFmt(frame->format);
         auto packetTimestamp = frame->pts; // in stream time base
-        frame->pts           = av_rescale_q_rnd(av_gettime() - startTime_,
+        frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
                                       {1, AV_TIME_BASE},
                                       decoderCtx_->time_base,
                                       static_cast<AVRounding>(AV_ROUND_NEAR_INF
                                                               | AV_ROUND_PASS_MINMAX));
-        lastTimestamp_       = frame->pts;
+        lastTimestamp_ = frame->pts;
         if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
-            auto frame_time      = getTimeBase() * (packetTimestamp - avStream_->start_time);
+            auto frame_time = getTimeBase() * (packetTimestamp - avStream_->start_time);
             auto target_relative = static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto target_absolute = startTime_ + target_relative;
             if (target_relative < seekTime_) {
@@ -636,13 +636,13 @@ MediaDecoder::flush()
     av_init_packet(&inpacket);
 
     int frameFinished = 0;
-    int ret           = 0;
-    ret               = avcodec_send_packet(decoderCtx_, &inpacket);
+    int ret = 0;
+    ret = avcodec_send_packet(decoderCtx_, &inpacket);
     if (ret < 0 && ret != AVERROR(EAGAIN))
         return ret == AVERROR_EOF ? DecodeStatus::Success : DecodeStatus::DecodeError;
 
     auto result = std::make_shared<MediaFrame>();
-    ret         = avcodec_receive_frame(decoderCtx_, result->pointer());
+    ret = avcodec_receive_frame(decoderCtx_, result->pointer());
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
         return DecodeStatus::DecodeError;
     if (ret >= 0)

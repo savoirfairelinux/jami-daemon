@@ -151,7 +151,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     pj_ansi_snprintf(base.obj_name, PJ_MAX_OBJ_NAME, "dtls%p", &base);
     base.endpt = endpt;
     base.tpmgr = pjsip_endpt_get_tpmgr(endpt);
-    base.pool  = pool_.get();
+    base.pool = pool_.get();
 
     if (pj_atomic_create(pool_.get(), 0, &base.ref_cnt) != PJ_SUCCESS)
         throw std::runtime_error("Can't create PJSIP atomic.");
@@ -159,13 +159,13 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     if (pj_lock_create_recursive_mutex(pool_.get(), "dtls", &base.lock) != PJ_SUCCESS)
         throw std::runtime_error("Can't create PJSIP mutex.");
 
-    local_  = ice->getLocalAddress(comp_id);
+    local_ = ice->getLocalAddress(comp_id);
     remote_ = ice->getRemoteAddress(comp_id);
     pj_sockaddr_cp(&base.key.rem_addr, remote_.pjPtr());
-    base.key.type  = tp_type;
-    auto reg_type  = static_cast<pjsip_transport_type_e>(tp_type);
+    base.key.type = tp_type;
+    auto reg_type = static_cast<pjsip_transport_type_e>(tp_type);
     base.type_name = const_cast<char*>(pjsip_transport_get_type_name(reg_type));
-    base.flag      = pjsip_transport_get_flag_from_type(reg_type);
+    base.flag = pjsip_transport_get_flag_from_type(reg_type);
     base.info = static_cast<char*>(pj_pool_alloc(pool_.get(), sip_utils::TRANSPORT_INFO_LENGTH));
 
     auto remote_addr = remote_.toString();
@@ -175,7 +175,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
                      base.type_name,
                      remote_addr.c_str());
     base.addr_len = remote_.getLength();
-    base.dir      = PJSIP_TP_DIR_NONE;
+    base.dir = PJSIP_TP_DIR_NONE;
 
     /* Set initial local address */
     auto local = ice->getDefaultLocalAddress();
@@ -213,18 +213,18 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
 
     /* Init rdata_ */
     std::memset(&rdata_, 0, sizeof(pjsip_rx_data));
-    rxPool_                     = sip_utils::smart_alloc_pool(endpt,
+    rxPool_ = sip_utils::smart_alloc_pool(endpt,
                                           "dtls.rxPool",
                                           PJSIP_POOL_RDATA_LEN,
                                           PJSIP_POOL_RDATA_LEN);
-    rdata_.tp_info.pool         = rxPool_.get();
-    rdata_.tp_info.transport    = &base;
-    rdata_.tp_info.tp_data      = this;
+    rdata_.tp_info.pool = rxPool_.get();
+    rdata_.tp_info.transport = &base;
+    rdata_.tp_info.tp_data = this;
     rdata_.tp_info.op_key.rdata = &rdata_;
     pj_ioqueue_op_key_init(&rdata_.tp_info.op_key.op_key, sizeof(pj_ioqueue_op_key_t));
-    rdata_.pkt_info.src_addr     = base.key.rem_addr;
+    rdata_.pkt_info.src_addr = base.key.rem_addr;
     rdata_.pkt_info.src_addr_len = sizeof(rdata_.pkt_info.src_addr);
-    auto rem_addr                = &base.key.rem_addr;
+    auto rem_addr = &base.key.rem_addr;
     pj_sockaddr_print(rem_addr, rdata_.pkt_info.src_name, sizeof(rdata_.pkt_info.src_name), 0);
     rdata_.pkt_info.src_port = pj_sockaddr_get_port(rem_addr);
 
@@ -306,11 +306,11 @@ SipsIceTransport::handleEvents()
 
     ChangeStateEventData disconnectedEvent;
     bool disconnected = false;
-    auto state_cb     = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr);
+    auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr);
     if (state_cb) {
         for (auto& evdata : eventDataQueue) {
             evdata.tls_info.ssl_sock_info = &evdata.ssl_info;
-            evdata.state_info.ext_info    = &evdata.tls_info;
+            evdata.state_info.ext_info = &evdata.tls_info;
             if (evdata.state == PJSIP_TP_STATE_CONNECTED) {
                 if (PJSIP_TRANSPORT_IS_RELIABLE(&trData_.base)) {
                     eventLoop_ = std::thread([this] {
@@ -327,8 +327,8 @@ SipsIceTransport::handleEvents()
             } else {
                 JAMI_WARN("[SIPS] got disconnected event!");
                 disconnectedEvent = std::move(evdata);
-                disconnected      = true;
-                stopLoop_         = true;
+                disconnected = true;
+                stopLoop_ = true;
                 break;
             }
         }
@@ -472,14 +472,14 @@ SipsIceTransport::verifyCertificate(gnutls_session_t session)
 
     // Store verification status
     unsigned int status = 0;
-    auto ret            = gnutls_certificate_verify_peers2(session, &status);
+    auto ret = gnutls_certificate_verify_peers2(session, &status);
     if (ret < 0 or (status & GNUTLS_CERT_SIGNATURE_FAILURE) != 0) {
         verifyStatus_ = PJ_SSL_CERT_EUNTRUSTED;
         return GNUTLS_E_CERTIFICATE_ERROR;
     }
 
     unsigned int cert_list_size = 0;
-    auto cert_list              = gnutls_certificate_get_peers(session, &cert_list_size);
+    auto cert_list = gnutls_certificate_get_peers(session, &cert_list_size);
     if (cert_list == nullptr) {
         verifyStatus_ = PJ_SSL_CERT_EISSUER_NOT_FOUND;
         return GNUTLS_E_CERTIFICATE_ERROR;
@@ -503,7 +503,7 @@ SipsIceTransport::updateTransportState(pjsip_transport_state state)
     std::memset(&ev.state_info, 0, sizeof(ev.state_info));
     std::memset(&ev.tls_info, 0, sizeof(ev.tls_info));
 
-    ev.state       = state;
+    ev.state = state;
     bool connected = state == PJSIP_TP_STATE_CONNECTED;
     {
         std::lock_guard<std::mutex> lk {txMutex_};
@@ -540,9 +540,9 @@ SipsIceTransport::getInfo(pj_ssl_sock_info* info, bool established)
         } else
             JAMI_ERR("[TLS] Can't find info on used cipher");
 
-        info->local_cert_info  = &localCertInfo_;
+        info->local_cert_info = &localCertInfo_;
         info->remote_cert_info = &remoteCertInfo_;
-        info->verify_status    = verifyStatus_;
+        info->verify_status = verifyStatus_;
 
         pj_sockaddr_cp(&info->remote_addr, remote_.pjPtr());
     }
@@ -561,11 +561,11 @@ SipsIceTransport::certGetInfo(pj_pool_t* pool,
                               const gnutls_datum_t* crt_raw,
                               size_t crt_raw_num)
 {
-    char buf[512]  = {0};
+    char buf[512] = {0};
     size_t bufsize = sizeof(buf);
     std::array<uint8_t, sizeof(ci->serial_no)> serial_no; /* should be >= sizeof(ci->serial_no) */
     size_t serialsize = serial_no.size();
-    size_t len        = sizeof(buf);
+    size_t len = sizeof(buf);
     int i, ret, seq = 0;
     pj_ssl_cert_name_type type;
 
@@ -591,7 +591,7 @@ SipsIceTransport::certGetInfo(pj_pool_t* pool,
     ci->raw_chain.cert_raw = (pj_str_t*) pj_pool_calloc(pool,
                                                         crt_raw_num,
                                                         sizeof(*ci->raw_chain.cert_raw));
-    ci->raw_chain.cnt      = crt_raw_num;
+    ci->raw_chain.cnt = crt_raw_num;
     for (size_t i = 0; i < crt_raw_num; ++i) {
         const pj_str_t cert = {(char*) crt_raw[i].data, (pj_ssize_t) crt_raw[i].size};
         pj_strdup(pool, ci->raw_chain.cert_raw + i, &cert);
@@ -614,9 +614,9 @@ SipsIceTransport::certGetInfo(pj_pool_t* pool,
     certGetCn(&ci->subject.info, &ci->subject.cn);
 
     /* Validity */
-    ci->validity.end.sec   = gnutls_x509_crt_get_expiration_time(crt.cert);
+    ci->validity.end.sec = gnutls_x509_crt_get_expiration_time(crt.cert);
     ci->validity.start.sec = gnutls_x509_crt_get_activation_time(crt.cert);
-    ci->validity.gmt       = 0;
+    ci->validity.gmt = 0;
 
     /* Subject Alternative Name extension */
     if (ci->version >= 3) {
@@ -730,8 +730,8 @@ SipsIceTransport::send(pjsip_tx_data* tdata,
     }
 
     // Asynchronous sending
-    tdata->op_key.tdata    = tdata;
-    tdata->op_key.token    = token;
+    tdata->op_key.tdata = tdata;
+    tdata->op_key.token = token;
     tdata->op_key.callback = callback;
     txQueue_.push_back(tdata);
     scheduler_.run([this] { handleEvents(); });

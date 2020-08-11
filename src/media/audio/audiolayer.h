@@ -84,14 +84,14 @@ public:
     AudioLayer(const AudioPreference&);
     virtual ~AudioLayer();
 
-    virtual std::vector<std::string> getCaptureDeviceList() const  = 0;
+    virtual std::vector<std::string> getCaptureDeviceList() const = 0;
     virtual std::vector<std::string> getPlaybackDeviceList() const = 0;
 
     virtual int getAudioDeviceIndex(const std::string& name, DeviceType type) const = 0;
-    virtual std::string getAudioDeviceName(int index, DeviceType type) const        = 0;
-    virtual int getIndexCapture() const                                             = 0;
-    virtual int getIndexPlayback() const                                            = 0;
-    virtual int getIndexRingtone() const                                            = 0;
+    virtual std::string getAudioDeviceName(int index, DeviceType type) const = 0;
+    virtual int getIndexCapture() const = 0;
+    virtual int getIndexPlayback() const = 0;
+    virtual int getIndexRingtone() const = 0;
 
     /**
      * Start the capture stream and prepare the playback stream.

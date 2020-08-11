@@ -87,7 +87,7 @@ struct AudioLayer::EchoState
             recordQueue.dequeue();
         }
         auto playback = playbackQueue.dequeue();
-        auto record   = recordQueue.dequeue();
+        auto record = recordQueue.dequeue();
         if (playback and record) {
             auto ret = std::make_shared<AudioFrame>(record->getFormat(), record->getFrameSize());
             speex_echo_cancellation(state.get(),
@@ -244,7 +244,7 @@ AudioLayer::getToRing(AudioFormat format, size_t writableSamples)
     ringtoneBuffer_.resize(0);
     if (auto fileToPlay = Manager::instance().getTelephoneFile()) {
         auto fileformat = fileToPlay->getFormat();
-        bool resample   = format != fileformat;
+        bool resample = format != fileformat;
 
         size_t readableSamples = resample ? (rational<size_t>(writableSamples, format.sample_rate)
                                              * (size_t) fileformat.sample_rate)

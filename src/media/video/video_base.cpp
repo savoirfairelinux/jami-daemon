@@ -84,11 +84,11 @@ extractString(const std::map<std::string, std::string>& settings, const std::str
 
 VideoSettings::VideoSettings(const std::map<std::string, std::string>& settings)
 {
-    name       = extractString(settings, "name");
-    id         = extractString(settings, "id");
-    channel    = extractString(settings, "channel");
+    name = extractString(settings, "name");
+    id = extractString(settings, "id");
+    channel = extractString(settings, "channel");
     video_size = extractString(settings, "size");
-    framerate  = extractString(settings, "rate");
+    framerate = extractString(settings, "rate");
 }
 
 std::map<std::string, std::string>
@@ -110,11 +110,11 @@ Node
 convert<jami::video::VideoSettings>::encode(const jami::video::VideoSettings& rhs)
 {
     Node node;
-    node["name"]       = rhs.name;
-    node["id"]         = rhs.id;
+    node["name"] = rhs.name;
+    node["id"] = rhs.id;
     node["video_size"] = rhs.video_size;
-    node["channel"]    = rhs.channel;
-    node["framerate"]  = rhs.framerate;
+    node["channel"] = rhs.channel;
+    node["framerate"] = rhs.framerate;
     return node;
 }
 
@@ -125,11 +125,11 @@ convert<jami::video::VideoSettings>::decode(const Node& node, jami::video::Video
         JAMI_WARN("Can't decode VideoSettings YAML node");
         return false;
     }
-    rhs.name       = node["name"].as<std::string>();
-    rhs.id         = node["id"].as<std::string>();
+    rhs.name = node["name"].as<std::string>();
+    rhs.id = node["id"].as<std::string>();
     rhs.video_size = node["video_size"].as<std::string>();
-    rhs.channel    = node["channel"].as<std::string>();
-    rhs.framerate  = node["framerate"].as<std::string>();
+    rhs.channel = node["channel"].as<std::string>();
+    rhs.framerate = node["framerate"].as<std::string>();
     return true;
 }
 

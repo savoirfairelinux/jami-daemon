@@ -59,7 +59,7 @@ CertificateStore::loadLocalCertificates()
     std::lock_guard<std::mutex> l(lock_);
 
     auto dir_content = fileutils::readDirectory(certPath_);
-    unsigned n       = 0;
+    unsigned n = 0;
     for (const auto& f : dir_content) {
         try {
             auto crt = std::make_shared<crypto::Certificate>(
@@ -166,7 +166,7 @@ CertificateStore::findIssuer(const std::shared_ptr<crypto::Certificate>& crt) co
     if (not ret)
         return ret;
     unsigned verify_out = 0;
-    int err             = gnutls_x509_crt_verify(crt->cert, &ret->cert, 1, 0, &verify_out);
+    int err = gnutls_x509_crt_verify(crt->cert, &ret->cert, 1, 0, &verify_out);
     if (err != GNUTLS_E_SUCCESS) {
         JAMI_WARN("gnutls_x509_crt_verify failed: %s", gnutls_strerror(err));
         return {};
@@ -448,7 +448,7 @@ TrustStore::setCertificateStatus(std::shared_ptr<crypto::Certificate> cert,
         dirty = certStatus_.erase(cert_id);
     } else {
         bool allowed = (status == PermissionStatus::ALLOWED);
-        auto s       = certStatus_.find(cert_id);
+        auto s = certStatus_.find(cert_id);
         if (s == std::end(certStatus_)) {
             // Certificate state is currently undefined
             if (not cert)

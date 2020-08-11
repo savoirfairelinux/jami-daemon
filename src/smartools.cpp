@@ -88,10 +88,10 @@ Smartools::setResolution(const std::string& id, int width, int height)
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
     if (id == "local") {
-        information_["local width"]  = std::to_string(width);
+        information_["local width"] = std::to_string(width);
         information_["local height"] = std::to_string(height);
     } else {
-        information_["remote width"]  = std::to_string(width);
+        information_["remote width"] = std::to_string(width);
         information_["remote height"] = std::to_string(height);
     }
 }
@@ -125,10 +125,10 @@ Smartools::setRemoteVideoCodec(const std::string& remoteVideoCodec, const std::s
     if (auto call = Manager::instance().getCallFromCallID(callID)) {
         auto confID = call->getConfId();
         if (not confID.empty()) {
-            information_["type"]   = "conference";
+            information_["type"] = "conference";
             information_["callID"] = confID;
         } else {
-            information_["type"]   = "no conference";
+            information_["type"] = "no conference";
             information_["callID"] = callID;
         }
     }

@@ -80,7 +80,7 @@ void
 JackLayer::playback()
 {
     notifyIncomingCall();
-    auto format         = audioFormat_;
+    auto format = audioFormat_;
     format.sampleFormat = AV_SAMPLE_FMT_FLTP;
     if (auto toPlay = getPlayback(format, writeSpace())) {
         write(*toPlay);
@@ -110,8 +110,8 @@ void
 JackLayer::write(const AudioFrame& buffer)
 {
     auto num_samples = buffer.pointer()->nb_samples;
-    auto num_bytes   = num_samples * sizeof(float);
-    auto channels    = std::min<size_t>(out_ringbuffers_.size(), buffer.pointer()->channels);
+    auto num_bytes = num_samples * sizeof(float);
+    auto channels = std::min<size_t>(out_ringbuffers_.size(), buffer.pointer()->channels);
     for (size_t i = 0; i < channels; ++i) {
         jack_ringbuffer_write(out_ringbuffers_[i],
                               (const char*) buffer.pointer()->extended_data[i],
@@ -132,7 +132,7 @@ JackLayer::read()
     if (not toRead)
         return {};
 
-    auto format         = audioInputFormat_;
+    auto format = audioInputFormat_;
     format.sampleFormat = AV_SAMPLE_FMT_FLTP;
     auto buffer = std::make_unique<AudioFrame>(format, toRead / sizeof(jack_default_audio_sample_t));
 
@@ -196,7 +196,7 @@ createPorts(jack_client_t* client,
         else
             snprintf(port_name, sizeof(port_name), "in_%d", i + 1);
         port_name[sizeof(port_name) - 1] = '\0';
-        jack_port_t* port                = jack_port_register(client,
+        jack_port_t* port = jack_port_register(client,
                                                port_name,
                                                JACK_DEFAULT_AUDIO_TYPE,
                                                playback ? JackPortIsOutput : JackPortIsInput,
@@ -206,7 +206,7 @@ createPorts(jack_client_t* client,
         ports.push_back(port);
 
         static const unsigned RB_SIZE = 16384;
-        jack_ringbuffer_t* rb         = jack_ringbuffer_create(RB_SIZE);
+        jack_ringbuffer_t* rb = jack_ringbuffer_create(RB_SIZE);
         if (rb == nullptr)
             throw std::runtime_error("Could not create JACK ringbuffer");
         if (jack_ringbuffer_mlock(rb))
@@ -239,7 +239,7 @@ JackLayer::JackLayer(const AudioPreference& p)
     createPorts(playbackClient_, out_ports_, true, out_ringbuffers_);
     createPorts(captureClient_, in_ports_, false, in_ringbuffers_);
 
-    const auto playRate    = jack_get_sample_rate(playbackClient_);
+    const auto playRate = jack_get_sample_rate(playbackClient_);
     const auto captureRate = jack_get_sample_rate(captureClient_);
 
     audioInputFormat_ = {captureRate, (unsigned) in_ringbuffers_.size()};
@@ -325,7 +325,7 @@ JackLayer::process_capture(jack_nframes_t frames, void* arg)
             jack_port_get_buffer(context->in_ports_[i], frames));
 
         const size_t bytes_to_read = frames * sizeof(*in_buffers);
-        size_t bytes_to_rb         = jack_ringbuffer_write(context->in_ringbuffers_[i],
+        size_t bytes_to_rb = jack_ringbuffer_write(context->in_ringbuffers_[i],
                                                    (char*) in_buffers,
                                                    bytes_to_read);
 
@@ -360,7 +360,7 @@ JackLayer::process_playback(jack_nframes_t frames, void* arg)
             jack_port_get_buffer(context->out_ports_[i], frames));
 
         const size_t bytes_to_write = frames * sizeof(*out_buffers);
-        size_t bytes_from_rb        = jack_ringbuffer_read(context->out_ringbuffers_[i],
+        size_t bytes_from_rb = jack_ringbuffer_read(context->out_ringbuffers_[i],
                                                     (char*) out_buffers,
                                                     bytes_to_write);
 

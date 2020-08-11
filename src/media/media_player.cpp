@@ -34,8 +34,8 @@ MediaPlayer::MediaPlayer(const std::string& path)
             [] {})
 {
     static const std::string& sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
-    const auto pos                = path.find(sep);
-    const auto suffix             = path.substr(pos + sep.size());
+    const auto pos = path.find(sep);
+    const auto suffix = path.substr(pos + sep.size());
 
     if (access(suffix.c_str(), R_OK) != 0) {
         JAMI_ERR() << "File '" << path << "' not available";
@@ -43,7 +43,7 @@ MediaPlayer::MediaPlayer(const std::string& path)
     }
 
     path_ = path;
-    id_   = std::to_string(rand());
+    id_ = std::to_string(rand());
     Manager::instance().startAudioPlayback();
     audioInput_ = jami::getAudioInput(id_);
     audioInput_->setPaused(paused_);
@@ -63,9 +63,9 @@ bool
 MediaPlayer::configureMediaInputs()
 {
     DeviceParams devOpts = {};
-    devOpts.input        = path_;
-    devOpts.name         = path_;
-    devOpts.loop         = "1";
+    devOpts.input = path_;
+    devOpts.name = path_;
+    devOpts.loop = "1";
 
     if (demuxer_->openInput(devOpts) < 0) {
         emitInfo();
@@ -73,8 +73,8 @@ MediaPlayer::configureMediaInputs()
     }
     demuxer_->findStreamInfo();
 
-    pauseInterval_  = 0;
-    startTime_      = av_gettime();
+    pauseInterval_ = 0;
+    startTime_ = av_gettime();
     lastPausedTime_ = startTime_;
 
     try {
@@ -233,9 +233,9 @@ MediaPlayer::playFileFromBeginning()
         return;
     }
     flushMediaBuffers();
-    startTime_      = av_gettime();
+    startTime_ = av_gettime();
     lastPausedTime_ = startTime_;
-    pauseInterval_  = 0;
+    pauseInterval_ = 0;
     if (hasAudio()) {
         audioInput_->updateStartTime(startTime_);
     }

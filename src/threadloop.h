@@ -58,7 +58,7 @@ public:
     std::thread::id get_id() const noexcept;
 
 private:
-    ThreadLoop(const ThreadLoop&)     = delete;
+    ThreadLoop(const ThreadLoop&) = delete;
     ThreadLoop(ThreadLoop&&) noexcept = delete;
     ThreadLoop& operator=(const ThreadLoop&) = delete;
     ThreadLoop& operator=(ThreadLoop&&) noexcept = delete;

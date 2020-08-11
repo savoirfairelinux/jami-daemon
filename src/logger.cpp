@@ -118,10 +118,10 @@ contextHeader(const char* const file, int line)
     struct timeval tv;
 
     if (!gettimeofday(&tv, NULL)) {
-        secs  = tv.tv_sec;
+        secs = tv.tv_sec;
         milli = tv.tv_usec / 1000; // suppose that milli < 1000
     } else {
-        secs  = time(NULL);
+        secs = time(NULL);
         milli = 0;
     }
 

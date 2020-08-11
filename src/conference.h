@@ -52,20 +52,20 @@ struct ParticipantInfo
     void fromJson(const Json::Value& v)
     {
         uri = v["uri"].asString();
-        x   = v["x"].asInt();
-        y   = v["y"].asInt();
-        w   = v["w"].asInt();
-        h   = v["h"].asInt();
+        x = v["x"].asInt();
+        y = v["y"].asInt();
+        w = v["w"].asInt();
+        h = v["h"].asInt();
     }
 
     Json::Value toJson() const
     {
         Json::Value val;
         val["uri"] = uri;
-        val["x"]   = x;
-        val["y"]   = y;
-        val["w"]   = w;
-        val["h"]   = h;
+        val["x"] = x;
+        val["y"] = y;
+        val["w"] = w;
+        val["h"] = h;
         return val;
     }
 

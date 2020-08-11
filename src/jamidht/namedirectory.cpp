@@ -103,7 +103,7 @@ NameDirectory::NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::
 {
     if (!serverUrl_.empty() && serverUrl_.back() == '/')
         serverUrl_.pop_back();
-    resolver_  = std::make_shared<dht::http::Resolver>(*httpContext_, serverUrl, logger_);
+    resolver_ = std::make_shared<dht::http::Resolver>(*httpContext_, serverUrl, logger_);
     cachePath_ = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + CACHE_DIRECTORY
                  + DIR_SEPARATOR_STR + resolver_->get_url().host;
 }
@@ -152,7 +152,7 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
     auto request = std::make_shared<Request>(*httpContext_,
                                              resolver_,
                                              serverUrl_ + QUERY_ADDR + addr);
-    auto reqid   = request->id();
+    auto reqid = request->id();
     try {
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
@@ -234,7 +234,7 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
     auto request = std::make_shared<Request>(*httpContext_,
                                              resolver_,
                                              serverUrl_ + QUERY_NAME + name);
-    auto reqid   = request->id();
+    auto reqid = request->id();
     try {
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
@@ -260,7 +260,7 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                         cb("", Response::error);
                         return;
                     }
-                    auto addr      = json["addr"].asString();
+                    auto addr = json["addr"].asString();
                     auto publickey = json["publickey"].asString();
                     auto signature = json["signature"].asString();
 
@@ -345,7 +345,7 @@ NameDirectory::registerName(const std::string& addr,
     auto request = std::make_shared<Request>(*httpContext_,
                                              resolver_,
                                              serverUrl_ + QUERY_NAME + name);
-    auto reqid   = request->id();
+    auto reqid = request->id();
     try {
         request->set_method(restinio::http_method_post());
         setHeaderFields(*request);

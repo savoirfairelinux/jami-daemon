@@ -38,17 +38,17 @@
 namespace jami {
 
 enum CodecType : unsigned {
-    CODEC_NONE            = 0, // indicates that no codec is used or defined
-    CODEC_ENCODER         = 1,
-    CODEC_DECODER         = 2,
+    CODEC_NONE = 0, // indicates that no codec is used or defined
+    CODEC_ENCODER = 1,
+    CODEC_DECODER = 2,
     CODEC_ENCODER_DECODER = CODEC_ENCODER | CODEC_DECODER
 };
 
 enum MediaType : unsigned {
-    MEDIA_NONE  = 0, // indicates that no media is used or defined
+    MEDIA_NONE = 0, // indicates that no media is used or defined
     MEDIA_AUDIO = 1,
     MEDIA_VIDEO = 2,
-    MEDIA_ALL   = MEDIA_AUDIO | MEDIA_VIDEO
+    MEDIA_ALL = MEDIA_AUDIO | MEDIA_VIDEO
 };
 
 enum class RateMode : unsigned { CRF_CONSTRAINED, CQ, CBR };
@@ -80,9 +80,9 @@ struct SystemCodecInfo
                     const std::string& name,
                     const std::string& libName,
                     MediaType mediaType,
-                    CodecType codecType   = CODEC_NONE,
-                    unsigned bitrate      = 0,
-                    unsigned payloadType  = 0,
+                    CodecType codecType = CODEC_NONE,
+                    unsigned bitrate = 0,
+                    unsigned payloadType = 0,
                     unsigned m_minQuality = DEFAULT_NO_QUALITY,
                     unsigned m_maxQuality = DEFAULT_NO_QUALITY);
 
@@ -117,9 +117,9 @@ struct SystemAudioCodecInfo : SystemCodecInfo
                          const std::string& name,
                          const std::string& libName,
                          CodecType type,
-                         unsigned bitrate     = 0,
-                         unsigned sampleRate  = 0,
-                         unsigned nbChannels  = 0,
+                         unsigned bitrate = 0,
+                         unsigned sampleRate = 0,
+                         unsigned nbChannels = 0,
                          unsigned payloadType = 0);
 
     ~SystemAudioCodecInfo();
@@ -140,13 +140,13 @@ struct SystemVideoCodecInfo : SystemCodecInfo
                          unsigned avcodecId,
                          const std::string& name,
                          const std::string& libName,
-                         CodecType type        = CODEC_NONE,
-                         unsigned bitrate      = 0,
+                         CodecType type = CODEC_NONE,
+                         unsigned bitrate = 0,
                          unsigned m_minQuality = 0,
                          unsigned m_maxQuality = 0,
-                         unsigned payloadType  = 0,
-                         unsigned frameRate    = 0,
-                         unsigned profileId    = 0);
+                         unsigned payloadType = 0,
+                         unsigned frameRate = 0,
+                         unsigned profileId = 0);
 
     ~SystemVideoCodecInfo();
 
@@ -166,8 +166,8 @@ struct AccountCodecInfo
 {
     AccountCodecInfo(const SystemCodecInfo& sysCodecInfo) noexcept;
     AccountCodecInfo(const AccountCodecInfo&) noexcept = default;
-    AccountCodecInfo(AccountCodecInfo&&) noexcept      = delete;
-    AccountCodecInfo& operator                         =(const AccountCodecInfo&);
+    AccountCodecInfo(AccountCodecInfo&&) noexcept = delete;
+    AccountCodecInfo& operator=(const AccountCodecInfo&);
     AccountCodecInfo& operator=(AccountCodecInfo&&) noexcept = delete;
 
     const SystemCodecInfo& systemCodecInfo;

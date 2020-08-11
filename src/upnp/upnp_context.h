@@ -68,7 +68,7 @@ class IpAddr;
 namespace jami {
 namespace upnp {
 
-using MapCb              = std::function<void(const Mapping&, bool)>;
+using MapCb = std::function<void(const Mapping&, bool)>;
 using ConnectionChangeCb = std::function<void()>;
 struct ControllerData
 {

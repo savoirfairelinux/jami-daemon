@@ -151,7 +151,7 @@ SIPPresence::updateStatus(bool status, const std::string& note)
     */
 
     pj_bzero(&status_data_, sizeof(status_data_));
-    status_data_.info_cnt           = 1;
+    status_data_.info_cnt = 1;
     status_data_.info[0].basic_open = status;
 
     // at most we will have 3 digits + NULL termination
@@ -193,7 +193,7 @@ SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_pres_
     if (uri == acc_->getFromUri()) {
         // save the status of our own account
         status_ = status->info[0].basic_open;
-        note_   = note;
+        note_ = note;
     }
     // report status to client signal
     emitSignal<DRing::PresenceSignal::NewBuddyNotification>(acc_ID,
@@ -324,7 +324,7 @@ SIPPresence::fillDoc(pjsip_tx_data* tdata, const pres_msg_data* msg_data)
         constexpr pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
         std::string useragent(acc_->getUserAgentName());
         pj_str_t pJuseragent = pj_str((char*) useragent.c_str());
-        pjsip_hdr* h         = (pjsip_hdr*) pjsip_generic_string_hdr_create(tdata->pool,
+        pjsip_hdr* h = (pjsip_hdr*) pjsip_generic_string_hdr_create(tdata->pool,
                                                                     &STR_USER_AGENT,
                                                                     &pJuseragent);
         pjsip_msg_add_hdr(tdata->msg, h);
@@ -346,9 +346,9 @@ SIPPresence::fillDoc(pjsip_tx_data* tdata, const pres_msg_data* msg_data)
 
     if (msg_data->content_type.slen && msg_data->msg_body.slen) {
         pjsip_msg_body* body;
-        constexpr pj_str_t type    = CONST_PJ_STR("application");
+        constexpr pj_str_t type = CONST_PJ_STR("application");
         constexpr pj_str_t subtype = CONST_PJ_STR("pidf+xml");
-        body             = pjsip_msg_body_create(tdata->pool, &type, &subtype, &msg_data->msg_body);
+        body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &msg_data->msg_body);
         tdata->msg->body = body;
     }
 }
@@ -420,10 +420,10 @@ SIPPresence::send_publish(SIPPresence* pres)
 
     JAMI_DBG("Send PUBLISH (%s).", pres->getAccount()->getAccountID().c_str());
 
-    SIPAccount* acc               = pres->getAccount();
+    SIPAccount* acc = pres->getAccount();
     std::string contactWithAngles = acc->getFromUri();
     contactWithAngles.erase(contactWithAngles.find('>'));
-    int semicolon                    = contactWithAngles.find_first_of(':');
+    int semicolon = contactWithAngles.find_first_of(':');
     std::string contactWithoutAngles = contactWithAngles.substr(semicolon + 1);
     //    pj_str_t contact = pj_str(strdup(contactWithoutAngles.c_str()));
     //    pj_memcpy(&status_data.info[0].contact, &contt, sizeof(pj_str_t));;
@@ -432,7 +432,7 @@ SIPPresence::send_publish(SIPPresence* pres)
     char* bpos;
     pj_str_t entity;
 
-    status        = pjsip_publishc_publish(pres->publish_sess_, PJ_TRUE, &tdata);
+    status = pjsip_publishc_publish(pres->publish_sess_, PJ_TRUE, &tdata);
     pj_str_t from = pj_strdup3(pres->pool_, acc->getFromUri().c_str());
 
     if (status != PJ_SUCCESS) {
@@ -449,7 +449,7 @@ SIPPresence::send_publish(SIPPresence* pres)
             goto on_error;
         }
 
-        entity.ptr  = bpos + 1;
+        entity.ptr = bpos + 1;
         entity.slen = epos - bpos - 1;
     } else {
         entity = from;
@@ -501,8 +501,8 @@ SIPPresence::publish(SIPPresence* pres)
 {
     pj_status_t status;
     constexpr pj_str_t STR_PRESENCE = CONST_PJ_STR("presence");
-    SIPAccount* acc                 = pres->getAccount();
-    pjsip_endpoint* endpt           = Manager::instance().sipVoIPLink().getEndpoint();
+    SIPAccount* acc = pres->getAccount();
+    pjsip_endpoint* endpt = Manager::instance().sipVoIPLink().getEndpoint();
 
     /* Create and init client publication session */
 

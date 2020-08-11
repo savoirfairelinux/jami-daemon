@@ -132,7 +132,7 @@ Controller::requestMappingRemove(uint16_t portExternal, PortType type)
         return false;
     std::lock_guard<std::mutex> lk(mapListMutex_);
     auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
-    auto mapIt             = instanceMappings.find(portExternal);
+    auto mapIt = instanceMappings.find(portExternal);
     if (mapIt != instanceMappings.end()) {
         if (!upnpContext_->requestMappingRemove(mapIt->second)) {
             // No port mapped, so the callback will not be removed,
@@ -150,7 +150,7 @@ Controller::isLocalMapPresent(uint16_t portExternal, PortType type) const
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
     auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
-    auto it                = instanceMappings.find(portExternal);
+    auto it = instanceMappings.find(portExternal);
     return it != instanceMappings.end();
 }
 
@@ -185,7 +185,7 @@ Controller::removeLocalMap(const Mapping& map)
         return false;
     std::lock_guard<std::mutex> lk(mapListMutex_);
     auto& instanceMappings = map.getType() == PortType::UDP ? udpMappings_ : tcpMappings_;
-    auto it                = instanceMappings.find(map.getPortExternal());
+    auto it = instanceMappings.find(map.getPortExternal());
     if (it != instanceMappings.end()) {
         instanceMappings.erase(it);
         return true;

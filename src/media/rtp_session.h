@@ -46,11 +46,11 @@ public:
 
     virtual void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) = 0;
     virtual void restartSender() = 0;
-    virtual void stop()          = 0;
+    virtual void stop() = 0;
 
     virtual void updateMedia(const MediaDescription& send, const MediaDescription& receive)
     {
-        send_    = send;
+        send_ = send;
         receive_ = receive;
     }
 
@@ -61,7 +61,7 @@ public:
 
     void setSuccessfulSetupCb(const std::function<void(MediaType)>& cb) { onSuccessfulSetup_ = cb; }
 
-    virtual void initRecorder(std::shared_ptr<MediaRecorder>& rec)   = 0;
+    virtual void initRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
     virtual void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
 
     std::shared_ptr<AccountCodecInfo> getCodec() const { return send_.codec; }

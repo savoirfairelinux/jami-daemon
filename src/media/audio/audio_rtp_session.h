@@ -62,7 +62,7 @@ private:
     std::shared_ptr<AudioInput> audioInput_;
     std::shared_ptr<RingBuffer> ringbuffer_;
     uint16_t initSeqVal_ = 0;
-    bool muteState_      = false;
+    bool muteState_ = false;
     DeviceParams localAudioParams_;
     std::string input_;
 };

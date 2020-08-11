@@ -67,18 +67,18 @@ FtpServer::startNewFile()
 {
     // Request filename from client (WARNING: synchrone call!)
     DRing::DataTransferInfo info {};
-    info.accountId     = accountId_;
-    info.peer          = peerUri_;
-    info.displayName   = displayName_;
-    info.totalSize     = fileSize_;
+    info.accountId = accountId_;
+    info.peer = peerUri_;
+    info.displayName = displayName_;
+    info.totalSize = fileSize_;
     info.bytesProgress = 0;
-    rx_                = 0;
-    transferId_        = Manager::instance()
+    rx_ = 0;
+    transferId_ = Manager::instance()
                       .dataTransfers->createIncomingTransfer(info,
                                                              outId_,
                                                              cb_); // return immediately
     isTreatingRequest_ = true;
-    out_               = Manager::instance().dataTransfers->onIncomingFileRequest(
+    out_ = Manager::instance().dataTransfers->onIncomingFileRequest(
         transferId_); // we block here until answer from client
     isTreatingRequest_ = false;
     if (!out_.stream) {
@@ -166,7 +166,7 @@ FtpServer::write(const std::vector<uint8_t>& buffer)
                 if (!count)
                     break;
                 auto size_needed = fileSize_ - rx_;
-                count            = std::min(count, size_needed);
+                count = std::min(count, size_needed);
                 if (out_.stream)
                     out_.stream->write(reinterpret_cast<const uint8_t*>(&line_[0]), count);
                 rx_ += count;
@@ -185,7 +185,7 @@ FtpServer::write(const std::vector<uint8_t>& buffer)
         if (out_.stream)
             out_.stream->write(&buffer[0], buffer.size());
         auto size_needed = fileSize_ - rx_;
-        auto read_size   = std::min(buffer.size(), size_needed);
+        auto read_size = std::min(buffer.size(), size_needed);
         rx_ += read_size;
         if (rx_ == fileSize_) {
             closeCurrentFile();

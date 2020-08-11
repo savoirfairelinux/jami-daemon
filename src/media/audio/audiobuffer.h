@@ -355,9 +355,9 @@ public:
      */
     size_t copy(AudioBuffer& in,
                 int sample_num = -1,
-                size_t pos_in  = 0,
+                size_t pos_in = 0,
                 size_t pos_out = 0,
-                bool upmix     = true);
+                bool upmix = true);
 
     /**
      * Copy sample_num samples from in to this buffer (at sample pos_out).

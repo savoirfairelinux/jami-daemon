@@ -218,15 +218,15 @@ public:
 
     void write(VideoFrame& frame)
     {
-        int ret         = 0;
+        int ret = 0;
         uint8_t* buffer = nullptr;
-        auto f          = frame.pointer();
+        auto f = frame.pointer();
 
         if (format_ != f->format || width_ != f->width || height_ != f->height)
             return;
 
         int size = av_image_get_buffer_size(format_, width_, height_, 1);
-        buffer   = reinterpret_cast<uint8_t*>(av_malloc(size));
+        buffer = reinterpret_cast<uint8_t*>(av_malloc(size));
         if (!buffer) {
             return;
         }

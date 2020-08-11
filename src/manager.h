@@ -150,7 +150,7 @@ public:
      */
     std::string outgoingCall(const std::string& accountId,
                              const std::string& to,
-                             const std::string& conf_id                                    = "",
+                             const std::string& conf_id = "",
                              const std::map<std::string, std::string>& volatileCallDetails = {});
 
     /**
@@ -831,7 +831,7 @@ public:
     std::vector<std::shared_ptr<T>> getAllAccounts() const
     {
         const auto& account_order = loadAccountOrder();
-        const auto& all_accounts  = accountFactory.getAllAccounts<T>();
+        const auto& all_accounts = accountFactory.getAllAccounts<T>();
         std::vector<std::shared_ptr<T>> accountList;
         accountList.reserve(all_accounts.size());
         for (const auto& id : account_order) {
@@ -922,7 +922,7 @@ public:
      * @return share_ptr<SinkClient> A shared pointer on the created instance.
      */
     std::shared_ptr<video::SinkClient> createSinkClient(const std::string& id = "",
-                                                        bool mixer            = false);
+                                                        bool mixer = false);
 
     /**
      * Return an existing SinkClient instance as a shared_ptr associated to the given identifier.

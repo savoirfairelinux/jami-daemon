@@ -67,7 +67,7 @@ getGlobalInstance()
         if (not counter)
             return nullptr;
         auto link = std::make_shared<T>();
-        wlink     = link;
+        wlink = link;
         if (counter > 0)
             --counter;
         return link;

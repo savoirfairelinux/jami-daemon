@@ -102,13 +102,13 @@ PUPnP::PUPnP()
         pupnpRun_ = false;
         return;
     } else {
-        char* ip_address     = UpnpGetServerIpAddress();
-        char* ip_address6    = nullptr;
-        unsigned short port  = UpnpGetServerPort();
+        char* ip_address = UpnpGetServerIpAddress();
+        char* ip_address6 = nullptr;
+        unsigned short port = UpnpGetServerPort();
         unsigned short port6 = 0;
 #if UPNP_ENABLE_IPV6
         ip_address6 = UpnpGetServerIp6Address();
-        port6       = UpnpGetServerPort6();
+        port6 = UpnpGetServerPort6();
 #endif
         if (ip_address6 and port6)
             JAMI_DBG("PUPnP: Initialiazed on %s:%u | %s:%u", ip_address, port, ip_address6, port6);
@@ -303,7 +303,7 @@ PUPnP::validateIgd(const IGDInfo& info)
 
     // Store info for subscription.
     std::string eventSub = igd_candidate->getEventSubURL();
-    std::string udn      = igd_candidate->getUDN();
+    std::string udn = igd_candidate->getUDN();
 
     // Remove any local mappings that may be left over from last time used.
     removeAllLocalMappings(igd_candidate.get());
@@ -687,7 +687,7 @@ int
 PUPnP::handleSubscriptionUPnPEvent(Upnp_EventType /*event_type */, const void* event)
 {
     const UpnpEventSubscribe* es_event = (const UpnpEventSubscribe*) event;
-    int upnp_err                       = UpnpEventSubscribe_get_ErrCode(es_event);
+    int upnp_err = UpnpEventSubscribe_get_ErrCode(es_event);
     if (upnp_err != UPNP_E_SUCCESS) {
         JAMI_WARN("PUPnP: Error when trying to handle subscription callback -> %s",
                   UpnpGetErrorMessage(upnp_err));
@@ -738,7 +738,7 @@ PUPnP::parseIgd(IXML_Document* doc, std::string locationUrl)
     // Go through the "serviceType" nodes until we find the the correct service type.
     for (unsigned long node_idx = 0; node_idx < list_length; node_idx++) {
         IXML_Node* serviceType_node = ixmlNodeList_item(serviceList.get(), node_idx);
-        std::string serviceType     = getElementText(serviceType_node);
+        std::string serviceType = getElementText(serviceType_node);
 
         // Only check serviceType of WANIPConnection or WANPPPConnection.
         if (serviceType != std::string(UPNP_WANIP_SERVICE)
@@ -762,7 +762,7 @@ PUPnP::parseIgd(IXML_Document* doc, std::string locationUrl)
 
         // Get serviceId.
         IXML_Element* service_element = (IXML_Element*) service_node;
-        std::string serviceId         = getFirstElementItem(service_element, "serviceId");
+        std::string serviceId = getFirstElementItem(service_element, "serviceId");
         if (serviceId.empty()) {
             // IGD "serviceId" is empty. Going to next node.
             continue;
@@ -826,7 +826,7 @@ PUPnP::actionIsIgdConnected(const UPnPIGD& igd)
     // Action and response pointers.
     XMLDocument action(nullptr, ixmlDocument_free);   // Action pointer.
     XMLDocument response(nullptr, ixmlDocument_free); // Response pointer.
-    IXML_Document* action_container_ptr   = nullptr;
+    IXML_Document* action_container_ptr = nullptr;
     IXML_Document* response_container_ptr = nullptr;
 
     // Set action name.
@@ -894,7 +894,7 @@ PUPnP::actionGetExternalIP(const UPnPIGD& igd)
     action.reset(action_container_ptr);
 
     IXML_Document* response_container_ptr = nullptr;
-    int upnp_err                          = UpnpSendAction(ctrlptHandle_,
+    int upnp_err = UpnpSendAction(ctrlptHandle_,
                                   igd.getControlURL().c_str(),
                                   igd.getServiceType().c_str(),
                                   nullptr,
@@ -928,7 +928,7 @@ PUPnP::actionDeletePortMappingsByDesc(const UPnPIGD& igd, const std::string& des
     static constexpr const char* action_name {"GetGenericPortMappingEntry"};
 
     int entry_idx = 0;
-    bool done     = false;
+    bool done = false;
 
     do {
         // Action and resposne pointers.
@@ -936,7 +936,7 @@ PUPnP::actionDeletePortMappingsByDesc(const UPnPIGD& igd, const std::string& des
             action(nullptr, ixmlDocument_free); // Action pointer.
         std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&>
             response(nullptr, ixmlDocument_free); // Response pointer.
-        IXML_Document* action_container_ptr   = nullptr;
+        IXML_Document* action_container_ptr = nullptr;
         IXML_Document* response_container_ptr = nullptr;
 
         UpnpAddToAction(&action_container_ptr,
@@ -974,14 +974,14 @@ PUPnP::actionDeletePortMappingsByDesc(const UPnPIGD& igd, const std::string& des
         } else {
             // Parse the rest of the response.
             std::string desc_actual = getFirstDocItem(response.get(), "NewPortMappingDescription");
-            std::string client_ip   = getFirstDocItem(response.get(), "NewInternalClient");
+            std::string client_ip = getFirstDocItem(response.get(), "NewInternalClient");
 
             // Check IP and description.
             if (IpAddr(client_ip) == igd.localIp_ and desc_actual.compare(description) == 0) {
                 // Get parameters needed for port removal.
                 std::string port_internal = getFirstDocItem(response.get(), "NewInternalPort");
                 std::string port_external = getFirstDocItem(response.get(), "NewExternalPort");
-                std::string protocol      = getFirstDocItem(response.get(), "NewProtocol");
+                std::string protocol = getFirstDocItem(response.get(), "NewProtocol");
 
                 // Attempt to delete entry.
                 if (not actionDeletePortMapping(igd, port_external, protocol)) {
@@ -1010,7 +1010,7 @@ PUPnP::actionDeletePortMapping(const UPnPIGD& igd,
         action(nullptr, ixmlDocument_free); // Action pointer.
     std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&>
         response(nullptr, ixmlDocument_free); // Response pointer.
-    IXML_Document* action_container_ptr   = nullptr;
+    IXML_Document* action_container_ptr = nullptr;
     IXML_Document* response_container_ptr = nullptr;
 
     // Set action name.
@@ -1085,7 +1085,7 @@ PUPnP::actionAddPortMapping(const UPnPIGD& igd,
     // Action and response pointers.
     XMLDocument action(nullptr, ixmlDocument_free);   // Action pointer.
     XMLDocument response(nullptr, ixmlDocument_free); // Response pointer.
-    IXML_Document* action_container_ptr   = nullptr;
+    IXML_Document* action_container_ptr = nullptr;
     IXML_Document* response_container_ptr = nullptr;
 
     // Set action name.

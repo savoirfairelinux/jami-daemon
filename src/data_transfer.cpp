@@ -74,7 +74,7 @@ public:
 
     virtual bool start()
     {
-        wasStarted_   = true;
+        wasStarted_ = true;
         bool expected = false;
         return started_.compare_exchange_strong(expected, true);
     }
@@ -86,7 +86,7 @@ public:
     void bytesProgress(int64_t& total, int64_t& progress) const
     {
         std::lock_guard<std::mutex> lk {infoMutex_};
-        total    = info_.totalSize;
+        total = info_.totalSize;
         progress = info_.bytesProgress;
     }
 
@@ -177,7 +177,7 @@ void
 OptimisticMetaOutgoingInfo::updateInfo(const DRing::DataTransferInfo& info) const
 {
     bool emitCodeChanged = false;
-    bool checkOngoing    = false;
+    bool checkOngoing = false;
     {
         std::lock_guard<std::mutex> lk {infoMutex_};
         if (info_.lastEvent > DRing::DataTransferEventCode::timeout_expired) {
@@ -197,7 +197,7 @@ OptimisticMetaOutgoingInfo::updateInfo(const DRing::DataTransferInfo& info) cons
             // if not finished show error if all failed
             // if the transfer was ongoing and canceled, we should go to the best status
             bool isAllFailed = true;
-            checkOngoing     = info_.lastEvent == DRing::DataTransferEventCode::ongoing;
+            checkOngoing = info_.lastEvent == DRing::DataTransferEventCode::ongoing;
             DRing::DataTransferEventCode bestEvent {DRing::DataTransferEventCode::invalid};
             for (const auto* transfer : linkedTransfers_) {
                 const auto& i = transfer->info();
@@ -454,7 +454,7 @@ SubOutgoingFileTransfer::emit(DRing::DataTransferEventCode code) const
     metaInfo_->updateInfo(info_);
     if (code == DRing::DataTransferEventCode::wait_peer_acceptance) {
         timeoutThread_ = std::unique_ptr<std::thread>(new std::thread([this]() {
-            const auto TEN_MIN        = 1000 * 60 * 10;
+            const auto TEN_MIN = 1000 * 60 * 10;
             const auto SLEEP_DURATION = 100;
             for (auto i = 0; i < TEN_MIN / SLEEP_DURATION; ++i) {
                 // 10 min before timeout
@@ -742,7 +742,7 @@ DataTransferFacade::Impl::createOutgoingFileTransfer(const DRing::DataTransferIn
                                                      DRing::DataTransferId& tid,
                                                      InternalCompletionCb cb)
 {
-    tid           = generateUID();
+    tid = generateUID();
     auto transfer = std::make_shared<OutgoingFileTransfer>(tid, info, cb);
     {
         std::lock_guard<std::mutex> lk {mapMutex_};
@@ -757,7 +757,7 @@ DataTransferFacade::Impl::createIncomingFileTransfer(const DRing::DataTransferIn
                                                      const DRing::DataTransferId& internal_id,
                                                      InternalCompletionCb cb)
 {
-    auto tid      = generateUID();
+    auto tid = generateUID();
     auto transfer = std::make_shared<IncomingFileTransfer>(tid, info, internal_id, cb);
     {
         std::lock_guard<std::mutex> lk {mapMutex_};

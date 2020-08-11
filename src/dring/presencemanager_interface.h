@@ -51,19 +51,19 @@ struct DRING_PUBLIC PresenceSignal
     struct DRING_PUBLIC NewServerSubscriptionRequest
     {
         constexpr static const char* name = "NewServerSubscriptionRequest";
-        using cb_type                     = void(const std::string& /*remote*/);
+        using cb_type = void(const std::string& /*remote*/);
     };
     struct DRING_PUBLIC ServerError
     {
         constexpr static const char* name = "ServerError";
-        using cb_type                     = void(const std::string& /*account_id*/,
+        using cb_type = void(const std::string& /*account_id*/,
                              const std::string& /*error*/,
                              const std::string& /*msg*/);
     };
     struct DRING_PUBLIC NewBuddyNotification
     {
         constexpr static const char* name = "NewBuddyNotification";
-        using cb_type                     = void(const std::string& /*account_id*/,
+        using cb_type = void(const std::string& /*account_id*/,
                              const std::string& /*buddy_uri*/,
                              int /*status*/,
                              const std::string& /*line_status*/);
@@ -71,7 +71,7 @@ struct DRING_PUBLIC PresenceSignal
     struct DRING_PUBLIC NearbyPeerNotification
     {
         constexpr static const char* name = "NearbyPeerNotification";
-        using cb_type                     = void(const std::string& /*account_id*/,
+        using cb_type = void(const std::string& /*account_id*/,
                              const std::string& /*buddy_uri*/,
                              int /*state*/,
                              const std::string& /*displayname*/);
@@ -79,7 +79,7 @@ struct DRING_PUBLIC PresenceSignal
     struct DRING_PUBLIC SubscriptionStateChanged
     {
         constexpr static const char* name = "SubscriptionStateChanged";
-        using cb_type                     = void(const std::string& /*account_id*/,
+        using cb_type = void(const std::string& /*account_id*/,
                              const std::string& /*buddy_uri*/,
                              int /*state*/);
     };

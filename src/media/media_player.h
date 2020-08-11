@@ -58,8 +58,8 @@ private:
 
     inline bool hasVideo() const { return videoStream_ >= 0; }
 
-    int audioStream_      = -1;
-    int videoStream_      = -1;
+    int audioStream_ = -1;
+    int videoStream_ = -1;
     int64_t fileDuration_ = 0;
 
     void playFileFromBeginning();

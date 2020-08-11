@@ -52,8 +52,8 @@ int
 MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> msps)
 {
     int ret = 0;
-    desc_   = filterDesc;
-    graph_  = avfilter_graph_alloc();
+    desc_ = filterDesc;
+    graph_ = avfilter_graph_alloc();
 
     if (!graph_)
         return fail("Failed to allocate filter graph", AVERROR(ENOMEM));
@@ -76,7 +76,7 @@ MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> 
         return fail("Failed to create output for filter graph", ret);
 
     // make sure inputs linked list is the same size as msps
-    size_t count              = 0;
+    size_t count = 0;
     AVFilterInOut* dummyInput = inputs.get();
     while (dummyInput && ++count) // increment count before evaluating its value
         dummyInput = dummyInput->next;
@@ -89,7 +89,7 @@ MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> 
         if (!current->name)
             return fail("Filters require non empty names", AVERROR(EINVAL));
         std::string name = current->name;
-        const auto& it   = std::find_if(msps.begin(), msps.end(), [name](const MediaStream& msp) {
+        const auto& it = std::find_if(msps.begin(), msps.end(), [name](const MediaStream& msp) {
             return msp.name == name;
         });
         if (it != msps.end()) {
@@ -131,20 +131,20 @@ MediaFilter::getOutputParams() const
 
     switch (av_buffersink_get_type(output_)) {
     case AVMEDIA_TYPE_VIDEO:
-        output.name      = "videoOutput";
-        output.format    = av_buffersink_get_format(output_);
-        output.isVideo   = true;
-        output.timeBase  = av_buffersink_get_time_base(output_);
-        output.width     = av_buffersink_get_w(output_);
-        output.height    = av_buffersink_get_h(output_);
-        output.bitrate   = 0;
+        output.name = "videoOutput";
+        output.format = av_buffersink_get_format(output_);
+        output.isVideo = true;
+        output.timeBase = av_buffersink_get_time_base(output_);
+        output.width = av_buffersink_get_w(output_);
+        output.height = av_buffersink_get_h(output_);
+        output.bitrate = 0;
         output.frameRate = av_buffersink_get_frame_rate(output_);
         break;
     case AVMEDIA_TYPE_AUDIO:
-        output.name       = "audioOutput";
-        output.format     = av_buffersink_get_format(output_);
-        output.isVideo    = false;
-        output.timeBase   = av_buffersink_get_time_base(output_);
+        output.name = "audioOutput";
+        output.format = av_buffersink_get_format(output_);
+        output.isVideo = false;
+        output.timeBase = av_buffersink_get_time_base(output_);
         output.sampleRate = av_buffersink_get_sample_rate(output_);
         output.nbChannels = av_buffersink_get_channels(output_);
         break;
@@ -267,24 +267,24 @@ MediaFilter::initOutputFilter(AVFilterInOut* out)
 int
 MediaFilter::initInputFilter(AVFilterInOut* in, MediaStream msp)
 {
-    int ret                       = 0;
+    int ret = 0;
     AVBufferSrcParameters* params = av_buffersrc_parameters_alloc();
     if (!params)
         return -1;
 
     const AVFilter* buffersrc;
     AVMediaType mediaType = avfilter_pad_get_type(in->filter_ctx->input_pads, in->pad_idx);
-    params->format        = msp.format;
-    params->time_base     = msp.timeBase;
+    params->format = msp.format;
+    params->time_base = msp.timeBase;
     if (mediaType == AVMEDIA_TYPE_VIDEO) {
-        params->width      = msp.width;
-        params->height     = msp.height;
+        params->width = msp.width;
+        params->height = msp.height;
         params->frame_rate = msp.frameRate;
-        buffersrc          = avfilter_get_by_name("buffer");
+        buffersrc = avfilter_get_by_name("buffer");
     } else {
-        params->sample_rate    = msp.sampleRate;
+        params->sample_rate = msp.sampleRate;
         params->channel_layout = av_get_default_channel_layout(msp.nbChannels);
-        buffersrc              = avfilter_get_by_name("abuffer");
+        buffersrc = avfilter_get_by_name("abuffer");
     }
 
     AVFilterContext* buffersrcCtx = nullptr;
@@ -319,7 +319,7 @@ MediaFilter::reinitialize()
 {
     // keep parameters needed for initialization before clearing filter
     auto params = std::move(inputParams_);
-    auto desc   = std::move(desc_);
+    auto desc = std::move(desc_);
     clean();
     auto ret = initialize(desc, params);
     if (ret >= 0)

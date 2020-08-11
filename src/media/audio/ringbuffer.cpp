@@ -174,9 +174,9 @@ RingBuffer::putToBuffer(std::shared_ptr<AudioFrame>&& data)
 
     size_t pos = endPos_;
 
-    buffer_[pos]       = std::move(data);
+    buffer_[pos] = std::move(data);
     const auto& newBuf = buffer_[pos];
-    pos                = (pos + 1) % buffer_size;
+    pos = (pos + 1) % buffer_size;
 
     endPos_ = pos;
 
@@ -185,7 +185,7 @@ RingBuffer::putToBuffer(std::shared_ptr<AudioFrame>&& data)
         rmsLevel_ += newBuf->calcRMS();
         if (rmsFrameCount_ == RMS_SIGNAL_INTERVAL) {
             emitSignal<DRing::AudioSignal::AudioMeter>(id, rmsLevel_ / RMS_SIGNAL_INTERVAL);
-            rmsLevel_      = 0;
+            rmsLevel_ = 0;
             rmsFrameCount_ = 0;
         }
     }
@@ -223,11 +223,11 @@ RingBuffer::get(const std::string& call_id)
         return {};
 
     size_t startPos = offset->second.offset;
-    size_t len      = (endPos_ + buffer_size - startPos) % buffer_size;
+    size_t len = (endPos_ + buffer_size - startPos) % buffer_size;
     if (len == 0)
         return {};
 
-    auto ret              = buffer_[startPos];
+    auto ret = buffer_[startPos];
     offset->second.offset = (startPos + 1) % buffer_size;
     return ret;
 }
@@ -243,10 +243,10 @@ RingBuffer::waitForDataAvailable(const std::string& call_id, const time_point& d
         return 0;
 
     size_t getl = 0;
-    auto check  = [=, &getl] {
+    auto check = [=, &getl] {
         // Re-find read_ptr: it may be destroyed during the wait
         const size_t buffer_size = buffer_.size();
-        const auto read_ptr      = readoffsets_.find(call_id);
+        const auto read_ptr = readoffsets_.find(call_id);
         if (buffer_size == 0 || read_ptr == readoffsets_.end())
             return true;
         getl = (endPos_ + buffer_size - read_ptr->second.offset) % buffer_size;
@@ -277,7 +277,7 @@ RingBuffer::discard(size_t toDiscard, const std::string& call_id)
         return 0;
 
     size_t len = (endPos_ + buffer_size - offset->second.offset) % buffer_size;
-    toDiscard  = std::min(toDiscard, len);
+    toDiscard = std::min(toDiscard, len);
 
     offset->second.offset = (offset->second.offset + toDiscard) % buffer_size;
     return toDiscard;

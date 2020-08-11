@@ -37,7 +37,7 @@ namespace jami {
 /**
  * A runnable function
  */
-using Job         = std::function<void()>;
+using Job = std::function<void()>;
 using RepeatedJob = std::function<bool()>;
 
 /**
@@ -98,9 +98,9 @@ private:
 class ScheduledExecutor
 {
 public:
-    using clock      = std::chrono::steady_clock;
+    using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
-    using duration   = clock::duration;
+    using duration = clock::duration;
 
     ScheduledExecutor();
     ~ScheduledExecutor();

@@ -60,33 +60,33 @@ using random_device = dht::crypto::random_device;
 
 namespace jami {
 
-const char* const Account::ALL_CODECS_KEY                = "allCodecs";
-const char* const Account::VIDEO_CODEC_ENABLED           = "enabled";
-const char* const Account::VIDEO_CODEC_NAME              = "name";
-const char* const Account::VIDEO_CODEC_PARAMETERS        = "parameters";
-const char* const Account::VIDEO_CODEC_BITRATE           = "bitrate";
-const char* const Account::RINGTONE_PATH_KEY             = "ringtonePath";
-const char* const Account::RINGTONE_ENABLED_KEY          = "ringtoneEnabled";
-const char* const Account::VIDEO_ENABLED_KEY             = "videoEnabled";
-const char* const Account::DISPLAY_NAME_KEY              = "displayName";
-const char* const Account::ALIAS_KEY                     = "alias";
-const char* const Account::TYPE_KEY                      = "type";
-const char* const Account::ID_KEY                        = "id";
-const char* const Account::USERNAME_KEY                  = "username";
-const char* const Account::AUTHENTICATION_USERNAME_KEY   = "authenticationUsername";
-const char* const Account::PASSWORD_KEY                  = "password";
-const char* const Account::HOSTNAME_KEY                  = "hostname";
-const char* const Account::ACCOUNT_ENABLE_KEY            = "enable";
-const char* const Account::ACCOUNT_AUTOANSWER_KEY        = "autoAnswer";
-const char* const Account::ACCOUNT_ISRENDEZVOUS_KEY      = "rendezVous";
+const char* const Account::ALL_CODECS_KEY = "allCodecs";
+const char* const Account::VIDEO_CODEC_ENABLED = "enabled";
+const char* const Account::VIDEO_CODEC_NAME = "name";
+const char* const Account::VIDEO_CODEC_PARAMETERS = "parameters";
+const char* const Account::VIDEO_CODEC_BITRATE = "bitrate";
+const char* const Account::RINGTONE_PATH_KEY = "ringtonePath";
+const char* const Account::RINGTONE_ENABLED_KEY = "ringtoneEnabled";
+const char* const Account::VIDEO_ENABLED_KEY = "videoEnabled";
+const char* const Account::DISPLAY_NAME_KEY = "displayName";
+const char* const Account::ALIAS_KEY = "alias";
+const char* const Account::TYPE_KEY = "type";
+const char* const Account::ID_KEY = "id";
+const char* const Account::USERNAME_KEY = "username";
+const char* const Account::AUTHENTICATION_USERNAME_KEY = "authenticationUsername";
+const char* const Account::PASSWORD_KEY = "password";
+const char* const Account::HOSTNAME_KEY = "hostname";
+const char* const Account::ACCOUNT_ENABLE_KEY = "enable";
+const char* const Account::ACCOUNT_AUTOANSWER_KEY = "autoAnswer";
+const char* const Account::ACCOUNT_ISRENDEZVOUS_KEY = "rendezVous";
 const char* const Account::ACCOUNT_ACTIVE_CALL_LIMIT_KEY = "activeCallLimit";
-const char* const Account::MAILBOX_KEY                   = "mailbox";
-const char* const Account::DEFAULT_USER_AGENT            = PACKAGE_NAME;
-const char* const Account::USER_AGENT_KEY                = "useragent";
-const char* const Account::HAS_CUSTOM_USER_AGENT_KEY     = "hasCustomUserAgent";
-const char* const Account::PRESENCE_MODULE_ENABLED_KEY   = "presenceModuleEnabled";
-const char* const Account::UPNP_ENABLED_KEY              = "upnpEnabled";
-const char* const Account::ACTIVE_CODEC_KEY              = "activeCodecs";
+const char* const Account::MAILBOX_KEY = "mailbox";
+const char* const Account::DEFAULT_USER_AGENT = PACKAGE_NAME;
+const char* const Account::USER_AGENT_KEY = "useragent";
+const char* const Account::HAS_CUSTOM_USER_AGENT_KEY = "hasCustomUserAgent";
+const char* const Account::PRESENCE_MODULE_ENABLED_KEY = "presenceModuleEnabled";
+const char* const Account::UPNP_ENABLED_KEY = "upnpEnabled";
+const char* const Account::ACTIVE_CODEC_KEY = "activeCodecs";
 
 #ifdef __ANDROID__
 constexpr const char* const DEFAULT_RINGTONE_PATH
@@ -167,7 +167,7 @@ Account::setRegistrationState(RegistrationState state,
         registrationState_ = state;
         // Notify the client
         runOnMainThread([accountId = accountID_,
-                         state     = mapStateNumberToString(registrationState_),
+                         state = mapStateNumberToString(registrationState_),
                          detail_code,
                          detail_str,
                          details = getVolatileAccountDetails()] {
@@ -261,7 +261,7 @@ Account::unserialize(const YAML::Node& node)
         std::string allCodecs;
         if (parseValueOptional(node, ALL_CODECS_KEY, allCodecs)) {
             JAMI_WARN("Converting deprecated codec list");
-            auto list  = convertIdToAVId(split_string_to_unsigned(allCodecs, '/'));
+            auto list = convertIdToAVId(split_string_to_unsigned(allCodecs, '/'));
             auto codec = searchCodecByName("H265", MEDIA_ALL);
             // set H265 as first active codec if found
             if (codec)
@@ -376,7 +376,7 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
     for (const auto& item : list) {
         if (auto accCodec = searchCodecById(item, MEDIA_ALL)) {
             accCodec->isActive = true;
-            accCodec->order    = order;
+            accCodec->order = order;
             ++order;
         }
     }

@@ -63,7 +63,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call>
 public:
     using SubcallSet = std::set<std::shared_ptr<Call>, std::owner_less<std::shared_ptr<Call>>>;
     using OnNeedFallbackCb = std::function<void()>;
-    using OnReadyCb        = std::function<void(bool)>;
+    using OnReadyCb = std::function<void(bool)>;
 
     static const char* const DEFAULT_ID;
 

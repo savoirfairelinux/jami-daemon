@@ -61,9 +61,9 @@ public:
         unsupported
     };
 
-    using LookupCallback       = std::function<void(const std::string& result, Response response)>;
-    using SearchResult         = std::vector<std::map<std::string, std::string>>;
-    using SearchCallback       = std::function<void(const SearchResult& result, Response response)>;
+    using LookupCallback = std::function<void(const std::string& result, Response response)>;
+    using SearchResult = std::vector<std::map<std::string, std::string>>;
+    using SearchCallback = std::function<void(const SearchResult& result, Response response)>;
     using RegistrationCallback = std::function<void(RegistrationResponse response)>;
 
     NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::Logger> l = {});

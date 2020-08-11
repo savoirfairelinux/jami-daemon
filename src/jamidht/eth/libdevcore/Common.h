@@ -69,8 +69,8 @@ extern char const* Version;
 extern std::string const EmptyString;
 
 // Binary data types.
-using bytes         = std::vector<uint8_t>;
-using bytesRef      = vector_ref<uint8_t>;
+using bytes = std::vector<uint8_t>;
+using bytesRef = vector_ref<uint8_t>;
 using bytesConstRef = vector_ref<uint8_t const>;
 
 template<class T>
@@ -131,8 +131,8 @@ using bytesSec = secure_vector<uint8_t>;
 
 // Map types.
 using StringMap = std::map<std::string, std::string>;
-using BytesMap  = std::map<bytes, bytes>;
-using HexMap    = std::map<bytes, bytes>;
+using BytesMap = std::map<bytes, bytes>;
+using HexMap = std::map<bytes, bytes>;
 
 // Hash types.
 using StringHashMap = std::unordered_map<std::string, std::string>;

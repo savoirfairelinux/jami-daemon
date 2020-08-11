@@ -95,8 +95,8 @@ private:
     void process();
 
     const std::string id_;
-    int width_            = 0;
-    int height_           = 0;
+    int width_ = 0;
+    int height_ = 0;
     AVPixelFormat format_ = AV_PIX_FMT_YUV422P;
     rw_mutex rwMutex_;
 

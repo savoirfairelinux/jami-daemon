@@ -29,7 +29,7 @@ constexpr static unsigned int MAX_RESTART_SEARCH_RETRY {5};
 NatPmp::NatPmp()
 {
     clearNatPmpHdl(natpmpHdl_);
-    pmpIGD_    = std::make_unique<PMPIGD>();
+    pmpIGD_ = std::make_unique<PMPIGD>();
     pmpThread_ = std::thread([this]() {
         {
             std::lock_guard<std::mutex> lk(natpmpMutex_);
@@ -114,7 +114,7 @@ NatPmp::NatPmp()
             if (pmpIGD_) {
                 std::lock_guard<std::mutex> upnpLk(pmpIGD_->mapListMutex_);
                 if (pmpIGD_->clearAll_) {
-                    clearAll           = true;
+                    clearAll = true;
                     pmpIGD_->clearAll_ = false;
                     pmpIGD_->toRemove_.clear();
                 } else if (not pmpIGD_->toRemove_.empty()) {
@@ -372,8 +372,8 @@ NatPmp::searchForPmpIgd()
             break;
         } else if (r != NATPMP_TRYAGAIN) {
             restartSearchRetry_ = 0;
-            pmpIGD_->localIp_   = ip_utils::getLocalAddr(AF_INET);
-            pmpIGD_->publicIp_  = IpAddr(response.pnu.publicaddress.addr);
+            pmpIGD_->localIp_ = ip_utils::getLocalAddr(AF_INET);
+            pmpIGD_->publicIp_ = IpAddr(response.pnu.publicaddress.addr);
             JAMI_DBG("NAT-PMP: Found device with external IP %s",
                      pmpIGD_->publicIp_.toString().c_str());
             {

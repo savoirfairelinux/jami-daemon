@@ -94,8 +94,8 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
     else if (not c->second.isActive() and c->second.banned == ban)
         return false;
     c->second.removed = std::time(nullptr);
-    c->second.banned  = ban;
-    auto uri          = h.toString();
+    c->second.banned = ban;
+    auto uri = h.toString();
     trust_.setCertificateStatus(uri,
                                 ban ? tls::TrustStore::PermissionStatus::BANNED
                                     : tls::TrustStore::PermissionStatus::UNDEFINED);
@@ -150,7 +150,7 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact)
     auto c = contacts_.find(id);
     if (c == contacts_.end()) {
         JAMI_DBG("[Contacts] new contact: %s", id.toString().c_str());
-        c            = contacts_.emplace(id, contact).first;
+        c = contacts_.emplace(id, contact).first;
         stateChanged = c->second.isActive() or c->second.isBanned();
     } else {
         JAMI_DBG("[Contacts] updated contact: %s", id.toString().c_str());
@@ -236,7 +236,7 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
     bool accept = false;
     // Check existing contact
     auto contact = contacts_.find(peer_account);
-    bool active  = false;
+    bool active = false;
     if (contact != contacts_.end()) {
         // Banned contact: discard request
         if (contact->second.isBanned())
@@ -266,9 +266,9 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
         } else {
             // Update trust request
             if (received < req->second.received) {
-                req->second.device   = peer_device;
+                req->second.device = peer_device;
                 req->second.received = received;
-                req->second.payload  = std::move(payload);
+                req->second.payload = std::move(payload);
             } else {
                 JAMI_DBG("[Contacts] Ignoring outdated trust request from %s",
                          peer_account.toString().c_str());
@@ -481,7 +481,7 @@ ContactList::getSyncData() const
                 .emplace(req.first, TrustRequest {req.second.device, req.second.received, {}});
     else {
         size_t inserted = 0;
-        auto req        = trustRequests_.lower_bound(dht::InfoHash::getRandom());
+        auto req = trustRequests_.lower_bound(dht::InfoHash::getRandom());
         while (inserted++ < MAX_TRUST_REQUESTS) {
             if (req == trustRequests_.end())
                 req = trustRequests_.begin();

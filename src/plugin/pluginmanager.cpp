@@ -129,8 +129,8 @@ PluginManager::callPluginInitFunction(const std::string& path)
         // Plugin found
         // Since the Plugin was found it is of type DLPlugin with a valid init symbol
         std::shared_ptr<DLPlugin> plugin = std::static_pointer_cast<DLPlugin>(it->second);
-        const auto& initFunc             = plugin->getInitFunction();
-        JAMI_PluginExitFunc exitFunc     = nullptr;
+        const auto& initFunc = plugin->getInitFunction();
+        JAMI_PluginExitFunc exitFunc = nullptr;
 
         try {
             // Call Plugin Init function
@@ -155,20 +155,20 @@ bool
 PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin)
 {
     // Here we know that Plugin is of type DLPlugin with a valid init symbol
-    const auto& initFunc         = plugin->getInitFunction();
+    const auto& initFunc = plugin->getInitFunction();
     JAMI_PluginExitFunc exitFunc = nullptr;
 
     DLPlugin* pluginPtr = static_cast<DLPlugin*>(plugin.get());
 
-    pluginPtr->apiContext_                = this;
-    pluginPtr->api_.version               = {JAMI_PLUGIN_ABI_VERSION, JAMI_PLUGIN_API_VERSION};
+    pluginPtr->apiContext_ = this;
+    pluginPtr->api_.version = {JAMI_PLUGIN_ABI_VERSION, JAMI_PLUGIN_API_VERSION};
     pluginPtr->api_.registerObjectFactory = registerObjectFactory_;
     /**
      * Implements JAMI_PluginAPI.invokeService().
      * Must be C accessible.
      */
     pluginPtr->api_.invokeService = [](const JAMI_PluginAPI* api, const char* name, void* data) {
-        auto plugin  = static_cast<DLPlugin*>(api->context);
+        auto plugin = static_cast<DLPlugin*>(api->context);
         auto manager = reinterpret_cast<PluginManager*>(plugin->apiContext_);
         if (!manager) {
             JAMI_ERR() << "invokeService called with null plugin API";
@@ -183,7 +183,7 @@ PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin)
      * Must be C accessible.
      */
     pluginPtr->api_.manageComponent = [](const JAMI_PluginAPI* api, const char* name, void* data) {
-        auto plugin  = static_cast<DLPlugin*>(api->context);
+        auto plugin = static_cast<DLPlugin*>(api->context);
         auto manager = reinterpret_cast<PluginManager*>(plugin->apiContext_);
         if (!manager) {
             JAMI_ERR() << "createComponent called with null plugin API";
@@ -333,7 +333,7 @@ PluginManager::createObject(const std::string& type)
     const auto& factoryIter = exactMatchMap_.find(type);
     if (factoryIter != exactMatchMap_.end()) {
         const auto& factory = factoryIter->second;
-        auto object         = factory.data.create(&op, factory.data.closure);
+        auto object = factory.data.create(&op, factory.data.closure);
         if (object)
             return {object, factory.deleter};
     }

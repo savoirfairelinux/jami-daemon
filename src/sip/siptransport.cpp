@@ -61,7 +61,7 @@ constexpr const char* TRANSPORT_STATE_STR[] = {"CONNECTED",
                                                "SHUTDOWN",
                                                "DESTROY",
                                                "UNKNOWN STATE"};
-constexpr const size_t TRANSPORT_STATE_SZ   = arraySize(TRANSPORT_STATE_STR);
+constexpr const size_t TRANSPORT_STATE_SZ = arraySize(TRANSPORT_STATE_STR);
 
 void
 SipTransport::deleteTransport(pjsip_transport* t)
@@ -118,11 +118,11 @@ SipTransport::stateCallback(pjsip_transport_state state, const pjsip_transport_s
 
     auto extInfo = static_cast<const pjsip_tls_state_info*>(info->ext_info);
     if (isSecure() && extInfo && extInfo->ssl_sock_info && extInfo->ssl_sock_info->established) {
-        auto tlsInfo           = extInfo->ssl_sock_info;
-        tlsInfos_.proto        = (pj_ssl_sock_proto) tlsInfo->proto;
-        tlsInfos_.cipher       = tlsInfo->cipher;
+        auto tlsInfo = extInfo->ssl_sock_info;
+        tlsInfos_.proto = (pj_ssl_sock_proto) tlsInfo->proto;
+        tlsInfos_.cipher = tlsInfo->cipher;
         tlsInfos_.verifyStatus = (pj_ssl_cert_verify_flag_t) tlsInfo->verify_status;
-        const auto& peers      = tlsInfo->remote_cert_info->raw_chain;
+        const auto& peers = tlsInfo->remote_cert_info->raw_chain;
         std::vector<std::pair<const uint8_t*, const uint8_t*>> bits;
         bits.resize(peers.cnt);
         std::transform(peers.cert_raw,
@@ -303,7 +303,7 @@ SipTransportBroker::getUdpTransport(const IpAddr& ipAddress)
             } else {
                 // Transport still exists but have not been destroyed yet.
                 JAMI_WARN("Recycling transport %s", ipAddress.toString(true).c_str());
-                auto ret   = std::make_shared<SipTransport>(itp->second);
+                auto ret = std::make_shared<SipTransport>(itp->second);
                 it->second = ret;
                 return ret;
             }
@@ -315,7 +315,7 @@ SipTransportBroker::getUdpTransport(const IpAddr& ipAddress)
     auto ret = createUdpTransport(ipAddress);
     if (ret) {
         udpTransports_[ipAddress] = ret->get();
-        transports_[ret->get()]   = ret;
+        transports_[ret->get()] = ret;
     }
     return ret;
 }
@@ -327,7 +327,7 @@ SipTransportBroker::createUdpTransport(const IpAddr& ipAddress)
 
     pjsip_udp_transport_cfg pj_cfg;
     pjsip_udp_transport_cfg_default(&pj_cfg, ipAddress.getFamily());
-    pj_cfg.bind_addr           = ipAddress;
+    pj_cfg.bind_addr = ipAddress;
     pjsip_transport* transport = nullptr;
     if (pj_status_t status = pjsip_udp_transport_start2(endpt_, &pj_cfg, &transport)) {
         JAMI_ERR("pjsip_udp_transport_start2 failed with error %d: %s",
@@ -380,15 +380,15 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l,
 
     JAMI_DBG("Get new TLS transport to %s", remoteAddr.toString(true).c_str());
     pjsip_tpselector sel;
-    sel.type                     = PJSIP_TPSELECTOR_LISTENER;
-    sel.u.listener               = l->get();
+    sel.type = PJSIP_TPSELECTOR_LISTENER;
+    sel.u.listener = l->get();
     sel.disable_connection_reuse = PJ_FALSE;
 
     pjsip_tx_data tx_data;
     tx_data.dest_info.name = pj_str_t {(char*) remote_name.data(), (pj_ssize_t) remote_name.size()};
 
     pjsip_transport* transport = nullptr;
-    pj_status_t status         = pjsip_endpt_acquire_transport2(endpt_,
+    pj_status_t status = pjsip_endpt_acquire_transport2(endpt_,
                                                         l->get()->type,
                                                         remoteAddr.pjPtr(),
                                                         remoteAddr.getLength(),
@@ -420,8 +420,8 @@ SipTransportBroker::getTlsIceTransport(const std::shared_ptr<jami::IceTransport>
         type = ipv6 ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
     }
     auto sip_ice_tr = std::make_unique<tls::SipsIceTransport>(endpt_, type, params, ice, comp_id);
-    auto tr         = sip_ice_tr->getTransportBase();
-    auto sip_tr     = std::make_shared<SipTransport>(tr);
+    auto tr = sip_ice_tr->getTransportBase();
+    auto sip_tr = std::make_shared<SipTransport>(tr);
     sip_tr->setIsIceTransport();
     sip_ice_tr.release(); // managed by PJSIP now
 
@@ -441,17 +441,17 @@ SipTransportBroker::getChanneledTransport(const std::shared_ptr<ChannelSocket>& 
     auto ice = socket->underlyingICE();
     if (!ice)
         return {};
-    auto local   = ice->getLocalAddress(0);
-    auto remote  = ice->getRemoteAddress(0);
-    auto type    = local.isIpv6() ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
+    auto local = ice->getLocalAddress(0);
+    auto remote = ice->getRemoteAddress(0);
+    auto type = local.isIpv6() ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
     auto sips_tr = std::make_unique<tls::ChanneledSIPTransport>(endpt_,
                                                                 type,
                                                                 socket,
                                                                 local,
                                                                 remote,
                                                                 std::move(cb));
-    auto tr      = sips_tr->getTransportBase();
-    auto sip_tr  = std::make_shared<SipTransport>(tr);
+    auto tr = sips_tr->getTransportBase();
+    auto sip_tr = std::make_shared<SipTransport>(tr);
     sip_tr->setIsChanneledTransport();
     sips_tr.release(); // managed by PJSIP now
 

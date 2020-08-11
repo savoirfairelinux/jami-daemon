@@ -121,10 +121,10 @@ lockReg(int fd, int cmd, int type, int whence, int start, off_t len)
 {
     struct flock fl;
 
-    fl.l_type   = type;
+    fl.l_type = type;
     fl.l_whence = whence;
-    fl.l_start  = start;
-    fl.l_len    = len;
+    fl.l_start = start;
+    fl.l_len = len;
 
     return fcntl(fd, cmd, &fl);
 }
@@ -307,19 +307,19 @@ writeTime(const std::string& path)
 #else
 #if RING_UWP
     _CREATEFILE2_EXTENDED_PARAMETERS ext_params = {0};
-    ext_params.dwSize                           = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
-    ext_params.dwFileAttributes                 = FILE_ATTRIBUTE_NORMAL;
-    ext_params.dwFileFlags                      = FILE_FLAG_NO_BUFFERING;
-    ext_params.dwSecurityQosFlags               = SECURITY_ANONYMOUS;
-    ext_params.lpSecurityAttributes             = nullptr;
-    ext_params.hTemplateFile                    = nullptr;
-    HANDLE h                                    = CreateFile2(jami::to_wstring(path).c_str(),
+    ext_params.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
+    ext_params.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+    ext_params.dwFileFlags = FILE_FLAG_NO_BUFFERING;
+    ext_params.dwSecurityQosFlags = SECURITY_ANONYMOUS;
+    ext_params.lpSecurityAttributes = nullptr;
+    ext_params.hTemplateFile = nullptr;
+    HANDLE h = CreateFile2(jami::to_wstring(path).c_str(),
                            GENERIC_READ,
                            FILE_SHARE_READ,
                            OPEN_EXISTING,
                            &ext_params);
 #elif _WIN32
-    HANDLE h    = CreateFileW(jami::to_wstring(path).c_str(),
+    HANDLE h = CreateFileW(jami::to_wstring(path).c_str(),
                            GENERIC_READ,
                            FILE_SHARE_READ,
                            nullptr,
@@ -338,12 +338,12 @@ writeTime(const std::string& path)
         throw std::runtime_error("Can't check write time for: " + path);
     struct tm tm
     {};
-    tm.tm_year  = sTime.wYear - 1900;
-    tm.tm_mon   = sTime.wMonth - 1;
-    tm.tm_mday  = sTime.wDay;
-    tm.tm_hour  = sTime.wHour;
-    tm.tm_min   = sTime.wMinute;
-    tm.tm_sec   = sTime.wSecond;
+    tm.tm_year = sTime.wYear - 1900;
+    tm.tm_mon = sTime.wMonth - 1;
+    tm.tm_mday = sTime.wDay;
+    tm.tm_hour = sTime.wHour;
+    tm.tm_min = sTime.wMinute;
+    tm.tm_sec = sTime.wSecond;
     tm.tm_isdst = -1;
     return std::chrono::system_clock::from_time_t(mktime(&tm));
 #endif
@@ -841,14 +841,14 @@ eraseFile_win32(const std::string& path, bool dosync)
 
     OVERLAPPED ovlp;
     if (size.QuadPart < (1024 - 42)) { // a small file can be stored in the MFT record
-        ovlp.Offset     = 0;
+        ovlp.Offset = 0;
         ovlp.OffsetHigh = 0;
         WriteFile(h, buffer, (DWORD) size.QuadPart, 0, &ovlp);
         FlushFileBuffers(h);
     }
     for (uint64_t i = 0; i < size_blocks; i++) {
         uint64_t offset = i * ERASE_BLOCK;
-        ovlp.Offset     = offset & 0x00000000FFFFFFFF;
+        ovlp.Offset = offset & 0x00000000FFFFFFFF;
         ovlp.OffsetHigh = offset >> 32;
         WriteFile(h, buffer, ERASE_BLOCK, 0, &ovlp);
     }

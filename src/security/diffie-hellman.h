@@ -32,12 +32,12 @@ namespace tls {
 class DhParams
 {
 public:
-    DhParams()           = default;
+    DhParams() = default;
     DhParams(DhParams&&) = default;
     DhParams(const DhParams& other) { *this = other; }
 
     DhParams& operator=(DhParams&& other) = default;
-    DhParams& operator                    =(const DhParams& other);
+    DhParams& operator=(const DhParams& other);
 
     /// \brief Construct by taking ownership of given gnutls DH params
     ///

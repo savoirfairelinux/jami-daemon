@@ -245,13 +245,13 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>&& pkt)
                     // Answer to ChannelRequest if accepted
                     ChannelRequest val;
                     val.channel = req.channel;
-                    val.name    = req.name;
+                    val.name = req.name;
                     val.state = accept ? ChannelRequestState::ACCEPT : ChannelRequestState::DECLINE;
                     std::stringstream ss;
                     msgpack::pack(ss, val);
                     std::error_code ec;
                     auto toSend = ss.str();
-                    int wr      = parent_.write(CONTROL_CHANNEL,
+                    int wr = parent_.write(CONTROL_CHANNEL,
                                            reinterpret_cast<const uint8_t*>(&toSend[0]),
                                            toSend.size(),
                                            ec);
@@ -329,7 +329,7 @@ MultiplexedSocket::addChannel(const std::string& name)
     auto offset = dist(rd);
     std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
     for (int i = 1; i < UINT16_MAX; ++i) {
-        auto c       = (offset + i) % UINT16_MAX;
+        auto c = (offset + i) % UINT16_MAX;
         auto& socket = pimpl_->sockets[c];
         if (!socket) {
             auto& channel = pimpl_->channelDatas_[c];
@@ -405,7 +405,7 @@ MultiplexedSocket::read(const uint16_t& channel, uint8_t* buf, std::size_t len, 
         return -1;
     }
     auto& chanBuf = dataIt->second->buf;
-    auto size     = std::min(len, chanBuf.size());
+    auto size = std::min(len, chanBuf.size());
 
     for (std::size_t i = 0; i < size; ++i) {
         buf[i] = chanBuf[i];

@@ -52,7 +52,7 @@ operator+(const string_view& sv, const string& s)
 
 namespace jami {
 
-constexpr static const char TRUE_STR[]  = "true";
+constexpr static const char TRUE_STR[] = "true";
 constexpr static const char FALSE_STR[] = "false";
 
 constexpr static const char*

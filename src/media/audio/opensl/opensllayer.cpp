@@ -94,7 +94,7 @@ OpenSLLayer::stopStream()
 
     if (engineObject_ != nullptr) {
         (*engineObject_)->Destroy(engineObject_);
-        engineObject_    = nullptr;
+        engineObject_ = nullptr;
         engineInterface_ = nullptr;
     }
 
@@ -128,7 +128,7 @@ OpenSLLayer::initAudioEngine()
     std::vector<int32_t> hw_infos;
     hw_infos.reserve(4);
     emitSignal<DRing::ConfigurationSignal::GetHardwareAudioFormat>(&hw_infos);
-    hardwareFormat_   = AudioFormat(hw_infos[0], 1); // Mono on Android
+    hardwareFormat_ = AudioFormat(hw_infos[0], 1); // Mono on Android
     hardwareBuffSize_ = hw_infos[1];
     hardwareFormatAvailable(hardwareFormat_, hardwareBuffSize_);
 
@@ -137,7 +137,7 @@ OpenSLLayer::initAudioEngine()
     SLASSERT((*engineObject_)->GetInterface(engineObject_, SL_IID_ENGINE, &engineInterface_));
 
     uint32_t bufSize = hardwareBuffSize_ * hardwareFormat_.getBytesPerFrame();
-    bufs_            = allocateSampleBufs(BUF_COUNT * 3, bufSize);
+    bufs_ = allocateSampleBufs(BUF_COUNT * 3, bufSize);
     for (int i = 0; i < BUF_COUNT; i++)
         freePlayBufQueue_.push(&bufs_[i]);
     for (int i = BUF_COUNT; i < 2 * BUF_COUNT; i++)
@@ -312,7 +312,7 @@ OpenSLLayer::startAudioCapture()
                 recBufQueue_.pop();
                 if (buf->size_ > 0) {
                     auto nb_samples = buf->size_ / hardwareFormat_.getBytesPerFrame();
-                    auto out        = std::make_shared<AudioFrame>(hardwareFormat_, nb_samples);
+                    auto out = std::make_shared<AudioFrame>(hardwareFormat_, nb_samples);
                     if (isCaptureMuted_)
                         libav_utils::fillWithSilence(out->pointer());
                     else
@@ -379,9 +379,9 @@ OpenSLLayer::getCaptureDeviceList() const
     // to obtain such an information)-> SL_FEATURE_UNSUPPORTED
 
     SLuint32 InputDeviceIDs[MAX_NUMBER_INPUT_DEVICES];
-    SLint32 numInputs       = 0;
+    SLint32 numInputs = 0;
     SLboolean mic_available = SL_BOOLEAN_FALSE;
-    SLuint32 mic_deviceID   = 0;
+    SLuint32 mic_deviceID = 0;
 
     SLresult res;
 
@@ -395,7 +395,7 @@ OpenSLLayer::getCaptureDeviceList() const
         return captureDeviceList;
 
     numInputs = MAX_NUMBER_INPUT_DEVICES;
-    res       = (*deviceCapabilities)
+    res = (*deviceCapabilities)
               ->GetAvailableAudioInputs(deviceCapabilities, &numInputs, InputDeviceIDs);
     if (res != SL_RESULT_SUCCESS)
         return captureDeviceList;
@@ -415,14 +415,14 @@ OpenSLLayer::getCaptureDeviceList() const
             and audioInputDescriptor_.deviceScope == SL_DEVSCOPE_USER
             and audioInputDescriptor_.deviceLocation == SL_DEVLOCATION_HEADSET) {
             JAMI_DBG("SL_DEVCONNECTION_ATTACHED_WIRED : mic_deviceID: %d", InputDeviceIDs[i]);
-            mic_deviceID  = InputDeviceIDs[i];
+            mic_deviceID = InputDeviceIDs[i];
             mic_available = SL_BOOLEAN_TRUE;
             break;
         } else if (audioInputDescriptor_.deviceConnection == SL_DEVCONNECTION_INTEGRATED
                    and audioInputDescriptor_.deviceScope == SL_DEVSCOPE_USER
                    and audioInputDescriptor_.deviceLocation == SL_DEVLOCATION_HANDSET) {
             JAMI_DBG("SL_DEVCONNECTION_INTEGRATED : mic_deviceID: %d", InputDeviceIDs[i]);
-            mic_deviceID  = InputDeviceIDs[i];
+            mic_deviceID = InputDeviceIDs[i];
             mic_available = SL_BOOLEAN_TRUE;
             break;
         }

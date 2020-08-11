@@ -44,7 +44,7 @@ Tone::genBuffer(const std::string& definition)
     if (definition.empty())
         return;
 
-    size_t size          = 0;
+    size_t size = 0;
     const int sampleRate = buffer_->getSampleRate();
 
     std::vector<AudioSample> buffer(SIZEBUF);
@@ -52,7 +52,7 @@ Tone::genBuffer(const std::string& definition)
 
     // Number of format sections
     std::string::size_type posStart = 0; // position of precedent comma
-    std::string::size_type posEnd   = 0; // position of the next comma
+    std::string::size_type posEnd = 0;   // position of the next comma
 
     std::string s; // portion of frequency
     size_t count;  // number of int for one sequence
@@ -72,25 +72,25 @@ Tone::genBuffer(const std::string& definition)
             s = definition.substr(posStart, posEnd - posStart);
 
             // The 1st frequency is before the first + or the /
-            size_t pos_plus     = s.find('+');
-            size_t pos_slash    = s.find('/');
-            size_t len          = s.length();
+            size_t pos_plus = s.find('+');
+            size_t pos_slash = s.find('/');
+            size_t len = s.length();
             size_t endfrequency = 0;
 
             if (pos_slash == std::string::npos) {
-                time         = 0;
+                time = 0;
                 endfrequency = len;
             } else {
-                time         = atoi(s.substr(pos_slash + 1, len - pos_slash - 1).c_str());
+                time = atoi(s.substr(pos_slash + 1, len - pos_slash - 1).c_str());
                 endfrequency = pos_slash;
             }
 
             // without a plus = 1 frequency
             if (pos_plus == std::string::npos) {
-                low  = atoi(s.substr(0, endfrequency).c_str());
+                low = atoi(s.substr(0, endfrequency).c_str());
                 high = 0;
             } else {
-                low  = atoi(s.substr(0, pos_plus).c_str());
+                low = atoi(s.substr(0, pos_plus).c_str());
                 high = atoi(s.substr(pos_plus + 1, endfrequency - pos_plus - 1).c_str());
             }
 
@@ -118,10 +118,10 @@ Tone::genBuffer(const std::string& definition)
 void
 Tone::genSin(AudioSample* buffer, int lowFrequency, int highFrequency, size_t nb)
 {
-    static constexpr auto PI               = 3.141592653589793238462643383279502884L;
-    const double sr                        = (double) buffer_->getSampleRate();
-    const double dx_h                      = sr ? 2.0 * PI * lowFrequency / sr : 0.0;
-    const double dx_l                      = sr ? 2.0 * PI * highFrequency / sr : 0.0;
+    static constexpr auto PI = 3.141592653589793238462643383279502884L;
+    const double sr = (double) buffer_->getSampleRate();
+    const double dx_h = sr ? 2.0 * PI * lowFrequency / sr : 0.0;
+    const double dx_l = sr ? 2.0 * PI * highFrequency / sr : 0.0;
     static constexpr double DATA_AMPLITUDE = 2048;
     for (size_t t = 0; t < nb; t++) {
         buffer[t] = DATA_AMPLITUDE * (sin(t * dx_h) + sin(t * dx_l));

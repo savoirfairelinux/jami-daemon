@@ -271,8 +271,8 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 
     // Emit client state only if changed
     auto old_client_state = getStateStr();
-    callState_            = call_state;
-    connectionState_      = cnx_state;
+    callState_ = call_state;
+    connectionState_ = cnx_state;
     auto new_client_state = getStateStr();
 
     for (auto& l : stateChangedListeners_)
@@ -432,7 +432,7 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
 void
 Call::peerHungup()
 {
-    const auto state   = getState();
+    const auto state = getState();
     const auto aborted = state == CallState::ACTIVE or state == CallState::HOLD;
     setState(ConnectionState::DISCONNECTED, aborted ? ECONNABORTED : ECONNREFUSED);
 }
@@ -463,7 +463,7 @@ Call::addSubCall(Call& subcall)
         subcall.sendTextMessage(msg.first, msg.second);
 
     subcall.addStateListener(
-        [sub    = subcall.weak(),
+        [sub = subcall.weak(),
          parent = weak()](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
             runOnMainThread([sub, parent, new_state, new_cstate, code]() {
                 if (auto p = parent.lock()) {
@@ -660,7 +660,7 @@ Call::setConferenceInfo(const std::string& msg)
     {
         std::lock_guard<std::mutex> lk(confInfoMutex_);
         confInfo_ = std::move(newInfo);
-        toSend    = confInfo_.toVectorMapStringString();
+        toSend = confInfo_.toVectorMapStringString();
     }
 
     // Inform client that layout has changed

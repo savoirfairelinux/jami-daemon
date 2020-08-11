@@ -60,7 +60,7 @@ class Emitter;
 namespace dev {
 template<unsigned N>
 class FixedHash;
-using h160    = FixedHash<20>;
+using h160 = FixedHash<20>;
 using Address = h160;
 } // namespace dev
 
@@ -86,10 +86,10 @@ class ChanneledOutgoingTransfer;
 class JamiAccount : public SIPAccountBase
 {
 public:
-    constexpr static const char* const ACCOUNT_TYPE          = "RING";
-    constexpr static const in_port_t DHT_DEFAULT_PORT        = 4222;
+    constexpr static const char* const ACCOUNT_TYPE = "RING";
+    constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
     constexpr static const char* const DHT_DEFAULT_BOOTSTRAP = "bootstrap.jami.net";
-    constexpr static const char* const DHT_DEFAULT_PROXY     = "dhtproxy.jami.net:[80-100]";
+    constexpr static const char* const DHT_DEFAULT_PROXY = "dhtproxy.jami.net:[80-100]";
     constexpr static const char* const DHT_DEFAULT_BOOTSTRAP_LIST_URL
         = "https://config.jami.net/boostrapList";
     constexpr static const char* const DHT_DEFAULT_PROXY_LIST_URL
@@ -223,8 +223,8 @@ public:
 
     void setReceivedParameter(const std::string& received)
     {
-        receivedParameter_  = received;
-        via_addr_.host.ptr  = (char*) receivedParameter_.c_str();
+        receivedParameter_ = received;
+        via_addr_.host.ptr = (char*) receivedParameter_.c_str();
         via_addr_.host.slen = receivedParameter_.size();
     }
 
@@ -274,7 +274,7 @@ public:
     std::shared_ptr<SIPCall> newIncomingCall(
         const std::string& from,
         const std::map<std::string, std::string>& details = {},
-        const std::shared_ptr<SipTransport>& sipTr        = nullptr) override;
+        const std::shared_ptr<SipTransport>& sipTr = nullptr) override;
 
     void onTextMessage(const std::string& id,
                        const std::string& from,
@@ -454,7 +454,7 @@ public:
 private:
     NON_COPYABLE(JamiAccount);
 
-    using clock      = std::chrono::system_clock;
+    using clock = std::chrono::system_clock;
     using time_point = clock::time_point;
 
     /**
@@ -533,8 +533,8 @@ private:
     bool handlePendingCall(PendingCall& pc, bool incoming);
 
     void loadAccount(const std::string& archive_password = {},
-                     const std::string& archive_pin      = {},
-                     const std::string& archive_path     = {});
+                     const std::string& archive_pin = {},
+                     const std::string& archive_path = {});
     void loadAccountFromFile(const std::string& archive_path, const std::string& archive_password);
     void loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin);
     void loadAccountFromArchive(AccountArchive&& archive, const std::string& archive_password);

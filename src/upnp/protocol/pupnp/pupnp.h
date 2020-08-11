@@ -72,7 +72,7 @@ namespace jami {
 namespace upnp {
 
 // Error codes returned by router when trying to remove ports.
-constexpr static int ARRAY_IDX_INVALID   = 713;
+constexpr static int ARRAY_IDX_INVALID = 713;
 constexpr static int CONFLICT_IN_MAPPING = 718;
 
 // Timeout values (in seconds).

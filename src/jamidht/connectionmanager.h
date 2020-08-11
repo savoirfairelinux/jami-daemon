@@ -40,8 +40,8 @@ class ConnectionManager;
 struct PeerConnectionRequest : public dht::EncryptedValue<PeerConnectionRequest>
 {
     static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
-    static constexpr const char* key_prefix     = "peer:"; ///< base to compute the DHT listen key
-    dht::Value::Id id                           = dht::Value::INVALID_ID;
+    static constexpr const char* key_prefix = "peer:"; ///< base to compute the DHT listen key
+    dht::Value::Id id = dht::Value::INVALID_ID;
     std::string ice_msg {};
     bool isAnswer {false};
     MSGPACK_DEFINE_MAP(id, ice_msg, isAnswer)

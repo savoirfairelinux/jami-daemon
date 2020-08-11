@@ -124,7 +124,7 @@ public:
     /// Explicitly construct, copying from a  string.
     explicit FixedHash(std::string const& _s,
                        ConstructFromStringType _t = FromHex,
-                       ConstructFromHashType _ht  = FailIfDifferent)
+                       ConstructFromHashType _ht = FailIfDifferent)
         : FixedHash(_t == FromHex ? fromHex(_s, WhenError::Throw) : dev::asBytes(_s), _ht)
     {}
 
@@ -266,8 +266,8 @@ public:
     template<unsigned P, unsigned M>
     inline FixedHash<M> bloomPart() const
     {
-        unsigned const c_bloomBits  = M * 8;
-        unsigned const c_mask       = c_bloomBits - 1;
+        unsigned const c_bloomBits = M * 8;
+        unsigned const c_mask = c_bloomBits - 1;
         unsigned const c_bloomBytes = (StaticLog2<c_bloomBits>::result + 7) / 8;
 
         static_assert((M & (M - 1)) == 0, "M must be power-of-two");
@@ -311,10 +311,10 @@ template<unsigned T>
 class SecureFixedHash : private FixedHash<T>
 {
 public:
-    using ConstructFromHashType    = typename FixedHash<T>::ConstructFromHashType;
-    using ConstructFromStringType  = typename FixedHash<T>::ConstructFromStringType;
+    using ConstructFromHashType = typename FixedHash<T>::ConstructFromHashType;
+    using ConstructFromStringType = typename FixedHash<T>::ConstructFromStringType;
     using ConstructFromPointerType = typename FixedHash<T>::ConstructFromPointerType;
-    SecureFixedHash()              = default;
+    SecureFixedHash() = default;
     explicit SecureFixedHash(bytes const& _b,
                              ConstructFromHashType _t = FixedHash<T>::FailIfDifferent)
         : FixedHash<T>(_b, _t)
@@ -339,7 +339,7 @@ public:
     {}
     explicit SecureFixedHash(std::string const& _s,
                              ConstructFromStringType _t = FixedHash<T>::FromHex,
-                             ConstructFromHashType _ht  = FixedHash<T>::FailIfDifferent)
+                             ConstructFromHashType _ht = FixedHash<T>::FailIfDifferent)
         : FixedHash<T>(_s, _t, _ht)
     {}
     explicit SecureFixedHash(bytes const* _d, ConstructFromPointerType _t)
@@ -509,19 +509,19 @@ operator<<(std::ostream& _out, SecureFixedHash<N> const& _h)
 }
 
 // Common types of FixedHash.
-using h2048    = FixedHash<256>;
-using h1024    = FixedHash<128>;
-using h520     = FixedHash<65>;
-using h512     = FixedHash<64>;
-using h256     = FixedHash<32>;
-using h160     = FixedHash<20>;
-using h128     = FixedHash<16>;
-using h64      = FixedHash<8>;
-using h512s    = std::vector<h512>;
-using h256s    = std::vector<h256>;
-using h160s    = std::vector<h160>;
-using h256Set  = std::set<h256>;
-using h160Set  = std::set<h160>;
+using h2048 = FixedHash<256>;
+using h1024 = FixedHash<128>;
+using h520 = FixedHash<65>;
+using h512 = FixedHash<64>;
+using h256 = FixedHash<32>;
+using h160 = FixedHash<20>;
+using h128 = FixedHash<16>;
+using h64 = FixedHash<8>;
+using h512s = std::vector<h512>;
+using h256s = std::vector<h256>;
+using h160s = std::vector<h160>;
+using h256Set = std::set<h256>;
+using h160Set = std::set<h160>;
 using h256Hash = std::unordered_set<h256>;
 using h160Hash = std::unordered_set<h160>;
 

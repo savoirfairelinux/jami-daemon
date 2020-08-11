@@ -126,7 +126,7 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
     struct udev_list_entry* deventry;
     udev_list_entry_foreach(deventry, devlist)
     {
-        const char* path        = udev_list_entry_get_name(deventry);
+        const char* path = udev_list_entry_get_name(deventry);
         struct udev_device* dev = udev_device_new_from_syspath(udev_, path);
 
         if (is_v4l2(dev)) {
@@ -154,7 +154,7 @@ udev_failed:
     if (udev_)
         udev_unref(udev_);
     udev_mon_ = NULL;
-    udev_     = NULL;
+    udev_ = NULL;
 
     /* fallback : go through /dev/video* */
     for (int idx = 0;; ++idx) {
@@ -173,7 +173,7 @@ void
 VideoDeviceMonitorImpl::start()
 {
     probing_ = true;
-    thread_  = std::thread(&VideoDeviceMonitorImpl::run, this);
+    thread_ = std::thread(&VideoDeviceMonitorImpl::run, this);
 }
 
 VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
@@ -213,7 +213,7 @@ VideoDeviceMonitorImpl::run()
                 break;
             }
 
-            const char* node   = udev_device_get_devnode(dev);
+            const char* node = udev_device_get_devnode(dev);
             const char* action = udev_device_get_action(dev);
             if (!strcmp(action, "add")) {
                 JAMI_DBG("udev: adding %s", node);

@@ -54,10 +54,10 @@ struct Contact
     Contact() = default;
     Contact(const Json::Value& json)
     {
-        added     = json["added"].asInt();
-        removed   = json["removed"].asInt();
+        added = json["added"].asInt();
+        removed = json["removed"].asInt();
         confirmed = json["confirmed"].asBool();
-        banned    = json["banned"].asBool();
+        banned = json["banned"].asBool();
     }
 
     /**
@@ -72,7 +72,7 @@ struct Contact
         }
         if (c.removed > removed) {
             removed = c.removed;
-            banned  = c.banned;
+            banned = c.banned;
         }
         if (c.confirmed != confirmed) {
             confirmed = c.confirmed or confirmed;
@@ -150,7 +150,7 @@ struct DeviceSync : public dht::EncryptedValue<DeviceSync>
 
 struct KnownDevice
 {
-    using clock      = std::chrono::system_clock;
+    using clock = std::chrono::system_clock;
     using time_point = clock::time_point;
 
     /** Device certificate */
@@ -164,7 +164,7 @@ struct KnownDevice
 
     KnownDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
                 const std::string& n = {},
-                time_point sync      = time_point::min())
+                time_point sync = time_point::min())
         : certificate(cert)
         , name(n)
         , last_sync(sync)

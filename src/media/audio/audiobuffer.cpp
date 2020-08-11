@@ -57,7 +57,7 @@ AudioBuffer::AudioBuffer(const AudioBuffer& other, bool copy_content /* = false 
 AudioBuffer&
 AudioBuffer::operator=(const AudioBuffer& other)
 {
-    samples_    = other.samples_;
+    samples_ = other.samples_;
     sampleRate_ = other.sampleRate_;
     return *this;
 }
@@ -65,7 +65,7 @@ AudioBuffer::operator=(const AudioBuffer& other)
 AudioBuffer&
 AudioBuffer::operator=(AudioBuffer&& other)
 {
-    samples_    = std::move(other.samples_);
+    samples_ = std::move(other.samples_);
     sampleRate_ = other.sampleRate_;
     return *this;
 }
@@ -254,7 +254,7 @@ AudioBuffer::convertFloatPlanarToSigned16(uint8_t** extended_data,
             float inputChannelVal = *inputChannel++;
             // avoid saturation: limit val between -1 and 1
             inputChannelVal = std::max(-1.0f, std::min(inputChannelVal, 1.0f));
-            samples_[j][i]  = (int16_t)(inputChannelVal * 32768.0f);
+            samples_[j][i] = (int16_t)(inputChannelVal * 32768.0f);
         }
     }
 }
@@ -262,8 +262,8 @@ AudioBuffer::convertFloatPlanarToSigned16(uint8_t** extended_data,
 size_t
 AudioBuffer::mix(const AudioBuffer& other, bool up /* = true */)
 {
-    const bool upmix        = up && (other.samples_.size() < samples_.size());
-    const size_t samp_num   = std::min(frames(), other.frames());
+    const bool upmix = up && (other.samples_.size() < samples_.size());
+    const size_t samp_num = std::min(frames(), other.frames());
     const unsigned chan_num = upmix ? samples_.size()
                                     : std::min(samples_.size(), other.samples_.size());
 
@@ -301,7 +301,7 @@ AudioBuffer::copy(AudioBuffer& in,
     if (to_copy <= 0)
         return 0;
 
-    const bool upmix      = up && (in.samples_.size() < samples_.size());
+    const bool upmix = up && (in.samples_.size() < samples_.size());
     const size_t chan_num = upmix ? samples_.size() : std::min(in.samples_.size(), samples_.size());
 
     if ((pos_out + to_copy) > frames())
@@ -354,7 +354,7 @@ AudioBuffer::append(const AudioFrame& audioFrame)
         setFormat(newFormat);
     }
 
-    auto f       = frames();
+    auto f = frames();
     auto newSize = f + frame->nb_samples;
     resize(newSize);
 

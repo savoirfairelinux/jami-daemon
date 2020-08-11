@@ -84,13 +84,13 @@ VideoReceiveThread::setup()
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     }));
 
-    dstWidth_  = args_.width;
+    dstWidth_ = args_.width;
     dstHeight_ = args_.height;
 
     static const std::string SDP_FILENAME = "dummyFilename";
     if (args_.input.empty()) {
         args_.format = "sdp";
-        args_.input  = SDP_FILENAME;
+        args_.input = SDP_FILENAME;
     } else if (args_.input.substr(0, strlen("/dev/video")) == "/dev/video") {
         // it's a v4l device if starting with /dev/video
         // FIXME: This is not a robust way of checking if we mean to use a
@@ -195,7 +195,7 @@ VideoReceiveThread::configureVideoOutput()
 
     // Default size from input video
     if (dstWidth_ == 0 and dstHeight_ == 0) {
-        dstWidth_  = videoDecoder_->getWidth();
+        dstWidth_ = videoDecoder_->getWidth();
         dstHeight_ = videoDecoder_->getHeight();
     }
 

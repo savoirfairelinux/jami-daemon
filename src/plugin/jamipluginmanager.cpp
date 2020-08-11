@@ -63,9 +63,9 @@ namespace jami {
 std::map<std::string, std::string>
 checkManifestJsonContentValidity(const Json::Value& root)
 {
-    std::string name        = root.get("name", "").asString();
+    std::string name = root.get("name", "").asString();
     std::string description = root.get("description", "").asString();
-    std::string version     = root.get("version", "").asString();
+    std::string version = root.get("version", "").asString();
     if (!name.empty() || !version.empty()) {
         return {{"name", name}, {"description", description}, {"version", version}};
     } else {
@@ -178,8 +178,8 @@ JamiPluginManager::getPluginDetails(const std::string& rootPath)
     std::map<std::string, std::string> details = parseManifestFile(manifestPath(rootPath));
     if (!details.empty()) {
         details["iconPath"] = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "icon.png";
-        details["soPath"]   = rootPath + DIR_SEPARATOR_CH + "lib" + details["name"] + ".so";
-        detailsIt           = pluginDetailsMap_.emplace(rootPath, std::move(details)).first;
+        details["soPath"] = rootPath + DIR_SEPARATOR_CH + "lib" + details["name"] + ".so";
+        detailsIt = pluginDetailsMap_.emplace(rootPath, std::move(details)).first;
         return detailsIt->second;
     }
     return {};
@@ -207,8 +207,8 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
     int r {0};
     if (fileutils::isFile(jplPath)) {
         try {
-            auto manifestMap    = readPluginManifestFromArchive(jplPath);
-            std::string name    = manifestMap["name"];
+            auto manifestMap = readPluginManifestFromArchive(jplPath);
+            std::string name = manifestMap["name"];
             std::string version = manifestMap["version"];
             const std::string destinationDir {fileutils::get_data_dir() + DIR_SEPARATOR_CH
                                               + "plugins" + DIR_SEPARATOR_CH + name};
@@ -359,8 +359,8 @@ JamiPluginManager::getPluginPreferences(const std::string& rootPath)
             for (int i = 0; i < static_cast<int>(root.size()); i++) {
                 const Json::Value jsonPreference = root[i];
                 std::string category = jsonPreference.get("category", "NoCategory").asString();
-                std::string type     = jsonPreference.get("type", "None").asString();
-                std::string key      = jsonPreference.get("key", "None").asString();
+                std::string type = jsonPreference.get("type", "None").asString();
+                std::string key = jsonPreference.get("key", "None").asString();
                 if (type != "None" && key != "None") {
                     if (keys.find(key) == keys.end()) {
                         const auto& preferenceAttributes = parsePreferenceConfig(jsonPreference,
@@ -422,7 +422,7 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
                                        const std::string& key,
                                        const std::string& value)
 {
-    bool returnValue                                            = false;
+    bool returnValue = false;
     std::map<std::string, std::string> pluginUserPreferencesMap = getPluginUserPreferencesValuesMap(
         rootPath);
     std::map<std::string, std::string> pluginPreferencesMap = getPluginPreferencesValuesMap(
@@ -430,7 +430,7 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
 
     auto find = pluginPreferencesMap.find(key);
     if (find != pluginPreferencesMap.end()) {
-        pluginUserPreferencesMap[key]               = value;
+        pluginUserPreferencesMap[key] = value;
         const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePath(rootPath);
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
         if (!fs.good()) {
@@ -518,7 +518,7 @@ JamiPluginManager::registerServices()
     // Register pluginPreferences
     pm_.registerService("getPluginPreferences", [this](const DLPlugin* plugin, void* data) {
         auto ppp = static_cast<std::map<std::string, std::string>*>(data);
-        *ppp     = getPluginPreferencesValuesMap(getRootPathFromSoPath(plugin->getPath()));
+        *ppp = getPluginPreferencesValuesMap(getRootPathFromSoPath(plugin->getPath()));
         return 0;
     });
 

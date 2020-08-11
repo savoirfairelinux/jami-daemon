@@ -109,7 +109,7 @@ private:
     void setupVideoPipeline();
     void startSender();
     void startReceiver();
-    using clock      = std::chrono::steady_clock;
+    using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
     std::string input_;

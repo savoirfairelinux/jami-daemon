@@ -366,7 +366,7 @@ PulseLayer::createStreams(pa_context* c)
     auto onReady = [this] {
         bool playbackReady = not playback_ or playback_->isReady();
         bool ringtoneReady = not ringtone_ or ringtone_->isReady();
-        bool recordReady   = not record_ or record_->isReady();
+        bool recordReady = not record_ or record_->isReady();
         if (playbackReady and recordReady and ringtoneReady) {
             JAMI_DBG("All streams ready, starting !");
             if (playback_)
@@ -503,11 +503,11 @@ PulseLayer::writeToSpeaker()
         return;
 
     // available bytes to be written in pulseaudio internal buffer
-    AudioSample* data    = nullptr;
+    AudioSample* data = nullptr;
     size_t writableBytes = (size_t) -1;
     int ret = pa_stream_begin_write(playback_->stream(), (void**) &data, &writableBytes);
     if (ret == 0 and data and writableBytes != 0) {
-        writableBytes    = std::min(pa_stream_writable_size(playback_->stream()), writableBytes);
+        writableBytes = std::min(pa_stream_writable_size(playback_->stream()), writableBytes);
         const auto& buff = getToPlay(playback_->format(), writableBytes / playback_->frameSize());
         if (not buff or isPlaybackMuted_)
             memset(data, 0, writableBytes);
@@ -533,7 +533,7 @@ PulseLayer::readFromMic()
     if (bytes == 0)
         return;
 
-    size_t sample_size   = record_->frameSize();
+    size_t sample_size = record_->frameSize();
     const size_t samples = bytes / sample_size;
 
     auto out = std::make_shared<AudioFrame>(record_->format(), samples);
@@ -554,11 +554,11 @@ PulseLayer::ringtoneToSpeaker()
     if (!ringtone_ or !ringtone_->isReady())
         return;
 
-    AudioSample* data    = nullptr;
+    AudioSample* data = nullptr;
     size_t writableBytes = (size_t) -1;
     int ret = pa_stream_begin_write(ringtone_->stream(), (void**) &data, &writableBytes);
     if (ret == 0 and data and writableBytes != 0) {
-        writableBytes    = std::min(pa_stream_writable_size(ringtone_->stream()), writableBytes);
+        writableBytes = std::min(pa_stream_writable_size(ringtone_->stream()), writableBytes);
         const auto& buff = getToRing(ringtone_->format(), writableBytes / ringtone_->frameSize());
         if (not buff or isRingtoneMuted_)
             memset(data, 0, writableBytes);
@@ -650,13 +650,13 @@ PulseLayer::waitForDeviceList()
             return;
 
         // If a current device changed, restart streams
-        auto playbackInfo          = getDeviceInfos(sinkList_, getPreferredPlaybackDevice());
+        auto playbackInfo = getDeviceInfos(sinkList_, getPreferredPlaybackDevice());
         bool playbackDeviceChanged = !playback_
                                      or (!playbackInfo->name.empty()
                                          and playbackInfo->name
                                                  != stripEchoSufix(playback_->getDeviceName()));
 
-        auto recordInfo          = getDeviceInfos(sourceList_, getPreferredCaptureDevice());
+        auto recordInfo = getDeviceInfos(sourceList_, getPreferredCaptureDevice());
         bool recordDeviceChanged = !record_
                                    or (!recordInfo->name.empty()
                                        and recordInfo->name
@@ -696,9 +696,9 @@ PulseLayer::server_info_callback(pa_context*, const pa_server_info* i, void* use
              pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
              pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map));
 
-    PulseLayer* context          = static_cast<PulseLayer*>(userdata);
-    context->defaultSink_        = {};
-    context->defaultSource_      = {};
+    PulseLayer* context = static_cast<PulseLayer*>(userdata);
+    context->defaultSink_ = {};
+    context->defaultSource_ = {};
     context->defaultAudioFormat_ = {i->sample_spec.rate, i->sample_spec.channels};
     if (not context->sinkList_.empty())
         context->sinkList_.front().channel_map.channels = std::min(i->sample_spec.channels,

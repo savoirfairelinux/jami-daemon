@@ -71,10 +71,10 @@ AudioStream::AudioStream(pa_context* c,
 
     pa_buffer_attr attributes;
     attributes.maxlength = pa_usec_to_bytes(160 * PA_USEC_PER_MSEC, &sample_spec);
-    attributes.tlength   = pa_usec_to_bytes(80 * PA_USEC_PER_MSEC, &sample_spec);
-    attributes.prebuf    = 0;
-    attributes.fragsize  = pa_usec_to_bytes(80 * PA_USEC_PER_MSEC, &sample_spec);
-    attributes.minreq    = (uint32_t) -1;
+    attributes.tlength = pa_usec_to_bytes(80 * PA_USEC_PER_MSEC, &sample_spec);
+    attributes.prebuf = 0;
+    attributes.fragsize = pa_usec_to_bytes(80 * PA_USEC_PER_MSEC, &sample_spec);
+    attributes.minreq = (uint32_t) -1;
 
     pa_stream_set_state_callback(
         audiostream_,

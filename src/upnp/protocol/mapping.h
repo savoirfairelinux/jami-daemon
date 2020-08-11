@@ -42,13 +42,13 @@ class Mapping
 {
 public:
     constexpr static const char* UPNP_DEFAULT_MAPPING_DESCRIPTION = "RING";
-    constexpr static uint16_t UPNP_PORT_MIN                       = 1024;
-    constexpr static uint16_t UPNP_PORT_MAX                       = 65535;
+    constexpr static uint16_t UPNP_PORT_MIN = 1024;
+    constexpr static uint16_t UPNP_PORT_MAX = 65535;
 
-    Mapping(uint16_t portExternal          = 0,
-            uint16_t portInternal          = 0,
-            PortType type                  = PortType::UDP,
-            bool unique                    = true,
+    Mapping(uint16_t portExternal = 0,
+            uint16_t portInternal = 0,
+            PortType type = PortType::UDP,
+            bool unique = true,
             const std::string& description = UPNP_DEFAULT_MAPPING_DESCRIPTION);
     Mapping(Mapping&& other) noexcept;
     Mapping(const Mapping& other);

@@ -45,7 +45,7 @@ public:
     BandwidthUsage get_bw_state(float estimation, float thresh);
 
 private:
-    using clock      = std::chrono::steady_clock;
+    using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
     float get_estimate_m(float k, int d_m);

@@ -41,7 +41,7 @@ namespace jami {
 std::wstring
 to_wstring(const std::string& str, int codePage)
 {
-    int srcLength    = (int) str.length();
+    int srcLength = (int) str.length();
     int requiredSize = MultiByteToWideChar(codePage, 0, str.c_str(), srcLength, nullptr, 0);
     if (!requiredSize) {
         throw std::runtime_error("Can't convert string to wstring");
@@ -56,7 +56,7 @@ to_wstring(const std::string& str, int codePage)
 std::string
 to_string(const std::wstring& wstr, int codePage)
 {
-    int srcLength    = (int) wstr.length();
+    int srcLength = (int) wstr.length();
     int requiredSize = WideCharToMultiByte(codePage, 0, wstr.c_str(), srcLength, nullptr, 0, 0, 0);
     if (!requiredSize) {
         throw std::runtime_error("Can't convert wstring to string");

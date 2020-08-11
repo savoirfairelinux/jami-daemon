@@ -324,7 +324,7 @@ UPnPContext::requestMappingAdd(
             != currentMappings.end()) {
             // Keep searching until you find a unique port.
             bool unique_found = false;
-            portDesired       = generateRandomPort(upnp::Mapping::UPNP_PORT_MIN,
+            portDesired = generateRandomPort(upnp::Mapping::UPNP_PORT_MIN,
                                              upnp::Mapping::UPNP_PORT_MAX);
             while (not unique_found) {
                 if (std::find(currentMappings.begin(), currentMappings.end(), portDesired)

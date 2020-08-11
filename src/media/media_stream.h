@@ -101,19 +101,19 @@ struct MediaStream
             timeBase = c->time_base;
             switch (c->codec_type) {
             case AVMEDIA_TYPE_VIDEO:
-                format    = c->pix_fmt;
-                isVideo   = true;
-                width     = c->width;
-                height    = c->height;
-                bitrate   = c->bit_rate;
+                format = c->pix_fmt;
+                isVideo = true;
+                width = c->width;
+                height = c->height;
+                bitrate = c->bit_rate;
                 frameRate = c->framerate;
                 break;
             case AVMEDIA_TYPE_AUDIO:
-                format     = c->sample_fmt;
-                isVideo    = false;
+                format = c->sample_fmt;
+                isVideo = false;
                 sampleRate = c->sample_rate;
                 nbChannels = c->channels;
-                frameSize  = c->frame_size;
+                frameSize = c->frame_size;
                 break;
             default:
                 break;
@@ -140,12 +140,12 @@ struct MediaStream
         // update all info possible (AVFrame has no fps or bitrate data)
         format = f->format;
         if (isVideo) {
-            width  = f->width;
+            width = f->width;
             height = f->height;
         } else {
             sampleRate = f->sample_rate;
             nbChannels = f->channels;
-            timeBase   = rational<int>(1, f->sample_rate);
+            timeBase = rational<int>(1, f->sample_rate);
             if (!frameSize)
                 frameSize = f->nb_samples;
         }

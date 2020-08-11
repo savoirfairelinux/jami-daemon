@@ -117,8 +117,8 @@ exportAccounts(const std::vector<std::string>& accountIDs,
     }
 
     std::size_t found = filepath.find_last_of(DIR_SEPARATOR_CH);
-    auto toDir        = filepath.substr(0, found);
-    auto filename     = filepath.substr(found + 1);
+    auto toDir = filepath.substr(0, found);
+    auto filename = filepath.substr(found + 1);
 
     if (!fileutils::isDirectory(toDir)) {
         JAMI_ERR("%s is not a directory", toDir.c_str());
@@ -142,8 +142,8 @@ exportAccounts(const std::vector<std::string>& accountIDs,
     root["accounts"] = array;
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"]  = "";
-    auto output              = Json::writeString(wbuilder, root);
+    wbuilder["indentation"] = "";
+    auto output = Json::writeString(wbuilder, root);
 
     // Compress
     std::vector<uint8_t> compressed;
@@ -202,7 +202,7 @@ importAccounts(const std::string& archivePath, const std::string& password)
 
     try {
         const auto* char_file_begin = reinterpret_cast<const char*>(&file[0]);
-        const auto* char_file_end   = reinterpret_cast<const char*>(&file[file.size()]);
+        const auto* char_file_end = reinterpret_cast<const char*>(&file[file.size()]);
 
         // Add
         std::string err;
@@ -218,7 +218,7 @@ importAccounts(const std::string& archivePath, const std::string& password)
         for (int i = 0, n = accounts.size(); i < n; ++i) {
             // Generate a new account id
             auto accountId = jami::Manager::instance().getNewAccountId();
-            auto details   = jsonValueToAccount(accounts[i], accountId);
+            auto details = jsonValueToAccount(accounts[i], accountId);
             jami::Manager::instance().addAccount(details, accountId);
         }
     } catch (const std::exception& ex) {
@@ -284,7 +284,7 @@ decompress(const std::vector<uint8_t>& str)
     if (inflateInit(&zs) != Z_OK)
         throw std::runtime_error("inflateInit failed while decompressing.");
 
-    zs.next_in  = (Bytef*) str.data();
+    zs.next_in = (Bytef*) str.data();
     zs.avail_in = str.size();
 
     int ret;
@@ -293,7 +293,7 @@ decompress(const std::vector<uint8_t>& str)
     // get the decompressed bytes blockwise using repeated calls to inflate
     do {
         std::array<uint8_t, 32768> outbuffer;
-        zs.next_out  = reinterpret_cast<Bytef*>(outbuffer.data());
+        zs.next_out = reinterpret_cast<Bytef*>(outbuffer.data());
         zs.avail_out = outbuffer.size();
 
         ret = inflate(&zs, 0);
@@ -331,7 +331,7 @@ openGzip(const std::string& path, const char* mode)
 #ifdef ENABLE_PLUGIN
 // LIBARCHIVE DEFINITIONS
 //==========================
-using ArchivePtr      = std::unique_ptr<archive, void (*)(archive*)>;
+using ArchivePtr = std::unique_ptr<archive, void (*)(archive*)>;
 using ArchiveEntryPtr = std::unique_ptr<archive_entry, void (*)(archive_entry*)>;
 
 struct DataBlock
@@ -407,7 +407,7 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
 #ifdef ENABLE_PLUGIN
     int r;
 
-    ArchivePtr archiveReader     = createArchiveReader();
+    ArchivePtr archiveReader = createArchiveReader();
     ArchivePtr archiveDiskWriter = createArchiveDiskWriter();
     struct archive_entry* entry;
 

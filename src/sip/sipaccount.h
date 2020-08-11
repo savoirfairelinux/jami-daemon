@@ -50,8 +50,8 @@ namespace Conf {
 const char* const KEEP_ALIVE_ENABLED = "keepAlive";
 
 // TODO: write an object to store credential which implement serializable
-const char* const SRTP_KEY         = "srtp";
-const char* const SRTP_ENABLE_KEY  = "enable";
+const char* const SRTP_KEY = "srtp";
+const char* const SRTP_ENABLE_KEY = "enable";
 const char* const KEY_EXCHANGE_KEY = "keyExchange";
 const char* const RTP_FALLBACK_KEY = "rtpFallback";
 } // namespace Conf
@@ -201,7 +201,7 @@ public:
     std::vector<std::map<std::string, std::string>> getCredentials() const;
 
     virtual void setRegistrationState(RegistrationState state,
-                                      unsigned code                 = 0,
+                                      unsigned code = 0,
                                       const std::string& detail_str = {}) override;
 
     /**
@@ -385,8 +385,8 @@ public:
 
     void setReceivedParameter(const std::string& received)
     {
-        receivedParameter_  = received;
-        via_addr_.host.ptr  = (char*) receivedParameter_.c_str();
+        receivedParameter_ = received;
+        via_addr_.host.ptr = (char*) receivedParameter_.c_str();
         via_addr_.host.slen = receivedParameter_.size();
     }
 
@@ -404,7 +404,7 @@ public:
 
     void setRPort(int rPort)
     {
-        rPort_         = rPort;
+        rPort_ = rPort;
         via_addr_.port = rPort;
     }
 

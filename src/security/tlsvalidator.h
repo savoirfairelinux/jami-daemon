@@ -184,9 +184,9 @@ public:
      * @param caList An optional CA list to use for certificate validation
      */
     TlsValidator(const std::string& certificate,
-                 const std::string& privatekey       = "",
+                 const std::string& privatekey = "",
                  const std::string& privatekeyPasswd = "",
-                 const std::string& caList           = "");
+                 const std::string& caList = "");
 
     TlsValidator(const std::vector<std::vector<uint8_t>>& certificate_chain_raw);
 

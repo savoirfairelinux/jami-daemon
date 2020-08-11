@@ -145,7 +145,7 @@ AccountFactory::getAccount(const std::string& id) const
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     for (const auto& item : accountMaps_) {
-        const auto& map  = item.second;
+        const auto& map = item.second;
         const auto& iter = map.find(id);
         if (iter != map.cend())
             return iter->second;

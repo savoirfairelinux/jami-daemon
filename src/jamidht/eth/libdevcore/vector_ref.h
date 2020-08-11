@@ -20,8 +20,8 @@ template<class _T>
 class vector_ref
 {
 public:
-    using value_type         = _T;
-    using element_type       = _T;
+    using value_type = _T;
+    using element_type = _T;
     using mutable_value_type = typename std::
         conditional<std::is_const<_T>::value, typename std::remove_const<_T>::type, _T>::type;
 
@@ -130,12 +130,12 @@ public:
     }
     void retarget(_T* _d, size_t _s)
     {
-        m_data  = _d;
+        m_data = _d;
         m_count = _s;
     }
     void retarget(std::vector<_T> const& _t)
     {
-        m_data  = _t.data();
+        m_data = _t.data();
         m_count = _t.size();
     }
     template<class T>
@@ -167,10 +167,10 @@ public:
     void cleanse()
     {
         static std::atomic<unsigned char> s_cleanseCounter {0u};
-        uint8_t* p       = (uint8_t*) begin();
+        uint8_t* p = (uint8_t*) begin();
         size_t const len = (uint8_t*) end() - p;
-        size_t loop      = len;
-        size_t count     = s_cleanseCounter;
+        size_t loop = len;
+        size_t count = s_cleanseCounter;
         while (loop--) {
             *(p++) = (uint8_t) count;
             count += (17 + ((size_t) p & 0xf));
@@ -212,7 +212,7 @@ public:
 
     void reset()
     {
-        m_data  = nullptr;
+        m_data = nullptr;
         m_count = 0;
     }
 

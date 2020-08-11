@@ -51,7 +51,7 @@ public:
             std::string&& locationURL,
             std::string&& controlURL,
             std::string&& eventSubURL,
-            IpAddr&& localIp  = {},
+            IpAddr&& localIp = {},
             IpAddr&& publicIp = {});
     ~UPnPIGD() {}
     const std::string& getUDN() const { return UDN_; }

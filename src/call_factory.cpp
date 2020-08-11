@@ -38,7 +38,7 @@ CallFactory::removeCall(Call& call)
     const auto& id = call.getCallId();
     JAMI_DBG("Removing call %s", id.c_str());
     const auto& linkType = call.getLinkType();
-    auto& map            = callMaps_.at(linkType);
+    auto& map = callMaps_.at(linkType);
     map.erase(id);
     JAMI_DBG("Remaining %zu %s call(s)", map.size(), linkType);
 }
@@ -102,7 +102,7 @@ CallFactory::getCall<Call>(const std::string& id) const
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
 
     for (const auto& item : callMaps_) {
-        const auto& map  = item.second;
+        const auto& map = item.second;
         const auto& iter = map.find(id);
         if (iter != map.cend())
             return iter->second;

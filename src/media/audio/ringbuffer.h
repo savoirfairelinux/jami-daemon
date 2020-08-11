@@ -44,8 +44,8 @@ namespace jami {
 class RingBuffer
 {
 public:
-    using clock         = std::chrono::high_resolution_clock;
-    using time_point    = clock::time_point;
+    using clock = std::chrono::high_resolution_clock;
+    using time_point = clock::time_point;
     using FrameCallback = std::function<void(const std::shared_ptr<AudioFrame>&)>;
 
     /**

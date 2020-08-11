@@ -87,7 +87,7 @@ DSP::process(AudioBuffer& buff, int samples)
     }
 
     auto& channelData = buff.getData();
-    size_t index      = 0;
+    size_t index = 0;
     for (auto& c : channelData) {
         if (index < dspStates_.size() and dspStates_[index].get())
             speex_preprocess_run(dspStates_[index].get(), c.data());

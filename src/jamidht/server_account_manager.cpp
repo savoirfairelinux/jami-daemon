@@ -35,9 +35,9 @@ using Request = dht::http::Request;
 
 #define JAMI_PATH_LOGIN "/api/login"
 #define JAMI_PATH_AUTH  "/api/auth"
-constexpr std::string_view PATH_DEVICE   = JAMI_PATH_AUTH "/device";
-constexpr std::string_view PATH_DEVICES  = JAMI_PATH_AUTH "/devices";
-constexpr std::string_view PATH_SEARCH   = JAMI_PATH_AUTH "/directory/search";
+constexpr std::string_view PATH_DEVICE = JAMI_PATH_AUTH "/device";
+constexpr std::string_view PATH_DEVICES = JAMI_PATH_AUTH "/devices";
+constexpr std::string_view PATH_SEARCH = JAMI_PATH_AUTH "/directory/search";
 constexpr std::string_view PATH_CONTACTS = JAMI_PATH_AUTH "/contacts";
 
 ServerAccountManager::ServerAccountManager(const std::string& path,
@@ -67,19 +67,19 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                          AuthFailureCallback onFailure,
                                          OnChangeCallback onChange)
 {
-    auto ctx         = std::make_shared<AuthContext>();
-    ctx->key         = key;
-    ctx->request     = buildRequest(key);
-    ctx->deviceName  = std::move(deviceName);
+    auto ctx = std::make_shared<AuthContext>();
+    ctx->key = key;
+    ctx->request = buildRequest(key);
+    ctx->deviceName = std::move(deviceName);
     ctx->credentials = dynamic_unique_cast<ServerAccountCredentials>(std::move(credentials));
-    ctx->onSuccess   = std::move(onSuccess);
-    ctx->onFailure   = std::move(onFailure);
+    ctx->onSuccess = std::move(onSuccess);
+    ctx->onFailure = std::move(onFailure);
     if (not ctx->credentials or ctx->credentials->username.empty()) {
         ctx->onFailure(AuthError::INVALID_ARGUMENTS, "invalid credentials");
         return;
     }
 
-    onChange_             = std::move(onChange);
+    onChange_ = std::move(onChange);
     const std::string url = managerHostname_ + PATH_DEVICE;
     JAMI_WARN("[Auth] authentication with: %s to %s",
               ctx->credentials->username.c_str(),
@@ -91,8 +91,8 @@ ServerAccountManager::initAuthentication(PrivateKey key,
             Json::Value body;
             {
                 std::stringstream ss;
-                auto csr           = ctx->request.get()->toString();
-                body["csr"]        = csr;
+                auto csr = ctx->request.get()->toString();
+                body["csr"] = csr;
                 body["deviceName"] = ctx->deviceName;
             }
             auto request = std::make_shared<Request>(
@@ -142,11 +142,11 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                     auto receiptSignature = base64::decode(
                                         json["receiptSignature"].asString());
 
-                                    auto info             = std::make_unique<AccountInfo>();
-                                    info->identity.first  = ctx->key.get();
+                                    auto info = std::make_unique<AccountInfo>();
+                                    info->identity.first = ctx->key.get();
                                     info->identity.second = cert;
-                                    info->deviceId        = cert->getPublicKey().getId().toString();
-                                    info->accountId       = accountCert->getId().toString();
+                                    info->deviceId = cert->getPublicKey().getId().toString();
+                                    info->accountId = accountCert->getId().toString();
                                     info->contacts = std::make_unique<ContactList>(accountCert,
                                                                                    this_.path_,
                                                                                    this_.onChange_);
@@ -167,7 +167,7 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                     info->username = ctx->credentials->username;
 
                                     this_.creds_ = std::move(ctx->credentials);
-                                    this_.info_  = std::move(info);
+                                    this_.info_ = std::move(info);
                                     std::map<std::string, std::string> config;
                                     if (json.isMember("nameServer")) {
                                         auto nameServer = json["nameServer"].asString();
@@ -226,7 +226,7 @@ ServerAccountManager::authenticateDevice()
                 auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
                 if (response.status_code >= 200 && response.status_code < 300) {
                     auto scopeStr = json["scope"].asString();
-                    auto scope    = scopeStr == "DEVICE"
+                    auto scope = scopeStr == "DEVICE"
                                      ? TokenScope::Device
                                      : (scopeStr == "USER" ? TokenScope::User : TokenScope::None);
                     auto expires_in = json["expires_in"].asLargestUInt();
@@ -292,7 +292,7 @@ ServerAccountManager::authError(TokenScope scope)
     {
         std::lock_guard<std::mutex> lock(tokenLock_);
         if (scope <= tokenScope_) {
-            token_      = {};
+            token_ = {};
             tokenScope_ = TokenScope::None;
         }
     }
@@ -306,8 +306,8 @@ ServerAccountManager::setToken(std::string token,
                                std::chrono::steady_clock::time_point expiration)
 {
     std::lock_guard<std::mutex> lock(tokenLock_);
-    token_       = std::move(token);
-    tokenScope_  = scope;
+    token_ = std::move(token);
+    tokenScope_ = scope;
     tokenExpire_ = expiration;
 
     nameDir_.get().setToken(token_);
@@ -355,13 +355,13 @@ ServerAccountManager::sendAccountRequest(const std::shared_ptr<dht::http::Reques
 void
 ServerAccountManager::syncDevices()
 {
-    const std::string urlDevices  = managerHostname_ + PATH_DEVICES;
+    const std::string urlDevices = managerHostname_ + PATH_DEVICES;
     const std::string urlContacts = managerHostname_ + PATH_CONTACTS;
 
     JAMI_WARN("[Auth] syncContacts %s", urlContacts.c_str());
     Json::Value jsonContacts(Json::arrayValue);
     for (const auto& contact : info_->contacts->getContacts()) {
-        auto jsonContact   = contact.second.toJson();
+        auto jsonContact = contact.second.toJson();
         jsonContact["uri"] = contact.first.toString();
         jsonContacts.append(std::move(jsonContact));
     }

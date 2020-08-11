@@ -57,7 +57,7 @@ PjsipErrorCategory::message(int condition) const
 std::string
 fetchHeaderValue(pjsip_msg* msg, const std::string& field)
 {
-    pj_str_t name                 = pj_str((char*) field.c_str());
+    pj_str_t name = pj_str((char*) field.c_str());
     pjsip_generic_string_hdr* hdr = static_cast<pjsip_generic_string_hdr*>(
         pjsip_msg_find_hdr_by_name(msg, &name, NULL));
 
@@ -80,7 +80,7 @@ createRouteSet(const std::string& route, pj_pool_t* hdr_pool)
     pjsip_route_hdr* route_set = pjsip_route_hdr_create(hdr_pool);
 
     std::string host;
-    int port     = 0;
+    int port = 0;
     size_t found = route.find(':');
     if (found != std::string::npos) {
         host = route.substr(0, found);
@@ -89,9 +89,9 @@ createRouteSet(const std::string& route, pj_pool_t* hdr_pool)
         host = route;
 
     pjsip_route_hdr* routing = pjsip_route_hdr_create(hdr_pool);
-    pjsip_sip_uri* url       = pjsip_sip_uri_create(hdr_pool, 0);
-    url->lr_param            = 1;
-    routing->name_addr.uri   = (pjsip_uri*) url;
+    pjsip_sip_uri* url = pjsip_sip_uri_create(hdr_pool, 0);
+    url->lr_param = 1;
+    routing->name_addr.uri = (pjsip_uri*) url;
     pj_strdup2(hdr_pool, &url->host, host.c_str());
     url->port = port;
 
@@ -136,7 +136,7 @@ stripSipUriPrefix(std::string& sipUri)
 {
     // Remove sip: prefix
     static const char SIP_PREFIX[] = "sip:";
-    size_t found                   = sipUri.find(SIP_PREFIX);
+    size_t found = sipUri.find(SIP_PREFIX);
 
     if (found != std::string::npos)
         sipUri.erase(found, (sizeof SIP_PREFIX) - 1);
@@ -175,7 +175,7 @@ void
 addContactHeader(const pj_str_t* contact_str, pjsip_tx_data* tdata)
 {
     pjsip_contact_hdr* contact = pjsip_contact_hdr_create(tdata->pool);
-    contact->uri               = pjsip_parse_uri(tdata->pool,
+    contact->uri = pjsip_parse_uri(tdata->pool,
                                    contact_str->ptr,
                                    contact_str->slen,
                                    PJSIP_PARSE_URI_AS_NAMEADDR);
@@ -214,7 +214,7 @@ sockaddr_to_host_port(pj_pool_t* pool, pjsip_host_port* host_port, const pj_sock
     host_port->host.ptr = (char*) pj_pool_alloc(pool, PJ_INET6_ADDRSTRLEN + 4);
     pj_sockaddr_print(addr, host_port->host.ptr, PJ_INET6_ADDRSTRLEN + 4, 0);
     host_port->host.slen = pj_ansi_strlen(host_port->host.ptr);
-    host_port->port      = pj_sockaddr_get_port(addr);
+    host_port->port = pj_sockaddr_get_port(addr);
 }
 
 } // namespace sip_utils

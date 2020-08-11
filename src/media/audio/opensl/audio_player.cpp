@@ -111,19 +111,19 @@ AudioPlayer::AudioPlayer(jami::AudioFormat sampleFormat,
     SLDataLocator_AndroidSimpleBufferQueue loc_bufq = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
                                                        DEVICE_SHADOW_BUFFER_QUEUE_LEN};
 
-    auto format_pcm       = convertToSLSampleFormat(sampleInfo_);
+    auto format_pcm = convertToSLSampleFormat(sampleInfo_);
     SLDataSource audioSrc = {&loc_bufq, &format_pcm};
 
     // configure audio sink
     SLDataLocator_OutputMix loc_outmix = {SL_DATALOCATOR_OUTPUTMIX, outputMixObjectItf_};
-    SLDataSink audioSnk                = {&loc_outmix, nullptr};
+    SLDataSink audioSnk = {&loc_outmix, nullptr};
     /*
      * create fast path audio player: SL_IID_BUFFERQUEUE and SL_IID_VOLUME interfaces ok,
      * NO others!
      */
     SLInterfaceID ids[3] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME, SL_IID_ANDROIDCONFIGURATION};
-    SLboolean req[3]     = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
-    result               = (*slEngine)->CreateAudioPlayer(slEngine,
+    SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+    result = (*slEngine)->CreateAudioPlayer(slEngine,
                                             &playerObjectItf_,
                                             &audioSrc,
                                             &audioSnk,

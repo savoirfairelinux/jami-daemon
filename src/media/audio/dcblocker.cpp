@@ -40,7 +40,7 @@ DcBlocker::doProcess(AudioSample* out, AudioSample* in, unsigned samples, struct
     for (unsigned i = 0; i < samples; ++i) {
         state->x_ = in[i];
 
-        state->y_   = (AudioSample)((float) state->x_ - (float) state->xm1_
+        state->y_ = (AudioSample)((float) state->x_ - (float) state->xm1_
                                   + 0.9999 * (float) state->y_);
         state->xm1_ = state->x_;
         state->ym1_ = state->y_;
@@ -60,7 +60,7 @@ DcBlocker::process(AudioSample* out, AudioSample* in, int samples)
 void
 DcBlocker::process(AudioBuffer& buf)
 {
-    const size_t chans   = buf.channels();
+    const size_t chans = buf.channels();
     const size_t samples = buf.frames();
     if (chans > states.size())
         states.resize(buf.channels(), StreamState {0, 0, 0, 0});

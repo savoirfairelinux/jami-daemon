@@ -42,13 +42,13 @@ ArchiveAccountManager::initAuthentication(PrivateKey key,
                                           AuthFailureCallback onFailure,
                                           OnChangeCallback onChange)
 {
-    auto ctx         = std::make_shared<AuthContext>();
-    ctx->key         = key;
-    ctx->request     = buildRequest(key);
-    ctx->deviceName  = std::move(deviceName);
+    auto ctx = std::make_shared<AuthContext>();
+    ctx->key = key;
+    ctx->request = buildRequest(key);
+    ctx->deviceName = std::move(deviceName);
     ctx->credentials = dynamic_unique_cast<ArchiveAccountCredentials>(std::move(credentials));
-    ctx->onSuccess   = std::move(onSuccess);
-    ctx->onFailure   = std::move(onFailure);
+    ctx->onSuccess = std::move(onSuccess);
+    ctx->onFailure = std::move(onFailure);
 
     if (not ctx->credentials) {
         onFailure(AuthError::INVALID_ARGUMENTS, "invalid credentials");
@@ -127,7 +127,7 @@ ArchiveAccountManager::updateCertificates(AccountArchive& archive, dht::crypto::
     bool updated = false;
 
     auto& cert = archive.id.second;
-    auto ca    = cert->issuer;
+    auto ca = cert->issuer;
     // Update CA if possible and relevant
     if (not ca or (not ca->issuer and (not ca->isCA() or ca->getExpiration() < clock::now()))) {
         ca = std::make_shared<Certificate>(
@@ -162,7 +162,7 @@ ArchiveAccountManager::createAccount(AuthContext& ctx)
 {
     AccountArchive a;
     auto future_keypair = dht::ThreadPool::computation().get<dev::KeyPair>(&dev::KeyPair::create);
-    auto ca             = dht::crypto::generateIdentity("Jami CA");
+    auto ca = dht::crypto::generateIdentity("Jami CA");
     if (!ca.first || !ca.second) {
         throw std::runtime_error("Can't generate CA for this account.");
     }
@@ -173,9 +173,9 @@ ArchiveAccountManager::createAccount(AuthContext& ctx)
     JAMI_WARN("[Auth] new account: CA: %s, RingID: %s",
               ca.second->getId().toString().c_str(),
               a.id.second->getId().toString().c_str());
-    a.ca_key     = ca.first;
+    a.ca_key = ca.first;
     auto keypair = future_keypair.get();
-    a.eth_key    = keypair.secret().makeInsecure().asBytes();
+    a.eth_key = keypair.secret().makeInsecure().asBytes();
     onArchiveLoaded(ctx, std::move(a));
 }
 
@@ -274,13 +274,13 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
                 },
                 [=, &s](bool ok) {
                     JAMI_DBG("[Auth] DHT archive search ended at %s", /**/ loc.toString().c_str());
-                    s.first  = true;
+                    s.first = true;
                     s.second = ok;
                     searchEnded();
                 });
         } catch (const std::exception& e) {
             // JAMI_ERR("Error computing kedht::ThreadPool::computation().run(ys: %s", e.what());
-            s.first  = true;
+            s.first = true;
             s.second = true;
             searchEnded();
             return;
@@ -334,14 +334,14 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a)
 
     auto deviceCertificate = std::make_shared<dht::crypto::Certificate>(
         dht::crypto::Certificate::generate(*request, a.id));
-    auto receipt          = makeReceipt(a.id, *deviceCertificate, ethAccount);
+    auto receipt = makeReceipt(a.id, *deviceCertificate, ethAccount);
     auto receiptSignature = a.id.first->sign({receipt.first.begin(), receipt.first.end()});
 
-    auto info             = std::make_unique<AccountInfo>();
-    info->identity.first  = ctx.key.get();
+    auto info = std::make_unique<AccountInfo>();
+    info->identity.first = ctx.key.get();
     info->identity.second = deviceCertificate;
-    info->accountId       = a.id.second->getId().toString();
-    info->deviceId        = deviceCertificate->getPublicKey().getId().toString();
+    info->accountId = a.id.second->getId().toString();
+    info->deviceId = deviceCertificate->getPublicKey().getId().toString();
     if (ctx.deviceName.empty())
         ctx.deviceName = info->deviceId.substr(8);
 
@@ -349,8 +349,8 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a)
     info->contacts->setContacts(a.contacts);
     info->contacts->foundAccountDevice(deviceCertificate, ctx.deviceName, clock::now());
     info->ethAccount = ethAccount;
-    info->announce   = std::move(receipt.second);
-    info_            = std::move(info);
+    info->announce = std::move(receipt.second);
+    info_ = std::move(info);
 
     JAMI_WARN("[Auth] created new device: %s", info_->deviceId.c_str());
     ctx.onSuccess(*info_,
@@ -365,7 +365,7 @@ ArchiveAccountManager::computeKeys(const std::string& password,
                                    bool previous)
 {
     // Compute time seed
-    auto now   = std::chrono::duration_cast<std::chrono::seconds>(clock::now().time_since_epoch());
+    auto now = std::chrono::duration_cast<std::chrono::seconds>(clock::now().time_since_epoch());
     auto tseed = now.count() / std::chrono::seconds(EXPORT_KEY_RENEWAL_TIME).count();
     if (previous)
         tseed--;
@@ -591,7 +591,7 @@ ArchiveAccountManager::addDevice(const std::string& password, AddDeviceCallback 
 {
     dht::ThreadPool::computation().run([onAsync = onAsync_, password, cb = std::move(cb)]() mutable {
         onAsync([password = std::move(password),
-                 cb       = std::move(cb)](AccountManager& accountManager) mutable {
+                 cb = std::move(cb)](AccountManager& accountManager) mutable {
             auto& this_ = *static_cast<ArchiveAccountManager*>(&accountManager);
 
             std::vector<uint8_t> key;
@@ -654,8 +654,8 @@ ArchiveAccountManager::revokeDevice(const std::string& password,
                             return;
                         }
                         onAsync([cb,
-                                 crt      = std::move(crt),
-                                 fa       = std::move(fa),
+                                 crt = std::move(crt),
+                                 fa = std::move(fa),
                                  password = std::move(password)](
                                     AccountManager& accountManager) mutable {
                             auto& this_ = *static_cast<ArchiveAccountManager*>(&accountManager);
@@ -737,12 +737,12 @@ ArchiveAccountManager::registerName(const std::string& password,
     std::string ethAccount;
 
     try {
-        auto archive    = readArchive(password);
+        auto archive = readArchive(password);
         auto privateKey = archive.id.first;
-        auto pk         = privateKey->getPublicKey();
-        publickey       = pk.toString();
-        accountId       = pk.getId().toString();
-        signedName      = base64::encode(
+        auto pk = privateKey->getPublicKey();
+        publickey = pk.toString();
+        accountId = pk.getId().toString();
+        signedName = base64::encode(
             privateKey->sign(std::vector<uint8_t>(nameLowercase.begin(), nameLowercase.end())));
         ethAccount = dev::KeyPair(dev::Secret(archive.eth_key)).address().hex();
     } catch (const std::exception& e) {

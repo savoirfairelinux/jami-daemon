@@ -265,7 +265,7 @@ HardwareAccel::transfer(const VideoFrame& frame)
         }
 
         auto framePtr = std::make_unique<VideoFrame>();
-        auto hwFrame  = framePtr->pointer();
+        auto hwFrame = framePtr->pointer();
 
         if ((ret = av_hwframe_get_buffer(framesCtx_, hwFrame, 0)) < 0) {
             JAMI_ERR() << "Failed to allocate hardware buffer: "
@@ -295,8 +295,8 @@ void
 HardwareAccel::setDetails(AVCodecContext* codecCtx)
 {
     if (type_ == CODEC_DECODER) {
-        codecCtx->hw_device_ctx         = av_buffer_ref(deviceCtx_);
-        codecCtx->get_format            = getFormatCb;
+        codecCtx->hw_device_ctx = av_buffer_ref(deviceCtx_);
+        codecCtx->get_format = getFormatCb;
         codecCtx->thread_safe_callbacks = 1;
     } else if (type_ == CODEC_ENCODER) {
         if (framesCtx_)
@@ -318,11 +318,11 @@ HardwareAccel::initFrame()
     if (!framesCtx_)
         return false;
 
-    auto ctx               = reinterpret_cast<AVHWFramesContext*>(framesCtx_->data);
-    ctx->format            = format_;
-    ctx->sw_format         = swFormat_;
-    ctx->width             = width_;
-    ctx->height            = height_;
+    auto ctx = reinterpret_cast<AVHWFramesContext*>(framesCtx_->data);
+    ctx->format = format_;
+    ctx->sw_format = swFormat_;
+    ctx->width = width_;
+    ctx->height = height_;
     ctx->initial_pool_size = 20; // TODO try other values
 
     if ((ret = av_hwframe_ctx_init(framesCtx_)) < 0) {
@@ -341,7 +341,7 @@ HardwareAccel::linkHardware(AVBufferRef* framesCtx)
     if (framesCtx) {
         // Force sw_format to match swFormat_. Frame is never transferred to main
         // memory when hardware is linked, so the sw_format doesn't matter.
-        auto hw       = reinterpret_cast<AVHWFramesContext*>(framesCtx->data);
+        auto hw = reinterpret_cast<AVHWFramesContext*>(framesCtx->data);
         hw->sw_format = swFormat_;
 
         if (framesCtx_)
@@ -361,7 +361,7 @@ std::unique_ptr<VideoFrame>
 HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desiredFormat)
 {
     auto input = frame.pointer();
-    auto out   = std::make_unique<VideoFrame>();
+    auto out = std::make_unique<VideoFrame>();
 
     auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input->format));
     if (desc && not(desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
@@ -369,7 +369,7 @@ HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desir
         return out;
     }
 
-    auto output    = out->pointer();
+    auto output = out->pointer();
     output->format = desiredFormat;
 
     int ret = av_hwframe_transfer_data(output, input, 0);
@@ -415,15 +415,15 @@ HardwareAccel::getCompatibleAccel(AVCodecID id, int width, int height, CodecType
             auto hwtype = AV_HWDEVICE_TYPE_NONE;
             while ((hwtype = av_hwdevice_iterate_types(hwtype)) != AV_HWDEVICE_TYPE_NONE) {
                 if (hwtype == api.hwType) {
-                    auto accel              = HardwareAccel(id,
+                    auto accel = HardwareAccel(id,
                                                api.name,
                                                api.hwType,
                                                api.format,
                                                api.swFormat,
                                                type,
                                                api.dynBitrate);
-                    accel.height_           = height;
-                    accel.width_            = width;
+                    accel.height_ = height;
+                    accel.width_ = width;
                     accel.possible_devices_ = api.possible_devices;
                     l.emplace_back(std::move(accel));
                 }

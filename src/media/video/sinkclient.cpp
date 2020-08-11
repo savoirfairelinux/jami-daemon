@@ -132,7 +132,7 @@ ShmHolder::ShmHolder(const std::string& name)
 
     if (not name.empty()) {
         openedName_ = name;
-        fd_         = ::shm_open(openedName_.c_str(), flags, perms);
+        fd_ = ::shm_open(openedName_.c_str(), flags, perms);
         if (fd_ < 0)
             shmFailedWithErrno("shm_open");
     } else {
@@ -140,7 +140,7 @@ ShmHolder::ShmHolder(const std::string& name)
             std::ostringstream tmpName;
             tmpName << PACKAGE_NAME << "_shm_" << getpid() << "_" << i;
             openedName_ = tmpName.str();
-            fd_         = ::shm_open(openedName_.c_str(), flags, perms);
+            fd_ = ::shm_open(openedName_.c_str(), flags, perms);
             if (fd_ < 0 and errno != EEXIST)
                 shmFailedWithErrno("shm_open");
         }
@@ -222,14 +222,14 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
         SemGuardLock lk {area_->mutex};
 
         area_->frameSize = frameSize;
-        area_->mapSize   = areaSize;
+        area_->mapSize = areaSize;
 
         // Compute aligned IO pointers
         // Note: we not using std::align as not implemented in 4.9
         // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57350
-        auto p             = reinterpret_cast<std::uintptr_t>(area_->data);
+        auto p = reinterpret_cast<std::uintptr_t>(area_->data);
         area_->writeOffset = ((p + 15) & ~15) - p;
-        area_->readOffset  = area_->writeOffset + frameSize;
+        area_->readOffset = area_->writeOffset + frameSize;
     }
 
     return true;
@@ -238,9 +238,9 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
 void
 ShmHolder::renderFrame(const VideoFrame& src) noexcept
 {
-    const auto width     = src.width();
-    const auto height    = src.height();
-    const auto format    = AV_PIX_FMT_BGRA;
+    const auto width = src.width();
+    const auto height = src.height();
+    const auto format = AV_PIX_FMT_BGRA;
     const auto frameSize = videoFrameSize(format, width, height);
 
     if (!resizeArea(frameSize)) {
@@ -332,7 +332,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
 #ifdef DEBUG_FPS
-    auto currentTime                            = std::chrono::system_clock::now();
+    auto currentTime = std::chrono::system_clock::now();
     const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
     ++frameCount_;
     if (seconds.count() > 1) {
@@ -340,7 +340,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         fps << frameCount_ / seconds.count();
         // Send the framerate in smartInfo
         Smartools::getInstance().setFrameRate(id_, fps.str());
-        frameCount_     = 0;
+        frameCount_ = 0;
         lastFrameDebug_ = currentTime;
     }
 #endif
@@ -370,13 +370,13 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             frame = std::static_pointer_cast<VideoFrame>(frame_p);
         AVFrameSideData* side_data = av_frame_get_side_data(frame->pointer(),
                                                             AV_FRAME_DATA_DISPLAYMATRIX);
-        int angle                  = 0;
+        int angle = 0;
         if (side_data) {
             auto matrix_rotation = reinterpret_cast<int32_t*>(side_data->data);
-            angle                = -av_display_rotation_get(matrix_rotation);
+            angle = -av_display_rotation_get(matrix_rotation);
         }
         if (angle != rotation_) {
-            filter_   = getTransposeFilter(angle,
+            filter_ = getTransposeFilter(angle,
                                          FILTER_INPUT_NAME,
                                          frame->width(),
                                          frame->height(),
@@ -398,7 +398,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #endif
         if (target_.pull) {
             VideoFrame dst;
-            const int width  = frame->width();
+            const int width = frame->width();
             const int height = frame->height();
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
             const int format = AV_PIX_FMT_RGBA;
@@ -409,7 +409,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             if (bytes > 0) {
                 if (auto buffer_ptr = target_.pull(bytes)) {
                     buffer_ptr->format = format;
-                    buffer_ptr->width  = width;
+                    buffer_ptr->width = width;
                     buffer_ptr->height = height;
                     dst.setFromMemory(buffer_ptr->ptr, format, width, height);
                     scaler_->scale(*frame, dst);
@@ -423,7 +423,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 void
 SinkClient::setFrameSize(int width, int height)
 {
-    width_  = width;
+    width_ = width;
     height_ = height;
     if (width > 0 and height > 0) {
         JAMI_WARN("Start sink <%s / %s>, size=%dx%d, mixer=%u",

@@ -70,13 +70,13 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngin
                                       SL_IODEVICE_AUDIOINPUT,
                                       SL_DEFAULTDEVICEID_AUDIOINPUT,
                                       nullptr};
-    SLDataSource audioSrc          = {&loc_dev, nullptr};
+    SLDataSource audioSrc = {&loc_dev, nullptr};
 
     // configure audio sink
     SLDataLocator_AndroidSimpleBufferQueue loc_bq = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
                                                      DEVICE_SHADOW_BUFFER_QUEUE_LEN};
 
-    auto format_pcm     = convertToSLSampleFormat(sampleInfo_);
+    auto format_pcm = convertToSLSampleFormat(sampleInfo_);
     SLDataSink audioSnk = {&loc_bq, &format_pcm};
 
     // create audio recorder
@@ -86,7 +86,7 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngin
                                  SL_IID_ANDROIDACOUSTICECHOCANCELLATION,
                                  SL_IID_ANDROIDAUTOMATICGAINCONTROL,
                                  SL_IID_ANDROIDNOISESUPPRESSION};
-    const SLboolean req[1]    = {SL_BOOLEAN_TRUE};
+    const SLboolean req[1] = {SL_BOOLEAN_TRUE};
     SLresult result;
     result = (*slEngine)->CreateAudioRecorder(slEngine,
                                               &recObjectItf_,
@@ -99,7 +99,7 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngin
 
     SLAndroidConfigurationItf recordConfig;
     SLint32 streamType = SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION;
-    result             = (*recObjectItf_)
+    result = (*recObjectItf_)
                  ->GetInterface(recObjectItf_, SL_IID_ANDROIDCONFIGURATION, &recordConfig);
     result = (*recordConfig)
                  ->SetConfiguration(recordConfig,
@@ -116,8 +116,8 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngin
 
     /* Check actual performance mode granted*/
     SLuint32 modeRetrieved = SL_ANDROID_PERFORMANCE_NONE;
-    SLuint32 modeSize      = sizeof(SLuint32);
-    result                 = (*recordConfig)
+    SLuint32 modeSize = sizeof(SLuint32);
+    result = (*recordConfig)
                  ->GetConfiguration(recordConfig,
                                     SL_ANDROID_KEY_PERFORMANCE_MODE,
                                     &modeSize,
@@ -277,7 +277,7 @@ AudioRecorder::setBufQueues(AudioQueue* freeQ, AudioQueue* recQ)
 {
     assert(freeQ && recQ);
     freeQueue_ = freeQ;
-    recQueue_  = recQ;
+    recQueue_ = recQ;
 }
 
 size_t

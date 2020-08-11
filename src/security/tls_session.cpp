@@ -91,7 +91,7 @@ static constexpr auto COOKIE_TIMEOUT = std::chrono::seconds(
     10); // Time to wait for a cookie packet from client
 static constexpr int MIN_MTU {
     512 - 20 - 8}; // minimal payload size of a DTLS packet carried by an IPv4 packet
-static constexpr uint8_t HEARTBEAT_TRIES        = 1; // Number of tries at each heartbeat ping send
+static constexpr uint8_t HEARTBEAT_TRIES = 1; // Number of tries at each heartbeat ping send
 static constexpr auto HEARTBEAT_RETRANS_TIMEOUT = std::chrono::milliseconds(
     700); // gnutls heartbeat retransmission timeout for each ping (in milliseconds)
 static constexpr auto HEARTBEAT_TOTAL_TIMEOUT
@@ -201,7 +201,7 @@ private:
 class TlsSession::TlsSessionImpl
 {
 public:
-    using clock        = std::chrono::steady_clock;
+    using clock = std::chrono::steady_clock;
     using StateHandler = std::function<TlsSessionState(TlsSessionState state)>;
 
     // Constants (ctor init.)
@@ -467,7 +467,7 @@ TlsSession::TlsSessionImpl::initCredentials()
     }
     if (params_.peer_ca) {
         auto chain = params_.peer_ca->getChainWithRevocations();
-        auto ret   = gnutls_certificate_set_x509_trust(*xcred_,
+        auto ret = gnutls_certificate_set_x509_trust(*xcred_,
                                                      chain.first.data(),
                                                      chain.first.size());
         if (not chain.second.empty())
@@ -608,7 +608,7 @@ TlsSession::TlsSessionImpl::send(const ValueType* tx_data, std::size_t tx_size, 
     // Split incoming data into chunck suitable for the underlying transport
     while (total_written < tx_size) {
         auto chunck_sz = std::min(max_tx_sz, tx_size - total_written);
-        auto data_seq  = tx_data + total_written;
+        auto data_seq = tx_data + total_written;
         ssize_t nwritten;
         do {
             nwritten = gnutls_record_send(session_, data_seq, chunck_sz);
@@ -672,7 +672,7 @@ TlsSession::TlsSessionImpl::sendRawVec(const giovec_t* iov, int iovcnt)
     ssize_t sent = 0;
     for (int i = 0; i < iovcnt; ++i) {
         const giovec_t& dat = iov[i];
-        ssize_t ret         = sendRaw(dat.iov_base, dat.iov_len);
+        ssize_t ret = sendRaw(dat.iov_base, dat.iov_len);
         if (ret < 0)
             return -1;
         sent += ret;
@@ -702,7 +702,7 @@ TlsSession::TlsSessionImpl::recvRaw(void* buf, size_t size)
         return -1;
     }
 
-    const auto& pkt         = rxQueue_.front();
+    const auto& pkt = rxQueue_.front();
     const std::size_t count = std::min(pkt.size(), size);
     std::copy_n(pkt.begin(), count, reinterpret_cast<ValueType*>(buf));
     rxQueue_.pop_front();
@@ -759,7 +759,7 @@ TlsSession::TlsSessionImpl::initFromRecordState(int offset)
         return false;
     }
 
-    baseSeq_   = array2uint(seq) + offset;
+    baseSeq_ = array2uint(seq) + offset;
     gapOffset_ = baseSeq_;
     lastRxSeq_ = baseSeq_ - 1;
     JAMI_DBG("[TLS] Initial sequence number: %lx", baseSeq_);
@@ -988,7 +988,7 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
     // Aware about certificates updates
     if (callbacks_.onCertificatesUpdate) {
         unsigned int remote_count;
-        auto local  = gnutls_certificate_get_ours(session_);
+        auto local = gnutls_certificate_get_ours(session_);
         auto remote = gnutls_certificate_get_peers(session_, &remote_count);
         callbacks_.onCertificatesUpdate(local, remote, remote_count);
     }
@@ -1055,7 +1055,7 @@ TlsSession::TlsSessionImpl::pathMtuHeartbeat()
                                   HEARTBEAT_TOTAL_TIMEOUT.count());
 
     int errno_send = GNUTLS_E_SUCCESS;
-    int mtuOffset  = 0;
+    int mtuOffset = 0;
 
     // when the remote (server) has a IPV6 interface selected by ICE, and local (client) has a IPV4
     // selected, the path MTU discovery triggers errors for packets too big on server side because
@@ -1175,7 +1175,7 @@ TlsSession::TlsSessionImpl::flushRxQueue()
 
     auto now = clock::now();
 
-    auto item        = std::begin(reorderBuffer_);
+    auto item = std::begin(reorderBuffer_);
     auto next_offset = item->first;
 
     // Wait for next continuous packet until timeout
@@ -1191,11 +1191,11 @@ TlsSession::TlsSessionImpl::flushRxQueue()
     // Loop on offset-ordered received packet until a discontinuity in sequence number
     while (item != std::end(reorderBuffer_) and item->first <= next_offset) {
         auto pkt_offset = item->first;
-        auto pkt        = std::move(item->second);
+        auto pkt = std::move(item->second);
 
         // Remove item before unlocking to not trash the item' relationship
         next_offset = pkt_offset + 1;
-        item        = reorderBuffer_.erase(item);
+        item = reorderBuffer_.erase(item);
 
         if (callbacks_.onRxData) {
             lk.unlock();
@@ -1204,7 +1204,7 @@ TlsSession::TlsSessionImpl::flushRxQueue()
         }
     }
 
-    gapOffset_    = std::max(gapOffset_, next_offset);
+    gapOffset_ = std::max(gapOffset_, next_offset);
     lastReadTime_ = now;
 }
 
@@ -1250,7 +1250,7 @@ TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
             mtuProbe_ = MTUS_[std::max(0, hbPingRecved_ - 1)];
             gnutls_dtls_set_mtu(session_, mtuProbe_);
             maxPayload_ = gnutls_dtls_get_data_mtu(session_);
-            pmtudOver_  = true;
+            pmtudOver_ = true;
             JAMI_DBG() << "[TLS] maxPayload: " << maxPayload_.load();
 
             if (!initFromRecordState(-1))
@@ -1354,8 +1354,8 @@ TlsSession::currentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const
 {
     // get current session cipher suite info
     gnutls_cipher_algorithm_t cipher, s_cipher = gnutls_cipher_get(pimpl_->session_);
-    gnutls_kx_algorithm_t kx, s_kx             = gnutls_kx_get(pimpl_->session_);
-    gnutls_mac_algorithm_t mac, s_mac          = gnutls_mac_get(pimpl_->session_);
+    gnutls_kx_algorithm_t kx, s_kx = gnutls_kx_get(pimpl_->session_);
+    gnutls_mac_algorithm_t mac, s_mac = gnutls_mac_get(pimpl_->session_);
 
     // Loop on all known cipher suites until matching with session data, extract it's cs_id
     for (std::size_t i = 0;; ++i) {

@@ -73,8 +73,8 @@ class VideoGenerator : public VideoFrameActiveWriter
 public:
     VideoGenerator() {}
 
-    virtual int getWidth() const                 = 0;
-    virtual int getHeight() const                = 0;
+    virtual int getWidth() const = 0;
+    virtual int getHeight() const = 0;
     virtual AVPixelFormat getPixelFormat() const = 0;
 
     std::shared_ptr<VideoFrame> obtainLastFrame();
@@ -88,7 +88,7 @@ public:
 
 private:
     std::shared_ptr<VideoFrame> writableFrame_ = nullptr;
-    std::shared_ptr<VideoFrame> lastFrame_     = nullptr;
+    std::shared_ptr<VideoFrame> lastFrame_ = nullptr;
     std::mutex mutex_ {}; // lock writableFrame_/lastFrame_ access
 };
 

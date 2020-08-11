@@ -44,7 +44,7 @@
 namespace jami {
 
 using MutexGuard = std::lock_guard<std::mutex>;
-using MutexLock  = std::unique_lock<std::mutex>;
+using MutexLock = std::unique_lock<std::mutex>;
 
 inline namespace {
 
@@ -140,7 +140,7 @@ TurnTransportPimpl::onTurnState(pj_turn_state_t old_state, pj_turn_state_t new_s
         pj_turn_session_info info;
         pj_turn_sock_get_info(relay, &info);
         peerRelayAddr = IpAddr {info.relay_addr};
-        mappedAddr    = IpAddr {info.mapped_addr};
+        mappedAddr = IpAddr {info.mapped_addr};
         JAMI_DBG("TURN server ready, peer relay address: %s",
                  peerRelayAddr.toString(true, true).c_str());
         state = RelayState::READY;
@@ -217,7 +217,7 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
     if (server.isUnspecified())
         throw std::invalid_argument("invalid turn server address");
 
-    pimpl_           = std::unique_ptr<TurnTransportPimpl>(new TurnTransportPimpl);
+    pimpl_ = std::unique_ptr<TurnTransportPimpl>(new TurnTransportPimpl);
     pimpl_->settings = params;
 
     // PJSIP memory pool

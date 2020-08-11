@@ -56,7 +56,7 @@ class VideoInput : public VideoGenerator, public std::enable_shared_from_this<Vi
 {
 public:
     VideoInput(VideoInputMode inputMode = VideoInputMode::Undefined,
-               const std::string& id_   = "local");
+               const std::string& id_ = "local");
     ~VideoInput();
 
     // as VideoGenerator
@@ -97,7 +97,7 @@ private:
     std::string id_;
     std::string currentResource_;
     std::atomic<bool> switchPending_ = {false};
-    std::atomic_bool isStopped_      = {false};
+    std::atomic_bool isStopped_ = {false};
 
     DeviceParams decOpts_;
     std::promise<DeviceParams> foundDecOpts_;

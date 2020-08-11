@@ -73,7 +73,7 @@ AudioSender::setup(SocketPair& socketPair)
         audioEncoder_->openOutput(dest_, "rtp");
         audioEncoder_->setOptions(args_);
         auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
-        auto ms    = MediaStream("audio sender", codec->audioformat);
+        auto ms = MediaStream("audio sender", codec->audioformat);
         audioEncoder_->setOptions(ms);
         audioEncoder_->addStream(args_.codec->systemCodecInfo);
         audioEncoder_->setInitSeqVal(seqVal_);
@@ -90,7 +90,7 @@ AudioSender::setup(SocketPair& socketPair)
 #endif
 
     // NOTE do after encoder is ready to encode
-    auto codec  = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
+    auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
     audioInput_ = jami::getAudioInput(id_);
     audioInput_->setFormat(codec->audioformat);
     audioInput_->attach(this);
@@ -102,14 +102,14 @@ void
 AudioSender::update(Observable<std::shared_ptr<jami::MediaFrame>>* /*obs*/,
                     const std::shared_ptr<jami::MediaFrame>& framePtr)
 {
-    auto frame        = framePtr->pointer();
-    auto ms           = MediaStream("a:local",
+    auto frame = framePtr->pointer();
+    auto ms = MediaStream("a:local",
                           frame->format,
                           rational<int>(1, frame->sample_rate),
                           frame->sample_rate,
                           frame->channels,
                           frame->nb_samples);
-    frame->pts        = sent_samples;
+    frame->pts = sent_samples;
     ms.firstTimestamp = frame->pts;
     sent_samples += frame->nb_samples;
 

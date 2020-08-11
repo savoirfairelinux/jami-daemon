@@ -52,7 +52,7 @@ template<typename T, std::size_t N = 0>
 class _ChannelBase
 {
 public:
-    using value_type           = T;
+    using value_type = T;
     const std::size_t max_size = N; ///< maximal size of the Channel, 0 means no size limits
 
     // Pop operations

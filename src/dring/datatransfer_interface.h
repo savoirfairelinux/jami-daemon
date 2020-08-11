@@ -173,7 +173,7 @@ struct DRING_PUBLIC DataTransferSignal
     struct DRING_PUBLIC DataTransferEvent
     {
         constexpr static const char* name = "DataTransferEvent";
-        using cb_type                     = void(const DataTransferId& transferId, int eventCode);
+        using cb_type = void(const DataTransferId& transferId, int eventCode);
     };
 };
 

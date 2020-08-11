@@ -50,8 +50,8 @@ MessageEngine::sendMessage(const std::string& to, const std::map<std::string, st
         do {
             token = std::uniform_int_distribution<MessageToken> {1, DRING_ID_MAX_VAL}(account_.rand);
         } while (peerMessages.find(token) != peerMessages.end());
-        auto m                   = peerMessages.emplace(token, Message {});
-        m.first->second.to       = to;
+        auto m = peerMessages.emplace(token, Message {});
+        m.first->second.to = to;
         m.first->second.payloads = payloads;
         save_();
     }
@@ -206,20 +206,20 @@ MessageEngine::load()
         std::lock_guard<std::mutex> lock(messagesMutex_);
         long unsigned loaded {0};
         for (auto i = root.begin(); i != root.end(); ++i) {
-            auto to         = i.key().asString();
+            auto to = i.key().asString();
             auto& pmessages = *i;
-            auto& p         = messages_[to];
+            auto& p = messages_[to];
             for (auto m = pmessages.begin(); m != pmessages.end(); ++m) {
                 const auto& jmsg = *m;
                 MessageToken token;
                 std::istringstream iss(m.key().asString());
                 iss >> std::hex >> token;
                 Message msg;
-                msg.status     = (MessageStatus) jmsg["status"].asInt();
-                msg.to         = jmsg["to"].asString();
+                msg.status = (MessageStatus) jmsg["status"].asInt();
+                msg.to = jmsg["to"].asString();
                 auto wall_time = std::chrono::system_clock::from_time_t(jmsg["last_op"].asInt64());
-                msg.last_op    = clock::now() + (wall_time - std::chrono::system_clock::now());
-                msg.retried    = jmsg.get("retried", 0).asUInt();
+                msg.last_op = clock::now() + (wall_time - std::chrono::system_clock::now());
+                msg.retried = jmsg.get("retried", 0).asUInt();
                 const auto& pl = jmsg["payload"];
                 for (auto p = pl.begin(); p != pl.end(); ++p)
                     msg.payloads[p.key().asString()] = p->asString();
@@ -261,9 +261,9 @@ MessageEngine::save_() const
                 Json::Value msg;
                 std::ostringstream msgsId;
                 msgsId << std::hex << m.first;
-                msg["status"]  = (int) (v.status == MessageStatus::SENDING ? MessageStatus::IDLE
+                msg["status"] = (int) (v.status == MessageStatus::SENDING ? MessageStatus::IDLE
                                                                           : v.status);
-                msg["to"]      = v.to;
+                msg["to"] = v.to;
                 auto wall_time = std::chrono::system_clock::now()
                                  + std::chrono::duration_cast<std::chrono::system_clock::duration>(
                                      v.last_op - clock::now());
@@ -278,15 +278,15 @@ MessageEngine::save_() const
             root[c.first] = std::move(peerRoot);
         }
         // Save asynchronously
-        dht::ThreadPool::computation().run([path       = savePath_,
-                                            root       = std::move(root),
-                                            accountID  = account_.getAccountID(),
+        dht::ThreadPool::computation().run([path = savePath_,
+                                            root = std::move(root),
+                                            accountID = account_.getAccountID(),
                                             messageNum = messages_.size()] {
             std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
             try {
                 Json::StreamWriterBuilder wbuilder;
                 wbuilder["commentStyle"] = "None";
-                wbuilder["indentation"]  = "";
+                wbuilder["indentation"] = "";
                 const std::unique_ptr<Json::StreamWriter> writer(wbuilder.newStreamWriter());
                 std::ofstream file;
                 file.exceptions(std::ifstream::failbit | std::ifstream::badbit);

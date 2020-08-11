@@ -234,7 +234,7 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
     void rtpSetupSuccess(MediaType type);
 
 private:
-    using clock      = std::chrono::steady_clock;
+    using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
     NON_COPYABLE(SIPCall);
@@ -247,7 +247,7 @@ private:
     /**
      * Call Streams and some typedefs
      */
-    using MediaStream        = Observable<std::shared_ptr<MediaFrame>>;
+    using MediaStream = Observable<std::shared_ptr<MediaFrame>>;
     using MediaStreamSubject = PublishMapSubject<std::shared_ptr<MediaFrame>, AVFrame*>;
 
 #ifdef ENABLE_PLUGIN

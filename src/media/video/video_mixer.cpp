@@ -141,7 +141,7 @@ VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
     auto lock(rwMutex_.write());
 
-    auto src    = std::unique_ptr<VideoMixerSource>(new VideoMixerSource);
+    auto src = std::unique_ptr<VideoMixerSource>(new VideoMixerSource);
     src->source = ob;
     sources_.emplace_back(std::move(src));
     layoutUpdated_ += 1;
@@ -157,7 +157,7 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
             // Handle the case where the current shown source leave the conference
             if (activeSource_ == ob) {
                 currentLayout_ = Layout::GRID;
-                activeSource_  = nullptr;
+                activeSource_ = nullptr;
             }
             sources_.remove(x);
             layoutUpdated_ += 1;
@@ -189,8 +189,8 @@ VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob,
 void
 VideoMixer::process()
 {
-    const auto now   = std::chrono::system_clock::now();
-    const auto diff  = now - lastProcess_;
+    const auto now = std::chrono::system_clock::now();
+    const auto diff = now - lastProcess_;
     const auto delay = FRAME_DURATION - diff;
     if (delay.count() > 0)
         std::this_thread::sleep_for(delay);
@@ -209,9 +209,9 @@ VideoMixer::process()
     {
         auto lock(rwMutex_.read());
 
-        int i                     = 0;
-        bool activeFound          = false;
-        bool needsUpdate          = layoutUpdated_ > 0;
+        int i = 0;
+        bool activeFound = false;
+        bool needsUpdate = layoutUpdated_ > 0;
         bool successfullyRendered = true;
         for (auto& x : sources_) {
             /* thread stop pending? */
@@ -292,21 +292,21 @@ VideoMixer::render_frame(VideoFrame& output,
 
     int cell_width, cell_height, xoff, yoff;
     if (not needsUpdate) {
-        cell_width  = source->w;
+        cell_width = source->w;
         cell_height = source->h;
-        xoff        = source->x;
-        yoff        = source->y;
+        xoff = source->x;
+        yoff = source->y;
     } else {
-        const int n    = currentLayout_ == Layout::ONE_BIG ? 1 : sources_.size();
+        const int n = currentLayout_ == Layout::ONE_BIG ? 1 : sources_.size();
         const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL ? std::max(6, n)
                                                                       : ceil(sqrt(n));
         if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL && index == 0) {
             // In ONE_BIG_WITH_SMALL, the first line at the top is the previews
             // The rest is the active source
-            cell_width  = width_;
+            cell_width = width_;
             cell_height = height_ - height_ / zoom;
         } else {
-            cell_width  = width_ / zoom;
+            cell_width = width_ / zoom;
             cell_height = height_ / zoom;
         }
         if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
@@ -333,10 +333,10 @@ VideoMixer::render_frame(VideoFrame& output,
 
     AVFrameSideData* sideData = av_frame_get_side_data(frame->pointer(),
                                                        AV_FRAME_DATA_DISPLAYMATRIX);
-    int angle                 = 0;
+    int angle = 0;
     if (sideData) {
         auto matrixRotation = reinterpret_cast<int32_t*>(sideData->data);
-        angle               = -av_display_rotation_get(matrixRotation);
+        angle = -av_display_rotation_get(matrixRotation);
     }
     const constexpr char filterIn[] = "mixin";
     if (angle != source->rotation) {
@@ -346,7 +346,7 @@ VideoMixer::render_frame(VideoFrame& output,
                                                            frame->height(),
                                                            frame->format(),
                                                            false);
-        source->rotation       = angle;
+        source->rotation = angle;
     }
     if (source->rotationFilter) {
         source->rotationFilter->feedInput(frame->pointer(), filterIn);
@@ -363,7 +363,7 @@ VideoMixer::setParameters(int width, int height, AVPixelFormat format)
 {
     auto lock(rwMutex_.write());
 
-    width_  = width;
+    width_ = width;
     height_ = height;
     format_ = format;
 

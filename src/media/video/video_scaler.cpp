@@ -44,7 +44,7 @@ void
 VideoScaler::scale(const VideoFrame& input, VideoFrame& output)
 {
     const auto input_frame = input.pointer();
-    auto output_frame      = output.pointer();
+    auto output_frame = output.pointer();
 
     ctx_ = sws_getCachedContext(ctx_,
                                 input_frame->width,
@@ -97,7 +97,7 @@ VideoScaler::scale_and_pad(const VideoFrame& input,
                            bool keep_aspect)
 {
     const auto input_frame = input.pointer();
-    auto output_frame      = output.pointer();
+    auto output_frame = output.pointer();
 
     /* Correct destination width/height and offset if we need to keep input
      * frame aspect.
@@ -108,11 +108,11 @@ VideoScaler::scale_and_pad(const VideoFrame& input,
 
         if (local_ratio > input_ratio) {
             auto old_dest_width = dest_width;
-            dest_width          = dest_height * input_ratio;
+            dest_width = dest_height * input_ratio;
             xoff += (old_dest_width - dest_width) / 2;
         } else {
             auto old_dest_heigth = dest_height;
-            dest_height          = dest_width / input_ratio;
+            dest_height = dest_width / input_ratio;
             yoff += (old_dest_heigth - dest_height) / 2;
         }
     }
@@ -149,7 +149,7 @@ VideoScaler::scale_and_pad(const VideoFrame& input,
             x_shift = -((-x_shift) >> out_desc->log2_chroma_w);
             y_shift = -((-y_shift) >> out_desc->log2_chroma_h);
         }
-        auto x_step  = out_desc->comp[i].step;
+        auto x_step = out_desc->comp[i].step;
         tmp_data_[i] = output_frame->data[i] + y_shift * output_frame->linesize[i]
                        + x_shift * x_step;
     }

@@ -89,7 +89,7 @@ pj_bool_t
 PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data* rdata)
 {
     pjsip_method* method = &rdata->msg_info.msg->line.req.method;
-    pj_str_t* str        = &method->name;
+    pj_str_t* str = &method->name;
     std::string request(str->ptr, str->slen);
 //    pj_str_t contact;
 #if 0 // DISABLED: removed IP2IP support, tuleap: #448

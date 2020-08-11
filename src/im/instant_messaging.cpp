@@ -61,7 +61,7 @@ createMessageBody(pj_pool_t* pool,
     if (std::string::npos == sep) {
         mimeType = payload.first;
     } else {
-        mimeType   = payload.first.substr(0, sep);
+        mimeType = payload.first.substr(0, sep);
         parameters = payload.first.substr(sep + 1);
     }
 
@@ -72,21 +72,21 @@ createMessageBody(pj_pool_t* pool,
         throw im::InstantMessageException("invalid mime type");
     }
 
-    const auto& type    = mimeType.substr(0, sep);
+    const auto& type = mimeType.substr(0, sep);
     const auto& subtype = mimeType.substr(sep + 1);
 
     // create part
-    auto type_pj    = pj_strdup3(pool, type.c_str());
+    auto type_pj = pj_strdup3(pool, type.c_str());
     auto subtype_pj = pj_strdup3(pool, subtype.c_str());
     auto message_pj = pj_strdup3(pool, payload.second.c_str());
-    *body_p         = pjsip_msg_body_create(pool, &type_pj, &subtype_pj, &message_pj);
+    *body_p = pjsip_msg_body_create(pool, &type_pj, &subtype_pj, &message_pj);
 
     if (not parameters.size())
         return;
 
     // now try to add parameters one by one
     do {
-        sep                   = parameters.find(';');
+        sep = parameters.find(';');
         const auto& paramPair = parameters.substr(0, sep);
         if (not paramPair.size())
             break;
@@ -98,7 +98,7 @@ createMessageBody(pj_pool_t* pool,
             throw im::InstantMessageException("invalid parameter");
         }
 
-        const auto& arg   = paramPair.substr(0, paramSplit);
+        const auto& arg = paramPair.substr(0, paramSplit);
         const auto& value = paramPair.substr(paramSplit + 1);
 
         // add to the body content type
@@ -108,8 +108,8 @@ createMessageBody(pj_pool_t* pool,
         pj_strtrim(&value_pj);
 
         pjsip_param* param = PJ_POOL_ALLOC_T(pool, pjsip_param);
-        param->name        = arg_pj;
-        param->value       = value_pj;
+        param->name = arg_pj;
+        param->value = value_pj;
         pj_list_push_back(&(*body_p)->content_type.param, param);
 
         // next parameter?
@@ -167,7 +167,7 @@ im::sendSipMessage(pjsip_inv_session* session, const std::map<std::string, std::
         sip_utils::PJDialogLock dialog_lock {dialog};
 
         pjsip_tx_data* tdata = nullptr;
-        auto status          = pjsip_dlg_create_request(dialog, &msg_method, -1, &tdata);
+        auto status = pjsip_dlg_create_request(dialog, &msg_method, -1, &tdata);
         if (status != PJ_SUCCESS) {
             JAMI_ERR("pjsip_dlg_create_request failed: %s", sip_utils::sip_strerror(status).c_str());
             throw InstantMessageException("Internal SIP error");

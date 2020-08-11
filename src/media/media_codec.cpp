@@ -155,11 +155,11 @@ AccountCodecInfo::operator=(const AccountCodecInfo& o)
 {
     if (&systemCodecInfo != &o.systemCodecInfo)
         throw std::runtime_error("cannot assign codec info object pointing to another codec.");
-    order       = o.order;
-    isActive    = o.isActive;
+    order = o.order;
+    isActive = o.isActive;
     payloadType = o.payloadType;
-    bitrate     = o.bitrate;
-    quality     = o.quality;
+    bitrate = o.bitrate;
+    quality = o.quality;
     return *this;
 }
 
@@ -187,11 +187,11 @@ AccountAudioCodecInfo::setCodecSpecifications(const std::map<std::string, std::s
     decltype(bitrate) tmp_bitrate = jami::stoi(
         details.at(DRing::Account::ConfProperties::CodecInfo::BITRATE));
     decltype(audioformat) tmp_audioformat = audioformat;
-    tmp_audioformat.sample_rate           = jami::stoi(
+    tmp_audioformat.sample_rate = jami::stoi(
         details.at(DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE));
 
     // copy back if no exception was raised
-    bitrate     = tmp_bitrate;
+    bitrate = tmp_bitrate;
     audioformat = tmp_audioformat;
 }
 

@@ -93,7 +93,7 @@ getDeviceUniqueName(PDEV_BROADCAST_DEVICEINTERFACE pbdi)
         return std::tolower(c);
     });
 
-    auto pos    = unique_name.find_last_of("#");
+    auto pos = unique_name.find_last_of("#");
     unique_name = unique_name.substr(0, pos);
 
     return unique_name;
@@ -116,9 +116,9 @@ registerDeviceInterfaceToHwnd(HWND hWnd, HDEVNOTIFY* hDeviceNotify)
     DEV_BROADCAST_DEVICEINTERFACE NotificationFilter;
 
     ZeroMemory(&NotificationFilter, sizeof(NotificationFilter));
-    NotificationFilter.dbcc_size       = sizeof(DEV_BROADCAST_DEVICEINTERFACE);
+    NotificationFilter.dbcc_size = sizeof(DEV_BROADCAST_DEVICEINTERFACE);
     NotificationFilter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
-    NotificationFilter.dbcc_classguid  = guidCamera;
+    NotificationFilter.dbcc_classguid = guidCamera;
 
     *hDeviceNotify = RegisterDeviceNotification(hWnd,
                                                 &NotificationFilter,
@@ -142,7 +142,7 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
     case WM_CREATE: {
         // Store object pointer passed from CreateWindowEx.
         auto createParams = reinterpret_cast<CREATESTRUCT*>(lParam)->lpCreateParams;
-        pThis             = static_cast<VideoDeviceMonitorImpl*>(createParams);
+        pThis = static_cast<VideoDeviceMonitorImpl*>(createParams);
         SetLastError(0);
         SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
 
@@ -157,7 +157,7 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
         case DBT_DEVICEREMOVECOMPLETE:
         case DBT_DEVICEARRIVAL: {
             PDEV_BROADCAST_DEVICEINTERFACE pbdi = (PDEV_BROADCAST_DEVICEINTERFACE) lParam;
-            auto unique_name                    = getDeviceUniqueName(pbdi);
+            auto unique_name = getDeviceUniqueName(pbdi);
             if (!unique_name.empty()) {
                 JAMI_DBG() << unique_name
                            << ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged");
@@ -203,11 +203,11 @@ VideoDeviceMonitorImpl::run()
 {
     // Create a dummy window with the sole purpose to receive device change messages.
     static const char* className = "Message";
-    WNDCLASSEX wx                = {};
-    wx.cbSize                    = sizeof(WNDCLASSEX);
-    wx.lpfnWndProc               = WinProcCallback;
-    wx.hInstance                 = reinterpret_cast<HINSTANCE>(GetModuleHandle(0));
-    wx.lpszClassName             = className;
+    WNDCLASSEX wx = {};
+    wx.cbSize = sizeof(WNDCLASSEX);
+    wx.lpfnWndProc = WinProcCallback;
+    wx.hInstance = reinterpret_cast<HINSTANCE>(GetModuleHandle(0));
+    wx.lpszClassName = className;
     if (RegisterClassEx(&wx)) {
         // Pass this as lpParam so WinProcCallback can access members of VideoDeviceMonitorImpl.
         hWnd_ = CreateWindowEx(
@@ -263,7 +263,7 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
         }
 
         IBindCtx* bind_ctx = NULL;
-        LPOLESTR olestr    = NULL;
+        LPOLESTR olestr = NULL;
 
         hr = CreateBindCtx(0, &bind_ctx);
         if (hr != S_OK) {

@@ -42,7 +42,7 @@ using strMapSubjectPtr = std::shared_ptr<PublishObservable<ConvMsgPtr>>;
 class ConversationHandler
 {
 public:
-    virtual ~ConversationHandler()                                                   = default;
+    virtual ~ConversationHandler() = default;
     virtual void notifyStrMapSubject(const bool direction, strMapSubjectPtr subject) = 0;
 };
 } // namespace jami

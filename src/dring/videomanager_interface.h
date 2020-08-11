@@ -77,7 +77,7 @@ public:
     MediaFrame();
     MediaFrame(const MediaFrame&) = delete;
     MediaFrame& operator=(const MediaFrame& o) = delete;
-    MediaFrame(MediaFrame&& o)                 = delete;
+    MediaFrame(MediaFrame&& o) = delete;
     MediaFrame& operator=(MediaFrame&& o) = delete;
 
     virtual ~MediaFrame() = default;
@@ -227,7 +227,7 @@ struct DRING_PUBLIC MediaPlayerSignal
     struct DRING_PUBLIC FileOpened
     {
         constexpr static const char* name = "FileOpened";
-        using cb_type                     = void(const std::string& /*playerId*/,
+        using cb_type = void(const std::string& /*playerId*/,
                              std::map<std::string, std::string> /*playerInfo*/);
     };
 };
@@ -238,12 +238,12 @@ struct DRING_PUBLIC VideoSignal
     struct DRING_PUBLIC DeviceEvent
     {
         constexpr static const char* name = "DeviceEvent";
-        using cb_type                     = void(void);
+        using cb_type = void(void);
     };
     struct DRING_PUBLIC DecodingStarted
     {
         constexpr static const char* name = "DecodingStarted";
-        using cb_type                     = void(const std::string& /*id*/,
+        using cb_type = void(const std::string& /*id*/,
                              const std::string& /*shm_path*/,
                              int /*w*/,
                              int /*h*/,
@@ -252,7 +252,7 @@ struct DRING_PUBLIC VideoSignal
     struct DRING_PUBLIC DecodingStopped
     {
         constexpr static const char* name = "DecodingStopped";
-        using cb_type                     = void(const std::string& /*id*/,
+        using cb_type = void(const std::string& /*id*/,
                              const std::string& /*shm_path*/,
                              bool /*is_mixer*/);
     };
@@ -260,7 +260,7 @@ struct DRING_PUBLIC VideoSignal
     struct DRING_PUBLIC SetParameters
     {
         constexpr static const char* name = "SetParameters";
-        using cb_type                     = void(const std::string& device,
+        using cb_type = void(const std::string& device,
                              const int format,
                              const int width,
                              const int height,
@@ -269,7 +269,7 @@ struct DRING_PUBLIC VideoSignal
     struct DRING_PUBLIC GetCameraInfo
     {
         constexpr static const char* name = "GetCameraInfo";
-        using cb_type                     = void(const std::string& device,
+        using cb_type = void(const std::string& device,
                              std::vector<int>* formats,
                              std::vector<unsigned>* sizes,
                              std::vector<unsigned>* rates);
@@ -277,33 +277,33 @@ struct DRING_PUBLIC VideoSignal
     struct DRING_PUBLIC RequestKeyFrame
     {
         constexpr static const char* name = "RequestKeyFrame";
-        using cb_type                     = void();
+        using cb_type = void();
     };
     struct DRING_PUBLIC SetBitrate
     {
         constexpr static const char* name = "SetBitrate";
-        using cb_type                     = void(const std::string& device, const int bitrate);
+        using cb_type = void(const std::string& device, const int bitrate);
     };
 #endif
     struct DRING_PUBLIC StartCapture
     {
         constexpr static const char* name = "StartCapture";
-        using cb_type                     = void(const std::string& /*device*/);
+        using cb_type = void(const std::string& /*device*/);
     };
     struct DRING_PUBLIC StopCapture
     {
         constexpr static const char* name = "StopCapture";
-        using cb_type                     = void(void);
+        using cb_type = void(void);
     };
     struct DRING_PUBLIC DeviceAdded
     {
         constexpr static const char* name = "DeviceAdded";
-        using cb_type                     = void(const std::string& /*device*/);
+        using cb_type = void(const std::string& /*device*/);
     };
     struct DRING_PUBLIC ParametersChanged
     {
         constexpr static const char* name = "ParametersChanged";
-        using cb_type                     = void(const std::string& /*device*/);
+        using cb_type = void(const std::string& /*device*/);
     };
 };
 

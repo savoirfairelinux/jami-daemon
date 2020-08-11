@@ -37,7 +37,7 @@ namespace dev {
 
 enum class WhenError {
     DontThrow = 0,
-    Throw     = 1,
+    Throw = 1,
 };
 
 template<class Iterator>
@@ -48,7 +48,7 @@ toHex(Iterator _it, Iterator _end, std::string _prefix)
     static_assert(sizeof(typename traits::value_type) == 1, "toHex needs byte-sized element type");
 
     static char const* hexdigits = "0123456789abcdef";
-    size_t off                   = _prefix.size();
+    size_t off = _prefix.size();
     std::string hex(std::distance(_it, _end) * 2 + off, '0');
     hex.replace(0, off, _prefix);
     for (; _it != _end; _it++) {

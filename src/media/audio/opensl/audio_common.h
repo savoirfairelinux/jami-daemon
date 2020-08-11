@@ -36,12 +36,12 @@ inline SLDataFormat_PCM
 convertToSLSampleFormat(const jami::AudioFormat& infos)
 {
     return SLDataFormat_PCM {
-        .formatType    = SL_DATAFORMAT_PCM,
-        .numChannels   = infos.nb_channels <= 1 ? 1u : 2u,
+        .formatType = SL_DATAFORMAT_PCM,
+        .numChannels = infos.nb_channels <= 1 ? 1u : 2u,
         .samplesPerSec = infos.sample_rate * 1000,
         .bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16,
         .containerSize = SL_PCMSAMPLEFORMAT_FIXED_16,
-        .channelMask   = infos.nb_channels <= 1 ? SL_SPEAKER_FRONT_CENTER
+        .channelMask = infos.nb_channels <= 1 ? SL_SPEAKER_FRONT_CENTER
                                               : SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
         .endianness = SL_BYTEORDER_LITTLEENDIAN,
     };

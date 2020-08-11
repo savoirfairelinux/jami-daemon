@@ -77,7 +77,7 @@ namespace jami {
 using yaml_utils::parseValue;
 
 constexpr const char* const Preferences::CONFIG_LABEL;
-const char* const Preferences::DFT_ZONE                = "North America";
+const char* const Preferences::DFT_ZONE = "North America";
 const char* const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
 
 // general preferences
@@ -307,10 +307,10 @@ HookPreference::toMap() const
 {
     std::map<std::string, std::string> settings;
     settings["PHONE_NUMBER_HOOK_ADD_PREFIX"] = numberAddPrefix_;
-    settings["PHONE_NUMBER_HOOK_ENABLED"]    = numberEnabled_ ? "true" : "false";
-    settings["URLHOOK_SIP_ENABLED"]          = sipEnabled_ ? "true" : "false";
-    settings["URLHOOK_COMMAND"]              = urlCommand_;
-    settings["URLHOOK_SIP_FIELD"]            = urlSipField_;
+    settings["PHONE_NUMBER_HOOK_ENABLED"] = numberEnabled_ ? "true" : "false";
+    settings["URLHOOK_SIP_ENABLED"] = sipEnabled_ ? "true" : "false";
+    settings["URLHOOK_COMMAND"] = urlCommand_;
+    settings["URLHOOK_SIP_FIELD"] = urlSipField_;
 
     return settings;
 }
@@ -581,10 +581,10 @@ ShortcutPreferences::getShortcuts() const
 {
     std::map<std::string, std::string> shortcutsMap;
 
-    shortcutsMap[HANGUP_SHORT_KEY]               = hangup_;
-    shortcutsMap[PICKUP_SHORT_KEY]               = pickup_;
-    shortcutsMap[POPUP_SHORT_KEY]                = popup_;
-    shortcutsMap[TOGGLE_HOLD_SHORT_KEY]          = toggleHold_;
+    shortcutsMap[HANGUP_SHORT_KEY] = hangup_;
+    shortcutsMap[PICKUP_SHORT_KEY] = pickup_;
+    shortcutsMap[POPUP_SHORT_KEY] = popup_;
+    shortcutsMap[TOGGLE_HOLD_SHORT_KEY] = toggleHold_;
     shortcutsMap[TOGGLE_PICKUP_HANGUP_SHORT_KEY] = togglePickupHangup_;
 
     return shortcutsMap;
@@ -593,10 +593,10 @@ ShortcutPreferences::getShortcuts() const
 void
 ShortcutPreferences::setShortcuts(std::map<std::string, std::string> map)
 {
-    hangup_             = map[HANGUP_SHORT_KEY];
-    pickup_             = map[PICKUP_SHORT_KEY];
-    popup_              = map[POPUP_SHORT_KEY];
-    toggleHold_         = map[TOGGLE_HOLD_SHORT_KEY];
+    hangup_ = map[HANGUP_SHORT_KEY];
+    pickup_ = map[PICKUP_SHORT_KEY];
+    popup_ = map[POPUP_SHORT_KEY];
+    toggleHold_ = map[TOGGLE_HOLD_SHORT_KEY];
     togglePickupHangup_ = map[TOGGLE_PICKUP_HANGUP_SHORT_KEY];
 }
 

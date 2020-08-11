@@ -33,7 +33,7 @@ using OnConnectionRequestCb = std::function<bool(const std::string& /* device id
 using OnConnectionReadyCb
     = std::function<void(const std::string& /* device id */, const std::shared_ptr<ChannelSocket>&)>;
 using onChannelReadyCb = std::function<void(void)>;
-using OnShutdownCb     = std::function<void(void)>;
+using OnShutdownCb = std::function<void(void)>;
 
 static constexpr uint16_t CONTROL_CHANNEL {0};
 

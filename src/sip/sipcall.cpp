@@ -282,7 +282,7 @@ SIPCall::SIPSessionReinvite()
 
     pjsip_tx_data* tdata;
     auto local_sdp = sdp_->getLocalSdpSession();
-    auto result    = pjsip_inv_reinvite(inv.get(), nullptr, local_sdp, &tdata);
+    auto result = pjsip_inv_reinvite(inv.get(), nullptr, local_sdp, &tdata);
     if (result == PJ_SUCCESS) {
         if (!tdata)
             return PJ_SUCCESS;
@@ -310,7 +310,7 @@ SIPCall::sendSIPInfo(const char* const body, const char* const subtype)
         throw VoipLinkException("Couldn't get invite dialog");
 
     constexpr pj_str_t methodName = CONST_PJ_STR("INFO");
-    constexpr pj_str_t type       = CONST_PJ_STR("application");
+    constexpr pj_str_t type = CONST_PJ_STR("application");
 
     pjsip_method method;
     pjsip_method_init_np(&method, (pj_str_t*) &methodName);
@@ -369,7 +369,7 @@ SIPCall::terminateSipSession(int status)
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     if (inv and inv->state != PJSIP_INV_STATE_DISCONNECTED) {
         pjsip_tx_data* tdata = nullptr;
-        auto ret             = pjsip_inv_end_session(inv.get(), status, nullptr, &tdata);
+        auto ret = pjsip_inv_end_session(inv.get(), status, nullptr, &tdata);
         if (ret == PJ_SUCCESS) {
             if (tdata) {
                 auto contact = getSIPAccount().getContactHeader(transport_ ? transport_->get()
@@ -633,10 +633,10 @@ SIPCall::attendedTransfer(const std::string& to)
         return false;
 
     pjsip_dialog* target_dlg = toCall->inv->dlg;
-    pjsip_uri* uri           = (pjsip_uri*) pjsip_uri_get_uri(target_dlg->remote.info->uri);
+    pjsip_uri* uri = (pjsip_uri*) pjsip_uri_get_uri(target_dlg->remote.info->uri);
 
     char str_dest_buf[PJSIP_MAX_URL_SIZE * 2] = {'<'};
-    pj_str_t dst                              = {str_dest_buf, 1};
+    pj_str_t dst = {str_dest_buf, 1};
 
     dst.slen += pjsip_uri_print(PJSIP_URI_IN_REQ_URI,
                                 uri,
@@ -663,7 +663,7 @@ SIPCall::onhold(OnReadyCb&& cb)
 {
     // If ICE is currently negotiating, we must wait before hold the call
     if (isWaitingForIceAndMedia_) {
-        holdCb_           = std::move(cb);
+        holdCb_ = std::move(cb);
         remainingRequest_ = Request::HoldingOn;
         return false;
     }
@@ -700,7 +700,7 @@ SIPCall::offhold(OnReadyCb&& cb)
 {
     // If ICE is currently negotiating, we must wait before unhold the call
     if (isWaitingForIceAndMedia_) {
-        offHoldCb_        = std::move(cb);
+        offHoldCb_ = std::move(cb);
         remainingRequest_ = Request::HoldingOff;
         return false;
     }
@@ -1025,7 +1025,7 @@ SIPCall::startAllMedia()
         onFailure(EPROTONOSUPPORT);
         return;
     }
-    auto slots           = sdp_->getMediaSlots();
+    auto slots = sdp_->getMediaSlots();
     unsigned ice_comp_id = 0;
     bool peer_holding {true};
     int slotN = -1;
@@ -1041,7 +1041,7 @@ SIPCall::startAllMedia()
 
     for (const auto& slot : slots) {
         ++slotN;
-        const auto& local  = slot.first;
+        const auto& local = slot.first;
         const auto& remote = slot.second;
 
         if (local.type != remote.type) {
@@ -1199,7 +1199,7 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
             return;
         JAMI_WARN("[call:%s] video muting %s", getCallId().c_str(), bool_to_str(mute));
         isVideoMuted_ = mute;
-        mediaInput_   = isVideoMuted_ ? ""
+        mediaInput_ = isVideoMuted_ ? ""
                                     : Manager::instance()
                                           .getVideoManager()
                                           .videoDeviceMonitor.getMRLForDefaultDevice();
@@ -1424,7 +1424,7 @@ SIPCall::getDetails() const
         }
         if (tlsInfos.peerCert) {
             details.emplace(DRing::TlsTransport::TLS_PEER_CERT, tlsInfos.peerCert->toString());
-            auto ca    = tlsInfos.peerCert->issuer;
+            auto ca = tlsInfos.peerCert->issuer;
             unsigned n = 0;
             while (ca) {
                 std::ostringstream name_str;
@@ -1510,7 +1510,7 @@ SIPCall::initIceMediaTransport(bool master, unsigned channel_num)
     JAMI_DBG("[call:%s] create media ICE transport", getCallId().c_str());
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    tmpMediaTransport_        = iceTransportFactory.createUTransport(getCallId().c_str(),
+    tmpMediaTransport_ = iceTransportFactory.createUTransport(getCallId().c_str(),
                                                               channel_num,
                                                               master,
                                                               getAccount().getIceOptions());
@@ -1528,17 +1528,17 @@ SIPCall::merge(Call& call)
     std::lock(callMutex_, subcall.callMutex_);
     std::lock_guard<std::recursive_mutex> lk1 {callMutex_, std::adopt_lock};
     std::lock_guard<std::recursive_mutex> lk2 {subcall.callMutex_, std::adopt_lock};
-    inv                                                         = std::move(subcall.inv);
+    inv = std::move(subcall.inv);
     inv->mod_data[Manager::instance().sipVoIPLink().getModId()] = this;
     setTransport(std::move(subcall.transport_));
-    sdp_         = std::move(subcall.sdp_);
+    sdp_ = std::move(subcall.sdp_);
     peerHolding_ = subcall.peerHolding_;
-    upnp_        = std::move(subcall.upnp_);
+    upnp_ = std::move(subcall.upnp_);
     std::copy_n(subcall.contactBuffer_, PJSIP_MAX_URL_SIZE, contactBuffer_);
     pj_strcpy(&contactHeader_, &subcall.contactHeader_);
-    localAudioPort_    = subcall.localAudioPort_;
-    localVideoPort_    = subcall.localVideoPort_;
-    mediaTransport_    = std::move(subcall.mediaTransport_);
+    localAudioPort_ = subcall.localAudioPort_;
+    localVideoPort_ = subcall.localVideoPort_;
+    mediaTransport_ = std::move(subcall.mediaTransport_);
     tmpMediaTransport_ = std::move(subcall.tmpMediaTransport_);
 
     Call::merge(subcall);

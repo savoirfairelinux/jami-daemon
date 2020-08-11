@@ -67,7 +67,7 @@ void
 VideoDeviceMonitorImpl::start()
 {
     probing_ = true;
-    thread_  = std::thread(&VideoDeviceMonitorImpl::run, this);
+    thread_ = std::thread(&VideoDeviceMonitorImpl::run, this);
 }
 
 VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()

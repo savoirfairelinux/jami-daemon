@@ -61,7 +61,7 @@ public:
     enum class Type { UNKNOWN, PUPNP, NAT_PMP };
 
     using IgdListChangedCallback = std::function<bool(UPnPProtocol*, IGD*, IpAddr, bool)>;
-    using NotifyContextCallback  = std::function<void(IpAddr, Mapping, bool)>;
+    using NotifyContextCallback = std::function<void(IpAddr, Mapping, bool)>;
 
     UPnPProtocol() {};
     virtual ~UPnPProtocol() {};

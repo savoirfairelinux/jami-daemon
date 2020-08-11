@@ -263,8 +263,8 @@ VideoV4l2Size::readFrameRates(int fd, unsigned int pixel_format)
     v4l2_frmivalenum frmival;
     ZEROVAR(frmival);
     frmival.pixel_format = pixel_format;
-    frmival.width        = width;
-    frmival.height       = height;
+    frmival.width = width;
+    frmival.height = height;
 
     if (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival)) {
         addRate(fallback_rate);
@@ -335,7 +335,7 @@ VideoV4l2Channel::readSizes(int fd, unsigned int pixelformat)
     v4l2_frmsizeenum frmsize;
     ZEROVAR(frmsize);
 
-    frmsize.index        = 0;
+    frmsize.index = 0;
     frmsize.pixel_format = pixelformat;
 
     if (ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) < 0) {
@@ -549,14 +549,14 @@ DeviceParams
 VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
-    params.name         = name;
-    params.input        = id;
-    params.format       = "video4linux2";
+    params.name = name;
+    params.input = id;
+    params.format = "video4linux2";
     params.channel_name = channel_.name;
-    params.channel      = channel_.idx;
-    params.width        = size_.width;
-    params.height       = size_.height;
-    params.framerate    = rate_.frame_rate;
+    params.channel = channel_.idx;
+    params.width = size_.width;
+    params.height = size_.height;
+    params.framerate = rate_.frame_rate;
     params.pixel_format = rate_.libAvPixelformat();
     return params;
 }
@@ -566,7 +566,7 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
 {
     // Set preferences or fallback to defaults.
     channel_ = getChannel(params.channel_name);
-    size_    = channel_.getSize({params.width, params.height});
+    size_ = channel_.getSize({params.width, params.height});
     try {
         rate_ = size_.getRate(params.framerate);
     } catch (...) {
@@ -578,14 +578,14 @@ VideoDevice::VideoDevice(const std::string& path,
                          const std::vector<std::map<std::string, std::string>>&)
     : deviceImpl_(new VideoDeviceImpl(path))
 {
-    id_  = path;
+    id_ = path;
     name = deviceImpl_->name;
 }
 
 DeviceParams
 VideoDevice::getDeviceParams() const
 {
-    auto params        = deviceImpl_->getDeviceParams();
+    auto params = deviceImpl_->getDeviceParams();
     params.orientation = orientation_;
     return params;
 }

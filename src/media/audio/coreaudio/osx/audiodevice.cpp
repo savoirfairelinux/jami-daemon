@@ -32,12 +32,12 @@ AudioDevice::AudioDevice(AudioDeviceID devid, bool isInput)
 void
 AudioDevice::init(AudioDeviceID devid, bool isInput)
 {
-    id_      = devid;
+    id_ = devid;
     isInput_ = isInput;
     if (id_ == kAudioDeviceUnknown)
         return;
 
-    name_     = getName();
+    name_ = getName();
     channels_ = countChannels();
 
     UInt32 propsize = sizeof(Float32);
@@ -51,13 +51,13 @@ AudioDevice::init(AudioDeviceID devid, bool isInput)
 
     __Verify_noErr(AudioObjectGetPropertyData(id_, &theAddress, 0, NULL, &propsize, &safetyOffset_));
 
-    propsize             = sizeof(UInt32);
+    propsize = sizeof(UInt32);
     theAddress.mSelector = kAudioDevicePropertyBufferFrameSize;
 
     __Verify_noErr(
         AudioObjectGetPropertyData(id_, &theAddress, 0, NULL, &propsize, &bufferSizeFrames_));
 
-    propsize             = sizeof(AudioStreamBasicDescription);
+    propsize = sizeof(AudioStreamBasicDescription);
     theAddress.mSelector = kAudioDevicePropertyStreamFormat;
 
     __Verify_noErr(AudioObjectGetPropertyData(id_, &theAddress, 0, NULL, &propsize, &format_));

@@ -40,8 +40,8 @@ class Plugin;
 class PluginManager
 {
 public:
-    using ObjectDeleter     = std::function<void(void*)>;
-    using ServiceFunction   = std::function<int32_t(const DLPlugin*, void*)>;
+    using ObjectDeleter = std::function<void(void*)>;
+    using ServiceFunction = std::function<int32_t(const DLPlugin*, void*)>;
     using ComponentFunction = std::function<int32_t(void*)>;
     // A vector to a pair<componentType, componentPtr>
     using ComponentTypePtrVector = std::vector<std::pair<std::string, void*>>;
@@ -59,11 +59,11 @@ private:
         ComponentFunction destroyComponent;
     };
 
-    using PluginMap           = std::map<std::string, std::shared_ptr<Plugin>>;
+    using PluginMap = std::map<std::string, std::shared_ptr<Plugin>>;
     using PluginComponentsMap = std::map<std::string, ComponentTypePtrVector>;
-    using ExitFuncVec         = std::vector<JAMI_PluginExitFunc>;
-    using ObjectFactoryVec    = std::vector<ObjectFactory>;
-    using ObjectFactoryMap    = std::map<std::string, ObjectFactory>;
+    using ExitFuncVec = std::vector<JAMI_PluginExitFunc>;
+    using ObjectFactoryVec = std::vector<ObjectFactory>;
+    using ObjectFactoryMap = std::map<std::string, ObjectFactory>;
 
 public:
     PluginManager();

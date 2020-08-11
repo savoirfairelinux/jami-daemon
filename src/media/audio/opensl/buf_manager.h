@@ -103,8 +103,8 @@ public:
     template<typename F>
     bool push(const F& writer)
     {
-        bool result  = false;
-        int readptr  = read_.load(std::memory_order_acquire);
+        bool result = false;
+        int readptr = read_.load(std::memory_order_acquire);
         int writeptr = write_.load(std::memory_order_relaxed);
 
         // note that while readptr and writeptr will eventually
@@ -144,7 +144,7 @@ public:
         bool result = false;
 
         int writeptr = write_.load(std::memory_order_acquire);
-        int readptr  = read_.load(std::memory_order_relaxed);
+        int readptr = read_.load(std::memory_order_relaxed);
 
         // As above, wraparound is ok
         int available = (int) (writeptr - readptr);
@@ -158,7 +158,7 @@ public:
     uint32_t size(void)
     {
         int writeptr = write_.load(std::memory_order_acquire);
-        int readptr  = read_.load(std::memory_order_relaxed);
+        int readptr = read_.load(std::memory_order_relaxed);
 
         return (uint32_t)(writeptr - readptr);
     }
@@ -185,17 +185,17 @@ struct sample_buf
         , cap_(o.cap_)
         , size_(o.size_)
     {
-        o.buf_  = nullptr;
-        o.cap_  = 0;
+        o.buf_ = nullptr;
+        o.cap_ = 0;
         o.size_ = 0;
     }
     sample_buf& operator=(sample_buf&& o)
     {
-        buf_    = o.buf_;
-        cap_    = o.cap_;
-        size_   = o.size_;
-        o.buf_  = nullptr;
-        o.cap_  = 0;
+        buf_ = o.buf_;
+        cap_ = o.cap_;
+        size_ = o.size_;
+        o.buf_ = nullptr;
+        o.cap_ = 0;
         o.size_ = 0;
         return *this;
     }

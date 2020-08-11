@@ -90,7 +90,7 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
 
         // Append "Subject: Phone Call" header
         constexpr auto subj_hdr_name = sip_utils::CONST_PJ_STR("Subject");
-        auto subj_hdr                = reinterpret_cast<pjsip_hdr*>(
+        auto subj_hdr = reinterpret_cast<pjsip_hdr*>(
             pjsip_parse_hdr(dialog->pool,
                             &subj_hdr_name,
                             const_cast<char*>("Phone call"),
@@ -186,7 +186,7 @@ static void
 validate(std::string& member, const std::string& param, const T& valid)
 {
     const auto begin = std::begin(valid);
-    const auto end   = std::end(valid);
+    const auto end = std::end(valid);
     if (find(begin, end, param) != end)
         member = param;
     else
@@ -197,7 +197,7 @@ static void
 updateRange(uint16_t min, uint16_t max, std::pair<uint16_t, uint16_t>& range)
 {
     if (min > 0 and (max > min) and max <= SIPAccountBase::MAX_PORT - 2) {
-        range.first  = min;
+        range.first = min;
         range.second = max;
     }
 }
@@ -570,13 +570,13 @@ SIPAccountBase::onTextMessage(const std::string& id,
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, cm->data_);
 
     DRing::Message message;
-    message.from     = cm->author_;
+    message.from = cm->author_;
     message.payloads = cm->data_;
 #else
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, payloads);
 
     DRing::Message message;
-    message.from     = from;
+    message.from = from;
     message.payloads = payloads;
 #endif
 

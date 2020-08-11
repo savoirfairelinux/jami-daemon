@@ -66,7 +66,7 @@ class CallMediaHandler : public MediaHandler
 {
 public:
     virtual void notifyAVFrameSubject(const StreamData& data, avSubjectPtr subject) = 0;
-    virtual std::map<std::string, std::string> getCallMediaHandlerDetails()         = 0;
-    virtual void detach()                                                           = 0;
+    virtual std::map<std::string, std::string> getCallMediaHandlerDetails() = 0;
+    virtual void detach() = 0;
 };
 } // namespace jami

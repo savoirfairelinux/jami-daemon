@@ -48,8 +48,8 @@ struct Certificate;
 namespace jami {
 
 using OnStateChangeCb = std::function<bool(tls::TlsSessionState state)>;
-using OnReadyCb       = std::function<void(bool ok)>;
-using onShutdownCb    = std::function<void(void)>;
+using OnReadyCb = std::function<void(bool ok)>;
+using onShutdownCb = std::function<void(void)>;
 
 class TurnTransport;
 class ConnectedTurnTransport;
@@ -91,7 +91,7 @@ class TlsTurnEndpoint : public GenericSocket<uint8_t>
 {
 public:
     using SocketType = GenericSocket<uint8_t>;
-    using Identity   = std::pair<std::shared_ptr<dht::crypto::PrivateKey>,
+    using Identity = std::pair<std::shared_ptr<dht::crypto::PrivateKey>,
                                std::shared_ptr<dht::crypto::Certificate>>;
 
     TlsTurnEndpoint(std::unique_ptr<ConnectedTurnTransport>&& turn,
@@ -203,7 +203,7 @@ class TlsSocketEndpoint : public GenericSocket<uint8_t>
 {
 public:
     using SocketType = GenericSocket<uint8_t>;
-    using Identity   = std::pair<std::shared_ptr<dht::crypto::PrivateKey>,
+    using Identity = std::pair<std::shared_ptr<dht::crypto::PrivateKey>,
                                std::shared_ptr<dht::crypto::Certificate>>;
 
     TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint>&& tr,

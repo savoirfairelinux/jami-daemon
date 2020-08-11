@@ -76,11 +76,11 @@ extern "C" {
 
 namespace jami {
 
-static constexpr int NET_POLL_TIMEOUT             = 100; /* poll() timeout in ms */
-static constexpr int RTP_MAX_PACKET_LENGTH        = 2048;
-static constexpr auto UDP_HEADER_SIZE             = 8;
-static constexpr auto SRTP_OVERHEAD               = 10;
-static constexpr uint32_t RTCP_RR_FRACTION_MASK   = 0xFF000000;
+static constexpr int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
+static constexpr int RTP_MAX_PACKET_LENGTH = 2048;
+static constexpr auto UDP_HEADER_SIZE = 8;
+static constexpr auto SRTP_OVERHEAD = 10;
+static constexpr uint32_t RTCP_RR_FRACTION_MASK = 0xFF000000;
 static constexpr unsigned MINIMUM_RTP_HEADER_SIZE = 16;
 
 enum class DataType : unsigned { RTP = 1 << 0, RTCP = 1 << 1 };
@@ -129,7 +129,7 @@ static int
 ff_network_wait_fd(int fd)
 {
     struct pollfd p = {fd, POLLOUT, 0};
-    auto ret        = poll(&p, 1, NET_POLL_TIMEOUT);
+    auto ret = poll(&p, 1, NET_POLL_TIMEOUT);
     return ret < 0 ? errno : p.revents & (POLLOUT | POLLERR | POLLHUP) ? 0 : -EAGAIN;
 }
 
@@ -145,7 +145,7 @@ udp_socket_create(int family, int port)
         udp_fd = -1;
     }
 #elif defined _WIN32
-    udp_fd       = socket(family, SOCK_DGRAM, 0);
+    udp_fd = socket(family, SOCK_DGRAM, 0);
     u_long block = 1;
     if (udp_fd >= 0 && ioctlsocket(udp_fd, FIONBIO, &block) < 0) {
         close(udp_fd);
@@ -327,7 +327,7 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
     av_url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &dst_rtp_port, path, sizeof(path), uri);
 
     const int local_rtcp_port = local_rtp_port + 1;
-    const int dst_rtcp_port   = dst_rtp_port + 1;
+    const int dst_rtcp_port = dst_rtp_port + 1;
 
     rtpDestAddr_ = IpAddr {hostname};
     rtpDestAddr_.setPort(dst_rtp_port);
@@ -386,7 +386,7 @@ SocketPair::waitForData()
 
             // work with system socket
             struct pollfd p[2] = {{rtpHandle_, POLLIN, 0}, {rtcpHandle_, POLLIN, 0}};
-            ret                = poll(p, 2, NET_POLL_TIMEOUT);
+            ret = poll(p, 2, NET_POLL_TIMEOUT);
             if (ret > 0) {
                 ret = 0;
                 if (p[0].revents & POLLIN)
@@ -437,7 +437,7 @@ SocketPair::readRtpData(void* buf, int buf_size)
         rtpDataBuff_.pop_front();
         lk.unlock(); // to not block our ICE callbacks
         int pkt_size = pkt.size();
-        int len      = std::min(pkt_size, buf_size);
+        int len = std::min(pkt_size, buf_size);
         std::copy_n(pkt.begin(), len, static_cast<char*>(buf));
         return len;
     }
@@ -467,7 +467,7 @@ SocketPair::readRtcpData(void* buf, int buf_size)
         rtcpDataBuff_.pop_front();
         lk.unlock();
         int pkt_size = pkt.size();
-        int len      = std::min(pkt_size, buf_size);
+        int len = std::min(pkt_size, buf_size);
         std::copy_n(pkt.begin(), len, static_cast<char*>(buf));
         return len;
     }
@@ -482,7 +482,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     if (datatype < 0)
         return datatype;
 
-    int len       = 0;
+    int len = 0;
     bool fromRTCP = false;
 
     if (datatype & static_cast<int>(DataType::RTCP)) {
@@ -511,7 +511,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
 
     // No RTCP... try RTP
     if (!len and (datatype & static_cast<int>(DataType::RTP))) {
-        len      = readRtpData(buf, buf_size);
+        len = readRtpData(buf, buf_size);
         fromRTCP = false;
     }
 
@@ -524,12 +524,12 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     // SRTP decrypt
     if (not fromRTCP and srtpContext_ and srtpContext_->srtp_in.aes) {
         int32_t gradient = 0;
-        int32_t deltaT   = 0;
-        float abs        = 0.0f;
-        bool res_parse   = false;
-        bool res_delay   = false;
+        int32_t deltaT = 0;
+        float abs = 0.0f;
+        bool res_parse = false;
+        bool res_delay = false;
 
-        res_parse   = parse_RTP_ext(buf, &abs);
+        res_parse = parse_RTP_ext(buf, &abs);
         bool marker = (buf[1] & 0x80) >> 7;
 
         if (res_parse)
@@ -564,10 +564,10 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
         IpAddr* dest_addr;
 
         if (isRTCP) {
-            fd        = rtcpHandle_;
+            fd = rtcpHandle_;
             dest_addr = &rtcpDestAddr_;
         } else {
-            fd        = rtpHandle_;
+            fd = rtpHandle_;
             dest_addr = &rtpDestAddr_;
         }
 
@@ -624,7 +624,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
     // check if we're sending an RR, if so, detect packet loss
     // buf_size gives length of buffer, not just header
     if (isRTCP && static_cast<unsigned>(buf_size) >= sizeof(rtcpRRHeader)) {
-        auto header     = reinterpret_cast<rtcpRRHeader*>(buf);
+        auto header = reinterpret_cast<rtcpRRHeader*>(buf);
         rtcpPacketLoss_ = (header->pt == 201
                            && ntohl(header->fraction_lost) & RTCP_RR_FRACTION_MASK);
     }
@@ -638,8 +638,8 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
     if (buf[1] == 200) // Sender Report
     {
         auto header = reinterpret_cast<rtcpSRHeader*>(buf);
-        ts_LSB      = Swap4Bytes(header->timestampLSB);
-        ts_MSB      = Swap4Bytes(header->timestampMSB);
+        ts_LSB = Swap4Bytes(header->timestampLSB);
+        ts_MSB = Swap4Bytes(header->timestampMSB);
 
         currentSRTS = ts_MSB + (ts_LSB / pow(2, 32));
 
@@ -690,7 +690,7 @@ SocketPair::getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient,
 
     // 1st frame
     if (not lastSendTS_) {
-        lastSendTS_    = sendTS;
+        lastSendTS_ = sendTS;
         lastReceiveTS_ = std::chrono::steady_clock::now();
         return 0;
     }
@@ -706,7 +706,7 @@ SocketPair::getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient,
     lastReceiveTS_ = arrival_TS;
 
     *gradient = deltaR - deltaS;
-    *deltaT   = deltaR;
+    *deltaT = deltaR;
 
     return true;
 }
@@ -721,9 +721,9 @@ SocketPair::parse_RTP_ext(uint8_t* buf, float* abs)
     if (magic_word != 0xBEDE)
         return false;
 
-    uint8_t sec    = buf[17] >> 2;
+    uint8_t sec = buf[17] >> 2;
     uint32_t fract = ((buf[17] & 0x3) << 16 | (buf[18] << 8) | buf[19]) << 14;
-    float milli    = fract / pow(2, 32);
+    float milli = fract / pow(2, 32);
 
     *abs = sec + (milli);
     return true;

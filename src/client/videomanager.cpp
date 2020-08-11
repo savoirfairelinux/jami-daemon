@@ -107,11 +107,11 @@ AudioFrame::AudioFrame(const jami::AudioFormat& format, size_t nb_samples)
 void
 AudioFrame::setFormat(const jami::AudioFormat& format)
 {
-    auto d            = pointer();
-    d->channels       = format.nb_channels;
+    auto d = pointer();
+    d->channels = format.nb_channels;
     d->channel_layout = av_get_default_channel_layout(format.nb_channels);
-    d->sample_rate    = format.sample_rate;
-    d->format         = format.sampleFormat;
+    d->sample_rate = format.sample_rate;
+    d->format = format.sampleFormat;
 }
 
 jami::AudioFormat
@@ -132,7 +132,7 @@ void
 AudioFrame::reserve(size_t nb_samples)
 {
     if (nb_samples != 0) {
-        auto d        = pointer();
+        auto d = pointer();
         d->nb_samples = nb_samples;
         int err;
         if ((err = av_frame_get_buffer(d, 0)) < 0) {
@@ -144,7 +144,7 @@ AudioFrame::reserve(size_t nb_samples)
 void
 AudioFrame::mix(const AudioFrame& frame)
 {
-    auto& f   = *pointer();
+    auto& f = *pointer();
     auto& fIn = *frame.pointer();
     if (f.channels != fIn.channels || f.format != fIn.format || f.sample_rate != fIn.sample_rate) {
         throw std::invalid_argument("Can't mix frames with different formats");
@@ -155,13 +155,13 @@ AudioFrame::mix(const AudioFrame& frame)
     } else if (f.nb_samples != fIn.nb_samples) {
         throw std::invalid_argument("Can't mix frames with different length");
     }
-    AVSampleFormat fmt         = (AVSampleFormat) f.format;
-    bool isPlanar              = av_sample_fmt_is_planar(fmt);
+    AVSampleFormat fmt = (AVSampleFormat) f.format;
+    bool isPlanar = av_sample_fmt_is_planar(fmt);
     unsigned samplesPerChannel = isPlanar ? f.nb_samples : f.nb_samples * f.channels;
-    unsigned channels          = isPlanar ? f.channels : 1;
+    unsigned channels = isPlanar ? f.channels : 1;
     if (fmt == AV_SAMPLE_FMT_S16 || fmt == AV_SAMPLE_FMT_S16P) {
         for (unsigned i = 0; i < channels; i++) {
-            auto c   = (int16_t*) f.extended_data[i];
+            auto c = (int16_t*) f.extended_data[i];
             auto cIn = (int16_t*) fIn.extended_data[i];
             for (unsigned s = 0; s < samplesPerChannel; s++) {
                 c[s] = std::clamp((int32_t) c[s] + (int32_t) cIn[s],
@@ -171,7 +171,7 @@ AudioFrame::mix(const AudioFrame& frame)
         }
     } else if (fmt == AV_SAMPLE_FMT_FLT || fmt == AV_SAMPLE_FMT_FLTP) {
         for (unsigned i = 0; i < channels; i++) {
-            auto c   = (float*) f.extended_data[i];
+            auto c = (float*) f.extended_data[i];
             auto cIn = (float*) fIn.extended_data[i];
             for (unsigned s = 0; s < samplesPerChannel; s++) {
                 c[s] += cIn[s];
@@ -186,11 +186,11 @@ AudioFrame::mix(const AudioFrame& frame)
 float
 AudioFrame::calcRMS() const
 {
-    double rms     = 0.0;
-    auto fmt       = static_cast<AVSampleFormat>(frame_->format);
-    bool planar    = av_sample_fmt_is_planar(fmt);
+    double rms = 0.0;
+    auto fmt = static_cast<AVSampleFormat>(frame_->format);
+    bool planar = av_sample_fmt_is_planar(fmt);
     int perChannel = planar ? frame_->nb_samples : frame_->nb_samples * frame_->channels;
-    int channels   = planar ? frame_->channels : 1;
+    int channels = planar ? frame_->channels : 1;
     if (fmt == AV_SAMPLE_FMT_S16 || fmt == AV_SAMPLE_FMT_S16P) {
         for (int c = 0; c < channels; ++c) {
             auto buf = reinterpret_cast<int16_t*>(frame_->extended_data[c]);
@@ -226,7 +226,7 @@ void
 VideoFrame::reset() noexcept
 {
     MediaFrame::reset();
-    allocated_       = false;
+    allocated_ = false;
     releaseBufferCb_ = {};
 }
 
@@ -234,7 +234,7 @@ void
 VideoFrame::copyFrom(const VideoFrame& o)
 {
     MediaFrame::copyFrom(o);
-    ptr_       = o.ptr_;
+    ptr_ = o.ptr_;
     allocated_ = o.allocated_;
 }
 
@@ -269,7 +269,7 @@ void
 VideoFrame::setGeometry(int format, int width, int height) noexcept
 {
     frame_->format = format;
-    frame_->width  = width;
+    frame_->width = width;
     frame_->height = height;
 }
 
@@ -288,7 +288,7 @@ VideoFrame::reserve(int format, int width, int height)
     setGeometry(format, width, height);
     if (av_frame_get_buffer(libav_frame, 32))
         throw std::bad_alloc();
-    allocated_       = true;
+    allocated_ = true;
     releaseBufferCb_ = {};
 }
 
@@ -318,7 +318,7 @@ VideoFrame::setFromMemory(uint8_t* ptr,
     setFromMemory(ptr, format, width, height);
     if (cb) {
         releaseBufferCb_ = cb;
-        ptr_             = ptr;
+        ptr_ = ptr;
     }
 }
 
@@ -429,7 +429,7 @@ void
 startCamera()
 {
     jami::Manager::instance().getVideoManager().videoPreview = jami::getVideoCamera();
-    jami::Manager::instance().getVideoManager().started      = switchToCamera();
+    jami::Manager::instance().getVideoManager().started = switchToCamera();
 }
 
 void
@@ -684,8 +684,8 @@ getVideoCamera()
     if (auto input = vmgr.videoInput.lock())
         return input;
 
-    vmgr.started    = false;
-    auto input      = std::make_shared<video::VideoInput>();
+    vmgr.started = false;
+    auto input = std::make_shared<video::VideoInput>();
     vmgr.videoInput = input;
     return input;
 }
@@ -717,7 +717,7 @@ getAudioInput(const std::string& id)
         }
     }
 
-    auto input           = std::make_shared<AudioInput>(id);
+    auto input = std::make_shared<AudioInput>(id);
     vmgr.audioInputs[id] = input;
     return input;
 }
@@ -726,14 +726,14 @@ std::shared_ptr<video::VideoInput>
 getVideoInput(const std::string& id, video::VideoInputMode inputMode)
 {
     auto& vmgr = Manager::instance().getVideoManager();
-    auto it    = vmgr.videoInputs.find(id);
+    auto it = vmgr.videoInputs.find(id);
     if (it != vmgr.videoInputs.end()) {
         if (auto input = it->second.lock()) {
             return input;
         }
     }
 
-    auto input           = std::make_shared<video::VideoInput>(inputMode);
+    auto input = std::make_shared<video::VideoInput>(inputMode);
     vmgr.videoInputs[id] = input;
     return input;
 }
@@ -755,7 +755,7 @@ std::shared_ptr<MediaPlayer>
 getMediaPlayer(const std::string& id)
 {
     auto& vmgr = Manager::instance().getVideoManager();
-    auto it    = vmgr.mediaPlayers.find(id);
+    auto it = vmgr.mediaPlayers.find(id);
     if (it != vmgr.mediaPlayers.end()) {
         return it->second;
     }
@@ -765,12 +765,12 @@ getMediaPlayer(const std::string& id)
 std::string
 createMediaPlayer(const std::string& path)
 {
-    auto& vmgr  = Manager::instance().getVideoManager();
+    auto& vmgr = Manager::instance().getVideoManager();
     auto player = std::make_shared<MediaPlayer>(path);
     if (!player->isInputValid()) {
         return "";
     }
-    auto playerId               = player.get()->getId();
+    auto playerId = player.get()->getId();
     vmgr.mediaPlayers[playerId] = player;
     return playerId;
 }
@@ -789,7 +789,7 @@ pausePlayer(const std::string& id, bool pause)
 bool
 closePlayer(const std::string& id)
 {
-    auto& vmgr  = Manager::instance().getVideoManager();
+    auto& vmgr = Manager::instance().getVideoManager();
     auto player = getMediaPlayer(id);
     if (player) {
         vmgr.mediaPlayers.erase(id);
@@ -804,7 +804,7 @@ closePlayer(const std::string& id)
 bool
 mutePlayerAudio(const std::string& id, bool mute)
 {
-    auto& vmgr  = Manager::instance().getVideoManager();
+    auto& vmgr = Manager::instance().getVideoManager();
     auto player = getMediaPlayer(id);
     if (player) {
         player->muteAudio(mute);
@@ -816,7 +816,7 @@ mutePlayerAudio(const std::string& id, bool mute)
 bool
 playerSeekToTime(const std::string& id, int time)
 {
-    auto& vmgr  = Manager::instance().getVideoManager();
+    auto& vmgr = Manager::instance().getVideoManager();
     auto player = getMediaPlayer(id);
     if (player) {
         return player->seekToTime(time);
@@ -827,7 +827,7 @@ playerSeekToTime(const std::string& id, int time)
 int64_t
 getPlayerPosition(const std::string& id)
 {
-    auto& vmgr  = Manager::instance().getVideoManager();
+    auto& vmgr = Manager::instance().getVideoManager();
     auto player = getMediaPlayer(id);
     if (player) {
         return player->getPlayerPosition();

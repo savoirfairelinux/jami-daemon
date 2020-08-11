@@ -38,7 +38,7 @@
 namespace jami {
 namespace upnp {
 
-using clock      = std::chrono::system_clock;
+using clock = std::chrono::system_clock;
 using time_point = clock::time_point;
 
 class PMPIGD : public IGD

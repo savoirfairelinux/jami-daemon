@@ -131,7 +131,7 @@ std::atomic_bool Manager::initialized = {false};
 static void
 copy_over(const std::string& srcPath, const std::string& destPath)
 {
-    std::ifstream src  = fileutils::ifstream(srcPath.c_str());
+    std::ifstream src = fileutils::ifstream(srcPath.c_str());
     std::ofstream dest = fileutils::ofstream(destPath.c_str());
     dest << src.rdbuf();
     src.close();
@@ -194,7 +194,7 @@ setDhtLogLevel()
 {
 #ifndef RING_UWP
     char* envvar = getenv(DHTLOGLEVEL);
-    int level    = 0;
+    int level = 0;
 
     if (envvar != nullptr) {
         if (not(std::istringstream(envvar) >> level))
@@ -235,7 +235,7 @@ setSipLogLevel()
         level = std::max(0, std::min(level, 6));
     }
 #else
-    int level                       = 0;
+    int level = 0;
 #endif
 
     pj_log_set_level(level);
@@ -268,7 +268,7 @@ setGnuTlsLogLevel()
 {
 #ifndef RING_UWP
     char* envvar = getenv("RING_TLS_LOGLEVEL");
-    int level    = RING_TLS_LOGLEVEL;
+    int level = RING_TLS_LOGLEVEL;
 
     if (envvar != nullptr) {
         int var_level;
@@ -461,7 +461,7 @@ Manager::ManagerPimpl::parseConfiguration()
     bool result = true;
 
     try {
-        std::ifstream file    = fileutils::ifstream(path_);
+        std::ifstream file = fileutils::ifstream(path_);
         YAML::Node parsedFile = YAML::Load(file);
         file.close();
         const int error_count = base_.loadAccountMap(parsedFile);
@@ -653,7 +653,7 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
 {
     const auto& call_id = call.getCallId();
     const auto& conf_id = conf.getConfID();
-    const auto& state   = call.getStateStr();
+    const auto& state = call.getStateStr();
 
     // ensure that calls are only in one conference at a time
     if (base_.isConferenceParticipant(call_id))
@@ -1830,7 +1830,7 @@ Manager::incomingCall(Call& call, const std::string& accountId)
         std::string peerNumber(call.getPeerNumber());
 
         const char SIP_PREFIX[] = "sip:";
-        size_t startIndex       = peerNumber.find(SIP_PREFIX);
+        size_t startIndex = peerNumber.find(SIP_PREFIX);
 
         if (startIndex != std::string::npos)
             call.setPeerNumber(peerNumber.substr(startIndex + sizeof(SIP_PREFIX) - 1));
@@ -1857,7 +1857,7 @@ Manager::incomingCall(Call& call, const std::string& accountId)
     if (call.getAccount().isRendezVous()) {
         runOnMainThread([this, callID] {
             answerCall(callID);
-            auto call      = getCallFromCallID(callID);
+            auto call = getCallFromCallID(callID);
             auto accountId = call->getAccountId();
             for (const auto& cid : getCallList()) {
                 if (auto call = getCallFromCallID(cid)) {
@@ -1896,7 +1896,7 @@ Manager::incomingCall(Call& call, const std::string& accountId)
                 // NOTE: in case of a SIP call it's already ready to compare
                 device_uid = device_uid.substr(5); // after ring:
             }
-            auto answerToCall         = false;
+            auto answerToCall = false;
             auto downgradeToAudioOnly = currentCall->isAudioOnly() != call.isAudioOnly();
             if (downgradeToAudioOnly)
                 // Accept the incoming audio only
@@ -2149,12 +2149,12 @@ Manager::playRingtone(const std::string& accountID)
     std::string ringchoice = account->getRingtonePath();
 #if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     // for ios file located in main buindle
-    CFBundleRef bundle              = CFBundleGetMainBundle();
-    CFURLRef bundleURL              = CFBundleCopyBundleURL(bundle);
-    CFStringRef stringPath          = CFURLCopyFileSystemPath(bundleURL, kCFURLPOSIXPathStyle);
+    CFBundleRef bundle = CFBundleGetMainBundle();
+    CFURLRef bundleURL = CFBundleCopyBundleURL(bundle);
+    CFStringRef stringPath = CFURLCopyFileSystemPath(bundleURL, kCFURLPOSIXPathStyle);
     CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
-    const char* buindlePath         = CFStringGetCStringPtr(stringPath, encodingMethod);
-    ringchoice                      = std::string(buindlePath) + DIR_SEPARATOR_STR + ringchoice;
+    const char* buindlePath = CFStringGetCStringPtr(stringPath, encodingMethod);
+    ringchoice = std::string(buindlePath) + DIR_SEPARATOR_STR + ringchoice;
 #elif !defined(_WIN32)
     if (ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos) {
         // check inside global share directory
@@ -2576,9 +2576,9 @@ AudioFormat
 Manager::audioFormatUsed(AudioFormat format)
 {
     AudioFormat currentFormat = pimpl_->ringbufferpool_->getInternalAudioFormat();
-    format.nb_channels        = std::max(currentFormat.nb_channels,
+    format.nb_channels = std::max(currentFormat.nb_channels,
                                   std::min(format.nb_channels, 2u)); // max 2 channels.
-    format.sample_rate        = std::max(currentFormat.sample_rate, format.sample_rate);
+    format.sample_rate = std::max(currentFormat.sample_rate, format.sample_rate);
 
     if (currentFormat == format)
         return format;
@@ -2693,7 +2693,7 @@ Manager::setAccountDetails(const std::string& accountID,
 std::map<std::string, std::string>
 Manager::testAccountICEInitialization(const std::string& accountID)
 {
-    const auto account          = getAccount(accountID);
+    const auto account = getAccount(accountID);
     const auto transportOptions = account->getIceOptions();
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
@@ -2849,7 +2849,7 @@ Manager::loadAccountMap(const YAML::Node& node)
     }
 
     auto accountBaseDir = fileutils::get_data_dir();
-    auto dirs           = fileutils::readDirectory(accountBaseDir);
+    auto dirs = fileutils::readDirectory(accountBaseDir);
 
     std::condition_variable cv;
     std::mutex lock;
@@ -2870,7 +2870,7 @@ Manager::loadAccountMap(const YAML::Node& node)
             if (fileutils::isFile(configFile)) {
                 try {
                     if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
-                        std::ifstream file      = fileutils::ifstream(configFile);
+                        std::ifstream file = fileutils::ifstream(configFile);
                         YAML::Node parsedConfig = YAML::Load(file);
                         file.close();
                         a->unserialize(parsedConfig);

@@ -72,7 +72,7 @@ private:
     void encodeAndSendVideo(VideoFrame&);
 
     // encoder MUST be deleted before muxContext
-    std::unique_ptr<MediaIOHandle> muxContext_  = nullptr;
+    std::unique_ptr<MediaIOHandle> muxContext_ = nullptr;
     std::unique_ptr<MediaEncoder> videoEncoder_ = nullptr;
 
     std::atomic<int> forceKeyFrame_ {KEYFRAMES_AT_START};

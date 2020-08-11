@@ -209,18 +209,18 @@ struct JamiAccount::DiscoveredPeer
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
-static constexpr auto TLS_TIMEOUT             = std::chrono::seconds(30);
-const constexpr auto EXPORT_KEY_RENEWAL_TIME  = std::chrono::minutes(20);
+static constexpr auto TLS_TIMEOUT = std::chrono::seconds(30);
+const constexpr auto EXPORT_KEY_RENEWAL_TIME = std::chrono::minutes(20);
 
 static constexpr const char* const RING_URI_PREFIX = "ring:";
 static constexpr const char* const JAMI_URI_PREFIX = "jami:";
-static constexpr const char* DEFAULT_TURN_SERVER   = "turn.jami.net";
+static constexpr const char* DEFAULT_TURN_SERVER = "turn.jami.net";
 static constexpr const char* DEFAULT_TURN_USERNAME = "ring";
-static constexpr const char* DEFAULT_TURN_PWD      = "ring";
-static constexpr const char* DEFAULT_TURN_REALM    = "ring";
+static constexpr const char* DEFAULT_TURN_PWD = "ring";
+static constexpr const char* DEFAULT_TURN_REALM = "ring";
 static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
 static const std::string PEER_DISCOVERY_JAMI_SERVICE = "jami";
-const constexpr auto PEER_DISCOVERY_EXPIRATION       = std::chrono::minutes(1);
+const constexpr auto PEER_DISCOVERY_EXPIRATION = std::chrono::minutes(1);
 
 constexpr const char* const JamiAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> JamiAccount::DHT_PORT_RANGE {4000, 8888};
@@ -294,14 +294,14 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     , connectionManager_ {}
 {
     // Force the SFL turn server if none provided yet
-    turnServer_         = DEFAULT_TURN_SERVER;
+    turnServer_ = DEFAULT_TURN_SERVER;
     turnServerUserName_ = DEFAULT_TURN_USERNAME;
-    turnServerPwd_      = DEFAULT_TURN_PWD;
-    turnServerRealm_    = DEFAULT_TURN_REALM;
-    turnEnabled_        = true;
+    turnServerPwd_ = DEFAULT_TURN_PWD;
+    turnServerRealm_ = DEFAULT_TURN_REALM;
+    turnEnabled_ = true;
 
     proxyListUrl_ = DHT_DEFAULT_PROXY_LIST_URL;
-    proxyServer_  = DHT_DEFAULT_PROXY;
+    proxyServer_ = DHT_DEFAULT_PROXY;
 
     try {
         std::istringstream is(fileutils::loadCacheTextFile(cachePath_ + DIR_SEPARATOR_STR "dhtproxy",
@@ -409,7 +409,7 @@ JamiAccount::newOutgoingCall(const std::string& toUrl,
     auto suffix = stripPrefix(toUrl);
     JAMI_DBG() << *this << "Calling DHT peer " << suffix;
     auto& manager = Manager::instance();
-    auto call     = manager.callFactory.newCall<SIPCall, JamiAccount>(*this,
+    auto call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this,
                                                                   manager.getNewCallID(),
                                                                   Call::CallType::OUTGOING,
                                                                   volatileCallDetails);
@@ -520,7 +520,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                                                                           Call::CallType::OUTGOING,
                                                                           call->getDetails());
 
-        auto callId     = dev_call->getCallId();
+        auto callId = dev_call->getCallId();
         auto onNegoDone = [callId, w = weak()](bool) {
             runOnMainThread([callId, w]() {
                 if (auto shared = w.lock())
@@ -529,8 +529,8 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         };
 
         std::weak_ptr<SIPCall> weak_dev_call = dev_call;
-        auto iceOptions                      = getIceOptions();
-        iceOptions.onNegoDone                = onNegoDone;
+        auto iceOptions = getIceOptions();
+        iceOptions.onNegoDone = onNegoDone;
         dev_call->setIPToIP(true);
         dev_call->setSecure(isTlsEnabled());
         auto ice = createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
@@ -544,7 +544,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         }
 
         iceOptions.tcpEnable = true;
-        auto ice_tcp         = createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
+        auto ice_tcp = createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
                                           ICE_COMPONENTS,
                                           true,
                                           iceOptions);
@@ -590,8 +590,8 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 sthis->registerDhtAddress(*ice_tcp);
             // Next step: sent the ICE data to peer through DHT
             const dht::Value::Id callvid = ValueIdDist()(sthis->rand);
-            const auto callkey           = dht::InfoHash::get("callto:" + deviceId);
-            auto blob                    = ice->packIceMsg();
+            const auto callkey = dht::InfoHash::get("callto:" + deviceId);
+            auto blob = ice->packIceMsg();
             if (ice_tcp) {
                 auto ice_tcp_msg = ice_tcp->packIceMsg(2);
                 blob.insert(blob.end(), ice_tcp_msg.begin(), ice_tcp_msg.end());
@@ -670,7 +670,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     auto& sipConns = sipConnections_[toUri];
     // NOTE: dummyCall is a call used to avoid to mark the call as failed if the
     // cached connection is failing with ICE (close event still not detected).
-    auto& manager  = Manager::instance();
+    auto& manager = Manager::instance();
     auto dummyCall = manager.callFactory.newCall<SIPCall, JamiAccount>(*this,
                                                                        manager.getNewCallID(),
                                                                        Call::CallType::OUTGOING,
@@ -820,12 +820,12 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
     pj_str_t pjFrom = pj_str((char*) from.c_str());
 
     std::string targetStr = getToUri(target.toString(true) /*+";transport=ICE"*/);
-    pj_str_t pjTarget     = pj_str((char*) targetStr.c_str());
+    pj_str_t pjTarget = pj_str((char*) targetStr.c_str());
 
     pj_str_t pjContact;
     {
         auto transport = call.getTransport();
-        pjContact      = getContactHeader(transport ? transport->get() : nullptr);
+        pjContact = getContactHeader(transport ? transport->get() : nullptr);
     }
 
     JAMI_DBG("contact header: %.*s / %s -> %s / %.*s",
@@ -1000,7 +1000,7 @@ JamiAccount::unserialize(const YAML::Node& node)
 
     try {
         parseValue(node, Conf::RING_ACCOUNT_RECEIPT, receipt_);
-        auto receipt_sig  = node[Conf::RING_ACCOUNT_RECEIPT_SIG].as<YAML::Binary>();
+        auto receipt_sig = node[Conf::RING_ACCOUNT_RECEIPT_SIG].as<YAML::Binary>();
         receiptSignature_ = {receipt_sig.data(), receipt_sig.data() + receipt_sig.size()};
     } catch (const std::exception& e) {
         JAMI_WARN("can't read receipt: %s", e.what());
@@ -1200,7 +1200,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                                                      managerUsername_,
                                                      std::move(callbacks))) {
             // normal loading path
-            id_       = std::move(id);
+            id_ = std::move(id);
             username_ = RING_URI_PREFIX + info->accountId;
             JAMI_WARN("[Account %s] loaded account identity", getAccountID().c_str());
             if (not isEnabled()) {
@@ -1228,31 +1228,31 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     archivePath_ = "archive.gz";
                 }
                 auto archivePath = fileutils::getFullPath(idPath_, archivePath_);
-                bool hasArchive  = fileutils::isFile(archivePath);
+                bool hasArchive = fileutils::isFile(archivePath);
                 if (not archive_path.empty()) {
                     // Importing external archive
                     acreds->scheme = "file";
-                    acreds->uri    = archive_path;
+                    acreds->uri = archive_path;
                 } else if (not archive_pin.empty()) {
                     // Importing from DHT
-                    acreds->scheme       = "dht";
-                    acreds->uri          = archive_pin;
+                    acreds->scheme = "dht";
+                    acreds->uri = archive_pin;
                     acreds->dhtBootstrap = loadBootstrap();
-                    acreds->dhtPort      = (in_port_t) dhtPortUsed_;
+                    acreds->dhtPort = (in_port_t) dhtPortUsed_;
                 } else if (hasArchive) {
                     // Migrating local account
-                    acreds->scheme         = "local";
-                    acreds->uri            = std::move(archivePath);
+                    acreds->scheme = "local";
+                    acreds->uri = std::move(archivePath);
                     acreds->updateIdentity = id;
-                    migrating              = true;
+                    migrating = true;
                 }
                 creds = std::move(acreds);
             } else {
                 auto screds = std::make_unique<ServerAccountManager::ServerAccountCredentials>();
                 screds->username = managerUsername_;
-                creds            = std::move(screds);
+                creds = std::move(screds);
             }
-            creds->password     = archive_password;
+            creds->password = archive_password;
             archiveHasPassword_ = !archive_password.empty();
 
             accountManager_->initAuthentication(
@@ -1268,15 +1268,15 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     fileutils::check_dir(idPath_.c_str(), 0700);
 
                     // save the chain including CA
-                    auto id                                           = info.identity;
-                    id.first                                          = std::move(fDeviceKey.get());
+                    auto id = info.identity;
+                    id.first = std::move(fDeviceKey.get());
                     std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(id,
                                                                                      idPath_,
                                                                                      "ring_device");
-                    id_                                               = std::move(id);
-                    tlsPassword_                                      = {};
+                    id_ = std::move(id);
+                    tlsPassword_ = {};
 
-                    username_       = RING_URI_PREFIX + info.accountId;
+                    username_ = RING_URI_PREFIX + info.accountId;
                     registeredName_ = managerUsername_;
                     ringDeviceName_ = accountManager_->getAccountDeviceName();
 
@@ -1289,7 +1289,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                         displayName_ = displayNameIt->second;
                     }
 
-                    receipt_          = std::move(receipt);
+                    receipt_ = std::move(receipt);
                     receiptSignature_ = std::move(receipt_signature);
                     if (migrating) {
                         Migration::setState(getAccountID(), Migration::State::SUCCESS);
@@ -1396,8 +1396,8 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
         proxyServer_ = DHT_DEFAULT_PROXY;
     if (proxyServer_ != oldProxyServer || oldProxyServerList != proxyListUrl_) {
         JAMI_DBG("DHT Proxy configuration changed, resetting cache");
-        proxyServerCached_      = {};
-        auto proxyCachePath     = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
+        proxyServerCached_ = {};
+        auto proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
         auto proxyListCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxylist";
         std::remove(proxyCachePath.c_str());
         std::remove(proxyListCachePath.c_str());
@@ -1660,7 +1660,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
     }
 
     auto ice_tcp = pc.ice_tcp_sp.get();
-    auto ice     = pc.ice_sp.get();
+    auto ice = pc.ice_sp.get();
 
     bool tcp_finished = ice_tcp == nullptr || ice_tcp->isStopped();
     bool udp_finished = ice == nullptr || ice->isStopped();
@@ -1697,14 +1697,14 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
     }
 
     // Securize a SIP transport with TLS (on top of ICE tranport) and assign the call with it
-    auto remote_device  = pc.from;
+    auto remote_device = pc.from;
     auto remote_account = pc.from_account;
-    auto id             = id_;
+    auto id = id_;
     if (not id.first or not id.second)
         throw std::runtime_error("No identity configured for this account.");
 
     std::weak_ptr<JamiAccount> waccount = weak();
-    std::weak_ptr<SIPCall> wcall        = call;
+    std::weak_ptr<SIPCall> wcall = call;
     tls::TlsParams tlsParams {
         /*.ca_list = */ "",
         /*.ca = */ pc.from_cert,
@@ -1779,10 +1779,10 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
         pendingSipCalls_.emplace_back(std::move(pc)); // copy of pc
     } else {
         // Be acknowledged on transport connection/disconnection
-        auto lid         = reinterpret_cast<uintptr_t>(this);
-        auto remote_id   = remote_device.toString();
+        auto lid = reinterpret_cast<uintptr_t>(this);
+        auto remote_id = remote_device.toString();
         auto remote_addr = best_transport->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
-        auto& tr_self    = *transport;
+        auto& tr_self = *transport;
 
         transport->addStateListener(lid,
                                     [&tr_self,
@@ -2080,16 +2080,16 @@ JamiAccount::doRegister_()
 #endif
 
         dht::DhtRunner::Config config {};
-        config.dht_config.node_config.network          = 0;
+        config.dht_config.node_config.network = 0;
         config.dht_config.node_config.maintain_storage = false;
-        config.dht_config.node_config.persist_path     = cachePath_ + DIR_SEPARATOR_STR "dhtstate";
-        config.dht_config.id                           = id_;
-        config.dht_config.cert_cache_all               = true;
-        config.push_node_id                            = getAccountID();
-        config.push_token                              = deviceKey_;
-        config.threaded                                = true;
-        config.peer_discovery                          = dhtPeerDiscovery_;
-        config.peer_publish                            = dhtPeerDiscovery_;
+        config.dht_config.node_config.persist_path = cachePath_ + DIR_SEPARATOR_STR "dhtstate";
+        config.dht_config.id = id_;
+        config.dht_config.cert_cache_all = true;
+        config.push_node_id = getAccountID();
+        config.push_token = deviceKey_;
+        config.threaded = true;
+        config.peer_discovery = dhtPeerDiscovery_;
+        config.peer_publish = dhtPeerDiscovery_;
         if (proxyEnabled_)
             config.proxy_server = proxyServerCached_;
 
@@ -2233,7 +2233,7 @@ JamiAccount::doRegister_()
         });
         connectionManager_->onChannelRequest(
             [this](const std::string& /* deviceId */, const std::string& name) {
-                auto isFile  = name.substr(0, 7) == "file://";
+                auto isFile = name.substr(0, 7) == "file://";
                 auto isVCard = name.substr(0, 8) == "vcard://";
                 if (name == "sip") {
                     return true;
@@ -2256,14 +2256,14 @@ JamiAccount::doRegister_()
                 auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
                 if (!cert || !cert->issuer)
                     return;
-                auto peerId  = cert->issuer->getId().toString();
-                auto isFile  = name.substr(0, 7) == "file://";
+                auto peerId = cert->issuer->getId().toString();
+                auto isFile = name.substr(0, 7) == "file://";
                 auto isVCard = name.substr(0, 8) == "vcard://";
                 if (name == "sip") {
                     cacheSIPConnection(std::move(channel), peerId, deviceId);
                 } else if (isFile or isVCard) {
                     auto tid_str = isFile ? name.substr(7) : name.substr(8);
-                    auto it      = incomingFileTransfers_.find(tid_str);
+                    auto it = incomingFileTransfers_.find(tid_str);
                     // Note, outgoing file transfers are ignored.
                     if (it == incomingFileTransfers_.end())
                         return;
@@ -2327,7 +2327,7 @@ JamiAccount::doRegister_()
                 dhtPublicInCalls_,
                 [this, v, inboxDeviceKey, msgId](const std::shared_ptr<dht::crypto::Certificate>&,
                                                  const dht::InfoHash& peer_account) {
-                    auto now             = clock::to_time_t(clock::now());
+                    auto now = clock::to_time_t(clock::now());
                     std::string datatype = utf8_make_valid(v.datatype);
                     if (datatype.empty()) {
                         datatype = "text/plain";
@@ -2382,21 +2382,21 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg,
     if (!call) {
         return;
     }
-    auto callId     = call->getCallId();
+    auto callId = call->getCallId();
     auto onNegoDone = [callId, w = weak()](bool) {
         runOnMainThread([callId, w]() {
             if (auto shared = w.lock())
                 shared->checkPendingCall(callId);
         });
     };
-    auto iceOptions       = getIceOptions();
+    auto iceOptions = getIceOptions();
     iceOptions.onNegoDone = onNegoDone;
-    auto ice              = createIceTransport(("sip:" + call->getCallId()).c_str(),
+    auto ice = createIceTransport(("sip:" + call->getCallId()).c_str(),
                                   ICE_COMPONENTS,
                                   false,
                                   iceOptions);
-    iceOptions.tcpEnable  = true;
-    auto ice_tcp          = createIceTransport(("sip:" + call->getCallId()).c_str(),
+    iceOptions.tcpEnable = true;
+    auto ice_tcp = createIceTransport(("sip:" + call->getCallId()).c_str(),
                                       ICE_COMPONENTS,
                                       true,
                                       iceOptions);
@@ -2473,7 +2473,7 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
 
     auto started_time = std::chrono::steady_clock::now();
 
-    auto sdp_list   = IceTransport::parseSDPList(peer_ice_msg.ice_data);
+    auto sdp_list = IceTransport::parseSDPList(peer_ice_msg.ice_data);
     auto udp_failed = true, tcp_failed = true;
     initICE(peer_ice_msg.ice_data, ice, ice_tcp, udp_failed, tcp_failed);
 
@@ -2654,7 +2654,7 @@ void
 JamiAccount::loadTreatedMessages()
 {
     std::lock_guard<std::mutex> lock(messageMutex_);
-    auto path        = cachePath_ + DIR_SEPARATOR_STR "treatedMessages";
+    auto path = cachePath_ + DIR_SEPARATOR_STR "treatedMessages";
     treatedMessages_ = loadIdList<std::string>(path);
     if (treatedMessages_.empty()) {
         auto messages = loadIdList(path);
@@ -2696,7 +2696,7 @@ JamiAccount::getKnownDevices() const
         return {};
     std::map<std::string, std::string> ids;
     for (auto& d : accountManager_->getKnownDevices()) {
-        auto id    = d.first.toString();
+        auto id = d.first.toString();
         auto label = d.second.name.empty() ? id.substr(0, 8) : d.second.name;
         ids.emplace(std::move(id), std::move(label));
     }
@@ -2742,7 +2742,7 @@ JamiAccount::loadCachedUrl(const std::string& url,
         try {
             auto data = fileutils::loadCacheFile(cachePath, cacheDuration);
             dht::http::Response ret;
-            ret.body        = {data.begin(), data.end()};
+            ret.body = {data.begin(), data.end()};
             ret.status_code = 200;
             cb(ret);
         } catch (const std::exception& e) {
@@ -2849,7 +2849,7 @@ JamiAccount::getDhtProxyServer(const std::string& serverList)
         // Cache it!
         fileutils::check_dir(cachePath_.c_str(), 0700);
         std::string proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
-        std::ofstream file         = fileutils::ofstream(proxyCachePath);
+        std::ofstream file = fileutils::ofstream(proxyCachePath);
         JAMI_DBG("Cache DHT proxy server: %s", proxyServerCached_.c_str());
         if (file.is_open())
             file << proxyServerCached_;
@@ -2904,8 +2904,8 @@ JamiAccount::getContactHeader(pjsip_transport* t)
 {
     std::string quotedDisplayName = "\"" + displayName_ + "\" " + (displayName_.empty() ? "" : " ");
     if (t) {
-        auto* td      = reinterpret_cast<tls::AbstractSIPTransport::TransportData*>(t);
-        auto address  = td->self->getLocalAddress().toString(true);
+        auto* td = reinterpret_cast<tls::AbstractSIPTransport::TransportData*>(t);
+        auto address = td->self->getLocalAddress().toString(true);
         bool reliable = t->flag & PJSIP_TRANSPORT_RELIABLE;
 
         contact_.slen = pj_ansi_snprintf(contact_.ptr,
@@ -3091,7 +3091,7 @@ JamiAccount::sendTextMessage(const std::string& to,
     std::set<std::string> devices;
     std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
     sip_utils::register_thread();
-    auto& sipConns    = sipConnections_[to];
+    auto& sipConns = sipConnections_[to];
     auto deviceConnIt = sipConns.begin();
     while (deviceConnIt != sipConns.end()) {
         if (deviceConnIt->second.empty()) {
@@ -3102,19 +3102,19 @@ JamiAccount::sendTextMessage(const std::string& to,
 
         // Set input token into callback
         std::unique_ptr<TextMessageCtx> ctx {std::make_unique<TextMessageCtx>()};
-        ctx->acc            = weak();
-        ctx->to             = to;
-        ctx->deviceId       = deviceConnIt->first;
-        ctx->id             = token;
+        ctx->acc = weak();
+        ctx->to = to;
+        ctx->deviceId = deviceConnIt->first;
+        ctx->id = token;
         ctx->retryOnTimeout = retryOnTimeout;
-        ctx->confirmation   = confirm;
+        ctx->confirmation = confirm;
 
         try {
             auto res = sendSIPMessage(
                 it, to, ctx.release(), token, payloads, [](void* token, pjsip_event* event) {
                     std::unique_ptr<TextMessageCtx> c {(TextMessageCtx*) token};
                     auto code = event->body.tsx_state.tsx->status_code;
-                    auto acc  = c->acc.lock();
+                    auto acc = c->acc.lock();
                     if (not acc)
                         return;
 
@@ -3394,7 +3394,7 @@ void
 JamiAccount::startAccountPublish()
 {
     AccountPeerInfo info_pub;
-    info_pub.accountId   = dht::InfoHash(accountManager_->getInfo()->accountId);
+    info_pub.accountId = dht::InfoHash(accountManager_->getInfo()->accountId);
     info_pub.displayName = displayName_;
     peerDiscovery_->startPublish<AccountPeerInfo>(PEER_DISCOVERY_JAMI_SERVICE, info_pub);
 }
@@ -3409,8 +3409,8 @@ JamiAccount::startAccountDiscovery()
             // Make sure that account itself will not be recorded
             if (v.accountId != id) {
                 // Create or Find the old one
-                auto& dp                                   = discoveredPeers_[v.accountId];
-                dp.displayName                             = v.displayName;
+                auto& dp = discoveredPeers_[v.accountId];
+                dp.displayName = v.displayName;
                 discoveredPeerMap_[v.accountId.toString()] = v.displayName;
                 if (dp.cleanupTask) {
                     dp.cleanupTask->cancel();
@@ -3574,7 +3574,7 @@ JamiAccount::needToSendProfile(const std::string& deviceId)
     auto vCardMd5 = fileutils::md5File(idPath_ + DIR_SEPARATOR_STR + "profile.vcf");
     std::string currentMd5 {};
     auto vCardPath = cachePath_ + DIR_SEPARATOR_STR + "vcard";
-    auto md5Path   = vCardPath + DIR_SEPARATOR_STR + "md5";
+    auto md5Path = vCardPath + DIR_SEPARATOR_STR + "md5";
     fileutils::check_dir(vCardPath.c_str(), 0700);
     try {
         currentMd5 = fileutils::loadTextFile(md5Path);
@@ -3601,7 +3601,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
                             pjsip_endpt_send_callback cb)
 {
     auto transport = conn.transport;
-    auto channel   = conn.channel;
+    auto channel = conn.channel;
     if (!channel || !channel->underlyingICE())
         throw std::runtime_error(
             "A SIP transport exists without Channel, this is a bug. Please report");
@@ -3615,8 +3615,8 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
     // Build SIP message
     constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD,
                                          jami::sip_utils::CONST_PJ_STR("MESSAGE")};
-    pj_str_t pjFrom                   = pj_str((char*) from.c_str());
-    pj_str_t pjTo                     = pj_str((char*) toURI.c_str());
+    pj_str_t pjFrom = pj_str((char*) from.c_str());
+    pj_str_t pjTo = pj_str((char*) toURI.c_str());
 
     // Create request.
     pj_status_t status = pjsip_endpt_create_request(link_.getEndpoint(),
@@ -3649,15 +3649,15 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
     pjsip_msg_add_hdr(tdata->msg, hdr);
 
     // https://tools.ietf.org/html/rfc5438#section-6.3
-    auto token_str   = to_hex_string(token);
+    auto token_str = to_hex_string(token);
     auto pjMessageId = sip_utils::CONST_PJ_STR(token_str);
-    hdr              = reinterpret_cast<pjsip_hdr*>(
+    hdr = reinterpret_cast<pjsip_hdr*>(
         pjsip_generic_string_hdr_create(tdata->pool, &STR_MESSAGE_ID, &pjMessageId));
     pjsip_msg_add_hdr(tdata->msg, hdr);
 
     // Add user agent header.
     pjsip_hdr* hdr_list;
-    constexpr auto pJuseragent        = sip_utils::CONST_PJ_STR("Jami");
+    constexpr auto pJuseragent = sip_utils::CONST_PJ_STR("Jami");
     constexpr pj_str_t STR_USER_AGENT = jami::sip_utils::CONST_PJ_STR("User-Agent");
 
     // Add Header
@@ -3667,7 +3667,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
 
     // Init tdata
     const pjsip_tpselector tp_sel = SIPVoIPLink::getTransportSelector(transport->get());
-    status                        = pjsip_tx_data_set_transport(tdata, &tp_sel);
+    status = pjsip_tx_data_set_transport(tdata, &tp_sel);
     if (status != PJ_SUCCESS) {
         JAMI_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
         return false;
@@ -3698,10 +3698,10 @@ JamiAccount::sendProfile(const std::string& deviceId)
 
         DRing::DataTransferInfo info;
         DRing::DataTransferId id {0};
-        info.accountId     = getAccountID();
-        info.peer          = deviceId;
-        info.path          = idPath_ + DIR_SEPARATOR_STR + "profile.vcf";
-        info.displayName   = "profile.vcf";
+        info.accountId = getAccountID();
+        info.peer = deviceId;
+        info.path = idPath_ + DIR_SEPARATOR_STR + "profile.vcf";
+        info.displayName = "profile.vcf";
         info.bytesProgress = 0;
 
         Manager::instance().dataTransfers->sendFile(info, id, [info](const std::string&) {
@@ -3723,7 +3723,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
     // Verify that the connection is not already cached
     auto& connections = sipConnections_[peerId][deviceId];
-    auto conn         = std::find_if(connections.begin(), connections.end(), [socket](auto v) {
+    auto conn = std::find_if(connections.begin(), connections.end(), [socket](auto v) {
         return v.channel == socket;
     });
     if (conn != connections.end()) {
@@ -3739,7 +3739,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
             return;
         std::lock_guard<std::mutex> lk(shared->sipConnectionsMtx_);
         auto& connections = shared->sipConnections_[peerId][deviceId];
-        auto conn         = connections.begin();
+        auto conn = connections.begin();
         while (conn != connections.end()) {
             if (conn->channel == socket)
                 conn = connections.erase(conn);

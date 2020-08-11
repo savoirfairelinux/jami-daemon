@@ -57,7 +57,7 @@ enum class TlsSessionState {
     SHUTDOWN
 };
 
-using clock    = std::chrono::steady_clock;
+using clock = std::chrono::steady_clock;
 using duration = clock::duration;
 
 struct TlsParams
@@ -91,9 +91,9 @@ struct TlsParams
 class TlsSession : public GenericSocket<uint8_t>
 {
 public:
-    using SocketType        = GenericSocket<uint8_t>;
+    using SocketType = GenericSocket<uint8_t>;
     using OnStateChangeFunc = std::function<void(TlsSessionState)>;
-    using OnRxDataFunc      = std::function<void(std::vector<uint8_t>&&)>;
+    using OnRxDataFunc = std::function<void(std::vector<uint8_t>&&)>;
     using OnCertificatesUpdate
         = std::function<void(const gnutls_datum_t*, const gnutls_datum_t*, unsigned int)>;
     using VerifyCertificate = std::function<int(gnutls_session_t)>;

@@ -62,7 +62,7 @@ static constexpr int MAX_DESTRUCTION_TIMEOUT {3};
 //==============================================================================
 
 using MutexGuard = std::lock_guard<std::mutex>;
-using MutexLock  = std::unique_lock<std::mutex>;
+using MutexLock = std::unique_lock<std::mutex>;
 
 namespace {
 
@@ -216,8 +216,8 @@ add_stun_server(pj_ice_strans_cfg& cfg, int af)
 
     pj_ice_strans_stun_cfg_default(&stun);
     stun.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
-    stun.af               = af;
-    stun.conn_type        = cfg.stun.conn_type;
+    stun.af = af;
+    stun.conn_type = cfg.stun.conn_type;
 
     JAMI_DBG("[ice (%s)] added host stun server", (cfg.protocol == PJ_ICE_TP_TCP ? "TCP" : "UDP"));
 }
@@ -246,7 +246,7 @@ add_stun_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const StunServerInfo& i
     if (!(stun.port = ip.getPort()))
         stun.port = PJ_STUN_PORT;
     stun.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
-    stun.conn_type        = cfg.stun.conn_type;
+    stun.conn_type = cfg.stun.conn_type;
 
     JAMI_DBG("[ice (%s)] added stun server '%s', port %u",
              (cfg.protocol == PJ_ICE_TP_TCP ? "TCP" : "UDP"),
@@ -277,11 +277,11 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
     if (!(turn.port = ip.getPort()))
         turn.port = PJ_STUN_PORT;
     turn.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
-    turn.conn_type        = cfg.turn.conn_type;
+    turn.conn_type = cfg.turn.conn_type;
 
     // Authorization (only static plain password supported yet)
     if (not info.password.empty()) {
-        turn.auth_cred.type                       = PJ_STUN_AUTH_CRED_STATIC;
+        turn.auth_cred.type = PJ_STUN_AUTH_CRED_STATIC;
         turn.auth_cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
         pj_strset(&turn.auth_cred.data.static_cred.realm,
                   (char*) info.realm.c_str(),
@@ -325,13 +325,13 @@ IceTransport::Impl::Impl(const char* name,
         upnp_.reset(new upnp::Controller(false));
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    config_                   = iceTransportFactory.getIceCfg(); // config copy
+    config_ = iceTransportFactory.getIceCfg(); // config copy
     if (options.tcpEnable) {
-        config_.protocol       = PJ_ICE_TP_TCP;
+        config_.protocol = PJ_ICE_TP_TCP;
         config_.stun.conn_type = PJ_STUN_TP_TCP;
         config_.turn.conn_type = PJ_TURN_TP_TCP;
     } else {
-        config_.protocol       = PJ_ICE_TP_UDP;
+        config_.protocol = PJ_ICE_TP_UDP;
         config_.stun.conn_type = PJ_STUN_TP_UDP;
         config_.turn.conn_type = PJ_TURN_TP_UDP;
     }
@@ -504,8 +504,8 @@ IceTransport::Impl::handleEvents(unsigned max_msec)
     // By tests, never seen more than two events per 500ms
     static constexpr auto MAX_NET_EVENTS = 2;
 
-    pj_time_val max_timeout  = {0, 0};
-    pj_time_val timeout      = {0, 0};
+    pj_time_val max_timeout = {0, 0};
+    pj_time_val timeout = {0, 0};
     unsigned net_event_count = 0;
 
     max_timeout.msec = max_msec;
@@ -753,7 +753,7 @@ IceTransport::Impl::addReflectiveCandidate(int comp_id,
         return (pj_uint8_t)((type << 6) | idx);
     };
     static constexpr int SRFLX_PREF = 65535;
-    static constexpr int TP_STUN    = 1;
+    static constexpr int TP_STUN = 1;
 
     // find a compatible STUN host with same address familly, normally all system
     // enabled host addresses are represented, so we expect to always found this
@@ -783,12 +783,12 @@ IceTransport::Impl::addReflectiveCandidate(int comp_id,
 
     pj_ice_sess_cand cand;
 
-    cand.type         = PJ_ICE_CAND_TYPE_SRFLX;
-    cand.status       = PJ_EPENDING; // not used
-    cand.comp_id      = comp_id;
+    cand.type = PJ_ICE_CAND_TYPE_SRFLX;
+    cand.status = PJ_EPENDING; // not used
+    cand.comp_id = comp_id;
     cand.transport_id = CREATE_TP_ID(TP_STUN, idx); // HACK!!
-    cand.local_pref   = SRFLX_PREF;                 // reflective
-    cand.transport    = transport;
+    cand.local_pref = SRFLX_PREF;                   // reflective
+    cand.transport = transport;
     /* cand.foundation = ? */
     /* cand.prio = calculated by ice session */
     /* make base and addr the same since we're not going through a server */
@@ -1237,7 +1237,7 @@ IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
     // But as this candidate is made after initialization, it's not used during
     // negotiation, only to exchanged candidates between peers.
     auto localIP = ip_utils::getLocalAddr(publicIP.getFamily());
-    auto pubIP   = publicIP;
+    auto pubIP = publicIP;
     for (const auto& cand : pimpl_->getLocalICECandidates(compId)) {
         auto port = cand.addr.getPort();
         localIP.setPort(port);
@@ -1266,7 +1266,7 @@ IceTransport::packIceMsg(uint8_t version) const
     } else {
         SDP sdp;
         sdp.ufrag = pimpl_->local_ufrag_;
-        sdp.pwd   = pimpl_->local_pwd_;
+        sdp.pwd = pimpl_->local_pwd_;
         for (unsigned i = 0; i < pimpl_->component_count_; i++) {
             auto candidates = getLocalCandidates(i);
             sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
@@ -1354,7 +1354,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand) c
     }
 
     cand.comp_id = (pj_uint8_t) comp_id;
-    cand.prio    = prio;
+    cand.prio = prio;
 
     if (strchr(ipaddr, ':'))
         af = pj_AF_INET6();
@@ -1388,7 +1388,7 @@ IceTransport::recv(int comp_id, unsigned char* buf, size_t len, std::error_code&
         return -1;
     }
 
-    auto& packet     = io.queue.front();
+    auto& packet = io.queue.front();
     const auto count = std::min(len, packet.data.size());
     std::copy_n(packet.data.begin(), count, buf);
     if (count == packet.data.size()) {
@@ -1523,7 +1523,7 @@ IceTransport::parseSDPList(const std::vector<uint8_t>& msg)
                 if (!result)
                     break;
                 std::tie(sdp.ufrag, sdp.pwd) = oh.get().as<std::pair<std::string, std::string>>();
-                result                       = pac.next(oh);
+                result = pac.next(oh);
                 if (!result)
                     break;
                 auto comp_cnt = oh.get().as<uint8_t>();

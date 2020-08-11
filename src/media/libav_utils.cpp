@@ -45,7 +45,7 @@ av_frame_new_side_data_from_buf(AVFrame* frame, enum AVFrameSideDataType type, A
 {
     auto side_data = av_frame_new_side_data(frame, type, 0);
     av_buffer_unref(&side_data->buf);
-    side_data->buf  = buf;
+    side_data->buf = buf;
     side_data->data = side_data->buf->data;
     side_data->size = side_data->buf->size;
     return side_data;
@@ -62,7 +62,7 @@ static int
 avcodecManageMutex(void** data, enum AVLockOp op)
 {
     auto mutex = reinterpret_cast<std::mutex**>(data);
-    int ret    = 0;
+    int ret = 0;
     switch (op) {
     case AV_LOCK_CREATE:
         try {
@@ -247,7 +247,7 @@ void
 fillWithBlack(AVFrame* frame)
 {
     const AVPixelFormat format = static_cast<AVPixelFormat>(frame->format);
-    const int planes           = av_pix_fmt_count_planes(format);
+    const int planes = av_pix_fmt_count_planes(format);
     // workaround for casting pointers to different sizes
     // on 64 bit machines: sizeof(ptrdiff_t) != sizeof(int)
     ptrdiff_t linesizes[4];
