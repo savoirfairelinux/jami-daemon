@@ -21,22 +21,23 @@
 #pragma once
 
 #include "ip_utils.h"
-#include "media_codec.h"
 #include "media/audio/audiobuffer.h"
+#include "media_codec.h"
 #include "noncopyable.h"
 
-#include <utility>
-#include <string>
-#include <vector>
 #include <cstring> // strcmp
+#include <string>
+#include <utility>
+#include <vector>
 
-#include <pjsip/sip_msg.h>
-#include <pjlib.h>
 #include <pj/pool.h>
-#include <pjsip/sip_endpoint.h>
+#include <pjlib.h>
 #include <pjsip/sip_dialog.h>
+#include <pjsip/sip_endpoint.h>
+#include <pjsip/sip_msg.h>
 
-namespace jami { namespace sip_utils {
+namespace jami {
+namespace sip_utils {
 
 static constexpr int DEFAULT_SIP_PORT {5060};
 static constexpr int DEFAULT_SIP_TLS_PORT {5061};
@@ -49,7 +50,7 @@ class PjsipErrorCategory final : public std::error_category
 {
 public:
     const char* name() const noexcept override { return "pjsip"; }
-    std::string message( int condition ) const override;
+    std::string message(int condition) const override;
 };
 
 /// PJSIP related exception
@@ -61,17 +62,23 @@ private:
 
 public:
     PjsipFailure()
-        : std::system_error(std::error_code(PJ_EUNKNOWN, PjsipErrorCategory()), what_) {}
+        : std::system_error(std::error_code(PJ_EUNKNOWN, PjsipErrorCategory()), what_)
+    {}
 
     explicit PjsipFailure(pj_status_t status)
-        : std::system_error(std::error_code(status, PjsipErrorCategory()), what_) {}
+        : std::system_error(std::error_code(status, PjsipErrorCategory()), what_)
+    {}
 };
 
-static constexpr const char* getKeyExchangeName(KeyExchangeProtocol kx) {
+static constexpr const char*
+getKeyExchangeName(KeyExchangeProtocol kx)
+{
     return kx == KeyExchangeProtocol::SDES ? "sdes" : "";
 }
 
-static inline KeyExchangeProtocol getKeyExchangeProtocol(const char* name) {
+static inline KeyExchangeProtocol
+getKeyExchangeProtocol(const char* name)
+{
     return !std::strcmp("sdes", name) ? KeyExchangeProtocol::SDES : KeyExchangeProtocol::NONE;
 }
 
@@ -79,10 +86,9 @@ static inline KeyExchangeProtocol getKeyExchangeProtocol(const char* name) {
  * Helper function to parser header from incoming sip messages
  * @return Header from SIP message
  */
-std::string fetchHeaderValue(pjsip_msg *msg, const std::string &field);
+std::string fetchHeaderValue(pjsip_msg* msg, const std::string& field);
 
-pjsip_route_hdr *
-createRouteSet(const std::string &route, pj_pool_t *hdr_pool);
+pjsip_route_hdr* createRouteSet(const std::string& route, pj_pool_t* hdr_pool);
 
 void stripSipUriPrefix(std::string& sipUri);
 
@@ -92,7 +98,7 @@ std::string parseDisplayName(const pjsip_contact_hdr* header);
 
 std::string getHostFromUri(const std::string& sipUri);
 
-void addContactHeader(const pj_str_t *contactStr, pjsip_tx_data *tdata);
+void addContactHeader(const pj_str_t* contactStr, pjsip_tx_data* tdata);
 
 std::string sip_strerror(pj_status_t code);
 
@@ -106,26 +112,30 @@ void register_thread();
 // that may be staticaly casted into char pointer.
 // Per convention, the input array is supposed to be null terminated.
 template<typename T, std::size_t N>
-constexpr const pj_str_t CONST_PJ_STR(T (&a)[N]) noexcept {
-    return {const_cast<char*>(a), N-1};
+constexpr const pj_str_t CONST_PJ_STR(T (&a)[N]) noexcept
+{
+    return {const_cast<char*>(a), N - 1};
 }
 
-inline const pj_str_t CONST_PJ_STR(const std::string& str) noexcept {
-    return {const_cast<char*>(str.c_str()), (pj_ssize_t)str.size()};
+inline const pj_str_t
+CONST_PJ_STR(const std::string& str) noexcept
+{
+    return {const_cast<char*>(str.c_str()), (pj_ssize_t) str.size()};
 }
 
 // PJSIP dialog locking in RAII way
 // Usage: declare local variable like this: sip_utils::PJDialogLock lock {dialog};
 // The lock is kept until the local variable is deleted
-class PJDialogLock {
+class PJDialogLock
+{
 public:
-    explicit PJDialogLock(pjsip_dialog* dialog) : dialog_(dialog) {
+    explicit PJDialogLock(pjsip_dialog* dialog)
+        : dialog_(dialog)
+    {
         pjsip_dlg_inc_lock(dialog_);
     }
 
-    ~PJDialogLock() {
-        pjsip_dlg_dec_lock(dialog_);
-    }
+    ~PJDialogLock() { pjsip_dlg_dec_lock(dialog_); }
 
 private:
     NON_COPYABLE(PJDialogLock);
@@ -135,7 +145,8 @@ private:
 // Helper on PJSIP memory pool allocation from endpoint
 // This encapsulate the allocated memory pool inside a unique_ptr
 static inline std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&>
-smart_alloc_pool(pjsip_endpoint* endpt, const char* const name, pj_size_t initial, pj_size_t inc) {
+smart_alloc_pool(pjsip_endpoint* endpt, const char* const name, pj_size_t initial, pj_size_t inc)
+{
     auto pool = pjsip_endpt_create_pool(endpt, name, initial, inc);
     if (not pool)
         throw std::bad_alloc();
@@ -148,4 +159,5 @@ static constexpr int POOL_TP_INIT {512};
 static constexpr int POOL_TP_INC {512};
 static constexpr int TRANSPORT_INFO_LENGTH {64};
 
-}} // namespace jami::sip_utils
+} // namespace sip_utils
+} // namespace jami

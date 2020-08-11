@@ -26,23 +26,23 @@
 #include "config.h"
 #endif
 
-#include "configurationmanager_interface.h"
-#include "account_schema.h"
-#include "manager.h"
-#include "security/tlsvalidator.h"
-#include "security/certstore.h"
-#include "logger.h"
-#include "fileutils.h"
-#include "archiver.h"
-#include "ip_utils.h"
-#include "sip/sipaccount.h"
-#include "jamidht/jamiaccount.h"
-#include "audio/audiolayer.h"
-#include "system_codec_container.h"
 #include "account_const.h"
-#include "client/ring_signal.h"
-#include "upnp/upnp_context.h"
+#include "account_schema.h"
+#include "archiver.h"
+#include "audio/audiolayer.h"
 #include "audio/ringbufferpool.h"
+#include "client/ring_signal.h"
+#include "configurationmanager_interface.h"
+#include "fileutils.h"
+#include "ip_utils.h"
+#include "jamidht/jamiaccount.h"
+#include "logger.h"
+#include "manager.h"
+#include "security/certstore.h"
+#include "security/tlsvalidator.h"
+#include "sip/sipaccount.h"
+#include "system_codec_container.h"
+#include "upnp/upnp_context.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>
@@ -66,16 +66,15 @@ namespace DRing {
 
 constexpr unsigned CODECS_NOT_LOADED = 0x1000; /** Codecs not found */
 
-using jami::SIPAccount;
-using jami::JamiAccount;
-using jami::tls::TlsValidator;
-using jami::tls::CertificateStore;
 using jami::DeviceType;
 using jami::HookPreference;
+using jami::JamiAccount;
+using jami::SIPAccount;
+using jami::tls::CertificateStore;
+using jami::tls::TlsValidator;
 
 void
-registerConfHandlers(const std::map<std::string,
-    std::shared_ptr<CallbackWrapperBase>>&handlers)
+registerConfHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>& handlers)
 {
     registerSignalHandlers(handlers);
 }
@@ -104,29 +103,27 @@ getTlsDefaultSettings()
     std::stringstream portstr;
     portstr << jami::sip_utils::DEFAULT_SIP_TLS_PORT;
 
-    return {
-        {jami::Conf::CONFIG_TLS_LISTENER_PORT, portstr.str()},
-        {jami::Conf::CONFIG_TLS_CA_LIST_FILE, ""},
-        {jami::Conf::CONFIG_TLS_CERTIFICATE_FILE, ""},
-        {jami::Conf::CONFIG_TLS_PRIVATE_KEY_FILE, ""},
-        {jami::Conf::CONFIG_TLS_PASSWORD, ""},
-        {jami::Conf::CONFIG_TLS_METHOD, "Default"},
-        {jami::Conf::CONFIG_TLS_CIPHERS, ""},
-        {jami::Conf::CONFIG_TLS_SERVER_NAME, ""},
-        {jami::Conf::CONFIG_TLS_VERIFY_SERVER, "true"},
-        {jami::Conf::CONFIG_TLS_VERIFY_CLIENT, "true"},
-        {jami::Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, "true"},
-        {jami::Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, "2"}
-    };
+    return {{jami::Conf::CONFIG_TLS_LISTENER_PORT, portstr.str()},
+            {jami::Conf::CONFIG_TLS_CA_LIST_FILE, ""},
+            {jami::Conf::CONFIG_TLS_CERTIFICATE_FILE, ""},
+            {jami::Conf::CONFIG_TLS_PRIVATE_KEY_FILE, ""},
+            {jami::Conf::CONFIG_TLS_PASSWORD, ""},
+            {jami::Conf::CONFIG_TLS_METHOD, "Default"},
+            {jami::Conf::CONFIG_TLS_CIPHERS, ""},
+            {jami::Conf::CONFIG_TLS_SERVER_NAME, ""},
+            {jami::Conf::CONFIG_TLS_VERIFY_SERVER, "true"},
+            {jami::Conf::CONFIG_TLS_VERIFY_CLIENT, "true"},
+            {jami::Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, "true"},
+            {jami::Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, "2"}};
 }
 
 std::map<std::string, std::string>
-validateCertificate(const std::string&,
-                    const std::string& certificate)
+validateCertificate(const std::string&, const std::string& certificate)
 {
     try {
-        return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedChecks();
-    } catch(const std::runtime_error& e) {
+        return TlsValidator {CertificateStore::instance().getCertificate(certificate)}
+            .getSerializedChecks();
+    } catch (const std::runtime_error& e) {
         JAMI_WARN("Certificate loading failed: %s", e.what());
         return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
     }
@@ -134,14 +131,14 @@ validateCertificate(const std::string&,
 
 std::map<std::string, std::string>
 validateCertificatePath(const std::string&,
-                    const std::string& certificate,
-                    const std::string& privateKey,
-                    const std::string& privateKeyPass,
-                    const std::string& caList)
+                        const std::string& certificate,
+                        const std::string& privateKey,
+                        const std::string& privateKeyPass,
+                        const std::string& caList)
 {
     try {
-        return TlsValidator{certificate, privateKey, privateKeyPass, caList}.getSerializedChecks();
-    } catch(const std::runtime_error& e) {
+        return TlsValidator {certificate, privateKey, privateKeyPass, caList}.getSerializedChecks();
+    } catch (const std::runtime_error& e) {
         JAMI_WARN("Certificate loading failed: %s", e.what());
         return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
     }
@@ -151,22 +148,26 @@ std::map<std::string, std::string>
 getCertificateDetails(const std::string& certificate)
 {
     try {
-        return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedDetails();
-    } catch(const std::runtime_error& e) {
+        return TlsValidator {CertificateStore::instance().getCertificate(certificate)}
+            .getSerializedDetails();
+    } catch (const std::runtime_error& e) {
         JAMI_WARN("Certificate loading failed: %s", e.what());
     }
     return {};
 }
 
 std::map<std::string, std::string>
-getCertificateDetailsPath(const std::string& certificate, const std::string& privateKey, const std::string& privateKeyPassword)
+getCertificateDetailsPath(const std::string& certificate,
+                          const std::string& privateKey,
+                          const std::string& privateKeyPassword)
 {
     try {
-        auto crt = std::make_shared<dht::crypto::Certificate>(jami::fileutils::loadFile(certificate));
+        auto crt = std::make_shared<dht::crypto::Certificate>(
+            jami::fileutils::loadFile(certificate));
         TlsValidator validator {certificate, privateKey, privateKeyPassword};
         CertificateStore::instance().pinCertificate(validator.getCertificate(), false);
         return validator.getSerializedDetails();
-    } catch(const std::runtime_error& e) {
+    } catch (const std::runtime_error& e) {
         JAMI_WARN("Certificate loading failed: %s", e.what());
     }
     return {};
@@ -211,23 +212,27 @@ pinRemoteCertificate(const std::string& accountId, const std::string& certId)
 }
 
 bool
-setCertificateStatus(const std::string& accountId, const std::string& certId, const std::string& ststr)
+setCertificateStatus(const std::string& accountId,
+                     const std::string& certId,
+                     const std::string& ststr)
 {
     try {
         if (accountId.empty()) {
-            jami::tls::CertificateStore::instance().setTrustedCertificate(certId, jami::tls::trustStatusFromStr(ststr.c_str()));
+            jami::tls::CertificateStore::instance()
+                .setTrustedCertificate(certId, jami::tls::trustStatusFromStr(ststr.c_str()));
         } else if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
             auto status = jami::tls::TrustStore::statusFromStr(ststr.c_str());
             return acc->setCertificateStatus(certId, status);
         }
-    } catch (const std::out_of_range&) {}
+    } catch (const std::out_of_range&) {
+    }
     return false;
 }
 
 std::vector<std::string>
 getCertificatesByStatus(const std::string& accountId, const std::string& ststr)
 {
-     auto status = jami::tls::TrustStore::statusFromStr(ststr.c_str());
+    auto status = jami::tls::TrustStore::statusFromStr(ststr.c_str());
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         return acc->getCertificatesByStatus(status);
     return {};
@@ -264,7 +269,9 @@ registerAllAccounts()
 }
 
 uint64_t
-sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& payloads)
+sendAccountTextMessage(const std::string& accountID,
+                       const std::string& to,
+                       const std::map<std::string, std::string>& payloads)
 {
     return jami::Manager::instance().sendTextMessage(accountID, to, payloads);
 }
@@ -282,7 +289,6 @@ getNearbyPeers(const std::string& accountID)
 {
     return jami::Manager::instance().getNearbyPeers(accountID);
 }
-
 
 int
 getMessageStatus(uint64_t messageId)
@@ -312,7 +318,10 @@ setIsComposing(const std::string& accountID, const std::string& to, bool isWriti
 }
 
 bool
-setMessageDisplayed(const std::string& accountID, const std::string& contactId, const std::string& messageId, int status)
+setMessageDisplayed(const std::string& accountID,
+                    const std::string& contactId,
+                    const std::string& messageId,
+                    int status)
 {
     if (const auto acc = jami::Manager::instance().getAccount(accountID))
         return acc->setMessageDisplayed(contactId, messageId, status);
@@ -330,7 +339,9 @@ exportOnRing(const std::string& accountID, const std::string& password)
 }
 
 bool
-exportToFile(const std::string& accountID, const std::string& destinationPath, const std::string& password)
+exportToFile(const std::string& accountID,
+             const std::string& destinationPath,
+             const std::string& password)
 {
     if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountID)) {
         return account->exportArchive(destinationPath, password);
@@ -356,7 +367,9 @@ getKnownRingDevices(const std::string& accountId)
 }
 
 bool
-changeAccountPassword(const std::string& accountID, const std::string& password_old, const std::string& password_new)
+changeAccountPassword(const std::string& accountID,
+                      const std::string& password_old,
+                      const std::string& password_new)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountID))
         if (acc->changeArchivePassword(password_old, password_new)) {
@@ -368,13 +381,15 @@ changeAccountPassword(const std::string& accountID, const std::string& password_
 
 /* contacts */
 
-void addContact(const std::string& accountId, const std::string& uri)
+void
+addContact(const std::string& accountId, const std::string& uri)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         return acc->addContact(uri);
 }
 
-void removeContact(const std::string& accountId, const std::string& uri, bool ban)
+void
+removeContact(const std::string& accountId, const std::string& uri, bool ban)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         return acc->removeContact(uri, ban);
@@ -422,7 +437,9 @@ discardTrustRequest(const std::string& accountId, const std::string& from)
 }
 
 void
-sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload)
+sendTrustRequest(const std::string& accountId,
+                 const std::string& to,
+                 const std::vector<uint8_t>& payload)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         acc->sendTrustRequest(to, payload);
@@ -432,7 +449,9 @@ sendTrustRequest(const std::string& accountId, const std::string& to, const std:
  * Import/Export accounts
  */
 int
-exportAccounts(const std::vector<std::string>& accountIDs, const std::string& filepath, const std::string& password)
+exportAccounts(const std::vector<std::string>& accountIDs,
+               const std::string& filepath,
+               const std::string& password)
 {
     return jami::archiver::exportAccounts(accountIDs, filepath, password);
 }
@@ -443,7 +462,7 @@ importAccounts(const std::string& archivePath, const std::string& password)
     return jami::archiver::importAccounts(archivePath, password);
 }
 
-///This function is used as a base for new accounts for clients that support it
+/// This function is used as a base for new accounts for clients that support it
 std::map<std::string, std::string>
 getAccountTemplate(const std::string& accountType)
 {
@@ -479,7 +498,8 @@ getAccountList()
 std::vector<unsigned>
 getCodecList()
 {
-    std::vector<unsigned> list {jami::getSystemCodecContainer()->getSystemCodecInfoIdList(jami::MEDIA_ALL)};
+    std::vector<unsigned> list {
+        jami::getSystemCodecContainer()->getSystemCodecInfoIdList(jami::MEDIA_ALL)};
     if (list.empty())
         jami::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
     return list;
@@ -500,16 +520,14 @@ getSupportedCiphers(const std::string& accountID)
     return {};
 }
 
-
 bool
 setCodecDetails(const std::string& accountID,
                 const unsigned& codecId,
-                const  std::map<std::string, std::string>& details)
+                const std::map<std::string, std::string>& details)
 {
     auto acc = jami::Manager::instance().getAccount(accountID);
     if (!acc) {
-        JAMI_ERR("Could not find account %s. can not set codec details"
-                , accountID.c_str());
+        JAMI_ERR("Could not find account %s. can not set codec details", accountID.c_str());
         return false;
     }
 
@@ -517,7 +535,6 @@ setCodecDetails(const std::string& accountID,
     if (!codec) {
         JAMI_ERR("can not find codec %d", codecId);
         return false;
-
     }
     try {
         if (codec->systemCodecInfo.mediaType & jami::MEDIA_AUDIO) {
@@ -531,8 +548,7 @@ setCodecDetails(const std::string& accountID,
         if (codec->systemCodecInfo.mediaType & jami::MEDIA_VIDEO) {
             if (auto foundCodec = std::static_pointer_cast<jami::AccountVideoCodecInfo>(codec)) {
                 foundCodec->setCodecSpecifications(details);
-                JAMI_WARN("parameters for %s changed ",
-                          foundCodec->systemCodecInfo.name.c_str());
+                JAMI_WARN("parameters for %s changed ", foundCodec->systemCodecInfo.name.c_str());
                 if (auto call = jami::Manager::instance().getCurrentCall()) {
                     if (call->getVideoCodec() == foundCodec) {
                         JAMI_WARN("%s running. Need to restart encoding",
@@ -555,16 +571,13 @@ std::map<std::string, std::string>
 getCodecDetails(const std::string& accountID, const unsigned& codecId)
 {
     auto acc = jami::Manager::instance().getAccount(accountID);
-    if (!acc)
-    {
-        JAMI_ERR("Could not find account %s return default codec details"
-                , accountID.c_str());
+    if (!acc) {
+        JAMI_ERR("Could not find account %s return default codec details", accountID.c_str());
         return jami::Account::getDefaultCodecDetails(codecId);
     }
 
     auto codec = acc->searchCodecById(codecId, jami::MEDIA_ALL);
-    if (!codec)
-    {
+    if (!codec) {
         jami::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
         return {};
     }
@@ -593,8 +606,7 @@ getActiveCodecList(const std::string& accountID)
 void
 setActiveCodecList(const std::string& accountID, const std::vector<unsigned>& list)
 {
-    if (auto acc = jami::Manager::instance().getAccount(accountID))
-    {
+    if (auto acc = jami::Manager::instance().getAccount(accountID)) {
         acc->setActiveCodecs(list);
         jami::Manager::instance().saveConfig(acc);
     } else {
@@ -916,13 +928,13 @@ getHookSettings()
 }
 
 void
-setHookSettings(const std::map<std::string,
-                std::string>& settings)
+setHookSettings(const std::map<std::string, std::string>& settings)
 {
     jami::Manager::instance().hookPreference = HookPreference(settings);
 }
 
-void setAccountsOrder(const std::string& order)
+void
+setAccountsOrder(const std::string& order)
 {
     jami::Manager::instance().setAccountsOrder(order);
 }
@@ -993,17 +1005,21 @@ connectivityChanged()
     }
 #endif
 
-    for (const auto &account : jami::Manager::instance().getAllAccounts()) {
+    for (const auto& account : jami::Manager::instance().getAllAccounts()) {
         account->connectivityChanged();
     }
 }
 
-bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name)
+bool
+lookupName(const std::string& account, const std::string& nameserver, const std::string& name)
 {
 #if HAVE_RINGNS
     if (account.empty()) {
         auto cb = [name](const std::string& result, jami::NameDirectory::Response response) {
-            jami::emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>("", (int)response, result, name);
+            jami::emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>("",
+                                                                              (int) response,
+                                                                              result,
+                                                                              name);
         };
         if (nameserver.empty())
             jami::NameDirectory::lookupUri(name, "", cb);
@@ -1018,13 +1034,18 @@ bool lookupName(const std::string& account, const std::string& nameserver, const
     return false;
 }
 
-bool lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address)
+bool
+lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address)
 {
 #if HAVE_RINGNS
     if (account.empty()) {
-        jami::NameDirectory::instance(nameserver).lookupAddress(address, [address](const std::string& result, jami::NameDirectory::Response response) {
-            jami::emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>("", (int)response, address, result);
-        });
+        jami::NameDirectory::instance(nameserver)
+            .lookupAddress(address,
+                           [address](const std::string& result,
+                                     jami::NameDirectory::Response response) {
+                               jami::emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(
+                                   "", (int) response, address, result);
+                           });
         return true;
     } else if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {
         acc->lookupAddress(address);
@@ -1034,7 +1055,8 @@ bool lookupAddress(const std::string& account, const std::string& nameserver, co
     return false;
 }
 
-bool searchUser(const std::string& account, const std::string& query)
+bool
+searchUser(const std::string& account, const std::string& query)
 {
     if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {
         return acc->searchUser(query);
@@ -1042,7 +1064,8 @@ bool searchUser(const std::string& account, const std::string& query)
     return false;
 }
 
-bool registerName(const std::string& account, const std::string& password, const std::string& name)
+bool
+registerName(const std::string& account, const std::string& password, const std::string& name)
 {
 #if HAVE_RINGNS
     if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {
@@ -1053,19 +1076,22 @@ bool registerName(const std::string& account, const std::string& password, const
     return false;
 }
 
-void enableProxyClient(const std::string& accountID, bool enable)
+void
+enableProxyClient(const std::string& accountID, bool enable)
 {
     if (auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountID))
         account->enableProxyClient(enable);
 }
 
-void setPushNotificationToken(const std::string& token)
+void
+setPushNotificationToken(const std::string& token)
 {
-    for (const auto &account : jami::Manager::instance().getAllAccounts<JamiAccount>())
+    for (const auto& account : jami::Manager::instance().getAllAccounts<JamiAccount>())
         account->setPushNotificationToken(token);
 }
 
-void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)
+void
+pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)
 {
     try {
         if (auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(data.at("to")))

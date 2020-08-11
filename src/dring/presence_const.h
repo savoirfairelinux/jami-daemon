@@ -32,8 +32,8 @@ constexpr static const char* LINESTATUS_KEY = "LineStatus";
 constexpr static const char* ONLINE_KEY     = "Online";
 constexpr static const char* OFFLINE_KEY    = "Offline";
 
-}
+} // namespace Presence
 
-}
+} // namespace DRing
 
 #endif

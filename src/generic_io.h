@@ -22,11 +22,11 @@
 
 #include "ip_utils.h"
 
-#include <functional>
-#include <vector>
 #include <chrono>
-#include <system_error>
 #include <cstdint>
+#include <functional>
+#include <system_error>
+#include <vector>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -35,7 +35,7 @@ using ssize_t = SSIZE_T;
 
 namespace jami {
 
-template <typename T>
+template<typename T>
 class GenericSocket
 {
 public:
@@ -94,14 +94,16 @@ public:
     virtual std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) = 0;
 
     /// write() adaptor for STL containers
-    template <typename U>
-    std::size_t write(const U& obj, std::error_code& ec) {
+    template<typename U>
+    std::size_t write(const U& obj, std::error_code& ec)
+    {
         return write(obj.data(), obj.size() * sizeof(typename U::value_type), ec);
     }
 
     /// read() adaptor for STL containers
-    template <typename U>
-    std::size_t read(U& storage, std::error_code& ec) {
+    template<typename U>
+    std::size_t read(U& storage, std::error_code& ec)
+    {
         auto res = read(storage.data(), storage.size() * sizeof(typename U::value_type), ec);
         if (!ec)
             storage.resize(res);

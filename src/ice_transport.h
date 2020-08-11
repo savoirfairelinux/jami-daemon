@@ -23,9 +23,9 @@
 #include "ice_socket.h"
 #include "ip_utils.h"
 
-#include <pjnath.h>
-#include <pjlib.h>
 #include <pjlib-util.h>
+#include <pjlib.h>
+#include <pjnath.h>
 
 #include <functional>
 #include <memory>
@@ -41,28 +41,51 @@ class Controller;
 class IceTransport;
 
 using IceTransportCompleteCb = std::function<void(bool)>;
-using IceRecvInfo = std::function<void(void)>;
-using IceRecvCb = std::function<ssize_t(unsigned char *buf, size_t len)>;
-using IceCandidate = pj_ice_sess_cand;
-using onShutdownCb = std::function<void(void)>;
+using IceRecvInfo            = std::function<void(void)>;
+using IceRecvCb              = std::function<ssize_t(unsigned char* buf, size_t len)>;
+using IceCandidate           = pj_ice_sess_cand;
+using onShutdownCb           = std::function<void(void)>;
 
-struct ICESDP {
-  std::vector<IceCandidate> rem_candidates;
-  std::string rem_ufrag;
-  std::string rem_pwd;
+struct ICESDP
+{
+    std::vector<IceCandidate> rem_candidates;
+    std::string rem_ufrag;
+    std::string rem_pwd;
 };
 
-struct StunServerInfo {
-    StunServerInfo& setUri(const std::string& args) { uri = args; return *this; }
+struct StunServerInfo
+{
+    StunServerInfo& setUri(const std::string& args)
+    {
+        uri = args;
+        return *this;
+    }
 
-    std::string uri;      // server URI, mandatory
+    std::string uri; // server URI, mandatory
 };
 
-struct TurnServerInfo {
-    TurnServerInfo& setUri(const std::string& args) { uri = args; return *this; }
-    TurnServerInfo& setUsername(const std::string& args) { username = args; return *this; }
-    TurnServerInfo& setPassword(const std::string& args) { password = args; return *this; }
-    TurnServerInfo& setRealm(const std::string& args) { realm = args; return *this; }
+struct TurnServerInfo
+{
+    TurnServerInfo& setUri(const std::string& args)
+    {
+        uri = args;
+        return *this;
+    }
+    TurnServerInfo& setUsername(const std::string& args)
+    {
+        username = args;
+        return *this;
+    }
+    TurnServerInfo& setPassword(const std::string& args)
+    {
+        password = args;
+        return *this;
+    }
+    TurnServerInfo& setRealm(const std::string& args)
+    {
+        realm = args;
+        return *this;
+    }
 
     std::string uri;      // server URI, mandatory
     std::string username; // credentials username (optional, empty if not used)
@@ -70,11 +93,12 @@ struct TurnServerInfo {
     std::string realm;    // credentials realm (optional, empty if not used)
 };
 
-struct IceTransportOptions {
+struct IceTransportOptions
+{
     bool upnpEnable {false};
     IceTransportCompleteCb onInitDone {};
     IceTransportCompleteCb onNegoDone {};
-    IceRecvInfo onRecvReady{}; // Detect that we have data to read but without destroying the buffer
+    IceRecvInfo onRecvReady {}; // Detect that we have data to read but without destroying the buffer
     std::vector<StunServerInfo> stunServers;
     std::vector<TurnServerInfo> turnServers;
     bool tcpEnable {false}; // If we want to use TCP
@@ -83,7 +107,8 @@ struct IceTransportOptions {
     bool aggressive {true};
 };
 
-struct SDP {
+struct SDP
+{
     std::string ufrag;
     std::string pwd;
 
@@ -91,9 +116,11 @@ struct SDP {
     MSGPACK_DEFINE(ufrag, pwd, candidates)
 };
 
-class IceTransport {
+class IceTransport
+{
 public:
-    using Attribute = struct {
+    using Attribute = struct
+    {
         std::string ufrag;
         std::string pwd;
     };
@@ -101,7 +128,9 @@ public:
     /**
      * Constructor
      */
-    IceTransport(const char* name, int component_count, bool master,
+    IceTransport(const char* name,
+                 int component_count,
+                 bool master,
                  const IceTransportOptions& options = {});
     ~IceTransport();
     /**
@@ -116,8 +145,7 @@ public:
      * with the negotiation result when operation is really done.
      * Return false if negotiation cannot be started else true.
      */
-    bool start(const Attribute& rem_attrs,
-               const std::vector<IceCandidate>& rem_candidates);
+    bool start(const Attribute& rem_attrs, const std::vector<IceCandidate>& rem_candidates);
     bool start(const SDP& sdp);
 
     /**
@@ -166,9 +194,7 @@ public:
 
     std::string getLastErrMsg() const;
 
-    IpAddr getDefaultLocalAddress() const {
-        return getLocalAddress(0);
-    }
+    IpAddr getDefaultLocalAddress() const { return getLocalAddress(0); }
 
     bool registerPublicIP(unsigned compId, const IpAddr& publicIP);
 
@@ -195,7 +221,7 @@ public:
     void setOnShutdown(onShutdownCb&& cb);
 
     ssize_t recv(int comp_id, unsigned char* buf, size_t len, std::error_code& ec);
-    ssize_t recvfrom(int comp_id, char *buf, size_t len, std::error_code& ec);
+    ssize_t recvfrom(int comp_id, char* buf, size_t len, std::error_code& ec);
 
     ssize_t send(int comp_id, const unsigned char* buf, size_t len);
 
@@ -231,12 +257,13 @@ public:
 
     void setDefaultRemoteAddress(int comp_id, const IpAddr& addr);
 
-  private:
+private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };
 
-class IceTransportFactory {
+class IceTransportFactory
+{
 public:
     IceTransportFactory();
     ~IceTransportFactory();
@@ -247,10 +274,9 @@ public:
                                                   const IceTransportOptions& options = {});
 
     std::unique_ptr<IceTransport> createUTransport(const char* name,
-                                                  int component_count,
-                                                  bool master,
-                                                  const IceTransportOptions& options = {});
-
+                                                   int component_count,
+                                                   bool master,
+                                                   const IceTransportOptions& options = {});
 
     /**
      * PJSIP specifics
@@ -264,4 +290,4 @@ private:
     pj_ice_strans_cfg ice_cfg_;
 };
 
-};
+}; // namespace jami

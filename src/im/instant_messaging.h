@@ -22,11 +22,11 @@
 
 #pragma once
 
+#include <list>
+#include <map>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <map>
-#include <list>
-#include <stdexcept>
 
 #include "config.h"
 
@@ -37,12 +37,14 @@ struct pjsip_msg;
 struct pjsip_tx_data;
 }
 
-namespace jami { namespace im {
+namespace jami {
+namespace im {
 
 struct InstantMessageException : std::runtime_error
 {
-    InstantMessageException(const std::string& str="") :
-        std::runtime_error("InstantMessageException occurred: " + str) {}
+    InstantMessageException(const std::string& str = "")
+        : std::runtime_error("InstantMessageException occurred: " + str)
+    {}
 };
 
 /**
@@ -77,4 +79,5 @@ std::map<std::string, std::string> parseSipMessage(const pjsip_msg* msg);
 
 void fillPJSIPMessageBody(pjsip_tx_data& tdata, const std::map<std::string, std::string>& payloads);
 
-}} // namespace jami::im
+} // namespace im
+} // namespace jami

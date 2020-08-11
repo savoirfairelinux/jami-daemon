@@ -23,10 +23,12 @@
 
 #include <string>
 
-namespace jami { namespace UrlHook {
+namespace jami {
+namespace UrlHook {
 
-int runAction(const std::string &command, const std::string &arg);
+int runAction(const std::string& command, const std::string& arg);
 
-}} // namespace jami::UrlHook
+}
+} // namespace jami
 
 #endif // URL_HOOK_H

@@ -21,35 +21,41 @@
 
 #pragma once
 
-#include "dring/datatransfer_interface.h"
-#include "data_transfer.h"
 #include "channeled_transfers.h"
+#include "data_transfer.h"
+#include "dring/datatransfer_interface.h"
 
-#include <string>
-#include <memory>
 #include <functional>
+#include <memory>
+#include <string>
 
 namespace jami {
 
 class JamiAccount;
 class PeerConnection;
 
-class DhtPeerConnector {
+class DhtPeerConnector
+{
 public:
     DhtPeerConnector(JamiAccount& account);
     ~DhtPeerConnector();
 
     void onDhtConnected(const std::string& device_id);
-    void requestConnection(const std::string& peer_id, const DRing::DataTransferId& tid, bool isVCard,
-                           const std::function<void(PeerConnection*)>& connect_cb,
-                           const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>& channeledConnectedCb,
-                           const std::function<void()>& onChanneledCancelled);
+    void requestConnection(
+        const std::string& peer_id,
+        const DRing::DataTransferId& tid,
+        bool isVCard,
+        const std::function<void(PeerConnection*)>& connect_cb,
+        const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
+            channeledConnectedCb,
+        const std::function<void()>& onChanneledCancelled);
     void closeConnection(const std::string& peer_id, const DRing::DataTransferId& tid);
     bool onIncomingChannelRequest(const DRing::DataTransferId& tid);
     void onIncomingConnection(const std::string& peer_id,
                               const DRing::DataTransferId& tid,
                               const std::shared_ptr<ChannelSocket>& channel,
                               InternalCompletionCb&& cb);
+
 private:
     DhtPeerConnector() = delete;
 
@@ -57,4 +63,4 @@ private:
     std::shared_ptr<Impl> pimpl_;
 };
 
-}
+} // namespace jami

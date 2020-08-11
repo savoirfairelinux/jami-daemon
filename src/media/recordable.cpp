@@ -19,11 +19,11 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#include "recordable.h"
 #include "audio/ringbufferpool.h"
 #include "fileutils.h"
 #include "logger.h"
 #include "manager.h"
-#include "recordable.h"
 
 #include <iomanip>
 
@@ -35,8 +35,7 @@ Recordable::Recordable()
     recorder_ = std::make_shared<MediaRecorder>();
 }
 
-Recordable::~Recordable()
-{}
+Recordable::~Recordable() {}
 
 std::string
 Recordable::getPath() const
@@ -56,7 +55,7 @@ Recordable::toggleRecording()
     }
 
     if (!recording_) {
-        std::time_t t = std::time(nullptr);
+        std::time_t t  = std::time(nullptr);
         auto startTime = *std::localtime(&t);
         std::stringstream ss;
         auto dir = Manager::instance().audioPreference.getRecordPath();

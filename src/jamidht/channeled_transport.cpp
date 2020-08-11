@@ -24,31 +24,36 @@
 #include "multiplexed_socket.h"
 #include "sip/sip_utils.h"
 
-#include <pjsip/sip_transport.h>
-#include <pjsip/sip_endpoint.h>
 #include <pj/compat/socket.h>
 #include <pj/lock.h>
+#include <pjsip/sip_endpoint.h>
+#include <pjsip/sip_transport.h>
 
-namespace jami { namespace tls {
+namespace jami {
+namespace tls {
 
-ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt, int tp_type,
+ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
+                                             int tp_type,
                                              const std::shared_ptr<ChannelSocket>& socket,
-                                             const IpAddr& local, const IpAddr& remote,
+                                             const IpAddr& local,
+                                             const IpAddr& remote,
                                              onShutdownCb&& cb)
-    : socket_ (socket)
+    : socket_(socket)
     , local_ {local}
     , remote_ {remote}
-    , trData_ ()
-    , pool_  {nullptr, pj_pool_release}
-    , rxPool_ (nullptr, pj_pool_release)
+    , trData_()
+    , pool_ {nullptr, pj_pool_release}
+    , rxPool_(nullptr, pj_pool_release)
 {
     JAMI_DBG("ChanneledSIPTransport@%p {tr=%p}", this, &trData_.base);
 
     // Init memory
     trData_.self = this; // up-link for PJSIP callbacks
 
-    pool_ = sip_utils::smart_alloc_pool(endpt, "channeled.pool",
-                                        sip_utils::POOL_TP_INIT, sip_utils::POOL_TP_INC);
+    pool_ = sip_utils::smart_alloc_pool(endpt,
+                                        "channeled.pool",
+                                        sip_utils::POOL_TP_INIT,
+                                        sip_utils::POOL_TP_INC);
 
     auto& base = trData_.base;
     std::memset(&base, 0, sizeof(base));
@@ -56,27 +61,29 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt, int tp_type,
     pj_ansi_snprintf(base.obj_name, PJ_MAX_OBJ_NAME, "chan%p", &base);
     base.endpt = endpt;
     base.tpmgr = pjsip_endpt_get_tpmgr(endpt);
-    base.pool = pool_.get();
+    base.pool  = pool_.get();
 
     if (pj_atomic_create(pool_.get(), 0, &base.ref_cnt) != PJ_SUCCESS)
         throw std::runtime_error("Can't create PJSIP atomic.");
 
-    if (pj_lock_create_recursive_mutex(pool_.get(), "chan",
-                                       &base.lock) != PJ_SUCCESS)
+    if (pj_lock_create_recursive_mutex(pool_.get(), "chan", &base.lock) != PJ_SUCCESS)
         throw std::runtime_error("Can't create PJSIP mutex.");
 
     pj_sockaddr_cp(&base.key.rem_addr, remote_.pjPtr());
-    base.key.type = tp_type;
-    auto reg_type = static_cast<pjsip_transport_type_e>(tp_type);
+    base.key.type  = tp_type;
+    auto reg_type  = static_cast<pjsip_transport_type_e>(tp_type);
     base.type_name = const_cast<char*>(pjsip_transport_get_type_name(reg_type));
-    base.flag = pjsip_transport_get_flag_from_type(reg_type);
+    base.flag      = pjsip_transport_get_flag_from_type(reg_type);
     base.info = static_cast<char*>(pj_pool_alloc(pool_.get(), sip_utils::TRANSPORT_INFO_LENGTH));
 
     auto remote_addr = remote_.toString();
-    pj_ansi_snprintf(base.info, sip_utils::TRANSPORT_INFO_LENGTH, "%s to %s", base.type_name,
+    pj_ansi_snprintf(base.info,
+                     sip_utils::TRANSPORT_INFO_LENGTH,
+                     "%s to %s",
+                     base.type_name,
                      remote_addr.c_str());
     base.addr_len = remote_.getLength();
-    base.dir = PJSIP_TP_DIR_NONE;
+    base.dir      = PJSIP_TP_DIR_NONE;
 
     // Set initial local address
     pj_sockaddr_cp(&base.local_addr, local_.pjPtr());
@@ -85,22 +92,30 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt, int tp_type,
     sip_utils::sockaddr_to_host_port(pool_.get(), &base.remote_name, remote_.pjPtr());
 
     // Init transport callbacks
-    base.send_msg = [](pjsip_transport *transport,
-                       pjsip_tx_data *tdata,
-                       const pj_sockaddr_t *rem_addr, int addr_len,
-                       void *token, pjsip_transport_callback callback) -> pj_status_t {
-        auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(reinterpret_cast<TransportData*>(transport)->self);
+    base.send_msg = [](pjsip_transport* transport,
+                       pjsip_tx_data* tdata,
+                       const pj_sockaddr_t* rem_addr,
+                       int addr_len,
+                       void* token,
+                       pjsip_transport_callback callback) -> pj_status_t {
+        auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(
+            reinterpret_cast<TransportData*>(transport)->self);
         return this_->send(tdata, rem_addr, addr_len, token, callback);
     };
-    base.do_shutdown = [](pjsip_transport *transport) -> pj_status_t {
-        auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(reinterpret_cast<TransportData*>(transport)->self);
-        JAMI_DBG("ChanneledSIPTransport@%p {tr=%p {rc=%ld}}: shutdown", this_,
-                 transport, pj_atomic_get(transport->ref_cnt));
-        if (this_->socket_) this_->socket_->shutdown();
+    base.do_shutdown = [](pjsip_transport* transport) -> pj_status_t {
+        auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(
+            reinterpret_cast<TransportData*>(transport)->self);
+        JAMI_DBG("ChanneledSIPTransport@%p {tr=%p {rc=%ld}}: shutdown",
+                 this_,
+                 transport,
+                 pj_atomic_get(transport->ref_cnt));
+        if (this_->socket_)
+            this_->socket_->shutdown();
         return PJ_SUCCESS;
     };
-    base.destroy = [](pjsip_transport *transport) -> pj_status_t {
-        auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(reinterpret_cast<TransportData*>(transport)->self);
+    base.destroy = [](pjsip_transport* transport) -> pj_status_t {
+        auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(
+            reinterpret_cast<TransportData*>(transport)->self);
         JAMI_DBG("ChanneledSIPTransport@%p: destroying", this_);
         delete this_;
         return PJ_SUCCESS;
@@ -108,19 +123,19 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt, int tp_type,
 
     // Init rdata_
     std::memset(&rdata_, 0, sizeof(pjsip_rx_data));
-    rxPool_ = sip_utils::smart_alloc_pool(endpt, "channeled.rxPool",
-                                          PJSIP_POOL_RDATA_LEN, PJSIP_POOL_RDATA_LEN);
-    rdata_.tp_info.pool = rxPool_.get();
-    rdata_.tp_info.transport = &base;
-    rdata_.tp_info.tp_data = this;
+    rxPool_                     = sip_utils::smart_alloc_pool(endpt,
+                                          "channeled.rxPool",
+                                          PJSIP_POOL_RDATA_LEN,
+                                          PJSIP_POOL_RDATA_LEN);
+    rdata_.tp_info.pool         = rxPool_.get();
+    rdata_.tp_info.transport    = &base;
+    rdata_.tp_info.tp_data      = this;
     rdata_.tp_info.op_key.rdata = &rdata_;
-    pj_ioqueue_op_key_init(&rdata_.tp_info.op_key.op_key,
-                           sizeof(pj_ioqueue_op_key_t));
-    rdata_.pkt_info.src_addr = base.key.rem_addr;
+    pj_ioqueue_op_key_init(&rdata_.tp_info.op_key.op_key, sizeof(pj_ioqueue_op_key_t));
+    rdata_.pkt_info.src_addr     = base.key.rem_addr;
     rdata_.pkt_info.src_addr_len = sizeof(rdata_.pkt_info.src_addr);
-    auto rem_addr = &base.key.rem_addr;
-    pj_sockaddr_print(rem_addr, rdata_.pkt_info.src_name,
-                      sizeof(rdata_.pkt_info.src_name), 0);
+    auto rem_addr                = &base.key.rem_addr;
+    pj_sockaddr_print(rem_addr, rdata_.pkt_info.src_name, sizeof(rdata_.pkt_info.src_name), 0);
     rdata_.pkt_info.src_port = pj_sockaddr_get_port(rem_addr);
 
     // Register callbacks
@@ -130,14 +145,14 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt, int tp_type,
     // Link to Channel Socket
     socket->setOnRecv([this](const uint8_t* buf, size_t len) {
         std::lock_guard<std::mutex> l(rxMtx_);
-        std::vector<uint8_t> rx {buf, buf+len};
+        std::vector<uint8_t> rx {buf, buf + len};
         rxPending_.emplace_back(std::move(rx));
-        scheduler_.run([this]{ handleEvents(); });
+        scheduler_.run([this] { handleEvents(); });
         return len;
     });
-    socket->onShutdown([cb=std::move(cb), this] {
+    socket->onShutdown([cb = std::move(cb), this] {
         disconnected_ = true;
-        scheduler_.run([this]{ handleEvents(); });
+        scheduler_.run([this] { handleEvents(); });
         cb();
     });
 }
@@ -149,7 +164,8 @@ ChanneledSIPTransport::~ChanneledSIPTransport()
     for (auto tdata : txQueue_) {
         tdata->op_key.tdata = nullptr;
         if (tdata->op_key.callback)
-            tdata->op_key.callback(&trData_.base, tdata->op_key.token,
+            tdata->op_key.callback(&trData_.base,
+                                   tdata->op_key.token,
                                    -PJ_RETURN_OS_ERROR(OSERR_ENOTCONN));
     }
 
@@ -157,8 +173,8 @@ ChanneledSIPTransport::~ChanneledSIPTransport()
 
     // Here, we reset callbacks in ChannelSocket to avoid to call it after destruction
     // ChanneledSIPTransport is managed by pjsip, so we don't have any weak_ptr available
-    socket_->setOnRecv([](const uint8_t*, size_t len){return len;});
-    socket_->onShutdown([](){});
+    socket_->setOnRecv([](const uint8_t*, size_t len) { return len; });
+    socket_->onShutdown([]() {});
     // Stop low-level transport first
     socket_->shutdown();
     socket_.reset();
@@ -221,15 +237,15 @@ ChanneledSIPTransport::handleEvents()
         auto eaten = pjsip_tpmgr_receive_packet(trData_.base.tpmgr, &rdata_);
 
         // Uncomplet parsing? (may be a partial sip packet received)
-        if (eaten != (pj_ssize_t)pck.size()) {
+        if (eaten != (pj_ssize_t) pck.size()) {
             auto npck_it = std::next(it);
             if (npck_it != rx.end()) {
                 // drop current packet, merge reminder with next one
                 auto& npck = *npck_it;
-                npck.insert(npck.begin(), pck.begin()+eaten, pck.end());
+                npck.insert(npck.begin(), pck.begin() + eaten, pck.end());
             } else {
                 // erase eaten part, keep remainder
-                pck.erase(pck.begin(), pck.begin()+eaten);
+                pck.erase(pck.begin(), pck.begin() + eaten);
                 {
                     std::lock_guard<std::mutex> l(rxMtx_);
                     rxPending_.splice(rxPending_.begin(), rx, it);
@@ -255,9 +271,11 @@ ChanneledSIPTransport::handleEvents()
 }
 
 pj_status_t
-ChanneledSIPTransport::send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
-                       int addr_len, void* token,
-                       pjsip_transport_callback callback)
+ChanneledSIPTransport::send(pjsip_tx_data* tdata,
+                            const pj_sockaddr_t* rem_addr,
+                            int addr_len,
+                            void* token,
+                            pjsip_transport_callback callback)
 {
     // Sanity check
     PJ_ASSERT_RETURN(tdata, PJ_EINVAL);
@@ -266,9 +284,9 @@ ChanneledSIPTransport::send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
     PJ_ASSERT_RETURN(tdata->op_key.tdata == nullptr, PJSIP_EPENDINGTX);
 
     // Check the address is supported
-    PJ_ASSERT_RETURN(rem_addr and
-                     (addr_len==sizeof(pj_sockaddr_in) or
-                      addr_len==sizeof(pj_sockaddr_in6)),
+    PJ_ASSERT_RETURN(rem_addr
+                         and (addr_len == sizeof(pj_sockaddr_in)
+                              or addr_len == sizeof(pj_sockaddr_in6)),
                      PJ_EINVAL);
 
     // Check in we are able to send it in synchronous way first
@@ -285,13 +303,13 @@ ChanneledSIPTransport::send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
     }
 
     // Asynchronous sending
-    tdata->op_key.tdata = tdata;
-    tdata->op_key.token = token;
+    tdata->op_key.tdata    = tdata;
+    tdata->op_key.token    = token;
     tdata->op_key.callback = callback;
     txQueue_.push_back(tdata);
-    scheduler_.run([this]{ handleEvents(); });
+    scheduler_.run([this] { handleEvents(); });
     return PJ_EPENDING;
 }
 
-
-}} // namespace jami::tls
+} // namespace tls
+} // namespace jami
