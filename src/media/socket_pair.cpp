@@ -91,7 +91,11 @@ static constexpr unsigned MINIMUM_RTP_HEADER_SIZE = 16;
 // Pacer
 const auto INTERVAL_BETWEEN_BURSTS {std::chrono::milliseconds(10)};
 const auto MAX_QUEUE_LENGTH {std::chrono::milliseconds(2000)};
-const auto PACER_FACTOR {2.5f};
+#if 200
+    const auto PACER_FACTOR {1.0f};
+#else
+    const auto PACER_FACTOR {2.5f};
+#endif
 
 enum class DataType : unsigned { RTP=1<<0, RTCP=1<<1 };
 
@@ -190,7 +194,11 @@ udp_socket_create(int family, int port)
 SocketPair::SocketPair(const char *uri, int localPort)
 {
     openSockets(uri, localPort);
-    packets_ = std::make_unique<Packet_queue_interface>();
+    {
+        std::lock_guard<std::mutex> lk(rtpQueue_);
+        packets_ = std::make_unique<Packet_queue_interface>();
+    }
+
 }
 
 SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
@@ -215,7 +223,10 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
     rtp_sock_->setOnRecv(queueRtpPacket);
     rtcp_sock_->setOnRecv(queueRtcpPacket);
 
-    packets_ = std::make_unique<Packet_queue_interface>();
+    {
+        std::lock_guard<std::mutex> lk(rtpQueue_);
+        packets_ = std::make_unique<Packet_queue_interface>();
+    }
     startToDrain();
 }
 
@@ -310,6 +321,8 @@ SocketPair::interrupt()
     cv_.notify_all();
     cvRtcpPacketReadyToRead_.notify_all();
     cvQueue_.notify_all();
+
+    JAMI_WARN("[MC] Socket pair %p was interrupted !", this);
 }
 
 void
@@ -568,6 +581,7 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
 
         if (noWrite_)
             return buf_size;
+
         return ::sendto(fd, reinterpret_cast<const char*>(buf), buf_size, 0,
                         *dest_addr, dest_addr->getLength());
     }
@@ -588,6 +602,72 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
     if (noWrite_)
         return 0;
 
+#if 200
+    {
+        constexpr int64_t longWinSizeInMs = 2000;
+        constexpr int64_t shortWinSizeInMs = 100;
+
+        auto now = std::chrono::steady_clock::now().time_since_epoch();
+        auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+
+        packet_counter_++;
+
+        dataWindow_.emplace_back(buf_size * 8, ts);
+
+        // Keep data only for a duration of winSizeInMs at most.
+        while (dataWindow_.back().second - dataWindow_.front().second > longWinSizeInMs) {
+            dataWindow_.pop_front();
+        }
+
+        if (packet_counter_ > 100 and not dataWindow_.empty()) {
+
+            auto longWinDuration = dataWindow_.back().second - dataWindow_.front().second;
+
+            if (longWinDuration > 0) {
+
+                // Compute the long-term rate.
+                double sum = 0;
+                for (auto it = dataWindow_.rbegin(); it != dataWindow_.rend(); it++) {
+                    sum += it->first;
+                }
+                // Rate in kbps
+                longTermRateInKbps_ = sum / longWinDuration;
+
+                // Compute the short-term rate.
+                sum = 0;
+                int64_t shortWinDuration = 0;
+
+                for (auto it = dataWindow_.rbegin(); it != dataWindow_.rend(); it++) {
+                    sum += it->first;
+                    shortWinDuration = dataWindow_.rbegin()->second - it->second;
+                    if (shortWinDuration >= shortWinSizeInMs) {
+                        break;
+                    }
+                }
+                shortTermRateInKbps_ = sum / shortWinDuration;
+                if (shortTermRateInKbps_ > maxShortTermRateInKbps_)
+                    maxShortTermRateInKbps_ = shortTermRateInKbps_;
+
+                // Log every X ms
+                if (ts >= nextTimeTolog_) {
+                    nextTimeTolog_ = ts + 1000;
+                    // Dump stats
+                    JAMI_WARN("[MC] Insert packet of size %u at %lu ms", buf_size, ts);
+                    JAMI_WARN("[MC] dataWindow size %lu - Rtp queue size %lu",
+                        dataWindow_.size(), packets_->queue.size());
+                    JAMI_WARN("[MC] Pacing br %u", pacing_bitrate_kbps_);
+                    JAMI_WARN("[MC] short-term: win dur %li - br %.2f kbps - ratio %.2f - max short-term rate %.2f ratio %.2f",
+                        shortWinDuration,
+                        shortTermRateInKbps_, shortTermRateInKbps_ / pacing_bitrate_kbps_,
+                        maxShortTermRateInKbps_, maxShortTermRateInKbps_ / pacing_bitrate_kbps_);
+                    JAMI_WARN("[MC] long-term: win  dur %li - br %.2f kbps - ratio %.2f",
+                        longWinDuration, longTermRateInKbps_, longTermRateInKbps_ / pacing_bitrate_kbps_);
+                }
+
+            }
+        }
+    }
+#endif
     int ret {0};
     bool isRTCP = RTP_PT_IS_RTCP(buf[1]);
     unsigned int ts_LSB, ts_MSB;
@@ -613,7 +693,18 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
         rtcpPacketLoss_ = (header->pt == 201 && ntohl(header->fraction_lost) & RTCP_RR_FRACTION_MASK);
     }
 
-    insertPacket(buf, buf_size);
+    // Pace the outgoing traffic if enabled, otherwise, send
+    // the data right away.
+    if (usePacer_) {
+        insertPacket(buf, buf_size);
+    } else {
+        do {
+            if (interrupted_)
+                return -EINTR;
+            ret = writeData(buf, buf_size);
+        } while (ret < 0 and errno == EAGAIN);
+
+    }
 
     if(buf[1] == 200) //Sender Report
     {
@@ -726,6 +817,7 @@ SocketPair::lastSeqValOut()
 void
 SocketPair::insertPacket(uint8_t* buf, int buf_size)
 {
+    std::lock_guard<std::mutex> lk(rtpQueue_);
     auto now = std::chrono::steady_clock::now();
     if (packets_->queue.empty()) {
         packets_->oldest_insert = now;
@@ -740,26 +832,44 @@ SocketPair::insertPacket(uint8_t* buf, int buf_size)
 
 }
 
-void
+int64_t
 SocketPair::drainQueue()
 {
-    // Compute the amout of bit we can send for this burst
-    unsigned int bitToSendCurrentBurst = pacing_bitrate_kbps_ * 1000 /* kbits->bits */ * PACER_FACTOR / (1000 / INTERVAL_BETWEEN_BURSTS.count());
+    double maxRate = pacing_bitrate_kbps_ * BURST_FACTOR_;
+    size_t bitsBudget = maxRate * BURST_WINDOW_MS_;
 
-    // Drain until we reach the amout of bit authorized to send
-    if (current_bit_sent_ >= bitToSendCurrentBurst) {
-        current_bit_sent_ = 0;
-        JAMI_ERR("@@@ Too much data sent, wait the end of the interval (still %d pkt to send)", packets_->queue.size());
-        std::this_thread::sleep_for(INTERVAL_BETWEEN_BURSTS);
-        return;
-    } else {
+    // Drain until we reach the amount of bit authorized to send
+    size_t sentBits = 0;
+    while (not packets_->queue.empty() and  sentBits < bitsBudget) {
         auto pkt = packets_->queue.front();
         sendPacedPacket(pkt);
+        sentBits += pkt.size() * 8;
         packets_->queue.pop_front();
-        current_bit_sent_ += pkt.size();
-        packet_counter_++;
-        JAMI_ERR("@@@ sent %d bits for the current burst (%d bits authorized, current bitrate: %d kbit/s)", current_bit_sent_, bitToSendCurrentBurst, pacing_bitrate_kbps_);
     }
+
+    int64_t minWaitTime = sentBits / pacing_bitrate_kbps_;
+
+    // Compute the debt (the amount of data waiting to be sent)
+    size_t debt = 0;
+    for (auto const& it : packets_->queue) {
+        debt += it.size() * 8;
+    }
+
+    if (debt > maxDebt_)
+        maxDebt_ = debt;
+
+    auto now = std::chrono::steady_clock::now().time_since_epoch();
+    auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+
+    if (ts >= nextTimeTolog_) {
+        // Dump some stats
+        {
+            JAMI_WARN("[MC] [drainQueue] bitsBudget %lu sentBits %lu, minWaitTime %lu, debt %lu maxDebt %lu",
+                bitsBudget, sentBits, minWaitTime, debt, maxDebt_);
+        }
+    }
+
+    return minWaitTime;
 }
 
 void
@@ -775,12 +885,23 @@ SocketPair::sendPacedPacket(std::vector<uint8_t>& pkt)
 
 void
 SocketPair::startToDrain() {
+    bool interrupted = false;
+    size_t qSize = 0;
+
     dht::ThreadPool::io().run([&] {
         while (!interrupted_) {
             std::unique_lock<std::mutex> lk(rtpQueue_);
             cvQueue_.wait(lk, [this]{ return interrupted_ or not packets_->queue.empty(); });
-            drainQueue();
+            auto waitTime = drainQueue();
+            std::this_thread::sleep_for(std::chrono::milliseconds(waitTime));
+            interrupted = interrupted_;
+            qSize = packets_->queue.size();
         }
+
+        JAMI_WARN("[MC] *** Exited the drain loop. queues size %lu",
+            qSize);
+        JAMI_WARN("[MC] *** Exited the drain loop. interrupted_ %i",
+            interrupted);
     });
 }
 
