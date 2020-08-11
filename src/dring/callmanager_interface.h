@@ -24,23 +24,25 @@
 
 #include "def.h"
 
-#include <stdexcept>
+#include <cstdint>
 #include <map>
 #include <memory>
-#include <vector>
+#include <stdexcept>
 #include <string>
-#include <cstdint>
+#include <vector>
 
 #include "dring.h"
 
 namespace DRing {
 
-[[deprecated("Replaced by registerSignalHandlers")]] DRING_PUBLIC
-void registerCallHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
+[[deprecated("Replaced by registerSignalHandlers")]] DRING_PUBLIC void registerCallHandlers(
+    const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 /* Call related methods */
 DRING_PUBLIC std::string placeCall(const std::string& accountID, const std::string& to);
-DRING_PUBLIC std::string placeCall(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& VolatileCallDetails);
+DRING_PUBLIC std::string placeCall(const std::string& accountID,
+                                   const std::string& to,
+                                   const std::map<std::string, std::string>& VolatileCallDetails);
 
 DRING_PUBLIC bool refuse(const std::string& callID);
 DRING_PUBLIC bool accept(const std::string& callID);
@@ -73,7 +75,8 @@ DRING_PUBLIC std::vector<std::string> getParticipantList(const std::string& conf
 DRING_PUBLIC std::vector<std::string> getDisplayNames(const std::string& confID);
 DRING_PUBLIC std::string getConferenceId(const std::string& callID);
 DRING_PUBLIC std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
-DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConferenceInfos(const std::string& confId);
+DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConferenceInfos(
+    const std::string& confId);
 
 /* Statistic related methods */
 DRING_PUBLIC void startSmartInfo(uint32_t refreshTimeMs);
@@ -104,98 +107,127 @@ DRING_PUBLIC void requestGoClear(const std::string& callID);
 DRING_PUBLIC void acceptEnrollment(const std::string& callID, bool accepted);
 
 /* Instant messaging */
-DRING_PUBLIC void sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from, bool isMixed);
+DRING_PUBLIC void sendTextMessage(const std::string& callID,
+                                  const std::map<std::string, std::string>& messages,
+                                  const std::string& from,
+                                  bool isMixed);
 
 // Call signal type definitions
-struct DRING_PUBLIC CallSignal {
-        struct DRING_PUBLIC StateChange {
-                constexpr static const char* name = "StateChange";
-                using cb_type = void(const std::string&, const std::string&, int);
-        };
-        struct DRING_PUBLIC TransferFailed {
-                constexpr static const char* name = "TransferFailed";
-                using cb_type = void(void);
-        };
-        struct DRING_PUBLIC TransferSucceeded {
-                constexpr static const char* name = "TransferSucceeded";
-                using cb_type = void(void);
-        };
-        struct DRING_PUBLIC RecordPlaybackStopped {
-                constexpr static const char* name = "RecordPlaybackStopped";
-                using cb_type = void(const std::string&);
-        };
-        struct DRING_PUBLIC VoiceMailNotify {
-                constexpr static const char* name = "VoiceMailNotify";
-                using cb_type = void(const std::string&, int32_t, int32_t, int32_t);
-        };
-        struct DRING_PUBLIC IncomingMessage {
-                constexpr static const char* name = "IncomingMessage";
-                using cb_type = void(const std::string&, const std::string&, const std::map<std::string, std::string>&);
-        };
-        struct DRING_PUBLIC IncomingCall {
-                constexpr static const char* name = "IncomingCall";
-                using cb_type = void(const std::string&, const std::string&, const std::string&);
-        };
-        struct DRING_PUBLIC RecordPlaybackFilepath {
-                constexpr static const char* name = "RecordPlaybackFilepath";
-                using cb_type = void(const std::string&, const std::string&);
-        };
-        struct DRING_PUBLIC ConferenceCreated {
-                constexpr static const char* name = "ConferenceCreated";
-                using cb_type = void(const std::string&);
-        };
-        struct DRING_PUBLIC ConferenceChanged {
-                constexpr static const char* name = "ConferenceChanged";
-                using cb_type = void(const std::string&, const std::string&);
-        };
-        struct DRING_PUBLIC UpdatePlaybackScale {
-                constexpr static const char* name = "UpdatePlaybackScale";
-                using cb_type = void(const std::string&, unsigned, unsigned);
-        };
-        struct DRING_PUBLIC ConferenceRemoved {
-                constexpr static const char* name = "ConferenceRemoved";
-                using cb_type = void(const std::string&);
-        };
-        struct DRING_PUBLIC RecordingStateChanged {
-                constexpr static const char* name = "RecordingStateChanged";
-                using cb_type = void(const std::string&, int);
-        };
-        struct DRING_PUBLIC SecureSdesOn {
-                constexpr static const char* name = "SecureSdesOn";
-                using cb_type = void(const std::string&);
-        };
-        struct DRING_PUBLIC SecureSdesOff {
-                constexpr static const char* name = "SecureSdesOff";
-                using cb_type = void(const std::string&);
-        };
-        struct DRING_PUBLIC RtcpReportReceived {
-                constexpr static const char* name = "RtcpReportReceived";
-                using cb_type = void(const std::string&, const std::map<std::string, int>&);
-        };
-        struct DRING_PUBLIC PeerHold {
-                constexpr static const char* name = "PeerHold";
-                using cb_type = void(const std::string&, bool);
-        };
-        struct DRING_PUBLIC VideoMuted {
-                constexpr static const char* name = "VideoMuted";
-                using cb_type = void(const std::string&, bool);
-        };
-        struct DRING_PUBLIC AudioMuted {
-                constexpr static const char* name = "AudioMuted";
-                using cb_type = void(const std::string&, bool);
-        };
-        struct DRING_PUBLIC SmartInfo {
-                constexpr static const char* name = "SmartInfo";
-                using cb_type = void(const std::map<std::string, std::string>&);
-        };
-        struct DRING_PUBLIC ConnectionUpdate {
-                constexpr static const char* name = "ConnectionUpdate";
-                using cb_type = void(const std::string&, int);
-        };
-        struct DRING_PUBLIC OnConferenceInfosUpdated {
-                constexpr static const char* name = "OnConferenceInfosUpdated";
-                using cb_type = void(const std::string&, const std::vector<std::map<std::string, std::string>>&);
-        };
+struct DRING_PUBLIC CallSignal
+{
+    struct DRING_PUBLIC StateChange
+    {
+        constexpr static const char* name = "StateChange";
+        using cb_type                     = void(const std::string&, const std::string&, int);
+    };
+    struct DRING_PUBLIC TransferFailed
+    {
+        constexpr static const char* name = "TransferFailed";
+        using cb_type                     = void(void);
+    };
+    struct DRING_PUBLIC TransferSucceeded
+    {
+        constexpr static const char* name = "TransferSucceeded";
+        using cb_type                     = void(void);
+    };
+    struct DRING_PUBLIC RecordPlaybackStopped
+    {
+        constexpr static const char* name = "RecordPlaybackStopped";
+        using cb_type                     = void(const std::string&);
+    };
+    struct DRING_PUBLIC VoiceMailNotify
+    {
+        constexpr static const char* name = "VoiceMailNotify";
+        using cb_type                     = void(const std::string&, int32_t, int32_t, int32_t);
+    };
+    struct DRING_PUBLIC IncomingMessage
+    {
+        constexpr static const char* name = "IncomingMessage";
+        using cb_type                     = void(const std::string&,
+                             const std::string&,
+                             const std::map<std::string, std::string>&);
+    };
+    struct DRING_PUBLIC IncomingCall
+    {
+        constexpr static const char* name = "IncomingCall";
+        using cb_type = void(const std::string&, const std::string&, const std::string&);
+    };
+    struct DRING_PUBLIC RecordPlaybackFilepath
+    {
+        constexpr static const char* name = "RecordPlaybackFilepath";
+        using cb_type                     = void(const std::string&, const std::string&);
+    };
+    struct DRING_PUBLIC ConferenceCreated
+    {
+        constexpr static const char* name = "ConferenceCreated";
+        using cb_type                     = void(const std::string&);
+    };
+    struct DRING_PUBLIC ConferenceChanged
+    {
+        constexpr static const char* name = "ConferenceChanged";
+        using cb_type                     = void(const std::string&, const std::string&);
+    };
+    struct DRING_PUBLIC UpdatePlaybackScale
+    {
+        constexpr static const char* name = "UpdatePlaybackScale";
+        using cb_type                     = void(const std::string&, unsigned, unsigned);
+    };
+    struct DRING_PUBLIC ConferenceRemoved
+    {
+        constexpr static const char* name = "ConferenceRemoved";
+        using cb_type                     = void(const std::string&);
+    };
+    struct DRING_PUBLIC RecordingStateChanged
+    {
+        constexpr static const char* name = "RecordingStateChanged";
+        using cb_type                     = void(const std::string&, int);
+    };
+    struct DRING_PUBLIC SecureSdesOn
+    {
+        constexpr static const char* name = "SecureSdesOn";
+        using cb_type                     = void(const std::string&);
+    };
+    struct DRING_PUBLIC SecureSdesOff
+    {
+        constexpr static const char* name = "SecureSdesOff";
+        using cb_type                     = void(const std::string&);
+    };
+    struct DRING_PUBLIC RtcpReportReceived
+    {
+        constexpr static const char* name = "RtcpReportReceived";
+        using cb_type = void(const std::string&, const std::map<std::string, int>&);
+    };
+    struct DRING_PUBLIC PeerHold
+    {
+        constexpr static const char* name = "PeerHold";
+        using cb_type                     = void(const std::string&, bool);
+    };
+    struct DRING_PUBLIC VideoMuted
+    {
+        constexpr static const char* name = "VideoMuted";
+        using cb_type                     = void(const std::string&, bool);
+    };
+    struct DRING_PUBLIC AudioMuted
+    {
+        constexpr static const char* name = "AudioMuted";
+        using cb_type                     = void(const std::string&, bool);
+    };
+    struct DRING_PUBLIC SmartInfo
+    {
+        constexpr static const char* name = "SmartInfo";
+        using cb_type                     = void(const std::map<std::string, std::string>&);
+    };
+    struct DRING_PUBLIC ConnectionUpdate
+    {
+        constexpr static const char* name = "ConnectionUpdate";
+        using cb_type                     = void(const std::string&, int);
+    };
+    struct DRING_PUBLIC OnConferenceInfosUpdated
+    {
+        constexpr static const char* name = "OnConferenceInfosUpdated";
+        using cb_type                     = void(const std::string&,
+                             const std::vector<std::map<std::string, std::string>>&);
+    };
 };
 
 } // namespace DRing

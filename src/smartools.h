@@ -19,11 +19,11 @@
  */
 #pragma once
 
-#include <string>
 #include <chrono>
-#include <mutex>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <string>
 
 namespace jami {
 class RepeatedTask;
@@ -54,4 +54,4 @@ private:
     std::map<std::string, std::string> information_;
     std::shared_ptr<RepeatedTask> task_;
 };
-}
+} // namespace jami

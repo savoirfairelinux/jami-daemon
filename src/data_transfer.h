@@ -29,9 +29,10 @@ namespace jami {
 
 class Stream;
 
-struct IncomingFileInfo {
-  DRing::DataTransferId id;
-  std::shared_ptr<Stream> stream;
+struct IncomingFileInfo
+{
+    DRing::DataTransferId id;
+    std::shared_ptr<Stream> stream;
 };
 
 typedef std::function<void(const std::string&)> InternalCompletionCb;
@@ -57,21 +58,22 @@ public:
                                           int64_t offset) noexcept;
 
     /// \see DRing::cancelDataTransfer
-    DRing::DataTransferError cancel(const DRing::DataTransferId &id) noexcept;
+    DRing::DataTransferError cancel(const DRing::DataTransferId& id) noexcept;
 
     /// Used by p2p.cpp
-    void close(const DRing::DataTransferId &id) noexcept;
+    void close(const DRing::DataTransferId& id) noexcept;
 
     /// \see DRing::dataTransferInfo
     DRing::DataTransferError info(const DRing::DataTransferId& id,
                                   DRing::DataTransferInfo& info) const noexcept;
 
     /// \see DRing::dataTransferBytesProgress
-    DRing::DataTransferError bytesProgress(const DRing::DataTransferId& id, int64_t& total,
+    DRing::DataTransferError bytesProgress(const DRing::DataTransferId& id,
+                                           int64_t& total,
                                            int64_t& progress) const noexcept;
 
     /// Used by p2p.cpp
-    DRing::DataTransferId createIncomingTransfer(const DRing::DataTransferInfo &info,
+    DRing::DataTransferId createIncomingTransfer(const DRing::DataTransferInfo& info,
                                                  const DRing::DataTransferId& internal_id,
                                                  const InternalCompletionCb& cb);
 

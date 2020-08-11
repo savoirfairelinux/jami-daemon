@@ -23,24 +23,23 @@
 #include "config.h"
 #endif
 
-#include <memory> // for weak/shared_ptr
-#include <vector>
 #include <map>
+#include <memory> // for weak/shared_ptr
 #include <mutex>
 #include <string>
+#include <vector>
 
 #include "audio/audio_input.h"
-#include "video/video_device_monitor.h"
-#include "video/video_base.h"
-#include "video/video_input.h"
 #include "media_player.h"
+#include "video/video_base.h"
+#include "video/video_device_monitor.h"
+#include "video/video_input.h"
 
 namespace jami {
 
 struct VideoManager
 {
 public:
-
     void setDeviceOrientation(const std::string& deviceId, int angle);
 
     /**
@@ -72,7 +71,8 @@ public:
 std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();
 video::VideoDeviceMonitor& getVideoDeviceMonitor();
 std::shared_ptr<AudioInput> getAudioInput(const std::string& id);
-std::shared_ptr<video::VideoInput> getVideoInput(const std::string& id, video::VideoInputMode inputMode = video::VideoInputMode::Undefined);
+std::shared_ptr<video::VideoInput> getVideoInput(
+    const std::string& id, video::VideoInputMode inputMode = video::VideoInputMode::Undefined);
 std::string createMediaPlayer(const std::string& path);
 std::shared_ptr<MediaPlayer> getMediaPlayer(const std::string& id);
 bool pausePlayer(const std::string& id, bool pause);

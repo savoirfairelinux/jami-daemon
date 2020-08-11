@@ -19,19 +19,21 @@
 // Utils
 #include "noncopyable.h"
 // Plugin Manager
-#include "pluginmanager.h"
 #include "conversationhandler.h"
 #include "logger.h"
-//Manager
+#include "pluginmanager.h"
+// Manager
 #include "manager.h"
 
 namespace jami {
 
 using ConversationHandlerPtr = std::unique_ptr<ConversationHandler>;
 
-class ConversationServicesManager{
+class ConversationServicesManager
+{
 public:
-    ConversationServicesManager(PluginManager& pm){
+    ConversationServicesManager(PluginManager& pm)
+    {
         registerComponentsLifeCycleManagers(pm);
 
         auto sendTextMessage = [this](const DLPlugin* plugin, void* data) {
@@ -45,13 +47,14 @@ public:
     NON_COPYABLE(ConversationServicesManager);
 
 public:
-    void registerComponentsLifeCycleManagers(PluginManager& pm) {
+    void registerComponentsLifeCycleManagers(PluginManager& pm)
+    {
         auto registerConversationHandler = [this](void* data) {
-            ConversationHandlerPtr ptr{(static_cast<ConversationHandler*>(data))};
+            ConversationHandlerPtr ptr {(static_cast<ConversationHandler*>(data))};
 
-            if(ptr) {
+            if (ptr) {
                 conversationHandlers.push_back(std::make_pair(false, std::move(ptr)));
-                if(!conversationHandlers.empty()) {
+                if (!conversationHandlers.empty()) {
                     listAvailableSubjects(conversationHandlers.back().second);
                 }
             }
@@ -60,8 +63,8 @@ public:
         };
 
         auto unregisterConversationHandler = [this](void* data) {
-            for(auto it = conversationHandlers.begin(); it != conversationHandlers.end(); ++it) {
-                if(it->second.get() == data) {
+            for (auto it = conversationHandlers.begin(); it != conversationHandlers.end(); ++it) {
+                if (it->second.get() == data) {
                     conversationHandlers.erase(it);
                     break;
                 }
@@ -70,31 +73,36 @@ public:
         };
 
         pm.registerComponentManager("ConversationHandlerManager",
-                                    registerConversationHandler, unregisterConversationHandler);
+                                    registerConversationHandler,
+                                    unregisterConversationHandler);
     }
 
-    void onTextMessage(std::shared_ptr<ConversationMessage>& cm) {
-        if(!conversationHandlers.empty()) {
+    void onTextMessage(std::shared_ptr<ConversationMessage>& cm)
+    {
+        if (!conversationHandlers.empty()) {
             receiveSubject->publish(cm);
         }
     }
 
-    void sendTextMessage(std::shared_ptr<ConversationMessage>& cm) {
-        if(!conversationHandlers.empty()) {
+    void sendTextMessage(std::shared_ptr<ConversationMessage>& cm)
+    {
+        if (!conversationHandlers.empty()) {
             sendSubject->publish(cm);
         }
     }
 
 private:
-
-    void listAvailableSubjects(ConversationHandlerPtr& plugin) {
+    void listAvailableSubjects(ConversationHandlerPtr& plugin)
+    {
         plugin->notifyStrMapSubject(false, sendSubject);
         plugin->notifyStrMapSubject(true, receiveSubject);
     }
 
 private:
     std::list<std::pair<bool, ConversationHandlerPtr>> conversationHandlers;
-    strMapSubjectPtr sendSubject = std::make_shared<PublishObservable<std::shared_ptr<ConversationMessage>>>();
-    strMapSubjectPtr receiveSubject = std::make_shared<PublishObservable<std::shared_ptr<ConversationMessage>>>();
+    strMapSubjectPtr sendSubject
+        = std::make_shared<PublishObservable<std::shared_ptr<ConversationMessage>>>();
+    strMapSubjectPtr receiveSubject
+        = std::make_shared<PublishObservable<std::shared_ptr<ConversationMessage>>>();
 };
-}
+} // namespace jami

@@ -24,28 +24,31 @@
 #include "config.h"
 #endif
 
-#include "noncopyable.h"
 #include "ip_utils.h"
+#include "noncopyable.h"
 #include "string_utils.h"
 
-#include <map>
-#include <string>
 #include <chrono>
 #include <functional>
+#include <map>
+#include <string>
 
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 
 enum class PortType { UDP, TCP };
 
 class Mapping
 {
 public:
-    constexpr static const char * UPNP_DEFAULT_MAPPING_DESCRIPTION = "RING";
-    constexpr static uint16_t UPNP_PORT_MIN = 1024;
-    constexpr static uint16_t UPNP_PORT_MAX = 65535;
+    constexpr static const char* UPNP_DEFAULT_MAPPING_DESCRIPTION = "RING";
+    constexpr static uint16_t UPNP_PORT_MIN                       = 1024;
+    constexpr static uint16_t UPNP_PORT_MAX                       = 65535;
 
-    Mapping(uint16_t portExternal = 0, uint16_t portInternal = 0,
-            PortType type = PortType::UDP, bool unique = true,
+    Mapping(uint16_t portExternal          = 0,
+            uint16_t portInternal          = 0,
+            PortType type                  = PortType::UDP,
+            bool unique                    = true,
             const std::string& description = UPNP_DEFAULT_MAPPING_DESCRIPTION);
     Mapping(Mapping&& other) noexcept;
     Mapping(const Mapping& other);
@@ -59,14 +62,14 @@ public:
     bool operator<=(const Mapping& other) const noexcept;
     bool operator>=(const Mapping& other) const noexcept;
 
-    uint16_t     getPortExternal()    const { return portExternal_;                         }
-    std::string  getPortExternalStr() const { return std::to_string(portExternal_);         }
-    uint16_t     getPortInternal()    const { return portInternal_;                         }
-    std::string  getPortInternalStr() const { return std::to_string(portInternal_);         }
-    PortType     getType()            const { return type_;                                  }
-    std::string  getTypeStr()         const { return type_ == PortType::UDP ? "UDP" : "TCP"; }
-    bool         isUnique()           const { return unique_;                                }
-    std::string  getDescription()     const { return description_;                           }
+    uint16_t getPortExternal() const { return portExternal_; }
+    std::string getPortExternalStr() const { return std::to_string(portExternal_); }
+    uint16_t getPortInternal() const { return portInternal_; }
+    std::string getPortInternalStr() const { return std::to_string(portInternal_); }
+    PortType getType() const { return type_; }
+    std::string getTypeStr() const { return type_ == PortType::UDP ? "UDP" : "TCP"; }
+    bool isUnique() const { return unique_; }
+    std::string getDescription() const { return description_; }
 
     std::string toString() const;
     bool isValid() const;
@@ -80,7 +83,6 @@ public:
 #endif
 
 private:
-
 protected:
     uint16_t portExternal_;
     uint16_t portInternal_;
@@ -89,4 +91,5 @@ protected:
     bool unique_;
 };
 
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

@@ -20,46 +20,53 @@
 
 #include "account_manager.h"
 
-#include <queue>
-#include <set>
 #include <chrono>
+#include <set>
+#include <queue>
 
 namespace jami {
 
-class ServerAccountManager : public AccountManager {
+class ServerAccountManager : public AccountManager
+{
 public:
-    ServerAccountManager(
-        const std::string& path,
-        OnAsync&& onAsync,
-        const std::string& managerHostname,
-        const std::string& nameServer);
+    ServerAccountManager(const std::string& path,
+                         OnAsync&& onAsync,
+                         const std::string& managerHostname,
+                         const std::string& nameServer);
 
-    struct ServerAccountCredentials : AccountCredentials {
+    struct ServerAccountCredentials : AccountCredentials
+    {
         std::string username;
         std::shared_ptr<dht::crypto::Certificate> ca;
     };
 
-    void initAuthentication(
-        PrivateKey request,
-        std::string deviceName,
-        std::unique_ptr<AccountCredentials> credentials,
-        AuthSuccessCallback onSuccess,
-        AuthFailureCallback onFailure,
-        OnChangeCallback onChange) override;
+    void initAuthentication(PrivateKey request,
+                            std::string deviceName,
+                            std::unique_ptr<AccountCredentials> credentials,
+                            AuthSuccessCallback onSuccess,
+                            AuthFailureCallback onFailure,
+                            OnChangeCallback onChange) override;
 
-    bool changePassword(const std::string& /*password_old*/, const std::string& /*password_new*/) override {
+    bool changePassword(const std::string& /*password_old*/,
+                        const std::string& /*password_new*/) override
+    {
         return false;
     }
 
     void syncDevices() override;
 
-    bool revokeDevice(const std::string& password, const std::string& device, RevokeDeviceCallback cb) override;
+    bool revokeDevice(const std::string& password,
+                      const std::string& device,
+                      RevokeDeviceCallback cb) override;
 
     bool searchUser(const std::string& query, SearchCallback cb) override;
-    void registerName(const std::string& password, const std::string& name, RegistrationCallback cb) override;
+    void registerName(const std::string& password,
+                      const std::string& name,
+                      RegistrationCallback cb) override;
 
 private:
-    struct AuthContext {
+    struct AuthContext
+    {
         PrivateKey key;
         CertRequest request;
         std::string deviceName;
@@ -78,26 +85,25 @@ private:
     void sendRequest(const std::shared_ptr<dht::http::Request>& request);
     void clearRequest(const std::weak_ptr<dht::http::Request>& request);
 
-    enum class TokenScope : unsigned {
-        None = 0,
-        Device,
-        User,
-        Admin
-    };
+    enum class TokenScope : unsigned { None = 0, Device, User, Admin };
     std::mutex tokenLock_;
     std::string token_ {};
     TokenScope tokenScope_ {};
-    std::chrono::steady_clock::time_point tokenExpire_ {std::chrono::steady_clock::time_point::min()};
+    std::chrono::steady_clock::time_point tokenExpire_ {
+        std::chrono::steady_clock::time_point::min()};
     unsigned authErrorCount {0};
 
     using RequestQueue = std::queue<std::shared_ptr<dht::http::Request>>;
     RequestQueue pendingDeviceRequests_;
     RequestQueue pendingAccountRequests_;
-    RequestQueue& getRequestQueue(TokenScope scope) {
+    RequestQueue& getRequestQueue(TokenScope scope)
+    {
         return scope == TokenScope::Device ? pendingDeviceRequests_ : pendingAccountRequests_;
     }
-    bool hasAuthorization(TokenScope scope) const {
-        return not token_.empty() and tokenScope_ >= scope and tokenExpire_ >= std::chrono::steady_clock::now();
+    bool hasAuthorization(TokenScope scope) const
+    {
+        return not token_.empty() and tokenScope_ >= scope
+               and tokenExpire_ >= std::chrono::steady_clock::now();
     }
     void setAuthHeaderFields(dht::http::Request& request) const;
 
@@ -109,7 +115,9 @@ private:
     void authFailed(TokenScope scope, int code);
     void authError(TokenScope scope);
 
-    void setToken(std::string token, TokenScope scope, std::chrono::steady_clock::time_point expiration);
+    void setToken(std::string token,
+                  TokenScope scope,
+                  std::chrono::steady_clock::time_point expiration);
 };
 
-}
+} // namespace jami
