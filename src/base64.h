@@ -18,20 +18,23 @@
 
 #pragma once
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
+#include <exception>
 #include <string>
 #include <vector>
-#include <exception>
 
 namespace jami {
 namespace base64 {
 
-class base64_exception : public std::exception { };
+class base64_exception : public std::exception
+{};
 
-std::string encode(const std::vector<uint8_t>::const_iterator begin, const std::vector<uint8_t>::const_iterator end);
+std::string encode(const std::vector<uint8_t>::const_iterator begin,
+                   const std::vector<uint8_t>::const_iterator end);
 std::string encode(const std::vector<uint8_t>& dat);
 std::vector<uint8_t> decode(const std::string& str);
 
-}} // namespace jami::base64
+} // namespace base64
+} // namespace jami

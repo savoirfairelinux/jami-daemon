@@ -29,12 +29,12 @@ namespace Media {
 // Supported MRL schemes
 namespace VideoProtocolPrefix {
 
-constexpr static const char* NONE       = "";
-constexpr static const char* DISPLAY    = "display";
-constexpr static const char* FILE       = "file";
-constexpr static const char* CAMERA     = "camera";
-constexpr static const char* SEPARATOR  = "://";
-}
+constexpr static const char* NONE      = "";
+constexpr static const char* DISPLAY   = "display";
+constexpr static const char* FILE      = "file";
+constexpr static const char* CAMERA    = "camera";
+constexpr static const char* SEPARATOR = "://";
+} // namespace VideoProtocolPrefix
 
 namespace Details {
 
@@ -42,15 +42,15 @@ constexpr static char MEDIA_TYPE_AUDIO[] = "MEDIA_TYPE_AUDIO";
 constexpr static char MEDIA_TYPE_VIDEO[] = "MEDIA_TYPE_VIDEO";
 
 // Renderer and Shm info
-constexpr static char CALL_ID [] = "CALL_ID";
+constexpr static char CALL_ID[]  = "CALL_ID";
 constexpr static char SHM_PATH[] = "SHM_PATH";
-constexpr static char WIDTH   [] = "WIDTH";
-constexpr static char HEIGHT  [] = "HEIGHT";
+constexpr static char WIDTH[]    = "WIDTH";
+constexpr static char HEIGHT[]   = "HEIGHT";
 
-}
+} // namespace Details
 
-} //namespace DRing::Media
+} // namespace Media
 
-} //namespace DRing
+} // namespace DRing
 
 #endif

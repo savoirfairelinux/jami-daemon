@@ -21,42 +21,46 @@
 #ifndef FILEUTILS_H_
 #define FILEUTILS_H_
 
-#include <string>
-#include <vector>
 #include <chrono>
-#include <mutex>
 #include <cstdio>
 #include <ios>
+#include <mutex>
+#include <string>
+#include <vector>
 
 #include "dring/def.h"
 
 #ifndef _MSC_VER
-#define PROTECTED_GETENV(str) ({char *envvar_ = getenv((str)); \
-                                                   envvar_ ? envvar_ : "";})
+#define PROTECTED_GETENV(str) \
+    ({ \
+        char* envvar_ = getenv((str)); \
+        envvar_ ? envvar_ : ""; \
+    })
 #else
 #define PROTECTED_GETENV(str) ""
 #endif
 
-#define XDG_DATA_HOME           (PROTECTED_GETENV("XDG_DATA_HOME"))
-#define XDG_CONFIG_HOME         (PROTECTED_GETENV("XDG_CONFIG_HOME"))
-#define XDG_CACHE_HOME          (PROTECTED_GETENV("XDG_CACHE_HOME"))
+#define XDG_DATA_HOME   (PROTECTED_GETENV("XDG_DATA_HOME"))
+#define XDG_CONFIG_HOME (PROTECTED_GETENV("XDG_CONFIG_HOME"))
+#define XDG_CACHE_HOME  (PROTECTED_GETENV("XDG_CACHE_HOME"))
 
-#define PIDFILE ".ring.pid"
+#define PIDFILE     ".ring.pid"
 #define ERASE_BLOCK 4096
 
 #ifndef _WIN32
-#include <sys/stat.h>           // mode_t
-#define DIR_SEPARATOR_STR "/"   // Directory separator string
-#define DIR_SEPARATOR_CH  '/'   // Directory separator char
-#define DIR_SEPARATOR_STR_ESC "\\/"   // Escaped directory separator string
+#include <sys/stat.h>               // mode_t
+#define DIR_SEPARATOR_STR     "/"   // Directory separator string
+#define DIR_SEPARATOR_CH      '/'   // Directory separator char
+#define DIR_SEPARATOR_STR_ESC "\\/" // Escaped directory separator string
 #else
-#define mode_t unsigned
-#define DIR_SEPARATOR_STR "\\"  // Directory separator string
-#define DIR_SEPARATOR_CH  '\\'  // Directory separator char
-#define DIR_SEPARATOR_STR_ESC "\\\\"   // Escaped directory separator string
+#define mode_t                unsigned
+#define DIR_SEPARATOR_STR     "\\"   // Directory separator string
+#define DIR_SEPARATOR_CH      '\\'   // Directory separator char
+#define DIR_SEPARATOR_STR_ESC "\\\\" // Escaped directory separator string
 #endif
 
-namespace jami { namespace fileutils {
+namespace jami {
+namespace fileutils {
 
 std::string get_home_dir();
 std::string get_config_dir(const char* pkg);
@@ -73,12 +77,12 @@ std::string get_cache_dir();
  * @param dir last directory creation mode
  * @param parents default mode for all created directories except the last
  */
-bool check_dir(const char *path, mode_t dir=0755, mode_t parents=0755);
-DRING_PUBLIC void set_program_dir(char *program_path); // public because bin/main.cpp uses it
-std::string expand_path(const std::string &path);
-bool isDirectoryWritable(const std::string &directory);
+bool check_dir(const char* path, mode_t dir = 0755, mode_t parents = 0755);
+DRING_PUBLIC void set_program_dir(char* program_path); // public because bin/main.cpp uses it
+std::string expand_path(const std::string& path);
+bool isDirectoryWritable(const std::string& directory);
 
-bool recursive_mkdir(const std::string& path, mode_t mode=0755);
+bool recursive_mkdir(const std::string& path, mode_t mode = 0755);
 
 bool isPathRelative(const std::string& path);
 /**
@@ -103,7 +107,7 @@ std::chrono::system_clock::time_point writeTime(const std::string& path);
  * The result is a list of relative (to @param dir) paths of all entries
  * in the directory, without "." and "..".
  */
-std::vector<std::string> readDirectory(const std::string &dir);
+std::vector<std::string> readDirectory(const std::string& dir);
 
 /**
  * Read the full content of a file at path.
@@ -112,23 +116,29 @@ std::vector<std::string> readDirectory(const std::string &dir);
 std::vector<uint8_t> loadFile(const std::string& path, const std::string& default_dir = {});
 std::string loadTextFile(const std::string& path, const std::string& default_dir = {});
 
-void saveFile(const std::string& path, const uint8_t* data, size_t data_size, mode_t mode=0644);
-inline void saveFile(const std::string& path, const std::vector<uint8_t>& data, mode_t mode=0644) {
+void saveFile(const std::string& path, const uint8_t* data, size_t data_size, mode_t mode = 0644);
+inline void
+saveFile(const std::string& path, const std::vector<uint8_t>& data, mode_t mode = 0644)
+{
     saveFile(path, data.data(), data.size(), mode);
 }
 
-std::vector<uint8_t> loadCacheFile(const std::string& path, std::chrono::system_clock::duration maxAge);
+std::vector<uint8_t> loadCacheFile(const std::string& path,
+                                   std::chrono::system_clock::duration maxAge);
 std::string loadCacheTextFile(const std::string& path, std::chrono::system_clock::duration maxAge);
 
 std::vector<uint8_t> readArchive(const std::string& path, const std::string& password = {});
-void writeArchive(const std::string& data, const std::string& path, const std::string& password = {});
+void writeArchive(const std::string& data,
+                  const std::string& path,
+                  const std::string& password = {});
 
 std::mutex& getFileLock(const std::string& path);
 
-struct FileHandle {
+struct FileHandle
+{
     int fd;
     const std::string name;
-    FileHandle(const std::string &name);
+    FileHandle(const std::string& name);
     ~FileHandle();
 };
 FileHandle create_pidfile();
@@ -149,8 +159,12 @@ int removeAll(const std::string& path, bool erase = false);
  * Wrappers for fstream opening that will convert paths to wstring
  * on windows
  */
-void openStream(std::ifstream& file, const std::string& path, std::ios_base::openmode mode = std::ios_base::in);
-void openStream(std::ofstream& file, const std::string& path, std::ios_base::openmode mode = std::ios_base::out);
+void openStream(std::ifstream& file,
+                const std::string& path,
+                std::ios_base::openmode mode = std::ios_base::in);
+void openStream(std::ofstream& file,
+                const std::string& path,
+                std::ios_base::openmode mode = std::ios_base::out);
 std::ifstream ifstream(const std::string& path, std::ios_base::openmode mode = std::ios_base::in);
 std::ofstream ofstream(const std::string& path, std::ios_base::openmode mode = std::ios_base::out);
 
@@ -162,6 +176,7 @@ std::string md5sum(const std::vector<uint8_t>& buffer);
  */
 int accessFile(const std::string& file, int mode);
 
-}} // namespace jami::fileutils
+} // namespace fileutils
+} // namespace jami
 
 #endif // FILEUTILS_H_

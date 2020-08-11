@@ -28,19 +28,23 @@
 
 // C-callable versions of C++ APIs.
 #ifdef __cplusplus
-namespace { extern "C" {
+namespace {
+extern "C" {
 #endif
 
 void ring_secure_memzero(void* ptr, size_t length);
 
 #ifdef __cplusplus
-}; }
+};
+}
 
-namespace jami { namespace secure {
+namespace jami {
+namespace secure {
 
 /// Erase with \a size '0' the given memory starting at \a ptr pointer.
 void memzero(void* ptr, std::size_t length);
 
-}}
+} // namespace secure
+} // namespace jami
 
 #endif // __cplusplus

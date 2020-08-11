@@ -25,9 +25,9 @@
 #include <cinttypes> // for PRIx64
 #include <cstdarg>
 
+#include "string_utils.h" // to_string
 #include <sstream>
 #include <string>
-#include "string_utils.h" // to_string
 
 #ifdef __cplusplus
 extern "C" {
@@ -99,18 +99,18 @@ public:
         : level_ {level}
         , file_ {file}
         , line_ {line}
-        , linefeed_ {linefeed} {}
+        , linefeed_ {linefeed}
+    {}
 
-    Logger() = delete;
+    Logger()              = delete;
     Logger(const Logger&) = delete;
-    Logger(Logger&&) = default;
+    Logger(Logger&&)      = default;
 
-    ~Logger() {
-        log(level_, file_, line_, linefeed_, "%s", os_.str().c_str());
-    }
+    ~Logger() { log(level_, file_, line_, linefeed_, "%s", os_.str().c_str()); }
 
-    template <typename T>
-    inline Logger& operator<<(const T& value) {
+    template<typename T>
+    inline Logger& operator<<(const T& value)
+    {
         os_ << value;
         return *this;
     }
@@ -120,41 +120,43 @@ public:
     ///
     /// Example: JAMI_DBG("%s", "Hello, World!")
     ///
-    static void log(int level, const char* file, int line, bool linefeed,
-                    const char* const fmt, ...) PRINTF_ATTRIBUTE(5, 6);
+    static void log(int level, const char* file, int line, bool linefeed, const char* const fmt, ...)
+        PRINTF_ATTRIBUTE(5, 6);
 
     ///
     /// Printf fashion logging (using va_list parameters)
     ///
-    static void vlog(const int level, const char* file, int line, bool linefeed,
-                     const char* format, va_list);
+    static void vlog(
+        const int level, const char* file, int line, bool linefeed, const char* format, va_list);
 
     ///
     /// Stream fashion logging.
     ///
     /// Example: JAMI_DBG() << "Hello, World!"
     ///
-    static Logger log(int level, const char* file, int line, bool linefeed) {
+    static Logger log(int level, const char* file, int line, bool linefeed)
+    {
         return {level, file, line, linefeed};
     }
 
 private:
-    int level_;                 ///< LOG_XXXX values
-    const char* const file_;    ///< contextual filename (printed as header)
-    const int line_;            ///< contextual line number (printed as header)
-    bool linefeed_ {true};      ///< true if a '\n' (or any platform equivalent) has to be put at line end in consoleMode
-    std::ostringstream os_;     ///< string stream used with C++ stream style (stream operator<<)
+    int level_;              ///< LOG_XXXX values
+    const char* const file_; ///< contextual filename (printed as header)
+    const int line_;         ///< contextual line number (printed as header)
+    bool linefeed_ {
+        true}; ///< true if a '\n' (or any platform equivalent) has to be put at line end in consoleMode
+    std::ostringstream os_; ///< string stream used with C++ stream style (stream operator<<)
 };
 
 // We need to use macros for contextual information
-#define JAMI_INFO(...) ::jami::Logger::log(LOG_INFO, __FILE__, __LINE__, true, ## __VA_ARGS__)
-#define JAMI_DBG(...) ::jami::Logger::log(LOG_DEBUG, __FILE__, __LINE__, true, ## __VA_ARGS__)
-#define JAMI_WARN(...) ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, true, ## __VA_ARGS__)
-#define JAMI_ERR(...) ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, true, ## __VA_ARGS__)
+#define JAMI_INFO(...) ::jami::Logger::log(LOG_INFO, __FILE__, __LINE__, true, ##__VA_ARGS__)
+#define JAMI_DBG(...)  ::jami::Logger::log(LOG_DEBUG, __FILE__, __LINE__, true, ##__VA_ARGS__)
+#define JAMI_WARN(...) ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, true, ##__VA_ARGS__)
+#define JAMI_ERR(...)  ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, true, ##__VA_ARGS__)
 
-#define JAMI_XINFO(...) ::jami::Logger::log(LOG_INFO, __FILE__, __LINE__, false, ## __VA_ARGS__)
-#define JAMI_XDBG(...) ::jami::Logger::log(LOG_DEBUG, __FILE__, __LINE__, false, ## __VA_ARGS__)
-#define JAMI_XWARN(...) ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, false, ## __VA_ARGS__)
-#define JAMI_XERR(...) ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, false, ## __VA_ARGS__)
+#define JAMI_XINFO(...) ::jami::Logger::log(LOG_INFO, __FILE__, __LINE__, false, ##__VA_ARGS__)
+#define JAMI_XDBG(...)  ::jami::Logger::log(LOG_DEBUG, __FILE__, __LINE__, false, ##__VA_ARGS__)
+#define JAMI_XWARN(...) ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, false, ##__VA_ARGS__)
+#define JAMI_XERR(...)  ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, false, ##__VA_ARGS__)
 
 } // namespace jami

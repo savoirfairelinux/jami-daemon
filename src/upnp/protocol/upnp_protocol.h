@@ -27,48 +27,44 @@
 #include "igd.h"
 #include "mapping.h"
 
+#include "ip_utils.h"
 #include "logger.h"
 #include "noncopyable.h"
-#include "ip_utils.h"
 #include "string_utils.h"
 
+#include <chrono>
+#include <condition_variable>
+#include <functional>
 #include <map>
 #include <string>
-#include <chrono>
-#include <functional>
-#include <condition_variable>
 
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 
 // UPnP device descriptions.
-constexpr static const char * UPNP_ROOT_DEVICE = "upnp:rootdevice";
-constexpr static const char * UPNP_IGD_DEVICE = "urn:schemas-upnp-org:device:InternetGatewayDevice:1";
-constexpr static const char * UPNP_WAN_DEVICE = "urn:schemas-upnp-org:device:WANDevice:1";
-constexpr static const char * UPNP_WANCON_DEVICE = "urn:schemas-upnp-org:device:WANConnectionDevice:1";
-constexpr static const char * UPNP_WANIP_SERVICE = "urn:schemas-upnp-org:service:WANIPConnection:1";
-constexpr static const char * UPNP_WANPPP_SERVICE = "urn:schemas-upnp-org:service:WANPPPConnection:1";
+constexpr static const char* UPNP_ROOT_DEVICE = "upnp:rootdevice";
+constexpr static const char* UPNP_IGD_DEVICE
+    = "urn:schemas-upnp-org:device:InternetGatewayDevice:1";
+constexpr static const char* UPNP_WAN_DEVICE = "urn:schemas-upnp-org:device:WANDevice:1";
+constexpr static const char* UPNP_WANCON_DEVICE
+    = "urn:schemas-upnp-org:device:WANConnectionDevice:1";
+constexpr static const char* UPNP_WANIP_SERVICE = "urn:schemas-upnp-org:service:WANIPConnection:1";
+constexpr static const char* UPNP_WANPPP_SERVICE
+    = "urn:schemas-upnp-org:service:WANPPPConnection:1";
 
 // Pure virtual interface class that UPnPContext uses to call protocol functions.
 class UPnPProtocol
 {
 public:
-    enum class UpnpError : int {
-        INVALID_ERR = -1,
-        ERROR_OK,
-        CONFLICT_IN_MAPPING
-    };
+    enum class UpnpError : int { INVALID_ERR = -1, ERROR_OK, CONFLICT_IN_MAPPING };
 
-    enum class Type {
-        UNKNOWN,
-        PUPNP,
-        NAT_PMP
-    };
+    enum class Type { UNKNOWN, PUPNP, NAT_PMP };
 
     using IgdListChangedCallback = std::function<bool(UPnPProtocol*, IGD*, IpAddr, bool)>;
-    using NotifyContextCallback = std::function<void(IpAddr, Mapping, bool)>;
+    using NotifyContextCallback  = std::function<void(IpAddr, Mapping, bool)>;
 
-    UPnPProtocol(){};
-    virtual ~UPnPProtocol(){};
+    UPnPProtocol() {};
+    virtual ~UPnPProtocol() {};
 
     // Allows each protocol to return it's type.
     virtual Type getType() const = 0;
@@ -80,7 +76,11 @@ public:
     virtual void searchForIgd() = 0;
 
     // Sends a request to add a mapping.
-    virtual void requestMappingAdd(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type) = 0;
+    virtual void requestMappingAdd(IGD* igd,
+                                   uint16_t port_external,
+                                   uint16_t port_internal,
+                                   PortType type)
+        = 0;
 
     // Sends a request to remove a mapping.
     virtual void requestMappingRemove(const Mapping& igdMapping) = 0;
@@ -95,14 +95,19 @@ public:
     void setOnPortMapAdd(NotifyContextCallback&& cb) { notifyContextPortOpenCb_ = std::move(cb); }
 
     // Set the remove port mapping callback handler.
-    void setOnPortMapRemove(NotifyContextCallback&& cb) { notifyContextPortCloseCb_ = std::move(cb); }
+    void setOnPortMapRemove(NotifyContextCallback&& cb)
+    {
+        notifyContextPortCloseCb_ = std::move(cb);
+    }
 
 protected:
-    mutable std::mutex validIgdMutex_;          // Mutex used to access these lists and IGDs in a thread-safe manner.
+    mutable std::mutex
+        validIgdMutex_; // Mutex used to access these lists and IGDs in a thread-safe manner.
 
-    IgdListChangedCallback updateIgdListCb_;    // Callback for when the IGD list changes.
-    NotifyContextCallback notifyContextPortOpenCb_;     // Callback for when a port mapping is added.
-    NotifyContextCallback notifyContextPortCloseCb_;    // Callback for when a port mapping is removed.
+    IgdListChangedCallback updateIgdListCb_;         // Callback for when the IGD list changes.
+    NotifyContextCallback notifyContextPortOpenCb_;  // Callback for when a port mapping is added.
+    NotifyContextCallback notifyContextPortCloseCb_; // Callback for when a port mapping is removed.
 };
 
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

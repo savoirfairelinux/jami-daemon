@@ -20,26 +20,26 @@
 
 #include "data_transfer.h"
 
-#include "manager.h"
-#include "jamidht/jamiaccount.h"
-#include "peer_connection.h"
-#include "fileutils.h"
-#include "string_utils.h"
-#include "map_utils.h"
 #include "client/ring_signal.h"
+#include "fileutils.h"
+#include "jamidht/jamiaccount.h"
 #include "jamidht/p2p.h"
+#include "manager.h"
+#include "map_utils.h"
+#include "peer_connection.h"
+#include "string_utils.h"
 
-#include <thread>
-#include <stdexcept>
-#include <fstream>
-#include <sstream>
-#include <ios>
-#include <iostream>
-#include <unordered_map>
-#include <mutex>
-#include <future>
 #include <atomic>
 #include <cstdlib> // mkstemp
+#include <fstream>
+#include <future>
+#include <ios>
+#include <iostream>
+#include <mutex>
+#include <sstream>
+#include <stdexcept>
+#include <thread>
+#include <unordered_map>
 
 #include <opendht/rng.h>
 #include <opendht/thread_pool.h>
@@ -61,49 +61,48 @@ class DataTransfer : public Stream
 {
 public:
     DataTransfer(DRing::DataTransferId id, InternalCompletionCb cb = {})
-        : Stream(), id {id}, internalCompletionCb_ {std::move(cb)} {}
+        : Stream()
+        , id {id}
+        , internalCompletionCb_ {std::move(cb)}
+    {}
 
     virtual ~DataTransfer() = default;
 
-    DRing::DataTransferId getId() const override {
-        return id;
-    }
+    DRing::DataTransferId getId() const override { return id; }
 
     virtual void accept(const std::string&, std::size_t) {};
 
-    virtual bool start() {
-        wasStarted_ = true;
+    virtual bool start()
+    {
+        wasStarted_   = true;
         bool expected = false;
         return started_.compare_exchange_strong(expected, true);
     }
 
-    virtual bool hasBeenStarted() const {
-        return wasStarted_;
-    }
+    virtual bool hasBeenStarted() const { return wasStarted_; }
 
-    void close() noexcept override {
-        started_ = false;
-    }
+    void close() noexcept override { started_ = false; }
 
-    void bytesProgress(int64_t& total, int64_t& progress) const {
+    void bytesProgress(int64_t& total, int64_t& progress) const
+    {
         std::lock_guard<std::mutex> lk {infoMutex_};
-        total = info_.totalSize;
+        total    = info_.totalSize;
         progress = info_.bytesProgress;
     }
 
-    void setBytesProgress(int64_t progress) const {
+    void setBytesProgress(int64_t progress) const
+    {
         std::lock_guard<std::mutex> lk {infoMutex_};
         info_.bytesProgress = progress;
     }
 
-    void info(DRing::DataTransferInfo& info) const {
+    void info(DRing::DataTransferInfo& info) const
+    {
         std::lock_guard<std::mutex> lk {infoMutex_};
         info = info_;
     }
 
-    DRing::DataTransferInfo info() const {
-        return info_;
-    }
+    DRing::DataTransferInfo info() const { return info_; }
 
     virtual void emit(DRing::DataTransferEventCode code) const;
 
@@ -145,8 +144,10 @@ class OptimisticMetaOutgoingInfo
 public:
     OptimisticMetaOutgoingInfo(const DataTransfer* parent, const DRing::DataTransferInfo& info);
     /**
-     * Update the DataTransferInfo of the parent if necessary (if the event is more *interesting* for the user)
-     * @param info the last modified linked info (for example if a subtransfer is accepted, it will gives as a parameter its info)
+     * Update the DataTransferInfo of the parent if necessary (if the event is more *interesting*
+     * for the user)
+     * @param info the last modified linked info (for example if a subtransfer is accepted, it will
+     * gives as a parameter its info)
      */
     void updateInfo(const DRing::DataTransferInfo& info) const;
     /**
@@ -166,15 +167,17 @@ private:
     mutable std::vector<DataTransfer*> linkedTransfers_;
 };
 
-OptimisticMetaOutgoingInfo::OptimisticMetaOutgoingInfo(const DataTransfer* parent, const DRing::DataTransferInfo& info)
-: parent_(parent), info_(info)
+OptimisticMetaOutgoingInfo::OptimisticMetaOutgoingInfo(const DataTransfer* parent,
+                                                       const DRing::DataTransferInfo& info)
+    : parent_(parent)
+    , info_(info)
 {}
 
 void
 OptimisticMetaOutgoingInfo::updateInfo(const DRing::DataTransferInfo& info) const
 {
     bool emitCodeChanged = false;
-    bool checkOngoing = false;
+    bool checkOngoing    = false;
     {
         std::lock_guard<std::mutex> lk {infoMutex_};
         if (info_.lastEvent > DRing::DataTransferEventCode::timeout_expired) {
@@ -194,18 +197,18 @@ OptimisticMetaOutgoingInfo::updateInfo(const DRing::DataTransferInfo& info) cons
             // if not finished show error if all failed
             // if the transfer was ongoing and canceled, we should go to the best status
             bool isAllFailed = true;
-            checkOngoing = info_.lastEvent == DRing::DataTransferEventCode::ongoing;
-            DRing::DataTransferEventCode bestEvent { DRing::DataTransferEventCode::invalid };
+            checkOngoing     = info_.lastEvent == DRing::DataTransferEventCode::ongoing;
+            DRing::DataTransferEventCode bestEvent {DRing::DataTransferEventCode::invalid};
             for (const auto* transfer : linkedTransfers_) {
                 const auto& i = transfer->info();
                 if (i.lastEvent >= DRing::DataTransferEventCode::created
                     && i.lastEvent <= DRing::DataTransferEventCode::finished) {
-                        isAllFailed = false;
-                        if (checkOngoing)
-                            bestEvent = bestEvent > i.lastEvent ? bestEvent : i.lastEvent;
-                        else
-                            break;
-                    }
+                    isAllFailed = false;
+                    if (checkOngoing)
+                        bestEvent = bestEvent > i.lastEvent ? bestEvent : i.lastEvent;
+                    else
+                        break;
+                }
             }
             if (isAllFailed) {
                 info_.lastEvent = info.lastEvent;
@@ -268,16 +271,19 @@ public:
     bool write(const std::vector<uint8_t>& buffer) override;
     void emit(DRing::DataTransferEventCode code) const override;
 
-    void cancel() override {
+    void cancel() override
+    {
         if (auto account = Manager::instance().getAccount<JamiAccount>(info_.accountId))
             account->closePeerConnection(peerUri_, id);
     }
 
-    void setOnRecv(std::function<void(std::vector<uint8_t>&&)>&& cb) override {
+    void setOnRecv(std::function<void(std::vector<uint8_t>&&)>&& cb) override
+    {
         bool send = false;
         {
             std::lock_guard<std::mutex> lock(onRecvCbMtx_);
-            if (cb) send = true;
+            if (cb)
+                send = true;
             onRecvCb_ = std::move(cb);
         }
         if (send) {
@@ -289,7 +295,8 @@ public:
 private:
     SubOutgoingFileTransfer() = delete;
 
-    void sendHeader(std::vector<uint8_t>& buf) const {
+    void sendHeader(std::vector<uint8_t>& buf) const
+    {
         std::stringstream ss;
         ss << "Content-Length: " << info_.totalSize << '\n'
            << "Display-Name: " << info_.displayName << '\n'
@@ -305,7 +312,8 @@ private:
             onRecvCb_(std::move(buf));
     }
 
-    void sendFile() const {
+    void sendFile() const
+    {
         dht::ThreadPool::computation().run([this]() {
             while (!input_.eof() && onRecvCb_) {
                 std::vector<uint8_t> buf;
@@ -322,7 +330,8 @@ private:
                     onRecvCb_(std::move(buf));
             }
             JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
-            if (internalCompletionCb_) internalCompletionCb_(info_.path);
+            if (internalCompletionCb_)
+                internalCompletionCb_(info_.path);
             emit(DRing::DataTransferEventCode::finished);
         });
     }
@@ -340,12 +349,13 @@ private:
 };
 
 SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
-                                           const std::string& peerUri,
-                                           const InternalCompletionCb& cb,
-                                           std::shared_ptr<OptimisticMetaOutgoingInfo> metaInfo)
-    : DataTransfer(tid, cb), metaInfo_(std::move(metaInfo)), peerUri_(peerUri)
+                                                 const std::string& peerUri,
+                                                 const InternalCompletionCb& cb,
+                                                 std::shared_ptr<OptimisticMetaOutgoingInfo> metaInfo)
+    : DataTransfer(tid, cb)
+    , metaInfo_(std::move(metaInfo))
+    , peerUri_(peerUri)
 {
-
     info_ = metaInfo_->info();
     fileutils::openStream(input_, info_.path, std::ios::binary);
     if (!input_)
@@ -353,7 +363,8 @@ SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
     metaInfo_->addLinkedTransfer(this);
 }
 
-SubOutgoingFileTransfer::~SubOutgoingFileTransfer() {
+SubOutgoingFileTransfer::~SubOutgoingFileTransfer()
+{
     if (timeoutThread_ && timeoutThread_->joinable()) {
         stopTimeout_ = true;
         timeoutThread_->join();
@@ -443,13 +454,13 @@ SubOutgoingFileTransfer::emit(DRing::DataTransferEventCode code) const
     metaInfo_->updateInfo(info_);
     if (code == DRing::DataTransferEventCode::wait_peer_acceptance) {
         timeoutThread_ = std::unique_ptr<std::thread>(new std::thread([this]() {
-            const auto TEN_MIN = 1000 * 60 * 10;
+            const auto TEN_MIN        = 1000 * 60 * 10;
             const auto SLEEP_DURATION = 100;
             for (auto i = 0; i < TEN_MIN / SLEEP_DURATION; ++i) {
                 // 10 min before timeout
                 std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_DURATION));
                 if (stopTimeout_.load())
-                    return;  // not waiting anymore
+                    return; // not waiting anymore
             }
             JAMI_WARN() << "FTP#" << this->getId() << ": timeout. Cancel";
             this->closeAndEmit(DRing::DataTransferEventCode::timeout_expired);
@@ -465,17 +476,24 @@ SubOutgoingFileTransfer::emit(DRing::DataTransferEventCode code) const
 class OutgoingFileTransfer final : public DataTransfer
 {
 public:
-    OutgoingFileTransfer(DRing::DataTransferId tid, const DRing::DataTransferInfo& info, const InternalCompletionCb& cb);
+    OutgoingFileTransfer(DRing::DataTransferId tid,
+                         const DRing::DataTransferInfo& info,
+                         const InternalCompletionCb& cb);
     ~OutgoingFileTransfer() {}
 
-    std::shared_ptr<DataTransfer> startNewOutgoing(const std::string& peer_uri) {
-        auto newTransfer = std::make_shared<SubOutgoingFileTransfer>(id, peer_uri, internalCompletionCb_, metaInfo_);
+    std::shared_ptr<DataTransfer> startNewOutgoing(const std::string& peer_uri)
+    {
+        auto newTransfer = std::make_shared<SubOutgoingFileTransfer>(id,
+                                                                     peer_uri,
+                                                                     internalCompletionCb_,
+                                                                     metaInfo_);
         subtransfer_.emplace_back(newTransfer);
         newTransfer->start();
         return newTransfer;
     }
 
-    bool cancel(bool channeled) {
+    bool cancel(bool channeled)
+    {
         if (channeled)
             cancelChanneled_ = true;
         else
@@ -486,7 +504,7 @@ public:
     bool hasBeenStarted() const override
     {
         // Started if one subtransfer is started
-        for (const auto& subtransfer: subtransfer_)
+        for (const auto& subtransfer : subtransfer_)
             if (subtransfer->hasBeenStarted())
                 return true;
         return false;
@@ -494,8 +512,9 @@ public:
 
     void close() noexcept override;
 
-    void cancel() {
-        for (const auto& subtransfer: subtransfer_)
+    void cancel()
+    {
+        for (const auto& subtransfer : subtransfer_)
             subtransfer->cancel();
     }
 
@@ -510,15 +529,17 @@ private:
     mutable std::vector<std::shared_ptr<SubOutgoingFileTransfer>> subtransfer_;
 };
 
-OutgoingFileTransfer::OutgoingFileTransfer(DRing::DataTransferId tid, const DRing::DataTransferInfo& info, const InternalCompletionCb& cb)
-: DataTransfer(tid, cb)
+OutgoingFileTransfer::OutgoingFileTransfer(DRing::DataTransferId tid,
+                                           const DRing::DataTransferInfo& info,
+                                           const InternalCompletionCb& cb)
+    : DataTransfer(tid, cb)
 {
     fileutils::openStream(input_, info.path, std::ios::binary);
     if (!input_)
         throw std::runtime_error("input file open failed");
 
     info_ = info;
-    info_.flags &= ~((uint32_t)1 << int(DRing::DataTransferFlags::direction)); // outgoing
+    info_.flags &= ~((uint32_t) 1 << int(DRing::DataTransferFlags::direction)); // outgoing
 
     // File size?
     input_.seekg(0, std::ios_base::end);
@@ -556,9 +577,11 @@ public:
 
     bool write(const uint8_t* buffer, std::size_t length) override;
 
-    void cancel() override {
+    void cancel() override
+    {
         auto account = Manager::instance().getAccount<JamiAccount>(info_.accountId);
-        if (account) account->closePeerConnection(info_.peer, internalId_);
+        if (account)
+            account->closePeerConnection(info_.peer, internalId_);
     }
 
 private:
@@ -574,12 +597,14 @@ IncomingFileTransfer::IncomingFileTransfer(DRing::DataTransferId tid,
                                            const DRing::DataTransferInfo& info,
                                            DRing::DataTransferId internalId,
                                            const InternalCompletionCb& cb)
-    : DataTransfer(tid, cb), internalId_(internalId)
+    : DataTransfer(tid, cb)
+    , internalId_(internalId)
 {
-    JAMI_WARN() << "[FTP] incoming transfert of " << info.totalSize << " byte(s): " << info.displayName;
+    JAMI_WARN() << "[FTP] incoming transfert of " << info.totalSize
+                << " byte(s): " << info.displayName;
 
     info_ = info;
-    info_.flags |= (uint32_t)1 << int(DRing::DataTransferFlags::direction); // incoming
+    info_.flags |= (uint32_t) 1 << int(DRing::DataTransferFlags::direction); // incoming
 }
 
 std::string
@@ -636,18 +661,17 @@ IncomingFileTransfer::close() noexcept
 
     try {
         filenamePromise_.set_value();
-    } catch (...) {}
+    } catch (...) {
+    }
 
     fout_.close();
 
-    JAMI_DBG() << "[FTP] file closed, rx " << info_.bytesProgress
-               << " on " << info_.totalSize;
+    JAMI_DBG() << "[FTP] file closed, rx " << info_.bytesProgress << " on " << info_.totalSize;
     if (info_.bytesProgress >= info_.totalSize) {
         if (internalCompletionCb_)
             internalCompletionCb_(info_.path);
         emit(DRing::DataTransferEventCode::finished);
-    }
-    else
+    } else
         emit(DRing::DataTransferEventCode::closed_by_host);
 }
 
@@ -655,7 +679,7 @@ void
 IncomingFileTransfer::accept(const std::string& filename, std::size_t offset)
 {
     // TODO: offset?
-    (void)offset;
+    (void) offset;
 
     info_.path = filename;
     try {
@@ -689,7 +713,9 @@ public:
     std::shared_ptr<DataTransfer> createOutgoingFileTransfer(const DRing::DataTransferInfo& info,
                                                              DRing::DataTransferId& tid,
                                                              InternalCompletionCb cb = {});
-    std::shared_ptr<IncomingFileTransfer> createIncomingFileTransfer(const DRing::DataTransferInfo&, const DRing::DataTransferId&, InternalCompletionCb cb);
+    std::shared_ptr<IncomingFileTransfer> createIncomingFileTransfer(const DRing::DataTransferInfo&,
+                                                                     const DRing::DataTransferId&,
+                                                                     InternalCompletionCb cb);
     std::shared_ptr<DataTransfer> getTransfer(const DRing::DataTransferId&);
     void cancel(DataTransfer&);
     void onConnectionRequestReply(const DRing::DataTransferId&, PeerConnection*);
@@ -716,7 +742,7 @@ DataTransferFacade::Impl::createOutgoingFileTransfer(const DRing::DataTransferIn
                                                      DRing::DataTransferId& tid,
                                                      InternalCompletionCb cb)
 {
-    tid = generateUID();
+    tid           = generateUID();
     auto transfer = std::make_shared<OutgoingFileTransfer>(tid, info, cb);
     {
         std::lock_guard<std::mutex> lk {mapMutex_};
@@ -727,9 +753,11 @@ DataTransferFacade::Impl::createOutgoingFileTransfer(const DRing::DataTransferIn
 }
 
 std::shared_ptr<IncomingFileTransfer>
-DataTransferFacade::Impl::createIncomingFileTransfer(const DRing::DataTransferInfo& info, const DRing::DataTransferId& internal_id, InternalCompletionCb cb)
+DataTransferFacade::Impl::createIncomingFileTransfer(const DRing::DataTransferInfo& info,
+                                                     const DRing::DataTransferId& internal_id,
+                                                     InternalCompletionCb cb)
 {
-    auto tid = generateUID();
+    auto tid      = generateUID();
     auto transfer = std::make_shared<IncomingFileTransfer>(tid, info, internal_id, cb);
     {
         std::lock_guard<std::mutex> lk {mapMutex_};
@@ -747,11 +775,9 @@ DataTransferFacade::Impl::onConnectionRequestReply(const DRing::DataTransferId& 
         if (connection) {
             connection->attachInputStream(
                 std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)->startNewOutgoing(
-                    connection->getPeerUri()
-                )
-            );
+                    connection->getPeerUri()));
         } else if (std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)->cancel(false)
-            and not transfer->hasBeenStarted()) {
+                   and not transfer->hasBeenStarted()) {
             transfer->emit(DRing::DataTransferEventCode::unjoinable_peer);
             cancel(*transfer);
         }
@@ -760,7 +786,8 @@ DataTransferFacade::Impl::onConnectionRequestReply(const DRing::DataTransferId& 
 
 //==============================================================================
 
-DataTransferFacade::DataTransferFacade() : pimpl_ {std::make_unique<Impl>()}
+DataTransferFacade::DataTransferFacade()
+    : pimpl_ {std::make_unique<Impl>()}
 {
     // JAMI_DBG("[XFER] facade created, pimpl @%p", pimpl_.get());
 }
@@ -802,25 +829,27 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
 
     try {
         // IMPLEMENTATION NOTE: requestPeerConnection() may call the given callback a multiple time.
-        // This happen when multiple agents handle communications of the given peer for the given account.
-        // Example: Ring account supports multi-devices, each can answer to the request.
-        // NOTE: this will create a PeerConnection for each files. This connection need to be shut when finished
+        // This happen when multiple agents handle communications of the given peer for the given
+        // account. Example: Ring account supports multi-devices, each can answer to the request. NOTE:
+        // this will create a PeerConnection for each files. This connection need to be shut when
+        // finished
         account->requestPeerConnection(
-            info.peer, tid, static_cast<bool>(cb),
-            [this, tid] (PeerConnection* connection) {
+            info.peer,
+            tid,
+            static_cast<bool>(cb),
+            [this, tid](PeerConnection* connection) {
                 pimpl_->onConnectionRequestReply(tid, connection);
             },
             [this, tid](const std::shared_ptr<ChanneledOutgoingTransfer>& out) {
                 if (auto transfer = pimpl_->getTransfer(tid))
                     if (out)
-                        out->linkTransfer(
-                            std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)->startNewOutgoing(out->peer())
-                        );
+                        out->linkTransfer(std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)
+                                              ->startNewOutgoing(out->peer()));
             },
             [this, tid]() {
                 if (auto transfer = pimpl_->getTransfer(tid))
                     if (std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)->cancel(true)
-                    and not transfer->hasBeenStarted()) {
+                        and not transfer->hasBeenStarted()) {
                         transfer->emit(DRing::DataTransferEventCode::unjoinable_peer);
                         pimpl_->cancel(*transfer);
                     }
@@ -861,7 +890,7 @@ DataTransferFacade::cancel(const DRing::DataTransferId& id) noexcept
 }
 
 void
-DataTransferFacade::close(const DRing::DataTransferId &id) noexcept
+DataTransferFacade::close(const DRing::DataTransferId& id) noexcept
 {
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     const auto& iter = pimpl_->map_.find(static_cast<uint64_t>(id));
@@ -874,7 +903,8 @@ DataTransferFacade::close(const DRing::DataTransferId &id) noexcept
 
 DRing::DataTransferError
 DataTransferFacade::bytesProgress(const DRing::DataTransferId& id,
-                                  int64_t& total, int64_t& progress) const noexcept
+                                  int64_t& total,
+                                  int64_t& progress) const noexcept
 {
     try {
         if (auto transfer = pimpl_->getTransfer(id)) {
@@ -889,8 +919,8 @@ DataTransferFacade::bytesProgress(const DRing::DataTransferId& id,
 }
 
 DRing::DataTransferError
-DataTransferFacade::info(const DRing::DataTransferId& id,
-                         DRing::DataTransferInfo& info) const noexcept
+DataTransferFacade::info(const DRing::DataTransferId& id, DRing::DataTransferInfo& info) const
+    noexcept
 {
     try {
         if (auto transfer = pimpl_->getTransfer(id)) {
@@ -905,7 +935,7 @@ DataTransferFacade::info(const DRing::DataTransferId& id,
 }
 
 DRing::DataTransferId
-DataTransferFacade::createIncomingTransfer(const DRing::DataTransferInfo &info,
+DataTransferFacade::createIncomingTransfer(const DRing::DataTransferInfo& info,
                                            const DRing::DataTransferId& internal_id,
                                            const InternalCompletionCb& cb)
 {

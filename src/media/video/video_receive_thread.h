@@ -23,40 +23,42 @@
 #ifndef _VIDEO_RECEIVE_THREAD_H_
 #define _VIDEO_RECEIVE_THREAD_H_
 
-#include "video_base.h"
-#include "media_codec.h"
-#include "media_io_handle.h"
 #include "media_codec.h"
 #include "media_device.h"
+#include "media_io_handle.h"
 #include "media_stream.h"
-#include "threadloop.h"
 #include "noncopyable.h"
+#include "threadloop.h"
+#include "video_base.h"
 
+#include <climits>
 #include <functional>
 #include <map>
-#include <string>
-#include <climits>
-#include <sstream>
 #include <memory>
+#include <sstream>
+#include <string>
 
 namespace jami {
 class SocketPair;
 class MediaDecoder;
 } // namespace jami
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 class SinkClient;
 
-class VideoReceiveThread : public VideoGenerator {
+class VideoReceiveThread : public VideoGenerator
+{
 public:
-    VideoReceiveThread(const std::string &id, const std::string &sdp, uint16_t mtu);
+    VideoReceiveThread(const std::string& id, const std::string& sdp, uint16_t mtu);
     ~VideoReceiveThread();
     void startLoop(const std::function<void(MediaType)>& cb);
 
     void addIOContext(SocketPair& socketPair);
-    void setRequestKeyFrameCallback(std::function<void (void)> cb) {
-      keyFrameRequestCallback_ = std::move(cb);
+    void setRequestKeyFrameCallback(std::function<void(void)> cb)
+    {
+        keyFrameRequestCallback_ = std::move(cb);
     };
     void enterConference();
     void exitConference();
@@ -68,10 +70,10 @@ public:
     MediaStream getInfo() const;
 
     /**
-      * Set angle of rotation to apply to the video by the decoder
-      *
-      * @param angle Angle of rotation in degrees (counterclockwise)
-      */
+     * Set angle of rotation to apply to the video by the decoder
+     *
+     * @param angle Angle of rotation in degrees (counterclockwise)
+     */
     void setRotation(int angle);
 
 private:
@@ -98,8 +100,8 @@ private:
 
     void openDecoder();
     void decodeFrame();
-    static int interruptCb(void *ctx);
-    static int readFunction(void *opaque, uint8_t *buf, int buf_size);
+    static int interruptCb(void* ctx);
+    static int readFunction(void* opaque, uint8_t* buf, int buf_size);
     bool configureVideoOutput();
 
     std::function<void(MediaType)> onSetupSuccess_;
@@ -114,6 +116,7 @@ private:
     std::function<void(void)> keyFrameRequestCallback_;
 };
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami
 
 #endif // _VIDEO_RECEIVE_THREAD_H_

@@ -28,25 +28,27 @@
 
 #include "sip_utils.h"
 
-#include "noncopyable.h"
 #include "logger.h"
+#include "noncopyable.h"
 
-#include <pjsip.h>
 #include <pjnath/stun_config.h>
+#include <pjsip.h>
 
-#include <functional>
-#include <mutex>
 #include <condition_variable>
+#include <functional>
+#include <list>
 #include <map>
+#include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
-#include <list>
-#include <memory>
 
 // OpenDHT
-namespace dht { namespace crypto {
+namespace dht {
+namespace crypto {
 struct Certificate;
-}} // namespace dht::crypto
+}
+} // namespace dht
 
 namespace jami {
 
@@ -56,88 +58,86 @@ using onShutdownCb = std::function<void(void)>;
 struct TlsListener
 {
     TlsListener() {}
-    TlsListener(pjsip_tpfactory* f) : listener(f) {}
-    virtual ~TlsListener() {
+    TlsListener(pjsip_tpfactory* f)
+        : listener(f)
+    {}
+    virtual ~TlsListener()
+    {
         JAMI_DBG("Destroying listener");
         listener->destroy(listener);
     }
-    pjsip_tpfactory* get() {
-        return listener;
-    }
+    pjsip_tpfactory* get() { return listener; }
+
 private:
     NON_COPYABLE(TlsListener);
     pjsip_tpfactory* listener {nullptr};
 };
 
-struct TlsInfos {
+struct TlsInfos
+{
     pj_ssl_cipher cipher {PJ_TLS_UNKNOWN_CIPHER};
     pj_ssl_sock_proto proto {PJ_SSL_SOCK_PROTO_DEFAULT};
     pj_ssl_cert_verify_flag_t verifyStatus {};
     std::shared_ptr<dht::crypto::Certificate> peerCert {};
 };
 
-using SipTransportStateCallback = std::function<void(pjsip_transport_state, const pjsip_transport_state_info*)>;
+using SipTransportStateCallback
+    = std::function<void(pjsip_transport_state, const pjsip_transport_state_info*)>;
 
 /**
  * SIP transport wraps pjsip_transport.
  */
 class SipTransport
 {
-    public:
-        SipTransport(pjsip_transport*);
-        SipTransport(pjsip_transport*, const std::shared_ptr<TlsListener>&);
+public:
+    SipTransport(pjsip_transport*);
+    SipTransport(pjsip_transport*, const std::shared_ptr<TlsListener>&);
 
-        ~SipTransport();
+    ~SipTransport();
 
-        static const char* stateToStr(pjsip_transport_state state);
+    static const char* stateToStr(pjsip_transport_state state);
 
-        void stateCallback(pjsip_transport_state state, const pjsip_transport_state_info *info);
+    void stateCallback(pjsip_transport_state state, const pjsip_transport_state_info* info);
 
-        pjsip_transport* get() {
-            return transport_.get();
-        }
+    pjsip_transport* get() { return transport_.get(); }
 
-        void addStateListener(uintptr_t lid, SipTransportStateCallback cb);
-        bool removeStateListener(uintptr_t lid);
+    void addStateListener(uintptr_t lid, SipTransportStateCallback cb);
+    bool removeStateListener(uintptr_t lid);
 
-        bool isSecure() const {
-            return PJSIP_TRANSPORT_IS_SECURE(transport_);
-        }
+    bool isSecure() const { return PJSIP_TRANSPORT_IS_SECURE(transport_); }
 
-        const TlsInfos& getTlsInfos() const {
-            return tlsInfos_;
-        }
+    const TlsInfos& getTlsInfos() const { return tlsInfos_; }
 
-        static bool isAlive(pjsip_transport_state state);
+    static bool isAlive(pjsip_transport_state state);
 
-        /** Only makes sense for connection-oriented transports */
-        bool isConnected() const noexcept { return connected_; }
+    /** Only makes sense for connection-oriented transports */
+    bool isConnected() const noexcept { return connected_; }
 
-        void setIsIceTransport() { isIceTransport_ = true; }
-        void setIsChanneledTransport() { isChanneledTransport_ = true; }
+    void setIsIceTransport() { isIceTransport_ = true; }
+    void setIsChanneledTransport() { isChanneledTransport_ = true; }
 
-        uint16_t getTlsMtu();
+    uint16_t getTlsMtu();
 
-    private:
-        NON_COPYABLE(SipTransport);
+private:
+    NON_COPYABLE(SipTransport);
 
-        static void deleteTransport(pjsip_transport* t);
+    static void deleteTransport(pjsip_transport* t);
 
-        std::unique_ptr<pjsip_transport, decltype(deleteTransport)&> transport_;
-        std::shared_ptr<TlsListener> tlsListener_;
-        std::map<uintptr_t, SipTransportStateCallback> stateListeners_;
-        std::mutex stateListenersMutex_;
+    std::unique_ptr<pjsip_transport, decltype(deleteTransport)&> transport_;
+    std::shared_ptr<TlsListener> tlsListener_;
+    std::map<uintptr_t, SipTransportStateCallback> stateListeners_;
+    std::mutex stateListenersMutex_;
 
-        bool connected_ {false};
-        bool isIceTransport_ {false};
-        bool isChanneledTransport_ {false};
-        TlsInfos tlsInfos_;
+    bool connected_ {false};
+    bool isIceTransport_ {false};
+    bool isChanneledTransport_ {false};
+    TlsInfos tlsInfos_;
 };
 
 class IpAddr;
 class IceTransport;
 namespace tls {
-   struct TlsParams;
+struct TlsParams;
 };
 
 /**
@@ -146,41 +146,44 @@ namespace tls {
 class SipTransportBroker
 {
 public:
-    SipTransportBroker(pjsip_endpoint *endpt);
+    SipTransportBroker(pjsip_endpoint* endpt);
     ~SipTransportBroker();
 
     std::shared_ptr<SipTransport> getUdpTransport(const IpAddr&);
 
-    std::shared_ptr<TlsListener>
-    getTlsListener(const IpAddr&, const pjsip_tls_setting*);
+    std::shared_ptr<TlsListener> getTlsListener(const IpAddr&, const pjsip_tls_setting*);
 
-    std::shared_ptr<SipTransport>
-    getTlsTransport(const std::shared_ptr<TlsListener>&, const IpAddr& remote, const std::string& remote_name = {});
+    std::shared_ptr<SipTransport> getTlsTransport(const std::shared_ptr<TlsListener>&,
+                                                  const IpAddr& remote,
+                                                  const std::string& remote_name = {});
 
-    std::shared_ptr<SipTransport>
-    getTlsIceTransport(const std::shared_ptr<IceTransport>&, unsigned comp_id,
-                       const tls::TlsParams&);
+    std::shared_ptr<SipTransport> getTlsIceTransport(const std::shared_ptr<IceTransport>&,
+                                                     unsigned comp_id,
+                                                     const tls::TlsParams&);
 
     std::shared_ptr<SipTransport> addTransport(pjsip_transport*);
 
-    std::shared_ptr<SipTransport> getChanneledTransport(const std::shared_ptr<ChannelSocket>& socket, onShutdownCb&& cb);
+    std::shared_ptr<SipTransport> getChanneledTransport(const std::shared_ptr<ChannelSocket>& socket,
+                                                        onShutdownCb&& cb);
 
     /**
      * Start graceful shutdown procedure for all transports
      */
     void shutdown();
 
-    void transportStateChanged(pjsip_transport*, pjsip_transport_state, const pjsip_transport_state_info*);
+    void transportStateChanged(pjsip_transport*,
+                               pjsip_transport_state,
+                               const pjsip_transport_state_info*);
 
 private:
     NON_COPYABLE(SipTransportBroker);
 
     /**
-    * Create SIP UDP transport from account's setting
-    * @param account The account for which a transport must be created.
-    * @param IP protocol version to use, can be pj_AF_INET() or pj_AF_INET6()
-    * @return a pointer to the new transport
-    */
+     * Create SIP UDP transport from account's setting
+     * @param account The account for which a transport must be created.
+     * @param IP protocol version to use, can be pj_AF_INET() or pj_AF_INET6()
+     * @return a pointer to the new transport
+     */
     std::shared_ptr<SipTransport> createUdpTransport(const IpAddr&);
 
     /**
@@ -195,7 +198,7 @@ private:
      */
     std::map<IpAddr, pjsip_transport*> udpTransports_;
 
-    pjsip_endpoint *endpt_;
+    pjsip_endpoint* endpt_;
 };
 
 } // namespace jami

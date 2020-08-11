@@ -82,7 +82,8 @@ ThreadLoop::start()
     }
 
     state_ = RUNNING;
-    thread_ = std::thread(&ThreadLoop::mainloop, this, std::ref(threadId_), setup_, process_, cleanup_);
+    thread_
+        = std::thread(&ThreadLoop::mainloop, this, std::ref(threadId_), setup_, process_, cleanup_);
     threadId_ = thread_.get_id();
 }
 
