@@ -108,12 +108,14 @@ private:
     void setAuthHeaderFields(dht::http::Request& request) const;
 
     void sendDeviceRequest(const std::shared_ptr<dht::http::Request>& req);
-    void sendAccountRequest(const std::shared_ptr<dht::http::Request>& req);
+    void sendAccountRequest(const std::shared_ptr<dht::http::Request>& req,
+                            const std::string& password);
 
     void authenticateDevice();
-    void authenticateAccount();
+    void authenticateAccount(const std::string& username, const std::string& password);
     void authFailed(TokenScope scope, int code);
     void authError(TokenScope scope);
+    void onAuthEnded(const Json::Value& json, const dht::http::Response& response, TokenScope scope);
 
     void setToken(std::string token,
                   TokenScope scope,
