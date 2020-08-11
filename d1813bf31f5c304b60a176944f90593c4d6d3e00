@@ -1,0 +1,123 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c02191e4_edde592e",
+        "filename": "src/jamidht/eth/libdevcore/Common.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-11T18:37:29Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027_f\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "d1813bf31f5c304b60a176944f90593c4d6d3e00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "a8cc9462_63336d88",
+        "filename": "src/jamidht/eth/libdevcore/CommonData.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-11T18:37:29Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027_prefix\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "d1813bf31f5c304b60a176944f90593c4d6d3e00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5036a59f_a8cdb429",
+        "filename": "src/jamidht/eth/libdevcore/SHA3.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-11T18:37:29Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nmacro argument should be enclosed in parentheses\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-macro-parentheses",
+      "revId": "d1813bf31f5c304b60a176944f90593c4d6d3e00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d9759b8f_d45d1c6e",
+        "filename": "src/manager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2867,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-11T18:37:29Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nstring concatenation results in allocation of unnecessary temporary strings; consider using \u0027operator+\u003d\u0027 or \u0027string::append()\u0027 instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-inefficient-string-concatenation",
+      "revId": "d1813bf31f5c304b60a176944f90593c4d6d3e00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "e3b813a8_a489630e",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-11T18:37:29Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027func\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "d1813bf31f5c304b60a176944f90593c4d6d3e00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b774cfad_943e0f6a",
+        "filename": "src/rational.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-11T18:37:29Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nDivision by zero\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-core.DivideZero",
+      "revId": "d1813bf31f5c304b60a176944f90593c4d6d3e00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c2f9233f_715ba361",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-11T18:37:29Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "d1813bf31f5c304b60a176944f90593c4d6d3e00",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
