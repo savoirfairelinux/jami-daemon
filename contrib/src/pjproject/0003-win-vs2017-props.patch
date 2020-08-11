@@ -5,11 +5,11 @@ Subject: [PATCH 3/3] win vs2017 props
 
 ---
  build/vs/pjproject-vs14-common-config.props   | 8 ++++----
- build/vs/pjproject-vs14-common-defaults.props | 4 ++--
- 2 files changed, 6 insertions(+), 6 deletions(-)
+ build/vs/pjproject-vs14-common-defaults.props | 2 +-
+ 2 files changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/build/vs/pjproject-vs14-common-config.props b/build/vs/pjproject-vs14-common-config.props
-index de8848ff5..6aa0276ba 100644
+index de8848f..6aa0276 100644
 --- a/build/vs/pjproject-vs14-common-config.props
 +++ b/build/vs/pjproject-vs14-common-config.props
 @@ -18,22 +18,22 @@
@@ -40,7 +40,7 @@ index de8848ff5..6aa0276ba 100644
          <AppTypeRev>10.0</AppTypeRev>
          
 diff --git a/build/vs/pjproject-vs14-common-defaults.props b/build/vs/pjproject-vs14-common-defaults.props
-index 526f6c925..198282b90 100644
+index 526f6c9..974447f 100644
 --- a/build/vs/pjproject-vs14-common-defaults.props
 +++ b/build/vs/pjproject-vs14-common-defaults.props
 @@ -3,7 +3,7 @@
@@ -52,13 +52,5 @@ index 526f6c925..198282b90 100644
    </PropertyGroup>
    <PropertyGroup>
      <_ProjectFileVersion>14.0.22823.1</_ProjectFileVersion>
-@@ -35,4 +35,4 @@
-       <Value>$(VSVer)</Value>
-     </BuildMacro>
-   </ItemGroup>
--</Project>
-\ No newline at end of file
-+</Project>
 -- 
-2.24.1
-
+2.25.4
