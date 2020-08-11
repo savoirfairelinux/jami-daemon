@@ -449,7 +449,7 @@
                </tp:docstring>
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.In3" value="VectorMapStringString"/>
-           <arg type="aa{ss}" name="result" direction="in" tp:type="String_String_Map">
+           <arg type="aa{ss}" name="result">
                <tp:docstring>
                    List of user results
                </tp:docstring>
