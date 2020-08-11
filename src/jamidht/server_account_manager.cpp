@@ -29,6 +29,8 @@
 #include <algorithm>
 #include <string_view>
 
+using namespace std::literals;
+
 namespace jami {
 
 using Request = dht::http::Request;
@@ -183,6 +185,24 @@ ServerAccountManager::initAuthentication(
 }
 
 void
+ServerAccountManager::onAuthEnded(const Json::Value& json, const dht::http::Response& response, TokenScope expectedScope)
+{
+    if (response.status_code >= 200 && response.status_code < 300) {
+        auto scopeStr = json["scope"].asString();
+        auto scope = scopeStr == "DEVICE"sv ? TokenScope::Device
+                    : (scopeStr == "USER"sv   ? TokenScope::User
+                                            : TokenScope::None);
+        auto expires_in = json["expires_in"].asLargestUInt();
+        auto expiration = std::chrono::steady_clock::now() + std::chrono::seconds(expires_in);
+        JAMI_WARN("[Auth] Got server response: %d %s", response.status_code, response.body.c_str());
+        setToken(json["access_token"].asString(), scope, expiration);
+    } else {
+        authFailed(expectedScope, response.status_code);
+    }
+    clearRequest(response.request);
+}
+
+void
 ServerAccountManager::authenticateDevice() {
     if (not info_) {
         authFailed(TokenScope::Device, 0);
@@ -191,24 +211,25 @@ ServerAccountManager::authenticateDevice() {
     JAMI_WARN("[Auth] getting a device token: %s", url.c_str());
     auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, Json::Value{Json::objectValue}, [onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
         onAsync([=] (AccountManager& accountManager) {
-            auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
-            if (response.status_code >= 200 && response.status_code < 300) {
-                auto scopeStr = json["scope"].asString();
-                auto scope = scopeStr == "DEVICE" ? TokenScope::Device
-                          : (scopeStr == "USER"   ? TokenScope::User
-                                                  : TokenScope::None);
-                auto expires_in = json["expires_in"].asLargestUInt();
-                auto expiration = std::chrono::steady_clock::now() + std::chrono::seconds(expires_in);
-                JAMI_WARN("[Auth] Got server response: %d %s", response.status_code, response.body.c_str());
-                this_.setToken(json["access_token"].asString(), scope, expiration);
-            } else {
-                this_.authFailed(TokenScope::Device, response.status_code);
-            }
-            this_.clearRequest(response.request);
+            static_cast<ServerAccountManager*>(&accountManager)->onAuthEnded(json, response, TokenScope::Device);
         });
     }, logger_);
     request->set_identity(info_->identity);
     // request->set_certificate_authority(info_->identity.second->issuer->issuer);
+    sendRequest(request);
+}
+
+void
+ServerAccountManager::authenticateAccount(const std::string& username, const std::string& password)
+{
+    const std::string url = managerHostname_ + JAMI_PATH_LOGIN;
+    JAMI_WARN("[Auth] getting a device token: %s", url.c_str());
+    auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, Json::Value{Json::objectValue}, [onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
+        onAsync([=] (AccountManager& accountManager) {
+            static_cast<ServerAccountManager*>(&accountManager)->onAuthEnded(json, response, TokenScope::User);
+        });
+    }, logger_);
+    request->set_auth(username, password);
     sendRequest(request);
 }
 
@@ -268,7 +289,7 @@ ServerAccountManager::setToken(std::string token, TokenScope scope, std::chrono:
     tokenExpire_ = expiration;
 
     nameDir_.get().setToken(token_);
-    if (not token_.empty()) {
+    if (not token_.empty() and scope != TokenScope::None) {
         auto& reqQueue = getRequestQueue(scope);
         JAMI_DBG("[Auth] Got token with scope %d, handling %zu pending requests", (int)scope, reqQueue.size());
         while (not reqQueue.empty()) {
@@ -294,14 +315,17 @@ void ServerAccountManager::sendDeviceRequest(const std::shared_ptr<dht::http::Re
     }
 }
 
-void ServerAccountManager::sendAccountRequest(const std::shared_ptr<dht::http::Request>& req)
+void ServerAccountManager::sendAccountRequest(const std::shared_ptr<dht::http::Request>& req, const std::string& pwd)
 {
     std::lock_guard<std::mutex> lock(tokenLock_);
     if (hasAuthorization(TokenScope::User)) {
         setAuthHeaderFields(*req);
         sendRequest(req);
     } else {
-        pendingAccountRequests_.emplace(req);
+        auto& rQueue = getRequestQueue(TokenScope::User);
+        if (rQueue.empty())
+            authenticateAccount(info_->username, pwd);
+        rQueue.emplace(req);
     }
 }
 
@@ -385,8 +409,8 @@ ServerAccountManager::revokeDevice(const std::string& password, const std::strin
         return false;
     }
     const std::string url = managerHostname_ + PATH_DEVICE + "?deviceId=" + device;
-    JAMI_WARN("[Revoke] Removing device of %s at %s", info_->username.c_str(), url.c_str());
-    auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, [cb, onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
+    JAMI_WARN("[Revoke] Revoking device of %s at %s", info_->username.c_str(), url.c_str());
+    sendAccountRequest(std::make_shared<Request>(*Manager::instance().ioContext(), url, [cb, onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
         onAsync([=] (AccountManager& accountManager) {
             JAMI_DBG("[Revoke] Got request callback with status code=%u", response.status_code);
             auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
@@ -407,11 +431,7 @@ ServerAccountManager::revokeDevice(const std::string& password, const std::strin
                 cb(RevokeDeviceResult::ERROR_NETWORK);
             this_.clearRequest(response.request);
         });
-    }, logger_);
-    request->set_method(restinio::http_method_delete());
-    request->set_auth(info_->username, password);
-    JAMI_DBG("[Revoke] Sending revoke device '%s' to JAMS", device.c_str());
-    sendRequest(request);
+    }, logger_), password);
     return false;
 }
 
