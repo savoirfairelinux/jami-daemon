@@ -1295,7 +1295,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                         Migration::setState(getAccountID(), Migration::State::SUCCESS);
                     }
 
-                    if (not info.photo.empty())
+                if (not info.photo.empty() or not displayName_.empty())
                         emitSignal<DRing::ConfigurationSignal::AccountProfileReceived>(getAccountID(),
                                                                                        displayName_,
                                                                                        info.photo);
