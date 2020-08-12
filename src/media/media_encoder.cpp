@@ -46,9 +46,12 @@ extern "C" {
 #include <json/json.h>
 #include <sstream>
 #include <thread> // hardware_concurrency
+#include <string_view>
 
 // Define following line if you need to debug libav SDP
 //#define DEBUG_SDP 1
+
+using namespace std::literals;
 
 namespace jami {
 
@@ -979,17 +982,17 @@ MediaEncoder::initH263(AVCodecContext* encoderCtx, uint64_t br)
 void
 MediaEncoder::initAccel(AVCodecContext* encoderCtx, uint64_t br)
 {
-    if (!accel_)
+    if (not accel_)
         return;
-    if (accel_->getName() == "nvenc") {
+    if (accel_->getName() == "nvenc"sv) {
         // Use same parameters as software
-    } else if (accel_->getName() == "vaapi") {
+    } else if (accel_->getName() == "vaapi"sv) {
         // Use VBR encoding with bitrate target set to 80% of the maxrate
         av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "b", br * 1000 * 0.8f, AV_OPT_SEARCH_CHILDREN);
-    } else if (accel_->getName() == "videotoolbox") {
+    } else if (accel_->getName() == "videotoolbox"sv) {
         // Use same parameters as software
-    } else if (accel_->getName() == "qsv") {
+    } else if (accel_->getName() == "qsv"sv) {
         // Use Video Conferencing Mode
         av_opt_set_int(encoderCtx, "vcm", 1, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "b", br * 1000 * 0.8f, AV_OPT_SEARCH_CHILDREN);

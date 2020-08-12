@@ -83,7 +83,7 @@ public:
     /**
      * @brief Name of the hardware layer/API being used.
      */
-    std::string getName() const { return name_; };
+    const std::string& getName() const { return name_; };
 
     /**
      * @brief Hardware format.
