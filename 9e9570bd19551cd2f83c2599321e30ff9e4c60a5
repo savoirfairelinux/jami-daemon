@@ -22,6 +22,30 @@
       "revId": "9e9570bd19551cd2f83c2599321e30ff9e4c60a5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "540c63a6_26459cc5",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1405,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-08-12T15:05:51Z",
+      "side": 1,
+      "message": "not so clear but the position parameter enforces that \"http\" should be at beginning of string:\n\nhttps://stackoverflow.com/questions/1878001/how-do-i-check-if-a-c-stdstring-starts-with-a-certain-string-and-convert-a",
+      "parentUuid": "5306aa55_8068450f",
+      "range": {
+        "startLine": 1405,
+        "startChar": 5,
+        "endLine": 1405,
+        "endChar": 44
+      },
+      "revId": "9e9570bd19551cd2f83c2599321e30ff9e4c60a5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
