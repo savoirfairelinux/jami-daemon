@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5306aa55_8068450f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1405,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-12T14:49:17Z",
+      "side": 1,
+      "message": "why rfind? Why not just check the first 4 characters?\n\nCause managerUri_ \u003d examplehttp.com will provide some bad result (ok it\u0027s not a common case, but still)",
+      "range": {
+        "startLine": 1405,
+        "startChar": 5,
+        "endLine": 1405,
+        "endChar": 44
+      },
+      "revId": "9e9570bd19551cd2f83c2599321e30ff9e4c60a5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
