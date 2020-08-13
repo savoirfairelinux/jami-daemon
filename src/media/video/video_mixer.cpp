@@ -321,6 +321,10 @@ VideoMixer::render_frame(VideoFrame& output,
             }
         } else {
             xoff = (index % zoom) * cell_width;
+            if (index >= (zoom * (zoom - 1)) && currentLayout_ == Layout::GRID) {
+                // Last line, center participants if not full
+                xoff += (width_ - (zoom * zoom - n) * cell_width) / 2;
+            }
             yoff = (index / zoom) * cell_height;
         }
 
