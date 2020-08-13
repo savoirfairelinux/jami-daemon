@@ -2379,8 +2379,12 @@ Manager::toggleRecordingCall(const std::string& id)
 bool
 Manager::isRecording(const std::string& id)
 {
-    auto call = getCallFromCallID(id);
-    return call and (static_cast<Recordable*>(call.get()))->isRecording();
+    if (auto call = getCallFromCallID(id)) {
+        return (static_cast<Recordable*>(call.get()))->isRecording();
+    } else if (auto conf = getConferenceFromID(id)) {
+        return conf->isRecording();
+    }
+    return false;
 }
 
 bool
