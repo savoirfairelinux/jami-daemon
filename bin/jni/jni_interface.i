@@ -148,7 +148,7 @@ namespace std {
 
 %typemap(javacode) vector< map<string,string> > %{
   public java.util.ArrayList<java.util.Map<String, String>> toNative() {
-    java.util.ArrayList<java.util.Map<String, String>> out = new java.util.ArrayList<>();
+    java.util.ArrayList<java.util.Map<String, String>> out = new java.util.ArrayList<>(size());
     for (int i = 0; i < size(); ++i) {
         out.add(get(i).toNative());
     }
