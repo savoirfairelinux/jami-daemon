@@ -42,7 +42,7 @@ patch_args = ['-flp1', '-i']
 
 # vs help
 win_sdk_default = '10.0.16299.0'
-win_toolset_default = 'v141'
+win_toolset_default = 'v142'
 
 vs_where_path = os.path.join(
     os.environ['ProgramFiles(x86)'], 'Microsoft Visual Studio', 'Installer', 'vswhere.exe'
