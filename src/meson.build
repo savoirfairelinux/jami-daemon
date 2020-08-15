@@ -174,10 +174,7 @@ if conf.get('HAVE_PORTAUDIO') == 1
 endif
 
 if conf.get('HAVE_COREAUDIO') == 1
-    if meson.get_compiler('cpp').compiles('''#import <TargetConditionals.h>
-                                             #if TARGET_OS_IPHONE == 0
-                                             #error This is not an IPHONE
-                                             #endif''')
+    if host_distribution == 'ios'
         libjami_sources += files(
             'media/audio/coreaudio/ios/corelayer.mm'
         )
@@ -238,7 +235,7 @@ if conf.get('ENABLE_VIDEO')
     endif
 
     if host_machine.system() == 'linux'
-        if meson.get_compiler('cpp').get_define('__ANDROID__') == '1'
+        if host_distribution == 'android'
             libjami_sources += files(
                 'media/video/androidvideo/video_device_impl.cpp',
                 'media/video/androidvideo/video_device_monitor_impl.cpp'
@@ -251,10 +248,7 @@ if conf.get('ENABLE_VIDEO')
             libjami_dependencies += deplibudev
         endif
     elif host_machine.system() == 'darwin'
-        if meson.get_compiler('cpp').compiles('''#import <TargetConditionals.h>
-                                                 #if TARGET_OS_IPHONE == 0
-                                                 #error This is not an IPHONE
-                                                 #endif''')
+        if host_distribution == 'ios'
             libjami_sources += files(
                 'media/video/iosvideo/video_device_impl.cpp',
                 'media/video/iosvideo/video_device_monitor_impl.cpp'

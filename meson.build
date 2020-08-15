@@ -8,6 +8,20 @@ project('jami-daemon', ['c', 'cpp'],
 modpkgconfig = import('pkgconfig')
 modcmake = import('cmake')
 
+host_distribution = ''
+if host_machine.system() == 'linux'
+    if meson.get_compiler('cpp').get_define('__ANDROID__') == '1'
+        host_distribution = 'android'
+    endif
+elif host_machine.system() == 'darwin'
+    if meson.get_compiler('cpp').compiles('''#import <TargetConditionals.h>
+                                             #if TARGET_OS_IPHONE == 0
+                                             #error This is not an IPHONE
+                                             #endif''')
+        host_distribution = 'ios'
+    endif
+endif
+
 #################################################
 # Required dependencies
 #################################################
@@ -109,7 +123,7 @@ conf.set10('HAVE_WEBRTC_AP', depwebrtcap.found())
 
 if get_option('video')
     conf.set('ENABLE_VIDEO', true)
-    if host_machine.system() == 'linux' and meson.get_compiler('cpp').get_define('__ANDROID__') != '1'
+    if host_machine.system() == 'linux' and host_distribution != 'android'
         deplibudev = dependency('libudev')
     endif
 
@@ -146,7 +160,7 @@ else
 endif
 
 conf.set10('HAVE_COREAUDIO', host_machine.system() == 'darwin')
-conf.set10('HAVE_SHM', host_machine.system() == 'linux' and meson.get_compiler('cpp').get_define('__ANDROID__') != '1')
+conf.set10('HAVE_SHM', host_machine.system() == 'linux' and host_distribution != 'android')
 
 configure_file(
     output: 'config.h',
@@ -187,7 +201,7 @@ endif
 #################################################
 subdir('ringtones')
 
-if host_machine.system() == 'linux' and meson.get_compiler('cpp').get_define('__ANDROID__') != '1'
+if host_machine.system() == 'linux' and host_distribution != 'android'
     provides_content = ''
     if get_option('interfaces').contains('dbus')
         provides_content += '  <dbus type="user">cx.ring.Ring</dbus>'
