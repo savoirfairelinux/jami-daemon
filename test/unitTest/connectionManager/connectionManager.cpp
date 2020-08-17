@@ -32,18 +32,20 @@
 
 using namespace DRing::Account;
 
-namespace jami { namespace test {
+namespace jami {
+namespace test {
 
-class ConnectionManagerTest : public CppUnit::TestFixture {
+class ConnectionManagerTest : public CppUnit::TestFixture
+{
 public:
-    ConnectionManagerTest() {
+    ConnectionManagerTest()
+    {
         // Init daemon
         DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
+        if (not Manager::instance().initialized)
+            CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
     }
-    ~ConnectionManagerTest() {
-        DRing::fini();
-    }
+    ~ConnectionManagerTest() { DRing::fini(); }
     static std::string name() { return "ConnectionManager"; }
     void setUp();
     void tearDown();
@@ -88,7 +90,7 @@ ConnectionManagerTest::setUp()
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE";
     details[ConfProperties::ALIAS] = "ALICE";
-    details[ConfProperties::UPNP_ENABLED] = "false";
+    details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
     details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = "";
@@ -98,42 +100,60 @@ ConnectionManagerTest::setUp()
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "BOB";
     details[ConfProperties::ALIAS] = "BOB";
-    details[ConfProperties::UPNP_ENABLED] = "false";
+    details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
     details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = "";
     bobId = Manager::instance().addAccount(details);
 
+    JAMI_INFO("Initialize account...");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-
-    bool ready = false;
-    auto idx = 0;
-    while(!ready && idx < 100) {
-        auto details = aliceAccount->getVolatileAccountDetails();
-        auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-        ready = (daemonStatus == "REGISTERED");
-        details = bobAccount->getVolatileAccountDetails();
-        daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-        ready &= (daemonStatus == "REGISTERED");
-        if (!ready) {
-            idx += 1;
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-    }
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    auto accountsReady = 0;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                bool ready = false;
+                auto details = aliceAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                ready = (daemonStatus == "REGISTERED");
+                details = bobAccount->getVolatileAccountDetails();
+                daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                ready &= (daemonStatus == "REGISTERED");
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+    cv.wait_for(lk, std::chrono::seconds(30));
+    DRing::unregisterSignalHandlers();
 }
 
 void
 ConnectionManagerTest::tearDown()
 {
+    JAMI_INFO("Remove created accounts...");
+
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
     auto currentAccSize = Manager::instance().getAccountList().size();
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
+            if (Manager::instance().getAccountList().size() <= currentAccSize - 2) {
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
     Manager::instance().removeAccount(aliceId, true);
     Manager::instance().removeAccount(bobId, true);
     // Because cppunit is not linked with dbus, just poll if removed
-    for (int i = 0; i < 40; ++i) {
-        if (Manager::instance().getAccountList().size() <= currentAccSize - 2) break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+    cv.wait_for(lk, std::chrono::seconds(30));
+
+    DRing::unregisterSignalHandlers();
 }
 
 void
@@ -143,29 +163,34 @@ ConnectionManagerTest::testConnectDevice()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) {return true;});
-    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk{ mtx };
-    std::condition_variable cv;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv, cvReceive;
     bool successfullyConnected = false;
     bool successfullyReceive = false;
 
     bobAccount->connectionManager().onChannelRequest(
-    [&successfullyReceive](const std::string&, const std::string& name) {
-        successfullyReceive = name == "git://*";
-        return true;
-    });
+        [&successfullyReceive, &cvReceive](const std::string&, const std::string& name) {
+            successfullyReceive = name == "git://*";
+            cvReceive.notify_one();
+            return true;
+        });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
-        [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            successfullyConnected = true;
-        }
-        cv.notify_one();
-    });
-    cv.wait_for(lk, std::chrono::seconds(10));
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
+    cvReceive.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(successfullyReceive);
+    cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(successfullyConnected);
 }
 
@@ -176,36 +201,40 @@ ConnectionManagerTest::testAcceptConnection()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) {return true;});
-    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk{ mtx };
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     bool successfullyConnected = false;
     bool successfullyReceive = false;
     bool receiverConnected = false;
 
     bobAccount->connectionManager().onChannelRequest(
-    [&successfullyReceive](const std::string&, const std::string& name) {
-        successfullyReceive = name == "git://*";
-        return true;
-    });
+        [&successfullyReceive](const std::string&, const std::string& name) {
+            successfullyReceive = name == "git://*";
+            return true;
+        });
 
     bobAccount->connectionManager().onConnectionReady(
-    [&receiverConnected](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
-        receiverConnected = socket && (name == "git://*");
-    });
+        [&receiverConnected](const std::string&,
+                             const std::string& name,
+                             std::shared_ptr<ChannelSocket> socket) {
+            receiverConnected = socket && (name == "git://*");
+        });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
-        [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            successfullyConnected = true;
-        }
-        cv.notify_one();
-    });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
 
-    cv.wait_for(lk, std::chrono::seconds(10));
+    cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(successfullyReceive);
     CPPUNIT_ASSERT(successfullyConnected);
     CPPUNIT_ASSERT(receiverConnected);
@@ -218,44 +247,49 @@ ConnectionManagerTest::testMultipleChannels()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) {return true;});
-    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk{ mtx };
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     bool successfullyConnected = false;
     bool successfullyConnected2 = false;
     int receiverConnected = 0;
 
     bobAccount->connectionManager().onChannelRequest(
-    [](const std::string&, const std::string&) {
-        return true;
-    });
+        [](const std::string&, const std::string&) { return true; });
 
     bobAccount->connectionManager().onConnectionReady(
-    [&receiverConnected](const std::string&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
-        if (socket) receiverConnected += 1;
-    });
+        [&receiverConnected](const std::string&,
+                             const std::string&,
+                             std::shared_ptr<ChannelSocket> socket) {
+            if (socket)
+                receiverConnected += 1;
+        });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
-        [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            successfullyConnected = true;
-        }
-        cv.notify_one();
-    });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId, "sip://*",
-        [&cv, &successfullyConnected2](std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            successfullyConnected2 = true;
-        }
-        cv.notify_one();
-    });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "sip://*",
+                                                    [&cv, &successfullyConnected2](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected2 = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
 
-    cv.wait_for(lk, std::chrono::seconds(10));
-    cv.wait_for(lk, std::chrono::seconds(10));
+    cv.wait_for(lk, std::chrono::seconds(30));
+    cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(successfullyConnected);
     CPPUNIT_ASSERT(successfullyConnected2);
     CPPUNIT_ASSERT(receiverConnected == 2);
@@ -268,45 +302,50 @@ ConnectionManagerTest::testMultipleChannelsSameName()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) {return true;});
-    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk{ mtx };
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     bool successfullyConnected = false;
     bool successfullyConnected2 = false;
     int receiverConnected = 0;
 
     bobAccount->connectionManager().onChannelRequest(
-    [](const std::string&, const std::string&) {
-        return true;
-    });
+        [](const std::string&, const std::string&) { return true; });
 
     bobAccount->connectionManager().onConnectionReady(
-    [&receiverConnected](const std::string&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
-        if (socket) receiverConnected += 1;
-    });
+        [&receiverConnected](const std::string&,
+                             const std::string&,
+                             std::shared_ptr<ChannelSocket> socket) {
+            if (socket)
+                receiverConnected += 1;
+        });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
-        [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            successfullyConnected = true;
-        }
-        cv.notify_one();
-    });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
 
     // We can open two sockets with the same name, it will be two different channel
-    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
-        [&cv, &successfullyConnected2](std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            successfullyConnected2 = true;
-        }
-        cv.notify_one();
-    });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected2](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected2 = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
 
-    cv.wait_for(lk, std::chrono::seconds(10));
-    cv.wait_for(lk, std::chrono::seconds(10));
+    cv.wait_for(lk, std::chrono::seconds(30));
+    cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(successfullyConnected);
     CPPUNIT_ASSERT(successfullyConnected2);
     CPPUNIT_ASSERT(receiverConnected == 2);
@@ -319,74 +358,76 @@ ConnectionManagerTest::testSendReceiveData()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) {return true;});
-    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk{ mtx };
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::atomic_int events(0);
-    bool successfullyConnected = false, successfullyConnected2 = false, successfullyReceive = false, receiverConnected = false;
+    bool successfullyConnected = false, successfullyConnected2 = false, successfullyReceive = false,
+         receiverConnected = false;
     const uint8_t buf_other[] = {0x64, 0x65, 0x66, 0x67};
     const uint8_t buf_test[] = {0x68, 0x69, 0x70, 0x71};
     bool dataOk = false, dataOk2 = false;
 
     bobAccount->connectionManager().onChannelRequest(
-    [&successfullyReceive](const std::string&, const std::string&) {
-        successfullyReceive = true;
-        return true;
-    });
+        [&successfullyReceive](const std::string&, const std::string&) {
+            successfullyReceive = true;
+            return true;
+        });
 
     bobAccount->connectionManager().onConnectionReady(
-    [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
-        if (socket && (name == "test" || name == "other")) {
-            receiverConnected = true;
-            std::error_code ec;
-            auto res = socket->waitForData(std::chrono::milliseconds(5000), ec);
-            if (res == 4) {
-                uint8_t buf[4];
-                socket->read(&buf[0], 4, ec);
-                if (name == "test")
-                    dataOk = std::equal(std::begin(buf), std::end(buf), std::begin(buf_test));
-                else
-                    dataOk2 = std::equal(std::begin(buf), std::end(buf), std::begin(buf_other));
-                events++;
-                cv.notify_one();
+        [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+            if (socket && (name == "test" || name == "other")) {
+                receiverConnected = true;
+                std::error_code ec;
+                auto res = socket->waitForData(std::chrono::milliseconds(5000), ec);
+                if (res == 4) {
+                    uint8_t buf[4];
+                    socket->read(&buf[0], 4, ec);
+                    if (name == "test")
+                        dataOk = std::equal(std::begin(buf), std::end(buf), std::begin(buf_test));
+                    else
+                        dataOk2 = std::equal(std::begin(buf), std::end(buf), std::begin(buf_other));
+                    events++;
+                    cv.notify_one();
+                }
             }
-        }
-    });
+        });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId, "test",
-        [&](std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            successfullyConnected = true;
-            std::error_code ec;
-            socket->write(&buf_test[0], 4, ec);
-        }
-        events++;
-        cv.notify_one();
-    });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "test",
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                            std::error_code ec;
+                                                            socket->write(&buf_test[0], 4, ec);
+                                                        }
+                                                        events++;
+                                                        cv.notify_one();
+                                                    });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId, "other",
-        [&](std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            successfullyConnected2 = true;
-            std::error_code ec;
-            socket->write(&buf_other[0], 4, ec);
-        }
-        events++;
-        cv.notify_one();
-    });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "other",
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected2 = true;
+                                                            std::error_code ec;
+                                                            socket->write(&buf_other[0], 4, ec);
+                                                        }
+                                                        events++;
+                                                        cv.notify_one();
+                                                    });
 
     auto expiration = std::chrono::system_clock::now() + std::chrono::seconds(10);
-    cv.wait_until(lk, expiration, [&events](){return events == 4;});
+    cv.wait_until(lk, expiration, [&events]() { return events == 4; });
     CPPUNIT_ASSERT(successfullyReceive);
     CPPUNIT_ASSERT(successfullyConnected);
     CPPUNIT_ASSERT(successfullyConnected2);
     CPPUNIT_ASSERT(receiverConnected);
     CPPUNIT_ASSERT(dataOk);
     CPPUNIT_ASSERT(dataOk2);
-
 }
 
 void
@@ -396,36 +437,40 @@ ConnectionManagerTest::testDeclineConnection()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) {return true;});
-    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk{ mtx };
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     bool successfullyConnected = false;
     bool successfullyReceive = false;
     bool receiverConnected = false;
 
     bobAccount->connectionManager().onChannelRequest(
-    [&successfullyReceive](const std::string&, const std::string&) {
-        successfullyReceive = true;
-        return false;
-    });
+        [&successfullyReceive](const std::string&, const std::string&) {
+            successfullyReceive = true;
+            return false;
+        });
 
     bobAccount->connectionManager().onConnectionReady(
-    [&receiverConnected](const std::string&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
-        if (socket)
-            receiverConnected = true;
-    });
+        [&receiverConnected](const std::string&,
+                             const std::string&,
+                             std::shared_ptr<ChannelSocket> socket) {
+            if (socket)
+                receiverConnected = true;
+        });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
-        [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            successfullyConnected = true;
-        }
-        cv.notify_one();
-    });
-    cv.wait_for(lk, std::chrono::seconds(10));
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
+    cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(successfullyReceive);
     CPPUNIT_ASSERT(!successfullyConnected);
     CPPUNIT_ASSERT(!receiverConnected);
@@ -438,35 +483,40 @@ ConnectionManagerTest::testAcceptsICERequest()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
 
-    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk{ mtx };
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     bool successfullyConnected = false;
     bool successfullyReceive = false;
     bool receiverConnected = false;
 
-    bobAccount->connectionManager().onChannelRequest([](const std::string&, const std::string&) { return true; });
+    bobAccount->connectionManager().onChannelRequest(
+        [](const std::string&, const std::string&) { return true; });
     bobAccount->connectionManager().onICERequest([&](const std::string&) {
         successfullyReceive = true;
         return true;
     });
 
     bobAccount->connectionManager().onConnectionReady(
-    [&receiverConnected](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
-        receiverConnected = socket && (name == "git://*");
-    });
+        [&receiverConnected](const std::string&,
+                             const std::string& name,
+                             std::shared_ptr<ChannelSocket> socket) {
+            receiverConnected = socket && (name == "git://*");
+        });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
-        [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            successfullyConnected = true;
-        }
-        cv.notify_one();
-    });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
 
-    cv.wait_for(lk, std::chrono::seconds(10));
+    cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(successfullyReceive);
     CPPUNIT_ASSERT(successfullyConnected);
     CPPUNIT_ASSERT(receiverConnected);
@@ -479,36 +529,40 @@ ConnectionManagerTest::testDeclineICERequest()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
 
-    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk{ mtx };
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     bool successfullyConnected = false;
     bool successfullyReceive = false;
     bool receiverConnected = false;
 
-    bobAccount->connectionManager().onChannelRequest([](const std::string&, const std::string&) { return true; });
+    bobAccount->connectionManager().onChannelRequest(
+        [](const std::string&, const std::string&) { return true; });
     bobAccount->connectionManager().onICERequest([&](const std::string&) {
         successfullyReceive = true;
         return false;
     });
 
     bobAccount->connectionManager().onConnectionReady(
-    [&receiverConnected](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
-        receiverConnected = socket && (name == "git://*");
-    });
+        [&receiverConnected](const std::string&,
+                             const std::string& name,
+                             std::shared_ptr<ChannelSocket> socket) {
+            receiverConnected = socket && (name == "git://*");
+        });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
-        [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            successfullyConnected = true;
-        }
-        cv.notify_one();
-    });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
 
-
-    cv.wait_for(lk, std::chrono::seconds(10));
+    cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(successfullyReceive);
     CPPUNIT_ASSERT(!successfullyConnected);
     CPPUNIT_ASSERT(!receiverConnected);
@@ -521,11 +575,11 @@ ConnectionManagerTest::testChannelRcvShutdown()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) {return true;});
-    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk{ mtx };
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable rcv, scv;
     bool successfullyConnected = false;
     bool successfullyReceive = false;
@@ -533,31 +587,32 @@ ConnectionManagerTest::testChannelRcvShutdown()
     bool shutdownReceived = false;
 
     bobAccount->connectionManager().onChannelRequest(
-    [&successfullyReceive](const std::string&, const std::string& name) {
-        successfullyReceive = name == "git://*";
-        return true;
-    });
+        [&successfullyReceive](const std::string&, const std::string& name) {
+            successfullyReceive = name == "git://*";
+            return true;
+        });
 
     bobAccount->connectionManager().onConnectionReady(
-    [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
-        receiverConnected = socket && (name == "git://*");
-        rcv.notify_one();
-        socket->shutdown();
-    });
+        [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+            receiverConnected = socket && (name == "git://*");
+            rcv.notify_one();
+            socket->shutdown();
+        });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
-        [&](std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            socket->onShutdown([&]() {
-                shutdownReceived = true;
-                scv.notify_one();
-            });
-            successfullyConnected = true;
-        }
-    });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            socket->onShutdown([&]() {
+                                                                shutdownReceived = true;
+                                                                scv.notify_one();
+                                                            });
+                                                            successfullyConnected = true;
+                                                        }
+                                                    });
 
-    rcv.wait_for(lk, std::chrono::seconds(10));
-    scv.wait_for(lk, std::chrono::seconds(10));
+    rcv.wait_for(lk, std::chrono::seconds(30));
+    scv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(shutdownReceived);
     CPPUNIT_ASSERT(successfullyReceive);
     CPPUNIT_ASSERT(successfullyConnected);
@@ -571,11 +626,11 @@ ConnectionManagerTest::testChannelSenderShutdown()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) {return true;});
-    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk{ mtx };
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable rcv, scv;
     bool successfullyConnected = false;
     bool successfullyReceive = false;
@@ -583,33 +638,34 @@ ConnectionManagerTest::testChannelSenderShutdown()
     bool shutdownReceived = false;
 
     bobAccount->connectionManager().onChannelRequest(
-    [&successfullyReceive](const std::string&, const std::string& name) {
-        successfullyReceive = name == "git://*";
-        return true;
-    });
+        [&successfullyReceive](const std::string&, const std::string& name) {
+            successfullyReceive = name == "git://*";
+            return true;
+        });
 
     bobAccount->connectionManager().onConnectionReady(
-    [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            socket->onShutdown([&]() {
-                shutdownReceived = true;
-                scv.notify_one();
-            });
-        }
-        receiverConnected = socket && (name == "git://*");
-    });
+        [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+            if (socket) {
+                socket->onShutdown([&]() {
+                    shutdownReceived = true;
+                    scv.notify_one();
+                });
+            }
+            receiverConnected = socket && (name == "git://*");
+        });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
-        [&](std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            successfullyConnected = true;
-            rcv.notify_one();
-            socket->shutdown();
-        }
-    });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                            rcv.notify_one();
+                                                            socket->shutdown();
+                                                        }
+                                                    });
 
-    rcv.wait_for(lk, std::chrono::seconds(10));
-    scv.wait_for(lk, std::chrono::seconds(10));
+    rcv.wait_for(lk, std::chrono::seconds(30));
+    scv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(shutdownReceived);
     CPPUNIT_ASSERT(successfullyReceive);
     CPPUNIT_ASSERT(successfullyConnected);
@@ -623,11 +679,11 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) {return true;});
-    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk{ mtx };
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable rcv, scv;
     std::atomic_int events(0);
     bool successfullyConnected = false;
@@ -635,45 +691,47 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
     bool receiverConnected = false;
 
     bobAccount->connectionManager().onChannelRequest(
-    [&successfullyReceive](const std::string&, const std::string& name) {
-        successfullyReceive = name == "git://*";
-        return true;
-    });
+        [&successfullyReceive](const std::string&, const std::string& name) {
+            successfullyReceive = name == "git://*";
+            return true;
+        });
 
     bobAccount->connectionManager().onConnectionReady(
-    [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            socket->onShutdown([&]() {
-                events += 1;
-                scv.notify_one();
-            });
-        }
-        receiverConnected = socket && (name == "git://*");
-    });
+        [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+            if (socket) {
+                socket->onShutdown([&]() {
+                    events += 1;
+                    scv.notify_one();
+                });
+            }
+            receiverConnected = socket && (name == "git://*");
+        });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
-        [&](std::shared_ptr<ChannelSocket> socket) {
-        if (socket) {
-            socket->onShutdown([&]() {
-                events += 1;
-                scv.notify_one();
-            });
-            successfullyConnected = true;
-            rcv.notify_one();
-        }
-    });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            socket->onShutdown([&]() {
+                                                                events += 1;
+                                                                scv.notify_one();
+                                                            });
+                                                            successfullyConnected = true;
+                                                            rcv.notify_one();
+                                                        }
+                                                    });
 
-    rcv.wait_for(lk, std::chrono::seconds(10));
+    rcv.wait_for(lk, std::chrono::seconds(30));
     // This should trigger onShutdown
     aliceAccount->connectionManager().closeConnectionsWith(bobDeviceId);
     auto expiration = std::chrono::system_clock::now() + std::chrono::seconds(10);
-    scv.wait_until(lk, expiration, [&events](){return events == 4;});
+    scv.wait_until(lk, expiration, [&events]() { return events == 4; });
     CPPUNIT_ASSERT(events == 2);
     CPPUNIT_ASSERT(successfullyReceive);
     CPPUNIT_ASSERT(successfullyConnected);
     CPPUNIT_ASSERT(receiverConnected);
 }
 
-}} // namespace test
+} // namespace test
+} // namespace jami
 
 RING_TEST_RUNNER(jami::test::ConnectionManagerTest::name())
