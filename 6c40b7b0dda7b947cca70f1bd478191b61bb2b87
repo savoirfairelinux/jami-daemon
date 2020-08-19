@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c47018e8_50509bae",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-19T20:48:00Z",
+      "side": 1,
+      "message": "incorrect commit message format\n\npart: short desc (50 chars max)\n\nlong desc",
+      "range": {
+        "startLine": 6,
+        "startChar": 0,
+        "endLine": 8,
+        "endChar": 60
+      },
+      "revId": "6c40b7b0dda7b947cca70f1bd478191b61bb2b87",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8ec52a21_ffb81a5b",
+        "filename": "src/manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 980,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-19T20:48:00Z",
+      "side": 1,
+      "message": "same (and some others)",
+      "range": {
+        "startLine": 979,
+        "startChar": 1,
+        "endLine": 980,
+        "endChar": 49
+      },
+      "revId": "6c40b7b0dda7b947cca70f1bd478191b61bb2b87",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "53cc8c33_d3a41df7",
+        "filename": "src/manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1413,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-19T20:48:00Z",
+      "side": 1,
+      "message": "avoid functions in log like that",
+      "range": {
+        "startLine": 1413,
+        "startChar": 16,
+        "endLine": 1413,
+        "endChar": 36
+      },
+      "revId": "6c40b7b0dda7b947cca70f1bd478191b61bb2b87",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6ac08cc2_5ac8240b",
+        "filename": "src/media/audio/ringbufferpool.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-19T20:48:00Z",
+      "side": 1,
+      "message": "those infos can be removed imho (in this file)",
+      "range": {
+        "startLine": 240,
+        "startChar": 53,
+        "endLine": 242,
+        "endChar": 48
+      },
+      "revId": "6c40b7b0dda7b947cca70f1bd478191b61bb2b87",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
