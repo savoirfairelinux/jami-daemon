@@ -54,6 +54,11 @@ public:
      */
     RingBuffer(const std::string& id, size_t size, AudioFormat format = AudioFormat::MONO());
 
+    /**
+     * Destructor
+     */
+    ~RingBuffer();
+
     const std::string& getId() const { return id; }
 
     /**

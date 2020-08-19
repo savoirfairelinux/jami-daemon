@@ -977,6 +977,8 @@ Manager::outgoingCall(const std::string& account_id,
 bool
 Manager::answerCall(const std::string& call_id)
 {
+    JAMI_INFO("answerCall(%s)", call_id.c_str());
+
     bool result = true;
 
     auto call = getCallFromCallID(call_id);
@@ -1284,6 +1286,8 @@ Manager::getConferenceFromID(const std::string& confID) const
 bool
 Manager::holdConference(const std::string& id)
 {
+    JAMI_INFO("Hold conference %s", id.c_str());
+
     if (auto conf = getConferenceFromID(id)) {
         conf->detach();
         emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
@@ -1347,7 +1351,7 @@ Manager::addParticipant(const std::string& callId, const std::string& conference
         return true;
     }
 
-    JAMI_DBG("Add participant %s to %s", callId.c_str(), conferenceId.c_str());
+    JAMI_DBG("Add participant %s to conference %s", callId.c_str(), conferenceId.c_str());
 
     // store the current call id (it will change in offHoldCall or in answerCall)
     auto current_call_id = getCurrentCallId();
@@ -1384,10 +1388,16 @@ Manager::ManagerPimpl::addMainParticipant(Conference& conf)
 bool
 Manager::addMainParticipant(const std::string& conference_id)
 {
+    JAMI_INFO("addMainParticipant(%s)", conference_id.c_str());
+
     if (auto conf = getConferenceFromID(conference_id)) {
         pimpl_->addMainParticipant(*conf);
+        JAMI_DBG("Successfully added main participant to conference %s",
+            conference_id.c_str());
         return true;
     } else
+        JAMI_WARN("Failed to add main participant to conference %s",
+            conference_id.c_str());
         return false;
 }
 
@@ -1400,6 +1410,8 @@ Manager::getCallFromCallID(const std::string& callID) const
 bool
 Manager::joinParticipant(const std::string& callId1, const std::string& callId2, bool attached)
 {
+    JAMI_INFO("JoinParticipant(%s, %s, %i)", callId1.c_str(), callId2.c_str(), attached);
+
     if (callId1 == callId2) {
         JAMI_ERR("Cannot join participant %s to itself", callId1.c_str());
         return false;
@@ -1412,7 +1424,7 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
         return false;
     }
 
-    // Set corresponding conderence details
+    // Set corresponding conference details
     auto call2 = getCallFromCallID(callId2);
     if (!call2) {
         JAMI_ERR("Could not find call %s", callId2.c_str());
@@ -1506,7 +1518,8 @@ Manager::setActiveParticipant(const std::string& confId, const std::string& call
 bool
 Manager::detachLocalParticipant(const std::string& conf_id)
 {
-    JAMI_DBG("Unbind local participant from conference");
+    JAMI_INFO("detachLocalParticipant(%s)", conf_id.c_str());
+
     if (auto conf = getConferenceFromID(conf_id.empty() ? getCurrentCallId() : conf_id)) {
         conf->detach();
         emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
@@ -1617,6 +1630,8 @@ Manager::joinConference(const std::string& conf_id1, const std::string& conf_id2
 void
 Manager::addAudio(Call& call)
 {
+    JAMI_INFO("addAudio(%s)", call.getCallId().c_str());
+
     const auto& call_id = call.getCallId();
 
     if (isConferenceParticipant(call_id)) {
@@ -1819,6 +1834,8 @@ Manager::incomingCallsWaiting()
 void
 Manager::incomingCall(Call& call, const std::string& accountId)
 {
+    JAMI_INFO("incomingCall(%s, %s)", call.getCallId().c_str(), accountId.c_str());
+
     stopTone();
     const std::string callID(call.getCallId());
 
