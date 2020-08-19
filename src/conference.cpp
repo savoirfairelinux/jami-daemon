@@ -45,6 +45,8 @@ Conference::Conference()
     , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
 #endif
 {
+    JAMI_INFO("Create new conference %s", id_.c_str());
+
 #ifdef ENABLE_VIDEO
     getVideoMixer()->setOnSourcesUpdated([this](const std::vector<video::SourceInfo>&& infos) {
         runOnMainThread([w = weak(), infos = std::move(infos)] {
@@ -93,6 +95,8 @@ Conference::Conference()
 
 Conference::~Conference()
 {
+    JAMI_INFO("Destroy conference %s", id_.c_str());
+
 #ifdef ENABLE_VIDEO
     for (const auto& participant_id : participants_) {
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
@@ -222,6 +226,8 @@ Conference::remove(const std::string& participant_id)
 void
 Conference::attach()
 {
+    JAMI_INFO("Attach local participant to conference %s", id_.c_str());
+
     if (getState() == State::ACTIVE_DETACHED) {
         auto& rbPool = Manager::instance().getRingBufferPool();
         for (const auto& participant : getParticipantList()) {
@@ -238,13 +244,16 @@ Conference::attach()
 #endif
         setState(State::ACTIVE_ATTACHED);
     } else {
-        JAMI_WARN("Invalid conference state in attach participant");
+        JAMI_WARN("Invalid conference state in attach participant: current \"%s\" - expected \"%s\"",
+            getStateStr(), "ACTIVE_DETACHED");
     }
 }
 
 void
 Conference::detach()
 {
+    JAMI_INFO("Detach local participant from conference %s", id_.c_str());
+
     if (getState() == State::ACTIVE_ATTACHED) {
         Manager::instance().getRingBufferPool().unBindAll(RingBufferPool::DEFAULT_ID);
 #ifdef ENABLE_VIDEO
@@ -254,13 +263,17 @@ Conference::detach()
 #endif
         setState(State::ACTIVE_DETACHED);
     } else {
-        JAMI_WARN("Invalid conference state in detach participant");
+        JAMI_WARN("Invalid conference state in detach participant: current \"%s\" - expected \"%s\"",
+            getStateStr(), "ACTIVE_ATTACHED");
     }
 }
 
 void
 Conference::bindParticipant(const std::string& participant_id)
 {
+    JAMI_INFO("Bind participant %s to conference %s",
+        participant_id.c_str(), id_.c_str());
+
     auto& rbPool = Manager::instance().getRingBufferPool();
 
     for (const auto& item : participants_) {
@@ -269,8 +282,12 @@ Conference::bindParticipant(const std::string& participant_id)
         rbPool.flush(item);
     }
 
-    rbPool.bindCallID(participant_id, RingBufferPool::DEFAULT_ID);
-    rbPool.flush(RingBufferPool::DEFAULT_ID);
+    // Bind local participant to other participants only if the
+    // local is attached to the conference.
+    if (getState() == State::ACTIVE_ATTACHED) {
+        rbPool.bindCallID(participant_id, RingBufferPool::DEFAULT_ID);
+        rbPool.flush(RingBufferPool::DEFAULT_ID);
+    }
 }
 
 const ParticipantSet&
