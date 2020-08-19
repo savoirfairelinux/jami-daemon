@@ -51,7 +51,14 @@ RingBuffer::RingBuffer(const std::string& rbuf_id, size_t /*size*/, AudioFormat 
     , resizer_(format_, format_.sample_rate / 50, [this](std::shared_ptr<AudioFrame>&& frame) {
         putToBuffer(std::move(frame));
     })
-{}
+{
+    JAMI_INFO("Create new RingBuffer %s", id.c_str());
+}
+
+RingBuffer::~RingBuffer()
+{
+    JAMI_INFO("Destroy RingBuffer %s", id.c_str());
+}
 
 void
 RingBuffer::flush(const std::string& call_id)
