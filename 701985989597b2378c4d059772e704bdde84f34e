@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0e6eb7ad_0f21072e",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-20T21:23:55Z",
+      "side": 1,
+      "message": "Can we just get details[\"name\"] instead creating the whole map",
+      "range": {
+        "startLine": 182,
+        "startChar": 44,
+        "endLine": 182,
+        "endChar": 70
+      },
+      "revId": "701985989597b2378c4d059772e704bdde84f34e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6e426499_ccf007bd",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-20T21:23:55Z",
+      "side": 1,
+      "message": "I think we prefer to check an exact match there",
+      "range": {
+        "startLine": 183,
+        "startChar": 22,
+        "endLine": 183,
+        "endChar": 68
+      },
+      "revId": "701985989597b2378c4d059772e704bdde84f34e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2de2cc7c_3c1b38b5",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-20T21:23:55Z",
+      "side": 1,
+      "message": "Please install the format hook (./make-ring.py --init on latest master)",
+      "range": {
+        "startLine": 176,
+        "startChar": 5,
+        "endLine": 187,
+        "endChar": 5
+      },
+      "revId": "701985989597b2378c4d059772e704bdde84f34e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
