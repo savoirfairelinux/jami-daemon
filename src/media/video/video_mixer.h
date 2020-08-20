@@ -43,6 +43,7 @@ struct SourceInfo
     int y;
     int w;
     int h;
+    bool hasVideo;
 };
 using OnSourcesUpdatedCb = std::function<void(const std::vector<SourceInfo>&&)>;
 
@@ -87,9 +88,9 @@ private:
 
     bool render_frame(VideoFrame& output,
                       const VideoFrame& input,
-                      std::unique_ptr<VideoMixerSource>& source,
-                      int index,
-                      bool needsUpdate);
+                      std::unique_ptr<VideoMixerSource>& source);
+
+    void calc_position(std::unique_ptr<VideoMixerSource>& source, int index);
 
     void start_sink();
     void stop_sink();
