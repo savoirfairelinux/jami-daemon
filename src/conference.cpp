@@ -54,6 +54,8 @@ Conference::Conference()
             if (!shared)
                 return;
             ConfInfo newInfo;
+            auto subCalls = shared->participants_;
+            // Handle participants showing their video
             std::unique_lock<std::mutex> lk(shared->videoToCallMtx_);
             for (const auto& info : infos) {
                 std::string uri = "";
@@ -67,9 +69,8 @@ Conference::Conference()
                     // a master of a conference and there is only one remote
                     // In the future, we should retrieve confInfo from the call
                     // To merge layouts informations
-                    if (auto call = Manager::instance().callFactory.getCall<SIPCall>(it->second)) {
+                    if (auto call = Manager::instance().callFactory.getCall<SIPCall>(it->second))
                         uri = call->getPeerNumber();
-                    }
                 }
                 auto active = false;
                 if (auto videoMixer = shared->getVideoMixer())
@@ -77,10 +78,18 @@ Conference::Conference()
                              or (uri.empty()
                                  and not videoMixer->getActiveParticipant()); // by default, local
                                                                               // is shown as active
-                newInfo.emplace_back(
-                    ParticipantInfo {std::move(uri), active, info.x, info.y, info.w, info.h});
+                subCalls.erase(it->second);
+                newInfo.emplace_back(ParticipantInfo {
+                    std::move(uri), active, info.x, info.y, info.w, info.h, !info.hasVideo, false});
             }
             lk.unlock();
+            // Handle participants not present in the video mixer
+            for (const auto& subCall : subCalls) {
+                std::string uri = "";
+                if (auto call = Manager::instance().callFactory.getCall<SIPCall>(subCall))
+                    uri = call->getPeerNumber();
+                ParticipantInfo {std::move(uri), false, 0, 0, 0, 0, true, false};
+            }
 
             {
                 std::lock_guard<std::mutex> lk2(shared->confInfoMutex_);
