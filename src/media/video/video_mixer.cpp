@@ -132,7 +132,7 @@ VideoMixer::stopInput()
 void
 VideoMixer::setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
-    activeSource_ = ob;
+    activeSource_ = ob ? ob : videoLocal_.get();
     layoutUpdated_ += 1;
 }
 
@@ -157,7 +157,7 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
             // Handle the case where the current shown source leave the conference
             if (activeSource_ == ob) {
                 currentLayout_ = Layout::GRID;
-                activeSource_ = nullptr;
+                activeSource_ = videoLocal_.get();
             }
             sources_.remove(x);
             layoutUpdated_ += 1;
@@ -219,8 +219,7 @@ VideoMixer::process()
                 return;
 
             if (currentLayout_ != Layout::ONE_BIG or activeSource_ == x->source
-                or (not activeSource_
-                    and not activeFound) /* By default ONE_BIG will show the first source */) {
+                or not activeFound /* By default ONE_BIG will show the first source */) {
                 // make rendered frame temporarily unavailable for update()
                 // to avoid concurrent access.
                 std::unique_ptr<VideoFrame> input;
@@ -231,9 +230,6 @@ VideoMixer::process()
                     wantedIndex = 0;
                     activeFound = true;
                 } else if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
-                    if (!activeSource_ && i == 0) {
-                        activeFound = true;
-                    }
                     if (activeSource_ == x->source) {
                         wantedIndex = 0;
                         activeFound = true;
