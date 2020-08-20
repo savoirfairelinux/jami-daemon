@@ -233,7 +233,8 @@ if(MSVC)
    # Dependencies
    ################################################################################
 
-   set(libAdditionalDependencies "${CMAKE_STATIC_LINKER_FLAGS} /LTCG ws2_32.lib 
+   set(libAdditionalDependencies "${CMAKE_STATIC_LINKER_FLAGS} /LTCG
+   ws2_32.lib 
    advapi32.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avcodec.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avdevice.lib 
@@ -251,7 +252,7 @@ if(MSVC)
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/portaudio.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libupnp.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/msvc/Release/natpmp.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libarchive/msvc/libarchive/Release/archive_static.lib 
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/archive_static.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-core-x86_64-x64-vc15-Release.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-simple-x86_64-x64-vc15-Release.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsua2-lib-x86_64-x64-vc15-Release.lib 
