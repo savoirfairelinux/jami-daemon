@@ -36,6 +36,13 @@ extern "C" {
 namespace jami {
 namespace video {
 
+
+enum State_Device {
+    NOT_TESTED,
+    USABLE,
+    NOT_USABLE
+};
+
 /**
  * @brief Provides an abstraction layer to the hardware acceleration APIs in FFmpeg.
  */
@@ -174,7 +181,7 @@ private:
     int init_device(const char* name, const char* device, int flags);
     int init_device_type(std::string& dev);
 
-    std::set<std::string> possible_devices_;
+    std::list<std::pair<std::string, State_Device>>* possible_devices_;
 };
 
 } // namespace video

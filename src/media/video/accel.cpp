@@ -38,76 +38,80 @@ struct HardwareAPI
     AVPixelFormat format;
     AVPixelFormat swFormat;
     std::vector<AVCodecID> supportedCodecs;
-    std::set<std::string> possible_devices;
+    std::list<std::pair<std::string, State_Device>> possible_devices;
     bool dynBitrate;
 };
 
-static const std::list<HardwareAPI> apiListDec = {
+
+static std::list<HardwareAPI> apiListDec = {
     {"nvdec",
      AV_HWDEVICE_TYPE_CUDA,
      AV_PIX_FMT_CUDA,
      AV_PIX_FMT_NV12,
      {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG},
-     {"0", "1", "2"},
+     {std::make_pair("default", NOT_TESTED), std::make_pair("1", NOT_TESTED), std::make_pair("2", NOT_TESTED)},
      false},
     {"vaapi",
      AV_HWDEVICE_TYPE_VAAPI,
      AV_PIX_FMT_VAAPI,
      AV_PIX_FMT_NV12,
      {AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG},
-     {"/dev/dri/renderD128", "/dev/dri/renderD129", ":0"},
+     {std::make_pair("default", NOT_TESTED), std::make_pair("/dev/dri/renderD128", NOT_TESTED),
+      std::make_pair("/dev/dri/renderD129", NOT_TESTED), std::make_pair(":0", NOT_TESTED)},
      false},
     {"vdpau",
      AV_HWDEVICE_TYPE_VDPAU,
      AV_PIX_FMT_VDPAU,
      AV_PIX_FMT_NV12,
      {AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4},
-     {},
+     {std::make_pair("default", NOT_TESTED)},
      false},
     {"videotoolbox",
      AV_HWDEVICE_TYPE_VIDEOTOOLBOX,
      AV_PIX_FMT_VIDEOTOOLBOX,
      AV_PIX_FMT_NV12,
      {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MPEG4},
-     {},
+     {std::make_pair("default", NOT_TESTED)},
      false},
     {"qsv",
      AV_HWDEVICE_TYPE_QSV,
      AV_PIX_FMT_QSV,
      AV_PIX_FMT_NV12,
      {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8, AV_CODEC_ID_VP9},
-     {},
+     {std::make_pair("default", NOT_TESTED)},
      false},
 };
 
-static const std::list<HardwareAPI> apiListEnc = {
+static std::list<HardwareAPI> apiListEnc = {
     {"nvenc",
      AV_HWDEVICE_TYPE_CUDA,
      AV_PIX_FMT_CUDA,
      AV_PIX_FMT_NV12,
      {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC},
-     {"0", "1", "2"},
+     {std::make_pair("default", NOT_TESTED), std::make_pair("1", NOT_TESTED), std::make_pair("2", NOT_TESTED)},
      true},
     {"vaapi",
      AV_HWDEVICE_TYPE_VAAPI,
      AV_PIX_FMT_VAAPI,
      AV_PIX_FMT_NV12,
      {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8},
-     {"/dev/dri/renderD128", "/dev/dri/renderD129", ":0"},
+     {std::make_pair("default", NOT_TESTED), std::make_pair("/dev/dri/renderD128", NOT_TESTED),
+      std::make_pair("/dev/dri/renderD129", NOT_TESTED),
+      std::make_pair(":0", NOT_TESTED)},
      false},
     {"videotoolbox",
      AV_HWDEVICE_TYPE_VIDEOTOOLBOX,
      AV_PIX_FMT_VIDEOTOOLBOX,
      AV_PIX_FMT_NV12,
      {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC},
-     {},
+     {std::make_pair("default", NOT_TESTED)},
      false},
     {"qsv",
      AV_HWDEVICE_TYPE_QSV,
      AV_PIX_FMT_QSV,
      AV_PIX_FMT_NV12,
      {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8},
-     {},
+     {std::make_pair("default", NOT_TESTED)},
      false},
 };
 
@@ -199,30 +203,38 @@ HardwareAccel::init_device_type(std::string& dev)
     JAMI_WARN("-- Starting %s init for %s with default device.",
               (type_ == CODEC_ENCODER) ? "encoding" : "decoding",
               name);
-    if (name_ == "qsv")
-        err = init_device(name, "auto", 0);
-    else
-        err = init_device(name, nullptr, 0);
-    if (err == 0) {
-        JAMI_DBG("-- Init passed for %s with default device.", name);
-        dev = "default";
-        return 0;
-    } else {
-        JAMI_DBG("-- Init failed for %s with default device.", name);
+    if (possible_devices_->front().second != NOT_USABLE) {
+        if (name_ == "qsv")
+            err = init_device(name, "auto", 0);
+        else
+            err = init_device(name, nullptr, 0);
+        if (err == 0) {
+            JAMI_DBG("-- Init passed for %s with default device.", name);
+            possible_devices_->front().second = USABLE;
+            dev = "default";
+            return 0;
+        } else {
+            possible_devices_->front().second = NOT_USABLE;
+            JAMI_DBG("-- Init failed for %s with default device.", name);
+        }
     }
 
-    for (const auto& device : possible_devices_) {
+    for (auto& device : *possible_devices_) {
+        if (device.second == NOT_USABLE)
+            continue;
         JAMI_WARN("-- Init %s for %s with device %s.",
                   (type_ == CODEC_ENCODER) ? "encoding" : "decoding",
                   name,
-                  device.c_str());
-        err = init_device(name, device.c_str(), 0);
+                  device.first.c_str());
+        err = init_device(name, device.first.c_str(), 0);
         if (err == 0) {
-            JAMI_DBG("-- Init passed for %s with device %s.", name, device.c_str());
-            dev = device;
+            JAMI_DBG("-- Init passed for %s with device %s.", name, device.first.c_str());
+            device.second = USABLE;
+            dev = device.first;
             return 0;
         } else {
-            JAMI_DBG("-- Init failed for %s with device %s.", name, device.c_str());
+            device.second = NOT_USABLE;
+            JAMI_DBG("-- Init failed for %s with device %s.", name, device.first.c_str());
         }
     }
     return -1;
@@ -409,7 +421,7 @@ HardwareAccel::getCompatibleAccel(AVCodecID id, int width, int height, CodecType
 {
     std::list<HardwareAccel> l;
     const auto& list = (type == CODEC_ENCODER) ? &apiListEnc : &apiListDec;
-    for (auto api : *list) {
+    for (auto& api : *list) {
         const auto& it = std::find(api.supportedCodecs.begin(), api.supportedCodecs.end(), id);
         if (it != api.supportedCodecs.end()) {
             auto hwtype = AV_HWDEVICE_TYPE_NONE;
@@ -424,7 +436,7 @@ HardwareAccel::getCompatibleAccel(AVCodecID id, int width, int height, CodecType
                                                api.dynBitrate);
                     accel.height_ = height;
                     accel.width_ = width;
-                    accel.possible_devices_ = api.possible_devices;
+                    accel.possible_devices_ = &api.possible_devices;
                     l.emplace_back(std::move(accel));
                 }
             }
