@@ -49,6 +49,8 @@ struct ParticipantInfo
     int y {0};
     int w {0};
     int h {0};
+    bool videoMuted {false};
+    bool audioMuted {false};
 
     void fromJson(const Json::Value& v)
     {
@@ -58,6 +60,8 @@ struct ParticipantInfo
         y = v["y"].asInt();
         w = v["w"].asInt();
         h = v["h"].asInt();
+        videoMuted = v["videoMuted"].asBool();
+        audioMuted = v["audioMuted"].asBool();
     }
 
     Json::Value toJson() const
@@ -69,6 +73,8 @@ struct ParticipantInfo
         val["y"] = y;
         val["w"] = w;
         val["h"] = h;
+        val["videoMuted"] = videoMuted;
+        val["audioMuted"] = audioMuted;
         return val;
     }
 
@@ -79,7 +85,9 @@ struct ParticipantInfo
                 {"x", std::to_string(x)},
                 {"y", std::to_string(y)},
                 {"w", std::to_string(w)},
-                {"h", std::to_string(h)}};
+                {"h", std::to_string(h)},
+                {"videoMuted", videoMuted ? "true" : "false"},
+                {"audioMuted", audioMuted ? "true" : "false"}};
     }
 };
 

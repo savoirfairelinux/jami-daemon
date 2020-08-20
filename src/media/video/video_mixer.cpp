@@ -63,6 +63,7 @@ struct VideoMixer::VideoMixerSource
     int y {};
     int w {};
     int h {};
+    bool hasVideo {false};
 
 private:
     std::mutex mutex_;
@@ -212,7 +213,7 @@ VideoMixer::process()
         int i = 0;
         bool activeFound = false;
         bool needsUpdate = layoutUpdated_ > 0;
-        bool successfullyRendered = true;
+        bool successfullyRendered = false;
         for (auto& x : sources_) {
             /* thread stop pending? */
             if (!loop_.isRunning())
@@ -238,17 +239,25 @@ VideoMixer::process()
                     }
                 }
 
-                if (input)
-                    successfullyRendered &= render_frame(output, *input, x, wantedIndex, needsUpdate);
-                else
-                    successfullyRendered = false;
+                if (needsUpdate)
+                    calc_position(x, wantedIndex);
 
+                if (input)
+                    successfullyRendered |= render_frame(output, *input, x);
+
+                auto hasVideo = x->hasVideo;
+                x->hasVideo = input && successfullyRendered;
+                if (hasVideo != x->hasVideo) {
+                    layoutUpdated_ += 1;
+                    needsUpdate = true;
+                }
                 x->atomic_swap_render(input);
             } else if (needsUpdate) {
                 x->x = 0;
                 x->y = 0;
                 x->w = 0;
                 x->h = 0;
+                x->hasVideo = false;
             }
 
             ++i;
@@ -259,7 +268,8 @@ VideoMixer::process()
                 std::vector<SourceInfo> sourcesInfo;
                 sourcesInfo.reserve(sources_.size());
                 for (auto& x : sources_) {
-                    sourcesInfo.emplace_back(SourceInfo {x->source, x->x, x->y, x->w, x->h});
+                    sourcesInfo.emplace_back(
+                        SourceInfo {x->source, x->x, x->y, x->w, x->h, x->hasVideo});
                 }
                 if (onSourcesUpdated_)
                     (onSourcesUpdated_)(std::move(sourcesInfo));
@@ -273,9 +283,7 @@ VideoMixer::process()
 bool
 VideoMixer::render_frame(VideoFrame& output,
                          const VideoFrame& input,
-                         std::unique_ptr<VideoMixerSource>& source,
-                         int index,
-                         bool needsUpdate)
+                         std::unique_ptr<VideoMixerSource>& source)
 {
     if (!width_ or !height_ or !input.pointer() or input.pointer()->format == -1)
         return false;
@@ -286,51 +294,10 @@ VideoMixer::render_frame(VideoFrame& output,
     std::shared_ptr<VideoFrame> frame = input;
 #endif
 
-    int cell_width, cell_height, xoff, yoff;
-    if (not needsUpdate) {
-        cell_width = source->w;
-        cell_height = source->h;
-        xoff = source->x;
-        yoff = source->y;
-    } else {
-        const int n = currentLayout_ == Layout::ONE_BIG ? 1 : sources_.size();
-        const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL ? std::max(6, n)
-                                                                      : ceil(sqrt(n));
-        if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL && index == 0) {
-            // In ONE_BIG_WITH_SMALL, the first line at the top is the previews
-            // The rest is the active source
-            cell_width = width_;
-            cell_height = height_ - height_ / zoom;
-        } else {
-            cell_width = width_ / zoom;
-            cell_height = height_ / zoom;
-        }
-        if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
-            if (index == 0) {
-                xoff = 0;
-                yoff = height_ / zoom; // First line height
-            } else {
-                xoff = (index - 1) * cell_width;
-                // Show sources in center
-                xoff += (width_ - (n - 1) * cell_width) / 2;
-                yoff = 0;
-            }
-        } else {
-            xoff = (index % zoom) * cell_width;
-            if (currentLayout_ == Layout::GRID && n % zoom != 0
-                && index >= (zoom * ((n - 1) / zoom))) {
-                // Last line, center participants if not full
-                xoff += (width_ - (n % zoom) * cell_width) / 2;
-            }
-            yoff = (index / zoom) * cell_height;
-        }
-
-        // Update source's cache
-        source->w = cell_width;
-        source->h = cell_height;
-        source->x = xoff;
-        source->y = yoff;
-    }
+    int cell_width = source->w;
+    int cell_height = source->h;
+    int xoff = source->x;
+    int yoff = source->y;
 
     AVFrameSideData* sideData = av_frame_get_side_data(frame->pointer(),
                                                        AV_FRAME_DATA_DISPLAYMATRIX);
@@ -357,6 +324,50 @@ VideoMixer::render_frame(VideoFrame& output,
 
     scaler_.scale_and_pad(*frame, output, xoff, yoff, cell_width, cell_height, true);
     return true;
+}
+
+void
+VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source, int index)
+{
+    if (!width_ or !height_)
+        return;
+
+    int cell_width, cell_height, xoff, yoff;
+    const int n = currentLayout_ == Layout::ONE_BIG ? 1 : sources_.size();
+    const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL ? std::max(6, n) : ceil(sqrt(n));
+    if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL && index == 0) {
+        // In ONE_BIG_WITH_SMALL, the first line at the top is the previews
+        // The rest is the active source
+        cell_width = width_;
+        cell_height = height_ - height_ / zoom;
+    } else {
+        cell_width = width_ / zoom;
+        cell_height = height_ / zoom;
+    }
+    if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
+        if (index == 0) {
+            xoff = 0;
+            yoff = height_ / zoom; // First line height
+        } else {
+            xoff = (index - 1) * cell_width;
+            // Show sources in center
+            xoff += (width_ - (n - 1) * cell_width) / 2;
+            yoff = 0;
+        }
+    } else {
+        xoff = (index % zoom) * cell_width;
+        if (currentLayout_ == Layout::GRID && n % zoom != 0 && index >= (zoom * ((n - 1) / zoom))) {
+            // Last line, center participants if not full
+            xoff += (width_ - (n % zoom) * cell_width) / 2;
+        }
+        yoff = (index / zoom) * cell_height;
+    }
+
+    // Update source's cache
+    source->w = cell_width;
+    source->h = cell_height;
+    source->x = xoff;
+    source->y = yoff;
 }
 
 void
