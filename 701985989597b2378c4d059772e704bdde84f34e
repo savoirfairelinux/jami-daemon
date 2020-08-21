@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "0302e9dc_60bf8407",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-08-21T14:49:08Z",
+      "side": 1,
+      "message": "if callMediaHandler exists\nif the preference has this mediaHandler as one of the possible scopes\nthen the preference may be changed on the fly.\nThe change is applied for every mediaHandler in it\u0027s scope and is saved as default for the next time this plugin is loaded.",
+      "parentUuid": "0e6eb7ad_0f21072e",
+      "range": {
+        "startLine": 182,
+        "startChar": 44,
+        "endLine": 182,
+        "endChar": 70
+      },
+      "revId": "701985989597b2378c4d059772e704bdde84f34e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "6e426499_ccf007bd",
         "filename": "src/plugin/callservicesmanager.h",
         "patchSetId": 7
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "6bd8a9e1_0cefe7ad",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-08-21T14:49:08Z",
+      "side": 1,
+      "message": "The scope of a preference may have multiple media handlers",
+      "parentUuid": "6e426499_ccf007bd",
+      "range": {
+        "startLine": 183,
+        "startChar": 22,
+        "endLine": 183,
+        "endChar": 68
+      },
+      "revId": "701985989597b2378c4d059772e704bdde84f34e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "2de2cc7c_3c1b38b5",
         "filename": "src/plugin/callservicesmanager.h",
         "patchSetId": 7
@@ -59,6 +107,30 @@
       "writtenOn": "2020-08-20T21:23:55Z",
       "side": 1,
       "message": "Please install the format hook (./make-ring.py --init on latest master)",
+      "range": {
+        "startLine": 176,
+        "startChar": 5,
+        "endLine": 187,
+        "endChar": 5
+      },
+      "revId": "701985989597b2378c4d059772e704bdde84f34e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6019a400_1011285e",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-08-21T14:49:08Z",
+      "side": 1,
+      "message": "better?",
+      "parentUuid": "2de2cc7c_3c1b38b5",
       "range": {
         "startLine": 176,
         "startChar": 5,
