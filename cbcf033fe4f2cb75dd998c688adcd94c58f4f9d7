@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "c7f0ac5f_4f2083db",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 3
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-08-21T13:42:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bdb4643a_0268ad7a",
+      "range": {
+        "startLine": 4,
+        "startChar": 27,
+        "endLine": 9,
+        "endChar": 27
+      },
+      "revId": "cbcf033fe4f2cb75dd998c688adcd94c58f4f9d7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "926115bf_455d4ff3",
         "filename": "contrib/src/opencv/rules.mak",
         "patchSetId": 3
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "cd510c3a_4e53a786",
+        "filename": "contrib/src/opencv/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-08-21T13:42:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "926115bf_455d4ff3",
+      "range": {
+        "startLine": 72,
+        "startChar": 9,
+        "endLine": 75,
+        "endChar": 957
+      },
+      "revId": "cbcf033fe4f2cb75dd998c688adcd94c58f4f9d7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "99587cf7_204a19cf",
         "filename": "src/fileutils.h",
         "patchSetId": 3
@@ -59,6 +107,30 @@
       "writtenOn": "2020-08-20T21:18:10Z",
       "side": 1,
       "message": "On windows, \\\\\\\\ is not correct?\n\nLike in C:\\Dir\\Foo\\Bar?",
+      "range": {
+        "startLine": 59,
+        "startChar": 31,
+        "endLine": 59,
+        "endChar": 35
+      },
+      "revId": "cbcf033fe4f2cb75dd998c688adcd94c58f4f9d7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8591e6e4_eed248e7",
+        "filename": "src/fileutils.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-08-21T13:42:15Z",
+      "side": 1,
+      "message": "The JPL paths arriving to uncompress is as C://foo//bar, so the regex was failling.",
+      "parentUuid": "99587cf7_204a19cf",
       "range": {
         "startLine": 59,
         "startChar": 31,
