@@ -1839,7 +1839,8 @@ Manager::incomingCall(Call& call, const std::string& accountId)
     if (not hasCurrentCall()) {
         call.setState(Call::ConnectionState::RINGING);
 #ifndef RING_UWP
-        playRingtone(accountId);
+        if (not call.getAccount().isRendezVous())
+            playRingtone(accountId);
 #endif
     }
 
