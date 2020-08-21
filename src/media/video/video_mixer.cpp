@@ -81,6 +81,7 @@ VideoMixer::VideoMixer(const std::string& id)
     if (videoLocal_)
         videoLocal_->attach(this);
     loop_.start();
+    lastProcess_ = std::chrono::system_clock::now();
 }
 
 VideoMixer::~VideoMixer()
@@ -194,7 +195,7 @@ VideoMixer::process()
     const auto delay = FRAME_DURATION - diff;
     if (delay.count() > 0)
         std::this_thread::sleep_for(delay);
-    lastProcess_ = now;
+    lastProcess_ = std::chrono::system_clock::now();
 
     VideoFrame& output = getNewFrame();
     try {
