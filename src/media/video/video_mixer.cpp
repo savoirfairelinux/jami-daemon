@@ -72,7 +72,8 @@ private:
     std::mutex mutex_;
 };
 
-static constexpr const auto FRAME_DURATION = std::chrono::duration<double>(1 / 30.);
+static constexpr const auto MIXER_FRAMERATE = 30;
+static constexpr const auto FRAME_DURATION = std::chrono::duration<double>(1. / MIXER_FRAMERATE);
 
 VideoMixer::VideoMixer(const std::string& id)
     : VideoGenerator::VideoGenerator()
@@ -85,6 +86,7 @@ VideoMixer::VideoMixer(const std::string& id)
     if (videoLocal_)
         videoLocal_->attach(this);
     loop_.start();
+    nextProcess_ = std::chrono::steady_clock::now();
 }
 
 VideoMixer::~VideoMixer()
@@ -193,12 +195,10 @@ VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob,
 void
 VideoMixer::process()
 {
-    const auto now = std::chrono::system_clock::now();
-    const auto diff = now - lastProcess_;
-    const auto delay = FRAME_DURATION - diff;
+    nextProcess_ += std::chrono::duration_cast<std::chrono::microseconds>(FRAME_DURATION);
+    const auto delay = nextProcess_ - std::chrono::steady_clock::now();
     if (delay.count() > 0)
         std::this_thread::sleep_for(delay);
-    lastProcess_ = now;
 
     VideoFrame& output = getNewFrame();
     try {

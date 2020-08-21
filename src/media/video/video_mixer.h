@@ -105,7 +105,7 @@ private:
 
     std::shared_ptr<SinkClient> sink_;
 
-    std::chrono::time_point<std::chrono::system_clock> lastProcess_;
+    std::chrono::time_point<std::chrono::steady_clock> nextProcess_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
     VideoScaler scaler_;
 
