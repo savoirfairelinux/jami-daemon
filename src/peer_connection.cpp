@@ -813,7 +813,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                     std::error_code ec;
                     if (endpoint_->waitForData(std::chrono::milliseconds(100), ec) > 0) {
                         std::vector<uint8_t> buf(IO_BUFFER_SIZE);
-                        JAMI_DBG("A good buffer arrived before any input or output attachment");
+                        JAMI_INFO("A good buffer arrived before any input or output attachment");
                         auto size = endpoint_->read(buf, ec);
                         if (ec)
                             throw std::system_error(ec);

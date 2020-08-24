@@ -916,7 +916,7 @@ DhtPeerConnector::requestConnection(
         }
 
         channel->onShutdown([this, tid, onChanneledCancelled, peer = outgoingFile->peer()]() {
-            JAMI_INFO("Channel down for outgoing transfer with id(%lu)", tid);
+            JAMI_ERR("Channel down for outgoing transfer with id(%lu)", tid);
             onChanneledCancelled();
             dht::ThreadPool::io().run([w = pimpl_->weak(), tid, peer] {
                 auto shared = w.lock();

@@ -662,15 +662,18 @@ IncomingFileTransfer::close() noexcept
         std::lock_guard<std::mutex> lk {infoMutex_};
         if (info_.lastEvent >= DRing::DataTransferEventCode::finished)
             return;
-        if (info_.bytesProgress >= info_.totalSize)
+
+        if (info_.bytesProgress >= info_.totalSize) {
             info_.lastEvent = DRing::DataTransferEventCode::finished;
-        else if (!internalCompletionCb_)
+        } else if (!internalCompletionCb_) {
             info_.lastEvent = DRing::DataTransferEventCode::closed_by_host;
+        }
     }
+
     if (info_.bytesProgress >= info_.totalSize) {
-        if (internalCompletionCb_) {
+        if (internalCompletionCb_)
             internalCompletionCb_(info_.path);
-        } else {
+        else {
             runOnMainThread([id = id]() {
                 emitSignal<DRing::DataTransferSignal::DataTransferEvent>(
                     id, uint32_t(DRing::DataTransferEventCode::finished));
@@ -682,6 +685,7 @@ IncomingFileTransfer::close() noexcept
                 id, uint32_t(DRing::DataTransferEventCode::closed_by_host));
         });
     }
+
     DataTransfer::close();
 
     try {
@@ -968,6 +972,7 @@ IncomingFileInfo
 DataTransferFacade::onIncomingFileRequest(const DRing::DataTransferId& id)
 {
     if (auto transfer = std::static_pointer_cast<IncomingFileTransfer>(pimpl_->getTransfer(id))) {
+        JAMI_ERR("@@@ onIncomingFileRequest");
         auto filename = transfer->requestFilename();
         if (!filename.empty() && transfer->start())
             return {id, std::static_pointer_cast<Stream>(transfer)};
