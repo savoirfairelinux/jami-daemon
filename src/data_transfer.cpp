@@ -267,7 +267,7 @@ public:
 
     void close() noexcept override;
     void closeAndEmit(DRing::DataTransferEventCode code) const noexcept;
-    bool read(std::vector<uint8_t>&) const override;
+    bool read(std::vector<uint8_t>&) override;
     bool write(const std::vector<uint8_t>& buffer) override;
     void emit(DRing::DataTransferEventCode code) const override;
 
@@ -383,12 +383,16 @@ SubOutgoingFileTransfer::closeAndEmit(DRing::DataTransferEventCode code) const n
     started_ = false; // NOTE: replace DataTransfer::close(); which is non const
     input_.close();
 
-    if (info_.lastEvent < DRing::DataTransferEventCode::finished)
+    if (info_.lastEvent < DRing::DataTransferEventCode::finished) {
+        if (auto account = Manager::instance().getAccount<JamiAccount>(info_.accountId))
+            account->closePeerConnection(peerUri_, id);
+
         emit(code);
+    }
 }
 
 bool
-SubOutgoingFileTransfer::read(std::vector<uint8_t>& buf) const
+SubOutgoingFileTransfer::read(std::vector<uint8_t>& buf)
 {
     // Need to send headers?
     if (!headerSent_) {
@@ -415,7 +419,7 @@ SubOutgoingFileTransfer::read(std::vector<uint8_t>& buf) const
     // File end reached?
     if (input_.eof()) {
         JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
-        emit(DRing::DataTransferEventCode::finished);
+        closeAndEmit(DRing::DataTransferEventCode::finished);
         return false;
     }
 
@@ -437,7 +441,7 @@ SubOutgoingFileTransfer::write(const std::vector<uint8_t>& buffer)
         } else {
             // consider any other response as a cancel msg
             JAMI_WARN() << "FTP#" << getId() << ": refused by peer";
-            emit(DRing::DataTransferEventCode::closed_by_peer);
+            closeAndEmit(DRing::DataTransferEventCode::closed_by_peer);
             return false;
         }
     }

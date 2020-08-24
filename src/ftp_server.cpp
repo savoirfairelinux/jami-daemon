@@ -118,7 +118,7 @@ FtpServer::closeCurrentFile()
 }
 
 bool
-FtpServer::read(std::vector<uint8_t>& buffer) const
+FtpServer::read(std::vector<uint8_t>& buffer)
 {
     if (!out_.stream) {
         if (closed_) {
