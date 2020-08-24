@@ -147,7 +147,9 @@ public:
 
     explicit Impl(const std::weak_ptr<JamiAccount>& account)
         : account {account}
-    {}
+    {
+        JAMI_ERR("@@@@@@@");
+    }
 
     ~Impl()
     {
@@ -455,6 +457,7 @@ private:
                                                       ice->isRunning());
         tls_ep_->setOnStateChange([this, ice = std::move(ice)](tls::TlsSessionState state) {
             if (state == tls::TlsSessionState::SHUTDOWN) {
+                JAMI_ERR("@@@@@@@@ SHUTDOWN %p", tls_ep_.get());
                 if (!connected_)
                     JAMI_WARN() << "TLS connection failure from peer " << peer_.toString();
                 ice->cancelOperations(); // This will stop current PeerChannel operations
@@ -771,6 +774,7 @@ DhtPeerConnector::Impl::onAddDevice(const dht::InfoHash& dev_h,
     std::lock_guard<std::mutex> lock(clientsMutex_);
     const auto& iter = clients_.find(client);
     if (iter == std::end(clients_)) {
+        JAMI_ERR("@@@@");
         clients_.emplace(client,
                          std::make_unique<Impl::ClientConnector>(*this,
                                                                  tid,
@@ -786,6 +790,7 @@ DhtPeerConnector::Impl::onAddDevice(const dht::InfoHash& dev_h,
 void
 DhtPeerConnector::Impl::cancel(const std::string& peer_id, const DRing::DataTransferId& tid)
 {
+    JAMI_ERR("@@@ CANCEL %s %u", peer_id.c_str(), tid);
     dht::ThreadPool::io().run([w = weak(), dev_h = dht::InfoHash(peer_id), tid] {
         auto shared = w.lock();
         if (!shared)
@@ -793,7 +798,9 @@ DhtPeerConnector::Impl::cancel(const std::string& peer_id, const DRing::DataTran
         // Cancel outgoing files
         {
             std::lock_guard<std::mutex> lock(shared->clientsMutex_);
+            JAMI_ERR("@@@ SIZE: %u", shared->clients_.size());
             shared->clients_.erase(std::make_pair(dev_h, tid));
+            JAMI_ERR("@@@ SIZE: %u", shared->clients_.size());
         }
         // Cancel incoming files
         std::unique_lock<std::mutex> lk(shared->serversMutex_);
@@ -819,6 +826,7 @@ DhtPeerConnector::Impl::cancel(const std::string& peer_id, const DRing::DataTran
 void
 DhtPeerConnector::Impl::cancelChanneled(const std::string& peerId, const DRing::DataTransferId& tid)
 {
+    JAMI_ERR("@@@ CANCEL CHANNELED");
     dht::ThreadPool::io().run([w = weak(), tid] {
         auto shared = w.lock();
         if (!shared)
@@ -916,7 +924,7 @@ DhtPeerConnector::requestConnection(
         }
 
         channel->onShutdown([this, tid, onChanneledCancelled, peer = outgoingFile->peer()]() {
-            JAMI_INFO("Channel down for outgoing transfer with id(%lu)", tid);
+            JAMI_ERR("Channel down for outgoing transfer with id(%lu)", tid);
             onChanneledCancelled();
             dht::ThreadPool::io().run([w = pimpl_->weak(), tid, peer] {
                 auto shared = w.lock();
@@ -1033,6 +1041,7 @@ DhtPeerConnector::onIncomingConnection(const std::string& peer_id,
         std::lock_guard<std::mutex> lk(pimpl_->channeledIncomingMtx_);
         pimpl_->channeledIncoming_.emplace(tid, std::move(incomingFile));
     }
+    JAMI_ERR("@@@@pimpl_->channeledIncoming_ added");
     channel->onShutdown([this, tid]() {
         JAMI_INFO("Channel down for incoming transfer with id(%lu)", tid);
         dht::ThreadPool::io().run([w = pimpl_->weak(), tid] {
