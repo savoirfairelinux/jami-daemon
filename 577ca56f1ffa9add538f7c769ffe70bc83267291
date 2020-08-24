@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c845ce31_fc5d28b6",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-08-24T14:40:20Z",
+      "side": 1,
+      "message": "It unlikely but still possible to have (diff \u003e FRAME_DURATION), leading to an unexpected behavior. It\u0027s best to cap the delay. Something like this:\n\ndelay \u003d FRAME_DURATION \u003e diff ? FRAME_DURATION - diff : 0;",
+      "range": {
+        "startLine": 195,
+        "startChar": 15,
+        "endLine": 195,
+        "endChar": 44
+      },
+      "revId": "577ca56f1ffa9add538f7c769ffe70bc83267291",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
