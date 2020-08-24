@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b83fc4a8_b27e93be",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 335,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-08-24T13:43:30Z",
+      "side": 1,
+      "message": "are we sure that sources_ is never empty ? if so, may we assert here.\nIs the preview part of sources ?",
+      "range": {
+        "startLine": 335,
+        "startChar": 58,
+        "endLine": 335,
+        "endChar": 73
+      },
+      "revId": "075ab034bac140b2dd216f3e0e4d76f55605e15d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8075c692_aa5d3075",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-08-24T13:43:30Z",
+      "side": 1,
+      "message": "we could use a #define for the max number of sources and a comment for more readability.",
+      "range": {
+        "startLine": 336,
+        "startChar": 73,
+        "endLine": 336,
+        "endChar": 78
+      },
+      "revId": "075ab034bac140b2dd216f3e0e4d76f55605e15d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}

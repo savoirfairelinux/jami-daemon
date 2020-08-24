@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a4f67c71_d2d53051",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-08-24T13:43:30Z",
+      "side": 1,
+      "message": "Is the local preview included in sources_ ?\nAre we sure that sources_ is never empty ? if yes, we can add an assert.",
+      "range": {
+        "startLine": 336,
+        "startChar": 58,
+        "endLine": 336,
+        "endChar": 73
+      },
+      "revId": "af31e7aa0ef2bae344bf202be0f635476173e5ad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "be64295c_fef15db0",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 337,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-08-24T13:43:30Z",
+      "side": 1,
+      "message": "the max number of displayed sources (6) could use a #define with a comment for more readability",
+      "range": {
+        "startLine": 337,
+        "startChar": 77,
+        "endLine": 337,
+        "endChar": 78
+      },
+      "revId": "af31e7aa0ef2bae344bf202be0f635476173e5ad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
