@@ -440,14 +440,17 @@ IceTransport::Impl::Impl(const char* name,
 
 IceTransport::Impl::~Impl()
 {
+    JAMI_ERR("@@@IceTransport::Impl::~Impl()");
     JAMI_DBG("[ice:%p] destroying", this);
     sip_utils::register_thread();
     threadTerminateFlags_ = true;
     iceCV_.notify_all();
+    JAMI_ERR("@@@IceTransport::Impl::~Impl() 1");
 
     if (thread_.joinable())
         thread_.join();
 
+    JAMI_ERR("@@@IceTransport::Impl::~Impl() 2");
     {
         std::lock_guard<std::mutex> lk {iceMutex_};
         icest_.reset(); // must be done before ioqueue/timer destruction
@@ -458,6 +461,7 @@ IceTransport::Impl::~Impl()
 
     if (config_.stun_cfg.timer_heap)
         pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
+    JAMI_ERR("@@@IceTransport::Impl::~Impl() END");
 }
 
 bool

@@ -62,7 +62,7 @@ public:
     virtual ~Stream() { close(); }
     virtual void close() noexcept {}
     virtual DRing::DataTransferId getId() const = 0;
-    virtual bool read(std::vector<uint8_t>& buffer) const
+    virtual bool read(std::vector<uint8_t>& buffer)
     {
         (void) buffer;
         return false;

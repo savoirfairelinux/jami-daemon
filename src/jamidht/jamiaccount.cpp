@@ -1295,7 +1295,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                         Migration::setState(getAccountID(), Migration::State::SUCCESS);
                     }
 
-                if (not info.photo.empty() or not displayName_.empty())
+                    if (not info.photo.empty() or not displayName_.empty())
                         emitSignal<DRing::ConfigurationSignal::AccountProfileReceived>(getAccountID(),
                                                                                        displayName_,
                                                                                        info.photo);
@@ -2255,6 +2255,7 @@ JamiAccount::doRegister_()
         connectionManager_->onConnectionReady([this](const std::string& deviceId,
                                                      const std::string& name,
                                                      std::shared_ptr<ChannelSocket> channel) {
+            JAMI_ERR("@@@@ onConnectionReady");
             if (channel) {
                 auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
                 if (!cert || !cert->issuer)

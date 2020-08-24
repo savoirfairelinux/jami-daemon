@@ -813,7 +813,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                     std::error_code ec;
                     if (endpoint_->waitForData(std::chrono::milliseconds(100), ec) > 0) {
                         std::vector<uint8_t> buf(IO_BUFFER_SIZE);
-                        JAMI_DBG("A good buffer arrived before any input or output attachment");
+                        JAMI_ERR("@@@ A good buffer arrived before any input or output attachment");
                         auto size = endpoint_->read(buf, ec);
                         if (ec)
                             throw std::system_error(ec);
@@ -860,6 +860,8 @@ PeerConnection::PeerConnectionImpl::eventLoop()
             if (!stream)
                 return false;
             buf.resize(IO_BUFFER_SIZE);
+            if (!bufferPool_.empty())
+                JAMI_ERR("@@@");
             if (stream->read(buf)) {
                 if (not buf.empty()) {
                     endpoint_->write(buf, ec);
@@ -871,6 +873,8 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                 // EOF on outgoing stream => finished
                 return false;
             }
+            if (!bufferPool_.empty())
+                JAMI_ERR("@@@");
             if (!bufferPool_.empty()) {
                 stream->write(bufferPool_);
                 bufferPool_.clear();
@@ -889,6 +893,8 @@ PeerConnection::PeerConnectionImpl::eventLoop()
         handle_stream_list(outputs_, [&](auto& stream) {
             if (!stream)
                 return false;
+            if (!bufferPool_.empty())
+                JAMI_ERR("@@@");
             buf.resize(IO_BUFFER_SIZE);
             auto eof = stream->read(buf);
             // if eof we let a chance to send a reply before leaving
@@ -900,6 +906,8 @@ PeerConnection::PeerConnectionImpl::eventLoop()
             if (not eof)
                 return false;
 
+            if (!bufferPool_.empty())
+                JAMI_ERR("@@@");
             if (!bufferPool_.empty()) {
                 stream->write(bufferPool_);
                 bufferPool_.clear();
