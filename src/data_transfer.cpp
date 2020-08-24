@@ -85,21 +85,30 @@ public:
 
     void bytesProgress(int64_t& total, int64_t& progress) const
     {
+        JAMI_ERR("### LOCK?");
         std::lock_guard<std::mutex> lk {infoMutex_};
+        JAMI_ERR("### LOCK!");
         total = info_.totalSize;
         progress = info_.bytesProgress;
+        JAMI_ERR("### LOCK END");
     }
 
     void setBytesProgress(int64_t progress) const
     {
+        JAMI_ERR("### LOCK?");
         std::lock_guard<std::mutex> lk {infoMutex_};
+        JAMI_ERR("### LOCK!");
         info_.bytesProgress = progress;
+        JAMI_ERR("### LOCK END");
     }
 
     void info(DRing::DataTransferInfo& info) const
     {
+        JAMI_ERR("### LOCK?");
         std::lock_guard<std::mutex> lk {infoMutex_};
+        JAMI_ERR("### LOCK!");
         info = info_;
+        JAMI_ERR("### LOCK END");
     }
 
     DRing::DataTransferInfo info() const { return info_; }
@@ -122,12 +131,18 @@ void
 DataTransfer::emit(DRing::DataTransferEventCode code) const
 {
     {
+        JAMI_ERR("### LOCK?");
         std::lock_guard<std::mutex> lk {infoMutex_};
+        JAMI_ERR("### LOCK!");
         info_.lastEvent = code;
+        JAMI_ERR("### LOCK END");
     }
     if (internalCompletionCb_)
         return; // VCard transfer is just for the daemon
-    emitSignal<DRing::DataTransferSignal::DataTransferEvent>(id, uint32_t(code));
+
+    runOnMainThread([id = id, code]() {
+        emitSignal<DRing::DataTransferSignal::DataTransferEvent>(id, uint32_t(code));
+    });
 }
 
 //==============================================================================
@@ -267,7 +282,7 @@ public:
 
     void close() noexcept override;
     void closeAndEmit(DRing::DataTransferEventCode code) const noexcept;
-    bool read(std::vector<uint8_t>&) const override;
+    bool read(std::vector<uint8_t>&) override;
     bool write(const std::vector<uint8_t>& buffer) override;
     void emit(DRing::DataTransferEventCode code) const override;
 
@@ -332,7 +347,7 @@ private:
             JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
             if (internalCompletionCb_)
                 internalCompletionCb_(info_.path);
-            emit(DRing::DataTransferEventCode::finished);
+            closeAndEmit(DRing::DataTransferEventCode::finished);
         });
     }
 
@@ -383,12 +398,16 @@ SubOutgoingFileTransfer::closeAndEmit(DRing::DataTransferEventCode code) const n
     started_ = false; // NOTE: replace DataTransfer::close(); which is non const
     input_.close();
 
-    if (info_.lastEvent < DRing::DataTransferEventCode::finished)
+    if (info_.lastEvent < DRing::DataTransferEventCode::finished) {
+        if (auto account = Manager::instance().getAccount<JamiAccount>(info_.accountId))
+            account->closePeerConnection(peerUri_, id);
+
         emit(code);
+    }
 }
 
 bool
-SubOutgoingFileTransfer::read(std::vector<uint8_t>& buf) const
+SubOutgoingFileTransfer::read(std::vector<uint8_t>& buf)
 {
     // Need to send headers?
     if (!headerSent_) {
@@ -415,7 +434,7 @@ SubOutgoingFileTransfer::read(std::vector<uint8_t>& buf) const
     // File end reached?
     if (input_.eof()) {
         JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
-        emit(DRing::DataTransferEventCode::finished);
+        closeAndEmit(DRing::DataTransferEventCode::finished);
         return false;
     }
 
@@ -437,7 +456,7 @@ SubOutgoingFileTransfer::write(const std::vector<uint8_t>& buffer)
         } else {
             // consider any other response as a cancel msg
             JAMI_WARN() << "FTP#" << getId() << ": refused by peer";
-            emit(DRing::DataTransferEventCode::closed_by_peer);
+            closeAndEmit(DRing::DataTransferEventCode::closed_by_peer);
             return false;
         }
     }
@@ -656,7 +675,30 @@ IncomingFileTransfer::close() noexcept
         std::lock_guard<std::mutex> lk {infoMutex_};
         if (info_.lastEvent >= DRing::DataTransferEventCode::finished)
             return;
+
+        if (info_.bytesProgress >= info_.totalSize) {
+            info_.lastEvent = DRing::DataTransferEventCode::finished;
+        } else if (!internalCompletionCb_) {
+            info_.lastEvent = DRing::DataTransferEventCode::closed_by_host;
+        }
     }
+
+    if (info_.bytesProgress >= info_.totalSize) {
+        if (internalCompletionCb_)
+            internalCompletionCb_(info_.path);
+        else {
+            runOnMainThread([id = id]() {
+                emitSignal<DRing::DataTransferSignal::DataTransferEvent>(
+                    id, uint32_t(DRing::DataTransferEventCode::finished));
+            });
+        }
+    } else if (!internalCompletionCb_) {
+        runOnMainThread([id = id]() {
+            emitSignal<DRing::DataTransferSignal::DataTransferEvent>(
+                id, uint32_t(DRing::DataTransferEventCode::closed_by_host));
+        });
+    }
+
     DataTransfer::close();
 
     try {
@@ -667,12 +709,6 @@ IncomingFileTransfer::close() noexcept
     fout_.close();
 
     JAMI_DBG() << "[FTP] file closed, rx " << info_.bytesProgress << " on " << info_.totalSize;
-    if (info_.bytesProgress >= info_.totalSize) {
-        if (internalCompletionCb_)
-            internalCompletionCb_(info_.path);
-        emit(DRing::DataTransferEventCode::finished);
-    } else
-        emit(DRing::DataTransferEventCode::closed_by_host);
 }
 
 void
@@ -697,8 +733,10 @@ IncomingFileTransfer::write(const uint8_t* buffer, std::size_t length)
     fout_.write(reinterpret_cast<const char*>(buffer), length);
     if (!fout_)
         return false;
+    JAMI_ERR("### LOCK?");
     std::lock_guard<std::mutex> lk {infoMutex_};
     info_.bytesProgress += length;
+    JAMI_ERR("### LOCK END");
     return true;
 }
 
@@ -730,8 +768,11 @@ DataTransferFacade::Impl::cancel(DataTransfer& transfer)
 std::shared_ptr<DataTransfer>
 DataTransferFacade::Impl::getTransfer(const DRing::DataTransferId& id)
 {
+    JAMI_ERR("@@@@ LOCK1?");
     std::lock_guard<std::mutex> lk {mapMutex_};
+    JAMI_ERR("@@@@ LOCK1!");
     const auto& iter = map_.find(id);
+    JAMI_ERR("@@@@ LOCK1 END");
     if (iter == std::end(map_))
         return {};
     return iter->second;
@@ -745,8 +786,11 @@ DataTransferFacade::Impl::createOutgoingFileTransfer(const DRing::DataTransferIn
     tid = generateUID();
     auto transfer = std::make_shared<OutgoingFileTransfer>(tid, info, cb);
     {
+        JAMI_ERR("@@@@ LOCK2?");
         std::lock_guard<std::mutex> lk {mapMutex_};
+        JAMI_ERR("@@@@ LOCK2!");
         map_.emplace(tid, transfer);
+        JAMI_ERR("@@@@ LOCK2 END");
     }
     transfer->emit(DRing::DataTransferEventCode::created);
     return transfer;
@@ -760,8 +804,11 @@ DataTransferFacade::Impl::createIncomingFileTransfer(const DRing::DataTransferIn
     auto tid = generateUID();
     auto transfer = std::make_shared<IncomingFileTransfer>(tid, info, internal_id, cb);
     {
+        JAMI_ERR("@@@@ LOCK3?");
         std::lock_guard<std::mutex> lk {mapMutex_};
+        JAMI_ERR("@@@@ LOCK3!");
         map_.emplace(tid, transfer);
+        JAMI_ERR("@@@@ LOCK3 END");
     }
     transfer->emit(DRing::DataTransferEventCode::created);
     return transfer;
@@ -800,7 +847,9 @@ DataTransferFacade::~DataTransferFacade()
 std::vector<DRing::DataTransferId>
 DataTransferFacade::list() const noexcept
 {
+    JAMI_ERR("@@@@ LOCK");
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
+    JAMI_ERR("@@@@ LOCK!");
     return map_utils::extractKeys(pimpl_->map_);
 }
 
@@ -866,7 +915,9 @@ DataTransferFacade::acceptAsFile(const DRing::DataTransferId& id,
                                  const std::string& file_path,
                                  int64_t offset) noexcept
 {
+    JAMI_ERR("@@@@ LOCK");
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
+    JAMI_ERR("@@@@ LOCK!");
     const auto& iter = pimpl_->map_.find(id);
     if (iter == std::end(pimpl_->map_))
         return DRing::DataTransferError::invalid_argument;
@@ -875,6 +926,7 @@ DataTransferFacade::acceptAsFile(const DRing::DataTransferId& id,
 #else
     iter->second->accept(file_path, offset);
 #endif
+    JAMI_ERR("@@@@ LOCK END");
     return DRing::DataTransferError::success;
 }
 
@@ -892,13 +944,18 @@ DataTransferFacade::cancel(const DRing::DataTransferId& id) noexcept
 void
 DataTransferFacade::close(const DRing::DataTransferId& id) noexcept
 {
+    JAMI_ERR("@@@@ LOCK");
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
+    JAMI_ERR("@@@@ LOCK!");
     const auto& iter = pimpl_->map_.find(static_cast<uint64_t>(id));
     if (iter != std::end(pimpl_->map_)) {
         // NOTE: don't erase from map. The client can retrieve
         // related info() to know if the file is finished.
+        JAMI_ERR("#### CLOSE?");
         iter->second->close();
+        JAMI_ERR("#### CLOSE!");
     }
+    JAMI_ERR("@@@@ LOCK END");
 }
 
 DRing::DataTransferError
@@ -949,6 +1006,7 @@ IncomingFileInfo
 DataTransferFacade::onIncomingFileRequest(const DRing::DataTransferId& id)
 {
     if (auto transfer = std::static_pointer_cast<IncomingFileTransfer>(pimpl_->getTransfer(id))) {
+        JAMI_ERR("@@@ onIncomingFileRequest");
         auto filename = transfer->requestFilename();
         if (!filename.empty() && transfer->start())
             return {id, std::static_pointer_cast<Stream>(transfer)};

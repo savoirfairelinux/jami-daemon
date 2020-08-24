@@ -35,9 +35,11 @@ ChanneledOutgoingTransfer::ChanneledOutgoingTransfer(const std::shared_ptr<Chann
 
 ChanneledOutgoingTransfer::~ChanneledOutgoingTransfer()
 {
+    JAMI_ERR("@@@ DESTROY");
     channel_->setOnRecv({});
     file_->setOnRecv({});
     channel_->shutdown();
+    JAMI_ERR("@@@ DESTROY END");
 }
 
 std::string
@@ -53,6 +55,8 @@ ChanneledOutgoingTransfer::linkTransfer(const std::shared_ptr<Stream>& file)
         return;
     file_ = file;
     channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
+        JAMI_ERR("@@@ %u", len);
+
         dht::ThreadPool::io().run(
             [rx = std::vector<uint8_t>(buf, buf + len), file = std::weak_ptr<Stream>(file_)] {
                 if (auto f = file.lock())
@@ -62,6 +66,7 @@ ChanneledOutgoingTransfer::linkTransfer(const std::shared_ptr<Stream>& file)
     });
     file_->setOnRecv(
         [channel = std::weak_ptr<ChannelSocket>(channel_)](std::vector<uint8_t>&& data) {
+            JAMI_ERR("@@@ %u", data.size());
             if (auto c = channel.lock()) {
                 std::error_code ec;
                 c->write(data.data(), data.size(), ec);

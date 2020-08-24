@@ -77,21 +77,32 @@ public:
             return;
         stop.store(true);
         isShutdown_ = true;
-        if (onShutdown_)
+        if (onShutdown_) {
+            JAMI_ERR("@@@@@@ DOWN1");
             onShutdown_();
+            JAMI_ERR("@@@@@@ DOWN2");
+        }
         if (endpoint) {
+            JAMI_ERR("@@@@@@ DOWN3");
             std::unique_lock<std::mutex> lk(writeMtx);
+            JAMI_ERR("@@@@@@ DOWN4");
             endpoint->shutdown();
+            JAMI_ERR("@@@@@@ DOWN5");
         }
         std::lock_guard<std::mutex> lkSockets(socketsMutex);
         for (auto& socket : sockets) {
             // Just trigger onShutdown() to make client know
             // No need to write the EOF for the channel, the write will fail because endpoint is
             // already shutdown
-            if (socket.second)
+            if (socket.second) {
+                JAMI_ERR("@@@@@@ DOWN6");
                 socket.second->stop();
+                JAMI_ERR("@@@@@@ DOWN7");
+            }
         }
+        JAMI_ERR("@@@@@@ DOWN8");
         sockets.clear();
+        JAMI_ERR("@@@@@@ DOWN9");
     }
 
     /**
@@ -147,7 +158,9 @@ MultiplexedSocket::Impl::eventLoop()
     endpoint->setOnStateChange([this](tls::TlsSessionState state) {
         if (state == tls::TlsSessionState::SHUTDOWN && !isShutdown_) {
             JAMI_INFO("Tls endpoint is down, shutdown multiplexed socket");
+            JAMI_ERR("@@@@@@ SHUT");
             shutdown();
+            JAMI_ERR("@@@@@@ SHUT END");
             return false;
         }
         return true;
