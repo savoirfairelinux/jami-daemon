@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8d38e03f_974d09cb",
+        "filename": "src/jamidht/channeled_transfers.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-24T21:40:08Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027size_t\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "58972b3be1299356e61eb6a4f8863dd8b32ff914",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b8128ec1_543de69e",
+        "filename": "src/jamidht/channeled_transfers.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-24T21:40:08Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "58972b3be1299356e61eb6a4f8863dd8b32ff914",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "a0bb1452_b0fcf588",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 793,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-24T21:40:08Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027DRing::DataTransferId\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "58972b3be1299356e61eb6a4f8863dd8b32ff914",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c11be59d_57b00d5c",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 801,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-24T21:40:08Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::map\u003cstd::pair\u003cdht::Hash\u003c20\u003e, unsigned long\u003e, std::unique_ptr\u003cjami::DhtPeerConnector::Impl::ClientConnector, std::default_delete\u003cjami::DhtPeerConnector::Impl::ClientConnector\u003e \u003e, std::less\u003cstd::pair\u003cdht::Hash\u003c20\u003e, unsigned long\u003e \u003e, std::allocator\u003cstd::pair\u003cconst std::pair\u003cdht::Hash\u003c20\u003e, unsigned long\u003e, std::unique_ptr\u003cjami::DhtPeerConnector::Impl::ClientConnector, std::default_delete\u003cjami::DhtPeerConnector::Impl::ClientConnector\u003e \u003e \u003e \u003e \u003e::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "58972b3be1299356e61eb6a4f8863dd8b32ff914",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "78967ecf_6b049b67",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 803,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-24T21:40:08Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::map\u003cstd::pair\u003cdht::Hash\u003c20\u003e, unsigned long\u003e, std::unique_ptr\u003cjami::DhtPeerConnector::Impl::ClientConnector, std::default_delete\u003cjami::DhtPeerConnector::Impl::ClientConnector\u003e \u003e, std::less\u003cstd::pair\u003cdht::Hash\u003c20\u003e, unsigned long\u003e \u003e, std::allocator\u003cstd::pair\u003cconst std::pair\u003cdht::Hash\u003c20\u003e, unsigned long\u003e, std::unique_ptr\u003cjami::DhtPeerConnector::Impl::ClientConnector, std::default_delete\u003cjami::DhtPeerConnector::Impl::ClientConnector\u003e \u003e \u003e \u003e \u003e::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "58972b3be1299356e61eb6a4f8863dd8b32ff914",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
