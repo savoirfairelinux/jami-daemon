@@ -22,6 +22,30 @@
       "revId": "568c9adffae93c5297d232cd8981e58e24c5c77b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "335000d9_73b36fd3",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-08-24T14:14:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "38b2af29_126aff7f",
+      "range": {
+        "startLine": 193,
+        "startChar": 28,
+        "endLine": 193,
+        "endChar": 40
+      },
+      "revId": "568c9adffae93c5297d232cd8981e58e24c5c77b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
