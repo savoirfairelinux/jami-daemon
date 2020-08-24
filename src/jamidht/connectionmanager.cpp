@@ -710,6 +710,7 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId,
             return false;
         });
     mSock->onShutdown([w = weak(), deviceId, vid]() {
+        JAMI_ERR("@@@ in ConnectionManager::Impl");
         auto sthis = w.lock();
         if (!sthis)
             return;
@@ -728,7 +729,9 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId,
                 }
             }
         }
+        JAMI_ERR("@@@ in ConnectionManager::Impl 2");
         dht::ThreadPool::io().run([w, deviceId, vid] {
+            JAMI_ERR("@@@ in ConnectionManager::Impl3");
             auto sthis = w.lock();
             if (!sthis)
                 return;
@@ -768,6 +771,7 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId,
                 if (mxSockIt->second.empty())
                     sthis->multiplexedSockets_.erase(mxSockIt);
             }
+            JAMI_ERR("@@@ in ConnectionManager::Impl4");
         });
     });
     multiplexedSockets_[deviceId][vid] = std::move(mSock);
