@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "18fc8162_ce4842db",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-24T14:08:29Z",
+      "side": 1,
+      "message": "depend if the local is shown/attached.\n\ncalc_position is called in \"for (auto\u0026 x : sources_) {\" so yeah, sources_ is not empty",
+      "parentUuid": "a4f67c71_d2d53051",
+      "range": {
+        "startLine": 336,
+        "startChar": 58,
+        "endLine": 336,
+        "endChar": 73
+      },
+      "revId": "af31e7aa0ef2bae344bf202be0f635476173e5ad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "be64295c_fef15db0",
         "filename": "src/media/video/video_mixer.cpp",
         "patchSetId": 3
@@ -45,6 +69,30 @@
       "revId": "af31e7aa0ef2bae344bf202be0f635476173e5ad",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "22268eae_429fe7b7",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 337,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-24T14:08:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "be64295c_fef15db0",
+      "range": {
+        "startLine": 337,
+        "startChar": 77,
+        "endLine": 337,
+        "endChar": 78
+      },
+      "revId": "af31e7aa0ef2bae344bf202be0f635476173e5ad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
