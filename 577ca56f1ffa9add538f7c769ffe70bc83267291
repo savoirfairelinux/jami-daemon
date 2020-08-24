@@ -22,6 +22,53 @@
       "revId": "577ca56f1ffa9add538f7c769ffe70bc83267291",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "df62fadb_1122dc36",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-08-24T16:30:23Z",
+      "side": 1,
+      "message": "it\u0027s not unexpected behavior: std::duration can be negative: https://en.cppreference.com/w/cpp/chrono/duration\n\nAlso the case of negative or zero duration is handled just after.",
+      "parentUuid": "c845ce31_fc5d28b6",
+      "range": {
+        "startLine": 195,
+        "startChar": 15,
+        "endLine": 195,
+        "endChar": 44
+      },
+      "revId": "577ca56f1ffa9add538f7c769ffe70bc83267291",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b8d5fd60_afe19b2a",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-08-24T16:30:23Z",
+      "side": 1,
+      "message": "this would create video clock drift and break framerate computation.",
+      "range": {
+        "startLine": 198,
+        "startChar": 19,
+        "endLine": 198,
+        "endChar": 52
+      },
+      "revId": "577ca56f1ffa9add538f7c769ffe70bc83267291",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
