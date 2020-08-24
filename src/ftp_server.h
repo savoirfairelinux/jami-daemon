@@ -40,7 +40,7 @@ public:
               const DRing::DataTransferId& outId = 0,
               InternalCompletionCb&& cb = {});
 
-    bool read(std::vector<uint8_t>& buffer) const override;
+    bool read(std::vector<uint8_t>& buffer) override;
     bool write(const std::vector<uint8_t>& buffer) override;
     DRing::DataTransferId getId() const override;
     void close() noexcept override;
