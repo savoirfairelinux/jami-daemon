@@ -46,6 +46,13 @@ public:
     void close() noexcept override;
 
     void setOnRecv(RecvCb&& cb) { onRecvCb_ = cb; }
+    void setOnStateChangedCb(const OnStateChangedCb& cb)
+    {
+        if (out_.stream)
+            out_.stream->setOnStateChangedCb(std::move(cb));
+        else
+            tmpOnStateChangedCb_ = cb;
+    }
 
 private:
     bool parseStream(const std::vector<uint8_t>&);
@@ -77,6 +84,7 @@ private:
 
     RecvCb onRecvCb_ {};
     InternalCompletionCb cb_ {};
+    OnStateChangedCb tmpOnStateChangedCb_ {};
 };
 
 } // namespace jami
