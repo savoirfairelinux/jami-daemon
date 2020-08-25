@@ -144,4 +144,12 @@ getCallMediaHandlerStatus()
         .getCallServicesManager()
         .getCallMediaHandlerStatus();
 }
+
+bool
+addValueToPreference(const std::string& pluginId,
+                     const std::string& preferenceKey,
+                     const std::string& value)
+{
+    return jami::Manager::instance().getJamiPluginManager().addValueToPreference(pluginId, preferenceKey, value);
+}
 } // namespace DRing
