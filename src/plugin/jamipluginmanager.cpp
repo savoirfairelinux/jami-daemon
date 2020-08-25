@@ -23,6 +23,7 @@
 
 #include <sstream>
 #include <fstream>
+#include <filesystem>
 #include <regex>
 #include <stdexcept>
 
@@ -372,6 +373,7 @@ std::vector<std::map<std::string, std::string>>
 JamiPluginManager::getPluginPreferences(const std::string& rootPath)
 {
     const std::string preferenceFilePath = getPreferencesConfigFilePath(rootPath);
+    std::map<std::string, std::map<std::string, std::string>> userPreferences = getUserPreferencesValuesMap(rootPath);
     std::ifstream file(preferenceFilePath);
     Json::Value root;
     Json::CharReaderBuilder rbuilder;
@@ -389,10 +391,30 @@ JamiPluginManager::getPluginPreferences(const std::string& rootPath)
                 std::string key = jsonPreference.get("key", "None").asString();
                 if (type != "None" && key != "None") {
                     if (keys.find(key) == keys.end()) {
-                        const auto& preferenceAttributes = parsePreferenceConfig(jsonPreference,
+                        auto& preferenceAttributes = parsePreferenceConfig(jsonPreference,
                                                                                  type);
                         // If the parsing of the attributes was successful, commit the map and the key
                         if (!preferenceAttributes.empty()) {
+                            if (!userPreferences[key].empty()) {
+                                preferenceAttributes["entryValues"]
+                                    = userPreferences[key]["entryValues"];
+                                preferenceAttributes["entries"]
+                                    = userPreferences[key]["entries"];
+                            }
+
+                            preferenceAttributes["entryValues"]
+                                = std::regex_replace(preferenceAttributes["entryValues"],
+                                                     std::regex("\\["), "$2");
+                            preferenceAttributes["entryValues"]
+                                = std::regex_replace(preferenceAttributes["entryValues"],
+                                                     std::regex("\\]"), "$2");
+                            preferenceAttributes["entries"]
+                                = std::regex_replace(preferenceAttributes["entries"],
+                                                     std::regex("\\["), "$2");
+                            preferenceAttributes["entries"]
+                                = std::regex_replace(preferenceAttributes["entries"],
+                                                     std::regex("\\]"), "$2");
+
                             preferences.push_back(std::move(preferenceAttributes));
                             keys.insert(key);
                         }
@@ -414,6 +436,41 @@ JamiPluginManager::getPluginUserPreferencesValuesMap(const std::string& rootPath
     const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePath(rootPath);
     std::ifstream file(preferencesValuesFilePath, std::ios::binary);
     std::map<std::string, std::string> rmap;
+
+    // If file is accessible
+    if (file.good()) {
+        std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
+        // Get file size
+        std::string str;
+        file.seekg(0, std::ios::end);
+        size_t fileSize = static_cast<size_t>(file.tellg());
+        // If not empty
+        if (fileSize > 0) {
+            // Read whole file content and put it in the string str
+            str.reserve(static_cast<size_t>(file.tellg()));
+            file.seekg(0, std::ios::beg);
+            str.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            file.close();
+            try {
+                // Unpack the string
+                msgpack::object_handle oh = msgpack::unpack(str.data(), str.size());
+                // Deserialized object is valid during the msgpack::object_handle instance is alive.
+                msgpack::object deserialized = oh.get();
+                deserialized.convert(rmap);
+            } catch (const std::exception& e) {
+                JAMI_ERR() << e.what();
+            }
+        }
+    }
+    return rmap;
+}
+
+std::map<std::string, std::map<std::string, std::string>>
+JamiPluginManager::getUserPreferencesValuesMap(const std::string& rootPath)
+{
+    const std::string preferencesValuesFilePath = pluginAddedPreferencesValuesFilePath(rootPath);
+    std::ifstream file(preferencesValuesFilePath, std::ios::binary);
+    std::map<std::string, std::map<std::string, std::string>> rmap;
 
     // If file is accessible
     if (file.good()) {
@@ -517,6 +574,71 @@ JamiPluginManager::resetPluginPreferencesValuesMap(const std::string& rootPath)
     }
 
     return returnValue;
+}
+
+void
+JamiPluginManager::copyFileToPluginData(const std::string& pluginId,
+                                        const std::string& value,
+                                        const std::string& preferenceCategory,
+                                        std::string& fileName,
+                                        std::string& fileExt)
+{
+    const std::string destinationDir {pluginId + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH
+                                      + preferenceCategory + DIR_SEPARATOR_CH};
+    fileName = value;
+    const size_t last_slash_idx = fileName.find_last_of(DIR_SEPARATOR_STR_ESC);
+    if (std::string::npos != last_slash_idx) {
+        fileName.erase(0, last_slash_idx + 1);
+    }
+
+    fileExt = fileName;
+
+    fileExt = fileExt.substr(fileExt.find_last_of("."));
+
+    // Remove extension if present.
+    const size_t period_idx = fileName.rfind('.');
+    if (std::string::npos != period_idx) {
+        fileName.erase(period_idx);
+    }
+    const auto copyOptions = std::filesystem::copy_options::update_existing;
+    std::filesystem::copy(value, destinationDir + fileName + fileExt, copyOptions);
+}
+
+bool
+JamiPluginManager::addValueToPreference(const std::string& pluginId,
+    const std::string& preferenceKey,
+    const std::string& value)
+{
+    bool status = false;
+    std::map<std::string, std::map<std::string, std::string>> userPreferences
+        = getUserPreferencesValuesMap(pluginId);
+    std::vector<std::map<std::string, std::string>> preferences = getPluginPreferences(
+        pluginId);
+
+    for (auto& preference : preferences) {
+        if (preference["key"] == preferenceKey) {
+            std::string fileName, fileExt;
+            copyFileToPluginData(pluginId, value, preference["category"], fileName, fileExt);
+            userPreferences[preferenceKey]["entries"] = preference["entries"] + "," + fileName;
+            userPreferences[preferenceKey]["entryValues"] = preference["entryValues"] + "," + fileName + fileExt;
+
+            const std::string preferencesValuesFilePath = pluginAddedPreferencesValuesFilePath(
+                pluginId);
+            std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
+            if (!fs.good()) {
+                return false;
+            }
+            try {
+                std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
+                msgpack::pack(fs, userPreferences);
+                status = true;
+            } catch (const std::exception& e) {
+                status = false;
+                JAMI_ERR() << e.what();
+            }
+        }
+    }
+    return status;
 }
 
 std::map<std::string, std::string>

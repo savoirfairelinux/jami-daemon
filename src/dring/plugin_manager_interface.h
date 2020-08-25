@@ -53,4 +53,7 @@ DRING_PUBLIC std::map<std::string,std::string> getCallMediaHandlerDetails(const 
 DRING_PUBLIC bool getPluginsEnabled();
 DRING_PUBLIC void setPluginsEnabled(bool state);
 DRING_PUBLIC std::map<std::string,std::string> getCallMediaHandlerStatus();
+DRING_PUBLIC bool addValueToPreference(const std::string& pluginId,
+                                       const std::string& preferenceKey,
+                                       const std::string& value);
 }
