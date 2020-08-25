@@ -24,6 +24,7 @@
 #include <memory>
 
 #include "dring/datatransfer_interface.h"
+#include "data_transfer.h"
 
 namespace jami {
 
@@ -34,12 +35,13 @@ class FtpServer;
 class ChanneledOutgoingTransfer
 {
 public:
-    ChanneledOutgoingTransfer(const std::shared_ptr<ChannelSocket>& channel);
+    ChanneledOutgoingTransfer(const std::shared_ptr<ChannelSocket>& channel, OnStateChangedCb&& cb);
     ~ChanneledOutgoingTransfer();
     void linkTransfer(const std::shared_ptr<Stream>& file);
     std::string peer() const;
 
 private:
+    OnStateChangedCb stateChangedCb_ {};
     std::shared_ptr<ChannelSocket> channel_ {};
     std::shared_ptr<Stream> file_;
 };
@@ -48,7 +50,8 @@ class ChanneledIncomingTransfer
 {
 public:
     ChanneledIncomingTransfer(const std::shared_ptr<ChannelSocket>& channel,
-                              const std::shared_ptr<FtpServer>& ftp);
+                              const std::shared_ptr<FtpServer>& ftp,
+                              OnStateChangedCb&& cb);
     ~ChanneledIncomingTransfer();
     DRing::DataTransferId id() const;
 

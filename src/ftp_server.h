@@ -46,6 +46,16 @@ public:
     void close() noexcept override;
 
     void setOnRecv(RecvCb&& cb) { onRecvCb_ = cb; }
+    void setOnStateChangedCb(const OnStateChangedCb& cb)
+    {
+        // If out_ is not attached, store the callback
+        // inside a temporary object. Will be linked when out_.stream
+        // will be attached
+        if (out_.stream)
+            out_.stream->setOnStateChangedCb(std::move(cb));
+        else
+            tmpOnStateChangedCb_ = std::move(cb);
+    }
 
 private:
     bool parseStream(const std::vector<uint8_t>&);
@@ -77,6 +87,7 @@ private:
 
     RecvCb onRecvCb_ {};
     InternalCompletionCb cb_ {};
+    OnStateChangedCb tmpOnStateChangedCb_ {};
 };
 
 } // namespace jami

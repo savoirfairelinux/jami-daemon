@@ -110,12 +110,15 @@ public:
 
     virtual void cancel() {}
 
+    void setOnStateChangedCb(const OnStateChangedCb& cb) override;
+
 protected:
     mutable std::mutex infoMutex_;
     mutable DRing::DataTransferInfo info_;
     mutable std::atomic_bool started_ {false};
     std::atomic_bool wasStarted_ {false};
     InternalCompletionCb internalCompletionCb_ {};
+    OnStateChangedCb stateChangedCb_ {};
 };
 
 void
@@ -125,11 +128,19 @@ DataTransfer::emit(DRing::DataTransferEventCode code) const
         std::lock_guard<std::mutex> lk {infoMutex_};
         info_.lastEvent = code;
     }
+    if (stateChangedCb_)
+        stateChangedCb_(id, code);
     if (internalCompletionCb_)
         return; // VCard transfer is just for the daemon
     runOnMainThread([id = id, code]() {
         emitSignal<DRing::DataTransferSignal::DataTransferEvent>(id, uint32_t(code));
     });
+}
+
+void
+DataTransfer::setOnStateChangedCb(const OnStateChangedCb& cb)
+{
+    stateChangedCb_ = std::move(cb);
 }
 
 //==============================================================================
@@ -453,10 +464,12 @@ SubOutgoingFileTransfer::emit(DRing::DataTransferEventCode code) const
         std::lock_guard<std::mutex> lk {infoMutex_};
         info_.lastEvent = code;
     }
+    if (stateChangedCb_)
+        stateChangedCb_(id, code);
     metaInfo_->updateInfo(info_);
     if (code == DRing::DataTransferEventCode::wait_peer_acceptance) {
         timeoutThread_ = std::unique_ptr<std::thread>(new std::thread([this]() {
-            const auto TEN_MIN = 1000 * 60 * 10;
+            const auto TEN_MIN = 1000 * 30;
             const auto SLEEP_DURATION = 100;
             for (auto i = 0; i < TEN_MIN / SLEEP_DURATION; ++i) {
                 // 10 min before timeout
@@ -489,6 +502,7 @@ public:
                                                                      peer_uri,
                                                                      internalCompletionCb_,
                                                                      metaInfo_);
+        newTransfer->setOnStateChangedCb(stateChangedCb_);
         subtransfer_.emplace_back(newTransfer);
         newTransfer->start();
         return newTransfer;
