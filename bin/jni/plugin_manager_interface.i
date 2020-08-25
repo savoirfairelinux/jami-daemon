@@ -42,4 +42,7 @@ std::map<std::string,std::string> getCallMediaHandlerDetails(const std::string& 
 bool getPluginsEnabled();
 void setPluginsEnabled(bool state);
 std::map<std::string,std::string> getCallMediaHandlerStatus();
+bool addValueToPreference(const std::string& pluginId,
+                          const std::string& preferenceKey,
+                          const std::string& value);
 }
