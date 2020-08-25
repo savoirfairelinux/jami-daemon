@@ -22,6 +22,7 @@
 #pragma once
 
 #include "dring/datatransfer_interface.h"
+#include "data_transfer.h"
 #include "ip_utils.h"
 #include "generic_io.h"
 #include "security/diffie-hellman.h"
@@ -82,6 +83,8 @@ public:
     {
         // Not implemented
     }
+
+    virtual void setOnStateChangedCb(const OnStateChangedCb& cb) {}
 };
 
 //==============================================================================
@@ -268,6 +271,8 @@ public:
     bool hasStreamWithId(const DRing::DataTransferId& id);
 
     std::string getPeerUri() const;
+
+    void setOnStateChangedCb(const OnStateChangedCb&);
 
 private:
     class PeerConnectionImpl;

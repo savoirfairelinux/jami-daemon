@@ -36,6 +36,8 @@ struct IncomingFileInfo
 };
 
 typedef std::function<void(const std::string&)> InternalCompletionCb;
+typedef std::function<void(const DRing::DataTransferId&, const DRing::DataTransferEventCode&)>
+    OnStateChangedCb;
 
 /// Front-end to data transfer service
 class DataTransferFacade
