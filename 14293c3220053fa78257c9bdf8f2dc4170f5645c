@@ -19,6 +19,23 @@
     },
     {
       "key": {
+        "uuid": "081c5a5e_02f30ebd",
+        "filename": "src/jamidht/channeled_transfers.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-25T14:46:25Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027size_t\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "14293c3220053fa78257c9bdf8f2dc4170f5645c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "2bac5612_fef4ebb9",
         "filename": "src/jamidht/channeled_transfers.cpp",
         "patchSetId": 9
@@ -28,6 +45,23 @@
         "id": 5
       },
       "writtenOn": "2020-08-25T14:46:16Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "14293c3220053fa78257c9bdf8f2dc4170f5645c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "261aeb60_d968a32f",
+        "filename": "src/jamidht/channeled_transfers.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-25T14:46:25Z",
       "side": 1,
       "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
       "revId": "14293c3220053fa78257c9bdf8f2dc4170f5645c",
