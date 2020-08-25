@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "d92d2532_b8c6d36c",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 391,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-25T14:55:36Z",
+      "side": 1,
+      "message": "agree",
+      "parentUuid": "5a3881bc_b1b467cb",
+      "range": {
+        "startLine": 390,
+        "startChar": 8,
+        "endLine": 391,
+        "endChar": 55
+      },
+      "revId": "b489fe452afa0a24ffbc8e91965bda250fa7bfaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "0f0e9d83_430bed99",
         "filename": "src/data_transfer.cpp",
         "patchSetId": 2
@@ -36,6 +60,30 @@
       "writtenOn": "2020-08-25T14:30:06Z",
       "side": 1,
       "message": "not clear why mutable",
+      "range": {
+        "startLine": 535,
+        "startChar": 4,
+        "endLine": 535,
+        "endChar": 11
+      },
+      "revId": "b489fe452afa0a24ffbc8e91965bda250fa7bfaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "71883dbf_3ec850ba",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 535,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-25T14:55:36Z",
+      "side": 1,
+      "message": "used in const methods",
+      "parentUuid": "0f0e9d83_430bed99",
       "range": {
         "startLine": 535,
         "startChar": 4,
@@ -105,6 +153,30 @@
       "writtenOn": "2020-08-25T14:30:06Z",
       "side": 1,
       "message": "logic here is not clear and looks bug-prone.",
+      "range": {
+        "startLine": 661,
+        "startChar": 4,
+        "endLine": 684,
+        "endChar": 5
+      },
+      "revId": "b489fe452afa0a24ffbc8e91965bda250fa7bfaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "41a6c24d_3422f091",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 684,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-25T14:55:36Z",
+      "side": 1,
+      "message": "agree",
+      "parentUuid": "9ff71658_83d8611e",
       "range": {
         "startLine": 661,
         "startChar": 4,
