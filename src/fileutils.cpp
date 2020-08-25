@@ -1023,5 +1023,35 @@ accessFile(const std::string& file, int mode)
 #endif
 }
 
+std::string
+getFileName(const std::string& filePath)
+{
+    std::string fileName = filePath;
+    const size_t last_slash_idx = fileName.find_last_of(DIR_SEPARATOR_STR_ESC);
+    if (std::string::npos != last_slash_idx) {
+        fileName.erase(0, last_slash_idx + 1);
+    }
+    return fileName;
+}
+
+std::string
+removeExtension(const std::string& filePath)
+{
+    std::string fileName = filePath;
+    const size_t period_idx = fileName.rfind('.');
+    if (std::string::npos != period_idx) {
+        fileName.erase(period_idx);
+    }
+    return fileName;
+}
+
+std::string
+getExtension(const std::string& filePath)
+{
+    std::string fileExt = filePath;
+    fileExt.substr(fileExt.find_last_of('.'));
+    return fileExt;
+}
+
 } // namespace jami
 } // namespace fileutils
