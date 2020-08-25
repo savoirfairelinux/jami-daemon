@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5a3881bc_b1b467cb",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 391,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-08-25T14:30:06Z",
+      "side": 1,
+      "message": "should use callback. daatatransfer should not be aware of accounts",
+      "range": {
+        "startLine": 390,
+        "startChar": 8,
+        "endLine": 391,
+        "endChar": 55
+      },
+      "revId": "b489fe452afa0a24ffbc8e91965bda250fa7bfaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0f0e9d83_430bed99",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 535,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-08-25T14:30:06Z",
+      "side": 1,
+      "message": "not clear why mutable",
+      "range": {
+        "startLine": 535,
+        "startChar": 4,
+        "endLine": 535,
+        "endChar": 11
+      },
+      "revId": "b489fe452afa0a24ffbc8e91965bda250fa7bfaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "af60e85d_72bacae0",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 591,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-08-25T14:30:06Z",
+      "side": 1,
+      "message": "should use a callback",
+      "range": {
+        "startLine": 586,
+        "startChar": 4,
+        "endLine": 591,
+        "endChar": 5
+      },
+      "revId": "b489fe452afa0a24ffbc8e91965bda250fa7bfaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e1e48661_e57a11b9",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 668,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-08-25T14:30:06Z",
+      "side": 1,
+      "message": "not clear why the lastEvent (and so the general logic) depends on internalCompletionCb_",
+      "range": {
+        "startLine": 667,
+        "startChar": 16,
+        "endLine": 668,
+        "endChar": 75
+      },
+      "revId": "b489fe452afa0a24ffbc8e91965bda250fa7bfaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9ff71658_83d8611e",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 684,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-08-25T14:30:06Z",
+      "side": 1,
+      "message": "logic here is not clear and looks bug-prone.",
+      "range": {
+        "startLine": 661,
+        "startChar": 4,
+        "endLine": 684,
+        "endChar": 5
+      },
+      "revId": "b489fe452afa0a24ffbc8e91965bda250fa7bfaa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
