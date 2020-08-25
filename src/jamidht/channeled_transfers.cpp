@@ -29,8 +29,10 @@
 
 namespace jami {
 
-ChanneledOutgoingTransfer::ChanneledOutgoingTransfer(const std::shared_ptr<ChannelSocket>& channel)
+ChanneledOutgoingTransfer::ChanneledOutgoingTransfer(const std::shared_ptr<ChannelSocket>& channel,
+                                                     OnStateChangedCb&& cb)
     : channel_(channel)
+    , stateChangedCb_(cb)
 {}
 
 ChanneledOutgoingTransfer::~ChanneledOutgoingTransfer()
@@ -67,10 +69,12 @@ ChanneledOutgoingTransfer::linkTransfer(const std::shared_ptr<Stream>& file)
                 c->write(data.data(), data.size(), ec);
             }
         });
+    file_->setOnStateChangedCb(stateChangedCb_);
 }
 
 ChanneledIncomingTransfer::ChanneledIncomingTransfer(const std::shared_ptr<ChannelSocket>& channel,
-                                                     const std::shared_ptr<FtpServer>& ftp)
+                                                     const std::shared_ptr<FtpServer>& ftp,
+                                                     OnStateChangedCb&& cb)
     : ftp_(ftp)
     , channel_(channel)
 {
@@ -88,6 +92,7 @@ ChanneledIncomingTransfer::ChanneledIncomingTransfer(const std::shared_ptr<Chann
             c->write(data.data(), data.size(), ec);
         }
     });
+    ftp_->setOnStateChangedCb(cb);
 }
 
 ChanneledIncomingTransfer::~ChanneledIncomingTransfer()
