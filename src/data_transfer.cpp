@@ -127,7 +127,9 @@ DataTransfer::emit(DRing::DataTransferEventCode code) const
     }
     if (internalCompletionCb_)
         return; // VCard transfer is just for the daemon
-    emitSignal<DRing::DataTransferSignal::DataTransferEvent>(id, uint32_t(code));
+    runOnMainThread([id = id, code]() {
+        emitSignal<DRing::DataTransferSignal::DataTransferEvent>(id, uint32_t(code));
+    });
 }
 
 //==============================================================================
