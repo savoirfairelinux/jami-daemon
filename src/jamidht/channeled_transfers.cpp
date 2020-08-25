@@ -29,12 +29,17 @@
 
 namespace jami {
 
-ChanneledOutgoingTransfer::ChanneledOutgoingTransfer(const std::shared_ptr<ChannelSocket>& channel)
+ChanneledOutgoingTransfer::ChanneledOutgoingTransfer(const std::shared_ptr<ChannelSocket>& channel,
+                                                     OnStateChangedCb&& cb)
     : channel_(channel)
-{}
+    , stateChangedCb_(cb)
+{
+    JAMI_ERR("@@@ CREATE OUT");
+}
 
 ChanneledOutgoingTransfer::~ChanneledOutgoingTransfer()
 {
+    JAMI_ERR("@@@ DESTROY OUT");
     channel_->setOnRecv({});
     file_->setOnRecv({});
     channel_->shutdown();
@@ -62,18 +67,22 @@ ChanneledOutgoingTransfer::linkTransfer(const std::shared_ptr<Stream>& file)
     });
     file_->setOnRecv(
         [channel = std::weak_ptr<ChannelSocket>(channel_)](std::vector<uint8_t>&& data) {
+            JAMI_ERR("@@@ ON OUT");
             if (auto c = channel.lock()) {
                 std::error_code ec;
                 c->write(data.data(), data.size(), ec);
             }
         });
+    file_->setOnStateChangedCb(stateChangedCb_);
 }
 
 ChanneledIncomingTransfer::ChanneledIncomingTransfer(const std::shared_ptr<ChannelSocket>& channel,
-                                                     const std::shared_ptr<FtpServer>& ftp)
+                                                     const std::shared_ptr<FtpServer>& ftp,
+                                                     OnStateChangedCb&& cb)
     : ftp_(ftp)
     , channel_(channel)
 {
+    JAMI_ERR("@@@ CREATE In");
     channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
         dht::ThreadPool::io().run(
             [rx = std::vector<uint8_t>(buf, buf + len), ftp = std::weak_ptr<FtpServer>(ftp_)] {
@@ -84,14 +93,17 @@ ChanneledIncomingTransfer::ChanneledIncomingTransfer(const std::shared_ptr<Chann
     });
     ftp_->setOnRecv([channel = std::weak_ptr<ChannelSocket>(channel_)](std::vector<uint8_t>&& data) {
         if (auto c = channel.lock()) {
+            JAMI_ERR("@@@ ON IN");
             std::error_code ec;
             c->write(data.data(), data.size(), ec);
         }
     });
+    ftp_->setOnStateChangedCb(cb);
 }
 
 ChanneledIncomingTransfer::~ChanneledIncomingTransfer()
 {
+    JAMI_ERR("@@@ DESTROY IN");
     channel_->setOnRecv({});
     channel_->shutdown();
 }
