@@ -127,7 +127,10 @@ DataTransfer::emit(DRing::DataTransferEventCode code) const
     }
     if (internalCompletionCb_)
         return; // VCard transfer is just for the daemon
-    emitSignal<DRing::DataTransferSignal::DataTransferEvent>(id, uint32_t(code));
+
+    runOnMainThread([id = id, code]() {
+        emitSignal<DRing::DataTransferSignal::DataTransferEvent>(id, uint32_t(code));
+    });
 }
 
 //==============================================================================
@@ -332,7 +335,7 @@ private:
             JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
             if (internalCompletionCb_)
                 internalCompletionCb_(info_.path);
-            emit(DRing::DataTransferEventCode::finished);
+            closeAndEmit(DRing::DataTransferEventCode::finished);
         });
     }
 
@@ -383,8 +386,11 @@ SubOutgoingFileTransfer::closeAndEmit(DRing::DataTransferEventCode code) const n
     started_ = false; // NOTE: replace DataTransfer::close(); which is non const
     input_.close();
 
-    if (info_.lastEvent < DRing::DataTransferEventCode::finished)
+    if (info_.lastEvent < DRing::DataTransferEventCode::finished) {
+        if (auto account = Manager::instance().getAccount<JamiAccount>(info_.accountId))
+            account->closePeerConnection(peerUri_, id);
         emit(code);
+    }
 }
 
 bool
@@ -415,7 +421,7 @@ SubOutgoingFileTransfer::read(std::vector<uint8_t>& buf) const
     // File end reached?
     if (input_.eof()) {
         JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
-        emit(DRing::DataTransferEventCode::finished);
+        closeAndEmit(DRing::DataTransferEventCode::finished);
         return false;
     }
 
@@ -437,7 +443,7 @@ SubOutgoingFileTransfer::write(const std::vector<uint8_t>& buffer)
         } else {
             // consider any other response as a cancel msg
             JAMI_WARN() << "FTP#" << getId() << ": refused by peer";
-            emit(DRing::DataTransferEventCode::closed_by_peer);
+            closeAndEmit(DRing::DataTransferEventCode::closed_by_peer);
             return false;
         }
     }
@@ -656,6 +662,25 @@ IncomingFileTransfer::close() noexcept
         std::lock_guard<std::mutex> lk {infoMutex_};
         if (info_.lastEvent >= DRing::DataTransferEventCode::finished)
             return;
+        if (info_.bytesProgress >= info_.totalSize)
+            info_.lastEvent = DRing::DataTransferEventCode::finished;
+        else if (!internalCompletionCb_)
+            info_.lastEvent = DRing::DataTransferEventCode::closed_by_host;
+    }
+    if (info_.bytesProgress >= info_.totalSize) {
+        if (internalCompletionCb_) {
+            internalCompletionCb_(info_.path);
+        } else {
+            runOnMainThread([id = id]() {
+                emitSignal<DRing::DataTransferSignal::DataTransferEvent>(
+                    id, uint32_t(DRing::DataTransferEventCode::finished));
+            });
+        }
+    } else if (!internalCompletionCb_) {
+        runOnMainThread([id = id]() {
+            emitSignal<DRing::DataTransferSignal::DataTransferEvent>(
+                id, uint32_t(DRing::DataTransferEventCode::closed_by_host));
+        });
     }
     DataTransfer::close();
 
@@ -667,12 +692,6 @@ IncomingFileTransfer::close() noexcept
     fout_.close();
 
     JAMI_DBG() << "[FTP] file closed, rx " << info_.bytesProgress << " on " << info_.totalSize;
-    if (info_.bytesProgress >= info_.totalSize) {
-        if (internalCompletionCb_)
-            internalCompletionCb_(info_.path);
-        emit(DRing::DataTransferEventCode::finished);
-    } else
-        emit(DRing::DataTransferEventCode::closed_by_host);
 }
 
 void
