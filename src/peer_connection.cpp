@@ -766,11 +766,12 @@ public:
 
     const std::string peer_uri;
     Channel<std::unique_ptr<CtrlMsg>> ctrlChannel;
+    OnStateChangedCb stateChangedCb_;
+    std::vector<std::shared_ptr<Stream>> inputs_;
+    std::vector<std::shared_ptr<Stream>> outputs_;
 
 private:
     std::unique_ptr<SocketType> endpoint_;
-    std::vector<std::shared_ptr<Stream>> inputs_;
-    std::vector<std::shared_ptr<Stream>> outputs_;
     std::future<void> eventLoopFut_;
     std::vector<uint8_t> bufferPool_; // will store non rattached buffers
 
@@ -832,11 +833,13 @@ PeerConnection::PeerConnectionImpl::eventLoop()
             switch (msg->type()) {
             case CtrlMsgType::ATTACH_INPUT: {
                 auto& input_msg = static_cast<AttachInputCtrlMsg&>(*msg);
+                input_msg.stream->setOnStateChangedCb(stateChangedCb_);
                 inputs_.emplace_back(std::move(input_msg.stream));
             } break;
 
             case CtrlMsgType::ATTACH_OUTPUT: {
                 auto& output_msg = static_cast<AttachOutputCtrlMsg&>(*msg);
+                output_msg.stream->setOnStateChangedCb(stateChangedCb_);
                 outputs_.emplace_back(std::move(output_msg.stream));
             } break;
 
@@ -952,6 +955,16 @@ std::string
 PeerConnection::getPeerUri() const
 {
     return pimpl_->peer_uri;
+}
+
+void
+PeerConnection::setOnStateChangedCb(const OnStateChangedCb& cb)
+{
+    pimpl_->stateChangedCb_ = cb;
+    for (auto& input : pimpl_->inputs_)
+        input->setOnStateChangedCb(pimpl_->stateChangedCb_);
+    for (auto& output : pimpl_->outputs_)
+        output->setOnStateChangedCb(pimpl_->stateChangedCb_);
 }
 
 } // namespace jami

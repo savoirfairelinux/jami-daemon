@@ -85,6 +85,8 @@ FtpServer::startNewFile()
         JAMI_DBG() << "[FTP] transfer aborted by client";
         closed_ = true; // send NOK msg at next read()
     } else {
+        if (tmpOnStateChangedCb_)
+            out_.stream->setOnStateChangedCb(std::move(tmpOnStateChangedCb_));
         go_ = true;
     }
 
