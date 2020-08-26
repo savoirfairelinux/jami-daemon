@@ -57,6 +57,7 @@ public:
     void setFormat(const AudioFormat& fmt);
     void setMuted(bool isMuted);
     MediaStream getInfo() const;
+    MediaStream getInfo(const std::string& name) const;
     void updateStartTime(int64_t start);
     void setPaused(bool paused);
     void configureFilePlayback(const std::string& path,
