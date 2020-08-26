@@ -72,7 +72,6 @@ struct DeviceSync;
 struct AccountArchive;
 class ConnectionManager;
 class DhtPeerConnector;
-class PeerConnection;
 class ContactList;
 class AccountManager;
 struct AccountInfo;
@@ -366,7 +365,6 @@ public:
         const std::string& peer,
         const DRing::DataTransferId& tid,
         bool isVCard,
-        const std::function<void(PeerConnection*)>& connect_cb,
         const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
             channeledConnectedCb,
         const std::function<void()>& onChanneledCancelled);
@@ -377,7 +375,7 @@ public:
     /// /// \param[in] peer RingID on request's recipient
     /// /// \param[in] tid linked outgoing data transfer
     ///
-    void closePeerConnection(const std::string& peer, const DRing::DataTransferId& tid);
+    void closePeerConnection(const DRing::DataTransferId& tid);
 
     std::vector<std::string> publicAddresses();
 
