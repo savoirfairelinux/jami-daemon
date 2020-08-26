@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7908e4af_952ad38a",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-26T16:16:55Z",
+      "side": 1,
+      "message": "erase return an iterator\n\nhttps://en.cppreference.com/w/cpp/container/list/erase",
+      "range": {
+        "startLine": 90,
+        "startChar": 16,
+        "endLine": 90,
+        "endChar": 41
+      },
+      "revId": "1ccc25b9fed97726c5001d14a26b904db6b8b84e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
