@@ -29,6 +29,9 @@
 #include <memory>
 #include <vector>
 
+#include "audio/audio_input.h"
+
+
 #include <json/json.h>
 
 #include "recordable.h"
@@ -221,11 +224,17 @@ private:
     // We need to convert call to frame
     std::mutex videoToCallMtx_;
     std::map<Observable<std::shared_ptr<MediaFrame>>*, std::string> videoToCall_ {};
+    std::shared_ptr<RingBuffer> ghostRingBuffer_;
 
 #ifdef ENABLE_VIDEO
     std::string mediaInput_ {};
     std::shared_ptr<video::VideoMixer> videoMixer_;
 #endif
+
+    std::shared_ptr<jami::AudioInput> audioMixer_;
+
+    void initRecorder(std::shared_ptr<MediaRecorder>& rec);
+    void deinitRecorder(std::shared_ptr<MediaRecorder>& rec);
 };
 
 } // namespace jami

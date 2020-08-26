@@ -385,4 +385,12 @@ AudioInput::getInfo() const
     return ms;
 }
 
+MediaStream
+AudioInput::getInfo(const std::string& name) const
+{
+    std::lock_guard<std::mutex> lk(fmtMutex_);
+    auto ms = MediaStream(name, format_, sent_samples);
+    return ms;
+}
+
 } // namespace jami
