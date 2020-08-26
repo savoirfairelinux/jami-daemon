@@ -287,7 +287,7 @@ public:
     void cancel() override
     {
         if (auto account = Manager::instance().getAccount<JamiAccount>(info_.accountId))
-            account->closePeerConnection(peerUri_, id);
+            account->closePeerConnection(id);
     }
 
     void setOnRecv(std::function<void(std::vector<uint8_t>&&)>&& cb) override
@@ -597,7 +597,7 @@ public:
     {
         auto account = Manager::instance().getAccount<JamiAccount>(info_.accountId);
         if (account)
-            account->closePeerConnection(info_.peer, internalId_);
+            account->closePeerConnection(internalId_);
     }
 
 private:
@@ -734,7 +734,6 @@ public:
                                                                      InternalCompletionCb cb);
     std::shared_ptr<DataTransfer> getTransfer(const DRing::DataTransferId&);
     void cancel(DataTransfer&);
-    void onConnectionRequestReply(const DRing::DataTransferId&, PeerConnection*);
 };
 
 void
@@ -783,23 +782,6 @@ DataTransferFacade::Impl::createIncomingFileTransfer(const DRing::DataTransferIn
     return transfer;
 }
 
-void
-DataTransferFacade::Impl::onConnectionRequestReply(const DRing::DataTransferId& id,
-                                                   PeerConnection* connection)
-{
-    if (auto transfer = getTransfer(id)) {
-        if (connection) {
-            connection->attachInputStream(
-                std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)->startNewOutgoing(
-                    connection->getPeerUri()));
-        } else if (std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)->cancel(false)
-                   and not transfer->hasBeenStarted()) {
-            transfer->emit(DRing::DataTransferEventCode::unjoinable_peer);
-            cancel(*transfer);
-        }
-    }
-}
-
 //==============================================================================
 
 DataTransferFacade::DataTransferFacade()
@@ -846,16 +828,11 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
     try {
         // IMPLEMENTATION NOTE: requestPeerConnection() may call the given callback a multiple time.
         // This happen when multiple agents handle communications of the given peer for the given
-        // account. Example: Ring account supports multi-devices, each can answer to the request.
-        // NOTE: this will create a PeerConnection for each files. This connection need to be shut
-        // when finished
+        // account. Example: Jami account supports multi-devices, each can answer to the request.
         account->requestPeerConnection(
             info.peer,
             tid,
             static_cast<bool>(cb),
-            [this, tid](PeerConnection* connection) {
-                pimpl_->onConnectionRequestReply(tid, connection);
-            },
             [this, tid](const std::shared_ptr<ChanneledOutgoingTransfer>& out) {
                 if (auto transfer = pimpl_->getTransfer(tid))
                     if (out)

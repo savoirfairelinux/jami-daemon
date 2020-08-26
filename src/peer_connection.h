@@ -246,37 +246,4 @@ private:
     std::unique_ptr<Impl> pimpl_;
 };
 
-//==============================================================================
-
-class PeerConnection
-{
-public:
-    using SocketType = GenericSocket<uint8_t>;
-    PeerConnection(std::function<void()>&& done,
-                   const std::string& peer_uri,
-                   std::unique_ptr<SocketType> endpoint);
-
-    ~PeerConnection();
-
-    void attachOutputStream(const std::shared_ptr<Stream>& stream);
-
-    void attachInputStream(const std::shared_ptr<Stream>& stream);
-
-    /**
-     * Check if an input or output stream got the given id.
-     * NOTE: used by p2p to know which PeerConnection to close
-     * @param id to check
-     * @return if id is found
-     */
-    bool hasStreamWithId(const DRing::DataTransferId& id);
-
-    std::string getPeerUri() const;
-
-    void setOnStateChangedCb(const OnStateChangedCb&);
-
-private:
-    class PeerConnectionImpl;
-    std::unique_ptr<PeerConnectionImpl> pimpl_;
-};
-
 } // namespace jami

@@ -1178,11 +1178,10 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 auto label = d.second.name.empty() ? id.substr(0, 8) : d.second.name;
                 ids.emplace(std::move(id), std::move(label));
             }
-            dht::ThreadPool::computation().run([id=getAccountID(), devices=std::move(ids)] {
+            dht::ThreadPool::computation().run([id = getAccountID(), devices = std::move(ids)] {
                 emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(id, devices);
             });
-        }
-    };
+        }};
 
     try {
         auto onAsync = [w = weak()](AccountManager::AsyncUser&& cb) {
@@ -2367,7 +2366,6 @@ JamiAccount::doRegister_()
 
         if (!dhtPeerConnector_)
             dhtPeerConnector_ = std::make_unique<DhtPeerConnector>(*this);
-        dhtPeerConnector_->onDhtConnected(accountManager_->getInfo()->deviceId);
 
         std::lock_guard<std::mutex> bLock(buddyInfoMtx);
         for (auto& buddy : trackedBuddies_) {
@@ -2977,12 +2975,13 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
     std::set<std::string> devices;
     {
         std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
-        for (const auto& deviceConn: sipConnections_[uri]) {
+        for (const auto& deviceConn : sipConnections_[uri]) {
             devices.emplace(deviceConn.first);
         }
         sipConnections_.erase(uri);
 
-        for (auto pendingIt = pendingSipConnections_.begin(); pendingIt != pendingSipConnections_.end();) {
+        for (auto pendingIt = pendingSipConnections_.begin();
+             pendingIt != pendingSipConnections_.end();) {
             if (uri == pendingIt->first) {
                 devices.emplace(pendingIt->second);
                 pendingIt = pendingSipConnections_.erase(pendingIt);
@@ -2992,7 +2991,7 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
         }
     }
 
-    for (const auto& device: devices) {
+    for (const auto& device : devices) {
         if (connectionManager_)
             connectionManager_->closeConnectionsWith(device);
     }
@@ -3022,7 +3021,8 @@ std::vector<std::map<std::string, std::string>>
 JamiAccount::getTrustRequests() const
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
-    return accountManager_ ? accountManager_->getTrustRequests() : std::vector<std::map<std::string, std::string>>{};
+    return accountManager_ ? accountManager_->getTrustRequests()
+                           : std::vector<std::map<std::string, std::string>> {};
 }
 
 bool
@@ -3358,28 +3358,26 @@ JamiAccount::requestPeerConnection(
     const std::string& peer_id,
     const DRing::DataTransferId& tid,
     bool isVCard,
-    const std::function<void(PeerConnection*)>& connect_cb,
     const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
         channeledConnectedCb,
     const std::function<void()>& onChanneledCancelled)
 {
     if (not dhtPeerConnector_) {
-        runOnMainThread([onChanneledCancelled]{ onChanneledCancelled(); });
+        runOnMainThread([onChanneledCancelled] { onChanneledCancelled(); });
         return;
     }
     dhtPeerConnector_->requestConnection(peer_id,
                                          tid,
                                          isVCard,
-                                         connect_cb,
                                          channeledConnectedCb,
                                          onChanneledCancelled);
 }
 
 void
-JamiAccount::closePeerConnection(const std::string& peer, const DRing::DataTransferId& tid)
+JamiAccount::closePeerConnection(const DRing::DataTransferId& tid)
 {
     if (dhtPeerConnector_)
-        dhtPeerConnector_->closeConnection(peer, tid);
+        dhtPeerConnector_->closeConnection(tid);
 }
 
 void
