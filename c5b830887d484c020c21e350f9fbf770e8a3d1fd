@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ef1721cf_e7311cf2",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 201,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-08-26T14:06:09Z",
+      "side": 1,
+      "message": "can be simplified to\n\n  lastProcess_ +\u003d FRAME_DURATION;\n  const auto delay \u003d lastProcess_ - std::chrono::system_clock::now();",
+      "range": {
+        "startLine": 198,
+        "startChar": 4,
+        "endLine": 201,
+        "endChar": 86
+      },
+      "revId": "c5b830887d484c020c21e350f9fbf770e8a3d1fd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
