@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5f9464c3_db131e67",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 237,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-26T13:51:28Z",
+      "side": 1,
+      "message": "this is not related and from a bad rebase. checkout master",
+      "range": {
+        "startLine": 222,
+        "startChar": 16,
+        "endLine": 237,
+        "endChar": 25
+      },
+      "revId": "bffe3ad0bc2c8b21a62f5e6a0c44b3f5a1d3f7a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bc4c4ab6_0cb38b84",
+        "filename": "src/security/tlsvalidator.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 874,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-26T13:51:28Z",
+      "side": 1,
+      "message": "same not related",
+      "range": {
+        "startLine": 865,
+        "startChar": 0,
+        "endLine": 874,
+        "endChar": 18
+      },
+      "revId": "bffe3ad0bc2c8b21a62f5e6a0c44b3f5a1d3f7a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c1e9f4f9_8289700d",
+        "filename": "src/upnp/protocol/mapping.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-26T13:51:28Z",
+      "side": 1,
+      "message": "(not important) change in this file and the following are not related to that patch, but whatever, just clang",
+      "range": {
+        "startLine": 161,
+        "startChar": 2,
+        "endLine": 164,
+        "endChar": 19
+      },
+      "revId": "bffe3ad0bc2c8b21a62f5e6a0c44b3f5a1d3f7a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
