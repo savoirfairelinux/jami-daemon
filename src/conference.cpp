@@ -39,6 +39,8 @@
 
 namespace jami {
 
+const auto RECORDER_BUFFER_ID = "audio_recorder";
+
 Conference::Conference()
     : id_(Manager::instance().getNewCallID())
 #ifdef ENABLE_VIDEO
@@ -322,8 +324,11 @@ Conference::getDisplayNames() const
 bool
 Conference::toggleRecording()
 {
-    const bool startRecording = Recordable::toggleRecording();
-    return startRecording;
+    if (not isRecording())
+        initRecorder(recorder_);
+    else
+        deinitRecorder(recorder_);
+    return Recordable::toggleRecording();
 }
 
 const std::string&
@@ -350,5 +355,48 @@ Conference::getVideoMixer()
     return videoMixer_;
 }
 #endif
+
+void
+Conference::initRecorder(std::shared_ptr<MediaRecorder>& rec)
+{
+    // Video
+    if (videoMixer_) {
+        if (auto ob = rec->addStream(videoMixer_->getStream("v:mixer"))) {
+            videoMixer_->attach(ob);
+        }
+    }
+
+    // Audio
+    // Create ghost participant for ringbufferpool
+    auto& rbPool = Manager::instance().getRingBufferPool();
+    ghostRingBuffer_ = rbPool.createRingBuffer(RECORDER_BUFFER_ID);
+
+    // Bind it to ringbufferpool in order to get the all mixed frames
+    bindParticipant(RECORDER_BUFFER_ID);
+
+    // Add stream to recorder
+    audioMixer_ = jami::getAudioInput(RECORDER_BUFFER_ID);
+    if (auto ob = rec->addStream(audioMixer_->getInfo("a:mixer"))) {
+        audioMixer_->attach(ob);
+    }
+}
+
+void
+Conference::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
+{
+    // Video
+    if (videoMixer_) {
+        if (auto ob = rec->getStream("v:mixer")) {
+            videoMixer_->detach(ob);
+        }
+    }
+
+    // Audio
+    if (auto ob = rec->getStream("a:mixer"))
+        audioMixer_->detach(ob);
+    audioMixer_.reset();
+    Manager::instance().getRingBufferPool().unBindAll(RECORDER_BUFFER_ID);
+    ghostRingBuffer_.reset();
+}
 
 } // namespace jami

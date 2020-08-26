@@ -26,6 +26,7 @@
 #include "video_scaler.h"
 #include "threadloop.h"
 #include "rw_mutex.h"
+#include "media_stream.h"
 
 #include <list>
 #include <chrono>
@@ -82,6 +83,8 @@ public:
 
     void setOnSourcesUpdated(OnSourcesUpdatedCb&& cb) { onSourcesUpdated_ = std::move(cb); }
 
+    MediaStream getStream(std::string name) const;
+
 private:
     NON_COPYABLE(VideoMixer);
     struct VideoMixerSource;
@@ -117,6 +120,9 @@ private:
 
     std::atomic_int layoutUpdated_ {0};
     OnSourcesUpdatedCb onSourcesUpdated_ {};
+
+    int64_t startTime_;
+    int64_t lastTimestamp_;
 };
 
 } // namespace video

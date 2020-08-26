@@ -255,7 +255,7 @@ MediaRecorder::getStream(const std::string& name) const
 void
 MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame>& frame)
 {
-    if (!isRecording_)
+    if (not isRecording_)
         return;
 
     // copy frame to not mess with the original frame's pts (does not actually copy frame data)
@@ -280,7 +280,7 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
 #if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     clone->pointer()->pts = av_rescale_q_rnd(av_gettime() - startTimeStamp_,
                                              {1, AV_TIME_BASE},
-                                             ms.timeBase,
+                                             {1, ms.timeBase},
                                              static_cast<AVRounding>(AV_ROUND_NEAR_INF
                                                                      | AV_ROUND_PASS_MINMAX));
 #else
@@ -384,32 +384,46 @@ MediaRecorder::initRecord()
 MediaStream
 MediaRecorder::setupVideoOutput()
 {
-    MediaStream encoderStream, peer, local;
+    MediaStream encoderStream, peer, local, mixer;
     auto it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
         return pair.second->info.isVideo
                && pair.second->info.name.find("remote") != std::string::npos;
     });
-
-    if (it != streams_.end()) {
+    if (it != streams_.end())
         peer = it->second->info;
-    }
 
     it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
         return pair.second->info.isVideo
                && pair.second->info.name.find("local") != std::string::npos;
     });
-
-    if (it != streams_.end()) {
+    if (it != streams_.end())
         local = it->second->info;
-    }
+
+    it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
+        return pair.second->info.isVideo
+               && pair.second->info.name.find("mixer") != std::string::npos;
+    });
+    if (it != streams_.end())
+        mixer = it->second->info;
 
     // vp8 supports only yuv420p
     videoFilter_.reset(new MediaFilter);
     int ret = -1;
-    int streams = peer.isValid() + local.isValid();
+    int streams = peer.isValid() + local.isValid() + mixer.isValid();
     switch (streams) {
     case 1: {
-        auto inputStream = peer.isValid() ? peer : local;
+        MediaStream inputStream;
+        if (peer.isValid())
+            inputStream = peer;
+        else if (local.isValid())
+            inputStream = local;
+        else if (mixer.isValid())
+            inputStream = mixer;
+        else {
+            JAMI_ERR("Trying to record a stream but none is valid");
+            break;
+        }
+
         ret = videoFilter_->initialize(buildVideoFilter({}, inputStream), {inputStream});
         break;
     }
@@ -472,32 +486,45 @@ MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers,
 MediaStream
 MediaRecorder::setupAudioOutput()
 {
-    MediaStream encoderStream, peer, local;
+    MediaStream encoderStream, peer, local, mixer;
     auto it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
         return !pair.second->info.isVideo
                && pair.second->info.name.find("remote") != std::string::npos;
     });
-
-    if (it != streams_.end()) {
+    if (it != streams_.end())
         peer = it->second->info;
-    }
 
     it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
         return !pair.second->info.isVideo
                && pair.second->info.name.find("local") != std::string::npos;
     });
-
-    if (it != streams_.end()) {
+    if (it != streams_.end())
         local = it->second->info;
-    }
+
+    it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
+        return !pair.second->info.isVideo
+               && pair.second->info.name.find("mixer") != std::string::npos;
+    });
+    if (it != streams_.end())
+        local = it->second->info;
 
     // resample to common audio format, so any player can play the file
     audioFilter_.reset(new MediaFilter);
     int ret = -1;
-    int streams = peer.isValid() + local.isValid();
+    int streams = peer.isValid() + local.isValid() + mixer.isValid();
     switch (streams) {
     case 1: {
-        auto inputStream = peer.isValid() ? peer : local;
+        MediaStream inputStream;
+        if (peer.isValid())
+            inputStream = peer;
+        else if (local.isValid())
+            inputStream = local;
+        else if (mixer.isValid())
+            inputStream = mixer;
+        else {
+            JAMI_ERR("Trying to record a stream but none is valid");
+            break;
+        }
         ret = audioFilter_->initialize(buildAudioFilter({}, inputStream), {inputStream});
         break;
     }
