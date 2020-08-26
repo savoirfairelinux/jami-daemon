@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "b7bb7cdd_c2eccdbd",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 454,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-08-26T19:07:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4e215614_994256a5",
+      "range": {
+        "startLine": 454,
+        "startChar": 13,
+        "endLine": 454,
+        "endChar": 17
+      },
+      "revId": "c51d15a8d63ba264b73eadda239474c54fe71c98",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "6eee89dc_bd872b19",
         "filename": "src/plugin/mediahandler.h",
         "patchSetId": 11
@@ -36,6 +60,30 @@
       "writtenOn": "2020-08-26T16:14:35Z",
       "side": 1,
       "message": "never implemented",
+      "range": {
+        "startLine": 61,
+        "startChar": 3,
+        "endLine": 61,
+        "endChar": 65
+      },
+      "revId": "c51d15a8d63ba264b73eadda239474c54fe71c98",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5bc7cc41_c7ecba83",
+        "filename": "src/plugin/mediahandler.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-08-26T19:07:13Z",
+      "side": 1,
+      "message": "It\u0027s implemented by the plugin",
+      "parentUuid": "6eee89dc_bd872b19",
       "range": {
         "startLine": 61,
         "startChar": 3,
