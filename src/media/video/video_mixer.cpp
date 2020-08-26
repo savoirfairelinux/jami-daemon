@@ -279,6 +279,12 @@ VideoMixer::process()
         }
     }
 
+    output.pointer()->pts = av_rescale_q_rnd(av_gettime() - startTime_,
+                                      AV_TIME_BASE_Q,
+                                      {1, MIXER_FRAMERATE},
+                                      static_cast<AVRounding>(AV_ROUND_NEAR_INF
+                                                              | AV_ROUND_PASS_MINMAX));
+    lastTimestamp_ = output.pointer()->pts;
     publishFrame();
 }
 
@@ -389,6 +395,7 @@ VideoMixer::setParameters(int width, int height, AVPixelFormat format)
 
     start_sink();
     layoutUpdated_ += 1;
+    startTime_ = av_gettime();
 }
 
 void
@@ -433,6 +440,22 @@ AVPixelFormat
 VideoMixer::getPixelFormat() const
 {
     return format_;
+}
+
+MediaStream
+VideoMixer::getStream(const std::string& name) const
+{
+    MediaStream ms;
+    ms.name = name;
+    ms.format = format_;
+    ms.isVideo = true;
+    ms.height = height_;
+    ms.width = width_;
+    ms.frameRate = {MIXER_FRAMERATE, 1};
+    ms.timeBase = {1, MIXER_FRAMERATE};
+    ms.firstTimestamp = lastTimestamp_;
+
+    return ms;
 }
 
 } // namespace video

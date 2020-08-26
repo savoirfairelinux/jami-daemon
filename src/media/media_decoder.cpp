@@ -573,7 +573,7 @@ MediaDecoder::decode(AVPacket& packet)
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
         auto packetTimestamp = frame->pts; // in stream time base
         frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
-                                      {1, AV_TIME_BASE},
+                                      AV_TIME_BASE_Q,
                                       decoderCtx_->time_base,
                                       static_cast<AVRounding>(AV_ROUND_NEAR_INF
                                                               | AV_ROUND_PASS_MINMAX));
