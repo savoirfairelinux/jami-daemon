@@ -49,6 +49,30 @@
     },
     {
       "key": {
+        "uuid": "5f9c32df_bd73c4bd",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 454,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-08-26T19:37:29Z",
+      "side": 1,
+      "message": "Actually, using const generates a build error for the compare() and setPreference() functions",
+      "parentUuid": "b7bb7cdd_c2eccdbd",
+      "range": {
+        "startLine": 454,
+        "startChar": 13,
+        "endLine": 454,
+        "endChar": 17
+      },
+      "revId": "c51d15a8d63ba264b73eadda239474c54fe71c98",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "6eee89dc_bd872b19",
         "filename": "src/plugin/mediahandler.h",
         "patchSetId": 11
