@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "43d682b6_43d2b31a",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 237,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2020-08-26T14:05:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5f9464c3_db131e67",
+      "range": {
+        "startLine": 222,
+        "startChar": 16,
+        "endLine": 237,
+        "endChar": 25
+      },
+      "revId": "bffe3ad0bc2c8b21a62f5e6a0c44b3f5a1d3f7a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "bc4c4ab6_0cb38b84",
         "filename": "src/security/tlsvalidator.cpp",
         "patchSetId": 26
@@ -36,6 +60,30 @@
       "writtenOn": "2020-08-26T13:51:28Z",
       "side": 1,
       "message": "same not related",
+      "range": {
+        "startLine": 865,
+        "startChar": 0,
+        "endLine": 874,
+        "endChar": 18
+      },
+      "revId": "bffe3ad0bc2c8b21a62f5e6a0c44b3f5a1d3f7a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bcccd4b5_0b834f43",
+        "filename": "src/security/tlsvalidator.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 874,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2020-08-26T14:05:50Z",
+      "side": 1,
+      "message": "I did that on purpose.",
+      "parentUuid": "bc4c4ab6_0cb38b84",
       "range": {
         "startLine": 865,
         "startChar": 0,
@@ -68,6 +116,30 @@
       "revId": "bffe3ad0bc2c8b21a62f5e6a0c44b3f5a1d3f7a2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4763c8f3_09695c91",
+        "filename": "src/upnp/protocol/mapping.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2020-08-26T14:05:50Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "c1e9f4f9_8289700d",
+      "range": {
+        "startLine": 161,
+        "startChar": 2,
+        "endLine": 164,
+        "endChar": 19
+      },
+      "revId": "bffe3ad0bc2c8b21a62f5e6a0c44b3f5a1d3f7a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
