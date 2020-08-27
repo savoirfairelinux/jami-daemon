@@ -1,0 +1,30 @@
+ pjnath/src/pjnath/ice_session.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 2a4125bc5..c0c1bdb45 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1686,6 +1686,14 @@ PJ_DEF(pj_status_t) pj_ice_sess_create_check_list(
+ 
+ 	    pj_ice_sess_cand *lcand = &ice->lcand[i];
+ 	    pj_ice_sess_cand *rcand = &ice->rcand[j];
++
++		
++		char raddr[PJ_INET6_ADDRSTRLEN+20];
++		char laddr[PJ_INET6_ADDRSTRLEN+20];
++		printf("@@@ %s vs %s\n",
++			pj_sockaddr_print(&lcand->addr, laddr, sizeof(laddr), 3),
++			pj_sockaddr_print(&rcand->addr, raddr, sizeof(raddr), 3));
++
+ 	    pj_ice_sess_check *chk = NULL;
+ 
+ 	    if (clist->count >= PJ_ICE_MAX_CHECKS) {
+@@ -1712,6 +1720,7 @@ PJ_DEF(pj_status_t) pj_ice_sess_create_check_list(
+ 
+ 	    chk->prio = CALC_CHECK_PRIO(ice, lcand, rcand);
+ 
++		printf("@@@ ADD\n");
+ 	    clist->count++;
+ 	}
+     }
