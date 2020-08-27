@@ -1869,7 +1869,6 @@ Manager::incomingCall(Call& call, const std::string& accountId)
                                                 callID,
                                                 call.getPeerDisplayName() + " " + from);
 
-    auto currentCall = getCurrentCall();
     if (call.getAccount().isRendezVous()) {
         runOnMainThread([this, callID] {
             answerCall(callID);
@@ -1903,33 +1902,48 @@ Manager::incomingCall(Call& call, const std::string& accountId)
         });
     } else if (pimpl_->autoAnswer_) {
         runOnMainThread([this, callID] { answerCall(callID); });
-    } else if (currentCall) {
-        // Test if already calling this person
-        if (currentCall->getAccountId() == accountId
-            && currentCall->getPeerNumber() == call.getPeerNumber()) {
-            auto device_uid = currentCall->getAccount().getUsername();
-            if (device_uid.find("ring:") == 0) {
-                // NOTE: in case of a SIP call it's already ready to compare
-                device_uid = device_uid.substr(5); // after ring:
-            }
-            auto answerToCall = false;
-            auto downgradeToAudioOnly = currentCall->isAudioOnly() != call.isAudioOnly();
-            if (downgradeToAudioOnly)
-                // Accept the incoming audio only
-                answerToCall = call.isAudioOnly();
-            else
-                // Accept the incoming call from the higher id number
-                answerToCall = (device_uid.compare(call.getPeerNumber()) < 0);
+    } else {
+        std::shared_ptr<Call> duplicatedCall = getDuplicatedCall(call, accountId);
+        if (duplicatedCall != nullptr) {
+            auto duplicatedCallID = duplicatedCall->getCallId();
+            JAMI_INFO("Concurrent calls: autoanswering call %s, hanging up %s",
+                      callID.c_str(),
+                      duplicatedCallID.c_str());
+            runOnMainThread([this, callID, duplicatedCallID] {
+                answerCall(callID);
+                hangupCall(duplicatedCallID);
+            });
+        }
+    }
+}
 
-            if (answerToCall) {
-                auto currentCallID = currentCall->getCallId();
-                runOnMainThread([this, currentCallID, callID] {
-                    answerCall(callID);
-                    hangupCall(currentCallID);
-                });
+std::shared_ptr<Call>
+Manager::getDuplicatedCall(Call& call, const std::string& accountId)
+{
+    for (const auto c : callFactory.getAllCalls()) {
+        if (c->getAccountId() == accountId
+            && c->getPeerNumber() == call.getPeerNumber()
+            && c->getCallId() != call.getCallId()) {
+
+            auto downgradeToAudioOnly = c->isAudioOnly() != call.isAudioOnly();
+            if (downgradeToAudioOnly) {
+                // Accept the incoming audio only
+                if (call.isAudioOnly())
+                    return c;
+            } else {
+                auto device_uid = c->getAccount().getUsername();
+                if (device_uid.find("ring:") == 0) {
+                    // NOTE: in case of a SIP call it's already ready to compare
+                    device_uid = device_uid.substr(5); // after ring:
+                }
+
+                // Accept the incoming call from the higher id number
+                if (device_uid.compare(call.getPeerNumber()) < 0)
+                    return c;
             }
         }
     }
+    return nullptr;
 }
 
 void
