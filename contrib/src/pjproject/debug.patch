@@ -1,0 +1,16 @@
+ pjnath/src/pjnath/ice_session.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 2a4125bc5..16fedf169 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1699,7 +1699,7 @@ PJ_DEF(pj_status_t) pj_ice_sess_create_check_list(
+ 	     * and only if the two candidates have the same component ID 
+ 	     * and have the same IP address version. 
+ 	     */
+-	    if ((lcand->comp_id != rcand->comp_id) ||
++	    if (/*(lcand->comp_id != rcand->comp_id) ||*/
+ 		(lcand->addr.addr.sa_family != rcand->addr.addr.sa_family))
+ 	    {
+ 		continue;
