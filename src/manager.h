@@ -366,6 +366,22 @@ public:
     void incomingCall(Call& call, const std::string& accountId);
 
     /**
+     * Determine if there's already an ongoing call with a specific contact
+     * @param call A call pointer
+     * @param accountId an account id
+     */
+    std::shared_ptr<Call> getCallWithPeer(Call& call,
+                                          const std::string& accountId);
+
+    /**
+     * Determine if there's already an ongoing call with a specific contact
+     * @param call A call pointer
+     * @param existingCall an account id
+     */
+    std::shared_ptr<Call> chooseCall(Call& call,
+                                     std::shared_ptr<Call> existingCall);
+
+    /**
      * Notify the user that the recipient of the call has answered and the put the
      * call in Current state
      * @param id  The call identifier
