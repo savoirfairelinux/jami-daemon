@@ -1923,6 +1923,11 @@ Manager::incomingCall(Call& call, const std::string& accountId)
 
             if (answerToCall) {
                 auto currentCallID = currentCall->getCallId();
+                if (currentCallID == callID) {
+                    JAMI_ERR("Concurrent calls occuring, but callID == currentCallID");
+                    return;
+                }
+                JAMI_ERR("Concurrent calls occuring, and callID != currentCallID");
                 runOnMainThread([this, currentCallID, callID] {
                     answerCall(callID);
                     hangupCall(currentCallID);
