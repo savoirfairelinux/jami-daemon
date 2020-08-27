@@ -185,6 +185,30 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                         this_.info_->photo = json["userPhoto"].asString();
                                     }
 
+                                    if (json.isMember("policy")) {
+                                        // Retrieve config provided by JAMS for parameters like
+                                        // TURN, autoAnswer, etc
+                                        auto policy = json["policy"].asString();
+                                        Json::Value policyJson;
+                                        std::string err;
+                                        auto policyReader = std::unique_ptr<Json::CharReader>(
+                                            Json::CharReaderBuilder {}.newCharReader());
+                                        if (!policyReader->parse(policy.data(),
+                                                                 policy.data() + policy.size(),
+                                                                 &policyJson,
+                                                                 &err)) {
+                                            JAMI_WARN("[Auth] Can't parse policy from server: %s",
+                                                      err.c_str());
+                                        } else {
+                                            for (Json::Value::const_iterator itr = policyJson.begin();
+                                                 itr != policyJson.end();
+                                                 ++itr) {
+                                                config.emplace(itr.key().asString(),
+                                                               itr->asString());
+                                            }
+                                        }
+                                    }
+
                                     ctx->onSuccess(*this_.info_,
                                                    std::move(config),
                                                    std::move(receipt),
