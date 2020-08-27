@@ -1,0 +1,101 @@
+ pjnath/src/pjnath/ice_session.c | 18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index c3a06fbc4..3d47840a7 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1663,6 +1663,8 @@ static void on_tcp_connect_timeout(pj_ice_sess* ice)
+ 		if (*ice->cb.close_tcp_connection)
+ 		    (*ice->cb.close_tcp_connection)(ice, &ice->clist, i);
+ 
++		char address[PJ_INET6_ADDRSTRLEN+20];
++		printf("@@@on_tcp_connect_timeout %s %u\n",  pj_sockaddr_print(&check->rcand->addr, address, sizeof(address), 3), i);
+ 		check_set_state(ice, check,
+ 		    PJ_ICE_SESS_CHECK_STATE_FAILED, PJ_ECANCELLED);
+ 		on_check_complete(ice, check);
+@@ -1856,6 +1858,7 @@ static pj_status_t send_connectivity_check(pj_ice_sess *ice,
+ 					   pj_bool_t nominate,
+ 					   pj_ice_msg_data *msg_data)
+ {
++	printf("@@@ CHECK %u\n", check_id);
+     pj_ice_sess_check      *check;
+     const pj_ice_sess_cand *lcand;
+     const pj_ice_sess_cand *rcand;
+@@ -1898,6 +1901,7 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+     comp = find_comp(ice, lcand->comp_id);
+ 
+     pj_log_push_indent();
++	printf("@@@@ CHECK %u\n", check_id);
+     LOG5((ice->obj_name, 
+ 	 "Sending connectivity check for check %s", 
+ 	 dump_check(ice->tmp.txt, sizeof(ice->tmp.txt), clist, check)));
+@@ -1998,12 +2002,15 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+     status = send_connectivity_check(ice, clist, check_id, nominate, msg_data);
+ #endif
+ 
++	printf("@@@ STATUS %u\n", status);
++
+     if (status == PJ_SUCCESS) {
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS,
+ 			status);
+     } else if (status == PJ_EPENDING) {
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_PENDING, status);
+     } else if (check->rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++	printf("@@@check->rcand->type == PJ_ICE_CAND_TYPE_RELAYED %u\n", status);
+ 	/* TODO (sblin) remove this - https://github.com/coturn/coturn/issues/408 */
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
+ 			status);
+@@ -2403,7 +2410,8 @@ static pj_ice_sess_check* get_current_check_at_state(pj_ice_sess *ice,
+     // NOTE: Multiple checks can have the same remote, we only take care of the first
+     // First, check if the TCP is really connected. If not, abort
+     pj_ice_sess_check *check = NULL;
+-    for (int i = 0; i < ice->clist.count; ++i) {
++	int i = 0;
++    for (; i < ice->clist.count; ++i) {
+         // Find related check
+         pj_ice_sess_check *c = &ice->clist.checks[i];
+         /* Host candidate not found this this srflx! */
+@@ -2416,6 +2424,7 @@ static pj_ice_sess_check* get_current_check_at_state(pj_ice_sess *ice,
+             break;
+         }
+     }
++	printf("@@@ RETURN CHECK AT %u\n", i);
+     return check;
+ }
+ 
+@@ -2429,6 +2438,8 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+     // finished
+     if (!remote_addr)
+ 	return;
++	char address[PJ_INET6_ADDRSTRLEN+20];
++	printf("@@@ice_sess_on_peer_connection %s %u\n",  pj_sockaddr_print(&remote_addr, address, sizeof(address), 3), status);
+ 
+     int current_check = -1;
+     pj_ice_sess_check *check = get_current_check_at_state(ice,remote_addr,
+@@ -2476,6 +2487,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 					       PJ_FALSE, PJ_FALSE, &rcand->addr,
+ 					       pj_sockaddr_get_len(&rcand->addr),
+ 					       check->tdata);
++	printf("@@@ ice_sess_on_peer_connection after send: %u\n", status_send_msg);
+     if (status_send_msg == PJ_EBUSY /* EBUSY */) {
+         check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET;
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
+@@ -2510,7 +2522,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+ 	on_check_complete(ice, check);
+     } else if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
+-	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET, status);
++	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, status);
+     } else {
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, status);
+     }
+@@ -2524,6 +2536,8 @@ void ice_sess_on_peer_reset_connection(pj_ice_sess *ice,
+     if (!remote_addr)
+ 	return;
+ 
++	char address[PJ_INET6_ADDRSTRLEN+20];
++	printf("@@@ice_sess_on_peer_reset_connection %s\n",  pj_sockaddr_print(&remote_addr, address, sizeof(address), 3));
+     pj_ice_sess_check *check = get_current_check_at_state(ice, remote_addr,
+ 							  PJ_ICE_SESS_CHECK_STATE_PENDING,
+ 							  NULL);
