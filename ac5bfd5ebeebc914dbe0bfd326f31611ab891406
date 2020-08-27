@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b240415b_ce3dbb32",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-08-27T15:05:39Z",
+      "side": 1,
+      "message": "not the discussed API, to be fixed by JAMS team",
+      "range": {
+        "startLine": 188,
+        "startChar": 55,
+        "endLine": 188,
+        "endChar": 61
+      },
+      "revId": "ac5bfd5ebeebc914dbe0bfd326f31611ab891406",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
