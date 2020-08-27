@@ -171,20 +171,20 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                     this_.creds_ = std::move(ctx->credentials);
                                     this_.info_ = std::move(info);
                                     std::map<std::string, std::string> config;
-                                    if (json.isMember("nameServer")) {
-                                        auto nameServer = json["nameServer"].asString();
-                                        if (!nameServer.empty() && nameServer[0] == '/')
-                                            nameServer = this_.managerHostname_ + nameServer;
-                                        this_.nameDir_ = NameDirectory::instance(nameServer);
-                                        config.emplace(DRing::Account::ConfProperties::RingNS::URI,
-                                                       std::move(nameServer));
-                                    }
-                                    if (json.isMember("displayName")) {
-                                        config.emplace(DRing::Account::ConfProperties::DISPLAYNAME,
-                                                       json["displayName"].asString());
-                                    }
-                                    if (json.isMember("userPhoto")) {
-                                        this_.info_->photo = json["userPhoto"].asString();
+                                    for (auto itr = json.begin(); itr != json.end(); ++itr) {
+                                        const auto& name = itr.name();
+                                        if (name == "nameServer"sv) {
+                                            auto nameServer = json["nameServer"].asString();
+                                            if (!nameServer.empty() && nameServer[0] == '/')
+                                                nameServer = this_.managerHostname_ + nameServer;
+                                            this_.nameDir_ = NameDirectory::instance(nameServer);
+                                            config.emplace(DRing::Account::ConfProperties::RingNS::URI,
+                                                        std::move(nameServer));
+                                        } else if (name == "userPhoto"sv) {
+                                            this_.info_->photo = json["userPhoto"].asString();
+                                        } else {
+                                            config.emplace(name, itr->asString());
+                                        }
                                     }
 
                                     ctx->onSuccess(*this_.info_,

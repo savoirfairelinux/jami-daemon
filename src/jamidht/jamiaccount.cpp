@@ -1305,6 +1305,12 @@ JamiAccount::loadAccount(const std::string& archive_password,
                         Migration::setState(getAccountID(), Migration::State::SUCCESS);
                     }
 
+                    // Use the provided config by JAMS instead of default one
+                    auto details = getAccountDetails();
+                    for (const auto& [key, value] : config)
+                        details[key] = value;
+                    setAccountDetails(details);
+
                     if (not info.photo.empty() or not displayName_.empty())
                         emitSignal<DRing::ConfigurationSignal::AccountProfileReceived>(getAccountID(),
                                                                                        displayName_,
