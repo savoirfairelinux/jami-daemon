@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "2457e509_2b50fe5d",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 604,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-08-28T19:39:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fe78b004_ddc7501c",
+      "range": {
+        "startLine": 600,
+        "startChar": 11,
+        "endLine": 604,
+        "endChar": 5
+      },
+      "revId": "918d7fc6bdcec2b2019f84ab85decdc04d09bbca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "8767cade_1a0c5db0",
         "filename": "src/plugin/jamipluginmanager.cpp",
         "patchSetId": 9
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "8b7a9e7a_3474a9fb",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 615,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-08-28T19:39:05Z",
+      "side": 1,
+      "message": "These values are returned",
+      "parentUuid": "8767cade_1a0c5db0",
+      "range": {
+        "startLine": 615,
+        "startChar": 42,
+        "endLine": 615,
+        "endChar": 59
+      },
+      "revId": "918d7fc6bdcec2b2019f84ab85decdc04d09bbca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d041a244_80f2a7e2",
         "filename": "src/plugin/jamipluginmanager.cpp",
         "patchSetId": 9
@@ -68,6 +116,30 @@
       "revId": "918d7fc6bdcec2b2019f84ab85decdc04d09bbca",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fa26446c_ea6caddb",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 631,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-08-28T19:39:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d041a244_80f2a7e2",
+      "range": {
+        "startLine": 630,
+        "startChar": 42,
+        "endLine": 631,
+        "endChar": 49
+      },
+      "revId": "918d7fc6bdcec2b2019f84ab85decdc04d09bbca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
