@@ -591,6 +591,7 @@ private:
 
     DRing::DataTransferId internalId_;
 
+    std::mutex foutMtx_;
     std::ofstream fout_;
     std::promise<void> filenamePromise_;
 };
@@ -641,11 +642,13 @@ IncomingFileTransfer::start()
     if (!DataTransfer::start())
         return false;
 
+    std::unique_lock<std::mutex> lk {foutMtx_};
     fileutils::openStream(fout_, &info_.path[0], std::ios::binary);
     if (!fout_) {
         JAMI_ERR() << "[FTP] Can't open file " << info_.path;
         return false;
     }
+    lk.unlock();
 
     emit(DRing::DataTransferEventCode::ongoing);
     return true;
@@ -654,6 +657,7 @@ IncomingFileTransfer::start()
 void
 IncomingFileTransfer::close() noexcept
 {
+    std::unique_lock<std::mutex> lk {foutMtx_};
     {
         std::lock_guard<std::mutex> lk {infoMutex_};
         if (info_.lastEvent >= DRing::DataTransferEventCode::finished)
@@ -667,6 +671,7 @@ IncomingFileTransfer::close() noexcept
     }
 
     fout_.close();
+    lk.unlock();
 
     JAMI_DBG() << "[FTP] file closed, rx " << info_.bytesProgress << " on " << info_.totalSize;
     if (info_.bytesProgress >= info_.totalSize) {
@@ -696,6 +701,7 @@ IncomingFileTransfer::write(const uint8_t* buffer, std::size_t length)
 {
     if (!length)
         return true;
+    std::lock_guard<std::mutex> lkFout {foutMtx_};
     fout_.write(reinterpret_cast<const char*>(buffer), length);
     if (!fout_)
         return false;
@@ -921,8 +927,8 @@ DataTransferFacade::bytesProgress(const DRing::DataTransferId& id,
 }
 
 DRing::DataTransferError
-DataTransferFacade::info(const DRing::DataTransferId& id, DRing::DataTransferInfo& info) const
-    noexcept
+DataTransferFacade::info(const DRing::DataTransferId& id,
+                         DRing::DataTransferInfo& info) const noexcept
 {
     try {
         if (auto transfer = pimpl_->getTransfer(id)) {
