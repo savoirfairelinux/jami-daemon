@@ -141,6 +141,7 @@ VideoDeviceMonitor::setDefaultDevice(const std::string& id)
 void
 VideoDeviceMonitor::setDeviceOrientation(const std::string& id, int angle)
 {
+    std::lock_guard<std::mutex> l(lock_);
     const auto itd = findDeviceById(id);
     if (itd != devices_.cend()) {
         itd->setOrientation(angle);
