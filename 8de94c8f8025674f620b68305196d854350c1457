@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "80dd3fb5_0c1e50d9",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-28T16:10:03Z",
+      "side": 1,
+      "message": "avoid todo in code, just add a ticket in gitlab. We already have some forgotten TODO for years",
+      "range": {
+        "startLine": 78,
+        "startChar": 9,
+        "endLine": 83,
+        "endChar": 10
+      },
+      "revId": "8de94c8f8025674f620b68305196d854350c1457",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9499f2b5_55549d51",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-28T16:10:03Z",
+      "side": 1,
+      "message": "std::erase_if can do the job: https://en.cppreference.com/w/cpp/container/list/erase2",
+      "range": {
+        "startLine": 88,
+        "startChar": 8,
+        "endLine": 94,
+        "endChar": 9
+      },
+      "revId": "8de94c8f8025674f620b68305196d854350c1457",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
