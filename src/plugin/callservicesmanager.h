@@ -199,7 +199,9 @@ public:
     {
         for (auto& pair : callMediaHandlers) {
             if (pair.second && getCallHandlerId(pair.second) == id) {
-                return pair.second->getCallMediaHandlerDetails();
+                auto result = pair.second->getCallMediaHandlerDetails();
+                result["pluginId"] = pair.second->id();
+                return result;
             }
         }
         return {};
