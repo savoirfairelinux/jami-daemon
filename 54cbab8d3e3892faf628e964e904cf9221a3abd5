@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1b16ade7_aa3662e1",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1027,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-28T20:22:28Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027filePath\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "54cbab8d3e3892faf628e964e904cf9221a3abd5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "93df85f9_fabcfaf3",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1038,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-28T20:22:28Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027filePath\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "54cbab8d3e3892faf628e964e904cf9221a3abd5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9b832c18_36da9a66",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1049,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-28T20:22:28Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027filePath\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "54cbab8d3e3892faf628e964e904cf9221a3abd5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c90bacbb_86e7dfea",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1052,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-28T20:22:28Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\n\u0027find_last_of\u0027 called with a string literal consisting of a single character; consider using the more effective overload accepting a character\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-faster-string-find",
+      "revId": "54cbab8d3e3892faf628e964e904cf9221a3abd5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
