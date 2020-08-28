@@ -112,10 +112,9 @@ FtpServer::startNewFile()
 void
 FtpServer::closeCurrentFile()
 {
-    if (out_.stream) {
+    if (out_.stream && not closed_.exchange(true)) {
         out_.stream->close();
         out_.stream.reset();
-        closed_ = true;
     }
 }
 
@@ -123,8 +122,7 @@ bool
 FtpServer::read(std::vector<uint8_t>& buffer) const
 {
     if (!out_.stream) {
-        if (closed_) {
-            closed_ = false;
+        if (closed_.exchange(false)) {
             if (rx_ < fileSize_) {
                 buffer.resize(4);
                 buffer[0] = 'N';

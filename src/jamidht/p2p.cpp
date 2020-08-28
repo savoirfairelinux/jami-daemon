@@ -837,20 +837,14 @@ DhtPeerConnector::Impl::cancelChanneled(const std::string& peerId, const DRing::
         if (!shared)
             return;
         // Cancel outgoing files
-        DRing::DataTransferId finalId = tid;
         {
             std::lock_guard<std::mutex> lk(shared->channeledIncomingMtx_);
-            auto it = shared->channeledIncoming_.find(tid);
-            if (it != shared->channeledIncoming_.end()) {
-                finalId = it->second->id();
-            }
-            shared->channeledIncoming_.erase(tid);
+            auto it = shared->channeledIncoming_.erase(tid);
         }
         {
             std::lock_guard<std::mutex> lk(shared->channeledOutgoingMtx_);
             shared->channeledOutgoing_.erase(tid);
         }
-        Manager::instance().dataTransfers->close(finalId);
     });
 }
 
@@ -977,7 +971,6 @@ DhtPeerConnector::requestConnection(
                                 shared->channeledOutgoing_.erase(outgoingTransfers);
                         }
                     }
-                    Manager::instance().dataTransfers->close(tid);
                 });
             });
             // Cancel via DHT because we will use the channeled path
@@ -1080,17 +1073,9 @@ DhtPeerConnector::onIncomingConnection(const std::string& peer_id,
             if (!shared)
                 return;
             // Cancel incoming files
-            DRing::DataTransferId internalId = 0;
-            {
-                std::lock_guard<std::mutex> lk(shared->channeledIncomingMtx_);
-                auto it = shared->channeledIncoming_.find(tid);
-                if (it != shared->channeledIncoming_.end())
-                    internalId = it->second->id();
-                shared->channeledIncoming_.erase(tid);
-            }
-            if (internalId != 0) {
-                Manager::instance().dataTransfers->close(internalId);
-            }
+            // Note: erasing the channeled transfer will close the file via ftp_->close()
+            std::lock_guard<std::mutex> lk(shared->channeledIncomingMtx_);
+            shared->channeledIncoming_.erase(tid);
         });
     });
 }

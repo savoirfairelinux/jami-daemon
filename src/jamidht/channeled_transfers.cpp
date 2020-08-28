@@ -40,6 +40,7 @@ ChanneledOutgoingTransfer::~ChanneledOutgoingTransfer()
     channel_->setOnRecv({});
     file_->setOnRecv({});
     channel_->shutdown();
+    file_->close();
 }
 
 std::string
@@ -99,14 +100,8 @@ ChanneledIncomingTransfer::~ChanneledIncomingTransfer()
 {
     channel_->setOnRecv({});
     channel_->shutdown();
-}
-
-DRing::DataTransferId
-ChanneledIncomingTransfer::id() const
-{
     if (ftp_)
-        return ftp_->getId();
-    return 0;
+        ftp_->close();
 }
 
 } // namespace jami
