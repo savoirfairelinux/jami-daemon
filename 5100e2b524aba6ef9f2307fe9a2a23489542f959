@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "77decaec_095090d2",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1052,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-28T23:09:49Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\n\u0027find_last_of\u0027 called with a string literal consisting of a single character; consider using the more effective overload accepting a character\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-faster-string-find",
+      "revId": "5100e2b524aba6ef9f2307fe9a2a23489542f959",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
