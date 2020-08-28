@@ -53,7 +53,6 @@ public:
                               const std::shared_ptr<FtpServer>& ftp,
                               OnStateChangedCb&& cb);
     ~ChanneledIncomingTransfer();
-    DRing::DataTransferId id() const;
 
 private:
     std::shared_ptr<FtpServer> ftp_;

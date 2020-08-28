@@ -81,7 +81,7 @@ private:
     std::stringstream headerStream_;
     std::string displayName_;
     std::array<char, 1000> line_;
-    mutable bool closed_ {false};
+    mutable std::atomic_bool closed_ {false};
     mutable bool go_ {false};
     FtpState state_ {FtpState::PARSE_HEADERS};
 
