@@ -94,6 +94,30 @@
     },
     {
       "key": {
+        "uuid": "ad138696_5faa542c",
+        "filename": "src/media/video/video_rtp_session.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-08-31T18:34:21Z",
+      "side": 1,
+      "message": "actually moving from argument value works too ! That allows caller to choose to either copy or move.",
+      "parentUuid": "11251aa6_7a5f1c8e",
+      "range": {
+        "startLine": 100,
+        "startChar": 36,
+        "endLine": 100,
+        "endChar": 55
+      },
+      "revId": "bc40e199592bced0af6f1e0a2f63d50df95fe0c5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "3f7c2500_04ace502",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 12
