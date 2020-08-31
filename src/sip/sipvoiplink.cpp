@@ -1052,6 +1052,7 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
         pj_strset(&control_st, (char*) body->data, body->len);
         static constexpr pj_str_t PICT_FAST_UPDATE = CONST_PJ_STR("picture_fast_update");
         static constexpr pj_str_t DEVICE_ORIENTATION = CONST_PJ_STR("device_orientation");
+        static constexpr pj_str_t RECORDING_STATE = CONST_PJ_STR("recording_state");
 
         if (pj_strstr(&control_st, &PICT_FAST_UPDATE)) {
             call.sendKeyframe();
@@ -1074,6 +1075,22 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
                     call.getVideoRtp().setRotation(rotation);
                 } catch (const std::exception& e) {
                     JAMI_WARN("Error parsing angle: %s", e.what());
+                }
+                return true;
+            }
+        }
+        else if (pj_strstr(&control_st, &RECORDING_STATE)) {
+            static const std::regex REC_REGEX("recording_state=([0-1])");
+            std::string body_msg(control_st.ptr, control_st.slen);
+            std::smatch matched_pattern;
+            std::regex_search(body_msg, matched_pattern, REC_REGEX);
+
+            if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                try {
+                    bool state = std::stoi(matched_pattern[1]);
+                    call.setRemoteRecording(state);
+                } catch (const std::exception& e) {
+                    JAMI_WARN("Error parsing state remote recording: %s", e.what());
                 }
                 return true;
             }
