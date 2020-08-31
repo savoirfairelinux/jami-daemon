@@ -262,6 +262,7 @@ VideoDeviceImpl::getDeviceParams() const
     DeviceParams params;
 
     params.name = name;
+    params.unique_id = id;
     params.input = id;
     params.format = "dshow";
 
