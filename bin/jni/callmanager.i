@@ -48,6 +48,7 @@ public:
     virtual void onConferenceInfosUpdated(const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos) {}
     virtual void peerHold(const std::string& call_id, bool holding){}
     virtual void connectionUpdate(const std::string& id, int state){}
+    virtual void remoteRecordingChanged(const std::string& id, bool state){}
 };
 
 
@@ -137,4 +138,6 @@ public:
     virtual void onConferenceInfosUpdated(const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos) {}
     virtual void peerHold(const std::string& call_id, bool holding){}
     virtual void connectionUpdate(const std::string& id, int state){}
+    virtual void remoteRecordingChanged(const std::string& call_id, const std::string& contact_id, bool state){}
+
 };
