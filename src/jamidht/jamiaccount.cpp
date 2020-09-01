@@ -1744,6 +1744,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
                                      remote_id,
                                      remote_addr](pjsip_transport_state state,
                                                   UNUSED const pjsip_transport_state_info* info) {
+                                        JAMI_ERR("@@@ addStateListener");
                                         if (state == PJSIP_TP_STATE_CONNECTED) {
                                             if (auto call = wcall.lock()) {
                                                 if (auto account = waccount.lock()) {
@@ -1793,7 +1794,9 @@ JamiAccount::registerAsyncOps()
                         JAMI_WARN("[Account %s] DHT port changed to %u: restarting network",
                                   getAccountID().c_str(),
                                   newPort);
+                        JAMI_ERR("@@@@ Start connectivity changed");
                         dht_->connectivityChanged();
+                        JAMI_ERR("@@@@ END connectivity changed");
                     }
                 } else {
                     *update = true;
