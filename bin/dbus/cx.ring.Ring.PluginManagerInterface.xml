@@ -154,16 +154,5 @@
             </arg>
         </method>
 
-       <method name="addValueToPreference" tp:name-for-bindings="addValueToPreference">
-            <tp:added version="9.6.0"/>
-            <arg type="s" name="pluginId" direction="in">
-            </arg>
-            <arg type="s" name="preferenceKey" direction="in">
-            </arg>
-            <arg type="s" name="value" direction="in">
-            </arg>
-            <arg type="b" name="status" direction="out">
-            </arg>
-        </method>
     </interface>
 </node>

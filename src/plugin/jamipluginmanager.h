@@ -125,10 +125,6 @@ public:
 
     bool resetPluginPreferencesValuesMap(const std::string& rootPath);
 
-    bool addValueToPreference(const std::string& pluginId,
-                              const std::string& preferenceKey,
-                              const std::string& value);
-
 public:
     CallServicesManager& getCallServicesManager() { return csm_; }
 
@@ -184,13 +180,6 @@ private:
     }
 
     std::map<std::string, std::string> getPluginUserPreferencesValuesMap(const std::string& rootPath);
-    std::map<std::string, std::map<std::string, std::string>> getUserPreferencesValuesMap(
-        const std::string& rootPath);
-    bool copyFileToPluginData(const std::string& pluginId,
-                              const std::string& value,
-                              const std::string& preferenceCategory,
-                              std::string& fileName,
-                              std::string& fileExt);
 
     /**
      * @brief getPreferencesConfigFilePath
@@ -214,18 +203,6 @@ private:
     std::string pluginPreferencesValuesFilePath(const std::string& rootPath) const
     {
         return rootPath + DIR_SEPARATOR_CH + "preferences.msgpack";
-    }
-
-    /**
-     * @brief pluginAddedPreferencesValuesFilePath
-     * Returns the plugin added preferences values file path from the plugin root path
-     * This is entirely defined by how the plugin files are structured
-     * @param plugin rootPath
-     * @return path of the preferences values
-     */
-    std::string pluginAddedPreferencesValuesFilePath(const std::string& rootPath) const
-    {
-        return rootPath + DIR_SEPARATOR_CH + "addedPreferences.msgpack";
     }
 
     void registerServices();

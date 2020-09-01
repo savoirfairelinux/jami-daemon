@@ -132,11 +132,3 @@ DBusPluginManagerInterface::getCallMediaHandlerStatus()
 {
     return DRing::getCallMediaHandlerStatus();
 }
-
-bool
-DBusPluginManagerInterface::addValueToPreference(const std::string& pluginId,
-                          const std::string& preferenceKey,
-                          const std::string& value)
-{
-    return DRing::addValueToPreference(pluginId, preferenceKey, value);
-}

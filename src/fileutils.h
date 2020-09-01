@@ -176,10 +176,6 @@ std::string md5sum(const std::vector<uint8_t>& buffer);
  */
 int accessFile(const std::string& file, int mode);
 
-std::string getFileName(const std::string& filePath);
-std::string removeExtension(const std::string& filePath);
-std::string getExtension(const std::string& filePath);
-
 } // namespace fileutils
 } // namespace jami
 

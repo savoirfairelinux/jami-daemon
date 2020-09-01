@@ -71,7 +71,4 @@ class DRING_PUBLIC DBusPluginManagerInterface :
         bool getPluginsEnabled();
         void setPluginsEnabled(const bool& state);
         std::map<std::string,std::string> getCallMediaHandlerStatus();
-        bool addValueToPreference(const std::string& pluginId,
-                                  const std::string& preferenceKey,
-                                  const std::string& value);
 };
