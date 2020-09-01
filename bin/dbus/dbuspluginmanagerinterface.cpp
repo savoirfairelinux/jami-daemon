@@ -43,25 +43,27 @@ DBusPluginManagerInterface::togglePlugin(const std::string& path, const bool& to
     DRing::togglePlugin(path, toggle);
 }
 
-std::map<std::string,std::string>
+std::map<std::string, std::string>
 DBusPluginManagerInterface::getPluginDetails(const std::string& path)
 {
     return DRing::getPluginDetails(path);
 }
 
-std::vector<std::map<std::string,std::string>>
+std::vector<std::map<std::string, std::string>>
 DBusPluginManagerInterface::getPluginPreferences(const std::string& path)
 {
     return DRing::getPluginPreferences(path);
 }
 
 bool
-DBusPluginManagerInterface::setPluginPreference(const std::string& path, const std::string& key, const std::string& value)
+DBusPluginManagerInterface::setPluginPreference(const std::string& path,
+                                                const std::string& key,
+                                                const std::string& value)
 {
     return DRing::setPluginPreference(path, key, value);
 }
 
-std::map<std::string,std::string>
+std::map<std::string, std::string>
 DBusPluginManagerInterface::getPluginPreferencesValues(const std::string& path)
 {
     return DRing::getPluginPreferencesValues(path);
@@ -109,7 +111,7 @@ DBusPluginManagerInterface::toggleCallMediaHandler(const std::string& id, const 
     DRing::toggleCallMediaHandler(id, toggle);
 }
 
-std::map<std::string,std::string>
+std::map<std::string, std::string>
 DBusPluginManagerInterface::getCallMediaHandlerDetails(const std::string& id)
 {
     return DRing::getCallMediaHandlerDetails(id);
@@ -127,7 +129,7 @@ DBusPluginManagerInterface::setPluginsEnabled(const bool& state)
     DRing::setPluginsEnabled(state);
 }
 
-std::map<std::string,std::string>
+std::map<std::string, std::string>
 DBusPluginManagerInterface::getCallMediaHandlerStatus()
 {
     return DRing::getCallMediaHandlerStatus();

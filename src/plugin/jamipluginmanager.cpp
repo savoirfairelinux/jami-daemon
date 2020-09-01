@@ -150,22 +150,22 @@ uncompressJplFunction(const std::string& relativeFileName)
 std::string
 convertArrayToString(const Json::Value& jsonArray)
 {
-    std::string stringArray = "[";
+    std::string stringArray = "";
 
-    for (int i = 0; i < static_cast<int>(jsonArray.size()) - 1; i++) {
-        if (jsonArray[i].isString()) {
-            stringArray += jsonArray[i].asString() + ",";
-        } else if (jsonArray[i].isArray()) {
-            stringArray += convertArrayToString(jsonArray[i]) + ",";
+    if (jsonArray.size()) {
+        for (unsigned i = 0; i < jsonArray.size() - 1; i++) {
+            if (jsonArray[i].isString()) {
+                stringArray += jsonArray[i].asString() + ",";
+            } else if (jsonArray[i].isArray()) {
+                stringArray += convertArrayToString(jsonArray[i]) + ",";
+            }
+        }
+
+        unsigned lastIndex = jsonArray.size() - 1;
+        if (jsonArray[lastIndex].isString()) {
+            stringArray += jsonArray[lastIndex].asString();
         }
     }
-
-    int lastIndex = static_cast<int>(jsonArray.size()) - 1;
-    if (jsonArray[lastIndex].isString()) {
-        stringArray += jsonArray[lastIndex].asString();
-    }
-
-    stringArray += "]";
 
     return stringArray;
 }
@@ -337,11 +337,10 @@ JamiPluginManager::unloadPlugin(const std::string& rootPath)
 void
 JamiPluginManager::togglePlugin(const std::string& rootPath, bool toggle)
 {
-    //This function should not be used as is
-    //One should modify it to perform plugin install followed by load
-    //rootPath should be the jplpath!
-    try
-    {
+    // This function should not be used as is
+    // One should modify it to perform plugin install followed by load
+    // rootPath should be the jplpath!
+    try {
         std::string soPath = getPluginDetails(rootPath).at("soPath");
         // remove the previous plugin object if it was registered
         pm_.destroyPluginComponents(soPath);
@@ -382,16 +381,21 @@ JamiPluginManager::getPluginPreferences(const std::string& rootPath)
     if (file) {
         bool ok = Json::parseFromStream(rbuilder, file, &root, &errs);
         if (ok && root.isArray()) {
-            for (int i = 0; i < static_cast<int>(root.size()); i++) {
-                const Json::Value jsonPreference = root[i];
+            for (unsigned i = 0; i < root.size(); i++) {
+                const Json::Value& jsonPreference = root[i];
                 std::string category = jsonPreference.get("category", "NoCategory").asString();
                 std::string type = jsonPreference.get("type", "None").asString();
                 std::string key = jsonPreference.get("key", "None").asString();
                 if (type != "None" && key != "None") {
                     if (keys.find(key) == keys.end()) {
-                        const auto& preferenceAttributes = parsePreferenceConfig(jsonPreference,
-                                                                                 type);
-                        // If the parsing of the attributes was successful, commit the map and the key
+                        auto preferenceAttributes = parsePreferenceConfig(jsonPreference, type);
+                        // If the parsing of the attributes was successful, commit the map and the keys
+                        auto defaultValue = preferenceAttributes.find("defaultValue");
+                        if (type == "Path" && defaultValue != preferenceAttributes.end()) {
+                            defaultValue->second = rootPath + DIR_SEPARATOR_STR
+                                                   + defaultValue->second;
+                        }
+
                         if (!preferenceAttributes.empty()) {
                             preferences.push_back(std::move(preferenceAttributes));
                             keys.insert(key);
@@ -448,7 +452,6 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
                                        const std::string& key,
                                        const std::string& value)
 {
-    bool returnValue = false;
     std::map<std::string, std::string> pluginUserPreferencesMap = getPluginUserPreferencesValuesMap(
         rootPath);
     std::map<std::string, std::string> pluginPreferencesMap = getPluginPreferencesValuesMap(
@@ -473,14 +476,13 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
         try {
             std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
             msgpack::pack(fs, pluginUserPreferencesMap);
-            returnValue = true;
+            return true;
         } catch (const std::exception& e) {
-            returnValue = false;
             JAMI_ERR() << e.what();
+            return false;
         }
     }
-
-    return returnValue;
+    return false;
 }
 
 std::map<std::string, std::string>
