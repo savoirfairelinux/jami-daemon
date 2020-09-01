@@ -139,11 +139,14 @@ SipTransport::stateCallback(pjsip_transport_state state, const pjsip_transport_s
 
     std::vector<SipTransportStateCallback> cbs;
     {
+        JAMI_ERR("@@@ SipTransport::stateCallback 0");
         std::lock_guard<std::mutex> lock(stateListenersMutex_);
+        JAMI_ERR("@@@ SipTransport::stateCallback 1");
         cbs.reserve(stateListeners_.size());
         for (auto& l : stateListeners_)
             cbs.push_back(l.second);
     }
+    JAMI_ERR("@@@ SipTransport::stateCallback 2");
     for (auto& cb : cbs)
         cb(state, info);
 }
@@ -216,10 +219,14 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
     std::shared_ptr<SipTransport> sipTransport;
 
     {
+        JAMI_ERR("@@@ transportMapMutex_ 1");
         std::lock_guard<std::mutex> lock(transportMapMutex_);
+        JAMI_ERR("@@@ transportMapMutex_ 2");
         auto key = transports_.find(tp);
-        if (key == transports_.end())
+        if (key == transports_.end()) {
+            JAMI_ERR("@@@ transportMapMutex_ 2.1");
             return;
+        }
 
         sipTransport = key->second.lock();
 
@@ -251,8 +258,11 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
 
     // Propagate the event to the appropriate transport
     // Note the SipTransport may not be in our mappings if marked as dead
-    if (sipTransport)
+    if (sipTransport) {
+        JAMI_ERR("@@@ transportMapMutex_ 3");
         sipTransport->stateCallback(state, info);
+        JAMI_ERR("@@@ transportMapMutex_ 4");
+    }
 }
 
 std::shared_ptr<SipTransport>
