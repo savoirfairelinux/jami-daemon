@@ -94,6 +94,7 @@ Call::Call(Account& account,
     addStateListener([this](Call::CallState call_state,
                             Call::ConnectionState cnx_state,
                             UNUSED int code) {
+        JAMI_ERR("@@@ addStateListener 0");
         if (cnx_state == ConnectionState::PROGRESSING && startFallback_.exchange(false)
             && not isSubcall()) {
             // If the other peer lose the connectivity during the progressing
@@ -465,6 +466,7 @@ Call::addSubCall(Call& subcall)
     subcall.addStateListener(
         [sub = subcall.weak(),
          parent = weak()](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
+            JAMI_ERR("@@@ addStateListener 2");
             runOnMainThread([sub, parent, new_state, new_cstate, code]() {
                 if (auto p = parent.lock()) {
                     if (auto s = sub.lock()) {

@@ -1,0 +1,211 @@
+ include/opendht/dht_proxy_client.h |  5 +----
+ src/dht_proxy_client.cpp           | 29 +++++++++++++++++++++++++----
+ src/dhtrunner.cpp                  | 48 +++++++++++++++++++++++++++++++++++++++++++++---
+ 3 files changed, 71 insertions(+), 11 deletions(-)
+
+diff --git a/include/opendht/dht_proxy_client.h b/include/opendht/dht_proxy_client.h
+index 848ea0a..0198b05 100644
+--- a/include/opendht/dht_proxy_client.h
++++ b/include/opendht/dht_proxy_client.h
+@@ -266,10 +266,7 @@ public:
+     void connectivityChanged(sa_family_t) override {
+         getProxyInfos();
+     }
+-    void connectivityChanged() override {
+-        getProxyInfos();
+-        loopSignal_();
+-    }
++    void connectivityChanged() override;
+ 
+ private:
+     /**
+diff --git a/src/dht_proxy_client.cpp b/src/dht_proxy_client.cpp
+index c19f20d..29bda52 100644
+--- a/src/dht_proxy_client.cpp
++++ b/src/dht_proxy_client.cpp
+@@ -967,6 +967,20 @@ DhtProxyClient::handleExpireListener(const asio::error_code &ec, const InfoHash&
+     }
+ }
+ 
++void
++DhtProxyClient::connectivityChanged()
++{
++    if (logger_)
++        logger_->e("[proxy:client] @@@ connectivityChanged0");
++    getProxyInfos();
++    if (logger_)
++        logger_->e("[proxy:client] @@@ connectivityChanged1");
++    loopSignal_();
++    if (logger_)
++        logger_->e("[proxy:client] @@@ connectivityChanged2");
++}
++
++
+ void
+ DhtProxyClient::sendListen(const restinio::http_request_header_t& header,
+                            const CacheValueCallback& cb,
+@@ -1111,12 +1125,19 @@ DhtProxyClient::restartListeners(const asio::error_code &ec)
+     }
+     if (not deviceKey_.empty()) {
+         if (logger_)
+-            logger_->d("[proxy:client] [listeners] resubscribe due to a connectivity change");
++            logger_->d("@@@[proxy:client] [listeners] resubscribe due to a connectivity change");
+         // Connectivity changed, refresh all subscribe
+-        for (auto& search : searches_)
+-            for (auto& listener : search.second.listeners)
++        for (auto& search : searches_) {
++            auto key = search.first;
++            if (logger_)
++                logger_->e("@@@ FOR %s nb listeners (%u)", key.to_c_str(), search.second.listeners.size());
++            for (auto& listener : search.second.listeners) {
++                if (logger_)
++                    logger_->e("@@@ FOR %s ok (%u) stopped (%u)", key.to_c_str(), listener.second.opstate->ok.load(), listener.second.opstate->stop.load());
+                 if (!listener.second.opstate->ok)
+                     resubscribe(search.first, listener.first, listener.second);
++            }
++        }
+         return;
+     }
+     if (logger_)
+@@ -1258,7 +1279,7 @@ DhtProxyClient::resubscribe(const InfoHash& key, const size_t token, Listener& l
+     if (deviceKey_.empty())
+         return;
+     if (logger_)
+-        logger_->d("[proxy:client] [resubscribe] [search %s]", key.to_c_str());
++        logger_->e("[proxy:client] [resubscribe] [search %s]", key.to_c_str());
+ 
+     auto opstate = listener.opstate;
+     opstate->stop = true;
+diff --git a/src/dhtrunner.cpp b/src/dhtrunner.cpp
+index 2ece5e2..31d4682 100644
+--- a/src/dhtrunner.cpp
++++ b/src/dhtrunner.cpp
+@@ -277,6 +277,8 @@ DhtRunner::shutdown(ShutdownCallback cb) {
+     ongoing_ops++;
+     shutdownCallbacks_.emplace_back(std::move(cb));
+     pending_ops_prio.emplace([=](SecureDht&) mutable {
++        if (logger_)
++            logger_->e("@@@ DhtRunner::shutdown");
+         auto onShutdown = [this]{ opEnded(); };
+ #ifdef OPENDHT_PROXY_CLIENT
+         if (dht_via_proxy_)
+@@ -284,6 +286,8 @@ DhtRunner::shutdown(ShutdownCallback cb) {
+ #endif
+         if (dht_)
+             dht_->shutdown(onShutdown);
++        if (logger_)
++            logger_->e("@@@ DhtRunner::shutdown END");
+     });
+     cv.notify_all();
+ }
+@@ -522,6 +526,8 @@ DhtRunner::getNodeInfo(std::function<void(std::shared_ptr<NodeInfo>)> cb)
+     std::lock_guard<std::mutex> lck(storage_mtx);
+     ongoing_ops++;
+     pending_ops_prio.emplace([cb = std::move(cb), this](SecureDht& dht){
++        if (logger_)
++            logger_->e("@@@ DhtRunner::getNodeInfo");
+         auto sinfo = std::make_shared<NodeInfo>();
+         auto& info = *sinfo;
+         info.id = dht.getId();
+@@ -535,6 +541,8 @@ DhtRunner::getNodeInfo(std::function<void(std::shared_ptr<NodeInfo>)> cb)
+         info.ongoing_ops = ongoing_ops;
+         cb(std::move(sinfo));
+         opEnded();
++        if (logger_)
++            logger_->e("@@@ DhtRunner::getNodeInfo END");
+     });
+     cv.notify_all();
+ }
+@@ -579,9 +587,18 @@ DhtRunner::getSearchLog(const InfoHash& f, sa_family_t af) const
+ std::vector<SockAddr>
+ DhtRunner::getPublicAddress(sa_family_t af)
+ {
++    if (logger_)
++        logger_->e("@@@ DhtRunner::getPublicAddress(sa_family_t af)");
+     std::lock_guard<std::mutex> lck(dht_mtx);
+-    if (auto dht = activeDht())
++    if (logger_)
++        logger_->e("@@@ DhtRunner::getPublicAddress(sa_family_t af) 2");
++    if (auto dht = activeDht()) {
++        if (logger_)
++            logger_->e("@@@ DhtRunner::getPublicAddress(sa_family_t af) 3");
+         return dht->getPublicAddress(af);
++        if (logger_)
++            logger_->e("@@@ DhtRunner::getPublicAddress(sa_family_t af) 4");
++    }
+     return {};
+ }
+ std::vector<std::string>
+@@ -995,8 +1012,12 @@ DhtRunner::bootstrap(const SockAddr& addr, DoneCallbackSimple&& cb)
+     }
+     std::lock_guard<std::mutex> lck(storage_mtx);
+     ongoing_ops++;
+-    pending_ops_prio.emplace([addr, cb = bindOpDoneCallback(std::move(cb))](SecureDht& dht) mutable {
++    pending_ops_prio.emplace([=](SecureDht& dht) mutable {
++        if (logger_)
++            logger_->e("@@@ bootstrap(const SockAddr& addr, DoneCallbackSimple&& cb)");
+         dht.pingNode(std::move(addr), std::move(cb));
++        if (logger_)
++            logger_->e("@@@ bootstrap(const SockAddr& addr, DoneCallbackSimple&& cb) END");
+     });
+     cv.notify_all();
+ }
+@@ -1007,8 +1028,12 @@ DhtRunner::bootstrap(const InfoHash& id, const SockAddr& address)
+     if (running != State::Running)
+         return;
+     std::unique_lock<std::mutex> lck(storage_mtx);
+-    pending_ops_prio.emplace([id, address](SecureDht& dht) mutable {
++    pending_ops_prio.emplace([=](SecureDht& dht) mutable {
++        if (logger_)
++            logger_->e("@@@ bootstrap(const InfoHash& id, const SockAddr& address)");
+         dht.insertNode(id, address);
++        if (logger_)
++            logger_->e("@@@ bootstrap(const InfoHash& id, const SockAddr& address) END");
+     });
+     cv.notify_all();
+ }
+@@ -1020,8 +1045,12 @@ DhtRunner::bootstrap(const std::vector<NodeExport>& nodes)
+         return;
+     std::lock_guard<std::mutex> lck(storage_mtx);
+     pending_ops_prio.emplace([=](SecureDht& dht) {
++        if (logger_)
++            logger_->e("@@@ DhtRunner::bootstrap(const std::vector<NodeExport>& nodes)");
+         for (auto& node : nodes)
+             dht.insertNode(node);
++        if (logger_)
++            logger_->e("@@@ DhtRunner::bootstrap(const std::vector<NodeExport>& nodes) END");
+     });
+     cv.notify_all();
+ }
+@@ -1029,9 +1058,18 @@ DhtRunner::bootstrap(const std::vector<NodeExport>& nodes)
+ void
+ DhtRunner::connectivityChanged()
+ {
++
++    if (logger_)
++        logger_->e("@@@ DhtRunner::connectivityChanged() 0");
+     std::lock_guard<std::mutex> lck(storage_mtx);
++    if (logger_)
++        logger_->e("@@@ DhtRunner::connectivityChanged() 1");
+     pending_ops_prio.emplace([=](SecureDht& dht) {
++        if (logger_)
++            logger_->e("@@@ DhtRunner::connectivityChanged() 2");
+         dht.connectivityChanged();
++        if (logger_)
++            logger_->e("@@@ DhtRunner::connectivityChanged() 3");
+ #ifdef OPENDHT_PEER_DISCOVERY
+         if (peerDiscovery_)
+             peerDiscovery_->connectivityChanged();
+@@ -1187,8 +1225,12 @@ DhtRunner::pushNotificationReceived(const std::map<std::string, std::string>& da
+     {
+         std::lock_guard<std::mutex> lck(storage_mtx);
+         pending_ops_prio.emplace([=](SecureDht&) {
++            if (logger_)
++                logger_->e("@@@ pushNotificationReceived");
+             if (dht_via_proxy_)
+                 dht_via_proxy_->pushNotificationReceived(data);
++            if (logger_)
++                logger_->e("@@@ pushNotificationReceived END");
+         });
+     }
+     cv.notify_all();
