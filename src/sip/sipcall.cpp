@@ -232,6 +232,7 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
         transport_->addStateListener(
             list_id,
             [wthis_ = weak()](pjsip_transport_state state, const pjsip_transport_state_info*) {
+                JAMI_ERR("@@@ addStateListener 4");
                 if (auto this_ = wthis_.lock()) {
                     // end the call if the SIP transport is shut down
                     auto isAlive = SipTransport::isAlive(state);

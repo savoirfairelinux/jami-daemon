@@ -447,6 +447,7 @@ Call::addSubCall(Call& subcall)
     subcall.addStateListener(
         [sub = subcall.weak(),
          parent = weak()](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
+            JAMI_ERR("@@@ addStateListener 2");
             runOnMainThread([sub, parent, new_state, new_cstate, code]() {
                 if (auto p = parent.lock()) {
                     if (auto s = sub.lock()) {

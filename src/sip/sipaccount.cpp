@@ -282,6 +282,7 @@ void
 SIPAccount::onTransportStateChanged(pjsip_transport_state state,
                                     const pjsip_transport_state_info* info)
 {
+    JAMI_ERR("@@@ addStateListener 3");
     pj_status_t currentStatus = transportStatus_;
     JAMI_DBG("Transport state changed to %s for account %s !",
              SipTransport::stateToStr(state),
