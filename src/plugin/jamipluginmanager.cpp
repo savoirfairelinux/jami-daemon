@@ -337,11 +337,10 @@ JamiPluginManager::unloadPlugin(const std::string& rootPath)
 void
 JamiPluginManager::togglePlugin(const std::string& rootPath, bool toggle)
 {
-    //This function should not be used as is
-    //One should modify it to perform plugin install followed by load
-    //rootPath should be the jplpath!
-    try
-    {
+    // This function should not be used as is
+    // One should modify it to perform plugin install followed by load
+    // rootPath should be the jplpath!
+    try {
         std::string soPath = getPluginDetails(rootPath).at("soPath");
         // remove the previous plugin object if it was registered
         pm_.destroyPluginComponents(soPath);
@@ -389,9 +388,32 @@ JamiPluginManager::getPluginPreferences(const std::string& rootPath)
                 std::string key = jsonPreference.get("key", "None").asString();
                 if (type != "None" && key != "None") {
                     if (keys.find(key) == keys.end()) {
-                        const auto& preferenceAttributes = parsePreferenceConfig(jsonPreference,
-                                                                                 type);
+                        std::map<std::string, std::string> preferenceAttributes
+                            = parsePreferenceConfig(jsonPreference, type);
                         // If the parsing of the attributes was successful, commit the map and the key
+                        preferenceAttributes["entryValues"]
+                            = std::regex_replace(preferenceAttributes["entryValues"],
+                                                 std::regex("\\["),
+                                                 "$2");
+                        preferenceAttributes["entryValues"]
+                            = std::regex_replace(preferenceAttributes["entryValues"],
+                                                 std::regex("\\]"),
+                                                 "$2");
+                        preferenceAttributes["entries"]
+                            = std::regex_replace(preferenceAttributes["entries"],
+                                                 std::regex("\\["),
+                                                 "$2");
+                        preferenceAttributes["entries"]
+                            = std::regex_replace(preferenceAttributes["entries"],
+                                                 std::regex("\\]"),
+                                                 "$2");
+                        if (type == "Path") {
+                            preferenceAttributes["defaultValue"]
+                                = rootPath + DIR_SEPARATOR_STR + "data" + DIR_SEPARATOR_STR
+                                  + preferenceAttributes["category"] + DIR_SEPARATOR_STR
+                                  + preferenceAttributes["defaultValue"];
+                        }
+
                         if (!preferenceAttributes.empty()) {
                             preferences.push_back(std::move(preferenceAttributes));
                             keys.insert(key);
@@ -448,7 +470,6 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
                                        const std::string& key,
                                        const std::string& value)
 {
-    bool returnValue = false;
     std::map<std::string, std::string> pluginUserPreferencesMap = getPluginUserPreferencesValuesMap(
         rootPath);
     std::map<std::string, std::string> pluginPreferencesMap = getPluginPreferencesValuesMap(
@@ -473,14 +494,13 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
         try {
             std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
             msgpack::pack(fs, pluginUserPreferencesMap);
-            returnValue = true;
+            return true;
         } catch (const std::exception& e) {
-            returnValue = false;
             JAMI_ERR() << e.what();
+            return false;
         }
     }
-
-    return returnValue;
+    return false;
 }
 
 std::map<std::string, std::string>
