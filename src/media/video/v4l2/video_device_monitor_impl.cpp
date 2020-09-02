@@ -82,33 +82,17 @@ private:
 };
 
 std::string
-getDeviceString(udev* udev, const std::string& dev_path)
+getDeviceString(udev* udev, struct udev_device* udev_device)
 {
-    std::string unique_device_string;
-    struct stat statbuf;
-    if (stat(dev_path.c_str(), &statbuf) < 0) {
-        return {};
+    auto opened_dev = udev_device;
+    if (auto syspath = udev_device_get_syspath(opened_dev)) {
+        auto dev = udev_device_new_from_syspath(udev, syspath);
+        if (!dev)
+            return {};
+        if (auto serial = udev_device_get_property_value(dev, "ID_SERIAL"))
+            return serial;
     }
-    auto type = S_ISBLK(statbuf.st_mode) ? 'b' : S_ISCHR(statbuf.st_mode) ? 'c' : 0;
-
-    auto opened_dev = udev_device_new_from_devnum(udev, type, statbuf.st_rdev);
-    auto dev = opened_dev;
-
-    while (dev != nullptr) {
-        auto serial = udev_device_get_sysattr_value(dev, "serial");
-        if (nullptr == serial) {
-            dev = udev_device_get_parent(dev);
-        } else {
-            unique_device_string += udev_device_get_sysattr_value(dev, "idVendor");
-            unique_device_string += udev_device_get_sysattr_value(dev, "idProduct");
-            unique_device_string += serial;
-            break;
-        }
-    }
-    if (opened_dev) {
-        udev_device_unref(opened_dev);
-    }
-    return unique_device_string;
+    return {};
 }
 
 static int
@@ -167,7 +151,7 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
                 // udev_device_get_devnode will fail
                 continue;
             }
-            auto unique_name = getDeviceString(udev_, path);
+            auto unique_name = getDeviceString(udev_, dev);
             JAMI_DBG("udev: adding device with id %s", unique_name.c_str());
             std::map<std::string, std::string> info = {{"devPath", path}};
             std::vector<std::map<std::string, std::string>> devInfo = {info};
@@ -253,7 +237,7 @@ VideoDeviceMonitorImpl::run()
                     // udev_device_get_devnode will fail
                     break;
                 }
-                auto unique_name = getDeviceString(udev_, path);
+                auto unique_name = getDeviceString(udev_, dev);
 
                 const char* action = udev_device_get_action(dev);
                 if (!strcmp(action, "add")) {
