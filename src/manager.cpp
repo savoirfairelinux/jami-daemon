@@ -1853,7 +1853,7 @@ Manager::incomingCall(Call& call, const std::string& accountId)
 
     if (not hasCurrentCall()) {
         call.setState(Call::ConnectionState::RINGING);
-#ifndef RING_UWP
+#if !defined(RING_UWP) && !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
         if (not call.getAccount().isRendezVous())
             playRingtone(accountId);
 #endif
