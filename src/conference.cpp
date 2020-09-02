@@ -114,6 +114,15 @@ Conference::~Conference()
             call->sendTextMessage(std::map<std::string, std::string> {{"application/confInfo+json",
                                                                        "[]"}},
                                   call->getAccount().getFromUri());
+            // Continue the recording for the call if the conference was recorded
+            if (this->isRecording()) {
+                JAMI_DBG("Stop recording for conf %s", getConfID().c_str());
+                this->toggleRecording();
+                if (not call->isRecording()) {
+                    JAMI_DBG("Conference was recorded, start recording for conf %s", call->getCallId().c_str());
+                    call->toggleRecording();
+                }
+            }
         }
     }
 #endif // ENABLE_VIDEO
@@ -136,8 +145,18 @@ Conference::add(const std::string& participant_id)
 {
     if (participants_.insert(participant_id).second) {
 #ifdef ENABLE_VIDEO
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id))
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
             call->getVideoRtp().enterConference(this);
+            // Continue the recording for the conference if one participant was recording
+            if (call->isRecording()) {
+                JAMI_DBG("Stop recording for call %s", call->getCallId().c_str());
+                call->toggleRecording();
+                if (not this->isRecording()) {
+                    JAMI_DBG("One participant was recording, start recording for conference %s", getConfID().c_str());
+                    this->toggleRecording();
+                }
+            }
+        }
         else
             JAMI_ERR("no call associate to participant %s", participant_id.c_str());
 #endif // ENABLE_VIDEO
