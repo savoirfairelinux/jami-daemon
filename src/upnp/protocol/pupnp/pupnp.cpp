@@ -23,6 +23,7 @@
 #include "pupnp.h"
 
 #include <opendht/thread_pool.h>
+#include <opendht/http.h>
 
 namespace jami {
 namespace upnp {
@@ -551,8 +552,19 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
         if (not cpDeviceList_.emplace(cpDeviceId).second)
             break;
 
+        IpAddr ipSrc(*(const pj_sockaddr*) (UpnpDiscovery_get_DestAddr(d_event)));
+
         // Check if we already downloaded the xml doc based on the igd location string.
         std::string igdLocationUrl {UpnpDiscovery_get_Location_cstr(d_event)};
+        dht::http::Url url(igdLocationUrl);
+
+        // NOTE: here, we check if the location given is related to the source address.
+        // If it's not the case, it's certainly a router plugged in the network, but not
+        // related to this network. So the given location will be unreachable and this
+        // will cause some timeout
+        if (IpAddr(url.host) != ipSrc)
+            break;
+
         dwnldlXmlList_.emplace_back(
             dht::ThreadPool::io().get<pIGDInfo>([this, location = std::move(igdLocationUrl)] {
                 IXML_Document* doc_container_ptr = nullptr;
