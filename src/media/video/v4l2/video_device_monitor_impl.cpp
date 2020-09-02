@@ -82,16 +82,11 @@ private:
 };
 
 std::string
-getDeviceString(udev* udev, const std::string& dev_path)
+getDeviceString(udev* udev, struct udev_device *udev_device)
 {
     std::string unique_device_string;
-    struct stat statbuf;
-    if (stat(dev_path.c_str(), &statbuf) < 0) {
-        return {};
-    }
-    auto type = S_ISBLK(statbuf.st_mode) ? 'b' : S_ISCHR(statbuf.st_mode) ? 'c' : 0;
 
-    auto opened_dev = udev_device_new_from_devnum(udev, type, statbuf.st_rdev);
+    auto opened_dev = udev_device;
     auto dev = opened_dev;
 
     while (dev != nullptr) {
@@ -99,14 +94,82 @@ getDeviceString(udev* udev, const std::string& dev_path)
         if (nullptr == serial) {
             dev = udev_device_get_parent(dev);
         } else {
-            unique_device_string += udev_device_get_sysattr_value(dev, "idVendor");
-            unique_device_string += udev_device_get_sysattr_value(dev, "idProduct");
-            unique_device_string += serial;
+            JAMI_ERR("- Start informations on device:");
+            JAMI_ERR("- serial: %s", serial);
+	
+            if (auto* path = udev_device_get_devnode(dev))
+                JAMI_ERR("- devnode: %s", path);
+            else
+                JAMI_ERR("- devnode: null");
+            if (auto* vid = udev_device_get_sysattr_value(dev, "idVendor"))
+                JAMI_ERR("- idVendor: %s", vid);
+            else
+                JAMI_ERR("- idVendor: null");
+            if (auto* pid = udev_device_get_sysattr_value(dev, "idProduct"))
+                JAMI_ERR("- idProduct: %s", pid);
+            else
+                JAMI_ERR("- idProduct: null");
+            if (auto* manufacturer = udev_device_get_sysattr_value(dev, "manufacturer"))
+                JAMI_ERR("- manufacturer: %s", manufacturer);
+            else
+                JAMI_ERR("- manufacturer: null");
+            if (auto* product = udev_device_get_sysattr_value(dev, "product"))
+                JAMI_ERR("- product: %s", product);
+            else
+                JAMI_ERR("- product: null");
+            if (auto* busnum = udev_device_get_sysattr_value(dev, "busnum"))
+                JAMI_ERR("- busnum: %s", busnum);
+            else
+                JAMI_ERR("- busnum: null");
+            if (auto* devnum = udev_device_get_sysattr_value(dev, "devnum"))
+                JAMI_ERR("- devnum: %s", devnum);
+            else
+                JAMI_ERR("- devnum: null");
+            if (auto devpath = udev_device_get_devpath(dev))
+                JAMI_ERR("- devpath: %s", devpath);
+            else
+                JAMI_ERR("- devpath: null");
+            if (auto syspath = udev_device_get_syspath(dev))
+                JAMI_ERR("- syspath: %s", syspath);
+            else
+                JAMI_ERR("- syspath: null");
+            if (auto sysname = udev_device_get_sysname(dev))
+                JAMI_ERR("- sysname: %s", sysname);
+            else
+                JAMI_ERR("- sysname: null");
+            if (auto sysnum = udev_device_get_sysnum(dev))
+                JAMI_ERR("- sysnum: %s", sysnum);
+            else
+                JAMI_ERR("- sysnum: null");
+            if (auto devtype = udev_device_get_devtype(dev))
+                JAMI_ERR("- devtype: %s", devtype);
+            else
+                JAMI_ERR("- devtype: null");
+            if (auto subsystem = udev_device_get_subsystem(dev))
+                JAMI_ERR("- subsystem: %s", subsystem);
+            else
+                JAMI_ERR("- subsystem: null");
+            if (auto driver = udev_device_get_driver(dev))
+                JAMI_ERR("- driver: %s", driver);
+            else
+                JAMI_ERR("- driver: null");
+            if (auto action = udev_device_get_action(dev))
+                JAMI_ERR("- action: %s", action);
+            else
+                JAMI_ERR("- action: null");
+    
+            JAMI_ERR("----- END INFORMATIONS --------");
+            if (auto devpath = udev_device_get_devpath(dev))
+                unique_device_string = devpath;
+            else {
+                if (auto vid = udev_device_get_sysattr_value(dev, "idVendor"))
+                    unique_device_string += vid;
+                if (auto pid = udev_device_get_sysattr_value(dev, "idProduct"))
+                    unique_device_string += pid;
+                unique_device_string += serial;
+            }
             break;
         }
-    }
-    if (opened_dev) {
-        udev_device_unref(opened_dev);
     }
     return unique_device_string;
 }
@@ -167,7 +230,7 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
                 // udev_device_get_devnode will fail
                 continue;
             }
-            auto unique_name = getDeviceString(udev_, path);
+            auto unique_name = getDeviceString(udev_, dev);
             JAMI_DBG("udev: adding device with id %s", unique_name.c_str());
             std::map<std::string, std::string> info = {{"devPath", path}};
             std::vector<std::map<std::string, std::string>> devInfo = {info};
@@ -253,7 +316,7 @@ VideoDeviceMonitorImpl::run()
                     // udev_device_get_devnode will fail
                     break;
                 }
-                auto unique_name = getDeviceString(udev_, path);
+                auto unique_name = getDeviceString(udev_, dev);
 
                 const char* action = udev_device_get_action(dev);
                 if (!strcmp(action, "add")) {
