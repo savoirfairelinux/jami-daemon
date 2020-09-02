@@ -1443,6 +1443,23 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
         conf->detach();
     }
 
+    bool isParticipantRecording = false;
+    if (call1->isRecording()) {
+        JAMI_DBG("Stop recording for call %s", callId1.c_str());
+        call1->toggleRecording();
+        isParticipantRecording = true;
+    }
+    if (call2->isRecording()) {
+        JAMI_DBG("Stop recording for call %s", callId2.c_str());
+        call2->toggleRecording();
+        isParticipantRecording = true;
+    }
+
+    if (isParticipantRecording) {
+        JAMI_DBG("One participant was recording, start recording for conference %s", conf->getConfID().c_str());
+        conf->toggleRecording();
+    }
+
     pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
     emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
     return true;
