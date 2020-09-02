@@ -99,8 +99,15 @@ getDeviceString(udev* udev, const std::string& dev_path)
         if (nullptr == serial) {
             dev = udev_device_get_parent(dev);
         } else {
-            unique_device_string += udev_device_get_sysattr_value(dev, "idVendor");
-            unique_device_string += udev_device_get_sysattr_value(dev, "idProduct");
+            if (auto vid = udev_device_get_sysattr_value(dev, "idVendor"))
+                unique_device_string += vid;
+            if (auto pid = udev_device_get_sysattr_value(dev, "idProduct"))
+                unique_device_string += pid;
+            if (auto manufacturer = udev_device_get_sysattr_value(dev, "manufacturer"))
+                unique_device_string += manufacturer;
+            if (auto product = udev_device_get_sysattr_value(dev, "product"))
+                unique_device_string += product;
+            JAMI_ERR("@@@ %s", unique_device_string.c_str());
             unique_device_string += serial;
             break;
         }
