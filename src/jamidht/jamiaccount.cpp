@@ -3353,6 +3353,10 @@ JamiAccount::requestPeerConnection(
         channeledConnectedCb,
     const std::function<void()>& onChanneledCancelled)
 {
+    if (not dhtPeerConnector_) {
+        runOnMainThread([onChanneledCancelled]{ onChanneledCancelled(); });
+        return;
+    }
     dhtPeerConnector_->requestConnection(peer_id,
                                          tid,
                                          isVCard,
@@ -3364,7 +3368,8 @@ JamiAccount::requestPeerConnection(
 void
 JamiAccount::closePeerConnection(const std::string& peer, const DRing::DataTransferId& tid)
 {
-    dhtPeerConnector_->closeConnection(peer, tid);
+    if (dhtPeerConnector_)
+        dhtPeerConnector_->closeConnection(peer, tid);
 }
 
 void
