@@ -547,6 +547,18 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
                 base_.onHoldCall(call->getCallId());
             else
                 switchCall(call);
+
+            bool isConfRecording = false;
+            if (conf.isRecording()) {
+                JAMI_DBG("Stop recording for conf %s", conf.getConfID().c_str());
+                conf.toggleRecording();
+                isConfRecording = true;
+            }
+
+            if (isConfRecording) {
+                JAMI_DBG("Conference was recorded, start recording for conf %s", call->getCallId().c_str());
+                call->toggleRecording();
+            }
         }
 
         JAMI_DBG("No remaining participants, remove conference");
@@ -1441,6 +1453,23 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
         conf->setState(Conference::State::ACTIVE_ATTACHED);
     } else {
         conf->detach();
+    }
+
+    bool isParticipantRecording = false;
+    if (call1->isRecording()) {
+        JAMI_DBG("Stop recording for call %s", callId1.c_str());
+        call1->toggleRecording();
+        isParticipantRecording = true;
+    }
+    if (call2->isRecording()) {
+        JAMI_DBG("Stop recording for call %s", callId2.c_str());
+        call2->toggleRecording();
+        isParticipantRecording = true;
+    }
+
+    if (isParticipantRecording) {
+        JAMI_DBG("One participant was recording, start recording for conference %s", conf->getConfID().c_str());
+        conf->toggleRecording();
     }
 
     pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
