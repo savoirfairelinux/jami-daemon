@@ -164,7 +164,6 @@ PUPnP::PUPnP()
                         if (it->wait_for(std::chrono::seconds(1)) == std::future_status::ready) {
                             finished.splice(finished.end(), xmlList, it++);
                         } else {
-                            JAMI_WARN("PUPnP: XML download timed out");
                             ++it;
                         }
                     }
