@@ -99,9 +99,15 @@ getDeviceString(udev* udev, const std::string& dev_path)
         if (nullptr == serial) {
             dev = udev_device_get_parent(dev);
         } else {
-            unique_device_string += udev_device_get_sysattr_value(dev, "idVendor");
-            unique_device_string += udev_device_get_sysattr_value(dev, "idProduct");
-            unique_device_string += serial;
+            if (auto devpath = udev_device_get_devpath(dev))
+                unique_device_string = devpath;
+            else {
+                if (auto vid = udev_device_get_sysattr_value(dev, "idVendor"))
+                    unique_device_string += vid;
+                if (auto pid = udev_device_get_sysattr_value(dev, "idProduct"))
+                    unique_device_string += pid;
+                unique_device_string += serial;
+            }
             break;
         }
     }
