@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "846d9048_5bf05490",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 409,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-02T01:06:42Z",
+      "side": 1,
+      "message": "* this would create new keys in the map even when it didn\u0027t exist before\n* regex is recompiled for every use",
+      "range": {
+        "startLine": 393,
+        "startChar": 102,
+        "endLine": 409,
+        "endChar": 55
+      },
+      "revId": "c36eabcf055d6ff61ec0b7c40717f0a1489d68ee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
