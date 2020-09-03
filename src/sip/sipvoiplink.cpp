@@ -83,6 +83,7 @@ static void transaction_state_changed_cb(pjsip_inv_session* inv,
                                          pjsip_transaction* tsx,
                                          pjsip_event* e);
 static std::shared_ptr<SIPCall> getCallFromInvite(pjsip_inv_session* inv);
+static void processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* e);
 
 static void
 handleIncomingOptions(pjsip_rx_data* rdata)
@@ -112,7 +113,7 @@ handleIncomingOptions(pjsip_rx_data* rdata)
         pjsip_tx_data_dec_ref(tdata);
 }
 
-// return PJ_FALSE so that eventuall other modules will handle these requests
+// return PJ_FALSE so that eventually other modules will handle these requests
 // TODO: move Voicemail to separate module
 static pj_bool_t
 transaction_response_cb(pjsip_rx_data* rdata)
@@ -295,6 +296,12 @@ transaction_request_cb(pjsip_rx_data* rdata)
         return PJ_FALSE;
     }
 
+    if (method->id == PJSIP_INVITE_METHOD) {
+        // Log headers of received INVITE
+        JAMI_INFO("Received a SIP INVITE request");
+        sip_utils::logMessageHeaders(&rdata->msg_info.msg->hdr);
+    }
+
     pjmedia_sdp_session* r_sdp;
 
     if (!body
@@ -465,13 +472,16 @@ transaction_request_cb(pjsip_rx_data* rdata)
     }
 
     // Check if call has been transferred
-    pjsip_tx_data* tdata = 0;
+    pjsip_tx_data* tdata = nullptr;
 
     if (pjsip_inv_initial_answer(call->inv.get(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata)
         != PJ_SUCCESS) {
         JAMI_ERR("Could not create answer TRYING");
         return PJ_FALSE;
     }
+
+    // Add user-agent header
+    sip_utils::addUserAgenttHeader(account->getUserAgentName(), tdata);
 
     if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
         JAMI_ERR("Could not send msg TRYING");
@@ -825,7 +835,7 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
         return;
 
     if (ev->type != PJSIP_EVENT_TSX_STATE and ev->type != PJSIP_EVENT_TX_MSG) {
-        JAMI_WARN("[call:%s] INVITE@%p state changed to %d (%s): unwaited event type %d",
+        JAMI_WARN("[call:%s] INVITE@%p state changed to %d (%s): unexpected event type %d",
                   call->getCallId().c_str(),
                   inv,
                   inv->state,
@@ -1181,6 +1191,8 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     if (not call)
         return;
 
+    processInviteResponseHelper(inv, event);
+
     // We process here only incoming request message
     if (tsx->role != PJSIP_ROLE_UAS or tsx->state != PJSIP_TSX_STATE_TRYING
         or event->body.tsx_state.type != PJSIP_EVENT_RX_MSG) {
@@ -1222,6 +1234,39 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
                 call->onTextMessage(std::move(m));
             });
     }
+}
+
+
+static void processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* event)
+{
+
+    if (event->body.tsx_state.type != PJSIP_EVENT_RX_MSG)
+        return;
+
+    const auto rdata = event->body.tsx_state.src.rdata;
+    if (rdata == nullptr or rdata->msg_info.msg == nullptr)
+        return;
+
+    const auto msg = rdata->msg_info.msg;
+    if (msg->type != PJSIP_RESPONSE_MSG)
+        return;
+
+    // Only handle the following responses
+    switch(msg->line.status.code) {
+        case PJSIP_SC_TRYING :
+        case PJSIP_SC_RINGING :
+        case PJSIP_SC_OK :
+            break;
+        default :
+            return;
+    }
+
+    JAMI_INFO("[INVITE:%p] SIP RX response: reason %s, status code %i",
+        inv,
+        std::string(msg->line.status.reason.ptr, msg->line.status.reason.slen).c_str(),
+        msg->line.status.code);
+
+    sip_utils::logMessageHeaders(&msg->hdr);
 }
 
 int
