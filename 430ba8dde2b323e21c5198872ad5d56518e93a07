@@ -1,0 +1,188 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f3760ee6_0bf81cfc",
+        "filename": "src/account.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-03T20:31:31Z",
+      "side": 1,
+      "message": "This is not dependent on any account-related information, so it should be either:\n* a static const string initialized on startup\n* a string returned by a global/\"static\" function when needed\n* or both (a static const string initialized using a function)",
+      "range": {
+        "startLine": 119,
+        "startChar": 0,
+        "endLine": 123,
+        "endChar": 95
+      },
+      "revId": "430ba8dde2b323e21c5198872ad5d56518e93a07",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8d9dfeb5_a27d47e6",
+        "filename": "src/account.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 481,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-03T20:31:31Z",
+      "side": 1,
+      "message": "by definition, the default user agent is not configurable, so this variable is not necessary",
+      "range": {
+        "startLine": 481,
+        "startChar": 16,
+        "endLine": 481,
+        "endChar": 33
+      },
+      "revId": "430ba8dde2b323e21c5198872ad5d56518e93a07",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6295effb_448adced",
+        "filename": "src/buildinfo.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-03T20:31:31Z",
+      "side": 1,
+      "message": "should return something to avoid undefined behavior",
+      "range": {
+        "startLine": 70,
+        "startChar": 0,
+        "endLine": 70,
+        "endChar": 23
+      },
+      "revId": "430ba8dde2b323e21c5198872ad5d56518e93a07",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e8ff2d9b_918de6ce",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-03T20:31:31Z",
+      "side": 1,
+      "message": "simply use:\n\n    \"%.*s\", str.slen, str.ptr\n\nto print a string with known-length directly without std::string(allocation + copy + free)",
+      "range": {
+        "startLine": 207,
+        "startChar": 38,
+        "endLine": 207,
+        "endChar": 88
+      },
+      "revId": "430ba8dde2b323e21c5198872ad5d56518e93a07",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5a1feb2c_18a20535",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-03T20:31:31Z",
+      "side": 1,
+      "message": "not used",
+      "range": {
+        "startLine": 219,
+        "startChar": 13,
+        "endLine": 219,
+        "endChar": 20
+      },
+      "revId": "430ba8dde2b323e21c5198872ad5d56518e93a07",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3e00a689_90b929a7",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 229,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-03T20:31:31Z",
+      "side": 1,
+      "message": "Could be a tad more efficient by avoiding a few unneeded strlen():\n\nvoid logMessageHeaders(const pjsip_hdr* hdr_list)\n{\n    std::string msgHdrStr;\n    msgHdrStr.reserve(1024);\n    for (auto hdr \u003d hdr_list-\u003enext; hdr !\u003d hdr_list; hdr \u003d hdr-\u003enext) {\n        char buf[1024];\n        int size \u003d pjsip_hdr_print_on((void*)hdr, buf, sizeof(buf) - 1);\n        if (size \u003e 0) {\n            msgHdrStr.append(buf, size);\n            msgHdrStr.push_back(\u0027\\n\u0027);\n        }\n    }\n    JAMI_INFO(\"Message headers:\\n%.*s\", (int)msgHdrStr.size(), msgHdrStr.c_str());\n}",
+      "range": {
+        "startLine": 215,
+        "startChar": 0,
+        "endLine": 229,
+        "endChar": 39
+      },
+      "revId": "430ba8dde2b323e21c5198872ad5d56518e93a07",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "eb25e663_43d7b78f",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-03T20:31:31Z",
+      "side": 1,
+      "message": "do we really want to log every header of every received request ?",
+      "range": {
+        "startLine": 298,
+        "startChar": 0,
+        "endLine": 303,
+        "endChar": 0
+      },
+      "revId": "430ba8dde2b323e21c5198872ad5d56518e93a07",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f086e506_11f586c2",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1270,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-03T20:31:31Z",
+      "side": 1,
+      "message": "do we really want to log every header of every received request ?",
+      "range": {
+        "startLine": 1239,
+        "startChar": 0,
+        "endLine": 1270,
+        "endChar": 0
+      },
+      "revId": "430ba8dde2b323e21c5198872ad5d56518e93a07",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
