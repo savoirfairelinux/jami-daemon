@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5e5a29f3_2777c58a",
+        "filename": "src/manager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1924,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-09-03T18:07:34Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe loop variable\u0027s type is not a reference type; this creates a copy in each iteration; consider making this a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "004de023c9d59d74cea60fd3793897db3255d356",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
