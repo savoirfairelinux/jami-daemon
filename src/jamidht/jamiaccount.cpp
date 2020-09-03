@@ -872,6 +872,10 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
     }
 
     JAMI_DBG("[call:%s] Sending SIP invite", call.getCallId().c_str());
+
+    // Add user-agent header
+    sip_utils::addUserAgenttHeader(getUserAgentName(), tdata);
+
     if (pjsip_inv_send_msg(call.inv.get(), tdata) != PJ_SUCCESS) {
         JAMI_ERR("Unable to send invite message for this call");
         return false;
@@ -3681,15 +3685,8 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
         pjsip_generic_string_hdr_create(tdata->pool, &STR_MESSAGE_ID, &pjMessageId));
     pjsip_msg_add_hdr(tdata->msg, hdr);
 
-    // Add user agent header.
-    pjsip_hdr* hdr_list;
-    constexpr auto pJuseragent = sip_utils::CONST_PJ_STR("Jami");
-    constexpr pj_str_t STR_USER_AGENT = jami::sip_utils::CONST_PJ_STR("User-Agent");
-
-    // Add Header
-    hdr_list = reinterpret_cast<pjsip_hdr*>(
-        pjsip_user_agent_hdr_create(tdata->pool, &STR_USER_AGENT, &pJuseragent));
-    pjsip_msg_add_hdr(tdata->msg, hdr_list);
+    // Add user-agent header
+    sip_utils::addUserAgenttHeader(getUserAgentName(), tdata);
 
     // Init tdata
     const pjsip_tpselector tp_sel = SIPVoIPLink::getTransportSelector(transport->get());
