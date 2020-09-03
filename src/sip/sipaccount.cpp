@@ -409,6 +409,9 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
     }
 
+    // Add user-agent header
+    sip_utils::addUserAgenttHeader(getUserAgentName(), tdata);
+
     if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
         JAMI_ERR("Unable to send invite message for this call");
         return false;
@@ -1052,13 +1055,12 @@ SIPAccount::sendRegister()
 
     pjsip_hdr hdr_list;
     pj_list_init(&hdr_list);
-    std::string useragent(getUserAgentName());
-    auto pJuseragent = CONST_PJ_STR(useragent);
+    auto pjUserAgent = CONST_PJ_STR(getUserAgentName());
     constexpr pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
 
     pjsip_generic_string_hdr* h = pjsip_generic_string_hdr_create(link_.getPool(),
                                                                   &STR_USER_AGENT,
-                                                                  &pJuseragent);
+                                                                  &pjUserAgent);
     pj_list_push_back(&hdr_list, (pjsip_hdr*) h);
     pjsip_regc_add_headers(regc, &hdr_list);
 
@@ -1724,14 +1726,6 @@ SIPAccount::setRegistrationState(RegistrationState state,
     SIPAccountBase::setRegistrationState(state, details_code, details_str);
 }
 
-std::string
-SIPAccount::getUserAgentName() const
-{
-    if (not hasCustomUserAgent_ or userAgent_.empty())
-        return DEFAULT_USER_AGENT;
-    return userAgent_;
-}
-
 std::map<std::string, std::string>
 SIPAccount::getTlsSettings() const
 {
@@ -2168,15 +2162,8 @@ SIPAccount::sendTextMessage(const std::string& to,
         pjsip_date_hdr_create(tdata->pool, &key, pj_cstr(&date_str, date)));
     pjsip_msg_add_hdr(tdata->msg, hdr);
 
-    /* Add user agent header. */
-    pjsip_hdr* hdr_list;
-    auto pJuseragent = CONST_PJ_STR(getUserAgentName());
-    constexpr pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
-
-    // Add Header
-    hdr_list = reinterpret_cast<pjsip_hdr*>(
-        pjsip_user_agent_hdr_create(tdata->pool, &STR_USER_AGENT, &pJuseragent));
-    pjsip_msg_add_hdr(tdata->msg, hdr_list);
+    // Add user-agent header
+    sip_utils::addUserAgenttHeader(getUserAgentName(), tdata);
 
     // Set input token into callback
     std::unique_ptr<ctx> t {new ctx(new pjsip_auth_clt_sess)};

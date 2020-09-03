@@ -99,6 +99,8 @@ std::string parseDisplayName(const pjsip_contact_hdr* header);
 std::string getHostFromUri(const std::string& sipUri);
 
 void addContactHeader(const pj_str_t* contactStr, pjsip_tx_data* tdata);
+void addUserAgenttHeader(const std::string& userAgent, pjsip_tx_data* tdata);
+void logMessageHeaders(const pjsip_hdr* hdr_list);
 
 std::string sip_strerror(pj_status_t code);
 
@@ -109,7 +111,7 @@ std::string sip_strerror(pj_status_t code);
 void register_thread();
 
 // Helper function that return a constant pj_str_t from an array of any types
-// that may be staticaly casted into char pointer.
+// that may be statically casted into char pointer.
 // Per convention, the input array is supposed to be null terminated.
 template<typename T, std::size_t N>
 constexpr const pj_str_t CONST_PJ_STR(T (&a)[N]) noexcept

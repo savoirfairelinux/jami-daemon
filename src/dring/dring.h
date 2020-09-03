@@ -45,6 +45,11 @@ enum InitFlag {
 DRING_PUBLIC const char* version() noexcept;
 
 /**
+ * Return the target platform (OS) as a string.
+ */
+DRING_PUBLIC const char* platform() noexcept;
+
+/**
  * Initialize globals, create underlaying daemon.
  *
  * @param flags  Flags to customize this initialization
