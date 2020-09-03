@@ -22,6 +22,30 @@
       "revId": "c36eabcf055d6ff61ec0b7c40717f0a1489d68ee",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a4979949_963f5c6f",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 409,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-09-03T15:52:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "846d9048_5bf05490",
+      "range": {
+        "startLine": 393,
+        "startChar": 102,
+        "endLine": 409,
+        "endChar": 55
+      },
+      "revId": "c36eabcf055d6ff61ec0b7c40717f0a1489d68ee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
