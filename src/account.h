@@ -309,6 +309,11 @@ public:
 
     std::vector<unsigned> convertIdToAVId(const std::vector<unsigned>& list);
 
+    /**
+     * Get the user-agent
+    */
+    std::string& getUserAgentName();
+
 public: // virtual methods that has to be implemented by concrete classes
     /**
      * This method is called to request removal of possible account traces on the system,
@@ -374,7 +379,6 @@ protected:
     static const char* const MAILBOX_KEY;
     static const char* const USER_AGENT_KEY;
     static const char* const HAS_CUSTOM_USER_AGENT_KEY;
-    static const char* const DEFAULT_USER_AGENT;
     static const char* const PRESENCE_MODULE_ENABLED_KEY;
     static const char* const UPNP_ENABLED_KEY;
     static const char* const PROXY_ENABLED_KEY;
@@ -472,9 +476,14 @@ protected:
     std::string displayName_;
 
     /**
-     * Useragent used for registration
+     * Default user-agent
      */
-    std::string userAgent_;
+    std::string defaultUserAgent_;
+
+    /**
+     * User-agent used for registration
+     */
+    std::string customUserAgent_;
 
     //  true if user has overridden default
     bool hasCustomUserAgent_;

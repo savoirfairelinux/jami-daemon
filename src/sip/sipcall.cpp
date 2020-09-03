@@ -286,6 +286,10 @@ SIPCall::SIPSessionReinvite()
     if (result == PJ_SUCCESS) {
         if (!tdata)
             return PJ_SUCCESS;
+
+        // Add user-agent header
+        sip_utils::addUserAgenttHeader(getAccount().getUserAgentName(), tdata);
+
         result = pjsip_inv_send_msg(inv.get(), tdata);
         if (result == PJ_SUCCESS)
             return PJ_SUCCESS;
@@ -375,6 +379,10 @@ SIPCall::terminateSipSession(int status)
                 auto contact = getSIPAccount().getContactHeader(transport_ ? transport_->get()
                                                                            : nullptr);
                 sip_utils::addContactHeader(&contact, tdata);
+
+                // Add user-agent header
+                sip_utils::addUserAgenttHeader(getAccount().getUserAgentName(), tdata);
+
                 ret = pjsip_inv_send_msg(inv.get(), tdata);
                 if (ret != PJ_SUCCESS)
                     JAMI_ERR("[call:%s] failed to send terminate msg, SIP error (%s)",
@@ -435,6 +443,9 @@ SIPCall::answer()
                  contactHeader_.ptr);
         sip_utils::addContactHeader(&contactHeader_, tdata);
     }
+
+    // Add user-agent header
+    sip_utils::addUserAgenttHeader(account.getUserAgentName(), tdata);
 
     if (pjsip_inv_send_msg(inv.get(), tdata) != PJ_SUCCESS) {
         inv.reset();

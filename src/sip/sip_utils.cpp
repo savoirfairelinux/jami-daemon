@@ -184,6 +184,51 @@ addContactHeader(const pj_str_t* contact_str, pjsip_tx_data* tdata)
     pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
 }
 
+void
+addUserAgenttHeader(std::string& userAgent, pjsip_tx_data* tdata)
+{
+    if (tdata == nullptr)
+        return;
+
+    pj_str_t pjUserAgent = pj_str((char*)userAgent.c_str());
+    constexpr pj_str_t STR_USER_AGENT = jami::sip_utils::CONST_PJ_STR("User-Agent");
+
+    // Do nothing if user-agent header is present.
+    pjsip_hdr* hdr = static_cast<pjsip_hdr*>(pjsip_msg_find_hdr_by_name(tdata->msg, &STR_USER_AGENT, nullptr));
+    if (hdr != nullptr) {
+        return;
+    }
+
+    // Add Header
+    hdr = reinterpret_cast<pjsip_hdr*>(
+        pjsip_user_agent_hdr_create(tdata->pool, &STR_USER_AGENT, &pjUserAgent));
+
+    if (hdr != nullptr) {
+        JAMI_DBG("Add header %s: %s", std::string(hdr->name.ptr, hdr->name.slen).c_str(),
+            std::string(pjUserAgent.ptr, pjUserAgent.slen).c_str());
+        pjsip_msg_add_hdr(tdata->msg, hdr);
+    }
+}
+
+void logMessageHeaders(const pjsip_hdr* hdr_list)
+{
+    const pjsip_hdr* hdr = hdr_list->next;
+    const pjsip_hdr* end = hdr_list;
+    std::string msgHdrStr("Message headers:\n");
+    for (; hdr != end; hdr = hdr->next) {
+        auto hdrName = std::string(hdr->name.ptr, hdr->name.slen);
+        char buf[1000];
+        int size = pjsip_hdr_print_on((void*)hdr, buf, sizeof(buf) - 1);
+        if (size > 0) {
+            buf[size] = '\0';
+            msgHdrStr.append(buf);
+            msgHdrStr.append("\n");
+        }
+    }
+
+    JAMI_INFO("%s", msgHdrStr.c_str());
+}
+
 std::string
 sip_strerror(pj_status_t code)
 {
