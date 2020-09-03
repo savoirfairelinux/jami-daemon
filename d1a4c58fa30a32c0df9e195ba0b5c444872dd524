@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1f17e6ea_848f1abe",
+        "filename": "src/media/video/v4l2/video_device_monitor_impl.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-03T19:21:36Z",
+      "side": 1,
+      "message": "might throw or fallback to avoid logic issues with empty id",
+      "range": {
+        "startLine": 89,
+        "startChar": 4,
+        "endLine": 89,
+        "endChar": 14
+      },
+      "revId": "d1a4c58fa30a32c0df9e195ba0b5c444872dd524",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
