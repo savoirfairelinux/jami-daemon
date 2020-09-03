@@ -81,12 +81,12 @@ const char* const Account::ACCOUNT_AUTOANSWER_KEY = "autoAnswer";
 const char* const Account::ACCOUNT_ISRENDEZVOUS_KEY = "rendezVous";
 const char* const Account::ACCOUNT_ACTIVE_CALL_LIMIT_KEY = "activeCallLimit";
 const char* const Account::MAILBOX_KEY = "mailbox";
-const char* const Account::DEFAULT_USER_AGENT = PACKAGE_NAME;
 const char* const Account::USER_AGENT_KEY = "useragent";
 const char* const Account::HAS_CUSTOM_USER_AGENT_KEY = "hasCustomUserAgent";
 const char* const Account::PRESENCE_MODULE_ENABLED_KEY = "presenceModuleEnabled";
 const char* const Account::UPNP_ENABLED_KEY = "upnpEnabled";
 const char* const Account::ACTIVE_CODEC_KEY = "activeCodecs";
+const std::string Account::DEFAULT_USER_AGENT = Account::setDefaultUserAgent();
 
 #ifdef __ANDROID__
 constexpr const char* const DEFAULT_RINGTONE_PATH
@@ -107,16 +107,15 @@ Account::Account(const std::string& accountID)
     , registrationState_(RegistrationState::UNREGISTERED)
     , systemCodecContainer_(getSystemCodecContainer())
     , accountCodecInfoList_()
-    , ringtonePath_("")
+    ,ringtonePath_(DEFAULT_RINGTONE_PATH)
     , ringtoneEnabled_(true)
     , displayName_("")
-    , userAgent_(DEFAULT_USER_AGENT)
+    , customUserAgent_("")
     , hasCustomUserAgent_(false)
     , mailBox_()
 {
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
-    ringtonePath_ = DEFAULT_RINGTONE_PATH;
 }
 
 Account::~Account() {}
@@ -233,7 +232,7 @@ Account::serialize(YAML::Emitter& out) const
     out << YAML::Key << RINGTONE_ENABLED_KEY << YAML::Value << ringtoneEnabled_;
     out << YAML::Key << RINGTONE_PATH_KEY << YAML::Value << ringtonePath_;
     out << YAML::Key << HAS_CUSTOM_USER_AGENT_KEY << YAML::Value << hasCustomUserAgent_;
-    out << YAML::Key << USER_AGENT_KEY << YAML::Value << userAgent_;
+    out << YAML::Key << USER_AGENT_KEY << YAML::Value << customUserAgent_;
     out << YAML::Key << DISPLAY_NAME_KEY << YAML::Value << displayName_;
     out << YAML::Key << HOSTNAME_KEY << YAML::Value << hostname_;
     out << YAML::Key << UPNP_ENABLED_KEY << YAML::Value << bool(upnp_);
@@ -278,7 +277,7 @@ Account::unserialize(const YAML::Node& node)
     parseValue(node, HOSTNAME_KEY, hostname_);
 
     parseValue(node, HAS_CUSTOM_USER_AGENT_KEY, hasCustomUserAgent_);
-    parseValue(node, USER_AGENT_KEY, userAgent_);
+    parseValue(node, USER_AGENT_KEY, customUserAgent_);
     parseValue(node, RINGTONE_PATH_KEY, ringtonePath_);
     parseValue(node, RINGTONE_ENABLED_KEY, ringtoneEnabled_);
     if (ringtonePath_.empty()) {
@@ -299,7 +298,6 @@ Account::setAccountDetails(const std::map<std::string, std::string>& details)
     parseBool(details, Conf::CONFIG_ACCOUNT_ENABLE, enabled_);
     parseString(details, Conf::CONFIG_ACCOUNT_HOSTNAME, hostname_);
     parseString(details, Conf::CONFIG_ACCOUNT_MAILBOX, mailBox_);
-    parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, userAgent_);
     parseBool(details, Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
     parseBool(details, Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous_);
     parseInt(details, DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, activeCallLimit_);
@@ -310,9 +308,8 @@ Account::setAccountDetails(const std::map<std::string, std::string>& details)
     }
     parseBool(details, Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_);
     if (hasCustomUserAgent_)
-        parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, userAgent_);
-    else
-        userAgent_ = DEFAULT_USER_AGENT;
+        parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent_);
+
     bool enabled;
     parseBool(details, Conf::CONFIG_UPNP_ENABLED, enabled);
     enableUpnp(enabled && isEnabled());
@@ -328,9 +325,8 @@ Account::getAccountDetails() const
             {Conf::CONFIG_ACCOUNT_HOSTNAME, hostname_},
             {Conf::CONFIG_ACCOUNT_USERNAME, username_},
             {Conf::CONFIG_ACCOUNT_MAILBOX, mailBox_},
-            {Conf::CONFIG_ACCOUNT_USERAGENT, hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT},
-            {Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT,
-             hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT},
+            {Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent_},
+            {Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_ ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_ ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous_ ? TRUE_STR : FALSE_STR},
             {DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, std::to_string(activeCallLimit_)},
@@ -661,4 +657,26 @@ Account::getIceOptions() const noexcept
     return opts;
 }
 
+const std::string&
+Account::getUserAgentName()
+{
+    if (hasCustomUserAgent_ and not customUserAgent_.empty())
+        return customUserAgent_;
+    return DEFAULT_USER_AGENT;
+}
+
+std::string
+Account::setDefaultUserAgent()
+{
+    // Build the default user-agent string
+    std::string defaultUA;
+    defaultUA.append(PACKAGE_NAME);
+    defaultUA.append(" ");
+    defaultUA.append(DRing::version());
+    defaultUA.append(" (");
+    defaultUA.append(DRing::platform());
+    defaultUA.append(")");
+
+    return defaultUA;
+}
 } // namespace jami

@@ -49,4 +49,25 @@ version() noexcept
                : (RING_REVISION[0] ? PACKAGE_VERSION "-" RING_REVISION : PACKAGE_VERSION);
 }
 
+const char*
+platform() noexcept
+{
+#ifdef __linux__
+    #if defined(__ANDROID__)
+        return "android";
+    #else
+        return "linux";
+    #endif
+#elif defined(__WINS__)
+    return "windows";
+#elif defined(__APPLE__)
+    #ifdef TARGET_OS_IOS
+        return "iOS";
+    #else
+        return "macOS";
+    #endif
+#else
+    #error "Unknown OS"
+#endif
+}
 } // namespace DRing
