@@ -60,7 +60,7 @@ private:
     void buildTones(unsigned int sampleRate);
 
     CountryId countryId_;
-    std::array<std::shared_ptr<Tone>, (size_t) Tone::ToneId::TONE_NULL> tones_;
+    std::array<std::shared_ptr<Tone>, (size_t) Tone::ToneId::TONE_NULL> tones_ {};
     Tone::ToneId currentTone_;
 };
 
