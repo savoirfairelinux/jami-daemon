@@ -25,6 +25,29 @@
     },
     {
       "key": {
+        "uuid": "6ee3468c_d47df571",
+        "filename": "src/account.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 306,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-04T17:43:16Z",
+      "side": 1,
+      "message": "Imho, this should not be stored in the account details. I mean the user agent doesn\u0027t depends on the account and can change a lot.\n\nMoreover this value will be exported with the account archive, so if it\u0027s not used correctly, we will just have fake user agents.",
+      "range": {
+        "startLine": 306,
+        "startChar": 57,
+        "endLine": 306,
+        "endChar": 73
+      },
+      "revId": "430ba8dde2b323e21c5198872ad5d56518e93a07",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "8d9dfeb5_a27d47e6",
         "filename": "src/account.h",
         "patchSetId": 2
