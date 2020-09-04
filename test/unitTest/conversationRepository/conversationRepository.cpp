@@ -76,9 +76,6 @@ private:
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
                           const std::string& commit_msg);
-    bool merge_in_master(const std::shared_ptr<JamiAccount> account,
-                         git_repository* repo,
-                         const std::string& commit_ref);
 
     CPPUNIT_TEST_SUITE(ConversationRepositoryTest);
     CPPUNIT_TEST(testCreateRepository);
@@ -606,12 +603,12 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
     auto commit_str = git_oid_tostr_s(&commit_id);
     if (commit_str) {
         JAMI_INFO("New commit added with id: %s", commit_str);
-        // Move commit to master branch
+        // Move commit to main branch
         git_reference* ref_ptr = nullptr;
         std::string branch_name = "refs/heads/" + branch;
         if (git_reference_create(&ref_ptr, repo, branch_name.c_str(), &commit_id, true, nullptr)
             < 0) {
-            JAMI_WARN("Could not move commit to master");
+            JAMI_WARN("Could not move commit to main");
         }
         git_reference_free(ref_ptr);
     }
@@ -633,7 +630,7 @@ ConversationRepositoryTest::testMerge()
     // Assert that first commit is signed by alice
     git_repository* repo;
     CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
-    auto id1 = addCommit(repo, aliceAccount, "master", "Commit 1");
+    auto id1 = addCommit(repo, aliceAccount, "main", "Commit 1");
 
     git_reference* ref = nullptr;
     git_commit* commit = nullptr;
@@ -668,7 +665,7 @@ ConversationRepositoryTest::testFFMerge()
     // Assert that first commit is signed by alice
     git_repository* repo;
     CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
-    auto id1 = addCommit(repo, aliceAccount, "master", "Commit 1");
+    auto id1 = addCommit(repo, aliceAccount, "main", "Commit 1");
 
     git_reference* ref = nullptr;
     git_commit* commit = nullptr;

@@ -195,7 +195,7 @@ GitServer::Impl::sendReferenceCapabilities()
     std::stringstream packet;
     packet << std::setw(4) << std::setfill('0') << std::hex << ((5 + capStr.size()) & 0x0FFFF);
     packet << capStr << "\n";
-    packet << "003f" << currentHead_ << " refs/heads/master\n";
+    packet << "003d" << currentHead_ << " refs/heads/main\n";
     packet << FLUSH_PKT;
 
     std::error_code ec;

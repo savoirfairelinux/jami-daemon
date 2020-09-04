@@ -115,10 +115,10 @@ public:
     /**
      * Retrieve remote head. Can be useful after a fetch operation
      * @param remoteDeviceId        The remote name
-     * @param branch                Remote branch to check (default: master)
+     * @param branch                Remote branch to check (default: main)
      * @return the commit id pointed
      */
-    std::string remoteHead(const std::string& remoteDeviceId, const std::string& branch = "master");
+    std::string remoteHead(const std::string& remoteDeviceId, const std::string& branch = "main");
 
     /**
      * Return the conversation id
@@ -142,7 +142,7 @@ public:
     std::vector<ConversationCommit> log(const std::string& from = "", const std::string& to = "");
 
     /**
-     * Merge another branch into the master branch
+     * Merge another branch into the main branch
      * @param merge_id      The reference to merge
      * @return if the merge was successful
      */

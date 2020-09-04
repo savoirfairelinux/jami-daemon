@@ -83,8 +83,9 @@ GitRepository
 create_empty_repository(const std::string path)
 {
     git_repository* repo = nullptr;
-    if (git_repository_init(&repo, path.c_str(), false /* we want a non-bare repo to work on it */)
-        < 0) {
+    git_repository_init_options options;
+    options.initial_head = "main";
+    if (git_repository_init_ext(&repo, path.c_str(), &options) < 0) {
         JAMI_ERR("Couldn't create a git repository in %s", path.c_str());
     }
     return {std::move(repo), git_repository_free};
@@ -262,11 +263,11 @@ initial_commit(GitRepository& repo, const std::shared_ptr<JamiAccount>& account)
         return {};
     }
 
-    // Move commit to master branch
+    // Move commit to main branch
     git_commit* commit = nullptr;
     if (git_commit_lookup(&commit, repo.get(), &commit_id) == 0) {
         git_reference* ref = nullptr;
-        git_branch_create(&ref, repo.get(), "master", commit, true);
+        git_branch_create(&ref, repo.get(), "main", commit, true);
         git_commit_free(commit);
         git_reference_free(ref);
     }
@@ -406,16 +407,16 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     auto commit_str = git_oid_tostr_s(&commit_oid);
     if (commit_str) {
         JAMI_INFO("New merge commit added with id: %s", commit_str);
-        // Move commit to master branch
+        // Move commit to main branch
         git_reference* ref_ptr = nullptr;
         if (git_reference_create(&ref_ptr,
                                  repository_.get(),
-                                 "refs/heads/master",
+                                 "refs/heads/main",
                                  &commit_oid,
                                  true,
                                  nullptr)
             < 0) {
-            JAMI_WARN("Could not move commit to master");
+            JAMI_WARN("Could not move commit to main");
         }
         git_reference_free(ref_ptr);
     }
@@ -443,7 +444,7 @@ ConversationRepository::Impl::mergeFastforward(const git_oid* target_oid, int is
         // Grab the reference HEAD should be pointing to
         const auto* symbolic_ref = git_reference_symbolic_target(head_ref.get());
 
-        // Create our master reference on the target OID
+        // Create our main reference on the target OID
         if (git_reference_create(&target_ref_ptr,
                                  repository_.get(),
                                  symbolic_ref,
@@ -451,7 +452,7 @@ ConversationRepository::Impl::mergeFastforward(const git_oid* target_oid, int is
                                  0,
                                  nullptr)
             < 0) {
-            JAMI_ERR("failed to create master reference");
+            JAMI_ERR("failed to create main reference");
             return false;
         }
 
@@ -598,16 +599,11 @@ ConversationRepository::Impl::commit(const std::string& msg)
         return {};
     }
 
-    // Move commit to master branch
+    // Move commit to main branch
     git_reference* ref_ptr = nullptr;
-    if (git_reference_create(&ref_ptr,
-                             repository_.get(),
-                             "refs/heads/master",
-                             &commit_id,
-                             true,
-                             nullptr)
+    if (git_reference_create(&ref_ptr, repository_.get(), "refs/heads/main", &commit_id, true, nullptr)
         < 0) {
-        JAMI_WARN("Could not move commit to master");
+        JAMI_WARN("Could not move commit to main");
     }
     git_reference_free(ref_ptr);
 
@@ -1048,9 +1044,9 @@ ConversationRepository::merge(const std::string& merge_id)
         JAMI_ERR("Merge operation aborted: repository is in unexpected state %d", state);
         return false;
     }
-    // Checkout master (to do a `git_merge branch`)
-    if (git_repository_set_head(pimpl_->repository_.get(), "refs/heads/master") < 0) {
-        JAMI_ERR("Merge operation aborted: couldn't checkout master branch");
+    // Checkout main (to do a `git_merge branch`)
+    if (git_repository_set_head(pimpl_->repository_.get(), "refs/heads/main") < 0) {
+        JAMI_ERR("Merge operation aborted: couldn't checkout main branch");
         return false;
     }
 
@@ -1127,7 +1123,7 @@ ConversationRepository::merge(const std::string& merge_id)
         return false;
     }
     auto result = pimpl_->createMergeCommit(index.get(), merge_id);
-    JAMI_INFO("Merge done between %s and master", merge_id.c_str());
+    JAMI_INFO("Merge done between %s and main", merge_id.c_str());
     return result;
 }
 
