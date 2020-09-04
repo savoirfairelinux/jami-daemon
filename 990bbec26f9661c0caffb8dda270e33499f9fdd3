@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e7002f6a_7b9eacf3",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-04T17:54:37Z",
+      "side": 1,
+      "message": "Link Gitlabs ticket",
+      "revId": "990bbec26f9661c0caffb8dda270e33499f9fdd3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "822f5795_bdb598e3",
+        "filename": "src/manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1473,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-04T17:54:37Z",
+      "side": 1,
+      "message": "This isn\u0027t the only place where calls are added/removed.\n\nThis code seems bug prone, because if we modify how calls are added, this will just be forgotten and broken\n\nImho the whole logic should be done in conference.cpp when we add/remove participants (same for the other part)\n\nBroken scenario:\n\nA is a meeting point\nA \u0026 B are attached to the meeting\nC join \u003d\u003e recording broken",
+      "range": {
+        "startLine": 1458,
+        "startChar": 14,
+        "endLine": 1473,
+        "endChar": 5
+      },
+      "revId": "990bbec26f9661c0caffb8dda270e33499f9fdd3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
