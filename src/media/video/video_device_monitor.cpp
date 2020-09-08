@@ -185,7 +185,7 @@ notify()
 
 void
 VideoDeviceMonitor::addDevice(const string& id,
-                              const std::vector<std::map<std::string, std::string>>* devInfo)
+                              const std::vector<std::map<std::string, std::string>>& devInfo)
 {
     try {
         std::lock_guard<std::mutex> l(lock_);
@@ -193,7 +193,7 @@ VideoDeviceMonitor::addDevice(const string& id,
             return;
 
         // instantiate a new unique device
-        VideoDevice dev {id, *devInfo};
+        VideoDevice dev {id, devInfo};
 
         if (dev.getChannelList().empty())
             return;

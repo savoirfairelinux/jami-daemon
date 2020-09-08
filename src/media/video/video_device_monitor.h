@@ -60,7 +60,7 @@ public:
     void setDeviceOrientation(const std::string& id, int angle);
 
     void addDevice(const std::string& node,
-                   const std::vector<std::map<std::string, std::string>>* devInfo = nullptr);
+                   const std::vector<std::map<std::string, std::string>>& devInfo = {});
     void removeDevice(const std::string& node);
     void removeDeviceViaInput(const std::string& path);
 
