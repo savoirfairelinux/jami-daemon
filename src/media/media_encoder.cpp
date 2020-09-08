@@ -990,7 +990,7 @@ MediaEncoder::initAccel(AVCodecContext* encoderCtx, uint64_t br)
         av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "b", br * 1000 * 0.8f, AV_OPT_SEARCH_CHILDREN);
     } else if (accel_->getName() == "videotoolbox"sv) {
-        // Use same parameters as software
+        av_opt_set_int(encoderCtx, "b", br * 1000 * 0.8f, AV_OPT_SEARCH_CHILDREN);
     } else if (accel_->getName() == "qsv"sv) {
         // Use Video Conferencing Mode
         av_opt_set_int(encoderCtx, "vcm", 1, AV_OPT_SEARCH_CHILDREN);
