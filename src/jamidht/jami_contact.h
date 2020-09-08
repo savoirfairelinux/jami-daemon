@@ -54,8 +54,8 @@ struct Contact
     Contact() = default;
     Contact(const Json::Value& json)
     {
-        added = json["added"].asInt();
-        removed = json["removed"].asInt();
+        added = json["added"].asLargestUInt();
+        removed = json["removed"].asLargestUInt();
         confirmed = json["confirmed"].asBool();
         banned = json["banned"].asBool();
     }
