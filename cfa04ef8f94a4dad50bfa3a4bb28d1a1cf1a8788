@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "507d9201_85c72ced",
+        "filename": "src/account.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-08T18:33:52Z",
+      "side": 1,
+      "message": "INSTALL CLANG FORMAT",
+      "range": {
+        "startLine": 110,
+        "startChar": 3,
+        "endLine": 110,
+        "endChar": 13
+      },
+      "revId": "cfa04ef8f94a4dad50bfa3a4bb28d1a1cf1a8788",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
