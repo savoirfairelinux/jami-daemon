@@ -480,7 +480,7 @@ SIPAccountBase::getIceOptions() const noexcept
         }
         if (cacheTurnV6_ && *cacheTurnV6_) {
             opts.turnServers.emplace_back(TurnServerInfo()
-                                              .setUri(cacheTurnV4_->toString(true))
+                                              .setUri(cacheTurnV6_->toString(true))
                                               .setUsername(turnServerUserName_)
                                               .setPassword(turnServerPwd_)
                                               .setRealm(turnServerRealm_));
