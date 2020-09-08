@@ -148,9 +148,7 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
             try {
                 auto unique_name = getDeviceString(dev);
                 JAMI_DBG("udev: adding device with id %s", unique_name.c_str());
-                std::map<std::string, std::string> info = {{"devPath", path}};
-                std::vector<std::map<std::string, std::string>> devInfo = {info};
-                monitor_->addDevice(unique_name, &devInfo);
+                monitor_->addDevice(unique_name, {{{"devPath", path}}});
                 currentPathToId_.emplace(path, unique_name);
             } catch (const std::exception& e) {
                 JAMI_ERR("%s", e.what());
@@ -237,9 +235,7 @@ VideoDeviceMonitorImpl::run()
                     const char* action = udev_device_get_action(dev);
                     if (!strcmp(action, "add")) {
                         JAMI_DBG("udev: adding device with id %s", unique_name.c_str());
-                        std::map<std::string, std::string> info = {{"devPath", path}};
-                        std::vector<std::map<std::string, std::string>> devInfo = {info};
-                        monitor_->addDevice(unique_name, &devInfo);
+                        monitor_->addDevice(unique_name, {{{"devPath", path}}});
                         currentPathToId_.emplace(path, unique_name);
                     } else if (!strcmp(action, "remove")) {
                         auto it = currentPathToId_.find(path);
