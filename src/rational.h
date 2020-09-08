@@ -42,21 +42,21 @@ class rational
 {
 public:
     // Constructors
-    rational() {}; // Zero
-    rational(I n)
-        : num_(n) {}; // Equal to n/1
-    rational(I n, I d)
+    constexpr rational() {} // Zero
+    constexpr rational(I n)
+        : num_(n) {} // Equal to n/1
+    constexpr rational(I n, I d)
         : num_(n)
         , den_(d)
     {
         reduce();
-    }; // General case (n/d)
+    } // General case (n/d)
 
     // Define conversions to and from AVRational (equivalent)
-    rational(AVRational r)
+    constexpr rational(AVRational r)
         : num_(r.num)
         , den_(r.den) {};
-    operator AVRational() const { return AVRational {(int) num_, (int) den_}; }
+    constexpr operator AVRational() const { return AVRational {(int) num_, (int) den_}; }
 
     // Normal copy constructors and assignment operators
 
@@ -78,10 +78,11 @@ public:
     }
 
     // Representation
-    I numerator() const { return num_; };
-    I denominator() const { return den_; };
+    constexpr I numerator() const { return num_; };
+    constexpr I denominator() const { return den_; };
+
     template<typename R = double>
-    R real() const
+    constexpr R real() const
     {
         return num_ / (R) den_;
     }
@@ -90,16 +91,16 @@ public:
     // operators are available - see operators.hpp
 
     // Arithmetic operators
-    rational operator+(const rational& r) const
+    constexpr rational operator+(const rational& r) const
     {
         return {num_ * r.den_ + r.num_ * den_, den_ * r.den_};
     }
-    rational operator-(const rational& r) const
+    constexpr rational operator-(const rational& r) const
     {
         return {num_ * r.den_ - r.num_ * den_, den_ * r.den_};
     }
-    rational operator*(const rational& r) const { return {num_ * r.num_, den_ * r.den_}; }
-    rational operator/(const rational& r) const { return {num_ * r.den_, den_ * r.num_}; }
+    constexpr rational operator*(const rational& r) const { return {num_ * r.num_, den_ * r.den_}; }
+    constexpr rational operator/(const rational& r) const { return {num_ * r.den_, den_ * r.num_}; }
 
     rational& operator+=(const rational& r)
     {
@@ -163,30 +164,30 @@ public:
     }
 
     // Operator not
-    bool operator!() const { return !num_; };
+    constexpr bool operator!() const { return !num_; };
 
     // Boolean conversion
-    explicit operator bool() const { return num_; }
+    explicit constexpr operator bool() const { return num_; }
 
     // Comparison operators
-    bool operator<(const rational& r) const
+    constexpr bool operator<(const rational& r) const
     {
         bool inv = (den_ > 0) != (r.den_ > 0);
         return inv != (num_ * r.den_ < den_ * r.num_);
     }
-    bool operator>(const rational& r) const
+    constexpr bool operator>(const rational& r) const
     {
         bool inv = (den_ > 0) != (r.den_ > 0);
         return inv != (num_ * r.den_ > den_ * r.num_);
     }
-    bool operator==(const rational& r) const { return num_ * r.den_ == den_ * r.num_; }
-    bool operator!=(const rational& r) const { return num_ * r.den_ != den_ * r.num_; }
+    constexpr bool operator==(const rational& r) const { return num_ * r.den_ == den_ * r.num_; }
+    constexpr bool operator!=(const rational& r) const { return num_ * r.den_ != den_ * r.num_; }
 
     // Comparison with integers
-    bool operator<(I i) const { return den_ < 0 ? (num_ > i * den_) : (num_ < i * den_); }
-    bool operator>(I i) const { return den_ < 0 ? (num_ < i * den_) : (num_ > i * den_); }
-    bool operator==(I i) const { return num_ == i * den_; }
-    bool operator!=(I i) const { return num_ != i * den_; }
+    constexpr bool operator<(I i) const { return den_ < 0 ? (num_ > i * den_) : (num_ < i * den_); }
+    constexpr bool operator>(I i) const { return den_ < 0 ? (num_ < i * den_) : (num_ > i * den_); }
+    constexpr bool operator==(I i) const { return num_ == i * den_; }
+    constexpr bool operator!=(I i) const { return num_ != i * den_; }
 
 private:
     I num_ {0};

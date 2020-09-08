@@ -69,7 +69,7 @@ getTransposeFilter(
         return {};
     }
 
-    const auto one = rational<int>(1);
+    constexpr auto one = rational<int>(1);
     std::vector<MediaStream> msv;
     msv.emplace_back(inputName, format, one, width, height, 0, one);
 
