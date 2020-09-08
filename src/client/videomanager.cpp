@@ -661,7 +661,7 @@ setEncodingAccelerated(bool state)
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 void
 addVideoDevice(const std::string& node,
-               std::vector<std::map<std::string, std::string>> const* devInfo)
+               const std::vector<std::map<std::string, std::string>>& devInfo)
 {
     jami::Manager::instance().getVideoManager().videoDeviceMonitor.addDevice(node, devInfo);
 }
