@@ -1144,9 +1144,6 @@ SIPCall::startAllMedia()
             isVideoMuted_ = mediaInput_.empty();
             break;
 #endif
-        case MEDIA_AUDIO:
-            isAudioMuted_ = not rtp->isSending();
-            break;
         default:
             break;
         }
