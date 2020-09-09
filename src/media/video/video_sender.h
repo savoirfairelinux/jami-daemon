@@ -79,7 +79,7 @@ private:
     int keyFrameFreq_ {0}; // Set keyframe rate, 0 to disable auto-keyframe. Computed in constructor
     int64_t frameNumber_ = 0;
 
-    int rotation_ = 0;
+    int rotation_ = -1;
     std::function<void(int)> changeOrientationCallback_;
 };
 } // namespace video
