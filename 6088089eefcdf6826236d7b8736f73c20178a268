@@ -1,0 +1,165 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "25d9c460_f5249cb6",
+        "filename": "src/gittransport.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-09T20:48:40Z",
+      "side": 1,
+      "message": "sv",
+      "range": {
+        "startLine": 57,
+        "startChar": 20,
+        "endLine": 57,
+        "endChar": 21
+      },
+      "revId": "6088089eefcdf6826236d7b8736f73c20178a268",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "68176009_d06d5f8a",
+        "filename": "src/gittransport.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-09T20:48:40Z",
+      "side": 1,
+      "message": "sv",
+      "range": {
+        "startLine": 57,
+        "startChar": 53,
+        "endLine": 57,
+        "endChar": 54
+      },
+      "revId": "6088089eefcdf6826236d7b8736f73c20178a268",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cbd8bf0f_c3026cfd",
+        "filename": "src/gittransport.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-09T20:48:40Z",
+      "side": 1,
+      "message": "auto str \u003d streamed.str();\ngit_buf_set(request, str.c_str(), str.size());",
+      "range": {
+        "startLine": 58,
+        "startChar": 4,
+        "endLine": 58,
+        "endChar": 56
+      },
+      "revId": "6088089eefcdf6826236d7b8736f73c20178a268",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5d28f7aa_ea0bcc6e",
+        "filename": "src/gittransport.h",
+        "patchSetId": 31
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-09T20:48:40Z",
+      "side": 1,
+      "message": "string_view",
+      "range": {
+        "startLine": 50,
+        "startChar": 10,
+        "endLine": 50,
+        "endChar": 27
+      },
+      "revId": "6088089eefcdf6826236d7b8736f73c20178a268",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "44801d22_2b14b44e",
+        "filename": "src/gittransport.h",
+        "patchSetId": 31
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-09T20:48:40Z",
+      "side": 1,
+      "message": "string_view",
+      "range": {
+        "startLine": 51,
+        "startChar": 10,
+        "endLine": 51,
+        "endChar": 27
+      },
+      "revId": "6088089eefcdf6826236d7b8736f73c20178a268",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "35ffaeee_e1c4301b",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 451,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-09T20:48:40Z",
+      "side": 1,
+      "message": "sv",
+      "range": {
+        "startLine": 451,
+        "startChar": 95,
+        "endLine": 451,
+        "endChar": 96
+      },
+      "revId": "6088089eefcdf6826236d7b8736f73c20178a268",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8a259148_31abe155",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 31
+      },
+      "lineNbr": 463,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-09T20:48:40Z",
+      "side": 1,
+      "message": "const",
+      "range": {
+        "startLine": 463,
+        "startChar": 4,
+        "endLine": 463,
+        "endChar": 13
+      },
+      "revId": "6088089eefcdf6826236d7b8736f73c20178a268",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
