@@ -1174,11 +1174,10 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 auto label = d.second.name.empty() ? id.substr(0, 8) : d.second.name;
                 ids.emplace(std::move(id), std::move(label));
             }
-            dht::ThreadPool::computation().run([id=getAccountID(), devices=std::move(ids)] {
+            dht::ThreadPool::computation().run([id = getAccountID(), devices = std::move(ids)] {
                 emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(id, devices);
             });
-        }
-    };
+        }};
 
     try {
         auto onAsync = [w = weak()](AccountManager::AsyncUser&& cb) {
@@ -2967,12 +2966,13 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
     std::set<std::string> devices;
     {
         std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
-        for (const auto& deviceConn: sipConnections_[uri]) {
+        for (const auto& deviceConn : sipConnections_[uri]) {
             devices.emplace(deviceConn.first);
         }
         sipConnections_.erase(uri);
 
-        for (auto pendingIt = pendingSipConnections_.begin(); pendingIt != pendingSipConnections_.end();) {
+        for (auto pendingIt = pendingSipConnections_.begin();
+             pendingIt != pendingSipConnections_.end();) {
             if (uri == pendingIt->first) {
                 devices.emplace(pendingIt->second);
                 pendingIt = pendingSipConnections_.erase(pendingIt);
@@ -2982,7 +2982,7 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
         }
     }
 
-    for (const auto& device: devices) {
+    for (const auto& device : devices) {
         if (connectionManager_)
             connectionManager_->closeConnectionsWith(device);
     }
@@ -3012,7 +3012,8 @@ std::vector<std::map<std::string, std::string>>
 JamiAccount::getTrustRequests() const
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
-    return accountManager_ ? accountManager_->getTrustRequests() : std::vector<std::map<std::string, std::string>>{};
+    return accountManager_ ? accountManager_->getTrustRequests()
+                           : std::vector<std::map<std::string, std::string>> {};
 }
 
 bool
@@ -3354,7 +3355,7 @@ JamiAccount::requestPeerConnection(
     const std::function<void()>& onChanneledCancelled)
 {
     if (not dhtPeerConnector_) {
-        runOnMainThread([onChanneledCancelled]{ onChanneledCancelled(); });
+        runOnMainThread([onChanneledCancelled] { onChanneledCancelled(); });
         return;
     }
     dhtPeerConnector_->requestConnection(peer_id,
@@ -3509,6 +3510,10 @@ JamiAccount::cacheTurnServers()
             this_->isRefreshing_ = false;
             return;
         }
+        const auto& addr6 = this_->dht_->getPublicAddress(AF_INET6);
+        auto hasV6 = addr6.size();
+        if (!hasV6)
+            this_->cacheTurnV6_.reset();
         JAMI_INFO("Refresh cache for TURN server resolution");
         // Retrieve old cached value if available.
         // This means that we directly get the correct value when launching the application on the
@@ -3525,11 +3530,13 @@ JamiAccount::cacheTurnServers()
         }
         auto pathV6 = this_->cachePath_ + DIR_SEPARATOR_STR + "domains" + DIR_SEPARATOR_STR + "v6."
                       + server;
-        if (auto turnV6File = std::ifstream(pathV6)) {
-            std::string content((std::istreambuf_iterator<char>(turnV6File)),
-                                std::istreambuf_iterator<char>());
-            std::lock_guard<std::mutex> lk(this_->cachedTurnMutex_);
-            this_->cacheTurnV6_ = std::make_unique<IpAddr>(content, AF_INET6);
+        if (hasV6) {
+            if (auto turnV6File = std::ifstream(pathV6)) {
+                std::string content((std::istreambuf_iterator<char>(turnV6File)),
+                                    std::istreambuf_iterator<char>());
+                std::lock_guard<std::mutex> lk(this_->cachedTurnMutex_);
+                this_->cacheTurnV6_ = std::make_unique<IpAddr>(content, AF_INET6);
+            }
         }
         // Resolve just in case. The user can have a different connectivity
         auto turnV4 = IpAddr {server, AF_INET};
@@ -3546,7 +3553,7 @@ JamiAccount::cacheTurnServers()
             this_->cacheTurnV4_ = std::make_unique<IpAddr>(std::move(turnV4));
         }
         auto turnV6 = IpAddr {server.empty() ? DEFAULT_TURN_SERVER : server, AF_INET6};
-        {
+        if (hasV6) {
             if (turnV6) {
                 // Cache value to avoid a delay when starting up Jami
                 std::ofstream turnV6File(pathV6);

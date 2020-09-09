@@ -1,0 +1,14 @@
+[host_machine]
+system = 'linux'
+cpu_family = 'aarch64'
+cpu = 'aarch64'
+endian = 'little'
+
+# Compilers and tools reside in <NDK>/toolchains/llvm/prebuilt/<host-tag>/bin/
+# Please add this path to the environment(PATH) before compiling
+[binaries]
+c = 'arm64-linux-gcc'
+cpp = 'arm64-linux-gcc++'
+ar = 'arm64-linux-gcc-ar'
+strip = 'arm64-linux-gcc-strip'
+pkgconfig = 'pkg-config'
