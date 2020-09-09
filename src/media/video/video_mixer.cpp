@@ -38,10 +38,6 @@
 
 #include <opendht/thread_pool.h>
 
-extern "C" {
-#include <libavutil/display.h>
-}
-
 static constexpr auto MIN_LINE_ZOOM
     = 6; // Used by the ONE_BIG_WITH_SMALL layout for the small previews
 
@@ -307,13 +303,7 @@ VideoMixer::render_frame(VideoFrame& output,
     int xoff = source->x;
     int yoff = source->y;
 
-    AVFrameSideData* sideData = av_frame_get_side_data(frame->pointer(),
-                                                       AV_FRAME_DATA_DISPLAYMATRIX);
-    int angle = 0;
-    if (sideData) {
-        auto matrixRotation = reinterpret_cast<int32_t*>(sideData->data);
-        angle = -av_display_rotation_get(matrixRotation);
-    }
+    int angle = frame->getOrientation();
     const constexpr char filterIn[] = "mixin";
     if (angle != source->rotation) {
         source->rotationFilter = video::getTransposeFilter(angle,
