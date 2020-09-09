@@ -39,10 +39,6 @@
 #include <sys/types.h>
 #include <ctime>
 
-extern "C" {
-#include <libavutil/display.h>
-}
-
 namespace jami {
 
 const constexpr char ROTATION_FILTER_INPUT_NAME[] = "in";
@@ -87,11 +83,7 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
             else
 #endif
                 framePtr = std::static_pointer_cast<VideoFrame>(m);
-            AVFrameSideData* sideData = av_frame_get_side_data(framePtr->pointer(),
-                                                               AV_FRAME_DATA_DISPLAYMATRIX);
-            int angle = sideData
-                            ? -av_display_rotation_get(reinterpret_cast<int32_t*>(sideData->data))
-                            : 0;
+            int angle = framePtr->getOrientation();
             if (angle != rotation_) {
                 videoRotationFilter_ = jami::video::getTransposeFilter(angle,
                                                                        ROTATION_FILTER_INPUT_NAME,
