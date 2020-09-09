@@ -58,10 +58,6 @@
 #include <stdexcept>
 #include <cmath>
 
-extern "C" {
-#include <libavutil/display.h>
-}
-
 namespace jami {
 namespace video {
 
@@ -367,14 +363,8 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                                                         AV_PIX_FMT_NV12);
         else
 #endif
-            frame = std::static_pointer_cast<VideoFrame>(frame_p);
-        AVFrameSideData* side_data = av_frame_get_side_data(frame->pointer(),
-                                                            AV_FRAME_DATA_DISPLAYMATRIX);
-        int angle = 0;
-        if (side_data) {
-            auto matrix_rotation = reinterpret_cast<int32_t*>(side_data->data);
-            angle = -av_display_rotation_get(matrix_rotation);
-        }
+        frame = std::static_pointer_cast<VideoFrame>(frame_p);
+        int angle = frame->getOrientation();
         if (angle != rotation_) {
             filter_ = getTransposeFilter(angle,
                                          FILTER_INPUT_NAME,

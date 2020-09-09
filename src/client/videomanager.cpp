@@ -49,6 +49,10 @@
 #include <cstring> // std::memset
 #include <ciso646> // fix windows compiler bug
 
+extern "C" {
+#include <libavutil/display.h>
+}
+
 namespace DRing {
 
 MediaFrame::MediaFrame()
@@ -339,6 +343,24 @@ VideoFrame::noise()
     for (std::size_t i = 0; i < size(); ++i) {
         f->data[0][i] = std::rand() & 255;
     }
+}
+
+int
+VideoFrame::getOrientation() const
+{
+    int32_t* matrix {nullptr};
+    if (auto p = packet()) {
+        matrix = reinterpret_cast<int32_t*>(av_packet_get_side_data(p, AV_PKT_DATA_DISPLAYMATRIX, nullptr));
+    } else if (auto p = pointer()) {
+        if (AVFrameSideData* side_data = av_frame_get_side_data(p, AV_FRAME_DATA_DISPLAYMATRIX)) {
+            matrix = reinterpret_cast<int32_t*>(side_data->data);
+        }
+    }
+    if (matrix) {
+        double angle = av_display_rotation_get(matrix);
+        return std::isnan(angle) ? 0 : -(int)angle;
+    }
+    return 0;
 }
 
 VideoFrame*
