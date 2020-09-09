@@ -149,6 +149,9 @@ public:
     // Allocate internal pixel buffers following given specifications
     void reserve(int format, int width, int height);
 
+    // Return orientation (in degrees) stored in the frame metadata, or 0 by default.
+    int getOrientation() const;
+
     // Set internal pixel buffers on given memory buffer
     // This buffer must follow given specifications.
     void setFromMemory(uint8_t* data, int format, int width, int height) noexcept;
