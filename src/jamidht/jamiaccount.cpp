@@ -319,15 +319,6 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     }
 
     setActiveCodecs({});
-
-    JAMI_INFO("Start loading conversations…");
-    auto conversationsRepositories = fileutils::readDirectory(idPath_ + DIR_SEPARATOR_STR
-                                                              + "conversations");
-    for (const auto& repository : conversationsRepositories) {
-        JAMI_ERR("@@@ %s", repository.c_str());
-        conversations_.emplace(repository, std::make_unique<Conversation>(weak(), repository));
-    }
-    JAMI_INFO("Conversations loaded!");
 }
 
 JamiAccount::~JamiAccount()
@@ -2253,7 +2244,21 @@ JamiAccount::doRegister_()
             dht_->bootstrap(bootstrap);
 
         accountManager_->setDht(dht_);
-        accountManager_->startSync();
+        accountManager_->startSync([this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+            if (!crt)
+                return;
+            auto deviceId = crt->getId().toString();
+            if (accountManager_->getInfo()->deviceId == deviceId)
+                return;
+
+            connectionManager().connectDevice(deviceId,
+                                              "sync://" + deviceId,
+                                              [this,
+                                               deviceId](std::shared_ptr<ChannelSocket> socket) {
+                                                  if (socket)
+                                                      syncWith(deviceId, socket);
+                                              });
+        });
 
         // Init connection manager
         if (!connectionManager_)
@@ -2281,27 +2286,45 @@ JamiAccount::doRegister_()
             auto result = fut.get();
             return result;
         });
-        connectionManager_->onChannelRequest(
-            [this](const std::string& /* deviceId */, const std::string& name) {
-                auto isFile = name.substr(0, 7) == "file://";
-                auto isVCard = name.substr(0, 8) == "vcard://";
-                if (name.find("git://") == 0) {
-                    // TODO
+        connectionManager_->onChannelRequest([this](const std::string& deviceId,
+                                                    const std::string& name) {
+            auto isFile = name.substr(0, 7) == "file://";
+            auto isVCard = name.substr(0, 8) == "vcard://";
+            if (name.find("git://") == 0) {
+                // TODO
+                return true;
+            } else if (name == "sip") {
+                return true;
+            } else if (name.find("sync://") == 0) {
+                // Check if sync request is from same account
+                std::promise<bool> accept;
+                std::future<bool> fut = accept.get_future();
+                accountManager_
+                    ->findCertificate(dht::InfoHash(deviceId),
+                                      [this, &accept](
+                                          const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                                          if (not cert or not cert->issuer) {
+                                              accept.set_value(false);
+                                              return;
+                                          }
+                                          accept.set_value(cert->issuer->getId().toString()
+                                                           == accountManager_->getInfo()->accountId);
+                                      });
+                fut.wait();
+                auto result = fut.get();
+                return result;
+            } else if (isFile or isVCard) {
+                auto tid_str = isFile ? name.substr(7) : name.substr(8);
+                uint64_t tid;
+                std::istringstream iss(tid_str);
+                iss >> tid;
+                if (dhtPeerConnector_->onIncomingChannelRequest(tid)) {
+                    incomingFileTransfers_.emplace(tid_str);
                     return true;
-                } else if (name == "sip") {
-                    return true;
-                } else if (isFile or isVCard) {
-                    auto tid_str = isFile ? name.substr(7) : name.substr(8);
-                    uint64_t tid;
-                    std::istringstream iss(tid_str);
-                    iss >> tid;
-                    if (dhtPeerConnector_->onIncomingChannelRequest(tid)) {
-                        incomingFileTransfers_.emplace(tid_str);
-                        return true;
-                    }
                 }
-                return false;
-            });
+            }
+            return false;
+        });
         connectionManager_->onConnectionReady([this](const std::string& deviceId,
                                                      const std::string& name,
                                                      std::shared_ptr<ChannelSocket> channel) {
@@ -2314,6 +2337,8 @@ JamiAccount::doRegister_()
                 auto isVCard = name.substr(0, 8) == "vcard://";
                 if (name == "sip") {
                     cacheSIPConnection(std::move(channel), peerId, deviceId);
+                } else if (name.find("sync://") == 0) {
+                    cacheSyncConnection(std::move(channel), peerId, deviceId);
                 } else if (isFile or isVCard) {
                     auto tid_str = isFile ? name.substr(7) : name.substr(8);
                     auto it = incomingFileTransfers_.find(tid_str);
@@ -2434,11 +2459,27 @@ JamiAccount::doRegister_()
                 std::map<std::string, std::string> metadatas = req.metadatas;
                 {
                     std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
+                    auto it = conversationsRequests_.find(convId);
+                    if (it != conversationsRequests_.end()) {
+                        JAMI_INFO("Received a request for a conversation already existing. Ignore");
+                        return true;
+                    }
                     conversationsRequests_[convId] = std::move(req);
                 }
-                emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(accountID_,
-                                                                                   convId,
-                                                                                   metadatas);
+                // TODO: store request to be persistent when restarting
+
+                auto cert = tls::CertificateStore::instance().getCertificate(req.from.toString());
+                if (!cert || !cert->issuer)
+                    return true;
+                auto peerId = cert->issuer->getId().toString();
+                if (accountManager_->getInfo()->accountId == peerId) {
+                    JAMI_INFO("Another device started a conversation. Accept invitation");
+                    acceptConversationRequest(convId);
+                } else {
+                    emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(accountID_,
+                                                                                       convId,
+                                                                                       metadatas);
+                }
                 return true;
             });
 
@@ -3582,9 +3623,33 @@ JamiAccount::startConversation()
     auto convId = conversation->id();
     conversations_[convId] = std::move(conversation);
 
-    // TODO
-    // And send an invite to others devices to sync the conversation between device
-    // Via getMembers
+    // Invite connected devices for the same user
+
+    if (!accountManager_)
+        return convId;
+
+    std::string accountId {};
+    if (auto info = accountManager_->getInfo())
+        accountId = info->accountId;
+    else
+        return convId;
+
+    auto toH = dht::InfoHash(accountId);
+    ConversationRequest req;
+    req.conversationId = convId;
+    auto convMembers = conversations_[convId]->getMembers();
+    for (const auto& member : convMembers)
+        req.members.emplace_back(member.at("uri"));
+    req.metadatas = {/* TODO */};
+    forEachDevice(toH, [this, toH, req](const dht::InfoHash& dev) {
+        if (dev == dht()->getId())
+            return;
+        JAMI_INFO("Sending conversation invite %s / %s",
+                  toH.toString().c_str(),
+                  dev.toString().c_str());
+        dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev.toString()), dev, req);
+    });
+
     return convId;
 }
 
@@ -3606,11 +3671,10 @@ JamiAccount::acceptConversationRequest(const std::string& conversationId)
     }
     for (const auto& member : request->second.members) {
         auto memberHash = dht::InfoHash(member);
-        // Avoid to connect to self for now
-        if (username_.find(member) != std::string::npos)
-            continue;
         // TODO cf sync between devices
         forEachDevice(memberHash, [this, request = request->second](const dht::InfoHash& dev) {
+            if (dev == dht()->getId())
+                return;
             connectionManager().connectDevice(
                 dev.toString(),
                 "git://" + dev.toString() + "/" + request.conversationId,
@@ -4175,6 +4239,98 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
 
     // Retry messages
     messageEngine_.onPeerOnline(peerId);
+}
+
+void
+JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
+                                 const std::string& peerId,
+                                 const std::string& deviceId)
+{
+    std::unique_lock<std::mutex> lk(syncConnectionsMtx_);
+    syncConnections_[deviceId].emplace_back(socket);
+
+    socket->onShutdown([w = weak(), peerId, deviceId, socket]() {
+        auto shared = w.lock();
+        if (!shared)
+            return;
+        std::lock_guard<std::mutex> lk(shared->syncConnectionsMtx_);
+        auto& connections = shared->syncConnections_[deviceId];
+        auto conn = connections.begin();
+        while (conn != connections.end()) {
+            if (*conn == socket)
+                conn = connections.erase(conn);
+            else
+                conn++;
+        }
+    });
+
+    socket->setOnRecv([this](const uint8_t* buf, size_t len) {
+        if (!buf)
+            return len;
+
+        std::string err;
+        Json::Value value;
+        Json::CharReaderBuilder rbuilder;
+        Json::CharReaderBuilder::strictMode(&rbuilder.settings_);
+        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+        auto bufCstr = reinterpret_cast<const char*>(buf);
+        if (!reader->parse(bufCstr, bufCstr + len, &value, &err)) {
+            JAMI_ERR() << "Archive JSON parsing error: " << err;
+            return len;
+        }
+
+        if (value.isMember("conversations")) {
+            for (const auto& jsonConv : value["conversations"]) {
+                auto convId = jsonConv.asString();
+                if (conversations_.find(convId) == conversations_.end()) {
+                    JAMI_ERR("TODO account %s needs to clone %s",
+                             getAccountID().c_str(),
+                             convId.c_str());
+                } else {
+                    JAMI_INFO("[Account %s] Already have conversation %s",
+                              getAccountID().c_str(),
+                              convId.c_str());
+                }
+            }
+        }
+        return len;
+    });
+}
+
+void
+JamiAccount::syncWith(const std::string& deviceId, const std::shared_ptr<ChannelSocket>& socket)
+{
+    if (!socket)
+        return;
+    {
+        std::lock_guard<std::mutex> lk(syncConnectionsMtx_);
+        socket->onShutdown([w = weak(), socket, deviceId]() {
+            auto shared = w.lock();
+            if (!shared)
+                return;
+            std::lock_guard<std::mutex> lk(shared->syncConnectionsMtx_);
+            auto& connections = shared->syncConnections_[deviceId];
+            auto conn = connections.begin();
+            while (conn != connections.end()) {
+                if (*conn == socket)
+                    conn = connections.erase(conn);
+                else
+                    conn++;
+            }
+        });
+        syncConnections_[deviceId].emplace_back(socket);
+    }
+    // Sync conversations
+    Json::Value syncValue;
+    for (const auto& [convId, _conv] : conversations_) {
+        syncValue["conversations"].append(convId);
+    }
+
+    Json::StreamWriterBuilder builder;
+    const auto sync = Json::writeString(builder, syncValue);
+
+    std::error_code ec;
+    socket->write(reinterpret_cast<const unsigned char*>(sync.c_str()), sync.size(), ec);
 }
 
 } // namespace jami
