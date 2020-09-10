@@ -872,12 +872,12 @@ DBusConfigurationManager::getConversationRequests(const std::string& accountId)
     return DRing::getConversationRequests(accountId);
 }
 
-void
+bool
 DBusConfigurationManager::addConversationMember(const std::string& accountId,
                                                 const std::string& conversationId,
                                                 const std::string& contactUri)
 {
-    DRing::addConversationMember(accountId, conversationId, contactUri);
+    return DRing::addConversationMember(accountId, conversationId, contactUri);
 }
 
 bool
