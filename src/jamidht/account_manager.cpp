@@ -190,7 +190,7 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
 }
 
 void
-AccountManager::startSync()
+AccountManager::startSync(const OnNewDeviceCb& cb)
 {
     // Put device announcement
     if (info_->announce) {
@@ -199,10 +199,13 @@ AccountManager::startSync()
         dht_->put(h, info_->announce, dht::DoneCallback {}, {}, true);
         for (const auto& crl : info_->identity.second->issuer->getRevocationLists())
             dht_->put(h, crl, dht::DoneCallback {}, {}, true);
-        dht_->listen<DeviceAnnouncement>(h, [this](DeviceAnnouncement&& dev) {
-            findCertificate(dev.dev, [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-                foundAccountDevice(crt);
-            });
+        dht_->listen<DeviceAnnouncement>(h, [this, cb = std::move(cb)](DeviceAnnouncement&& dev) {
+            findCertificate(dev.dev,
+                            [this, cb](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                                if (cb)
+                                    cb(crt);
+                                foundAccountDevice(crt);
+                            });
             return true;
         });
         dht_->listen<dht::crypto::RevocationList>(h, [this](dht::crypto::RevocationList&& crl) {

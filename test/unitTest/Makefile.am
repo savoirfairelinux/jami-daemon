@@ -151,4 +151,10 @@ ut_conversation_SOURCES = conversation/conversation.cpp
 check_PROGRAMS += ut_media_control
 ut_media_control_SOURCES = media_control/media_control.cpp
 
+#
+# syncHistory
+#
+check_PROGRAMS += ut_syncHistory
+ut_syncHistory_SOURCES = syncHistory/syncHistory.cpp
+
 TESTS = $(check_PROGRAMS)
