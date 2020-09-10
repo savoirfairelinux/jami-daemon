@@ -81,6 +81,7 @@ struct AccountInfo;
 class SipTransport;
 class ChanneledOutgoingTransfer;
 class Conversation;
+struct ConvInfo;
 
 /**
  * A ConversationRequest is a request which corresponds to a trust request, but for conversations
@@ -674,6 +675,9 @@ private:
      */
     void generateDhParams();
 
+    void loadConvInfo();
+    void saveConvInfo() const;
+
     template<class... Args>
     std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
 
@@ -722,6 +726,7 @@ private:
 
     /** Conversations */
     std::map<std::string, std::unique_ptr<Conversation>> conversations_;
+    std::vector<ConvInfo> convInfos_;
 
     mutable std::mutex dhtValuesMtx_;
     bool dhtPublicInCalls_ {true};
@@ -831,6 +836,12 @@ private:
      */
     void callConnectionClosed(const DeviceId& deviceId, bool eraseDummy);
 
+    // Sync connections
+    std::mutex syncConnectionsMtx_;
+    std::set<std::string> pendingSync_ {};
+    std::map<std::string /* deviceId */, std::vector<std::shared_ptr<ChannelSocket>>>
+        syncConnections_;
+
     /**
      * Ask a device to open a channeled SIP socket
      * @param peerId        The contact who owns the device
@@ -847,6 +858,15 @@ private:
     void cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
                             const std::string& peerId,
                             const DeviceId& deviceId);
+    /**
+     * Store a new Sync connection
+     * @param socket    The new sync channel
+     * @param peerId    The contact who owns the device
+     * @param deviceId  Device linked to that transport
+     */
+    void cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
+                             const std::string& peerId,
+                             const DeviceId& deviceId);
 
     // File transfers
     std::mutex transfersMtx_ {};
@@ -893,6 +913,10 @@ private:
     std::shared_ptr<RepeatedTask> conversationsEventHandler {};
     void checkConversationsEvents();
     bool handlePendingConversations();
+
+    void syncWith(const std::string& deviceId, const std::shared_ptr<ChannelSocket>& socket);
+    void syncInfos(const std::shared_ptr<ChannelSocket>& socket);
+    void syncWithConnected();
 };
 
 static inline std::ostream&
