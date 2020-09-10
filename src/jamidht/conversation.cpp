@@ -268,6 +268,10 @@ Conversation::fetchFrom(const std::string& uri)
 bool
 Conversation::mergeHistory(const std::string& uri)
 {
+    if (not pimpl_ or not pimpl_->repository_) {
+        JAMI_WARN("Invalid repo. Abort merge");
+        return false;
+    }
     auto remoteHead = pimpl_->repository_->remoteHead(uri);
     if (remoteHead.empty()) {
         JAMI_WARN("Could not get HEAD of %s", uri.c_str());
