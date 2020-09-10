@@ -449,9 +449,9 @@ ArchiveAccountManager::syncDevices()
 }
 
 void
-ArchiveAccountManager::startSync()
+ArchiveAccountManager::startSync(const OnNewDeviceCb& cb)
 {
-    AccountManager::startSync();
+    AccountManager::startSync(std::move(cb));
 
     dht_->listen<DeviceSync>(dht::InfoHash::get("inbox:" + info_->deviceId), [this](DeviceSync&& sync) {
         // Received device sync data.
