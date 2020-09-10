@@ -64,6 +64,7 @@ private:
     void testSendMessageTriggerMessageReceived();
     void testGetRequests();
     void testDeclineRequest();
+    void testSendMessageToMultipleParticipants();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -75,6 +76,7 @@ private:
     CPPUNIT_TEST(testSendMessageTriggerMessageReceived);
     CPPUNIT_TEST(testGetRequests);
     CPPUNIT_TEST(testDeclineRequest);
+    CPPUNIT_TEST(testSendMessageToMultipleParticipants);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -110,8 +112,8 @@ ConversationTest::setUp()
 
     details = DRing::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "Carla";
-    details[ConfProperties::ALIAS] = "Carla";
+    details[ConfProperties::DISPLAYNAME] = "CARLA";
+    details[ConfProperties::ALIAS] = "CARLA";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
     details[ConfProperties::ARCHIVE_PIN] = "";
@@ -518,6 +520,101 @@ ConversationTest::testDeclineRequest()
     // Decline request
     auto requests = bobAccount->getConversationRequests();
     CPPUNIT_ASSERT(requests.size() == 0);
+}
+
+void
+ConversationTest::testSendMessageToMultipleParticipants()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
+    if (bobUri.find("ring:") == 0)
+        bobUri = bobUri.substr(std::string("ring:").size());
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto carlaUri = carlaAccount->getAccountDetails()[ConfProperties::USERNAME];
+    if (carlaUri.find("ring:") == 0)
+        carlaUri = carlaUri.substr(std::string("ring:").size());
+
+    // Enable carla
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = carlaAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    cv.notify_one();
+                }
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    Manager::instance().sendRegister(carlaId, true);
+    cv.wait_for(lk, std::chrono::seconds(30));
+    confHandlers.clear();
+    DRing::unregisterSignalHandlers();
+
+    auto messageReceivedBob = 0;
+    auto messageReceivedCarla = 0;
+    auto requestReceived = 0;
+    auto conversationReady = 0;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*message*/) {
+            if (accountId == bobId)
+                messageReceivedBob += 1;
+            if (accountId == carlaId)
+                messageReceivedCarla += 1;
+            if (messageReceivedBob > 0 && messageReceivedCarla > 0)
+                cv.notify_one();
+        }));
+
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived += 1;
+                if (requestReceived >= 2)
+                    cv.notify_one();
+            }));
+
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
+            conversationReady += 1;
+            if (conversationReady >= 3)
+                cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    auto convId = aliceAccount->startConversation();
+
+    aliceAccount->addConversationMember(convId, bobUri);
+    aliceAccount->addConversationMember(convId, carlaUri);
+    cv.wait_for(lk, std::chrono::seconds(60));
+    CPPUNIT_ASSERT(requestReceived == 2);
+
+    bobAccount->acceptConversationRequest(convId);
+    carlaAccount->acceptConversationRequest(convId);
+    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(conversationReady == 3);
+
+    // Assert that repository exists
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
+               + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+
+    aliceAccount->sendMessage(convId, "hi");
+    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(messageReceivedBob == 1);
+    CPPUNIT_ASSERT(messageReceivedCarla == 1);
+    DRing::unregisterSignalHandlers();
 }
 
 } // namespace test
