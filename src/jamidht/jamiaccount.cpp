@@ -319,15 +319,6 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     }
 
     setActiveCodecs({});
-
-    JAMI_INFO("Start loading conversations…");
-    auto conversationsRepositories = fileutils::readDirectory(idPath_ + DIR_SEPARATOR_STR
-                                                              + "conversations");
-    for (const auto& repository : conversationsRepositories) {
-        JAMI_ERR("@@@ %s", repository.c_str());
-        conversations_.emplace(repository, std::make_unique<Conversation>(weak(), repository));
-    }
-    JAMI_INFO("Conversations loaded!");
 }
 
 JamiAccount::~JamiAccount()
@@ -2434,11 +2425,27 @@ JamiAccount::doRegister_()
                 std::map<std::string, std::string> metadatas = req.metadatas;
                 {
                     std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
+                    auto it = conversationsRequests_.find(convId);
+                    if (it != conversationsRequests_.end()) {
+                        JAMI_INFO("Received a request for a conversation already existing. Ignore");
+                        return true;
+                    }
                     conversationsRequests_[convId] = std::move(req);
                 }
-                emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(accountID_,
-                                                                                   convId,
-                                                                                   metadatas);
+                // TODO: store request to be persistent when restarting
+
+                auto cert = tls::CertificateStore::instance().getCertificate(req.from.toString());
+                if (!cert || !cert->issuer)
+                    return true;
+                auto peerId = cert->issuer->getId().toString();
+                if (accountManager_->getInfo()->accountId == peerId) {
+                    JAMI_INFO("Another device started a conversation. Accept invitation");
+                    acceptConversationRequest(convId);
+                } else {
+                    emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(accountID_,
+                                                                                       convId,
+                                                                                       metadatas);
+                }
                 return true;
             });
 
@@ -3582,9 +3589,33 @@ JamiAccount::startConversation()
     auto convId = conversation->id();
     conversations_[convId] = std::move(conversation);
 
-    // TODO
-    // And send an invite to others devices to sync the conversation between device
-    // Via getMembers
+    // Invite connected devices for the same user
+
+    if (!accountManager_)
+        return convId;
+
+    std::string accountId {};
+    if (auto info = accountManager_->getInfo())
+        accountId = info->accountId;
+    else
+        return convId;
+
+    auto toH = dht::InfoHash(accountId);
+    ConversationRequest req;
+    req.conversationId = convId;
+    auto convMembers = conversations_[convId]->getMembers();
+    for (const auto& member : convMembers)
+        req.members.emplace_back(member.at("uri"));
+    req.metadatas = {/* TODO */};
+    forEachDevice(toH, [this, toH, req](const dht::InfoHash& dev) {
+        if (dev == dht()->getId())
+            return;
+        JAMI_INFO("Sending conversation invite %s / %s",
+                  toH.toString().c_str(),
+                  dev.toString().c_str());
+        dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev.toString()), dev, req);
+    });
+
     return convId;
 }
 
@@ -3606,11 +3637,10 @@ JamiAccount::acceptConversationRequest(const std::string& conversationId)
     }
     for (const auto& member : request->second.members) {
         auto memberHash = dht::InfoHash(member);
-        // Avoid to connect to self for now
-        if (username_.find(member) != std::string::npos)
-            continue;
         // TODO cf sync between devices
         forEachDevice(memberHash, [this, request = request->second](const dht::InfoHash& dev) {
+            if (dev == dht()->getId())
+                return;
             connectionManager().connectDevice(
                 dev.toString(),
                 "git://" + dev.toString() + "/" + request.conversationId,
