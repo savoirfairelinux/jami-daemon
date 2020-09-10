@@ -823,6 +823,11 @@ private:
     std::set<std::pair<std::string /* accountId */, std::string /* deviceId */>>
         pendingSipConnections_ {};
 
+    // Sync connections
+    std::mutex syncConnectionsMtx_;
+    std::map<std::string /* deviceId */, std::vector<std::shared_ptr<ChannelSocket>>>
+        syncConnections_;
+
     /**
      * Ask a device to open a channeled SIP socket
      * @param peerId        The contact who owns the device
@@ -883,6 +888,8 @@ private:
     std::shared_ptr<RepeatedTask> conversationsEventHandler {};
     void checkConversationsEvents();
     bool handlePendingConversations();
+
+    void syncWith(const std::string& deviceId, const std::shared_ptr<ChannelSocket>& socket);
 };
 
 static inline std::ostream&
