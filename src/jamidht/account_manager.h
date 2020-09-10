@@ -73,6 +73,7 @@ public:
     using OnChangeCallback = ContactList::OnChangeCallback;
     using clock = std::chrono::system_clock;
     using time_point = clock::time_point;
+    using OnNewDeviceCb = std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>;
 
     AccountManager(const std::string& path, OnAsync&& onAsync, const std::string& nameServer)
         : path_(path)
@@ -133,7 +134,7 @@ public:
 
     void setDht(const std::shared_ptr<dht::DhtRunner>& dht) { dht_ = dht; }
 
-    virtual void startSync();
+    virtual void startSync(const OnNewDeviceCb& cb);
 
     const AccountInfo* getInfo() const { return info_.get(); }
 
