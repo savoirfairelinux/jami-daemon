@@ -14,7 +14,6 @@
         "0008-fix_ioqueue_ipv6_sendto.patch",
         "0009-add-config-site.patch",
         "0011-fix-tcp-death-detection.patch",
-        "0012-fix-turn-shutdown-crash.patch",
         "0013-Assign-unique-local-preferences-for-candidates-with-.patch",
         "0014-Add-new-compile-time-setting-PJ_ICE_ST_USE_TURN_PERM.patch",
         "0015-update-local-preference-for-peer-reflexive-candidate.patch",
