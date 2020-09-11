@@ -470,10 +470,17 @@ private:
                 connection_ = std::make_unique<PeerConnection>([this] { cancel(); },
                                                                peer_.toString(),
                                                                std::move(tls_ep_));
-                connection_->setOnStateChangedCb([this](const DRing::DataTransferId& id,
-                                                        const DRing::DataTransferEventCode& code) {
-                    parent_.stateChanged(peer_.toString(), id, code);
-                });
+                connection_->setOnStateChangedCb(
+                    [p = parent_.weak(),
+                     peer = peer_.toString()](const DRing::DataTransferId& id,
+                                              const DRing::DataTransferEventCode& code) {
+                        // NOTE: this callback is shared by all potential inputs/output, not
+                        // only used by connection_, weak pointers MUST be used.
+                        auto parent = p.lock();
+                        if (!parent)
+                            return;
+                        parent->stateChanged(peer, id, code);
+                    });
                 for (auto& cb : listeners_) {
                     cb(connection_.get());
                 }
