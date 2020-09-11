@@ -1,0 +1,61 @@
+ pjnath/src/pjnath/ice_strans.c   | 25 ++++++++++++++++++++-----
+ pjnath/src/pjnath/turn_session.c |  2 +-
+ 2 files changed, 21 insertions(+), 6 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index c38799f26..dd34571e6 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -189,6 +189,7 @@ typedef struct pj_ice_strans_comp
+     struct {
+ 	pj_turn_sock	*sock;		/**< TURN relay transport.	*/
+ 	pj_bool_t	 log_off;	/**< TURN loggin off?		*/
++	pj_bool_t	 need_commit;
+ 	unsigned	 err_cnt;	/**< TURN disconnected count.	*/
+     } turn[PJ_ICE_MAX_TURN];
+ 
+@@ -490,6 +491,8 @@ static pj_status_t add_update_turn(pj_ice_strans *ice_st,
+     /* Add pending job */
+     ///sess_add_ref(ice_st);
+ 
++	comp->turn[idx].need_commit = new_cand;
++
+     /* Start allocation */
+     status=pj_turn_sock_alloc(comp->turn[idx].sock,
+ 			      &turn_cfg->server,
+@@ -502,11 +505,6 @@ static pj_status_t add_update_turn(pj_ice_strans *ice_st,
+ 	return status;
+     }
+ 
+-    if (new_cand) {
+-	/* Commit the relayed candidate. */
+-	comp->cand_cnt++;
+-    }
+-
+     PJ_LOG(4,(ice_st->obj_name,
+ 		  "Comp %d/%d: TURN relay candidate (tpid=%d) "
+ 		  "waiting for allocation",
+@@ -2921,6 +2919,23 @@ static void turn_on_state(pj_turn_sock *turn_sock, pj_turn_state_t old_state,
+ 
+ 	/* Wait until initialization completes */
+ 	pj_grp_lock_acquire(comp->ice_st->grp_lock);
++	if (comp->turn[tp_idx].need_commit) {
++		comp->turn[tp_idx].need_commit = PJ_FALSE;
++
++		cand = &comp->cand_list[comp->cand_cnt];
++		cand->type = PJ_ICE_CAND_TYPE_RELAYED;
++		cand->status = PJ_SUCCESS;
++		cand->local_pref = RELAY_PREF;
++		cand->transport_id = tp_idx;
++		cand->comp_id = (pj_uint8_t) comp->comp_id;
++		pj_ice_strans_turn_cfg *turn_cfg = &comp->ice_st->cfg.turn_tp[tp_idx];
++		cand->transport = turn_cfg->conn_type == PJ_TURN_TP_UDP ?
++								PJ_CAND_UDP :
++								PJ_CAND_TCP_PASSIVE;
++
++
++		comp->cand_cnt++;
++	}
+ 
+ 	/* Find relayed candidate in the component */
+ 	for (i=0; i<comp->cand_cnt; ++i) {
