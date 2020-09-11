@@ -1638,12 +1638,17 @@ SIPCall::rtpSetupSuccess(MediaType type)
 void
 SIPCall::setRemoteRecording(bool state)
 {
+    std::string id {};
+    if (getConfId().empty())
+        id = getCallId();
+    else
+        id = getConfId();
     if (state) {
         JAMI_WARN("SIP remote recording enabled");
-        emitSignal<DRing::CallSignal::RemoteRecordingChanged>(getCallId(), getPeerNumber(), true);
+        emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), true);
     } else {
         JAMI_WARN("SIP remote recording disabled");
-        emitSignal<DRing::CallSignal::RemoteRecordingChanged>(getCallId(), getPeerNumber(), false);
+        emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), false);
     }
 }
 
