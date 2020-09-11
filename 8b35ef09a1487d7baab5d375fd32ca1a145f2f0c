@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "aeb7fffb_6101a037",
+        "filename": "src/manager.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1906,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-11T20:37:34Z",
+      "side": 1,
+      "message": "you mean chooseCall",
+      "range": {
+        "startLine": 1906,
+        "startChar": 45,
+        "endLine": 1906,
+        "endChar": 60
+      },
+      "revId": "8b35ef09a1487d7baab5d375fd32ca1a145f2f0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e5747d5e_8f1b5aea",
+        "filename": "src/manager.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1907,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-11T20:37:34Z",
+      "side": 1,
+      "message": "if (auto callWithPeer \u003d getCallWithPeer(call, accountId))",
+      "range": {
+        "startLine": 1907,
+        "startChar": 8,
+        "endLine": 1907,
+        "endChar": 38
+      },
+      "revId": "8b35ef09a1487d7baab5d375fd32ca1a145f2f0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "226a6dcd_47f25e37",
+        "filename": "src/manager.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1909,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-11T20:37:34Z",
+      "side": 1,
+      "message": "typo",
+      "range": {
+        "startLine": 1909,
+        "startChar": 41,
+        "endLine": 1909,
+        "endChar": 54
+      },
+      "revId": "8b35ef09a1487d7baab5d375fd32ca1a145f2f0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0952743a_49fa315f",
+        "filename": "src/manager.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1937,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-11T20:37:34Z",
+      "side": 1,
+      "message": "chooseCallToAnswer?",
+      "range": {
+        "startLine": 1937,
+        "startChar": 9,
+        "endLine": 1937,
+        "endChar": 19
+      },
+      "revId": "8b35ef09a1487d7baab5d375fd32ca1a145f2f0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "393a824e_73cdbdd5",
+        "filename": "src/manager.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 378,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-11T20:37:34Z",
+      "side": 1,
+      "message": "avoid caps",
+      "range": {
+        "startLine": 378,
+        "startChar": 18,
+        "endLine": 378,
+        "endChar": 25
+      },
+      "revId": "8b35ef09a1487d7baab5d375fd32ca1a145f2f0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
