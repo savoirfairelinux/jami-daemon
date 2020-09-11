@@ -743,9 +743,11 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                                                                    std::move(
                                                                        waitForReadyEndpoints_[idx]));
                 connection->setOnStateChangedCb(
-                    [this, peer_h](const DRing::DataTransferId& id,
-                                   const DRing::DataTransferEventCode& code) {
-                        stateChanged(peer_h, id, code);
+                    [w = weak(), peer_h](const DRing::DataTransferId& id,
+                                         const DRing::DataTransferEventCode& code) {
+                        if (auto sthis = w.lock()) {
+                            sthis->stateChanged(peer_h, id, code);
+                        }
                     });
                 connection->attachOutputStream(std::make_shared<FtpServer>(accountId, peer_h));
                 {
