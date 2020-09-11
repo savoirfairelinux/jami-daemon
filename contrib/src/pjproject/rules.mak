@@ -56,7 +56,6 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0009-add-config-site.patch
 	$(APPLY) $(SRC)/pjproject/0010-fix-pkgconfig.patch
 	$(APPLY) $(SRC)/pjproject/0011-fix-tcp-death-detection.patch
-	$(APPLY) $(SRC)/pjproject/0012-fix-turn-shutdown-crash.patch
 	$(APPLY) $(SRC)/pjproject/0013-Assign-unique-local-preferences-for-candidates-with-.patch
 	$(APPLY) $(SRC)/pjproject/0014-Add-new-compile-time-setting-PJ_ICE_ST_USE_TURN_PERM.patch
 	$(APPLY) $(SRC)/pjproject/0015-update-local-preference-for-peer-reflexive-candidate.patch
