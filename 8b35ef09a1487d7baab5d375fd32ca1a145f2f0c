@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "0b9714e1_c490e3f9",
+        "filename": "src/manager.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1906,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-11T20:52:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aeb7fffb_6101a037",
+      "range": {
+        "startLine": 1906,
+        "startChar": 45,
+        "endLine": 1906,
+        "endChar": 60
+      },
+      "revId": "8b35ef09a1487d7baab5d375fd32ca1a145f2f0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "e5747d5e_8f1b5aea",
         "filename": "src/manager.cpp",
         "patchSetId": 14
@@ -71,6 +95,29 @@
     },
     {
       "key": {
+        "uuid": "bd2bcc6d_45db1138",
+        "filename": "src/manager.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1929,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-11T20:52:16Z",
+      "side": 1,
+      "message": "Just return the call and do not choose here, it\u0027s not the role of this function",
+      "range": {
+        "startLine": 1927,
+        "startChar": 13,
+        "endLine": 1929,
+        "endChar": 34
+      },
+      "revId": "8b35ef09a1487d7baab5d375fd32ca1a145f2f0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "0952743a_49fa315f",
         "filename": "src/manager.cpp",
         "patchSetId": 14
@@ -87,6 +134,29 @@
         "startChar": 9,
         "endLine": 1937,
         "endChar": 19
+      },
+      "revId": "8b35ef09a1487d7baab5d375fd32ca1a145f2f0c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "436bde00_4d0bf9dc",
+        "filename": "src/manager.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1937,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-11T20:52:16Z",
+      "side": 1,
+      "message": "imho, to be consistent, the signature can be (Call\u0026 callA, Call\u0026 callB) because existingCall must not be nullptr there",
+      "range": {
+        "startLine": 1937,
+        "startChar": 20,
+        "endLine": 1937,
+        "endChar": 65
       },
       "revId": "8b35ef09a1487d7baab5d375fd32ca1a145f2f0c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
