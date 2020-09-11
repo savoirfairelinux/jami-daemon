@@ -516,7 +516,8 @@ ServerAccountManager::searchUser(const std::string& query, SearchCallback cb)
                             const auto& ruser = json[i];
                             std::map<std::string, std::string> user;
                             for (const auto& member : ruser.getMemberNames()) {
-                                user[member] = ruser[member].asString();
+                                if (ruser[member].isString())
+                                    user[member] = ruser[member].asString();
                             }
                             results.emplace_back(std::move(user));
                         }
