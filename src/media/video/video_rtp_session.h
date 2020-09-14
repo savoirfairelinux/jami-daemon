@@ -97,9 +97,6 @@ public:
     const std::string& getInput() const { return input_; }
 
     void setChangeOrientationCallback(std::function<void(int)> cb);
-    void setRecStateCallback(std::function<void(bool)> cb) {
-        recordingStateCallback_ = std::move(cb);
-    }
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
