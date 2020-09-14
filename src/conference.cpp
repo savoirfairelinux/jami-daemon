@@ -123,6 +123,9 @@ Conference::~Conference()
                     call->toggleRecording();
                 }
             }
+            // Notify that the remaining peer is still recording after conference
+            if (call->isPeerRecording())
+                call->setRemoteRecording(true);
         }
     }
 #endif // ENABLE_VIDEO
@@ -245,8 +248,11 @@ Conference::remove(const std::string& participant_id)
 {
     if (participants_.erase(participant_id)) {
 #ifdef ENABLE_VIDEO
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id))
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
             call->getVideoRtp().exitConference();
+            if (call->isPeerRecording())
+                call->setRemoteRecording(false);
+        }
 #endif // ENABLE_VIDEO
     }
 }
@@ -344,10 +350,19 @@ Conference::getDisplayNames() const
 bool
 Conference::toggleRecording()
 {
-    if (not isRecording())
+    bool newState = not isRecording();
+    if (newState)
         initRecorder(recorder_);
     else
         deinitRecorder(recorder_);
+
+    // Notify each participant
+    for (const auto& participant_id : participants_) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+            call->updateRecState(newState);
+        }
+    }
+
     return Recordable::toggleRecording();
 }
 
