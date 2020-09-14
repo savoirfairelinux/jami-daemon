@@ -1,6 +1,6 @@
 # UPNP
-UPNP_VERSION := 1.12.0
-UPNP_URL := https://github.com/mrjimenez/pupnp/archive/release-$(UPNP_VERSION).tar.gz
+UPNP_VERSION := 1.14.0
+UPNP_URL := https://github.com/pupnp/pupnp/archive/release-$(UPNP_VERSION).tar.gz
 
 PKGS += upnp
 ifeq ($(call need_pkg,"libupnp >= 1.8.4"),)
@@ -17,8 +17,6 @@ upnp: pupnp-release-$(UPNP_VERSION).tar.gz .sum-upnp
 ifeq ($(OS),Windows_NT)
 	$(APPLY) $(SRC)/upnp/libupnp-windows.patch
 endif
-	$(APPLY) $(SRC)/upnp/libupnp-ipv6.patch
-	#$(APPLY) $(SRC)/upnp/miniserver.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv config.guess config.sub
 	$(MOVE)
 
