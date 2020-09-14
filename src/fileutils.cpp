@@ -89,6 +89,23 @@
 #include <pj/ctype.h>
 #include <pjlib-util/md5.h>
 
+#ifndef _MSC_VER
+#define PROTECTED_GETENV(str) \
+    ({ \
+        char* envvar_ = getenv((str)); \
+        envvar_ ? envvar_ : ""; \
+    })
+#else
+#define PROTECTED_GETENV(str) ""
+#endif
+
+#define XDG_DATA_HOME   (PROTECTED_GETENV("XDG_DATA_HOME"))
+#define XDG_CONFIG_HOME (PROTECTED_GETENV("XDG_CONFIG_HOME"))
+#define XDG_CACHE_HOME  (PROTECTED_GETENV("XDG_CACHE_HOME"))
+
+#define PIDFILE     ".ring.pid"
+#define ERASE_BLOCK 4096
+
 namespace jami {
 namespace fileutils {
 
@@ -571,9 +588,6 @@ FileHandle::~FileHandle()
 }
 
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-static std::string files_path;
-static std::string cache_path;
-static std::string config_path;
 #else
 static char* program_dir = NULL;
 void
@@ -591,40 +605,37 @@ std::string
 get_cache_dir(const char* pkg)
 {
 #ifdef RING_UWP
+    std::string cache_path;
     std::vector<std::string> paths;
+    paths.reserve(1);
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
-    if (not paths.empty())
+    if (not paths.empty()) {
         cache_path = paths[0] + DIR_SEPARATOR_STR + std::string(".cache");
-
-    if (fileutils::recursive_mkdir(cache_path.data(), 0700) != true) {
-        // If directory creation failed
-        if (errno != EEXIST)
-            JAMI_DBG("Cannot create directory: %s!", cache_path.c_str());
+        if (fileutils::recursive_mkdir(cache_path.data(), 0700) != true) {
+            // If directory creation failed
+            if (errno != EEXIST)
+                JAMI_DBG("Cannot create directory: %s!", cache_path.c_str());
+        }
     }
     return cache_path;
-#else
-    const std::string cache_home(XDG_CACHE_HOME);
-
-    if (not cache_home.empty()) {
-        return cache_home;
-    } else {
-#endif
-#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+#elif defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
+    paths.reserve(1);
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("cache", &paths);
     if (not paths.empty())
-        cache_path = paths[0];
-    return cache_path;
+        return paths[0];
+    return {};
 #elif defined(__APPLE__)
-        return get_home_dir() + DIR_SEPARATOR_STR + "Library" + DIR_SEPARATOR_STR + "Caches"
-               + DIR_SEPARATOR_STR + pkg;
+    return get_home_dir() + DIR_SEPARATOR_STR + "Library" + DIR_SEPARATOR_STR + "Caches"
+            + DIR_SEPARATOR_STR + pkg;
 #else
-    return get_home_dir() + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + pkg;
+    const std::string cache_home(XDG_CACHE_HOME);
+    if (not cache_home.empty())
+        return cache_home;
+    else
+        return get_home_dir() + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + pkg;
 #endif
-#ifndef RING_UWP
 }
-#endif
-} // namespace fileutils
 
 std::string
 get_cache_dir()
@@ -637,16 +648,18 @@ get_home_dir()
 {
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
+    paths.reserve(1);
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("files", &paths);
     if (not paths.empty())
-        files_path = paths[0];
-    return files_path;
+        return paths[0];
+    return {};
 #elif defined RING_UWP
-        std::vector<std::string> paths;
-        emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
-        if (not paths.empty())
-            files_path = paths[0];
-        return files_path;
+    std::vector<std::string> paths;
+    paths.reserve(1);
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
+    if (not paths.empty())
+        return paths[0];
+    return {};
 #elif defined _WIN32
     TCHAR path[MAX_PATH];
     if (SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_PROFILE, nullptr, 0, path))) {
@@ -678,13 +691,14 @@ get_data_dir(const char* pkg)
 {
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
+    paths.reserve(1);
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("files", &paths);
     if (not paths.empty())
-        files_path = paths[0];
-    return files_path;
+        return paths[0];
+    return {};
 #elif defined(__APPLE__)
-        return get_home_dir() + DIR_SEPARATOR_STR + "Library" + DIR_SEPARATOR_STR
-               + "Application Support" + DIR_SEPARATOR_STR + pkg;
+    return get_home_dir() + DIR_SEPARATOR_STR + "Library" + DIR_SEPARATOR_STR
+            + "Application Support" + DIR_SEPARATOR_STR + pkg;
 #elif defined(_WIN32)
     if (!strcmp(pkg, "ring")) {
         return get_home_dir() + DIR_SEPARATOR_STR + ".local" + DIR_SEPARATOR_STR
@@ -695,16 +709,18 @@ get_data_dir(const char* pkg)
     }
 #elif defined(RING_UWP)
     std::vector<std::string> paths;
+    paths.reserve(1);
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
-    if (not paths.empty())
-        files_path = paths[0] + DIR_SEPARATOR_STR + std::string(".data");
-
-    if (fileutils::recursive_mkdir(files_path.data(), 0700) != true) {
-        // If directory creation failed
-        if (errno != EEXIST)
-            JAMI_DBG("Cannot create directory: %s!", files_path.c_str());
+    if (not paths.empty()) {
+        auto files_path = paths[0] + DIR_SEPARATOR_STR + std::string(".data");
+        if (fileutils::recursive_mkdir(files_path.data(), 0700) != true) {
+            // If directory creation failed
+            if (errno != EEXIST)
+                JAMI_DBG("Cannot create directory: %s!", files_path.c_str());
+        }
+        return files_path;
     }
-    return files_path;
+    return {};
 #else
     const std::string data_home(XDG_DATA_HOME);
     if (not data_home.empty())
@@ -725,31 +741,21 @@ get_data_dir()
 std::string
 get_config_dir(const char* pkg)
 {
+    std::string configdir;
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("config", &paths);
     if (not paths.empty())
-        config_path = paths[0];
-    return config_path;
-
+        configdir = std::move(paths[0]);
 #elif defined(RING_UWP)
-        std::vector<std::string> paths;
-        emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
-        if (not paths.empty())
-            config_path = paths[0] + DIR_SEPARATOR_STR + std::string(".config");
-
-        if (fileutils::recursive_mkdir(config_path.data(), 0700) != true) {
-            // If directory creation failed
-            if (errno != EEXIST)
-                JAMI_DBG("Cannot create directory: %s!", config_path.c_str());
-        }
-        return config_path;
-#else
-#if defined(__APPLE__)
-    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + "Library"
+    std::vector<std::string> paths;
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
+    if (not paths.empty())
+        configdir = paths[0] + DIR_SEPARATOR_STR + std::string(".config");
+#elif defined(__APPLE__)
+    configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + "Library"
                             + DIR_SEPARATOR_STR + "Application Support" + DIR_SEPARATOR_STR + pkg;
 #elif defined(_WIN32)
-    std::string configdir;
     if (!strcmp(pkg, "ring")) {
         configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + ".config" + DIR_SEPARATOR_STR
                     + pkg;
@@ -758,20 +764,19 @@ get_config_dir(const char* pkg)
                     + "Local" + DIR_SEPARATOR_STR + pkg;
     }
 #else
-    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + ".config"
-                            + DIR_SEPARATOR_STR + pkg;
-#endif
     const std::string xdg_env(XDG_CONFIG_HOME);
     if (not xdg_env.empty())
         configdir = xdg_env + DIR_SEPARATOR_STR + pkg;
-
+    else
+        configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + ".config"
+                            + DIR_SEPARATOR_STR + pkg;
+#endif
     if (fileutils::recursive_mkdir(configdir.data(), 0700) != true) {
         // If directory creation failed
         if (errno != EEXIST)
             JAMI_DBG("Cannot create directory: %s!", configdir.c_str());
     }
     return configdir;
-#endif
 }
 
 std::string
