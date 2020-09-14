@@ -30,23 +30,6 @@
 
 #include "dring/def.h"
 
-#ifndef _MSC_VER
-#define PROTECTED_GETENV(str) \
-    ({ \
-        char* envvar_ = getenv((str)); \
-        envvar_ ? envvar_ : ""; \
-    })
-#else
-#define PROTECTED_GETENV(str) ""
-#endif
-
-#define XDG_DATA_HOME   (PROTECTED_GETENV("XDG_DATA_HOME"))
-#define XDG_CONFIG_HOME (PROTECTED_GETENV("XDG_CONFIG_HOME"))
-#define XDG_CACHE_HOME  (PROTECTED_GETENV("XDG_CACHE_HOME"))
-
-#define PIDFILE     ".ring.pid"
-#define ERASE_BLOCK 4096
-
 #ifndef _WIN32
 #include <sys/stat.h>               // mode_t
 #define DIR_SEPARATOR_STR     "/"   // Directory separator string
