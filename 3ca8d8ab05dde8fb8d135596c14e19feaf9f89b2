@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "87650e43_be7aafaf",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 356,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-14T21:08:15Z",
+      "side": 1,
+      "message": "bool newState \u003d not isRecording();\nif (newState)\n    initRecorder(recorder_);\nelse\n    deinitRecorder(recorder_);",
+      "range": {
+        "startLine": 347,
+        "startChar": 0,
+        "endLine": 356,
+        "endChar": 0
+      },
+      "revId": "3ca8d8ab05dde8fb8d135596c14e19feaf9f89b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
