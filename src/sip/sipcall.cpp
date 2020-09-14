@@ -1067,12 +1067,6 @@ SIPCall::startAllMedia()
                 this_->setVideoOrientation(angle);
         });
     });
-    videortp_->setRecStateCallback([wthis = weak()] (bool state) {
-        runOnMainThread([wthis, state] {
-            if (auto this_ = wthis.lock())
-                this_->updateRecState(state);
-        });
-    });
 #endif
 
     for (const auto& slot : slots) {
@@ -1490,6 +1484,7 @@ SIPCall::toggleRecording()
 
     // add streams to recorder before starting the record
     if (not Call::isRecording()) {
+        updateRecState(true);
         std::stringstream ss;
         ss << "Conversation at %TIMESTAMP between " << getSIPAccount().getUserUri() << " and "
            << peerUri_;
@@ -1501,6 +1496,7 @@ SIPCall::toggleRecording()
             videortp_->initRecorder(recorder_);
 #endif
     } else {
+        updateRecState(false);
         deinitRecorder();
     }
     pendingRecord_ = false;
@@ -1635,11 +1631,7 @@ SIPCall::rtpSetupSuccess(MediaType type)
 void
 SIPCall::setRemoteRecording(bool state)
 {
-    std::string id {};
-    if (getConfId().empty())
-        id = getCallId();
-    else
-        id = getConfId();
+    const std::string& id = getConfId().empty() ? getCallId() : getConfId();
     if (state) {
         JAMI_WARN("SIP remote recording enabled");
         emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), true);
@@ -1647,6 +1639,7 @@ SIPCall::setRemoteRecording(bool state)
         JAMI_WARN("SIP remote recording disabled");
         emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), false);
     }
+    peerRecording_ = state;
 }
 
 } // namespace jami

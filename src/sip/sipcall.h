@@ -237,6 +237,8 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     void setRemoteRecording(bool state);
 
+    bool isPeerRecording() { return peerRecording_; }
+
 private:
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
@@ -370,6 +372,8 @@ private:
 
     OnReadyCb holdCb_ {};
     OnReadyCb offHoldCb_ {};
+
+    bool peerRecording_ {false};
 };
 
 // Helpers
