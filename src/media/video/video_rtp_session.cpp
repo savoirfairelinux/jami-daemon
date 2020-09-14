@@ -649,8 +649,6 @@ VideoRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
             }
         }
     }
-    if (recordingStateCallback_)
-        recordingStateCallback_(true);
 }
 
 void
@@ -666,9 +664,6 @@ VideoRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
             input->detach(ob);
         }
     }
-    if (recordingStateCallback_)
-        recordingStateCallback_(false);
-
 }
 
 void
