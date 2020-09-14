@@ -57,13 +57,6 @@
 #include <memory>
 #include <future>
 
-// Action identifiers.
-constexpr static const char* ACTION_ADD_PORT_MAPPING {"AddPortMapping"};
-constexpr static const char* ACTION_DELETE_PORT_MAPPING {"DeletePortMapping"};
-constexpr static const char* ACTION_GET_GENERIC_PORT_MAPPING_ENTRY {"GetGenericPortMappingEntry"};
-constexpr static const char* ACTION_GET_STATUS_INFO {"GetStatusInfo"};
-constexpr static const char* ACTION_GET_EXTERNAL_IP_ADDRESS {"GetExternalIPAddress"};
-
 namespace jami {
 class IpAddr;
 }
@@ -116,15 +109,15 @@ public:
                            uint16_t port_internal,
                            PortType type) override;
     // Treats the reception of an add mapping action answer.
-    void processAddMapAction(const std::string& ctrlURL, IXML_Document* actionRequest);
+    void processAddMapAction(const std::string_view& ctrlURL, IXML_Document* actionRequest);
 
     // Returns control point action callback based on xml node.
-    CtrlAction getAction(char* xmlNode);
+    CtrlAction getAction(const char* xmlNode);
 
     // Removes a mapping.
     void requestMappingRemove(const Mapping& igdMapping) override;
     // Treats the reception of a remove mapping action answer.
-    void processRemoveMapAction(const std::string& ctrlURL, IXML_Document* actionRequest);
+    void processRemoveMapAction(const std::string_view& ctrlURL, IXML_Document* actionRequest);
 
     // Removes all local mappings of IGD that we're added by the application.
     void removeAllLocalMappings(IGD* igd) override;
