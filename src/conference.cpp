@@ -344,10 +344,23 @@ Conference::getDisplayNames() const
 bool
 Conference::toggleRecording()
 {
-    if (not isRecording())
+    bool newState {};
+    if (not isRecording()) {
+        newState = true;
         initRecorder(recorder_);
-    else
+    }
+    else {
+        newState = false;
         deinitRecorder(recorder_);
+    }
+
+    // Notify each participant
+    for (const auto& participant_id : participants_) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+            call->updateRecState(newState);
+        }
+    }
+
     return Recordable::toggleRecording();
 }
 
