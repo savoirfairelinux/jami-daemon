@@ -1067,12 +1067,6 @@ SIPCall::startAllMedia()
                 this_->setVideoOrientation(angle);
         });
     });
-    videortp_->setRecStateCallback([wthis = weak()] (bool state) {
-        runOnMainThread([wthis, state] {
-            if (auto this_ = wthis.lock())
-                this_->updateRecState(state);
-        });
-    });
 #endif
 
     for (const auto& slot : slots) {
@@ -1490,6 +1484,7 @@ SIPCall::toggleRecording()
 
     // add streams to recorder before starting the record
     if (not Call::isRecording()) {
+        updateRecState(true);
         std::stringstream ss;
         ss << "Conversation at %TIMESTAMP between " << getSIPAccount().getUserUri() << " and "
            << peerUri_;
@@ -1501,6 +1496,7 @@ SIPCall::toggleRecording()
             videortp_->initRecorder(recorder_);
 #endif
     } else {
+        updateRecState(false);
         deinitRecorder();
     }
     pendingRecord_ = false;
