@@ -56,7 +56,7 @@ static constexpr unsigned MAX_REMB_DEC {1};
 
 constexpr auto DELAY_AFTER_RESTART = std::chrono::milliseconds(1000);
 constexpr auto EXPIRY_TIME_RTCP = std::chrono::seconds(2);
-constexpr auto DELAY_AFTER_REMB_INC = std::chrono::seconds(2);
+constexpr auto DELAY_AFTER_REMB_INC = std::chrono::seconds(1);
 constexpr auto DELAY_AFTER_REMB_DEC = std::chrono::milliseconds(500);
 
 VideoRtpSession::VideoRtpSession(const string& callID, const DeviceParams& localVideoParams)
