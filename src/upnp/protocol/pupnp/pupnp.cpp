@@ -28,6 +28,13 @@
 namespace jami {
 namespace upnp {
 
+// Action identifiers.
+constexpr static const char* ACTION_ADD_PORT_MAPPING {"AddPortMapping"};
+constexpr static const char* ACTION_DELETE_PORT_MAPPING {"DeletePortMapping"};
+constexpr static const char* ACTION_GET_GENERIC_PORT_MAPPING_ENTRY {"GetGenericPortMappingEntry"};
+constexpr static const char* ACTION_GET_STATUS_INFO {"GetStatusInfo"};
+constexpr static const char* ACTION_GET_EXTERNAL_IP_ADDRESS {"GetExternalIPAddress"};
+
 // Helper functions for xml parsing.
 static std::string
 getElementText(IXML_Node* node)
@@ -89,13 +96,7 @@ errorOnResponse(IXML_Document* doc)
 
 PUPnP::PUPnP()
 {
-    int upnp_err = UPNP_E_SUCCESS;
-
-#if UPNP_ENABLE_IPV6
-    upnp_err = UpnpInit2(nullptr, 0);
-#else
-    upnp_err = UpnpInit(0, 0); // Deprecated function but fall back on it if IPv6 not enabled.
-#endif
+    int upnp_err = UpnpInit2(nullptr, 0);
 
     if (upnp_err != UPNP_E_SUCCESS) {
         JAMI_ERR("PUPnP: Can't initialize libupnp: %s", UpnpGetErrorMessage(upnp_err));
@@ -413,7 +414,7 @@ PUPnP::actionAddPortMappingAsync(const UPnPIGD& igd, const Mapping& mapping)
 }
 
 void
-PUPnP::processAddMapAction(const std::string& ctrlURL, IXML_Document* actionRequest)
+PUPnP::processAddMapAction(const std::string_view& ctrlURL, IXML_Document* actionRequest)
 {
     std::string portExternal(getFirstDocItem(actionRequest, "NewExternalPort"));
     std::string portInternal(getFirstDocItem(actionRequest, "NewInternalPort"));
@@ -446,7 +447,7 @@ PUPnP::processAddMapAction(const std::string& ctrlURL, IXML_Document* actionRequ
 }
 
 void
-PUPnP::processRemoveMapAction(const std::string& ctrlURL, IXML_Document* actionRequest)
+PUPnP::processRemoveMapAction(const std::string_view& ctrlURL, IXML_Document* actionRequest)
 {
     std::string portExternal(getFirstDocItem(actionRequest, "NewExternalPort"));
     std::string protocol(getFirstDocItem(actionRequest, "NewProtocol"));
@@ -516,7 +517,7 @@ PUPnP::ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_d
 }
 
 PUPnP::CtrlAction
-PUPnP::getAction(char* xmlNode)
+PUPnP::getAction(const char* xmlNode)
 {
     if (strstr(xmlNode, ACTION_ADD_PORT_MAPPING)) {
         return CtrlAction::ADD_PORT_MAPPING;
@@ -531,6 +532,11 @@ PUPnP::getAction(char* xmlNode)
     } else {
         return CtrlAction::UNKNOWN;
     }
+}
+
+inline std::string_view
+viewFromUpnpString(const UpnpString* ustr) {
+    return {UpnpString_get_String(ustr), UpnpString_get_Length(ustr)};
 }
 
 int
@@ -648,14 +654,10 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
     case UPNP_CONTROL_ACTION_COMPLETE: {
         const UpnpActionComplete* a_event = (const UpnpActionComplete*) event;
         if (UpnpActionComplete_get_ErrCode(a_event) == UPNP_E_SUCCESS) {
-            IXML_Document* actionRequest = UpnpActionComplete_get_ActionRequest(a_event);
-            if (actionRequest) {
-                std::string ctrlURL(UpnpString_get_String(UpnpActionComplete_get_CtrlUrl(a_event)));
-                char* xmlbuff = ixmlPrintNode((IXML_Node*) actionRequest);
-                if (xmlbuff) {
+            if (IXML_Document* actionRequest = UpnpActionComplete_get_ActionRequest(a_event)) {
+                auto ctrlURL = viewFromUpnpString(UpnpActionComplete_get_CtrlUrl(a_event));
+                if (const char* xmlbuff = ixmlPrintNode((IXML_Node*) actionRequest)) {
                     switch (getAction(xmlbuff)) {
-                    case CtrlAction::UNKNOWN:
-                        break;
                     case CtrlAction::ADD_PORT_MAPPING:
                         processAddMapAction(ctrlURL, actionRequest);
                         break;
@@ -668,6 +670,7 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
                         break;
                     case CtrlAction::GET_EXTERNAL_IP_ADDRESS:
                         break;
+                    case CtrlAction::UNKNOWN:
                     default:
                         break;
                     }
