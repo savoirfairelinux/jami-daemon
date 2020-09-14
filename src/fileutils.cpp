@@ -89,6 +89,23 @@
 #include <pj/ctype.h>
 #include <pjlib-util/md5.h>
 
+#ifndef _MSC_VER
+#define PROTECTED_GETENV(str) \
+    ({ \
+        char* envvar_ = getenv((str)); \
+        envvar_ ? envvar_ : ""; \
+    })
+#else
+#define PROTECTED_GETENV(str) ""
+#endif
+
+#define XDG_DATA_HOME   (PROTECTED_GETENV("XDG_DATA_HOME"))
+#define XDG_CONFIG_HOME (PROTECTED_GETENV("XDG_CONFIG_HOME"))
+#define XDG_CACHE_HOME  (PROTECTED_GETENV("XDG_CACHE_HOME"))
+
+#define PIDFILE     ".ring.pid"
+#define ERASE_BLOCK 4096
+
 namespace jami {
 namespace fileutils {
 
@@ -602,15 +619,9 @@ get_cache_dir(const char* pkg)
             JAMI_DBG("Cannot create directory: %s!", cache_path.c_str());
     }
     return cache_path;
-#else
-    const std::string cache_home(XDG_CACHE_HOME);
-
-    if (not cache_home.empty()) {
-        return cache_home;
-    } else {
-#endif
-#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+#elif defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
+    paths.reserve(1);
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("cache", &paths);
     if (not paths.empty())
         cache_path = paths[0];
@@ -619,12 +630,13 @@ get_cache_dir(const char* pkg)
         return get_home_dir() + DIR_SEPARATOR_STR + "Library" + DIR_SEPARATOR_STR + "Caches"
                + DIR_SEPARATOR_STR + pkg;
 #else
-    return get_home_dir() + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + pkg;
+    const std::string cache_home(XDG_CACHE_HOME);
+    if (not cache_home.empty())
+        return cache_home;
+    else
+        return get_home_dir() + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + pkg;
 #endif
-#ifndef RING_UWP
 }
-#endif
-} // namespace fileutils
 
 std::string
 get_cache_dir()
@@ -637,6 +649,7 @@ get_home_dir()
 {
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
+    paths.reserve(1);
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("files", &paths);
     if (not paths.empty())
         files_path = paths[0];
