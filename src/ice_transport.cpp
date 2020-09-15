@@ -113,6 +113,7 @@ public:
     bool _isRunning() const;
     bool _isFailed() const;
 
+    const pj_ice_sess_cand* getSelectedCandidate(unsigned comp_id, bool remote) const;
     IpAddr getLocalAddress(unsigned comp_id) const;
     IpAddr getRemoteAddress(unsigned comp_id) const;
 
@@ -591,14 +592,18 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
             for (unsigned i = 0; i < component_count_; ++i) {
                 auto laddr = getLocalAddress(i);
                 auto raddr = getRemoteAddress(i);
+
                 if (laddr and raddr) {
-                    out << " [" << i << "] " << laddr.toString(true, true) << " <-> "
-                        << raddr.toString(true, true) << '\n';
+                    out << " [" << i+1 << "] "
+                        << laddr.toString(true, true) << " [" << pj_ice_get_cand_type_name(getSelectedCandidate(i, false)) << "] "
+                        << " <-> "
+                        << raddr.toString(true, true) << " [" << pj_ice_get_cand_type_name(getSelectedCandidate(i, true)) << "] " << '\n';
                 } else {
-                    out << " [" << i << "] disabled\n";
+                    out << " [" << i+1 << "] disabled\n";
                 }
             }
-            JAMI_DBG("[ice:%p] %s connection pairs (local <-> remote):\n%s",
+
+            JAMI_DBG("[ice:%p] %s connection pairs ([comp id] local [type] <-> remote [type]):\n%s",
                      this,
                      (config_.protocol == PJ_ICE_TP_TCP ? "TCP" : "UDP"),
                      out.str().c_str());
@@ -645,39 +650,44 @@ IceTransport::Impl::setSlaveSession()
     return createIceSession(PJ_ICE_SESS_ROLE_CONTROLLED);
 }
 
+const pj_ice_sess_cand*
+IceTransport::Impl::getSelectedCandidate(unsigned comp_id, bool remote) const
+{
+    // Return the selected candidate pair. Might not be the nominated pair if
+    // ICE has not concluded yet, but should be the nominated pair afterwards.
+    if (not _isRunning()) {
+        JAMI_ERR("[ice:%p] ICE transport is not running", this);
+        return nullptr;
+    }
+    const auto* sess = pj_ice_strans_get_valid_pair(icest_.get(), comp_id + 1);
+    if (sess == nullptr) {
+        JAMI_ERR("[ice:%p] Component %i has no valid pair", this, comp_id);
+        return nullptr;
+    }
+
+    if (remote)
+        return sess->rcand;
+    else
+        return sess->lcand;
+}
+
 IpAddr
 IceTransport::Impl::getLocalAddress(unsigned comp_id) const
 {
-    // Return the local IP of negotiated connection pair
-    if (_isRunning()) {
-        if (auto sess = pj_ice_strans_get_valid_pair(icest_.get(), comp_id + 1))
-            return sess->lcand->addr;
-        else
-            return {}; // disabled component
-    } else
-        JAMI_WARN("[ice:%p] bad call: non-negotiated transport", this);
+    if (auto cand = getSelectedCandidate(comp_id, false))
+        return cand->addr;
 
-    // Return the default IP (could be not nominated and valid after negotiation)
-    if (_isInitialized())
-        return cand_[comp_id].addr;
-
-    JAMI_ERR("[ice:%p] bad call: non-initialized transport", this);
+    JAMI_ERR("[ice:%p] No local address for component %i", this, comp_id);
     return {};
 }
 
 IpAddr
 IceTransport::Impl::getRemoteAddress(unsigned comp_id) const
 {
-    // Return the remote IP of negotiated connection pair
-    if (_isRunning()) {
-        if (auto sess = pj_ice_strans_get_valid_pair(icest_.get(), comp_id + 1))
-            return sess->rcand->addr;
-        else
-            return {}; // disabled component
-    } else
-        JAMI_WARN("[ice:%p] bad call: non-negotiated transport", this);
+    if (auto cand = getSelectedCandidate(comp_id, true))
+        return cand->addr;
 
-    JAMI_ERR("[ice:%p] bad call: non-negotiated transport", this);
+    JAMI_ERR("[ice:%p] No remote address for component %i", this, comp_id);
     return {};
 }
 
