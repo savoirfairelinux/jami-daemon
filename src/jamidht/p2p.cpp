@@ -287,7 +287,12 @@ public:
 
     ~ClientConnector()
     {
-        for (auto& cb : listeners_)
+        decltype(listeners_) listeners;
+        {
+            std::lock_guard<std::mutex> lk {listenersMutex_};
+            listeners = listeners_;
+        }
+        for (auto& cb : listeners)
             cb(nullptr);
         connection_.reset();
     }
@@ -300,7 +305,7 @@ public:
     {
         if (!connected_) {
             std::lock_guard<std::mutex> lk {listenersMutex_};
-            listeners_.push_back(cb);
+            listeners_.emplace_back(cb);
         } else {
             cb(connection_.get());
         }
@@ -481,7 +486,13 @@ private:
                             return;
                         parent->stateChanged(peer, id, code);
                     });
-                for (auto& cb : listeners_) {
+
+                decltype(listeners_) listeners;
+                {
+                    std::lock_guard<std::mutex> lk {listenersMutex_};
+                    listeners = listeners_;
+                }
+                for (auto& cb : listeners) {
                     cb(connection_.get());
                 }
             }
