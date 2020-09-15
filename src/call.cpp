@@ -91,65 +91,40 @@ Call::Call(Account& account,
 {
     updateDetails(details);
 
-    addStateListener([this](Call::CallState call_state,
-                            Call::ConnectionState cnx_state,
-                            UNUSED int code) {
-        if (cnx_state == ConnectionState::PROGRESSING && startFallback_.exchange(false)
-            && not isSubcall()) {
-            // If the other peer lose the connectivity during the progressing
-            // this means that the other peer had a connectivity change we didn't
-            // detect for now.
-            // In this case, we let two secs before sending a request via the DHT
-            // just to bypass the CONNECTING status
-
+    addStateListener(
+        [this](Call::CallState call_state, Call::ConnectionState cnx_state, UNUSED int code) {
+            checkPendingIM();
             std::weak_ptr<Call> callWkPtr = shared_from_this();
-            Manager::instance().scheduler().scheduleIn(
-                [callWkPtr] {
-                    if (auto callShPtr = callWkPtr.lock()) {
-                        if (callShPtr->getConnectionState() == Call::ConnectionState::PROGRESSING) {
-                            JAMI_WARN("Call %s is still connecting after timeout, sending fallback "
-                                      "request",
-                                      callShPtr->getCallId().c_str());
-                            if (callShPtr->onNeedFallback_)
-                                callShPtr->onNeedFallback_();
-                        }
-                    }
-                },
-                std::chrono::seconds(2));
-        }
+            runOnMainThread([callWkPtr] {
+                if (auto call = callWkPtr.lock())
+                    call->checkAudio();
+            });
 
-        checkPendingIM();
-        std::weak_ptr<Call> callWkPtr = shared_from_this();
-        runOnMainThread([callWkPtr] {
-            if (auto call = callWkPtr.lock())
-                call->checkAudio();
+            // if call just started ringing, schedule call timeout
+            if (type_ == CallType::INCOMING and cnx_state == ConnectionState::RINGING) {
+                auto timeout = Manager::instance().getRingingTimeout();
+                JAMI_DBG("Scheduling call timeout in %d seconds", timeout);
+
+                std::weak_ptr<Call> callWkPtr = shared_from_this();
+                Manager::instance().scheduler().scheduleIn(
+                    [callWkPtr] {
+                        if (auto callShPtr = callWkPtr.lock()) {
+                            if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
+                                JAMI_DBG(
+                                    "Call %s is still ringing after timeout, setting state to BUSY",
+                                    callShPtr->getCallId().c_str());
+                                callShPtr->hangup(PJSIP_SC_BUSY_HERE);
+                                Manager::instance().callFailure(*callShPtr);
+                            }
+                        }
+                    },
+                    std::chrono::seconds(timeout));
+            }
+
+            // kill pending subcalls at disconnect
+            if (call_state == CallState::OVER)
+                hangupCalls(safePopSubcalls(), 0);
         });
-
-        // if call just started ringing, schedule call timeout
-        if (type_ == CallType::INCOMING and cnx_state == ConnectionState::RINGING) {
-            auto timeout = Manager::instance().getRingingTimeout();
-            JAMI_DBG("Scheduling call timeout in %d seconds", timeout);
-
-            std::weak_ptr<Call> callWkPtr = shared_from_this();
-            Manager::instance().scheduler().scheduleIn(
-                [callWkPtr] {
-                    if (auto callShPtr = callWkPtr.lock()) {
-                        if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
-                            JAMI_DBG(
-                                "Call %s is still ringing after timeout, setting state to BUSY",
-                                callShPtr->getCallId().c_str());
-                            callShPtr->hangup(PJSIP_SC_BUSY_HERE);
-                            Manager::instance().callFailure(*callShPtr);
-                        }
-                    }
-                },
-                std::chrono::seconds(timeout));
-        }
-
-        // kill pending subcalls at disconnect
-        if (call_state == CallState::OVER)
-            hangupCalls(safePopSubcalls(), 0);
-    });
 
     time(&timestamp_start_);
     account_.attachCall(id_);

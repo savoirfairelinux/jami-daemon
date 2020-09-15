@@ -63,7 +63,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call>
 {
 public:
     using SubcallSet = std::set<std::shared_ptr<Call>, std::owner_less<std::shared_ptr<Call>>>;
-    using OnNeedFallbackCb = std::function<void()>;
     using OnReadyCb = std::function<void(bool)>;
 
     static const char* const DEFAULT_ID;
@@ -272,8 +271,6 @@ public:
         return parent_ != nullptr;
     }
 
-    void setOnNeedFallback(OnNeedFallbackCb&& cb) { onNeedFallback_ = std::move(cb); }
-
 public: // media management
     virtual bool toggleRecording();
 
@@ -411,10 +408,6 @@ private:
 
     ///< MultiDevice: message received by subcall to merged yet
     MsgList pendingInMessages_;
-
-    // If the call is blocked during the progressing state
-    OnNeedFallbackCb onNeedFallback_;
-    std::atomic_bool startFallback_ {true};
 
     mutable std::mutex confInfoMutex_ {};
     mutable ConfInfo confInfo_ {};
