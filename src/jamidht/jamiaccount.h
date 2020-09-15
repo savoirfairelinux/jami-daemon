@@ -602,7 +602,7 @@ private:
     /**
      * DHT calls waiting for ICE negotiation
      */
-    std::map<std::string, PendingCall> pendingCalls_;
+    std::map<std::string, PendingCall> pendingCallsDht_;
 
     /**
      * Incoming DHT calls that are not yet actual SIP calls.
@@ -728,6 +728,9 @@ private:
     // However, we only negotiate one socket from our side
     std::set<std::pair<std::string /* accountId */, std::string /* deviceId */>>
         pendingSipConnections_ {};
+
+    std::mutex pendingCallsMutex_;
+    std::map<std::string, std::vector<std::shared_ptr<SIPCall>>> pendingCalls_;
 
     /**
      * Ask a device to open a channeled SIP socket
