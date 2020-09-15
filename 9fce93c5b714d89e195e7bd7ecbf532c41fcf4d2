@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a9818716_a6929b55",
+        "filename": "contrib/src/upnp/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-15T17:53:50Z",
+      "side": 0,
+      "message": "libupnp-ipv6 is not used anymore. The file can be removed",
+      "range": {
+        "startLine": 20,
+        "startChar": 1,
+        "endLine": 20,
+        "endChar": 40
+      },
+      "revId": "9fce93c5b714d89e195e7bd7ecbf532c41fcf4d2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c8497ec0_0002b79a",
+        "filename": "contrib/src/upnp/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-15T17:53:50Z",
+      "side": 0,
+      "message": "miniserver.patch seems unused, we can remove it also",
+      "range": {
+        "startLine": 20,
+        "startChar": 40,
+        "endLine": 21,
+        "endChar": 39
+      },
+      "revId": "9fce93c5b714d89e195e7bd7ecbf532c41fcf4d2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
