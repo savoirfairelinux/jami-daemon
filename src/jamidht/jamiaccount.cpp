@@ -108,7 +108,6 @@ struct PendingConfirmation
 {
     std::mutex lock;
     bool replied {false};
-    std::map<dht::InfoHash, std::future<size_t>> listenTokens {};
 };
 
 // Used to pass infos to a pjsip callback (pjsip_endpt_send_request)
@@ -2338,6 +2337,7 @@ JamiAccount::doRegister_()
             return true;
         });
 
+        // Note: this code should be unused unless for DHT text messages
         auto inboxDeviceKey = dht::InfoHash::get("inbox:" + accountManager_->getInfo()->deviceId);
         dht_->listen<dht::ImMessage>(inboxDeviceKey, [this, inboxDeviceKey](dht::ImMessage&& v) {
             auto msgId = to_hex_string(v.id);
@@ -3206,98 +3206,13 @@ JamiAccount::sendTextMessage(const std::string& to,
                 std::lock_guard<std::mutex> lock(messageMutex_);
                 sentMessages_[token].to.emplace(dev);
             }
-
-            auto h = dht::InfoHash::get("inbox:" + dev.toString());
-            std::lock_guard<std::mutex> l(confirm->lock);
-            auto list_token
-                = dht_->listen<dht::ImMessage>(h, [this, to, token, confirm](dht::ImMessage&& msg) {
-                      // check expected message confirmation
-                      if (msg.id != token)
-                          return true;
-
-                      {
-                          std::lock_guard<std::mutex> lock(messageMutex_);
-                          auto e = sentMessages_.find(msg.id);
-                          if (e == sentMessages_.end()
-                              or e->second.to.find(msg.from) == e->second.to.end()) {
-                              JAMI_DBG() << "[Account " << getAccountID() << "] [message " << token
-                                         << "] Message not found";
-                              return true;
-                          }
-                          sentMessages_.erase(e);
-                          JAMI_DBG() << "[Account " << getAccountID() << "] [message " << token
-                                     << "] Received text message reply";
-
-                          // add treated message
-                          auto res = treatedMessages_.emplace(to_hex_string(msg.id));
-                          if (!res.second)
-                              return true;
-                      }
-                      saveTreatedMessages();
-
-                      // report message as confirmed received
-                      {
-                          std::lock_guard<std::mutex> l(confirm->lock);
-                          for (auto& t : confirm->listenTokens)
-                              dht_->cancelListen(t.first, std::move(t.second));
-                          confirm->listenTokens.clear();
-                          confirm->replied = true;
-                      }
-                      messageEngine_.onMessageSent(to, token, true);
-                      return false;
-                  });
-            confirm->listenTokens.emplace(h, std::move(list_token));
-            dht_->putEncrypted(h,
-                               dev,
-                               dht::ImMessage(token,
-                                              std::string(payloads.begin()->first),
-                                              std::string(payloads.begin()->second),
-                                              now),
-                               [this, to, token, confirm, h](bool ok) {
-                                   JAMI_DBG()
-                                       << "[Account " << getAccountID() << "] [message " << token
-                                       << "] Put encrypted " << (ok ? "ok" : "failed");
-                                   if (not ok) {
-                                       std::unique_lock<std::mutex> l(confirm->lock);
-                                       auto lt = confirm->listenTokens.find(h);
-                                       if (lt != confirm->listenTokens.end()) {
-                                           dht_->cancelListen(h, std::move(lt->second));
-                                           confirm->listenTokens.erase(lt);
-                                       }
-                                       if (confirm->listenTokens.empty() and not confirm->replied) {
-                                           l.unlock();
-                                           messageEngine_.onMessageSent(to, token, false);
-                                       }
-                                   }
-                               });
-
-            JAMI_DBG() << "[Account " << getAccountID() << "] [message " << token
-                       << "] Sending message for device " << dev.toString();
+            messageEngine_.onMessageSent(to, token, false);
         },
         [this, to, token](bool ok) {
             if (not ok) {
                 messageEngine_.onMessageSent(to, token, false);
             }
         });
-
-    // Timeout cleanup
-    Manager::instance().scheduleTask(
-        [w = weak(), confirm, to, token]() {
-            std::unique_lock<std::mutex> l(confirm->lock);
-            if (not confirm->replied) {
-                if (auto this_ = w.lock()) {
-                    JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token
-                               << "] Timeout";
-                    for (auto& t : confirm->listenTokens)
-                        this_->dht_->cancelListen(t.first, std::move(t.second));
-                    confirm->listenTokens.clear();
-                    confirm->replied = true;
-                    l.unlock();
-                    this_->messageEngine_.onMessageSent(to, token, false);
-                }
-            }
-        },
-        std::chrono::steady_clock::now() + std::chrono::minutes(1));
 }
 
 void
