@@ -481,7 +481,12 @@ private:
                             return;
                         parent->stateChanged(peer, id, code);
                     });
-                for (auto& cb : listeners_) {
+                decltype(listeners_) listeners;
+                {
+                    std::lock_guard<std::mutex> lk {listenersMutex_};
+                    listeners = listeners_;
+                }
+                for (auto& cb : listeners) {
                     cb(connection_.get());
                 }
             }
