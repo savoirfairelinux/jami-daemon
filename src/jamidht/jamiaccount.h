@@ -473,9 +473,6 @@ private:
     void trackPresence(const dht::InfoHash& h, BuddyInfo& buddy);
 
     void doRegister_();
-    void incomingCall(dht::IceCandidates&& msg,
-                      const std::shared_ptr<dht::crypto::Certificate>& from_cert,
-                      const dht::InfoHash& from);
 
     const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
 
@@ -527,9 +524,6 @@ private:
      */
     void onPortMappingAdded(uint16_t port_used, bool success);
 
-    void checkPendingCall(const std::string& callId);
-    bool handlePendingCall(PendingCall& pc, bool incoming);
-
     void loadAccount(const std::string& archive_password = {},
                      const std::string& archive_pin = {},
                      const std::string& archive_path = {});
@@ -555,9 +549,6 @@ private:
     static std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity id,
                                                             const std::string& path,
                                                             const std::string& name);
-
-    void loadTreatedCalls();
-    void saveTreatedCalls() const;
 
     void loadTreatedMessages();
     void saveTreatedMessages() const;
@@ -596,20 +587,6 @@ private:
     std::shared_ptr<dht::DhtRunner> dht_ {};
     std::unique_ptr<AccountManager> accountManager_;
     dht::crypto::Identity id_ {};
-
-    dht::InfoHash callKey_;
-
-    /**
-     * DHT calls waiting for ICE negotiation
-     */
-    std::map<std::string, PendingCall> pendingCallsDht_;
-
-    /**
-     * Incoming DHT calls that are not yet actual SIP calls.
-     */
-    std::list<PendingCall> pendingSipCalls_;
-    std::set<dht::Value::Id> treatedCalls_ {};
-    mutable std::mutex callsMutex_ {};
 
     mutable std::mutex messageMutex_ {};
     std::map<dht::Value::Id, PendingMessage> sentMessages_;

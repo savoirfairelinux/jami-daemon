@@ -157,10 +157,6 @@ public:
                                                   const IpAddr& remote,
                                                   const std::string& remote_name = {});
 
-    std::shared_ptr<SipTransport> getTlsIceTransport(const std::shared_ptr<IceTransport>&,
-                                                     unsigned comp_id,
-                                                     const tls::TlsParams&);
-
     std::shared_ptr<SipTransport> addTransport(pjsip_transport*);
 
     std::shared_ptr<SipTransport> getChanneledTransport(const std::shared_ptr<ChannelSocket>& socket,
