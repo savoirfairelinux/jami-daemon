@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1d6aca73_840717b6",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 491,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-15T14:59:50Z",
+      "side": 1,
+      "message": "copy callback before calling in case the callback wants to add another callback or destroy the ClientConnector",
+      "range": {
+        "startLine": 488,
+        "startChar": 16,
+        "endLine": 491,
+        "endChar": 17
+      },
+      "revId": "107209d8a37b27707ea4fd102d6f442c98bbe999",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
