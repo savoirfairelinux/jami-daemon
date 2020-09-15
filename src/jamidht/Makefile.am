@@ -23,8 +23,6 @@ libringacc_la_SOURCES = \
         channeled_transfers.cpp \
         multiplexed_socket.h \
         multiplexed_socket.cpp \
-        sips_transport_ice.cpp \
-        sips_transport_ice.h \
         accountarchive.cpp \
         accountarchive.h \
         p2p.cpp \
