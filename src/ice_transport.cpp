@@ -890,11 +890,12 @@ IceTransport::Impl::selectUPnPIceCandidates()
                 // Request port
                 upnpIceCntr++;
                 JAMI_DBG("[ice:%p] UPnP: Trying to open port %d for ICE comp %d/%d and adding "
-                         "candidate with public IP",
+                         "candidate with public IP %s",
                          this,
                          port,
                          upnpIceCntr,
-                         component_count_);
+                         component_count_,
+                         publicIp.toString(true).c_str());
                 upnp_->requestMappingAdd(
                     [this, candidate, comp_id](uint16_t port_used, bool success) {
                         if (upnp_) {

@@ -537,7 +537,8 @@ PUPnP::eventTypeToString(Upnp_EventType eventType)
 int
 PUPnP::ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data)
 {
-    JAMI_DBG("PUPnP: Control point callback event_type %s", PUPnP::eventTypeToString(event_type));
+    if (event_type != UPNP_DISCOVERY_ADVERTISEMENT_ALIVE)
+        JAMI_DBG("PUPnP: Control point callback event_type %s", PUPnP::eventTypeToString(event_type));
 
     if (auto pupnp = static_cast<PUPnP*>(user_data))
         return pupnp->handleCtrlPtUPnPEvents(event_type, event);
@@ -584,10 +585,8 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
         // Check if this device ID is already in the list.
         std::string cpDeviceId = UpnpDiscovery_get_DeviceID_cstr(d_event);
         std::lock_guard<std::mutex> lk(validIgdMutex_);
-        if (not cpDeviceList_.emplace(cpDeviceId).second) {
-            JAMI_WARN("PUPnP: Deviced %s already in the devices list", cpDeviceId.c_str());
+        if (not cpDeviceList_.emplace(cpDeviceId).second)
             break;
-        }
 
         IpAddr ipSrc(*(const pj_sockaddr*) (UpnpDiscovery_get_DestAddr(d_event)));
 
@@ -599,9 +598,15 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
         // If it's not the case, it's certainly a router plugged in the network, but not
         // related to this network. So the given location will be unreachable and this
         // will cause some timeout.
+#if 1
         if (IpAddr(url.host).toString(false) != ipSrc.toString(false)) {
             JAMI_WARN("PUPnP: Returned location %s does not match the source address %s",
                 IpAddr(url.host).toString(true, true).c_str(), ipSrc.toString(true, true).c_str());
+#else
+        if (IpAddr(url.host) != ipSrc) {
+            JAMI_WARN("PUPnP: Returned location %s does not match the source address %s",
+                IpAddr(url.host).toString(true, true).c_str(), ipSrc.toString(true, true).c_str());
+#endif
             break;
         } else {
             JAMI_WARN("PUPnP: Returned IGD location %s", IpAddr(url.host).toString(true, true).c_str());
