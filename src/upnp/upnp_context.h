@@ -79,7 +79,7 @@ struct ControllerData
     ConnectionChangeCb onConnectionChanged;
 };
 
-const constexpr auto MAP_REQUEST_TIMEOUT = std::chrono::seconds(1);
+const constexpr auto MAP_REQUEST_TIMEOUT = std::chrono::seconds(5);
 
 class UPnPContext
 {

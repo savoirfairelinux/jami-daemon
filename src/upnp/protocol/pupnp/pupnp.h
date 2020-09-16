@@ -175,6 +175,8 @@ private:
     bool actionDeletePortMappingAsync(const UPnPIGD& igd,
                                       const std::string& port_external,
                                       const std::string& protocol);
+    // Event type to string
+    static const char* eventTypeToString(Upnp_EventType eventType);
 
 private:
     NON_COPYABLE(PUPnP);

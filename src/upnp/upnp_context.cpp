@@ -187,8 +187,12 @@ UPnPContext::igdListChanged(UPnPProtocol* protocol, IGD* igd, IpAddr publicIpAdd
 {
     std::lock_guard<std::mutex> igdListLock(igdListMutex_);
     if (added) {
+        JAMI_DBG("UPnPContext: IGD %p added for public address %s",
+            igd, publicIpAddr.toString(true, true).c_str());
         return addIgdToList(protocol, igd);
     } else {
+        JAMI_WARN("UPnPContext: Failed to add IGD %p for public address %s",
+            igd, publicIpAddr.toString(true, true).c_str());
         if (publicIpAddr) {
             return removeIgdFromList(publicIpAddr);
         } else {
@@ -348,6 +352,9 @@ UPnPContext::requestMappingAdd(
 void
 UPnPContext::requestMappingAdd(IGD* igd, uint16_t portExternal, uint16_t portInternal, PortType type)
 {
+    JAMI_DBG("PUPnP: request mapping [ext %u, int %u, type %s]",
+        portExternal, portInternal, type == PortType::TCP ? "TCP" : "UDP");
+
     // Iterate over the IGD list and call add the mapping with the corresponding protocol.
     if (not igdList_.empty()) {
         for (auto const& item : igdList_) {
@@ -356,12 +363,20 @@ UPnPContext::requestMappingAdd(IGD* igd, uint16_t portExternal, uint16_t portInt
                 return;
             }
         }
+    } else {
+        JAMI_ERR("PUPnP: IGD list is empty !");
     }
 }
 
 void
 UPnPContext::onMappingAdded(IpAddr igdIp, const Mapping& map, bool success)
 {
+    if (success)
+        JAMI_DBG("PUPnP: Mapping for %s successfully added", igdIp.toString(true, true).c_str());
+    else
+        JAMI_WARN("PUPnP: Failed to add mapping for %s", igdIp.toString(true, true).c_str());
+
+
     if (map.isValid()) {
         unregisterAddMappingTimeout(map);
         if (success)
