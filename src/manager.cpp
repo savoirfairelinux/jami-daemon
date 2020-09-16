@@ -1430,6 +1430,8 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
     }
 
     auto conf = std::make_shared<Conference>();
+    // Send signal right after conference creation
+    emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
 
     // Bind calls according to their state
     pimpl_->bindCallToConference(*call1, *conf);
@@ -1444,7 +1446,6 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
     }
 
     pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
-    emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
     return true;
 }
 
@@ -1458,6 +1459,8 @@ Manager::createConfFromParticipantList(const std::vector<std::string>& participa
     }
 
     auto conf = std::make_shared<Conference>();
+    // Send signal right after conference creation
+    emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
 
     int successCounter = 0;
 
@@ -1480,7 +1483,6 @@ Manager::createConfFromParticipantList(const std::vector<std::string>& participa
     // Create the conference if and only if at least 2 calls have been successfully created
     if (successCounter >= 2) {
         pimpl_->conferenceMap_[conf->getConfID()] = conf;
-        emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
     }
 }
 
@@ -1893,13 +1895,14 @@ Manager::incomingCall(Call& call, const std::string& accountId)
             }
             // First call
             auto conf = std::make_shared<Conference>();
+            // Send signal right after conference creation
+            emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
 
             // Bind calls according to their state
             pimpl_->bindCallToConference(*call, *conf);
             conf->detach();
 
             pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
-            emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
         });
     } else if (pimpl_->autoAnswer_) {
         runOnMainThread([this, callID] { answerCall(callID); });

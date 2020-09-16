@@ -159,6 +159,10 @@ Conference::add(const std::string& participant_id)
                     this->toggleRecording();
                 }
             }
+            if (call->getConfId().empty())
+                call->setConfId(id_);
+            if (call->isPeerRecording())
+                call->setRemoteRecording(true);
         }
         else
             JAMI_ERR("no call associate to participant %s", participant_id.c_str());
