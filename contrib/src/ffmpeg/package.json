@@ -9,7 +9,10 @@
         "ffnvcodec",
         "media-sdk"
     ],
-    "patches": ["change-RTCP-ratio.patch"],
+    "patches": [
+        "change-RTCP-ratio.patch",
+        "rtp_ext_abs_send_time.patch"
+    ],
     "win_patches": [
         "windows-configure.patch",
         "windows-configure-ffnvcodec.patch",
