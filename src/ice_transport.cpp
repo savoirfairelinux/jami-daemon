@@ -848,11 +848,11 @@ IceTransport::Impl::addReflectiveCandidate(int comp_id,
                  base.toString().c_str(),
                  addr.toString().c_str());
     } else {
-        JAMI_DBG("[ice:%p] succeed to add candidate for comp_id=%d : %s : %s",
+        JAMI_DBG("[ice:%p] succeeded to add candidate for comp_id=%d : %s : %s",
                  this,
                  comp_id,
-                 base.toString().c_str(),
-                 addr.toString().c_str());
+                 base.toString(true).c_str(),
+                 addr.toString(true).c_str());
     }
 }
 
