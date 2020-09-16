@@ -468,31 +468,11 @@ SIPAccountBase::getIceOptions() const noexcept
     if (stunEnabled_)
         opts.stunServers.emplace_back(StunServerInfo().setUri(stunServer_));
     if (turnEnabled_) {
-        auto cached = false;
-        std::lock_guard<std::mutex> lk(cachedTurnMutex_);
-        cached = cacheTurnV4_ || cacheTurnV6_;
-        if (cacheTurnV4_ && *cacheTurnV4_) {
-            opts.turnServers.emplace_back(TurnServerInfo()
-                                              .setUri(cacheTurnV4_->toString(true))
-                                              .setUsername(turnServerUserName_)
-                                              .setPassword(turnServerPwd_)
-                                              .setRealm(turnServerRealm_));
-        }
-        if (cacheTurnV6_ && *cacheTurnV6_) {
-            opts.turnServers.emplace_back(TurnServerInfo()
-                                              .setUri(cacheTurnV6_->toString(true))
-                                              .setUsername(turnServerUserName_)
-                                              .setPassword(turnServerPwd_)
-                                              .setRealm(turnServerRealm_));
-        }
-        // Nothing cached, so do the resolution
-        if (!cached) {
-            opts.turnServers.emplace_back(TurnServerInfo()
-                                              .setUri(turnServer_)
-                                              .setUsername(turnServerUserName_)
-                                              .setPassword(turnServerPwd_)
-                                              .setRealm(turnServerRealm_));
-        }
+        opts.turnServers.emplace_back(TurnServerInfo()
+                                          .setUri(turnServer_)
+                                          .setUsername(turnServerUserName_)
+                                          .setPassword(turnServerPwd_)
+                                          .setRealm(turnServerRealm_));
     }
     return opts;
 }

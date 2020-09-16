@@ -1,0 +1,27 @@
+ pjlib/src/pj/addr_resolv_sock.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/pjlib/src/pj/addr_resolv_sock.c b/pjlib/src/pj/addr_resolv_sock.c
+index 54646007c..a988eb981 100644
+--- a/pjlib/src/pj/addr_resolv_sock.c
++++ b/pjlib/src/pj/addr_resolv_sock.c
+@@ -23,6 +23,7 @@
+ #include <pj/errno.h>
+ #include <pj/ip_helper.h>
+ #include <pj/compat/socket.h>
++#include <pj/log.h>
+ 
+ #if defined(PJ_GETADDRINFO_USE_CFHOST) && PJ_GETADDRINFO_USE_CFHOST!=0
+ #   include <CoreFoundation/CFString.h>
+@@ -129,6 +130,11 @@ PJ_DEF(pj_status_t) pj_getaddrinfo(int af, const pj_str_t *nodename,
+     if (CFHostStartInfoResolution(hostRef, kCFHostAddresses, nil)) {
+ 	CFArrayRef addrRef = CFHostGetAddressing(hostRef, nil);
+ 	i = 0;
++
++	if (addrRef == nil) {
++	    PJ_LOG(4,("addr_resolv", "@@@ AddrRef is nil with %s", nodename->ptr));
++	}
++
+ 	if (addrRef != nil) {
+ 	    CFIndex idx, naddr;
+ 	    
