@@ -49,6 +49,13 @@ void setDebugMode(int d);
 int getDebugMode(void);
 
 /**
+ * Set time format
+ * @param:
+ *  mode: Use EPOCH format if 0. Use wall-clock
+ *        format otherwise.
+*/
+void useWallClockTime(int mode);
+/**
  * Thread-safe function to print the stringified contents of errno
  */
 void strErr();
@@ -149,14 +156,17 @@ private:
 };
 
 // We need to use macros for contextual information
-#define JAMI_INFO(...) ::jami::Logger::log(LOG_INFO, __FILE__, __LINE__, true, ##__VA_ARGS__)
-#define JAMI_DBG(...)  ::jami::Logger::log(LOG_DEBUG, __FILE__, __LINE__, true, ##__VA_ARGS__)
-#define JAMI_WARN(...) ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, true, ##__VA_ARGS__)
-#define JAMI_ERR(...)  ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, true, ##__VA_ARGS__)
+#define JAMI_DBG(...)   ::jami::Logger::log(LOG_DEBUG, __FILE__, __LINE__, true, ##__VA_ARGS__)
+#define JAMI_ENTER_INTERNAL(...) ::jami::Logger::log(LOG_ENTER, __FILE__, __LINE__, true, ##__VA_ARGS__)
+#define JAMI_ENTER() JAMI_ENTER_INTERNAL("Enter %s method", __FUNCTION__)
+#define JAMI_INFO(...)  ::jami::Logger::log(LOG_INFO, __FILE__, __LINE__, true, ##__VA_ARGS__)
+#define JAMI_WARN(...)  ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, true, ##__VA_ARGS__)
+#define JAMI_ERR(...)   ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, true, ##__VA_ARGS__)
 
-#define JAMI_XINFO(...) ::jami::Logger::log(LOG_INFO, __FILE__, __LINE__, false, ##__VA_ARGS__)
-#define JAMI_XDBG(...)  ::jami::Logger::log(LOG_DEBUG, __FILE__, __LINE__, false, ##__VA_ARGS__)
-#define JAMI_XWARN(...) ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, false, ##__VA_ARGS__)
-#define JAMI_XERR(...)  ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, false, ##__VA_ARGS__)
+#define JAMI_XDBG(...)    ::jami::Logger::log(LOG_DEBUG, __FILE__, __LINE__, false, ##__VA_ARGS__)
+#define JAMI_XENTER(...)  ::jami::Logger::log(LOG_ENTER, __FILE__, __LINE__, false, ##__VA_ARGS__)
+#define JAMI_XINFO(...)   ::jami::Logger::log(LOG_INFO, __FILE__, __LINE__, false, ##__VA_ARGS__)
+#define JAMI_XWARN(...)   ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, false, ##__VA_ARGS__)
+#define JAMI_XERR(...)    ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, false, ##__VA_ARGS__)
 
 } // namespace jami
