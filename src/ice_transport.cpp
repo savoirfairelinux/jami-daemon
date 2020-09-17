@@ -196,6 +196,7 @@ public:
     pj_ssize_t lastSentLen_;
     std::condition_variable waitDataCv_ = {};
 
+    std::atomic_bool destroying_ {false};
     onShutdownCb scb;
 
     // Default remote adresses
@@ -386,6 +387,8 @@ IceTransport::Impl::Impl(const char* name,
 
     icecb.on_destroy = [](pj_ice_strans* ice_st) {
         if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st))) {
+            tr->destroying_ = true;
+            tr->waitDataCv_.notify_all();
             if (tr->scb)
                 tr->scb();
         } else {
@@ -1449,7 +1452,9 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         // NOTE; because we are in TCP, the sent size will count the header (2
         // bytes length).
         std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
-        pimpl_->waitDataCv_.wait(lk, [&] { return pimpl_->lastSentLen_ >= len; });
+        pimpl_->waitDataCv_.wait(lk, [&] {
+            return pimpl_->lastSentLen_ >= len or pimpl_->destroying_.load();
+        });
         pimpl_->lastSentLen_ = 0;
     } else if (status != PJ_SUCCESS && status != PJ_EPENDING) {
         if (status == PJ_EBUSY) {
