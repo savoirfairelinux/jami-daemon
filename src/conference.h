@@ -208,6 +208,8 @@ public:
         return confInfo_.toVectorMapStringString();
     }
 
+    void transferRemoteRecNotification(const std::string& uriRecorder, const bool state);
+
 private:
     std::weak_ptr<Conference> weak()
     {

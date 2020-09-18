@@ -340,12 +340,12 @@ SIPCall::sendSIPInfo(const char* const body, const char* const subtype)
 }
 
 void
-SIPCall::updateRecState(bool state)
+SIPCall::updateRecState(const std::string& id, bool state)
 {
     std::string BODY =
     "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
     "<media_control><vc_primitive><to_encoder>"
-    "<recording_state=" + std::to_string(state) + "/>"
+    "<recording_id=" + id + ",recording_state=" + std::to_string(state) + +"/>"
     "</to_encoder></vc_primitive></media_control>";
     // see https://tools.ietf.org/html/rfc5168 for XML Schema for Media Control details
 
@@ -1484,7 +1484,7 @@ SIPCall::toggleRecording()
 
     // add streams to recorder before starting the record
     if (not Call::isRecording()) {
-        updateRecState(true);
+        updateRecState(getSIPAccount().getUserUri(), true);
         std::stringstream ss;
         ss << "Conversation at %TIMESTAMP between " << getSIPAccount().getUserUri() << " and "
            << peerUri_;
@@ -1496,7 +1496,7 @@ SIPCall::toggleRecording()
             videortp_->initRecorder(recorder_);
 #endif
     } else {
-        updateRecState(false);
+        updateRecState(getSIPAccount().getUserUri(), false);
         deinitRecorder();
     }
     pendingRecord_ = false;
@@ -1629,15 +1629,15 @@ SIPCall::rtpSetupSuccess(MediaType type)
 }
 
 void
-SIPCall::setRemoteRecording(bool state)
+SIPCall::setRemoteRecording(const std::string& uriRecorder, const bool state)
 {
     const std::string& id = getConfId().empty() ? getCallId() : getConfId();
     if (state) {
         JAMI_WARN("SIP remote recording enabled");
-        emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), true);
+        emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, uriRecorder, true);
     } else {
         JAMI_WARN("SIP remote recording disabled");
-        emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), false);
+        emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, uriRecorder, false);
     }
     peerRecording_ = state;
 }

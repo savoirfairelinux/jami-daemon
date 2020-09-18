@@ -28,6 +28,7 @@
 
 #ifdef ENABLE_VIDEO
 #include "sip/sipcall.h"
+#include "sip/sipaccount.h"
 #include "client/videomanager.h"
 #include "video/video_input.h"
 #include "video/video_mixer.h"
@@ -125,7 +126,7 @@ Conference::~Conference()
             }
             // Notify that the remaining peer is still recording after conference
             if (call->isPeerRecording())
-                call->setRemoteRecording(true);
+                call->setRemoteRecording(call->getPeerNumber(), true);
         }
     }
 #endif // ENABLE_VIDEO
@@ -225,6 +226,17 @@ Conference::sendConferenceInfos()
 }
 
 void
+Conference::transferRemoteRecNotification(const std::string& uriRecorder, const bool state)
+{
+    for (const auto& participant_id : participants_) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+            if (call->getPeerNumber() != uriRecorder)
+                call->setRemoteRecording(uriRecorder, state);
+        }
+    }
+}
+
+void
 Conference::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId)
 {
     std::lock_guard<std::mutex> lk(videoToCallMtx_);
@@ -251,7 +263,7 @@ Conference::remove(const std::string& participant_id)
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
             call->getVideoRtp().exitConference();
             if (call->isPeerRecording())
-                call->setRemoteRecording(false);
+                call->setRemoteRecording(call->getPeerNumber(), false);
         }
 #endif // ENABLE_VIDEO
     }
@@ -359,7 +371,7 @@ Conference::toggleRecording()
     // Notify each participant
     for (const auto& participant_id : participants_) {
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
-            call->updateRecState(newState);
+            call->updateRecState(call->getSIPAccount().getUserUri(), newState);
         }
     }
 

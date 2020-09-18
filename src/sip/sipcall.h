@@ -174,7 +174,7 @@ public: // SIP related
 
     void requestKeyframe();
 
-    void updateRecState(bool state);
+    void updateRecState(const std::string& id, bool state);
 
     SIPAccountBase& getSIPAccount() const;
 
@@ -235,7 +235,7 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     void rtpSetupSuccess(MediaType type);
 
-    void setRemoteRecording(bool state);
+    void setRemoteRecording(const std::string& uriRecorder, const bool state);
 
     bool isPeerRecording() { return peerRecording_; }
 

@@ -53,6 +53,8 @@
 #include "string_utils.h"
 #include "logger.h"
 
+#include "conference.h"
+
 #include <opendht/thread_pool.h>
 
 #include <pjsip/sip_endpoint.h>
@@ -1098,7 +1100,12 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
                 try {
                     bool state = std::stoi(matched_pattern[1]);
-                    call.setRemoteRecording(state);
+                    call.setRemoteRecording(call.getPeerNumber(), state);
+                    if (not call.getConfId().empty()) {
+                        auto conf = Manager::instance().getConferenceFromCallID(call.getCallId());
+                        conf->transferRemoteRecNotification(call.getPeerNumber(), state);
+                    }
+
                 } catch (const std::exception& e) {
                     JAMI_WARN("Error parsing state remote recording: %s", e.what());
                 }
