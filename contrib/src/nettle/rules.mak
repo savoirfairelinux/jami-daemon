@@ -1,8 +1,7 @@
 # Nettle
 
-NETTLE_VERSION := 3.6
-NETTLE_URL := $(GNU)/nettle/nettle-$(NETTLE_VERSION).tar.gz
-
+NETTLE_VERSION := 91df68136ad1562cf9217599254706d8cfa970ea
+NETTLE_URL := https://git.lysator.liu.se/aberaud/nettle/-/archive/$(NETTLE_VERSION)/nettle-$(NETTLE_VERSION).tar.gz
 PKGS += nettle
 
 ifeq ($(call need_pkg,"nettle >= 3.4.1"),)
@@ -24,10 +23,8 @@ DEPS_nettle = gmp
 .nettle: nettle
 ifdef HAVE_IOS
 	cd $< && sed -i.orig s/-ggdb3//g configure.ac
-	cd $< && autoreconf
-	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -O3" ./configure $(HOSTCONF)
-else
-	cd $< && $(HOSTVARS) ./configure --disable-documentation $(HOSTCONF)
 endif
+	cd $< && autoreconf
+	cd $< && $(HOSTVARS) ./configure --disable-documentation $(HOSTCONF)
 	cd $< && $(MAKE) install
 	touch $@
