@@ -51,6 +51,7 @@
 #include <chrono>
 #include <list>
 #include <future>
+#include <json/json.h>
 
 #if HAVE_RINGNS
 #include "namedirectory.h"
@@ -89,14 +90,22 @@ struct ConvInfo;
  * such as the conversation's vcard, etc. (TODO determine)
  * Transmitted via the UDP DHT
  */
-struct ConversationRequest : public dht::EncryptedValue<ConversationRequest>
+struct ConversationRequest
 {
-    static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
-    dht::Value::Id id = dht::Value::INVALID_ID;
     std::string conversationId;
     std::vector<std::string> members;
     std::map<std::string, std::string> metadatas;
-    MSGPACK_DEFINE_MAP(id, conversationId, members, metadatas)
+
+    time_t received {0};
+    time_t declined {0};
+
+    ConversationRequest() = default;
+    ConversationRequest(const Json::Value& json);
+
+    Json::Value toJson() const;
+    std::map<std::string, std::string> toMap() const;
+
+    MSGPACK_DEFINE_MAP(conversationId, members, metadatas, received, declined)
 };
 
 using SipConnectionKey = std::pair<std::string /* accountId */, DeviceId>;
@@ -505,7 +514,9 @@ public:
     std::vector<std::map<std::string, std::string>> getConversationRequests();
 
     // Member management
-    bool addConversationMember(const std::string& conversationId, const std::string& contactUri);
+    bool addConversationMember(const std::string& conversationId,
+                               const std::string& contactUri,
+                               bool sendRequest = true);
     bool removeConversationMember(const std::string& conversationId, const std::string& contactUri);
     std::vector<std::map<std::string, std::string>> getConversationMembers(
         const std::string& conversationId);
@@ -514,16 +525,23 @@ public:
     void sendMessage(const std::string& conversationId,
                      const std::string& message,
                      const std::string& parent = "",
-                     const std::string& type = "text/plain");
+                     const std::string& type = "text/plain",
+                     bool announce = true);
     uint32_t loadConversationMessages(const std::string& conversationId,
-                                  const std::string& fromMessage = "",
-                                  size_t n = 0);
+                                      const std::string& fromMessage = "",
+                                      size_t n = 0);
 
     // Received a new commit notification
     void onNewGitCommit(const std::string& peer,
                         const std::string& deviceId,
                         const std::string& conversationId,
                         const std::string& commitId) override;
+    void fetchNewCommits(const std::string& peer,
+                         const std::string& deviceId,
+                         const std::string& conversationId);
+
+    // Invites
+    void onConversationRequest(const Json::Value&) override;
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -667,6 +685,9 @@ private:
 
     void loadConvInfo();
     void saveConvInfo() const;
+
+    void loadConvRequests();
+    void saveConvRequests();
 
     template<class... Args>
     std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
@@ -897,6 +918,7 @@ private:
     void syncWith(const std::string& deviceId, const std::shared_ptr<ChannelSocket>& socket);
     void syncInfos(const std::shared_ptr<ChannelSocket>& socket);
     void syncWithConnected();
+    std::atomic_bool needsConvSync {true};
 };
 
 static inline std::ostream&
