@@ -60,6 +60,10 @@ class Emitter;
 class Node;
 } // namespace YAML
 
+namespace Json {
+class Value;
+}
+
 namespace jami {
 
 class Call;
@@ -302,6 +306,11 @@ public:
                                 const std::string& /*deviceId*/,
                                 const std::string& /*conversationId*/,
                                 const std::string& /*commitId*/) {};
+
+    // Invites
+    virtual void onConversationRequest(const Json::Value&) {};
+    virtual void onNeedConversationRequest(const std::string& /* from */,
+                                           const std::string& /* conversationId */) {};
 
     /**
      * Helper function used to load the default codec order from the codec factory

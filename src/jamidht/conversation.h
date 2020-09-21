@@ -52,7 +52,7 @@ public:
      *  ...
      * }
      */
-    std::vector<std::map<std::string, std::string>> getMembers();
+    std::vector<std::map<std::string, std::string>> getMembers() const;
     /**
      * Test if an URI is a member
      * @param uri       URI to test
@@ -94,6 +94,12 @@ public:
      * @return if the operation was successful
      */
     bool mergeHistory(const std::string& uri);
+
+    /**
+     * Generate an invitation to send to new contacts
+     * @return the invite to send
+     */
+    std::map<std::string, std::string> generateInvitation() const;
 
 private:
     class Impl;

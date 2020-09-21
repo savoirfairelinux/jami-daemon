@@ -82,7 +82,6 @@
 #include <opendht/http.h>
 
 #include <yaml-cpp/yaml.h>
-#include <json/json.h>
 
 #include <unistd.h>
 
@@ -156,6 +155,48 @@ struct ConvInfo
 
     MSGPACK_DEFINE_MAP(id, created, removed)
 };
+
+// ConversationRequest
+ConversationRequest::ConversationRequest(const Json::Value& json)
+{
+    received = json["received"].asLargestUInt();
+    declined = json["declined"].asLargestUInt();
+    conversationId = json["conversationId"].asString();
+    for (const auto& value : json["members"]) {
+        members.emplace_back(value["uri"].asString());
+    }
+    auto& md = json["metadatas"];
+    for (const auto& member : md.getMemberNames()) {
+        metadatas.emplace(member, md[member].asString());
+    }
+}
+
+Json::Value
+ConversationRequest::toJson() const
+{
+    Json::Value json;
+    json["conversationId"] = conversationId;
+    json["received"] = received;
+    if (declined)
+        json["declined"] = declined;
+    for (const auto& member : members) {
+        Json::Value value;
+        value["member"] = member;
+        json["members"].append(value);
+    }
+    for (const auto& [key, value] : metadatas) {
+        json["metadatas"][key] = value;
+    }
+    return json;
+}
+
+std::map<std::string, std::string>
+ConversationRequest::toMap() const
+{
+    auto result = metadatas;
+    result["id"] = conversationId;
+    return result;
+}
 
 namespace Migration {
 
@@ -1883,6 +1924,7 @@ JamiAccount::doRegister()
         }
     }
     loadConvInfo();
+    loadConvRequests();
     JAMI_INFO("[Account %s] Conversations loaded!", getAccountID().c_str());
 
     // invalid state transitions:
@@ -2439,34 +2481,39 @@ JamiAccount::doRegister_()
         if (!dhtPeerConnector_)
             dhtPeerConnector_ = std::make_unique<DhtPeerConnector>(*this);
 
-        dht_->listen<ConversationRequest>(
-            inboxDeviceKey, [this, inboxDeviceKey](ConversationRequest&& req) {
-                // TODO it's a trust request, we need to confirm incoming device
-                JAMI_INFO("Receive a new conversation request for conversation %s",
-                          req.conversationId.c_str());
-                auto convId = req.conversationId;
-                std::map<std::string, std::string> metadatas = req.metadatas;
-                {
-                    std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
-                    auto it = conversationsRequests_.find(convId);
-                    if (it != conversationsRequests_.end()) {
-                        JAMI_INFO("Received a request for a conversation already existing. Ignore");
-                        return true;
+        {
+            std::lock_guard<std::mutex> lock(buddyInfoMtx);
+            for (auto& buddy : trackedBuddies_) {
+                buddy.second.devices_cnt = 0;
+                trackPresence(buddy.first, buddy.second);
+            }
+        }
+
+        if (needsConvSync.exchange(false)) {
+            // Sync conversations (at startup or when re-enabled)
+            for (const auto& [convId, conv] : conversations_) {
+                if (!conv)
+                    continue;
+                for (const auto& member : conv->getMembers()) {
+                    auto peer = member.at("uri");
+                    if (username_.find(peer) != std::string::npos) {
+                        // TODO should be handled by device sync
+                        continue;
                     }
-                    conversationsRequests_[convId] = std::move(req);
+                    accountManager_
+                        ->forEachDevice(dht::InfoHash(peer),
+                                        [w = weak(), peer, convId](const dht::InfoHash& dev) {
+                                            auto shared = w.lock();
+                                            if (!shared)
+                                                return;
+                                            JAMI_INFO("Start syncing conversation %s with %s (%s)",
+                                                      convId.c_str(),
+                                                      peer.c_str(),
+                                                      dev.toString().c_str());
+                                            shared->fetchNewCommits(peer, dev.toString(), convId);
+                                        });
                 }
-                // TODO: store request to be persistent when restarting
-
-                emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(accountID_,
-                                                                                    convId,
-                                                                                    metadatas);
-                return true;
-            });
-
-        std::lock_guard<std::mutex> lock(buddyInfoMtx);
-        for (auto& buddy : trackedBuddies_) {
-            buddy.second.devices_cnt = 0;
-            trackPresence(buddy.first, buddy.second);
+            }
         }
     } catch (const std::exception& e) {
         JAMI_ERR("Error registering DHT account: %s", e.what());
@@ -2658,8 +2705,10 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
 
     // Stop all current p2p connections if account is disabled
     // Else, we let the system managing if the co is down or not
-    if (not isEnabled())
+    if (not isEnabled()) {
+        needsConvSync = true;
         shutdownConnections();
+    }
 
     setRegistrationState(RegistrationState::UNREGISTERED);
 
@@ -3607,7 +3656,7 @@ JamiAccount::startConversation()
     convInfos_.emplace_back(info);
     saveConvInfo();
 
-    runOnMainThread([w=weak()]() {
+    runOnMainThread([w = weak()]() {
         // Invite connected devices for the same user
         auto shared = w.lock();
         if (!shared or !shared->accountManager_)
@@ -3667,6 +3716,8 @@ JamiAccount::acceptConversationRequest(const std::string& conversationId)
     }
     conversationsRequests_.erase(conversationId);
     lk.unlock();
+    saveConvRequests();
+    syncWithConnected();
     checkConversationsEvents();
 }
 
@@ -3699,8 +3750,8 @@ JamiAccount::handlePendingConversations()
             try {
                 auto conversationId = it->first;
                 auto conversation = std::make_unique<Conversation>(weak(),
-                                                                it->second.deviceId,
-                                                                conversationId);
+                                                                   it->second.deviceId,
+                                                                   conversationId);
                 if (conversation) {
                     ConvInfo info;
                     info.id = conversationId;
@@ -3709,7 +3760,8 @@ JamiAccount::handlePendingConversations()
                     saveConvInfo();
                     conversations_.emplace(conversationId, std::move(conversation));
                     // Inform user that the conversation is ready
-                    emitSignal<DRing::ConversationSignal::ConversationReady>(accountID_, conversationId);
+                    emitSignal<DRing::ConversationSignal::ConversationReady>(accountID_,
+                                                                             conversationId);
                 }
             } catch (const std::exception& e) {
                 JAMI_WARN("Something went wrong when cloning conversation: %s", e.what());
@@ -3724,7 +3776,16 @@ JamiAccount::handlePendingConversations()
 
 void
 JamiAccount::declineConversationRequest(const std::string& conversationId)
-{}
+{
+    std::unique_lock<std::mutex> lk(conversationsRequestsMtx_);
+    auto request = conversationsRequests_.find(conversationId);
+    if (request == conversationsRequests_.end())
+        return;
+    request->second.declined = std::time(nullptr);
+    lk.unlock();
+    saveConvRequests();
+    syncWithConnected();
+}
 
 bool
 JamiAccount::removeConversation(const std::string& conversationId)
@@ -3746,8 +3807,17 @@ JamiAccount::getConversations()
 std::vector<std::map<std::string, std::string>>
 JamiAccount::getConversationRequests()
 {
-    // TODO
-    return {};
+    std::vector<std::map<std::string, std::string>> requests;
+    {
+        std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
+        requests.reserve(conversationsRequests_.size());
+        for (const auto& [id, request] : conversationsRequests_) {
+            if (request.declined)
+                continue; // Do not add declined requests
+            requests.emplace_back(request.toMap());
+        }
+    }
+    return requests;
 }
 
 // Member management
@@ -3755,25 +3825,16 @@ void
 JamiAccount::addConversationMember(const std::string& conversationId, const std::string& contactUri)
 {
     // Add a new member in the conversation
-    if (!conversations_[conversationId]->addMember(contactUri)) {
+    auto it = conversations_.find(conversationId);
+    if (it == conversations_.end()) {
+        JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
+        return;
+    }
+    if (!it->second->addMember(contactUri)) {
         JAMI_WARN("Couldn't add %s to %s", contactUri.c_str(), conversationId.c_str());
         return;
     }
-    // Invite the new member to the conversation
-    auto toH = dht::InfoHash(contactUri);
-    ConversationRequest req;
-    req.conversationId = conversationId;
-    auto convMembers = conversations_[conversationId]->getMembers();
-    for (const auto& member : convMembers)
-        req.members.emplace_back(member.at("uri"));
-    req.metadatas = {/* TODO */};
-    // TODO message engine
-    forEachDevice(toH, [this, toH, req](const dht::InfoHash& dev) {
-        JAMI_INFO("Sending conversation invite %s / %s",
-                  toH.toString().c_str(),
-                  dev.toString().c_str());
-        dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev.toString()), dev, req);
-    });
+    sendTextMessage(contactUri, it->second->generateInvitation());
 }
 
 bool
@@ -3835,7 +3896,8 @@ JamiAccount::loadConversationMessages(const std::string& conversationId,
                                       const std::string& fromMessage,
                                       size_t n)
 {
-    if (conversations_.find(conversationId) == conversations_.end()) return 0;
+    if (conversations_.find(conversationId) == conversations_.end())
+        return 0;
     const uint32_t id = LoadIdDist()(rand);
     // loadMessages will perform a git log that can take quite some time, so to avoid any lock, run
     // it the threadpool
@@ -3871,6 +3933,14 @@ JamiAccount::onNewGitCommit(const std::string& peer,
              peer.c_str(),
              conversationId.c_str(),
              commitId.c_str());
+    fetchNewCommits(peer, deviceId, conversationId);
+}
+
+void
+JamiAccount::fetchNewCommits(const std::string& peer,
+                             const std::string& deviceId,
+                             const std::string& conversationId)
+{
     auto conversation = conversations_.find(conversationId);
     if (conversation != conversations_.end() && conversation->second) {
         if (!conversation->second->isMember(peer)) {
@@ -3886,20 +3956,21 @@ JamiAccount::onNewGitCommit(const std::string& peer,
         else
             lastMessageId = lastMessage.front().at("id");
 
-        auto announceMessages = [w=weak(), conversationId, lastMessageId]() {
+        auto announceMessages = [w = weak(), conversationId, lastMessageId]() {
             auto shared = w.lock();
-            if (!shared) return;
+            if (!shared)
+                return;
             auto conversation = shared->conversations_.find(conversationId);
             if (conversation != shared->conversations_.end() && conversation->second) {
                 // Do a diff between last message, and current new message when merged
                 auto messages = conversation->second->loadMessages("", lastMessageId);
                 for (const auto& message : messages) {
                     JAMI_DBG("New message received for conversation %s with id %s",
-                            conversationId.c_str(),
-                            message.at("id").c_str());
+                             conversationId.c_str(),
+                             message.at("id").c_str());
                     emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
-                                                                        conversationId,
-                                                                        message);
+                                                                           conversationId,
+                                                                           message);
                 }
             } else {
                 JAMI_WARN("Unknown conversation %s", conversationId.c_str());
@@ -3953,8 +4024,61 @@ JamiAccount::onNewGitCommit(const std::string& peer,
                 });
         }
     } else {
-        JAMI_WARN("Could not find conversation %s", conversationId.c_str());
+        {
+            // Check if the conversation is still a request
+            std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
+            if (conversationsRequests_.find(conversationId) != conversationsRequests_.end())
+                return;
+        }
+        {
+            // Check if the conversation is cloning
+            std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+            if (pendingConversationsFetch_.find(conversationId) != pendingConversationsFetch_.end())
+                return;
+        }
+        JAMI_WARN("Could not find conversation %s, ask for an invite", conversationId.c_str());
+        // If not, ask sender for an invite!
+        std::map<std::string, std::string> askInvite = {{"application/invite", conversationId}};
+        sendTextMessage(peer, askInvite);
     }
+}
+
+void
+JamiAccount::onConversationRequest(const Json::Value& value)
+{
+    ConversationRequest req(value);
+    JAMI_INFO("Receive a new conversation request for conversation %s", req.conversationId.c_str());
+    auto convId = req.conversationId;
+
+    std::map<std::string, std::string> metadatas = req.metadatas;
+    {
+        std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
+        auto it = conversationsRequests_.find(convId);
+        if (it != conversationsRequests_.end()) {
+            JAMI_INFO("Received a request for a conversation already existing. "
+                      "Ignore");
+            return;
+        }
+        req.received = std::time(nullptr);
+        conversationsRequests_[convId] = std::move(req);
+    }
+    saveConvRequests();
+    // Note: no need to sync here because over connected devices should receives
+    // the same conversation request. Will sync when the conversation will be added
+
+    emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(accountID_,
+                                                                       convId,
+                                                                       metadatas);
+}
+
+void
+JamiAccount::onNeedConversationRequest(const std::string& from, const std::string& conversationId)
+{
+    auto conversation = conversations_.find(conversationId);
+    if (conversation == conversations_.end() or not conversation->second)
+        return; // No conversation found, ignore
+    JAMI_INFO() << from << " asks for a new invite for conversation " << conversationId;
+    sendTextMessage(from, conversation->second->generateInvitation());
 }
 
 void
@@ -4345,6 +4469,10 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
             for (const auto& jsonConv : value["conversations"]) {
                 auto convId = jsonConv["id"].asString();
                 auto removed = jsonConv.isMember("removed");
+                {
+                    std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
+                    conversationsRequests_.erase(convId);
+                }
                 if (not removed) {
                     if (conversations_.find(convId) == conversations_.end()) {
                         {
@@ -4395,8 +4523,39 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
                     }
                 }
             }
-            saveConvInfo();
         }
+
+        if (value.isMember("conversationsRequests")) {
+            for (const auto& jsonReq : value["conversationsRequests"]) {
+                auto convId = jsonReq["conversationId"].asString();
+                if (conversations_.find(convId) != conversations_.end()) {
+                    // Already accepted request
+                    std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
+                    conversationsRequests_.erase(convId);
+                    continue;
+                }
+
+                // New request
+                ConversationRequest req(jsonReq);
+                {
+                    std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
+                    conversationsRequests_[convId] = req;
+                }
+
+                if (req.declined != 0)
+                    continue; // Request removed, do not emit signal
+
+                JAMI_INFO("[Account %s] New request detected for conversation %s (device %s)",
+                          getAccountID().c_str(),
+                          convId.c_str(),
+                          deviceId.c_str());
+                emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(getAccountID(),
+                                                                                   convId,
+                                                                                   req.metadatas);
+            }
+        }
+        saveConvInfo();
+        saveConvRequests();
         return len;
     });
 }
@@ -4435,11 +4594,14 @@ void
 JamiAccount::syncInfos(const std::shared_ptr<ChannelSocket>& socket)
 {
     // Sync conversations
-    if (not socket or convInfos_.empty())
+    if (not socket or (convInfos_.empty() and conversationsRequests_.empty()))
         return;
     Json::Value syncValue;
     for (const auto& info : convInfos_) {
         syncValue["conversations"].append(info.toJson());
+    }
+    for (const auto& [_id, request] : conversationsRequests_) {
+        syncValue["conversationsRequests"].append(request.toJson());
     }
 
     Json::StreamWriterBuilder builder;
@@ -4483,6 +4645,30 @@ JamiAccount::saveConvInfo() const
 {
     std::ofstream file(idPath_ + DIR_SEPARATOR_STR "convInfo", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, convInfos_);
+}
+
+void
+JamiAccount::loadConvRequests()
+{
+    try {
+        // read file
+        auto file = fileutils::loadFile("convRequests", idPath_);
+        // load values
+        msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
+        std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
+        oh.get().convert(conversationsRequests_);
+    } catch (const std::exception& e) {
+        JAMI_WARN("Error loading conversationsRequests: %s", e.what());
+    }
+}
+
+void
+JamiAccount::saveConvRequests()
+{
+    std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
+    std::ofstream file(idPath_ + DIR_SEPARATOR_STR "convRequests",
+                       std::ios::trunc | std::ios::binary);
+    msgpack::pack(file, conversationsRequests_);
 }
 
 } // namespace jami
