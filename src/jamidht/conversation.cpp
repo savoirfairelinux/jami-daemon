@@ -162,7 +162,7 @@ Conversation::removeMember(const std::string& contactUri)
 }
 
 std::vector<std::map<std::string, std::string>>
-Conversation::getMembers()
+Conversation::getMembers() const
 {
     std::vector<std::map<std::string, std::string>> result;
     auto shared = pimpl_->account_.lock();
@@ -289,6 +289,30 @@ Conversation::mergeHistory(const std::string& uri)
     }
     JAMI_DBG("Successfully merge history with %s", uri.c_str());
     return true;
+}
+
+std::map<std::string, std::string>
+Conversation::generateInvitation() const
+{
+    // Invite the new member to the conversation
+    std::map<std::string, std::string> invite;
+    Json::Value root;
+    root["conversationId"] = id();
+    // TODO remove, cause the peer cannot trust?
+    // Or add signatures?
+    for (const auto& member : getMembers()) {
+        Json::Value jsonMember;
+        for (const auto& [key, value] : member) {
+            jsonMember[key] = value;
+        }
+        root["members"].append(jsonMember);
+    }
+    // TODO metadatas
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    invite["application/invite+json"] = Json::writeString(wbuilder, root);
+    return invite;
 }
 
 } // namespace jami

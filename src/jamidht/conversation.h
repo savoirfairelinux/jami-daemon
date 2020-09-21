@@ -107,6 +107,12 @@ public:
      */
     bool mergeHistory(const std::string& uri);
 
+    /**
+     * Generate an invitation to send to new contacts
+     * @return the invite to send
+     */
+    std::map<std::string, std::string> generateInvitation() const;
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
