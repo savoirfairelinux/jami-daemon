@@ -49,6 +49,7 @@ public:
     std::string addMember(const std::string& contactUri);
     bool removeMember(const std::string& contactUri);
     /**
+     * @param includeInvited        If we want invited members
      * @return a vector of member details:
      * {
      *  "uri":"xxx",
@@ -57,7 +58,7 @@ public:
      *  ...
      * }
      */
-    std::vector<std::map<std::string, std::string>> getMembers();
+    std::vector<std::map<std::string, std::string>> getMembers(bool includeInvited = false) const;
 
     /**
      * Join a conversation
@@ -106,6 +107,12 @@ public:
      * @return if the operation was successful
      */
     bool mergeHistory(const std::string& uri);
+
+    /**
+     * Generate an invitation to send to new contacts
+     * @return the invite to send
+     */
+    std::map<std::string, std::string> generateInvitation() const;
 
 private:
     class Impl;
