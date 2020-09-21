@@ -50,6 +50,7 @@
 #include <chrono>
 #include <list>
 #include <future>
+#include <json/json.h>
 
 #if HAVE_RINGNS
 #include "namedirectory.h"
@@ -97,6 +98,16 @@ struct ConversationRequest : public dht::EncryptedValue<ConversationRequest>
     std::string conversationId;
     std::vector<std::string> members;
     std::map<std::string, std::string> metadatas;
+
+    time_t received {0};
+    time_t declined {0};
+
+    ConversationRequest() = default;
+    ConversationRequest(const Json::Value& json);
+
+    Json::Value toJson() const;
+    std::map<std::string, std::string> toMap() const;
+
     MSGPACK_DEFINE_MAP(id, conversationId, members, metadatas)
 };
 
@@ -675,6 +686,9 @@ private:
 
     void loadConvInfo();
     void saveConvInfo() const;
+
+    void loadConvRequests();
+    void saveConvRequests();
 
     template<class... Args>
     std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
