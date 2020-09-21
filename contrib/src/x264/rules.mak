@@ -1,6 +1,6 @@
 # x264
 ifndef HAVE_IOS
-X264_HASH := 8c2974255b01728d4eda2434cc1997c4a3ca5eff
+X264_HASH := db0d417728460c647ed4a847222a535b00d3dbcb
 else
 X264_HASH := fa3cac516cb71b8ece09cedbfd0ce631ca8a2a4c
 endif
@@ -26,8 +26,10 @@ else
 X264CONF += --enable-win32thread
 endif
 ifndef HAVE_IOS
+ifndef HAVE_ANDROID
 ifdef HAVE_CROSS_COMPILE
 X264CONF += --cross-prefix="$(CROSS_COMPILE)"
+endif
 endif
 endif
 
@@ -64,6 +66,6 @@ endif
 	$(MOVE)
 
 .x264: x264
-	cd $< && $(HOSTVARS) ./configure $(X264CONF)
+	cd $< && $(HOSTVARS) AS=$(CC) ./configure $(X264CONF)
 	cd $< && $(MAKE) install
 	touch $@
