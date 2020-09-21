@@ -57,7 +57,7 @@ public:
      *  ...
      * }
      */
-    std::vector<std::map<std::string, std::string>> getMembers();
+    std::vector<std::map<std::string, std::string>> getMembers() const;
 
     /**
      * Join a conversation
@@ -106,6 +106,12 @@ public:
      * @return if the operation was successful
      */
     bool mergeHistory(const std::string& uri);
+
+    /**
+     * Generate an invitation to send to new contacts
+     * @return the invite to send
+     */
+    std::map<std::string, std::string> generateInvitation() const;
 
 private:
     class Impl;
