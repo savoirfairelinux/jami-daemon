@@ -50,6 +50,7 @@
 #include <chrono>
 #include <list>
 #include <future>
+#include <json/json.h>
 
 #if HAVE_RINGNS
 #include "namedirectory.h"
@@ -90,14 +91,22 @@ struct ConvInfo;
  * such as the conversation's vcard, etc. (TODO determine)
  * Transmitted via the UDP DHT
  */
-struct ConversationRequest : public dht::EncryptedValue<ConversationRequest>
+struct ConversationRequest
 {
-    static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
-    dht::Value::Id id = dht::Value::INVALID_ID;
     std::string conversationId;
     std::vector<std::string> members;
     std::map<std::string, std::string> metadatas;
-    MSGPACK_DEFINE_MAP(id, conversationId, members, metadatas)
+
+    time_t received {0};
+    time_t declined {0};
+
+    ConversationRequest() = default;
+    ConversationRequest(const Json::Value& json);
+
+    Json::Value toJson() const;
+    std::map<std::string, std::string> toMap() const;
+
+    MSGPACK_DEFINE_MAP(conversationId, members, metadatas, received, declined)
 };
 
 using GitSocketList = std::map<std::string,                            /* device Id */
@@ -677,6 +686,9 @@ private:
 
     void loadConvInfo();
     void saveConvInfo() const;
+
+    void loadConvRequests();
+    void saveConvRequests();
 
     template<class... Args>
     std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
