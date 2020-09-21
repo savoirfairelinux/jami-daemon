@@ -55,6 +55,10 @@ class Emitter;
 class Node;
 } // namespace YAML
 
+namespace Json {
+class Value;
+}
+
 namespace jami {
 static constexpr uint64_t DRING_ID_MAX_VAL = 9007199254740992;
 
@@ -318,6 +322,9 @@ public:
                                 const std::string& /*deviceId*/,
                                 const std::string& /*conversationId*/,
                                 const std::string& /*commitId*/) {};
+
+    // Invites
+    virtual void onConversationRequest(const std::string& from, const Json::Value&) {};
 
     /**
      * Helper function used to load the default codec order from the codec factory

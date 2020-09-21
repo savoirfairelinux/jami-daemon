@@ -52,17 +52,20 @@ public:
     void tearDown();
 
     std::string aliceId;
+    std::string bobId;
     std::string alice2Id;
 
 private:
     void testCreateConversationThenSync();
     void testCreateConversationWithOnlineDevice();
     void testCreateConversationWithMessagesThenAddDevice();
+    void testReceivesInviteThenAddDevice();
 
     CPPUNIT_TEST_SUITE(SyncHistoryTest);
     CPPUNIT_TEST(testCreateConversationThenSync);
     CPPUNIT_TEST(testCreateConversationWithOnlineDevice);
     CPPUNIT_TEST(testCreateConversationWithMessagesThenAddDevice);
+    CPPUNIT_TEST(testReceivesInviteThenAddDevice);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -81,8 +84,19 @@ SyncHistoryTest::setUp()
     details[ConfProperties::ARCHIVE_PATH] = "";
     aliceId = Manager::instance().addAccount(details);
 
+    details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "BOB";
+    details[ConfProperties::ALIAS] = "BOB";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = "";
+    bobId = Manager::instance().addAccount(details);
+
     JAMI_INFO("Initialize account...");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -94,33 +108,43 @@ SyncHistoryTest::setUp()
                 auto details = aliceAccount->getVolatileAccountDetails();
                 auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
                 ready = (daemonStatus == "REGISTERED");
+                details = bobAccount->getVolatileAccountDetails();
+                daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                ready &= (daemonStatus == "REGISTERED");
                 if (ready)
                     cv.notify_one();
             }));
     DRing::registerSignalHandlers(confHandlers);
     cv.wait_for(lk, std::chrono::seconds(30));
     DRing::unregisterSignalHandlers();
+    alice2Id = "";
 }
 
 void
 SyncHistoryTest::tearDown()
 {
     JAMI_INFO("Remove created accounts...");
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    std::remove(aliceArchive.c_str());
 
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     auto currentAccSize = Manager::instance().getAccountList().size();
+    auto toRemove = alice2Id.empty() ? 2 : 3;
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
-            if (Manager::instance().getAccountList().size() <= currentAccSize - 1) {
+            if (Manager::instance().getAccountList().size() <= currentAccSize - toRemove) {
                 cv.notify_one();
             }
         }));
     DRing::registerSignalHandlers(confHandlers);
 
     Manager::instance().removeAccount(aliceId, true);
+    if (!alice2Id.empty())
+        Manager::instance().removeAccount(alice2Id, true);
+    Manager::instance().removeAccount(bobId, true);
     // Because cppunit is not linked with dbus, just poll if removed
     cv.wait_for(lk, std::chrono::seconds(30));
 
@@ -180,25 +204,6 @@ SyncHistoryTest::testCreateConversationThenSync()
     DRing::unregisterSignalHandlers();
     confHandlers.clear();
 
-    // Remove alice 2 and alice.gz
-    std::remove(aliceArchive.c_str());
-
-    auto currentAccSize = Manager::instance().getAccountList().size();
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
-            if (Manager::instance().getAccountList().size() <= currentAccSize - 1) {
-                cv.notify_one();
-            }
-        }));
-    DRing::registerSignalHandlers(confHandlers);
-
-    Manager::instance().removeAccount(alice2Id, true);
-    // Because cppunit is not linked with dbus, just poll if removed
-    cv.wait_for(lk, std::chrono::seconds(30));
-
-    DRing::unregisterSignalHandlers();
-    confHandlers.clear();
-
     // Check if conversation is ready
     CPPUNIT_ASSERT(conversationReady);
 }
@@ -253,25 +258,6 @@ SyncHistoryTest::testCreateConversationWithOnlineDevice()
         }));
     DRing::registerSignalHandlers(confHandlers);
     cv.wait_for(lk, std::chrono::seconds(30));
-    DRing::unregisterSignalHandlers();
-    confHandlers.clear();
-
-    // Remove alice 2 and alice.gz
-    std::remove(aliceArchive.c_str());
-
-    auto currentAccSize = Manager::instance().getAccountList().size();
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
-            if (Manager::instance().getAccountList().size() <= currentAccSize - 1) {
-                cv.notify_one();
-            }
-        }));
-    DRing::registerSignalHandlers(confHandlers);
-
-    Manager::instance().removeAccount(alice2Id, true);
-    // Because cppunit is not linked with dbus, just poll if removed
-    cv.wait_for(lk, std::chrono::seconds(30));
-
     DRing::unregisterSignalHandlers();
     confHandlers.clear();
 
@@ -353,25 +339,76 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     CPPUNIT_ASSERT(messages[0]["body"] == "Message 3");
     CPPUNIT_ASSERT(messages[1]["body"] == "Message 2");
     CPPUNIT_ASSERT(messages[2]["body"] == "Message 1");
+}
 
-    // Remove alice 2 and alice.gz
+void
+SyncHistoryTest::testReceivesInviteThenAddDevice()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+
+    // Export alice
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
     std::remove(aliceArchive.c_str());
+    aliceAccount->exportArchive(aliceArchive);
 
-    auto currentAccSize = Manager::instance().getAccountList().size();
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto uri = aliceAccount->getUsername();
+
+    // Start conversation for Alice
+    auto convId = bobAccount->startConversation();
+    bobAccount->addConversationMember(convId, uri);
+
+    // Check that alice receives the request
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto requestReceived = false;
     confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
-            if (Manager::instance().getAccountList().size() <= currentAccSize - 1) {
-                cv.notify_one();
-            }
-        }));
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                std::map<std::string, std::string> /*metadatas*/) {
+                if (accountId == aliceId && conversationId == convId) {
+                    requestReceived = true;
+                    cv.notify_one();
+                }
+            }));
     DRing::registerSignalHandlers(confHandlers);
 
-    Manager::instance().removeAccount(alice2Id, true);
-    // Because cppunit is not linked with dbus, just poll if removed
     cv.wait_for(lk, std::chrono::seconds(30));
-
     DRing::unregisterSignalHandlers();
     confHandlers.clear();
+    CPPUNIT_ASSERT(requestReceived);
+
+    // Now create alice2
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "ALICE2";
+    details[ConfProperties::ALIAS] = "ALICE2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
+    alice2Id = Manager::instance().addAccount(details);
+
+    requestReceived = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                std::map<std::string, std::string> /*metadatas*/) {
+                if (accountId == alice2Id && conversationId == convId) {
+                    requestReceived = true;
+                    cv.notify_one();
+                }
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    cv.wait_for(lk, std::chrono::seconds(30));
+    DRing::unregisterSignalHandlers();
+    confHandlers.clear();
+    CPPUNIT_ASSERT(requestReceived);
 }
 
 } // namespace test
