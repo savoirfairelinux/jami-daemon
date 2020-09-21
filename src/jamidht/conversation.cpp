@@ -56,12 +56,24 @@ public:
     }
     ~Impl() = default;
 
+    std::string repoPath() const;
+
     std::unique_ptr<ConversationRepository> repository_;
     std::weak_ptr<JamiAccount> account_;
     std::vector<std::map<std::string, std::string>> loadMessages(const std::string& fromMessage = "",
                                                                  const std::string& toMessage = "",
                                                                  size_t n = 0);
 };
+
+std::string
+Conversation::Impl::repoPath() const
+{
+    auto shared = account_.lock();
+    if (!shared)
+        return {};
+    return fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
+           + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository_->id();
+}
 
 std::vector<std::map<std::string, std::string>>
 Conversation::Impl::loadMessages(const std::string& fromMessage,
@@ -156,7 +168,7 @@ Conversation::removeMember(const std::string& contactUri)
 }
 
 std::vector<std::map<std::string, std::string>>
-Conversation::getMembers()
+Conversation::getMembers(bool includeInvited) const
 {
     std::vector<std::map<std::string, std::string>> result;
     auto shared = pimpl_->account_.lock();
@@ -168,6 +180,7 @@ Conversation::getMembers()
                     + pimpl_->repository_->id();
     auto adminsPath = repoPath + DIR_SEPARATOR_STR + "admins";
     auto membersPath = repoPath + DIR_SEPARATOR_STR + "members";
+    auto invitedPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "invited";
     for (const auto& certificate : fileutils::readDirectory(adminsPath)) {
         if (certificate.find(".crt") == std::string::npos) {
             JAMI_WARN("Incorrect file found: %s/%s", adminsPath.c_str(), certificate.c_str());
@@ -187,6 +200,14 @@ Conversation::getMembers()
             details {{"uri", certificate.substr(0, certificate.size() - std::string(".crt").size())},
                      {"role", "member"}};
         result.emplace_back(details);
+    }
+    if (includeInvited) {
+        for (const auto& uri : fileutils::readDirectory(invitedPath)) {
+            std::map<std::string, std::string>
+                details {{"uri", uri },
+                        {"role", "invited"}};
+            result.emplace_back(details);
+        }
     }
 
     return result;
@@ -287,6 +308,30 @@ Conversation::mergeHistory(const std::string& uri)
     }
     JAMI_DBG("Successfully merge history with %s", uri.c_str());
     return true;
+}
+
+std::map<std::string, std::string>
+Conversation::generateInvitation() const
+{
+    // Invite the new member to the conversation
+    std::map<std::string, std::string> invite;
+    Json::Value root;
+    root["conversationId"] = id();
+    // TODO remove, cause the peer cannot trust?
+    // Or add signatures?
+    for (const auto& member : getMembers()) {
+        Json::Value jsonMember;
+        for (const auto& [key, value] : member) {
+            jsonMember[key] = value;
+        }
+        root["members"].append(jsonMember);
+    }
+    // TODO metadatas
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    invite["application/invite+json"] = Json::writeString(wbuilder, root);
+    return invite;
 }
 
 } // namespace jami
