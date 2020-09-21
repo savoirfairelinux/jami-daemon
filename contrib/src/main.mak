@@ -121,11 +121,6 @@ STRIP := $(CROSS_COMPILE)strip
 endif
 endif
 
-ifdef HAVE_ANDROID
-CC := $(CROSS_COMPILE)clang
-CXX := $(CROSS_COMPILE)clang++
-endif
-
 ifdef HAVE_MACOSX
 MIN_OSX_VERSION=10.11
 CC=xcrun cc
