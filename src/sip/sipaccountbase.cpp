@@ -58,6 +58,7 @@ namespace jami {
 
 static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
 static constexpr const char MIME_TYPE_GIT[] {"application/im-gitmessage-id"};
+static constexpr const char MIME_TYPE_INVITE_JSON[] {"application/invite+json"};
 static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
 static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT {std::chrono::seconds(12)};
 
@@ -580,6 +581,16 @@ SIPAccountBase::onTextMessage(const std::string& id,
                            json["deviceId"].asString(),
                            json["id"].asString(),
                            json["commit"].asString());
+        } else if (m.first == MIME_TYPE_INVITE_JSON) {
+            Json::Value json;
+            std::string err;
+            Json::CharReaderBuilder rbuilder;
+            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+            if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
+                JAMI_ERR("Can't parse server response: %s", err.c_str());
+                return;
+            }
+            onConversationRequest(from, json);
         }
     }
 
