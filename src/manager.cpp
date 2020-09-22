@@ -1049,6 +1049,7 @@ Manager::hangupCall(const std::string& callId)
     const auto& currentCallId(getCurrentCallId());
 
     stopTone();
+    pimpl_->removeWaitingCall(callId);
 
     /* We often get here when the call was hungup before being created */
     auto call = getCallFromCallID(callId);
