@@ -543,6 +543,9 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
         } else
             archive.config[it.first] = it.second;
     }
+    if (!info_) {
+        return;
+    }
     archive.contacts = info_->contacts->getContacts();
 }
 
