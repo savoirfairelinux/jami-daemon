@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "97d5ecd8_d1e16153",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 384,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-09-23T21:49:06Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nexpression result unused\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-unused-value",
+      "revId": "85ba43661fed9d37c075cf8e2b403b4e05f24ba0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2da052b9_58b216a2",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 886,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-09-23T21:49:06Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nresult of comparison of constant 0 with expression of type \u0027bool\u0027 is always false\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-tautological-constant-compare",
+      "revId": "85ba43661fed9d37c075cf8e2b403b4e05f24ba0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
