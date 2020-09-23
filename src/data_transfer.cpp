@@ -287,7 +287,7 @@ public:
     void cancel() override
     {
         if (auto account = Manager::instance().getAccount<JamiAccount>(info_.accountId))
-            account->closePeerConnection(id);
+                 account->closePeerConnection(id);
     }
 
     void setOnRecv(std::function<void(std::vector<uint8_t>&&)>&& cb) override
