@@ -1310,7 +1310,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                         details[key] = value;
                     setAccountDetails(details);
 
-                    if (not info.photo.empty() or not displayName_.empty())
+                    if (not info.photo.empty())
                         emitSignal<DRing::ConfigurationSignal::AccountProfileReceived>(getAccountID(),
                                                                                        displayName_,
                                                                                        info.photo);
