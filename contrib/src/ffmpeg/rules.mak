@@ -194,7 +194,6 @@ endif
 
 ifdef HAVE_LINUX
 FFMPEGCONF += --enable-pic
-FFMPEGCONF += --extra-cxxflags=-fPIC --extra-cflags=-fPIC
 ifdef HAVE_ANDROID
 # Android Linux
 FFMPEGCONF += \
@@ -204,7 +203,14 @@ FFMPEGCONF += \
 	--enable-decoder=vp8_mediacodec \
 	--enable-decoder=h264_mediacodec \
 	--enable-decoder=mpeg4_mediacodec \
-	--enable-decoder=hevc_mediacodec
+	--enable-decoder=hevc_mediacodec \
+	--enable-cross-compile \
+	--ranlib=$(RANLIB) \
+	--strip=$(STRIP) \
+	--cc=$(CC) \
+	--cxx=$(CXX) \
+	--ld=$(CC) \
+	--ar=$(AR)
 # ASM not working on Android x86 https://trac.ffmpeg.org/ticket/4928
 ifeq ($(ARCH),i386)
 FFMPEGCONF += --disable-asm
@@ -276,13 +282,14 @@ FFMPEGCONF += \
 	--enable-encoder=hevc_videotoolbox \
 	--target-os=darwin \
 	--enable-cross-compile \
-	--arch=$(ARCH) \
 	--enable-pic
 endif
 
 ifndef HAVE_IOS
+ifndef HAVE_ANDROID
 ifdef HAVE_CROSS_COMPILE
 FFMPEGCONF += --cross-prefix=$(HOST)-
+endif
 endif
 endif
 

@@ -5,6 +5,8 @@ LIBARCHIVE_URL := https://github.com/libarchive/libarchive/releases/download/v$(
 PKGS += libarchive
 ifeq ($(call need_pkg,"libarchive >= 3.4.0"),)
 PKGS_FOUND += libarchive
+else
+DEPS_libarchive += nettle
 endif
 
 LIBARCHIVE_CMAKECONF := \
