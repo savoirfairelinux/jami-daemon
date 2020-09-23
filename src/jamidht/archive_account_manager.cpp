@@ -68,7 +68,7 @@ ArchiveAccountManager::initAuthentication(PrivateKey key,
             try {
                 if (ctx->credentials->scheme == "file") {
                     // Import from external archive
-                    this_.loadFromFile(*ctx);
+                    this_.loadFromFile(*ctx, true);
                 } else {
                     // Create/migrate local account
                     bool hasArchive = not ctx->credentials->uri.empty()
@@ -80,7 +80,7 @@ ArchiveAccountManager::initAuthentication(PrivateKey key,
                             and needsMigration(ctx->credentials->updateIdentity)) {
                             this_.migrateAccount(*ctx);
                         } else {
-                            this_.loadFromFile(*ctx);
+                            this_.loadFromFile(*ctx, false);
                         }
                     } else if (ctx->credentials->updateIdentity.first
                                and ctx->credentials->updateIdentity.second) {
@@ -100,7 +100,7 @@ ArchiveAccountManager::initAuthentication(PrivateKey key,
                         }
                         this_.updateCertificates(a, ctx->credentials->updateIdentity);
                         a.eth_key = future_keypair.get().secret().makeInsecure().asBytes();
-                        this_.onArchiveLoaded(*ctx, std::move(a));
+                        this_.onArchiveLoaded(*ctx, std::move(a), false);
                     } else {
                         this_.createAccount(*ctx);
                     }
@@ -180,7 +180,7 @@ ArchiveAccountManager::createAccount(AuthContext& ctx)
 }
 
 void
-ArchiveAccountManager::loadFromFile(AuthContext& ctx)
+ArchiveAccountManager::loadFromFile(AuthContext& ctx, bool external)
 {
     JAMI_WARN("[Auth] loading archive from: %s", ctx.credentials->uri.c_str());
     AccountArchive archive;
@@ -191,7 +191,7 @@ ArchiveAccountManager::loadFromFile(AuthContext& ctx)
         ctx.onFailure(AuthError::INVALID_ARGUMENTS, ex.what());
         return;
     }
-    onArchiveLoaded(ctx, std::move(archive));
+    onArchiveLoaded(ctx, std::move(archive), external);
 }
 
 struct ArchiveAccountManager::DhtLoadContext
@@ -306,13 +306,13 @@ ArchiveAccountManager::migrateAccount(AuthContext& ctx)
     updateArchive(archive);
 
     if (updateCertificates(archive, ctx.credentials->updateIdentity)) {
-        onArchiveLoaded(ctx, std::move(archive));
+        onArchiveLoaded(ctx, std::move(archive), false);
     } else
         ctx.onFailure(AuthError::UNKNOWN, "");
 }
 
 void
-ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a)
+ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a, bool external)
 {
     auto ethAccount = dev::KeyPair(dev::Secret(a.eth_key)).address().hex();
     fileutils::check_dir(path_.c_str(), 0700);
@@ -344,9 +344,11 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a)
     info->deviceId = deviceCertificate->getPublicKey().getId().toString();
     if (ctx.deviceName.empty())
         ctx.deviceName = info->deviceId.substr(8);
-
     info->contacts = std::make_unique<ContactList>(a.id.second, path_, onChange_);
-    info->contacts->setContacts(a.contacts);
+    if (external)
+        info->contacts->setContacts(a.contacts);
+    else
+        info->contacts->loadContacts();
     info->contacts->foundAccountDevice(deviceCertificate, ctx.deviceName, clock::now());
     info->ethAccount = ethAccount;
     info->announce = std::move(receipt.second);

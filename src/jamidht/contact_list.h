@@ -123,6 +123,7 @@ public:
     DeviceSync getSyncData() const;
     bool syncDevice(const dht::InfoHash& device, const time_point& syncDate);
     // void onSyncData(DeviceSync&& device);
+    void loadContacts();
 
 private:
     mutable std::mutex lock;
@@ -138,7 +139,6 @@ private:
 
     OnChangeCallback callbacks_;
 
-    void loadContacts();
     void saveContacts() const;
 
     void loadTrustRequests();

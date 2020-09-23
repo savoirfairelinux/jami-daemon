@@ -100,9 +100,9 @@ private:
     bool updateCertificates(AccountArchive& archive, dht::crypto::Identity& device);
     static bool needsMigration(const dht::crypto::Identity& id);
 
-    void loadFromFile(AuthContext& ctx);
+    void loadFromFile(AuthContext& ctx, bool external);
     void loadFromDHT(const std::shared_ptr<AuthContext>& ctx);
-    void onArchiveLoaded(AuthContext& ctx, AccountArchive&& a);
+    void onArchiveLoaded(AuthContext& ctx, AccountArchive&& a, bool external = true);
 
     OnExportConfig onExportConfig_;
     std::string archivePath_;
