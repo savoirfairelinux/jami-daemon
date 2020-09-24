@@ -578,6 +578,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         auto remoted_address = it.channel->underlyingICE()->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
         try {
+            JAMI_ERR("@@@ Handle pending call 3");
             onConnectedOutgoingCall(*dev_call, toUri, remoted_address);
         } catch (const VoipLinkException&) {
             // In this case, the main scenario is that SIPStartCall failed because
@@ -732,7 +733,7 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
         return false;
     }
 
-    JAMI_DBG("[call:%s] Sending SIP invite", call.getCallId().c_str());
+    JAMI_ERR("@@@[call:%s] Sending SIP invite", call.getCallId().c_str());
 
     // Add user-agent header
     sip_utils::addUserAgenttHeader(getUserAgentName(), tdata);
@@ -1678,6 +1679,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
                                             if (auto call = wcall.lock()) {
                                                 if (auto account = waccount.lock()) {
                                                     // Start SIP layer when TLS negotiation is successful
+                                                    JAMI_ERR("@@@ Handle pending call");
                                                     account->onConnectedOutgoingCall(*call,
                                                                                      remote_id,
                                                                                      remote_addr);
@@ -3658,6 +3660,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         if (auto ice = socket->underlyingICE()) {
             auto remoted_address = ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
             try {
+                JAMI_ERR("@@@ Handle pending call2");
                 onConnectedOutgoingCall(*pendingCall, peerId, remoted_address);
             } catch (const VoipLinkException&) {
                 // In this case, the main scenario is that SIPStartCall failed because
