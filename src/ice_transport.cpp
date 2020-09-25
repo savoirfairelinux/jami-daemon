@@ -116,20 +116,20 @@ public:
     IpAddr getLocalAddress(unsigned comp_id) const;
     IpAddr getRemoteAddress(unsigned comp_id) const;
 
-    std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> pool_;
-    IceTransportCompleteCb on_initdone_cb_;
-    IceTransportCompleteCb on_negodone_cb_;
-    IceRecvInfo on_recv_cb_;
+    std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> pool_ {};
+    IceTransportCompleteCb on_initdone_cb_ {};
+    IceTransportCompleteCb on_negodone_cb_ {};
+    IceRecvInfo on_recv_cb_ {};
     mutable std::mutex iceMutex_ {};
     std::unique_ptr<pj_ice_strans, IceSTransDeleter> icest_;
-    unsigned component_count_;
+    unsigned component_count_ {};
     pj_ice_sess_cand cand_[MAX_CANDIDATES] {};
-    std::string local_ufrag_;
-    std::string local_pwd_;
-    pj_sockaddr remoteAddr_;
+    std::string local_ufrag_ {};
+    std::string local_pwd_ {};
+    pj_sockaddr remoteAddr_ {};
     std::condition_variable iceCV_ {};
-    pj_ice_strans_cfg config_;
-    std::string last_errmsg_;
+    pj_ice_strans_cfg config_ {};
+    std::string last_errmsg_ {};
 
     std::atomic_bool is_stopped_ {false};
 
@@ -138,10 +138,10 @@ public:
         Packet(void* pkt, pj_size_t size)
             : data {reinterpret_cast<char*>(pkt), reinterpret_cast<char*>(pkt) + size}
         {}
-        std::vector<char> data;
+        std::vector<char> data {};
     };
 
-    std::vector<PeerChannel> peerChannels_;
+    std::vector<PeerChannel> peerChannels_ {};
 
     struct ComponentIO
     {
@@ -151,7 +151,7 @@ public:
         IceRecvCb cb;
     };
 
-    std::vector<ComponentIO> compIO_;
+    std::vector<ComponentIO> compIO_ {};
 
     std::atomic_bool initiatorSession_ {true};
 
@@ -182,25 +182,25 @@ public:
     void setDefaultRemoteAddress(int comp_id, const IpAddr& addr);
     const IpAddr& getDefaultRemoteAddress(int comp_id) const;
 
-    std::unique_ptr<upnp::Controller> upnp_;
-    std::mutex upnpMutex_;
+    std::unique_ptr<upnp::Controller> upnp_ {};
+    std::mutex upnpMutex_ {};
 
     bool onlyIPv4Private_ {true};
 
     // IO/Timer events are handled by following thread
-    std::thread thread_;
+    std::thread thread_ {};
     std::atomic_bool threadTerminateFlags_ {false};
     bool handleEvents(unsigned max_msec);
 
     // Wait data on components
-    pj_ssize_t lastSentLen_;
+    pj_ssize_t lastSentLen_ {};
     std::condition_variable waitDataCv_ = {};
 
     std::atomic_bool destroying_ {false};
-    onShutdownCb scb;
+    onShutdownCb scb {};
 
     // Default remote adresses
-    std::vector<IpAddr> iceDefaultRemoteAddr_;
+    std::vector<IpAddr> iceDefaultRemoteAddr_ {};
 };
 
 //==============================================================================
