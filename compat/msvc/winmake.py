@@ -30,6 +30,9 @@ daemon_msvc_build_local_dir = daemon_dir + r'\build-local'
 contrib_src_dir = daemon_dir + r'\contrib\src'
 contrib_build_dir = daemon_dir + r'\contrib\build'
 contrib_tmp_dir = daemon_dir + r'\contrib\tarballs'
+plugins_bin_dir = daemon_dir + r'\..\plugins\build'
+plugins_dir = daemon_dir + r'\..\plugins'
+pluginsList = ['GreenScreen']
 
 # SCM
 wget_args = [
@@ -125,6 +128,53 @@ def getVSEnvCmd(arch='x64', platform='', version=''):
     vcEnvInit = 'call \"' + ' '.join(vcEnvInit)
     return vcEnvInit
 
+def make_plugin(pkg_info, force, sdk_version, toolset):
+    pkg_name = pkg_info.get('name')
+    version = pkg_info.get('version')
+    extractLibs = pkg_info.get('extractLibs')
+    plugin_path = (plugins_dir + "/" +  pkg_name).replace("\\", "/")
+    if (extractLibs):
+        with tarfile.open(plugins_dir + r'\contrib\libs.tar.gz', 'r', encoding="utf8", errors='ignore') as tarball:
+            tarball.extractall(plugins_dir + r'\contrib')
+    pkg_build_uptodate = False
+    pkg_ver_uptodate = False
+    # attempt to get the current built version
+    current_version = ''
+    # check build file for current version
+    build_file = plugins_bin_dir + r'\\.' + pkg_name
+    if os.path.exists(build_file):
+        if force:
+            os.remove(build_file)
+        else:
+            pkg_build_uptodate = is_build_uptodate(pkg_name, build_file)
+            with open(build_file, 'r+', encoding="utf8", errors='ignore') as f:
+                current_version = f.read()
+                if current_version == version:
+                    pkg_ver_uptodate = True
+    for dep in pkg_info.get('deps', []):
+        dep_build_dep = resolve(dep, False, sdk_version, toolset)
+        if dep_build_dep:
+            pkg_build_uptodate = False
+    pkg_up_to_date = pkg_build_uptodate & pkg_ver_uptodate
+    cmake_defines = ""
+    for define in pkg_info.get('defines', []):
+        cmake_defines += " -D" + define + " "
+    if not pkg_up_to_date or current_version is None or force:
+        root_logger.warning(
+            "Building plugin with preferred sdk version %s and toolset %s", sdk_version, toolset)
+        env_set = 'false' if pkg_info.get('with_env', '') == '' else 'true'
+        sdk_to_use = sdk_version if env_set == 'false' else pkg_info.get('with_env', '')
+        cmake_script = "cmake -G " + getCMakeGenerator(getLatestVSVersion()) + cmake_defines + "-S " + plugin_path + " -B " + plugin_path + "/msvc"
+        root_logger.warning("Cmake generating vcxproj files")
+        result = getSHrunner().exec_batch(cmake_script)
+        build(pkg_name,
+              plugin_path,
+              pkg_info.get('project_paths', []),
+              pkg_info.get('custom_scripts', {}),
+              env_set,
+              sdk_to_use,
+              toolset)
+        track_build(pkg_name, version)
 
 def make_daemon(pkg_info, force, sdk_version, toolset):
     cmake_script = 'cmake -DCMAKE_CONFIGURATION_TYPES="ReleaseLib_win32" -DCMAKE_SYSTEM_VERSION=' + sdk_version + ' -DCMAKE_VS_PLATFORM_NAME="x64" -G ' + getCMakeGenerator(getLatestVSVersion()) + ' -T $(DefaultPlatformToolset) -S ../../ -B ../../build-local'
@@ -152,6 +202,8 @@ def make(pkg_info, force, sdk_version, toolset):
     pkg_name = pkg_info.get('name')
     if pkg_name == 'daemon':
         return make_daemon(pkg_info, force, sdk_version, toolset)
+    if pkg_name in pluginsList:
+        return make_plugin(pkg_info, force, sdk_version, toolset)
     version = pkg_info.get('version')
     pkg_build_uptodate = False
     pkg_ver_uptodate = False
@@ -214,10 +266,10 @@ def fetch_pkg(pkg_name, version, url, force):
         log.error(pkg_name + ' missing url in package configuration')
         return False
     archive_name = full_url[full_url.rfind("/") + 1:]
-    archive_path = contrib_tmp_dir + '\\' + archive_name
+    archive_path = contrib_tmp_dir + '\\' + pkg_name + '_' + archive_name
     if not os.path.exists(archive_path):
         log.debug('Fetching ' + pkg_name + ' from: ' + full_url)
-        args = [full_url, '-P', contrib_tmp_dir]
+        args = [full_url, '-O', archive_path]
         args.extend(wget_args)
         dl_result = getSHrunner().exec_batch('wget', args)
         if dl_result[0] is not 0:
@@ -328,6 +380,8 @@ def apply(pkg_name, patches, win_patches):
 def get_pkg_file(pkg_name):
     if pkg_name == 'daemon':
         pkg_location = daemon_msvc_dir
+    elif (pkg_name in pluginsList):
+        pkg_location = plugins_dir + r'\\' + pkg_name
     else:
         pkg_location = daemon_dir + r'\contrib\src\\' + pkg_name
     pkg_json_file = pkg_location + r"\\package.json"
@@ -351,7 +405,10 @@ def resolve(pkg_name, force=False, sdk_version='', toolset=''):
 
 
 def track_build(pkg_name, version):
-    build_file = contrib_build_dir + '\\.' + pkg_name
+    if pkg_name in pluginsList:
+        build_file = plugins_bin_dir + '\\.' + pkg_name
+    else:
+        build_file = contrib_build_dir + '\\.' + pkg_name
     f = open(build_file, "w+", encoding="utf8", errors='ignore')
     f.write(version)
     f.close()
@@ -651,16 +708,29 @@ def main():
             pkg_json_file = get_pkg_file(parsed_args.clean)
             with open(pkg_json_file, encoding="utf8", errors='ignore') as json_file:
                 pkg_info = json.load(json_file)
-                dir_to_clean = contrib_build_dir + '\\' + pkg_info['name']
-                file_to_clean = contrib_build_dir + '\\.' + pkg_info['name']
-                if os.path.exists(dir_to_clean) or os.path.exists(file_to_clean):
-                    log.warning('Removing contrib build ' + dir_to_clean)
-                    getSHrunner().exec_batch(
-                        'rmdir', ['/s', '/q', dir_to_clean])
-                    getSHrunner().exec_batch(
-                        'del', ['/s', '/f', '/q', file_to_clean])
+                if (parsed_args.clean not in pluginsList):
+                    exclude_dirs = contrib_build_dir
+                    dir_to_clean = exclude_dirs + '\\' + pkg_info['name']
+                    file_to_clean = exclude_dirs + '\\.' + pkg_info['name']
+
+                    if os.path.exists(dir_to_clean) or os.path.exists(file_to_clean):
+                        log.warning('Removing build ' + dir_to_clean)
+                        getSHrunner().exec_batch(
+                            'rmdir', ['/s', '/q', dir_to_clean])
+                        getSHrunner().exec_batch(
+                            'del', ['/s', '/f', '/q', file_to_clean])
+                    else:
+                        log.warning('No builds to remove')
                 else:
-                    log.warning('No builds to remove')
+                    exclude_dirs = plugins_bin_dir
+                    files_to_clean = [exclude_dirs + '\\.' + pkg_info['name']]
+                    for name in glob.iglob(exclude_dirs + '\\**\\' + pkg_info['name'] + ".jpl", recursive=True):
+                        files_to_clean.append(name)
+                    for name in files_to_clean:
+                        getSHrunner().exec_batch(
+                            'del', ['/s', '/f', '/q', name])
+                    getSHrunner().exec_batch(
+                        'rmdir', ['/s', '/q', plugins_dir + "\\" + parsed_args.clean + "\\msvc"])
 
     if parsed_args.build:
         if not os.path.exists(contrib_build_dir):
