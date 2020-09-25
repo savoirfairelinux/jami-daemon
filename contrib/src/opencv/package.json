@@ -2,15 +2,15 @@
     "name": "opencv",
     "version": "4.1.1",
     "url": "https://github.com/opencv/opencv/archive/__VERSION__.tar.gz",
-    "deps": [
-	"opencv_contrib"
-    ],
+    "deps": [],
     "patches": [],
     "win_patches": [],
     "project_paths": [],
     "with_env" : "",
     "custom_scripts": {
-        "pre_build": [],
+        "pre_build": [
+			"mkdir build"
+		],
         "build": [],
         "post_build": []
     }
