@@ -110,27 +110,27 @@ public:
     void setOnReady(OnConnectionReadyCb&& cb) { onChannelReady_ = std::move(cb); }
     void setOnRequest(OnConnectionRequestCb&& cb) { onRequest_ = std::move(cb); }
 
-    msgpack::unpacker pac_;
+    msgpack::unpacker pac_ {};
 
     MultiplexedSocket& parent_;
 
-    OnConnectionReadyCb onChannelReady_;
-    OnConnectionRequestCb onRequest_;
-    OnShutdownCb onShutdown_;
+    OnConnectionReadyCb onChannelReady_ {};
+    OnConnectionRequestCb onRequest_ {};
+    OnShutdownCb onShutdown_ {};
 
-    std::string deviceId;
+    std::string deviceId {};
     // Main socket
-    std::unique_ptr<TlsSocketEndpoint> endpoint;
+    std::unique_ptr<TlsSocketEndpoint> endpoint {};
 
-    std::mutex socketsMutex;
-    std::map<uint16_t, std::shared_ptr<ChannelSocket>> sockets;
+    std::mutex socketsMutex {};
+    std::map<uint16_t, std::shared_ptr<ChannelSocket>> sockets {};
     // Contains callback triggered when a channel is ready
-    std::mutex channelCbsMutex;
-    std::map<uint16_t, onChannelReadyCb> channelCbs;
+    std::mutex channelCbsMutex {};
+    std::map<uint16_t, onChannelReadyCb> channelCbs {};
 
     // Main loop to parse incoming packets
-    std::future<void> eventLoopFut_;
-    std::atomic_bool stop;
+    std::future<void> eventLoopFut_ {};
+    std::atomic_bool stop {};
 
     // Multiplexed available datas
     std::map<uint16_t, std::unique_ptr<ChannelInfo>> channelDatas_ {};
@@ -138,7 +138,7 @@ public:
     std::map<uint16_t, GenericSocket<uint8_t>::RecvCb> channelCbs_ {};
     std::atomic_bool isShutdown_ {false};
 
-    std::mutex writeMtx;
+    std::mutex writeMtx {};
 };
 
 void
@@ -517,11 +517,11 @@ public:
 
     ~Impl() {}
 
-    OnShutdownCb shutdownCb_;
+    OnShutdownCb shutdownCb_ {};
     std::atomic_bool isShutdown_ {false};
-    std::string name;
-    uint16_t channel;
-    std::weak_ptr<MultiplexedSocket> endpoint;
+    std::string name {};
+    uint16_t channel {};
+    std::weak_ptr<MultiplexedSocket> endpoint {};
 };
 
 ChannelSocket::ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,

@@ -45,8 +45,8 @@ struct ConnectionInfo
 {
     std::condition_variable responseCv_ {};
     std::atomic_bool responseReceived_ {false};
-    PeerConnectionRequest response_;
-    std::mutex mutex_;
+    PeerConnectionRequest response_ {};
+    std::mutex mutex_ {};
     std::unique_ptr<IceTransport> ice_ {nullptr};
 };
 
@@ -158,27 +158,27 @@ public:
     // Note: Someone can ask multiple sockets, so to avoid any race condition,
     // each device can have multiple multiplexed sockets.
     std::map<std::string /* device id */, std::map<dht::Value::Id /* uid */, ConnectionInfo>>
-        connectionsInfos_;
+        connectionsInfos_ {};
     // Used to store currently non ready TLS Socket
-    std::mutex nonReadySocketsMutex_;
+    std::mutex nonReadySocketsMutex_ {};
     std::map<std::string /* device id */,
              std::map<dht::Value::Id /* uid */, std::unique_ptr<TlsSocketEndpoint>>>
-        nonReadySockets_;
-    std::mutex msocketsMutex_;
+        nonReadySockets_ {};
+    std::mutex msocketsMutex_ {};
     // Note: Multiplexed sockets is also stored in ChannelSockets, so has to be shared_ptr
     std::map<std::string /* device id */,
              std::map<dht::Value::Id /* uid */, std::shared_ptr<MultiplexedSocket>>>
-        multiplexedSockets_;
+        multiplexedSockets_ {};
 
     // key: Stored certificate PublicKey id (normaly it's the DeviceId)
     // value: pair of shared_ptr<Certificate> and associated RingId
     std::map<dht::InfoHash, std::pair<std::shared_ptr<dht::crypto::Certificate>, dht::InfoHash>>
-        certMap_;
+        certMap_ {};
     bool validatePeerCertificate(const dht::crypto::Certificate&, dht::InfoHash&);
 
-    ChannelRequestCallback channelReqCb_;
-    ConnectionReadyCallback connReadyCb_;
-    onICERequestCallback iceReqCb_;
+    ChannelRequestCallback channelReqCb_ {};
+    ConnectionReadyCallback connReadyCb_ {};
+    onICERequestCallback iceReqCb_ {};
 
     std::mutex connectCbsMtx_ {};
     std::map<std::pair<std::string, dht::Value::Id>, ConnectCallback> pendingCbs_ {};
