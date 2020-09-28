@@ -19,12 +19,14 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#include <regex>
 #include <sstream>
 
 #include "conference.h"
 #include "manager.h"
 #include "audio/audiolayer.h"
 #include "audio/ringbufferpool.h"
+#include "jamidht/jamiaccount.h"
 
 #ifdef ENABLE_VIDEO
 #include "sip/sipcall.h"
@@ -46,6 +48,17 @@ Conference::Conference()
 #endif
 {
     JAMI_INFO("Create new conference %s", id_.c_str());
+
+    // TODO: For now, add all accounts on the same device as
+    // conference master. In the future, this should be
+    // retrieven with another way
+    auto accounts = jami::Manager::instance().getAllAccounts<JamiAccount>();
+    moderators_.reserve(accounts.size());
+    for (const auto& account : accounts) {
+        if (!account)
+            continue;
+        moderators_.emplace_back(account->getUsername());
+    }
 
 #ifdef ENABLE_VIDEO
     getVideoMixer()->setOnSourcesUpdated([this](const std::vector<video::SourceInfo>&& infos) {
@@ -79,8 +92,15 @@ Conference::Conference()
                                  and not videoMixer->getActiveParticipant()); // by default, local
                                                                               // is shown as active
                 subCalls.erase(it->second);
-                newInfo.emplace_back(ParticipantInfo {
-                    std::move(uri), active, info.x, info.y, info.w, info.h, !info.hasVideo, false});
+                newInfo.emplace_back(ParticipantInfo {std::move(uri),
+                                                      active,
+                                                      info.x,
+                                                      info.y,
+                                                      info.w,
+                                                      info.h,
+                                                      !info.hasVideo,
+                                                      false,
+                                                      shared->isModerator(uri)});
             }
             lk.unlock();
             // Handle participants not present in the video mixer
@@ -88,7 +108,15 @@ Conference::Conference()
                 std::string uri = "";
                 if (auto call = Manager::instance().callFactory.getCall<SIPCall>(subCall))
                     uri = call->getPeerNumber();
-                ParticipantInfo {std::move(uri), false, 0, 0, 0, 0, true, false};
+                ParticipantInfo {std::move(uri),
+                                 false,
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 true,
+                                 false,
+                                 shared->isModerator(uri)};
             }
 
             {
@@ -119,7 +147,8 @@ Conference::~Conference()
                 JAMI_DBG("Stop recording for conf %s", getConfID().c_str());
                 this->toggleRecording();
                 if (not call->isRecording()) {
-                    JAMI_DBG("Conference was recorded, start recording for conf %s", call->getCallId().c_str());
+                    JAMI_DBG("Conference was recorded, start recording for conf %s",
+                             call->getCallId().c_str());
                     call->toggleRecording();
                 }
             }
@@ -155,12 +184,12 @@ Conference::add(const std::string& participant_id)
                 JAMI_DBG("Stop recording for call %s", call->getCallId().c_str());
                 call->toggleRecording();
                 if (not this->isRecording()) {
-                    JAMI_DBG("One participant was recording, start recording for conference %s", getConfID().c_str());
+                    JAMI_DBG("One participant was recording, start recording for conference %s",
+                             getConfID().c_str());
                     this->toggleRecording();
                 }
             }
-        }
-        else
+        } else
             JAMI_ERR("no call associate to participant %s", participant_id.c_str());
 #endif // ENABLE_VIDEO
     }
@@ -172,8 +201,9 @@ Conference::setActiveParticipant(const std::string& participant_id)
     if (!videoMixer_)
         return;
     for (const auto& item : participants_) {
-        if (participant_id == item) {
-            if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(item)) {
+            if (participant_id == item
+                || call->getPeerNumber().find(participant_id) != std::string::npos) {
                 videoMixer_->setActiveParticipant(call->getVideoRtp().getVideoReceive().get());
                 return;
             }
@@ -181,6 +211,24 @@ Conference::setActiveParticipant(const std::string& participant_id)
     }
     // Set local by default
     videoMixer_->setActiveParticipant(nullptr);
+}
+
+void
+Conference::setLayout(int layout)
+{
+    switch (layout) {
+    case 0:
+        getVideoMixer()->setVideoLayout(video::Layout::GRID);
+        break;
+    case 1:
+        getVideoMixer()->setVideoLayout(video::Layout::ONE_BIG_WITH_SMALL);
+        break;
+    case 2:
+        getVideoMixer()->setVideoLayout(video::Layout::ONE_BIG);
+        break;
+    default:
+        break;
+    }
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -432,6 +480,48 @@ Conference::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
     audioMixer_.reset();
     Manager::instance().getRingBufferPool().unBindAll(getConfID());
     ghostRingBuffer_.reset();
+}
+
+void
+Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
+{
+    // Check if the peer is a master
+    if (auto call = Manager::instance().getCallFromCallID(callId)) {
+        auto uri = call->getPeerNumber();
+        auto separator = uri.find('@');
+        if (separator != std::string::npos)
+            uri = uri.substr(0, separator - 1);
+        if (!isModerator(uri)) {
+            JAMI_WARN("Received conference order from a non master (%s)", uri.c_str());
+            return;
+        }
+
+        std::string err;
+        Json::Value root;
+        Json::CharReaderBuilder rbuilder;
+        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+        if (!reader->parse(confOrder.c_str(), confOrder.c_str() + confOrder.size(), &root, &err)) {
+            JAMI_WARN("Couldn't parse conference order from %s", uri.c_str());
+            return;
+        }
+        if (root.isMember("layout")) {
+            setLayout(root["layout"].asUInt());
+        }
+        if (root.isMember("activeParticipant")) {
+            setActiveParticipant(root["activeParticipant"].asString());
+        }
+    }
+}
+
+bool
+Conference::isModerator(const std::string& uri) const
+{
+    return std::find_if(moderators_.begin(),
+                        moderators_.end(),
+                        [&uri](const std::string& master) {
+                            return master.find(uri) != std::string::npos;
+                        })
+           != moderators_.end();
 }
 
 } // namespace jami
