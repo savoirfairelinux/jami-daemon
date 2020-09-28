@@ -1488,28 +1488,35 @@ void
 Manager::setConferenceLayout(const std::string& confId, int layout)
 {
     if (auto conf = getConferenceFromID(confId)) {
-        auto videoMixer = conf->getVideoMixer();
-        switch (layout) {
-        case 0:
-            videoMixer->setVideoLayout(video::Layout::GRID);
-            break;
-        case 1:
-            videoMixer->setVideoLayout(video::Layout::ONE_BIG_WITH_SMALL);
-            break;
-        case 2:
-            videoMixer->setVideoLayout(video::Layout::ONE_BIG);
-            break;
-        default:
-            break;
-        }
+        conf->setLayout(layout);
+    } else if (auto call = getCallFromCallID(confId)) {
+        std::map<std::string, std::string> messages;
+        Json::Value root;
+        root["layout"] = layout;
+        Json::StreamWriterBuilder wbuilder;
+        wbuilder["commentStyle"] = "None";
+        wbuilder["indentation"] = "";
+        auto output = Json::writeString(wbuilder, root);
+        messages["application/confOrder+json"] = output;
+        call->sendTextMessage(messages, call->getPeerDisplayName());
     }
 }
 
 void
-Manager::setActiveParticipant(const std::string& confId, const std::string& callId)
+Manager::setActiveParticipant(const std::string& confId, const std::string& participant)
 {
     if (auto conf = getConferenceFromID(confId)) {
-        conf->setActiveParticipant(callId);
+        conf->setActiveParticipant(participant);
+    } else if (auto call = getCallFromCallID(confId)) {
+        std::map<std::string, std::string> messages;
+        Json::Value root;
+        root["activeParticipant"] = participant;
+        Json::StreamWriterBuilder wbuilder;
+        wbuilder["commentStyle"] = "None";
+        wbuilder["indentation"] = "";
+        auto output = Json::writeString(wbuilder, root);
+        messages["application/confOrder+json"] = output;
+        call->sendTextMessage(messages, call->getPeerDisplayName());
     }
 }
 

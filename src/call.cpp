@@ -419,6 +419,13 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
         return;
     }
 
+    it = messages.find("application/confOrder+json");
+    if (it != messages.end()) {
+        if (auto conf = Manager::instance().getConferenceFromID(confID_))
+            conf->onConfOrder(getCallId(), it->second);
+        return;
+    }
+
     {
         std::lock_guard<std::recursive_mutex> lk {callMutex_};
         if (parent_) {
