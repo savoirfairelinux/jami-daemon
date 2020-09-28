@@ -31,7 +31,6 @@
 
 #include "audio/audio_input.h"
 
-
 #include <json/json.h>
 
 #include "recordable.h"
@@ -54,6 +53,7 @@ struct ParticipantInfo
     int h {0};
     bool videoMuted {false};
     bool audioMuted {false};
+    bool isModerator {false};
 
     void fromJson(const Json::Value& v)
     {
@@ -65,6 +65,7 @@ struct ParticipantInfo
         h = v["h"].asInt();
         videoMuted = v["videoMuted"].asBool();
         audioMuted = v["audioMuted"].asBool();
+        isModerator = v["isModerator"].asBool();
     }
 
     Json::Value toJson() const
@@ -78,6 +79,7 @@ struct ParticipantInfo
         val["h"] = h;
         val["videoMuted"] = videoMuted;
         val["audioMuted"] = audioMuted;
+        val["isModerator"] = isModerator;
         return val;
     }
 
@@ -90,7 +92,8 @@ struct ParticipantInfo
                 {"w", std::to_string(w)},
                 {"h", std::to_string(h)},
                 {"videoMuted", videoMuted ? "true" : "false"},
-                {"audioMuted", audioMuted ? "true" : "false"}};
+                {"audioMuted", audioMuted ? "true" : "false"},
+                {"isModerator", isModerator ? "true" : "false"}};
     }
 };
 
@@ -193,9 +196,12 @@ public:
     void switchInput(const std::string& input);
 
     void setActiveParticipant(const std::string& participant_id);
+    void setLayout(int layout);
 
     void attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId);
     void detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame);
+
+    void onConfOrder(const std::string& callId, const std::string& order);
 
 #ifdef ENABLE_VIDEO
     std::shared_ptr<video::VideoMixer> getVideoMixer();
@@ -213,6 +219,8 @@ private:
     {
         return std::static_pointer_cast<Conference>(shared_from_this());
     }
+
+    bool isModerator(const std::string& uri) const;
 
     std::string id_;
     State confState_ {State::ACTIVE_ATTACHED};
@@ -232,6 +240,7 @@ private:
 #endif
 
     std::shared_ptr<jami::AudioInput> audioMixer_;
+    std::vector<std::string> moderators_ {};
 
     void initRecorder(std::shared_ptr<MediaRecorder>& rec);
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec);
