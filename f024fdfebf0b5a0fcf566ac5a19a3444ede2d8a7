@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b464fba5_ca8e2d26",
+        "filename": "contrib/src/opencv/package.json",
+        "patchSetId": 7
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2020-09-28T19:45:25Z",
+      "side": 1,
+      "message": "tabs here",
+      "range": {
+        "startLine": 12,
+        "startChar": 0,
+        "endLine": 12,
+        "endChar": 2
+      },
+      "revId": "f024fdfebf0b5a0fcf566ac5a19a3444ede2d8a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
