@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "19933a5f_83de2bf4",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 634,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-29T21:11:11Z",
+      "side": 1,
+      "message": "indeed, just SIPStartCall uses the ICE",
+      "parentUuid": "fb605777_cd6c9951",
+      "range": {
+        "startLine": 634,
+        "startChar": 8,
+        "endLine": 634,
+        "endChar": 23
+      },
+      "revId": "7552070c92780e731c16c7fc8661644a5bb46925",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "d3ab4405_d307f59e",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 1
@@ -36,6 +60,30 @@
       "writtenOn": "2020-09-29T20:33:23Z",
       "side": 1,
       "message": "relevant ?",
+      "range": {
+        "startLine": 656,
+        "startChar": 0,
+        "endLine": 661,
+        "endChar": 87
+      },
+      "revId": "7552070c92780e731c16c7fc8661644a5bb46925",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d7cf5c27_8cd4809f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 661,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-29T21:11:11Z",
+      "side": 1,
+      "message": "I did replace this by a warn",
+      "parentUuid": "d3ab4405_d307f59e",
       "range": {
         "startLine": 656,
         "startChar": 0,
