@@ -29,6 +29,7 @@
 #endif
 
 #include "call.h"
+#include "ice_transport.h"
 #include "media_codec.h" // for MediaType enum
 #include "sip_utils.h"
 
@@ -42,6 +43,7 @@
 #include "noncopyable.h"
 
 #include <memory>
+#include <optional>
 
 extern "C" {
 #include <pjsip/sip_config.h>
@@ -57,7 +59,6 @@ class Sdp;
 class SIPAccountBase;
 class SipTransport;
 class AudioRtpSession;
-class IceTransport;
 class IceSocket;
 
 using IceCandidate = pj_ice_sess_cand;
@@ -225,7 +226,9 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     void setPeerUri(const std::string& peerUri) { peerUri_ = peerUri; }
 
-    bool initIceMediaTransport(bool master, unsigned channel_num = 4);
+    bool initIceMediaTransport(bool master,
+                               std::optional<IceTransportOptions> options = std::nullopt,
+                               unsigned channel_num = 4);
 
     bool isIceRunning() const;
 
