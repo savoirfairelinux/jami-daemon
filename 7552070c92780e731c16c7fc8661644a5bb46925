@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fb605777_cd6c9951",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 634,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-29T20:33:23Z",
+      "side": 1,
+      "message": "does everything needs to be in runOnMainThread ? or just SIPStartCall ?",
+      "range": {
+        "startLine": 634,
+        "startChar": 8,
+        "endLine": 634,
+        "endChar": 23
+      },
+      "revId": "7552070c92780e731c16c7fc8661644a5bb46925",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d3ab4405_d307f59e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 661,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-09-29T20:33:23Z",
+      "side": 1,
+      "message": "relevant ?",
+      "range": {
+        "startLine": 656,
+        "startChar": 0,
+        "endLine": 661,
+        "endChar": 87
+      },
+      "revId": "7552070c92780e731c16c7fc8661644a5bb46925",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
