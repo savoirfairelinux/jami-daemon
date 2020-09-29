@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "89d99c4b_e1b2b6d2",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2020-09-29T19:39:53Z",
+      "side": 1,
+      "message": "+3!",
+      "range": {
+        "startLine": 230,
+        "startChar": 31,
+        "endLine": 230,
+        "endChar": 88
+      },
+      "revId": "082e92f1f97af475f851c8c70aa5c1ab4f78d5a4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
