@@ -1308,7 +1308,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand) c
     pj_bool_t is_tcp = PJ_FALSE;
 
     cnt = sscanf(line.c_str(),
-                 "%s %d %s %d %s %d typ %s tcptype %s\n",
+                 "%31s %d %11s %d %79s %d typ %31s tcptype %31s\n",
                  foundation,
                  &comp_id,
                  transport,
