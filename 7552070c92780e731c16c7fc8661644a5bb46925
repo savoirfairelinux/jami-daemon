@@ -49,6 +49,40 @@
     },
     {
       "key": {
+        "uuid": "88618aea_9aff734a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 642,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-09-30T13:23:01Z",
+      "side": 1,
+      "message": "I believe always using localAddress is enough. No need to check for the public (UPNP) address.\nThis address is only for information purposes.",
+      "revId": "7552070c92780e731c16c7fc8661644a5bb46925",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "14b1358f_d0ffe063",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 653,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-09-30T13:23:01Z",
+      "side": 1,
+      "message": "It would better to unify comments using only //",
+      "revId": "7552070c92780e731c16c7fc8661644a5bb46925",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "d3ab4405_d307f59e",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 1

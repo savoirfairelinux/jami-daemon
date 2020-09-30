@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6b7750d2_44596002",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 777,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-09-30T13:23:01Z",
+      "side": 1,
+      "message": "if it\u0027s set\nuse // for comment",
+      "revId": "8d1d4f3c61776efe28156b4c2a6da6a772cf6736",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9b082442_251c246c",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 787,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-09-30T13:23:01Z",
+      "side": 1,
+      "message": "May be we should consider always using local (default) address in the SDP. This would be in in line with PJNATH semantics.",
+      "revId": "8d1d4f3c61776efe28156b4c2a6da6a772cf6736",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
