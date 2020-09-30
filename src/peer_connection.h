@@ -60,7 +60,7 @@ class ConnectedTurnTransport;
 class Stream
 {
 public:
-    virtual ~Stream() { close(); }
+    virtual ~Stream() = default;
     virtual void close() noexcept {}
     virtual DRing::DataTransferId getId() const = 0;
     virtual bool read(std::vector<uint8_t>& buffer) const
