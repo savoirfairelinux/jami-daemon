@@ -79,8 +79,9 @@ public:
     IpAddr localIp_ {};  // Internal IP interface used to communication with IGD.
     IpAddr publicIp_ {}; // External IP of IGD.
 
-protected:
     std::mutex mapListMutex_;      // Mutex for protecting map lists.
+
+protected:
     PortMapGlobal udpMappings_ {}; // IGD UDP port mappings.
     PortMapGlobal tcpMappings_ {}; // IGD TCP port mappings.
 

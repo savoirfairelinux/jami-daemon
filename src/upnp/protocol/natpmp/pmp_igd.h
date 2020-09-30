@@ -77,7 +77,6 @@ public:
     // Gets the next renewal time.
     time_point getRenewalTime();
 
-    std::mutex mapListMutex_;                // Mutex for protecting map lists.
     std::vector<Mapping> toAdd_ {};          // List of maps to add.
     std::vector<Mapping> toRenew_ {};        // List of maps to renew.
     std::vector<Mapping> toRemove_ {};       // List of maps to remove.
