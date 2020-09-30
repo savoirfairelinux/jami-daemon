@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e9788959_375e31b6",
+        "filename": "test/unitTest/scheduler.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-30T19:23:20Z",
+      "side": 1,
+      "message": "some build warnings too int/const long unsigned int",
+      "range": {
+        "startLine": 71,
+        "startChar": 15,
+        "endLine": 71,
+        "endChar": 27
+      },
+      "revId": "e6cbab6ebe03d1c9b22e844ea39cb99e7bad0fe3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
