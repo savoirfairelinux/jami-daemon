@@ -838,7 +838,7 @@ public:
     }
 
     template<class T = Account>
-    bool accountCount() const
+    std::size_t accountCount() const
     {
         return accountFactory.accountCount<T>();
     }
