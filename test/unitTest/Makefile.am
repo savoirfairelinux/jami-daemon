@@ -21,6 +21,13 @@ ut_certstore_SOURCES = certstore.cpp
 ut_certstore_LDADD = @OPENDHT_LIBS@
 
 #
+# scheduler
+#
+check_PROGRAMS += ut_scheduler
+ut_scheduler_SOURCES = scheduler.cpp
+ut_scheduler_LDADD = @OPENDHT_LIBS@
+
+#
 # base64
 #
 check_PROGRAMS += ut_base64

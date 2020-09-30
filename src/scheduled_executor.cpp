@@ -109,8 +109,10 @@ ScheduledExecutor::loop()
         while (running_ and (jobs_.empty() or jobs_.begin()->first > clock::now())) {
             if (jobs_.empty())
                 cv_.wait(lock);
-            else
-                cv_.wait_until(lock, jobs_.begin()->first);
+            else {
+                auto nextJob = jobs_.begin()->first;
+                cv_.wait_until(lock, nextJob);
+            }
         }
         if (not running_)
             return;
