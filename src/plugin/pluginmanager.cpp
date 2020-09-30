@@ -184,15 +184,15 @@ PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin)
      */
     pluginPtr->api_.manageComponent = [](const JAMI_PluginAPI* api, const char* name, void* data) {
         auto plugin = static_cast<DLPlugin*>(api->context);
+        if (!plugin) {
+            JAMI_ERR() << "createComponent called with null context";
+            return -1;
+        }
         auto manager = reinterpret_cast<PluginManager*>(plugin->apiContext_);
         if (!manager) {
             JAMI_ERR() << "createComponent called with null plugin API";
             return -1;
-        } else if (!plugin) {
-            JAMI_ERR() << "createComponent called with null context";
-            return -1;
         }
-
         return manager->manageComponent(plugin, name, data);
     };
 
