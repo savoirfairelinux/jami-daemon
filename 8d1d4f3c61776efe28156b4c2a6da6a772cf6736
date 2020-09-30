@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "cf3bf906_ffa08927",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 777,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-30T14:12:27Z",
+      "side": 1,
+      "message": "I agree, I hate oneline with /*",
+      "parentUuid": "6b7750d2_44596002",
+      "revId": "8d1d4f3c61776efe28156b4c2a6da6a772cf6736",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "9b082442_251c246c",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 3
@@ -30,6 +48,24 @@
       "writtenOn": "2020-09-30T13:23:01Z",
       "side": 1,
       "message": "May be we should consider always using local (default) address in the SDP. This would be in in line with PJNATH semantics.",
+      "revId": "8d1d4f3c61776efe28156b4c2a6da6a772cf6736",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c4f78bb5_d565dfdd",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 787,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-09-30T14:12:27Z",
+      "side": 1,
+      "message": "This is the current code and if this needs to be changed, it will be done in another patch, not this one. The role of this patch is to avoid the waitForInit(35s) on the mainThread, the rest of the logic is the same as before :)",
+      "parentUuid": "9b082442_251c246c",
       "revId": "8d1d4f3c61776efe28156b4c2a6da6a772cf6736",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
