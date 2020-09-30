@@ -202,7 +202,7 @@ importAccounts(const std::string& archivePath, const std::string& password)
 
     try {
         const auto* char_file_begin = reinterpret_cast<const char*>(&file[0]);
-        const auto* char_file_end = reinterpret_cast<const char*>(&file[file.size()]);
+        const auto* char_file_end = char_file_begin + file.size();
 
         // Add
         std::string err;
