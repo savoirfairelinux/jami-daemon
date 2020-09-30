@@ -169,26 +169,27 @@ PortAudioLayer::startStream(AudioDeviceType stream)
 void
 PortAudioLayer::stopStream(AudioDeviceType stream)
 {
-    if (status_ != Status::Started)
-        return;
-
-    JAMI_DBG("Stop PortAudio Streams");
-
-    for (auto& st_ptr : pimpl_->streams_) {
-        if (!st_ptr)
-            continue;
-
-        auto err = Pa_StopStream(st_ptr);
-        if (err != paNoError)
-            JAMI_ERR("Pa_StopStream error : %s", Pa_GetErrorText(err));
-
-        err = Pa_CloseStream(st_ptr);
-        if (err != paNoError)
-            JAMI_ERR("Pa_StopStream error : %s", Pa_GetErrorText(err));
-    }
-
     {
         std::lock_guard<std::mutex> lock {mutex_};
+
+        if (status_ != Status::Started)
+            return;
+
+        JAMI_DBG("Stop PortAudio Streams");
+
+        for (auto& st_ptr : pimpl_->streams_) {
+            if (!st_ptr)
+                continue;
+
+            auto err = Pa_StopStream(st_ptr);
+            if (err != paNoError)
+                JAMI_ERR("Pa_StopStream error : %s", Pa_GetErrorText(err));
+
+            err = Pa_CloseStream(st_ptr);
+            if (err != paNoError)
+                JAMI_ERR("Pa_StopStream error : %s", Pa_GetErrorText(err));
+        }
+
         status_ = Status::Idle;
     }
 
