@@ -1,17 +1,11 @@
-From 753c3c04da7465622d6f0ce2efebdf428fba536f Mon Sep 17 00:00:00 2001
-From: jrun <darwinskernel@gmail.com>
-Date: Thu, 27 Feb 2020 11:34:40 -0500
-Subject: [PATCH 2/9] rfc2466
-
----
- pjnath/src/pjnath/ice_session.c | 170 ++++++++++++++++++++++++++++++++
- 1 file changed, 170 insertions(+)
+ pjnath/src/pjnath/ice_session.c | 176 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 176 insertions(+)
 
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index 960c55156..a50c21c94 100644
+index 2a4125bc5..542acf7b4 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
-@@ -30,6 +30,21 @@
+@@ -29,6 +29,21 @@
  #include <pj/rand.h>
  #include <pj/string.h>
  
@@ -33,7 +27,7 @@ index 960c55156..a50c21c94 100644
  /* String names for candidate types */
  static const char *cand_type_names[] =
  {
-@@ -712,6 +727,138 @@ static pj_uint32_t CALC_CAND_PRIO(pj_ice_sess *ice,
+@@ -703,6 +718,144 @@ static pj_uint32_t CALC_CAND_PRIO(pj_ice_sess *ice,
  #endif
  }
  
@@ -97,6 +91,7 @@ index 960c55156..a50c21c94 100644
 +	rtn = recv(fd, read_buffer, pagesize, 0);
 +	if(rtn < 0) {
 +	    perror ("recv(): ");
++	    free(deprecatedAddrs);
 +	    return;
 +	}
 +
@@ -105,6 +100,7 @@ index 960c55156..a50c21c94 100644
 +
 +	if (nlmsg_len < sizeof (struct nlmsghdr)) {
 +	    perror ("Received an uncomplete netlink packet");
++	    free(deprecatedAddrs);
 +	    return;
 +	}
 +
@@ -137,6 +133,7 @@ index 960c55156..a50c21c94 100644
 +							  (idx + 256)*sizeof(char)*PJ_INET6_ADDRSTRLEN);
 +			    if (newDeprecated == NULL) {
 +				perror("realloc error: abort");
++				free(deprecatedAddrs);
 +				return;
 +			    }
 +			    deprecatedAddrs = newDeprecated;
@@ -165,16 +162,19 @@ index 960c55156..a50c21c94 100644
 +	    *addresses = final;
 +	} else {
 +	    perror("realloc error: abort");
++	    free(deprecatedAddrs);
 +	}
++	} else {
++	    free(deprecatedAddrs);
 +    }
 +#endif
 +}
  
  /*
   * Add ICE candidate
-@@ -729,6 +876,29 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
- 					 unsigned *p_cand_id,
- 					 pj_ice_cand_transport transport)
+@@ -719,6 +872,29 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
+ 					 int addr_len,
+ 					 unsigned *p_cand_id)
  {
 +    /**
 +     * RFC 2466: an ip address can have the status DEPRECATED and SHOULD NOT
@@ -202,6 +202,3 @@ index 960c55156..a50c21c94 100644
      pj_ice_sess_cand *lcand;
      pj_status_t status = PJ_SUCCESS;
      char address[PJ_INET6_ADDRSTRLEN];
--- 
-2.24.1
-
