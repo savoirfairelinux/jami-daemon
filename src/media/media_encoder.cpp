@@ -608,7 +608,7 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
         encoderCtx->sample_rate = std::max(8000, audioOpts_.sampleRate);
         encoderCtx->time_base = AVRational {1, encoderCtx->sample_rate};
         if (audioOpts_.nbChannels > 2 || audioOpts_.nbChannels < 1) {
-            encoderCtx->channels = std::max(std::min(audioOpts_.nbChannels, 1), 2);
+            encoderCtx->channels = std::clamp(audioOpts_.nbChannels, 1, 2);
             JAMI_ERR() << "[" << encoderName
                        << "] Clamping invalid channel count: " << audioOpts_.nbChannels << " -> "
                        << encoderCtx->channels;
@@ -943,14 +943,18 @@ MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
         av_opt_set_int(encoderCtx, "drop-frame", 25, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "undershoot-pct", 95, AV_OPT_SEARCH_CHILDREN);
         // don't set encoderCtx->gop_size: let libvpx decide when to insert a keyframe
-        encoderCtx->slices = 2; // VP8E_SET_TOKEN_PARTITIONS
-        encoderCtx->qmin = 4;
-        encoderCtx->qmax = 56;
-        crf = std::min(encoderCtx->qmax, std::max((int) crf, encoderCtx->qmin));
+        av_opt_set_int(encoderCtx, "slices", 2, AV_OPT_SEARCH_CHILDREN); // VP8E_SET_TOKEN_PARTITIONS
+        av_opt_set_int(encoderCtx, "qmax", 56, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "qmin", 4, AV_OPT_SEARCH_CHILDREN);
+        crf = std::clamp((int) crf, 4, 56);
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
-        encoderCtx->rc_buffer_size = bufSize;
-        encoderCtx->rc_max_rate = maxBitrate;
-        JAMI_DBG("VP8 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, maxBitrate);
+        av_opt_set_int(encoderCtx, "b", maxBitrate, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
+        JAMI_DBG("VP8 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu",
+                 crf,
+                 maxBitrate / 1000,
+                 bufSize / 1000);
     }
 }
 
