@@ -342,12 +342,11 @@ SIPCall::sendSIPInfo(const char* const body, const char* const subtype)
 void
 SIPCall::updateRecState(bool state)
 {
-    std::string BODY = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                       "<media_control><vc_primitive><to_encoder>"
-                       "<recording_state="
-                       + std::to_string(state)
-                       + "/>"
-                         "</to_encoder></vc_primitive></media_control>";
+    std::string BODY =
+    "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+    "<media_control><vc_primitive><to_encoder>"
+    "<recording_state=" + std::to_string(state) + "/>"
+    "</to_encoder></vc_primitive></media_control>";
     // see https://tools.ietf.org/html/rfc5168 for XML Schema for Media Control details
 
     JAMI_DBG("Sending recording state via SIP INFO");
@@ -1213,8 +1212,10 @@ SIPCall::stopAllMedia()
     videortp_->stop();
 #endif
 #ifdef ENABLE_PLUGIN
-    jami::Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(
-        getCallId());
+    jami::Manager::instance()
+        .getJamiPluginManager()
+        .getCallServicesManager()
+        .clearAVSubject(getCallId());
 #endif
 }
 
@@ -1535,18 +1536,15 @@ SIPCall::InvSessionDeleter::operator()(pjsip_inv_session* inv) const noexcept
 }
 
 bool
-SIPCall::initIceMediaTransport(bool master,
-                               std::optional<IceTransportOptions> options,
-                               unsigned channel_num)
+SIPCall::initIceMediaTransport(bool master, unsigned channel_num)
 {
     JAMI_DBG("[call:%s] create media ICE transport", getCallId().c_str());
-    auto iceOptions = options == std::nullopt ? getAccount().getIceOptions() : *options;
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
     tmpMediaTransport_ = iceTransportFactory.createUTransport(getCallId().c_str(),
                                                               channel_num,
                                                               master,
-                                                              iceOptions);
+                                                              getAccount().getIceOptions());
     return static_cast<bool>(tmpMediaTransport_);
 }
 
