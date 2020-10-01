@@ -589,7 +589,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
              deviceId = deviceConnIt->first](Call::CallState, Call::ConnectionState state, int) {
                 if (state >= Call::ConnectionState::PROGRESSING) {
                     if (auto shared = w.lock()) {
-                        JAMI_ERR("@@@ ERASE");
                         std::lock_guard<std::mutex> lk(shared->onConnectionClosedMtx_);
                         shared->onConnectionClosed_.erase(deviceId);
                     }
