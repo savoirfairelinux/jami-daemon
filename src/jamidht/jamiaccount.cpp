@@ -641,7 +641,12 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
     JAMI_DBG("[call:%s] outgoing call connected to %s", call->getCallId().c_str(), to_id.c_str());
 
     auto opts = getIceOptions();
-    opts.onInitDone = [w = weak(), target = std::move(target), call](bool ok) {
+    std::promise<bool> created;
+    std::shared_future<bool> created_fut = created.get_future();
+    opts.onInitDone = [w = weak(),
+                       target = std::move(target),
+                       created_fut = std::move(created_fut),
+                       call](bool ok) {
         if (!ok) {
             JAMI_ERR("ICE medias are not initialized");
             return;
@@ -649,42 +654,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
         auto shared = w.lock();
         if (!shared or !call)
             return;
-
-        const auto localAddress = ip_utils::getInterfaceAddr(shared->getLocalInterface(),
-                                                             target.getFamily());
-
-        IpAddr addrSdp;
-        if (shared->getUPnPActive()) {
-            // use UPnP addr, or published addr if its set
-            addrSdp = shared->getPublishedSameasLocal() ? shared->getUPnPIpAddress()
-                                                        : shared->getPublishedIpAddress();
-        } else {
-            addrSdp = shared->isStunEnabled() or (not shared->getPublishedSameasLocal())
-                          ? shared->getPublishedIpAddress()
-                          : localAddress;
-        }
-
-        // fallback on local address
-        if (not addrSdp)
-            addrSdp = localAddress;
-
-        // Initialize the session using ULAW as default codec in case of early media
-        // The session should be ready to receive media once the first INVITE is sent, before
-        // the session initialization is completed
-        if (!getSystemCodecContainer()->searchCodecByName("PCMA", jami::MEDIA_AUDIO))
-            JAMI_WARN("Could not instantiate codec for early media");
-
-        // Building the local SDP offer
-        auto& sdp = call->getSDP();
-
-        sdp.setPublishedIP(addrSdp);
-        const bool created = sdp.createOffer(shared->getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                                             shared->getActiveAccountCodecInfoList(
-                                                 shared->videoEnabled_ and not call->isAudioOnly()
-                                                     ? MEDIA_VIDEO
-                                                     : MEDIA_NONE),
-                                             shared->getSrtpKeyExchange());
-        if (not created) {
+        if (not created_fut.get()) {
             JAMI_ERR("Could not send outgoing INVITE request for new call");
             return;
         }
@@ -706,6 +676,37 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
     call->setIPToIP(true);
     call->setPeerNumber(to_id);
     call->initIceMediaTransport(true, std::move(opts));
+
+    const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), target.getFamily());
+
+    IpAddr addrSdp;
+    if (getUPnPActive()) {
+        // use UPnP addr, or published addr if its set
+        addrSdp = getPublishedSameasLocal() ? getUPnPIpAddress() : getPublishedIpAddress();
+    } else {
+        addrSdp = isStunEnabled() or (not getPublishedSameasLocal()) ? getPublishedIpAddress()
+                                                                     : localAddress;
+    }
+
+    // fallback on local address
+    if (not addrSdp)
+        addrSdp = localAddress;
+
+    // Initialize the session using ULAW as default codec in case of early media
+    // The session should be ready to receive media once the first INVITE is sent, before
+    // the session initialization is completed
+    if (!getSystemCodecContainer()->searchCodecByName("PCMA", jami::MEDIA_AUDIO))
+        JAMI_WARN("Could not instantiate codec for early media");
+
+    // Building the local SDP offer
+    auto& sdp = call->getSDP();
+
+    sdp.setPublishedIP(addrSdp);
+    created.set_value(
+        sdp.createOffer(getActiveAccountCodecInfoList(MEDIA_AUDIO),
+                        getActiveAccountCodecInfoList(
+                            videoEnabled_ and not call->isAudioOnly() ? MEDIA_VIDEO : MEDIA_NONE),
+                        getSrtpKeyExchange()));
 }
 
 std::shared_ptr<Call>
