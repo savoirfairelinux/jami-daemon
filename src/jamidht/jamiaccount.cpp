@@ -646,48 +646,6 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
             JAMI_ERR("ICE medias are not initialized");
             return;
         }
-        auto shared = w.lock();
-        if (!shared or !call)
-            return;
-
-        const auto localAddress = ip_utils::getInterfaceAddr(shared->getLocalInterface(),
-                                                             target.getFamily());
-
-        IpAddr addrSdp;
-        if (shared->getUPnPActive()) {
-            // use UPnP addr, or published addr if its set
-            addrSdp = shared->getPublishedSameasLocal() ? shared->getUPnPIpAddress()
-                                                        : shared->getPublishedIpAddress();
-        } else {
-            addrSdp = shared->isStunEnabled() or (not shared->getPublishedSameasLocal())
-                          ? shared->getPublishedIpAddress()
-                          : localAddress;
-        }
-
-        // fallback on local address
-        if (not addrSdp)
-            addrSdp = localAddress;
-
-        // Initialize the session using ULAW as default codec in case of early media
-        // The session should be ready to receive media once the first INVITE is sent, before
-        // the session initialization is completed
-        if (!getSystemCodecContainer()->searchCodecByName("PCMA", jami::MEDIA_AUDIO))
-            JAMI_WARN("Could not instantiate codec for early media");
-
-        // Building the local SDP offer
-        auto& sdp = call->getSDP();
-
-        sdp.setPublishedIP(addrSdp);
-        const bool created = sdp.createOffer(shared->getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                                             shared->getActiveAccountCodecInfoList(
-                                                 shared->videoEnabled_ and not call->isAudioOnly()
-                                                     ? MEDIA_VIDEO
-                                                     : MEDIA_NONE),
-                                             shared->getSrtpKeyExchange());
-        if (not created) {
-            JAMI_ERR("Could not send outgoing INVITE request for new call");
-            return;
-        }
         // Note: pj_ice_strans_create can call onComplete in the same thread
         // This means that iceMutex_ in IceTransport can be locked when onInitDone is called
         // So, we need to run the call creation in the main thread
@@ -705,6 +663,42 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
     };
     call->setIPToIP(true);
     call->setPeerNumber(to_id);
+
+    const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), target.getFamily());
+
+    IpAddr addrSdp;
+    if (getUPnPActive()) {
+        // use UPnP addr, or published addr if its set
+        addrSdp = getPublishedSameasLocal() ? getUPnPIpAddress() : getPublishedIpAddress();
+    } else {
+        addrSdp = isStunEnabled() or (not getPublishedSameasLocal()) ? getPublishedIpAddress()
+                                                                     : localAddress;
+    }
+
+    // fallback on local address
+    if (not addrSdp)
+        addrSdp = localAddress;
+
+    // Initialize the session using ULAW as default codec in case of early media
+    // The session should be ready to receive media once the first INVITE is sent, before
+    // the session initialization is completed
+    if (!getSystemCodecContainer()->searchCodecByName("PCMA", jami::MEDIA_AUDIO))
+        JAMI_WARN("Could not instantiate codec for early media");
+
+    // Building the local SDP offer
+    auto& sdp = call->getSDP();
+
+    sdp.setPublishedIP(addrSdp);
+    auto created = sdp.createOffer(getActiveAccountCodecInfoList(MEDIA_AUDIO),
+                                   getActiveAccountCodecInfoList(
+                                       videoEnabled_ and not call->isAudioOnly() ? MEDIA_VIDEO
+                                                                                 : MEDIA_NONE),
+                                   getSrtpKeyExchange());
+
+    if (not created.get()) {
+        JAMI_ERR("Could not send outgoing INVITE request for new call");
+        return;
+    }
     call->initIceMediaTransport(true, std::move(opts));
 }
 
