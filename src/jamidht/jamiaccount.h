@@ -481,7 +481,9 @@ private:
 
     void startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri);
 
-    void onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, IpAddr target);
+    void onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
+                                 const std::string& to_id,
+                                 IpAddr target);
 
     /**
      * Set the internal state for this account, mainly used to manage account details from the

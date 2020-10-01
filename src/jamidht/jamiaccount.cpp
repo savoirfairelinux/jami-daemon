@@ -598,7 +598,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         auto remoted_address = it.channel->underlyingICE()->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
         try {
-            onConnectedOutgoingCall(*dev_call, toUri, remoted_address);
+            onConnectedOutgoingCall(dev_call, toUri, remoted_address);
         } catch (const VoipLinkException&) {
             // In this case, the main scenario is that SIPStartCall failed because
             // the ICE is dead and the TLS session didn't send any packet on that dead
@@ -633,18 +633,22 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 }
 
 void
-JamiAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, IpAddr target)
+JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
+                                     const std::string& to_id,
+                                     IpAddr target)
 {
-    JAMI_DBG("[call:%s] outgoing call connected to %s", call.getCallId().c_str(), to_id.c_str());
+    if (!call)
+        return;
+    JAMI_DBG("[call:%s] outgoing call connected to %s", call->getCallId().c_str(), to_id.c_str());
 
     auto opts = getIceOptions();
-    opts.onInitDone = [w = weak(), target = std::move(target), &call](bool ok) {
+    opts.onInitDone = [w = weak(), target = std::move(target), call](bool ok) {
         if (!ok) {
             JAMI_ERR("ICE medias are not initialized");
             return;
         }
         auto shared = w.lock();
-        if (!shared)
+        if (!shared or !call)
             return;
 
         const auto localAddress = ip_utils::getInterfaceAddr(shared->getLocalInterface(),
@@ -672,12 +676,12 @@ JamiAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
             JAMI_WARN("Could not instantiate codec for early media");
 
         // Building the local SDP offer
-        auto& sdp = call.getSDP();
+        auto& sdp = call->getSDP();
 
         sdp.setPublishedIP(addrSdp);
         const bool created = sdp.createOffer(shared->getActiveAccountCodecInfoList(MEDIA_AUDIO),
                                              shared->getActiveAccountCodecInfoList(
-                                                 shared->videoEnabled_ and not call.isAudioOnly()
+                                                 shared->videoEnabled_ and not call->isAudioOnly()
                                                      ? MEDIA_VIDEO
                                                      : MEDIA_NONE),
                                              shared->getSrtpKeyExchange());
@@ -690,19 +694,19 @@ JamiAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
         // So, we need to run the call creation in the main thread
         // Also, we do not directly call SIPStartCall before receiving onInitDone, because
         // there is an inside waitForInitialization that can block the thread.
-        runOnMainThread([w = std::move(w), target = std::move(target), &call] {
+        runOnMainThread([w = std::move(w), target = std::move(target), call = std::move(call)] {
             auto shared = w.lock();
             if (!shared)
                 return;
 
-            if (not shared->SIPStartCall(call, target)) {
+            if (not shared->SIPStartCall(*call, target)) {
                 JAMI_ERR("Could not send outgoing INVITE request for new call");
             }
         });
     };
-    call.setIPToIP(true);
-    call.setPeerNumber(to_id);
-    call.initIceMediaTransport(true, std::move(opts));
+    call->setIPToIP(true);
+    call->setPeerNumber(to_id);
+    call->initIceMediaTransport(true, std::move(opts));
 }
 
 std::shared_ptr<Call>
@@ -1724,7 +1728,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
                                             if (auto call = wcall.lock()) {
                                                 if (auto account = waccount.lock()) {
                                                     // Start SIP layer when TLS negotiation is successful
-                                                    account->onConnectedOutgoingCall(*call,
+                                                    account->onConnectedOutgoingCall(call,
                                                                                      remote_id,
                                                                                      remote_addr);
                                                     return;
@@ -3726,7 +3730,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         if (auto ice = socket->underlyingICE()) {
             auto remoted_address = ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
             try {
-                onConnectedOutgoingCall(*pendingCall, peerId, remoted_address);
+                onConnectedOutgoingCall(pendingCall, peerId, remoted_address);
             } catch (const VoipLinkException&) {
                 // In this case, the main scenario is that SIPStartCall failed because
                 // the ICE is dead and the TLS session didn't send any packet on that dead
