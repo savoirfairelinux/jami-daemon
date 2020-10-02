@@ -49,6 +49,7 @@ class Task;
 class NameDirectory
 {
 public:
+    constexpr static const char DEFAULT_SERVER_HOST[] = "https://ns.jami.net";
     enum class Response : int { found = 0, invalidResponse, notFound, error };
     enum class RegistrationResponse : int {
         success = 0,
