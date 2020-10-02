@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "eee2176c_28d490a4",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 514,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-10-02T16:13:18Z",
+      "side": 1,
+      "message": "don\u0027t run on ioThread (non-blocking anymore)",
+      "range": {
+        "startLine": 509,
+        "startChar": 28,
+        "endLine": 514,
+        "endChar": 31
+      },
+      "revId": "53f2800708b04fc7cd04d1283bad07d2f3e2a4bf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
