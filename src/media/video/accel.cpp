@@ -102,13 +102,14 @@ static const std::list<HardwareAPI> apiListEnc = {
      {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC},
      {},
      false},
-    {"qsv",
-     AV_HWDEVICE_TYPE_QSV,
-     AV_PIX_FMT_QSV,
-     AV_PIX_FMT_NV12,
-     {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8},
-     {},
-     false},
+    // Disable temporarily QSVENC
+    // {"qsv",
+    //  AV_HWDEVICE_TYPE_QSV,
+    //  AV_PIX_FMT_QSV,
+    //  AV_PIX_FMT_NV12,
+    //  {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8},
+    //  {},
+    //  false},
 };
 
 HardwareAccel::HardwareAccel(AVCodecID id,
