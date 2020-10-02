@@ -508,12 +508,12 @@ ServerAccountManager::searchUser(const std::string& query, SearchCallback cb)
                 auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
                 if (response.status_code >= 200 && response.status_code < 300) {
                     try {
-                        Json::Value::ArrayIndex rcount = json.size();
+                        Json::Value::ArrayIndex rcount = json["profiles"].size();
                         std::vector<std::map<std::string, std::string>> results;
                         results.reserve(rcount);
                         JAMI_WARN("[Search] Got server response: %s", response.body.c_str());
                         for (Json::Value::ArrayIndex i = 0; i < rcount; i++) {
-                            const auto& ruser = json[i];
+                            const auto& ruser = json["profiles"][i];
                             std::map<std::string, std::string> user;
                             for (const auto& member : ruser.getMemberNames()) {
                                 const auto& rmember = ruser[member];
