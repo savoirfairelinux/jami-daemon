@@ -92,6 +92,7 @@ Conference::Conference()
                                  and not videoMixer->getActiveParticipant()); // by default, local
                                                                               // is shown as active
                 subCalls.erase(it->second);
+                auto isModerator = shared->isModerator(uri);
                 newInfo.emplace_back(ParticipantInfo {std::move(uri),
                                                       active,
                                                       info.x,
@@ -100,7 +101,7 @@ Conference::Conference()
                                                       info.h,
                                                       !info.hasVideo,
                                                       false,
-                                                      shared->isModerator(uri)});
+                                                      isModerator});
             }
             lk.unlock();
             // Handle participants not present in the video mixer
@@ -108,15 +109,8 @@ Conference::Conference()
                 std::string uri = "";
                 if (auto call = Manager::instance().callFactory.getCall<SIPCall>(subCall))
                     uri = call->getPeerNumber();
-                ParticipantInfo {std::move(uri),
-                                 false,
-                                 0,
-                                 0,
-                                 0,
-                                 0,
-                                 true,
-                                 false,
-                                 shared->isModerator(uri)};
+                auto isModerator = shared->isModerator(uri);
+                ParticipantInfo {std::move(uri), false, 0, 0, 0, 0, true, false, isModerator};
             }
 
             {
@@ -518,8 +512,8 @@ Conference::isModerator(const std::string& uri) const
 {
     return std::find_if(moderators_.begin(),
                         moderators_.end(),
-                        [&uri](const std::string& master) {
-                            return master.find(uri) != std::string::npos;
+                        [&uri](const std::string& moderator) {
+                            return moderator.find(uri) != std::string::npos;
                         })
            != moderators_.end();
 }
