@@ -528,7 +528,6 @@ void
 ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
                                           const std::shared_ptr<dht::crypto::Certificate>& cert)
 {
-    auto vid = req.id;
     auto deviceId = req.from.toString();
     JAMI_INFO() << account << "New connection requested by " << deviceId.c_str();
     if (!iceReqCb_ || !iceReqCb_(deviceId)) {
@@ -558,135 +557,171 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         ir.ready = true;
         ir.cv.notify_one();
     };
+    ice_config.onInitDone = [w = weak(), deviceId, req = std::move(req)](bool ok) {
+        auto shared = w.lock();
+        if (!shared)
+            return;
+        if (!ok) {
+            JAMI_ERR("Cannot initialize ICE session.");
+            if (shared->connReadyCb_)
+                shared->connReadyCb_(deviceId, "", nullptr);
+            return;
+        }
+
+        dht::ThreadPool::io().run([w = std::move(w), deviceId, req = std::move(req)] {
+            auto shared = w.lock();
+            if (!shared)
+                return;
+            auto tit = shared->connectionsInfos_.find(deviceId);
+            if (tit == shared->connectionsInfos_.end())
+                return;
+            auto it = tit->second.find(req.id);
+            if (it == tit->second.end())
+                return;
+
+            std::unique_lock<std::mutex> lk {it->second.mutex_};
+            auto& ice = it->second.ice_;
+            if (!ice) {
+                JAMI_ERR("No ICE detected");
+                if (shared->connReadyCb_)
+                    shared->connReadyCb_(deviceId, "", nullptr);
+                return;
+            }
+
+            shared->account.registerDhtAddress(*ice);
+
+            auto sdp = IceTransport::parse_SDP(req.ice_msg, *ice);
+            auto hasPubIp = shared->hasPublicIp(sdp);
+            if (not ice->start({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
+                JAMI_ERR("[Account:%s] start ICE failed - fallback to TURN",
+                         shared->account.getAccountID().c_str());
+                ice = nullptr;
+                if (shared->connReadyCb_)
+                    shared->connReadyCb_(deviceId, "", nullptr);
+                return;
+            }
+
+            if (!hasPubIp) {
+                ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
+                if (ice->isRunning()) {
+                    JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP",
+                             shared->account.getAccountID().c_str());
+                } else {
+                    JAMI_ERR("[Account:%s] ICE negotation failed",
+                             shared->account.getAccountID().c_str());
+                    ice = nullptr;
+                    if (shared->connReadyCb_)
+                        shared->connReadyCb_(deviceId, "", nullptr);
+                    return;
+                }
+            }
+
+            // NOTE: This is a shortest version of a real SDP message to save some bits
+            auto iceAttributes = ice->getLocalAttributes();
+            std::stringstream icemsg;
+            icemsg << iceAttributes.ufrag << "\n";
+            icemsg << iceAttributes.pwd << "\n";
+            for (const auto& addr : ice->getLocalCandidates(0)) {
+                icemsg << addr << "\n";
+            }
+
+            // Send PeerConnection response
+            PeerConnectionRequest val;
+            val.id = req.id;
+            val.ice_msg = icemsg.str();
+            val.isAnswer = true;
+            auto value = std::make_shared<dht::Value>(std::move(val));
+            value->user_type = "peer_request";
+
+            JAMI_DBG() << shared->account << "[CNX] connection accepted, DHT reply to " << req.from;
+            shared->account.dht()->putEncrypted(dht::InfoHash::get(PeerConnectionRequest::key_prefix
+                                                                   + deviceId),
+                                                req.from,
+                                                value);
+
+            if (hasPubIp) {
+                ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
+                if (ice->isRunning()) {
+                    JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP",
+                             shared->account.getAccountID().c_str());
+                } else {
+                    JAMI_ERR("[Account:%s] ICE negotation failed",
+                             shared->account.getAccountID().c_str());
+                    ice = nullptr;
+                    if (shared->connReadyCb_)
+                        shared->connReadyCb_(deviceId, "", nullptr);
+                    return;
+                }
+            }
+
+            // Build socket
+            std::lock_guard<std::mutex> lknrs(shared->nonReadySocketsMutex_);
+            auto endpoint = std::make_unique<IceSocketEndpoint>(std::shared_ptr<IceTransport>(
+                                                                    std::move(ice)),
+                                                                false);
+
+            // init TLS session
+            auto ph = req.from;
+            auto tlsSocket = std::make_unique<TlsSocketEndpoint>(
+                std::move(endpoint),
+                shared->account.identity(),
+                shared->account.dhParams(),
+                [ph, w = w](const dht::crypto::Certificate& cert) {
+                    auto shared = w.lock();
+                    if (!shared)
+                        return false;
+                    dht::InfoHash peer_h;
+                    return shared->validatePeerCertificate(cert, peer_h) && peer_h == ph;
+                });
+
+            auto& nonReadyIt = shared->nonReadySockets_[deviceId][req.id];
+            nonReadyIt = std::move(tlsSocket);
+            nonReadyIt->setOnReady([w = w, deviceId, vid = std::move(req.id)](bool ok) {
+                auto shared = w.lock();
+                if (!shared)
+                    return;
+                if (shared->multiplexedSockets_[deviceId].find(vid)
+                    != shared->multiplexedSockets_[deviceId].end())
+                    return;
+                if (!ok) {
+                    JAMI_ERR() << "TLS connection failure for peer " << deviceId;
+                    if (shared->connReadyCb_)
+                        shared->connReadyCb_(deviceId, "", nullptr);
+                } else {
+                    // The socket is ready, store it in multiplexedSockets_
+                    std::lock_guard<std::mutex> lk(shared->msocketsMutex_);
+                    std::lock_guard<std::mutex> lknrs(shared->nonReadySocketsMutex_);
+                    auto nonReadyIt = shared->nonReadySockets_.find(deviceId);
+                    if (nonReadyIt != shared->nonReadySockets_.end()) {
+                        JAMI_DBG("Connection to %s is ready", deviceId.c_str());
+                        shared->addNewMultiplexedSocket(deviceId,
+                                                        vid,
+                                                        std::move(nonReadyIt->second[vid]));
+                        nonReadyIt->second.erase(vid);
+                        if (nonReadyIt->second.empty()) {
+                            shared->nonReadySockets_.erase(nonReadyIt);
+                        }
+                    }
+                }
+            });
+        });
+    };
 
     // 1. Create a new Multiplexed Socket
 
     // Negotiate a new ICE socket
     auto& connectionInfo = connectionsInfos_[deviceId][req.id];
+    std::unique_lock<std::mutex> lk {connectionInfo.mutex_};
     connectionInfo.ice_ = iceTransportFactory.createUTransport(account.getAccountID().c_str(),
                                                                1,
                                                                true,
                                                                ice_config);
-    auto& ice = connectionInfo.ice_;
-
-    if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
+    if (not connectionInfo.ice_) {
         JAMI_ERR("Cannot initialize ICE session.");
-        ice = nullptr;
         if (connReadyCb_)
             connReadyCb_(deviceId, "", nullptr);
         return;
     }
-
-    account.registerDhtAddress(*ice);
-
-    auto sdp = IceTransport::parse_SDP(req.ice_msg, *ice);
-    auto hasPubIp = hasPublicIp(sdp);
-    if (not ice->start({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
-        JAMI_ERR("[Account:%s] start ICE failed - fallback to TURN", account.getAccountID().c_str());
-        ice = nullptr;
-        if (connReadyCb_)
-            connReadyCb_(deviceId, "", nullptr);
-        return;
-    }
-
-    if (!hasPubIp) {
-        ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
-        if (ice->isRunning()) {
-            JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP",
-                     account.getAccountID().c_str());
-        } else {
-            JAMI_ERR("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
-            ice = nullptr;
-            if (connReadyCb_)
-                connReadyCb_(deviceId, "", nullptr);
-            return;
-        }
-    }
-
-    // NOTE: This is a shortest version of a real SDP message to save some bits
-    auto iceAttributes = ice->getLocalAttributes();
-    std::stringstream icemsg;
-    icemsg << iceAttributes.ufrag << "\n";
-    icemsg << iceAttributes.pwd << "\n";
-    for (const auto& addr : ice->getLocalCandidates(0)) {
-        icemsg << addr << "\n";
-    }
-
-    // Send PeerConnection response
-    PeerConnectionRequest val;
-    val.id = req.id;
-    val.ice_msg = icemsg.str();
-    val.isAnswer = true;
-    auto value = std::make_shared<dht::Value>(std::move(val));
-    value->user_type = "peer_request";
-
-    JAMI_DBG() << account << "[CNX] connection accepted, DHT reply to " << req.from;
-    account.dht()->putEncrypted(dht::InfoHash::get(PeerConnectionRequest::key_prefix + deviceId),
-                                req.from,
-                                value);
-
-    if (hasPubIp) {
-        ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
-        if (ice->isRunning()) {
-            JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP",
-                     account.getAccountID().c_str());
-        } else {
-            JAMI_ERR("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
-            ice = nullptr;
-            if (connReadyCb_)
-                connReadyCb_(deviceId, "", nullptr);
-            return;
-        }
-    }
-
-    // Build socket
-    std::lock_guard<std::mutex> lknrs(nonReadySocketsMutex_);
-    auto endpoint = std::make_unique<IceSocketEndpoint>(std::shared_ptr<IceTransport>(
-                                                            std::move(ice)),
-                                                        false);
-
-    // init TLS session
-    auto ph = req.from;
-    auto tlsSocket = std::make_unique<TlsSocketEndpoint>(
-        std::move(endpoint),
-        account.identity(),
-        account.dhParams(),
-        [ph, w = weak()](const dht::crypto::Certificate& cert) {
-            auto shared = w.lock();
-            if (!shared)
-                return false;
-            dht::InfoHash peer_h;
-            return shared->validatePeerCertificate(cert, peer_h) && peer_h == ph;
-        });
-
-    auto& nonReadyIt = nonReadySockets_[deviceId][vid];
-    nonReadyIt = std::move(tlsSocket);
-    nonReadyIt->setOnReady([w = weak(), deviceId, vid = std::move(vid)](bool ok) {
-        auto shared = w.lock();
-        if (!shared)
-            return;
-        if (shared->multiplexedSockets_[deviceId].find(vid)
-            != shared->multiplexedSockets_[deviceId].end())
-            return;
-        if (!ok) {
-            JAMI_ERR() << "TLS connection failure for peer " << deviceId;
-            if (shared->connReadyCb_)
-                shared->connReadyCb_(deviceId, "", nullptr);
-        } else {
-            // The socket is ready, store it in multiplexedSockets_
-            std::lock_guard<std::mutex> lk(shared->msocketsMutex_);
-            std::lock_guard<std::mutex> lknrs(shared->nonReadySocketsMutex_);
-            auto nonReadyIt = shared->nonReadySockets_.find(deviceId);
-            if (nonReadyIt != shared->nonReadySockets_.end()) {
-                JAMI_DBG("Connection to %s is ready", deviceId.c_str());
-                shared->addNewMultiplexedSocket(deviceId, vid, std::move(nonReadyIt->second[vid]));
-                nonReadyIt->second.erase(vid);
-                if (nonReadyIt->second.empty()) {
-                    shared->nonReadySockets_.erase(nonReadyIt);
-                }
-            }
-        }
-    });
 }
 
 void
