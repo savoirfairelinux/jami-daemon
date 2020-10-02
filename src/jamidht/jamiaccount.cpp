@@ -1228,6 +1228,9 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     if (nameServerIt != config.end() && !nameServerIt->second.empty()) {
                         nameServer_ = nameServerIt->second;
                     }
+                    if (nameServer_.empty()) {
+                        nameServer_ = NameDirectory::DEFAULT_SERVER_HOST;
+                    }
                     auto displayNameIt = config.find(DRing::Account::ConfProperties::DISPLAYNAME);
                     if (displayNameIt != config.end() && !displayNameIt->second.empty()) {
                         displayName_ = displayNameIt->second;
