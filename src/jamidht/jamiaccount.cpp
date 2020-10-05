@@ -509,12 +509,36 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
     dht::InfoHash peer_account(toUri);
 
-    auto sendRequest = [this, wCall, toUri](const std::string& deviceId) {
+    // Call connected devices
+    std::set<std::string> devices;
+    std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
+    auto& sipConns = sipConnections_[toUri];
+    // NOTE: dummyCall is a call used to avoid to mark the call as failed if the
+    // cached connection is failing with ICE (close event still not detected).
+    auto& manager = Manager::instance();
+    auto dummyCall = manager.callFactory.newCall<SIPCall, JamiAccount>(*this,
+                                                                       manager.getNewCallID(),
+                                                                       Call::CallType::OUTGOING,
+                                                                       call->getDetails());
+    dummyCall->setIPToIP(true);
+    dummyCall->setSecure(isTlsEnabled());
+    call->addSubCall(*dummyCall);
+    auto sendRequest = [this,
+                        wCall,
+                        toUri,
+                        dummyCall = std::move(dummyCall)](const std::string& deviceId,
+                                                          bool eraseDummy) {
+        if (eraseDummy) {
+            // Mark the temp call as failed to stop the main call if necessary
+            if (dummyCall)
+                dummyCall->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
+            return;
+        }
         auto call = wCall.lock();
         if (not call)
             return;
         auto state = call->getConnectionState();
-        if (state > Call::ConnectionState::PROGRESSING)
+        if (state != Call::ConnectionState::PROGRESSING and state != Call::ConnectionState::TRYING)
             return;
 
         auto dev_call = Manager::instance().callFactory.newCall<SIPCall, JamiAccount>(
@@ -535,20 +559,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         requestSIPConnection(toUri, deviceId);
     };
 
-    // Call connected devices
-    std::set<std::string> devices;
-    std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
-    auto& sipConns = sipConnections_[toUri];
-    // NOTE: dummyCall is a call used to avoid to mark the call as failed if the
-    // cached connection is failing with ICE (close event still not detected).
-    auto& manager = Manager::instance();
-    auto dummyCall = manager.callFactory.newCall<SIPCall, JamiAccount>(*this,
-                                                                       manager.getNewCallID(),
-                                                                       Call::CallType::OUTGOING,
-                                                                       call->getDetails());
-    dummyCall->setIPToIP(true);
-    dummyCall->setSecure(isTlsEnabled());
-    call->addSubCall(*dummyCall);
     for (auto deviceConnIt = sipConns.begin(); deviceConnIt != sipConns.end(); ++deviceConnIt) {
         if (deviceConnIt->second.empty())
             continue;
@@ -587,10 +597,16 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         call->addStateListener(
             [w = weak(),
              deviceId = deviceConnIt->first](Call::CallState, Call::ConnectionState state, int) {
-                if (state >= Call::ConnectionState::PROGRESSING) {
+                if (state != Call::ConnectionState::PROGRESSING
+                    and state != Call::ConnectionState::TRYING) {
                     if (auto shared = w.lock()) {
                         std::lock_guard<std::mutex> lk(shared->onConnectionClosedMtx_);
-                        shared->onConnectionClosed_.erase(deviceId);
+                        auto it = shared->onConnectionClosed_.find(deviceId);
+                        if (it != shared->onConnectionClosed_.end()) {
+                            if (it->second)
+                                it->second(deviceId, true);
+                            shared->onConnectionClosed_.erase(it);
+                        }
                     }
                 }
             });
@@ -616,12 +632,9 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             // Test if already sent via a SIP transport
             if (devices.find(dev.toString()) != devices.end())
                 return;
-            sendRequest(dev.toString());
+            sendRequest(dev.toString(), false);
         },
-        [wCall, dummyCall](bool ok) {
-            // Mark the temp call as failed to stop the main call if necessary
-            if (dummyCall)
-                dummyCall->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
+        [wCall](bool ok) {
             if (not ok) {
                 if (auto call = wCall.lock()) {
                     JAMI_WARN("[call:%s] no devices found", call->getCallId().c_str());
@@ -3697,7 +3710,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         // The connection can be closed during the SIP initialization, so
         // if this happens, the request should be re-sent to ask for a new
         // SIP channel to make the call pass through
-        std::function<void(const std::string&)> cb;
+        std::function<void(const std::string&, bool)> cb;
         {
             std::lock_guard<std::mutex> lk(shared->onConnectionClosedMtx_);
             if (shared->onConnectionClosed_[deviceId]) {
@@ -3707,7 +3720,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         }
         if (cb) {
             JAMI_WARN("An outgoing call was in progress while shutdown, relaunch the request");
-            cb(deviceId);
+            cb(deviceId, false);
         }
     };
     auto sip_tr = link_.sipTransportBroker->getChanneledTransport(socket, std::move(onShutdown));
@@ -3728,6 +3741,9 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         pc = std::move(pendingCalls_[deviceId]);
     }
     for (auto& pendingCall : pc) {
+        if (pendingCall->getConnectionState() != Call::ConnectionState::TRYING
+            and pendingCall->getConnectionState() != Call::ConnectionState::PROGRESSING)
+            continue;
         pendingCall->setTransport(sip_tr);
         pendingCall->setState(Call::ConnectionState::PROGRESSING);
         if (auto ice = socket->underlyingICE()) {
