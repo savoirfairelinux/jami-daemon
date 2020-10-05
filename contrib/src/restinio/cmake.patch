@@ -1,22 +1,40 @@
- dev/restinio/CMakeLists.txt | 8 +++-----
- 1 file changed, 3 insertions(+), 5 deletions(-)
+From 2c0b6f5e5ba04d7a74e8406a3df1fd433680599d Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Adrien=20B=C3=A9raud?= <adrien.beraud@savoirfairelinux.com>
+Date: Fri, 1 Nov 2019 10:51:08 -0400
+Subject: [PATCH] look for official http-parser
 
-diff --git a/dev/restinio/CMakeLists.txt b/dev/restinio/CMakeLists.txt
-index df2ecdf..e5f5489 100644
---- a/dev/restinio/CMakeLists.txt
-+++ b/dev/restinio/CMakeLists.txt
-@@ -10,11 +10,9 @@ add_library(${RESTINIO} INTERFACE)
- add_library(restinio::restinio ALIAS ${RESTINIO})
+---
+ dev/CMakeLists.txt | 13 +++----------
+ 1 file changed, 3 insertions(+), 10 deletions(-)
+
+diff --git a/dev/CMakeLists.txt b/dev/CMakeLists.txt
+index 515e8ba7..baf8797a 100644
+--- a/dev/CMakeLists.txt
++++ b/dev/CMakeLists.txt
+@@ -86,11 +86,8 @@ IF (RESTINIO_MASTER_PROJECT)
+ 		ENDIF ()
  
- IF (${CMAKE_VERSION} VERSION_LESS "3.8.0")
--	set_target_properties(${RESTINIO} PROPERTIES
--		CXX_STANDARD 14
--		CXX_STANDARD_REQUIRED YES
--		CXX_EXTENSIONS NO
--	)
-+	set (CMAKE_CXX_STANDARD 14)
-+	set (CMAKE_CXX_STANDARD_REQUIRED on)
-+	set (CMAKE_CXX_EXTENSIONS off)
- ELSE ()
- 	target_compile_features(${RESTINIO} INTERFACE cxx_std_14)
- ENDIF ()
+ 		# HTTP parser
+-		IF (RESTINIO_USE_EXTERNAL_HTTP_PARSER)
+-			find_package(http-parser REQUIRED)
+-		ELSE ()
+-			find_package(unofficial-http-parser CONFIG REQUIRED)
+-		ENDIF ()
++		find_path(http-parser_INCLUDE http_parser.h)
++		find_library(http-parser_LIBRARY http_parser)
+ 
+ 		# fmtlib
+ 		find_package(fmt REQUIRED)
+@@ -100,11 +97,7 @@ IF (RESTINIO_MASTER_PROJECT)
+ 		include_directories("${CMAKE_SOURCE_DIR}/clara")
+ 
+ 		# HTTP parser
+-		IF (RESTINIO_USE_EXTERNAL_HTTP_PARSER)
+-			find_package(http-parser REQUIRED)
+-		ELSE ()
+-			add_subdirectory(nodejs/http_parser)
+-		ENDIF ()
++		add_subdirectory(nodejs/http_parser)
+ 
+ 		# fmtlib
+ 		add_subdirectory(fmt)

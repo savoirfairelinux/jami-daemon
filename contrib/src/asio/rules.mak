@@ -18,7 +18,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-ASIO_VERSION := asio-1-12-2
+ASIO_VERSION := be7badc31abcc395cf868de6a1e240c2350bdbf2
 ASIO_URL := https://github.com/chriskohlhoff/asio/archive/$(ASIO_VERSION).tar.gz
 
 # Pure dependency of restinio: do not add to PKGS.

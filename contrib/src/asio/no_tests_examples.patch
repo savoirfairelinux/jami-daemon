@@ -1,9 +1,17 @@
-Description: Disable building tests and examples
-Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+From 1ba8c0b03426b88e00dab833dd6e54cc91f595ec Mon Sep 17 00:00:00 2001
+From: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Date: Tue, 6 Oct 2020 09:42:45 -0400
+Subject: Disable building tests and examples
 
+---
+ src/Makefile.am | 20 --------------------
+ 1 file changed, 20 deletions(-)
+
+diff --git a/src/Makefile.am b/src/Makefile.am
+index e9b20e60..f2fbcefe 100644
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -1,17 +1,1 @@
+@@ -1,23 +1,3 @@
 -if !STANDALONE
 -EXAMPLES_CPP03 = examples/cpp03
 -endif
@@ -16,9 +24,17 @@ Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
 -EXAMPLES_CPP14 = examples/cpp14
 -endif
 -
--SUBDIRS = $(EXAMPLES_CPP03) $(EXAMPLES_CPP11) $(EXAMPLES_CPP14) tests
+-if HAVE_CXX17
+-EXAMPLES_CPP17 = examples/cpp17
+-endif
+-
+-SUBDIRS = $(EXAMPLES_CPP03) $(EXAMPLES_CPP11) $(EXAMPLES_CPP14) $(EXAMPLES_CPP17) tests
 -
 -DIST_SUBDIRS = examples/cpp03 examples/cpp11 examples/cpp14 examples/cpp17 tests
 -
  EXTRA_DIST = \
+    Makefile.mgw \
+    Makefile.msc \
+--
+2.26.2
 
