@@ -46,7 +46,7 @@ ChanneledOutgoingTransfer::~ChanneledOutgoingTransfer()
 std::string
 ChanneledOutgoingTransfer::peer() const
 {
-    return channel_ ? "" : channel_->deviceId();
+    return channel_ ? "" : channel_->deviceId().toString();
 }
 
 void
