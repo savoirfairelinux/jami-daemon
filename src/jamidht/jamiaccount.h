@@ -743,7 +743,7 @@ private:
      * @param deviceId      The device to ask
      * @note triggers cacheSIPConnection
      */
-    void requestSIPConnection(const std::string& peerId, const std::string& deviceId);
+    void requestSIPConnection(const std::string& peerId, const dht::InfoHash& deviceId);
     /**
      * Store a new SIP connection into sipConnections_
      * @param socket    The new sip channel

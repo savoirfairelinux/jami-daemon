@@ -250,7 +250,7 @@ DhtPeerConnector::requestConnection(
     };
 
     if (isVCard) {
-        acc->connectionManager().connectDevice(peer_id,
+        acc->connectionManager().connectDevice(peer_h,
                                                "vcard://" + std::to_string(tid),
                                                channelReadyCb);
         return;
@@ -277,7 +277,7 @@ DhtPeerConnector::requestConnection(
                 return;
             }
 
-            acc->connectionManager().connectDevice(dev_h.toString(),
+            acc->connectionManager().connectDevice(dev_h,
                                                    "file://" + std::to_string(tid),
                                                    channelReadyCb);
         },
