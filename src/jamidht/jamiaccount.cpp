@@ -49,7 +49,6 @@
 #include "ice_transport.h"
 
 #include "p2p.h"
-#include "connectionmanager.h"
 
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
@@ -509,7 +508,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
     dht::InfoHash peer_account(toUri);
 
-    auto sendRequest = [this, wCall, toUri](const std::string& deviceId) {
+    auto sendRequest = [this, wCall, toUri](const DeviceId& deviceId) {
         auto call = wCall.lock();
         if (not call)
             return;
@@ -526,7 +525,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         call->addSubCall(*dev_call);
         {
             std::lock_guard<std::mutex> lk(pendingCallsMutex_);
-            pendingCalls_[deviceId].emplace_back(dev_call);
+            pendingCalls_[deviceId.toString()].emplace_back(dev_call);
         }
 
         JAMI_WARN("[call %s] No channeled socket with this peer. Send request",
@@ -616,7 +615,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             // Test if already sent via a SIP transport
             if (devices.find(dev.toString()) != devices.end())
                 return;
-            sendRequest(dev.toString());
+            sendRequest(dev);
         },
         [wCall, dummyCall](bool ok) {
             // Mark the temp call as failed to stop the main call if necessary
@@ -1883,7 +1882,7 @@ JamiAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
         lk.unlock();
         for (const auto& device : devices) {
             if (connectionManager_)
-                connectionManager_->closeConnectionsWith(device);
+                connectionManager_->closeConnectionsWith(DeviceId(device));
         }
     }
 
@@ -2143,13 +2142,12 @@ JamiAccount::doRegister_()
         // Init connection manager
         if (!connectionManager_)
             connectionManager_ = std::make_unique<ConnectionManager>(*this);
-        connectionManager_->onDhtConnected(accountManager_->getInfo()->deviceId);
-        connectionManager_->onICERequest([this](const std::string& deviceId) {
+        connectionManager_->onDhtConnected(DeviceId(accountManager_->getInfo()->deviceId));
+        connectionManager_->onICERequest([this](const DeviceId& deviceId) {
             std::promise<bool> accept;
             std::future<bool> fut = accept.get_future();
             accountManager_->findCertificate(
-                dht::InfoHash(deviceId),
-                [this, &accept](const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                deviceId, [this, &accept](const std::shared_ptr<dht::crypto::Certificate>& cert) {
                     dht::InfoHash peer_account_id;
                     auto res = accountManager_->onPeerCertificate(cert,
                                                                   dhtPublicInCalls_,
@@ -2167,7 +2165,7 @@ JamiAccount::doRegister_()
             return result;
         });
         connectionManager_->onChannelRequest(
-            [this](const std::string& /* deviceId */, const std::string& name) {
+            [this](const DeviceId& /* deviceId */, const std::string& name) {
                 auto isFile = name.substr(0, 7) == "file://";
                 auto isVCard = name.substr(0, 8) == "vcard://";
                 if (name == "sip") {
@@ -2184,11 +2182,11 @@ JamiAccount::doRegister_()
                 }
                 return false;
             });
-        connectionManager_->onConnectionReady([this](const std::string& deviceId,
+        connectionManager_->onConnectionReady([this](const DeviceId& deviceId,
                                                      const std::string& name,
                                                      std::shared_ptr<ChannelSocket> channel) {
             if (channel) {
-                auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
+                auto cert = tls::CertificateStore::instance().getCertificate(deviceId.toString());
                 if (!cert || !cert->issuer)
                     return;
                 auto peerId = cert->issuer->getId().toString();
@@ -2912,7 +2910,7 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
 
     for (const auto& device : devices) {
         if (connectionManager_)
-            connectionManager_->closeConnectionsWith(device);
+            connectionManager_->closeConnectionsWith(DeviceId(device));
     }
 }
 
@@ -3079,7 +3077,7 @@ JamiAccount::sendTextMessage(const std::string& to,
                             std::unique_lock<std::mutex> lk(acc->sipConnectionsMtx_);
                             acc->sipConnections_[c->to].erase(c->deviceId);
                         }
-                        acc->connectionManager_->closeConnectionsWith(c->deviceId);
+                        acc->connectionManager_->closeConnectionsWith(DeviceId(c->deviceId));
                         // This MUST be done after closing the connection to avoid race condition
                         // with messageEngine_
                         acc->messageEngine_.onMessageSent(c->to, c->id, false);
@@ -3120,7 +3118,7 @@ JamiAccount::sendTextMessage(const std::string& to,
             }
 
             // Else, ask for a channel and send a DHT message
-            requestSIPConnection(to, dev.toString());
+            requestSIPConnection(to, dev);
             {
                 std::lock_guard<std::mutex> lock(messageMutex_);
                 sentMessages_[token].to.emplace(dev);
@@ -3491,19 +3489,19 @@ JamiAccount::cacheTurnServers()
 }
 
 void
-JamiAccount::requestSIPConnection(const std::string& peerId, const std::string& deviceId)
+JamiAccount::requestSIPConnection(const std::string& peerId, const dht::InfoHash& deviceId)
 {
     // If a connection already exists or is in progress, no need to do this
     std::lock_guard<std::mutex> lk(sipConnectionsMtx_);
-    const auto& id = std::make_pair(peerId, deviceId);
-    if (!sipConnections_[peerId][deviceId].empty()
+    auto id = std::make_pair<std::string, std::string>(std::string(peerId), deviceId.toString());
+    if (!sipConnections_[peerId][deviceId.toString()].empty()
         || pendingSipConnections_.find(id) != pendingSipConnections_.end()) {
-        JAMI_DBG("A SIP connection with %s already exists", deviceId.c_str());
+        JAMI_DBG("A SIP connection with %s already exists", deviceId.to_c_str());
         return;
     }
     pendingSipConnections_.emplace(id);
     // If not present, create it
-    JAMI_INFO("Ask %s for a new SIP channel", deviceId.c_str());
+    JAMI_INFO("Ask %s for a new SIP channel", deviceId.to_c_str());
     if (!connectionManager_)
         return;
     connectionManager_->connectDevice(deviceId,
@@ -3664,11 +3662,12 @@ JamiAccount::sendProfile(const std::string& deviceId)
 void
 JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
                                 const std::string& peerId,
-                                const std::string& deviceId)
+                                const dht::InfoHash& deviceId)
 {
+    auto deviceIdStr = deviceId.toString();
     std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
     // Verify that the connection is not already cached
-    auto& connections = sipConnections_[peerId][deviceId];
+    auto& connections = sipConnections_[peerId][deviceIdStr];
     auto conn = std::find_if(connections.begin(), connections.end(), [socket](auto v) {
         return v.channel == socket;
     });
@@ -3680,12 +3679,13 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     // Convert to SIP transport
     sip_utils::register_thread();
     auto onShutdown = [w = weak(), peerId, deviceId, socket]() {
+        auto deviceIdStr = deviceId.toString();
         auto shared = w.lock();
         if (!shared)
             return;
         {
             std::lock_guard<std::mutex> lk(shared->sipConnectionsMtx_);
-            auto& connections = shared->sipConnections_[peerId][deviceId];
+            auto& connections = shared->sipConnections_[peerId][deviceIdStr];
             auto conn = connections.begin();
             while (conn != connections.end()) {
                 if (conn->channel == socket)
@@ -3697,12 +3697,12 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         // The connection can be closed during the SIP initialization, so
         // if this happens, the request should be re-sent to ask for a new
         // SIP channel to make the call pass through
-        std::function<void(const std::string&)> cb;
+        std::function<void(const dht::InfoHash&)> cb;
         {
             std::lock_guard<std::mutex> lk(shared->onConnectionClosedMtx_);
-            if (shared->onConnectionClosed_[deviceId]) {
-                cb = std::move(shared->onConnectionClosed_[deviceId]);
-                shared->onConnectionClosed_.erase(deviceId);
+            if (shared->onConnectionClosed_[deviceIdStr]) {
+                cb = std::move(shared->onConnectionClosed_[deviceIdStr]);
+                shared->onConnectionClosed_.erase(deviceIdStr);
             }
         }
         if (cb) {
@@ -3712,11 +3712,11 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     };
     auto sip_tr = link_.sipTransportBroker->getChanneledTransport(socket, std::move(onShutdown));
     // Store the connection
-    sipConnections_[peerId][deviceId].emplace_back(SipConnection {sip_tr, socket});
-    JAMI_WARN("New SIP channel opened with %s", deviceId.c_str());
+    sipConnections_[peerId][deviceIdStr].emplace_back(SipConnection {sip_tr, socket});
+    JAMI_WARN("New SIP channel opened with %s", deviceId.to_c_str());
     lk.unlock();
 
-    sendProfile(deviceId);
+    sendProfile(deviceIdStr);
 
     // Retry messages
     messageEngine_.onPeerOnline(peerId);
@@ -3725,7 +3725,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     std::vector<std::shared_ptr<SIPCall>> pc;
     {
         std::lock_guard<std::mutex> lk(pendingCallsMutex_);
-        pc = std::move(pendingCalls_[deviceId]);
+        pc = std::move(pendingCalls_[deviceIdStr]);
     }
     for (auto& pendingCall : pc) {
         if (pendingCall->getConnectionState() != Call::ConnectionState::TRYING)
