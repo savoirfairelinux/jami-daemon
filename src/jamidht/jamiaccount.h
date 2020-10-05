@@ -735,7 +735,7 @@ private:
     std::map<std::string, std::vector<std::shared_ptr<SIPCall>>> pendingCalls_;
 
     std::mutex onConnectionClosedMtx_ {};
-    std::map<std::string, std::function<void(const std::string&)>> onConnectionClosed_ {};
+    std::map<std::string, std::function<void(const std::string&, bool)>> onConnectionClosed_ {};
 
     /**
      * Ask a device to open a channeled SIP socket
