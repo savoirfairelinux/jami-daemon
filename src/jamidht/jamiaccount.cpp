@@ -3728,6 +3728,8 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         pc = std::move(pendingCalls_[deviceId]);
     }
     for (auto& pendingCall : pc) {
+        if (pendingCall->getConnectionState() != Call::ConnectionState::TRYING)
+            continue;
         pendingCall->setTransport(sip_tr);
         pendingCall->setState(Call::ConnectionState::PROGRESSING);
         if (auto ice = socket->underlyingICE()) {
