@@ -979,12 +979,16 @@ JamiAccount::changeArchivePassword(const std::string& password_old, const std::s
 bool
 JamiAccount::isPasswordValid(const std::string& password)
 {
-    return accountManager_->isPasswordValid(password);
+    return accountManager_ and accountManager_->isPasswordValid(password);
 }
 
 void
 JamiAccount::addDevice(const std::string& password)
 {
+    if (not accountManager_) {
+        emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
+        return;
+    }
     accountManager_
         ->addDevice(password, [this](AccountManager::AddDeviceResult result, std::string pin) {
             switch (result) {
@@ -3491,7 +3495,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const std::string& 
 {
     // If a connection already exists or is in progress, no need to do this
     std::lock_guard<std::mutex> lk(sipConnectionsMtx_);
-    auto id = std::make_pair<std::string, std::string>(std::string(peerId), std::string(deviceId));
+    const auto& id = std::make_pair(peerId, deviceId);
     if (!sipConnections_[peerId][deviceId].empty()
         || pendingSipConnections_.find(id) != pendingSipConnections_.end()) {
         JAMI_DBG("A SIP connection with %s already exists", deviceId.c_str());

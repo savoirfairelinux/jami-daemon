@@ -617,7 +617,7 @@ ArchiveAccountManager::addDevice(const std::string& password, AddDeviceCallback 
             try {
                 this_.updateArchive(a);
                 auto encrypted = dht::crypto::aesEncrypt(archiver::compress(a.serialize()), key);
-                if (not this_.dht_->isRunning())
+                if (not this_.dht_ or not this_.dht_->isRunning())
                     throw std::runtime_error("DHT is not running..");
                 JAMI_WARN("[Auth] exporting account with PIN: %s at %s (size %zu)",
                           pin_str.c_str(),
