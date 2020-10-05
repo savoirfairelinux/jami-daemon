@@ -1,20 +1,20 @@
- /*
-  *  Copyright (C) 2020 Savoir-faire Linux Inc.
-  *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
-  *
-  *  This program is free software; you can redistribute it and/or modify
-  *  it under the terms of the GNU General Public License as published by
-  *  the Free Software Foundation; either version 3 of the License, or
-  *  (at your option) any later version.
-  *
-  *  This program is distributed in the hope that it will be useful,
-  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  *  GNU General Public License for more details.
-  *
-  *  You should have received a copy of the GNU General Public License
-  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
-  */
+/*
+ *  Copyright (C) 2020 Savoir-faire Linux Inc.
+ *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
 
 #include <cppunit/TestAssert.h>
 #include <cppunit/TestFixture.h>
@@ -32,19 +32,20 @@
 
 using namespace DRing::Account;
 
-namespace jami { namespace test {
+namespace jami {
+namespace test {
 
-class CallTest : public CppUnit::TestFixture {
+class CallTest : public CppUnit::TestFixture
+{
 public:
-    CallTest() {
+    CallTest()
+    {
         // Init daemon
         DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
             CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
     }
-    ~CallTest() {
-        DRing::fini();
-    }
+    ~CallTest() { DRing::fini(); }
     static std::string name() { return "Call"; }
     void setUp();
     void tearDown();
@@ -92,25 +93,26 @@ CallTest::setUp()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk{ mtx };
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::atomic_bool accountsReady {false};
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-    [&](const std::string&, const std::map<std::string, std::string>&) {
-        bool ready = false;
-        auto details = aliceAccount->getVolatileAccountDetails();
-        auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-        ready = (daemonStatus == "REGISTERED");
-        details = bobAccount->getVolatileAccountDetails();
-        daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-        ready &= (daemonStatus == "REGISTERED");
-        if (ready) {
-            accountsReady = true;
-            cv.notify_one();
-        }
-    }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                bool ready = false;
+                auto details = aliceAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                ready = (daemonStatus == "REGISTERED");
+                details = bobAccount->getVolatileAccountDetails();
+                daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                ready &= (daemonStatus == "REGISTERED");
+                if (ready) {
+                    accountsReady = true;
+                    cv.notify_one();
+                }
+            }));
     DRing::registerSignalHandlers(confHandlers);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]{ return accountsReady.load(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsReady.load(); }));
     DRing::unregisterSignalHandlers();
 }
 
@@ -121,23 +123,24 @@ CallTest::tearDown()
 
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk{ mtx };
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     auto currentAccSize = Manager::instance().getAccountList().size();
     std::atomic_bool accountsRemoved {false};
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>(
-    [&]() {
-        if (Manager::instance().getAccountList().size() <= currentAccSize - 2) {
-            accountsRemoved = true;
-            cv.notify_one();
-        }
-    }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
+            if (Manager::instance().getAccountList().size() <= currentAccSize - 2) {
+                accountsRemoved = true;
+                cv.notify_one();
+            }
+        }));
     DRing::registerSignalHandlers(confHandlers);
 
     Manager::instance().removeAccount(aliceId, true);
     Manager::instance().removeAccount(bobId, true);
     // Because cppunit is not linked with dbus, just poll if removed
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]{ return accountsRemoved.load(); }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsRemoved.load(); }));
 
     DRing::unregisterSignalHandlers();
 }
@@ -155,36 +158,36 @@ CallTest::testCall()
     auto aliceUri = aliceAccount->getAccountDetails()[ConfProperties::USERNAME];
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk{ mtx };
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::atomic_bool callReceived {false};
     std::atomic<int> callStopped {0};
     // Watch signals
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCall>(
-    [&](const std::string&, const std::string&, const std::string&) {
-        callReceived = true;
-        cv.notify_one();
-    }));
+        [&](const std::string&, const std::string&, const std::string&) {
+            callReceived = true;
+            cv.notify_one();
+        }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-    [&](const std::string&, const std::string& state, signed) {
-        if (state == "OVER") {
-            callStopped += 1;
-            if (callStopped == 2)
-                cv.notify_one();
-        }
-    }));
+        [&](const std::string&, const std::string& state, signed) {
+            if (state == "OVER") {
+                callStopped += 1;
+                if (callStopped == 2)
+                    cv.notify_one();
+            }
+        }));
     DRing::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Start call between alice and Bob");
     auto call = aliceAccount->newOutgoingCall(bobUri, {});
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]{ return callReceived.load(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callReceived.load(); }));
 
     JAMI_INFO("Stop call between alice and Bob");
     callStopped = 0;
     Manager::instance().hangupCall(call->getCallId());
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]{ return callStopped == 2; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callStopped == 2; }));
 }
 
 void
@@ -197,50 +200,54 @@ CallTest::testCachedCall()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
-    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
     auto aliceUri = aliceAccount->getAccountDetails()[ConfProperties::USERNAME];
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk{ mtx };
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::atomic_bool callReceived {false}, successfullyConnected {false};
     std::atomic<int> callStopped {0};
     // Watch signals
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCall>(
-    [&](const std::string&, const std::string&, const std::string&) {
-        callReceived = true;
-        cv.notify_one();
-    }));
+        [&](const std::string&, const std::string&, const std::string&) {
+            callReceived = true;
+            cv.notify_one();
+        }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-    [&](const std::string&, const std::string& state, signed) {
-        if (state == "OVER") {
-            callStopped += 1;
-            if (callStopped == 2)
-                cv.notify_one();
-        }
-    }));
+        [&](const std::string&, const std::string& state, signed) {
+            if (state == "OVER") {
+                callStopped += 1;
+                if (callStopped == 2)
+                    cv.notify_one();
+            }
+        }));
     DRing::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Connect Alice's device and Bob's device");
-    aliceAccount->connectionManager().connectDevice(bobDeviceId, "sip",
-        [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket) {
-        if (socket)
-            successfullyConnected = true;
-        cv.notify_one();
-    });
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]{ return successfullyConnected.load(); }));
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "sip",
+                                                    [&cv, &successfullyConnected](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket)
+                                                            successfullyConnected = true;
+                                                        cv.notify_one();
+                                                    });
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(30), [&] { return successfullyConnected.load(); }));
 
     JAMI_INFO("Start call between alice and Bob");
     auto call = aliceAccount->newOutgoingCall(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]{ return callReceived.load(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callReceived.load(); }));
 
     callStopped = 0;
     JAMI_INFO("Stop call between alice and Bob");
     Manager::instance().hangupCall(call->getCallId());
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]{ return callStopped == 2; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callStopped == 2; }));
 }
 
-}} // namespace test
+} // namespace test
+} // namespace jami
 
 RING_TEST_RUNNER(jami::test::CallTest::name())
