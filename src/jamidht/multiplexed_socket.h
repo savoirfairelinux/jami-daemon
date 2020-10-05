@@ -27,11 +27,11 @@ class IceTransport;
 class ChannelSocket;
 class TlsSocketEndpoint;
 
-using OnConnectionRequestCb = std::function<bool(const std::string& /* device id */,
-                                                 const uint16_t& /* id */,
-                                                 const std::string& /* name */)>;
+using DeviceId = dht::InfoHash;
+using OnConnectionRequestCb = std::function<
+    bool(const DeviceId& /* device id */, const uint16_t& /* id */, const std::string& /* name */)>;
 using OnConnectionReadyCb
-    = std::function<void(const std::string& /* device id */, const std::shared_ptr<ChannelSocket>&)>;
+    = std::function<void(const DeviceId& /* device id */, const std::shared_ptr<ChannelSocket>&)>;
 using onChannelReadyCb = std::function<void(void)>;
 using OnShutdownCb = std::function<void(void)>;
 
@@ -68,7 +68,7 @@ struct ChanneledMessage
 class MultiplexedSocket : public std::enable_shared_from_this<MultiplexedSocket>
 {
 public:
-    MultiplexedSocket(const std::string& deviceId, std::unique_ptr<TlsSocketEndpoint> endpoint);
+    MultiplexedSocket(const DeviceId& deviceId, std::unique_ptr<TlsSocketEndpoint> endpoint);
     ~MultiplexedSocket();
     std::shared_ptr<ChannelSocket> addChannel(const std::string& name);
 
@@ -89,7 +89,7 @@ public:
         return std::static_pointer_cast<MultiplexedSocket const>(shared_from_this());
     }
 
-    std::string deviceId() const;
+    DeviceId deviceId() const;
     bool isReliable() const;
     bool isInitiator() const;
     int maxPayload() const;
@@ -146,7 +146,7 @@ public:
                   const uint16_t& channel);
     ~ChannelSocket();
 
-    std::string deviceId() const;
+    DeviceId deviceId() const;
     std::string name() const;
     uint16_t channel() const;
     bool isReliable() const override;
