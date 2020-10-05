@@ -1,0 +1,64 @@
+diff --git a/libavcodec/qsvenc.c b/libavcodec/qsvenc.c
+index ed4539f697..e776f0f34e 100644
+--- a/libavcodec/qsvenc.c
++++ b/libavcodec/qsvenc.c
+@@ -1407,6 +1407,7 @@ static int encode_frame(AVCodecContext *avctx, QSVEncContext *q,
+     int ret;
+ 
+     if (frame) {
++        ret = reconfig_encoder(avctx, q);
+         ret = submit_frame(q, frame, &qsv_frame);
+         if (ret < 0) {
+             av_log(avctx, AV_LOG_ERROR, "Error submitting the frame for encoding.\n");
+@@ -1518,6 +1519,40 @@ static int encode_frame(AVCodecContext *avctx, QSVEncContext *q,
+     return 0;
+ }
+ 
++int reconfig_encoder(AVCodecContext *avctx, QSVEncContext *q)
++{
++    mfxStatus ret = 0;
++    mfxVideoParam param = { 0 };
++    mfxInfoMFX *info = &q->param.mfx;
++    int target_bitrate_kbps, max_bitrate_kbps, brc_param_multiplier;
++
++    ret = MFXVideoENCODE_GetVideoParam(q->session, &param);
++    if (ret < 0)
++        return ff_qsv_print_error(avctx, ret, "Error calling MFXVideoENCODE_GetVideoParam");
++
++    target_bitrate_kbps        = avctx->bit_rate / 1000;
++    max_bitrate_kbps           = avctx->rc_max_rate / 1000;
++    brc_param_multiplier       = (FFMAX(target_bitrate_kbps, max_bitrate_kbps) + 0x10000) / 0x10000;
++
++    if (target_bitrate_kbps > 0 && param.mfx.TargetKbps != (target_bitrate_kbps / brc_param_multiplier)) {
++        if (info->RateControlMethod == MFX_RATECONTROL_CQP ||
++            info->RateControlMethod == MFX_RATECONTROL_VBR) {
++            param.mfx.TargetKbps       = target_bitrate_kbps / brc_param_multiplier;
++            param.mfx.MaxKbps          = max_bitrate_kbps / brc_param_multiplier;
++        } else if (info->RateControlMethod == MFX_RATECONTROL_CBR ||
++            info->RateControlMethod == MFX_RATECONTROL_AVBR) {
++            param.mfx.TargetKbps       = target_bitrate_kbps / brc_param_multiplier;
++        } else {
++            av_log(avctx, AV_LOG_WARNING, "This rate mode doesn't support dynamic bitrate change\n");
++            return -1;
++        }
++        ret = MFXVideoENCODE_Reset(q->session, &param);
++        if (ret < 0)
++            return ff_qsv_print_error(avctx, ret, "Error calling MFXVideoENCODE_Reset");
++    }
++    return 0;
++}
++
+ int ff_qsv_encode(AVCodecContext *avctx, QSVEncContext *q,
+                   AVPacket *pkt, const AVFrame *frame, int *got_packet)
+ {
+diff --git a/libavcodec/qsvenc.h b/libavcodec/qsvenc.h
+index 4f579d1db1..a5a81e1593 100644
+--- a/libavcodec/qsvenc.h
++++ b/libavcodec/qsvenc.h
+@@ -210,4 +210,6 @@ int ff_qsv_encode(AVCodecContext *avctx, QSVEncContext *q,
+ 
+ int ff_qsv_enc_close(AVCodecContext *avctx, QSVEncContext *q);
+ 
++int reconfig_encoder(AVCodecContext *avctx, QSVEncContext *q);
++
+ #endif /* AVCODEC_QSVENC_H */
