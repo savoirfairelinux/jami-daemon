@@ -11,7 +11,8 @@
     ],
     "patches": [
         "change-RTCP-ratio.patch",
-        "rtp_ext_abs_send_time.patch"
+        "rtp_ext_abs_send_time.patch",
+        "dynamic_bitrate_qsv.patch"
     ],
     "win_patches": [
         "windows-configure.patch",
