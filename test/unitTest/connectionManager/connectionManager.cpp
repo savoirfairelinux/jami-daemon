@@ -161,10 +161,11 @@ ConnectionManagerTest::testConnectDevice()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = dht::InfoHash(
+        bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
-    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    bobAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -173,7 +174,7 @@ ConnectionManagerTest::testConnectDevice()
     bool successfullyReceive = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive, &cvReceive](const std::string&, const std::string& name) {
+        [&successfullyReceive, &cvReceive](const dht::InfoHash&, const std::string& name) {
             successfullyReceive = name == "git://*";
             cvReceive.notify_one();
             return true;
@@ -199,10 +200,11 @@ ConnectionManagerTest::testAcceptConnection()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = dht::InfoHash(
+        bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
-    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    bobAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -212,13 +214,13 @@ ConnectionManagerTest::testAcceptConnection()
     bool receiverConnected = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const std::string&, const std::string& name) {
+        [&successfullyReceive](const dht::InfoHash&, const std::string& name) {
             successfullyReceive = name == "git://*";
             return true;
         });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&receiverConnected](const std::string&,
+        [&receiverConnected](const dht::InfoHash&,
                              const std::string& name,
                              std::shared_ptr<ChannelSocket> socket) {
             receiverConnected = socket && (name == "git://*");
@@ -245,10 +247,11 @@ ConnectionManagerTest::testMultipleChannels()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = dht::InfoHash(
+        bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
-    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    bobAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -258,10 +261,10 @@ ConnectionManagerTest::testMultipleChannels()
     int receiverConnected = 0;
 
     bobAccount->connectionManager().onChannelRequest(
-        [](const std::string&, const std::string&) { return true; });
+        [](const dht::InfoHash&, const std::string&) { return true; });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&receiverConnected](const std::string&,
+        [&receiverConnected](const dht::InfoHash&,
                              const std::string&,
                              std::shared_ptr<ChannelSocket> socket) {
             if (socket)
@@ -300,10 +303,11 @@ ConnectionManagerTest::testMultipleChannelsSameName()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = dht::InfoHash(
+        bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
-    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    bobAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -313,10 +317,10 @@ ConnectionManagerTest::testMultipleChannelsSameName()
     int receiverConnected = 0;
 
     bobAccount->connectionManager().onChannelRequest(
-        [](const std::string&, const std::string&) { return true; });
+        [](const dht::InfoHash&, const std::string&) { return true; });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&receiverConnected](const std::string&,
+        [&receiverConnected](const dht::InfoHash&,
                              const std::string&,
                              std::shared_ptr<ChannelSocket> socket) {
             if (socket)
@@ -356,10 +360,11 @@ ConnectionManagerTest::testSendReceiveData()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = dht::InfoHash(
+        bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
-    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    bobAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -372,13 +377,13 @@ ConnectionManagerTest::testSendReceiveData()
     bool dataOk = false, dataOk2 = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const std::string&, const std::string&) {
+        [&successfullyReceive](const dht::InfoHash&, const std::string&) {
             successfullyReceive = true;
             return true;
         });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        [&](const dht::InfoHash&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
             if (socket && (name == "test" || name == "other")) {
                 receiverConnected = true;
                 std::error_code ec;
@@ -435,10 +440,11 @@ ConnectionManagerTest::testDeclineConnection()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = dht::InfoHash(
+        bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
-    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    bobAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -448,13 +454,13 @@ ConnectionManagerTest::testDeclineConnection()
     bool receiverConnected = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const std::string&, const std::string&) {
+        [&successfullyReceive](const dht::InfoHash&, const std::string&) {
             successfullyReceive = true;
             return false;
         });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&receiverConnected](const std::string&,
+        [&receiverConnected](const dht::InfoHash&,
                              const std::string&,
                              std::shared_ptr<ChannelSocket> socket) {
             if (socket)
@@ -481,9 +487,10 @@ ConnectionManagerTest::testAcceptsICERequest()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = dht::InfoHash(
+        bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
 
-    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -493,14 +500,14 @@ ConnectionManagerTest::testAcceptsICERequest()
     bool receiverConnected = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [](const std::string&, const std::string&) { return true; });
-    bobAccount->connectionManager().onICERequest([&](const std::string&) {
+        [](const dht::InfoHash&, const std::string&) { return true; });
+    bobAccount->connectionManager().onICERequest([&](const dht::InfoHash&) {
         successfullyReceive = true;
         return true;
     });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&receiverConnected](const std::string&,
+        [&receiverConnected](const dht::InfoHash&,
                              const std::string& name,
                              std::shared_ptr<ChannelSocket> socket) {
             receiverConnected = socket && (name == "git://*");
@@ -527,9 +534,10 @@ ConnectionManagerTest::testDeclineICERequest()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = dht::InfoHash(
+        bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
 
-    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -539,14 +547,14 @@ ConnectionManagerTest::testDeclineICERequest()
     bool receiverConnected = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [](const std::string&, const std::string&) { return true; });
-    bobAccount->connectionManager().onICERequest([&](const std::string&) {
+        [](const dht::InfoHash&, const std::string&) { return true; });
+    bobAccount->connectionManager().onICERequest([&](const dht::InfoHash&) {
         successfullyReceive = true;
         return false;
     });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&receiverConnected](const std::string&,
+        [&receiverConnected](const dht::InfoHash&,
                              const std::string& name,
                              std::shared_ptr<ChannelSocket> socket) {
             receiverConnected = socket && (name == "git://*");
@@ -573,10 +581,11 @@ ConnectionManagerTest::testChannelRcvShutdown()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = dht::InfoHash(
+        bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
-    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    bobAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -587,13 +596,13 @@ ConnectionManagerTest::testChannelRcvShutdown()
     bool shutdownReceived = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const std::string&, const std::string& name) {
+        [&successfullyReceive](const dht::InfoHash&, const std::string& name) {
             successfullyReceive = name == "git://*";
             return true;
         });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        [&](const dht::InfoHash&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
             receiverConnected = socket && (name == "git://*");
             rcv.notify_one();
             socket->shutdown();
@@ -624,10 +633,11 @@ ConnectionManagerTest::testChannelSenderShutdown()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = dht::InfoHash(
+        bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
-    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    bobAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -638,13 +648,13 @@ ConnectionManagerTest::testChannelSenderShutdown()
     bool shutdownReceived = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const std::string&, const std::string& name) {
+        [&successfullyReceive](const dht::InfoHash&, const std::string& name) {
             successfullyReceive = name == "git://*";
             return true;
         });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        [&](const dht::InfoHash&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
             if (socket) {
                 socket->onShutdown([&]() {
                     shutdownReceived = true;
@@ -677,10 +687,11 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = dht::InfoHash(
+        bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
 
-    bobAccount->connectionManager().onICERequest([](const std::string&) { return true; });
-    aliceAccount->connectionManager().onICERequest([](const std::string&) { return true; });
+    bobAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const dht::InfoHash&) { return true; });
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -691,13 +702,13 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
     bool receiverConnected = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const std::string&, const std::string& name) {
+        [&successfullyReceive](const dht::InfoHash&, const std::string& name) {
             successfullyReceive = name == "git://*";
             return true;
         });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        [&](const dht::InfoHash&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
             if (socket) {
                 socket->onShutdown([&]() {
                     events += 1;
