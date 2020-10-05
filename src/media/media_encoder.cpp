@@ -1015,8 +1015,12 @@ MediaEncoder::initAccel(AVCodecContext* encoderCtx, uint64_t br)
     } else if (accel_->getName() == "videotoolbox"sv) {
         av_opt_set_int(encoderCtx, "b", br * 1000 * 0.8f, AV_OPT_SEARCH_CHILDREN);
     } else if (accel_->getName() == "qsv"sv) {
-        // Use Video Conferencing Mode
-        av_opt_set_int(encoderCtx, "vcm", 1, AV_OPT_SEARCH_CHILDREN);
+        // Use VBR Mode cause it produces the best results
+        av_opt_set_int(encoderCtx, "vbr", 1, AV_OPT_SEARCH_CHILDREN);
+        // Fastest preset for QSV
+        av_opt_set(encoderCtx, "preset", "veryfast", AV_OPT_SEARCH_CHILDREN);
+        // Specify a high value for bufsize to avoid blur/pixel effect
+        av_opt_set_int(encoderCtx, "bufsize", 100000 * 1000, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "b", br * 1000 * 0.8f, AV_OPT_SEARCH_CHILDREN);
     }
 }
