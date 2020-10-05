@@ -587,7 +587,8 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         call->addStateListener(
             [w = weak(),
              deviceId = deviceConnIt->first](Call::CallState, Call::ConnectionState state, int) {
-                if (state >= Call::ConnectionState::PROGRESSING) {
+                if (state != Call::ConnectionState::PROGRESSING
+                    || state != Call::ConnectionState::TRYING) {
                     if (auto shared = w.lock()) {
                         std::lock_guard<std::mutex> lk(shared->onConnectionClosedMtx_);
                         shared->onConnectionClosed_.erase(deviceId);
@@ -3728,6 +3729,8 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         pc = std::move(pendingCalls_[deviceId]);
     }
     for (auto& pendingCall : pc) {
+        if (pendingCall->getConnectionState() != Call::ConnectionState::TRYING)
+            continue;
         pendingCall->setTransport(sip_tr);
         pendingCall->setState(Call::ConnectionState::PROGRESSING);
         if (auto ice = socket->underlyingICE()) {
