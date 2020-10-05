@@ -40,7 +40,7 @@ class MultiplexedSocket::Impl
 {
 public:
     Impl(MultiplexedSocket& parent,
-         const std::string& deviceId,
+         const DeviceId& deviceId,
          std::unique_ptr<TlsSocketEndpoint> endpoint)
         : parent_(parent)
         , deviceId(deviceId)
@@ -118,7 +118,7 @@ public:
     OnConnectionRequestCb onRequest_ {};
     OnShutdownCb onShutdown_ {};
 
-    std::string deviceId {};
+    DeviceId deviceId {};
     // Main socket
     std::unique_ptr<TlsSocketEndpoint> endpoint {};
 
@@ -312,7 +312,7 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector
     }
 }
 
-MultiplexedSocket::MultiplexedSocket(const std::string& deviceId,
+MultiplexedSocket::MultiplexedSocket(const DeviceId& deviceId,
                                      std::unique_ptr<TlsSocketEndpoint> endpoint)
     : pimpl_(std::make_unique<Impl>(*this, deviceId, std::move(endpoint)))
 {}
@@ -342,7 +342,7 @@ MultiplexedSocket::addChannel(const std::string& name)
     return {};
 }
 
-std::string
+DeviceId
 MultiplexedSocket::deviceId() const
 {
     return pimpl_->deviceId;
@@ -532,7 +532,7 @@ ChannelSocket::ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
 
 ChannelSocket::~ChannelSocket() {}
 
-std::string
+DeviceId
 ChannelSocket::deviceId() const
 {
     if (auto ep = pimpl_->endpoint.lock()) {
