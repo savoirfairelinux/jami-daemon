@@ -36,6 +36,7 @@
 #include "ring_types.h" // enable_if_base_of
 #include "security/certstore.h"
 #include "scheduled_executor.h"
+#include "connectionmanager.h"
 
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
@@ -70,12 +71,10 @@ class IceTransport;
 struct Contact;
 struct DeviceSync;
 struct AccountArchive;
-class ConnectionManager;
 class DhtPeerConnector;
 class ContactList;
 class AccountManager;
 struct AccountInfo;
-class ChannelSocket;
 class SipTransport;
 class ChanneledOutgoingTransfer;
 
@@ -735,7 +734,7 @@ private:
     std::map<std::string, std::vector<std::shared_ptr<SIPCall>>> pendingCalls_;
 
     std::mutex onConnectionClosedMtx_ {};
-    std::map<std::string, std::function<void(const std::string&, bool)>> onConnectionClosed_ {};
+    std::map<std::string, std::function<void(const DeviceId&, bool)>> onConnectionClosed_ {};
 
     /**
      * Ask a device to open a channeled SIP socket
@@ -743,7 +742,7 @@ private:
      * @param deviceId      The device to ask
      * @note triggers cacheSIPConnection
      */
-    void requestSIPConnection(const std::string& peerId, const std::string& deviceId);
+    void requestSIPConnection(const std::string& peerId, const DeviceId& deviceId);
     /**
      * Store a new SIP connection into sipConnections_
      * @param socket    The new sip channel
@@ -752,7 +751,7 @@ private:
      */
     void cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
                             const std::string& peerId,
-                            const std::string& deviceId);
+                            const DeviceId& deviceId);
 
     // File transfers
     std::set<std::string> incomingFileTransfers_ {};
