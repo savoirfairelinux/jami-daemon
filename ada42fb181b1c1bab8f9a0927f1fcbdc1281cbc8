@@ -16,6 +16,24 @@
       "revId": "ada42fb181b1c1bab8f9a0927f1fcbdc1281cbc8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "71ba8d1f_494fd870",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 205,
+      "author": {
+        "id": 894
+      },
+      "writtenOn": "2020-10-06T17:56:02Z",
+      "side": 1,
+      "message": "Would be clearer indeed ! 👍\n\nAcked !",
+      "parentUuid": "1d30d76a_99173e26",
+      "revId": "ada42fb181b1c1bab8f9a0927f1fcbdc1281cbc8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
