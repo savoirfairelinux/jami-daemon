@@ -24,6 +24,7 @@
 #include "peer_connection.h"
 #include "logger.h"
 
+#include <opendht/crypto.h>
 #include <opendht/thread_pool.h>
 #include <opendht/value.h>
 
@@ -170,12 +171,6 @@ public:
             return {};
         return it->second;
     }
-
-    // key: Stored certificate PublicKey id (normaly it's the DeviceId)
-    // value: pair of shared_ptr<Certificate> and associated RingId
-    std::map<dht::InfoHash, std::pair<std::shared_ptr<dht::crypto::Certificate>, dht::InfoHash>>
-        certMap_ {};
-    bool validatePeerCertificate(const dht::crypto::Certificate&, dht::InfoHash&);
 
     ChannelRequestCallback channelReqCb_ {};
     ConnectionReadyCallback connReadyCb_ {};
@@ -665,8 +660,10 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
             auto shared = w.lock();
             if (!shared)
                 return false;
-            dht::InfoHash peer_h;
-            return shared->validatePeerCertificate(cert, peer_h) && peer_h == ph;
+            auto crt = tls::CertificateStore::instance().getCertificate(ph.toString());
+            if (!crt)
+                return false;
+            return crt->getPacked() == cert.getPacked();
         });
 
     info->tls_->setOnReady(
@@ -701,9 +698,6 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
                   deviceId.c_str());
         return;
     }
-
-    auto crt = cert; // This copy the shared_ptr for gcc 6
-    certMap_.emplace(cert->getId(), std::make_pair(crt, deviceId));
 
     // Because the connection is accepted, create an ICE socket.
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
@@ -824,20 +818,6 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const
             sthis->infos_.erase({deviceId, vid});
         });
     });
-}
-
-bool
-ConnectionManager::Impl::validatePeerCertificate(const dht::crypto::Certificate& cert,
-                                                 dht::InfoHash& peer_h)
-{
-    const auto& iter = certMap_.find(cert.getId());
-    if (iter != std::cend(certMap_)) {
-        if (iter->second.first->getPacked() == cert.getPacked()) {
-            peer_h = iter->second.second;
-            return true;
-        }
-    }
-    return false;
 }
 
 ConnectionManager::ConnectionManager(JamiAccount& account)
