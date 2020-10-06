@@ -336,7 +336,7 @@ HardwareAccel::initFrame()
     ctx->sw_format = swFormat_;
     ctx->width = width_;
     ctx->height = height_;
-    ctx->initial_pool_size = 20; // TODO try other values
+    //ctx->initial_pool_size = 20; // TODO try other values
 
     if ((ret = av_hwframe_ctx_init(framesCtx_)) < 0) {
         JAMI_ERR("Failed to initialize hardware frame context: %s (%d)",
@@ -413,6 +413,10 @@ HardwareAccel::initAPI(bool linkable, AVBufferRef* framesCtx)
         if (hwType_ == AV_HWDEVICE_TYPE_VIDEOTOOLBOX || link || initFrame()) {
             return 0;
         }
+
+//        if (link || initFrame()) {
+//            return 0;
+//        }
     }
     return -1;
 }

@@ -363,57 +363,69 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
         initStream(videoCodec_, input.pointer()->hw_frames_ctx);
         startIO();
     }
-
     AVFrame* frame;
 #ifdef RING_ACCEL
-    auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input.format()));
-    bool isHardware = desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL);
-#ifdef ENABLE_VIDEOTOOLBOX
-    // Videotoolbox handles frames allocations itself and do not need creating frame context
-    // manually. Now videotoolbox supports only fully accelerated pipeline
-    bool isVideotoolbox = static_cast<AVPixelFormat>(input.format()) == AV_PIX_FMT_VIDEOTOOLBOX;
-    if (accel_ && isVideotoolbox) {
-        // Fully accelerated pipeline, skip main memory
-        frame = input.pointer();
+    if (accel_) {
+    frame = input.pointer();
     } else {
-#else
-    std::unique_ptr<VideoFrame> framePtr;
-    if (accel_ && accel_->isLinked() && isHardware) {
-        // Fully accelerated pipeline, skip main memory
-        // We have to check if the frame is hardware even if
-        // we are using linked HW encoder and decoder because after
-        // conference mixing the frame become software (prevent crashes)
-        frame = input.pointer();
-    } else if (isHardware) {
-        // Hardware decoded frame, transfer back to main memory
-        // Transfer to GPU if we have a hardware encoder
-        // Hardware decoders decode to NV12, but Jami's supported software encoders want YUV420P
-        AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_NV12);
-        framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
-        if (!accel_)
-            framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
-        else
-            framePtr = accel_->transfer(*framePtr);
-        frame = framePtr->pointer();
-    } else if (accel_) {
-        // Software decoded frame with a hardware encoder, convert to accepted format first
-        auto pix = accel_->getSoftwareFormat();
-        if (input.format() != pix) {
-            framePtr = scaler_.convertFormat(input, pix);
-            framePtr = accel_->transfer(*framePtr);
-        } else {
-            framePtr = accel_->transfer(input);
-        }
-        frame = framePtr->pointer();
-    } else {
-#endif // ENABLE_VIDEOTOOLBOX
-#endif
         libav_utils::fillWithBlack(scaledFrame_.pointer());
         scaler_.scale_with_aspect(input, scaledFrame_);
         frame = scaledFrame_.pointer();
-#ifdef RING_ACCEL
     }
+#else
+    libav_utils::fillWithBlack(scaledFrame_.pointer());
+    scaler_.scale_with_aspect(input, scaledFrame_);
+    frame = scaledFrame_.pointer();
 #endif
+////#ifdef RING_ACCEL
+//    auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input.format()));
+//    bool isHardware = desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL);
+////#ifdef ENABLE_VIDEOTOOLBOX
+//    // Videotoolbox handles frames allocations itself and do not need creating frame context
+//    // manually. Now videotoolbox supports only fully accelerated pipeline
+//    bool isVideotoolbox = static_cast<AVPixelFormat>(input.format()) == AV_PIX_FMT_VIDEOTOOLBOX;
+//    if (accel_ && isVideotoolbox) {
+//        // Fully accelerated pipeline, skip main memory
+//        frame = input.pointer();
+//    } else {
+////#else
+//    std::unique_ptr<VideoFrame> framePtr;
+//    if (accel_ && accel_->isLinked() && isHardware) {
+//        // Fully accelerated pipeline, skip main memory
+//        // We have to check if the frame is hardware even if
+//        // we are using linked HW encoder and decoder because after
+//        // conference mixing the frame become software (prevent crashes)
+//        frame = input.pointer();
+//    } else if (isHardware) {
+//        // Hardware decoded frame, transfer back to main memory
+//        // Transfer to GPU if we have a hardware encoder
+//        // Hardware decoders decode to NV12, but Jami's supported software encoders want YUV420P
+//        AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_NV12);
+//        framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
+//        if (!accel_)
+//            framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
+//        else
+//            framePtr = accel_->transfer(*framePtr);
+//        frame = framePtr->pointer();
+//    } else if (accel_) {
+//        // Software decoded frame with a hardware encoder, convert to accepted format first
+//        auto pix = accel_->getSoftwareFormat();
+//        if (input.format() != pix) {
+//            framePtr = scaler_.convertFormat(input, pix);
+//            framePtr = accel_->transfer(*framePtr);
+//        } else {
+//            framePtr = accel_->transfer(input);
+//        }
+//        frame = framePtr->pointer();
+//    } //else {
+////#endif // ENABLE_VIDEOTOOLBOX
+//#endif
+//        libav_utils::fillWithBlack(scaledFrame_.pointer());
+//        scaler_.scale_with_aspect(input, scaledFrame_);
+//        frame = scaledFrame_.pointer();
+//#ifdef RING_ACCEL
+//    }
+//#endif
 
     AVCodecContext* enc = encoders_[currentStreamIdx_];
     frame->pts = frame_number;
@@ -589,14 +601,14 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
 
         // emit one intra frame every gop_size frames
         encoderCtx->max_b_frames = 0;
-        encoderCtx->pix_fmt = AV_PIX_FMT_YUV420P;
-#ifdef RING_ACCEL
-// Keep YUV format for macOS
-#if !(defined(__APPLE__) && !TARGET_OS_IOS)
-        if (accel_)
-            encoderCtx->pix_fmt = accel_->getFormat();
-#endif
-#endif
+        encoderCtx->pix_fmt = AV_PIX_FMT_NV12;
+//#ifdef RING_ACCEL
+//// Keep YUV format for macOS
+//#if !(defined(__APPLE__) && !TARGET_OS_IOS)
+//        if (accel_)
+//            encoderCtx->pix_fmt = accel_->getFormat();
+//#endif
+//#endif
 
         // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
         // pps and sps to be sent in-band for RTP
