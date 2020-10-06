@@ -78,6 +78,8 @@ struct AccountInfo;
 class SipTransport;
 class ChanneledOutgoingTransfer;
 
+using SipConnectionKey = std::pair<std::string /* accountId */, DeviceId>;
+
 /**
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
  */
@@ -712,7 +714,7 @@ private:
 
     std::set<std::shared_ptr<dht::http::Request>> requests_;
 
-    std::mutex sipConnectionsMtx_ {};
+    std::mutex sipConnsMtx_ {};
     struct SipConnection
     {
         std::shared_ptr<SipTransport> transport;
@@ -723,18 +725,13 @@ private:
     // NOTE: here we use a vector to avoid race conditions. In fact the contact
     // can ask for a SIP channel when we are creating a new SIP Channel with this
     // peer too.
-    std::map<std::string /* accountId */,
-             std::map<std::string /* deviceId */, std::vector<SipConnection>>>
-        sipConnections_ {};
-    // However, we only negotiate one socket from our side
-    std::set<std::pair<std::string /* accountId */, std::string /* deviceId */>>
-        pendingSipConnections_ {};
+    std::map<SipConnectionKey, std::vector<SipConnection>> sipConns_;
 
     std::mutex pendingCallsMutex_;
     std::map<std::string, std::vector<std::shared_ptr<SIPCall>>> pendingCalls_;
 
     std::mutex onConnectionClosedMtx_ {};
-    std::map<std::string, std::function<void(const DeviceId&, bool)>> onConnectionClosed_ {};
+    std::map<DeviceId, std::function<void(const DeviceId&, bool)>> onConnectionClosed_ {};
 
     /**
      * Ask a device to open a channeled SIP socket
