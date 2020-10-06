@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1d30d76a_99173e26",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 205,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-10-06T17:52:48Z",
+      "side": 1,
+      "message": "Looks like end is actually supposed to be the past-the-end iterator:\nhttps://github.com/open-source-parsers/jsoncpp/blob/master/src/lib_json/json_reader.cpp#L95\n\nso maybe to avoid any confusion we can use:\n\n        const auto* char_file_end \u003d char_file_begin + file.size();",
+      "revId": "ada42fb181b1c1bab8f9a0927f1fcbdc1281cbc8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
