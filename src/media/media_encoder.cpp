@@ -368,7 +368,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
 #ifdef RING_ACCEL
     auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input.format()));
     bool isHardware = desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL);
-#ifdef ENABLE_VIDEOTOOLBOX
+//#ifdef ENABLE_VIDEOTOOLBOX
     // Videotoolbox handles frames allocations itself and do not need creating frame context
     // manually. Now videotoolbox supports only fully accelerated pipeline
     bool isVideotoolbox = static_cast<AVPixelFormat>(input.format()) == AV_PIX_FMT_VIDEOTOOLBOX;
@@ -376,7 +376,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
         // Fully accelerated pipeline, skip main memory
         frame = input.pointer();
     } else {
-#else
+//#else
     std::unique_ptr<VideoFrame> framePtr;
     if (accel_ && accel_->isLinked() && isHardware) {
         // Fully accelerated pipeline, skip main memory
@@ -405,8 +405,8 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
             framePtr = accel_->transfer(input);
         }
         frame = framePtr->pointer();
-    } else {
-#endif // ENABLE_VIDEOTOOLBOX
+    } //else {
+//#endif // ENABLE_VIDEOTOOLBOX
 #endif
         libav_utils::fillWithBlack(scaledFrame_.pointer());
         scaler_.scale_with_aspect(input, scaledFrame_);
