@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "53260765_145e260b",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 165,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-10-06T00:34:19Z",
+      "side": 1,
+      "message": "declare a type like\n\n    using ConnectionKey \u003d std::pair\u003cdht::InfoHash /* device id */, dht::Value::Id /* uid */\u003e;\n    std::map\u003cConnectionKey, std::shared_ptr\u003cConnectionInfo\u003e\u003e infos_ {};",
+      "range": {
+        "startLine": 165,
+        "startChar": 13,
+        "endLine": 165,
+        "endChar": 79
+      },
+      "revId": "645c15b1d010c36849230453186bd792ee03f234",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d58cf098_8f16ed68",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 808,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-10-06T00:34:19Z",
+      "side": 1,
+      "message": "req.from",
+      "range": {
+        "startLine": 808,
+        "startChar": 15,
+        "endLine": 808,
+        "endChar": 39
+      },
+      "revId": "645c15b1d010c36849230453186bd792ee03f234",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8db52dff_f8031d22",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 867,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-10-06T00:34:19Z",
+      "side": 1,
+      "message": "convert to deviceId once at the begining",
+      "range": {
+        "startLine": 867,
+        "startChar": 39,
+        "endLine": 867,
+        "endChar": 62
+      },
+      "revId": "645c15b1d010c36849230453186bd792ee03f234",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
