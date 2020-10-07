@@ -87,11 +87,6 @@ public:
     VoipPreference voipPreferences;
 
     /**
-     * Hook preferences
-     */
-    HookPreference hookPreference;
-
-    /**
      * Audio preferences
      */
     AudioPreference audioPreference;

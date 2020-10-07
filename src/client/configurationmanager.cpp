@@ -71,7 +71,6 @@ using jami::JamiAccount;
 using jami::tls::TlsValidator;
 using jami::tls::CertificateStore;
 using jami::AudioDeviceType;
-using jami::HookPreference;
 
 void
 registerConfHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>& handlers)
@@ -919,18 +918,6 @@ muteRingtone(bool mute)
 
     JAMI_ERR("Audio layer not valid");
     return;
-}
-
-std::map<std::string, std::string>
-getHookSettings()
-{
-    return jami::Manager::instance().hookPreference.toMap();
-}
-
-void
-setHookSettings(const std::map<std::string, std::string>& settings)
-{
-    jami::Manager::instance().hookPreference = HookPreference(settings);
 }
 
 void

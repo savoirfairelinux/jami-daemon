@@ -64,7 +64,6 @@
 #pragma GCC diagnostic pop
 
 #include "config/yamlparser.h"
-#include "hooks/urlhook.h"
 #include "sip/sip_utils.h"
 #include <sstream>
 #include <algorithm>
@@ -99,14 +98,6 @@ static constexpr const char* PLAY_TONES_KEY {"playTones"};
 static constexpr const char* PULSE_LENGTH_KEY {"pulseLength"};
 static constexpr const char* SYMMETRIC_RTP_KEY {"symmetric"};
 static constexpr const char* ZID_FILE_KEY {"zidFile"};
-
-// hooks preferences
-constexpr const char* const HookPreference::CONFIG_LABEL;
-static constexpr const char* NUMBER_ADD_PREFIX_KEY {"numberAddPrefix"};
-static constexpr const char* NUMBER_ENABLED_KEY {"numberEnabled"};
-static constexpr const char* SIP_ENABLED_KEY {"sipEnabled"};
-static constexpr const char* URL_COMMAND_KEY {"urlCommand"};
-static constexpr const char* URL_SIP_FIELD_KEY {"urlSipField"};
 
 // audio preferences
 constexpr const char* const AudioPreference::CONFIG_LABEL;
@@ -284,66 +275,6 @@ VoipPreference::unserialize(const YAML::Node& in)
     parseValue(node, PULSE_LENGTH_KEY, pulseLength_);
     parseValue(node, SYMMETRIC_RTP_KEY, symmetricRtp_);
     parseValue(node, ZID_FILE_KEY, zidFile_);
-}
-
-HookPreference::HookPreference()
-    : numberAddPrefix_("")
-    , numberEnabled_(false)
-    , sipEnabled_(false)
-    , urlCommand_("x-www-browser")
-    , urlSipField_("X-ring-url")
-{}
-
-HookPreference::HookPreference(const std::map<std::string, std::string>& settings)
-    : numberAddPrefix_(settings.find("PHONE_NUMBER_HOOK_ADD_PREFIX")->second)
-    , numberEnabled_(settings.find("PHONE_NUMBER_HOOK_ENABLED")->second == "true")
-    , sipEnabled_(settings.find("URLHOOK_SIP_ENABLED")->second == "true")
-    , urlCommand_(settings.find("URLHOOK_COMMAND")->second)
-    , urlSipField_(settings.find("URLHOOK_SIP_FIELD")->second)
-{}
-
-std::map<std::string, std::string>
-HookPreference::toMap() const
-{
-    std::map<std::string, std::string> settings;
-    settings["PHONE_NUMBER_HOOK_ADD_PREFIX"] = numberAddPrefix_;
-    settings["PHONE_NUMBER_HOOK_ENABLED"] = numberEnabled_ ? "true" : "false";
-    settings["URLHOOK_SIP_ENABLED"] = sipEnabled_ ? "true" : "false";
-    settings["URLHOOK_COMMAND"] = urlCommand_;
-    settings["URLHOOK_SIP_FIELD"] = urlSipField_;
-
-    return settings;
-}
-
-void
-HookPreference::serialize(YAML::Emitter& out) const
-{
-    out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
-    out << YAML::Key << NUMBER_ADD_PREFIX_KEY << YAML::Value << numberAddPrefix_;
-    out << YAML::Key << SIP_ENABLED_KEY << YAML::Value << sipEnabled_;
-    out << YAML::Key << URL_COMMAND_KEY << YAML::Value << urlCommand_;
-    out << YAML::Key << URL_SIP_FIELD_KEY << YAML::Value << urlSipField_;
-    out << YAML::EndMap;
-}
-
-void
-HookPreference::unserialize(const YAML::Node& in)
-{
-    const auto& node = in[CONFIG_LABEL];
-
-    parseValue(node, NUMBER_ADD_PREFIX_KEY, numberAddPrefix_);
-    parseValue(node, SIP_ENABLED_KEY, sipEnabled_);
-    parseValue(node, URL_COMMAND_KEY, urlCommand_);
-    parseValue(node, URL_SIP_FIELD_KEY, urlSipField_);
-}
-
-void
-HookPreference::runHook(pjsip_msg* msg)
-{
-    if (sipEnabled_) {
-        const std::string header(sip_utils::fetchHeaderValue(msg, urlSipField_));
-        UrlHook::runAction(urlCommand_, header);
-    }
 }
 
 AudioPreference::AudioPreference()

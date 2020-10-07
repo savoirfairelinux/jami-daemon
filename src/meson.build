@@ -12,7 +12,6 @@ libjami_sources = files(
     'client/presencemanager.cpp',
     'client/ring_signal.cpp',
     'config/yamlparser.cpp',
-    'hooks/urlhook.cpp',
     'im/instant_messaging.cpp',
     'im/message_engine.cpp',
     'jamidht/eth/libdevcore/Common.cpp',

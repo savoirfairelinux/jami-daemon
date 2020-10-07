@@ -175,9 +175,6 @@ addressbook:
 hooks:
   numberAddPrefix:
   numberEnabled: false
-  sipEnabled: false
-  urlCommand: x-www-browser
-  urlSipField: X-sflphone-url
 audio:
   alsa:
     cardIn: 0

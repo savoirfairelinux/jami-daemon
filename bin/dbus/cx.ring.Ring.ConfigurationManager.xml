@@ -1114,19 +1114,6 @@
            </arg>
        </method>
 
-       <!-- Hook configuration -->
-       <method name="getHookSettings" tp:name-for-bindings="getHookSettings">
-           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-           <arg type="a{ss}" name="settings" direction="out">
-           </arg>
-       </method>
-
-       <method name="setHookSettings" tp:name-for-bindings="setHookSettings">
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
-           <arg type="a{ss}" name="settings" direction="in">
-           </arg>
-       </method>
-
        <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
        </signal>
 

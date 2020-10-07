@@ -488,18 +488,6 @@ DBusConfigurationManager::setAccountsOrder(const std::string& order)
 }
 
 auto
-DBusConfigurationManager::getHookSettings() -> decltype(DRing::getHookSettings())
-{
-    return DRing::getHookSettings();
-}
-
-void
-DBusConfigurationManager::setHookSettings(const std::map<std::string, std::string>& settings)
-{
-    DRing::setHookSettings(settings);
-}
-
-auto
 DBusConfigurationManager::validateCertificate(const std::string& accountId, const std::string& certificate) -> decltype(DRing::validateCertificate(accountId, certificate))
 {
    return DRing::validateCertificate(accountId, certificate);

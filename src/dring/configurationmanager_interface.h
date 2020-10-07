@@ -173,9 +173,6 @@ DRING_PUBLIC int32_t getRingingTimeout();
 
 DRING_PUBLIC void setAccountsOrder(const std::string& order);
 
-DRING_PUBLIC std::map<std::string, std::string> getHookSettings();
-DRING_PUBLIC void setHookSettings(const std::map<std::string, std::string>& settings);
-
 DRING_PUBLIC std::vector<std::map<std::string, std::string>> getCredentials(
     const std::string& accountID);
 DRING_PUBLIC void setCredentials(const std::string& accountID,
