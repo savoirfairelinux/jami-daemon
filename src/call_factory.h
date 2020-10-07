@@ -73,7 +73,7 @@ public:
      * @param account account useed to create this call
      */
     template<class T, class A>
-    std::shared_ptr<T> newCall(A& account,
+    std::shared_ptr<T> newCall(std::shared_ptr<A> account,
                                const std::string& id,
                                Call::CallType type,
                                const std::map<std::string, std::string>& details = {})
@@ -88,7 +88,7 @@ public:
         // We use a concrete class to bypass this restriction.
         struct ConcreteCall : T
         {
-            ConcreteCall(A& account,
+            ConcreteCall(std::shared_ptr<A> account,
                          const std::string& id,
                          Call::CallType type,
                          const std::map<std::string, std::string>& details)

@@ -134,9 +134,13 @@ Conference::~Conference()
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
             call->getVideoRtp().exitConference();
             // Reset distant callInfo
+            auto w = call->getAccount();
+            auto account = w.lock();
+            if (!account)
+                continue;
             call->sendTextMessage(std::map<std::string, std::string> {{"application/confInfo+json",
                                                                        "[]"}},
-                                  call->getAccount().getFromUri());
+                                  account->getFromUri());
             // Continue the recording for the call if the conference was recorded
             if (this->isRecording()) {
                 JAMI_DBG("Stop recording for conf %s", getConfID().c_str());
@@ -257,9 +261,13 @@ Conference::sendConferenceInfos()
     // Inform calls that the layout has changed
     for (const auto& participant_id : participants_) {
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+            auto w = call->getAccount();
+            auto account = w.lock();
+            if (!account)
+                continue;
             call->sendTextMessage(std::map<std::string, std::string> {{"application/confInfo+json",
                                                                        confInfo}},
-                                  call->getAccount().getFromUri());
+                                  account->getFromUri());
         }
     }
 
