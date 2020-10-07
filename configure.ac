@@ -623,7 +623,6 @@ AC_CONFIG_FILES([Makefile \
                  src/media/audio/sound/Makefile \
                  src/config/Makefile \
                  src/client/Makefile \
-                 src/hooks/Makefile \
                  src/media/video/Makefile \
                  src/media/video/v4l2/Makefile \
                  src/media/video/androidvideo/Makefile \

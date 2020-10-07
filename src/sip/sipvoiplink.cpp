@@ -323,8 +323,6 @@ transaction_request_cb(pjsip_rx_data* rdata)
         return PJ_FALSE;
     }
 
-    Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
-
     bool hasVideo = false;
     if (r_sdp) {
         auto pj_str_video = pj_str((char*) "video");

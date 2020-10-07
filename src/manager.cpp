@@ -706,7 +706,6 @@ Manager::instance()
 Manager::Manager()
     : preferences()
     , voipPreferences()
-    , hookPreference()
     , audioPreference()
     , shortcutPreferences()
 #ifdef ENABLE_VIDEO
@@ -947,11 +946,10 @@ Manager::outgoingCall(const std::string& account_id,
     JAMI_DBG() << "try outgoing call to '" << to << "'"
                << " with account '" << account_id << "'";
 
-    std::string to_cleaned = hookPreference.getNumberAddPrefix() + trim(to);
     std::shared_ptr<Call> call;
 
     try {
-        call = newOutgoingCall(to_cleaned, account_id, volatileCallDetails);
+        call = newOutgoingCall(trim(to), account_id, volatileCallDetails);
     } catch (const std::exception& e) {
         JAMI_ERR("%s", e.what());
         return {};
@@ -1730,7 +1728,6 @@ Manager::saveConfig()
         preferences.verifyAccountOrder(getAccountList());
         preferences.serialize(out);
         voipPreferences.serialize(out);
-        hookPreference.serialize(out);
         audioPreference.serialize(out);
 #ifdef ENABLE_VIDEO
         videoPreferences.serialize(out);
@@ -2823,7 +2820,6 @@ Manager::loadAccountMap(const YAML::Node& node)
         // build preferences
         preferences.unserialize(node);
         voipPreferences.unserialize(node);
-        hookPreference.unserialize(node);
         audioPreference.unserialize(node);
         shortcutPreferences.unserialize(node);
 #ifdef ENABLE_VIDEO

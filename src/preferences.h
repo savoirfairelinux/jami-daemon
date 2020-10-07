@@ -147,37 +147,6 @@ private:
     constexpr static const char* const CONFIG_LABEL = "voipPreferences";
 };
 
-class HookPreference : public Serializable
-{
-public:
-    HookPreference();
-    HookPreference(const std::map<std::string, std::string>& settings);
-
-    void serialize(YAML::Emitter& out) const override;
-    void unserialize(const YAML::Node& in) override;
-
-    std::string getNumberAddPrefix() const
-    {
-        if (numberEnabled_)
-            return numberAddPrefix_;
-        else
-            return "";
-    }
-
-    const std::string& getUrlCommand() const { return urlCommand_; }
-
-    std::map<std::string, std::string> toMap() const;
-    void runHook(pjsip_msg* msg);
-
-private:
-    std::string numberAddPrefix_;
-    bool numberEnabled_;
-    bool sipEnabled_;
-    std::string urlCommand_;
-    std::string urlSipField_;
-    constexpr static const char* const CONFIG_LABEL = "hooks";
-};
-
 class AudioPreference : public Serializable
 {
 public:
