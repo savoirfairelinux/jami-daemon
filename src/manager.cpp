@@ -540,7 +540,13 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
         auto p = participants.begin();
         if (auto call = base_.getCallFromCallID(*p)) {
             // if we are not listening to this conference and not a rendez-vous
-            if (call->getAccount().isRendezVous())
+            auto w = call->getAccount();
+            auto account = w.lock();
+            if (!account) {
+                JAMI_ERR("No account detected");
+                return;
+            }
+            if (account->isRendezVous())
                 return;
 
             call->setConfId("");
@@ -1843,10 +1849,17 @@ Manager::incomingCall(Call& call, const std::string& accountId)
             call.setPeerNumber(peerNumber.substr(startIndex + sizeof(SIP_PREFIX) - 1));
     }
 
+    auto w = call.getAccount();
+    auto account = w.lock();
+    if (!account) {
+        JAMI_ERR("No account detected");
+        return;
+    }
+
     if (not hasCurrentCall()) {
         call.setState(Call::ConnectionState::RINGING);
 #if !defined(RING_UWP) && !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-        if (not call.getAccount().isRendezVous())
+        if (not account->isRendezVous())
             playRingtone(accountId);
 #endif
     }
@@ -1862,7 +1875,7 @@ Manager::incomingCall(Call& call, const std::string& accountId)
                                                 call.getPeerDisplayName() + " " + from);
 
     auto currentCall = getCurrentCall();
-    if (call.getAccount().isRendezVous()) {
+    if (account->isRendezVous()) {
         runOnMainThread([this, callID] {
             answerCall(callID);
             auto call = getCallFromCallID(callID);
@@ -1899,7 +1912,13 @@ Manager::incomingCall(Call& call, const std::string& accountId)
         // Test if already calling this person
         if (currentCall->getAccountId() == accountId
             && currentCall->getPeerNumber() == call.getPeerNumber()) {
-            auto device_uid = currentCall->getAccount().getUsername();
+            auto w = currentCall->getAccount();
+            auto account = w.lock();
+            if (!account) {
+                JAMI_ERR("No account detected");
+                return;
+            }
+            auto device_uid = account->getUsername();
             if (device_uid.find("ring:") == 0) {
                 // NOTE: in case of a SIP call it's already ready to compare
                 device_uid = device_uid.substr(5); // after ring:
@@ -2291,7 +2310,6 @@ Manager::startAudio()
     for (const auto& type : TYPES)
         if (pimpl_->audioStreamUsers_[(unsigned) type])
             pimpl_->audiodriver_->startStream(type);
-
 }
 
 AudioDeviceGuard::AudioDeviceGuard(Manager& manager, AudioDeviceType type)
