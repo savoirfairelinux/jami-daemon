@@ -126,8 +126,8 @@ public:
 
     void setConfId(const std::string& id) { confID_ = id; }
 
-    Account& getAccount() const { return account_; }
-    const std::string& getAccountId() const;
+    std::weak_ptr<Account> getAccount() const { return account_; }
+    std::string getAccountId() const;
 
     CallType getCallType() const { return type_; }
 
@@ -340,7 +340,7 @@ protected:
      * @param type set definitely this call as incoming/outgoing
      * @param details volatile details to customize the call creation
      */
-    Call(Account& account,
+    Call(const std::shared_ptr<Account>& account,
          const std::string& id,
          Call::CallType type,
          const std::map<std::string, std::string>& details = {});
@@ -387,7 +387,7 @@ private:
     CallType type_;
 
     /** Associate account ID */
-    Account& account_;
+    std::weak_ptr<Account> account_;
 
     /** Disconnected/Progressing/Trying/Ringing/Connected */
     ConnectionState connectionState_ {ConnectionState::DISCONNECTED};
