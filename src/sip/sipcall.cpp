@@ -88,7 +88,7 @@ static constexpr int ICE_VIDEO_RTCP_COMPID {3};
 
 const char* const SIPCall::LINK_TYPE = SIPAccount::ACCOUNT_TYPE;
 
-SIPCall::SIPCall(SIPAccountBase& account,
+SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& id,
                  Call::CallType type,
                  const std::map<std::string, std::string>& details)
@@ -101,7 +101,7 @@ SIPCall::SIPCall(SIPAccountBase& account,
 #endif
     , sdp_(new Sdp(id))
 {
-    if (account.getUPnPActive())
+    if (account->getUPnPActive())
         upnp_.reset(new upnp::Controller(false));
 
     setCallMediaLocal();
@@ -120,10 +120,10 @@ SIPCall::~SIPCall()
     inv.reset(); // prevents callback usage
 }
 
-SIPAccountBase&
+std::shared_ptr<SIPAccountBase>
 SIPCall::getSIPAccount() const
 {
-    return static_cast<SIPAccountBase&>(getAccount());
+    return std::static_pointer_cast<SIPAccountBase>(getAccount().lock());
 }
 
 #ifdef ENABLE_PLUGIN
@@ -187,21 +187,25 @@ SIPCall::setCallMediaLocal()
 void
 SIPCall::generateMediaPorts()
 {
-    auto& account = getSIPAccount();
+    auto account = getSIPAccount();
+    if (!account) {
+        JAMI_ERR("No account detected");
+        return;
+    }
 
     // Reference: http://www.cs.columbia.edu/~hgs/rtp/faq.html#ports
     // We only want to set ports to new values if they haven't been set
-    const unsigned callLocalAudioPort = account.generateAudioPort();
+    const unsigned callLocalAudioPort = account->generateAudioPort();
     if (localAudioPort_ != 0)
-        account.releasePort(localAudioPort_);
+        account->releasePort(localAudioPort_);
     localAudioPort_ = callLocalAudioPort;
     sdp_->setLocalPublishedAudioPort(callLocalAudioPort);
 
 #ifdef ENABLE_VIDEO
     // https://projects.savoirfairelinux.com/issues/17498
-    const unsigned int callLocalVideoPort = account.generateVideoPort();
+    const unsigned int callLocalVideoPort = account->generateVideoPort();
     if (localVideoPort_ != 0)
-        account.releasePort(localVideoPort_);
+        account->releasePort(localVideoPort_);
     // this should already be guaranteed by SIPAccount
     assert(localAudioPort_ != callLocalVideoPort);
     localVideoPort_ = callLocalVideoPort;
@@ -271,12 +275,16 @@ SIPCall::SIPSessionReinvite()
     // LibAV doesn't discriminate SSRCs and will be confused about Seq changes on a given port
     generateMediaPorts();
     sdp_->clearIce();
-    auto& acc = getSIPAccount();
-    if (not sdp_->createOffer(acc.getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                              acc.getActiveAccountCodecInfoList(
-                                  acc.isVideoEnabled() and not isAudioOnly() ? MEDIA_VIDEO
-                                                                             : MEDIA_NONE),
-                              acc.getSrtpKeyExchange(),
+    auto acc = getSIPAccount();
+    if (!acc) {
+        JAMI_ERR("No account detected");
+        return !PJ_SUCCESS;
+    }
+    if (not sdp_->createOffer(acc->getActiveAccountCodecInfoList(MEDIA_AUDIO),
+                              acc->getActiveAccountCodecInfoList(
+                                  acc->isVideoEnabled() and not isAudioOnly() ? MEDIA_VIDEO
+                                                                              : MEDIA_NONE),
+                              acc->getSrtpKeyExchange(),
                               getState() == CallState::HOLD))
         return !PJ_SUCCESS;
 
@@ -291,7 +299,7 @@ SIPCall::SIPSessionReinvite()
             return PJ_SUCCESS;
 
         // Add user-agent header
-        sip_utils::addUserAgenttHeader(getAccount().getUserAgentName(), tdata);
+        sip_utils::addUserAgenttHeader(acc->getUserAgentName(), tdata);
 
         result = pjsip_inv_send_msg(inv.get(), tdata);
         if (result == PJ_SUCCESS)
@@ -399,12 +407,17 @@ SIPCall::terminateSipSession(int status)
         auto ret = pjsip_inv_end_session(inv.get(), status, nullptr, &tdata);
         if (ret == PJ_SUCCESS) {
             if (tdata) {
-                auto contact = getSIPAccount().getContactHeader(transport_ ? transport_->get()
-                                                                           : nullptr);
-                sip_utils::addContactHeader(&contact, tdata);
+                auto account = getSIPAccount();
+                if (account) {
+                    auto contact = account->getContactHeader(transport_ ? transport_->get()
+                                                                        : nullptr);
+                    sip_utils::addContactHeader(&contact, tdata);
+                } else {
+                    JAMI_ERR("No account detected");
+                }
 
                 // Add user-agent header
-                sip_utils::addUserAgenttHeader(getAccount().getUserAgentName(), tdata);
+                sip_utils::addUserAgenttHeader(account->getUserAgentName(), tdata);
 
                 ret = pjsip_inv_send_msg(inv.get(), tdata);
                 if (ret != PJ_SUCCESS)
@@ -426,7 +439,11 @@ void
 SIPCall::answer()
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
-    auto& account = getSIPAccount();
+    auto account = getSIPAccount();
+    if (!account) {
+        JAMI_ERR("No account detected");
+        return;
+    }
 
     if (not inv)
         throw VoipLinkException("[call:" + getCallId()
@@ -438,11 +455,11 @@ SIPCall::answer()
         pjmedia_sdp_session* dummy = 0;
         Manager::instance().sipVoIPLink().createSDPOffer(inv.get(), &dummy);
 
-        if (account.isStunEnabled())
+        if (account->isStunEnabled())
             updateSDPFromSTUN();
     }
 
-    pj_str_t contact(account.getContactHeader(transport_ ? transport_->get() : nullptr));
+    pj_str_t contact(account->getContactHeader(transport_ ? transport_->get() : nullptr));
     setContactHeader(&contact);
 
     pjsip_tx_data* tdata;
@@ -468,7 +485,7 @@ SIPCall::answer()
     }
 
     // Add user-agent header
-    sip_utils::addUserAgenttHeader(account.getUserAgentName(), tdata);
+    sip_utils::addUserAgenttHeader(account->getUserAgentName(), tdata);
 
     if (pjsip_inv_send_msg(inv.get(), tdata) != PJ_SUCCESS) {
         inv.reset();
@@ -641,14 +658,18 @@ SIPCall::transferCommon(const pj_str_t* dst)
 void
 SIPCall::transfer(const std::string& to)
 {
-    auto& account = getSIPAccount();
+    auto account = getSIPAccount();
+    if (!account) {
+        JAMI_ERR("No account detected");
+        return;
+    }
 
     if (Recordable::isRecording()) {
         deinitRecorder();
         stopRecording();
     }
 
-    std::string toUri = account.getToUri(to);
+    std::string toUri = account->getToUri(to);
     const pj_str_t dst(CONST_PJ_STR(toUri));
     JAMI_DBG("[call:%s] Transferring to %.*s", getCallId().c_str(), (int) dst.slen, dst.ptr);
 
@@ -750,11 +771,15 @@ SIPCall::offhold(OnReadyCb&& cb)
 bool
 SIPCall::unhold()
 {
-    auto& account = getSIPAccount();
+    auto account = getSIPAccount();
+    if (!account) {
+        JAMI_ERR("No account detected");
+        return false;
+    }
 
     bool success = false;
     try {
-        if (account.isStunEnabled())
+        if (account->isStunEnabled())
             success = internalOffHold([&] { updateSDPFromSTUN(); });
         else
             success = internalOffHold([] {});
@@ -985,7 +1010,12 @@ SIPCall::setupLocalSDPFromIce()
         return;
     }
 
-    if (const auto& ip = getSIPAccount().getPublishedIpAddress()) {
+    auto account = getSIPAccount();
+    if (!account) {
+        JAMI_ERR("No account detected");
+        return;
+    }
+    if (const auto& ip = account->getPublishedIpAddress()) {
         for (unsigned compId = 1; compId <= media_tr->getComponentCount(); ++compId)
             media_tr->registerPublicIP(compId, ip);
     }
@@ -1358,12 +1388,16 @@ void
 SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer)
 {
     sdp_->clearIce();
-    auto& acc = getSIPAccount();
+    auto acc = getSIPAccount();
+    if (!acc) {
+        JAMI_ERR("No account detected");
+        return;
+    }
     sdp_->receiveOffer(offer,
-                       acc.getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                       acc.getActiveAccountCodecInfoList(acc.isVideoEnabled() ? MEDIA_VIDEO
-                                                                              : MEDIA_NONE),
-                       acc.getSrtpKeyExchange(),
+                       acc->getActiveAccountCodecInfoList(MEDIA_AUDIO),
+                       acc->getActiveAccountCodecInfoList(acc->isVideoEnabled() ? MEDIA_VIDEO
+                                                                                : MEDIA_NONE),
+                       acc->getSrtpKeyExchange(),
                        getState() == CallState::HOLD);
     setRemoteSdp(offer);
     sdp_->startNegotiation();
@@ -1432,11 +1466,15 @@ SIPCall::getDetails() const
     auto details = Call::getDetails();
     details.emplace(DRing::Call::Details::PEER_HOLDING, peerHolding_ ? TRUE_STR : FALSE_STR);
 
-    auto& acc = getSIPAccount();
+    auto acc = getSIPAccount();
+    if (!acc) {
+        JAMI_ERR("No account detected");
+        return {};
+    }
 
 #ifdef ENABLE_VIDEO
     // If Video is not enabled return an empty string
-    details.emplace(DRing::Call::Details::VIDEO_SOURCE, acc.isVideoEnabled() ? mediaInput_ : "");
+    details.emplace(DRing::Call::Details::VIDEO_SOURCE, acc->isVideoEnabled() ? mediaInput_ : "");
     if (auto codec = videortp_->getCodec())
         details.emplace(DRing::Call::Details::VIDEO_CODEC, codec->systemCodecInfo.name);
 #endif
@@ -1487,8 +1525,12 @@ SIPCall::toggleRecording()
     if (not Call::isRecording()) {
         updateRecState(true);
         std::stringstream ss;
-        ss << "Conversation at %TIMESTAMP between " << getSIPAccount().getUserUri() << " and "
-           << peerUri_;
+        auto account = getSIPAccount();
+        if (!account) {
+            JAMI_ERR("No account detected");
+            return false;
+        }
+        ss << "Conversation at %TIMESTAMP between " << account->getUserUri() << " and " << peerUri_;
         recorder_->setMetadata(ss.str(), ""); // use default description
         if (avformatrtp_)
             avformatrtp_->initRecorder(recorder_);
@@ -1545,9 +1587,14 @@ SIPCall::initIceMediaTransport(bool master,
                                std::optional<IceTransportOptions> options,
                                unsigned channel_num)
 {
+    auto acc = getSIPAccount();
+    if (!acc) {
+        JAMI_ERR("No account detected");
+        return false;
+    }
     std::lock_guard<std::mutex> lk(transportMtx_);
     JAMI_DBG("[call:%s] create media ICE transport", getCallId().c_str());
-    auto iceOptions = options == std::nullopt ? getAccount().getIceOptions() : *options;
+    auto iceOptions = options == std::nullopt ? acc->getIceOptions() : *options;
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
     tmpMediaTransport_ = iceTransportFactory.createUTransport(getCallId().c_str(),

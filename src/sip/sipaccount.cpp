@@ -178,7 +178,7 @@ SIPAccount::newIncomingCall(const std::string& from UNUSED,
                             const std::shared_ptr<SipTransport>&)
 {
     auto& manager = Manager::instance();
-    return manager.callFactory.newCall<SIPCall, SIPAccount>(*this,
+    return manager.callFactory.newCall<SIPCall, SIPAccount>(shared(),
                                                             manager.getNewCallID(),
                                                             Call::CallType::INCOMING,
                                                             details);
@@ -195,7 +195,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl,
     JAMI_DBG() << *this << "Calling SIP peer " << toUrl;
 
     auto& manager = Manager::instance();
-    auto call = manager.callFactory.newCall<SIPCall, SIPAccount>(*this,
+    auto call = manager.callFactory.newCall<SIPCall, SIPAccount>(shared(),
                                                                  manager.getNewCallID(),
                                                                  Call::CallType::OUTGOING,
                                                                  volatileCallDetails);
