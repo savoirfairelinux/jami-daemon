@@ -231,8 +231,8 @@ std::string
 sip_strerror(pj_status_t code)
 {
     char err_msg[PJ_ERR_MSG_SIZE];
-    pj_strerror(code, err_msg, sizeof err_msg);
-    return std::string {err_msg};
+    auto ret = pj_strerror(code, err_msg, sizeof err_msg);
+    return std::string {ret.ptr, ret.ptr+ret.slen};
 }
 
 void
