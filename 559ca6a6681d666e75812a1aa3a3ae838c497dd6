@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "23b860c2_7b1d839e",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 577,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-10-07T21:17:09Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nValue stored to \u0027x\u0027 during its initialization is never read\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-deadcode.DeadStores",
+      "revId": "559ca6a6681d666e75812a1aa3a3ae838c497dd6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
