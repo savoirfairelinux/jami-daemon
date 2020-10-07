@@ -364,7 +364,7 @@ JamiAccount::newIncomingCall(const std::string& from,
                         continue;
 
                     auto call = Manager::instance().callFactory.newCall<SIPCall, JamiAccount>(
-                        *this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
+                        shared(), Manager::instance().getNewCallID(), Call::CallType::INCOMING);
                     if (!call)
                         return {};
 
@@ -409,7 +409,7 @@ JamiAccount::newOutgoingCall(const std::string& toUrl,
     auto suffix = stripPrefix(toUrl);
     JAMI_DBG() << *this << "Calling DHT peer " << suffix;
     auto& manager = Manager::instance();
-    auto call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this,
+    auto call = manager.callFactory.newCall<SIPCall, JamiAccount>(shared(),
                                                                   manager.getNewCallID(),
                                                                   Call::CallType::OUTGOING,
                                                                   volatileCallDetails);
@@ -515,48 +515,50 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     // NOTE: dummyCall is a call used to avoid to mark the call as failed if the
     // cached connection is failing with ICE (close event still not detected).
     auto& manager = Manager::instance();
-    auto dummyCall = manager.callFactory.newCall<SIPCall, JamiAccount>(*this,
+    auto dummyCall = manager.callFactory.newCall<SIPCall, JamiAccount>(shared(),
                                                                        manager.getNewCallID(),
                                                                        Call::CallType::OUTGOING,
                                                                        call->getDetails());
     dummyCall->setIPToIP(true);
     dummyCall->setSecure(isTlsEnabled());
     call->addSubCall(*dummyCall);
-    auto sendRequest = [this,
-                        wCall,
-                        toUri,
-                        dummyCall = std::move(dummyCall)](const DeviceId& deviceId,
-                                                          bool eraseDummy) {
-        if (eraseDummy) {
-            // Mark the temp call as failed to stop the main call if necessary
-            if (dummyCall)
-                dummyCall->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
-            return;
-        }
-        auto call = wCall.lock();
-        if (not call)
-            return;
-        auto state = call->getConnectionState();
-        if (state != Call::ConnectionState::PROGRESSING and state != Call::ConnectionState::TRYING)
-            return;
+    auto sendRequest =
+        [this, wCall, toUri, dummyCall = std::move(dummyCall)](const DeviceId& deviceId,
+                                                               bool eraseDummy) {
+            if (eraseDummy) {
+                // Mark the temp call as failed to stop the main call if necessary
+                if (dummyCall)
+                    dummyCall->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
+                return;
+            }
+            auto call = wCall.lock();
+            if (not call)
+                return;
+            auto state = call->getConnectionState();
+            if (state != Call::ConnectionState::PROGRESSING
+                and state != Call::ConnectionState::TRYING)
+                return;
 
-        auto dev_call = Manager::instance().callFactory.newCall<SIPCall, JamiAccount>(
-            *this, Manager::instance().getNewCallID(), Call::CallType::OUTGOING, call->getDetails());
+            auto dev_call = Manager::instance().callFactory.newCall<SIPCall, JamiAccount>(
+                shared(),
+                Manager::instance().getNewCallID(),
+                Call::CallType::OUTGOING,
+                call->getDetails());
 
-        dev_call->setIPToIP(true);
-        dev_call->setSecure(isTlsEnabled());
-        dev_call->setState(Call::ConnectionState::TRYING);
-        call->addSubCall(*dev_call);
-        {
-            std::lock_guard<std::mutex> lk(pendingCallsMutex_);
-            pendingCalls_[deviceId.toString()].emplace_back(dev_call);
-        }
+            dev_call->setIPToIP(true);
+            dev_call->setSecure(isTlsEnabled());
+            dev_call->setState(Call::ConnectionState::TRYING);
+            call->addSubCall(*dev_call);
+            {
+                std::lock_guard<std::mutex> lk(pendingCallsMutex_);
+                pendingCalls_[deviceId.toString()].emplace_back(dev_call);
+            }
 
-        JAMI_WARN("[call %s] No channeled socket with this peer. Send request",
-                  call->getCallId().c_str());
-        // Else, ask for a channel (for future calls/text messages)
-        requestSIPConnection(toUri, deviceId);
-    };
+            JAMI_WARN("[call %s] No channeled socket with this peer. Send request",
+                      call->getCallId().c_str());
+            // Else, ask for a channel (for future calls/text messages)
+            requestSIPConnection(toUri, deviceId);
+        };
 
     for (auto it = sipConns_.begin(); it != sipConns_.end(); ++it) {
         auto& [key, value] = *it;
@@ -577,7 +579,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         JAMI_WARN("[call %s] A channeled socket is detected with this peer.",
                   call->getCallId().c_str());
 
-        auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this,
+        auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(shared(),
                                                                           manager.getNewCallID(),
                                                                           Call::CallType::OUTGOING,
                                                                           call->getDetails());
@@ -2321,7 +2323,7 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg,
                           const dht::InfoHash& from)
 {
     auto call = Manager::instance()
-                    .callFactory.newCall<SIPCall, JamiAccount>(*this,
+                    .callFactory.newCall<SIPCall, JamiAccount>(shared(),
                                                                Manager::instance().getNewCallID(),
                                                                Call::CallType::INCOMING);
     if (!call) {
