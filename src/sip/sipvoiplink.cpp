@@ -347,7 +347,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     // Append PJSIP transport to the broker's SipTransport list
     if (!transport) {
-        if (not::strcmp(account->getAccountType(), SIPAccount::ACCOUNT_TYPE)) {
+        if (not ::strcmp(account->getAccountType(), SIPAccount::ACCOUNT_TYPE)) {
             JAMI_WARN("Using transport from account.");
             transport = std::static_pointer_cast<SIPAccount>(account)->getTransport();
         }
@@ -929,7 +929,11 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
     if (not call)
         return;
 
-    const auto& account = call->getSIPAccount();
+    auto account = call->getSIPAccount();
+    if (not account) {
+        JAMI_ERR("No account detected");
+        return;
+    }
     auto family = pj_AF_INET();
     // FIXME : for now, use the same address family as the SIP transport
     if (auto dlg = inv->dlg) {
@@ -941,15 +945,15 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
                 family = tr->local_addr.addr.sa_family;
         }
     }
-    auto ifaceAddr = ip_utils::getInterfaceAddr(account.getLocalInterface(), family);
+    auto ifaceAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
 
     IpAddr address;
-    if (account.getUPnPActive()) {
+    if (account->getUPnPActive()) {
         /* use UPnP addr, or published addr if its set */
-        address = account.getPublishedSameasLocal() ? account.getUPnPIpAddress()
-                                                    : account.getPublishedIpAddress();
+        address = account->getPublishedSameasLocal() ? account->getUPnPIpAddress()
+                                                     : account->getPublishedIpAddress();
     } else {
-        address = account.getPublishedSameasLocal() ? ifaceAddr : account.getPublishedIpAddress();
+        address = account->getPublishedSameasLocal() ? ifaceAddr : account->getPublishedIpAddress();
     }
 
     /* fallback on local address */
@@ -958,11 +962,11 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
 
     auto& localSDP = call->getSDP();
     localSDP.setPublishedIP(address);
-    const bool created = localSDP.createOffer(account.getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                                              account.getActiveAccountCodecInfoList(
-                                                  account.isVideoEnabled() ? MEDIA_VIDEO
-                                                                           : MEDIA_NONE),
-                                              account.getSrtpKeyExchange());
+    const bool created = localSDP.createOffer(account->getActiveAccountCodecInfoList(MEDIA_AUDIO),
+                                              account->getActiveAccountCodecInfoList(
+                                                  account->isVideoEnabled() ? MEDIA_VIDEO
+                                                                            : MEDIA_NONE),
+                                              account->getSrtpKeyExchange());
 
     if (created)
         *p_offer = localSDP.getLocalSdpSession();
@@ -1086,8 +1090,7 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
                 }
                 return true;
             }
-        }
-        else if (pj_strstr(&control_st, &RECORDING_STATE)) {
+        } else if (pj_strstr(&control_st, &RECORDING_STATE)) {
             static const std::regex REC_REGEX("recording_state=([0-1])");
             std::string body_msg(control_st.ptr, control_st.slen);
             std::smatch matched_pattern;
@@ -1234,10 +1237,9 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     }
 }
 
-
-static void processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* event)
+static void
+processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* event)
 {
-
     if (event->body.tsx_state.type != PJSIP_EVENT_RX_MSG)
         return;
 
@@ -1250,19 +1252,19 @@ static void processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* eve
         return;
 
     // Only handle the following responses
-    switch(msg->line.status.code) {
-        case PJSIP_SC_TRYING :
-        case PJSIP_SC_RINGING :
-        case PJSIP_SC_OK :
-            break;
-        default :
-            return;
+    switch (msg->line.status.code) {
+    case PJSIP_SC_TRYING:
+    case PJSIP_SC_RINGING:
+    case PJSIP_SC_OK:
+        break;
+    default:
+        return;
     }
 
     JAMI_INFO("[INVITE:%p] SIP RX response: reason %s, status code %i",
-        inv,
-        std::string(msg->line.status.reason.ptr, msg->line.status.reason.slen).c_str(),
-        msg->line.status.code);
+              inv,
+              std::string(msg->line.status.reason.ptr, msg->line.status.reason.slen).c_str(),
+              msg->line.status.code);
 
     sip_utils::logMessageHeaders(&msg->hdr);
 }
