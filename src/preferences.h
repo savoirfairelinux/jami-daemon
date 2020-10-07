@@ -164,17 +164,11 @@ public:
             return "";
     }
 
-    const std::string& getUrlCommand() const { return urlCommand_; }
-
     std::map<std::string, std::string> toMap() const;
-    void runHook(pjsip_msg* msg);
 
 private:
     std::string numberAddPrefix_;
     bool numberEnabled_;
-    bool sipEnabled_;
-    std::string urlCommand_;
-    std::string urlSipField_;
     constexpr static const char* const CONFIG_LABEL = "hooks";
 };
 
