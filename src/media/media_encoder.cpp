@@ -368,13 +368,16 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
 #ifdef RING_ACCEL
     auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input.format()));
     bool isHardware = desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL);
-#ifdef ENABLE_VIDEOTOOLBOX
-    // Videotoolbox handles frames allocations itself and do not need creating frame context
-    // manually. Now videotoolbox supports only fully accelerated pipeline
-    bool isVideotoolbox = static_cast<AVPixelFormat>(input.format()) == AV_PIX_FMT_VIDEOTOOLBOX;
-    if (accel_ && isVideotoolbox) {
-        // Fully accelerated pipeline, skip main memory
-        frame = input.pointer();
+#if defined(TARGET_OS_IOS) && TARGET_OS_IOS
+    if (accel_) {
+        auto pix = accel_->getSoftwareFormat();
+        if (input.format() != pix) {
+            std::unique_ptr<VideoFrame> framePtr;
+            framePtr = scaler_.convertFormat(input, pix);
+            frame = framePtr->pointer();
+        } else {
+            frame = input.pointer();
+        }
     } else {
 #else
     std::unique_ptr<VideoFrame> framePtr;
@@ -406,7 +409,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
         }
         frame = framePtr->pointer();
     } else {
-#endif // ENABLE_VIDEOTOOLBOX
+#endif // defined(TARGET_OS_IOS) && TARGET_OS_IOS
 #endif
         libav_utils::fillWithBlack(scaledFrame_.pointer());
         scaler_.scale_with_aspect(input, scaledFrame_);
@@ -594,7 +597,7 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
 // Keep YUV format for macOS
 #if !(defined(__APPLE__) && !TARGET_OS_IOS)
         if (accel_)
-            encoderCtx->pix_fmt = accel_->getFormat();
+            encoderCtx->pix_fmt = accel_->getSoftwareFormat();
 #endif
 #endif
 
