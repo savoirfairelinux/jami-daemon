@@ -39,7 +39,7 @@ $(TARBALLS)/openbsd-$(OPENBSD_VERSION).tar.gz:
 
 libressl: portable-$(LIBRESSL_VERSION).tar.gz openbsd-$(OPENBSD_VERSION).tar.gz
 	$(UNPACK)
-	mv portable-$(SSL_VERSION) portable-v$(SSL_VERSION) 
+	mv portable-$(SSL_VERSION) portable-v$(SSL_VERSION)
 	$(APPLY) $(SRC)/libressl/0001-build-don-t-fetch-git-tag-if-openbsd-directory-exist.patch
 	mv openbsd-$(OPENBSD_VERSION) $(UNPACK_DIR)/openbsd
 	$(MOVE)
@@ -55,6 +55,8 @@ else ifeq ($(IOS_TARGET_PLATFORM),iPhoneOS)
 	cd $< && mkdir -p build && cd build && $(CMAKE) -DLIBRESSL_TESTS=Off -DLIBRESSL_APPS=Off -DDESTDIR=$(PREFIX) -DCMAKE_C_FLAGS='-miphoneos-version-min=9.3 -fembed-bitcode -arch arm64' .. && $(MAKE) && $(MAKE) install
 else ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
 	cd $< && mkdir -p build && cd build && $(CMAKE) -DLIBRESSL_TESTS=Off -DLIBRESSL_APPS=Off -DDESTDIR=$(PREFIX) -DCMAKE_C_FLAGS='-miphoneos-version-min=9.3 -fembed-bitcode -arch x86_64' .. && $(MAKE) && $(MAKE) install
+else ifeq ($(HOST_ARCH),arm-linux-gnueabihf)
+	cd $< && mkdir -p build && cd build && $(CMAKE) -DLIBRESSL_TESTS=Off -DLIBRESSL_APPS=Off -DDESTDIR=$(PREFIX) -DCMAKE_SYSTEM_PROCESSOR=arm -DENABLE_ASM=Off -DCMAKE_C_FLAGS='-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard' .. && $(MAKE) && $(MAKE) install
 else
 	cd $< && mkdir -p build && cd build && $(CMAKE) -DLIBRESSL_TESTS=Off -DLIBRESSL_APPS=Off -DDESTDIR=$(PREFIX) .. && $(MAKE) && $(MAKE) install
 endif
