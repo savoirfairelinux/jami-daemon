@@ -110,9 +110,12 @@ SIPCall::SIPCall(SIPAccountBase& account,
 SIPCall::~SIPCall()
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
-    if (tmpMediaTransport_)
-        dht::ThreadPool::io().run([ice = std::make_shared<decltype(tmpMediaTransport_)>(
-                                       std::move(tmpMediaTransport_))] {});
+    {
+        std::lock_guard<std::mutex> lk(transportMtx_);
+        if (tmpMediaTransport_)
+            dht::ThreadPool::io().run([ice = std::make_shared<decltype(tmpMediaTransport_)>(
+                                           std::move(tmpMediaTransport_))] {});
+    }
     setTransport({});
     inv.reset(); // prevents callback usage
 }
@@ -1327,14 +1330,17 @@ SIPCall::waitForIceAndStartMedia()
 
                     // Nego succeed: move to the new media transport
                     call->stopAllMedia();
-                    if (call->tmpMediaTransport_) {
-                        // Destroy the ICE media transport on another thread. This can take quite
-                        // some time.
-                        if (call->mediaTransport_)
-                            dht::ThreadPool::io().run(
-                                [ice = std::make_shared<decltype(call->mediaTransport_)>(
-                                     std::move(call->mediaTransport_))] {});
-                        call->mediaTransport_ = std::move(call->tmpMediaTransport_);
+                    {
+                        std::lock_guard<std::mutex> lk(call->transportMtx_);
+                        if (call->tmpMediaTransport_) {
+                            // Destroy the ICE media transport on another thread. This can take
+                            // quite some time.
+                            if (call->mediaTransport_)
+                                dht::ThreadPool::io().run(
+                                    [ice = std::make_shared<decltype(call->mediaTransport_)>(
+                                         std::move(call->mediaTransport_))] {});
+                            call->mediaTransport_ = std::move(call->tmpMediaTransport_);
+                        }
                     }
                     call->startAllMedia();
                     return false;
@@ -1539,6 +1545,7 @@ SIPCall::initIceMediaTransport(bool master,
                                std::optional<IceTransportOptions> options,
                                unsigned channel_num)
 {
+    std::lock_guard<std::mutex> lk(transportMtx_);
     JAMI_DBG("[call:%s] create media ICE transport", getCallId().c_str());
     auto iceOptions = options == std::nullopt ? getAccount().getIceOptions() : *options;
 
@@ -1571,8 +1578,11 @@ SIPCall::merge(Call& call)
     pj_strcpy(&contactHeader_, &subcall.contactHeader_);
     localAudioPort_ = subcall.localAudioPort_;
     localVideoPort_ = subcall.localVideoPort_;
-    mediaTransport_ = std::move(subcall.mediaTransport_);
-    tmpMediaTransport_ = std::move(subcall.tmpMediaTransport_);
+    {
+        std::lock_guard<std::mutex> lk(transportMtx_);
+        mediaTransport_ = std::move(subcall.mediaTransport_);
+        tmpMediaTransport_ = std::move(subcall.tmpMediaTransport_);
+    }
 
     Call::merge(subcall);
 

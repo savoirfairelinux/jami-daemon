@@ -248,8 +248,10 @@ private:
 
     NON_COPYABLE(SIPCall);
 
+    mutable std::mutex transportMtx_ {};
     IceTransport* getIceMediaTransport() const
     {
+        std::lock_guard<std::mutex> lk(transportMtx_);
         return tmpMediaTransport_ ? tmpMediaTransport_.get() : mediaTransport_.get();
     }
 
