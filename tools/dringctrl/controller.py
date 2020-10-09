@@ -127,6 +127,9 @@ class DRingCtrl(Thread):
             proxy_callmgr.connect_to_signal('conferenceCreated', self.onConferenceCreated)
             proxy_confmgr.connect_to_signal('accountsChanged', self.onAccountsChanged)
             proxy_confmgr.connect_to_signal('dataTransferEvent', self.onDataTransferEvent)
+            proxy_confmgr.connect_to_signal('conversationReady', self.onConversationReady)
+            proxy_confmgr.connect_to_signal('conversationRequestReceived', self.onConversationRequestReceived)
+            proxy_confmgr.connect_to_signal('messageReceived', self.onMessageReceived)
 
         except dbus.DBusException as e:
             raise DRingCtrlDBusError("Unable to connect to dring DBus signals")
@@ -304,6 +307,17 @@ class DRingCtrl(Thread):
 
     def onDataTransferEvent(self, transferId, code):
         pass
+
+    def onConversationReady(self, account, conversationId):
+        print(f'New conversation ready for {account} with id {conversationId}')
+
+    def onConversationRequestReceived(self, account, conversationId, metadatas):
+        print(f'New conversation request for {account} with id {conversationId}')
+
+    def onMessageReceived(self, account, conversationId, message):
+        print(f'New message for {account} in conversation {conversationId} with id {message["id"]}')
+        for key in message:
+            print(f'\t {key}: {message[key]}')
 
     #
     # Account management
@@ -553,7 +567,7 @@ class DRingCtrl(Thread):
         if not self.account:
             self.setFirstRegisteredAccount()
 
-        if self.account is not "IP2IP" and not self.isAccountRegistered():
+        if self.account != "IP2IP" and not self.isAccountRegistered():
             raise DRingCtrlAccountError("Can't place a call without a registered account")
 
         # Send the request to the CallManager
@@ -695,6 +709,30 @@ class DRingCtrl(Thread):
 
     def sendTextMessage(self, account, to, message):
         return self.configurationmanager.sendTextMessage(account, to, { 'text/plain': message })
+
+    def startConversation(self, account):
+        return self.configurationmanager.startConversation(account)
+
+    def listConversations(self, account):
+        return self.configurationmanager.getConversations(account)
+
+    def listConversationsRequests(self, account):
+        return self.configurationmanager.getConversationRequests(account)
+
+    def listConversationsMembers(self, account, conversationId):
+        return self.configurationmanager.getConversationMembers(account, conversationId)
+
+    def addConversationMember(self, account, conversationId, member):
+        return self.configurationmanager.addConversationMember(account, conversationId, member)
+
+    def acceptConversationRequest(self, account, conversationId):
+        return self.configurationmanager.acceptConversationRequest(account, conversationId)
+
+    def declineConversationRequest(self, account, conversationId):
+        return self.configurationmanager.declineConversationRequest(account, conversationId)
+
+    def sendMessage(self, account, conversationId, message, parent=''):
+        return self.configurationmanager.sendMessage(account, conversationId, message, parent)
 
     def run(self):
         """Processing method for this thread"""
