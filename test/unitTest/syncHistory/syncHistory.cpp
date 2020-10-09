@@ -356,7 +356,7 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
 
     // Start conversation for Alice
     auto convId = bobAccount->startConversation();
-    bobAccount->addConversationMember(convId, uri);
+    CPPUNIT_ASSERT(bobAccount->addConversationMember(convId, uri));
 
     // Check that alice receives the request
     std::mutex mtx;
