@@ -52,11 +52,11 @@ ifdef HAVE_WIN32
 else ifdef HAVE_WIN64
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) && $(MAKE) && $(MAKE) install
 else ifeq ($(IOS_TARGET_PLATFORM),iPhoneOS)
-	cd $< && mkdir build && cd build && $(CMAKE) -DLIBRESSL_TESTS=Off -DLIBRESSL_APPS=Off -DDESTDIR=$(PREFIX) -DCMAKE_C_FLAGS='-miphoneos-version-min=9.3 -fembed-bitcode -arch arm64' .. && $(MAKE) && $(MAKE) install
+	cd $< && mkdir -p build && cd build && $(CMAKE) -DLIBRESSL_TESTS=Off -DLIBRESSL_APPS=Off -DDESTDIR=$(PREFIX) -DCMAKE_C_FLAGS='-miphoneos-version-min=9.3 -fembed-bitcode -arch arm64' .. && $(MAKE) && $(MAKE) install
 else ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
-	cd $< && mkdir build && cd build && $(CMAKE) -DLIBRESSL_TESTS=Off -DLIBRESSL_APPS=Off -DDESTDIR=$(PREFIX) -DCMAKE_C_FLAGS='-miphoneos-version-min=9.3 -fembed-bitcode -arch x86_64' .. && $(MAKE) && $(MAKE) install
+	cd $< && mkdir -p build && cd build && $(CMAKE) -DLIBRESSL_TESTS=Off -DLIBRESSL_APPS=Off -DDESTDIR=$(PREFIX) -DCMAKE_C_FLAGS='-miphoneos-version-min=9.3 -fembed-bitcode -arch x86_64' .. && $(MAKE) && $(MAKE) install
 else
-	cd $< && mkdir build && cd build && $(CMAKE) -DLIBRESSL_TESTS=Off -DLIBRESSL_APPS=Off -DDESTDIR=$(PREFIX) .. && $(MAKE) && $(MAKE) install
+	cd $< && mkdir -p build && cd build && $(CMAKE) -DLIBRESSL_TESTS=Off -DLIBRESSL_APPS=Off -DDESTDIR=$(PREFIX) .. && $(MAKE) && $(MAKE) install
 endif
 	rm -rf $(PREFIX)/lib/*.so $(PREFIX)/lib/*.so.*
 	touch $@
