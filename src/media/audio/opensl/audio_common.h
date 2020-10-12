@@ -27,7 +27,7 @@ namespace opensl {
 /*
  * Sample Buffer Controls...
  */
-#define RECORD_DEVICE_KICKSTART_BUF_COUNT 2
+#define RECORD_DEVICE_KICKSTART_BUF_COUNT 4
 #define PLAY_KICKSTART_BUFFER_COUNT       8
 #define DEVICE_SHADOW_BUFFER_QUEUE_LEN    4
 #define BUF_COUNT                         16
