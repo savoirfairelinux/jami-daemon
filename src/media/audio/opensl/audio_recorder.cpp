@@ -51,9 +51,9 @@ AudioRecorder::processSLCallback(SLAndroidSimpleBufferQueueItf bq)
         }
 
         // should leave the device to sleep to save power if no buffers
-        if (devShadowQueue_.size() == 0) {
+        /*if (devShadowQueue_.size() == 0) {
             (*recItf_)->SetRecordState(recItf_, SL_RECORDSTATE_STOPPED);
-        }
+        }*/
         callback_();
     } catch (const std::exception& e) {
         JAMI_ERR("processSLCallback exception: %s", e.what());
