@@ -45,7 +45,7 @@ patch_args = ['-flp1', '-i']
 
 # vs help
 win_sdk_default = '10.0.16299.0'
-win_toolset_default = 'v142'
+win_toolset_default = '142'
 
 vs_where_path = os.path.join(
     os.environ['ProgramFiles(x86)'], 'Microsoft Visual Studio', 'Installer', 'vswhere.exe'
@@ -707,6 +707,10 @@ def parse_args():
         help='Use specified platform toolset version')
 
     parsed_args = ap.parse_args()
+
+    if parsed_args.toolset:
+        if parsed_args.toolset[0] != 'v':
+            parsed_args.toolset = 'v' + parsed_args.toolset
 
     return parsed_args
 
