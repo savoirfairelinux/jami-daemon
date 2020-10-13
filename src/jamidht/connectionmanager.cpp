@@ -370,11 +370,11 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
             }
 
             // Avoid dht operation in a DHT callback to avoid deadlocks
-            runOnMainThread([w,
-                             deviceId = std::move(deviceId),
-                             name = std::move(name),
-                             cert = std::move(cert),
-                             cb = std::move(cb)] {
+            dht::ThreadPool::io().run([w,
+                                       deviceId = std::move(deviceId),
+                                       name = std::move(name),
+                                       cert = std::move(cert),
+                                       cb = std::move(cb)] {
                 auto sthis = w.lock();
                 if (!sthis || sthis->isDestroying_) {
                     cb(nullptr);
@@ -383,7 +383,9 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                 auto vid = ValueIdDist()(sthis->account.rand);
                 ConnectionKey cbId(deviceId, vid);
                 {
+                    JAMI_ERR("@@@ LOCK?");
                     std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
+                    JAMI_ERR("@@@ LOCK!");
                     auto cbIt = sthis->pendingCbs_.find(cbId);
                     if (cbIt != sthis->pendingCbs_.end()) {
                         JAMI_WARN("Already have a current callback for same channel");
