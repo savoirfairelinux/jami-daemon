@@ -220,13 +220,17 @@ ConnectionManager::Impl::connectDeviceStartIce(const std::string& deviceId,
 
     auto onError = [&]() {
         ice.reset();
-        std::lock_guard<std::mutex> lk(connectCbsMtx_);
-        auto cbIt = pendingCbs_.find(cbId);
-        if (cbIt != pendingCbs_.end()) {
-            if (cbIt->second)
-                cbIt->second(nullptr);
-            pendingCbs_.erase(cbIt);
+        ConnectCallback cb;
+        {
+            std::lock_guard<std::mutex> lk(connectCbsMtx_);
+            auto cbIt = pendingCbs_.find(cbId);
+            if (cbIt != pendingCbs_.end()) {
+                cb = std::move(cbIt->second);
+                pendingCbs_.erase(cbIt);
+            }
         }
+        if (cb)
+            cb(nullptr);
     };
 
     if (!ice) {
@@ -300,13 +304,17 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
     auto& ice = info->ice_;
 
     auto onError = [&]() {
-        std::lock_guard<std::mutex> lk(connectCbsMtx_);
-        auto cbIt = pendingCbs_.find(cbId);
-        if (cbIt != pendingCbs_.end()) {
-            if (cbIt->second)
-                cbIt->second(nullptr);
-            pendingCbs_.erase(cbIt);
+        ConnectCallback cb;
+        {
+            std::lock_guard<std::mutex> lk(connectCbsMtx_);
+            auto cbIt = pendingCbs_.find(cbId);
+            if (cbIt != pendingCbs_.end()) {
+                cb = std::move(cbIt->second);
+                pendingCbs_.erase(cbIt);
+            }
         }
+        if (cb)
+            cb(nullptr);
     };
 
     if (!ice || !ice->isRunning()) {
@@ -338,14 +346,18 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
                 return;
             if (!ok) {
                 JAMI_ERR() << "TLS connection failure for peer " << deviceId;
-                std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
-                std::pair<std::string, dht::Value::Id> cbId(deviceId, vid);
-                auto cbIt = sthis->pendingCbs_.find(cbId);
-                if (cbIt != sthis->pendingCbs_.end()) {
-                    if (cbIt->second)
-                        cbIt->second(nullptr);
-                    sthis->pendingCbs_.erase(cbIt);
+                ConnectCallback cb;
+                {
+                    std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
+                    std::pair<std::string, dht::Value::Id> cbId(deviceId, vid);
+                    auto cbIt = sthis->pendingCbs_.find(cbId);
+                    if (cbIt != sthis->pendingCbs_.end()) {
+                        cb = std::move(cbIt->second);
+                        sthis->pendingCbs_.erase(cbIt);
+                    }
                 }
+                if (cb)
+                    cb(nullptr);
             } else {
                 // The socket is ready, store it
                 sthis->addNewMultiplexedSocket(deviceId, vid);
@@ -376,11 +388,11 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId,
             }
 
             // Avoid dht operation in a DHT callback to avoid deadlocks
-            runOnMainThread([w,
-                             deviceId = std::move(deviceId),
-                             name = std::move(name),
-                             cert = std::move(cert),
-                             cb = std::move(cb)] {
+            dht::ThreadPool::io().run([w,
+                                       deviceId = std::move(deviceId),
+                                       name = std::move(name),
+                                       cert = std::move(cert),
+                                       cb = std::move(cb)] {
                 auto sthis = w.lock();
                 if (!sthis || sthis->isDestroying_) {
                     cb(nullptr);
@@ -433,13 +445,17 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId,
                         return;
                     if (!ok) {
                         JAMI_ERR("Cannot initialize ICE session.");
-                        std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
-                        auto cbIt = sthis->pendingCbs_.find(cbId);
-                        if (cbIt != sthis->pendingCbs_.end()) {
-                            if (cbIt->second)
-                                cbIt->second(nullptr);
-                            sthis->pendingCbs_.erase(cbIt);
+                        ConnectCallback cb;
+                        {
+                            std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
+                            auto cbIt = sthis->pendingCbs_.find(cbId);
+                            if (cbIt != sthis->pendingCbs_.end()) {
+                                cb = std::move(cbIt->second);
+                                sthis->pendingCbs_.erase(cbIt);
+                            }
                         }
+                        if (cb)
+                            cb(nullptr);
                         return;
                     }
 
@@ -462,13 +478,17 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId,
                         return;
                     if (!ok) {
                         JAMI_ERR("ICE negotiation failed.");
-                        std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
-                        auto cbIt = sthis->pendingCbs_.find(cbId);
-                        if (cbIt != sthis->pendingCbs_.end()) {
-                            if (cbIt->second)
-                                cbIt->second(nullptr);
-                            sthis->pendingCbs_.erase(cbIt);
+                        ConnectCallback cb;
+                        {
+                            std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
+                            auto cbIt = sthis->pendingCbs_.find(cbId);
+                            if (cbIt != sthis->pendingCbs_.end()) {
+                                cb = std::move(cbIt->second);
+                                sthis->pendingCbs_.erase(cbIt);
+                            }
                         }
+                        if (cb)
+                            cb(nullptr);
                         return;
                     }
 
@@ -498,13 +518,17 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId,
 
                 if (!info->ice_) {
                     JAMI_ERR("Cannot initialize ICE session.");
-                    std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
-                    auto cbIt = sthis->pendingCbs_.find(cbId);
-                    if (cbIt != sthis->pendingCbs_.end()) {
-                        if (cbIt->second)
-                            cbIt->second(nullptr);
-                        sthis->pendingCbs_.erase(cbIt);
+                    ConnectCallback cb;
+                    {
+                        std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
+                        auto cbIt = sthis->pendingCbs_.find(cbId);
+                        if (cbIt != sthis->pendingCbs_.end()) {
+                            cb = std::move(cbIt->second);
+                            sthis->pendingCbs_.erase(cbIt);
+                        }
                     }
+                    if (cb)
+                        cb(nullptr);
                     return;
                 }
             });
@@ -529,14 +553,18 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
         auto shared = w.lock();
         if (!shared)
             return;
-        std::lock_guard<std::mutex> lk(shared->connectCbsMtx_);
-        std::pair<std::string, dht::Value::Id> cbId(deviceId, vid);
-        auto cbIt = shared->pendingCbs_.find(cbId);
-        if (cbIt != shared->pendingCbs_.end()) {
-            if (cbIt->second)
-                cbIt->second(channelSock);
-            shared->pendingCbs_.erase(cbIt);
+        ConnectCallback cb;
+        {
+            std::lock_guard<std::mutex> lk(shared->connectCbsMtx_);
+            std::pair<std::string, dht::Value::Id> cbId(deviceId, vid);
+            auto cbIt = shared->pendingCbs_.find(cbId);
+            if (cbIt != shared->pendingCbs_.end()) {
+                cb = std::move(cbIt->second);
+                shared->pendingCbs_.erase(cbIt);
+            }
         }
+        if (cb)
+            cb(channelSock);
     });
     std::error_code ec;
     int res = sock->write(CONTROL_CHANNEL,
@@ -842,19 +870,24 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId,
         if (!sthis)
             return;
         // Cancel current outgoing connections
+        std::vector<ConnectCallback> cbs;
         {
             std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
             if (!sthis->pendingCbs_.empty()) {
                 auto it = sthis->pendingCbs_.begin();
                 while (it != sthis->pendingCbs_.end()) {
                     if (it->first.first == deviceId && it->first.second == vid) {
-                        it->second(nullptr);
+                        cbs.emplace_back(std::move(it->second));
                         it = sthis->pendingCbs_.erase(it);
                     } else {
                         ++it;
                     }
                 }
             }
+        }
+        for (const auto& cb : cbs) {
+            if (cb)
+                cb(nullptr);
         }
         dht::ThreadPool::io().run([w, deviceId, vid] {
             auto sthis = w.lock();
@@ -911,18 +944,22 @@ ConnectionManager::connectDevice(const std::string& deviceId,
 void
 ConnectionManager::closeConnectionsWith(const std::string& deviceId)
 {
+    std::vector<ConnectCallback> cbs;
     {
         std::lock_guard<std::mutex> lk(pimpl_->connectCbsMtx_);
         auto it = pimpl_->pendingCbs_.begin();
         while (it != pimpl_->pendingCbs_.end()) {
             if (it->first.first == deviceId) {
-                if (it->second)
-                    it->second(nullptr);
+                cbs.emplace_back(std::move(it->second));
                 it = pimpl_->pendingCbs_.erase(it);
             } else {
                 ++it;
             }
         }
+    }
+    for (const auto& cb : cbs) {
+        if (cb)
+            cb(nullptr);
     }
     std::vector<std::shared_ptr<ConnectionInfo>> connInfos;
     {
