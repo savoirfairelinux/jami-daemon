@@ -2142,6 +2142,7 @@ JamiAccount::doRegister_()
             }
             *currentDhtStatus = newStatus;
             setRegistrationState(state);
+            injectPushNotifications();
         };
 
         setRegistrationState(RegistrationState::TRYING);
@@ -3337,7 +3338,31 @@ JamiAccount::pushNotificationReceived(const std::string& from,
                                       const std::map<std::string, std::string>& data)
 {
     JAMI_WARN("[Account %s] pushNotificationReceived: %s", getAccountID().c_str(), from.c_str());
-    dht_->pushNotificationReceived(data);
+    {
+        std::lock_guard<std::mutex> lk(pushNotificationsMtx_);
+        pushNotifications_.emplace_back(data);
+    }
+    if (not dht_->isRunning()) {
+        JAMI_INFO("@@@ Dht not running, trigger connectivity changed first");
+        dht_->connectivityChanged();
+        return;
+    }
+    injectPushNotifications();
+}
+
+void
+JamiAccount::injectPushNotifications()
+{
+    decltype(pushNotifications_) toInject;
+    {
+        std::lock_guard<std::mutex> lk(pushNotificationsMtx_);
+        toInject = std::move(pushNotifications_);
+    }
+
+    if (not toInject.empty())
+        JAMI_INFO("@@@ Inject push");
+    for (const auto& notif : toInject)
+        dht_->pushNotificationReceived(notif);
 }
 
 std::string
