@@ -501,7 +501,7 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
     auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
     int newBitrate = oldBitrate;
 
-    // JAMI_DBG("[AutoAdapt] pond loss: %f%, last loss: %f%", pondLoss, rtcpi->packetLoss);
+    JAMI_DBG("@@@ [AutoAdapt] pond loss: %f%, last loss: %f%", pondLoss, rtcpi->packetLoss);
 
     // Fill histoLoss and histoJitter_ with samples
     if (restartTimer < DELAY_AFTER_RESTART + std::chrono::seconds(1)) {
@@ -532,10 +532,14 @@ void
 VideoRtpSession::delayProcessing(int br)
 {
     int newBitrate = videoBitrateInfo_.videoBitrateCurrent;
-    if (br == 0x6803)
+    if (br == 0x6803) {
         newBitrate *= 0.85f;
-    else if (br == 0x7378)
+        JAMI_ERR("@@@ [AutoAdapt] receive bitrate decrease");
+    }
+    else if (br == 0x7378) {
         newBitrate *= 1.05f;
+        JAMI_ERR("@@@ [AutoAdapt] receive bitrate increase");
+    }
     else
         return;
 
@@ -735,6 +739,7 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
             JAMI_WARN("[BandwidthAdapt] Detected reception bandwidth overuse");
             uint8_t* buf = nullptr;
             uint64_t br = 0x6803; // Decrease 3
+            JAMI_ERR("@@@ [AutoAdapt] receive bitrate decrease");
             auto v = cc->createREMB(br);
             buf = &v[0];
             socketPair_->writeData(buf, v.size());
@@ -745,6 +750,7 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
         if (remb_timer_inc > DELAY_AFTER_REMB_INC) {
             uint8_t* buf = nullptr;
             uint64_t br = 0x7378; // INcrease
+            JAMI_ERR("@@@ [AutoAdapt] receive bitrate increase");
             auto v = cc->createREMB(br);
             buf = &v[0];
             socketPair_->writeData(buf, v.size());
