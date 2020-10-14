@@ -2404,6 +2404,10 @@ JamiAccount::doRegister_()
                         return;
                     }
                     auto accountId = this->accountID_;
+                    JAMI_WARN("Git server requested for conversation %s, device %s, channel %u",
+                              conversationId.c_str(),
+                              deviceId.to_c_str(),
+                              channel->channel());
                     auto gs = std::make_unique<GitServer>(accountId, conversationId, channel);
                     const dht::Value::Id serverId = ValueIdDist()(rand);
                     {
@@ -3822,7 +3826,9 @@ JamiAccount::getConversationRequests()
 
 // Member management
 void
-JamiAccount::addConversationMember(const std::string& conversationId, const std::string& contactUri)
+JamiAccount::addConversationMember(const std::string& conversationId,
+                                   const std::string& contactUri,
+                                   bool sendRequest)
 {
     // Add a new member in the conversation
     auto it = conversations_.find(conversationId);
@@ -3834,7 +3840,8 @@ JamiAccount::addConversationMember(const std::string& conversationId, const std:
         JAMI_WARN("Couldn't add %s to %s", contactUri.c_str(), conversationId.c_str());
         return;
     }
-    sendTextMessage(contactUri, it->second->generateInvitation());
+    if (sendRequest)
+        sendTextMessage(contactUri, it->second->generateInvitation());
 }
 
 bool

@@ -526,7 +526,9 @@ public:
     std::vector<std::map<std::string, std::string>> getConversationRequests();
 
     // Member management
-    void addConversationMember(const std::string& conversationId, const std::string& contactUri);
+    void addConversationMember(const std::string& conversationId,
+                               const std::string& contactUri,
+                               bool sendRequest = true);
     bool removeConversationMember(const std::string& conversationId, const std::string& contactUri);
     std::vector<std::map<std::string, std::string>> getConversationMembers(
         const std::string& conversationId);
