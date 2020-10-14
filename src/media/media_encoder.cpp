@@ -593,11 +593,14 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
         // emit one intra frame every gop_size frames
         encoderCtx->max_b_frames = 0;
         encoderCtx->pix_fmt = AV_PIX_FMT_YUV420P;
+        // Keep YUV format for macOS
 #ifdef RING_ACCEL
-// Keep YUV format for macOS
-#if !(defined(__APPLE__) && !TARGET_OS_IOS)
+#if defined(TARGET_OS_IOS) && TARGET_OS_IOS
         if (accel_)
             encoderCtx->pix_fmt = accel_->getSoftwareFormat();
+#elif !defined(__APPLE__)
+        if (accel_)
+            encoderCtx->pix_fmt = accel_->getFormat();
 #endif
 #endif
 
