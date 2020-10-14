@@ -1,0 +1,608 @@
+ src/clone.c                     | 30 +++++++++++++++++++++++++-----
+ src/fetch.c                     |  6 +++++-
+ src/indexer.c                   |  2 +-
+ src/remote.c                    | 52 +++++++++++++++++++++++++++++++++++++++++-----------
+ src/transports/smart_pkt.c      | 13 +++++++++++--
+ src/transports/smart_protocol.c | 79 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----------------
+ 6 files changed, 146 insertions(+), 36 deletions(-)
+
+diff --git a/src/clone.c b/src/clone.c
+index a93ec475f..451f7a023 100644
+--- a/src/clone.c
++++ b/src/clone.c
+@@ -380,6 +380,7 @@ static int checkout_branch(git_repository *repo, git_remote *remote, const git_c
+ 
+ static int clone_into(git_repository *repo, git_remote *_remote, const git_fetch_options *opts, const git_checkout_options *co_opts, const char *branch)
+ {
++	printf("@@@ clone_into0\n");
+ 	int error;
+ 	git_buf reflog_message = GIT_BUF_INIT;
+ 	git_fetch_options fetch_opts;
+@@ -388,27 +389,34 @@ static int clone_into(git_repository *repo, git_remote *_remote, const git_fetch
+ 	assert(repo && _remote);
+ 
+ 	if (!git_repository_is_empty(repo)) {
++		printf("@@@ clone_into1\n");
+ 		git_error_set(GIT_ERROR_INVALID, "the repository is not empty");
+ 		return -1;
+ 	}
+ 
+-	if ((error = git_remote_dup(&remote, _remote)) < 0)
++	if ((error = git_remote_dup(&remote, _remote)) < 0) {
++		printf("@@@ clone_into2\n");
+ 		return error;
++	}
+ 
+ 	memcpy(&fetch_opts, opts, sizeof(git_fetch_options));
+ 	fetch_opts.update_fetchhead = 0;
+ 	fetch_opts.download_tags = GIT_REMOTE_DOWNLOAD_TAGS_ALL;
+ 	git_buf_printf(&reflog_message, "clone: from %s", git_remote_url(remote));
+ 
+-	if ((error = git_remote_fetch(remote, NULL, &fetch_opts, git_buf_cstr(&reflog_message))) != 0)
++	if ((error = git_remote_fetch(remote, NULL, &fetch_opts, git_buf_cstr(&reflog_message))) != 0) {
++		printf("@@@ clone_into3\n");
+ 		goto cleanup;
++	}
+ 
+ 	error = checkout_branch(repo, remote, co_opts, branch, git_buf_cstr(&reflog_message));
++	printf("@@@ clone_into4\n");
+ 
+ cleanup:
+ 	git_remote_free(remote);
+ 	git_buf_dispose(&reflog_message);
+ 
++	printf("@@@ clone_into5 %u\n", error);
+ 	return error;
+ }
+ 
+@@ -445,6 +453,7 @@ static int git__clone(
+ 	const git_clone_options *_options,
+ 	int use_existing)
+ {
++	printf("@@@ git__clone\n");
+ 	int error = 0;
+ 	git_repository *repo = NULL;
+ 	git_remote *origin;
+@@ -457,6 +466,7 @@ static int git__clone(
+ 	if (_options)
+ 		memcpy(&options, _options, sizeof(git_clone_options));
+ 
++	printf("@@@ git__clone1\n");
+ 	GIT_ERROR_CHECK_VERSION(&options, GIT_CLONE_OPTIONS_VERSION, "git_clone_options");
+ 
+ 	/* Only clone to a new directory or an empty directory */
+@@ -467,6 +477,7 @@ static int git__clone(
+ 	}
+ 
+ 	/* Only remove the root directory on failure if we create it */
++	printf("@@@ git__clone2\n");
+ 	if (git_path_exists(local_path))
+ 		rmdir_flags |= GIT_RMDIR_SKIP_ROOT;
+ 
+@@ -478,24 +489,32 @@ static int git__clone(
+ 	if ((error = repository_cb(&repo, local_path, options.bare, options.repository_cb_payload)) < 0)
+ 		return error;
+ 
++	printf("@@@ git__clone3\n");
+ 	if (!(error = create_and_configure_origin(&origin, repo, url, &options))) {
+ 		int clone_local = git_clone__should_clone_local(url, options.local);
+ 		int link = options.local != GIT_CLONE_LOCAL_NO_LINKS;
+ 
+-		if (clone_local == 1)
++		if (clone_local == 1) {
++			printf("@@@ git__clone3.1\n");
+ 			error = clone_local_into(
+ 				repo, origin, &options.fetch_opts, &options.checkout_opts,
+ 				options.checkout_branch, link);
+-		else if (clone_local == 0)
++		}
++		else if (clone_local == 0) {
++			printf("@@@ git__clone3.2\n");
+ 			error = clone_into(
+ 				repo, origin, &options.fetch_opts, &options.checkout_opts,
+ 				options.checkout_branch);
+-		else
++		}
++		else {
++			printf("@@@ git__clone3.3\n");
+ 			error = -1;
++		}
+ 
+ 		git_remote_free(origin);
+ 	}
+ 
++	printf("@@@ git__clone4\n");
+ 	if (error != 0) {
+ 		git_error_state last_error = {0};
+ 		git_error_state_capture(&last_error, error);
+@@ -509,6 +528,7 @@ static int git__clone(
+ 	}
+ 
+ 	*out = repo;
++	printf("@@@ git__clone5\n");
+ 	return error;
+ }
+ 
+diff --git a/src/fetch.c b/src/fetch.c
+index f4a4c9f81..32115363d 100644
+--- a/src/fetch.c
++++ b/src/fetch.c
+@@ -108,18 +108,22 @@ cleanup:
+  */
+ int git_fetch_negotiate(git_remote *remote, const git_fetch_options *opts)
+ {
++	printf("@@@@@@git_fetch_negotiate0\n");
+ 	git_transport *t = remote->transport;
+ 
+ 	remote->need_pack = 0;
+ 
+ 	if (filter_wants(remote, opts) < 0) {
++		printf("@@@@@@git_fetch_negotiate1\n");
+ 		git_error_set(GIT_ERROR_NET, "failed to filter the reference list for wants");
+ 		return -1;
+ 	}
+ 
+ 	/* Don't try to negotiate when we don't want anything */
+-	if (!remote->need_pack)
++	if (!remote->need_pack) {
++		printf("@@@@@@git_fetch_negotiate2\n");
+ 		return 0;
++	}
+ 
+ 	/*
+ 	 * Now we have everything set up so we can start tell the
+diff --git a/src/indexer.c b/src/indexer.c
+index 8c74f0e72..f9c12aca5 100644
+--- a/src/indexer.c
++++ b/src/indexer.c
+@@ -96,7 +96,7 @@ static int parse_header(struct git_pack_header *hdr, struct git_pack_file *pack)
+ 
+ 	/* Verify we recognize this pack file format. */
+ 	if (hdr->hdr_signature != ntohl(PACK_SIGNATURE)) {
+-		git_error_set(GIT_ERROR_INDEXER, "wrong pack signature");
++		git_error_set(GIT_ERROR_INDEXER, "wrong pack signature %u vs %u", hdr->hdr_signature, ntohl(PACK_SIGNATURE));
+ 		return -1;
+ 	}
+ 
+diff --git a/src/remote.c b/src/remote.c
+index 51e99dc94..3bd7997f4 100644
+--- a/src/remote.c
++++ b/src/remote.c
+@@ -919,6 +919,7 @@ static int ls_to_vector(git_vector *out, git_remote *remote)
+ 
+ int git_remote_download(git_remote *remote, const git_strarray *refspecs, const git_fetch_options *opts)
+ {
++	printf("@@@@git_remote_download0\n");
+ 	int error = -1;
+ 	size_t i;
+ 	git_vector *to_active, specs = GIT_VECTOR_INIT, refs = GIT_VECTOR_INIT;
+@@ -930,6 +931,7 @@ int git_remote_download(git_remote *remote, const git_strarray *refspecs, const
+ 
+ 	if (!remote->repo) {
+ 		git_error_set(GIT_ERROR_INVALID, "cannot download detached remote");
++		printf("@@@@git_remote_download1\n");
+ 		return -1;
+ 	}
+ 
+@@ -942,22 +944,32 @@ int git_remote_download(git_remote *remote, const git_strarray *refspecs, const
+ 	}
+ 
+ 	if (!git_remote_connected(remote) &&
+-	    (error = git_remote_connect(remote, GIT_DIRECTION_FETCH, cbs, proxy, custom_headers)) < 0)
++	    (error = git_remote_connect(remote, GIT_DIRECTION_FETCH, cbs, proxy, custom_headers)) < 0) {
++		printf("@@@@git_remote_download2\n");
+ 		goto on_error;
++		}
+ 
+-	if (ls_to_vector(&refs, remote) < 0)
++	if (ls_to_vector(&refs, remote) < 0) {
++		printf("@@@@git_remote_download3\n");
+ 		return -1;
++	}
+ 
+-	if ((git_vector_init(&specs, 0, NULL)) < 0)
++	if ((git_vector_init(&specs, 0, NULL)) < 0) {
++		printf("@@@@git_remote_download4\n");
+ 		goto on_error;
++	}
+ 
+ 	remote->passed_refspecs = 0;
+ 	if (!refspecs || !refspecs->count) {
++		printf("@@@@git_remote_download5.1\n");
+ 		to_active = &remote->refspecs;
+ 	} else {
++		printf("@@@@git_remote_download5.2\n");
+ 		for (i = 0; i < refspecs->count; i++) {
+-			if ((error = add_refspec_to(&specs, refspecs->strings[i], true)) < 0)
++			if ((error = add_refspec_to(&specs, refspecs->strings[i], true)) < 0) {
++				printf("@@@@git_remote_download6\n");
+ 				goto on_error;
++			}
+ 		}
+ 
+ 		to_active = &specs;
+@@ -965,8 +977,10 @@ int git_remote_download(git_remote *remote, const git_strarray *refspecs, const
+ 	}
+ 
+ 	free_refspecs(&remote->passive_refspecs);
+-	if ((error = dwim_refspecs(&remote->passive_refspecs, &remote->refspecs, &refs)) < 0)
++	if ((error = dwim_refspecs(&remote->passive_refspecs, &remote->refspecs, &refs)) < 0) {
++		printf("@@@@git_remote_download7\n");
+ 		goto on_error;
++	}
+ 
+ 	free_refspecs(&remote->active_refspecs);
+ 	error = dwim_refspecs(&remote->active_refspecs, to_active, &refs);
+@@ -975,17 +989,23 @@ int git_remote_download(git_remote *remote, const git_strarray *refspecs, const
+ 	free_refspecs(&specs);
+ 	git_vector_free(&specs);
+ 
+-	if (error < 0)
++	if (error < 0) {
++		printf("@@@@git_remote_download8\n");
+ 		return error;
++	}
+ 
+ 	if (remote->push) {
++		printf("@@@@git_remote_download9\n");
+ 		git_push_free(remote->push);
+ 		remote->push = NULL;
+ 	}
+ 
+-	if ((error = git_fetch_negotiate(remote, opts)) < 0)
++	if ((error = git_fetch_negotiate(remote, opts)) < 0) {
++		printf("@@@@git_remote_download10\n");
+ 		return error;
++	}
+ 
++	printf("@@@@git_remote_download11\n");
+ 	return git_fetch_download_pack(remote, cbs);
+ 
+ on_error:
+@@ -1001,6 +1021,7 @@ int git_remote_fetch(
+ 		const git_fetch_options *opts,
+ 		const char *reflog_message)
+ {
++	printf("@@@git_remote_fetch0\n");
+ 	int error, update_fetchhead = 1;
+ 	git_remote_autotag_option_t tagopt = remote->download_tags;
+ 	bool prune = false;
+@@ -1019,8 +1040,10 @@ int git_remote_fetch(
+ 	}
+ 
+ 	/* Connect and download everything */
+-	if ((error = git_remote__connect(remote, GIT_DIRECTION_FETCH, cbs, &conn)) != 0)
++	if ((error = git_remote__connect(remote, GIT_DIRECTION_FETCH, cbs, &conn)) != 0) {
++		printf("@@@git_remote_fetch1\n");
+ 		return error;
++	}
+ 
+ 	error = git_remote_download(remote, refspecs, opts);
+ 
+@@ -1028,8 +1051,10 @@ int git_remote_fetch(
+ 	git_remote_disconnect(remote);
+ 
+ 	/* If the download failed, return the error */
+-	if (error != 0)
++	if (error != 0) {
++		printf("@@@git_remote_fetch2\n");
+ 		return error;
++	}
+ 
+ 	/* Default reflog message */
+ 	if (reflog_message)
+@@ -1042,8 +1067,10 @@ int git_remote_fetch(
+ 	/* Create "remote/foo" branches for all remote branches */
+ 	error = git_remote_update_tips(remote, cbs, update_fetchhead, tagopt, git_buf_cstr(&reflog_msg_buf));
+ 	git_buf_dispose(&reflog_msg_buf);
+-	if (error < 0)
++	if (error < 0) {
++		printf("@@@git_remote_fetch3\n");
+ 		return error;
++	}
+ 
+ 	if (opts && opts->prune == GIT_FETCH_PRUNE)
+ 		prune = true;
+@@ -1054,9 +1081,12 @@ int git_remote_fetch(
+ 	else
+ 		prune = remote->prune_refs;
+ 
+-	if (prune)
++	if (prune) {
+ 		error = git_remote_prune(remote, cbs);
++		printf("@@@git_remote_fetch4\n");
++	}
+ 
++	printf("@@@git_remote_fetch5\n");
+ 	return error;
+ }
+ 
+diff --git a/src/transports/smart_pkt.c b/src/transports/smart_pkt.c
+index 56b680d28..a5eb9c731 100644
+--- a/src/transports/smart_pkt.c
++++ b/src/transports/smart_pkt.c
+@@ -417,10 +417,12 @@ static int parse_len(size_t *out, const char *line, size_t linelen)
+ int git_pkt_parse_line(
+ 	git_pkt **pkt, const char **endptr, const char *line, size_t linelen)
+ {
++	printf("@@@@@@@@git_pkt_parse_line 0 %s\n", line);
+ 	int error;
+ 	size_t len;
+ 
+ 	if ((error = parse_len(&len, line, linelen)) < 0) {
++		printf("@@@@@@@@git_pkt_parse_line 1 %d %u\n", error, linelen);
+ 		/*
+ 		 * If we fail to parse the length, it might be
+ 		 * because the server is trying to send us the
+@@ -440,16 +442,20 @@ int git_pkt_parse_line(
+ 	 * Make sure there is enough in the buffer to satisfy
+ 	 * this line.
+ 	 */
+-	if (linelen < len)
++	if (linelen < len) {
++		printf("@@@@@@@@git_pkt_parse_line 2 %d vs %d\n", linelen, len);
+ 		return GIT_EBUFS;
++	}
+ 
+ 	/*
+ 	 * The length has to be exactly 0 in case of a flush
+ 	 * packet or greater than PKT_LEN_SIZE, as the decoded
+ 	 * length includes its own encoded length of four bytes.
+ 	 */
+-	if (len != 0 && len < PKT_LEN_SIZE)
++	if (len != 0 && len < PKT_LEN_SIZE) {
++		printf("@@@@@@@@git_pkt_parse_line 3 %d vs %d\n", PKT_LEN_SIZE, len);
+ 		return GIT_ERROR;
++	}
+ 
+ 	line += PKT_LEN_SIZE;
+ 	/*
+@@ -458,17 +464,20 @@ int git_pkt_parse_line(
+ 	 * line, we should return an error upon hitting one.
+ 	 */
+ 	if (len == PKT_LEN_SIZE) {
++		printf("@@@@@@@@git_pkt_parse_line 4 %d vs %d\n", PKT_LEN_SIZE, len);
+ 		git_error_set_str(GIT_ERROR_NET, "Invalid empty packet");
+ 		return GIT_ERROR;
+ 	}
+ 
+ 	if (len == 0) { /* Flush pkt */
++		printf("@@@@@@@@git_pkt_parse_line 5 %d\n", len);
+ 		*endptr = line;
+ 		return flush_pkt(pkt);
+ 	}
+ 
+ 	len -= PKT_LEN_SIZE; /* the encoded length includes its own size */
+ 
++	printf("@@@@@@@@git_pkt_parse_line 6 %s\n", line);
+ 	if (*line == GIT_SIDE_BAND_DATA)
+ 		error = data_pkt(pkt, line, len);
+ 	else if (*line == GIT_SIDE_BAND_PROGRESS)
+diff --git a/src/transports/smart_protocol.c b/src/transports/smart_protocol.c
+index c01656dc4..1f8d0a17c 100644
+--- a/src/transports/smart_protocol.c
++++ b/src/transports/smart_protocol.c
+@@ -217,25 +217,34 @@ static int recv_pkt(git_pkt **out_pkt, git_pkt_type *out_type, gitno_buffer *buf
+ 	int error = 0, ret;
+ 
+ 	do {
+-		if (buf->offset > 0)
++		if (buf->offset > 0) {
+ 			error = git_pkt_parse_line(&pkt, &line_end, ptr, buf->offset);
++			printf("@@@@@@@recv_pkt 0 %d\n", error);
++		}
+ 		else
+ 			error = GIT_EBUFS;
+ 
+-		if (error == 0)
++		if (error == 0) {
++			printf("@@@@@@@recv_pkt 1 %d\n", error);
+ 			break; /* return the pkt */
++		}
+ 
+-		if (error < 0 && error != GIT_EBUFS)
++		if (error < 0 && error != GIT_EBUFS) {
++			printf("@@@@@@@recv_pkt 2 %d\n", error);
+ 			return error;
++		}
+ 
+ 		if ((ret = gitno_recv(buf)) < 0) {
++			printf("@@@@@@@recv_pkt 3 %d\n", error);
+ 			return ret;
+ 		} else if (ret == 0) {
++			printf("@@@@@@@recv_pkt 4 %d\n", error);
+ 			git_error_set(GIT_ERROR_NET, "early EOF");
+ 			return GIT_EEOF;
+ 		}
+ 	} while (error);
+ 
++	printf("@@@@@@@recv_pkt 5 %d\n", error);
+ 	gitno_consume(buf, line_end);
+ 	if (out_type != NULL)
+ 		*out_type = pkt->type;
+@@ -244,6 +253,7 @@ static int recv_pkt(git_pkt **out_pkt, git_pkt_type *out_type, gitno_buffer *buf
+ 	else
+ 		git__free(pkt);
+ 
++	printf("@@@@@@@recv_pkt 6 %d\n", error);
+ 	return error;
+ }
+ 
+@@ -303,6 +313,7 @@ static int wait_while_ack(gitno_buffer *buf)
+ 
+ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, const git_remote_head * const *wants, size_t count)
+ {
++	printf("@@@@@@git_smart__negotiate_fetch0\n");
+ 	transport_smart *t = (transport_smart *)transport;
+ 	git_revwalk__push_options opts = GIT_REVWALK__PUSH_OPTIONS_INIT;
+ 	gitno_buffer *buf = &t->buffer;
+@@ -313,15 +324,21 @@ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, c
+ 	unsigned int i;
+ 	git_oid oid;
+ 
+-	if ((error = git_pkt_buffer_wants(wants, count, &t->caps, &data)) < 0)
++	if ((error = git_pkt_buffer_wants(wants, count, &t->caps, &data)) < 0) {
++		printf("@@@@@@git_smart__negotiate_fetch1\n");
+ 		return error;
++	}
+ 
+-	if ((error = git_revwalk_new(&walk, repo)) < 0)
++	if ((error = git_revwalk_new(&walk, repo)) < 0) {
++		printf("@@@@@@git_smart__negotiate_fetch2\n");
+ 		goto on_error;
++	}
+ 
+ 	opts.insert_by_date = 1;
+-	if ((error = git_revwalk__push_glob(walk, "refs/*", &opts)) < 0)
++	if ((error = git_revwalk__push_glob(walk, "refs/*", &opts)) < 0) {
++		printf("@@@@@@git_smart__negotiate_fetch3\n");
+ 		goto on_error;
++	}
+ 
+ 	/*
+ 	 * Our support for ACK extensions is simply to parse them. On
+@@ -334,6 +351,7 @@ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, c
+ 		error = git_revwalk_next(&oid, walk);
+ 
+ 		if (error < 0) {
++			printf("@@@@@@git_smart__negotiate_fetch4 %u\n", i);
+ 			if (GIT_ITEROVER == error)
+ 				break;
+ 
+@@ -344,6 +362,7 @@ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, c
+ 		i++;
+ 		if (i % 20 == 0) {
+ 			if (t->cancelled.val) {
++				printf("@@@@@@git_smart__negotiate_fetch5 %u\n", i);
+ 				git_error_set(GIT_ERROR_NET, "The fetch was cancelled by the user");
+ 				error = GIT_EUSER;
+ 				goto on_error;
+@@ -351,26 +370,34 @@ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, c
+ 
+ 			git_pkt_buffer_flush(&data);
+ 			if (git_buf_oom(&data)) {
++				printf("@@@@@@git_smart__negotiate_fetch6 %u\n", i);
+ 				error = -1;
+ 				goto on_error;
+ 			}
+ 
+-			if ((error = git_smart__negotiation_step(&t->parent, data.ptr, data.size)) < 0)
++			if ((error = git_smart__negotiation_step(&t->parent, data.ptr, data.size)) < 0) {
++				printf("@@@@@@git_smart__negotiate_fetch7 %u\n", i);
+ 				goto on_error;
++			}
+ 
+ 			git_buf_clear(&data);
+ 			if (t->caps.multi_ack || t->caps.multi_ack_detailed) {
+-				if ((error = store_common(t)) < 0)
++				if ((error = store_common(t)) < 0) {
++					printf("@@@@@@git_smart__negotiate_fetch8 %u\n", i);
+ 					goto on_error;
++				}
+ 			} else {
+-				if ((error = recv_pkt(NULL, &pkt_type, buf)) < 0)
++				if ((error = recv_pkt(NULL, &pkt_type, buf)) < 0) {
++					printf("@@@@@@git_smart__negotiate_fetch9 %u\n", i);
+ 					goto on_error;
++				}
+ 
+ 				if (pkt_type == GIT_PKT_ACK) {
+ 					break;
+ 				} else if (pkt_type == GIT_PKT_NAK) {
+ 					continue;
+ 				} else {
++					printf("@@@@@@git_smart__negotiate_fetch10 %u, pkt: %u\n", i, pkt_type);
+ 					git_error_set(GIT_ERROR_NET, "unexpected pkt type");
+ 					error = -1;
+ 					goto on_error;
+@@ -385,15 +412,20 @@ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, c
+ 			git_pkt_ack *pkt;
+ 			unsigned int j;
+ 
+-			if ((error = git_pkt_buffer_wants(wants, count, &t->caps, &data)) < 0)
++			if ((error = git_pkt_buffer_wants(wants, count, &t->caps, &data)) < 0) {
++				printf("@@@@@@git_smart__negotiate_fetch11 %u\n", i);
+ 				goto on_error;
++			}
+ 
+ 			git_vector_foreach(&t->common, j, pkt) {
+-				if ((error = git_pkt_buffer_have(&pkt->oid, &data)) < 0)
++				if ((error = git_pkt_buffer_have(&pkt->oid, &data)) < 0) {
++					printf("@@@@@@git_smart__negotiate_fetch12 %u\n", i);
+ 					goto on_error;
++				}
+ 			}
+ 
+ 			if (git_buf_oom(&data)) {
++				printf("@@@@@@git_smart__negotiate_fetch13 %u\n", i);
+ 				error = -1;
+ 				goto on_error;
+ 			}
+@@ -405,47 +437,62 @@ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, c
+ 		git_pkt_ack *pkt;
+ 		unsigned int j;
+ 
+-		if ((error = git_pkt_buffer_wants(wants, count, &t->caps, &data)) < 0)
++		if ((error = git_pkt_buffer_wants(wants, count, &t->caps, &data)) < 0) {
++			printf("@@@@@@git_smart__negotiate_fetch14\n");
+ 			goto on_error;
++		}
+ 
+ 		git_vector_foreach(&t->common, j, pkt) {
+-			if ((error = git_pkt_buffer_have(&pkt->oid, &data)) < 0)
++			if ((error = git_pkt_buffer_have(&pkt->oid, &data)) < 0) {
++				printf("@@@@@@git_smart__negotiate_fetch15\n");
+ 				goto on_error;
++			}
+ 		}
+ 
+ 		if (git_buf_oom(&data)) {
+ 			error = -1;
++			printf("@@@@@@git_smart__negotiate_fetch16\n");
+ 			goto on_error;
+ 		}
+ 	}
+ 
+-	if ((error = git_pkt_buffer_done(&data)) < 0)
++	if ((error = git_pkt_buffer_done(&data)) < 0) {
++		printf("@@@@@@git_smart__negotiate_fetch17\n");
+ 		goto on_error;
++	}
+ 
+ 	if (t->cancelled.val) {
+ 		git_error_set(GIT_ERROR_NET, "The fetch was cancelled by the user");
+ 		error = GIT_EUSER;
++		printf("@@@@@@git_smart__negotiate_fetch18\n");
+ 		goto on_error;
+ 	}
+-	if ((error = git_smart__negotiation_step(&t->parent, data.ptr, data.size)) < 0)
++	if ((error = git_smart__negotiation_step(&t->parent, data.ptr, data.size)) < 0) {
++		printf("@@@@@@git_smart__negotiate_fetch19\n");
+ 		goto on_error;
++	}
+ 
+ 	git_buf_dispose(&data);
+ 	git_revwalk_free(walk);
+ 
+ 	/* Now let's eat up whatever the server gives us */
+ 	if (!t->caps.multi_ack && !t->caps.multi_ack_detailed) {
+-		if ((error = recv_pkt(NULL, &pkt_type, buf)) < 0)
++		if ((error = recv_pkt(NULL, &pkt_type, buf)) < 0) {
++			printf("@@@@@@git_smart__negotiate_fetch20\n");
+ 			return error;
++		}
+ 
+ 		if (pkt_type != GIT_PKT_ACK && pkt_type != GIT_PKT_NAK) {
++			printf("@@@@@@git_smart__negotiate_fetch21\n");
+ 			git_error_set(GIT_ERROR_NET, "unexpected pkt type");
+ 			return -1;
+ 		}
+ 	} else {
+ 		error = wait_while_ack(buf);
++		printf("@@@@@@git_smart__negotiate_fetch22\n");
+ 	}
+ 
++	printf("@@@@@@git_smart__negotiate_fetch23 %d\n", error);
+ 	return error;
+ 
+ on_error:
