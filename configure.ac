@@ -299,7 +299,11 @@ AS_IF([test -d "${TOOLS_DIR}"], [
 dnl Check for zlib
 PKG_CHECK_MODULES(ZLIB, zlib,, AC_MSG_ERROR([zlib not found]))
 
-PKG_CHECK_MODULES(LIBGIT2, [libgit2 >= 0.27.9],, AC_MSG_ERROR([Missing libgit2 files]))
+PKG_CHECK_MODULES(LIBGIT2, [libgit2 >= 1.1.0],, AC_MSG_ERROR([Missing libgit2 files]))
+PKG_CHECK_MODULES(PCRE, libpcre,, AC_MSG_ERROR([Missing PCRE files]))
+
+LDFLAGS+=" ${PCRE_LIBS}"
+
 dnl Check for pjproject
 PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject files]))
 

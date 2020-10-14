@@ -2404,6 +2404,10 @@ JamiAccount::doRegister_()
                         return;
                     }
                     auto accountId = this->accountID_;
+                    JAMI_WARN("Git server requested for conversation %s, device %s, channel %u",
+                              conversationId.c_str(),
+                              deviceId.to_c_str(),
+                              channel->channel());
                     auto gs = std::make_unique<GitServer>(accountId, conversationId, channel);
                     const dht::Value::Id serverId = ValueIdDist()(rand);
                     {
