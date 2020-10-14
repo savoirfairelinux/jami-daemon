@@ -488,9 +488,6 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
     // If bitrate has changed, let time to receive fresh RTCP packets
     auto now = clock::now();
     auto restartTimer = now - lastMediaRestart_;
-    if (restartTimer < DELAY_AFTER_RESTART) {
-        return;
-    }
 
     // Do nothing if jitter is more than 1 second
     if (rtcpi->jitter > 1000) {
@@ -501,17 +498,18 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
     auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
     int newBitrate = oldBitrate;
 
-    // JAMI_DBG("[AutoAdapt] pond loss: %f%, last loss: %f%", pondLoss, rtcpi->packetLoss);
+    JAMI_DBG("@@@ [AutoAdapt] pond loss: %f%, last loss: %f%", pondLoss, rtcpi->packetLoss);
 
     // Fill histoLoss and histoJitter_ with samples
-    if (restartTimer < DELAY_AFTER_RESTART + std::chrono::seconds(1)) {
+    if (restartTimer < DELAY_AFTER_RESTART) {
         return;
     } else {
         // If ponderate drops are inferior to 10% that mean drop are not from congestion but from
         // network...
         // ... we can increase
         if (pondLoss >= 5.0f && rtcpi->packetLoss > 0.0f) {
-            newBitrate *= 1.0f - rtcpi->packetLoss / 150.0f;
+            float ratio = 0.8f - rtcpi->packetLoss;
+            newBitrate *= std::clamp(ratio, 0.1f, 0.9f);
             histoLoss_.clear();
             lastMediaRestart_ = now;
             JAMI_DBG(
@@ -519,7 +517,7 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
                 "%u Kbps to %d Kbps, ratio %f (ponderate loss: %f%%, packet loss rate: %f%%)",
                 oldBitrate,
                 newBitrate,
-                (float) newBitrate / oldBitrate,
+                ratio,
                 pondLoss,
                 rtcpi->packetLoss);
         }
@@ -532,10 +530,14 @@ void
 VideoRtpSession::delayProcessing(int br)
 {
     int newBitrate = videoBitrateInfo_.videoBitrateCurrent;
-    if (br == 0x6803)
+    if (br == 0x6803) {
         newBitrate *= 0.85f;
-    else if (br == 0x7378)
+        JAMI_ERR("@@@ [AutoAdapt] receive bitrate decrease");
+    }
+    else if (br == 0x7378) {
         newBitrate *= 1.05f;
+        JAMI_ERR("@@@ [AutoAdapt] receive bitrate increase");
+    }
     else
         return;
 
@@ -735,6 +737,7 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
             JAMI_WARN("[BandwidthAdapt] Detected reception bandwidth overuse");
             uint8_t* buf = nullptr;
             uint64_t br = 0x6803; // Decrease 3
+            JAMI_ERR("@@@ [AutoAdapt] receive bitrate decrease");
             auto v = cc->createREMB(br);
             buf = &v[0];
             socketPair_->writeData(buf, v.size());
@@ -745,6 +748,7 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
         if (remb_timer_inc > DELAY_AFTER_REMB_INC) {
             uint8_t* buf = nullptr;
             uint64_t br = 0x7378; // INcrease
+            JAMI_ERR("@@@ [AutoAdapt] receive bitrate increase");
             auto v = cc->createREMB(br);
             buf = &v[0];
             socketPair_->writeData(buf, v.size());
