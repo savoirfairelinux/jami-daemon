@@ -785,6 +785,10 @@ private:
      * @param deviceId      Device that will receive the profile
      */
     void sendProfile(const std::string& deviceId);
+
+    void injectPushNotifications();
+    std::mutex pushNotificationsMtx_ {};
+    std::vector<std::map<std::string, std::string>> pushNotifications_ {};
 };
 
 static inline std::ostream&
