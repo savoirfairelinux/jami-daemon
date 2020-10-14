@@ -2242,16 +2242,17 @@ SIPAccount::onComplete(void* token, pjsip_event* event)
             cseq_hdr->cseq += 1;
 
             // Resend request
-            ctx* token_ptr = c.release();
+            auto to = c->to;
+            auto id = c->id;
             status = pjsip_endpt_send_request(acc->link_.getEndpoint(),
                                               new_request,
                                               -1,
-                                              token_ptr,
+                                              c.release(),
                                               &onComplete);
 
             if (status != PJ_SUCCESS) {
                 JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
-                acc->messageEngine_.onMessageSent(token_ptr->to, token_ptr->id, false);
+                acc->messageEngine_.onMessageSent(to, id, false);
             }
             return;
         } else {
