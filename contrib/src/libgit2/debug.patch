@@ -1,0 +1,89 @@
+ src/clone.c   | 18 +++++++++++++++---
+ src/indexer.c |  2 +-
+ 2 files changed, 16 insertions(+), 4 deletions(-)
+
+diff --git a/src/clone.c b/src/clone.c
+index a93ec475f..0b312aece 100644
+--- a/src/clone.c
++++ b/src/clone.c
+@@ -445,6 +445,7 @@ static int git__clone(
+ 	const git_clone_options *_options,
+ 	int use_existing)
+ {
++	printf("@@@ git__clone\n");
+ 	int error = 0;
+ 	git_repository *repo = NULL;
+ 	git_remote *origin;
+@@ -457,6 +458,7 @@ static int git__clone(
+ 	if (_options)
+ 		memcpy(&options, _options, sizeof(git_clone_options));
+ 
++	printf("@@@ git__clone1\n");
+ 	GIT_ERROR_CHECK_VERSION(&options, GIT_CLONE_OPTIONS_VERSION, "git_clone_options");
+ 
+ 	/* Only clone to a new directory or an empty directory */
+@@ -467,6 +469,7 @@ static int git__clone(
+ 	}
+ 
+ 	/* Only remove the root directory on failure if we create it */
++	printf("@@@ git__clone2\n");
+ 	if (git_path_exists(local_path))
+ 		rmdir_flags |= GIT_RMDIR_SKIP_ROOT;
+ 
+@@ -478,24 +481,32 @@ static int git__clone(
+ 	if ((error = repository_cb(&repo, local_path, options.bare, options.repository_cb_payload)) < 0)
+ 		return error;
+ 
++	printf("@@@ git__clone3\n");
+ 	if (!(error = create_and_configure_origin(&origin, repo, url, &options))) {
+ 		int clone_local = git_clone__should_clone_local(url, options.local);
+ 		int link = options.local != GIT_CLONE_LOCAL_NO_LINKS;
+ 
+-		if (clone_local == 1)
++		if (clone_local == 1) {
++			printf("@@@ git__clone3.1\n");
+ 			error = clone_local_into(
+ 				repo, origin, &options.fetch_opts, &options.checkout_opts,
+ 				options.checkout_branch, link);
+-		else if (clone_local == 0)
++		}
++		else if (clone_local == 0) {
++			printf("@@@ git__clone3.2\n");
+ 			error = clone_into(
+ 				repo, origin, &options.fetch_opts, &options.checkout_opts,
+ 				options.checkout_branch);
+-		else
++		}
++		else {
++			printf("@@@ git__clone3.3\n");
+ 			error = -1;
++		}
+ 
+ 		git_remote_free(origin);
+ 	}
+ 
++	printf("@@@ git__clone4\n");
+ 	if (error != 0) {
+ 		git_error_state last_error = {0};
+ 		git_error_state_capture(&last_error, error);
+@@ -509,6 +520,7 @@ static int git__clone(
+ 	}
+ 
+ 	*out = repo;
++	printf("@@@ git__clone5\n");
+ 	return error;
+ }
+ 
+diff --git a/src/indexer.c b/src/indexer.c
+index 8c74f0e72..f9c12aca5 100644
+--- a/src/indexer.c
++++ b/src/indexer.c
+@@ -96,7 +96,7 @@ static int parse_header(struct git_pack_header *hdr, struct git_pack_file *pack)
+ 
+ 	/* Verify we recognize this pack file format. */
+ 	if (hdr->hdr_signature != ntohl(PACK_SIGNATURE)) {
+-		git_error_set(GIT_ERROR_INDEXER, "wrong pack signature");
++		git_error_set(GIT_ERROR_INDEXER, "wrong pack signature %u vs %u", hdr->hdr_signature, ntohl(PACK_SIGNATURE));
+ 		return -1;
+ 	}
+ 
