@@ -19,6 +19,7 @@
         "0014-Add-new-compile-time-setting-PJ_ICE_ST_USE_TURN_PERM.patch",
         "0015-update-local-preference-for-peer-reflexive-candidate.patch",
         "0016-use-addrinfo-instead-CFHOST.patch",
+        "debug.patch",
         "0001-win-config.patch",
         "0002-win-vs-gnutls.patch",
         "0003-win-vs2017-props.patch"
