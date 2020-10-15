@@ -1,0 +1,35 @@
+ pjnath/src/pjnath/ice_session.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 7cea3b5d8..d095c79eb 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -2009,7 +2009,8 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+ 			status);
+     } else {
+ 	check->tdata = NULL;
+-	pjnath_perror(ice->obj_name, "Error sending STUN request", status);
++	pjnath_perror(ice->obj_name, "Error sending STUN request 2", check->rcand->type);
++	pjnath_perror(ice->obj_name, "Error sending STUN request 3", status);
+     }
+     pj_log_pop_indent();
+     return status;
+@@ -2491,7 +2492,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 					       PJ_FALSE, PJ_FALSE, &rcand->addr,
+ 					       pj_sockaddr_get_len(&rcand->addr),
+ 					       check->tdata);
+-    if (status_send_msg == PJ_EBUSY /* EBUSY */) {
++    if (status_send_msg == PJ_EBUSY /* EBUSY */ || status_send_msg == 130054) {
+         check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET;
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
+ 			status_send_msg);
+@@ -2504,7 +2505,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 	return;
+     } else if (status_send_msg != PJ_SUCCESS) {
+ 	check->tdata = NULL;
+-	pjnath_perror(ice->obj_name, "Error sending STUN request", status_send_msg);
++	pjnath_perror(ice->obj_name, "Error sending STUN request 1", status_send_msg);
+ 	pj_log_pop_indent();
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+ 	on_check_complete(ice, check);
