@@ -46,6 +46,7 @@ $(TARBALLS)/pjproject-$(PJPROJECT_VERSION).tar.gz:
 pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(UNPACK)
 	$(APPLY) $(SRC)/pjproject/0001-rfc6544.patch
+	$(APPLY) $(SRC)/pjproject/debug.patch
 	$(APPLY) $(SRC)/pjproject/0002-rfc2466.patch
 	$(APPLY) $(SRC)/pjproject/0003-add-tcp-keep-alive.patch
 	$(APPLY) $(SRC)/pjproject/0004-multiple_listeners.patch
