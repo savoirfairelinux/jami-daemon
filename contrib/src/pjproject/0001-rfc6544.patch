@@ -648,7 +648,7 @@ index fff4fad26..e7f8b84eb 100644
      if (status != PJ_SUCCESS && status != PJ_EPENDING) {
  	app_perror("    error: server sending data", status);
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index 2a4125bc5..3f8c03cd2 100644
+index 2a4125bc5..1da2d8091 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
 @@ -18,6 +18,7 @@
@@ -1231,13 +1231,13 @@ index 2a4125bc5..3f8c03cd2 100644
 +					       PJ_FALSE, PJ_FALSE, &rcand->addr,
 +					       pj_sockaddr_get_len(&rcand->addr),
 +					       check->tdata);
-+    if (status_send_msg == PJ_EBUSY /* EBUSY */) {
++
++	if (status_send_msg == PJ_EBUSY /* EBUSY */) {
 +        check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET;
 +	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
 +			status_send_msg);
 +	return;
-+    }
-+    if (status_send_msg == 120032 /* BROKEN PIPE */) {
++    } else if (status_send_msg == 120032 /* BROKEN PIPE */ || status == 130054 /* ECONNRESET */) {
 +	check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY;
 +	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
 +			status_send_msg);
@@ -4112,5 +4112,5 @@ index 474a8d07c..9257f07a4 100644
  	if (status != PJ_SUCCESS) {
  	    char errmsg[PJ_ERR_MSG_SIZE];
 -- 
-2.25.4
+2.26.2
 
