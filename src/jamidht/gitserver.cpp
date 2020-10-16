@@ -199,6 +199,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     packet.clear();
     packet << std::setw(4) << std::setfill('0') << std::hex << ((5 + capStr.size()) & 0x0FFFF);
     packet << capStr << "\n";
+    auto toSend = packet.str();
 
     // Now, add other references
     git_strarray refs;
@@ -211,18 +212,30 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
             }
             currentHead = git_oid_tostr_s(&commit_id);
 
+            packet.clear();
             packet << std::setw(4) << std::setfill('0') << std::hex
                    << ((6 /* size + space + \n */ + currentHead.size() + ref.size()) & 0x0FFFF);
             packet << currentHead << " " << ref << "\n";
+            toSend += packet.str();
         }
     }
     git_repository_free(repo);
 
     // And add FLUSH
+    packet.clear();
     packet << FLUSH_PKT;
-    socket_->write(reinterpret_cast<const unsigned char*>(packet.str().c_str()),
-                   packet.str().size(),
-                   ec);
+    toSend += packet.str();
+
+    // auto toSend = packet.str();
+    for (auto i = 0; i < toSend.size(); ++i) {
+        if (toSend[i] == '\0') {
+            printf("-");
+        } else {
+            printf("%c", toSend[i]);
+        }
+    }
+    printf("\n");
+    socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
     if (ec) {
         JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
     }

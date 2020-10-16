@@ -283,6 +283,7 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>&& pkt)
 void
 MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector<uint8_t>&& pkt)
 {
+    JAMI_ERR("@@@ %s", std::string(pkt.data(), pkt.data() + pkt.size()).c_str());
     auto sockIt = sockets.find(channel);
     auto dataIt = channelDatas_.find(channel);
     if (channel > 0 && sockIt->second && dataIt->second) {
