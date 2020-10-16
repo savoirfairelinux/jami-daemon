@@ -105,7 +105,6 @@ P2PStreamRead(git_smart_subtransport_stream* stream, char* buffer, size_t buflen
         *read = fs->socket->read(reinterpret_cast<unsigned char*>(buffer),
                                  std::min(datalen, buflen),
                                  ec);
-
     return res;
 }
 

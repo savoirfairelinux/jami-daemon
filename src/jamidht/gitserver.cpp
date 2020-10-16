@@ -196,7 +196,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
                  << " HEAD\0side-band side-band-64k shallow no-progress include-tag"sv;
     std::string capStr = capabilities.str();
 
-    packet.clear();
+    packet.str("");
     packet << std::setw(4) << std::setfill('0') << std::hex << ((5 + capStr.size()) & 0x0FFFF);
     packet << capStr << "\n";
 
@@ -220,9 +220,9 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
 
     // And add FLUSH
     packet << FLUSH_PKT;
-    socket_->write(reinterpret_cast<const unsigned char*>(packet.str().c_str()),
-                   packet.str().size(),
-                   ec);
+    auto toSend = packet.str();
+
+    socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
     if (ec) {
         JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
     }
