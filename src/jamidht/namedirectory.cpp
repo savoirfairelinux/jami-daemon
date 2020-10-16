@@ -77,12 +77,12 @@ NameDirectory::instance()
 }
 
 void
-NameDirectory::lookupUri(const std::string& uri,
+NameDirectory::lookupUri(std::string_view uri,
                          const std::string& default_server,
                          LookupCallback cb)
 {
     const std::string& default_ns = default_server.empty() ? DEFAULT_SERVER_HOST : default_server;
-    std::smatch pieces_match;
+    std::svmatch pieces_match;
     if (std::regex_match(uri, pieces_match, URI_VALIDATOR)) {
         if (pieces_match.size() == 4) {
             if (pieces_match[2].length() == 0)
@@ -92,7 +92,7 @@ NameDirectory::lookupUri(const std::string& uri,
             return;
         }
     }
-    JAMI_ERR("Can't parse URI: %s", uri.c_str());
+    JAMI_ERR("Can't parse URI: %.*s", (int)uri.size(), uri.data());
     cb("", Response::invalidResponse);
 }
 

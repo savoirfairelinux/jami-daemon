@@ -451,7 +451,7 @@ public:
      * Note: keep declaration before newOutgoingCall template.
      */
     std::shared_ptr<Call> newOutgoingCall(
-        const std::string& toUrl,
+        std::string_view toUrl,
         const std::map<std::string, std::string>& volatileCallDetails = {}) override;
 
     /**
@@ -464,7 +464,7 @@ public:
 #ifndef _MSC_VER
     template<class T = SIPCall>
     std::shared_ptr<enable_if_base_of<T, SIPCall>> newOutgoingCall(
-        const std::string& toUrl,
+        std::string_view toUrl,
         const std::map<std::string, std::string>& volatileCallDetails = {});
 #else
     template<class T>
