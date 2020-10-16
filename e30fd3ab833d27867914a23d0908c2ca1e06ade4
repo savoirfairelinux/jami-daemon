@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "96cccde3_565d13cb",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-10-16T20:58:32Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027path\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "e30fd3ab833d27867914a23d0908c2ca1e06ade4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "115c6040_0c5e3aa7",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 153,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-10-16T20:58:32Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nstring concatenation results in allocation of unnecessary temporary strings; consider using \u0027operator+\u003d\u0027 or \u0027string::append()\u0027 instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-inefficient-string-concatenation",
+      "revId": "e30fd3ab833d27867914a23d0908c2ca1e06ade4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "67cb6031_86e45d6c",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 44
+      },
+      "lineNbr": 473,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-10-16T20:58:32Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027socket\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "e30fd3ab833d27867914a23d0908c2ca1e06ade4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8ace2b3c_476f72e6",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 44
+      },
+      "lineNbr": 473,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-10-16T20:58:32Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027socket\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "e30fd3ab833d27867914a23d0908c2ca1e06ade4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "27b32515_c6022b3a",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 312,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-10-16T20:58:32Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "e30fd3ab833d27867914a23d0908c2ca1e06ade4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
