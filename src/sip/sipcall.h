@@ -222,7 +222,7 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     void openPortsUPnP();
 
-    void setPeerRegistredName(const std::string& name) { peerRegistredName_ = name; }
+    void setPeerRegisteredName(const std::string& name) { peerRegisteredName_ = name; }
 
     void setPeerUri(const std::string& peerUri) { peerUri_ = peerUri; }
 
@@ -349,7 +349,7 @@ private:
     enum class Request { HoldingOn, HoldingOff, SwitchInput, NoRequest };
     Request remainingRequest_ {Request::NoRequest};
 
-    std::string peerRegistredName_ {};
+    std::string peerRegisteredName_ {};
 
     char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
     pj_str_t contactHeader_ {contactBuffer_, 0};
