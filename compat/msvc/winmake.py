@@ -173,7 +173,7 @@ def make_plugin(pkg_info, force, sdk_version, toolset):
         cmake_script = "cmake -G " + getCMakeGenerator(getLatestVSVersion(
         )) + cmake_defines + "-S " + plugin_path + " -B " + plugin_path + "/msvc"
         root_logger.warning("Cmake generating vcxproj files")
-        result = getSHrunner().exec_batch(cmake_script)
+        _ = getSHrunner().exec_batch(cmake_script)
         build(pkg_name,
               plugin_path,
               pkg_info.get('project_paths', []),

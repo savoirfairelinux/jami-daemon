@@ -12,10 +12,12 @@
     ],
     "patches": [],
     "win_patches": [],
-    "project_paths": ["msvc/opendht.vcxproj"],
+    "project_paths": ["msvc/opendht-static.vcxproj"],
     "with_env" : "",
     "custom_scripts": {
-        "pre_build": [],
+        "pre_build": [
+            "mkdir msvc & cd msvc & cmake .. -G %CMAKE_GENERATOR% -DOPENDHT_OPENSSL_STATIC=1 -DOPENDHT_SHARED=0 -DOPENDHT_PROXY_CLIENT=1 -DOPENDHT_PROXY_SERVER=1 -DOPENDHT_PUSH_NOTIFICATIONS=1"
+        ],
         "build": [],
         "post_build": []
     }
