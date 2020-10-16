@@ -28,13 +28,21 @@ namespace DRing {
 bool
 loadPlugin(const std::string& path)
 {
-    return jami::Manager::instance().getJamiPluginManager().loadPlugin(path);
+    bool status = jami::Manager::instance().getJamiPluginManager().loadPlugin(path);
+
+    jami::Manager::instance().pluginPreferences.saveStateLoadedPlugins(path, status);
+    jami::Manager::instance().saveConfig();
+    return status;
 }
 
 bool
 unloadPlugin(const std::string& path)
 {
-    return jami::Manager::instance().getJamiPluginManager().unloadPlugin(path);
+    bool status = jami::Manager::instance().getJamiPluginManager().unloadPlugin(path);
+
+    jami::Manager::instance().pluginPreferences.saveStateLoadedPlugins(path, false);
+    jami::Manager::instance().saveConfig();
+    return status;
 }
 
 void
