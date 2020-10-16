@@ -26,7 +26,7 @@ log = None
 # project paths
 daemon_msvc_dir = os.path.dirname(os.path.realpath(__file__))
 daemon_dir = os.path.dirname(os.path.dirname(daemon_msvc_dir))
-daemon_msvc_build_local_dir = daemon_dir + r'\build-local'
+daemon_build_dir = daemon_dir + r'\build'
 contrib_src_dir = daemon_dir + r'\contrib\src'
 contrib_build_dir = daemon_dir + r'\contrib\build'
 contrib_tmp_dir = daemon_dir + r'\contrib\tarballs'
@@ -173,7 +173,7 @@ def make_plugin(pkg_info, force, sdk_version, toolset):
         cmake_script = "cmake -G " + getCMakeGenerator(getLatestVSVersion(
         )) + cmake_defines + "-S " + plugin_path + " -B " + plugin_path + "/msvc"
         root_logger.warning("Cmake generating vcxproj files")
-        result = getSHrunner().exec_batch(cmake_script)
+        _ = getSHrunner().exec_batch(cmake_script)
         build(pkg_name,
               plugin_path,
               pkg_info.get('project_paths', []),
@@ -187,7 +187,7 @@ def make_plugin(pkg_info, force, sdk_version, toolset):
 def make_daemon(pkg_info, force, sdk_version, toolset):
     cmake_script = 'cmake -DCMAKE_CONFIGURATION_TYPES="ReleaseLib_win32" -DCMAKE_SYSTEM_VERSION=' + sdk_version + \
         ' -DCMAKE_VS_PLATFORM_NAME="x64" -G ' + getCMakeGenerator(getLatestVSVersion(
-        )) + ' -T $(DefaultPlatformToolset) -S ../../ -B ../../build-local'
+        )) + ' -T $(DefaultPlatformToolset) -S ../../ -B ../../build'
     root_logger.warning("Cmake generating vcxproj files")
     result = getSHrunner().exec_batch(cmake_script)
     if result[0] is not 0:
@@ -200,7 +200,7 @@ def make_daemon(pkg_info, force, sdk_version, toolset):
     env_set = 'false' if pkg_info.get('with_env', '') == '' else 'true'
     sdk_to_use = sdk_version if env_set == 'false' else pkg_info.get(
         'with_env', '')
-    build('daemon', daemon_msvc_build_local_dir,
+    build('daemon', daemon_build_dir,
           pkg_info.get('project_paths', []),
           pkg_info.get('custom_scripts', {}),
           env_set,
@@ -254,13 +254,30 @@ def make(pkg_info, force, sdk_version, toolset):
         env_set = 'false' if pkg_info.get('with_env', '') == '' else 'true'
         sdk_to_use = sdk_version if env_set == 'false' else pkg_info.get(
             'with_env', '')
+
+        # configure with cmake ?
+        use_cmake = pkg_info.get('use_cmake', False)
+        if use_cmake:
+            cmake_defines = ""
+            for define in pkg_info.get('defines', []):
+                cmake_defines += " -D" + define + " "
+            if not pkg_up_to_date or current_version is None or force:
+                cmake_conf_script = "cmake -G " + getCMakeGenerator(getLatestVSVersion(
+                )) + cmake_defines + "-S '" + pkg_build_path + "' -B '" + pkg_build_path + "\\build'"
+                log.debug("Configuring with Cmake")
+                result = getSHrunner().exec_batch(cmake_conf_script)
+                if result[0] is not 0:
+                    log.error("Error configuring with CMake")
+                    exit(1)
+
         if build(pkg_name,
                  contrib_build_dir + '\\' + pkg_name,
                  pkg_info.get('project_paths', []),
                  pkg_info.get('custom_scripts', {}),
                  env_set,
                  sdk_to_use,
-                 toolset):
+                 toolset,
+                 use_cmake=True):
             track_build(pkg_name, version)
         else:
             log.error("Couldn't build contrib " + pkg_name)
@@ -428,7 +445,7 @@ def track_build(pkg_name, version):
 
 
 def build(pkg_name, pkg_dir, project_paths, custom_scripts, with_env, sdk,
-          toolset, arch='x64', conf='Release'):
+          toolset, arch='x64', conf='Release', use_cmake=False):
     getMSbuilder().set_msbuild_configuration(with_env, arch, conf, toolset)
     getMSbuilder().setup_vs_env(sdk)
 
@@ -458,12 +475,22 @@ def build(pkg_name, pkg_dir, project_paths, custom_scripts, with_env, sdk,
     # vcxproj files
     if project_paths:
         log.debug('Msbuild phase')
-    for pp in project_paths:
-        project_full_path = pkg_dir + '\\' + pp
-        log.debug('Building: ' + pkg_name + " with sdk version " +
-                  sdk + " and toolset " + toolset)
-        getMSbuilder().build(pkg_name, project_full_path, sdk, toolset)
-        build_operations += 1
+        for pp in project_paths:
+            project_full_path = pkg_dir + '\\' + pp
+            log.debug('Building: ' + pkg_name + " with sdk version " +
+                      sdk + " and toolset " + toolset)
+            getMSbuilder().build(pkg_name, project_full_path, sdk, toolset)
+            build_operations += 1
+    else:
+        # build directly with cmake
+        if use_cmake is True:
+            log.debug('CMake build phase')
+            cmake_build_script = "cmake --build '" + pkg_dir + \
+                "\\build' " + "--config " + conf
+            result = getSHrunner().exec_batch(cmake_build_script)
+            if result[0] is not 0:
+                log.error("Error building with CMake")
+                exit(1)
 
     os.chdir(tmp_dir)
 
