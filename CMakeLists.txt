@@ -104,7 +104,7 @@ if(MSVC)
    ################################################################################
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
        set_target_properties(${PROJECT_NAME} PROPERTIES
-           OUTPUT_DIRECTORY_RELEASELIB_WIN32 "${CMAKE_CURRENT_SOURCE_DIR}/build-local/${CMAKE_VS_PLATFORM_NAME}/$<CONFIG>/bin/"
+           OUTPUT_DIRECTORY_RELEASELIB_WIN32 "${CMAKE_CURRENT_SOURCE_DIR}/build/${CMAKE_VS_PLATFORM_NAME}/$<CONFIG>/bin/"
        )
    endif()
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
@@ -121,7 +121,7 @@ if(MSVC)
                "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/include/upnp;"
                "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/include;"
                "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/sndfile/src;"
-               "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/inc32;"
+               "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/include;"
                "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/asio/asio/include;"
                "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/restinio/dev;"
                "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/fmt/include;"
@@ -148,6 +148,7 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/msgpack-c/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/opendht/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libarchive/libarchive;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/jsoncpp/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yaml-cpp/include;"
@@ -201,7 +202,8 @@ if(MSVC)
                /Oy-;
                /sdl-;
                /W0;
-               /FC
+               /FC;
+               /FS
            >
            /nologo;
            /Zi;
@@ -245,7 +247,7 @@ if(MSVC)
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/swscale.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libgnutls.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/lib_json.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libopendht.lib 
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/opendht/build/Release/libopendht.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/argon2/vs2015/Argon2Ref/vs2015/build/Argon2Ref.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/secp256k1.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yaml-cpp/msvc/Release/libyaml-cppmd.lib 
@@ -264,9 +266,8 @@ if(MSVC)
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjnath/lib/pjnath-x86_64-x64-vc15-Release.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/fmt/msvc/Release/fmt.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/http_parser/x64/Release/http-parser.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/asio/asio/msvc/x64/Release/asio.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/out32dll/libeay32.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/out32dll/ssleay32.lib 
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/libcrypto.lib 
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/libssl.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/lib/libspeexdsp.lib
    /ignore:4006 
    "

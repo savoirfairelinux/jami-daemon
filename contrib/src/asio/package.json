@@ -7,9 +7,7 @@
     "win_patches": [
         "asio-vcxproj.patch"
     ],
-    "project_paths": [
-        "asio/msvc/asio.vcxproj"
-    ],
+    "project_paths": [],
     "with_env" : "",
     "custom_scripts": {
         "pre_build": [],
