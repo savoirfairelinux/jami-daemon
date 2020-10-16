@@ -270,7 +270,7 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
 void
 Sdp::addRTCPAttribute(pjmedia_sdp_media* med)
 {
-    IpAddr outputAddr = publishedIpAddr_;
+    IpAddr outputAddr {publishedIpAddr_};
     outputAddr.setPort(localAudioControlPort_);
     pjmedia_sdp_attr* attr = pjmedia_sdp_attr_create_rtcp(memPool_.get(), outputAddr.pjPtr());
     if (attr)
@@ -618,7 +618,7 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
             JAMI_ERR("Could not find connection information for media");
             continue;
         }
-        descr.addr = std::string(conn->addr.ptr, conn->addr.slen);
+        descr.addr = std::string_view(conn->addr.ptr, conn->addr.slen);
         descr.addr.setPort(media->desc.port);
 
         // Get the "rtcp" address from the SDP if present. Otherwise,
@@ -628,7 +628,7 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
             pjmedia_sdp_rtcp_attr rtcp;
             auto status = pjmedia_sdp_attr_get_rtcp(attr, &rtcp);
             if (status == PJ_SUCCESS && rtcp.addr.slen) {
-                descr.rtcp_addr = std::string(rtcp.addr.ptr, rtcp.addr.slen);
+                descr.rtcp_addr = std::string_view(rtcp.addr.ptr, rtcp.addr.slen);
                 descr.rtcp_addr.setPort(rtcp.port);
             }
         }
