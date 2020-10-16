@@ -1,6 +1,6 @@
 {
     "name": "opendht",
-    "version": "cf44bb608f220d8e592380e7fb0157aaa9f3a20d",
+    "version": "076a5006623539a58262d33458a5605be096b3a1",
     "url": "https://github.com/savoirfairelinux/opendht/archive/__VERSION__.tar.gz",
     "deps": [
         "argon2",
@@ -10,9 +10,17 @@
         "msgpack",
         "restinio"
     ],
+    "use_cmake" : true,
+    "defines": [
+        "OPENDHT_SHARED=0",
+        "OPENDHT_PROXY_CLIENT=1",
+        "OPENDHT_PROXY_SERVER=1",
+        "OPENDHT_PUSH_NOTIFICATIONS=1",
+        "OPENDHT_TOOLS=0"
+    ],
     "patches": [],
     "win_patches": [],
-    "project_paths": ["msvc/opendht.vcxproj"],
+    "project_paths": [],
     "with_env" : "",
     "custom_scripts": {
         "pre_build": [],

@@ -5,12 +5,10 @@
     "deps": [],
     "patches": [],
     "win_patches": [],
-    "project_paths": ["vs2017/msgpackc.vcxproj"],
+    "project_paths": [],
     "with_env" : "",
     "custom_scripts": {
-        "pre_build": [
-            "mkdir vs2017 & cd vs2017 & cmake .. -DMSGPACK_CXX11=ON -G %CMAKE_GENERATOR%"
-        ],
+        "pre_build": [],
         "build": [],
         "post_build": []
     }
