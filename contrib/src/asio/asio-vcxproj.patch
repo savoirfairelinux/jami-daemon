@@ -79,7 +79,7 @@
 +      <Optimization>Disabled</Optimization>
 +      <SDLCheck>true</SDLCheck>
 +      <ConformanceMode>true</ConformanceMode>
-+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\openssl\inc32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 +      <PreprocessorDefinitions>_WIN32_WINNT=0x0A00;ASIO_STANDALONE;ASIO_SEPARATE_COMPILATION;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 +    </ClCompile>
 +    <Link>
@@ -95,7 +95,7 @@
 +      <Optimization>Disabled</Optimization>
 +      <SDLCheck>true</SDLCheck>
 +      <ConformanceMode>true</ConformanceMode>
-+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\openssl\inc32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 +      <PreprocessorDefinitions>_WIN32_WINNT=0x0A00;ASIO_STANDALONE;ASIO_SEPARATE_COMPILATION;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 +    </ClCompile>
 +    <Link>
@@ -113,7 +113,7 @@
 +      <IntrinsicFunctions>true</IntrinsicFunctions>
 +      <SDLCheck>true</SDLCheck>
 +      <ConformanceMode>true</ConformanceMode>
-+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\openssl\inc32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 +      <PreprocessorDefinitions>_WIN32_WINNT=0x0A00;ASIO_STANDALONE;ASIO_SEPARATE_COMPILATION;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 +    </ClCompile>
 +    <Link>
@@ -131,7 +131,7 @@
 +      <IntrinsicFunctions>true</IntrinsicFunctions>
 +      <SDLCheck>true</SDLCheck>
 +      <ConformanceMode>true</ConformanceMode>
-+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\openssl\inc32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 +      <PreprocessorDefinitions>_WIN32_WINNT=0x0A00;ASIO_STANDALONE;ASIO_SEPARATE_COMPILATION;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 +    </ClCompile>
 +    <Link>
