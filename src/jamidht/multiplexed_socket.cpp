@@ -283,6 +283,7 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>&& pkt)
 void
 MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector<uint8_t>&& pkt)
 {
+    JAMI_ERR("@@@ channel %u %s", channel, std::string(pkt.data(), pkt.data() + pkt.size()).c_str());
     auto sockIt = sockets.find(channel);
     auto dataIt = channelDatas_.find(channel);
     if (channel > 0 && sockIt->second && dataIt->second) {
@@ -423,6 +424,8 @@ MultiplexedSocket::write(const uint16_t& channel,
                          std::size_t len,
                          std::error_code& ec)
 {
+    if (channel != 0)
+        JAMI_WARN("@@@ channel %u %s", channel, std::string(buf, buf + len).c_str());
     if (pimpl_->isShutdown_) {
         ec = std::make_error_code(std::errc::broken_pipe);
         return -1;

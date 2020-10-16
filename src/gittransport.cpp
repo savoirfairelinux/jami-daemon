@@ -105,7 +105,8 @@ P2PStreamRead(git_smart_subtransport_stream* stream, char* buffer, size_t buflen
         *read = fs->socket->read(reinterpret_cast<unsigned char*>(buffer),
                                  std::min(datalen, buflen),
                                  ec);
-
+    std::string buf(buffer, buffer + std::min(datalen, buflen));
+    printf("READ: %s\n", buf.c_str());
     return res;
 }
 
@@ -118,6 +119,8 @@ P2PStreamWrite(git_smart_subtransport_stream* stream, const char* buffer, size_t
         return -1;
     }
     std::error_code ec;
+    std::string buf(buffer, buffer + len);
+    printf("WRITE: %s\n", buf.c_str());
     auto written = fs->socket->write(reinterpret_cast<const unsigned char*>(buffer), len, ec);
     if (written < 0) {
         giterr_set_str(GITERR_NET, ec.message().c_str());
