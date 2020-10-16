@@ -780,7 +780,7 @@ public:
      * Load the accounts order set by the user from the dringrc config file
      * @return std::vector<std::string> A vector containing the account ID's
      */
-    std::vector<std::string> loadAccountOrder() const;
+    std::vector<std::string_view> loadAccountOrder() const;
 
     /**
      * Load the account map from configuration
@@ -828,11 +828,11 @@ public:
         accountList.reserve(all_accounts.size());
         for (const auto& id : account_order) {
             if (auto acc = accountFactory.getAccount<T>(id))
-                accountList.push_back(acc);
+                accountList.emplace_back(std::move(acc));
         }
-        for (const auto& account : all_accounts) {
+        for (auto& account : all_accounts) {
             if (std::find(accountList.begin(), accountList.end(), account) == accountList.end())
-                accountList.emplace_back(account);
+                accountList.emplace_back(std::move(account));
         }
         return accountList;
     }

@@ -2806,7 +2806,7 @@ Manager::getNewCallID()
     return random_id.str();
 }
 
-std::vector<std::string>
+std::vector<std::string_view>
 Manager::loadAccountOrder() const
 {
     return split_string(preferences.getAccountOrder(), '/');

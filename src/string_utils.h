@@ -85,7 +85,29 @@ stod(const std::string& str)
 
 std::string trim(const std::string& s);
 
-std::vector<std::string> split_string(const std::string& s, char sep);
+inline
+std::vector<std::string_view> split_string(std::string_view str, char delim)
+{
+    std::vector<std::string_view> output;
+    for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last; first = second + 1) {
+        second = std::find(first, last, delim);
+        if (first != second)
+            output.emplace_back(first, second - first);
+    }
+    return output;
+}
+
+inline
+std::vector<std::string_view> split_string(std::string_view str, std::string_view delims = " ")
+{
+    std::vector<std::string_view> output;
+    for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last; first = second + 1) {
+        second = std::find_first_of(first, last, std::cbegin(delims), std::cend(delims));
+        if (first != second)
+            output.emplace_back(first, second - first);
+    }
+    return output;
+}
 
 std::vector<unsigned> split_string_to_unsigned(const std::string& s, char sep);
 
