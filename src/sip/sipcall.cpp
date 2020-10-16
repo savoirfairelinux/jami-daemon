@@ -1480,8 +1480,8 @@ SIPCall::getDetails() const
 #endif
 
 #if HAVE_RINGNS
-    if (not peerRegistredName_.empty())
-        details.emplace(DRing::Call::Details::REGISTERED_NAME, peerRegistredName_);
+    if (not peerRegisteredName_.empty())
+        details.emplace(DRing::Call::Details::REGISTERED_NAME, peerRegisteredName_);
 #endif
 
 #ifdef ENABLE_CLIENT_CERT

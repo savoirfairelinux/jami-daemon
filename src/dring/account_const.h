@@ -79,7 +79,7 @@ enum class testAccountICEInitializationStatus : int {
 namespace VolatileProperties {
 
 constexpr static const char ACTIVE[] = "Account.active";
-constexpr static const char REGISTERED_NAME[] = "Account.registredName";
+constexpr static const char REGISTERED_NAME[] = "Account.registeredName";
 
 // Volatile parameters
 namespace Registration {

@@ -500,7 +500,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                                            const NameDirectory::Response& response) {
                                        if (response == NameDirectory::Response::found)
                                            if (auto call = wCall.lock()) {
-                                               call->setPeerRegistredName(result);
+                                               call->setPeerRegisteredName(result);
                                                call->setPeerUri(RING_URI_PREFIX + result);
                                            }
                                    });
@@ -2392,7 +2392,7 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                                            const NameDirectory::Response& response) {
                                        if (response == NameDirectory::Response::found)
                                            if (auto call = wcall.lock()) {
-                                               call->setPeerRegistredName(result);
+                                               call->setPeerRegisteredName(result);
                                                call->setPeerUri(RING_URI_PREFIX + result);
                                            }
                                    });
