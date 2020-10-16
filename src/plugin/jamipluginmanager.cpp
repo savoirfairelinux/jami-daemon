@@ -302,8 +302,6 @@ JamiPluginManager::loadPlugin(const std::string& rootPath)
         bool status = pm_.load(getPluginDetails(rootPath).at("soPath"));
         JAMI_INFO() << "PLUGIN: load status - " << status;
 
-        jami::Manager::instance().pluginPreferences.saveStateLoadedPlugins(rootPath, status);
-        jami::Manager::instance().saveConfig();
         return status;
 
     } catch (const std::exception& e) {
@@ -321,9 +319,6 @@ JamiPluginManager::unloadPlugin(const std::string& rootPath)
     try {
         bool status = pm_.unload(getPluginDetails(rootPath).at("soPath"));
         JAMI_INFO() << "PLUGIN: unload status - " << status;
-
-        jami::Manager::instance().pluginPreferences.saveStateLoadedPlugins(rootPath, false);
-        jami::Manager::instance().saveConfig();
 
         return status;
     } catch (const std::exception& e) {
