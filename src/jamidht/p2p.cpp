@@ -282,7 +282,7 @@ DhtPeerConnector::requestConnection(
                                                    channelReadyCb);
         },
 
-        [this, peer_h, onChanneledCancelled, accId = acc->getAccountID()](bool found) {
+        [peer_h, onChanneledCancelled, accId = acc->getAccountID()](bool found) {
             if (!found) {
                 JAMI_WARN() << accId << "[CNX] aborted, no devices for " << peer_h;
                 onChanneledCancelled();
