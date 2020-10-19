@@ -309,18 +309,26 @@ public:
 
     bool getDecodingAccelerated() const { return decodingAccelerated_; }
 
-    void setDecodingAccelerated(bool decodingAccelerated)
+    bool setDecodingAccelerated(bool decodingAccelerated)
     {
-        decodingAccelerated_ = decodingAccelerated;
-        emitSignal<DRing::ConfigurationSignal::HardwareDecodingChanged>(decodingAccelerated_);
+        if (decodingAccelerated_ != decodingAccelerated) {
+            decodingAccelerated_ = decodingAccelerated;
+            emitSignal<DRing::ConfigurationSignal::HardwareDecodingChanged>(decodingAccelerated_);
+            return true;
+        }
+        return false;
     }
 
     bool getEncodingAccelerated() const { return encodingAccelerated_; }
 
-    void setEncodingAccelerated(bool encodingAccelerated)
+    bool setEncodingAccelerated(bool encodingAccelerated)
     {
-        encodingAccelerated_ = encodingAccelerated;
-        emitSignal<DRing::ConfigurationSignal::HardwareEncodingChanged>(encodingAccelerated_);
+        if (encodingAccelerated_ != encodingAccelerated) {
+            encodingAccelerated_ = encodingAccelerated;
+            emitSignal<DRing::ConfigurationSignal::HardwareEncodingChanged>(encodingAccelerated_);
+            return true;
+        }
+        return false;
     }
 
     bool getRecordPreview() const { return recordPreview_; }

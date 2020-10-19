@@ -56,7 +56,7 @@ public:
 
     std::string getDefaultDevice() const;
     std::string getMRLForDefaultDevice() const;
-    void setDefaultDevice(const std::string& name);
+    bool setDefaultDevice(const std::string& name);
     void setDeviceOrientation(const std::string& id, int angle);
 
     void addDevice(const std::string& node,
