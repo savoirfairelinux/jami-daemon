@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "dcb5eab0_e104e5bd",
+        "filename": "src/jamidht/channeled_transfers.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-10-19T19:45:31Z",
+      "side": 1,
+      "message": "avoid unneeded copy",
+      "range": {
+        "startLine": 59,
+        "startChar": 21,
+        "endLine": 59,
+        "endChar": 57
+      },
+      "revId": "cd701252acf3c1aa8a65d83f7656c203c20b845b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f38df706_10607c6c",
+        "filename": "src/jamidht/channeled_transfers.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-10-19T19:45:31Z",
+      "side": 1,
+      "message": "avoid unneeded copy",
+      "range": {
+        "startLine": 79,
+        "startChar": 20,
+        "endLine": 79,
+        "endChar": 56
+      },
+      "revId": "cd701252acf3c1aa8a65d83f7656c203c20b845b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
