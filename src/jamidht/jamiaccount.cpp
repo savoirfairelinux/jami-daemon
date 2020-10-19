@@ -2191,6 +2191,7 @@ JamiAccount::doRegister_()
                     std::istringstream iss(tid_str);
                     iss >> tid;
                     if (dhtPeerConnector_->onIncomingChannelRequest(tid)) {
+                        std::lock_guard<std::mutex> lk(transfersMtx_);
                         incomingFileTransfers_.emplace(tid_str);
                         return true;
                     }
@@ -2211,11 +2212,13 @@ JamiAccount::doRegister_()
                     cacheSIPConnection(std::move(channel), peerId, deviceId);
                 } else if (isFile or isVCard) {
                     auto tid_str = isFile ? name.substr(7) : name.substr(8);
+                    std::unique_lock<std::mutex> lk(transfersMtx_);
                     auto it = incomingFileTransfers_.find(tid_str);
                     // Note, outgoing file transfers are ignored.
                     if (it == incomingFileTransfers_.end())
                         return;
                     incomingFileTransfers_.erase(it);
+                    lk.unlock();
                     uint64_t tid;
                     std::istringstream iss(tid_str);
                     iss >> tid;

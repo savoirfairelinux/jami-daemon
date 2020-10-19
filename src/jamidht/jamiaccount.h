@@ -755,6 +755,7 @@ private:
                             const std::string& deviceId);
 
     // File transfers
+    std::mutex transfersMtx_ {};
     std::set<std::string> incomingFileTransfers_ {};
 
     /**
