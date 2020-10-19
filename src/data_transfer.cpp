@@ -281,7 +281,7 @@ public:
     void close() noexcept override;
     void closeAndEmit(DRing::DataTransferEventCode code) const noexcept;
     bool read(std::vector<uint8_t>&) const override;
-    bool write(const std::vector<uint8_t>& buffer) override;
+    bool write(std::string_view) override;
     void emit(DRing::DataTransferEventCode code) const override;
 
     void cancel() override
@@ -290,7 +290,7 @@ public:
             account->closePeerConnection(id);
     }
 
-    void setOnRecv(std::function<void(std::vector<uint8_t>&&)>&& cb) override
+    void setOnRecv(std::function<void(std::string_view)>&& cb) override
     {
         bool send = false;
         {
@@ -322,7 +322,7 @@ private:
         headerSent_ = true;
         emit(DRing::DataTransferEventCode::wait_peer_acceptance);
         if (onRecvCb_)
-            onRecvCb_(std::move(buf));
+            onRecvCb_(std::string_view((const char*)buf.data(), buf.size()));
     }
 
     void sendFile() const
@@ -340,7 +340,7 @@ private:
                     metaInfo_->updateInfo(info_);
                 }
                 if (onRecvCb_)
-                    onRecvCb_(std::move(buf));
+                    onRecvCb_(std::string_view((const char*)buf.data(), buf.size()));
             }
             JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
             if (internalCompletionCb_)
@@ -358,7 +358,7 @@ private:
     mutable std::unique_ptr<std::thread> timeoutThread_;
     mutable std::atomic_bool stopTimeout_ {false};
     std::mutex onRecvCbMtx_;
-    std::function<void(std::vector<uint8_t>&&)> onRecvCb_ {};
+    std::function<void(std::string_view)> onRecvCb_ {};
 };
 
 SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
@@ -436,7 +436,7 @@ SubOutgoingFileTransfer::read(std::vector<uint8_t>& buf) const
 }
 
 bool
-SubOutgoingFileTransfer::write(const std::vector<uint8_t>& buffer)
+SubOutgoingFileTransfer::write(std::string_view buffer)
 {
     if (buffer.empty())
         return true;
@@ -528,7 +528,7 @@ public:
 
     void close() noexcept override;
 
-    void cancel()
+    void cancel() override
     {
         for (const auto& subtransfer : subtransfer_)
             subtransfer->cancel();
@@ -591,7 +591,7 @@ public:
 
     void accept(const std::string&, std::size_t offset) override;
 
-    bool write(const uint8_t* buffer, std::size_t length) override;
+    bool write(std::string_view data) override;
 
     void cancel() override
     {
@@ -713,15 +713,15 @@ IncomingFileTransfer::accept(const std::string& filename, std::size_t offset)
 }
 
 bool
-IncomingFileTransfer::write(const uint8_t* buffer, std::size_t length)
+IncomingFileTransfer::write(std::string_view buffer)
 {
-    if (!length)
+    if (buffer.empty())
         return true;
-    fout_.write(reinterpret_cast<const char*>(buffer), length);
+    fout_ << buffer;
     if (!fout_)
         return false;
     std::lock_guard<std::mutex> lk {infoMutex_};
-    info_.bytesProgress += length;
+    info_.bytesProgress += buffer.size();
     return true;
 }
 

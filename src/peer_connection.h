@@ -68,18 +68,11 @@ public:
         (void) buffer;
         return false;
     }
-    virtual bool write(const std::vector<uint8_t>& buffer)
+    virtual bool write(std::string_view) 
     {
-        (void) buffer;
         return false;
     };
-    virtual bool write(const uint8_t* buffer, std::size_t length)
-    {
-        (void) buffer;
-        (void) length;
-        return false;
-    };
-    virtual void setOnRecv(std::function<void(std::vector<uint8_t>&&)>&&)
+    virtual void setOnRecv(std::function<void(std::string_view)>&&)
     {
         // Not implemented
     }
