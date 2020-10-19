@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ea2c089e_a10e385f",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 335,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-19T17:13:24Z",
+      "side": 1,
+      "message": "fyi can be replaced by auto here",
+      "range": {
+        "startLine": 335,
+        "startChar": 32,
+        "endLine": 335,
+        "endChar": 65
+      },
+      "revId": "7d96edba7791f1432970d860c0aa4c26bb9cb069",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
