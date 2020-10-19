@@ -80,8 +80,10 @@ public:
                                                  const InternalCompletionCb& cb);
 
     /// Create an IncomingFileTransfer object.
-    /// \return a shared pointer on created Stream object, or nullptr in case of error
-    IncomingFileInfo onIncomingFileRequest(const DRing::DataTransferId& id);
+    /// @param id of the transfer
+    /// @param a shared pointer on created Stream object, or nullptr in case of error
+    void onIncomingFileRequest(const DRing::DataTransferId& id,
+                               const std::function<void(const IncomingFileInfo&)>& cb);
 
 private:
     class Impl;
