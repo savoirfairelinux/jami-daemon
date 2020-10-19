@@ -587,7 +587,7 @@ public:
 
     void close() noexcept override;
 
-    std::string requestFilename();
+    void requestFilename(const std::function<void(const std::string&)>& cb);
 
     void accept(const std::string&, std::size_t offset) override;
 
@@ -606,7 +606,8 @@ private:
     DRing::DataTransferId internalId_;
 
     std::ofstream fout_;
-    std::promise<void> filenamePromise_;
+    std::mutex cbMtx_ {};
+    std::function<void(const std::string&)> onFilenameCb_ {};
 };
 
 IncomingFileTransfer::IncomingFileTransfer(DRing::DataTransferId tid,
@@ -623,9 +624,13 @@ IncomingFileTransfer::IncomingFileTransfer(DRing::DataTransferId tid,
     info_.flags |= (uint32_t) 1 << int(DRing::DataTransferFlags::direction); // incoming
 }
 
-std::string
-IncomingFileTransfer::requestFilename()
+void
+IncomingFileTransfer::requestFilename(const std::function<void(const std::string&)>& cb)
 {
+    {
+        std::lock_guard<std::mutex> lk(cbMtx_);
+        onFilenameCb_ = cb;
+    }
     emit(DRing::DataTransferEventCode::wait_host_acceptance);
 
 #if 1
@@ -635,9 +640,7 @@ IncomingFileTransfer::requestFilename()
         if (not fileutils::isFile(filename))
             throw std::system_error(errno, std::generic_category());
         info_.path = filename;
-    } else {
-        // Now wait for DataTransferFacade::acceptFileTransfer() call
-        filenamePromise_.get_future().wait();
+        cb(filename);
     }
 #else
     // For DEBUG only
@@ -646,7 +649,6 @@ IncomingFileTransfer::requestFilename()
         throw std::system_error(errno, std::generic_category());
     info_.path = filename;
 #endif
-    return info_.path;
 }
 
 bool
@@ -675,10 +677,13 @@ IncomingFileTransfer::close() noexcept
     }
     DataTransfer::close();
 
-    try {
-        filenamePromise_.set_value();
-    } catch (...) {
+    decltype(onFilenameCb_) cb;
+    {
+        std::lock_guard<std::mutex> lk(cbMtx_);
+        cb = std::move(onFilenameCb_);
     }
+    if (cb)
+        cb("");
 
     fout_.close();
 
@@ -698,11 +703,13 @@ IncomingFileTransfer::accept(const std::string& filename, std::size_t offset)
     (void) offset;
 
     info_.path = filename;
-    try {
-        filenamePromise_.set_value();
-    } catch (const std::future_error& e) {
-        JAMI_WARN() << "transfer already accepted";
+    decltype(onFilenameCb_) cb;
+    {
+        std::lock_guard<std::mutex> lk(cbMtx_);
+        cb = std::move(onFilenameCb_);
     }
+    if (cb)
+        cb(filename);
 }
 
 bool
@@ -912,8 +919,8 @@ DataTransferFacade::bytesProgress(const DRing::DataTransferId& id,
 }
 
 DRing::DataTransferError
-DataTransferFacade::info(const DRing::DataTransferId& id, DRing::DataTransferInfo& info) const
-    noexcept
+DataTransferFacade::info(const DRing::DataTransferId& id,
+                         DRing::DataTransferInfo& info) const noexcept
 {
     try {
         if (auto transfer = pimpl_->getTransfer(id)) {
@@ -938,15 +945,18 @@ DataTransferFacade::createIncomingTransfer(const DRing::DataTransferInfo& info,
     return transfer->getId();
 }
 
-IncomingFileInfo
-DataTransferFacade::onIncomingFileRequest(const DRing::DataTransferId& id)
+void
+DataTransferFacade::onIncomingFileRequest(const DRing::DataTransferId& id,
+                                          const std::function<void(const IncomingFileInfo&)>& cb)
 {
     if (auto transfer = std::static_pointer_cast<IncomingFileTransfer>(pimpl_->getTransfer(id))) {
-        auto filename = transfer->requestFilename();
-        if (!filename.empty() && transfer->start())
-            return {id, std::static_pointer_cast<Stream>(transfer)};
+        transfer->requestFilename([transfer, id, cb = std::move(cb)](const std::string& filename) {
+            if (!filename.empty() && transfer->start())
+                cb({id, std::static_pointer_cast<Stream>(transfer)});
+            else
+                cb({id, nullptr});
+        });
     }
-    return {id, nullptr};
 }
 
 } // namespace jami
