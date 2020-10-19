@@ -32,7 +32,7 @@ namespace jami {
 
 using RecvCb = std::function<void(std::vector<uint8_t>&& buf)>;
 
-class FtpServer final : public Stream
+class FtpServer final : public Stream, public std::enable_shared_from_this<FtpServer>
 {
 public:
     FtpServer(const std::string& account_id,
@@ -61,11 +61,12 @@ private:
     bool parseStream(const std::vector<uint8_t>&);
     bool parseLine(const std::string&);
     void handleHeader(const std::string&, const std::string&);
-    bool startNewFile();
+    void startNewFile();
     void closeCurrentFile();
 
     enum class FtpState {
         PARSE_HEADERS,
+        WAIT_ACCEPTANCE,
         READ_DATA,
     };
 
@@ -88,6 +89,23 @@ private:
     RecvCb onRecvCb_ {};
     InternalCompletionCb cb_ {};
     OnStateChangedCb tmpOnStateChangedCb_ {};
+
+    std::shared_ptr<FtpServer> shared()
+    {
+        return std::static_pointer_cast<FtpServer>(shared_from_this());
+    }
+    std::shared_ptr<FtpServer const> shared() const
+    {
+        return std::static_pointer_cast<FtpServer const>(shared_from_this());
+    }
+    std::weak_ptr<FtpServer> weak()
+    {
+        return std::static_pointer_cast<FtpServer>(shared_from_this());
+    }
+    std::weak_ptr<FtpServer const> weak() const
+    {
+        return std::static_pointer_cast<FtpServer const>(shared_from_this());
+    }
 };
 
 } // namespace jami
