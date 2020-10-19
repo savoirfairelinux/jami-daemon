@@ -406,8 +406,8 @@ void
 setDefaultDevice(const std::string& deviceId)
 {
     JAMI_DBG("Setting default device to %s", deviceId.c_str());
-    jami::Manager::instance().getVideoManager().videoDeviceMonitor.setDefaultDevice(deviceId);
-    jami::Manager::instance().saveConfig();
+    if (jami::Manager::instance().getVideoManager().videoDeviceMonitor.setDefaultDevice(deviceId))
+        jami::Manager::instance().saveConfig();
 }
 
 void
@@ -639,8 +639,8 @@ setDecodingAccelerated(bool state)
 {
 #ifdef RING_ACCEL
     JAMI_DBG("%s hardware acceleration", (state ? "Enabling" : "Disabling"));
-    jami::Manager::instance().videoPreferences.setDecodingAccelerated(state);
-    jami::Manager::instance().saveConfig();
+    if (jami::Manager::instance().videoPreferences.setDecodingAccelerated(state))
+        jami::Manager::instance().saveConfig();
 #endif
 }
 
@@ -659,8 +659,10 @@ setEncodingAccelerated(bool state)
 {
 #ifdef RING_ACCEL
     JAMI_DBG("%s hardware acceleration", (state ? "Enabling" : "Disabling"));
-    jami::Manager::instance().videoPreferences.setEncodingAccelerated(state);
-    jami::Manager::instance().saveConfig();
+    if (jami::Manager::instance().videoPreferences.setEncodingAccelerated(state))
+        jami::Manager::instance().saveConfig();
+    else
+        return;
 #endif
     for (const auto& acc : jami::Manager::instance().getAllAccounts()) {
         if (state)
