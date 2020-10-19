@@ -118,12 +118,14 @@ VideoDeviceMonitor::getMRLForDefaultDevice() const
     return DRing::Media::VideoProtocolPrefix::CAMERA + sep + it->getDeviceId();
 }
 
-void
+bool
 VideoDeviceMonitor::setDefaultDevice(const std::string& id)
 {
     std::lock_guard<std::mutex> l(lock_);
     const auto itDev = findDeviceById(id);
     if (itDev != devices_.end()) {
+        if (defaultDevice_ == itDev->getDeviceId())
+            return false;
         defaultDevice_ = itDev->getDeviceId();
 
         // place it at the begining of the prefs
@@ -135,7 +137,9 @@ VideoDeviceMonitor::setDefaultDevice(const std::string& id)
         } else {
             preferences_.insert(preferences_.begin(), itDev->getSettings());
         }
+        return true;
     }
+    return false;
 }
 
 void
