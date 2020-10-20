@@ -2806,7 +2806,7 @@ Manager::getNewCallID()
     return random_id.str();
 }
 
-std::vector<std::string>
+std::vector<std::string_view>
 Manager::loadAccountOrder() const
 {
     return split_string(preferences.getAccountOrder(), '/');
@@ -3102,7 +3102,7 @@ Manager::getAudioDriver()
 }
 
 std::shared_ptr<Call>
-Manager::newOutgoingCall(const std::string& toUrl,
+Manager::newOutgoingCall(std::string_view toUrl,
                          const std::string& accountId,
                          const std::map<std::string, std::string>& volatileCallDetails)
 {
