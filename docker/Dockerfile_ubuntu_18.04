@@ -1,6 +1,10 @@
 FROM ubuntu:18.04
 
 RUN apt-get update && \
+    apt install -y software-properties-common
+
+RUN add-apt-repository universe && \
+    apt-get update && \
     apt-get install -y -o Acquire::Retries=10 \
         git \
         autoconf \
@@ -34,6 +38,7 @@ RUN apt-get update && \
         libboost-dev \
         libxext-dev \
         libxfixes-dev \
+        libstdc++-8-dev_8.4.0 \
         libspeex-dev \
         libspeexdsp-dev \
         uuid-dev \
