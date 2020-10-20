@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c2e12462_cf60317e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 512,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-10-20T23:00:11Z",
+      "side": 1,
+      "message": "InfoHash",
+      "range": {
+        "startLine": 512,
+        "startChar": 50,
+        "endLine": 512,
+        "endChar": 61
+      },
+      "revId": "6ccf24845feaf6dba3663e14053433967b896472",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6cebeb09_c65f2c3e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 619,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-10-20T23:00:11Z",
+      "side": 1,
+      "message": "just \u0027dev\u0027 and sendRequest() can take a InfoHash instead of string",
+      "range": {
+        "startLine": 619,
+        "startChar": 24,
+        "endLine": 619,
+        "endChar": 38
+      },
+      "revId": "6ccf24845feaf6dba3663e14053433967b896472",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a7ee7c8b_7299b9ca",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1867,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-10-20T23:00:11Z",
+      "side": 1,
+      "message": "InfoHash",
+      "range": {
+        "startLine": 1867,
+        "startChar": 17,
+        "endLine": 1867,
+        "endChar": 28
+      },
+      "revId": "6ccf24845feaf6dba3663e14053433967b896472",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "676cf776_dd84d409",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3497,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-10-20T23:00:11Z",
+      "side": 1,
+      "message": "regression over previous commit ?",
+      "range": {
+        "startLine": 3497,
+        "startChar": 4,
+        "endLine": 3497,
+        "endChar": 97
+      },
+      "revId": "6ccf24845feaf6dba3663e14053433967b896472",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
