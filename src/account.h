@@ -147,7 +147,7 @@ public:
      * @return std::shared_ptr<Call> A pointer on the created call
      */
     virtual std::shared_ptr<Call> newOutgoingCall(
-        const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails = {})
+        std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {})
         = 0;
 
     /* Note: we forbid incoming call creation from an instance of Account.
