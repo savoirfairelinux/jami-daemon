@@ -145,9 +145,9 @@ public:
     /*
      * Read accessor. Get the local IP address
      */
-    IpAddr getPublishedIPAddr() const { return publishedIpAddr_; }
+    IpAddr getPublishedIPAddr() const { return std::string_view(publishedIpAddr_); }
 
-    std::string getPublishedIP() const { return publishedIpAddr_; }
+    std::string_view getPublishedIP() const { return publishedIpAddr_; }
 
     void setLocalPublishedAudioPort(int port)
     {

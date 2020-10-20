@@ -186,7 +186,7 @@ SIPAccount::newIncomingCall(const std::string& from UNUSED,
 
 template<>
 std::shared_ptr<SIPCall>
-SIPAccount::newOutgoingCall(const std::string& toUrl,
+SIPAccount::newOutgoingCall(std::string_view toUrl,
                             const std::map<std::string, std::string>& volatileCallDetails)
 {
     std::string to;
@@ -222,7 +222,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl,
         // FIXME : for now, use the same address family as the SIP transport
         family = pjsip_transport_type_get_af(getTransportType());
 
-        JAMI_DBG("UserAgent: New registered account call to %s", toUrl.c_str());
+        JAMI_DBG("UserAgent: New registered account call to %.*s", (int)toUrl.size(), toUrl.data());
     }
 
     auto toUri = getToUri(to);
@@ -341,7 +341,7 @@ SIPAccount::getTransportSelector()
 }
 
 std::shared_ptr<Call>
-SIPAccount::newOutgoingCall(const std::string& toUrl,
+SIPAccount::newOutgoingCall(std::string_view toUrl,
                             const std::map<std::string, std::string>& volatileCallDetails)
 {
     return newOutgoingCall<SIPCall>(toUrl, volatileCallDetails);
@@ -1518,7 +1518,7 @@ SIPAccount::getContactHeader(pjsip_transport* t)
         auto success = link_.findLocalAddressFromSTUN(t, &stunServerName_, stunPort_, address, port);
         if (not success)
             emitSignal<DRing::ConfigurationSignal::StunStatusFailed>(getAccountID());
-        setPublishedAddress(address);
+        setPublishedAddress({address});
         publishedPort_ = port;
         usePublishedAddressPortInVIA();
     } else {
