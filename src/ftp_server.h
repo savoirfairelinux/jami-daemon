@@ -30,7 +30,7 @@
 
 namespace jami {
 
-using RecvCb = std::function<void(std::vector<uint8_t>&& buf)>;
+using RecvCb = std::function<void(std::string_view buf)>;
 
 class FtpServer final : public Stream, public std::enable_shared_from_this<FtpServer>
 {
@@ -41,12 +41,12 @@ public:
               InternalCompletionCb&& cb = {});
 
     bool read(std::vector<uint8_t>& buffer) const override;
-    bool write(const std::vector<uint8_t>& buffer) override;
+    bool write(std::string_view data) override;
     DRing::DataTransferId getId() const override;
     void close() noexcept override;
 
-    void setOnRecv(RecvCb&& cb) { onRecvCb_ = cb; }
-    void setOnStateChangedCb(const OnStateChangedCb& cb)
+    void setOnRecv(RecvCb&& cb) override { onRecvCb_ = cb; }
+    void setOnStateChangedCb(const OnStateChangedCb& cb) override
     {
         // If out_ is not attached, store the callback
         // inside a temporary object. Will be linked when out_.stream
@@ -58,7 +58,7 @@ public:
     }
 
 private:
-    bool parseStream(const std::vector<uint8_t>&);
+    bool parseStream(std::string_view);
     bool parseLine(std::string_view);
     void handleHeader(std::string_view key, std::string_view value);
     void startNewFile();
