@@ -1,6 +1,12 @@
 FROM ubuntu:18.04
 
 RUN apt-get update && \
+    apt install -y software-properties-common
+
+RUN add-apt-repository universe && \
+    apt-get update && \
+    apt-get install -y -o Acquire::Retries=10 \
+        libstdc++-8-dev && \
     apt-get install -y -o Acquire::Retries=10 \
         git \
         autoconf \
@@ -57,7 +63,11 @@ RUN apt-get update && \
         libssl-dev \
         libsndfile1-dev \
         libsecp256k1-dev \
-        libasio-dev
+        libasio-dev && \
+    apt-get remove -y \
+        libstdc++-7-dev
+
+RUN ls -la /usr/include/c++/8/charconv
 
 # Tests framework
 RUN apt-get install -y -o Acquire::Retries=10 \
