@@ -1,13 +1,23 @@
 FROM ubuntu:18.04
 
 RUN apt-get update && \
+    apt install -y software-properties-common
+
+RUN add-apt-repository universe && \
+    apt-get update && \
     apt-get install -y -o Acquire::Retries=10 \
+        g++-8 \
+        gcc-8 \
+        cpp-8 \
+        file \
+        make \
+        libc6-dev \
+        libstdc++-8-dev \
         git \
         autoconf \
         automake \
         autopoint \
         cmake \
-        libtool \
         libdbus-1-dev \
         libdbus-c++-dev \
         libupnp-dev \
@@ -28,7 +38,6 @@ RUN apt-get update && \
         gettext \
         libpulse-dev \
         libasound2-dev \
-        libexpat1-dev \
         libpcre3-dev \
         libyaml-cpp-dev \
         libboost-dev \
@@ -57,7 +66,13 @@ RUN apt-get update && \
         libssl-dev \
         libsndfile1-dev \
         libsecp256k1-dev \
-        libasio-dev
+        libasio-dev \
+        libexpat1 libexpat1-dev
+
+RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 50
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 50
+
+RUN ls -la /usr/include/c++/8/charconv
 
 # Tests framework
 RUN apt-get install -y -o Acquire::Retries=10 \
