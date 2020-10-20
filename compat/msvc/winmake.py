@@ -485,6 +485,8 @@ def build(pkg_name, pkg_dir, project_paths, custom_scripts, with_env, sdk,
         # build directly with cmake
         if use_cmake is True:
             log.debug('CMake build phase')
+            if os.path.exists(pkg_dir + "\\build") == False:
+                os.mkdir(pkg_dir + "\\build")
             cmake_build_script = "cmake --build '" + pkg_dir + \
                 "\\build' " + "--config " + conf
             result = getSHrunner().exec_batch(cmake_build_script)
