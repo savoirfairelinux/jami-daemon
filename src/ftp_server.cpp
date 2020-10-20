@@ -32,6 +32,8 @@
 #include <iterator>
 #include <charconv>
 
+using namespace std::literals;
+
 namespace jami {
 
 //==============================================================================
@@ -98,20 +100,7 @@ FtpServer::startNewFile()
             }
 
             if (shared->onRecvCb_) {
-                std::vector<uint8_t> buffer;
-                if (shared->go_) {
-                    buffer.resize(3);
-                    buffer[0] = 'G';
-                    buffer[1] = 'O';
-                    buffer[2] = '\n';
-                } else {
-                    buffer.resize(4);
-                    buffer[0] = 'N';
-                    buffer[1] = 'G';
-                    buffer[2] = 'O';
-                    buffer[3] = '\n';
-                }
-                shared->onRecvCb_(std::move(buffer));
+                shared->onRecvCb_(shared->go_ ? "GO\n"sv : "NGO\n"sv);
             }
 
             if (shared->out_.stream) {
@@ -123,9 +112,7 @@ FtpServer::startNewFile()
                         break;
                     auto size_needed = shared->fileSize_ - shared->rx_;
                     count = std::min(count, size_needed);
-                    shared->out_.stream->write(reinterpret_cast<const uint8_t*>(
-                                                &shared->line_[0]),
-                                            count);
+                    shared->out_.stream->write(std::string_view(shared->line_.data(), count));
                     shared->rx_ += count;
                     if (shared->rx_ == shared->fileSize_) {
                         shared->closeCurrentFile();
@@ -179,7 +166,7 @@ FtpServer::read(std::vector<uint8_t>& buffer) const
 }
 
 bool
-FtpServer::write(const std::vector<uint8_t>& buffer)
+FtpServer::write(std::string_view buffer)
 {
     switch (state_) {
     case FtpState::WAIT_ACCEPTANCE:
@@ -196,7 +183,7 @@ FtpServer::write(const std::vector<uint8_t>& buffer)
 
     case FtpState::READ_DATA: {
         if (out_.stream)
-            out_.stream->write(&buffer[0], buffer.size());
+            out_.stream->write(buffer);
         auto size_needed = fileSize_ - rx_;
         auto read_size = std::min(buffer.size(), size_needed);
         rx_ += read_size;
@@ -217,9 +204,9 @@ FtpServer::write(const std::vector<uint8_t>& buffer)
 }
 
 bool
-FtpServer::parseStream(const std::vector<uint8_t>& buffer)
+FtpServer::parseStream(std::string_view buffer)
 {
-    headerStream_.write((const char*)buffer.data(), buffer.size());
+    headerStream_ << buffer;
 
     // Simple line stream parser
     while (headerStream_.getline(&line_[0], line_.size())) {
