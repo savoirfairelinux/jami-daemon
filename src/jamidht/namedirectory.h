@@ -75,7 +75,7 @@ public:
 
     void setToken(std::string token) { serverToken_ = std::move(token); }
 
-    static void lookupUri(const std::string& uri,
+    static void lookupUri(std::string_view uri,
                           const std::string& default_server,
                           LookupCallback cb);
 

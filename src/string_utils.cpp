@@ -28,6 +28,7 @@
 #include <iomanip>
 #include <stdexcept>
 #include <ios>
+#include <charconv>
 #ifdef _WIN32
 #include <windows.h>
 #include <oleauto.h>
@@ -99,41 +100,30 @@ from_hex_string(const std::string& str)
     return id;
 }
 
-std::string
-trim(const std::string& s)
+std::string_view
+trim(std::string_view s)
 {
     auto wsfront = std::find_if_not(s.cbegin(), s.cend(), [](int c) { return std::isspace(c); });
-    return std::string(wsfront,
-                       std::find_if_not(s.rbegin(),
-                                        std::string::const_reverse_iterator(wsfront),
+    return std::string_view(wsfront, std::find_if_not(s.rbegin(),
+                                        std::string_view::const_reverse_iterator(wsfront),
                                         [](int c) { return std::isspace(c); })
-                           .base());
-}
-
-std::vector<std::string>
-split_string(const std::string& s, char delim)
-{
-    std::vector<std::string> result;
-    std::string token;
-    std::istringstream ss(s);
-
-    while (std::getline(ss, token, delim))
-        if (not token.empty())
-            result.emplace_back(token);
-    return result;
+                           .base() - wsfront);
 }
 
 std::vector<unsigned>
-split_string_to_unsigned(const std::string& s, char delim)
+split_string_to_unsigned(const std::string& str, char delim)
 {
-    std::vector<unsigned> result;
-    std::string token;
-    std::istringstream ss(s);
-
-    while (std::getline(ss, token, delim))
-        if (not token.empty())
-            result.emplace_back(jami::stoi(token));
-    return result;
+    std::vector<unsigned> output;
+    for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last; first = second + 1) {
+        second = std::find(first, last, delim);
+        if (first != second) {
+            unsigned result;
+            auto [p, ec] = std::from_chars(first, second, result);
+            if (ec ==  std::errc())
+                output.emplace_back(result);
+        }
+    }
+    return output;
 }
 
 void
