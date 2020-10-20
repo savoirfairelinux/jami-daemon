@@ -277,7 +277,9 @@ def make(pkg_info, force, sdk_version, toolset):
                  env_set,
                  sdk_to_use,
                  toolset,
-                 use_cmake=True):
+                 'x64',
+                 'Release',
+                 use_cmake):
             track_build(pkg_name, version)
         else:
             log.error("Couldn't build contrib " + pkg_name)
