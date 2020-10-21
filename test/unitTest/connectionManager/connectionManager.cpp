@@ -65,6 +65,7 @@ private:
     void testChannelRcvShutdown();
     void testChannelSenderShutdown();
     void testCloseConnectionWithDevice();
+    void testShutdownCallbacks();
 
     CPPUNIT_TEST_SUITE(ConnectionManagerTest);
     CPPUNIT_TEST(testConnectDevice);
@@ -78,6 +79,7 @@ private:
     CPPUNIT_TEST(testChannelRcvShutdown);
     CPPUNIT_TEST(testChannelSenderShutdown);
     CPPUNIT_TEST(testCloseConnectionWithDevice);
+    CPPUNIT_TEST(testShutdownCallbacks);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -724,11 +726,77 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
     // This should trigger onShutdown
     aliceAccount->connectionManager().closeConnectionsWith(bobDeviceId);
     auto expiration = std::chrono::system_clock::now() + std::chrono::seconds(10);
-    scv.wait_until(lk, expiration, [&events]() { return events == 4; });
+    scv.wait_until(lk, expiration, [&events]() { return events == 2; });
     CPPUNIT_ASSERT(events == 2);
     CPPUNIT_ASSERT(successfullyReceive);
     CPPUNIT_ASSERT(successfullyConnected);
     CPPUNIT_ASSERT(receiverConnected);
+}
+
+void
+ConnectionManagerTest::testShutdownCallbacks()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    auto aliceDeviceId = DeviceId(aliceAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+
+    bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable rcv, chan2cv;
+    bool successfullyConnected = false;
+    bool successfullyReceive = false;
+    bool receiverConnected = false;
+
+    bobAccount->connectionManager().onChannelRequest(
+        [&successfullyReceive, &chan2cv](const DeviceId&, const std::string& name) {
+            if (name == "1") {
+                successfullyReceive = true;
+            } else {
+                chan2cv.notify_one();
+                // Do not return directly. Let the connection be closed
+                std::this_thread::sleep_for(std::chrono::seconds(10));
+            }
+            return true;
+        });
+
+    bobAccount->connectionManager().onConnectionReady(
+        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+            receiverConnected = socket && (name == "1");
+        });
+
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "1",
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                            rcv.notify_one();
+                                                        }
+                                                    });
+    // Connect first channel. This will initiate a mx sock
+    rcv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(successfullyReceive);
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
+
+    // Connect another channel, but close the connection
+    bool channel2NotConnected = false;
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "2",
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                        channel2NotConnected = !socket;
+                                                        rcv.notify_one();
+                                                    });
+    chan2cv.wait_for(lk, std::chrono::seconds(30));
+
+    // This should trigger onShutdown for second callback
+    bobAccount->connectionManager().closeConnectionsWith(aliceDeviceId);
+    auto expiration = std::chrono::system_clock::now() + std::chrono::seconds(10);
+    rcv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(channel2NotConnected);
 }
 
 } // namespace test
