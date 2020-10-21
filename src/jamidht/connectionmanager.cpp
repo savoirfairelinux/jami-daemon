@@ -39,6 +39,7 @@ static constexpr std::chrono::seconds ICE_INIT_TIMEOUT {10};
 static constexpr std::chrono::seconds DHT_MSG_TIMEOUT {30};
 static constexpr std::chrono::seconds SOCK_TIMEOUT {10};
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
+using CallbackId = std::pair<jami::DeviceId, dht::Value::Id>;
 
 namespace jami {
 
@@ -52,13 +53,12 @@ struct ConnectionInfo
     // Used to store currently non ready TLS Socket
     std::unique_ptr<TlsSocketEndpoint> tls_ {nullptr};
     std::shared_ptr<MultiplexedSocket> socket_ {};
+    std::set<CallbackId> cbIds_ {};
 };
 
 class ConnectionManager::Impl : public std::enable_shared_from_this<ConnectionManager::Impl>
 {
 public:
-    using ConnectionKey = std::pair<DeviceId /* device id */, dht::Value::Id /* uid */>;
-
     explicit Impl(JamiAccount& account)
         : account {account}
     {}
@@ -161,15 +161,19 @@ public:
     std::mutex infosMtx_ {};
     // Note: Someone can ask multiple sockets, so to avoid any race condition,
     // each device can have multiple multiplexed sockets.
-    std::map<ConnectionKey, std::shared_ptr<ConnectionInfo>> infos_ {};
+    std::map<CallbackId, std::shared_ptr<ConnectionInfo>> infos_ {};
 
-    std::shared_ptr<ConnectionInfo> getInfo(const DeviceId& deviceId, const dht::Value::Id& id)
+    std::shared_ptr<ConnectionInfo> getInfo(const DeviceId& deviceId,
+                                            const dht::Value::Id& id = dht::Value::INVALID_ID)
     {
         std::lock_guard<std::mutex> lk(infosMtx_);
-        auto it = infos_.find({deviceId, id});
-        if (it == infos_.end())
-            return {};
-        return it->second;
+        auto it = std::find_if(infos_.begin(), infos_.end(), [&](const auto& item) {
+            auto& [key, value] = item;
+            return key.first == deviceId && (id == dht::Value::INVALID_ID or key.second == id);
+        });
+        if (it != infos_.end())
+            return it->second;
+        return {};
     }
 
     ChannelRequestCallback channelReqCb_ {};
@@ -177,7 +181,6 @@ public:
     onICERequestCallback iceReqCb_ {};
 
     std::mutex connectCbsMtx_ {};
-    using CallbackId = std::pair<DeviceId, dht::Value::Id>;
     std::map<CallbackId, ConnectCallback> pendingCbs_ {};
 
     ConnectCallback getPendingCallback(const CallbackId& cbId)
@@ -371,7 +374,7 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                     return;
                 }
                 auto vid = ValueIdDist()(sthis->account.rand);
-                ConnectionKey cbId(deviceId, vid);
+                CallbackId cbId(deviceId, vid);
                 {
                     std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
                     auto cbIt = sthis->pendingCbs_.find(cbId);
@@ -383,25 +386,16 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                     }
                 }
 
-                std::shared_ptr<MultiplexedSocket> sock;
-                {
-                    // Test if a socket already exists for this device
-                    std::lock_guard<std::mutex> lk(sthis->infosMtx_);
-                    auto it = std::find_if(sthis->infos_.begin(),
-                                           sthis->infos_.end(),
-                                           [deviceId](const auto& item) {
-                                               auto& [key, value] = item;
-                                               return key.first == deviceId;
-                                           });
-                    if (it != sthis->infos_.end() && it->second) {
-                        sock = it->second->socket_;
+                if (auto info = sthis->getInfo(deviceId)) {
+                    std::lock_guard<std::mutex> lk(info->mutex_);
+                    if (info->socket_) {
+                        JAMI_DBG("Peer already connected. Add a new channel");
+                        info->cbIds_.emplace(cbId);
+                        sthis->sendChannelRequest(info->socket_, name, deviceId, vid);
+                        return;
                     }
                 }
-                if (sock) {
-                    JAMI_DBG("Peer already connected. Add a new channel");
-                    sthis->sendChannelRequest(sock, name, deviceId, vid);
-                    return;
-                }
+
                 // If no socket exists, we need to initiate an ICE connection.
                 auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
                 auto ice_config = sthis->account.getIceOptions();
@@ -794,25 +788,27 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const
             return false;
         });
     info->socket_->onShutdown([w = weak(), deviceId, vid]() {
-        auto sthis = w.lock();
-        if (!sthis)
-            return;
         // Cancel current outgoing connections
-        if (auto cb = sthis->getPendingCallback({deviceId, vid}))
-            cb(nullptr);
         dht::ThreadPool::io().run([w, deviceId = dht::InfoHash(deviceId), vid] {
             auto sthis = w.lock();
             if (!sthis)
                 return;
-            auto info = sthis->getInfo(deviceId, vid);
-            if (!info)
-                return;
 
-            if (info->socket_)
-                info->socket_->shutdown();
-
-            if (info && info->ice_)
-                info->ice_->cancelOperations();
+            std::set<CallbackId> ids;
+            if (auto info = sthis->getInfo(deviceId, vid)) {
+                std::lock_guard<std::mutex> lk(info->mutex_);
+                if (info->socket_) {
+                    ids = std::move(info->cbIds_);
+                    info->socket_->shutdown();
+                }
+                if (info->ice_)
+                    info->ice_->cancelOperations();
+            }
+            for (const auto& cbId : ids) {
+                if (auto cb = sthis->getPendingCallback(cbId)) {
+                    cb(nullptr);
+                }
+            }
 
             std::lock_guard<std::mutex> lk(sthis->infosMtx_);
             sthis->infos_.erase({deviceId, vid});
