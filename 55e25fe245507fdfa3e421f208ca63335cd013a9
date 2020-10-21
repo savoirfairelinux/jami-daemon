@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "7b10c76d_636d8917",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 598,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-21T13:21:25Z",
+      "side": 1,
+      "message": "Component ID are numbered starting from 1, as you can see in the SDP. Here \"i\" is the component index. So, we want to log the ID not the index.",
+      "parentUuid": "15cd8a6d_4ef125b8",
+      "range": {
+        "startLine": 598,
+        "startChar": 36,
+        "endLine": 598,
+        "endChar": 37
+      },
+      "revId": "55e25fe245507fdfa3e421f208ca63335cd013a9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "e00892f6_dfe295a6",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 4
@@ -36,6 +60,30 @@
       "writtenOn": "2020-10-19T17:19:08Z",
       "side": 1,
       "message": "if (not sess)",
+      "range": {
+        "startLine": 664,
+        "startChar": 3,
+        "endLine": 664,
+        "endChar": 24
+      },
+      "revId": "55e25fe245507fdfa3e421f208ca63335cd013a9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e5974926_711ab64b",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 664,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-21T13:21:25Z",
+      "side": 1,
+      "message": "Sorry to insist, although what you suggest is very common, but for good practice we should prefer comparing pointer to pointer as specified in google coding style (https://google.github.io/styleguide/cppguide.html#0_and_nullptr/NULL)",
+      "parentUuid": "e00892f6_dfe295a6",
       "range": {
         "startLine": 664,
         "startChar": 3,
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "7c676177_47768b92",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 670,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-21T13:21:25Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "444ccd10_567e1506",
+      "range": {
+        "startLine": 668,
+        "startChar": 0,
+        "endLine": 670,
+        "endChar": 28
+      },
+      "revId": "55e25fe245507fdfa3e421f208ca63335cd013a9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "ad244abc_bd50ab07",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 4
@@ -82,6 +154,30 @@
       "writtenOn": "2020-10-19T17:19:08Z",
       "side": 1,
       "message": "if (not cand)",
+      "range": {
+        "startLine": 680,
+        "startChar": 4,
+        "endLine": 680,
+        "endChar": 26
+      },
+      "revId": "55e25fe245507fdfa3e421f208ca63335cd013a9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dc43df66_2ce3d190",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 680,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-21T13:21:25Z",
+      "side": 1,
+      "message": "same",
+      "parentUuid": "ad244abc_bd50ab07",
       "range": {
         "startLine": 680,
         "startChar": 4,
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "edc9c807_d61fe1cb",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 693,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-21T13:21:25Z",
+      "side": 1,
+      "message": "same",
+      "parentUuid": "24e6b9ae_58f9a2c6",
+      "range": {
+        "startLine": 693,
+        "startChar": 9,
+        "endLine": 693,
+        "endChar": 24
+      },
+      "revId": "55e25fe245507fdfa3e421f208ca63335cd013a9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "feb66dc6_085b0207",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 4
@@ -128,6 +248,30 @@
       "writtenOn": "2020-10-19T17:19:08Z",
       "side": 1,
       "message": "same",
+      "range": {
+        "startLine": 705,
+        "startChar": 6,
+        "endLine": 705,
+        "endChar": 24
+      },
+      "revId": "55e25fe245507fdfa3e421f208ca63335cd013a9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fa2e2162_cd64ffe0",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 705,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-21T13:21:25Z",
+      "side": 1,
+      "message": "same",
+      "parentUuid": "feb66dc6_085b0207",
       "range": {
         "startLine": 705,
         "startChar": 6,

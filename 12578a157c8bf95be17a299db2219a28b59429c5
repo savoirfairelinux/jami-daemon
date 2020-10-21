@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "9420e09f_33af229a",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 595,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-21T13:21:25Z",
+      "side": 1,
+      "message": "To be more consistent and less confusing, it\u0027s better to use the component ID instead of the index.",
+      "parentUuid": "af0b3d53_629282b4",
+      "range": {
+        "startLine": 595,
+        "startChar": 35,
+        "endLine": 595,
+        "endChar": 38
+      },
+      "revId": "12578a157c8bf95be17a299db2219a28b59429c5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "ac0a90ba_0bf62d47",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 2
@@ -45,6 +69,30 @@
       "revId": "12578a157c8bf95be17a299db2219a28b59429c5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0a736c2f_ec5e9b1c",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 596,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-21T13:21:25Z",
+      "side": 1,
+      "message": "Technically, getCandidateType never returns null, but I changed it anyway.\nDone",
+      "parentUuid": "ac0a90ba_0bf62d47",
+      "range": {
+        "startLine": 596,
+        "startChar": 82,
+        "endLine": 596,
+        "endChar": 108
+      },
+      "revId": "12578a157c8bf95be17a299db2219a28b59429c5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "b74ebb19_65b47f61",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 598,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-21T13:21:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "18cea568_3e8ffdf4",
+      "range": {
+        "startLine": 598,
+        "startChar": 106,
+        "endLine": 598,
+        "endChar": 107
+      },
+      "revId": "12578a157c8bf95be17a299db2219a28b59429c5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "44603373_b6365040",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 2
@@ -91,6 +163,30 @@
       "revId": "12578a157c8bf95be17a299db2219a28b59429c5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "93e2aa75_487a46f7",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 660,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-21T13:21:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "44603373_b6365040",
+      "range": {
+        "startLine": 660,
+        "startChar": 4,
+        "endLine": 660,
+        "endChar": 8
+      },
+      "revId": "12578a157c8bf95be17a299db2219a28b59429c5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "c6e6bffa_4185d4ee",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 677,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-21T13:21:25Z",
+      "side": 1,
+      "message": "Why ?",
+      "parentUuid": "11fe071d_929984b0",
+      "range": {
+        "startLine": 677,
+        "startChar": 4,
+        "endLine": 677,
+        "endChar": 26
+      },
+      "revId": "12578a157c8bf95be17a299db2219a28b59429c5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "ad4d3b26_1d708bcd",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 2
@@ -128,6 +248,30 @@
       "writtenOn": "2020-09-15T18:37:13Z",
       "side": 1,
       "message": "same",
+      "range": {
+        "startLine": 688,
+        "startChar": 17,
+        "endLine": 688,
+        "endChar": 30
+      },
+      "revId": "12578a157c8bf95be17a299db2219a28b59429c5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a0628384_fa6ec91f",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 688,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-21T13:21:25Z",
+      "side": 1,
+      "message": "why ?",
+      "parentUuid": "ad4d3b26_1d708bcd",
       "range": {
         "startLine": 688,
         "startChar": 17,
