@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "64eb9579_a5278255",
+        "filename": "src/preferences.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2020-10-21T18:22:35Z",
+      "side": 1,
+      "message": "what is the reason to not use string_view here?",
+      "range": {
+        "startLine": 57,
+        "startChar": 4,
+        "endLine": 57,
+        "endChar": 22
+      },
+      "revId": "126dbbfda8072de816a35d128653981f42452f8d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "406183fe_ec180987",
+        "filename": "src/sip/sip_utils.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2020-10-21T18:22:35Z",
+      "side": 1,
+      "message": "should this not be const \u0026 ?",
+      "range": {
+        "startLine": 129,
+        "startChar": 13,
+        "endLine": 129,
+        "endChar": 36
+      },
+      "revId": "126dbbfda8072de816a35d128653981f42452f8d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
