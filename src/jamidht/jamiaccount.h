@@ -768,7 +768,7 @@ private:
     bool sendSIPMessage(SipConnection& conn,
                         const std::string& to,
                         void* ctx,
-                        int token,
+                        uint64_t token,
                         const std::map<std::string, std::string>& data,
                         pjsip_endpt_send_callback cb);
 
