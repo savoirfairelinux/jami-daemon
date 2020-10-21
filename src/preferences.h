@@ -54,7 +54,7 @@ public:
     void serialize(YAML::Emitter& out) const override;
     void unserialize(const YAML::Node& in) override;
 
-    std::string getAccountOrder() const { return accountOrder_; }
+    const std::string& getAccountOrder() const { return accountOrder_; }
 
     // flush invalid accountIDs from account order
     void verifyAccountOrder(const std::vector<std::string>& accounts);

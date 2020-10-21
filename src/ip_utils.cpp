@@ -223,7 +223,7 @@ ip_utils::getAddrList(const std::string& name, pj_uint16_t family)
     if (name.empty())
         return ipList;
     if (IpAddr::isValid(name, family)) {
-        ipList.push_back(name);
+        ipList.emplace_back(name);
         return ipList;
     }
 
@@ -248,7 +248,7 @@ ip_utils::getAddrList(const std::string& name, pj_uint16_t family)
                 break;
             }
         if (!found)
-            ipList.push_back(res[i].ai_addr);
+            ipList.emplace_back(res[i].ai_addr);
     }
 
     return ipList;
@@ -425,7 +425,7 @@ ip_utils::getLocalNameservers()
 }
 
 bool
-IpAddr::isValid(const std::string& address, pj_uint16_t family)
+IpAddr::isValid(std::string_view address, pj_uint16_t family)
 {
     const pj_str_t pjstring(sip_utils::CONST_PJ_STR(address));
     pj_str_t ret_str;

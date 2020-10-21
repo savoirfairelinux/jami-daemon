@@ -59,8 +59,8 @@ public:
 
 private:
     bool parseStream(const std::vector<uint8_t>&);
-    bool parseLine(const std::string&);
-    void handleHeader(const std::string&, const std::string&);
+    bool parseLine(std::string_view);
+    void handleHeader(std::string_view key, std::string_view value);
     void startNewFile();
     void closeCurrentFile();
 
@@ -81,7 +81,7 @@ private:
     std::size_t rx_ {0};
     std::stringstream headerStream_;
     std::string displayName_;
-    std::array<char, 1000> line_;
+    std::array<char, 1024> line_;
     mutable std::atomic_bool closed_ {false};
     mutable bool go_ {false};
     FtpState state_ {FtpState::PARSE_HEADERS};

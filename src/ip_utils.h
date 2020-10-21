@@ -137,14 +137,14 @@ public:
         memcpy(&addr.ipv6.sin6_addr, &ip, sizeof(in6_addr));
     }
 
-    IpAddr(const std::string& str, pj_uint16_t family = AF_UNSPEC)
+    IpAddr(std::string_view str, pj_uint16_t family = AF_UNSPEC)
         : addr()
     {
         if (str.empty()) {
             addr.addr.sa_family = AF_UNSPEC;
             return;
         }
-        const pj_str_t pjstring {(char*) str.c_str(), (pj_ssize_t) str.size()};
+        const pj_str_t pjstring {(char*) str.data(), (pj_ssize_t) str.size()};
         auto status = pj_sockaddr_parse(family, 0, &pjstring, &addr);
         if (status != PJ_SUCCESS)
             addr.addr.sa_family = AF_UNSPEC;
@@ -244,14 +244,13 @@ public:
     /**
      * Return true if address is a valid IPv6.
      */
-    inline static bool isIpv6(const std::string& address) { return isValid(address, AF_INET6); }
+    inline static bool isIpv6(std::string_view address) { return isValid(address, AF_INET6); }
 
     /**
      * Return true if address is a valid IP address of specified family (if provided) or of any kind
      * (default). Does not resolve hostnames.
      */
-    static bool isValid(const std::string& address, pj_uint16_t family = pj_AF_UNSPEC());
-
+    static bool isValid(std::string_view address, pj_uint16_t family = pj_AF_UNSPEC());
 private:
     pj_sockaddr addr {};
 };
