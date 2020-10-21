@@ -188,7 +188,7 @@ Preferences::verifyAccountOrder(const std::vector<std::string>& accountIDs)
     if (drop) {
         accountOrder_.clear();
         for (const auto& t : tokens)
-            accountOrder_ += t + "/";
+            accountOrder_ += t + '/';
     }
 }
 
