@@ -23,6 +23,7 @@
 #include "noncopyable.h"
 #include "logger.h"
 #include "manager.h"
+#include "sip/sipcall.h"
 // Plugin Manager
 #include "pluginmanager.h"
 #include "streamdata.h"
@@ -87,7 +88,7 @@ public:
             }
         }
         for (auto& callMediaHandler : callMediaHandlers) {
-            if (mediaHandlerToggled_[getCallHandlerId(callMediaHandler.second)] == callID) {
+            if (mediaHandlerToggled_[getCallHandlerId(callMediaHandler.second)] == "on") {
                 callMediaHandler.first = false;
                 callMediaHandler.second->detach();
                 mediaHandlerToggled_[getCallHandlerId(callMediaHandler.second)] = "";
@@ -147,14 +148,14 @@ public:
      * if off, detach it
      * @param id
      */
-    void toggleCallMediaHandler(const std::string& id, const bool toggle)
+    void toggleCallMediaHandler(const std::string& id,
+                                const bool toggle,
+                                const bool restartSender = true)
     {
-        std::string callID = Manager::instance().getCurrentCallId();
-
         if (toggle) {
             for (auto& pair : mediaHandlerToggled_) {
-                if (pair.second == callID && pair.first != id) {
-                    toggleCallMediaHandler(pair.first, false);
+                if (pair.second == "on" && pair.first != id) {
+                    toggleCallMediaHandler(pair.first, false, false);
                 }
             }
         }
@@ -166,21 +167,21 @@ public:
         if (find == mediaHandlerToggled_.end())
             mediaHandlerToggled_[id] = "";
 
-        for (auto it = callAVsubjects.begin(); it != callAVsubjects.end(); ++it) {
-            if (it->first.id == callID) {
-                for (auto& pair : callMediaHandlers) {
-                    if (pair.second && getCallHandlerId(pair.second) == id) {
-                        pair.first = toggle;
-                        if (pair.first) {
-                            mediaHandlerToggled_[id] = callID;
-                            listAvailableSubjects(callID, pair.second);
-                        } else {
-                            pair.second->detach();
-                            mediaHandlerToggled_[id] = "";
-                        }
-                    }
+        for (auto& pair : callMediaHandlers) {
+            if (pair.second && getCallHandlerId(pair.second) == id) {
+                pair.first = toggle;
+                if (pair.first) {
+                    mediaHandlerToggled_[id] = "on";
+                    listAvailableSubjects(pair.second);
+                } else {
+                    pair.second->detach();
+                    mediaHandlerToggled_[id] = "";
                 }
             }
+        }
+        if (restartSender) {
+            for (const auto& call : Manager::instance().callFactory.getAllCalls<SIPCall>())
+                call->getVideoRtp().restartSender();
         }
     }
 
@@ -202,7 +203,7 @@ public:
     std::map<std::string, std::string> getCallMediaHandlerStatus()
     {
         for (auto& pair : mediaHandlerToggled_) {
-            if (pair.second == Manager::instance().getCurrentCallId()) {
+            if (pair.second != "") {
                 return {{"name", pair.first}};
             }
         }
@@ -255,12 +256,10 @@ private:
      * @param callMediaHandlerPtr
      * This functions lets the call media handler component know which subjects are available
      */
-    void listAvailableSubjects(const std::string& callID, CallMediaHandlerPtr& callMediaHandlerPtr)
+    void listAvailableSubjects(CallMediaHandlerPtr& callMediaHandlerPtr)
     {
-        for (auto it = callAVsubjects.begin(); it != callAVsubjects.end(); ++it) {
-            if (it->first.id == callID)
-                notifyAVSubject(callMediaHandlerPtr, it->first, it->second);
-        }
+        for (auto it = callAVsubjects.begin(); it != callAVsubjects.end(); ++it)
+            notifyAVSubject(callMediaHandlerPtr, it->first, it->second);
     }
 
     /**
