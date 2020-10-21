@@ -38,11 +38,11 @@ AccountFactory::AccountFactory()
     auto sipfunc = [](const std::string& id) {
         return std::make_shared<SIPAccount>(id, true);
     };
-    generators_.insert(std::make_pair(SIPAccount::ACCOUNT_TYPE, sipfunc));
+    generators_.emplace(SIPAccount::ACCOUNT_TYPE, sipfunc);
     auto dhtfunc = [](const std::string& id) {
         return std::make_shared<JamiAccount>(id, false);
     };
-    generators_.insert(std::make_pair(JamiAccount::ACCOUNT_TYPE, dhtfunc));
+    generators_.emplace(JamiAccount::ACCOUNT_TYPE, dhtfunc);
 }
 
 std::shared_ptr<Account>
@@ -88,19 +88,19 @@ AccountFactory::removeAccount(Account& account)
 }
 
 void
-AccountFactory::removeAccount(const std::string& id)
+AccountFactory::removeAccount(std::string_view id)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     if (auto account = getAccount(id)) {
         removeAccount(*account);
     } else
-        JAMI_ERR("No account with ID %s", id.c_str());
+        JAMI_ERR("No account with ID %.*s", (int)id.size(), id.data());
 }
 
 template<>
 bool
-AccountFactory::hasAccount(const std::string& id) const
+AccountFactory::hasAccount(std::string_view id) const
 {
     std::lock_guard<std::recursive_mutex> lk(mutex_);
 
@@ -140,7 +140,7 @@ AccountFactory::getAllAccounts() const
 
 template<>
 std::shared_ptr<Account>
-AccountFactory::getAccount(const std::string& id) const
+AccountFactory::getAccount(std::string_view id) const
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 

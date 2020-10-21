@@ -24,12 +24,13 @@
 #include "string_utils.h"
 #include "manager.h"
 
+#include <opendht/thread_pool.h>
+
 #include <algorithm>
 #include <array>
 #include <stdexcept>
 #include <iterator>
-#include <cstdlib> // strtoull
-#include <opendht/thread_pool.h>
+#include <charconv>
 
 namespace jami {
 
@@ -203,7 +204,7 @@ FtpServer::write(const std::vector<uint8_t>& buffer)
             closeCurrentFile();
             // data may remains into the buffer: copy into the header stream for next header parsing
             if (read_size < buffer.size())
-                headerStream_ << std::string(std::begin(buffer) + read_size, std::end(buffer));
+                headerStream_.write((const char*)(buffer.data() + read_size), buffer.size() - read_size);
             state_ = FtpState::PARSE_HEADERS;
         }
     } break;
@@ -218,11 +219,11 @@ FtpServer::write(const std::vector<uint8_t>& buffer)
 bool
 FtpServer::parseStream(const std::vector<uint8_t>& buffer)
 {
-    headerStream_ << std::string(std::begin(buffer), std::end(buffer));
+    headerStream_.write((const char*)buffer.data(), buffer.size());
 
     // Simple line stream parser
     while (headerStream_.getline(&line_[0], line_.size())) {
-        if (parseLine(std::string(&line_[0], headerStream_.gcount() - 1)))
+        if (parseLine(std::string_view(line_.data(), headerStream_.gcount() - 1)))
             return true; // headers EOF, data may remain in headerStream_
     }
 
@@ -234,14 +235,14 @@ FtpServer::parseStream(const std::vector<uint8_t>& buffer)
 }
 
 bool
-FtpServer::parseLine(const std::string& line)
+FtpServer::parseLine(std::string_view line)
 {
     if (line.empty())
         return true;
 
     // Valid line found, parse it as "key: value" and store until end of headers detection
     const auto& sep_pos = line.find(':');
-    if (sep_pos == std::string::npos)
+    if (sep_pos == std::string_view::npos)
         throw std::runtime_error("[FTP] stream protocol error: bad format");
 
     handleHeader(trim(line.substr(0, sep_pos)), trim(line.substr(sep_pos + 1)));
@@ -249,12 +250,15 @@ FtpServer::parseLine(const std::string& line)
 }
 
 void
-FtpServer::handleHeader(const std::string& key, const std::string& value)
+FtpServer::handleHeader(std::string_view key, std::string_view value)
 {
     JAMI_DBG() << "[FTP] header: '" << key << "' = '" << value << "'";
 
     if (key == "Content-Length") {
-        fileSize_ = std::strtoull(&value[0], nullptr, 10);
+        auto [p, ec] = std::from_chars(value.data(), value.data()+value.size(), fileSize_);
+        if (ec != std::errc()) {
+            throw std::runtime_error("[FTP] header parsing error");
+        }
     } else if (key == "Display-Name") {
         displayName_ = value;
     }

@@ -23,6 +23,9 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <regex>
+#include <iterator>
 #ifdef _WIN32
 #include <WTypes.h>
 #endif
@@ -47,6 +50,23 @@ operator+(const string_view& sv, const string& s)
     ret.append(sv);
     ret.append(s);
     return ret;
+}
+using svmatch = match_results<string_view::const_iterator>;
+using svsub_match = sub_match<string_view::const_iterator>;
+inline bool
+regex_match(string_view sv,
+            svmatch& m,
+            const regex& e,
+            regex_constants::match_flag_type flags = regex_constants::match_default)
+{
+    return regex_match(sv.begin(), sv.end(), m, e, flags);
+}
+inline bool
+regex_match(string_view sv,
+            const regex& e,
+            regex_constants::match_flag_type flags = regex_constants::match_default)
+{
+    return regex_match(sv.begin(), sv.end(), e, flags);
 }
 } // namespace std
 
@@ -83,9 +103,31 @@ stod(const std::string& str)
     return std::stod(str);
 }
 
-std::string trim(const std::string& s);
+std::string_view trim(std::string_view s);
 
-std::vector<std::string> split_string(const std::string& s, char sep);
+inline
+std::vector<std::string_view> split_string(std::string_view str, char delim)
+{
+    std::vector<std::string_view> output;
+    for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last; first = second + 1) {
+        second = std::find(first, last, delim);
+        if (first != second)
+            output.emplace_back(first, second - first);
+    }
+    return output;
+}
+
+inline
+std::vector<std::string_view> split_string(std::string_view str, std::string_view delims = " ")
+{
+    std::vector<std::string_view> output;
+    for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last; first = second + 1) {
+        second = std::find_first_of(first, last, std::cbegin(delims), std::cend(delims));
+        if (first != second)
+            output.emplace_back(first, second - first);
+    }
+    return output;
+}
 
 std::vector<unsigned> split_string_to_unsigned(const std::string& s, char sep);
 
