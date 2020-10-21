@@ -179,6 +179,7 @@ public:
     std::mutex connectCbsMtx_ {};
     using CallbackId = std::pair<DeviceId, dht::Value::Id>;
     std::map<CallbackId, ConnectCallback> pendingCbs_ {};
+    std::map<std::shared_ptr<MultiplexedSocket>, std::set<CallbackId>> socketRelatedId_ {};
 
     ConnectCallback getPendingCallback(const CallbackId& cbId)
     {
@@ -399,6 +400,15 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                 }
                 if (sock) {
                     JAMI_DBG("Peer already connected. Add a new channel");
+                    {
+                        std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
+                        auto it = sthis->socketRelatedId_.find(sock);
+                        if (it != sthis->socketRelatedId_.end()) {
+                            it->second.emplace(cbId);
+                        } else {
+                            sthis->socketRelatedId_.insert({sock, {cbId}});
+                        }
+                    }
                     sthis->sendChannelRequest(sock, name, deviceId, vid);
                     return;
                 }
@@ -794,12 +804,7 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const
             return false;
         });
     info->socket_->onShutdown([w = weak(), deviceId, vid]() {
-        auto sthis = w.lock();
-        if (!sthis)
-            return;
         // Cancel current outgoing connections
-        if (auto cb = sthis->getPendingCallback({deviceId, vid}))
-            cb(nullptr);
         dht::ThreadPool::io().run([w, deviceId = dht::InfoHash(deviceId), vid] {
             auto sthis = w.lock();
             if (!sthis)
@@ -808,8 +813,23 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const
             if (!info)
                 return;
 
-            if (info->socket_)
+            if (info->socket_) {
+                std::set<CallbackId> ids;
+                {
+                    std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
+                    auto it = sthis->socketRelatedId_.find(info->socket_);
+                    if (it != sthis->socketRelatedId_.end()) {
+                        ids = std::move(it->second);
+                        sthis->socketRelatedId_.erase(it);
+                    }
+                }
+                for (const auto& cbId : ids) {
+                    if (auto cb = sthis->getPendingCallback(cbId)) {
+                        cb(nullptr);
+                    }
+                }
                 info->socket_->shutdown();
+            }
 
             if (info && info->ice_)
                 info->ice_->cancelOperations();
