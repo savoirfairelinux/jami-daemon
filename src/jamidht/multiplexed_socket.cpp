@@ -193,15 +193,12 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>&& pkt)
 {
     // Run this on dedicated thread because some callbacks can take time
     dht::ThreadPool::io().run([this, pkt = std::move(pkt)]() {
-        msgpack::unpacker pac;
-        pac.reserve_buffer(pkt.size());
-        memcpy(pac.buffer(), pkt.data(), pkt.size());
-        pac.buffer_consumed(pkt.size());
-        msgpack::object_handle oh;
-
-        while (pac.next(oh)) {
-            try {
-                auto req = oh.get().as<ChannelRequest>();
+        try {
+            size_t off = 0;
+            while (off != pkt.size()) {
+                msgpack::unpacked result;
+                msgpack::unpack(result, (const char*)pkt.data(), pkt.size(), off);
+                auto req = result.get().as<ChannelRequest>();
                 if (req.state == ChannelRequestState::ACCEPT) {
                     std::lock_guard<std::mutex> lkSockets(socketsMutex);
                     auto& channel = channelDatas_[req.channel];
@@ -272,10 +269,10 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>&& pkt)
                         }
                     }
                 }
-            } catch (const std::exception& e) {
-                JAMI_ERR("Error on the control channel: %s", e.what());
-                stop.store(true);
             }
+        } catch (const std::exception& e) {
+            JAMI_ERR("Error on the control channel: %s", e.what());
+            stop.store(true);
         }
     });
 }
