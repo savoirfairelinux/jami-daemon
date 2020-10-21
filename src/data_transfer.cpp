@@ -508,15 +508,6 @@ public:
         return newTransfer;
     }
 
-    bool cancel(bool channeled)
-    {
-        if (channeled)
-            cancelChanneled_ = true;
-        else
-            cancelIce_ = true;
-        return cancelChanneled_ && cancelIce_;
-    }
-
     bool hasBeenStarted() const override
     {
         // Started if one subtransfer is started
@@ -536,9 +527,6 @@ public:
 
 private:
     OutgoingFileTransfer() = delete;
-
-    std::atomic_bool cancelChanneled_ {false};
-    std::atomic_bool cancelIce_ {false};
 
     mutable std::shared_ptr<OptimisticMetaOutgoingInfo> metaInfo_;
     mutable std::ifstream input_;
@@ -568,9 +556,8 @@ OutgoingFileTransfer::OutgoingFileTransfer(DRing::DataTransferId tid,
 void
 OutgoingFileTransfer::close() noexcept
 {
-    if (cancelChanneled_ && cancelIce_)
-        for (const auto& subtransfer : subtransfer_)
-            subtransfer->close();
+    for (const auto& subtransfer : subtransfer_)
+        subtransfer->close();
 }
 
 //==============================================================================
@@ -848,8 +835,7 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
             },
             [this, tid]() {
                 if (auto transfer = pimpl_->getTransfer(tid))
-                    if (std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)->cancel(true)
-                        and not transfer->hasBeenStarted()) {
+                    if (not transfer->hasBeenStarted()) {
                         transfer->emit(DRing::DataTransferEventCode::unjoinable_peer);
                         pimpl_->cancel(*transfer);
                     }
