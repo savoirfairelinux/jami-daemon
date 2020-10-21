@@ -226,19 +226,19 @@ constexpr const char* const JamiAccount::ACCOUNT_TYPE;
 
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
 
-static const std::string
-stripPrefix(const std::string& toUrl)
+static std::string_view
+stripPrefix(std::string_view toUrl)
 {
     auto dhtf = toUrl.find(RING_URI_PREFIX);
-    if (dhtf != std::string::npos) {
+    if (dhtf != std::string_view::npos) {
         dhtf = dhtf + 5;
     } else {
         dhtf = toUrl.find(JAMI_URI_PREFIX);
-        if (dhtf != std::string::npos) {
+        if (dhtf != std::string_view::npos) {
             dhtf = dhtf + 5;
         } else {
             dhtf = toUrl.find("sips:");
-            dhtf = (dhtf == std::string::npos) ? 0 : dhtf + 5;
+            dhtf = (dhtf == std::string_view::npos) ? 0 : dhtf + 5;
         }
     }
     while (dhtf < toUrl.length() && toUrl[dhtf] == '/')
@@ -246,14 +246,14 @@ stripPrefix(const std::string& toUrl)
     return toUrl.substr(dhtf);
 }
 
-static const std::string
-parseJamiUri(const std::string& toUrl)
+static std::string_view
+parseJamiUri(std::string_view toUrl)
 {
     auto sufix = stripPrefix(toUrl);
     if (sufix.length() < 40)
         throw std::invalid_argument("id must be a Jami infohash");
 
-    const std::string toUri = sufix.substr(0, 40);
+    const std::string_view toUri = sufix.substr(0, 40);
     if (std::find_if_not(toUri.cbegin(), toUri.cend(), ::isxdigit) != toUri.cend())
         throw std::invalid_argument("id must be a Jami infohash");
     return toUri;
@@ -402,7 +402,7 @@ JamiAccount::newIncomingCall(const std::string& from,
 
 template<>
 std::shared_ptr<SIPCall>
-JamiAccount::newOutgoingCall(const std::string& toUrl,
+JamiAccount::newOutgoingCall(std::string_view toUrl,
                              const std::map<std::string, std::string>& volatileCallDetails)
 {
     auto suffix = stripPrefix(toUrl);
@@ -417,7 +417,7 @@ JamiAccount::newOutgoingCall(const std::string& toUrl,
     call->setSecure(isTlsEnabled());
 
     try {
-        const std::string toUri = parseJamiUri(suffix);
+        const std::string toUri {parseJamiUri(suffix)};
         startOutgoingCall(call, toUri);
     } catch (...) {
 #if HAVE_RINGNS
@@ -434,7 +434,7 @@ JamiAccount::newOutgoingCall(const std::string& toUrl,
                                          }
                                          if (auto sthis = wthis_.lock()) {
                                              try {
-                                                 const std::string toUri = parseJamiUri(result);
+                                                 const std::string toUri {parseJamiUri(result)};
                                                  sthis->startOutgoingCall(call, toUri);
                                              } catch (...) {
                                                  call->onFailure(ENOENT);
@@ -725,7 +725,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
 }
 
 std::shared_ptr<Call>
-JamiAccount::newOutgoingCall(const std::string& toUrl,
+JamiAccount::newOutgoingCall(std::string_view toUrl,
                              const std::map<std::string, std::string>& volatileCallDetails)
 {
     return newOutgoingCall<SIPCall>(toUrl, volatileCallDetails);
@@ -2313,7 +2313,7 @@ JamiAccount::onTextMessage(const std::string& id,
                            const std::map<std::string, std::string>& payloads)
 {
     try {
-        const std::string fromUri = parseJamiUri(from);
+        const std::string fromUri {parseJamiUri(from)};
         SIPAccountBase::onTextMessage(id, fromUri, payloads);
     } catch (...) {
     }
@@ -3232,7 +3232,8 @@ void
 JamiAccount::onIsComposing(const std::string& peer, bool isWriting)
 {
     try {
-        Account::onIsComposing(parseJamiUri(peer), isWriting);
+        const std::string fromUri {parseJamiUri(peer)};
+        Account::onIsComposing(fromUri, isWriting);
     } catch (...) {
         JAMI_ERR("[Account %s] Can't parse URI: %s", getAccountID().c_str(), peer.c_str());
     }
@@ -3264,7 +3265,7 @@ JamiAccount::registerDhtAddress(IceTransport& ice)
         if (addr4.size())
             setPublishedAddress(reg_addr(ice, *addr4[0].get()));
     } else {
-        reg_addr(ice, ip);
+        reg_addr(ice, {ip});
     }
 }
 
