@@ -35,7 +35,7 @@ class Account;
 class AccountGeneratorBase;
 
 template<class T>
-using AccountMap = std::map<std::string, std::shared_ptr<T>>;
+using AccountMap = std::map<std::string, std::shared_ptr<T>, std::less<>>;
 
 class AccountFactory
 {
@@ -50,10 +50,10 @@ public:
 
     void removeAccount(Account& account);
 
-    void removeAccount(const std::string& id);
+    void removeAccount(std::string_view id);
 
     template<class T = Account>
-    bool hasAccount(const std::string& id) const
+    bool hasAccount(std::string_view id) const
     {
         std::lock_guard<std::recursive_mutex> lk(mutex_);
 
@@ -95,7 +95,7 @@ public:
     }
 
     template<class T = Account>
-    std::shared_ptr<T> getAccount(const std::string& id) const
+    std::shared_ptr<T> getAccount(std::string_view id) const
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
 
@@ -119,7 +119,7 @@ public:
         if (const auto map = getMap_<T>()) {
             v.reserve(map->size());
             for (const auto& it : *map)
-                v.push_back(std::static_pointer_cast<T>(it.second));
+                v.emplace_back(std::static_pointer_cast<T>(it.second));
         }
         return v;
     }
@@ -127,7 +127,7 @@ public:
 private:
     mutable std::recursive_mutex mutex_ {};
     std::map<std::string, std::function<std::shared_ptr<Account>(const std::string&)>> generators_ {};
-    std::map<std::string, AccountMap<Account>> accountMaps_ {};
+    std::map<std::string, AccountMap<Account>, std::less<>> accountMaps_ {};
 
     template<class T>
     const AccountMap<Account>* getMap_() const
@@ -142,7 +142,7 @@ private:
 };
 
 template<>
-bool AccountFactory::hasAccount(const std::string& id) const;
+bool AccountFactory::hasAccount(std::string_view id) const;
 
 template<>
 void AccountFactory::clear();
@@ -151,7 +151,7 @@ template<>
 std::vector<std::shared_ptr<Account>> AccountFactory::getAllAccounts() const;
 
 template<>
-std::shared_ptr<Account> AccountFactory::getAccount(const std::string& accountId) const;
+std::shared_ptr<Account> AccountFactory::getAccount(std::string_view accountId) const;
 
 template<>
 bool AccountFactory::empty() const;
