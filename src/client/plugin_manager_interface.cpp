@@ -119,7 +119,7 @@ toggleCallMediaHandler(const std::string& id, bool toggle)
     return jami::Manager::instance()
         .getJamiPluginManager()
         .getCallServicesManager()
-        .toggleCallMediaHandler(id, toggle);
+        .toggleCallMediaHandler(id, toggle, jami::Manager::instance().getCurrentCallId());
 }
 
 std::map<std::string, std::string>
