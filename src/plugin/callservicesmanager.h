@@ -23,6 +23,7 @@
 #include "noncopyable.h"
 #include "logger.h"
 #include "manager.h"
+#include "sip/sipcall.h"
 // Plugin Manager
 #include "pluginmanager.h"
 #include "streamdata.h"
@@ -147,14 +148,14 @@ public:
      * if off, detach it
      * @param id
      */
-    void toggleCallMediaHandler(const std::string& id, const bool toggle)
+    void toggleCallMediaHandler(const std::string& id, const bool toggle, const bool restartSender = true)
     {
         std::string callID = Manager::instance().getCurrentCallId();
 
         if (toggle) {
             for (auto& pair : mediaHandlerToggled_) {
                 if (pair.second == callID && pair.first != id) {
-                    toggleCallMediaHandler(pair.first, false);
+                    toggleCallMediaHandler(pair.first, false, false);
                 }
             }
         }
@@ -181,6 +182,9 @@ public:
                     }
                 }
             }
+        }
+        if (restartSender) {
+            Manager::instance().callFactory.getCall<SIPCall>(callID)->getVideoRtp().restartSender();
         }
     }
 
