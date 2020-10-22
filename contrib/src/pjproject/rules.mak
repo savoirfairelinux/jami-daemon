@@ -51,7 +51,7 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0004-multiple_listeners.patch
 	$(APPLY) $(SRC)/pjproject/0005-fix_ebusy_turn.patch
 	$(APPLY) $(SRC)/pjproject/0006-ignore_ipv6_on_transport_check.patch
-	$(APPLY) $(SRC)/pjproject/0007-pj_ice_sess.patch
+	$(APPLY) $(SRC)/pjproject/0007-upnp-srflx-nat-assisted-cand.patch
 	$(APPLY) $(SRC)/pjproject/0008-fix_ioqueue_ipv6_sendto.patch
 	$(APPLY) $(SRC)/pjproject/0009-add-config-site.patch
 	$(APPLY) $(SRC)/pjproject/0010-fix-pkgconfig.patch
@@ -61,6 +61,7 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0014-Add-new-compile-time-setting-PJ_ICE_ST_USE_TURN_PERM.patch
 	$(APPLY) $(SRC)/pjproject/0015-update-local-preference-for-peer-reflexive-candidate.patch
 	$(APPLY) $(SRC)/pjproject/0016-use-addrinfo-instead-CFHOST.patch
+	$(APPLY) $(SRC)/pjproject/0017-add-custom-srflx-candidates.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch
 endif
