@@ -61,6 +61,7 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0014-Add-new-compile-time-setting-PJ_ICE_ST_USE_TURN_PERM.patch
 	$(APPLY) $(SRC)/pjproject/0015-update-local-preference-for-peer-reflexive-candidate.patch
 	$(APPLY) $(SRC)/pjproject/0016-use-addrinfo-instead-CFHOST.patch
+	$(APPLY) $(SRC)/pjproject/0017-add-custom-srflx-candidates.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch
 endif
