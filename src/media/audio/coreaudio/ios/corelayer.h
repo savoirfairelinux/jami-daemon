@@ -23,7 +23,6 @@
 #define CORE_LAYER_H_
 
 #include "audio/audiolayer.h"
-#include "noncopyable.h"
 #include <AudioToolbox/AudioToolbox.h>
 
 #define checkErr(err) \
@@ -162,6 +161,7 @@ private:
     UInt32 outChannelsPerFrame_;
 
     std::condition_variable readyCv_ {};
+    dispatch_queue_t audioConfigurationQueue;
 };
 
 } // namespace jami

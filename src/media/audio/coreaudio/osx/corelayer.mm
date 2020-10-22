@@ -20,16 +20,18 @@
 
 #include "corelayer.h"
 #include "manager.h"
-#include "noncopyable.h"
-#include "audio/resampler.h"
-#include "audio/ringbufferpool.h"
-#include "audio/ringbuffer.h"
 #include "audiodevice.h"
 
-#include <cmath>
-#include <vector>
-
 namespace jami {
+
+dispatch_queue_t audioConfigurationQueueMacOS() {
+    static dispatch_once_t queueCreationGuard;
+    static dispatch_queue_t queue;
+    dispatch_once(&queueCreationGuard, ^{
+        queue = dispatch_queue_create("audioConfigurationQueueMacOS", DISPATCH_QUEUE_SERIAL);
+    });
+    return queue;
+}
 
 // AudioLayer implementation.
 CoreLayer::CoreLayer(const AudioPreference& pref)
@@ -42,7 +44,13 @@ CoreLayer::CoreLayer(const AudioPreference& pref)
 
 CoreLayer::~CoreLayer()
 {
-    stopStream();
+    dispatch_sync(audioConfigurationQueueMacOS(), ^{
+        if (status_ != Status::Started)
+            return;
+        destroyAudioLayer();
+        flushUrgent();
+        flushMain();
+    });
 }
 
 std::vector<std::string>
@@ -294,10 +302,9 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
 void
 CoreLayer::startStream(AudioDeviceType stream)
 {
-    JAMI_DBG("START STREAM");
+    dispatch_async(audioConfigurationQueueMacOS(), ^{
+        JAMI_DBG("START STREAM");
 
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
         if (status_ != Status::Idle)
             return;
         status_ = Status::Started;
@@ -306,13 +313,13 @@ CoreLayer::startStream(AudioDeviceType stream)
 
         initAudioLayerIO(stream);
 
-        auto inputRes = AudioUnitInitialize(ioUnit_);
-        auto outputRes = AudioOutputUnitStart(ioUnit_);
-        if (!inputRes && !outputRes) {
-            return;
+        auto inputError = AudioUnitInitialize(ioUnit_);
+        auto outputError = AudioOutputUnitStart(ioUnit_);
+        if (inputError || outputError) {
+            status_ = Status::Idle;
+            destroyAudioLayer();
         }
-    }
-    stopStream();
+    });
 }
 
 void
@@ -326,15 +333,13 @@ CoreLayer::destroyAudioLayer()
 void
 CoreLayer::stopStream(AudioDeviceType stream)
 {
-    JAMI_DBG("STOP STREAM");
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
+    dispatch_async(audioConfigurationQueueMacOS(), ^{
+        JAMI_DBG("STOP STREAM");
         if (status_ != Status::Started)
             return;
         status_ = Status::Idle;
         destroyAudioLayer();
-    }
-
+    });
     /* Flush the ring buffers */
     flushUrgent();
     flushMain();
