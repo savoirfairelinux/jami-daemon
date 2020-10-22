@@ -1531,42 +1531,33 @@ IceTransport::parseSDPList(const std::vector<uint8_t>& msg)
 {
     std::vector<SDP> sdp_list;
 
-    msgpack::unpacker pac;
-    pac.reserve_buffer(msg.size());
-    memcpy(pac.buffer(), msg.data(), msg.size());
-    pac.buffer_consumed(msg.size());
-    msgpack::object_handle oh;
-
-    while (auto result = pac.next(oh)) {
-        try {
+    try {
+        size_t off = 0;
+        while (off != msg.size()) {
+            msgpack::unpacked result;
+            msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
             SDP sdp;
-            if (oh.get().type == msgpack::type::POSITIVE_INTEGER) {
+            if (result.get().type == msgpack::type::POSITIVE_INTEGER) {
                 // Version 1
-                result = pac.next(oh);
-                if (!result)
-                    break;
-                std::tie(sdp.ufrag, sdp.pwd) = oh.get().as<std::pair<std::string, std::string>>();
-                result = pac.next(oh);
-                if (!result)
-                    break;
-                auto comp_cnt = oh.get().as<uint8_t>();
+                msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+                std::tie(sdp.ufrag, sdp.pwd) = result.get().as<std::pair<std::string, std::string>>();
+                msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+                auto comp_cnt = result.get().as<uint8_t>();
                 while (comp_cnt-- > 0) {
-                    result = pac.next(oh);
-                    if (!result)
-                        break;
-                    auto candidates = oh.get().as<std::vector<std::string>>();
+                    msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+                    auto candidates = result.get().as<std::vector<std::string>>();
                     sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
                     sdp.candidates.insert(sdp.candidates.end(),
                                           candidates.begin(),
                                           candidates.end());
                 }
             } else {
-                oh.get().convert(sdp);
+                result.get().convert(sdp);
             }
-            sdp_list.emplace_back(sdp);
-        } catch (const msgpack::unpack_error& e) {
-            break;
+            sdp_list.emplace_back(std::move(sdp));
         }
+    } catch (const msgpack::unpack_error& e) {
+        JAMI_WARN("Error parsing sdp: %s", e.what());
     }
 
     return sdp_list;
