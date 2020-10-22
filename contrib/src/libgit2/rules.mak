@@ -17,6 +17,7 @@ $(TARBALLS)/libgit2-v$(LIBGIT2_VERSION).tar.gz:
 libgit2: libgit2-v$(LIBGIT2_VERSION).tar.gz .sum-libgit2
 	$(UNPACK)
 	mv libgit2-$(LIBGIT2_VERSION) libgit2-v$(LIBGIT2_VERSION)
+	$(APPLY) $(SRC)/libgit2/debug.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 

@@ -1,0 +1,116 @@
+ src/transports/smart.c          |  1 +
+ src/transports/smart_pkt.c      |  2 ++
+ src/transports/smart_protocol.c | 16 +++++++++++++---
+ 3 files changed, 16 insertions(+), 3 deletions(-)
+
+diff --git a/src/transports/smart.c b/src/transports/smart.c
+index 5f5919407..2b02c8d85 100644
+--- a/src/transports/smart.c
++++ b/src/transports/smart.c
+@@ -410,6 +410,7 @@ static int git_smart__read_flags(git_transport *transport, int *flags)
+ 
+ static int git_smart__close(git_transport *transport)
+ {
++	printf("@@@git_smart__close\n");
+ 	transport_smart *t = GIT_CONTAINER_OF(transport, transport_smart, parent);
+ 	git_vector *common = &t->common;
+ 	unsigned int i;
+diff --git a/src/transports/smart_pkt.c b/src/transports/smart_pkt.c
+index 56b680d28..cb10a4895 100644
+--- a/src/transports/smart_pkt.c
++++ b/src/transports/smart_pkt.c
+@@ -524,6 +524,7 @@ void git_pkt_free(git_pkt *pkt)
+ 
+ int git_pkt_buffer_flush(git_buf *buf)
+ {
++	printf("@@@git_pkt_buffer_flush\n");
+ 	return git_buf_put(buf, pkt_flush_str, strlen(pkt_flush_str));
+ }
+ 
+@@ -619,6 +620,7 @@ int git_pkt_buffer_wants(
+ 			return -1;
+ 	}
+ 
++	printf("@@@git_pkt_buffer_wants\n");
+ 	return git_pkt_buffer_flush(buf);
+ }
+ 
+diff --git a/src/transports/smart_protocol.c b/src/transports/smart_protocol.c
+index c01656dc4..6e6821cb2 100644
+--- a/src/transports/smart_protocol.c
++++ b/src/transports/smart_protocol.c
+@@ -217,8 +217,10 @@ static int recv_pkt(git_pkt **out_pkt, git_pkt_type *out_type, gitno_buffer *buf
+ 	int error = 0, ret;
+ 
+ 	do {
+-		if (buf->offset > 0)
++		if (buf->offset > 0) {
+ 			error = git_pkt_parse_line(&pkt, &line_end, ptr, buf->offset);
++			printf("@@@ pkt: %s - error %u\n", pkt, error);
++		}
+ 		else
+ 			error = GIT_EBUFS;
+ 
+@@ -228,7 +230,9 @@ static int recv_pkt(git_pkt **out_pkt, git_pkt_type *out_type, gitno_buffer *buf
+ 		if (error < 0 && error != GIT_EBUFS)
+ 			return error;
+ 
++		printf("@@@ gitno_recv\n");
+ 		if ((ret = gitno_recv(buf)) < 0) {
++			printf("@@@ pkt: %s - error %u\n", pkt, ret);
+ 			return ret;
+ 		} else if (ret == 0) {
+ 			git_error_set(GIT_ERROR_NET, "early EOF");
+@@ -283,8 +287,10 @@ static int wait_while_ack(gitno_buffer *buf)
+ 		if ((error = recv_pkt(&pkt, NULL, buf)) < 0)
+ 			return error;
+ 
+-		if (pkt->type == GIT_PKT_NAK)
++		if (pkt->type == GIT_PKT_NAK) {
++			printf("@@@ NAK1\n");
+ 			break;
++		}
+ 		if (pkt->type != GIT_PKT_ACK)
+ 			continue;
+ 
+@@ -336,7 +342,7 @@ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, c
+ 		if (error < 0) {
+ 			if (GIT_ITEROVER == error)
+ 				break;
+-
++			printf("@@@ Error when parsing: %s %u", git_oid_tostr_s(&oid), error);
+ 			goto on_error;
+ 		}
+ 
+@@ -369,6 +375,7 @@ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, c
+ 				if (pkt_type == GIT_PKT_ACK) {
+ 					break;
+ 				} else if (pkt_type == GIT_PKT_NAK) {
++					printf("@@@ NAK2\n");
+ 					continue;
+ 				} else {
+ 					git_error_set(GIT_ERROR_NET, "unexpected pkt type");
+@@ -401,6 +408,7 @@ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, c
+ 	}
+ 
+ 	/* Tell the other end that we're done negotiating */
++	printf("@@@ Tell the other end that we're done negotiating\n");
+ 	if (t->rpc && t->common.length > 0) {
+ 		git_pkt_ack *pkt;
+ 		unsigned int j;
+@@ -439,6 +447,7 @@ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, c
+ 			return error;
+ 
+ 		if (pkt_type != GIT_PKT_ACK && pkt_type != GIT_PKT_NAK) {
++			printf("@@@ NAK3\n");
+ 			git_error_set(GIT_ERROR_NET, "unexpected pkt type");
+ 			return -1;
+ 		}
+@@ -659,6 +668,7 @@ static int gen_pktline(git_buf *buf, git_push *push)
+ 		git_buf_putc(buf, '\n');
+ 	}
+ 
++	printf("@@@gen_pktline\n");
+ 	git_buf_puts(buf, "0000");
+ 	return git_buf_oom(buf) ? -1 : 0;
+ }

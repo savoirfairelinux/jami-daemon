@@ -73,6 +73,7 @@ public:
     std::string repository_ {};
     std::shared_ptr<ChannelSocket> socket_ {};
     std::string wantedReference_ {};
+    std::string common_ {};
     std::vector<std::string> haveRefs_ {};
     std::string cachedPkt_ {};
     std::atomic_bool isDestroying_ {false};
@@ -138,11 +139,30 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
         auto content = pkt.substr(5, pkt_len - 5);
         auto commit = content.substr(4, 40);
         haveRefs_.emplace_back(commit);
+        if (common_.empty()) {
+            // Detect first common commit
+            // Reference:
+            // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L390
+            // TODO do not open repository every time
+            git_repository* repo;
+
+            if (git_repository_open(&repo, repository_.c_str()) != 0) {
+                JAMI_WARN("Couldn't open %s", repository_.c_str());
+                return !cachedPkt_.empty();
+            }
+            git_oid commit_id;
+            if (git_oid_fromstr(&commit_id, commit.c_str()) == 0) {
+                // Reference found
+                common_ = commit;
+            }
+
+            git_repository_free(repo);
+        }
     } else if (pkt == DONE_PKT) {
         // Reference:
         // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L390 Do
         // not do multi-ack, just send ACK + pack file
-        // TODO: in case of no common base, send NAK
+        // In case of no common base, send NAK
         JAMI_INFO("Peer negotiation is done. Answering to want order");
         answerToWantOrder();
     } else if (pkt == FLUSH_PKT) {
@@ -221,6 +241,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     // And add FLUSH
     packet << FLUSH_PKT;
     auto toSend = packet.str();
+    JAMI_ERR("@@@ SEND FLUSH");
     socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
     if (ec) {
         JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
@@ -231,6 +252,20 @@ void
 GitServer::Impl::answerToWantOrder()
 {
     std::error_code ec;
+    // Ack common base
+    if (!common_.empty()) {
+        std::stringstream packet;
+        packet << std::setw(4) << std::setfill('0') << std::hex
+               << ((18 /* size + ACK + space * 2 + continue + \n */ + common_.size()) & 0x0FFFF);
+        packet << "ACK " << common_ << " continue\n";
+        auto toSend = packet.str();
+        socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
+        if (ec) {
+            JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
+            return;
+        }
+    }
+    // NAK
     socket_->write(reinterpret_cast<const unsigned char*>(NAK_PKT.data()), NAK_PKT.size(), ec);
     if (ec) {
         JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
@@ -336,6 +371,7 @@ GitServer::Impl::sendPackData()
     git_packbuilder_free(pb);
     git_repository_free(repo);
 
+    JAMI_ERR("@@@ SEND FLUSH");
     socket_->write(reinterpret_cast<const unsigned char*>(FLUSH_PKT.data()), FLUSH_PKT.size(), ec);
     if (ec) {
         JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
