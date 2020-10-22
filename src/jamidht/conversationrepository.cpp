@@ -85,8 +85,7 @@ create_empty_repository(const std::string path)
     git_repository_init_options opts = GIT_REPOSITORY_INIT_OPTIONS_INIT;
     opts.flags |= GIT_REPOSITORY_INIT_MKPATH;
     opts.initial_head = "main";
-    if (git_repository_init_ext(&repo, path.c_str(), &opts)
-        < 0) {
+    if (git_repository_init_ext(&repo, path.c_str(), &opts) < 0) {
         JAMI_ERR("Couldn't create a git repository in %s", path.c_str());
     }
     return {std::move(repo), git_repository_free};
@@ -602,12 +601,7 @@ ConversationRepository::Impl::commit(const std::string& msg)
 
     // Move commit to main branch
     git_reference* ref_ptr = nullptr;
-    if (git_reference_create(&ref_ptr,
-                             repository_.get(),
-                             "refs/heads/main",
-                             &commit_id,
-                             true,
-                             nullptr)
+    if (git_reference_create(&ref_ptr, repository_.get(), "refs/heads/main", &commit_id, true, nullptr)
         < 0) {
         JAMI_WARN("Could not move commit to main");
     }
@@ -967,7 +961,12 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     GitRemote remote {remote_ptr, git_remote_free};
 
     if (git_remote_fetch(remote.get(), nullptr, &fetch_opts, "fetch") < 0) {
-        JAMI_ERR("Could not fetch remote repository for conversation %s", pimpl_->id_.c_str());
+        const git_error* err = giterr_last();
+        if (err)
+            JAMI_ERR(
+                "Could not fetch remote repository for conversation %s: git_error_last()->message",
+                pimpl_->id_.c_str(),
+                err->message);
         return false;
     }
 

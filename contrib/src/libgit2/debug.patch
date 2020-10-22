@@ -1,0 +1,90 @@
+ src/indexer.c                   |  2 ++
+ src/transports/smart_protocol.c | 36 ++++++++++++++++++++++++++++++++++++
+ 2 files changed, 38 insertions(+)
+
+diff --git a/src/indexer.c b/src/indexer.c
+index 8c74f0e72..bf6f002ab 100644
+--- a/src/indexer.c
++++ b/src/indexer.c
+@@ -96,11 +96,13 @@ static int parse_header(struct git_pack_header *hdr, struct git_pack_file *pack)
+ 
+ 	/* Verify we recognize this pack file format. */
+ 	if (hdr->hdr_signature != ntohl(PACK_SIGNATURE)) {
++		printf("@@@@@@@@@@@@@@@@@@@@@ %u vs %u\n", hdr->hdr_signature, ntohl(PACK_SIGNATURE));
+ 		git_error_set(GIT_ERROR_INDEXER, "wrong pack signature");
+ 		return -1;
+ 	}
+ 
+ 	if (!pack_version_ok(hdr->hdr_version)) {
++		printf("@@@@@@@@@@@@@@@@@@@@@ %u vs %u\n", hdr->hdr_version);
+ 		git_error_set(GIT_ERROR_INDEXER, "wrong pack version");
+ 		return -1;
+ 	}
+diff --git a/src/transports/smart_protocol.c b/src/transports/smart_protocol.c
+index c01656dc4..51eb5edd9 100644
+--- a/src/transports/smart_protocol.c
++++ b/src/transports/smart_protocol.c
+@@ -216,6 +216,18 @@ static int recv_pkt(git_pkt **out_pkt, git_pkt_type *out_type, gitno_buffer *buf
+ 	git_pkt *pkt = NULL;
+ 	int error = 0, ret;
+ 
++
++	int i = 0;
++
++	if (buf->offset > 0) {
++		printf("BUF: ");
++		while (i < buf->offset) {
++			printf("%u,", (unsigned char)(ptr[i]));
++			++i;
++		}
++		printf("\n");
++	}
++
+ 	do {
+ 		if (buf->offset > 0)
+ 			error = git_pkt_parse_line(&pkt, &line_end, ptr, buf->offset);
+@@ -512,6 +524,7 @@ int git_smart__download_pack(
+ 	git_indexer_progress_cb progress_cb,
+ 	void *progress_payload)
+ {
++	printf("@@@@@@@@@@@@ git_smart__download_pack\n");
+ 	transport_smart *t = (transport_smart *)transport;
+ 	gitno_buffer *buf = &t->buffer;
+ 	git_odb *odb;
+@@ -548,6 +561,7 @@ int git_smart__download_pack(
+ 		goto done;
+ 	}
+ 
++	int needpkt = 0;
+ 	do {
+ 		git_pkt *pkt = NULL;
+ 
+@@ -559,6 +573,28 @@ int git_smart__download_pack(
+ 		}
+ 
+ 		if ((error = recv_pkt(&pkt, NULL, buf)) >= 0) {
++			if (needpkt == 0) {
++				if (pkt->type == GIT_PKT_NAK) {
++					printf("@@@ NAK OK\n");
++					needpkt += 1;
++				} else {
++					printf("@@@ type: %u\n", pkt->type);
++				}
++			} else if (needpkt == 1) {
++				if (pkt->type == GIT_PKT_DATA) {
++					printf("@@@ GIT_PKT_DATA OK\n");
++					needpkt += 1;
++				} else {
++					printf("@@@ type: %u\n", pkt->type);
++				}
++			} else if (needpkt == 2) {
++				if (pkt->type == GIT_PKT_FLUSH) {
++					printf("@@@ FLUSH OK\n");
++					needpkt += 1;
++				} else {
++					printf("@@@ type: %u\n", pkt->type);
++				}
++			}
+ 			/* Check cancellation after network call */
+ 			if (t->cancelled.val) {
+ 				git_error_clear();

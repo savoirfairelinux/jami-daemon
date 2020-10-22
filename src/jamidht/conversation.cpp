@@ -298,6 +298,7 @@ Conversation::generateInvitation() const
         for (const auto& [key, value] : member) {
             Json::Value jsonMember;
             jsonMember[key] = value;
+            JAMI_ERR("@@@ %s: %s", key.c_str(), value.c_str());
             root["members"].append(jsonMember);
         }
     }

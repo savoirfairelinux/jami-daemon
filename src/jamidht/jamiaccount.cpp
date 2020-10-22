@@ -3706,7 +3706,10 @@ JamiAccount::acceptConversationRequest(const std::string& conversationId)
     }
     for (const auto& member : request->second.members) {
         auto memberHash = dht::InfoHash(member);
-        // TODO cf sync between devices
+        if (!memberHash) {
+            JAMI_ERR("@@@...");
+            continue;
+        }
         forEachDevice(memberHash, [this, request = request->second](const dht::InfoHash& dev) {
             if (dev == dht()->getId())
                 return;
@@ -4279,8 +4282,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
     pjsip_tx_data* tdata;
 
     // Build SIP message
-    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD,
-                                         sip_utils::CONST_PJ_STR("MESSAGE")};
+    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, sip_utils::CONST_PJ_STR("MESSAGE")};
     pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
     pj_str_t pjTo = sip_utils::CONST_PJ_STR(toURI);
 

@@ -123,6 +123,7 @@ public:
     IceTransportCompleteCb on_negodone_cb_ {};
     IceRecvInfo on_recv_cb_ {};
     mutable std::mutex iceMutex_ {};
+    std::mutex txMutex_ {};
     std::unique_ptr<pj_ice_strans, IceSTransDeleter> icest_;
     unsigned component_count_ {};
     pj_ice_sess_cand cand_[MAX_CANDIDATES] {};
@@ -595,12 +596,12 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
                 auto raddr = getRemoteAddress(i);
 
                 if (laddr and raddr) {
-                    out << " [" << i+1 << "] "
-                        << laddr.toString(true, true) << " [" << getCandidateType(getSelectedCandidate(i, false)) << "] "
-                        << " <-> "
-                        << raddr.toString(true, true) << " [" << getCandidateType(getSelectedCandidate(i, true)) << "] " << '\n';
+                    out << " [" << i + 1 << "] " << laddr.toString(true, true) << " ["
+                        << getCandidateType(getSelectedCandidate(i, false)) << "] "
+                        << " <-> " << raddr.toString(true, true) << " ["
+                        << getCandidateType(getSelectedCandidate(i, true)) << "] " << '\n';
                 } else {
-                    out << " [" << i+1 << "] disabled\n";
+                    out << " [" << i + 1 << "] disabled\n";
                 }
             }
 
@@ -1460,6 +1461,8 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         errno = EINVAL;
         return -1;
     }
+
+    std::lock_guard<std::mutex> lk(pimpl_->txMutex_);
     auto status = pj_ice_strans_sendto2(pimpl_->icest_.get(),
                                         comp_id + 1,
                                         buf,
@@ -1535,16 +1538,16 @@ IceTransport::parseSDPList(const std::vector<uint8_t>& msg)
         size_t off = 0;
         while (off != msg.size()) {
             msgpack::unpacked result;
-            msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+            msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
             SDP sdp;
             if (result.get().type == msgpack::type::POSITIVE_INTEGER) {
                 // Version 1
-                msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+                msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
                 std::tie(sdp.ufrag, sdp.pwd) = result.get().as<std::pair<std::string, std::string>>();
-                msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+                msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
                 auto comp_cnt = result.get().as<uint8_t>();
                 while (comp_cnt-- > 0) {
-                    msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+                    msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
                     auto candidates = result.get().as<std::vector<std::string>>();
                     sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
                     sdp.candidates.insert(sdp.candidates.end(),
