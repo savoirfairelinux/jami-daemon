@@ -162,6 +162,7 @@ private:
     UInt32 outChannelsPerFrame_;
 
     std::condition_variable readyCv_ {};
+    dispatch_queue_t audioConfigurationQueue;
 };
 
 } // namespace jami

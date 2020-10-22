@@ -43,7 +43,9 @@ CoreLayer::CoreLayer(const AudioPreference &pref)
     , indexOut_(pref.getAlsaCardout())
     , indexRing_(pref.getAlsaCardring())
     , playbackBuff_(0, audioFormat_)
-{}
+{
+    audioConfigurationQueue = dispatch_queue_create("audioConfigurationQueue", DISPATCH_QUEUE_SERIAL);
+}
 
 CoreLayer::~CoreLayer()
 {
@@ -317,29 +319,29 @@ CoreLayer::bindCallbacks() {
 void
 CoreLayer::startStream(AudioDeviceType stream)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    JAMI_DBG("iOS CoreLayer - Start Stream");
-    auto currentCategoty =  [[AVAudioSession sharedInstance] category];
-
-    bool updateStream = currentCategoty == AVAudioSessionCategoryPlayback && (stream == AudioDeviceType::CAPTURE || stream == AudioDeviceType::ALL);
-    if (status_ == Status::Started) {
-        if (updateStream)
-            destroyAudioLayer();
-        else
-            return;
-    }
-    status_ = Status::Started;
-
-    dcblocker_.reset();
-    if (initAudioLayerIO(stream)) {
-        auto inputRes = AudioUnitInitialize(ioUnit_);
-        auto outputRes = AudioOutputUnitStart(ioUnit_);
-        if (!inputRes && !outputRes) {
-            return;
+    dispatch_async(audioConfigurationQueue, ^{
+        JAMI_DBG("iOS CoreLayer - Start Stream");
+        auto currentCategoty =  [[AVAudioSession sharedInstance] category];
+        bool updateStream = currentCategoty == AVAudioSessionCategoryPlayback && (stream == AudioDeviceType::CAPTURE || stream == AudioDeviceType::ALL);
+        if (status_ == Status::Started) {
+            if (updateStream)
+                destroyAudioLayer();
+            else
+                return;
         }
-    }
-    destroyAudioLayer();
-    status_ = Status::Idle;
+        status_ = Status::Started;
+
+        dcblocker_.reset();
+        if (initAudioLayerIO(stream)) {
+            auto inputRes = AudioUnitInitialize(ioUnit_);
+            auto outputRes = AudioOutputUnitStart(ioUnit_);
+            if (!inputRes && !outputRes) {
+                return;
+            }
+        }
+        destroyAudioLayer();
+        status_ = Status::Idle;
+    });
 }
 
 void
@@ -354,18 +356,17 @@ CoreLayer::destroyAudioLayer()
 void
 CoreLayer::stopStream(AudioDeviceType stream)
 {
-    JAMI_DBG("iOS CoreLayer - Stop Stream");
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
+    dispatch_async(audioConfigurationQueue, ^{
+        JAMI_DBG("iOS CoreLayer - Stop Stream");
         if (status_ != Status::Started)
             return;
         status_ = Status::Idle;
         destroyAudioLayer();
-    }
 
-    /* Flush the ring buffers */
-    flushUrgent();
-    flushMain();
+        /* Flush the ring buffers */
+        flushUrgent();
+        flushMain();
+    });
 }
 
 OSStatus
