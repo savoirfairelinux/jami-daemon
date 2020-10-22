@@ -36,6 +36,15 @@
 
 namespace jami {
 
+dispatch_queue_t audioConfigurationQueueIOS() {
+    static dispatch_once_t queueCreationGuard;
+    static dispatch_queue_t queue;
+    dispatch_once(&queueCreationGuard, ^{
+        queue = dispatch_queue_create("audioConfigurationQueueIOS", DISPATCH_QUEUE_SERIAL);
+    });
+    return queue;
+}
+
 // AudioLayer implementation.
 CoreLayer::CoreLayer(const AudioPreference &pref)
     : AudioLayer(pref)
@@ -47,7 +56,12 @@ CoreLayer::CoreLayer(const AudioPreference &pref)
 
 CoreLayer::~CoreLayer()
 {
-    stopStream();
+    audioRunning = false;
+    dispatch_sync(audioConfigurationQueueIOS(), ^{
+        destroyAudioLayer();
+        flushUrgent();
+        flushMain();
+    });
 }
 
 std::vector<std::string>
@@ -317,29 +331,33 @@ CoreLayer::bindCallbacks() {
 void
 CoreLayer::startStream(AudioDeviceType stream)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    JAMI_DBG("iOS CoreLayer - Start Stream");
-    auto currentCategoty =  [[AVAudioSession sharedInstance] category];
+    dispatch_async(audioConfigurationQueueIOS(), ^{
+        JAMI_DBG("iOS CoreLayer - Start Stream");
+        auto currentCategoty =  [[AVAudioSession sharedInstance] category];
+        bool updateStream = currentCategoty == AVAudioSessionCategoryPlayback && (stream == AudioDeviceType::CAPTURE || stream == AudioDeviceType::ALL);
+        if (status_ == Status::Started) {
+            if (updateStream)
+                destroyAudioLayer();
+            else
+                return;
+        }
+        status_ = Status::Started;
 
-    bool updateStream = currentCategoty == AVAudioSessionCategoryPlayback && (stream == AudioDeviceType::CAPTURE || stream == AudioDeviceType::ALL);
-    if (status_ == Status::Started) {
-        if (updateStream)
+        dcblocker_.reset();
+        if (!initAudioLayerIO(stream)) {
             destroyAudioLayer();
-        else
-            return;
-    }
-    status_ = Status::Started;
-
-    dcblocker_.reset();
-    if (initAudioLayerIO(stream)) {
-        auto inputRes = AudioUnitInitialize(ioUnit_);
-        auto outputRes = AudioOutputUnitStart(ioUnit_);
-        if (!inputRes && !outputRes) {
+            status_ = Status::Idle;
             return;
         }
-    }
-    destroyAudioLayer();
-    status_ = Status::Idle;
+        auto inputRes = AudioUnitInitialize(ioUnit_);
+        auto outputRes = AudioOutputUnitStart(ioUnit_);
+        if (inputRes || outputRes) {
+            destroyAudioLayer();
+            status_ = Status::Idle;
+            return;
+        }
+        audioRunning = true;
+    });
 }
 
 void
@@ -354,15 +372,15 @@ CoreLayer::destroyAudioLayer()
 void
 CoreLayer::stopStream(AudioDeviceType stream)
 {
-    JAMI_DBG("iOS CoreLayer - Stop Stream");
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Started)
+    audioRunning = false;
+    dispatch_async(audioConfigurationQueueIOS(), ^{
+        JAMI_DBG("iOS CoreLayer - Stop Stream");
+        if (status_ != Status::Started) {
             return;
+        }
         status_ = Status::Idle;
         destroyAudioLayer();
-    }
-
+    });
     /* Flush the ring buffers */
     flushUrgent();
     flushMain();
@@ -387,6 +405,8 @@ CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     UInt32 inNumberFrames,
     AudioBufferList* ioData)
 {
+    if (!audioRunning)
+        return;
     (void) ioActionFlags;
     (void) inTimeStamp;
     (void) inBusNumber;
@@ -425,6 +445,8 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     UInt32 inNumberFrames,
     AudioBufferList* ioData)
 {
+    if (!audioRunning)
+        return;
     (void) ioData;
 
     if (inNumberFrames <= 0) {
