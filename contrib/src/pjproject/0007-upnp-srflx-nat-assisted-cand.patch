@@ -1,0 +1,220 @@
+From fb65c10396e6599fbd0ade79ccaec00872e5a0a9 Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Date: Tue, 20 Oct 2020 12:46:30 -0400
+Subject: [PATCH] upnp/srflx: allow user setting nat-assisted candidates
+
+---
+ pjnath/include/pjnath/ice_strans.h |   0
+ pjnath/include/pjnath/stun_sock.h  |  21 +++++
+ pjnath/src/pjnath/ice_session.c    |   0
+ pjnath/src/pjnath/ice_strans.c     | 138 ++++++++++++++++++++++++++++-
+ pjnath/src/pjnath/stun_sock.c      |   1 +
+ 5 files changed, 156 insertions(+), 4 deletions(-)
+
+diff --git a/pjnath/include/pjnath/stun_sock.h b/pjnath/include/pjnath/stun_sock.h
+index bfc9c14..aec1098 100644
+--- a/pjnath/include/pjnath/stun_sock.h
++++ b/pjnath/include/pjnath/stun_sock.h
+@@ -276,6 +276,27 @@ typedef struct pj_stun_sock_cfg
+      */
+     pj_sockaddr bound_addr;
+ 
++    /**
++     * This member holds a list of address mappings (internal/external) that
++     * the user (application) provides. These mappings are meant to be used
++     * to add server reflexive candidates that are not typically discovered
++     * by regular ICE operations. This is the case for mappings obtained
++     * through UPNP-IGD/NAT-PMP/PCP requests, or manually configured (port
++     * forward).
++     */
++    struct {
++        pj_sockaddr local_addr;
++        pj_sockaddr mapped_addr;
++    } user_mapping[PJ_ICE_MAX_COMP];
++
++    /**
++     * Holds the actual number of allocated ports. If the feature is used,
++     * this value should match the number of components of the ICE session.
++     * The feature is disabled if this variable is set to 0.
++     * Default value is 0.
++     */
++    unsigned user_mapping_cnt;
++
+     /**
+      * Specify the port range for STUN socket binding, relative to the start
+      * port number specified in \a bound_addr. Note that this setting is only
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index a1e9fde..79f262b 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -542,6 +542,123 @@ static pj_bool_t ice_cand_equals(pj_ice_sess_cand *lcand,
+     return PJ_TRUE;
+ }
+ 
++static pj_status_t add_nat_assisted_cand(pj_ice_strans *ice_st,
++                        pj_ice_strans_comp *comp,
++                        unsigned idx,
++                        unsigned max_cand_cnt)
++{
++    /* PJNATH library handles host and srflx connections through STUN
++     * sockets, even if there is no actual STUN server configured (for host
++     * only candidates). Since NAT-assisted candidates are srflx candidates,
++     * they will handled through STUN sockets as well.
++     * NAT-assisted candidate are provided as a STUN config through (as an
++     * entry in the stun_tp list). The position (index) of the config in the
++     * list is used to calculate the "local preference" of the priority, thus
++     * it will determine the priority of the NAT-assisted candidates relative
++     * to other srflx candidates.
++    */
++
++    pj_ice_sess_cand *cand;
++    pj_ice_strans_stun_cfg *nat_cfg = &ice_st->cfg.stun_tp[idx];
++    pj_stun_sock_cfg *sock_cfg  = &nat_cfg->cfg;
++    unsigned comp_idx = comp->comp_id - 1;
++    pj_stun_sock_cb sock_cb;
++    sock_user_data *data;
++    pj_status_t status;
++
++    PJ_ASSERT_RETURN(max_cand_cnt > 0, PJ_ETOOSMALL);
++    PJ_ASSERT_RETURN(nat_cfg->cfg.user_mapping_cnt > comp_idx, PJ_ETOOSMALL);
++
++    pj_sockaddr *laddr = &nat_cfg->cfg.user_mapping[comp_idx].local_addr;
++    pj_sockaddr *maddr = &nat_cfg->cfg.user_mapping[comp_idx].mapped_addr;
++
++    pj_bzero(&sock_cb, sizeof(sock_cb));
++    sock_cb.on_rx_data = &stun_on_rx_data;
++    sock_cb.on_status = &stun_on_status;
++    sock_cb.on_data_sent = &stun_on_data_sent;
++
++    /* Override component specific QoS settings, if any */
++    if (ice_st->cfg.comp[comp_idx].qos_type) {
++        sock_cfg->qos_type = ice_st->cfg.comp[comp_idx].qos_type;
++    }
++    if (ice_st->cfg.comp[comp_idx].qos_params.flags) {
++        pj_memcpy(&sock_cfg->qos_params,
++            &ice_st->cfg.comp[comp_idx].qos_params,
++            sizeof(sock_cfg->qos_params));
++    }
++
++    /* Override component specific socket buffer size settings, if any */
++    if (ice_st->cfg.comp[comp_idx].so_rcvbuf_size > 0) {
++        sock_cfg->so_rcvbuf_size = ice_st->cfg.comp[comp_idx].so_rcvbuf_size;
++    }
++    if (ice_st->cfg.comp[comp_idx].so_sndbuf_size > 0) {
++        sock_cfg->so_sndbuf_size = ice_st->cfg.comp[comp_idx].so_sndbuf_size;
++    }
++
++    /* Setup srflx candidate*/
++    cand = &comp->cand_list[comp->cand_cnt];
++    cand->type = PJ_ICE_CAND_TYPE_SRFLX;
++    /* User candidates are assumed ready */
++    cand->status = PJ_SUCCESS;
++    cand->local_pref = (pj_uint16_t)(SRFLX_PREF - idx);
++    cand->transport_id = CREATE_TP_ID(TP_STUN, idx);
++    cand->comp_id = (pj_uint8_t) comp->comp_id;
++    cand->transport = nat_cfg->conn_type == PJ_STUN_TP_UDP ?
++                                               PJ_CAND_UDP :
++                                               PJ_CAND_TCP_PASSIVE;
++
++    /* Set the user mappings if availlabe. */
++    pj_sockaddr_cp(&sock_cfg->bound_addr, laddr);
++
++    {
++        char localStr[PJ_INET6_ADDRSTRLEN];
++        char mappedStr[PJ_INET6_ADDRSTRLEN];
++        PJ_LOG(5,(ice_st->obj_name, "Setting user mapping %s -> %s [%s (%i)] for comp %u at config index %i",
++            pj_sockaddr_print(laddr, localStr, sizeof(localStr), 3),
++                pj_sockaddr_print(maddr, mappedStr, sizeof(mappedStr), 3),
++                nat_cfg->conn_type == PJ_STUN_TP_UDP?"UDP":"TCP",
++                nat_cfg->conn_type,
++                comp->comp_id, idx));
++    }
++
++    /* Allocate and initialize STUN socket data */
++    data = PJ_POOL_ZALLOC_T(ice_st->pool, sock_user_data);
++    data->comp = comp;
++    data->transport_id = cand->transport_id;
++
++    /* Create the STUN transport */
++    status = pj_stun_sock_create(&ice_st->cfg.stun_cfg, NULL,
++                nat_cfg->af, nat_cfg->conn_type,
++                &sock_cb, sock_cfg, data,
++                &comp->stun[idx].sock);
++    if (status != PJ_SUCCESS)
++        return status;
++
++    /* Update and commit NAT-assisted candidate. */
++    pj_sockaddr_cp(&cand->addr, maddr);
++    pj_sockaddr_cp(&cand->base_addr, laddr);
++    pj_sockaddr_cp(&cand->rel_addr, &cand->base_addr);
++    pj_ice_calc_foundation(ice_st->pool, &cand->foundation,
++        cand->type, &cand->base_addr);
++    comp->cand_cnt++;
++    max_cand_cnt--;
++
++    /* Add local address as a host candidate. */
++    if (nat_cfg->max_host_cands) {
++        pj_stun_sock_info stun_sock_info;
++        pj_memset(&stun_sock_info, 0, sizeof(stun_sock_info));
++        stun_sock_info.alias_cnt = 1;
++        pj_sockaddr_cp(&stun_sock_info.aliases[0], laddr);
++
++        unsigned cand_cnt = 0;
++
++        status = add_local_candidate(cand, idx, 0, &cand_cnt, &max_cand_cnt,
++                    stun_sock_info, ice_st, comp, cand->transport);
++    }
++
++    return status;
++}
++
+ static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
+ 				     pj_ice_strans_comp *comp,
+ 				     unsigned idx,
+@@ -872,14 +989,27 @@ static pj_status_t create_comp(pj_ice_strans *ice_st, unsigned comp_id)
+ 
+ 		status = PJ_ETOOSMALL;
+ 
+-	if ((max_cand_cnt > 0) && (max_cand_cnt <= PJ_ICE_ST_MAX_CAND))
++		if ((max_cand_cnt > 0) && (max_cand_cnt <= PJ_ICE_ST_MAX_CAND)) {
++			// Set custom mapping (nat) if provided by the user.
++			if (ice_st->cfg.stun_tp[i].cfg.user_mapping_cnt > 0) {
++				status = add_nat_assisted_cand(ice_st, comp, i, max_cand_cnt);
++				if (status != PJ_SUCCESS)
++					PJ_PERROR(3,(ice_st->obj_name, status,
++						"Failed to add NAT-assisted candidate at config #%d for comp %d",
++						i, comp->comp_id));
++			} else {
+ 				status = add_stun_and_host(ice_st, comp, i, max_cand_cnt);
+-
+-	if (status != PJ_SUCCESS) {
++				if (status != PJ_SUCCESS)
+ 					PJ_PERROR(3,(ice_st->obj_name, status,
+ 						"Failed creating STUN transport #%d for comp %d",
+ 						i, comp->comp_id));
+-	    //return status;
++			}
++		} else {
++			// All STUN config slots have been used.
++			if (status != PJ_SUCCESS)
++				PJ_PERROR(3,(ice_st->obj_name, status,
++					"Max STUN config (%d) has been reached for comp %d",
++					PJ_ICE_ST_MAX_CAND, comp->comp_id));
+ 		}
+     }
+ 
+diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
+index 0546167..49fae7b 100644
+--- a/pjnath/src/pjnath/stun_sock.c
++++ b/pjnath/src/pjnath/stun_sock.c
+@@ -217,6 +217,7 @@ PJ_DEF(void) pj_stun_sock_cfg_default(pj_stun_sock_cfg *cfg)
+     cfg->ka_interval = PJ_STUN_KEEP_ALIVE_SEC;
+     cfg->qos_type = PJ_QOS_TYPE_BEST_EFFORT;
+     cfg->qos_ignore_error = PJ_TRUE;
++    cfg->user_mapping_cnt = 0;
+ }
+ 
+ 
+-- 
+2.25.1
+
