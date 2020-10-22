@@ -550,7 +550,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             call->addSubCall(*dev_call);
             {
                 std::lock_guard<std::mutex> lk(pendingCallsMutex_);
-                pendingCalls_[deviceId.toString()].emplace_back(dev_call);
+                pendingCalls_[deviceId].emplace_back(dev_call);
             }
 
             JAMI_WARN("[call %s] No channeled socket with this peer. Send request",
@@ -635,6 +635,10 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             // Test if already sent via a SIP transport
             if (devices.find(dev) != devices.end())
                 return;
+            {
+                std::lock_guard<std::mutex> lk(onConnectionClosedMtx_);
+                onConnectionClosed_[dev] = sendRequest;
+            }
             sendRequest(dev, false);
         },
         [wCall](bool ok) {
@@ -3501,7 +3505,7 @@ JamiAccount::cacheTurnServers()
 }
 
 void
-JamiAccount::requestSIPConnection(const std::string& peerId, const dht::InfoHash& deviceId)
+JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& deviceId)
 {
     // If a connection already exists or is in progress, no need to do this
     std::lock_guard<std::mutex> lk(sipConnsMtx_);
@@ -3515,22 +3519,43 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const dht::InfoHash
     JAMI_INFO("Ask %s for a new SIP channel", deviceId.to_c_str());
     if (!connectionManager_)
         return;
-    connectionManager_->connectDevice(deviceId,
-                                      "sip",
-                                      [w = weak(), id](std::shared_ptr<ChannelSocket>) {
-                                          auto shared = w.lock();
-                                          if (!shared)
-                                              return;
-                                          // NOTE: No need to cache Connection there.
-                                          // OnConnectionReady is called before this callback, so
-                                          // the socket is already cached if succeed. We just need
-                                          // to remove the pending request.
-                                          std::lock_guard<std::mutex> lk(shared->sipConnsMtx_);
-                                          auto it = shared->sipConns_.find(id);
-                                          if (it != shared->sipConns_.end() && it->second.empty()) {
-                                              shared->sipConns_.erase(it);
-                                          }
-                                      });
+    connectionManager_
+        ->connectDevice(deviceId, "sip", [w = weak(), id](std::shared_ptr<ChannelSocket> socket) {
+            auto shared = w.lock();
+            if (!shared)
+                return;
+            // NOTE: No need to cache Connection there.
+            // OnConnectionReady is called before this callback, so
+            // the socket is already cached if succeed. We just need
+            // to remove the pending request.
+            if (!socket) {
+                // If this is triggered, this means that the connectDevice
+                // didn't get any response from the DHT.
+                // Stop searching pending call.
+                std::lock_guard<std::mutex> lk(shared->onConnectionClosedMtx_);
+                auto it = shared->onConnectionClosed_.find(id.second);
+                if (it != shared->onConnectionClosed_.end()) {
+                    if (it->second)
+                        it->second(id.second, true);
+                    shared->onConnectionClosed_.erase(it);
+                }
+
+                std::vector<std::shared_ptr<SIPCall>> pc;
+                {
+                    std::lock_guard<std::mutex> lk(shared->pendingCallsMutex_);
+                    pc = std::move(shared->pendingCalls_[id.second]);
+                }
+                for (auto& pendingCall : pc) {
+                    pendingCall->onFailure();
+                }
+            }
+
+            std::lock_guard<std::mutex> lk(shared->sipConnsMtx_);
+            auto it = shared->sipConns_.find(id);
+            if (it != shared->sipConns_.end() && it->second.empty()) {
+                shared->sipConns_.erase(it);
+            }
+        });
 }
 
 bool
@@ -3676,9 +3701,8 @@ JamiAccount::sendProfile(const std::string& deviceId)
 void
 JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
                                 const std::string& peerId,
-                                const dht::InfoHash& deviceId)
+                                const DeviceId& deviceId)
 {
-    auto deviceIdStr = deviceId.toString();
     std::unique_lock<std::mutex> lk(sipConnsMtx_);
     // Verify that the connection is not already cached
     SipConnectionKey key(peerId, deviceId);
@@ -3738,7 +3762,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     JAMI_WARN("New SIP channel opened with %s", deviceId.to_c_str());
     lk.unlock();
 
-    sendProfile(deviceIdStr);
+    sendProfile(deviceId.toString());
 
     // Retry messages
     messageEngine_.onPeerOnline(peerId);
@@ -3747,7 +3771,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     std::vector<std::shared_ptr<SIPCall>> pc;
     {
         std::lock_guard<std::mutex> lk(pendingCallsMutex_);
-        pc = std::move(pendingCalls_[deviceIdStr]);
+        pc = std::move(pendingCalls_[deviceId]);
     }
     for (auto& pendingCall : pc) {
         if (pendingCall->getConnectionState() != Call::ConnectionState::TRYING

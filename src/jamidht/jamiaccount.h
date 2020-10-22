@@ -253,13 +253,11 @@ public:
 #ifndef _MSC_VER
     template<class T = SIPCall>
     std::shared_ptr<enable_if_base_of<T, SIPCall>> newOutgoingCall(
-        std::string_view toUrl,
-        const std::map<std::string, std::string>& volatileCallDetails = {});
+        std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
 #else
     template<class T>
     std::shared_ptr<T> newOutgoingCall(
-        std::string_view toUrl,
-        const std::map<std::string, std::string>& volatileCallDetails = {});
+        std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
 #endif
 
     /**
@@ -728,7 +726,7 @@ private:
     std::map<SipConnectionKey, std::vector<SipConnection>> sipConns_;
 
     std::mutex pendingCallsMutex_;
-    std::map<std::string, std::vector<std::shared_ptr<SIPCall>>> pendingCalls_;
+    std::map<DeviceId, std::vector<std::shared_ptr<SIPCall>>> pendingCalls_;
 
     std::mutex onConnectionClosedMtx_ {};
     std::map<DeviceId, std::function<void(const DeviceId&, bool)>> onConnectionClosed_ {};
