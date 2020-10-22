@@ -22,10 +22,7 @@
 #define CORE_LAYER_H_
 
 #include "audio/audiolayer.h"
-#include "noncopyable.h"
-#include <CoreFoundation/CoreFoundation.h>
 #include <AudioToolbox/AudioToolbox.h>
-#include <CoreAudio/AudioHardware.h>
 
 #define checkErr(err) \
     if (err) { \
@@ -169,6 +166,7 @@ private:
     UInt32 outChannelsPerFrame_;
 
     std::vector<AudioDevice> getDeviceList(bool getCapture) const;
+    dispatch_queue_t audioConfigurationQueue;
 };
 
 } // namespace jami
