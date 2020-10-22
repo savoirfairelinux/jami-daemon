@@ -149,37 +149,35 @@ public:
 
     std::string_view getPublishedIP() const { return publishedIpAddr_; }
 
-    void setLocalPublishedAudioPort(int port)
+    void setLocalPublishedAudioPort(uint16_t port)
     {
-        localAudioDataPort_ = port;
-        localAudioControlPort_ = port + 1;
+        setLocalPublishedAudioPorts(port, port + 1);
     }
 
-    void setLocalPublishedAudioPorts(int audio_port, int control_port)
+    void setLocalPublishedAudioPorts(uint16_t audio_port, uint16_t control_port)
     {
         localAudioDataPort_ = audio_port;
         localAudioControlPort_ = control_port;
     }
 
-    void setLocalPublishedVideoPort(int port)
+    void setLocalPublishedVideoPort(uint16_t port)
     {
-        localVideoDataPort_ = port;
-        localVideoControlPort_ = port + 1;
+        setLocalPublishedVideoPorts(port, port + 1);
     }
 
-    void setLocalPublishedVideoPorts(int video_port, int control_port)
+    void setLocalPublishedVideoPorts(uint16_t video_port, uint16_t control_port)
     {
         localVideoDataPort_ = video_port;
         localVideoControlPort_ = control_port;
     }
 
-    unsigned int getLocalVideoPort() const { return localVideoDataPort_; }
+    uint16_t getLocalVideoPort() const { return localVideoDataPort_; }
 
-    unsigned int getLocalVideoControlPort() const { return localVideoControlPort_; }
+    uint16_t getLocalVideoControlPort() const { return localVideoControlPort_; }
 
-    unsigned int getLocalAudioPort() const { return localAudioDataPort_; }
+    uint16_t getLocalAudioPort() const { return localAudioDataPort_; }
 
-    unsigned int getLocalAudioControlPort() const { return localAudioControlPort_; }
+    uint16_t getLocalAudioControlPort() const { return localAudioControlPort_; }
 
     std::vector<MediaDescription> getMediaSlots(const pjmedia_sdp_session* session,
                                                 bool remote) const;
@@ -264,10 +262,10 @@ private:
     std::string publishedIpAddr_;
     pj_uint16_t publishedIpAddrType_;
 
-    int localAudioDataPort_ {0};
-    int localAudioControlPort_ {0};
-    int localVideoDataPort_ {0};
-    int localVideoControlPort_ {0};
+    uint16_t localAudioDataPort_ {0};
+    uint16_t localAudioControlPort_ {0};
+    uint16_t localVideoDataPort_ {0};
+    uint16_t localVideoControlPort_ {0};
 
     SdesNegotiator sdesNego_;
 
