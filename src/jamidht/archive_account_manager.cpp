@@ -119,8 +119,8 @@ ArchiveAccountManager::updateCertificates(AccountArchive& archive, dht::crypto::
     using Certificate = dht::crypto::Certificate;
 
     // We need the CA key to resign certificates
-    if (not archive.id.first or not*archive.id.first or not archive.id.second or not archive.ca_key
-        or not*archive.ca_key)
+    if (not archive.id.first or not *archive.id.first or not archive.id.second or not archive.ca_key
+        or not *archive.ca_key)
         return false;
 
     // Currently set the CA flag and update expiration dates
@@ -517,7 +517,11 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
                                        ARCHIVE_PATH,
                                        RING_DEVICE_ID,
                                        RING_DEVICE_NAME,
-                                       Conf::CONFIG_DHT_PORT};
+                                       Conf::CONFIG_DHT_PORT,
+                                       DHT_PROXY_LIST_URL,
+                                       PROXY_ENABLED,
+                                       PROXY_SERVER,
+                                       PROXY_PUSH_TOKEN};
 
     // Keys with meaning of file path where the contents has to be exported in base64
     static const auto encoded_keys = {TLS::CA_LIST_FILE,
