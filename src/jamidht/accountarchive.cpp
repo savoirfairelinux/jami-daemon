@@ -53,12 +53,18 @@ AccountArchive::deserialize(const std::vector<uint8_t>& dat)
                 if (key.compare(DRing::Account::ConfProperties::TLS::CA_LIST_FILE) == 0) {
                 } else if (key.compare(DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
                 } else if (key.compare(DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0) {
+                } else if (key.compare(DRing::Account::ConfProperties::PROXY_ENABLED) == 0) {
+                } else if (key.compare(DRing::Account::ConfProperties::PROXY_SERVER) == 0) {
+                } else if (key.compare(DRing::Account::ConfProperties::PROXY_PUSH_TOKEN) == 0) {
                 } else if (key.compare(Conf::RING_CA_KEY) == 0) {
-                    ca_key = std::make_shared<dht::crypto::PrivateKey>(base64::decode(itr->asString()));
+                    ca_key = std::make_shared<dht::crypto::PrivateKey>(
+                        base64::decode(itr->asString()));
                 } else if (key.compare(Conf::RING_ACCOUNT_KEY) == 0) {
-                    id.first = std::make_shared<dht::crypto::PrivateKey>(base64::decode(itr->asString()));
+                    id.first = std::make_shared<dht::crypto::PrivateKey>(
+                        base64::decode(itr->asString()));
                 } else if (key.compare(Conf::RING_ACCOUNT_CERT) == 0) {
-                    id.second = std::make_shared<dht::crypto::Certificate>(base64::decode(itr->asString()));
+                    id.second = std::make_shared<dht::crypto::Certificate>(
+                        base64::decode(itr->asString()));
                 } else if (key.compare(Conf::RING_ACCOUNT_CONTACTS) == 0) {
                     for (Json::ValueIterator citr = itr->begin(); citr != itr->end(); citr++) {
                         dht::InfoHash h {citr.key().asString()};
@@ -68,7 +74,8 @@ AccountArchive::deserialize(const std::vector<uint8_t>& dat)
                 } else if (key.compare(Conf::ETH_KEY) == 0) {
                     eth_key = base64::decode(itr->asString());
                 } else if (key.compare(Conf::RING_ACCOUNT_CRL) == 0) {
-                    revoked = std::make_shared<dht::crypto::RevocationList>(base64::decode(itr->asString()));
+                    revoked = std::make_shared<dht::crypto::RevocationList>(
+                        base64::decode(itr->asString()));
                 } else {
                     config[key] = itr->asString();
                 }
