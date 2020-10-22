@@ -56,10 +56,12 @@ public:
 private:
     void testCall();
     void testCachedCall();
+    void testStopSearching();
 
     CPPUNIT_TEST_SUITE(CallTest);
     CPPUNIT_TEST(testCall);
     CPPUNIT_TEST(testCachedCall);
+    CPPUNIT_TEST(testStopSearching);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -245,6 +247,44 @@ CallTest::testCachedCall()
     JAMI_INFO("Stop call between alice and Bob");
     Manager::instance().hangupCall(call->getCallId());
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callStopped == 2; }));
+}
+
+void
+CallTest::testStopSearching()
+{
+    JAMI_INFO("Waiting....");
+    // TODO remove. This sleeps is because it take some time for the DHT to be connected
+    // and account announced
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
+    auto aliceUri = aliceAccount->getAccountDetails()[ConfProperties::USERNAME];
+
+    Manager::instance().sendRegister(bobId, false);
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::atomic_bool callStopped {false};
+    // Watch signals
+    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
+        [&](const std::string&, const std::string& state, signed) {
+            if (state == "OVER") {
+                callStopped = true;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    JAMI_INFO("Start call between alice and Bob");
+    auto call = aliceAccount->newOutgoingCall(bobUri, {});
+
+    // Bob not there, so we should get a SEARCHING STATUS
+    JAMI_INFO("Wait OVER state");
+    // Then wait for the DHT no answer. this can take some times
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] { return callStopped.load(); }));
 }
 
 } // namespace test

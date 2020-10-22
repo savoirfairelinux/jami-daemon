@@ -253,13 +253,11 @@ public:
 #ifndef _MSC_VER
     template<class T = SIPCall>
     std::shared_ptr<enable_if_base_of<T, SIPCall>> newOutgoingCall(
-        std::string_view toUrl,
-        const std::map<std::string, std::string>& volatileCallDetails = {});
+        std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
 #else
     template<class T>
     std::shared_ptr<T> newOutgoingCall(
-        std::string_view toUrl,
-        const std::map<std::string, std::string>& volatileCallDetails = {});
+        std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
 #endif
 
     /**
@@ -532,6 +530,8 @@ private:
 
     void checkPendingCall(const std::string& callId);
     bool handlePendingCall(PendingCall& pc, bool incoming);
+    void forEachPendingCall(const DeviceId& deviceId,
+                            const std::function<void(const std::shared_ptr<SIPCall>&)>& cb);
 
     void loadAccount(const std::string& archive_password = {},
                      const std::string& archive_pin = {},
@@ -728,10 +728,17 @@ private:
     std::map<SipConnectionKey, std::vector<SipConnection>> sipConns_;
 
     std::mutex pendingCallsMutex_;
-    std::map<std::string, std::vector<std::shared_ptr<SIPCall>>> pendingCalls_;
+    std::map<DeviceId, std::vector<std::shared_ptr<SIPCall>>> pendingCalls_;
 
     std::mutex onConnectionClosedMtx_ {};
     std::map<DeviceId, std::function<void(const DeviceId&, bool)>> onConnectionClosed_ {};
+    /**
+     * onConnectionClosed contains callbacks that need to be called if a sub call is failing
+     * @param deviceId      The device we are calling
+     * @param eraseDummy    Erase the dummy call (a temporary subcall that must be stop when we will
+     * not create new subcalls)
+     */
+    void callConnectionClosed(const DeviceId& deviceId, bool eraseDummy);
 
     /**
      * Ask a device to open a channeled SIP socket
