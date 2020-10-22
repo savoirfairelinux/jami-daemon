@@ -255,6 +255,8 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
 
     // Send connection request through DHT
     JAMI_DBG() << account << "Request connection to " << deviceId;
+    JAMI_ERR("@@@ CONNECT TO %s",
+             dht::InfoHash::get(PeerConnectionRequest::key_prefix + deviceId.toString()).to_c_str());
     account.dht()->putEncrypted(dht::InfoHash::get(PeerConnectionRequest::key_prefix
                                                    + deviceId.toString()),
                                 deviceId,
@@ -345,6 +347,7 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                                        const std::string& name,
                                        ConnectCallback cb)
 {
+    return;
     if (!account.dht()) {
         cb(nullptr);
         return;
@@ -527,11 +530,15 @@ ConnectionManager::Impl::onPeerResponse(const PeerConnectionRequest& req)
 void
 ConnectionManager::Impl::onDhtConnected(const DeviceId& deviceId)
 {
+    return;
     if (!account.dht())
         return;
+    JAMI_ERR("@@@ listen on %s",
+             dht::InfoHash::get(PeerConnectionRequest::key_prefix + deviceId.toString()).to_c_str());
     account.dht()->listen<PeerConnectionRequest>(
         dht::InfoHash::get(PeerConnectionRequest::key_prefix + deviceId.toString()),
         [w = weak()](PeerConnectionRequest&& req) {
+            JAMI_ERR("@@@ RECEIVE PEER REQ");
             auto shared = w.lock();
             if (!shared)
                 return false;

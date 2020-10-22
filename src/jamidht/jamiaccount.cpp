@@ -2268,7 +2268,9 @@ JamiAccount::doRegister_()
         });
 
         auto inboxDeviceKey = dht::InfoHash::get("inbox:" + accountManager_->getInfo()->deviceId);
+        JAMI_ERR("@@@ LISTEN IM %s", inboxDeviceKey.to_c_str());
         dht_->listen<dht::ImMessage>(inboxDeviceKey, [this, inboxDeviceKey](dht::ImMessage&& v) {
+            JAMI_ERR("@@@ RECEIVE ON IM MESSAGE %s", inboxDeviceKey.to_c_str());
             auto msgId = to_hex_string(v.id);
             if (isMessageTreated(msgId))
                 return true;
@@ -3175,6 +3177,7 @@ JamiAccount::sendTextMessage(const std::string& to,
                       return false;
                   });
             confirm->listenTokens.emplace(h, std::move(list_token));
+            JAMI_ERR("@@@ PUT ON %s", h.to_c_str());
             dht_->putEncrypted(h,
                                dev,
                                dht::ImMessage(token,
@@ -3182,8 +3185,8 @@ JamiAccount::sendTextMessage(const std::string& to,
                                               std::string(payloads.begin()->second),
                                               now),
                                [this, to, token, confirm, h](bool ok) {
-                                   JAMI_DBG()
-                                       << "[Account " << getAccountID() << "] [message " << token
+                                   JAMI_ERR()
+                                       << "[@@@Account " << getAccountID() << "] [message " << token
                                        << "] Put encrypted " << (ok ? "ok" : "failed");
                                    if (not ok) {
                                        std::unique_lock<std::mutex> l(confirm->lock);
