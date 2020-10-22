@@ -22,6 +22,30 @@
       "revId": "15487cfef5ff15ced3db8dafb5c17f075d78cd9b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b64af80d_3ee7d261",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 153,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-10-22T16:00:54Z",
+      "side": 1,
+      "message": "Removed from here and put to plugin_manager_interface.cpp",
+      "parentUuid": "f3132f9a_559e3aef",
+      "range": {
+        "startLine": 153,
+        "startChar": 8,
+        "endLine": 153,
+        "endChar": 68
+      },
+      "revId": "15487cfef5ff15ced3db8dafb5c17f075d78cd9b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
