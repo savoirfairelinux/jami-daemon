@@ -26,8 +26,6 @@
 #include "audio/ringbuffer.h"
 #include "libav_utils.h"
 
-#include <AVFoundation/AVAudioSession.h>
-
 #include <cmath>
 #include <vector>
 
