@@ -20,14 +20,7 @@
 
 #include "corelayer.h"
 #include "manager.h"
-#include "noncopyable.h"
-#include "audio/resampler.h"
-#include "audio/ringbufferpool.h"
-#include "audio/ringbuffer.h"
 #include "audiodevice.h"
-
-#include <cmath>
-#include <vector>
 
 namespace jami {
 
@@ -38,7 +31,9 @@ CoreLayer::CoreLayer(const AudioPreference& pref)
     , indexOut_(pref.getAlsaCardout())
     , indexRing_(pref.getAlsaCardring())
     , playbackBuff_(0, audioFormat_)
-{}
+{
+    audioConfigurationQueue = dispatch_queue_create("com.savoirfairelinux.audioConfigurationQueueOSX", DISPATCH_QUEUE_SERIAL);
+}
 
 CoreLayer::~CoreLayer()
 {
@@ -294,10 +289,9 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
 void
 CoreLayer::startStream(AudioDeviceType stream)
 {
-    JAMI_DBG("START STREAM");
+    dispatch_async(audioConfigurationQueue, ^{
+        JAMI_DBG("START STREAM");
 
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
         if (status_ != Status::Idle)
             return;
         status_ = Status::Started;
@@ -311,8 +305,8 @@ CoreLayer::startStream(AudioDeviceType stream)
         if (!inputRes && !outputRes) {
             return;
         }
-    }
-    stopStream();
+        stopStream();
+    });
 }
 
 void
@@ -326,18 +320,17 @@ CoreLayer::destroyAudioLayer()
 void
 CoreLayer::stopStream(AudioDeviceType stream)
 {
-    JAMI_DBG("STOP STREAM");
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
+    dispatch_async(audioConfigurationQueue, ^{
+        JAMI_DBG("STOP STREAM");
         if (status_ != Status::Started)
             return;
         status_ = Status::Idle;
         destroyAudioLayer();
-    }
 
-    /* Flush the ring buffers */
-    flushUrgent();
-    flushMain();
+        /* Flush the ring buffers */
+        flushUrgent();
+        flushMain();
+    });
 }
 
 //// PRIVATE /////
