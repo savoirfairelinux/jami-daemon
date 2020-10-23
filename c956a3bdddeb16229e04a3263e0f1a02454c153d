@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2dd417b8_437b6bc7",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 627,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-23T16:30:39Z",
+      "side": 1,
+      "message": "(this, toUri and call) needs not to be captured for lambda function.",
+      "revId": "c956a3bdddeb16229e04a3263e0f1a02454c153d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "919e4dc0_a8d34ea5",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 736,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-23T16:30:39Z",
+      "side": 1,
+      "message": "to be called ...",
+      "revId": "c956a3bdddeb16229e04a3263e0f1a02454c153d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
