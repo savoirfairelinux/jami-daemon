@@ -279,7 +279,7 @@ private:
     void createCallAVStreams();
 #endif // ENABLE_PLUGIN
 
-    std::list<std::shared_ptr<MediaStreamSubject>> callAVStreams;
+    std::map<std::string, std::shared_ptr<MediaStreamSubject>> callAVStreams;
 
     void setCallMediaLocal();
 
