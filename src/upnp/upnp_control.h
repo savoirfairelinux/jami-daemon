@@ -42,12 +42,14 @@ class IpAddr;
 namespace jami {
 namespace upnp {
 
+
 class UPnPContext;
 
-class Controller
+class Controller : public std::enable_shared_from_this<Controller>
 {
 public:
     using NotifyServiceCallback = std::function<void(uint16_t, bool)>;
+
     Controller(bool keepCb = false);
     ~Controller();
 
@@ -60,15 +62,23 @@ public:
     // Gets the local ip that interface with the first valid IGD in the list.
     IpAddr getLocalIP() const;
 
-    void requestMappingAdd(NotifyServiceCallback&& cb,
-                           uint16_t portDesired,
-                           PortType type,
-                           bool unique,
-                           uint16_t portLocal = 0);
-    bool requestMappingRemove(uint16_t portExternal, PortType type);
+    // Request port mapping.
+    // Returns the port number for which a mapping is being requested. The
+    // mapping might not be ready when the method. The final result is
+    // returned through the provided callback.
+    uint16_t requestMappingAdd(NotifyServiceCallback&& cb, const Mapping& map);
+
+    // Remove port mapping.
+    bool requestMappingRemove( const Mapping& map);
 
     // Checks if the map is present locally given a port and type.
     bool isLocalMapPresent(uint16_t portExternal, PortType type) const;
+
+    // Generates provision ports to be used throughout the application's lifetime.
+    bool preAllocateProvisionedPorts(upnp::PortType type, unsigned portCount, uint16_t minPort, uint16_t maxPort);
+
+    // Generates random port number.
+    static uint16_t generateRandomPort(uint16_t min, uint16_t max, bool mustBeEven = false);
 
 private:
     std::shared_ptr<UPnPContext>
@@ -83,6 +93,9 @@ private:
     bool keepCb_ {false}; // Variable that indicates if the controller wants to keep it's callbacks
                           // in the list after a connectivity change.
 
+    // Try to provision a UPNP port.
+    uint16_t requestMappingAdd(ControllerData&& ctrlData, const Mapping& map);
+private:
     // Adds a mapping locally to the list.
     void addLocalMap(const Mapping& map);
     // Removes a mapping locally from the list.
