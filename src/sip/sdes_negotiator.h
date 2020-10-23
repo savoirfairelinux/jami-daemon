@@ -27,6 +27,8 @@
 #include <string>
 #include <vector>
 
+using namespace std::literals;
+
 namespace jami {
 
 /**
@@ -53,7 +55,7 @@ enum KeyMethod {
 
 struct CryptoSuiteDefinition
 {
-    const char* name;
+    std::string_view name;
     int masterKeyLength;
     int masterSaltLength;
     int srtpLifetime;
@@ -73,11 +75,11 @@ struct CryptoSuiteDefinition
  */
 
 static std::vector<CryptoSuiteDefinition> CryptoSuites = {
-    {"AES_CM_128_HMAC_SHA1_80", 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 80, 80, 160, 160},
+    {"AES_CM_128_HMAC_SHA1_80"sv, 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 80, 80, 160, 160},
 
-    {"AES_CM_128_HMAC_SHA1_32", 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 32, 80, 160, 160},
+    {"AES_CM_128_HMAC_SHA1_32"sv, 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 32, 80, 160, 160},
 
-    {"F8_128_HMAC_SHA1_80", 128, 112, 48, 31, AESF8Mode, 128, HMACSHA1, 80, 80, 160, 160}};
+    {"F8_128_HMAC_SHA1_80"sv, 128, 112, 48, 31, AESF8Mode, 128, HMACSHA1, 80, 80, 160, 160}};
 
 class SdesNegotiator
 {
