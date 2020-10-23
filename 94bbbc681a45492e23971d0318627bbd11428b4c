@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0ad1211a_0df30fa9",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 414,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-10-23T00:58:15Z",
+      "side": 1,
+      "message": "* Add version of getInfo looking by just the deviceId\n* Move cbIds to ConnectionInfo\n\nif (auto info \u003d getInfo(deviceId)) {\n  std::lock_guard\u003cstd::mutex\u003e lk(info-\u003emutex_);\n  if (info-\u003esock) {\n      JAMI_DBG(\"Peer already connected. Add a new channel\");\n      info-\u003ecbIds.emplace(cbId);\n      sthis-\u003esendChannelRequest(info-\u003esock, name, deviceId, vid);\n      return;\n  }\n}",
+      "range": {
+        "startLine": 387,
+        "startChar": 16,
+        "endLine": 414,
+        "endChar": 17
+      },
+      "revId": "94bbbc681a45492e23971d0318627bbd11428b4c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "510cdf2a_ffe03bc7",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 836,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-10-23T00:58:15Z",
+      "side": 1,
+      "message": "Something like\n\nstd::set\u003cCallbackId\u003e ids;\nif (auto info \u003d sthis-\u003egetInfo(deviceId, vid)) {\n  std::lock_guard\u003cstd::mutex\u003e lk(info-\u003emutex_);\n  if (info-\u003esocket_) {\n    ids \u003d std::move(info-\u003ecbIds);\n    info-\u003esocket_-\u003eshutdown();\n  }\n  if (info-\u003eice_)\n    info-\u003eice_-\u003ecancelOperations();\n}\nfor (const auto\u0026 cbId : ids) {\n    if (auto cb \u003d sthis-\u003egetPendingCallback(cbId)) {\n        cb(nullptr);\n    }\n}",
+      "range": {
+        "startLine": 812,
+        "startChar": 0,
+        "endLine": 836,
+        "endChar": 0
+      },
+      "revId": "94bbbc681a45492e23971d0318627bbd11428b4c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
