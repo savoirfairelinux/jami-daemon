@@ -69,6 +69,9 @@ public:
     // Allows each protocol to return it's type.
     virtual Type getType() const = 0;
 
+    // Get protocol type as string.
+    virtual std::string getTypeName() const = 0;
+
     // Clear all known IGDs.
     virtual void clearIgds() = 0;
 
@@ -76,12 +79,7 @@ public:
     virtual void searchForIgd() = 0;
 
     // Sends a request to add a mapping.
-    virtual void requestMappingAdd(IGD* igd,
-                                   uint16_t port_external,
-                                   uint16_t port_internal,
-                                   PortType type)
-        = 0;
-
+    virtual void requestMappingAdd(IGD* igd, const Mapping& map) = 0;
     // Sends a request to remove a mapping.
     virtual void requestMappingRemove(const Mapping& igdMapping) = 0;
 
