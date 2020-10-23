@@ -10,7 +10,6 @@
         "0004-multiple_listeners.patch",
         "0005-fix_ebusy_turn.patch",
         "0006-ignore_ipv6_on_transport_check.patch",
-        "0007-pj_ice_sess.patch",
         "0008-fix_ioqueue_ipv6_sendto.patch",
         "0009-add-config-site.patch",
         "0011-fix-tcp-death-detection.patch",
