@@ -46,7 +46,6 @@ public:
         : Mapping(mapping.getPortExternal(),
                   mapping.getPortInternal(),
                   mapping.getType(),
-                  mapping.isUnique(),
                   mapping.getDescription())
         , users(users)
     {}
