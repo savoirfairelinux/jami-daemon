@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0e650f9e_4b3fbbfd",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 176,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-10-23T15:24:45Z",
+      "side": 1,
+      "message": "should be O(log(N)) if the key is complete (possible too with incomplete keys with a bit of work using std::map::equal_range)",
+      "range": {
+        "startLine": 169,
+        "startChar": 0,
+        "endLine": 176,
+        "endChar": 18
+      },
+      "revId": "3067dcfc15bb30ffb2579d6fac736f3ebc5738de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
