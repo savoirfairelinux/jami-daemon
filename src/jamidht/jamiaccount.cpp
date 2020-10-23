@@ -1800,10 +1800,22 @@ JamiAccount::registerAsyncOps()
 
     loadCachedProxyServer([onLoad](const std::string&) { onLoad(); });
 
-    if (upnp_) {
+    if (upnp_!= nullptr) {
+        // Release current mapping if any.
+        if (dhtPortMapping_.getPortExternal()) {
+            upnp_->requestMappingRemove(dhtPortMapping_);
+            dhtPortMapping_ = upnp::Mapping {};
+        }
+        upnp::Mapping map {dhtPort_, dhtPort_, upnp::PortType::UDP, "JAMI-DHT"};
         upnp_->requestMappingAdd(
             [this, onLoad, update = std::make_shared<bool>(false)](uint16_t port_used,
                                                                    bool success) {
+                if (success) {
+                    dhtPortMapping_ = upnp::Mapping { port_used, port_used, upnp::PortType::UDP, "DHT Port" };
+                } else {
+                    dhtPortMapping_ = upnp::Mapping {};
+                }
+
                 auto oldPort = static_cast<in_port_t>(dhtPortUsed_);
                 auto newPort = success ? port_used : dhtPort_;
                 if (*update) {
@@ -1816,21 +1828,19 @@ JamiAccount::registerAsyncOps()
                 } else {
                     *update = true;
                     if (success)
-                        JAMI_WARN("[Account %s] Starting DHT on port %u",
+                        JAMI_DBG("[Account %s] Starting DHT on port %u",
                                   getAccountID().c_str(),
                                   newPort);
                     else
-                        JAMI_WARN("[Account %s] Failed to open port %u: starting DHT anyways",
+                        JAMI_WARN("[Account %s] Failed to open port %u: starting DHT anyway",
                                   getAccountID().c_str(),
                                   oldPort);
-                    onLoad();
                 }
             },
-            dhtPort_,
-            upnp::PortType::UDP,
-            false);
-    } else
-        onLoad();
+            map);
+    }
+    // DHT will be started regardless if UPNP is available and/or successful.
+    onLoad();
 }
 
 void
@@ -2502,8 +2512,11 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
 
     dht_->join();
 
-    if (upnp_)
-        upnp_->requestMappingRemove(static_cast<in_port_t>(dhtPortUsed_), upnp::PortType::UDP);
+    // Release current upnp mapping if any.
+    if (upnp_ and dhtPortMapping_.getPortExternal()) {
+        upnp_->requestMappingRemove(dhtPortMapping_);
+        dhtPortMapping_ = upnp::Mapping {};
+    }
 
     lock.unlock();
 
@@ -3264,8 +3277,6 @@ JamiAccount::registerDhtAddress(IceTransport& ice)
 {
     const auto reg_addr = [&](IceTransport& ice, const IpAddr& ip) {
         JAMI_DBG("[Account %s] using public IP: %s", getAccountID().c_str(), ip.toString().c_str());
-        for (unsigned compId = 1; compId <= ice.getComponentCount(); ++compId)
-            ice.registerPublicIP(compId, ip);
         return ip;
     };
 

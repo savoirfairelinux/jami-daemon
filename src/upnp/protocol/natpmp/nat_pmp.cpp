@@ -25,6 +25,7 @@ namespace upnp {
 
 constexpr static unsigned int ADD_MAP_LIFETIME {3600};
 constexpr static unsigned int MAX_RESTART_SEARCH_RETRY {5};
+constexpr static unsigned int TIMEOUT_BEFORE_READ_RETRY {std::chrono::milliseconds(300)};
 
 NatPmp::NatPmp()
 {
@@ -195,10 +196,9 @@ NatPmp::searchForIgd()
 }
 
 void
-NatPmp::requestMappingAdd(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type)
+NatPmp::requestMappingAdd(IGD* igd, const Mapping& mapping)
 {
     std::unique_lock<std::mutex> lk(validIgdMutex_);
-    Mapping mapping {port_external, port_internal, type};
     if (pmpIGD_) {
         if (not igd->isMapInUse(mapping)) {
             if (pmpIGD_->publicIp_ == igd->publicIp_) {
@@ -239,9 +239,12 @@ NatPmp::addPortMapping(Mapping& mapping, bool renew)
     }
     while (pmpRun_) {
         natpmpresp_t response;
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
         auto r = readnatpmpresponseorretry(&natpmpHdl_, &response);
-        if (r != NATPMP_TRYAGAIN) {
+
+        if (r == NATPMP_TRYAGAIN) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_BEFORE_READ_RETRY));
+        } else {
             if (r < 0) {
                 JAMI_ERR("NAT-PMP: Can't register port mapping %s: %s",
                          mapping.toString().c_str(),
@@ -251,11 +254,11 @@ NatPmp::addPortMapping(Mapping& mapping, bool renew)
                                    + std::chrono::seconds(response.pnu.newportmapping.lifetime / 2);
                 if (pmpIGD_) {
                     if (not renew) {
-                        JAMI_WARN("NAT-PMP: Opened port %s", mapping.toString().c_str());
+                        JAMI_DBG("NAT-PMP: Opened port %s", mapping.toString().c_str());
                         lk2.unlock();
                         notifyContextPortOpenCb_(pmpIGD_->publicIp_, std::move(mapToAdd), true);
                     } else {
-                        JAMI_WARN("NAT-PMP: Renewed port %s", mapping.toString().c_str());
+                        JAMI_DBG("NAT-PMP: Renewed port %s", mapping.toString().c_str());
                     }
                     pmpIGD_->addMapToRenew(std::move(mapping));
                 }
@@ -308,12 +311,15 @@ NatPmp::removePortMapping(Mapping& mapping)
     }
     while (pmpRun_) {
         natpmpresp_t response;
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
         auto r = readnatpmpresponseorretry(&natpmpHdl_, &response);
-        if (r < 0 && r != NATPMP_TRYAGAIN) {
+
+        if (r == NATPMP_TRYAGAIN) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_BEFORE_READ_RETRY));
+        } else if (r < 0) {
             JAMI_ERR("NAT-PMP: Can't unregister port mapping %s", mapping.toString().c_str());
             break;
-        } else if (r != NATPMP_TRYAGAIN) {
+        } else {
             mapping.renewal_ = clock::now()
                                + std::chrono::seconds(response.pnu.newportmapping.lifetime / 2);
             if (pmpIGD_) {
@@ -364,13 +370,17 @@ NatPmp::searchForPmpIgd()
     }
     while (pmpRun_) {
         natpmpresp_t response;
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
         auto r = readnatpmpresponseorretry(&natpmpHdl_, &response);
-        std::unique_lock<std::mutex> lk2(validIgdMutex_);
-        if (r < 0 && r != NATPMP_TRYAGAIN) {
+
+        if (r == NATPMP_TRYAGAIN) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_BEFORE_READ_RETRY));
+        } else if (r < 0) {
+            std::unique_lock<std::mutex> lk2(validIgdMutex_);
             pmpIGD_->renewal_ = clock::now() + std::chrono::minutes(5);
             break;
-        } else if (r != NATPMP_TRYAGAIN) {
+        } else {
+            std::unique_lock<std::mutex> lk2(validIgdMutex_);
             restartSearchRetry_ = 0;
             pmpIGD_->localIp_ = ip_utils::getLocalAddr(AF_INET);
             pmpIGD_->publicIp_ = IpAddr(response.pnu.publicaddress.addr);
@@ -406,9 +416,12 @@ NatPmp::deleteAllPortMappings(int proto)
 
     while (pmpRun_) {
         natpmpresp_t response;
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
         auto r = readnatpmpresponseorretry(&natpmpHdl_, &response);
-        if (r != NATPMP_TRYAGAIN) {
+
+        if (r == NATPMP_TRYAGAIN) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_BEFORE_READ_RETRY));
+        } else {
             if (r < 0)
                 JAMI_ERR("NAT-PMP: Can't remove all port mappings: %s", getNatPmpErrorStr(r));
             break;

@@ -355,7 +355,7 @@ private:
     char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
     pj_str_t contactHeader_ {contactBuffer_, 0};
 
-    std::unique_ptr<jami::upnp::Controller> upnp_;
+    std::shared_ptr<jami::upnp::Controller> upnp_;
 
     /** Local audio port, as seen by me. */
     unsigned int localAudioPort_ {0};

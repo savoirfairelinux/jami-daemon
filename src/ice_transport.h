@@ -196,8 +196,6 @@ public:
 
     IpAddr getDefaultLocalAddress() const { return getLocalAddress(0); }
 
-    bool registerPublicIP(unsigned compId, const IpAddr& publicIP);
-
     /**
      * Return ICE session attributes
      */
