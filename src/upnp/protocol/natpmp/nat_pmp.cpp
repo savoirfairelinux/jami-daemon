@@ -195,10 +195,9 @@ NatPmp::searchForIgd()
 }
 
 void
-NatPmp::requestMappingAdd(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type)
+NatPmp::requestMappingAdd(IGD* igd, const Mapping& mapping)
 {
     std::unique_lock<std::mutex> lk(validIgdMutex_);
-    Mapping mapping {port_external, port_internal, type};
     if (pmpIGD_) {
         if (not igd->isMapInUse(mapping)) {
             if (pmpIGD_->publicIp_ == igd->publicIp_) {

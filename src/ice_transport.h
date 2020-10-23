@@ -104,7 +104,7 @@ struct IceTransportOptions
     bool tcpEnable {false}; // If we want to use TCP
     // See https://tools.ietf.org/html/rfc5245#section-8.1.1.2
     // Make negotiation aggressive by default to avoid latencies.
-    bool aggressive {true};
+    bool aggressive {false};
 };
 
 struct SDP
@@ -195,8 +195,6 @@ public:
     std::string getLastErrMsg() const;
 
     IpAddr getDefaultLocalAddress() const { return getLocalAddress(0); }
-
-    bool registerPublicIP(unsigned compId, const IpAddr& publicIP);
 
     /**
      * Return ICE session attributes

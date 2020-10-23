@@ -57,6 +57,9 @@ public:
     // Returns the protocol type.
     Type getType() const override { return Type::NAT_PMP; }
 
+    // Get protocol type as string.
+    virtual std::string getTypeName() const override { return {"NAT_PMP"};}
+
     // Notifies a change in network.
     void clearIgds() override;
 
@@ -64,10 +67,7 @@ public:
     void searchForIgd() override;
 
     // Tries to add mapping.
-    void requestMappingAdd(IGD* igd,
-                           uint16_t port_external,
-                           uint16_t port_internal,
-                           PortType type) override;
+    void requestMappingAdd(IGD* igd, const Mapping& mapping) override;
 
     // Removes a mapping.
     void requestMappingRemove(const Mapping& igdMapping) override;

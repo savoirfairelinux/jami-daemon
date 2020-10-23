@@ -97,6 +97,9 @@ public:
     // Returns the protocol type.
     Type getType() const override { return Type::PUPNP; }
 
+    // Get protocol type as a string.
+    virtual std::string getTypeName() const override { return {"PUPNP"};}
+
     // Notifies a change in network.
     void clearIgds() override;
 
@@ -104,10 +107,8 @@ public:
     void searchForIgd() override;
 
     // Tries to add mapping. Assumes mutex is already locked.
-    void requestMappingAdd(IGD* igd,
-                           uint16_t port_external,
-                           uint16_t port_internal,
-                           PortType type) override;
+    void requestMappingAdd(IGD* igd, const Mapping& mapping) override;
+
     // Treats the reception of an add mapping action answer.
     void processAddMapAction(const std::string_view& ctrlURL, IXML_Document* actionRequest);
 
@@ -168,6 +169,8 @@ private:
     bool actionDeletePortMappingAsync(const UPnPIGD& igd,
                                       const std::string& port_external,
                                       const std::string& protocol);
+    // Event type to string
+    static const char* eventTypeToString(Upnp_EventType eventType);
 
 private:
     NON_COPYABLE(PUPnP);
