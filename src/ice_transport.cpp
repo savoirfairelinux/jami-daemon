@@ -63,6 +63,7 @@ static constexpr int MAX_DESTRUCTION_TIMEOUT {3};
 
 using MutexGuard = std::lock_guard<std::mutex>;
 using MutexLock = std::unique_lock<std::mutex>;
+using namespace upnp;
 
 namespace {
 
@@ -117,6 +118,7 @@ public:
     IpAddr getLocalAddress(unsigned comp_id) const;
     IpAddr getRemoteAddress(unsigned comp_id) const;
     static const char* getCandidateType(const pj_ice_sess_cand* cand);
+    bool isTcpEnabled() const { return config_.protocol == PJ_ICE_TP_TCP; }
 
     std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> pool_ {};
     IceTransportCompleteCb on_initdone_cb_ {};
@@ -165,27 +167,17 @@ public:
         IpAddr addr;
         pj_ice_cand_transport transport;
     };
-    std::vector<LocalCandidate> getLocalICECandidates(unsigned comp_id) const;
 
-    /**
-     * Adds a reflective candidate to ICE session
-     * Must be called before negotiation
-     */
-    void addReflectiveCandidate(int comp_id,
-                                const IpAddr& base,
-                                const IpAddr& addr,
-                                const pj_ice_cand_transport& transport);
-
-    /**
-     * Creates UPnP port mappings and adds ICE candidates based on those mappings
-     */
-    void selectUPnPIceCandidates();
-
-    void setDefaultRemoteAddress(int comp_id, const IpAddr& addr);
-    const IpAddr& getDefaultRemoteAddress(int comp_id) const;
+    bool addStunConfig(int af);
+    void requestUpnpMappings();
+    void setupHostAndUpnpCandidates();
+    void setDefaultRemoteAddress(unsigned comp_id, const IpAddr& addr);
+    const IpAddr& getDefaultRemoteAddress(unsigned comp_id) const;
 
     std::unique_ptr<upnp::Controller> upnp_ {};
     std::mutex upnpMutex_ {};
+    std::vector<std::unique_ptr<Mapping>> upnpMappings_;
+    std::mutex upnpMappingsMutex_ {};
 
     bool onlyIPv4Private_ {true};
 
@@ -201,35 +193,21 @@ public:
     std::atomic_bool destroying_ {false};
     onShutdownCb scb {};
 
-    // Default remote adresses
-    std::vector<IpAddr> iceDefaultRemoteAddr_ {};
+    // Default remote addresses
+    std::vector<IpAddr> iceDefaultRemoteAddr_;
 };
 
 //==============================================================================
 
 /**
- * Add stun/turn servers or default host as candidates
+ * Add stun/turn configuration or default host as candidates
  */
-static void
-add_stun_server(pj_ice_strans_cfg& cfg, int af)
-{
-    if (cfg.stun_tp_cnt >= PJ_ICE_MAX_STUN)
-        throw std::runtime_error("Too many STUN servers");
-    auto& stun = cfg.stun_tp[cfg.stun_tp_cnt++];
-
-    pj_ice_strans_stun_cfg_default(&stun);
-    stun.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
-    stun.af = af;
-    stun.conn_type = cfg.stun.conn_type;
-
-    JAMI_DBG("[ice (%s)] added host stun server", (cfg.protocol == PJ_ICE_TP_TCP ? "TCP" : "UDP"));
-}
 
 static void
 add_stun_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const StunServerInfo& info)
 {
     if (cfg.stun_tp_cnt >= PJ_ICE_MAX_STUN)
-        throw std::runtime_error("Too many STUN servers");
+        throw std::runtime_error("Too many STUN configurations");
 
     IpAddr ip {info.uri};
 
@@ -323,6 +301,9 @@ IceTransport::Impl::Impl(const char* name,
     , thread_()
     , iceDefaultRemoteAddr_(component_count)
 {
+    JAMI_DBG("[ice:%p] Creating IceTransport session for \"%s\" - comp count %u - as a %s",
+        this, name, component_count, master ? "master" : "slave");
+
     sip_utils::register_thread();
     if (options.upnpEnable)
         upnp_.reset(new upnp::Controller(false));
@@ -347,9 +328,8 @@ IceTransport::Impl::Impl(const char* name,
 
     peerChannels_.resize(component_count_ + 1);
 
-    // Add local hosts (IPv4, IPv6) as stun candidates
-    add_stun_server(config_, pj_AF_INET6());
-    add_stun_server(config_, pj_AF_INET());
+    requestUpnpMappings();
+    setupHostAndUpnpCandidates();
 
     pool_.reset(
         pj_pool_create(iceTransportFactory.getPoolFactory(), "IceTransport.pool", 512, 512, NULL));
@@ -439,7 +419,7 @@ IceTransport::Impl::Impl(const char* name,
         }
     });
 
-    // Init to invalid adresses
+    // Init to invalid addresses
     iceDefaultRemoteAddr_.reserve(component_count);
 }
 
@@ -581,7 +561,6 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
             setInitiatorSession();
         else
             setSlaveSession();
-        selectUPnPIceCandidates();
     }
 
     if (op == PJ_ICE_STRANS_OP_INIT and on_initdone_cb_)
@@ -730,206 +709,148 @@ IceTransport::Impl::createIceSession(pj_ice_sess_role role)
     return true;
 }
 
-std::vector<IceTransport::Impl::LocalCandidate>
-IceTransport::Impl::getLocalICECandidates(unsigned comp_id) const
+bool
+IceTransport::Impl::addStunConfig(int af)
 {
-    std::vector<LocalCandidate> cand_addrs;
-    pj_ice_sess_cand cand[PJ_ARRAY_SIZE(cand_)];
-    unsigned cand_cnt = PJ_ARRAY_SIZE(cand);
-
-    if (pj_ice_strans_enum_cands(icest_.get(), comp_id, &cand_cnt, cand) != PJ_SUCCESS) {
-        JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", this);
-        return cand_addrs;
+    if (config_.stun_tp_cnt >= PJ_ICE_MAX_STUN) {
+        JAMI_ERR("Max number of STUN configurations reached (%i)", PJ_ICE_MAX_STUN);
+        return false;
     }
 
-    for (unsigned i = 0; i < cand_cnt; ++i) {
-        cand_addrs.push_back({cand[i].addr, cand[i].transport});
+    if (af != pj_AF_INET() and af != pj_AF_INET6()) {
+        JAMI_ERR("Invalid address familly (%i)", af);
+        return false;
     }
 
-    return cand_addrs;
+    auto& stun = config_.stun_tp[config_.stun_tp_cnt++];
+
+    pj_ice_strans_stun_cfg_default(&stun);
+    stun.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
+    stun.af = af;
+    stun.conn_type = config_.stun.conn_type;
+
+    JAMI_DBG("[ice:%p)] added host stun server for %s transport",
+        this, config_.protocol == PJ_ICE_TP_TCP ? "TCP" : "UDP");
+
+    return true;
 }
 
 void
-IceTransport::Impl::addReflectiveCandidate(int comp_id,
-                                           const IpAddr& base,
-                                           const IpAddr& addr,
-                                           const pj_ice_cand_transport& transport)
+IceTransport::Impl::requestUpnpMappings()
 {
-    // HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK
-    // WARNING: following implementation is a HACK of PJNATH !!
-    // ice_strans doesn't have any API that permit to inject ICE any kind of
-    // candidates. So, the hack consists in accessing hidden ICE session using a
-    // patched PJPNATH library with a new API exposing this session
-    // (pj_ice_strans_get_ice_sess). Then call pj_ice_sess_add_cand() with a
-    // carfully forged candidate: the transport_id field uses an index in ICE
-    // transport STUN servers array corresponding to a STUN server with the same
-    // address familly. This implies we hope they'll not be modification of
-    // transport_id meaning in future and no conflics with the borrowed STUN
-    // config.
-    // HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK
-    sip_utils::register_thread();
+    // Must be called once !
 
-    // borrowed from pjproject/pjnath/ice_strans.c, modified to be C++11'ized.
-    static auto CREATE_TP_ID = [](pj_uint8_t type, pj_uint8_t idx) {
-        return (pj_uint8_t)((type << 6) | idx);
-    };
-    static constexpr int SRFLX_PREF = 65535;
-    static constexpr int TP_STUN = 1;
+    IpAddr localIp {};
+    IpAddr publicIp {};
 
-    // find a compatible STUN host with same address familly, normally all system
-    // enabled host addresses are represented, so we expect to always found this
-    // host
-    int idx = -1;
-    auto af = addr.getFamily();
-    if (af == AF_UNSPEC) {
-        JAMI_ERR("[ice:%p] Unable to add reflective IP %s: unknown addess familly",
-                 this,
-                 addr.toString().c_str());
+    std::lock_guard<std::mutex> lock(upnpMutex_);
+
+    if (upnp_ == nullptr)
         return;
-    }
 
-    for (unsigned i = 0; i < config_.stun_tp_cnt; ++i) {
-        if (config_.stun_tp[i].af == af) {
-            idx = i;
-            break;
+    auto transport = isTcpEnabled() ? PJ_CAND_TCP_PASSIVE : PJ_CAND_UDP;
+    auto portType = transport == PJ_CAND_UDP ? PortType::UDP : PortType::TCP;
+    localIp = upnp_->getLocalIP();
+    publicIp = upnp_->getExternalIP();
+
+    // Request upnp mapping for each component.
+    for (unsigned compId = 1; compId <= component_count_; compId++) {
+        // Set port number to 0 to get any available port.
+        Mapping map {0, 0, portType};
+        // Request the mapping
+        uint16_t port = upnp_->requestMappingAdd(
+            [this, map](uint16_t allocatedPort, bool success) {
+                if (success) {
+                    JAMI_DBG("[ice:%p]: Successfully allocated port %u [%s]",
+                        this, allocatedPort, map.getTypeStr().c_str());
+                } else {
+                    JAMI_WARN("[ice:%p]: Could not allocate for %s transport",
+                        this, map.getTypeStr().c_str());
+                }
+            },
+        map);
+
+        // Note that even if the returned port number is valid, the mapping
+        // might not be readily available. This is can happen if there is no
+        // port already provisioned. In this case a new mapping is requested
+        // and may take time for the IGD to grant the mapping.
+        // Hopefully, the mapping will be ready when the ICE connectivity
+        // checks are performed.
+        if (port > 0) {
+            std::lock_guard<std::mutex> lock(upnpMappingsMutex_);
+            upnpMappings_.emplace_back(std::make_unique<Mapping>(port, port, portType));
         }
     }
-    if (idx < 0) {
-        JAMI_ERR("[ice:%p] Unable to add reflective IP %s: no suitable local STUN "
-                 "host found",
-                 this,
-                 addr.toString().c_str());
-        return;
-    }
-
-    pj_ice_sess_cand cand;
-
-    cand.type = PJ_ICE_CAND_TYPE_SRFLX;
-    cand.status = PJ_EPENDING; // not used
-    cand.comp_id = comp_id;
-    cand.transport_id = CREATE_TP_ID(TP_STUN, idx); // HACK!!
-    cand.local_pref = SRFLX_PREF;                   // reflective
-    cand.transport = transport;
-    /* cand.foundation = ? */
-    /* cand.prio = calculated by ice session */
-    /* make base and addr the same since we're not going through a server */
-    pj_sockaddr_cp(&cand.base_addr, base.pjPtr());
-    pj_sockaddr_cp(&cand.addr, addr.pjPtr());
-    pj_sockaddr_cp(&cand.rel_addr, &cand.base_addr);
-    pj_ice_calc_foundation(pool_.get(), &cand.foundation, cand.type, &cand.base_addr);
-
-    std::lock_guard<std::mutex> lk(iceMutex_);
-    if (!icest_)
-        return;
-    auto ret = pj_ice_sess_add_cand(pj_ice_strans_get_ice_sess(icest_.get()),
-                                    cand.comp_id,
-                                    cand.transport_id,
-                                    cand.type,
-                                    cand.local_pref,
-                                    &cand.foundation,
-                                    &cand.addr,
-                                    &cand.base_addr,
-                                    &cand.rel_addr,
-                                    pj_sockaddr_get_len(&cand.addr),
-                                    NULL,
-                                    cand.transport);
-
-    if (ret != PJ_SUCCESS) {
-        last_errmsg_ = sip_utils::sip_strerror(ret);
-        JAMI_ERR("[ice:%p] pj_ice_sess_add_cand failed with error %d: %s",
-                 this,
-                 ret,
-                 last_errmsg_.c_str());
-        JAMI_ERR("[ice:%p] failed to add candidate for comp_id=%d : %s : %s",
-                 this,
-                 comp_id,
-                 base.toString().c_str(),
-                 addr.toString().c_str());
-    } else {
-        JAMI_DBG("[ice:%p] succeed to add candidate for comp_id=%d : %s : %s",
-                 this,
-                 comp_id,
-                 base.toString().c_str(),
-                 addr.toString().c_str());
-    }
 }
 
 void
-IceTransport::Impl::selectUPnPIceCandidates()
+IceTransport::Impl::setupHostAndUpnpCandidates()
 {
-    // For every component, get the candidate(s)
-    // Create a port mapping either with that port, or with an available port
-    // Add candidate with that port and public IP
-    std::lock_guard<std::mutex> lk(upnpMutex_);
-    if (upnp_) {
-        auto publicIp = upnp_->getExternalIP();
-        if (not publicIp) {
-            JAMI_WARN("[ice:%p] Could not determine public IP for ICE candidates", this);
+
+    JAMI_DBG("[ice:%p]: Setup host and UPNP candidates", this);
+
+    // STUN configs layout:
+    // - index 0 : host IPv4
+    // - index 1 : host IPv6
+    // - index 2 : upnp/srflx IPv4.
+
+    config_.stun_tp_cnt = 0;
+    if (not addStunConfig(pj_AF_INET()))
+        return;
+    if (not addStunConfig(pj_AF_INET6()))
+        return;
+
+    IpAddr localIp {};
+    IpAddr publicIp {};
+
+    {
+        std::lock_guard<std::mutex> lock(upnpMutex_);
+        if (upnp_ == nullptr)
             return;
-        }
-        auto localIp = upnp_->getLocalIP();
-        if (not localIp) {
-            JAMI_WARN("[ice:%p] Could not determine local IP for ICE candidates", this);
-            return;
-        }
-        // Use local list to store needed ports with their corresponding port type.
-        auto upnpIceCntr = 0;
-        for (unsigned comp_id = 1; comp_id <= component_count_; ++comp_id) {
-            auto candidates = getLocalICECandidates(comp_id);
-            for (const auto& candidate : candidates) {
-                if (candidate.transport == PJ_CAND_TCP_ACTIVE)
-                    continue; // We don't need to map port 9.
-                localIp.setPort(candidate.addr.getPort());
-                if (candidate.addr != localIp)
-                    continue;
-                uint16_t port = candidate.addr.getPort();
-                auto portType = candidate.transport == PJ_CAND_UDP ? upnp::PortType::UDP
-                                                                   : upnp::PortType::TCP;
-                // Request port
-                upnpIceCntr++;
-                JAMI_DBG("[ice:%p] UPnP: Trying to open port %d for ICE comp %d/%d and adding "
-                         "candidate with public IP",
-                         this,
-                         port,
-                         upnpIceCntr,
-                         component_count_);
-                upnp_->requestMappingAdd(
-                    [this, candidate, comp_id](uint16_t port_used, bool success) {
-                        if (upnp_) {
-                            std::lock_guard<std::mutex> lk(upnpMutex_);
-                            auto publicIp = upnp_->getExternalIP();
-                            if (not publicIp) {
-                                JAMI_WARN(
-                                    "[ice:%p] Could not determine public IP for ICE candidates",
-                                    this);
-                                return;
-                            }
-                            auto localIp = upnp_->getLocalIP();
-                            if (not localIp) {
-                                JAMI_WARN(
-                                    "[ice:%p] Could not determine local IP for ICE candidates",
-                                    this);
-                                return;
-                            }
-                            if (success and port_used == candidate.addr.getPort()) {
-                                publicIp.setPort(port_used);
-                                addReflectiveCandidate(comp_id,
-                                                       candidate.addr,
-                                                       publicIp,
-                                                       candidate.transport);
-                            }
-                        }
-                    },
-                    port,
-                    portType,
-                    true);
-            }
+        localIp = upnp_->getLocalIP();
+        publicIp = upnp_->getExternalIP();
+    }
+
+    // Add config for UPNP candidates.
+    if (not addStunConfig(pj_AF_INET()))
+        return;
+
+    assert(config_.stun_tp_cnt > 0 && config_.stun_tp_cnt < PJ_ICE_MAX_STUN);
+    auto& stun = config_.stun_tp[config_.stun_tp_cnt - 1];
+
+    std::lock_guard<std::mutex> lock(upnpMappingsMutex_);
+
+    // Abort if not enough mapped ports.
+    if (upnpMappings_.size() < component_count_)
+        return;
+
+    // Reset user mapping counter.
+    stun.cfg.user_mapping_cnt = 0;
+
+    // Add allocated mappings
+    for (unsigned compIdx = 0; compIdx < component_count_; compIdx++) {
+        if (stun.cfg.user_mapping_cnt < PJ_ICE_MAX_COMP) {
+            localIp.setPort(upnpMappings_[compIdx]->getPortInternal());
+            publicIp.setPort(upnpMappings_[compIdx]->getPortExternal());
+
+            JAMI_DBG("[ice:%p]: Set upnp mapping %s (%s) -> %s (%s) for comp %u",
+                this,
+                localIp.toString(true).c_str(),
+                localIp.getFamily() == pj_AF_INET() ? "IPv4" : localIp.getFamily() == pj_AF_INET6() ? "IPv6" : "unknown",
+                publicIp.toString(true).c_str(),
+                publicIp.getFamily() == pj_AF_INET() ? "IPv4" : localIp.getFamily() == pj_AF_INET6() ? "IPv6" : "unknown",
+                compIdx+1);
+
+            pj_sockaddr_cp(&stun.cfg.user_mapping[compIdx].mapped_addr, publicIp.pjPtr());
+            pj_sockaddr_cp(&stun.cfg.user_mapping[compIdx].local_addr, localIp.pjPtr());
+
+            stun.cfg.user_mapping_cnt++;
         }
     }
 }
 
 void
-IceTransport::Impl::setDefaultRemoteAddress(int comp_id, const IpAddr& addr)
+IceTransport::Impl::setDefaultRemoteAddress(unsigned comp_id, const IpAddr& addr)
 {
     // Component ID must be valid.
     assert(comp_id < component_count_);
@@ -940,7 +861,7 @@ IceTransport::Impl::setDefaultRemoteAddress(int comp_id, const IpAddr& addr)
 }
 
 const IpAddr&
-IceTransport::Impl::getDefaultRemoteAddress(int comp_id) const
+IceTransport::Impl::getDefaultRemoteAddress(unsigned comp_id) const
 {
     // Component ID must be valid.
     assert(comp_id < component_count_);
@@ -1056,20 +977,20 @@ bool
 IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>& rem_candidates)
 {
     if (not isInitialized()) {
-        JAMI_ERR("[ice:%p] not initialized transport", this);
+        JAMI_ERR("[ice:%p] not initialized transport", pimpl_.get());
         pimpl_->is_stopped_ = true;
         return false;
     }
 
     // pj_ice_strans_start_ice crashes if remote candidates array is empty
     if (rem_candidates.empty()) {
-        JAMI_ERR("[ice:%p] start failed: no remote candidates", this);
+        JAMI_ERR("[ice:%p] start failed: no remote candidates", pimpl_.get());
         pimpl_->is_stopped_ = true;
         return false;
     }
 
     pj_str_t ufrag, pwd;
-    JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)", this, rem_candidates.size());
+    JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)", pimpl_.get(), rem_candidates.size());
     auto status = pj_ice_strans_start_ice(pimpl_->icest_.get(),
                                           pj_strset(&ufrag,
                                                     (char*) rem_attrs.ufrag.c_str(),
@@ -1081,7 +1002,7 @@ IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>&
                                           rem_candidates.data());
     if (status != PJ_SUCCESS) {
         pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
-        JAMI_ERR("[ice:%p] start failed: %s", this, pimpl_->last_errmsg_.c_str());
+        JAMI_ERR("[ice:%p] start failed: %s", pimpl_.get(), pimpl_->last_errmsg_.c_str());
         pimpl_->is_stopped_ = true;
         return false;
     }
@@ -1093,12 +1014,12 @@ bool
 IceTransport::start(const SDP& sdp)
 {
     if (not isInitialized()) {
-        JAMI_ERR("[ice:%p] not initialized transport", this);
+        JAMI_ERR("[ice:%p] not initialized transport", pimpl_.get());
         pimpl_->is_stopped_ = true;
         return false;
     }
 
-    JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)", this, sdp.candidates.size());
+    JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)", pimpl_.get(), sdp.candidates.size());
     pj_str_t ufrag, pwd;
 
     std::vector<IceCandidate> rem_candidates;
@@ -1120,7 +1041,7 @@ IceTransport::start(const SDP& sdp)
                                           rem_candidates.data());
     if (status != PJ_SUCCESS) {
         pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
-        JAMI_ERR("[ice:%p] start failed: %s", this, pimpl_->last_errmsg_.c_str());
+        JAMI_ERR("[ice:%p] start failed: %s", pimpl_.get(), pimpl_->last_errmsg_.c_str());
         pimpl_->is_stopped_ = true;
         return false;
     }
@@ -1139,7 +1060,7 @@ IceTransport::stop()
         auto status = pj_ice_strans_stop_ice(pimpl_->icest_.get());
         if (status != PJ_SUCCESS) {
             pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
-            JAMI_ERR("ICE stop failed: %s", pimpl_->last_errmsg_.c_str());
+            JAMI_ERR("[ice:%p] ICE stop failed: %s", pimpl_.get(), pimpl_->last_errmsg_.c_str());
             return false;
         }
     }
@@ -1194,7 +1115,7 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
             return res;
         if (pj_ice_strans_enum_cands(pimpl_->icest_.get(), comp_id + 1, &cand_cnt, cand)
             != PJ_SUCCESS) {
-            JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", this);
+            JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", pimpl_.get());
             return res;
         }
     }
@@ -1241,34 +1162,6 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
     }
 
     return res;
-}
-
-bool
-IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
-{
-    if (not isInitialized()) {
-        JAMI_ERR("[ice:%p] registerPublicIP() called on non initialized transport", this);
-        return false;
-    }
-
-    // Find the local candidate corresponding to local host,
-    // then register a rflx candidate using given public address
-    // and this local address as base. It's port is used for both address
-    // even if on the public side it have strong probabilities to not exist.
-    // But as this candidate is made after initialization, it's not used during
-    // negotiation, only to exchanged candidates between peers.
-    auto localIP = ip_utils::getLocalAddr(publicIP.getFamily());
-    auto pubIP = publicIP;
-    for (const auto& cand : pimpl_->getLocalICECandidates(compId)) {
-        auto port = cand.addr.getPort();
-        localIP.setPort(port);
-        if (cand.addr != localIP)
-            continue;
-        pubIP.setPort(port);
-        pimpl_->addReflectiveCandidate(compId, cand.addr, pubIP, cand.transport);
-        return true;
-    }
-    return false;
 }
 
 std::vector<uint8_t>
@@ -1336,7 +1229,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand) c
                  type,
                  tcp_type);
     if (cnt != 7 && cnt != 8) {
-        JAMI_ERR("[ice:%p] Invalid ICE candidate line", this);
+        JAMI_ERR("[ice:%p] Invalid ICE candidate line", pimpl_.get());
         return false;
     }
 
@@ -1355,7 +1248,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand) c
     else if (strcmp(type, "relay") == 0)
         cand.type = PJ_ICE_CAND_TYPE_RELAYED;
     else {
-        JAMI_WARN("[ice:%p] invalid remote candidate type '%s'", this, type);
+        JAMI_WARN("[ice:%p] invalid remote candidate type '%s'", pimpl_.get(), type);
         return false;
     }
 
@@ -1367,7 +1260,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand) c
         else if (strcmp(tcp_type, "so") == 0)
             cand.transport = PJ_CAND_TCP_SO;
         else {
-            JAMI_WARN("[ice:%p] invalid transport type type '%s'", this, tcp_type);
+            JAMI_WARN("[ice:%p] invalid transport type type '%s'", pimpl_.get(), tcp_type);
             return false;
         }
     } else {
@@ -1388,7 +1281,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand) c
     pj_sockaddr_init(af, &cand.addr, NULL, 0);
     status = pj_sockaddr_set_str_addr(af, &cand.addr, &tmpaddr);
     if (status != PJ_SUCCESS) {
-        JAMI_WARN("[ice:%p] invalid IP address '%s'", this, ipaddr);
+        JAMI_WARN("[ice:%p] invalid IP address '%s'", pimpl_.get(), ipaddr);
         return false;
     }
 
@@ -1456,7 +1349,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
     auto remote = getRemoteAddress(comp_id);
 
     if (!remote) {
-        JAMI_ERR("[ice:%p] can't find remote address for component %d", this, comp_id);
+        JAMI_ERR("[ice:%p] can't find remote address for component %d", pimpl_.get(), comp_id);
         errno = EINVAL;
         return -1;
     }
@@ -1479,7 +1372,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
             errno = EAGAIN;
         } else {
             pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
-            JAMI_ERR("[ice:%p] ice send failed: %s", this, pimpl_->last_errmsg_.c_str());
+            JAMI_ERR("[ice:%p] ice send failed: %s", pimpl_.get(), pimpl_->last_errmsg_.c_str());
             errno = EIO;
         }
         return -1;
@@ -1495,7 +1388,7 @@ IceTransport::waitForInitialization(std::chrono::milliseconds timeout)
     if (!pimpl_->iceCV_.wait_for(lk, timeout, [this] {
             return pimpl_->threadTerminateFlags_ or pimpl_->_isInitialized() or pimpl_->_isFailed();
         })) {
-        JAMI_WARN("[ice:%p] waitForInitialization: timeout", this);
+        JAMI_WARN("[ice:%p] waitForInitialization: timeout", pimpl_.get());
         return -1;
     }
     return not(pimpl_->threadTerminateFlags_ or pimpl_->_isFailed());
@@ -1508,7 +1401,7 @@ IceTransport::waitForNegotiation(std::chrono::milliseconds timeout)
     if (!pimpl_->iceCV_.wait_for(lk, timeout, [this] {
             return pimpl_->threadTerminateFlags_ or pimpl_->_isRunning() or pimpl_->_isFailed();
         })) {
-        JAMI_WARN("[ice:%p] waitForIceNegotiation: timeout", this);
+        JAMI_WARN("[ice:%p] waitForIceNegotiation: timeout", pimpl_.get());
         return -1;
     }
     return not(pimpl_->threadTerminateFlags_ or pimpl_->_isFailed());
@@ -1566,7 +1459,7 @@ IceTransport::parseSDPList(const std::vector<uint8_t>& msg)
 bool
 IceTransport::isTCPEnabled()
 {
-    return pimpl_->config_.protocol == PJ_ICE_TP_TCP;
+    return pimpl_->isTcpEnabled();
 }
 
 ICESDP
