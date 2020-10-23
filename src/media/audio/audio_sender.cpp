@@ -93,6 +93,7 @@ AudioSender::setup(SocketPair& socketPair)
     auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
     audioInput_ = jami::getAudioInput(id_);
     audioInput_->setFormat(codec->audioformat);
+    audioInput_->setMuted(muteState_);
     audioInput_->attach(this);
     return true;
 }
