@@ -47,6 +47,15 @@ ToneControl::setSampleRate(unsigned rate)
         telephoneTone_.reset(new TelephoneTone(prefs_.getZoneToneChoice(), rate));
     else
         telephoneTone_->setSampleRate(rate);
+    if (!audioFile_) {
+        return;
+    }
+    auto path = audioFile_->getFilePath();
+    try {
+        audioFile_.reset(new AudioFile(path, sampleRate_));
+    } catch (const AudioFileException& e) {
+        JAMI_WARN("Audio file error: %s", e.what());
+    }
 }
 
 std::shared_ptr<AudioLoop>
