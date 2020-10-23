@@ -24,19 +24,10 @@
 namespace jami {
 namespace upnp {
 
-static uint16_t
-generateRandomPort(uint16_t min, uint16_t max)
-{
-    // Seed the generator.
-    static std::mt19937 gen(dht::crypto::getSeededRandomEngine());
-    // Define the range.
-    std::uniform_int_distribution<uint16_t> dist(min, max);
-    return dist(gen);
-}
-
 std::shared_ptr<UPnPContext>
 getUPnPContext()
 {
+    // This is the unique shared instance (singleton) of UPnPContext class.
     static auto context = std::make_shared<UPnPContext>();
     return context;
 }
@@ -45,12 +36,14 @@ UPnPContext::UPnPContext()
 {
     using namespace std::placeholders;
 #if HAVE_LIBNATPMP
-    auto natPmp = std::make_unique<NatPmp>();
-    natPmp->setOnPortMapAdd(std::bind(&UPnPContext::onMappingAdded, this, _1, _2, _3));
-    natPmp->setOnPortMapRemove(std::bind(&UPnPContext::onMappingRemoved, this, _1, _2, _3));
-    natPmp->setOnIgdChanged(std::bind(&UPnPContext::igdListChanged, this, _1, _2, _3, _4));
-    natPmp->searchForIgd();
-    protocolList_.push_back(std::move(natPmp));
+    if (enableNatPmp_) {
+        auto natPmp = std::make_unique<NatPmp>();
+        natPmp->setOnPortMapAdd(std::bind(&UPnPContext::onMappingAdded, this, _1, _2, _3));
+        natPmp->setOnPortMapRemove(std::bind(&UPnPContext::onMappingRemoved, this, _1, _2, _3));
+        natPmp->setOnIgdChanged(std::bind(&UPnPContext::igdListChanged, this, _1, _2, _3, _4));
+        natPmp->searchForIgd();
+        protocolList_.push_back(std::move(natPmp));
+    }
 #endif
 #if HAVE_LIBUPNP
     auto pupnp = std::make_unique<PUPnP>();
@@ -60,11 +53,51 @@ UPnPContext::UPnPContext()
     pupnp->searchForIgd();
     protocolList_.push_back(std::move(pupnp));
 #endif
+
+    // Set port ranges
+    portRange_[0] = { 20000, 20500 }; // UDP.
+    portRange_[1] = { 1000, 9999 }; // TCP.
+
+    // Provision now.
+    preAllocateProvisionedPorts(PortType::TCP, 5);
+    preAllocateProvisionedPorts(PortType::UDP, 8);
 }
 
 UPnPContext::~UPnPContext()
 {
-    igdList_.clear();
+    requestAllMappingRemove(PortType::UDP);
+    requestAllMappingRemove(PortType::TCP);
+    {
+        std::lock_guard<std::mutex> lock(igdListMutex_);
+        igdList_.clear();
+    }
+    {
+        std::lock_guard<std::mutex> lock(mapProvisionListMutex_);
+        for (auto& it : mapProvisionList_)
+            it.clear();
+    }
+}
+
+uint16_t
+UPnPContext::generateRandomPort(uint16_t min, uint16_t max, bool mustBeEven)
+{
+    if (min >= max){
+        JAMI_ERR("Max port number (%i) must be greater than min port number (%i) !",
+            max, min);
+        return 0;
+    }
+
+    int fact = mustBeEven ? 2 : 1;
+    if (mustBeEven) {
+        min /= fact;
+        max /= fact;
+    }
+
+    // Seed the generator.
+    static std::mt19937 gen(dht::crypto::getSeededRandomEngine());
+    // Define the range.
+    std::uniform_int_distribution<uint16_t> dist(min, max);
+    return dist(gen) * fact;
 }
 
 void
@@ -74,7 +107,7 @@ UPnPContext::connectivityChanged()
 
     // Trigger controllers onConnectionChanged
     {
-        std::lock_guard<std::mutex> lk(cbListMutex_);
+        std::lock_guard<std::mutex> lock(mapCbListMutex_);
         for (auto const& ctrl : mapCbList_)
             ctrl.second.onConnectionChanged();
     }
@@ -84,9 +117,16 @@ UPnPContext::connectivityChanged()
         protocol->clearIgds();
 
     {
-        std::lock_guard<std::mutex> lk(igdListMutex_);
+        std::lock_guard<std::mutex> lock(igdListMutex_);
         if (not igdList_.empty())
             igdList_.clear();
+    }
+
+    {
+        std::lock_guard<std::mutex> lk(mapProvisionListMutex_);
+        // CLear provisioned mappings.
+        for (auto& it : mapProvisionList_)
+            it.clear();
     }
 
     // Restart search for UPnP
@@ -123,7 +163,7 @@ IpAddr
 UPnPContext::getLocalIP() const
 {
     // Lock mutex on the igd list.
-    std::lock_guard<std::mutex> igdListLock(igdListMutex_);
+    std::lock_guard<std::mutex> lock(igdListMutex_);
 
     // Return first valid local Ip.
     if (not igdList_.empty()) {
@@ -142,7 +182,7 @@ IpAddr
 UPnPContext::getExternalIP() const
 {
     // Lock mutex on the igd list.
-    std::lock_guard<std::mutex> igdListLock(igdListMutex_);
+    std::lock_guard<std::mutex> lock(igdListMutex_);
 
     // Return first valid external Ip.
     if (not igdList_.empty()) {
@@ -157,12 +197,155 @@ UPnPContext::getExternalIP() const
     return {};
 }
 
-bool
-UPnPContext::isIgdInList(const IpAddr& publicIpAddr)
+const Mapping
+UPnPContext::selectProvisionedMapping(const Mapping& requestedMap)
 {
+    std::lock_guard<std::mutex> lk(mapProvisionListMutex_);
+    unsigned typeIdx = requestedMap.getType() == PortType::UDP ? 0 : 1;
+    auto desiredPort = requestedMap.getPortExternal();
+
+    JAMI_DBG("UPnP: Searching for available [%s] port in a list of %li entries",
+        requestedMap.getTypeStr().c_str(), mapProvisionList_[typeIdx].size());
+
+    if (desiredPort == 0) {
+        JAMI_DBG("UPnP: Desired port is not set, will provide the first available port for [%s]",
+            requestedMap.getTypeStr().c_str());
+    } else {
+        JAMI_DBG("UPnP: Try to find mapping for port %i [%s]",
+            desiredPort, requestedMap.getTypeStr().c_str());
+    }
+
+    // TODO. Optimize this
+    for (auto it = mapProvisionList_[typeIdx].begin(); it != mapProvisionList_[typeIdx].end(); it++) {
+        auto& map = it->second;
+        // If the desired port is null, we pick the first available port.
+        if ( (desiredPort == 0 or map.getPortExternal() == desiredPort) and map.isAvailable()) {
+            map.setAvailable(false);
+            map.setDescription(requestedMap.getDescription());
+            return map;
+        }
+    }
+
+    JAMI_WARN("UPnP: Did not find provisioned mapping for port %i [%s]",
+        desiredPort, requestedMap.getTypeStr().c_str());
+
+    return {};
+}
+
+void
+UPnPContext::unselectProvisionedPort(upnp::PortType type, uint16_t port)
+{
+    std::lock_guard<std::mutex> lk(mapProvisionListMutex_);
+
+    unsigned typeIdx = type == PortType::UDP ? 0 : 1;
+    auto it = mapProvisionList_[typeIdx].find(port);
+
+    if (it != mapProvisionList_[typeIdx].end()) {
+        if(not it->second.isAvailable()) {
+            // Make the mapping available for future use.
+            it->second.setAvailable(true);
+        } else {
+            JAMI_WARN("UPnP: Trying to release an unused mapping %s",
+                it->second.toString().c_str());
+        }
+    } else {
+        JAMI_WARN("UPnP: Trying to release an un-existing mapping for port %i", port);
+    }
+}
+
+uint16_t UPnPContext::getAvailablePortNumber(PortType type, uint16_t minPort, uint16_t maxPort)
+{
+    // Only return the an availalable random port. No actual
+    // reservation is made here.
+
+    if (minPort > maxPort) {
+        JAMI_ERR("UPnP: Min port %i can not be greater than max port",
+            minPort, maxPort);
+        return 0;
+    }
+
+    unsigned typeIdx = type == PortType::UDP ? 0 : 1;
+    if (minPort == 0)
+        minPort = portRange_[typeIdx].first;
+    if (maxPort == 0)
+        maxPort = portRange_[typeIdx].second;
+
+    constexpr int MAX_TRY_COUNT = 20;
+    int tryCount = 0;
+    while (tryCount++ < MAX_TRY_COUNT) {
+        uint16_t port = generateRandomPort(minPort, maxPort);
+        if (mapProvisionList_[typeIdx].find(port) == mapProvisionList_[typeIdx].end())
+            return port;
+    }
+
+    // Very unlikely to get here.
+    JAMI_ERR("UPnP: Could not find an available port after %i trials", MAX_TRY_COUNT);
+    return 0;
+}
+
+bool
+UPnPContext::provisionPort(IGD* igd, const Mapping& requestedMap)
+{
+    JAMI_DBG("UPnPContext: Provision for mapping %s on IGD %s",
+        requestedMap.toString().c_str(), igd->publicIp_.toString(true).c_str());
+
+    unsigned typeIdx = requestedMap.getType() == PortType::UDP ? 0 : 1;
+    auto ret = mapProvisionList_[typeIdx].insert(std::make_pair(requestedMap.getPortExternal(), requestedMap));
+
+    if (ret.second) {
+
+        // Request the mapping
+        for (auto const& protocol : protocolList_)
+            protocol->requestMappingAdd(igd, requestedMap);
+
+        return true;
+    }
+
+    JAMI_WARN("UPnPContext: Mapping %s already provisionned !",
+        requestedMap.toString().c_str());
+
+    return false;
+}
+
+bool
+UPnPContext::preAllocateProvisionedPorts(PortType type, unsigned portCount, uint16_t minPort, uint16_t maxPort)
+{
+    JAMI_DBG("UPnPContext: Try provision %i [%s] ports",
+        portCount, Mapping::getTypeStr(type).c_str());
+
+    unsigned int provPortsFound = 0;
+
+    while (provPortsFound < portCount) {
+        auto port = getAvailablePortNumber(type, minPort, maxPort);
+        if (port > 0) {
+            // Found an available port number
+            provPortsFound++;
+            Mapping map {port, port, type, "JAMI", true};
+            // Build the control data structure.
+            ControllerData ctrlData {};
+            ctrlData.id = 0;
+            ctrlData.keepCb = true;
+            ctrlData.onMapAdded = [](const Mapping& map, bool success) {};
+            ctrlData.onMapRemoved = [this](const Mapping& map, bool) {};
+            ctrlData.onConnectionChanged = [this]() {};
+            requestMappingAdd(ControllerData {ctrlData}, map);
+        } else {
+            // Very unlikely to get here !
+            JAMI_ERR("UPnPContext: Can not find any available port to provision !");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool
+UPnPContext::isIgdInList(const UPnPProtocol* protocol, const IpAddr& publicIpAddr)
+{
+    std::lock_guard<std::mutex> lock(igdListMutex_);
     for (auto const& item : igdList_) {
         if (item.second->publicIp_) {
-            if (item.second->publicIp_ == publicIpAddr) {
+            if (item.first == protocol && item.second->publicIp_ == publicIpAddr) {
                 return true;
             }
         }
@@ -173,6 +356,7 @@ UPnPContext::isIgdInList(const IpAddr& publicIpAddr)
 UPnPProtocol::Type
 UPnPContext::getIgdProtocol(IGD* igd)
 {
+    std::lock_guard<std::mutex> lock(igdListMutex_);
     for (auto const& item : igdList_) {
         if (item.second->publicIp_ == igd->publicIp_) {
             return item.first->getType();
@@ -185,10 +369,13 @@ UPnPContext::getIgdProtocol(IGD* igd)
 bool
 UPnPContext::igdListChanged(UPnPProtocol* protocol, IGD* igd, IpAddr publicIpAddr, bool added)
 {
-    std::lock_guard<std::mutex> igdListLock(igdListMutex_);
     if (added) {
+        JAMI_DBG("UPnPContext: IGD %p added for public address %s",
+            igd, publicIpAddr.toString(true, true).c_str());
         return addIgdToList(protocol, igd);
     } else {
+        JAMI_WARN("UPnPContext: Failed to add IGD %p for public address %s",
+            igd, publicIpAddr.toString(true, true).c_str());
         if (publicIpAddr) {
             return removeIgdFromList(publicIpAddr);
         } else {
@@ -200,34 +387,37 @@ UPnPContext::igdListChanged(UPnPProtocol* protocol, IGD* igd, IpAddr publicIpAdd
 bool
 UPnPContext::addIgdToList(UPnPProtocol* protocol, IGD* igd)
 {
-    // igdListMutex_ already locked
     // Check if IGD has a valid public IP.
     if (not igd->publicIp_) {
         JAMI_WARN("UPnPContext: IGD trying to be added has invalid public IpAddress");
         return false;
     }
-    {
-        // Check if the IGD is in the list.
-        if (isIgdInList(igd->publicIp_)) {
-            JAMI_DBG("UPnPContext: IGD with public IP %s is already in the list",
-                     igd->publicIp_.toString().c_str());
-            return false;
-        }
-        igdList_.emplace_back(protocol, igd);
-        JAMI_DBG("UPnP: IGD with public IP %s was added to the list",
-                 igd->publicIp_.toString().c_str());
+
+    // Check if the IGD is in the list.
+    if (isIgdInList(protocol, igd->publicIp_)) {
+        JAMI_DBG("UPnPContext: IGD with protocol %s and public IP %s is already in the list",
+            protocol->getTypeName().c_str(),
+            igd->publicIp_.toString().c_str());
+        return false;
     }
+
+    {
+        // Add the new IGD to the list.
+        std::lock_guard<std::mutex> lock(igdListMutex_);
+        igdList_.emplace_back(protocol, igd);
+        JAMI_DBG("UPnPContext: IGD with protocol %s public IP %s was added to the list",
+            protocol->getTypeName().c_str(),
+            igd->publicIp_.toString().c_str());
+    }
+
     // Iterate over callback list and dispatch any pending mapping requests
-    std::lock_guard<std::mutex> lk2(cbListMutex_);
+    std::lock_guard<std::mutex> lock(mapCbListMutex_);
     for (auto const& cbAdd : mapCbList_) {
         JAMI_DBG("[upnp:controller@%ld] sending out request in cb queue for mapping %s",
                  (long) cbAdd.second.id,
                  cbAdd.first.toString().c_str());
         registerAddMappingTimeout(cbAdd.first);
-        protocol->requestMappingAdd(igd,
-                                    cbAdd.first.getPortExternal(),
-                                    cbAdd.first.getPortInternal(),
-                                    cbAdd.first.getType());
+        provisionPort(igd, cbAdd.first);
     }
     return true;
 }
@@ -235,7 +425,8 @@ UPnPContext::addIgdToList(UPnPProtocol* protocol, IGD* igd)
 bool
 UPnPContext::removeIgdFromList(IGD* igd)
 {
-    // igdListMutex_ already locked
+    std::lock_guard<std::mutex> lock(igdListMutex_);
+
     auto it = igdList_.begin();
     while (it != igdList_.end()) {
         if (it->second->publicIp_ == igd->publicIp_) {
@@ -254,7 +445,7 @@ UPnPContext::removeIgdFromList(IGD* igd)
 bool
 UPnPContext::removeIgdFromList(IpAddr publicIpAddr)
 {
-    // igdListMutex_ already locked
+    std::lock_guard<std::mutex> lock(igdListMutex_);
     auto it = igdList_.begin();
     while (it != igdList_.end()) {
         if (it->second->publicIp_ == publicIpAddr) {
@@ -273,7 +464,7 @@ UPnPContext::removeIgdFromList(IpAddr publicIpAddr)
 bool
 UPnPContext::isMappingInUse(const unsigned int portDesired, PortType type)
 {
-    std::lock_guard<std::mutex> lk(igdListMutex_);
+    std::lock_guard<std::mutex> lock(igdListMutex_);
     for (auto const& igd : igdList_) {
         if (igd.second->isMapInUse(portDesired, type)) {
             return true;
@@ -284,98 +475,86 @@ UPnPContext::isMappingInUse(const unsigned int portDesired, PortType type)
 void
 UPnPContext::incrementNbOfUsers(const unsigned int portDesired, PortType type)
 {
-    std::lock_guard<std::mutex> lk(igdListMutex_);
+    std::lock_guard<std::mutex> lock(igdListMutex_);
     for (auto const& igd : igdList_) {
         igd.second->incrementNbOfUsers(portDesired, type);
     }
 }
 
-void
-UPnPContext::requestMappingAdd(
-    ControllerData&& ctrlData, uint16_t portDesired, uint16_t portLocal, PortType type, bool unique)
+uint16_t
+UPnPContext::requestMappingAdd(ControllerData&& ctrlData, const Mapping& requestedMap)
 {
     std::lock_guard<std::mutex> lk1(igdListMutex_);
     std::lock_guard<std::mutex> lk2(pendindRequestMutex_);
-    // If no IGD is found yet, register the callback and exit.
+
+
+    auto map { requestedMap };
+    if (map.getPortExternal() == 0) {
+        JAMI_DBG("UPnPContext: Port number not set. Will request a random port number");
+        auto port = getAvailablePortNumber(map.getType());
+        map.setPortExternal(port);
+        map.setPortInternal(port);
+    }
+
+    // No available IGD. Register the callback and exit. The mapping
+    // requests will be performed in when a IGD becomes available (in addIgdToList() method).
     if (igdList_.empty()) {
-        JAMI_WARN("UPnP: Trying to add mapping %u:%u %s with no Internet Gateway Device available",
-                  portDesired,
-                  portLocal,
-                  type == upnp::PortType::UDP ? "UDP" : "TCP");
-        Mapping map {portDesired, portLocal, type, unique};
-        registerAddMappingTimeout(map);
+        JAMI_WARN("UPnPContext: No IGD available. Mapping will be requested when an IGD becomes available");
         registerCallback(map, std::move(ctrlData));
-        return;
+        return 0;
     }
-    // If the mapping requested is unique, find a mapping that isn't already used.
-    if (unique) {
-        // Make a list of all currently opened mappings across all IGDs.
-        std::vector<uint16_t> currentMappings;
-        for (auto const& igd : igdList_) {
-            auto globalMappings = igd.second->getCurrentMappingList(type);
-            for (auto const& map : *globalMappings)
-                currentMappings.emplace_back(map.second.getPortExternal());
-        }
-        // Also take in consideration the pending map requests.
-        for (auto const& pendingMap : pendingAddMapList_) {
-            currentMappings.emplace_back(pendingMap.map.getPortExternal());
-        }
-        if (std::find(currentMappings.begin(), currentMappings.end(), portDesired)
-            != currentMappings.end()) {
-            // Keep searching until you find a unique port.
-            bool unique_found = false;
-            portDesired = generateRandomPort(upnp::Mapping::UPNP_PORT_MIN,
-                                             upnp::Mapping::UPNP_PORT_MAX);
-            while (not unique_found) {
-                if (std::find(currentMappings.begin(), currentMappings.end(), portDesired)
-                    != currentMappings.end())
-                    portDesired = generateRandomPort(upnp::Mapping::UPNP_PORT_MIN,
-                                                     upnp::Mapping::UPNP_PORT_MAX);
-                else
-                    unique_found = true;
-            }
-        }
-    }
+
     // Register the callback and the pending timeout.
-    Mapping map {portDesired, portDesired, type, unique};
     registerAddMappingTimeout(map);
     registerCallback(map, std::move(ctrlData));
     // Send out request to open the port to all IGDs.
     for (auto const& igd : igdList_)
-        requestMappingAdd(igd.second, portDesired, portDesired, type);
-}
+        provisionPort(igd.second, map);
 
-void
-UPnPContext::requestMappingAdd(IGD* igd, uint16_t portExternal, uint16_t portInternal, PortType type)
-{
-    // Iterate over the IGD list and call add the mapping with the corresponding protocol.
-    if (not igdList_.empty()) {
-        for (auto const& item : igdList_) {
-            if (item.second == igd) {
-                item.first->requestMappingAdd(item.second, portExternal, portInternal, type);
-                return;
-            }
-        }
-    }
+    return map.getPortExternal();
 }
 
 void
 UPnPContext::onMappingAdded(IpAddr igdIp, const Mapping& map, bool success)
 {
-    if (map.isValid()) {
-        unregisterAddMappingTimeout(map);
-        if (success)
-            addMappingToIgd(igdIp, map);
-        dispatchOnAddCallback(map, success);
-        if (success)
-            unregisterCallback(map);
+    if (not map.isValid()) {
+        JAMI_ERR("PUPnP: Mapping %s is invalid !", map.toString().c_str());
+        return;
     }
+
+    unregisterAddMappingTimeout(map);
+
+    unsigned typeIdx = map.getType() == PortType::UDP ? 0 : 1;
+    auto it = mapProvisionList_[typeIdx].find(map.getPortExternal());
+    if (it == mapProvisionList_[typeIdx].end()) {
+        JAMI_ERR("PUPnP: Received an response for an unknown mapping %s (on IGD %s)",
+            map.toString().c_str(), igdIp.toString().c_str());
+        return;
+    }
+
+    it->second.setOpen(success);
+
+    if (success) {
+        addMappingToIgd(igdIp, map);
+        JAMI_DBG("PUPnP: Mapping %s (on IGD %s) successfully performed",
+            it->second.toString().c_str(), igdIp.toString().c_str());
+    } else {
+        JAMI_ERR("PUPnP: Failed to perform mapping %s (on IGD %s)",
+            it->second.toString().c_str(), igdIp.toString().c_str());
+        unregisterProvisionedMapping(it->second);
+    }
+
+    dispatchOnAddCallback(it->second, success);
+    // TODO. We might need to keep the callback even on success to receive
+    // update when the state of the mapping changes.
+    if (success)
+        unregisterCallback(it->second);
 }
 
 void
 UPnPContext::addMappingToIgd(IpAddr igdIp, const Mapping& map)
 {
-    std::lock_guard<std::mutex> lk(igdListMutex_);
+    std::lock_guard<std::mutex> lock(igdListMutex_);
     for (auto const& igd : igdList_) {
         if (igd.second->publicIp_ == igdIp) {
             igd.second->incrementNbOfUsers(map);
@@ -389,7 +568,7 @@ UPnPContext::dispatchOnAddCallback(const Mapping& map, bool success)
 {
     std::vector<MapCb> cbList;
     {
-        std::lock_guard<std::mutex> lk(cbListMutex_);
+        std::lock_guard<std::mutex> lock(mapCbListMutex_);
         auto mmIt = mapCbList_.equal_range(map);
         for (auto it = mmIt.first; it != mmIt.second; it++)
             cbList.emplace_back(it->second.onMapAdded);
@@ -401,15 +580,15 @@ UPnPContext::dispatchOnAddCallback(const Mapping& map, bool success)
 bool
 UPnPContext::requestMappingRemove(const Mapping& map)
 {
+    // Only decrement the number of users. The actual removing of
+    // the mapping will be done when the context is destroyed.
     auto removed = false;
-    std::lock_guard<std::mutex> lk(igdListMutex_);
+    std::lock_guard<std::mutex> lock(igdListMutex_);
     if (not igdList_.empty()) {
         for (auto const& igd : igdList_) {
             if (igd.second->isMapInUse(map)) {
                 if (igd.second->getNbOfUsers(map) > 1) {
                     igd.second->decrementNbOfUsers(map);
-                } else {
-                    igd.first->requestMappingRemove(map);
                 }
                 removed = true;
             }
@@ -419,11 +598,31 @@ UPnPContext::requestMappingRemove(const Mapping& map)
 }
 
 void
+UPnPContext::requestAllMappingRemove(PortType type)
+{
+// TODO
+#if 0
+    std::lock_guard<std::mutex> lk(igdListMutex_);
+
+    for (auto const& igd : igdList_) {
+        auto instanceMappings = igd.second->getCurrentMappingList(type);
+
+        for (auto const& map : *instanceMappings) {
+            // TODO. this code is very sub-optimal (iterating twice over igdList_)
+            requestMappingRemove(map);
+        }
+    }
+#endif
+ }
+
+void
 UPnPContext::onMappingRemoved(IpAddr igdIp, const Mapping& map, bool success)
 {
     if (map.isValid()) {
-        if (success)
+        if (success) {
             removeMappingFromIgd(igdIp, map);
+            unregisterProvisionedMapping(map);  // Will only unregister if the mapping that was removed was a provisioned port.
+        }
         dispatchOnRmCallback(map, success);
         if (success)
             unregisterCallback(map);
@@ -433,7 +632,7 @@ UPnPContext::onMappingRemoved(IpAddr igdIp, const Mapping& map, bool success)
 void
 UPnPContext::removeMappingFromIgd(IpAddr igdIp, const Mapping& map)
 {
-    std::lock_guard<std::mutex> lk(igdListMutex_);
+    std::lock_guard<std::mutex> lock(igdListMutex_);
     for (auto const& igd : igdList_) {
         if (igd.second->publicIp_ == igdIp) {
             igd.second->removeMapInUse(map);
@@ -447,7 +646,7 @@ UPnPContext::dispatchOnRmCallback(const Mapping& map, bool success)
 {
     std::vector<MapCb> cbList;
     {
-        std::lock_guard<std::mutex> lk(cbListMutex_);
+        std::lock_guard<std::mutex> lk(mapCbListMutex_);
         for (auto it = mapCbList_.cbegin(); it != mapCbList_.cend(); it++) {
             if (it->first == map) {
                 cbList.emplace_back(it->second.onMapRemoved);
@@ -456,6 +655,19 @@ UPnPContext::dispatchOnRmCallback(const Mapping& map, bool success)
     }
     for (auto const& cb : cbList)
         cb(map, success);
+}
+
+bool
+UPnPContext::unregisterProvisionedMapping(const Mapping& map)
+{
+    std::lock_guard<std::mutex> lk(mapProvisionListMutex_);
+    unsigned typeIdx = map.getType() == PortType::UDP ? 0 : 1;
+    if (mapProvisionList_[typeIdx].erase(map.getPortExternal()) != 1) {
+        JAMI_WARN("UPnPContext: Trying to unregister an unknown mapping %s ",
+            map.toString().c_str());
+        return false;
+    }
+    return true;
 }
 
 void
@@ -475,7 +687,7 @@ UPnPContext::registerAddMappingTimeout(const Mapping& map)
                                              map.toString().c_str());
                                    std::vector<MapCb> cbList;
                                    {
-                                       std::lock_guard<std::mutex> lk(cbListMutex_);
+                                       std::lock_guard<std::mutex> lk(mapCbListMutex_);
                                        auto mmIt = mapCbList_.equal_range(map);
                                        for (auto it = mmIt.first; it != mmIt.second; it++)
                                            cbList.emplace_back(it->second.onMapAdded);
@@ -503,7 +715,7 @@ UPnPContext::unregisterAddMappingTimeout(const Mapping& map)
 void
 UPnPContext::registerCallback(const Mapping& map, ControllerData&& ctrlData)
 {
-    // Mutex is already locked.
+    std::lock_guard<std::mutex> lock(mapCbListMutex_);
     auto mmIt = mapCbList_.equal_range(map);
     for (auto it = mmIt.first; it != mmIt.second; it++)
         if (it->second.id == ctrlData.id)
@@ -518,7 +730,7 @@ UPnPContext::registerCallback(const Mapping& map, ControllerData&& ctrlData)
 void
 UPnPContext::unregisterCallback(const Mapping& map)
 {
-    std::lock_guard<std::mutex> lk(cbListMutex_);
+    std::lock_guard<std::mutex> lk(mapCbListMutex_);
     auto mmIt = mapCbList_.equal_range(map);
     for (auto it = mmIt.first; it != mmIt.second; it++) {
         if (not it->second.keepCb) {
@@ -533,7 +745,7 @@ UPnPContext::unregisterCallback(const Mapping& map)
 void
 UPnPContext::unregisterAllCallbacks(uint64_t ctrlId)
 {
-    std::lock_guard<std::mutex> lk(cbListMutex_);
+    std::lock_guard<std::mutex> lk(mapCbListMutex_);
     for (auto it = mapCbList_.begin(); it != mapCbList_.end(); ++it) {
         if (it->second.id == ctrlId) {
             JAMI_DBG("[upnp:controller@%ld] unregistering cb", (long) ctrlId);
