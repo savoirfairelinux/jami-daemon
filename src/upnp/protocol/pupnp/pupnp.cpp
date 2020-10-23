@@ -137,8 +137,10 @@ PUPnP::PUPnP()
                     JAMI_ERR("PUPnP: Can't register client: %s", UpnpGetErrorMessage(upnp_err));
                     pupnpRun_ = false;
                     break;
-                } else
+                } else {
+                    JAMI_DBG("PUPnP: Successfully registered client");
                     clientRegistered_ = true;
+                }
             }
 
             if (not pupnpRun_)
@@ -313,9 +315,14 @@ PUPnP::validateIgd(const IGDInfo& info)
     if (updateIgdListCb_(this,
                          std::move(igd_candidate.get()),
                          std::move(igd_candidate.get()->publicIp_),
-                         true))
+                         true)) {
+
         JAMI_DBG("PUPnP: IGD with public IP %s was added to the list",
-                 igd_candidate->publicIp_.toString().c_str());
+            igd_candidate->publicIp_.toString().c_str());
+    } else {
+        JAMI_DBG("PUPnP: IGD with public IP %s is already in the list",
+            igd_candidate->publicIp_.toString().c_str());
+    }
 
     // Keep local IGD list internally.
     validIgdList_.emplace(igd_candidate->getUDN(), std::move(igd_candidate));
@@ -335,9 +342,8 @@ PUPnP::validateIgd(const IGDInfo& info)
 }
 
 void
-PUPnP::requestMappingAdd(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type)
+PUPnP::requestMappingAdd(IGD* igd, const Mapping& mapping)
 {
-    Mapping mapping {port_external, port_internal, type};
     if (auto pupnp_igd = dynamic_cast<const UPnPIGD*>(igd)) {
         JAMI_DBG("PUPnP: Attempting to open port %s", mapping.toString().c_str());
         actionAddPortMappingAsync(*pupnp_igd, mapping);
@@ -506,9 +512,36 @@ PUPnP::removeAllLocalMappings(IGD* igd)
         actionDeletePortMappingsByDesc(*igd_del_map, Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
 }
 
+const char*
+PUPnP::eventTypeToString(Upnp_EventType eventType)
+{
+    switch(eventType){
+        case UPNP_CONTROL_ACTION_REQUEST: return "UPNP_CONTROL_ACTION_REQUEST";
+        case UPNP_CONTROL_ACTION_COMPLETE: return "UPNP_CONTROL_ACTION_COMPLETE";
+        case UPNP_CONTROL_GET_VAR_REQUEST: return "UPNP_CONTROL_GET_VAR_REQUEST";
+        case UPNP_CONTROL_GET_VAR_COMPLETE: return "UPNP_CONTROL_GET_VAR_COMPLETE";
+        case UPNP_DISCOVERY_ADVERTISEMENT_ALIVE: return "UPNP_DISCOVERY_ADVERTISEMENT_ALIVE";
+        case UPNP_DISCOVERY_ADVERTISEMENT_BYEBYE: return "UPNP_DISCOVERY_ADVERTISEMENT_BYEBYE";
+        case UPNP_DISCOVERY_SEARCH_RESULT: return "UPNP_DISCOVERY_SEARCH_RESULT";
+        case UPNP_DISCOVERY_SEARCH_TIMEOUT: return "UPNP_DISCOVERY_SEARCH_TIMEOUT";
+        case UPNP_EVENT_SUBSCRIPTION_REQUEST: return "UPNP_EVENT_SUBSCRIPTION_REQUEST";
+        case UPNP_EVENT_RECEIVED: return "UPNP_EVENT_RECEIVED";
+        case UPNP_EVENT_RENEWAL_COMPLETE: return "UPNP_EVENT_RENEWAL_COMPLETE";
+        case UPNP_EVENT_SUBSCRIBE_COMPLETE: return "UPNP_EVENT_SUBSCRIBE_COMPLETE";
+        case UPNP_EVENT_UNSUBSCRIBE_COMPLETE: return "UPNP_EVENT_UNSUBSCRIBE_COMPLETE";
+        case UPNP_EVENT_AUTORENEWAL_FAILED: return "UPNP_EVENT_AUTORENEWAL_FAILED";
+        case UPNP_EVENT_SUBSCRIPTION_EXPIRED: return "UPNP_EVENT_SUBSCRIPTION_EXPIRED";
+        default : return "Unknown UPNP Event !";
+    }
+}
+
 int
 PUPnP::ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data)
 {
+    // Filter out less relevant logs.
+    if (event_type != UPNP_DISCOVERY_ADVERTISEMENT_ALIVE)
+        JAMI_DBG("PUPnP: Control point callback event_type %s", PUPnP::eventTypeToString(event_type));
+
     if (auto pupnp = static_cast<PUPnP*>(user_data))
         return pupnp->handleCtrlPtUPnPEvents(event_type, event);
 
@@ -549,8 +582,11 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
         const UpnpDiscovery* d_event = (const UpnpDiscovery*) event;
 
         // First check the error code.
-        if (UpnpDiscovery_get_ErrCode(d_event) != UPNP_E_SUCCESS)
+        auto upnp_status = UpnpDiscovery_get_ErrCode(d_event);
+        if (upnp_status != UPNP_E_SUCCESS) {
+            JAMI_ERR("PUPnP: UPNP discovery is in erroneous state: %s", UpnpGetErrorMessage(upnp_status));
             break;
+        }
 
         // Check if this device ID is already in the list.
         std::string cpDeviceId = UpnpDiscovery_get_DeviceID_cstr(d_event);
@@ -567,9 +603,18 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
         // NOTE: here, we check if the location given is related to the source address.
         // If it's not the case, it's certainly a router plugged in the network, but not
         // related to this network. So the given location will be unreachable and this
-        // will cause some timeout
-        if (IpAddr(url.host) != ipSrc)
+        // will cause some timeout.
+
+        // Only check the IP address (ignore the port number).
+        if (IpAddr(url.host).toString(false) != ipSrc.toString(false)) {
+            JAMI_WARN("PUPnP: Returned location %s does not match the source address %s",
+                IpAddr(url.host).toString(true, true).c_str(), ipSrc.toString(true, true).c_str());
+
             break;
+        } else {
+            JAMI_WARN("PUPnP: Returned IGD location %s", IpAddr(url.host).toString(true, true).c_str());
+        }
+
 
         dwnldlXmlList_.emplace_back(
             dht::ThreadPool::io().get<pIGDInfo>([this, location = std::move(igdLocationUrl)] {
@@ -579,15 +624,18 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
                 if (doc_container_ptr)
                     doc_desc_ptr.reset(doc_container_ptr);
                 pupnpCv_.notify_all();
-                if (upnp_err != UPNP_E_SUCCESS or not doc_desc_ptr)
+                if (upnp_err != UPNP_E_SUCCESS or not doc_desc_ptr) {
                     JAMI_WARN("PUPnP: Error downloading device XML document from %s -> %s",
-                              location.c_str(),
-                              UpnpGetErrorMessage(upnp_err));
-                else
+                        location.c_str(), UpnpGetErrorMessage(upnp_err));
+                    return std::make_unique<IGDInfo>(
+                        IGDInfo {std::move(location), XMLDocument(nullptr, ixmlDocument_free)});
+                }
+                else {
+                    JAMI_WARN("PUPnP: Succeeded to download device XML document from %s",
+                        location.c_str());
                     return std::make_unique<IGDInfo>(
                         IGDInfo {std::move(location), std::move(doc_desc_ptr)});
-                return std::make_unique<IGDInfo>(
-                    IGDInfo {std::move(location), XMLDocument(nullptr, ixmlDocument_free)});
+                }
             }));
 
         break;

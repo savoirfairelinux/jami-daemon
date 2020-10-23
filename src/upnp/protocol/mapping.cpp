@@ -20,6 +20,7 @@
  */
 
 #include "mapping.h"
+#include "logger.h"
 
 namespace jami {
 namespace upnp {
@@ -27,13 +28,15 @@ namespace upnp {
 Mapping::Mapping(uint16_t portExternal,
                  uint16_t portInternal,
                  PortType type,
-                 bool unique,
-                 const std::string& description)
+                 const std::string& description,
+                 bool available)
     : portExternal_(portExternal)
     , portInternal_(portInternal)
     , type_(type)
     , description_(description)
-    , unique_(unique) {};
+    , available_(available)
+    , open_(false)
+    {};
 
 Mapping::Mapping(Mapping&& other) noexcept
     :
@@ -45,7 +48,8 @@ Mapping::Mapping(Mapping&& other) noexcept
     , portInternal_(other.portInternal_)
     , type_(other.type_)
     , description_(std::move(other.description_))
-    , unique_(other.unique_)
+    , available_(other.available_)
+    , open_(other.open_)
 {
     other.portExternal_ = 0;
     other.portInternal_ = 0;
@@ -61,7 +65,8 @@ Mapping::Mapping(const Mapping& other)
     , portInternal_(other.portInternal_)
     , type_(other.type_)
     , description_(std::move(other.description_))
-    , unique_(other.unique_)
+    , available_ (other.available_)
+    , open_ (other.open_)
 {}
 
 Mapping&
@@ -74,6 +79,11 @@ Mapping::operator=(Mapping&& other) noexcept
         other.portInternal_ = 0;
         type_ = other.type_;
         description_ = std::move(other.description_);
+        available_ = other.available_;
+        other.available_ = false;
+        open_ = other.open_;
+        other.open_ = false;
+
 #if HAVE_LIBNATPMP
         renewal_ = other.renewal_;
 #endif
@@ -148,10 +158,37 @@ Mapping::operator>=(const Mapping& other) const noexcept
     return false;
 }
 
+void
+Mapping::setAvailable(bool val)
+{
+    JAMI_DBG("UPnP: Changing mapping %s state from %s to %s",
+        this->toString().c_str(),
+        available_ ? "AVAILABLE":"UNAVAILABLE", val ? "AVAILABLE":"UNAVAILABLE");
+
+    available_ = val;
+}
+
+void
+Mapping::setOpen(bool val)
+{
+    JAMI_DBG("UPnP: Changing mapping %s state from %s to %s",
+        this->toString().c_str(),
+        open_ ? "OPEN":"CLOSED", val ? "OPEN":"CLOSED");
+
+    open_ = val;
+}
+
+void
+Mapping::setDescription(const std::string& descr)
+{
+    description_ = descr;
+}
+
 std::string
 Mapping::toString() const
 {
-    return getPortExternalStr() + ":" + getPortInternalStr() + " " + getTypeStr();
+    return getPortExternalStr() + ":" + getPortInternalStr() + " [" + getTypeStr() + "]" +
+        " \"" + description_.c_str() + "\"";
 }
 
 bool
