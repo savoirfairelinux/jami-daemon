@@ -109,6 +109,7 @@ Account::Account(const std::string& accountID)
     , accountCodecInfoList_()
     , ringtonePath_(DEFAULT_RINGTONE_PATH)
     , ringtoneEnabled_(true)
+    , upnpEnabled_(true)
     , displayName_("")
     , customUserAgent_("")
     , hasCustomUserAgent_(false)
@@ -235,7 +236,7 @@ Account::serialize(YAML::Emitter& out) const
     out << YAML::Key << USER_AGENT_KEY << YAML::Value << customUserAgent_;
     out << YAML::Key << DISPLAY_NAME_KEY << YAML::Value << displayName_;
     out << YAML::Key << HOSTNAME_KEY << YAML::Value << hostname_;
-    out << YAML::Key << UPNP_ENABLED_KEY << YAML::Value << bool(upnp_);
+    out << YAML::Key << UPNP_ENABLED_KEY << YAML::Value << upnpEnabled_;
 }
 
 void
@@ -284,9 +285,8 @@ Account::unserialize(const YAML::Node& node)
         ringtonePath_ = DEFAULT_RINGTONE_PATH;
     }
 
-    bool enabled;
-    parseValue(node, UPNP_ENABLED_KEY, enabled);
-    enableUpnp(enabled && isEnabled());
+    parseValue(node, UPNP_ENABLED_KEY, upnpEnabled_);
+    enableUpnp(upnpEnabled_ && isEnabled());
 }
 
 void
@@ -310,9 +310,8 @@ Account::setAccountDetails(const std::map<std::string, std::string>& details)
     if (hasCustomUserAgent_)
         parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent_);
 
-    bool enabled;
-    parseBool(details, Conf::CONFIG_UPNP_ENABLED, enabled);
-    enableUpnp(enabled && isEnabled());
+    parseBool(details, Conf::CONFIG_UPNP_ENABLED, upnpEnabled_);
+    enableUpnp(upnpEnabled_ && isEnabled());
 }
 
 std::map<std::string, std::string>
@@ -332,7 +331,7 @@ Account::getAccountDetails() const
             {DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, std::to_string(activeCallLimit_)},
             {Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled_ ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_RINGTONE_PATH, ringtonePath_},
-            {Conf::CONFIG_UPNP_ENABLED, upnp_ ? TRUE_STR : FALSE_STR}};
+            {Conf::CONFIG_UPNP_ENABLED, upnpEnabled_ ? TRUE_STR : FALSE_STR}};
 }
 
 std::map<std::string, std::string>

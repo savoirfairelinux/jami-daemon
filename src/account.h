@@ -498,6 +498,7 @@ protected:
     /**
      * UPnP IGD controller and the mutex to access it
      */
+    bool upnpEnabled_;
     mutable std::mutex upnp_mtx {};
     std::unique_ptr<jami::upnp::Controller> upnp_;
 
