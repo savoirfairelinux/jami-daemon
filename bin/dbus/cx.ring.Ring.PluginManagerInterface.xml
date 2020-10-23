@@ -115,7 +115,9 @@
 
        <method name="toggleCallMediaHandler" tp:name-for-bindings="toggleCallMediaHandler">
             <tp:added version="9.2.0"/>
-            <arg type="s" name="id" direction="in">
+            <arg type="s" name="mediaHandlerId" direction="in">
+            </arg>
+            <arg type="s" name="callId" direction="in">
             </arg>
             <arg type="b" name="toggle" direction="in">
             </arg>
@@ -124,7 +126,7 @@
        <method name="getCallMediaHandlerDetails" tp:name-for-bindings="getCallMediaHandlerDetails">
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <tp:added version="9.2.0"/>
-            <arg type="s" name="id" direction="in">
+            <arg type="s" name="mediaHandlerId" direction="in">
             </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="a{ss}" name="CallMediaHandlerDetails" direction="out">
@@ -149,8 +151,10 @@
        <method name="getCallMediaHandlerStatus" tp:name-for-bindings="getCallMediaHandlerStatus">
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <tp:added version="9.3.0"/>
+            <arg type="s" name="callId" direction="in">
+            </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-            <arg type="a{ss}" name="getCallMediaHandlerStatus" direction="out">
+            <arg type="a{sas}" name="getCallMediaHandlerStatus" direction="out">
             </arg>
         </method>
 
