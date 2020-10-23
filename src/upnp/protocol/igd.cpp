@@ -67,8 +67,7 @@ IGD::getMapping(in_port_t externalPort, upnp::PortType type) const
         if (it->first == externalPort) {
             return Mapping(it->second.getPortExternal(),
                            it->second.getPortInternal(),
-                           it->second.getType(),
-                           it->second.isUnique());
+                           it->second.getType());
         }
     }
     return Mapping(0, 0);
