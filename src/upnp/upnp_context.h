@@ -93,6 +93,8 @@ public:
     UPnPContext();
     ~UPnPContext();
 
+    static uint16_t generateRandomPort(uint16_t min, uint16_t max, bool mustBeEven = false);
+
     // Check if there is a valid IGD in the IGD list.
     bool hasValidIGD();
 
@@ -111,16 +113,11 @@ public:
     // Increments the number of users for a given port.
     void incrementNbOfUsers(const unsigned int portDesired, PortType type);
 
-    // Sends out a request to a protocol to add a mapping.
-    void requestMappingAdd(ControllerData&& ctrlData,
-                           uint16_t portDesired,
-                           uint16_t portLocal,
-                           PortType type,
-                           bool unique);
+    uint16_t requestMappingAdd(ControllerData&& ctrlData,
+                           const Mapping& map);
+
     // Adds mapping to corresponding IGD.
     void addMappingToIgd(IpAddr igdIp, const Mapping& map);
-    // Tries to add a mapping to a specific IGD.
-    void requestMappingAdd(IGD* igd, uint16_t portExternal, uint16_t portInternal, PortType type);
     // Callback function for when mapping is added.
     void onMappingAdded(IpAddr igdIp, const Mapping& map, bool success);
     // Calls corresponding callback.
@@ -133,6 +130,9 @@ public:
 
     // Sends out a request to protocol to remove a mapping.
     bool requestMappingRemove(const Mapping& map);
+    // Removes all mappings of the given type.
+    void requestAllMappingRemove(PortType type);
+
     // Removes mapping from corresponding IGD.
     void removeMappingFromIgd(IpAddr igdIp, const Mapping& map);
     // Callback function for when mapping is removed.
@@ -147,12 +147,25 @@ public:
     // Removes all callback with a specific controller Id.
     void unregisterAllCallbacks(uint64_t ctrlId);
 
-private:
-    // Checks if the IGD is in the list by checking the IGD's public Ip.
-    bool isIgdInList(const IpAddr& publicIpAddr);
+    // Returns a selected provisioned port depending on the type of port that is being requested.
+    const Mapping selectProvisionedMapping(const Mapping& requestedMap);
+    // Releases a previously provisioned port.
+    void unselectProvisionedPort(const Mapping& map);
 
-    // Returns the protocol of the IGD.
-    UPnPProtocol::Type getIgdProtocol(IGD* igd);
+    // Provision ports.
+    uint16_t getAvailablePortNumber(PortType type, uint16_t minPort = 0, uint16_t maxPort = 0);
+    bool provisionPort(IGD* igd, const Mapping& map);
+    bool preAllocateProvisionedPorts(PortType type, unsigned portCount, uint16_t minPort = 0,
+        uint16_t maxPort = 0);
+
+private:
+    // Checks if the IGD is in the list by checking the IGD's
+    // protocol and public Ip.
+    bool isIgdInList(const UPnPProtocol* protocol, const IpAddr& publicIpAddr);
+
+    // Returns protocol instance of a IGD.
+    UPnPProtocol* getIgdProtocol(IGD* igd);
+
 
     // Returns a random port that is not yet used by the daemon for UPnP.
     uint16_t chooseRandomPort(IGD& igd, PortType type);
@@ -163,14 +176,20 @@ private:
     // Tries to add IGD to the list by getting it's public Ip address internally.
     bool addIgdToList(UPnPProtocol* protocol, IGD* igd);
 
-    // Removes IGD from list by specifiying the IGD itself.
+    // Removes IGD from list by specifying the IGD itself.
     bool removeIgdFromList(IGD* igd);
 
-    // Removes IGD from list by specifiying the IGD's public Ip address.
+    // Removes IGD from list by specifying the IGD's public Ip address.
     bool removeIgdFromList(IpAddr publicIpAddr);
 
+    // Removes the corresponding mapping from the provision list.
+    bool unregisterProvisionedMapping(const Mapping& map);
+
+    // Get the mapping list
+    std::map<uint16_t, Mapping>& getMappingList(PortType type);
+
 public:
-    constexpr static unsigned MAX_RETRIES = 20;
+    constexpr static unsigned MAX_REQUEST_RETRIES = 20;
 
 private:
     NON_COPYABLE(UPnPContext);
@@ -179,13 +198,24 @@ private:
     mutable std::mutex
         igdListMutex_; // Mutex used to access these lists and IGDs in a thread-safe manner.
     std::list<std::pair<UPnPProtocol*, IGD*>>
-        igdList_; // List of IGDs with their corresponding public IPs.
+        igdList_ {}; // List of IGDs with their corresponding public IPs.
+
+    // Mutex that protects the provisioned mappings list.
+    std::mutex mapProvisionListMutex_;
+    // List of provisioned mappings.
+    std::map<uint16_t, Mapping> mapProvisionList_[2] {};
 
     std::mutex pendindRequestMutex_; // Mutex that protects the pending map request lists.
     std::vector<PendingMapRequest> pendingAddMapList_ {}; // Vector of pending add mapping requests.
-    std::mutex cbListMutex_;                              // Mutex that protects the callback list.
+    std::mutex mapCbListMutex_;                           // Mutex that protects the callback list.
     std::multimap<Mapping, ControllerData>
-        mapCbList_; // List of mappings with their corresponding callbacks.
+        mapCbList_  {}; // List of mappings with their corresponding callbacks.
+    // Port ranges for UPD and TCP (in that order).
+    std::pair<uint16_t, uint16_t> portRange_[2] {};
+
+#if HAVE_LIBNATPMP
+    bool enableNatPmp_ {true};
+#endif
 };
 
 std::shared_ptr<UPnPContext> getUPnPContext();
