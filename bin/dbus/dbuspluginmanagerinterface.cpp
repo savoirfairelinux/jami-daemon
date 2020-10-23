@@ -106,15 +106,17 @@ DBusPluginManagerInterface::listCallMediaHandlers() -> decltype(DRing::listCallM
 }
 
 void
-DBusPluginManagerInterface::toggleCallMediaHandler(const std::string& id, const bool& toggle)
+DBusPluginManagerInterface::toggleCallMediaHandler(const std::string& mediaHandlerId,
+                                                   const std::string& callId,
+                                                   const bool& toggle)
 {
-    DRing::toggleCallMediaHandler(id, toggle);
+    DRing::toggleCallMediaHandler(mediaHandlerId, callId, toggle);
 }
 
 std::map<std::string, std::string>
-DBusPluginManagerInterface::getCallMediaHandlerDetails(const std::string& id)
+DBusPluginManagerInterface::getCallMediaHandlerDetails(const std::string& mediaHanlderId)
 {
-    return DRing::getCallMediaHandlerDetails(id);
+    return DRing::getCallMediaHandlerDetails(mediaHanlderId);
 }
 
 bool
@@ -129,8 +131,8 @@ DBusPluginManagerInterface::setPluginsEnabled(const bool& state)
     DRing::setPluginsEnabled(state);
 }
 
-std::map<std::string, std::string>
-DBusPluginManagerInterface::getCallMediaHandlerStatus()
+std::map<std::string, std::vector<std::string>>
+DBusPluginManagerInterface::getCallMediaHandlerStatus(const std::string& callId)
 {
-    return DRing::getCallMediaHandlerStatus();
+    return DRing::getCallMediaHandlerStatus(callId);
 }
