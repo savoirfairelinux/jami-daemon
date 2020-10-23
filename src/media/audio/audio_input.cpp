@@ -293,8 +293,8 @@ AudioInput::switchInput(const std::string& resource)
     foundDevOpts_.swap(p);
 
     if (resource.empty()) {
-        if (initDevice(""))
-            foundDevOpts(devOpts_);
+        devOpts_ = {};
+        foundDevOpts(devOpts_);
     } else {
         static const std::string& sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
         const auto pos = resource.find(sep);
