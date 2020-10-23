@@ -739,14 +739,14 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
         getToUri(call.getPeerNumber() + "@"
                  + target.toString(true).c_str())); // expecting a fully well formed sip uri
 
-    pj_str_t pjTo = pj_str((char*) toUri.c_str());
+    pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);
 
     // Create the from header
     std::string from(getFromUri());
-    pj_str_t pjFrom = pj_str((char*) from.c_str());
+    pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
 
     std::string targetStr = getToUri(target.toString(true) /*+";transport=ICE"*/);
-    pj_str_t pjTarget = pj_str((char*) targetStr.c_str());
+    pj_str_t pjTarget = sip_utils::CONST_PJ_STR(targetStr);
 
     pj_str_t pjContact;
     {
@@ -3579,9 +3579,9 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
 
     // Build SIP message
     constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD,
-                                         jami::sip_utils::CONST_PJ_STR("MESSAGE")};
-    pj_str_t pjFrom = pj_str((char*) from.c_str());
-    pj_str_t pjTo = pj_str((char*) toURI.c_str());
+                                         sip_utils::CONST_PJ_STR("MESSAGE")};
+    pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
+    pj_str_t pjTo = sip_utils::CONST_PJ_STR(toURI);
 
     // Create request.
     pj_status_t status = pjsip_endpt_create_request(link_.getEndpoint(),
