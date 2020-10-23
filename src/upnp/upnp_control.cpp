@@ -29,15 +29,17 @@ Controller::Controller(bool keepCb)
 {
     id_ = (uint64_t) this;
     try {
-        upnpContext_ = getUPnPContext();
+        upnpContext_ = UPnPContext::getUPnPContext();
     } catch (std::runtime_error& e) {
         JAMI_ERR("UPnP context error: %s", e.what());
     }
+
+    JAMI_DBG("Controller@%lu: Created UPnP Controller session", id_);
 }
 
 Controller::~Controller()
 {
-    JAMI_DBG("Destroying UPnP Controller %p", this);
+    JAMI_DBG("Controller@%ld: Destroying UPnP Controller session", id_);
     // Avoid to call removeLocalMap on destroy
     if (upnpContext_) {
         upnpContext_->unregisterAllCallbacks(id_);
@@ -71,78 +73,77 @@ Controller::getExternalIP() const
     return {};
 }
 
-void
-Controller::requestMappingAdd(NotifyServiceCallback&& cb,
-                              uint16_t portDesired,
-                              PortType type,
-                              bool unique,
-                              uint16_t portLocal)
+uint16_t Controller::requestMappingAdd(ControllerData&& ctrlData, const Mapping& map)
 {
-    if (portLocal == 0)
-        portLocal = portDesired;
+    return upnpContext_->requestMappingAdd(std::move(ctrlData), map);
+}
 
-    // Check if the mapping requested isn't already in the controllers internal list.
-    if (isLocalMapPresent(portDesired, type)) {
-        cb(portDesired, true);
-        return;
+uint16_t
+Controller::requestMappingAdd(NotifyServiceCallback&& cb, const Mapping& requestedMap)
+{
+
+    if (not upnpContext_)
+        return 0;
+
+    JAMI_DBG("Controller@%lu: Trying to find a provisioned mapping %s",
+        id_, requestedMap.toString().c_str());
+
+    // Try to get a provisioned port
+    const auto map = upnpContext_->selectProvisionedMapping(requestedMap);
+    if (map.isValid()) {
+        JAMI_DBG("Controller@%lu: Found provisioned mapping %s",
+            id_, map.toString().c_str());
+        // Found an available port.
+        cb(map.getPortExternal(), true);
+        addLocalMap(map);
+        return map.getPortExternal();
     }
 
-    // If the port mapping requested not unique, check if it's already being used.
-    if (not unique) {
-        if (upnpContext_->isMappingInUse(portDesired, type)) {
-            upnpContext_->incrementNbOfUsers(portDesired, type);
-            Mapping map(portDesired, portLocal, type, unique);
-            addLocalMap(map);
-            cb(portDesired, true);
-            return;
+    // No port available.
+    // Should not get here if the ports were properly provisioned.
+
+    JAMI_WARN("Controller@%lu: No available UPNP mapping for %s. Trying to request one now.",
+        id_, requestedMap.toString().c_str());
+
+    // Build the control data structure.
+    ControllerData ctrlData {};
+    ctrlData.id = id_;
+    ctrlData.keepCb = keepCb_;
+
+    std::weak_ptr<Controller> thisWkPtr = std::static_pointer_cast<Controller>(shared_from_this());
+    ctrlData.onMapAdded = [cb, requestedMap, thisWkPtr](const Mapping& map, bool success) {
+        if (auto controller = thisWkPtr.lock()) {
+            cb(map.getPortExternal(), success);
+            if (success and map.isValid())
+                controller->addLocalMap(map);
         }
-    }
+    };
+    ctrlData.onMapRemoved = [thisWkPtr](const Mapping& map, bool) {
+        if (auto controller = thisWkPtr.lock()) {
+            if (map.isValid())
+                controller->removeLocalMap(map);
+        }
+    };
+    ctrlData.onConnectionChanged = [thisWkPtr]() {
+        if (auto controller = thisWkPtr.lock()) {
+            // Clear local mappings in case of a connectivity change
+            std::lock_guard<std::mutex> lk(controller->mapListMutex_);
+            controller->udpMappings_.clear();
+            controller->tcpMappings_.clear();
+        }
+    };
 
-    // Send out request.
-    upnpContext_->requestMappingAdd(ControllerData {id_,
-                                                    keepCb_,
-                                                    [cb, portDesired, this](const Mapping& map,
-                                                                            bool success) {
-                                                        cb(portDesired, success);
-                                                        if (map.isValid())
-                                                            addLocalMap(map);
-                                                    },
-                                                    [this](const Mapping& map, bool) {
-                                                        if (map.isValid())
-                                                            removeLocalMap(map);
-                                                    },
-                                                    [this]() {
-                                                        // Clear local mappings in case of a
-                                                        // connectivity changed
-                                                        std::lock_guard<std::mutex> lk(
-                                                            mapListMutex_);
-                                                        udpMappings_.clear();
-                                                        tcpMappings_.clear();
-                                                    }},
-                                    portDesired,
-                                    portLocal,
-                                    type,
-                                    unique);
+    // Send the request.
+    return requestMappingAdd(std::move(ctrlData), requestedMap);
 }
 
 bool
-Controller::requestMappingRemove(uint16_t portExternal, PortType type)
+Controller::requestMappingRemove( const Mapping& map)
 {
     if (not upnpContext_)
         return false;
-    std::lock_guard<std::mutex> lk(mapListMutex_);
-    auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
-    auto mapIt = instanceMappings.find(portExternal);
-    if (mapIt != instanceMappings.end()) {
-        if (!upnpContext_->requestMappingRemove(mapIt->second)) {
-            // No port mapped, so the callback will not be removed,
-            // remove it anyway
-            upnpContext_->unregisterCallback(mapIt->second);
-        }
-        instanceMappings.erase(mapIt);
-        return true;
-    }
-    return false;
+
+    return upnpContext_->requestMappingRemove(map);
 }
 
 bool
@@ -161,18 +162,21 @@ Controller::requestAllMappingRemove(PortType type)
         return;
     std::lock_guard<std::mutex> lk(mapListMutex_);
     auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
-    for (const auto& map : instanceMappings) {
-        if (!upnpContext_->requestMappingRemove(map.second)) {
+    for (const auto& [_, map] : instanceMappings) {
+        if (!upnpContext_->requestMappingRemove(map)) {
             // No port mapped, so the callback will not be removed,
             // remove it anyway
-            upnpContext_->unregisterCallback(map.second);
+            upnpContext_->unregisterCallback(map);
         }
+        upnpContext_->unselectProvisionedPort(map);
     }
 }
 
 void
 Controller::addLocalMap(const Mapping& map)
 {
+    JAMI_DBG("Controller@%ld: Added map %s", id_, map.toString().c_str());
+
     std::lock_guard<std::mutex> lk(mapListMutex_);
     auto& instanceMappings = map.getType() == PortType::UDP ? udpMappings_ : tcpMappings_;
     instanceMappings.emplace(map.getPortExternal(), Mapping(map));
@@ -183,6 +187,9 @@ Controller::removeLocalMap(const Mapping& map)
 {
     if (not upnpContext_)
         return false;
+
+    JAMI_DBG("Controller@%ld: Remove map %s", id_, map.toString().c_str());
+
     std::lock_guard<std::mutex> lk(mapListMutex_);
     auto& instanceMappings = map.getType() == PortType::UDP ? udpMappings_ : tcpMappings_;
     auto it = instanceMappings.find(map.getPortExternal());
@@ -191,6 +198,22 @@ Controller::removeLocalMap(const Mapping& map)
         return true;
     }
     return false;
+}
+
+bool
+Controller::preAllocateProvisionedPorts(upnp::PortType type, unsigned portCount,
+                                        uint16_t minPort, uint16_t maxPort)
+{
+    if (upnpContext_)
+        return upnpContext_->preAllocateProvisionedPorts(type, portCount);
+
+    return false;
+}
+
+uint16_t
+Controller::generateRandomPort(uint16_t min, uint16_t max, bool mustBeEven)
+{
+    return UPnPContext::generateRandomPort(min, max, mustBeEven);
 }
 
 } // namespace upnp
