@@ -51,7 +51,6 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0004-multiple_listeners.patch
 	$(APPLY) $(SRC)/pjproject/0005-fix_ebusy_turn.patch
 	$(APPLY) $(SRC)/pjproject/0006-ignore_ipv6_on_transport_check.patch
-	$(APPLY) $(SRC)/pjproject/0007-pj_ice_sess.patch
 	$(APPLY) $(SRC)/pjproject/0007-upnp-srflx-nat-assisted-cand.patch
 	$(APPLY) $(SRC)/pjproject/0008-fix_ioqueue_ipv6_sendto.patch
 	$(APPLY) $(SRC)/pjproject/0009-add-config-site.patch
