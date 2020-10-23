@@ -1013,10 +1013,6 @@ SIPCall::setupLocalSDPFromIce()
         JAMI_ERR("No account detected");
         return;
     }
-    if (const auto& ip = account->getPublishedIpAddress()) {
-        for (unsigned compId = 1; compId <= media_tr->getComponentCount(); ++compId)
-            media_tr->registerPublicIP(compId, ip);
-    }
 
     JAMI_WARN("[call:%s] fill SDP with ICE transport %p", getCallId().c_str(), media_tr);
     sdp_->addIceAttributes(media_tr->getLocalAttributes());
@@ -1417,10 +1413,14 @@ SIPCall::openPortsUPnP()
          * and marked as used, the old port should be "released"
          */
         JAMI_DBG("[call:%s] opening ports via UPNP for SDP session", getCallId().c_str());
+        upnp::Mapping mapAudioRtp {sdp_->getLocalAudioPort(), sdp_->getLocalAudioPort(),
+            upnp::PortType::UDP, "SIP Audio RTP port"};
         upnp_->requestMappingAdd(
             [this](uint16_t, bool success) {
                 if (!success)
                     return;
+                upnp::Mapping mapAudioRtcp {sdp_->getLocalAudioControlPort(), sdp_->getLocalAudioControlPort(),
+                    upnp::PortType::UDP, "SIP Audio RTCP port"};
                 upnp_->requestMappingAdd(
                     [this](uint16_t, bool success) {
                         if (!success)
@@ -1428,18 +1428,18 @@ SIPCall::openPortsUPnP()
                         sdp_->setLocalPublishedAudioPorts(sdp_->getLocalAudioPort(),
                                                           sdp_->getLocalAudioControlPort());
                     },
-                    sdp_->getLocalAudioControlPort(),
-                    upnp::PortType::UDP,
-                    true);
+                    mapAudioRtcp);
             },
-            sdp_->getLocalAudioPort(),
-            upnp::PortType::UDP,
-            true);
+            mapAudioRtp);
 #ifdef ENABLE_VIDEO
+        upnp::Mapping mapVideoRtp {sdp_->getLocalVideoPort(), sdp_->getLocalVideoPort(),
+            upnp::PortType::UDP, "SIP Video RTP port"};
         upnp_->requestMappingAdd(
             [this](uint16_t, bool success) {
                 if (!success)
                     return;
+                upnp::Mapping mapVideoRtcp {sdp_->getLocalVideoControlPort(), sdp_->getLocalVideoControlPort(),
+                    upnp::PortType::UDP, "SIP Video RTCP port"};
                 upnp_->requestMappingAdd(
                     [this](uint16_t, bool success) {
                         if (!success)
@@ -1447,13 +1447,9 @@ SIPCall::openPortsUPnP()
                         sdp_->setLocalPublishedVideoPorts(sdp_->getLocalVideoPort(),
                                                           sdp_->getLocalVideoControlPort());
                     },
-                    sdp_->getLocalVideoControlPort(),
-                    upnp::PortType::UDP,
-                    true);
+                    mapVideoRtcp);
             },
-            sdp_->getLocalVideoPort(),
-            upnp::PortType::UDP,
-            true);
+            mapVideoRtp);
 #endif
     }
 }
@@ -1599,6 +1595,11 @@ SIPCall::initIceMediaTransport(bool master,
                                                               channel_num,
                                                               master,
                                                               iceOptions);
+    if (tmpMediaTransport_ != nullptr) {
+        JAMI_DBG("[call:%s] Successfully created media ICE transport", getCallId().c_str());
+    } else {
+        JAMI_ERR("[call:%s] Failed to create media ICE transport", getCallId().c_str());
+    }
     return static_cast<bool>(tmpMediaTransport_);
 }
 
