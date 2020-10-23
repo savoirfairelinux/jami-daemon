@@ -986,7 +986,7 @@ connectivityChanged()
     // reset the UPnP context
 #if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     try {
-        jami::upnp::getUPnPContext()->connectivityChanged();
+        jami::upnp::UPnPContext::getUPnPContext()->connectivityChanged();
     } catch (std::runtime_error& e) {
         JAMI_ERR("UPnP context error: %s", e.what());
     }
