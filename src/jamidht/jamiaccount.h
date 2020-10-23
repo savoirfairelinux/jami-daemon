@@ -41,6 +41,8 @@
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
 
+#include "upnp/protocol/mapping.h"
+
 #include <pjsip/sip_types.h>
 
 #include <vector>
@@ -631,6 +633,8 @@ private:
      * DHT port preference
      */
     in_port_t dhtPort_ {};
+    /* Current port mapping */
+    upnp::Mapping dhtPortMapping_ {};
 
     bool dhtPeerDiscovery_ {false};
 
