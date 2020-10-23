@@ -29,6 +29,8 @@
 #include "mediahandler.h"
 // STL
 #include <list>
+#include <set>
+#include <tuple>
 
 namespace jami {
 using MediaHandlerPtr = std::unique_ptr<MediaHandler>;
@@ -49,24 +51,6 @@ public:
 
 public:
     /**
-     * @brief notifyAllAVSubject
-     * @param subject
-     * @param av
-     * @param local
-     * @param peerId
-     * This function is called whenever there is a new AVFrame subject available
-     */
-    void notifyAllAVSubject(const StreamData& data, AVSubjectSPtr& subject)
-    {
-        for (auto& pair : callMediaHandlers) {
-            auto& callMediaHandlerPtr = pair.second;
-            if (pair.first) {
-                notifyAVSubject(callMediaHandlerPtr, data, subject);
-            }
-        }
-    }
-
-    /**
      * @brief createAVSubject
      * @param data
      * Creates an av frame subject with properties StreamData
@@ -77,20 +61,13 @@ public:
         callAVsubjects.push_back(std::make_pair(data, subject));
     }
 
-    void clearAVSubject(const std::string& callID)
+    void clearAVSubject(const std::string& callId)
     {
         for (auto it = callAVsubjects.begin(); it != callAVsubjects.end();) {
-            if (it->first.id == callID) {
+            if (it->first.id == callId) {
                 it = callAVsubjects.erase(it);
             } else {
                 ++it;
-            }
-        }
-        for (auto& callMediaHandler : callMediaHandlers) {
-            if (mediaHandlerToggled_[getCallHandlerId(callMediaHandler.second)] == callID) {
-                callMediaHandler.first = false;
-                callMediaHandler.second->detach();
-                mediaHandlerToggled_[getCallHandlerId(callMediaHandler.second)] = "";
             }
         }
     }
@@ -105,14 +82,14 @@ public:
             CallMediaHandlerPtr ptr {(static_cast<CallMediaHandler*>(data))};
 
             if (ptr) {
-                callMediaHandlers.push_back(std::make_pair(false, std::move(ptr)));
+                callMediaHandlers.emplace_back(std::move(ptr));
             }
             return 0;
         };
 
         auto unregisterMediaHandler = [this](void* data) {
             for (auto it = callMediaHandlers.begin(); it != callMediaHandlers.end(); ++it) {
-                if (it->second.get() == data) {
+                if (it->get() == data) {
                     callMediaHandlers.erase(it);
                     break;
                 }
@@ -133,10 +110,8 @@ public:
     std::vector<std::string> listCallMediaHandlers()
     {
         std::vector<std::string> res;
-        for (const auto& pair : callMediaHandlers) {
-            if (pair.second) {
-                res.push_back(getCallHandlerId(pair.second));
-            }
+        for (const auto& mediaHandler : callMediaHandlers) {
+            res.emplace_back(getCallHandlerId(mediaHandler));
         }
         return res;
     }
@@ -147,36 +122,29 @@ public:
      * if off, detach it
      * @param id
      */
-    void toggleCallMediaHandler(const std::string& id, const bool toggle)
+    void toggleCallMediaHandler(const std::string& mediaHandlerId,
+                                const std::string& callId,
+                                const bool toggle)
     {
-        std::string callID = Manager::instance().getCurrentCallId();
-
-        if (toggle) {
-            for (auto& pair : mediaHandlerToggled_) {
-                if (pair.second == callID && pair.first != id) {
-                    toggleCallMediaHandler(pair.first, false);
-                }
-            }
-        }
-
-        if (id.empty())
+        if (mediaHandlerId.empty())
             return;
 
-        auto find = mediaHandlerToggled_.find(id);
+        auto find = mediaHandlerToggled_.find(callId);
         if (find == mediaHandlerToggled_.end())
-            mediaHandlerToggled_[id] = "";
+            mediaHandlerToggled_[callId] = {};
 
         for (auto it = callAVsubjects.begin(); it != callAVsubjects.end(); ++it) {
-            if (it->first.id == callID) {
-                for (auto& pair : callMediaHandlers) {
-                    if (pair.second && getCallHandlerId(pair.second) == id) {
-                        pair.first = toggle;
-                        if (pair.first) {
-                            mediaHandlerToggled_[id] = callID;
-                            listAvailableSubjects(callID, pair.second);
+            if (it->first.id == callId) {
+                for (auto& mediaHandler : callMediaHandlers) {
+                    if (getCallHandlerId(mediaHandler) == mediaHandlerId) {
+                        if (toggle) {
+                            mediaHandlerToggled_[callId].insert(mediaHandlerId);
+                            listAvailableSubjects(callId, mediaHandler);
                         } else {
-                            pair.second->detach();
-                            mediaHandlerToggled_[id] = "";
+                            mediaHandler->detach();
+                            if (mediaHandlerToggled_[callId].find(mediaHandlerId)
+                                != mediaHandlerToggled_[callId].end())
+                                mediaHandlerToggled_[callId].erase(mediaHandlerId);
                         }
                     }
                 }
@@ -189,34 +157,36 @@ public:
      * @param id of the call media handler
      * @return map of Call Media Handler Details
      */
-    std::map<std::string, std::string> getCallMediaHandlerDetails(const std::string& id)
+    std::map<std::string, std::string> getCallMediaHandlerDetails(const std::string& mediaHandlerId)
     {
-        for (auto& pair : callMediaHandlers) {
-            if (pair.second && getCallHandlerId(pair.second) == id) {
-                return pair.second->getCallMediaHandlerDetails();
+        for (auto& mediaHandler : callMediaHandlers) {
+            if (getCallHandlerId(mediaHandler) == mediaHandlerId) {
+                return mediaHandler->getCallMediaHandlerDetails();
             }
         }
         return {};
     }
 
-    std::map<std::string, std::string> getCallMediaHandlerStatus()
+    std::map<std::string, std::vector<std::string>> getCallMediaHandlerStatus(
+        const std::string& callId)
     {
-        for (auto& pair : mediaHandlerToggled_) {
-            if (pair.second == Manager::instance().getCurrentCallId()) {
-                return {{"name", pair.first}};
-            }
+        const auto& it = mediaHandlerToggled_.find(callId);
+        if (it != mediaHandlerToggled_.end()) {
+            std::vector<std::string> ret;
+            for (const auto& mediaHandlerId : it->second)
+                ret.push_back(mediaHandlerId);
+            return {{callId, ret}};
         }
 
-        return {{"name", ""}};
+        return {{callId, {}}};
     }
 
     void setPreference(const std::string& key, const std::string& value, const std::string& scopeStr)
     {
-        for (auto& pair : callMediaHandlers) {
-            if (pair.second
-                && scopeStr.find(pair.second->getCallMediaHandlerDetails()["name"])
-                       != std::string::npos) {
-                pair.second->setPreferenceAttribute(key, value);
+        for (auto& mediaHandler : callMediaHandlers) {
+            if (scopeStr.find(mediaHandler->getCallMediaHandlerDetails()["name"])
+                != std::string::npos) {
+                mediaHandler->setPreferenceAttribute(key, value);
             }
         }
     }
@@ -234,19 +204,6 @@ private:
     {
         if (auto soSubject = subject.lock()) {
             callMediaHandlerPtr->notifyAVFrameSubject(data, soSubject);
-        }
-    }
-
-    void cleanCallAVSubjects()
-    {
-        // remove subjects from not available calls callAVsubjects
-        for (auto it = callAVsubjects.begin(); it != callAVsubjects.end();) {
-            std::vector<std::string> callids = jami::Manager::instance().getCallList();
-            if (std::find(callids.begin(), callids.end(), it->first.id) == callids.end()) {
-                it = callAVsubjects.erase(it);
-            } else {
-                ++it;
-            }
         }
     }
 
@@ -286,7 +243,7 @@ private:
      * These objects can then be notified with notify notifyAVFrameSubject
      * whenever there is a new CallAVSubject like a video receive
      */
-    std::list<std::pair<bool, CallMediaHandlerPtr>> callMediaHandlers;
+    std::list<CallMediaHandlerPtr> callMediaHandlers;
 
     /**
      * @brief callAVsubjects
@@ -296,8 +253,9 @@ private:
      * It is pushed to this list list
      */
     std::list<std::pair<const StreamData, AVSubjectSPtr>> callAVsubjects;
+    // std::map<std::string, std::tuple<const StreamData, AVSubjectSPtr>> callAVsubjects;
 
-    std::map<std::string, std::string> mediaHandlerToggled_;
+    std::map<std::string, std::set<std::string>> mediaHandlerToggled_;
 };
 
 } // namespace jami
