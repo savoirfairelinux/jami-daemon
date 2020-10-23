@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c6cb6456_40653f19",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3522,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-10-23T17:34:10Z",
+      "side": 1,
+      "message": "avoid performing lookup 3 times in a row (use the iterator)",
+      "range": {
+        "startLine": 3520,
+        "startChar": 0,
+        "endLine": 3522,
+        "endChar": 48
+      },
+      "revId": "fe5c75bde8db34f5849a591d72f36f720e885e50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
