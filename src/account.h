@@ -500,7 +500,7 @@ protected:
      */
     bool upnpEnabled_;
     mutable std::mutex upnp_mtx {};
-    std::unique_ptr<jami::upnp::Controller> upnp_;
+    std::shared_ptr<jami::upnp::Controller> upnp_;
 
     /**
      * private account codec searching functions

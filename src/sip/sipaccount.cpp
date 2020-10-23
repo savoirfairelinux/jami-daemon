@@ -739,12 +739,14 @@ SIPAccount::getVolatileAccountDetails() const
 void
 SIPAccount::mapPortUPnP()
 {
+    upnp::Mapping map {publishedPort_, localPort_, upnp::PortType::UDP, "SIP Account Port"};
+
     upnp_->requestMappingAdd(
         [this](uint16_t port_used, bool success) {
             auto oldPort = static_cast<in_port_t>(publishedPortUsed_);
             auto newPort = success ? port_used : publishedPort_;
             if (not success and not isRegistered()) {
-                JAMI_WARN("[Account %s] Failed to open port %u: registering SIP account anyways",
+                JAMI_WARN("[Account %s] Failed to open port %u: registering SIP account anyway",
                           getAccountID().c_str(),
                           oldPort);
                 doRegister1_();
@@ -756,7 +758,7 @@ SIPAccount::mapPortUPnP()
                               getAccountID().c_str(),
                               newPort);
                 else
-                    JAMI_WARN("[Account %s] SIP port changed to %u: reregistering SIP account",
+                    JAMI_WARN("[Account %s] SIP port changed to %u: re-registering SIP account",
                               getAccountID().c_str(),
                               newPort);
                 publishedPortUsed_ = newPort;
@@ -765,10 +767,7 @@ SIPAccount::mapPortUPnP()
             }
             doRegister1_();
         },
-        publishedPort_,
-        jami::upnp::PortType::UDP,
-        false,
-        localPort_);
+        map);
 }
 
 void
