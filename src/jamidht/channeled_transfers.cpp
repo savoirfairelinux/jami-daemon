@@ -38,9 +38,11 @@ ChanneledOutgoingTransfer::ChanneledOutgoingTransfer(const std::shared_ptr<Chann
 ChanneledOutgoingTransfer::~ChanneledOutgoingTransfer()
 {
     channel_->setOnRecv({});
-    file_->setOnRecv({});
+    if (file_)
+        file_->setOnRecv({});
     channel_->shutdown();
-    file_->close();
+    if (file_)
+        file_->close();
 }
 
 std::string
