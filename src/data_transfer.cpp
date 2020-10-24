@@ -329,10 +329,10 @@ private:
     {
         dht::ThreadPool::computation().run([this]() {
             while (!input_.eof() && onRecvCb_) {
-                std::vector<uint8_t> buf;
+                std::vector<char> buf;
                 buf.resize(MAX_BUFFER_SIZE);
 
-                input_.read(reinterpret_cast<char*>(&buf[0]), buf.size());
+                input_.read(&buf[0], buf.size());
                 buf.resize(input_.gcount());
                 if (buf.size()) {
                     std::lock_guard<std::mutex> lk {infoMutex_};
@@ -340,7 +340,7 @@ private:
                     metaInfo_->updateInfo(info_);
                 }
                 if (onRecvCb_)
-                    onRecvCb_(std::string_view((const char*)buf.data(), buf.size()));
+                    onRecvCb_(std::string_view(buf.data(), buf.size()));
             }
             JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
             if (internalCompletionCb_)
