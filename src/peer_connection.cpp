@@ -411,7 +411,7 @@ public:
          const std::shared_future<tls::DhParams>& dh_params,
          bool isIceTransport = true)
         : peerCertificate {peer_cert}
-        , ep_ {ep.get()}
+        , ep_ {std::move(ep)}
         , isIce_ {isIceTransport}
     {
         tls::TlsSession::TlsSessionCallbacks tls_cbs
@@ -437,8 +437,9 @@ public:
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
 
         if (isIce_) {
-            if (const auto* iceSocket = reinterpret_cast<const IceSocketEndpoint*>(ep_)) {
-                iceSocket->underlyingICE()->setOnShutdown([this]() { tls->shutdown(); });
+            if (const auto* iceSocket = reinterpret_cast<const IceSocketEndpoint*>(ep_.get())) {
+                if (auto ice = iceSocket->underlyingICE())
+                    ice->setOnShutdown([this]() { tls->shutdown(); });
             }
         }
     }
@@ -450,7 +451,7 @@ public:
          bool isIce = true)
         : peerCertificateCheckFunc {std::move(cert_check)}
         , peerCertificate {null_cert}
-        , ep_ {ep.get()}
+        , ep_ {std::move(ep)}
         , isIce_ {isIce}
     {
         tls::TlsSession::TlsSessionCallbacks tls_cbs
@@ -476,7 +477,7 @@ public:
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
 
         if (isIce_) {
-            if (const auto* iceSocket = reinterpret_cast<const IceSocketEndpoint*>(ep_)) {
+            if (const auto* iceSocket = reinterpret_cast<const IceSocketEndpoint*>(ep_.get())) {
                 iceSocket->underlyingICE()->setOnShutdown([this]() {
                     if (tls)
                         tls->shutdown();
@@ -509,7 +510,7 @@ public:
     std::atomic_bool isReady_ {false};
     OnReadyCb onReadyCb_;
     std::unique_ptr<tls::TlsSession> tls;
-    const AbstractSocketEndpoint* ep_;
+    std::unique_ptr<AbstractSocketEndpoint> ep_;
     bool isIce_ {true};
 };
 
@@ -661,10 +662,11 @@ TlsSocketEndpoint::setOnReady(std::function<void(bool ok)>&& cb)
 void
 TlsSocketEndpoint::shutdown()
 {
-    if (pimpl_->ep_ && pimpl_->isIce_) {
-        const auto* iceSocket = reinterpret_cast<const IceSocketEndpoint*>(pimpl_->ep_);
-        if (iceSocket && iceSocket->underlyingICE())
-            iceSocket->underlyingICE()->cancelOperations();
+    if (pimpl_->isIce_) {
+        if (auto iceSocket = reinterpret_cast<const IceSocketEndpoint*>(pimpl_->ep_.get())) {
+            if (auto ice = iceSocket->underlyingICE())
+                ice->cancelOperations();
+        }
     }
     pimpl_->tls->shutdown();
 }
@@ -673,7 +675,7 @@ std::shared_ptr<IceTransport>
 TlsSocketEndpoint::underlyingICE() const
 {
     if (pimpl_->ep_ && pimpl_->isIce_)
-        if (const auto* iceSocket = reinterpret_cast<const IceSocketEndpoint*>(pimpl_->ep_))
+        if (const auto* iceSocket = reinterpret_cast<const IceSocketEndpoint*>(pimpl_->ep_.get()))
             return iceSocket->underlyingICE();
     return {};
 }
