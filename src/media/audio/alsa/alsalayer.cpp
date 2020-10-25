@@ -109,11 +109,24 @@ AlsaLayer::AlsaLayer(const AudioPreference& pref)
 
 AlsaLayer::~AlsaLayer()
 {
-    audioThread_.reset();
+    shutdown();
+}
+
+void
+AlsaLayer::shutdown()
+{
+    status_ = Status::Idle;
+    {
+        std::lock_guard<std::mutex> lock(audioThreadMtx_);
+        audioThread_.reset();
+    }
 
     /* Then close the audio devices */
     closeCaptureStream();
     closePlaybackStream();
+    playbackHandle_ = nullptr;
+    captureHandle_ = nullptr;
+    ringtoneHandle_ = nullptr;
 }
 
 void
@@ -183,7 +196,12 @@ AlsaLayer::run()
     }
     startedCv_.notify_all();
 
-    while (status_ == AudioLayer::Status::Started and audioThread_ and audioThread_->isRunning()) {
+    while (status_ == AudioLayer::Status::Started) {
+        {
+            std::lock_guard<std::mutex> lock(audioThreadMtx_);
+            if (!audioThread_ or !audioThread_->isRunning())
+                return;
+        }
         playback();
         ringtone();
         capture();
@@ -207,8 +225,11 @@ AlsaLayer::openDevice(snd_pcm_t** pcm,
         if (err == -EBUSY) {
             // We're called in audioThread_ context, so if exit is requested
             // force return now
-            if ((not audioThread_) or (not audioThread_->isRunning()))
-                return false;
+            {
+                std::lock_guard<std::mutex> lock(audioThreadMtx_);
+                if ((not audioThread_) or (not audioThread_->isRunning()))
+                    return false;
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     } while (err == -EBUSY and ++tries <= MAX_RETRIES);
@@ -245,6 +266,7 @@ void AlsaLayer::startStream(AudioDeviceType)
     if (is_playback_running_ and is_capture_running_)
         return;
 
+    std::lock_guard<std::mutex> lock(audioThreadMtx_);
     if (not audioThread_) {
         audioThread_.reset(new AlsaThread(this));
         audioThread_->start();
@@ -254,22 +276,12 @@ void AlsaLayer::startStream(AudioDeviceType)
 }
 
 void
-AlsaLayer::stopStream(AudioDeviceType stream)
+AlsaLayer::stopStream(AudioDeviceType)
 {
-    audioThread_.reset();
-
-    closeCaptureStream();
-    closePlaybackStream();
-
-    playbackHandle_ = nullptr;
-    captureHandle_ = nullptr;
-    ringtoneHandle_ = nullptr;
-
     /* Flush the ring buffers */
+    shutdown();
     flushUrgent();
     flushMain();
-
-    status_ = Status::Idle;
 }
 
 /*
