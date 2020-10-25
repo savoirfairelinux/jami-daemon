@@ -173,6 +173,7 @@ private:
 
     NON_COPYABLE(AlsaLayer);
 
+    void shutdown();
     /**
      * Drop the pending frames and close the capture device
      * ALSA Library API
@@ -246,6 +247,7 @@ private:
     bool is_playback_open_;
     bool is_capture_open_;
 
+    std::mutex audioThreadMtx_ {};
     std::unique_ptr<AlsaThread> audioThread_;
 };
 
