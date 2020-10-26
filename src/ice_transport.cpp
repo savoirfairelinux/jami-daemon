@@ -143,14 +143,17 @@ public:
         std::vector<char> data {};
     };
 
-    std::vector<PeerChannel> peerChannels_ {};
-
     struct ComponentIO
     {
         std::mutex mutex;
         std::condition_variable cv;
-        std::deque<Packet> queue;
         IceRecvCb cb;
+        // If the ICE transport is a UDP transport, store the received packets in a queue
+        // And the user of this transport will drop packets if too old
+        std::deque<Packet> queue;
+        // Else it's a stream, so fill a channel
+        // TODO replace by just a deque if we only uses CB? Check what functions are called
+        PeerChannel channel;
     };
 
     std::vector<ComponentIO> compIO_ {};
@@ -199,7 +202,6 @@ public:
     std::condition_variable waitDataCv_ = {};
 
     std::atomic_bool destroying_ {false};
-    onShutdownCb scb {};
 
     // Default remote adresses
     std::vector<IpAddr> iceDefaultRemoteAddr_ {};
@@ -345,8 +347,6 @@ IceTransport::Impl::Impl(const char* name,
         config_.opt.aggressive = PJ_FALSE;
     }
 
-    peerChannels_.resize(component_count_ + 1);
-
     // Add local hosts (IPv4, IPv6) as stun candidates
     add_stun_server(config_, pj_AF_INET6());
     add_stun_server(config_, pj_AF_INET());
@@ -389,10 +389,14 @@ IceTransport::Impl::Impl(const char* name,
 
     icecb.on_destroy = [](pj_ice_strans* ice_st) {
         if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st))) {
+            JAMI_ERR("@@@ ICE ON DESTROY %p", tr);
             tr->destroying_ = true;
             tr->waitDataCv_.notify_all();
-            if (tr->scb)
-                tr->scb();
+            for (auto& io : tr->compIO_) {
+                std::lock_guard<std::mutex> lk(io.mutex);
+                if (io.cb)
+                    io.cb(nullptr, 0);
+            }
         } else {
             JAMI_WARN("null IceTransport");
         }
@@ -445,6 +449,7 @@ IceTransport::Impl::Impl(const char* name,
 
 IceTransport::Impl::~Impl()
 {
+    JAMI_ERR("@@@ IceTransport::Impl::~Impl() %p DELETE", this);
     JAMI_DBG("[ice:%p] destroying", this);
     sip_utils::register_thread();
     threadTerminateFlags_ = true;
@@ -463,6 +468,7 @@ IceTransport::Impl::~Impl()
 
     if (config_.stun_cfg.timer_heap)
         pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
+    JAMI_ERR("@@@ IceTransport::Impl::~Impl() %p DELETE END", this);
 }
 
 bool
@@ -595,12 +601,12 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
                 auto raddr = getRemoteAddress(i);
 
                 if (laddr and raddr) {
-                    out << " [" << i+1 << "] "
-                        << laddr.toString(true, true) << " [" << getCandidateType(getSelectedCandidate(i, false)) << "] "
-                        << " <-> "
-                        << raddr.toString(true, true) << " [" << getCandidateType(getSelectedCandidate(i, true)) << "] " << '\n';
+                    out << " [" << i + 1 << "] " << laddr.toString(true, true) << " ["
+                        << getCandidateType(getSelectedCandidate(i, false)) << "] "
+                        << " <-> " << raddr.toString(true, true) << " ["
+                        << getCandidateType(getSelectedCandidate(i, true)) << "] " << '\n';
                 } else {
-                    out << " [" << i+1 << "] disabled\n";
+                    out << " [" << i + 1 << "] disabled\n";
                 }
             }
 
@@ -965,12 +971,13 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void* pkt, pj_size_t size)
 
     if (io.cb) {
         io.cb((uint8_t*) pkt, size);
-    } else {
+    } else if (config_.protocol == PJ_ICE_TP_TCP) {
         std::error_code ec;
-        auto err = peerChannels_.at(comp_id - 1).write((char*) pkt, size, ec);
-        if (err < 0) {
+        auto err = io.channel.write(reinterpret_cast<char*>(pkt), size, ec);
+        if (err < 0)
             JAMI_ERR("[ice:%p] rx: channel is closed", this);
-        }
+    } else {
+        io.queue.emplace_back(Packet {pkt, size});
     }
 }
 
@@ -1149,8 +1156,8 @@ IceTransport::stop()
 void
 IceTransport::cancelOperations()
 {
-    for (auto& c : pimpl_->peerChannels_) {
-        c.stop();
+    for (auto& c : pimpl_->compIO_) {
+        c.channel.stop();
     }
 }
 
@@ -1425,7 +1432,7 @@ IceTransport::recv(int comp_id, unsigned char* buf, size_t len, std::error_code&
 ssize_t
 IceTransport::recvfrom(int comp_id, char* buf, size_t len, std::error_code& ec)
 {
-    return pimpl_->peerChannels_.at(comp_id).read(buf, len, ec);
+    return pimpl_->compIO_.at(comp_id).channel.read(buf, len, ec);
 }
 
 void
@@ -1437,16 +1444,20 @@ IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
 
     if (cb) {
         // Flush existing queue using the callback
-        for (const auto& packet : io.queue)
-            io.cb((uint8_t*) packet.data.data(), packet.data.size());
-        io.queue.clear();
+        if (isTCPEnabled()) {
+            auto available = pimpl_->compIO_.at(comp_id).channel.isDataAvailable();
+            if (available) {
+                char buf[available];
+                std::error_code ec;
+                pimpl_->compIO_.at(comp_id).channel.read(buf, available, ec);
+                io.cb(std::move((uint8_t*) buf), available);
+            }
+        } else {
+            for (const auto& packet : io.queue)
+                io.cb((uint8_t*) packet.data.data(), packet.data.size());
+            io.queue.clear();
+        }
     }
-}
-
-void
-IceTransport::setOnShutdown(onShutdownCb&& cb)
-{
-    pimpl_->scb = cb;
 }
 
 ssize_t
@@ -1517,13 +1528,13 @@ IceTransport::waitForNegotiation(std::chrono::milliseconds timeout)
 ssize_t
 IceTransport::isDataAvailable(int comp_id)
 {
-    return pimpl_->peerChannels_.at(comp_id).isDataAvailable();
+    return pimpl_->compIO_.at(comp_id).channel.isDataAvailable();
 }
 
 ssize_t
 IceTransport::waitForData(int comp_id, std::chrono::milliseconds timeout, std::error_code& ec)
 {
-    return pimpl_->peerChannels_.at(comp_id).wait(timeout, ec);
+    return pimpl_->compIO_.at(comp_id).channel.wait(timeout, ec);
 }
 
 std::vector<SDP>
@@ -1535,16 +1546,16 @@ IceTransport::parseSDPList(const std::vector<uint8_t>& msg)
         size_t off = 0;
         while (off != msg.size()) {
             msgpack::unpacked result;
-            msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+            msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
             SDP sdp;
             if (result.get().type == msgpack::type::POSITIVE_INTEGER) {
                 // Version 1
-                msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+                msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
                 std::tie(sdp.ufrag, sdp.pwd) = result.get().as<std::pair<std::string, std::string>>();
-                msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+                msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
                 auto comp_cnt = result.get().as<uint8_t>();
                 while (comp_cnt-- > 0) {
-                    msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+                    msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
                     auto candidates = result.get().as<std::vector<std::string>>();
                     sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
                     sdp.candidates.insert(sdp.candidates.end(),

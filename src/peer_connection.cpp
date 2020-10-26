@@ -192,8 +192,6 @@ public:
             /*.cert_check = */ nullptr,
         };
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
-
-        ep_->underlyingICE()->setOnShutdown([this]() { tls->shutdown(); });
     }
 
     Impl(std::unique_ptr<IceSocketEndpoint>&& ep,
@@ -225,21 +223,18 @@ public:
             /*.cert_check = */ nullptr,
         };
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
-
-        ep_->underlyingICE()->setOnShutdown([this]() {
-            if (tls)
-                tls->shutdown();
-        });
     }
 
     ~Impl()
     {
+        JAMI_ERR("@@@ TlsSocketEndpoint %p DELETE", this);
         {
             std::lock_guard<std::mutex> lk(cbMtx_);
             onStateChangeCb_ = {};
             onReadyCb_ = {};
         }
         tls.reset();
+        JAMI_ERR("@@@ TlsSocketEndpoint %p DELETE END", this);
     }
 
     // TLS callbacks
@@ -402,11 +397,6 @@ TlsSocketEndpoint::setOnReady(std::function<void(bool ok)>&& cb)
 void
 TlsSocketEndpoint::shutdown()
 {
-    if (pimpl_->ep_) {
-        const auto* iceSocket = reinterpret_cast<const IceSocketEndpoint*>(pimpl_->ep_);
-        if (iceSocket && iceSocket->underlyingICE())
-            iceSocket->underlyingICE()->cancelOperations();
-    }
     pimpl_->tls->shutdown();
 }
 

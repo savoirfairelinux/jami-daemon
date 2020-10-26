@@ -218,7 +218,6 @@ public:
     // I/O methods
 
     void setOnRecv(unsigned comp_id, IceRecvCb cb);
-    void setOnShutdown(onShutdownCb&& cb);
 
     ssize_t recv(int comp_id, unsigned char* buf, size_t len, std::error_code& ec);
     ssize_t recvfrom(int comp_id, char* buf, size_t len, std::error_code& ec);
