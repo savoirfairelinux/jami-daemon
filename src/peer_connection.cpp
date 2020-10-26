@@ -234,6 +234,7 @@ public:
 
     ~Impl()
     {
+        ep_->underlyingICE()->setOnShutdown({});
         {
             std::lock_guard<std::mutex> lk(cbMtx_);
             onStateChangeCb_ = {};
