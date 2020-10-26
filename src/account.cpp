@@ -224,7 +224,7 @@ Account::serialize(YAML::Emitter& out) const
     out << YAML::Key << ID_KEY << YAML::Value << accountID_;
     out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
     out << YAML::Key << ACCOUNT_ENABLE_KEY << YAML::Value << enabled_;
-    out << YAML::Key << TYPE_KEY << YAML::Value << getAccountType();
+    out << YAML::Key << TYPE_KEY << YAML::Value << std::string(getAccountType());
     out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value << activeCodecs;
     out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
     out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled_;
@@ -320,7 +320,7 @@ Account::getAccountDetails() const
     return {{Conf::CONFIG_ACCOUNT_ALIAS, alias_},
             {Conf::CONFIG_ACCOUNT_DISPLAYNAME, displayName_},
             {Conf::CONFIG_ACCOUNT_ENABLE, enabled_ ? TRUE_STR : FALSE_STR},
-            {Conf::CONFIG_ACCOUNT_TYPE, getAccountType()},
+            {Conf::CONFIG_ACCOUNT_TYPE, std::string(getAccountType())},
             {Conf::CONFIG_ACCOUNT_HOSTNAME, hostname_},
             {Conf::CONFIG_ACCOUNT_USERNAME, username_},
             {Conf::CONFIG_ACCOUNT_MAILBOX, mailBox_},

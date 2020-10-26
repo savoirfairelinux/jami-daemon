@@ -74,7 +74,7 @@ class Controller;
 class SIPCall : public Call
 {
 public:
-    static const char* const LINK_TYPE;
+    static const std::string_view LINK_TYPE;
 
     /**
      * Destructor
@@ -93,7 +93,7 @@ protected:
             const std::map<std::string, std::string>& details = {});
 
 public: // overridden
-    const char* getLinkType() const override { return LINK_TYPE; }
+    std::string_view getLinkType() const override { return LINK_TYPE; }
     void answer() override;
     void hangup(int reason) override;
     void refuse() override;

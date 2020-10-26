@@ -220,7 +220,7 @@ private:
         return std::static_pointer_cast<Conference>(shared_from_this());
     }
 
-    bool isModerator(const std::string& uri) const;
+    bool isModerator(std::string_view uri) const;
 
     std::string id_;
     State confState_ {State::ACTIVE_ATTACHED};

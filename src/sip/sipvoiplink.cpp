@@ -199,11 +199,11 @@ transaction_request_cb(pjsip_rx_data* rdata)
         return PJ_FALSE;
     }
 
-    std::string toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
-    std::string toHost(sip_to_uri->host.ptr, sip_to_uri->host.slen);
-    std::string viaHostname(sip_via.host.ptr, sip_via.host.slen);
-    const std::string remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
-    const std::string remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
+    std::string_view toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
+    std::string_view toHost(sip_to_uri->host.ptr, sip_to_uri->host.slen);
+    std::string_view viaHostname(sip_via.host.ptr, sip_via.host.slen);
+    const std::string_view remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
+    const std::string_view remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
     char tmp[PJSIP_MAX_URL_SIZE];
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
     std::string peerNumber(tmp, length);
@@ -223,15 +223,15 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     if (method->id == PJSIP_OTHER_METHOD) {
         pj_str_t* str = &method->name;
-        std::string request(str->ptr, str->slen);
+        std::string_view request(str->ptr, str->slen);
 
-        if (request.find("NOTIFY") != std::string::npos) {
+        if (request.find("NOTIFY") != std::string_view::npos) {
             if (body and body->data) {
                 int newCount {0};
                 int oldCount {0};
                 int urgentCount {0};
 
-                std::string sp = std::string(static_cast<char*>(body->data));
+                std::string sp(static_cast<char*>(body->data), body->len);
                 auto pos = sp.find("Voice-Message: ");
                 sp = sp.substr(pos);
 
@@ -249,7 +249,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
                                                                    oldCount,
                                                                    urgentCount);
             }
-        } else if (request.find("MESSAGE") != std::string::npos) {
+        } else if (request.find("MESSAGE") != std::string_view::npos) {
             // Reply 200 immediately (RFC 3428, ch. 7)
             try_respond_stateless(endpt_, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr);
             // Process message content in case of multi-part body
@@ -325,7 +325,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     bool hasVideo = false;
     if (r_sdp) {
-        auto pj_str_video = pj_str((char*) "video");
+        auto pj_str_video = sip_utils::CONST_PJ_STR("video");
         for (decltype(r_sdp->media_count) i = 0; i < r_sdp->media_count; i++) {
             if (pj_strcmp(&r_sdp->media[i]->desc.media, &pj_str_video) == 0)
                 hasVideo = true;
@@ -334,7 +334,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     auto transport = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(
         rdata->tp_info.transport);
-    auto call = account->newIncomingCall(remote_user,
+    auto call = account->newIncomingCall(std::string(remote_user),
                                          {{"AUDIO_ONLY", (hasVideo ? "false" : "true")}},
                                          transport);
     if (!call) {
@@ -347,7 +347,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     // Append PJSIP transport to the broker's SipTransport list
     if (!transport) {
-        if (not ::strcmp(account->getAccountType(), SIPAccount::ACCOUNT_TYPE)) {
+        if (account->getAccountType() == SIPAccount::ACCOUNT_TYPE) {
             JAMI_WARN("Using transport from account.");
             transport = std::static_pointer_cast<SIPAccount>(account)->getTransport();
         }
@@ -721,14 +721,14 @@ SIPVoIPLink::shutdown()
 }
 
 std::shared_ptr<SIPAccountBase>
-SIPVoIPLink::guessAccount(const std::string& userName,
-                          const std::string& server,
-                          const std::string& fromUri) const
+SIPVoIPLink::guessAccount(std::string_view userName,
+                          std::string_view server,
+                          std::string_view fromUri) const
 {
-    JAMI_DBG("username = %s, server = %s, from = %s",
-             userName.c_str(),
-             server.c_str(),
-             fromUri.c_str());
+    JAMI_DBG("username = %.*s, server = %.*s, from = %.*s",
+             (int)userName.size(), userName.data(),
+             (int)server.size(), server.data(),
+             (int)fromUri.size(), fromUri.data());
     // Try to find the account id from username and server name by full match
 
     std::shared_ptr<SIPAccountBase> result;
@@ -1084,7 +1084,9 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
                     while (rotation > 180)
                         rotation -= 360;
                     JAMI_WARN("Rotate video %d deg.", rotation);
+#ifdef ENABLE_VIDEO
                     call.getVideoRtp().setRotation(rotation);
+#endif
                 } catch (const std::exception& e) {
                     JAMI_WARN("Error parsing angle: %s", e.what());
                 }
