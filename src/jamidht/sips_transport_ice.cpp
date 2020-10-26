@@ -249,11 +249,6 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
            }};
     tls_ = std::make_unique<TlsSession>(std::move(iceSocket), param, cbs);
 
-    ice_->setOnShutdown([this]() {
-        if (tls_)
-            tls_->shutdown();
-    });
-
     if (pjsip_transport_register(base.tpmgr, &base) != PJ_SUCCESS)
         throw std::runtime_error("Can't register PJSIP transport.");
 }
