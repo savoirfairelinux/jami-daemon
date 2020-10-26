@@ -38,6 +38,7 @@
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
 
+#include <deque>
 #include <list>
 #include <mutex>
 #include <condition_variable>
@@ -240,7 +241,10 @@ public:
     // IO GnuTLS <-> ICE
     std::mutex rxMutex_ {};
     std::condition_variable rxCv_ {};
+    // For non reliable transport, the tls sessions receives a queue of packets
     std::list<std::vector<ValueType>> rxQueue_ {};
+    // For reliable transport, the rx_ is a stream
+    std::deque<ValueType> rx_ {};
 
     std::mutex reorderBufMutex_;
     bool flushProcessing_ {false};     ///< protect against recursive call to flushRxQueue
@@ -314,20 +318,22 @@ TlsSession::TlsSessionImpl::TlsSessionImpl(std::unique_ptr<SocketType>&& transpo
     , xcred_(nullptr)
     , thread_([this] { return setup(); }, [this] { process(); }, [this] { cleanup(); })
 {
-    if (not transport_->isReliable()) {
-        transport_->setOnRecv([this](const ValueType* buf, size_t len) {
-            std::lock_guard<std::mutex> lk {rxMutex_};
+    transport_->setOnRecv([this](const ValueType* buf, size_t len) {
+        std::lock_guard<std::mutex> lk {rxMutex_};
+        if (not transport_->isReliable()) {
             if (rxQueue_.size() == INPUT_MAX_SIZE) {
                 rxQueue_.pop_front(); // drop oldest packet if input buffer is full
                 ++stRxRawPacketDropCnt_;
             }
             rxQueue_.emplace_back(buf, buf + len);
-            ++stRxRawPacketCnt_;
-            stRxRawBytesCnt_ += len;
-            rxCv_.notify_one();
-            return len;
-        });
-    }
+        } else {
+            rx_.insert(rx_.end(), buf, buf + len);
+        }
+        ++stRxRawPacketCnt_;
+        stRxRawBytesCnt_ += len;
+        rxCv_.notify_one();
+        return len;
+    });
 
     // Run FSM into dedicated thread
     thread_.start();
@@ -339,8 +345,7 @@ TlsSession::TlsSessionImpl::~TlsSessionImpl()
     stateCondition_.notify_all();
     rxCv_.notify_all();
     thread_.join();
-    if (not transport_->isReliable())
-        transport_->setOnRecv(nullptr);
+    transport_->setOnRecv(nullptr);
 }
 
 const char*
@@ -687,25 +692,24 @@ TlsSession::TlsSessionImpl::sendRawVec(const giovec_t* iov, int iovcnt)
 ssize_t
 TlsSession::TlsSessionImpl::recvRaw(void* buf, size_t size)
 {
-    if (transport_->isReliable()) {
-        std::error_code ec;
-        auto count = transport_->read(reinterpret_cast<ValueType*>(buf), size, ec);
-        if (!ec)
-            return count;
-        gnutls_transport_set_errno(session_, ec.value());
-        return -1;
-    }
-
     std::lock_guard<std::mutex> lk {rxMutex_};
-    if (rxQueue_.empty()) {
+    ssize_t count = 0;
+    if (rx_.empty() and rxQueue_.empty()) {
         gnutls_transport_set_errno(session_, EAGAIN);
         return -1;
     }
+    if (transport_->isReliable()) {
+        count = std::min(size, rx_.size());
+        auto endIt = rx_.begin() + count;
+        std::copy(rx_.begin(), endIt, reinterpret_cast<ValueType*>(buf));
+        rx_.erase(rx_.begin(), endIt);
+    } else {
+        const auto& pkt = rxQueue_.front();
+        count = std::min(pkt.size(), size);
+        std::copy_n(pkt.begin(), count, reinterpret_cast<ValueType*>(buf));
+        rxQueue_.pop_front();
+    }
 
-    const auto& pkt = rxQueue_.front();
-    const std::size_t count = std::min(pkt.size(), size);
-    std::copy_n(pkt.begin(), count, reinterpret_cast<ValueType*>(buf));
-    rxQueue_.pop_front();
     return count;
 }
 
@@ -715,34 +719,15 @@ TlsSession::TlsSessionImpl::recvRaw(void* buf, size_t size)
 int
 TlsSession::TlsSessionImpl::waitForRawData(std::chrono::milliseconds timeout)
 {
-    if (transport_->isReliable()) {
-        std::error_code ec;
-        auto err = transport_->waitForData(timeout, ec);
-        if (err <= 0) {
-            // shutdown?
-            if (state_ == TlsSessionState::SHUTDOWN) {
-                gnutls_transport_set_errno(session_, EINTR);
-                return -1;
-            }
-            if (ec) {
-                gnutls_transport_set_errno(session_, ec.value());
-                return -1;
-            }
-            return 0;
-        }
-        return 1;
-    }
-
-    // non-reliable uses callback installed with setOnRecv()
     std::unique_lock<std::mutex> lk {rxMutex_};
     rxCv_.wait_for(lk, timeout, [this] {
-        return !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN;
+        return !rx_.empty() or !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN;
     });
     if (state_ == TlsSessionState::SHUTDOWN) {
         gnutls_transport_set_errno(session_, EINTR);
         return -1;
     }
-    if (rxQueue_.empty()) {
+    if (rx_.empty() and rxQueue_.empty()) {
         JAMI_ERR("[TLS] waitForRawData: timeout after %ld ms", timeout.count());
         return 0;
     }
@@ -851,15 +836,15 @@ TlsSession::TlsSessionImpl::handleStateCookie(TlsSessionState state)
         // block until rx packet or shutdown
         std::unique_lock<std::mutex> lk {rxMutex_};
         if (!rxCv_.wait_for(lk, COOKIE_TIMEOUT, [this] {
-                return !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN;
+                return !rx_.empty() or !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN;
             })) {
             JAMI_ERR("[TLS] SYN cookie failed: timeout");
             return TlsSessionState::SHUTDOWN;
         }
         // Shutdown state?
-        if (rxQueue_.empty())
+        if (rx_.empty() and rxQueue_.empty())
             return TlsSessionState::SHUTDOWN;
-        count = rxQueue_.front().size();
+        count = transport_->isReliable() ? rx_.size() : rxQueue_.front().size();
     }
 
     // Total bytes rx during cookie checking (see flood protection below)
@@ -870,9 +855,23 @@ TlsSession::TlsSessionImpl::handleStateCookie(TlsSessionState state)
     // Peek and verify front packet
     {
         std::lock_guard<std::mutex> lk {rxMutex_};
-        auto& pkt = rxQueue_.front();
         std::memset(&prestate_, 0, sizeof(prestate_));
-        ret = gnutls_dtls_cookie_verify(&cookie_key_, nullptr, 0, pkt.data(), pkt.size(), &prestate_);
+        if (transport_->isReliable()) {
+            ret = gnutls_dtls_cookie_verify(&cookie_key_,
+                                            nullptr,
+                                            0,
+                                            (ValueType*) rx_[0],
+                                            rx_.size(),
+                                            &prestate_);
+        } else {
+            auto& pkt = rxQueue_.front();
+            ret = gnutls_dtls_cookie_verify(&cookie_key_,
+                                            nullptr,
+                                            0,
+                                            pkt.data(),
+                                            pkt.size(),
+                                            &prestate_);
+        }
     }
 
     if (ret < 0) {
@@ -1211,25 +1210,6 @@ TlsSession::TlsSessionImpl::flushRxQueue()
 TlsSessionState
 TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
 {
-    // Nothing to do in reliable mode, so just wait for state change
-    if (transport_ and transport_->isReliable()) {
-        auto disconnected = [this]() -> bool {
-            return state_.load() != TlsSessionState::ESTABLISHED
-                   or newState_.load() != TlsSessionState::NONE;
-        };
-        std::unique_lock<std::mutex> lk(stateMutex_);
-        stateCondition_.wait(lk, disconnected);
-        auto oldState = state_.load();
-        if (oldState == TlsSessionState::ESTABLISHED) {
-            auto newState = newState_.load();
-            if (newState != TlsSessionState::NONE) {
-                newState_ = TlsSessionState::NONE;
-                return newState;
-            }
-        }
-        return oldState;
-    }
-
     // block until rx packet or state change
     {
         std::unique_lock<std::mutex> lk {rxMutex_};
@@ -1323,7 +1303,10 @@ TlsSession::TlsSession(std::unique_ptr<SocketType>&& transport,
     : pimpl_ {std::make_unique<TlsSessionImpl>(std::move(transport), params, cbs, anonymous)}
 {}
 
-TlsSession::~TlsSession() {}
+TlsSession::~TlsSession()
+{
+    JAMI_ERR("@@@ TlsSession %p DELETE", this);
+}
 
 bool
 TlsSession::isInitiator() const
