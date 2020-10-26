@@ -131,7 +131,7 @@ public:
 
     CallType getCallType() const { return type_; }
 
-    virtual const char* getLinkType() const = 0;
+    virtual std::string_view getLinkType() const = 0;
 
     /**
      * Set the peer number (destination on outgoing)
@@ -145,7 +145,7 @@ public:
      * not protected by mutex (when created)
      * @return std::string The peer number
      */
-    std::string getPeerNumber() const { return peerNumber_; }
+    const std::string& getPeerNumber() const { return peerNumber_; }
     /**
      * Set the display name (caller in ingoing)
      * not protected by mutex (when created)

@@ -221,7 +221,7 @@ static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.]+)(:(\\d+)|:\\[
 static const std::string PEER_DISCOVERY_JAMI_SERVICE = "jami";
 const constexpr auto PEER_DISCOVERY_EXPIRATION = std::chrono::minutes(1);
 
-constexpr const char* const JamiAccount::ACCOUNT_TYPE;
+constexpr const std::string_view JamiAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> JamiAccount::DHT_PORT_RANGE {4000, 8888};
 
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
@@ -734,7 +734,7 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
     call.setupLocalSDPFromIce();
     std::string toUri(
         getToUri(call.getPeerNumber() + "@"
-                 + target.toString(true).c_str())); // expecting a fully well formed sip uri
+                 + target.toString(true))); // expecting a fully well formed sip uri
 
     pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);
 
@@ -2834,7 +2834,7 @@ JamiAccount::generateDhParams()
 }
 
 MatchRank
-JamiAccount::matches(const std::string& userName, const std::string& server) const
+JamiAccount::matches(std::string_view userName, std::string_view server) const
 {
     if (not accountManager_ or not accountManager_->getInfo())
         return MatchRank::NONE;
@@ -2842,7 +2842,7 @@ JamiAccount::matches(const std::string& userName, const std::string& server) con
     if (userName == accountManager_->getInfo()->accountId
         || server == accountManager_->getInfo()->accountId
         || userName == accountManager_->getInfo()->deviceId) {
-        JAMI_DBG("Matching account id in request with username %s", userName.c_str());
+        JAMI_DBG("Matching account id in request with username %.*s", (int)userName.size(), userName.data());
         return MatchRank::FULL;
     } else {
         return MatchRank::NONE;

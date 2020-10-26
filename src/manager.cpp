@@ -1833,19 +1833,19 @@ Manager::incomingCallsWaiting()
 void
 Manager::incomingCall(Call& call, const std::string& accountId)
 {
-    JAMI_INFO("Incoming call %s on account %s)", call.getCallId().c_str(), accountId.c_str());
+    const std::string& callID(call.getCallId());
+    JAMI_INFO("Incoming call %s on account %s)", callID.c_str(), accountId.c_str());
 
     stopTone();
-    const std::string callID(call.getCallId());
 
     if (accountId.empty())
         call.setIPToIP(true);
     else {
         // strip sip: which is not required and bring confusion with ip to ip calls
         // when placing new call from history.
-        std::string peerNumber(call.getPeerNumber());
+        const std::string& peerNumber(call.getPeerNumber());
 
-        const char SIP_PREFIX[] = "sip:";
+        constexpr const char SIP_PREFIX[] = "sip:";
         size_t startIndex = peerNumber.find(SIP_PREFIX);
 
         if (startIndex != std::string::npos)
@@ -1869,15 +1869,9 @@ Manager::incomingCall(Call& call, const std::string& accountId)
 
     pimpl_->addWaitingCall(callID);
 
-    std::string number(call.getPeerNumber());
+    std::string from(call.getPeerDisplayName() + "<" + call.getPeerNumber() + ">");
+    emitSignal<DRing::CallSignal::IncomingCall>(accountId, callID, from);
 
-    std::string from("<" + number + ">");
-
-    emitSignal<DRing::CallSignal::IncomingCall>(accountId,
-                                                callID,
-                                                call.getPeerDisplayName() + " " + from);
-
-    auto currentCall = getCurrentCall();
     if (account->isRendezVous()) {
         runOnMainThread([this, callID] {
             answerCall(callID);
@@ -1911,7 +1905,7 @@ Manager::incomingCall(Call& call, const std::string& accountId)
         });
     } else if (pimpl_->autoAnswer_) {
         runOnMainThread([this, callID] { answerCall(callID); });
-    } else if (currentCall) {
+    } else if (auto currentCall = getCurrentCall()) {
         // Test if already calling this person
         if (currentCall->getAccountId() == accountId
             && currentCall->getPeerNumber() == call.getPeerNumber()) {
@@ -2763,9 +2757,9 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
     auto newAccountID = accountId.empty() ? getNewAccountId() : accountId;
 
     // Get the type
-    const char* accountType;
+    std::string_view accountType;
     if (details.find(Conf::CONFIG_ACCOUNT_TYPE) != details.end())
-        accountType = (*details.find(Conf::CONFIG_ACCOUNT_TYPE)).second.c_str();
+        accountType = (*details.find(Conf::CONFIG_ACCOUNT_TYPE)).second;
     else
         accountType = AccountFactory::DEFAULT_ACCOUNT_TYPE;
 
@@ -2773,9 +2767,9 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
 
     auto newAccount = accountFactory.createAccount(accountType, newAccountID);
     if (!newAccount) {
-        JAMI_ERR("Unknown %s param when calling addAccount(): %s",
+        JAMI_ERR("Unknown %s param when calling addAccount(): %.*s",
                  Conf::CONFIG_ACCOUNT_TYPE,
-                 accountType);
+                 (int)accountType.size(), accountType.data());
         return "";
     }
 
@@ -2861,8 +2855,6 @@ Manager::loadAccountMap(const YAML::Node& node)
         JAMI_ERR("%s: Preferences node unserialize error: ", e.what());
         ++errorCount;
     }
-
-    const std::string accountOrder = preferences.getAccountOrder();
 
     // load saved preferences for IP2IP account from configuration file
     const auto& accountList = node["accounts"];

@@ -31,22 +31,20 @@
 
 namespace jami {
 
-const char* const AccountFactory::DEFAULT_ACCOUNT_TYPE = SIPAccount::ACCOUNT_TYPE;
+const std::string_view AccountFactory::DEFAULT_ACCOUNT_TYPE = SIPAccount::ACCOUNT_TYPE;
 
 AccountFactory::AccountFactory()
 {
-    auto sipfunc = [](const std::string& id) {
+    generators_.emplace(SIPAccount::ACCOUNT_TYPE, [](const std::string& id) {
         return std::make_shared<SIPAccount>(id, true);
-    };
-    generators_.emplace(SIPAccount::ACCOUNT_TYPE, sipfunc);
-    auto dhtfunc = [](const std::string& id) {
+    });
+    generators_.emplace(JamiAccount::ACCOUNT_TYPE, [](const std::string& id) {
         return std::make_shared<JamiAccount>(id, false);
-    };
-    generators_.emplace(JamiAccount::ACCOUNT_TYPE, dhtfunc);
+    });
 }
 
 std::shared_ptr<Account>
-AccountFactory::createAccount(const char* const accountType, const std::string& id)
+AccountFactory::createAccount(const std::string_view accountType, const std::string& id)
 {
     if (hasAccount(id)) {
         JAMI_ERR("Existing account %s", id.c_str());
@@ -62,14 +60,14 @@ AccountFactory::createAccount(const char* const accountType, const std::string& 
 
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
-        accountMaps_[accountType].insert(std::make_pair(id, account));
+        accountMaps_[accountType].emplace(id, account);
     }
 
     return account;
 }
 
 bool
-AccountFactory::isSupportedType(const char* const name) const
+AccountFactory::isSupportedType(const std::string_view name) const
 {
     return generators_.find(name) != generators_.cend();
 }
@@ -77,7 +75,7 @@ AccountFactory::isSupportedType(const char* const name) const
 void
 AccountFactory::removeAccount(Account& account)
 {
-    const auto* account_type = account.getAccountType();
+    auto account_type = account.getAccountType();
 
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     const auto& id = account.getAccountID();
