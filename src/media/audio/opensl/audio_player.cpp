@@ -170,6 +170,7 @@ AudioPlayer::AudioPlayer(jami::AudioFormat sampleFormat,
 AudioPlayer::~AudioPlayer()
 {
     JAMI_DBG("Destroying OpenSL playback stream");
+    std::lock_guard<std::mutex> lk(m_);
 
     // destroy buffer queue audio player object, and invalidate all associated interfaces
     if (playerObjectItf_) {
@@ -192,6 +193,7 @@ AudioPlayer::setBufQueue(AudioQueue* playQ, AudioQueue* freeQ)
 bool
 AudioPlayer::start()
 {
+    std::lock_guard<std::mutex> lk(m_);
     JAMI_DBG("OpenSL playback start");
     SLuint32 state;
     SLresult result = (*playItf_)->GetPlayState(playItf_, &state);
@@ -227,6 +229,7 @@ void
 AudioPlayer::stop()
 {
     JAMI_DBG("OpenSL playback stop");
+    std::lock_guard<std::mutex> lk(m_);
     SLuint32 state;
 
     SLresult result = (*playItf_)->GetPlayState(playItf_, &state);
