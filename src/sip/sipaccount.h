@@ -411,7 +411,7 @@ public:
      * Timer used to periodically send re-register request based
      * on the "Expire" sip header (or the "expire" Contact parameter)
      */
-    static void keepAliveRegistrationCb(pj_timer_heap_t* th, pj_timer_entry* te);
+    void keepAliveRegistrationCb();
 
     bool isKeepAliveEnabled() const { return keepAliveEnabled_; }
 
@@ -546,7 +546,6 @@ private:
     {
         pj_bool_t active;     /**< Flag of reregister status. */
         pj_timer_entry timer; /**< Timer for reregistration.  */
-        void* reg_tp;         /**< Transport for registration.    */
         unsigned attempt_cnt; /**< Attempt counter.     */
     } auto_rereg_;            /**< Reregister/reconnect data. */
 
