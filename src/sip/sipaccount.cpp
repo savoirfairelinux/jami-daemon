@@ -919,6 +919,7 @@ SIPAccount::doUnregister(std::function<void(bool)> released_cb)
             JAMI_ERR("doUnregister %s", e.what());
         }
     }
+    resetAutoRegistration();
 
     lock.unlock();
     if (released_cb)
@@ -956,12 +957,15 @@ SIPAccount::startKeepAliveTimer()
     // make sure here we have an entirely new timer
     memset(&keepAliveTimer_, 0, sizeof(pj_timer_entry));
 
-    pj_time_val keepAliveDelay_;
-    keepAliveTimer_.cb = &SIPAccount::keepAliveRegistrationCb;
-    keepAliveTimer_.user_data = this;
+    keepAliveTimer_.cb = [](pj_timer_heap_t* /*th*/, pj_timer_entry* te) {
+        if (auto sipAccount = static_cast<std::weak_ptr<SIPAccount>*>(te->user_data)->lock())
+            sipAccount->keepAliveRegistrationCb();
+    };
+    keepAliveTimer_.user_data = new std::weak_ptr<SIPAccount>(weak());
     keepAliveTimer_.id = timerIdDist_(rand);
 
     // expiration may be undetermined during the first registration request
+    pj_time_val keepAliveDelay_;
     if (registrationExpire_ == 0) {
         JAMI_DBG("Registration Expire: 0, taking 60 instead");
         keepAliveDelay_.sec = 3600;
@@ -969,11 +973,8 @@ SIPAccount::startKeepAliveTimer()
         JAMI_DBG("Registration Expire: %d", registrationExpire_);
         keepAliveDelay_.sec = registrationExpire_ + MIN_REGISTRATION_TIME;
     }
-
     keepAliveDelay_.msec = 0;
-
     keepAliveTimerActive_ = true;
-
     link_.registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_);
 }
 
@@ -986,6 +987,10 @@ SIPAccount::stopKeepAliveTimer()
                  getAccountID().c_str());
         keepAliveTimerActive_ = false;
         link_.cancelKeepAliveTimer(keepAliveTimer_);
+        if (keepAliveTimer_.user_data) {
+            delete ((std::weak_ptr<SIPAccount>*)keepAliveTimer_.user_data);
+            keepAliveTimer_.user_data = nullptr;
+        }
     }
 }
 
@@ -1611,29 +1616,22 @@ SIPAccount::getSupportedTlsProtocols()
 }
 
 void
-SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t* th, pj_timer_entry* te)
+SIPAccount::keepAliveRegistrationCb()
 {
-    SIPAccount* sipAccount = static_cast<SIPAccount*>(te->user_data);
-
-    if (sipAccount == nullptr) {
-        JAMI_ERR("SIP account is nullptr while registering a new keep alive timer");
-        return;
-    }
-
-    JAMI_ERR("Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
+    JAMI_ERR("Keep alive registration callback for account %s", getAccountID().c_str());
 
     // IP2IP default does not require keep-alive
-    if (sipAccount->isIP2IP())
+    if (isIP2IP())
         return;
 
     // TLS is connection oriented and does not require keep-alive
-    if (sipAccount->isTlsEnabled())
+    if (isTlsEnabled())
         return;
 
-    sipAccount->stopKeepAliveTimer();
+    stopKeepAliveTimer();
 
-    if (sipAccount->isRegistered())
-        sipAccount->doRegister();
+    if (isRegistered())
+        doRegister();
 }
 
 void
@@ -1840,6 +1838,10 @@ SIPAccount::resetAutoRegistration()
 {
     auto_rereg_.active = PJ_FALSE;
     auto_rereg_.attempt_cnt = 0;
+    if (auto_rereg_.timer.user_data) {
+        delete ((std::weak_ptr<SIPAccount>*)auto_rereg_.timer.user_data);
+        auto_rereg_.timer.user_data = nullptr;
+    }
 }
 
 /* Update NAT address from the REGISTER response */
@@ -2058,9 +2060,11 @@ SIPAccount::scheduleReregistration()
 
     /* Set up timer for reregistration */
     auto_rereg_.timer.cb = [](pj_timer_heap_t* /*th*/, pj_timer_entry* te) {
-        static_cast<SIPAccount*>(te->user_data)->autoReregTimerCb();
+        if (auto sipAccount = static_cast<std::weak_ptr<SIPAccount>*>(te->user_data)->lock())
+            sipAccount->autoReregTimerCb();
     };
-    auto_rereg_.timer.user_data = this;
+    if (not auto_rereg_.timer.user_data)
+        auto_rereg_.timer.user_data = new std::weak_ptr<SIPAccount>(weak());
 
     /* Reregistration attempt. The first attempt will be done sooner */
     pj_time_val delay;
