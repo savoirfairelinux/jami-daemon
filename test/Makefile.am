@@ -1,2 +1,2 @@
 SUBDIRS = unitTest
-SUBDIRS += sip turn
+SUBDIRS += sip

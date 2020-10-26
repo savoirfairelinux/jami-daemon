@@ -28,7 +28,6 @@
 #include "ftp_server.h"
 #include "manager.h"
 #include "peer_connection.h"
-#include "turn_transport.h"
 #include "account_manager.h"
 #include "multiplexed_socket.h"
 #include "connectionmanager.h"

@@ -26,7 +26,6 @@
 #include "jamidht/jamiaccount.h"
 #include "string_utils.h"
 #include "channel.h"
-#include "turn_transport.h"
 #include "security/tls_session.h"
 
 #include <algorithm>
@@ -86,246 +85,6 @@ init_crt(gnutls_session_t session, dht::crypto::Certificate& crt)
 using lock = std::lock_guard<std::mutex>;
 
 static constexpr std::size_t IO_BUFFER_SIZE {8192}; ///< Size of char buffer used by IO operations
-
-//==============================================================================
-
-class TlsTurnEndpoint::Impl
-{
-public:
-    static constexpr auto TLS_TIMEOUT = std::chrono::seconds(20);
-
-    Impl(std::unique_ptr<ConnectedTurnTransport>&& turn_ep,
-         std::function<bool(const dht::crypto::Certificate&)>&& cert_check,
-         const Identity& local_identity,
-         const std::shared_future<tls::DhParams>& dh_params)
-        : peerCertificateCheckFunc {std::move(cert_check)}
-    {
-        // Add TLS over TURN
-        tls::TlsSession::TlsSessionCallbacks tls_cbs
-            = {/*.onStateChange = */ [this](tls::TlsSessionState state) { onTlsStateChange(state); },
-               /*.onRxData = */ [this](std::vector<uint8_t>&& buf) { onTlsRxData(std::move(buf)); },
-               /*.onCertificatesUpdate = */
-               [this](const gnutls_datum_t* l, const gnutls_datum_t* r, unsigned int n) {
-                   onTlsCertificatesUpdate(l, r, n);
-               },
-               /*.verifyCertificate = */
-               [this](gnutls_session_t session) {
-                   return verifyCertificate(session);
-               }};
-        tls::TlsParams tls_param = {
-            /*.ca_list = */ "",
-            /*.peer_ca = */ nullptr,
-            /*.cert = */ local_identity.second,
-            /*.cert_key = */ local_identity.first,
-            /*.dh_params = */ dh_params,
-            /*.timeout = */ Impl::TLS_TIMEOUT,
-            /*.cert_check = */ nullptr,
-        };
-        tls = std::make_unique<tls::TlsSession>(std::move(turn_ep), tls_param, tls_cbs);
-    }
-
-    ~Impl();
-
-    // TLS callbacks
-    int verifyCertificate(gnutls_session_t);
-    void onTlsStateChange(tls::TlsSessionState);
-    void onTlsRxData(std::vector<uint8_t>&&);
-    void onTlsCertificatesUpdate(const gnutls_datum_t*, const gnutls_datum_t*, unsigned int);
-
-    std::unique_ptr<tls::TlsSession> tls;
-    std::function<bool(const dht::crypto::Certificate&)> peerCertificateCheckFunc;
-    dht::crypto::Certificate peerCertificate;
-    std::mutex cbMtx_ {};
-    OnStateChangeCb onStateChangeCb_;
-};
-
-// Declaration at namespace scope is necessary (until C++17)
-constexpr std::chrono::seconds TlsTurnEndpoint::Impl::TLS_TIMEOUT;
-
-TlsTurnEndpoint::Impl::~Impl() {}
-
-int
-TlsTurnEndpoint::Impl::verifyCertificate(gnutls_session_t session)
-{
-    dht::crypto::Certificate crt;
-    auto verified = init_crt(session, crt);
-    if (verified != GNUTLS_E_SUCCESS)
-        return verified;
-
-    if (!peerCertificateCheckFunc(crt))
-        return GNUTLS_E_CERTIFICATE_ERROR;
-
-    peerCertificate = std::move(crt);
-
-    return GNUTLS_E_SUCCESS;
-}
-
-void
-TlsTurnEndpoint::Impl::onTlsStateChange(tls::TlsSessionState state)
-{
-    std::lock_guard<std::mutex> lk(cbMtx_);
-    if (onStateChangeCb_ && !onStateChangeCb_(state))
-        onStateChangeCb_ = {};
-}
-
-void
-TlsTurnEndpoint::Impl::onTlsRxData(UNUSED std::vector<uint8_t>&& buf)
-{
-    JAMI_ERR() << "[TLS-TURN] rx " << buf.size() << " (but not implemented)";
-}
-
-void
-TlsTurnEndpoint::Impl::onTlsCertificatesUpdate(UNUSED const gnutls_datum_t* local_raw,
-                                               UNUSED const gnutls_datum_t* remote_raw,
-                                               UNUSED unsigned int remote_count)
-{}
-
-TlsTurnEndpoint::TlsTurnEndpoint(std::unique_ptr<ConnectedTurnTransport>&& turn_ep,
-                                 const Identity& local_identity,
-                                 const std::shared_future<tls::DhParams>& dh_params,
-                                 std::function<bool(const dht::crypto::Certificate&)>&& cert_check)
-    : pimpl_ {
-        std::make_unique<Impl>(std::move(turn_ep), std::move(cert_check), local_identity, dh_params)}
-{}
-
-TlsTurnEndpoint::~TlsTurnEndpoint() = default;
-
-void
-TlsTurnEndpoint::shutdown()
-{
-    pimpl_->tls->shutdown();
-}
-
-bool
-TlsTurnEndpoint::isInitiator() const
-{
-    return pimpl_->tls->isInitiator();
-}
-
-void
-TlsTurnEndpoint::waitForReady(const std::chrono::steady_clock::duration& timeout)
-{
-    pimpl_->tls->waitForReady(timeout);
-}
-
-int
-TlsTurnEndpoint::maxPayload() const
-{
-    return pimpl_->tls->maxPayload();
-}
-
-std::size_t
-TlsTurnEndpoint::read(ValueType* buf, std::size_t len, std::error_code& ec)
-{
-    return pimpl_->tls->read(buf, len, ec);
-}
-
-std::size_t
-TlsTurnEndpoint::write(const ValueType* buf, std::size_t len, std::error_code& ec)
-{
-    return pimpl_->tls->write(buf, len, ec);
-}
-
-const dht::crypto::Certificate&
-TlsTurnEndpoint::peerCertificate() const
-{
-    return pimpl_->peerCertificate;
-}
-
-int
-TlsTurnEndpoint::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
-{
-    return pimpl_->tls->waitForData(timeout, ec);
-}
-
-void
-TlsTurnEndpoint::setOnStateChange(std::function<bool(tls::TlsSessionState state)>&& cb)
-{
-    std::lock_guard<std::mutex> lk(pimpl_->cbMtx_);
-    pimpl_->onStateChangeCb_ = std::move(cb);
-}
-
-//==============================================================================
-
-TcpSocketEndpoint::TcpSocketEndpoint(const IpAddr& addr)
-    : addr_ {addr}
-    , sock_ {static_cast<int>(::socket(addr.getFamily(), SOCK_STREAM, 0))}
-{
-    if (sock_ < 0)
-        std::system_error(errno, std::generic_category());
-    auto bound = ip_utils::getAnyHostAddr(addr.getFamily());
-    if (::bind(sock_, bound, bound.getLength()) < 0)
-        std::system_error(errno, std::generic_category());
-}
-
-TcpSocketEndpoint::~TcpSocketEndpoint()
-{
-#ifndef _MSC_VER
-    ::close(sock_);
-#else
-    ::closesocket(sock_);
-#endif
-}
-
-void
-TcpSocketEndpoint::connect(const std::chrono::milliseconds& timeout)
-{
-    int ms = timeout.count();
-    setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, (const char*) &ms, sizeof(ms));
-    setsockopt(sock_, SOL_SOCKET, SO_SNDTIMEO, (const char*) &ms, sizeof(ms));
-
-    if ((::connect(sock_, addr_, addr_.getLength())) < 0)
-        throw std::system_error(errno, std::generic_category());
-}
-
-int
-TcpSocketEndpoint::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
-{
-    for (;;) {
-        struct timeval tv;
-        tv.tv_sec = timeout.count() / 1000;
-        tv.tv_usec = (timeout.count() % 1000) * 1000;
-
-        fd_set read_fds;
-        FD_ZERO(&read_fds);
-        FD_SET(sock_, &read_fds);
-
-        auto res = ::select(sock_ + 1, &read_fds, nullptr, nullptr, &tv);
-        if (res < 0)
-            break;
-        if (res == 0)
-            return 0; // timeout
-        if (FD_ISSET(sock_, &read_fds))
-            return 1;
-    }
-
-    ec.assign(errno, std::generic_category());
-    return -1;
-}
-
-std::size_t
-TcpSocketEndpoint::read(ValueType* buf, std::size_t len, std::error_code& ec)
-{
-    // NOTE: recv buf args is a void* on POSIX compliant system, but it's a char* on mingw
-    auto res = ::recv(sock_, reinterpret_cast<char*>(buf), len, 0);
-    if (res < 0)
-        ec.assign(errno, std::generic_category());
-    else
-        ec.clear();
-    return (res >= 0) ? res : 0;
-}
-
-std::size_t
-TcpSocketEndpoint::write(const ValueType* buf, std::size_t len, std::error_code& ec)
-{
-    // NOTE: recv buf args is a void* on POSIX compliant system, but it's a char* on mingw
-    auto res = ::send(sock_, reinterpret_cast<const char*>(buf), len, 0);
-    if (res < 0)
-        ec.assign(errno, std::generic_category());
-    else
-        ec.clear();
-    return (res >= 0) ? res : 0;
-}
 
 //==============================================================================
 
@@ -405,14 +164,12 @@ class TlsSocketEndpoint::Impl
 public:
     static constexpr auto TLS_TIMEOUT = std::chrono::seconds(20);
 
-    Impl(std::unique_ptr<AbstractSocketEndpoint>&& ep,
+    Impl(std::unique_ptr<IceSocketEndpoint>&& ep,
          const dht::crypto::Certificate& peer_cert,
          const Identity& local_identity,
-         const std::shared_future<tls::DhParams>& dh_params,
-         bool isIceTransport = true)
+         const std::shared_future<tls::DhParams>& dh_params)
         : peerCertificate {peer_cert}
         , ep_ {ep.get()}
-        , isIce_ {isIceTransport}
     {
         tls::TlsSession::TlsSessionCallbacks tls_cbs
             = {/*.onStateChange = */ [this](tls::TlsSessionState state) { onTlsStateChange(state); },
@@ -436,22 +193,16 @@ public:
         };
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
 
-        if (isIce_) {
-            if (const auto* iceSocket = reinterpret_cast<const IceSocketEndpoint*>(ep_)) {
-                iceSocket->underlyingICE()->setOnShutdown([this]() { tls->shutdown(); });
-            }
-        }
+        ep_->underlyingICE()->setOnShutdown([this]() { tls->shutdown(); });
     }
 
-    Impl(std::unique_ptr<AbstractSocketEndpoint>&& ep,
+    Impl(std::unique_ptr<IceSocketEndpoint>&& ep,
          std::function<bool(const dht::crypto::Certificate&)>&& cert_check,
          const Identity& local_identity,
-         const std::shared_future<tls::DhParams>& dh_params,
-         bool isIce = true)
+         const std::shared_future<tls::DhParams>& dh_params)
         : peerCertificateCheckFunc {std::move(cert_check)}
         , peerCertificate {null_cert}
         , ep_ {ep.get()}
-        , isIce_ {isIce}
     {
         tls::TlsSession::TlsSessionCallbacks tls_cbs
             = {/*.onStateChange = */ [this](tls::TlsSessionState state) { onTlsStateChange(state); },
@@ -475,14 +226,10 @@ public:
         };
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
 
-        if (isIce_) {
-            if (const auto* iceSocket = reinterpret_cast<const IceSocketEndpoint*>(ep_)) {
-                iceSocket->underlyingICE()->setOnShutdown([this]() {
-                    if (tls)
-                        tls->shutdown();
-                });
-            }
-        }
+        ep_->underlyingICE()->setOnShutdown([this]() {
+            if (tls)
+                tls->shutdown();
+        });
     }
 
     ~Impl()
@@ -509,8 +256,7 @@ public:
     std::atomic_bool isReady_ {false};
     OnReadyCb onReadyCb_;
     std::unique_ptr<tls::TlsSession> tls;
-    const AbstractSocketEndpoint* ep_;
-    bool isIce_ {true};
+    const IceSocketEndpoint* ep_;
 };
 
 // Declaration at namespace scope is necessary (until C++17)
@@ -564,25 +310,20 @@ TlsSocketEndpoint::Impl::onTlsCertificatesUpdate(UNUSED const gnutls_datum_t* lo
                                                  UNUSED unsigned int remote_count)
 {}
 
-TlsSocketEndpoint::TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint>&& tr,
+TlsSocketEndpoint::TlsSocketEndpoint(std::unique_ptr<IceSocketEndpoint>&& tr,
                                      const Identity& local_identity,
                                      const std::shared_future<tls::DhParams>& dh_params,
-                                     const dht::crypto::Certificate& peer_cert,
-                                     bool isIce)
-    : pimpl_ {std::make_unique<Impl>(std::move(tr), peer_cert, local_identity, dh_params, isIce)}
+                                     const dht::crypto::Certificate& peer_cert)
+    : pimpl_ {std::make_unique<Impl>(std::move(tr), peer_cert, local_identity, dh_params)}
 {}
 
 TlsSocketEndpoint::TlsSocketEndpoint(
-    std::unique_ptr<AbstractSocketEndpoint>&& tr,
+    std::unique_ptr<IceSocketEndpoint>&& tr,
     const Identity& local_identity,
     const std::shared_future<tls::DhParams>& dh_params,
-    std::function<bool(const dht::crypto::Certificate&)>&& cert_check,
-    bool isIce)
-    : pimpl_ {std::make_unique<Impl>(std::move(tr),
-                                     std::move(cert_check),
-                                     local_identity,
-                                     dh_params,
-                                     isIce)}
+    std::function<bool(const dht::crypto::Certificate&)>&& cert_check)
+    : pimpl_ {
+        std::make_unique<Impl>(std::move(tr), std::move(cert_check), local_identity, dh_params)}
 {}
 
 TlsSocketEndpoint::~TlsSocketEndpoint() {}
@@ -661,7 +402,7 @@ TlsSocketEndpoint::setOnReady(std::function<void(bool ok)>&& cb)
 void
 TlsSocketEndpoint::shutdown()
 {
-    if (pimpl_->ep_ && pimpl_->isIce_) {
+    if (pimpl_->ep_) {
         const auto* iceSocket = reinterpret_cast<const IceSocketEndpoint*>(pimpl_->ep_);
         if (iceSocket && iceSocket->underlyingICE())
             iceSocket->underlyingICE()->cancelOperations();
@@ -672,7 +413,7 @@ TlsSocketEndpoint::shutdown()
 std::shared_ptr<IceTransport>
 TlsSocketEndpoint::underlyingICE() const
 {
-    if (pimpl_->ep_ && pimpl_->isIce_)
+    if (pimpl_->ep_)
         if (const auto* iceSocket = reinterpret_cast<const IceSocketEndpoint*>(pimpl_->ep_))
             return iceSocket->underlyingICE();
     return {};

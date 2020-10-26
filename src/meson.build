@@ -109,7 +109,6 @@ libjami_sources = files(
     'smartools.cpp',
     'string_utils.cpp',
     'threadloop.cpp',
-    'turn_transport.cpp',
     'utf8_utils.cpp'
 )
 if host_machine.system() == 'windows'
