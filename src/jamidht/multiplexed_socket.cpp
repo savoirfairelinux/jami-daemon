@@ -45,14 +45,13 @@ public:
         : parent_(parent)
         , deviceId(deviceId)
         , endpoint(std::move(endpoint))
-        , eventLoopFut_ {std::async(std::launch::async, [this] {
+        , eventLoopThread_ {[this] {
             try {
-                stop.store(false);
                 eventLoop();
             } catch (const std::exception& e) {
                 JAMI_ERR() << "[CNX] peer connection event loop failure: " << e.what();
             }
-        })}
+        }}
     {}
 
     ~Impl()
@@ -69,6 +68,7 @@ public:
             }
             sockets.clear();
         }
+        eventLoopThread_.join();
     }
 
     void shutdown()
@@ -129,8 +129,8 @@ public:
     std::map<uint16_t, onChannelReadyCb> channelCbs {};
 
     // Main loop to parse incoming packets
-    std::future<void> eventLoopFut_ {};
-    std::atomic_bool stop {};
+    std::thread eventLoopThread_ {};
+    std::atomic_bool stop {false};
 
     // Multiplexed available datas
     std::map<uint16_t, std::unique_ptr<ChannelInfo>> channelDatas_ {};
@@ -197,7 +197,7 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>&& pkt)
             size_t off = 0;
             while (off != pkt.size()) {
                 msgpack::unpacked result;
-                msgpack::unpack(result, (const char*)pkt.data(), pkt.size(), off);
+                msgpack::unpack(result, (const char*) pkt.data(), pkt.size(), off);
                 auto req = result.get().as<ChannelRequest>();
                 if (req.state == ChannelRequestState::ACCEPT) {
                     std::lock_guard<std::mutex> lkSockets(socketsMutex);
