@@ -79,6 +79,7 @@ class SipTransport;
 class ChanneledOutgoingTransfer;
 
 using SipConnectionKey = std::pair<std::string /* accountId */, DeviceId>;
+using namespace std::literals;
 
 /**
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
@@ -86,7 +87,7 @@ using SipConnectionKey = std::pair<std::string /* accountId */, DeviceId>;
 class JamiAccount : public SIPAccountBase
 {
 public:
-    constexpr static const char* const ACCOUNT_TYPE = "RING";
+    constexpr static const std::string_view ACCOUNT_TYPE = "RING"sv;
     constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
     constexpr static const char* const DHT_DEFAULT_BOOTSTRAP = "bootstrap.jami.net";
     constexpr static const char* const DHT_DEFAULT_PROXY = "dhtproxy.jami.net:[80-95]";
@@ -97,7 +98,7 @@ public:
 
     /* constexpr */ static const std::pair<uint16_t, uint16_t> DHT_PORT_RANGE;
 
-    const char* getAccountType() const override { return ACCOUNT_TYPE; }
+    const std::string_view getAccountType() const override { return ACCOUNT_TYPE; }
 
     std::shared_ptr<JamiAccount> shared()
     {
@@ -221,19 +222,8 @@ public:
      */
     pj_str_t getContactHeader(pjsip_transport* = nullptr) override;
 
-    void setReceivedParameter(const std::string& received)
-    {
-        receivedParameter_ = received;
-        via_addr_.host.ptr = (char*) receivedParameter_.c_str();
-        via_addr_.host.slen = receivedParameter_.size();
-    }
-
-    std::string getReceivedParameter() const { return receivedParameter_; }
-
-    pjsip_host_port* getViaAddr() { return &via_addr_; }
-
     /* Returns true if the username and/or hostname match this account */
-    MatchRank matches(const std::string& username, const std::string& hostname) const override;
+    MatchRank matches(std::string_view username, std::string_view hostname) const override;
 
     /**
      * Implementation of Account::newOutgoingCall()
@@ -670,18 +660,8 @@ private:
     bool allowPeersFromContact_ {true};
     bool allowPeersFromTrusted_ {true};
 
-    /**
-     * Optional: "received" parameter from VIA header
-     */
-    std::string receivedParameter_ {};
-
     std::string managerUri_ {};
     std::string managerUsername_ {};
-
-    /**
-     * Optional: "rport" parameter from VIA header
-     */
-    int rPort_ {-1};
 
     /**
      * Optional: via_addr construct from received parameters
