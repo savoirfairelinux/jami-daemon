@@ -164,8 +164,6 @@ libring_la_SOURCES = \
 		smartools.h \
 		base64.h \
 		base64.cpp \
-		turn_transport.h \
-		turn_transport.cpp \
 		channel.h \
 		peer_connection.cpp \
 		peer_connection.h \

@@ -638,7 +638,6 @@ AC_CONFIG_FILES([Makefile \
                  ringtones/Makefile \
                  test/Makefile\
                  test/sip/Makefile
-                 test/turn/Makefile \
                  test/unitTest/Makefile \
 
                  man/Makefile \

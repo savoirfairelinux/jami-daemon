@@ -60,8 +60,6 @@ list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/string_utils.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/threadloop.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/threadloop.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/turn_transport.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/turn_transport.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/utf8_utils.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/utf8_utils.h"
 )
