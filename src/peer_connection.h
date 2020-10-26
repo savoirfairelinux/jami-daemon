@@ -30,6 +30,8 @@
 #include "ice_transport.h"
 #include "security/tls_session.h"
 
+#include "logger.h"
+
 #include <functional>
 #include <future>
 #include <limits>
@@ -101,11 +103,14 @@ public:
 
     void setOnRecv(RecvCb&& cb) override
     {
-        if (ice_)
+        JAMI_ERR("@@@ setOnRecv");
+        if (ice_) {
+            JAMI_ERR("@@@ ICE %u", compId_);
             ice_->setOnRecv(compId_, cb);
+        } else {
+            JAMI_ERR("@@@ no ICE");
+        }
     }
-
-    void setOnShutdown(onShutdownCb&& cb) { ice_->setOnShutdown(std::move(cb)); }
 
 private:
     std::shared_ptr<IceTransport> ice_ {nullptr};

@@ -56,6 +56,7 @@ public:
 
     ~Impl()
     {
+        JAMI_ERR("@@@ MultiplexedSocket::Impl %p DELETE", this);
         if (!isShutdown_) {
             if (endpoint)
                 endpoint->setOnStateChange({});
@@ -69,6 +70,7 @@ public:
             sockets.clear();
         }
         eventLoopThread_.join();
+        JAMI_ERR("@@@ MultiplexedSocket::Impl %p DELETE END", this);
     }
 
     void shutdown()
