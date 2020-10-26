@@ -490,12 +490,12 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
 {
     // Check if the peer is a master
     if (auto call = Manager::instance().getCallFromCallID(callId)) {
-        auto uri = call->getPeerNumber();
+        std::string_view uri {call->getPeerNumber()};
         auto separator = uri.find('@');
-        if (separator != std::string::npos)
+        if (separator != std::string_view::npos)
             uri = uri.substr(0, separator - 1);
         if (!isModerator(uri)) {
-            JAMI_WARN("Received conference order from a non master (%s)", uri.c_str());
+            JAMI_WARN("Received conference order from a non master (%.*s)", (int)uri.size(), uri.data());
             return;
         }
 
@@ -504,7 +504,7 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         Json::CharReaderBuilder rbuilder;
         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         if (!reader->parse(confOrder.c_str(), confOrder.c_str() + confOrder.size(), &root, &err)) {
-            JAMI_WARN("Couldn't parse conference order from %s", uri.c_str());
+            JAMI_WARN("Couldn't parse conference order from %.*s", (int)uri.size(), uri.data());
             return;
         }
         if (root.isMember("layout")) {
@@ -517,7 +517,7 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
 }
 
 bool
-Conference::isModerator(const std::string& uri) const
+Conference::isModerator(std::string_view uri) const
 {
     return std::find_if(moderators_.begin(),
                         moderators_.end(),

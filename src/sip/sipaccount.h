@@ -60,6 +60,7 @@ typedef std::vector<pj_ssl_cipher> CipherArray;
 
 class SIPPresence;
 class SIPCall;
+using namespace std::literals;
 
 /**
  * @file sipaccount.h
@@ -68,7 +69,7 @@ class SIPCall;
 class SIPAccount : public SIPAccountBase
 {
 public:
-    constexpr static const char* const ACCOUNT_TYPE = "SIP";
+    constexpr static const std::string_view ACCOUNT_TYPE = "SIP"sv;
 
     std::shared_ptr<SIPAccount> shared()
     {
@@ -95,7 +96,7 @@ public:
 
     ~SIPAccount();
 
-    const char* getAccountType() const override { return ACCOUNT_TYPE; }
+    const std::string_view getAccountType() const override { return ACCOUNT_TYPE; }
 
     pjsip_host_port getHostPortFromSTUN(pj_pool_t* pool);
 
@@ -385,11 +386,10 @@ public:
     void setReceivedParameter(const std::string& received)
     {
         receivedParameter_ = received;
-        via_addr_.host.ptr = (char*) receivedParameter_.c_str();
-        via_addr_.host.slen = receivedParameter_.size();
+        via_addr_.host = sip_utils::CONST_PJ_STR(receivedParameter_);
     }
 
-    std::string getReceivedParameter() const { return receivedParameter_; }
+    const std::string& getReceivedParameter() const { return receivedParameter_; }
 
     pjsip_host_port* getViaAddr() { return &via_addr_; }
 
@@ -427,7 +427,7 @@ public:
     pjsip_tpselector getTransportSelector();
 
     /* Returns true if the username and/or hostname match this account */
-    MatchRank matches(const std::string& username, const std::string& hostname) const override;
+    MatchRank matches(std::string_view username, std::string_view hostname) const override;
 
     /**
      * Presence management
@@ -528,10 +528,10 @@ private:
 
     void usePublishedAddressPortInVIA();
     void useUPnPAddressPortInVIA();
-    bool fullMatch(const std::string& username, const std::string& hostname) const;
-    bool userMatch(const std::string& username) const;
-    bool hostnameMatch(const std::string& hostname) const;
-    bool proxyMatch(const std::string& hostname) const;
+    bool fullMatch(std::string_view username, std::string_view hostname) const;
+    bool userMatch(std::string_view username) const;
+    bool hostnameMatch(std::string_view hostname) const;
+    bool proxyMatch(std::string_view hostname) const;
 
     bool isSrtpEnabled() const { return srtpKeyExchange_ != sip_utils::KeyExchangeProtocol::NONE; }
 

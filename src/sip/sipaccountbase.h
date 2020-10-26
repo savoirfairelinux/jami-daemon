@@ -274,7 +274,7 @@ public:
                                const std::map<std::string, std::string>& payloads);
 
     /* Returns true if the username and/or hostname match this account */
-    virtual MatchRank matches(const std::string& username, const std::string& hostname) const = 0;
+    virtual MatchRank matches(std::string_view username, std::string_view hostname) const = 0;
 
     void connectivityChanged() override {};
 

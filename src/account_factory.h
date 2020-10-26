@@ -40,13 +40,13 @@ using AccountMap = std::map<std::string, std::shared_ptr<T>, std::less<>>;
 class AccountFactory
 {
 public:
-    static const char* const DEFAULT_ACCOUNT_TYPE;
+    static const std::string_view DEFAULT_ACCOUNT_TYPE;
 
     AccountFactory();
 
-    bool isSupportedType(const char* const accountType) const;
+    bool isSupportedType(const std::string_view accountType) const;
 
-    std::shared_ptr<Account> createAccount(const char* const accountType, const std::string& id);
+    std::shared_ptr<Account> createAccount(const std::string_view accountType, const std::string& id);
 
     void removeAccount(Account& account);
 
@@ -126,8 +126,8 @@ public:
 
 private:
     mutable std::recursive_mutex mutex_ {};
-    std::map<std::string, std::function<std::shared_ptr<Account>(const std::string&)>> generators_ {};
-    std::map<std::string, AccountMap<Account>, std::less<>> accountMaps_ {};
+    std::map<std::string_view, std::function<std::shared_ptr<Account>(const std::string_view&)>, std::less<>> generators_ {};
+    std::map<std::string_view, AccountMap<Account>, std::less<>> accountMaps_ {};
 
     template<class T>
     const AccountMap<Account>* getMap_() const

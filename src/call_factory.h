@@ -104,7 +104,7 @@ public:
         auto call = std::make_shared<ConcreteCall>(account, id, type, details);
         if (call) {
             std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
-            callMaps_[call->getLinkType()].insert(std::make_pair(id, call));
+            callMaps_[call->getLinkType()].emplace(id, call);
         }
 
         return call;
@@ -214,7 +214,7 @@ private:
 
     std::atomic_bool allowNewCall_ {true};
 
-    std::map<std::string, CallMap<Call>> callMaps_ {};
+    std::map<std::string_view, CallMap<Call>> callMaps_ {};
 
     template<class T>
     const CallMap<Call>* getMap_() const

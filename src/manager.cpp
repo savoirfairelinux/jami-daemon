@@ -1827,19 +1827,19 @@ Manager::incomingCallsWaiting()
 void
 Manager::incomingCall(Call& call, const std::string& accountId)
 {
-    JAMI_INFO("Incoming call %s on account %s)", call.getCallId().c_str(), accountId.c_str());
+    const std::string& callID(call.getCallId());
+    JAMI_INFO("Incoming call %s on account %s)", callID.c_str(), accountId.c_str());
 
     stopTone();
-    const std::string callID(call.getCallId());
 
     if (accountId.empty())
         call.setIPToIP(true);
     else {
         // strip sip: which is not required and bring confusion with ip to ip calls
         // when placing new call from history.
-        std::string peerNumber(call.getPeerNumber());
+        const std::string& peerNumber(call.getPeerNumber());
 
-        const char SIP_PREFIX[] = "sip:";
+        constexpr const char SIP_PREFIX[] = "sip:";
         size_t startIndex = peerNumber.find(SIP_PREFIX);
 
         if (startIndex != std::string::npos)
@@ -1863,15 +1863,9 @@ Manager::incomingCall(Call& call, const std::string& accountId)
 
     pimpl_->addWaitingCall(callID);
 
-    std::string number(call.getPeerNumber());
+    std::string from(call.getPeerDisplayName() + "<" + call.getPeerNumber() + ">");
+    emitSignal<DRing::CallSignal::IncomingCall>(accountId, callID, from);
 
-    std::string from("<" + number + ">");
-
-    emitSignal<DRing::CallSignal::IncomingCall>(accountId,
-                                                callID,
-                                                call.getPeerDisplayName() + " " + from);
-
-    auto currentCall = getCurrentCall();
     if (account->isRendezVous()) {
         runOnMainThread([this, callID] {
             answerCall(callID);
@@ -1905,7 +1899,7 @@ Manager::incomingCall(Call& call, const std::string& accountId)
         });
     } else if (pimpl_->autoAnswer_) {
         runOnMainThread([this, callID] { answerCall(callID); });
-    } else if (currentCall) {
+    } else if (auto currentCall = getCurrentCall()) {
         // Test if already calling this person
         if (currentCall->getAccountId() == accountId
             && currentCall->getPeerNumber() == call.getPeerNumber()) {
