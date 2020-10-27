@@ -322,7 +322,7 @@ private:
         headerSent_ = true;
         emit(DRing::DataTransferEventCode::wait_peer_acceptance);
         if (onRecvCb_)
-            onRecvCb_(std::string_view((const char*)buf.data(), buf.size()));
+            onRecvCb_(std::string_view((const char*) buf.data(), buf.size()));
     }
 
     void sendFile() const
@@ -614,13 +614,13 @@ IncomingFileTransfer::IncomingFileTransfer(DRing::DataTransferId tid,
 void
 IncomingFileTransfer::requestFilename(const std::function<void(const std::string&)>& cb)
 {
-    {
+    if (!internalCompletionCb_) {
         std::lock_guard<std::mutex> lk(cbMtx_);
         onFilenameCb_ = cb;
     }
+
     emit(DRing::DataTransferEventCode::wait_host_acceptance);
 
-#if 1
     if (internalCompletionCb_) {
         std::string filename = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + std::to_string(id);
         fileutils::ofstream(filename);
@@ -629,13 +629,6 @@ IncomingFileTransfer::requestFilename(const std::function<void(const std::string
         info_.path = filename;
         cb(filename);
     }
-#else
-    // For DEBUG only
-    char filename[] = "/tmp/ring_XXXXXX";
-    if (::mkstemp(filename) < 0)
-        throw std::system_error(errno, std::generic_category());
-    info_.path = filename;
-#endif
 }
 
 bool
