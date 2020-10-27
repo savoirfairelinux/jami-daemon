@@ -961,7 +961,8 @@ SIPAccount::startKeepAliveTimer()
         if (auto sipAccount = static_cast<std::weak_ptr<SIPAccount>*>(te->user_data)->lock())
             sipAccount->keepAliveRegistrationCb();
     };
-    keepAliveTimer_.user_data = new std::weak_ptr<SIPAccount>(weak());
+    if (not keepAliveTimer_.user_data)
+        keepAliveTimer_.user_data = new std::weak_ptr<SIPAccount>(weak());
     keepAliveTimer_.id = timerIdDist_(rand);
 
     // expiration may be undetermined during the first registration request
