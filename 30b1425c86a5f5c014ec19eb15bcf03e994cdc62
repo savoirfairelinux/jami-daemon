@@ -1,0 +1,251 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a044e3c2_edc8d9fa",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 664,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-27T19:19:37Z",
+      "side": 1,
+      "message": "Avoid todo in patches, just add a ticket or fix",
+      "range": {
+        "startLine": 663,
+        "startChar": 0,
+        "endLine": 664,
+        "endChar": 48
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4f26e379_6b307170",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 714,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-27T19:19:37Z",
+      "side": 1,
+      "message": "af should be checked if AF_UNSPEC",
+      "range": {
+        "startLine": 714,
+        "startChar": 38,
+        "endLine": 714,
+        "endChar": 40
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7d8b209a_af4303d8",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 740,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-27T19:19:37Z",
+      "side": 1,
+      "message": "desc(ice_session_id)",
+      "range": {
+        "startLine": 738,
+        "startChar": 0,
+        "endLine": 740,
+        "endChar": 28
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "faa50116_ab229914",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 748,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-27T19:19:37Z",
+      "side": 1,
+      "message": "no need, there is nothing done after the scope",
+      "range": {
+        "startLine": 747,
+        "startChar": 0,
+        "endLine": 748,
+        "endChar": 60
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "50dc34c3_422fa081",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 782,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-27T19:19:37Z",
+      "side": 1,
+      "message": "if we are not in the positive scenario, it will be like today, the connection will just fail and uses relay so it\u0027s ok",
+      "range": {
+        "startLine": 781,
+        "startChar": 12,
+        "endLine": 782,
+        "endChar": 36
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cacb00c0_6bb13ba9",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 802,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-27T19:19:37Z",
+      "side": 1,
+      "message": "if (!upnp_)",
+      "range": {
+        "startLine": 802,
+        "startChar": 9,
+        "endLine": 802,
+        "endChar": 25
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "445cb93f_ecce5885",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 815,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-27T19:19:37Z",
+      "side": 1,
+      "message": "mmh imho even if upnp_ is nullptr we want to exec this right?",
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0e141446_f8ca5a49",
+        "filename": "src/ice_transport.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-27T19:19:37Z",
+      "side": 1,
+      "message": "This should be done in another patch",
+      "range": {
+        "startLine": 107,
+        "startChar": 4,
+        "endLine": 107,
+        "endChar": 28
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e6ffaa7d_17c27892",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-27T19:19:37Z",
+      "side": 1,
+      "message": "avoid access to this element each time, use iterator",
+      "range": {
+        "startLine": 219,
+        "startChar": 19,
+        "endLine": 219,
+        "endChar": 45
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "53be371b_7f5d894a",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-27T19:19:37Z",
+      "side": 1,
+      "message": "is this thread safe? Can multiple thread access this code?",
+      "range": {
+        "startLine": 223,
+        "startChar": 13,
+        "endLine": 223,
+        "endChar": 36
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "36c30749_0a7a80f1",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 320,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-27T19:19:37Z",
+      "side": 1,
+      "message": "indent",
+      "range": {
+        "startLine": 319,
+        "startChar": 9,
+        "endLine": 320,
+        "endChar": 23
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
