@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fbb53a73_89a8913a",
+        "filename": "contrib/src/pjproject/0017-add-custom-srflx-candidates.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-27T18:16:18Z",
+      "side": 1,
+      "message": "imho this should be moved to a new function. This method is name add_stun_and_host() and we add new candidates that are neither host or stun",
+      "range": {
+        "startLine": 69,
+        "startChar": 11,
+        "endLine": 83,
+        "endChar": 6
+      },
+      "revId": "e6901ca6116f031a97c7de4eed9b5d0cf6e8f2f9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1ea53663_703523f1",
+        "filename": "contrib/src/pjproject/0017-add-custom-srflx-candidates.patch",
+        "patchSetId": 1
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-27T18:16:18Z",
+      "side": 1,
+      "message": "indent cahnge",
+      "range": {
+        "startLine": 88,
+        "startChar": 1,
+        "endLine": 89,
+        "endChar": 5
+      },
+      "revId": "e6901ca6116f031a97c7de4eed9b5d0cf6e8f2f9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
