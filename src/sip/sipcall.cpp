@@ -910,6 +910,7 @@ SIPCall::removeCall()
     JAMI_WARN("[call:%s] removeCall()", getCallId().c_str());
     Call::removeCall();
     mediaTransport_.reset();
+    tmpMediaTransport_.reset();
     inv.reset();
     setTransport({});
 }
