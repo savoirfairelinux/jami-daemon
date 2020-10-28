@@ -23,6 +23,7 @@
 #include "noncopyable.h"
 #include "logger.h"
 #include "manager.h"
+#include "sipcall.h"
 // Plugin Manager
 #include "pluginmanager.h"
 #include "streamdata.h"
@@ -145,11 +146,16 @@ public:
                                 == mediaHandlerToggled_[callId].end())
                                 mediaHandlerToggled_[callId].insert(mediaHandlerId);
                             listAvailableSubjects(callId, mediaHandler);
+                            Manager::instance().callFactory.getCall<SIPCall>(callId)->getVideoRtp().restartSender();
                         } else {
                             mediaHandler->detach();
                             if (mediaHandlerToggled_[callId].find(mediaHandlerId)
                                 != mediaHandlerToggled_[callId].end())
                                 mediaHandlerToggled_[callId].erase(mediaHandlerId);
+                                Manager::instance()
+                                    .callFactory.getCall<SIPCall>(callId)
+                                    ->getVideoRtp()
+                                    .restartSender();
                         }
                     }
                 }
