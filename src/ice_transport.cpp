@@ -1471,6 +1471,12 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         errno = EINVAL;
         return -1;
     }
+
+    printf("SEND: ");
+    for (auto i = 0; i < len; ++i) {
+        printf("%u,", buf[i]);
+    }
+    printf("\n");
     auto status = pj_ice_strans_sendto2(pimpl_->icest_.get(),
                                         comp_id + 1,
                                         buf,
