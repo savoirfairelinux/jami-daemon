@@ -22,6 +22,30 @@
       "revId": "5717bd8f00ac000adc23fdb20a8ecbd16671fd18",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8972c2bd_b6d09fed",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 769,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-28T19:59:28Z",
+      "side": 0,
+      "message": "+1\nAlso removed the PJNATH patch in the other review.",
+      "parentUuid": "2b71aec4_37c6d180",
+      "range": {
+        "startLine": 757,
+        "startChar": 1,
+        "endLine": 769,
+        "endChar": 21
+      },
+      "revId": "5717bd8f00ac000adc23fdb20a8ecbd16671fd18",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }

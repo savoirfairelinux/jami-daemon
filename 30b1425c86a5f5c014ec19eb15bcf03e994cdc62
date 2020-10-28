@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "1391e250_1c40eec5",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 664,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-28T19:59:28Z",
+      "side": 1,
+      "message": "Will remove all TODOs related to ice comp ID, and fix them in another patch.",
+      "parentUuid": "a044e3c2_edc8d9fa",
+      "range": {
+        "startLine": 663,
+        "startChar": 0,
+        "endLine": 664,
+        "endChar": 48
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4f26e379_6b307170",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 2
@@ -45,6 +69,30 @@
       "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "01636322_c7209398",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 714,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-28T19:59:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4f26e379_6b307170",
+      "range": {
+        "startLine": 714,
+        "startChar": 38,
+        "endLine": 714,
+        "endChar": 40
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "73d43abf_69f90620",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 740,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-28T19:59:28Z",
+      "side": 1,
+      "message": "I think it\u0027s not that useful after. Removed.",
+      "parentUuid": "7d8b209a_af4303d8",
+      "range": {
+        "startLine": 738,
+        "startChar": 0,
+        "endLine": 740,
+        "endChar": 28
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "faa50116_ab229914",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 2
@@ -91,6 +163,30 @@
       "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5454705a_bc26ccdc",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 748,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-28T19:59:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "faa50116_ab229914",
+      "range": {
+        "startLine": 747,
+        "startChar": 0,
+        "endLine": 748,
+        "endChar": 60
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "dec79d28_ed9a6352",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 782,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-28T19:59:28Z",
+      "side": 1,
+      "message": "Exactly. I prefer to keep the old behavior, meaning, we request mapping and them as candidate, without having any guaranty that the IGD will grant the request. This at least won\u0027t break scenarios when the IGD responds in timely manner.\nIn the next iteration, after implementing a port pool manager, we will add the srflx only if the port mapping are actually granted.",
+      "parentUuid": "50dc34c3_422fa081",
+      "range": {
+        "startLine": 781,
+        "startChar": 12,
+        "endLine": 782,
+        "endChar": 36
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "cacb00c0_6bb13ba9",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 2
@@ -128,6 +248,30 @@
       "writtenOn": "2020-10-27T19:19:37Z",
       "side": 1,
       "message": "if (!upnp_)",
+      "range": {
+        "startLine": 802,
+        "startChar": 9,
+        "endLine": 802,
+        "endChar": 25
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dafb4f69_7cd4d69b",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 802,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-28T19:59:28Z",
+      "side": 1,
+      "message": "I still believe we should compare pointer to pointer.",
+      "parentUuid": "cacb00c0_6bb13ba9",
       "range": {
         "startLine": 802,
         "startChar": 9,
@@ -157,6 +301,24 @@
     },
     {
       "key": {
+        "uuid": "630d2700_c95a26b1",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 815,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-28T19:59:28Z",
+      "side": 1,
+      "message": "agree.",
+      "parentUuid": "445cb93f_ecce5885",
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0e141446_f8ca5a49",
         "filename": "src/ice_transport.h",
         "patchSetId": 2
@@ -180,6 +342,30 @@
     },
     {
       "key": {
+        "uuid": "23d91d70_111a07ae",
+        "filename": "src/ice_transport.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-28T19:59:28Z",
+      "side": 1,
+      "message": "ok",
+      "parentUuid": "0e141446_f8ca5a49",
+      "range": {
+        "startLine": 107,
+        "startChar": 4,
+        "endLine": 107,
+        "endChar": 28
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "e6ffaa7d_17c27892",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 2
@@ -191,6 +377,30 @@
       "writtenOn": "2020-10-27T19:19:37Z",
       "side": 1,
       "message": "avoid access to this element each time, use iterator",
+      "range": {
+        "startLine": 219,
+        "startChar": 19,
+        "endLine": 219,
+        "endChar": 45
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f2f38811_1648cf86",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-28T19:59:28Z",
+      "side": 1,
+      "message": "The mapProvisionList_ needs a second iteration. Already on it.\nFurthermore, mapProvisionList_ seems redundant with the lists in IGD class.",
+      "parentUuid": "e6ffaa7d_17c27892",
       "range": {
         "startLine": 219,
         "startChar": 19,
@@ -226,6 +436,30 @@
     },
     {
       "key": {
+        "uuid": "71b70bb0_931c078a",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-28T19:59:28Z",
+      "side": 1,
+      "message": "the lock (std::lock_guard\u003cstd::mutex\u003e lk(mapProvisionListMutex_)) should cover it, unless you mean something else.",
+      "parentUuid": "53be371b_7f5d894a",
+      "range": {
+        "startLine": 223,
+        "startChar": 13,
+        "endLine": 223,
+        "endChar": 36
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "36c30749_0a7a80f1",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 2
@@ -246,6 +480,30 @@
       "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "426f128a_06e9fc8f",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 320,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-28T19:59:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "36c30749_0a7a80f1",
+      "range": {
+        "startLine": 319,
+        "startChar": 9,
+        "endLine": 320,
+        "endChar": 23
+      },
+      "revId": "30b1425c86a5f5c014ec19eb15bcf03e994cdc62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
