@@ -23,6 +23,7 @@
 #include "noncopyable.h"
 #include "logger.h"
 #include "manager.h"
+#include "sip/sipcall.h"
 // Plugin Manager
 #include "pluginmanager.h"
 #include "streamdata.h"
@@ -129,7 +130,7 @@ public:
                                 const std::string& callId,
                                 const bool toggle)
     {
-        if (mediaHandlerId.empty())
+        if (mediaHandlerId.empty() || callId.empty())
             return;
 
         auto find = mediaHandlerToggled_.find(callId);
@@ -151,6 +152,18 @@ public:
                                 != mediaHandlerToggled_[callId].end())
                                 mediaHandlerToggled_[callId].erase(mediaHandlerId);
                         }
+
+                        /* In the case when the mediaHandler receives a hardware format
+                         * frame and converts it to main memory, we need to restart the
+                         * sender to unlink ours encoder and decoder.
+                         *
+                         * When we deactivate a mediaHandler, we try to relink the encoder
+                         * and decoder by restarting the sender.
+                         */
+                        Manager::instance()
+                            .callFactory.getCall<SIPCall>(callId)
+                            ->getVideoRtp()
+                            .restartSender();
                     }
                 }
             }
