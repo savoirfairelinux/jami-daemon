@@ -31,12 +31,13 @@ namespace jami {
 AudioStream::AudioStream(pa_context* c,
                          pa_threaded_mainloop* m,
                          const char* desc,
-                         StreamType type,
+                         AudioDeviceType type,
                          unsigned samplrate,
                          const PaDeviceInfos* infos,
                          bool ec,
-                         OnReady onReady)
+                         OnReady onReady, OnData onData)
     : onReady_(std::move(onReady))
+    , onData_(std::move(onData))
     , audiostream_(0)
     , mainloop_(m)
 {
@@ -90,18 +91,24 @@ AudioStream::AudioStream(pa_context* c,
         const pa_stream_flags_t flags = static_cast<pa_stream_flags_t>(
             PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE | PA_STREAM_START_CORKED);
 
-        if (type == StreamType::Playback || type == StreamType::Ringtone) {
+        if (type == AudioDeviceType::PLAYBACK || type == AudioDeviceType::RINGTONE) {
             pa_stream_connect_playback(audiostream_,
                                        infos->name.empty() ? nullptr : infos->name.c_str(),
                                        &attributes,
                                        flags,
                                        nullptr,
                                        nullptr);
-        } else if (type == StreamType::Capture) {
+            pa_stream_set_write_callback(audiostream_, [](pa_stream* /*s*/, size_t bytes, void* userdata) {
+                static_cast<AudioStream*>(userdata)->onData_(bytes);
+            }, this);
+        } else if (type == AudioDeviceType::CAPTURE) {
             pa_stream_connect_record(audiostream_,
                                      infos->name.empty() ? nullptr : infos->name.c_str(),
                                      &attributes,
                                      flags);
+            pa_stream_set_read_callback(audiostream_, [](pa_stream* /*s*/, size_t bytes, void* userdata) {
+                static_cast<AudioStream*>(userdata)->onData_(bytes);
+            }, this);
         }
     }
 }
