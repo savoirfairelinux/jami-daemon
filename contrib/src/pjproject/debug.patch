@@ -1,0 +1,72 @@
+ pjnath/src/pjnath/ice_strans.c | 7 +++++++
+ pjnath/src/pjnath/stun_sock.c  | 1 +
+ 2 files changed, 8 insertions(+)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index d29c1f0db..57d758eaa 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -2169,6 +2169,7 @@ on_return:
+     	    ice_st->buf_idx = (ice_st->buf_idx + 1) % ice_st->num_buf;
+     	    pj_assert(ice_st->buf_idx == ice_st->empty_idx);
+     	}
++		printf("@@@ TRANSMITTED\n");
+     	ice_st->is_pending = PJ_FALSE;
+     	pj_grp_lock_release(ice_st->grp_lock);
+     }
+@@ -2211,6 +2212,7 @@ static void check_pending_send(pj_ice_strans *ice_st)
+     	send_data(ice_st, ps->comp_id, ps->buffer, ps->data_len,
+     	    	  &ps->dst_addr, ps->dst_addr_len, PJ_FALSE, PJ_TRUE);
+     } else {
++		if (ice_st->is_pending) printf("@@@ CHECKED SENT\n");
+     	ice_st->is_pending = PJ_FALSE;
+     	pj_grp_lock_release(ice_st->grp_lock);
+     }
+@@ -2243,6 +2245,7 @@ static void on_peer_connection(pj_stun_session* sess,
+     if (!ice_st || !ice_st->ice)
+         return;
+ 
++	printf("@@@ on_peer_connection\n");
+     ice_st->is_pending = PJ_FALSE;
+     ice_sess_on_peer_connection(ice_st->ice,
+                                 data->transport_id, status, remote_addr);
+@@ -2416,6 +2419,7 @@ static pj_status_t ice_close_tcp_connection(pj_ice_sess *ice,
+ 
+     if (idx != -1 && st_comp->stun[idx].sock) {
+         const pj_ice_sess_cand *rcand = check->rcand;
++		printf("@@@ close\n");
+         ice_st->is_pending = PJ_FALSE;
+         return pj_stun_sock_close(st_comp->stun[idx].sock, &rcand->addr);
+     }
+@@ -2429,9 +2433,11 @@ static pj_status_t ice_close_tcp_connection(pj_ice_sess *ice,
+  */
+ static pj_bool_t on_data_sent(pj_ice_strans *ice_st, pj_ssize_t sent)
+ {
++	printf("@@@ on_data_sent\n");
+     if (ice_st->destroy_req || !ice_st->is_pending)
+ 	return PJ_TRUE;
+ 
++	printf("@@@ on_data_sent %u & %u & %u\n", ice_st->call_send_cb, ice_st->cb.on_data_sent, sent == ice_st->last_data_len );
+     if (ice_st->call_send_cb && ice_st->cb.on_data_sent
+ 		&& sent == ice_st->last_data_len /* Only app data should be announced */) {
+ 	(*ice_st->cb.on_data_sent)(ice_st, sent);
+@@ -2501,6 +2507,7 @@ static pj_bool_t stun_on_data_sent(pj_stun_sock *stun_sock,
+ 				   pj_ioqueue_op_key_t *send_key,
+ 				   pj_ssize_t sent)
+ {
++	printf("@@@ stun_on_data_sent %u\n", sent);
+     sock_user_data *data;
+ 
+     PJ_UNUSED_ARG(send_key);
+diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
+index e5b91dd45..23a517c85 100644
+--- a/pjnath/src/pjnath/stun_sock.c
++++ b/pjnath/src/pjnath/stun_sock.c
+@@ -1703,6 +1703,7 @@ static pj_bool_t on_data_sent(pj_activesock_t *asock,
+ 			      pj_ioqueue_op_key_t *send_key,
+ 			      pj_ssize_t sent)
+ {
++    printf("@@@Y %u\n", sent);
+     pj_stun_sock *stun_sock;
+ 
+     stun_sock = (pj_stun_sock*) pj_activesock_get_user_data(asock);
