@@ -1,0 +1,28 @@
+ pjnath/src/pjnath/ice_strans.c | 1 +
+ pjnath/src/pjnath/stun_sock.c  | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index d29c1f0db..90c2cd1d4 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -2501,6 +2501,7 @@ static pj_bool_t stun_on_data_sent(pj_stun_sock *stun_sock,
+ 				   pj_ioqueue_op_key_t *send_key,
+ 				   pj_ssize_t sent)
+ {
++	printf("@@@ stun_on_data_sent %u\n", sent);
+     sock_user_data *data;
+ 
+     PJ_UNUSED_ARG(send_key);
+diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
+index e5b91dd45..23a517c85 100644
+--- a/pjnath/src/pjnath/stun_sock.c
++++ b/pjnath/src/pjnath/stun_sock.c
+@@ -1703,6 +1703,7 @@ static pj_bool_t on_data_sent(pj_activesock_t *asock,
+ 			      pj_ioqueue_op_key_t *send_key,
+ 			      pj_ssize_t sent)
+ {
++    printf("@@@Y %u\n", sent);
+     pj_stun_sock *stun_sock;
+ 
+     stun_sock = (pj_stun_sock*) pj_activesock_get_user_data(asock);
