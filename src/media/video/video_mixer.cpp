@@ -114,6 +114,11 @@ VideoMixer::switchInput(const std::string& input)
         videoLocal_ = getVideoCamera();
     }
 
+    if (input.empty()) {
+        JAMI_DBG("Input is empty, don't add it in the mixer");
+        return;
+    }
+
     // Re-attach videoInput to mixer
     if (videoLocal_) {
         if (auto localInput = std::dynamic_pointer_cast<VideoInput>(videoLocal_)) {
