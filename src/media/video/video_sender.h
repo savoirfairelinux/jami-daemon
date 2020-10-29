@@ -44,7 +44,7 @@ class VideoSender : public VideoFramePassiveReader
 {
 public:
     VideoSender(const std::string& dest,
-                const DeviceParams& dev,
+                const MediaStream& opts,
                 const MediaDescription& args,
                 SocketPair& socketPair,
                 const uint16_t seqVal,
