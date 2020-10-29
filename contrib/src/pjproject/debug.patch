@@ -1,0 +1,23 @@
+ pjnath/src/pjnath/ice_strans.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index d29c1f0db..82175e9e8 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -2243,7 +2243,6 @@ static void on_peer_connection(pj_stun_session* sess,
+     if (!ice_st || !ice_st->ice)
+         return;
+ 
+-    ice_st->is_pending = PJ_FALSE;
+     ice_sess_on_peer_connection(ice_st->ice,
+                                 data->transport_id, status, remote_addr);
+ }
+@@ -2416,7 +2415,6 @@ static pj_status_t ice_close_tcp_connection(pj_ice_sess *ice,
+ 
+     if (idx != -1 && st_comp->stun[idx].sock) {
+         const pj_ice_sess_cand *rcand = check->rcand;
+-        ice_st->is_pending = PJ_FALSE;
+         return pj_stun_sock_close(st_comp->stun[idx].sock, &rcand->addr);
+     }
+ 

@@ -56,6 +56,7 @@ public:
 
     ~Impl()
     {
+        JAMI_ERR("@@@ DESTROY! %p", this);
         if (!isShutdown_) {
             if (endpoint)
                 endpoint->setOnStateChange({});
@@ -73,6 +74,7 @@ public:
 
     void shutdown()
     {
+        JAMI_ERR("@@@shutdown! %p", this);
         if (isShutdown_)
             return;
         stop.store(true);
