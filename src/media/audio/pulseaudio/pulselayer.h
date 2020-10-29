@@ -22,17 +22,17 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef PULSE_LAYER_H_
-#define PULSE_LAYER_H_
+#pragma once
+
+#include "noncopyable.h"
+#include "logger.h"
+#include "audio/audiolayer.h"
+
+#include <pulse/pulseaudio.h>
+#include <pulse/stream.h>
 
 #include <list>
 #include <string>
-#include <pulse/pulseaudio.h>
-#include <pulse/stream.h>
-#include "audio/audiolayer.h"
-#include "noncopyable.h"
-#include "logger.h"
-
 #include <memory>
 #include <thread>
 
@@ -167,6 +167,7 @@ private:
     virtual int getIndexPlayback() const;
     virtual int getIndexRingtone() const;
 
+    void waitForDevices();
     void waitForDeviceList();
 
     std::string getPreferredPlaybackDevice() const;
@@ -176,15 +177,15 @@ private:
     NON_COPYABLE(PulseLayer);
 
     /**
-     * Create the audio streams into the given context
-     * @param c	The pulseaudio context
+     * Create the audio stream
      */
-    void createStreams(pa_context* c);
+    void createStream(std::unique_ptr<AudioStream>& stream, AudioDeviceType type, const PaDeviceInfos& dev_infos, bool ec, std::function<void(size_t)>&& onData);
 
     /**
      * Close the connection with the local pulseaudio server
      */
     void disconnectAudioStream();
+    void onStreamReady();
 
     /**
      * Returns a pointer to the PaEndpointInfos with the given name in sourceList_, or nullptr if
@@ -192,6 +193,8 @@ private:
      */
     const PaDeviceInfos* getDeviceInfos(const std::vector<PaDeviceInfos>&,
                                         const std::string& name) const;
+
+    std::atomic_uint pendingStreams {0};
 
     /**
      * A stream object to handle the pulseaudio playback stream
@@ -229,7 +232,7 @@ private:
     bool enumeratingSinks_ {false};
     bool enumeratingSources_ {false};
     bool gettingServerInfo_ {false};
-    bool waitingDeviceList_ {false};
+    std::atomic_bool waitingDeviceList_ {false};
     std::mutex readyMtx_ {};
     std::condition_variable readyCv_ {};
     std::thread streamStarter_ {};
@@ -241,5 +244,3 @@ private:
 };
 
 } // namespace jami
-
-#endif // PULSE_LAYER_H_

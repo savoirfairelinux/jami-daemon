@@ -31,16 +31,17 @@ namespace jami {
 AudioStream::AudioStream(pa_context* c,
                          pa_threaded_mainloop* m,
                          const char* desc,
-                         StreamType type,
+                         AudioDeviceType type,
                          unsigned samplrate,
-                         const PaDeviceInfos* infos,
+                         const PaDeviceInfos& infos,
                          bool ec,
-                         OnReady onReady)
+                         OnReady onReady, OnData onData)
     : onReady_(std::move(onReady))
+    , onData_(std::move(onData))
     , audiostream_(0)
     , mainloop_(m)
 {
-    const pa_channel_map channel_map = infos->channel_map;
+    const pa_channel_map channel_map = infos.channel_map;
 
     pa_sample_spec sample_spec = {PA_SAMPLE_S16LE, // PA_SAMPLE_FLOAT32LE,
                                   samplrate,
@@ -48,7 +49,7 @@ AudioStream::AudioStream(pa_context* c,
 
     JAMI_DBG("%s: trying to create stream with device %s (%dHz, %d channels)",
              desc,
-             infos->name.c_str(),
+             infos.name.c_str(),
              samplrate,
              channel_map.channels);
 
@@ -90,16 +91,24 @@ AudioStream::AudioStream(pa_context* c,
         const pa_stream_flags_t flags = static_cast<pa_stream_flags_t>(
             PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE | PA_STREAM_START_CORKED);
 
-        if (type == StreamType::Playback || type == StreamType::Ringtone) {
+        if (type == AudioDeviceType::PLAYBACK || type == AudioDeviceType::RINGTONE) {
+            pa_stream_set_write_callback(audiostream_, [](pa_stream* /*s*/, size_t bytes, void* userdata) {
+                static_cast<AudioStream*>(userdata)->onData_(bytes);
+            }, this);
+
             pa_stream_connect_playback(audiostream_,
-                                       infos->name.empty() ? nullptr : infos->name.c_str(),
+                                       infos.name.empty() ? nullptr : infos.name.c_str(),
                                        &attributes,
                                        flags,
                                        nullptr,
                                        nullptr);
-        } else if (type == StreamType::Capture) {
+        } else if (type == AudioDeviceType::CAPTURE) {
+            pa_stream_set_read_callback(audiostream_, [](pa_stream* /*s*/, size_t bytes, void* userdata) {
+                static_cast<AudioStream*>(userdata)->onData_(bytes);
+            }, this);
+
             pa_stream_connect_record(audiostream_,
-                                     infos->name.empty() ? nullptr : infos->name.c_str(),
+                                     infos.name.empty() ? nullptr : infos.name.c_str(),
                                      &attributes,
                                      flags);
         }
