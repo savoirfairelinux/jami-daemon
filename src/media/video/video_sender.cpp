@@ -43,7 +43,7 @@ namespace video {
 using std::string;
 
 VideoSender::VideoSender(const std::string& dest,
-                         const DeviceParams& dev,
+                         const MediaStream& opts,
                          const MediaDescription& args,
                          SocketPair& socketPair,
                          const uint16_t seqVal,
@@ -51,15 +51,8 @@ VideoSender::VideoSender(const std::string& dest,
     : muxContext_(socketPair.createIOContext(mtu))
     , videoEncoder_(new MediaEncoder)
 {
-    keyFrameFreq_ = dev.framerate.numerator() * KEY_FRAME_PERIOD;
+    keyFrameFreq_ = opts.frameRate.numerator() * KEY_FRAME_PERIOD;
     videoEncoder_->openOutput(dest, "rtp");
-    auto opts = MediaStream("video sender",
-                            AV_PIX_FMT_YUV420P,
-                            1 / (rational<int>) dev.framerate,
-                            dev.width,
-                            dev.height,
-                            args.bitrate,
-                            (rational<int>) dev.framerate);
     videoEncoder_->setOptions(opts);
     videoEncoder_->setOptions(args);
     videoEncoder_->addStream(args.codec->systemCodecInfo);
@@ -70,7 +63,7 @@ VideoSender::VideoSender(const std::string& dest,
     Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getVideoCodec());
 
     // Send the resolution in smartInfo
-    Smartools::getInstance().setResolution("local", dev.width, dev.height);
+    Smartools::getInstance().setResolution("local", opts.width, opts.height);
 }
 
 VideoSender::~VideoSender()

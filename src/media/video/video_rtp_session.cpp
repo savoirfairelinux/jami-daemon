@@ -145,12 +145,21 @@ VideoRtpSession::startSender()
         try {
             sender_.reset();
             socketPair_->stopSendOp(false);
+            MediaStream ms = !conference_ ?
+                        MediaStream("video sender",
+                            AV_PIX_FMT_YUV420P,
+                            1 / static_cast<rational<int>>(localVideoParams_.framerate),
+                            localVideoParams_.width,
+                            localVideoParams_.height,
+                            send_.bitrate,
+                            static_cast<rational<int>>(localVideoParams_.framerate)) :
+                        conference_->getVideoMixer()->getStream("Video Sender");
             sender_.reset(new VideoSender(getRemoteRtpUri(),
-                                          localVideoParams_,
-                                          send_,
-                                          *socketPair_,
-                                          initSeqVal_ + 1,
-                                          mtu_));
+                                        ms,
+                                        send_,
+                                        *socketPair_,
+                                        initSeqVal_ + 1,
+                                        mtu_));
             if (changeOrientationCallback_)
                 sender_->setChangeOrientationCallback(changeOrientationCallback_);
             if (socketPair_)
@@ -340,12 +349,17 @@ VideoRtpSession::enterConference(Conference* conference)
     // TODO is this correct? The video Mixer should be enabled for a detached conference even if we
     // are not sending values
     videoMixer_ = conference->getVideoMixer();
+    auto conf_res = split_string_to_unsigned(jami::Manager::instance().videoPreferences.getConferenceResolution(), 'x');
+    if (conf_res.size() != 2 or conf_res[0] <= 0 or conf_res[1] <= 0) {
+        JAMI_ERR("Conference resolution is invalid");
+        return;
+    }
 #if defined(__APPLE__) && TARGET_OS_MAC
-    videoMixer_->setParameters(localVideoParams_.width,
-                               localVideoParams_.height,
-                               av_get_pix_fmt(localVideoParams_.pixel_format.c_str()));
+    videoMixer_->setParameters(conf_res[0],
+                               conf_res[1],
+                               AV_PIX_FMT_NV12);
 #else
-    videoMixer_->setParameters(localVideoParams_.width, localVideoParams_.height);
+    videoMixer_->setParameters(conf_res[0], conf_res[1]);
 #endif
     if (send_.enabled or receiveThread_) {
         setupConferenceVideoPipeline(*conference_);
