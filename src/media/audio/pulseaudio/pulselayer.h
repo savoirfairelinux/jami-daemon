@@ -22,8 +22,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef PULSE_LAYER_H_
-#define PULSE_LAYER_H_
+#pragma once
 
 #include <list>
 #include <string>
@@ -176,15 +175,15 @@ private:
     NON_COPYABLE(PulseLayer);
 
     /**
-     * Create the audio streams into the given context
-     * @param c	The pulseaudio context
+     * Create the audio stream
      */
-    void createStreams(pa_context* c);
+    void createStream(std::unique_ptr<AudioStream>& stream, AudioDeviceType type, bool ec, std::function<void(size_t)>&& onData);
 
     /**
      * Close the connection with the local pulseaudio server
      */
     void disconnectAudioStream();
+    void onStreamReady();
 
     /**
      * Returns a pointer to the PaEndpointInfos with the given name in sourceList_, or nullptr if
@@ -192,6 +191,8 @@ private:
      */
     const PaDeviceInfos* getDeviceInfos(const std::vector<PaDeviceInfos>&,
                                         const std::string& name) const;
+
+    std::atomic_uint pendingStreams {0};
 
     /**
      * A stream object to handle the pulseaudio playback stream
