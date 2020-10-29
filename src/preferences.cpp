@@ -78,6 +78,7 @@ using yaml_utils::parseValue;
 constexpr const char* const Preferences::CONFIG_LABEL;
 const char* const Preferences::DFT_ZONE = "North America";
 const char* const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
+const std::string DEFAULT_CONFERENCE_RESOLUTION {"1280x720"};
 
 // general preferences
 static constexpr const char* ORDER_KEY {"order"};
@@ -136,6 +137,7 @@ static constexpr const char* DECODING_ACCELERATED_KEY {"decodingAccelerated"};
 static constexpr const char* ENCODING_ACCELERATED_KEY {"encodingAccelerated"};
 static constexpr const char* RECORD_PREVIEW_KEY {"recordPreview"};
 static constexpr const char* RECORD_QUALITY_KEY {"recordQuality"};
+static constexpr const char* CONFERENCE_RESOLUTION_KEY {"conference_resolution"};
 #endif
 
 #ifdef ENABLE_PLUGIN
@@ -561,6 +563,7 @@ VideoPreferences::VideoPreferences()
     , encodingAccelerated_(false)
     , recordPreview_(true)
     , recordQuality_(0)
+    , conferenceResolution_(DEFAULT_CONFERENCE_RESOLUTION)
 {}
 
 void
@@ -573,6 +576,7 @@ VideoPreferences::serialize(YAML::Emitter& out) const
     out << YAML::Key << DECODING_ACCELERATED_KEY << YAML::Value << decodingAccelerated_;
     out << YAML::Key << ENCODING_ACCELERATED_KEY << YAML::Value << encodingAccelerated_;
 #endif
+    out << YAML::Key << CONFERENCE_RESOLUTION_KEY << YAML::Value << conferenceResolution_;
     getVideoDeviceMonitor().serialize(out);
     out << YAML::EndMap;
 }
@@ -598,6 +602,11 @@ VideoPreferences::unserialize(const YAML::Node& in)
         encodingAccelerated_ = false;
     }
 #endif
+    try {
+        parseValue(node, CONFERENCE_RESOLUTION_KEY, conferenceResolution_);
+    } catch (...) {
+        conferenceResolution_ = DEFAULT_CONFERENCE_RESOLUTION;
+    }
     getVideoDeviceMonitor().unserialize(in);
 }
 #endif // ENABLE_VIDEO
