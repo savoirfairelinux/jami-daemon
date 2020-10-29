@@ -35,8 +35,9 @@ AudioStream::AudioStream(pa_context* c,
                          unsigned samplrate,
                          const PaDeviceInfos* infos,
                          bool ec,
-                         OnReady onReady)
+                         OnReady onReady, OnData onData)
     : onReady_(std::move(onReady))
+    , onData_(std::move(onData))
     , audiostream_(0)
     , mainloop_(m)
 {
@@ -97,11 +98,17 @@ AudioStream::AudioStream(pa_context* c,
                                        flags,
                                        nullptr,
                                        nullptr);
+            pa_stream_set_write_callback(audiostream_, [](pa_stream* /*s*/, size_t bytes, void* userdata) {
+                static_cast<AudioStream*>(userdata)->onData_(bytes);
+            }, this);
         } else if (type == StreamType::Capture) {
             pa_stream_connect_record(audiostream_,
                                      infos->name.empty() ? nullptr : infos->name.c_str(),
                                      &attributes,
                                      flags);
+            pa_stream_set_read_callback(audiostream_, [](pa_stream* /*s*/, size_t bytes, void* userdata) {
+                static_cast<AudioStream*>(userdata)->onData_(bytes);
+            }, this);
         }
     }
 }
