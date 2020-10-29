@@ -290,15 +290,18 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector
             std::lock_guard<std::mutex> lkSockets(socketsMutex);
             sockets.erase(sockIt);
         } else {
-            std::unique_lock<std::mutex> lk(channelCbsMtx_);
-            auto cb = channelCbs_.find(channel);
-            if (cb != channelCbs_.end()) {
-                lk.unlock();
-                if (cb->second)
-                    cb->second(&pkt[0], pkt.size());
+            GenericSocket<uint8_t>::RecvCb cb;
+            {
+                std::lock_guard<std::mutex> lk(channelCbsMtx_);
+                auto cbIt = channelCbs_.find(channel);
+                if (cbIt != channelCbs_.end()) {
+                    cb = cbIt->second;
+                }
+            }
+            if (cb) {
+                cb(&pkt[0], pkt.size());
                 return;
             }
-            lk.unlock();
             dataIt->second->buf.insert(dataIt->second->buf.end(),
                                        std::make_move_iterator(pkt.begin()),
                                        std::make_move_iterator(pkt.end()));
