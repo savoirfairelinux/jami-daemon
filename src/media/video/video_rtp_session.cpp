@@ -145,12 +145,21 @@ VideoRtpSession::startSender()
         try {
             sender_.reset();
             socketPair_->stopSendOp(false);
+            MediaStream ms = !conference_ ?
+                        MediaStream("video sender",
+                            AV_PIX_FMT_YUV420P,
+                            1 / (rational<int>) localVideoParams_.framerate,
+                            localVideoParams_.width,
+                            localVideoParams_.height,
+                            send_.bitrate,
+                            (rational<int>) localVideoParams_.framerate) :
+                        conference_->getVideoMixer()->getStream("Video Sender");
             sender_.reset(new VideoSender(getRemoteRtpUri(),
-                                          localVideoParams_,
-                                          send_,
-                                          *socketPair_,
-                                          initSeqVal_ + 1,
-                                          mtu_));
+                                        ms,
+                                        send_,
+                                        *socketPair_,
+                                        initSeqVal_ + 1,
+                                        mtu_));
             if (changeOrientationCallback_)
                 sender_->setChangeOrientationCallback(changeOrientationCallback_);
             if (socketPair_)
@@ -345,7 +354,13 @@ VideoRtpSession::enterConference(Conference* conference)
                                localVideoParams_.height,
                                av_get_pix_fmt(localVideoParams_.pixel_format.c_str()));
 #else
-    videoMixer_->setParameters(localVideoParams_.width, localVideoParams_.height);
+    auto conf_res = split_string_to_unsigned(jami::Manager::instance().videoPreferences.getConferenceResolution(), 'x');
+    if (conf_res.size() != 2 or conf_res[0] <= 0 or conf_res[1] <= 0) {
+        JAMI_ERR("Conference resolution is invalid");
+        return;
+    }
+    videoMixer_->setParameters(conf_res[0], conf_res[1]);
+
 #endif
     if (send_.enabled or receiveThread_) {
         setupConferenceVideoPipeline(*conference_);

@@ -338,12 +338,17 @@ public:
     int getRecordQuality() const { return recordQuality_; }
 
     void setRecordQuality(int rec) { recordQuality_ = rec; }
+    
+    std::string getConferenceResolution() const { return conferenceResolution_; }
+
+    void setConferenceResolution(std::string& res) { conferenceResolution_ = res; }
 
 private:
     bool decodingAccelerated_;
     bool encodingAccelerated_;
     bool recordPreview_;
     int recordQuality_;
+    std::string conferenceResolution_;
     constexpr static const char* const CONFIG_LABEL = "video";
 };
 #endif // ENABLE_VIDEO
