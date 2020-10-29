@@ -136,6 +136,7 @@ static constexpr const char* DECODING_ACCELERATED_KEY {"decodingAccelerated"};
 static constexpr const char* ENCODING_ACCELERATED_KEY {"encodingAccelerated"};
 static constexpr const char* RECORD_PREVIEW_KEY {"recordPreview"};
 static constexpr const char* RECORD_QUALITY_KEY {"recordQuality"};
+static constexpr const char* CONFERENCE_RESOLUTION_KEY {"conference_resolution"};
 #endif
 
 #ifdef ENABLE_PLUGIN
@@ -561,6 +562,7 @@ VideoPreferences::VideoPreferences()
     , encodingAccelerated_(false)
     , recordPreview_(true)
     , recordQuality_(0)
+    , conferenceResolution_("1280x720")
 {}
 
 void
@@ -573,6 +575,7 @@ VideoPreferences::serialize(YAML::Emitter& out) const
     out << YAML::Key << DECODING_ACCELERATED_KEY << YAML::Value << decodingAccelerated_;
     out << YAML::Key << ENCODING_ACCELERATED_KEY << YAML::Value << encodingAccelerated_;
 #endif
+    out << YAML::Key << CONFERENCE_RESOLUTION_KEY << YAML::Value << conferenceResolution_;
     getVideoDeviceMonitor().serialize(out);
     out << YAML::EndMap;
 }
@@ -598,6 +601,11 @@ VideoPreferences::unserialize(const YAML::Node& in)
         encodingAccelerated_ = false;
     }
 #endif
+    try {
+        parseValue(node, CONFERENCE_RESOLUTION_KEY, conferenceResolution_);
+    } catch (...) {
+        conferenceResolution_ = "1280x720";
+    }
     getVideoDeviceMonitor().unserialize(in);
 }
 #endif // ENABLE_VIDEO
