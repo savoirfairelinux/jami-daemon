@@ -150,7 +150,6 @@ AudioLayer::devicesChanged()
 void
 AudioLayer::flushMain()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     Manager::instance().getRingBufferPool().flushAllBuffers();
 }
 

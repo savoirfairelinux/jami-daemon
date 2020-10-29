@@ -31,6 +31,8 @@
 #include "logger.h"
 #include "manager.h"
 
+#include <opendht/thread_pool.h>
+
 #include <algorithm> // for std::find
 #include <stdexcept>
 
@@ -359,114 +361,65 @@ PulseLayer::getAudioDeviceName(int index, AudioDeviceType type) const
 }
 
 void
-PulseLayer::createStreams(pa_context* c)
+PulseLayer::onStreamReady() {
+    if (--pendingStreams == 0) {
+        JAMI_DBG("All streams ready, starting !");
+        // Flush outside the if statement: every time start stream is
+        // called is to notify a new event
+        flushUrgent();
+        flushMain();
+        if (playback_)
+            playback_->start();
+        if (ringtone_)
+            ringtone_->start();
+        if (record_)
+            record_->start();
+    }
+}
+
+void
+PulseLayer::createStream(std::unique_ptr<AudioStream>& stream, AudioDeviceType type, bool ec, std::function<void(size_t)>&& onData)
 {
-    hardwareFormatAvailable(defaultAudioFormat_);
-
-    auto onReady = [this] {
-        bool playbackReady = not playback_ or playback_->isReady();
-        bool ringtoneReady = not ringtone_ or ringtone_->isReady();
-        bool recordReady = not record_ or record_->isReady();
-        if (playbackReady and recordReady and ringtoneReady) {
-            JAMI_DBG("All streams ready, starting !");
-            if (playback_)
-                playback_->start();
-            if (ringtone_)
-                ringtone_->start();
-            if (record_)
-                record_->start();
-        }
-    };
-
-    // Create playback stream
-    if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredPlaybackDevice())) {
-        bool ec = preference_.getEchoCanceller() == "system";
-        playback_.reset(new AudioStream(c,
-                                        mainloop_.get(),
-                                        "Playback",
-                                        StreamType::Playback,
-                                        audioFormat_.sample_rate,
-                                        dev_infos,
-                                        ec,
-                                        onReady));
-        pa_stream_set_write_callback(
-            playback_->stream(),
-            [](pa_stream* /*s*/, size_t /*bytes*/, void* userdata) {
-                static_cast<PulseLayer*>(userdata)->writeToSpeaker();
-            },
-            this);
+    if (stream) {
+        JAMI_WARN("Stream already exists");
+        return;
     }
-
-    // Create ringtone stream
-    // Echo canceling is not enabled for ringtone, because PA can only cancel a single output source
-    // with an input source
-    if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredRingtoneDevice())) {
-        ringtone_.reset(new AudioStream(c,
-                                        mainloop_.get(),
-                                        "Ringtone",
-                                        StreamType::Ringtone,
-                                        audioFormat_.sample_rate,
-                                        dev_infos,
-                                        false,
-                                        onReady));
-        pa_stream_set_write_callback(
-            ringtone_->stream(),
-            [](pa_stream* /*s*/, size_t /*bytes*/, void* userdata) {
-                static_cast<PulseLayer*>(userdata)->ringtoneToSpeaker();
-            },
-            this);
-    }
-
-    // Create capture stream
-    if (auto dev_infos = getDeviceInfos(sourceList_, getPreferredCaptureDevice())) {
-        record_.reset(new AudioStream(c,
-                                      mainloop_.get(),
-                                      "Capture",
-                                      StreamType::Capture,
-                                      audioFormat_.sample_rate,
-                                      dev_infos,
-                                      true,
-                                      onReady));
-        pa_stream_set_read_callback(
-            record_->stream(),
-            [](pa_stream* /*s*/, size_t /*bytes*/, void* userdata) {
-                static_cast<PulseLayer*>(userdata)->readFromMic();
-            },
-            this);
-    }
-
+    pendingStreams++;
+    stream.reset(new AudioStream(context_, mainloop_.get(),
+                                    "..",
+                                    type,
+                                    audioFormat_.sample_rate,
+                                    dev_infos,
+                                    ec,
+                                    std::bind(&PulseLayer::onStreamReady, this), std::move(onData)));
     pa_threaded_mainloop_signal(mainloop_.get(), 0);
-
-    flushMain();
-    flushUrgent();
 }
 
 void
 PulseLayer::disconnectAudioStream()
 {
+    std::unique_lock<std::mutex> lk(mutex_);
     playback_.reset();
     ringtone_.reset();
     record_.reset();
+    status_ = Status::Idle;
 }
 
-void PulseLayer::startStream(AudioDeviceType)
+void PulseLayer::startStream(AudioDeviceType type)
 {
-    std::unique_lock<std::mutex> lk(readyMtx_);
-    readyCv_.wait(lk, [this] {
-        return !(enumeratingSinks_ or enumeratingSources_ or gettingServerInfo_);
-    });
-    if (status_ != Status::Idle)
-        return;
-    status_ = Status::Starting;
+    waitForDevices();
+    std::lock_guard<std::mutex> lk(mutex_);
+    if (status_ == Status::Idle)
+        status_ = Status::Starting;
 
     // Create Streams
-    if (!playback_ or !record_)
-        createStreams(context_);
-
-    // Flush outside the if statement: every time start stream is
-    // called is to notify a new event
-    flushUrgent();
-    flushMain();
+    if (type == AudioDeviceType::PLAYBACK) {
+        createStream(playback_, type, true, std::bind(&PulseLayer::writeToSpeaker, this));
+    } else if (type == AudioDeviceType::RINGTONE) {
+        createStream(ringtone_, type, false, std::bind(&PulseLayer::ringtoneToSpeaker, this));
+    } else if (type == AudioDeviceType::CAPTURE) {
+        createStream(record_, type, true, std::bind(&PulseLayer::readFromMic, this));
+    }
 
     status_ = Status::Started;
     startedCv_.notify_all();
@@ -475,25 +428,29 @@ void PulseLayer::startStream(AudioDeviceType)
 void
 PulseLayer::stopStream(AudioDeviceType stream)
 {
-    std::unique_lock<std::mutex> lk(readyMtx_);
-    readyCv_.wait(lk, [this] {
-        return !(enumeratingSinks_ or enumeratingSources_ or gettingServerInfo_);
-    });
-
+    waitForDevices();
+    std::lock_guard<std::mutex> lk(mutex_);
     {
         PulseMainLoopLock lock(mainloop_.get());
-
-        if (playback_)
+        if (stream == AudioDeviceType::PLAYBACK && playback_)
             pa_stream_flush(playback_->stream(), nullptr, nullptr);
 
-        if (record_)
+        if (stream == AudioDeviceType::CAPTURE && record_)
             pa_stream_flush(record_->stream(), nullptr, nullptr);
     }
 
-    disconnectAudioStream();
+    if (stream == AudioDeviceType::PLAYBACK) {
+        playback_.reset();
+    } else if (stream == AudioDeviceType::RINGTONE) {
+        ringtone_.reset();
+    } else if (stream == AudioDeviceType::CAPTURE) {
+        record_.reset();
+    }
 
-    status_ = Status::Idle;
-    startedCv_.notify_all();
+    if (!playback_ && !ringtone_ && !record_) {
+        status_ = Status::Idle;
+        startedCv_.notify_all();
+    }
 }
 
 void
@@ -629,49 +586,51 @@ PulseLayer::contextChanged(pa_context* c UNUSED,
 }
 
 void
+PulseLayer::waitForDevices()
+{
+    std::unique_lock<std::mutex> lk(readyMtx_);
+    readyCv_.wait(lk, [this] {
+        return !(enumeratingSinks_ or enumeratingSources_ or gettingServerInfo_);
+    });
+}
+
+void
 PulseLayer::waitForDeviceList()
 {
     std::unique_lock<std::mutex> lock(readyMtx_);
-    if (waitingDeviceList_)
+    if (waitingDeviceList_.exchange(true))
         return;
-    waitingDeviceList_ = true;
     if (streamStarter_.joinable())
         streamStarter_.join();
     streamStarter_ = std::thread([this]() mutable {
-        {
-            std::unique_lock<std::mutex> lock(readyMtx_);
-            readyCv_.wait(lock, [&]() {
-                return not enumeratingSources_ and not enumeratingSinks_ and not gettingServerInfo_;
-            });
-        }
-        devicesChanged();
+        bool playbackDeviceChanged, recordDeviceChanged;
+
+        waitForDevices();
         waitingDeviceList_ = false;
-        if (status_ != Status::Started)
-            return;
 
         // If a current device changed, restart streams
+        devicesChanged();
         auto playbackInfo = getDeviceInfos(sinkList_, getPreferredPlaybackDevice());
-        bool playbackDeviceChanged = !playback_
-                                     or (!playbackInfo->name.empty()
-                                         and playbackInfo->name
-                                                 != stripEchoSufix(playback_->getDeviceName()));
+        playbackDeviceChanged = playback_
+                                and (!playbackInfo->name.empty() and playbackInfo->name
+                                            != stripEchoSufix(playback_->getDeviceName()));
 
         auto recordInfo = getDeviceInfos(sourceList_, getPreferredCaptureDevice());
-        bool recordDeviceChanged = !record_
-                                   or (!recordInfo->name.empty()
-                                       and recordInfo->name
-                                               != stripEchoSufix(record_->getDeviceName()));
+        recordDeviceChanged = record_
+                                and (!recordInfo->name.empty() and recordInfo->name
+                                            != stripEchoSufix(record_->getDeviceName()));
 
-        if (playbackDeviceChanged or recordDeviceChanged) {
-            JAMI_WARN("Audio devices changed, restarting streams.");
-            stopStream();
-            startStream();
-        } else {
-            JAMI_WARN("Staying on \n %s \n %s",
-                      playback_->getDeviceName().c_str(),
-                      record_->getDeviceName().c_str());
-            status_ = Status::Started;
-            startedCv_.notify_all();
+        if (status_ != Status::Started)
+            return;
+        if (playbackDeviceChanged) {
+            JAMI_WARN("Playback devices changed, restarting streams.");
+            stopStream(AudioDeviceType::PLAYBACK);
+            startStream(AudioDeviceType::PLAYBACK);
+        }
+        if (recordDeviceChanged) {
+            JAMI_WARN("Record devices changed, restarting streams.");
+            stopStream(AudioDeviceType::CAPTURE);
+            startStream(AudioDeviceType::CAPTURE);
         }
     });
 }
