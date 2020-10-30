@@ -66,6 +66,8 @@ private:
     void testChannelSenderShutdown();
     void testCloseConnectionWithDevice();
     void testShutdownCallbacks();
+    void testFloodSocket();
+    void testDestroyWhileSending();
 
     CPPUNIT_TEST_SUITE(ConnectionManagerTest);
     CPPUNIT_TEST(testConnectDevice);
@@ -80,6 +82,8 @@ private:
     CPPUNIT_TEST(testChannelSenderShutdown);
     CPPUNIT_TEST(testCloseConnectionWithDevice);
     CPPUNIT_TEST(testShutdownCallbacks);
+    CPPUNIT_TEST(testFloodSocket);
+    CPPUNIT_TEST(testDestroyWhileSending);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -796,6 +800,200 @@ ConnectionManagerTest::testShutdownCallbacks()
     bobAccount->connectionManager().closeConnectionsWith(aliceDeviceId);
     rcv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(channel2NotConnected);
+}
+
+void
+ConnectionManagerTest::testFloodSocket()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    bool successfullyConnected = false;
+    bool successfullyReceive = false;
+    bool receiverConnected = false;
+    std::shared_ptr<ChannelSocket> rcvSock1, rcvSock2, rcvSock3, sendSock, sendSock2, sendSock3;
+    bobAccount->connectionManager().onChannelRequest(
+        [&successfullyReceive](const DeviceId&, const std::string& name) {
+            successfullyReceive = name == "1";
+            return true;
+        });
+    bobAccount->connectionManager().onConnectionReady(
+        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+            receiverConnected = socket != nullptr;
+            if (name == "1")
+                rcvSock1 = socket;
+            else if (name == "2")
+                rcvSock2 = socket;
+            else if (name == "3")
+                rcvSock3 = socket;
+        });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "1",
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            sendSock = socket;
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
+    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(successfullyReceive);
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
+    successfullyConnected = false;
+    receiverConnected = false;
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "2",
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            sendSock2 = socket;
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
+    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
+    successfullyConnected = false;
+    receiverConnected = false;
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "3",
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            sendSock3 = socket;
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
+    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
+    std::mutex mtxRcv {};
+    std::string alphabet, shouldRcv, rcv1, rcv2, rcv3;
+    for (int i = 0; i < 100; ++i)
+        alphabet += "QWERTYUIOPASDFGHJKLZXCVBNM";
+    rcvSock1->setOnRecv([&](const uint8_t* buf, size_t len) {
+        rcv1 += std::string(buf, buf + len);
+        return len;
+    });
+    rcvSock2->setOnRecv([&](const uint8_t* buf, size_t len) {
+        rcv2 += std::string(buf, buf + len);
+        return len;
+    });
+    rcvSock3->setOnRecv([&](const uint8_t* buf, size_t len) {
+        rcv3 += std::string(buf, buf + len);
+        return len;
+    });
+    for (uint64_t i = 0; i < alphabet.size(); ++i) {
+        auto send = std::string(8000, alphabet[i]);
+        shouldRcv += send;
+        std::error_code ec;
+        sendSock->write(reinterpret_cast<unsigned char*>(send.data()), send.size(), ec);
+        sendSock2->write(reinterpret_cast<unsigned char*>(send.data()), send.size(), ec);
+        sendSock3->write(reinterpret_cast<unsigned char*>(send.data()), send.size(), ec);
+        CPPUNIT_ASSERT(!ec);
+    }
+    cv.wait_for(lk, std::chrono::seconds(60));
+    CPPUNIT_ASSERT(shouldRcv == rcv1);
+    CPPUNIT_ASSERT(shouldRcv == rcv2);
+    CPPUNIT_ASSERT(shouldRcv == rcv3);
+}
+
+void
+ConnectionManagerTest::testDestroyWhileSending()
+{
+    // Same as test before, but destroy the accounts while sending.
+    // This test if a segfault occurs
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    bool successfullyConnected = false;
+    bool successfullyReceive = false;
+    bool receiverConnected = false;
+    std::shared_ptr<ChannelSocket> rcvSock1, rcvSock2, rcvSock3, sendSock, sendSock2, sendSock3;
+    bobAccount->connectionManager().onChannelRequest(
+        [&successfullyReceive](const DeviceId&, const std::string& name) {
+            successfullyReceive = name == "1";
+            return true;
+        });
+    bobAccount->connectionManager().onConnectionReady(
+        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+            receiverConnected = socket != nullptr;
+            if (name == "1")
+                rcvSock1 = socket;
+            else if (name == "2")
+                rcvSock2 = socket;
+            else if (name == "3")
+                rcvSock3 = socket;
+        });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "1",
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            sendSock = socket;
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
+    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(successfullyReceive);
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
+    successfullyConnected = false;
+    receiverConnected = false;
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "2",
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            sendSock2 = socket;
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
+    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
+    successfullyConnected = false;
+    receiverConnected = false;
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "3",
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            sendSock3 = socket;
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
+    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
+    std::mutex mtxRcv {};
+    std::string alphabet;
+    for (int i = 0; i < 100; ++i)
+        alphabet += "QWERTYUIOPASDFGHJKLZXCVBNM";
+    rcvSock1->setOnRecv([&](const uint8_t* buf, size_t len) { return len; });
+    rcvSock2->setOnRecv([&](const uint8_t* buf, size_t len) { return len; });
+    rcvSock3->setOnRecv([&](const uint8_t* buf, size_t len) { return len; });
+    for (uint64_t i = 0; i < alphabet.size(); ++i) {
+        auto send = std::string(8000, alphabet[i]);
+        std::error_code ec;
+        sendSock->write(reinterpret_cast<unsigned char*>(send.data()), send.size(), ec);
+        sendSock2->write(reinterpret_cast<unsigned char*>(send.data()), send.size(), ec);
+        sendSock3->write(reinterpret_cast<unsigned char*>(send.data()), send.size(), ec);
+        CPPUNIT_ASSERT(!ec);
+    }
+
+    // No need to wait, immediately destroy, no segfault must occurs
 }
 
 } // namespace test
