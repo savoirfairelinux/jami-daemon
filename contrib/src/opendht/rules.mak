@@ -20,7 +20,7 @@ endif
 ifneq ($(call need_pkg,"restinio >= v.0.5.1"),)
 DEPS_opendht += restinio
 endif
-ifneq ($(call need_pkg,"jsoncpp"),)
+ifneq ($(call need_pkg,"jsoncpp >= 1.7.2"),)
 DEPS_opendht += jsoncpp
 endif
 ifneq ($(call need_pkg,"gnutls >= 3.3.0"),)
