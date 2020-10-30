@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0193ac82_6d85cb36",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 382,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-10-30T17:26:44Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027pj_ssize_t\u0027 (aka \u0027long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "b7ee4f99d956cd95f2da575b1d83131782cefae7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0e438955_9444a8a3",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1471,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-10-30T17:26:44Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027size_t\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "b7ee4f99d956cd95f2da575b1d83131782cefae7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b2f6366_cc803e9b",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1478,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-10-30T17:26:44Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027size_t\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "b7ee4f99d956cd95f2da575b1d83131782cefae7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
