@@ -149,7 +149,7 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact)
     bool stateChanged {false};
     auto c = contacts_.find(id);
     if (c == contacts_.end()) {
-        JAMI_DBG("[Contacts] new contact: %s", id.toString().c_str());
+        //JAMI_DBG("[Contacts] new contact: %s", id.toString().c_str());
         c = contacts_.emplace(id, contact).first;
         stateChanged = c->second.isActive() or c->second.isBanned();
     } else {
