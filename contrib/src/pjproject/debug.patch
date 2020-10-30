@@ -1,0 +1,92 @@
+ pjnath/src/pjnath/ice_session.c  | 10 ++++++++--
+ pjnath/src/pjnath/stun_session.c |  4 ++--
+ 2 files changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 35cb08c07..ca4b87a81 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1255,6 +1255,7 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
+ 
+ 	/* Send to session */
+ 	addr_len = pj_sockaddr_get_len(&the_check->rcand->addr);
++	printf("@@@@ keep alive\n");
+ 	status = pj_stun_session_send_msg(comp->stun_sess, msg_data,
+ 					  PJ_FALSE, PJ_FALSE, 
+ 					  &the_check->rcand->addr, 
+@@ -1964,6 +1965,7 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+             status = (*ice->cb.reconnect_tcp_connection)(ice, clist, check_id);
+             break;
+         case PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET:
++			printf("@@@ PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET\n");
+             status = send_connectivity_check(ice, clist, check_id,
+                                              nominate, msg_data);
+             break;
+@@ -1991,10 +1993,12 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+     case PJ_CAND_TCP_SO:
+     case PJ_CAND_UDP:
+     default:
++		printf("@@@ PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET2\n");
+ 		status = send_connectivity_check(ice, clist, check_id, nominate, msg_data);
+         break;
+     }
+ #else
++		printf("@@@ PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET3\n");
+     status = send_connectivity_check(ice, clist, check_id, nominate, msg_data);
+ #endif
+ 
+@@ -2009,7 +2013,7 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+ 			status);
+     } else {
+ 	check->tdata = NULL;
+-	pjnath_perror(ice->obj_name, "Error sending STUN request", status);
++	pjnath_perror(ice->obj_name, "@@@ => 0 Error sending STUN request", status);
+     }
+     pj_log_pop_indent();
+     return status;
+@@ -2487,6 +2491,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+     // STUN session.
+ 
+     // Initiate STUN transaction to send the request
++	printf("@@@@ ice_sess_on_peer_connection\n");
+     status_send_msg = pj_stun_session_send_msg(comp->stun_sess, msg_data,
+ 					       PJ_FALSE, PJ_FALSE, &rcand->addr,
+ 					       pj_sockaddr_get_len(&rcand->addr),
+@@ -2519,7 +2524,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 	return;
+     } else if (status_send_msg != PJ_SUCCESS) {
+ 	check->tdata = NULL;
+-	pjnath_perror(ice->obj_name, "Error sending STUN request", status_send_msg);
++	pjnath_perror(ice->obj_name, "@@@ => 1 Error sending STUN request", status_send_msg);
+ 	pj_log_pop_indent();
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+ 	on_check_complete(ice, check);
+@@ -3070,6 +3075,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+     msg_data->has_req_data = PJ_FALSE;
+ 
+     /* Send the response */
++	printf("@@@ on_stun_rx_request\n");
+     status = pj_stun_session_send_msg(sess, msg_data, PJ_TRUE,
+                                       pj_stun_session_tp_type(sess) ==
+                                       PJ_STUN_TP_UDP,
+diff --git a/pjnath/src/pjnath/stun_session.c b/pjnath/src/pjnath/stun_session.c
+index ed17b904f..49d08b99e 100644
+--- a/pjnath/src/pjnath/stun_session.c
++++ b/pjnath/src/pjnath/stun_session.c
+@@ -1014,7 +1014,7 @@ PJ_DEF(pj_status_t) pj_stun_session_send_msg( pj_stun_session *sess,
+ 					     (unsigned)tdata->pkt_size);
+ 	if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+ 	    pj_stun_msg_destroy_tdata(sess, tdata);
+-	    LOG_ERR_(sess, "Error sending STUN request", status);
++	    LOG_ERR_(sess, "@@@ => 2 Error sending STUN request", status);
+ 	    goto on_return;
+ 	}
+ 
+@@ -1071,7 +1071,7 @@ PJ_DEF(pj_status_t) pj_stun_session_send_msg( pj_stun_session *sess,
+ 
+ 	if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+ 	    pj_stun_msg_destroy_tdata(sess, tdata);
+-	    LOG_ERR_(sess, "Error sending STUN request", status);
++	    LOG_ERR_(sess, "@@@ => 3 Error sending STUN request", status);
+ 	    goto on_return;
+ 	}
