@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "fe7ab7c3_5db79cea",
+        "filename": "contrib/src/pjproject/0007-upnp-srflx-nat-assisted-cand.patch",
+        "patchSetId": 7
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-30T22:57:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d61f60ee_cd7e2185",
+      "range": {
+        "startLine": 123,
+        "startChar": 23,
+        "endLine": 123,
+        "endChar": 42
+      },
+      "revId": "ce438c86c5003211d11707b2ed3f83ddce5191bc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "721aa1b8_7f5d3c01",
         "filename": "contrib/src/pjproject/0007-upnp-srflx-nat-assisted-cand.patch",
         "patchSetId": 7
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "fcc4249b_8919d764",
+        "filename": "contrib/src/pjproject/0007-upnp-srflx-nat-assisted-cand.patch",
+        "patchSetId": 7
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-30T22:57:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "721aa1b8_7f5d3c01",
+      "range": {
+        "startLine": 126,
+        "startChar": 23,
+        "endLine": 130,
+        "endChar": 25
+      },
+      "revId": "ce438c86c5003211d11707b2ed3f83ddce5191bc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d7140c07_048b7c5c",
         "filename": "contrib/src/pjproject/rules.mak",
         "patchSetId": 7
@@ -68,6 +116,30 @@
       "revId": "ce438c86c5003211d11707b2ed3f83ddce5191bc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "148f015c_e990faf4",
+        "filename": "contrib/src/pjproject/rules.mak",
+        "patchSetId": 7
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-10-30T22:57:48Z",
+      "side": 1,
+      "message": "Not really. \n0007-pj_ice_sess.patch will be removed in the other patch (#16199)",
+      "parentUuid": "d7140c07_048b7c5c",
+      "range": {
+        "startLine": 55,
+        "startChar": 27,
+        "endLine": 55,
+        "endChar": 31
+      },
+      "revId": "ce438c86c5003211d11707b2ed3f83ddce5191bc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
