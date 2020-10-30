@@ -1,0 +1,59 @@
+ pjnath/src/pjnath/ice_session.c | 24 +++++++++++++++++-------
+ 1 file changed, 17 insertions(+), 7 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 35cb08c07..8c92357e7 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1998,13 +1998,19 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+     status = send_connectivity_check(ice, clist, check_id, nominate, msg_data);
+ #endif
+ 
++	printf("@@@ status: %u\n", status);
+     if (status == PJ_SUCCESS) {
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS,
+ 			status);
+     } else if (status == PJ_EPENDING) {
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_PENDING, status);
++	} else if ((status == 120104 || status == 130054)/* CONNECTION RESET BY PEER */
++	&& check->rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++	check_set_state(ice, check,PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
++			status);
+     } else if (check->rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
+ 	/* TODO (sblin) remove this - https://github.com/coturn/coturn/issues/408 */
++	printf("@@@ status PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET: %u\n", status);
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
+ 			status);
+     } else {
+@@ -2509,6 +2515,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 		return;
+     } else if (status_send_msg == PJ_EBUSY /* EBUSY */) {
+         check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET;
++	printf("@@@ statusX PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET: %u\n", status);
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
+ 			status_send_msg);
+ 	return;
+@@ -2518,13 +2525,16 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 			status_send_msg);
+ 	return;
+     } else if (status_send_msg != PJ_SUCCESS) {
+-	check->tdata = NULL;
+-	pjnath_perror(ice->obj_name, "Error sending STUN request", status_send_msg);
+-	pj_log_pop_indent();
+-	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+-	on_check_complete(ice, check);
+-    } else if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
+-	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET, status);
++		if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++			printf("@@@PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET %u\n", status_send_msg);
++			check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET, status);
++		} else {
++			check->tdata = NULL;
++			pjnath_perror(ice->obj_name, "Error sending STUN request", status_send_msg);
++			pj_log_pop_indent();
++			check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
++			on_check_complete(ice, check);
++		}
+     } else {
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, status);
+     }
