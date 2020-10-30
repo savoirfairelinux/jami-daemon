@@ -29,7 +29,7 @@ on behalf of Savoir-faire Linux.
  pjnath/src/pjnath-test/sess_auth.c      |   14 +-
  pjnath/src/pjnath-test/stun_sock_test.c |    7 +-
  pjnath/src/pjnath/ice_session.c         |  505 +++++++++--
- pjnath/src/pjnath/ice_strans.c          |  745 +++++++++++++---
+ pjnath/src/pjnath/ice_strans.c          |  743 +++++++++++++---
  pjnath/src/pjnath/nat_detect.c          |    7 +-
  pjnath/src/pjnath/stun_session.c        |   15 +-
  pjnath/src/pjnath/stun_sock.c           | 1082 +++++++++++++++++++----
@@ -41,7 +41,7 @@ on behalf of Savoir-faire Linux.
  pjnath/src/pjturn-srv/server.c          |    2 +-
  pjsip-apps/src/samples/icedemo.c        |  116 ++-
  pjsip/src/pjsua-lib/pjsua_core.c        |    2 +-
- 21 files changed, 2451 insertions(+), 409 deletions(-)
+ 21 files changed, 2449 insertions(+), 409 deletions(-)
 
 diff --git a/pjnath/include/pjnath/ice_session.h b/pjnath/include/pjnath/ice_session.h
 index 8971220f0..4cccd7c64 100644
@@ -1377,7 +1377,7 @@ index 2a4125bc5..35cb08c07 100644
  	}
      }
 diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
-index 3cb350c2a..d29c1f0db 100644
+index 3cb350c2a..82175e9e8 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
 @@ -69,6 +69,7 @@ enum tp_type
@@ -2071,7 +2071,7 @@ index 3cb350c2a..d29c1f0db 100644
      if (ice_st->num_buf > 0 && ice_st->buf_idx != ice_st->empty_idx) {
  	/* There's some pending send. Send it one by one. */
          pending_send *ps = &ice_st->send_buf[ice_st->buf_idx];
-@@ -2031,6 +2216,214 @@ static void check_pending_send(pj_ice_strans *ice_st)
+@@ -2031,6 +2216,212 @@ static void check_pending_send(pj_ice_strans *ice_st)
      }
  }
  
@@ -2102,7 +2102,6 @@ index 3cb350c2a..d29c1f0db 100644
 +    if (!ice_st || !ice_st->ice)
 +        return;
 +
-+    ice_st->is_pending = PJ_FALSE;
 +    ice_sess_on_peer_connection(ice_st->ice,
 +                                data->transport_id, status, remote_addr);
 +}
@@ -2275,7 +2274,6 @@ index 3cb350c2a..d29c1f0db 100644
 +
 +    if (idx != -1 && st_comp->stun[idx].sock) {
 +        const pj_ice_sess_cand *rcand = check->rcand;
-+        ice_st->is_pending = PJ_FALSE;
 +        return pj_stun_sock_close(st_comp->stun[idx].sock, &rcand->addr);
 +    }
 +
@@ -2286,7 +2284,7 @@ index 3cb350c2a..d29c1f0db 100644
  /* Notifification when asynchronous send operation via STUN/TURN
   * has completed.
   */
-@@ -2039,7 +2432,8 @@ static pj_bool_t on_data_sent(pj_ice_strans *ice_st, pj_ssize_t sent)
+@@ -2039,7 +2430,8 @@ static pj_bool_t on_data_sent(pj_ice_strans *ice_st, pj_ssize_t sent)
      if (ice_st->destroy_req || !ice_st->is_pending)
  	return PJ_TRUE;
  
@@ -2296,7 +2294,7 @@ index 3cb350c2a..d29c1f0db 100644
  	(*ice_st->cb.on_data_sent)(ice_st, sent);
      }
  
-@@ -2196,7 +2590,7 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
+@@ -2196,7 +2588,7 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
  		{
  		    /* We get an IPv4 mapped address for our IPv6
  		     * host address.
@@ -2305,7 +2303,7 @@ index 3cb350c2a..d29c1f0db 100644
  		    comp->ipv4_mapped = PJ_TRUE;
  
  		    /* Find other host candidates with the same (IPv6)
-@@ -2208,7 +2602,7 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
+@@ -2208,7 +2600,7 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
  
  		        if (comp->cand_list[i].type != PJ_ICE_CAND_TYPE_HOST)
  		            continue;
@@ -2314,7 +2312,7 @@ index 3cb350c2a..d29c1f0db 100644
  		        a1 = &comp->cand_list[i].addr;
  		        a2 = &cand->base_addr;
  		        if (pj_memcmp(pj_sockaddr_get_addr(a1),
-@@ -2225,7 +2619,7 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
+@@ -2225,7 +2617,7 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
  		    pj_sockaddr_cp(&cand->base_addr, &info.mapped_addr);
  		    pj_sockaddr_cp(&cand->rel_addr, &info.mapped_addr);
  		}
@@ -2323,7 +2321,7 @@ index 3cb350c2a..d29c1f0db 100644
  		/* Eliminate the srflx candidate if the address is
  		 * equal to other (host) candidates.
  		 */
-@@ -2268,11 +2662,11 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
+@@ -2268,11 +2660,11 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
  					     sizeof(ipaddr), 3)));
  
  		sess_init_update(ice_st);
@@ -2337,7 +2335,7 @@ index 3cb350c2a..d29c1f0db 100644
  		    				  PJ_ICE_STRANS_OP_ADDR_CHANGE,
  		    				  status);
  		}
-@@ -2318,6 +2712,10 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
+@@ -2318,6 +2710,10 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
  	    }
  	}
  	break;
@@ -2348,7 +2346,7 @@ index 3cb350c2a..d29c1f0db 100644
      }
  
      return pj_grp_lock_dec_ref(ice_st->grp_lock)? PJ_FALSE : PJ_TRUE;
-@@ -2358,14 +2756,103 @@ static void turn_on_rx_data(pj_turn_sock *turn_sock,
+@@ -2358,14 +2754,103 @@ static void turn_on_rx_data(pj_turn_sock *turn_sock,
      } else {
  
  	/* Hand over the packet to ICE */
