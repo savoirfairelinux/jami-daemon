@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a85e3b31_5844fa5a",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 155,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-30T18:47:43Z",
+      "side": 1,
+      "message": "old cast style, use static_cast (same 4 lines before)",
+      "range": {
+        "startLine": 155,
+        "startChar": 28,
+        "endLine": 155,
+        "endChar": 72
+      },
+      "revId": "5fc5f0c4268212edcc732af09a61966d0d0cf7a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8f5ca7cb_598e4319",
+        "filename": "src/preferences.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 344,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-10-30T18:47:43Z",
+      "side": 1,
+      "message": "const",
+      "range": {
+        "startLine": 344,
+        "startChar": 33,
+        "endLine": 344,
+        "endChar": 49
+      },
+      "revId": "5fc5f0c4268212edcc732af09a61966d0d0cf7a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
