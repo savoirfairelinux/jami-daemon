@@ -28,7 +28,7 @@ on behalf of Savoir-faire Linux.
  pjnath/src/pjnath-test/concur_test.c    |    5 +-
  pjnath/src/pjnath-test/sess_auth.c      |   14 +-
  pjnath/src/pjnath-test/stun_sock_test.c |    7 +-
- pjnath/src/pjnath/ice_session.c         |  505 +++++++++--
+ pjnath/src/pjnath/ice_session.c         |  494 +++++++++--
  pjnath/src/pjnath/ice_strans.c          |  743 +++++++++++++---
  pjnath/src/pjnath/nat_detect.c          |    7 +-
  pjnath/src/pjnath/stun_session.c        |   15 +-
@@ -41,7 +41,7 @@ on behalf of Savoir-faire Linux.
  pjnath/src/pjturn-srv/server.c          |    2 +-
  pjsip-apps/src/samples/icedemo.c        |  116 ++-
  pjsip/src/pjsua-lib/pjsua_core.c        |    2 +-
- 21 files changed, 2449 insertions(+), 409 deletions(-)
+ 21 files changed, 2438 insertions(+), 409 deletions(-)
 
 diff --git a/pjnath/include/pjnath/ice_session.h b/pjnath/include/pjnath/ice_session.h
 index 8971220f0..4cccd7c64 100644
@@ -648,7 +648,7 @@ index fff4fad26..e7f8b84eb 100644
      if (status != PJ_SUCCESS && status != PJ_EPENDING) {
  	app_perror("    error: server sending data", status);
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index 2a4125bc5..35cb08c07 100644
+index 2a4125bc5..9936347a9 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
 @@ -18,6 +18,7 @@
@@ -1129,7 +1129,7 @@ index 2a4125bc5..35cb08c07 100644
      }
  
      pj_grp_lock_release(ice->grp_lock);
-@@ -2181,6 +2393,193 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
+@@ -2181,6 +2393,182 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
      return status;
  }
  
@@ -1232,41 +1232,30 @@ index 2a4125bc5..35cb08c07 100644
 +					       pj_sockaddr_get_len(&rcand->addr),
 +					       check->tdata);
 +
-+    if ((status_send_msg == 120104 || status_send_msg == 130054)/* CONNECTION RESET BY PEER */
-+	&& rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
-+	/**
-+	 * This part of the code is triggered when using ICE over TCP via TURN
-+	 * In fact, the other peer has to authorize this peer to connect to
-+	 * the relayed candidate. This is done by set_perm from the other case.
-+	 * But from this side, we can't know if the peer has authorized us. If it's
-+	 * not the case, the connection will got a CONNECTION RESET BY PEER status.
-+	 * In this case, we can try to reconnect a bit after and this until the check
-+	 * reached its timeout.
-+	 */
-+	check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY;
-+	check_set_state(ice, check,PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
-+			status_send_msg);
-+		return;
++    if ((status_send_msg == 120104 || status_send_msg == 130054 /* CONNECTION RESET BY PEER */ || status_send_msg == 120032 /* BROKEN PIPE */)
++		&& rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++		/**
++		 * This part of the code is triggered when using ICE over TCP via TURN
++		 * In fact, the other peer has to authorize this peer to connect to
++		 * the relayed candidate. This is done by set_perm from the other case.
++		 * But from this side, we can't know if the peer has authorized us. If it's
++		 * not the case, the connection will got a CONNECTION RESET BY PEER status.
++		 * In this case, we can try to reconnect a bit after and this until the check
++		 * reached its timeout.
++		 */
++		check_set_state(ice, check,PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
++				status_send_msg);
 +    } else if (status_send_msg == PJ_EBUSY /* EBUSY */) {
-+        check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET;
-+	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
-+			status_send_msg);
-+	return;
-+    } else if (status_send_msg == 120032 /* BROKEN PIPE */) {
-+	check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY;
-+	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
-+			status_send_msg);
-+	return;
++		check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
++				status_send_msg);
 +    } else if (status_send_msg != PJ_SUCCESS) {
-+	check->tdata = NULL;
-+	pjnath_perror(ice->obj_name, "Error sending STUN request", status_send_msg);
-+	pj_log_pop_indent();
-+	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
-+	on_check_complete(ice, check);
-+    } else if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
-+	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET, status);
++		check->tdata = NULL;
++		pjnath_perror(ice->obj_name, "Error sending STUN request", status_send_msg);
++		pj_log_pop_indent();
++		check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
++		on_check_complete(ice, check);
 +    } else {
-+	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, status);
++		check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, status);
 +    }
 +}
 +
@@ -1323,7 +1312,7 @@ index 2a4125bc5..35cb08c07 100644
  
  /* This callback is called when outgoing STUN request completed */
  static void on_stun_request_complete(pj_stun_session *stun_sess,
-@@ -2411,7 +2810,9 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+@@ -2411,7 +2799,9 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
  				      &check->lcand->base_addr, 
  				      &check->lcand->base_addr,
  				      pj_sockaddr_get_len(&xaddr->sockaddr),
@@ -1334,7 +1323,7 @@ index 2a4125bc5..35cb08c07 100644
  	if (status != PJ_SUCCESS) {
  	    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, 
  			    status);
-@@ -2474,11 +2875,7 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+@@ -2474,11 +2864,7 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
      /* Perform 7.1.2.2.2.  Updating Pair States.
       * This may terminate ICE processing.
       */
@@ -1347,7 +1336,7 @@ index 2a4125bc5..35cb08c07 100644
  
      pj_grp_lock_release(ice->grp_lock);
  }
-@@ -2673,7 +3070,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2673,7 +3059,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
      msg_data->has_req_data = PJ_FALSE;
  
      /* Send the response */
@@ -1358,7 +1347,7 @@ index 2a4125bc5..35cb08c07 100644
  				      src_addr, src_addr_len, tdata);
  
  
-@@ -2794,12 +3193,12 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -2794,12 +3182,12 @@ static void handle_incoming_check(pj_ice_sess *ice,
      /* Just get candidate with the highest priority and same transport ID
       * for the specified  component ID in the checklist.
       */
@@ -4133,3 +4122,4 @@ index 474a8d07c..9257f07a4 100644
  	    char errmsg[PJ_ERR_MSG_SIZE];
 -- 
 2.26.2
+
