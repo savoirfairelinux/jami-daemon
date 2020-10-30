@@ -518,7 +518,7 @@ stopLocalRecorder(const std::string& filepath)
 }
 
 bool
-switchInput(const std::string& resource)
+switchInput(const std::string& resource, bool videoOnly)
 {
     if (auto call = jami::Manager::instance().getCurrentCall()) {
         if (call->hasVideo()) {
@@ -532,6 +532,9 @@ switchInput(const std::string& resource)
         ret = input->switchInput(resource).valid();
     else
         JAMI_WARN("Video input not initialized");
+    if (videoOnly)
+        return ret;
+
 
     if (auto input = jami::getAudioInput(jami::RingBufferPool::DEFAULT_ID))
         ret &= input->switchInput(resource).valid();
@@ -542,7 +545,7 @@ bool
 switchToCamera()
 {
     return switchInput(
-        jami::Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice());
+        jami::Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice(), true);
 }
 
 bool
