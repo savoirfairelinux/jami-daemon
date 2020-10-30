@@ -1,0 +1,70 @@
+ pjnath/src/pjnath/ice_session.c | 53 +++++++++++++++++++++--------------------------------
+ 1 file changed, 21 insertions(+), 32 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 35cb08c07..9936347a9 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -2492,41 +2492,30 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 					       pj_sockaddr_get_len(&rcand->addr),
+ 					       check->tdata);
+ 
+-    if ((status_send_msg == 120104 || status_send_msg == 130054)/* CONNECTION RESET BY PEER */
+-	&& rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
+-	/**
+-	 * This part of the code is triggered when using ICE over TCP via TURN
+-	 * In fact, the other peer has to authorize this peer to connect to
+-	 * the relayed candidate. This is done by set_perm from the other case.
+-	 * But from this side, we can't know if the peer has authorized us. If it's
+-	 * not the case, the connection will got a CONNECTION RESET BY PEER status.
+-	 * In this case, we can try to reconnect a bit after and this until the check
+-	 * reached its timeout.
+-	 */
+-	check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY;
+-	check_set_state(ice, check,PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
+-			status_send_msg);
+-		return;
++    if ((status_send_msg == 120104 || status_send_msg == 130054 /* CONNECTION RESET BY PEER */ || status_send_msg == 120032 /* BROKEN PIPE */)
++		&& rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++		/**
++		 * This part of the code is triggered when using ICE over TCP via TURN
++		 * In fact, the other peer has to authorize this peer to connect to
++		 * the relayed candidate. This is done by set_perm from the other case.
++		 * But from this side, we can't know if the peer has authorized us. If it's
++		 * not the case, the connection will got a CONNECTION RESET BY PEER status.
++		 * In this case, we can try to reconnect a bit after and this until the check
++		 * reached its timeout.
++		 */
++		check_set_state(ice, check,PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
++				status_send_msg);
+     } else if (status_send_msg == PJ_EBUSY /* EBUSY */) {
+-        check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET;
+-	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
+-			status_send_msg);
+-	return;
+-    } else if (status_send_msg == 120032 /* BROKEN PIPE */) {
+-	check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY;
+-	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
+-			status_send_msg);
+-	return;
++		check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
++				status_send_msg);
+     } else if (status_send_msg != PJ_SUCCESS) {
+-	check->tdata = NULL;
+-	pjnath_perror(ice->obj_name, "Error sending STUN request", status_send_msg);
+-	pj_log_pop_indent();
+-	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+-	on_check_complete(ice, check);
+-    } else if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
+-	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET, status);
++		check->tdata = NULL;
++		pjnath_perror(ice->obj_name, "Error sending STUN request", status_send_msg);
++		pj_log_pop_indent();
++		check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
++		on_check_complete(ice, check);
+     } else {
+-	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, status);
++		check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, status);
+     }
+ }
+ 
