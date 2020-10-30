@@ -165,38 +165,39 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                              addr.c_str(),
                              response.status_code);
                     cb("", Response::error);
-                }
-                try {
-                    Json::Value json;
-                    std::string err;
-                    Json::CharReaderBuilder rbuilder;
-                    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-                    if (!reader->parse(response.body.data(),
-                                       response.body.data() + response.body.size(),
-                                       &json,
-                                       &err)) {
-                        JAMI_DBG("Address lookup for %s: can't parse server response: %s",
-                                 addr.c_str(),
-                                 response.body.c_str());
+                } else {
+                    try {
+                        Json::Value json;
+                        std::string err;
+                        Json::CharReaderBuilder rbuilder;
+                        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+                        if (!reader->parse(response.body.data(),
+                                        response.body.data() + response.body.size(),
+                                        &json,
+                                        &err)) {
+                            JAMI_DBG("Address lookup for %s: can't parse server response: %s",
+                                    addr.c_str(),
+                                    response.body.c_str());
+                            cb("", Response::error);
+                            return;
+                        }
+                        auto name = json["name"].asString();
+                        if (name.empty()) {
+                            cb(name, Response::notFound);
+                            return;
+                        }
+                        JAMI_DBG("Found name for %s: %s", addr.c_str(), name.c_str());
+                        {
+                            std::lock_guard<std::mutex> l(cacheLock_);
+                            addrCache_.emplace(name, addr);
+                            nameCache_.emplace(addr, name);
+                        }
+                        cb(name, Response::found);
+                        scheduleCacheSave();
+                    } catch (const std::exception& e) {
+                        JAMI_ERR("Error when performing address lookup: %s", e.what());
                         cb("", Response::error);
-                        return;
                     }
-                    auto name = json["name"].asString();
-                    if (name.empty()) {
-                        cb(name, Response::notFound);
-                        return;
-                    }
-                    JAMI_DBG("Found name for %s: %s", addr.c_str(), name.c_str());
-                    {
-                        std::lock_guard<std::mutex> l(cacheLock_);
-                        addrCache_.emplace(name, addr);
-                        nameCache_.emplace(addr, name);
-                    }
-                    cb(name, Response::found);
-                    scheduleCacheSave();
-                } catch (const std::exception& e) {
-                    JAMI_ERR("Error when performing address lookup: %s", e.what());
-                    cb("", Response::error);
                 }
                 requests_.erase(reqid);
             });
