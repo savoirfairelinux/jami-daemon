@@ -1,0 +1,24 @@
+ pjnath/src/pjnath/ice_session.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 35cb08c07..95dffc40c 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1998,11 +1998,16 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+     status = send_connectivity_check(ice, clist, check_id, nominate, msg_data);
+ #endif
+ 
++       printf("@@@ status: %u\n", status);
+     if (status == PJ_SUCCESS) {
+        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS,
+                        status);
+     } else if (status == PJ_EPENDING) {
+        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_PENDING, status);
++       } else if ((status == 120104 || status == 130054)/* CONNECTION RESET BY PEER */
++       && check->rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++       check_set_state(ice, check,PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
++                       status);
+     } else if (check->rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
+        /* TODO (sblin) remove this - https://github.com/coturn/coturn/issues/408 */
+        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
