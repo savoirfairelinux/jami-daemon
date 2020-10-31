@@ -457,8 +457,7 @@ startCamera()
 void
 stopCamera()
 {
-    if (switchInput(""))
-        jami::Manager::instance().getVideoManager().started = false;
+    jami::Manager::instance().getVideoManager().started = false;
     jami::Manager::instance().getVideoManager().videoPreview.reset();
 }
 
@@ -467,6 +466,7 @@ startAudioDevice()
 {
     jami::Manager::instance().getVideoManager().audioPreview = jami::getAudioInput(
         jami::RingBufferPool::DEFAULT_ID);
+    jami::Manager::instance().getVideoManager().audioPreview->switchInput("");
 }
 
 void
@@ -520,20 +520,13 @@ stopLocalRecorder(const std::string& filepath)
 bool
 switchInput(const std::string& resource)
 {
-    if (auto call = jami::Manager::instance().getCurrentCall()) {
-        if (call->hasVideo()) {
-            // TODO remove this part when clients are updated to use Calljami::Manager::switchInput
-            call->switchInput(resource);
-            return true;
-        }
-    }
     bool ret = true;
     if (auto input = jami::Manager::instance().getVideoManager().videoInput.lock())
         ret = input->switchInput(resource).valid();
     else
         JAMI_WARN("Video input not initialized");
 
-    if (auto input = jami::getAudioInput(jami::RingBufferPool::DEFAULT_ID))
+    if (auto input = jami::Manager::instance().getVideoManager().audioPreview)
         ret &= input->switchInput(resource).valid();
     return ret;
 }
