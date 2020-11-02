@@ -31,29 +31,28 @@ namespace jami {
 AudioStream::AudioStream(pa_context* c,
                          pa_threaded_mainloop* m,
                          const char* desc,
-                         StreamType type,
+                         AudioDeviceType type,
                          unsigned samplrate,
-                         const PaDeviceInfos* infos,
+                         const PaDeviceInfos& infos,
                          bool ec,
-                         OnReady onReady)
+                         OnReady onReady, OnData onData)
     : onReady_(std::move(onReady))
-    , audiostream_(0)
+    , onData_(std::move(onData))
+    , audiostream_(nullptr)
     , mainloop_(m)
 {
-    const pa_channel_map channel_map = infos->channel_map;
-
     pa_sample_spec sample_spec = {PA_SAMPLE_S16LE, // PA_SAMPLE_FLOAT32LE,
                                   samplrate,
-                                  channel_map.channels};
+                                  infos.channel_map.channels};
 
-    JAMI_DBG("%s: trying to create stream with device %s (%dHz, %d channels)",
+    JAMI_DBG("%s: Creating stream with device %s (%dHz, %d channels)",
              desc,
-             infos->name.c_str(),
+             infos.name.c_str(),
              samplrate,
-             channel_map.channels);
+             infos.channel_map.channels);
 
     assert(pa_sample_spec_valid(&sample_spec));
-    assert(pa_channel_map_valid(&channel_map));
+    assert(pa_channel_map_valid(&infos.channel_map));
 
     std::unique_ptr<pa_proplist, decltype(pa_proplist_free)&> pl(pa_proplist_new(),
                                                                  pa_proplist_free);
@@ -62,7 +61,7 @@ AudioStream::AudioStream(pa_context* c,
     audiostream_ = pa_stream_new_with_proplist(c,
                                                desc,
                                                &sample_spec,
-                                               &channel_map,
+                                               &infos.channel_map,
                                                ec ? pl.get() : nullptr);
     if (!audiostream_) {
         JAMI_ERR("%s: pa_stream_new() failed : %s", desc, pa_strerror(pa_context_errno(c)));
@@ -85,50 +84,76 @@ AudioStream::AudioStream(pa_context* c,
         [](pa_stream* s, void* user_data) { static_cast<AudioStream*>(user_data)->moved(s); },
         this);
 
-    {
-        PulseMainLoopLock lock(mainloop_);
-        const pa_stream_flags_t flags = static_cast<pa_stream_flags_t>(
-            PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE | PA_STREAM_START_CORKED);
+    constexpr pa_stream_flags_t flags = static_cast<pa_stream_flags_t>(
+        PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE | PA_STREAM_START_CORKED);
 
-        if (type == StreamType::Playback || type == StreamType::Ringtone) {
-            pa_stream_connect_playback(audiostream_,
-                                       infos->name.empty() ? nullptr : infos->name.c_str(),
-                                       &attributes,
-                                       flags,
-                                       nullptr,
-                                       nullptr);
-        } else if (type == StreamType::Capture) {
-            pa_stream_connect_record(audiostream_,
-                                     infos->name.empty() ? nullptr : infos->name.c_str(),
-                                     &attributes,
-                                     flags);
-        }
+    if (type == AudioDeviceType::PLAYBACK || type == AudioDeviceType::RINGTONE) {
+        pa_stream_set_write_callback(audiostream_, [](pa_stream* /*s*/, size_t bytes, void* userdata) {
+            static_cast<AudioStream*>(userdata)->onData_(bytes);
+        }, this);
+
+        pa_stream_connect_playback(audiostream_,
+                                    infos.name.empty() ? nullptr : infos.name.c_str(),
+                                    &attributes,
+                                    flags,
+                                    nullptr,
+                                    nullptr);
+    } else if (type == AudioDeviceType::CAPTURE) {
+        pa_stream_set_read_callback(audiostream_, [](pa_stream* /*s*/, size_t bytes, void* userdata) {
+            static_cast<AudioStream*>(userdata)->onData_(bytes);
+        }, this);
+
+        pa_stream_connect_record(audiostream_,
+                                    infos.name.empty() ? nullptr : infos.name.c_str(),
+                                    &attributes,
+                                    flags);
     }
+}
+
+void disconnectStream(pa_stream* s) {
+    // make sure we don't get any further callback
+    pa_stream_set_write_callback(s, nullptr, nullptr);
+    pa_stream_set_read_callback(s, nullptr, nullptr);
+    pa_stream_set_moved_callback(s, nullptr, nullptr);
+    pa_stream_set_underflow_callback(s, nullptr, nullptr);
+    pa_stream_set_overflow_callback(s, nullptr, nullptr);
+    pa_stream_set_suspended_callback(s, nullptr, nullptr);
+    pa_stream_set_started_callback(s, nullptr, nullptr);
+}
+
+void destroyStream(pa_stream* s) {
+    pa_stream_disconnect(s);
+    pa_stream_set_state_callback(s, nullptr, nullptr);
+    disconnectStream(s);
+    pa_stream_unref(s);
 }
 
 AudioStream::~AudioStream()
 {
-    PulseMainLoopLock lock(mainloop_);
-
-    pa_stream_disconnect(audiostream_);
-
-    // make sure we don't get any further callback
-    pa_stream_set_state_callback(audiostream_, nullptr, nullptr);
-    pa_stream_set_write_callback(audiostream_, nullptr, nullptr);
-    pa_stream_set_read_callback(audiostream_, nullptr, nullptr);
-    pa_stream_set_moved_callback(audiostream_, nullptr, nullptr);
-    pa_stream_set_underflow_callback(audiostream_, nullptr, nullptr);
-    pa_stream_set_overflow_callback(audiostream_, nullptr, nullptr);
-    pa_stream_set_suspended_callback(audiostream_, nullptr, nullptr);
-    pa_stream_set_started_callback(audiostream_, nullptr, nullptr);
-
-    pa_stream_unref(audiostream_);
+    stop();
 }
 
 void
 AudioStream::start()
 {
     pa_stream_cork(audiostream_, 0, nullptr, nullptr);
+}
+
+void
+AudioStream::stop()
+{
+    if (not audiostream_)
+        return;
+    JAMI_DBG("Destroying stream with device %s", pa_stream_get_device_name(audiostream_));
+    if (pa_stream_get_state(audiostream_) == PA_STREAM_CREATING) {
+        disconnectStream(audiostream_);
+        pa_stream_set_state_callback(audiostream_, [](pa_stream* s, void*){
+            destroyStream(s);
+        }, nullptr);
+    } else {
+        destroyStream(audiostream_);
+    }
+    audiostream_ = nullptr;
 }
 
 void
@@ -141,7 +166,7 @@ AudioStream::moved(pa_stream* s)
 void
 AudioStream::stateChanged(pa_stream* s)
 {
-    UNUSED char str[PA_SAMPLE_SPEC_SNPRINT_MAX];
+    //UNUSED char str[PA_SAMPLE_SPEC_SNPRINT_MAX];
 
     switch (pa_stream_get_state(s)) {
     case PA_STREAM_CREATING:
