@@ -25,7 +25,6 @@
 #endif
 
 #include "../igd.h"
-#include "../global_mapping.h"
 #include "noncopyable.h"
 #include "ip_utils.h"
 
@@ -34,58 +33,35 @@
 #include <string>
 #include <chrono>
 #include <functional>
+#include <natpmp.h>
 
 namespace jami {
 namespace upnp {
 
-using clock = std::chrono::system_clock;
-using time_point = clock::time_point;
-
 class PMPIGD : public IGD
 {
+    friend class NatPmp;
+
 public:
-    PMPIGD(IpAddr&& localIp = {}, IpAddr&& publicIp = {})
-        : IGD(std::move(localIp), std::move(publicIp))
-    {}
+    PMPIGD();
     ~PMPIGD() = default;
 
     bool operator==(IGD& other) const;
     bool operator==(PMPIGD& other) const;
 
-    // Checks if the given mapping was already added.
-    bool isMapAdded(const Mapping& map);
-    // Adds a mapping to the list of mappings we need to open.
-    void addMapToAdd(Mapping map);
-
-    // Removes a mapping from the list of mappings we need to open.
-    void removeMapToAdd(const Mapping& map);
-    // Adds an added mapping to the list of mappings to be considered for renewal.
-    void addMapToRenew(Mapping map);
-    // Removes a mapping from the renewal list.
-    void removeMapToRenew(const Mapping& map);
-
-    // Adds a mapping to the list of mappings we need to close.
-    void addMapToRemove(Mapping map);
-    // Removes a mapping from the list of mappings we need to close.
-    void removeMapToRemove(const Mapping& map);
-
-    // Clears all the mappings.
+private:
+    // Clear all the mappings.
     void clearMappings();
 
-    // Checks if a given mapping needs to be renewed.
-    bool isMapUpForRenewal(const Mapping& map, time_point now);
-    // Gets the next renewal time.
-    time_point getRenewalTime();
+    // Get handle.
+    natpmp_t& getHandle() { return natpmpHdl_; }
 
-    std::mutex mapListMutex_;                // Mutex for protecting map lists.
-    std::vector<Mapping> toAdd_ {};          // List of maps to add.
-    std::vector<Mapping> toRenew_ {};        // List of maps to renew.
-    std::vector<Mapping> toRemove_ {};       // List of maps to remove.
-    time_point renewal_ {time_point::min()}; // Renewal time of 1 minute.
-    // Upon creation, the thread will clear all the previously opened
-    // mappings (if there are any). The NatPmp class will then set the
-    // clearAll variable to false.
-    std::atomic_bool clearAll_ {true};
+    // Clear the natpmp handle.
+    void clearNatPmpHdl() { memset(&natpmpHdl_, 0, sizeof(natpmpHdl_)); };
+
+    std::mutex mapListMutex_; // Mutex for protecting map lists.
+    natpmp_t natpmpHdl_;      // NatPmp handle.
 };
+
 } // namespace upnp
 } // namespace jami
