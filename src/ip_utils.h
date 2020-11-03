@@ -211,14 +211,14 @@ public:
 
     inline uint16_t getPort() const
     {
-        if (not*this)
+        if (not *this)
             return 0;
         return pj_sockaddr_get_port(&addr);
     }
 
     inline socklen_t getLength() const
     {
-        if (not*this)
+        if (not *this)
             return 0;
         return pj_sockaddr_get_len(&addr);
     }
@@ -251,6 +251,7 @@ public:
      * (default). Does not resolve hostnames.
      */
     static bool isValid(std::string_view address, pj_uint16_t family = pj_AF_UNSPEC());
+
 private:
     pj_sockaddr addr {};
 };
@@ -299,8 +300,8 @@ std::string getHostname();
 
 int getHostName(char* out, size_t out_len);
 std::string getGateway(char* localHost, ip_utils::subnet_mask prefix);
-
 std::string getDeviceName();
+IpAddr getLocalGateway();
 
 /**
  * Return the generic "any host" IP address of the specified family.
