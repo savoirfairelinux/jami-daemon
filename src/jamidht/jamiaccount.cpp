@@ -464,10 +464,10 @@ initICE(const std::vector<uint8_t>& msg,
         if (sdp.candidates.size() > 0) {
             if (sdp.candidates[0].find("TCP") != std::string::npos) {
                 // It is a SDP for the TCP component
-                tcp_failed = (ice_tcp && !ice_tcp->start(sdp));
+                tcp_failed = (ice_tcp && !ice_tcp->startIce(sdp));
             } else {
                 // For UDP
-                udp_failed = (ice && !ice->start(sdp));
+                udp_failed = (ice && !ice->startIce(sdp));
             }
         }
     }
@@ -575,10 +575,12 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         auto& sipConn = value.back();
 
         auto transport = sipConn.transport;
+
         if (!sipConn.channel->underlyingICE()) {
             JAMI_WARN("A SIP transport exists without Channel, this is a bug. Please report");
             continue;
         }
+
         if (!transport)
             continue;
 
@@ -842,7 +844,7 @@ JamiAccount::serialize(YAML::Emitter& out) const
 
     out << YAML::BeginMap;
     SIPAccountBase::serialize(out);
-    out << YAML::Key << Conf::DHT_PORT_KEY << YAML::Value << dhtPort_;
+    out << YAML::Key << Conf::DHT_PORT_KEY << YAML::Value << dhtDefaultPort_;
     out << YAML::Key << Conf::DHT_PUBLIC_IN_CALLS << YAML::Value << dhtPublicInCalls_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_HISTORY << YAML::Value << allowPeersFromHistory_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_CONTACT << YAML::Value << allowPeersFromContact_;
@@ -944,10 +946,9 @@ JamiAccount::unserialize(const YAML::Node& node)
     // to make the DHT unusable (Address already in use, and SO_REUSEADDR & SO_REUSEPORT
     // doesn't seems to work). For now, use a random port
     // See https://git.jami.net/savoirfairelinux/ring-client-macosx/issues/221
-    // TODO: parseValueOptional(node, Conf::DHT_PORT_KEY, dhtPort_);
-    if (not dhtPort_)
-        dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
-    dhtPortUsed_ = dhtPort_;
+    // TODO: parseValueOptional(node, Conf::DHT_PORT_KEY, dhtDefaultPort_);
+    if (not dhtDefaultPort_)
+        dhtDefaultPort_ = getRandomEvenPort(DHT_PORT_RANGE);
 
     parseValueOptional(node, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
     parseValueOptional(node,
@@ -1180,7 +1181,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     acreds->scheme = "dht";
                     acreds->uri = archive_pin;
                     acreds->dhtBootstrap = loadBootstrap();
-                    acreds->dhtPort = (in_port_t) dhtPortUsed_;
+                    acreds->dhtPort = dhtPortUsed();
                 } else if (hasArchive) {
                     // Migrating local account
                     acreds->scheme = "local";
@@ -1299,7 +1300,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     if (hostname_.empty())
         hostname_ = DHT_DEFAULT_BOOTSTRAP;
     parseString(details, DRing::Account::ConfProperties::BOOTSTRAP_LIST_URL, bootstrapListUrl_);
-    parseInt(details, Conf::CONFIG_DHT_PORT, dhtPort_);
+    parseInt(details, Conf::CONFIG_DHT_PORT, dhtDefaultPort_);
     parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
     parseBool(details, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
     parseBool(details,
@@ -1315,9 +1316,8 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     parseBool(details,
               DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED,
               allowPeersFromTrusted_);
-    if (not dhtPort_)
-        dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
-    dhtPortUsed_ = dhtPort_;
+    if (not dhtDefaultPort_)
+        dhtDefaultPort_ = getRandomEvenPort(DHT_PORT_RANGE);
 
     parseString(details, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
     parseString(details, DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
@@ -1370,7 +1370,7 @@ JamiAccount::getAccountDetails() const
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
-    a.emplace(Conf::CONFIG_DHT_PORT, std::to_string(dhtPort_));
+    a.emplace(Conf::CONFIG_DHT_PORT, std::to_string(dhtDefaultPort_));
     a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::DHT_PEER_DISCOVERY,
               dhtPeerDiscovery_ ? TRUE_STR : FALSE_STR);
@@ -1799,47 +1799,74 @@ JamiAccount::registerAsyncOps()
 
     loadCachedProxyServer([onLoad](const std::string&) { onLoad(); });
 
-    if (upnp_!= nullptr) {
+    if (upnp_) {
         // Release current mapping if any.
-        if (dhtPortMapping_.getPortExternal()) {
-            upnp_->requestMappingRemove(dhtPortMapping_);
-            dhtPortMapping_ = upnp::Mapping {};
+        if (dhtUpnpMapping_.isValid()) {
+            upnp_->releaseMapping(dhtUpnpMapping_);
         }
-        upnp::Mapping map {dhtPort_, dhtPort_, upnp::PortType::UDP, "JAMI-DHT"};
-        upnp_->requestMappingAdd(
-            [this, onLoad, update = std::make_shared<bool>(false)](uint16_t port_used,
-                                                                   bool success) {
-                if (success) {
-                    dhtPortMapping_ = upnp::Mapping { port_used, port_used, upnp::PortType::UDP, "DHT Port" };
-                } else {
-                    dhtPortMapping_ = upnp::Mapping {};
-                }
 
-                auto oldPort = static_cast<in_port_t>(dhtPortUsed_);
-                auto newPort = success ? port_used : dhtPort_;
+        dhtUpnpMapping_ = upnp::Mapping {0, 0, upnp::PortType::UDP};
+
+        dhtUpnpMapping_.enableAutoUpdate(true);
+
+        // Set the notify callback.
+        dhtUpnpMapping_.setNotifyCallback([w = weak(),
+                                           onLoad,
+                                           update = std::make_shared<bool>(false)](
+                                              upnp::Mapping::sharedPtr_t mapRes) {
+            if (auto accPtr = w.lock()) {
+                auto& dhtMap = accPtr->dhtUpnpMapping_;
+                auto& accId = accPtr->getAccountID();
+
                 if (*update) {
-                    if (oldPort != newPort or not dht_->isRunning()) {
-                        JAMI_WARN("[Account %s] DHT port changed to %u: restarting network",
-                                  getAccountID().c_str(),
-                                  newPort);
-                        dht_->connectivityChanged();
+                    // Update if the mapping or its state changed.
+                    if (dhtMap != *mapRes or dhtMap.getState() != mapRes->getState()) {
+                        dhtMap = upnp::Mapping {*mapRes};
+
+                        // If state changes to "OPEN" or "FAILED", connectivity must be restarted.
+                        if (mapRes->getState() == upnp::MappingState::OPEN
+                            or (mapRes->getState() == upnp::MappingState::FAILED)) {
+                            JAMI_WARN(
+                                "[Account %s] DHT UPNP mapping updated to %s. Restarting network",
+                                accId.c_str(),
+                                mapRes->toString(true).c_str());
+                            accPtr->dht_->connectivityChanged();
+                        }
                     }
                 } else {
                     *update = true;
-                    if (success)
-                        JAMI_DBG("[Account %s] Starting DHT on port %u",
-                                  getAccountID().c_str(),
-                                  newPort);
-                    else
-                        JAMI_WARN("[Account %s] Failed to open port %u: starting DHT anyway",
-                                  getAccountID().c_str(),
-                                  oldPort);
+                    // Set connection info and load the account.
+                    if (mapRes->getState() == upnp::MappingState::OPEN) {
+                        dhtMap = upnp::Mapping {*mapRes};
+                        JAMI_DBG("[Account %s] Mapping %s successfully allocated: starting the DHT",
+                                 accId.c_str(),
+                                 dhtMap.toString().c_str());
+                    } else {
+                        JAMI_WARN(
+                            "[Account %s] Mapping request is in %s state: starting the DHT anyway",
+                            accId.c_str(),
+                            mapRes->getStateStr());
+                    }
+
+                    // Load the account and start the DHT.
+                    onLoad();
                 }
-            },
-            map);
+            }
+        });
+
+        // Request the mapping.
+        auto map = upnp_->reserveMapping(dhtUpnpMapping_);
+        // The returned mapping is invalid. Load the account now since
+        // we may never receive the callback.
+        if (not map->isValid()) {
+            onLoad();
+        }
+
+    } else {
+        // No UPNP. Load the account and start the DHT. The local DHT
+        // might not be reachable for peers if we are behind a NAT.
+        onLoad();
     }
-    // DHT will be started regardless if UPNP is available and/or successful.
-    onLoad();
 }
 
 void
@@ -2159,6 +2186,11 @@ JamiAccount::doRegister_()
             case dht::NodeStatus::Connected:
                 JAMI_WARN("[Account %s] connected to the DHT network", getAccountID().c_str());
                 state = RegistrationState::REGISTERED;
+                runOnMainThread([w = weak()] {
+                    if (auto acc = w.lock()) {
+                        acc->storeActiveIpAddress();
+                    }
+                });
                 break;
             case dht::NodeStatus::Disconnected:
                 JAMI_WARN("[Account %s] disconnected from the DHT network", getAccountID().c_str());
@@ -2173,7 +2205,7 @@ JamiAccount::doRegister_()
         };
 
         setRegistrationState(RegistrationState::TRYING);
-        dht_->run((in_port_t) dhtPortUsed_, config, std::move(context));
+        dht_->run(dhtPortUsed(), config, std::move(context));
 
         for (const auto& bootstrap : loadBootstrap())
             dht_->bootstrap(bootstrap);
@@ -2423,9 +2455,6 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                                            }
                                    });
 #endif
-    registerDhtAddress(*ice);
-    if (ice_tcp)
-        registerDhtAddress(*ice_tcp);
 
     auto blob = ice->packIceMsg();
     if (ice_tcp) {
@@ -2511,9 +2540,9 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     dht_->join();
 
     // Release current upnp mapping if any.
-    if (upnp_ and dhtPortMapping_.getPortExternal()) {
-        upnp_->requestMappingRemove(dhtPortMapping_);
-        dhtPortMapping_ = upnp::Mapping {};
+    if (upnp_ and dhtUpnpMapping_.isValid()) {
+        upnp_->releaseMapping(dhtUpnpMapping_);
+        dhtUpnpMapping_ = upnp::Mapping {};
     }
 
     lock.unlock();
@@ -2537,8 +2566,9 @@ JamiAccount::connectivityChanged()
         // nothing to do
         return;
     }
-
-    dht_->connectivityChanged();
+    // Let UPNP handle connectivity change if enabled.
+    if (not upnp_)
+        dht_->connectivityChanged();
     // reset cache
     setPublishedAddress({});
     cacheTurnServers();
@@ -3270,31 +3300,45 @@ JamiAccount::onIsComposing(const std::string& peer, bool isWriting)
     }
 }
 
-void
-JamiAccount::registerDhtAddress(IceTransport& ice)
+const IceTransportOptions
+JamiAccount::getIceOptions() const noexcept
 {
-    const auto reg_addr = [&](IceTransport& ice, const IpAddr& ip) {
-        JAMI_DBG("[Account %s] using public IP: %s", getAccountID().c_str(), ip.toString().c_str());
-        return ip;
-    };
+    auto opts = SIPAccountBase::getIceOptions();
+    auto publishedAddr = getPublishedIpAddress();
 
-    auto ip = getPublishedAddress();
-    if (ip.empty()) {
-        // We need a public address in case of NAT'ed network
-        // Trying to use one discovered by DHT service
+    if (publishedAddr) {
+        auto interfaceAddr = ip_utils::getInterfaceAddr(getLocalInterface(),
+                                                        publishedAddr.getFamily());
+        if (interfaceAddr) {
+            opts.accountLocalAddr = interfaceAddr;
+            opts.accountPublicAddr = publishedAddr;
+        }
+    }
 
-        // IPv6 (sdp support only one IP, put IPv6 before IPv4 as this last has the priority over
-        // IPv6 less NAT'able)
-        const auto& addr6 = dht_->getPublicAddress(AF_INET6);
-        if (addr6.size())
-            setPublishedAddress(reg_addr(ice, *addr6[0].get()));
+    return opts;
+}
 
-        // IPv4
-        const auto& addr4 = dht_->getPublicAddress(AF_INET);
-        if (addr4.size())
-            setPublishedAddress(reg_addr(ice, *addr4[0].get()));
-    } else {
-        reg_addr(ice, {ip});
+void
+JamiAccount::storeActiveIpAddress()
+{
+    // IPv4
+    const auto& addr4 = dht_->getPublicAddress(AF_INET);
+    if (addr4.size()) {
+        IpAddr publicAddr {*addr4[0].get()};
+        setPublishedAddress(publicAddr);
+        JAMI_DBG("[Account %s] Store DHT public IPv4 address : %s",
+                 getAccountID().c_str(),
+                 publicAddr.toString().c_str());
+    }
+
+    // IPv6
+    const auto& addr6 = dht_->getPublicAddress(AF_INET6);
+    if (addr6.size()) {
+        IpAddr publicAddr {*addr6[0].get()};
+        setPublishedAddress(publicAddr);
+        JAMI_DBG("[Account %s] Store DHT public IPv6 address : %s",
+                 getAccountID().c_str(),
+                 publicAddr.toString().c_str());
     }
 }
 
@@ -3557,6 +3601,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
     // If a connection already exists or is in progress, no need to do this
     std::lock_guard<std::mutex> lk(sipConnsMtx_);
     auto id = std::make_pair(peerId, deviceId);
+
     if (sipConns_.find(id) != sipConns_.end()) {
         JAMI_DBG("A SIP connection with %s already exists", deviceId.to_c_str());
         return;
