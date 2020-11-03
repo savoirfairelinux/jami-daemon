@@ -28,15 +28,11 @@
 
 namespace jami {
 
-/**
- * This data structure contains the different king of audio streams available
- */
-enum class StreamType { Playback, Capture, Ringtone };
-
 class AudioStream
 {
 public:
     using OnReady = std::function<void()>;
+    using OnData = std::function<void(size_t)>;
 
     /**
      * Constructor
@@ -52,15 +48,16 @@ public:
     AudioStream(pa_context*,
                 pa_threaded_mainloop*,
                 const char*,
-                StreamType,
+                AudioDeviceType,
                 unsigned,
-                const PaDeviceInfos*,
+                const PaDeviceInfos&,
                 bool,
-                OnReady onReady);
+                OnReady onReady, OnData onData);
 
     ~AudioStream();
 
     void start();
+    void stop();
 
     /**
      * Accessor: Get the pulseaudio stream object
@@ -95,6 +92,7 @@ private:
     NON_COPYABLE(AudioStream);
 
     OnReady onReady_;
+    OnData onData_;
 
     /**
      * Mandatory asynchronous callback on the audio stream state

@@ -156,7 +156,7 @@ public:
 
     static std::vector<std::string> getSupportedAudioManagers();
 
-    std::string getAudioApi() const { return audioApi_; }
+    const std::string& getAudioApi() const { return audioApi_; }
 
     void setAudioApi(const std::string& api) { audioApi_ = api; }
 
@@ -175,7 +175,7 @@ public:
 
     void setAlsaCardring(int c) { alsaCardring_ = c; }
 
-    std::string getAlsaPlugin() const { return alsaPlugin_; }
+    const std::string& getAlsaPlugin() const { return alsaPlugin_; }
 
     void setAlsaPlugin(const std::string& p) { alsaPlugin_ = p; }
 
@@ -183,19 +183,19 @@ public:
     void setAlsaSmplrate(int r) { alsaSmplrate_ = r; }
 
     // pulseaudio preference
-    std::string getPulseDevicePlayback() const { return pulseDevicePlayback_; }
+    const std::string& getPulseDevicePlayback() const { return pulseDevicePlayback_; }
 
     void setPulseDevicePlayback(const std::string& p) { pulseDevicePlayback_ = p; }
 
-    std::string getPulseDeviceRecord() const { return pulseDeviceRecord_; }
+    const std::string& getPulseDeviceRecord() const { return pulseDeviceRecord_; }
     void setPulseDeviceRecord(const std::string& r) { pulseDeviceRecord_ = r; }
 
-    std::string getPulseDeviceRingtone() const { return pulseDeviceRingtone_; }
+    const std::string& getPulseDeviceRingtone() const { return pulseDeviceRingtone_; }
 
     void setPulseDeviceRingtone(const std::string& r) { pulseDeviceRingtone_ = r; }
 
     // general preference
-    std::string getRecordPath() const { return recordpath_; }
+    const std::string& getRecordPath() const { return recordpath_; }
 
     // Returns true if directory is writeable
     bool setRecordPath(const std::string& r);
@@ -226,7 +226,7 @@ public:
 
     void setPlaybackMuted(bool muted) { playbackMuted_ = muted; }
 
-    std::string getEchoCanceller() const { return echoCanceller_; }
+    const std::string& getEchoCanceller() const { return echoCanceller_; }
 
     void setEchoCanceller(const std::string& ec) { echoCanceller_ = ec; }
 
