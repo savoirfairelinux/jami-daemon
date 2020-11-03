@@ -5,7 +5,6 @@
 # natpmp|pupnp
 
 list (APPEND Source_Files__upnp__protocol
-      "${CMAKE_CURRENT_SOURCE_DIR}/global_mapping.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/igd.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/igd.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/mapping.cpp"

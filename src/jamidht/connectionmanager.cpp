@@ -229,14 +229,13 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
         return;
     }
 
-    account.registerDhtAddress(*ice);
-
     auto iceAttributes = ice->getLocalAttributes();
     std::stringstream icemsg;
     icemsg << iceAttributes.ufrag << "\n";
     icemsg << iceAttributes.pwd << "\n";
     for (const auto& addr : ice->getLocalCandidates(0)) {
         icemsg << addr << "\n";
+        JAMI_DBG() << "Added local ICE candidate " << addr;
     }
 
     // Prepare connection request as a DHT message
@@ -253,7 +252,6 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
                                                    + deviceId.toString()),
                                 deviceId,
                                 value);
-
     // Wait for call to onResponse() operated by DHT
     if (isDestroying_)
         return; // This avoid to wait new negotiation when destroying
@@ -269,11 +267,10 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
     auto& response = info->response_;
     if (!ice)
         return;
+
     auto sdp = IceTransport::parse_SDP(response.ice_msg, *ice);
-    auto hasPubIp = hasPublicIp(sdp);
-    if (!hasPubIp)
-        ice->setInitiatorSession();
-    if (not ice->start({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
+
+    if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
         JAMI_WARN("[Account:%s] start ICE failed", account.getAccountID().c_str());
         onError();
     }
@@ -397,7 +394,6 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                 };
 
                 // If no socket exists, we need to initiate an ICE connection.
-                auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
                 auto ice_config = sthis->account.getIceOptions();
                 ice_config.tcpEnable = true;
                 ice_config.onInitDone = [w,
@@ -460,11 +456,8 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                     sthis->infos_[{deviceId, vid}] = info;
                 }
                 std::unique_lock<std::mutex> lk {info->mutex_};
-                info->ice_ = iceTransportFactory
-                                 .createUTransport(sthis->account.getAccountID().c_str(),
-                                                   1,
-                                                   false,
-                                                   ice_config);
+                info->ice_ = Manager::instance().getIceTransportFactory().createUTransport(
+                    sthis->account.getAccountID().c_str(), 1, false, ice_config);
 
                 if (!info->ice_) {
                     JAMI_ERR("Cannot initialize ICE session.");
@@ -607,11 +600,9 @@ ConnectionManager::Impl::onRequestStartIce(const PeerConnectionRequest& req)
         return;
     }
 
-    account.registerDhtAddress(*ice);
-
     auto sdp = IceTransport::parse_SDP(req.ice_msg, *ice);
     auto hasPubIp = hasPublicIp(sdp);
-    if (not ice->start({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
+    if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
         JAMI_ERR("[Account:%s] start ICE failed - fallback to TURN", account.getAccountID().c_str());
         ice = nullptr;
         if (connReadyCb_)

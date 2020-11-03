@@ -25,11 +25,11 @@
 #include "config.h"
 #endif
 
-#include "global_mapping.h"
-
 #include "noncopyable.h"
 #include "ip_utils.h"
 #include "string_utils.h"
+
+#include "upnp/protocol/mapping.h"
 
 #ifdef _MSC_VER
 typedef uint16_t in_port_t;
@@ -38,51 +38,71 @@ typedef uint16_t in_port_t;
 namespace jami {
 namespace upnp {
 
-// Subclasses to make it easier to differentiate and cast maps of port mappings.
-class PortMapLocal : public std::map<uint16_t, Mapping>
-{};
-class PortMapGlobal : public std::map<uint16_t, GlobalMapping>
-{};
+enum class NatProtocolType { UNKNOWN, PUPNP, NAT_PMP };
 
 class IGD
 {
 public:
-    IGD(IpAddr&& localIp = {}, IpAddr&& publicIp = {});
+    // Max error before moving the IGD to invalid state.
+    constexpr static int MAX_ERRORS_COUNT = 20;
+
+    IGD(NatProtocolType prot);
     virtual ~IGD() = default;
     bool operator==(IGD& other) const;
+    IGD& operator=(IGD&& other) = delete;
+    IGD& operator=(IGD& other) = delete;
 
-    // Checks if the port is currently being used (i.e. the port is already opened).
-    bool isMapInUse(const in_port_t externalPort, upnp::PortType type);
-    bool isMapInUse(const Mapping& map);
+    NatProtocolType getProtocol() const { return protocol_; }
 
-    // Returns the mapping associated to the given port and type.
-    Mapping getMapping(in_port_t externalPort, upnp::PortType type) const;
+    char const* getProtocolName() const
+    {
+        return protocol_ == NatProtocolType::NAT_PMP ? "NAT-PMP" : "UPNP";
+    };
 
-    // Increments the number of users for a given mapping.
-    void incrementNbOfUsers(const in_port_t externalPort, upnp::PortType type);
-    void incrementNbOfUsers(const Mapping& map);
+    IpAddr getLocalIp() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return localIp_;
+    }
+    IpAddr getPublicIp() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return publicIp_;
+    }
+    void setLocalIp(const IpAddr& addr)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        localIp_ = addr;
+    }
+    void setPublicIp(const IpAddr& addr)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        publicIp_ = addr;
+    }
+    void setUID(const std::string& uid)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        uid_ = uid;
+    }
+    std::string getUID() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return uid_;
+    }
 
-    // Removes the mapping from the list.
-    void removeMapInUse(const Mapping& map);
-
-    // Returns the list of currently used mappings according to the port type.
-    PortMapGlobal* getCurrentMappingList(upnp::PortType type);
-
-    // Returns number of users for a given mapping.
-    unsigned int getNbOfUsers(const in_port_t externalPort, upnp::PortType type);
-    unsigned int getNbOfUsers(const Mapping& map);
-
-    // Reduces the number of users for a given mapping.
-    void decrementNbOfUsers(const in_port_t externalPort, upnp::PortType type);
-    void decrementNbOfUsers(const Mapping& map);
-
-    IpAddr localIp_ {};  // Internal IP interface used to communication with IGD.
-    IpAddr publicIp_ {}; // External IP of IGD.
+    void setValid(bool valid);
+    bool isValid() const { return valid_; }
+    bool incrementErrorsCounter();
 
 protected:
-    std::mutex mapListMutex_;      // Mutex for protecting map lists.
-    PortMapGlobal udpMappings_ {}; // IGD UDP port mappings.
-    PortMapGlobal tcpMappings_ {}; // IGD TCP port mappings.
+    const NatProtocolType protocol_ {NatProtocolType::UNKNOWN};
+    std::atomic_bool valid_ {true};
+    std::atomic<int> errorsCounter_ {0};
+
+    mutable std::mutex mutex_;
+    IpAddr localIp_ {};  // Local IP of the IGD (typically the same as the gateway).
+    IpAddr publicIp_ {}; // External/public IP of IGD.
+    std::string uid_ {};
 
 private:
     NON_COPYABLE(IGD);
