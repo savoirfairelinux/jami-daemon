@@ -9,6 +9,7 @@ list (APPEND Source_Files__upnp
       "${CMAKE_CURRENT_SOURCE_DIR}/upnp_context.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/upnp_control.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/upnp_control.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/upnp_thread_util.h"
 )
 
 set (Source_Files__upnp ${Source_Files__upnp} PARENT_SCOPE)

@@ -176,7 +176,7 @@ public:
 
     std::shared_ptr<upnp::Controller> upnp_ {};
     std::mutex upnpMutex_ {};
-    std::vector<std::unique_ptr<Mapping>> upnpMappings_;
+    std::map<Mapping::key_t, Mapping> upnpMappings_;
     std::mutex upnpMappingsMutex_ {};
 
     bool onlyIPv4Private_ {true};
@@ -187,7 +187,7 @@ public:
     bool handleEvents(unsigned max_msec);
 
     // Wait data on components
-    pj_ssize_t lastSentLen_ {};
+    pj_size_t lastSentLen_ {};
     std::condition_variable waitDataCv_ = {};
 
     std::atomic_bool destroying_ {false};
@@ -302,11 +302,14 @@ IceTransport::Impl::Impl(const char* name,
     , iceDefaultRemoteAddr_(component_count)
 {
     JAMI_DBG("[ice:%p] Creating IceTransport session for \"%s\" - comp count %u - as a %s",
-        this, name, component_count, master ? "master" : "slave");
+             this,
+             name,
+             component_count,
+             master ? "master" : "slave");
 
     sip_utils::register_thread();
     if (options.upnpEnable)
-        upnp_.reset(new upnp::Controller(false));
+        upnp_.reset(new upnp::Controller());
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
     config_ = iceTransportFactory.getIceCfg(); // config copy
@@ -574,12 +577,12 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
                 auto raddr = getRemoteAddress(i);
 
                 if (laddr and raddr) {
-                    out << " [" << i+1 << "] "
-                        << laddr.toString(true, true) << " [" << getCandidateType(getSelectedCandidate(i, false)) << "] "
-                        << " <-> "
-                        << raddr.toString(true, true) << " [" << getCandidateType(getSelectedCandidate(i, true)) << "] " << '\n';
+                    out << " [" << i + 1 << "] " << laddr.toString(true, true) << " ["
+                        << getCandidateType(getSelectedCandidate(i, false)) << "] "
+                        << " <-> " << raddr.toString(true, true) << " ["
+                        << getCandidateType(getSelectedCandidate(i, true)) << "] " << '\n';
                 } else {
-                    out << " [" << i+1 << "] disabled\n";
+                    out << " [" << i + 1 << "] disabled\n";
                 }
             }
 
@@ -730,7 +733,8 @@ IceTransport::Impl::addStunConfig(int af)
     stun.conn_type = config_.stun.conn_type;
 
     JAMI_DBG("[ice:%p)] added host stun server for %s transport",
-        this, config_.protocol == PJ_ICE_TP_TCP ? "TCP" : "UDP");
+             this,
+             config_.protocol == PJ_ICE_TP_TCP ? "TCP" : "UDP");
 
     return true;
 }
@@ -740,9 +744,6 @@ IceTransport::Impl::requestUpnpMappings()
 {
     // Must be called once !
 
-    IpAddr localIp {};
-    IpAddr publicIp {};
-
     std::lock_guard<std::mutex> lock(upnpMutex_);
 
     if (upnp_ == nullptr)
@@ -750,35 +751,30 @@ IceTransport::Impl::requestUpnpMappings()
 
     auto transport = isTcpEnabled() ? PJ_CAND_TCP_PASSIVE : PJ_CAND_UDP;
     auto portType = transport == PJ_CAND_UDP ? PortType::UDP : PortType::TCP;
-    localIp = upnp_->getLocalIP();
-    publicIp = upnp_->getExternalIP();
 
     // Request upnp mapping for each component.
     for (unsigned compId = 1; compId <= component_count_; compId++) {
         // Set port number to 0 to get any available port.
-        Mapping map {0, 0, portType};
-        // Request the mapping
-        uint16_t port = upnp_->requestMappingAdd(
-            [this, map](uint16_t allocatedPort, bool success) {
-                if (success) {
-                    JAMI_DBG("[ice:%p]: Successfully allocated port %u [%s]",
-                        this, allocatedPort, map.getTypeStr().c_str());
-                } else {
-                    JAMI_WARN("[ice:%p]: Could not allocate for %s transport",
-                        this, map.getTypeStr().c_str());
-                }
-            },
-        map);
+        Mapping requestedMap {0, 0, portType};
 
-        // Note that even if the returned port number is valid, the mapping
-        // might not be readily available. This is can happen if there is no
-        // port already provisioned. In this case a new mapping is requested
-        // and may take time for the IGD to grant the mapping.
-        // Hopefully, the mapping will be ready when the ICE connectivity
-        // checks are performed.
-        if (port > 0) {
+        // Request the mapping
+        Mapping::sharedPtr_t mapPtr = upnp_->reserveMapping(requestedMap);
+
+        // To use a mapping, it must be valid and open.
+        if (mapPtr and mapPtr->getMapKey() and (mapPtr->getState() == MappingState::OPEN)) {
             std::lock_guard<std::mutex> lock(upnpMappingsMutex_);
-            upnpMappings_.emplace_back(std::make_unique<Mapping>(port, port, portType));
+            auto ret = upnpMappings_.emplace(mapPtr->getMapKey(), *mapPtr);
+            if (ret.second) {
+                JAMI_DBG("[ice:%p]: UPNP mapping %s successfully allocated",
+                         this,
+                         mapPtr->toString(true).c_str());
+            } else {
+                JAMI_WARN("[ice:%p]: UPNP mapping %s already in the list!",
+                          this,
+                          mapPtr->toString().c_str());
+            }
+        } else {
+            JAMI_ERR("[ice:%p]: UPNP mapping request failed!", this);
         }
     }
 }
@@ -786,7 +782,6 @@ IceTransport::Impl::requestUpnpMappings()
 void
 IceTransport::Impl::setupHostAndUpnpCandidates()
 {
-
     JAMI_DBG("[ice:%p]: Setup host and UPNP candidates", this);
 
     // STUN configs layout:
@@ -799,17 +794,6 @@ IceTransport::Impl::setupHostAndUpnpCandidates()
         return;
     if (not addStunConfig(pj_AF_INET6()))
         return;
-
-    IpAddr localIp {};
-    IpAddr publicIp {};
-
-    {
-        std::lock_guard<std::mutex> lock(upnpMutex_);
-        if (upnp_ == nullptr)
-            return;
-        localIp = upnp_->getLocalIP();
-        publicIp = upnp_->getExternalIP();
-    }
 
     // Add config for UPNP candidates.
     if (not addStunConfig(pj_AF_INET()))
@@ -824,28 +808,38 @@ IceTransport::Impl::setupHostAndUpnpCandidates()
     if (upnpMappings_.size() < component_count_)
         return;
 
-    // Reset user mapping counter.
+    // Reset counters.
     stun.cfg.user_mapping_cnt = 0;
+    unsigned compIdx = 0;
 
     // Add allocated mappings
-    for (unsigned compIdx = 0; compIdx < component_count_; compIdx++) {
-        if (stun.cfg.user_mapping_cnt < PJ_ICE_MAX_COMP) {
-            localIp.setPort(upnpMappings_[compIdx]->getPortInternal());
-            publicIp.setPort(upnpMappings_[compIdx]->getPortExternal());
+    for (auto const& [_, map] : upnpMappings_) {
+        assert(map.getMapKey());
 
-            JAMI_DBG("[ice:%p]: Set upnp mapping %s (%s) -> %s (%s) for comp %u",
-                this,
-                localIp.toString(true).c_str(),
-                localIp.getFamily() == pj_AF_INET() ? "IPv4" : localIp.getFamily() == pj_AF_INET6() ? "IPv6" : "unknown",
-                publicIp.toString(true).c_str(),
-                publicIp.getFamily() == pj_AF_INET() ? "IPv4" : localIp.getFamily() == pj_AF_INET6() ? "IPv6" : "unknown",
-                compIdx+1);
+        IpAddr publicIp {map.getExternalAddress()};
+        publicIp.setPort(map.getExternalPort());
+        IpAddr localIp {map.getInternalAddress()};
+        localIp.setPort(map.getInternalPort());
 
-            pj_sockaddr_cp(&stun.cfg.user_mapping[compIdx].mapped_addr, publicIp.pjPtr());
-            pj_sockaddr_cp(&stun.cfg.user_mapping[compIdx].local_addr, localIp.pjPtr());
+        JAMI_DBG("[ice:%p]: Set upnp mapping %s (%s) -> %s (%s) for comp %u",
+                 this,
+                 localIp.toString(true).c_str(),
+                 localIp.getFamily() == pj_AF_INET()
+                     ? "IPv4"
+                     : localIp.getFamily() == pj_AF_INET6() ? "IPv6" : "unknown",
+                 publicIp.toString(true).c_str(),
+                 publicIp.getFamily() == pj_AF_INET()
+                     ? "IPv4"
+                     : localIp.getFamily() == pj_AF_INET6() ? "IPv6" : "unknown",
+                 compIdx + 1);
 
-            stun.cfg.user_mapping_cnt++;
-        }
+        pj_sockaddr_cp(&stun.cfg.user_mapping[compIdx].mapped_addr, publicIp.pjPtr());
+        pj_sockaddr_cp(&stun.cfg.user_mapping[compIdx].local_addr, localIp.pjPtr());
+
+        stun.cfg.user_mapping_cnt++;
+        compIdx++;
+        if (compIdx == component_count_ or stun.cfg.user_mapping_cnt == PJ_ICE_MAX_COMP)
+            break;
     }
 }
 
@@ -990,7 +984,9 @@ IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>&
     }
 
     pj_str_t ufrag, pwd;
-    JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)", pimpl_.get(), rem_candidates.size());
+    JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)",
+             pimpl_.get(),
+             rem_candidates.size());
     auto status = pj_ice_strans_start_ice(pimpl_->icest_.get(),
                                           pj_strset(&ufrag,
                                                     (char*) rem_attrs.ufrag.c_str(),
@@ -1019,7 +1015,9 @@ IceTransport::start(const SDP& sdp)
         return false;
     }
 
-    JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)", pimpl_.get(), sdp.candidates.size());
+    JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)",
+             pimpl_.get(),
+             sdp.candidates.size());
     pj_str_t ufrag, pwd;
 
     std::vector<IceCandidate> rem_candidates;
@@ -1428,16 +1426,16 @@ IceTransport::parseSDPList(const std::vector<uint8_t>& msg)
         size_t off = 0;
         while (off != msg.size()) {
             msgpack::unpacked result;
-            msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+            msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
             SDP sdp;
             if (result.get().type == msgpack::type::POSITIVE_INTEGER) {
                 // Version 1
-                msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+                msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
                 std::tie(sdp.ufrag, sdp.pwd) = result.get().as<std::pair<std::string, std::string>>();
-                msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+                msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
                 auto comp_cnt = result.get().as<uint8_t>();
                 while (comp_cnt-- > 0) {
-                    msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+                    msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
                     auto candidates = result.get().as<std::vector<std::string>>();
                     sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
                     sdp.candidates.insert(sdp.candidates.end(),
