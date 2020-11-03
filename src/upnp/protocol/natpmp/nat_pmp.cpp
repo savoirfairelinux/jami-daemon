@@ -127,7 +127,7 @@ NatPmp::NatPmp()
                 }
                 // Add mappings who's renewal times are up.
                 for (auto it = pmpIGD_->toRenew_.begin(); it != pmpIGD_->toRenew_.end();) {
-                    if (it->renewal_ <= now) {
+                    if (it->getRenewal() <= now) {
                         toRenew.emplace_back(std::move(*it));
                         it = pmpIGD_->toRenew_.erase(it);
                     } else {
@@ -196,18 +196,20 @@ NatPmp::searchForIgd()
 }
 
 void
-NatPmp::requestMappingAdd(IGD* igd, const Mapping& mapping)
+NatPmp::getIgdList(std::list<std::shared_ptr<IGD>>& igdList) const
+{
+    igdList.emplace_back(pmpIGD_);
+}
+
+void
+NatPmp::requestMappingAdd(const IGD* igd, const Mapping& mapping)
 {
     std::unique_lock<std::mutex> lk(validIgdMutex_);
     if (pmpIGD_) {
-        if (not igd->isMapInUse(mapping)) {
-            if (pmpIGD_->publicIp_ == igd->publicIp_) {
-                JAMI_DBG("NAT-PMP: Attempting to open port %s", mapping.toString().c_str());
-                pmpIGD_->addMapToAdd(std::move(mapping));
-                pmpCv_.notify_all();
-            }
-        } else {
-            igd->incrementNbOfUsers(mapping);
+        if (pmpIGD_->getPublicIp() == igd->getPublicIp()) {
+            JAMI_DBG("NAT-PMP: Attempting to open port %s", mapping.toString().c_str());
+            pmpIGD_->addMapToAdd(std::move(mapping));
+            pmpCv_.notify_all();
         }
     } else {
         JAMI_WARN("NAT-PMP: no valid IGD available");
@@ -229,11 +231,11 @@ NatPmp::addPortMapping(Mapping& mapping, bool renew)
                                         ADD_MAP_LIFETIME);
     if (err < 0) {
         JAMI_ERR("NAT-PMP: Can't send open port request -> %s %i", getNatPmpErrorStr(err), errno);
-        mapping.renewal_ = clock::now() + std::chrono::minutes(1);
+        mapping.setRenewal(clock::now() + std::chrono::minutes(1));
         if (pmpIGD_) {
             pmpIGD_->removeMapToAdd(mapping);
             lk2.unlock();
-            notifyContextPortOpenCb_(pmpIGD_->publicIp_, std::move(mapToAdd), false);
+            userCallbacks_.notifyContextPortOpenCb_(pmpIGD_->getPublicIp(), std::move(mapToAdd), false);
         }
         return;
     }
@@ -250,13 +252,12 @@ NatPmp::addPortMapping(Mapping& mapping, bool renew)
                     mapping.toString().c_str(),
                     getNatPmpErrorStr(r));
             } else {
-                mapping.renewal_ = clock::now()
-                                   + std::chrono::seconds(response.pnu.newportmapping.lifetime / 2);
+                mapping.setRenewal(clock::now() + std::chrono::seconds(response.pnu.newportmapping.lifetime / 2));
                 if (pmpIGD_) {
                     if (not renew) {
                         JAMI_DBG("NAT-PMP: Opened port %s", mapping.toString().c_str());
                         lk2.unlock();
-                        notifyContextPortOpenCb_(pmpIGD_->publicIp_, std::move(mapToAdd), true);
+                        userCallbacks_.notifyContextPortOpenCb_(pmpIGD_->getPublicIp(), std::move(mapToAdd), true);
                     } else {
                         JAMI_DBG("NAT-PMP: Renewed port %s", mapping.toString().c_str());
                     }
@@ -301,11 +302,11 @@ NatPmp::removePortMapping(Mapping& mapping)
                                         0);
     if (err < 0) {
         JAMI_ERR("NAT-PMP: Can't send close port request -> %s", getNatPmpErrorStr(err));
-        mapping.renewal_ = clock::now() + std::chrono::minutes(1);
+        mapping.setRenewal(clock::now() + std::chrono::minutes(1));
         if (pmpIGD_) {
             pmpIGD_->removeMapToRemove(mapping);
             lk2.unlock();
-            notifyContextPortCloseCb_(pmpIGD_->publicIp_, std::move(mapToRemove), false);
+            userCallbacks_.notifyContextPortCloseCb_(pmpIGD_->getPublicIp(), std::move(mapToRemove), false);
         }
         return;
     }
@@ -321,14 +322,13 @@ NatPmp::removePortMapping(Mapping& mapping)
             JAMI_ERR("NAT-PMP: Can't unregister port mapping %s", mapping.toString().c_str());
             break;
         } else {
-            mapping.renewal_ = clock::now()
-                               + std::chrono::seconds(response.pnu.newportmapping.lifetime / 2);
+            mapping.setRenewal(clock::now() + std::chrono::seconds(response.pnu.newportmapping.lifetime / 2));
             if (pmpIGD_) {
                 JAMI_WARN("NAT-PMP: Closed port %s", mapping.toString().c_str());
                 pmpIGD_->removeMapToRemove(mapping);
                 pmpIGD_->removeMapToRenew(mapping);
                 lk2.unlock();
-                notifyContextPortCloseCb_(pmpIGD_->publicIp_, std::move(mapToRemove), true);
+                userCallbacks_.notifyContextPortCloseCb_(pmpIGD_->getPublicIp(), std::move(mapToRemove), true);
             }
             return;
         }
@@ -353,7 +353,7 @@ NatPmp::searchForPmpIgd()
         std::lock_guard<std::mutex> lk2(validIgdMutex_);
         JAMI_ERR("NAT-PMP: Can't send search request -> %s", getNatPmpErrorStr(err));
         if (pmpIGD_) {
-            updateIgdListCb_(this, pmpIGD_.get(), pmpIGD_.get()->publicIp_, false);
+            userCallbacks_.onIgdChanged_(shared_from_this(), pmpIGD_, pmpIGD_->getPublicIp(), false);
         }
         if (restart_) {
             restartSearchRetry_++;
@@ -383,24 +383,24 @@ NatPmp::searchForPmpIgd()
         } else {
             std::unique_lock<std::mutex> lk2(validIgdMutex_);
             restartSearchRetry_ = 0;
-            pmpIGD_->localIp_ = ip_utils::getLocalAddr(AF_INET);
-            pmpIGD_->publicIp_ = IpAddr(response.pnu.publicaddress.addr);
-            JAMI_DBG("NAT-PMP: Found device with external IP %s",
-                     pmpIGD_->publicIp_.toString().c_str());
-            {
-                // Store public Ip address.
-                std::string publicIpStr(std::move(pmpIGD_.get()->publicIp_.toString()));
-                // Add the igd to the upnp context class list.
+
+            IpAddr igdAddr(response.pnu.publicaddress.addr);
+            if (pmpIGD_->getPublicIp() != igdAddr) {
+                JAMI_DBG("NAT-PMP: Found new device with external IP %s",
+                     pmpIGD_->getPublicIp().toString().c_str());
+
+                pmpIGD_->setPublicIp(IpAddr(igdAddr));
+                pmpIGD_->setLocalIp(ip_utils::getLocalAddr(AF_INET));
+
+                // Report to the listener.
                 lk2.unlock();
-                if (updateIgdListCb_(this, pmpIGD_.get(), pmpIGD_.get()->publicIp_, true)) {
-                    JAMI_DBG("NAT-PMP: IGD with public IP %s was added to the list",
-                             publicIpStr.c_str());
-                } else {
-                    JAMI_DBG("NAT-PMP: IGD with public IP %s is already in the list",
-                             publicIpStr.c_str());
-                }
+                userCallbacks_.onIgdChanged_(shared_from_this(), pmpIGD_, igdAddr, true);
                 lk2.lock();
+            } else {
+                JAMI_DBG("NAT-PMP: IGD with public IP %s is already in the list",
+                    igdAddr.toString().c_str());
             }
+
             pmpIGD_->renewal_ = clock::now() + std::chrono::minutes(1);
             break;
         }

@@ -25,7 +25,6 @@
 #endif
 
 #include "../igd.h"
-#include "../global_mapping.h"
 #include "noncopyable.h"
 #include "ip_utils.h"
 
@@ -52,8 +51,6 @@ public:
     bool operator==(IGD& other) const;
     bool operator==(PMPIGD& other) const;
 
-    // Checks if the given mapping was already added.
-    bool isMapAdded(const Mapping& map);
     // Adds a mapping to the list of mappings we need to open.
     void addMapToAdd(Mapping map);
 
