@@ -25,7 +25,6 @@
 #endif
 
 #include "../upnp_protocol.h"
-#include "../global_mapping.h"
 #include "../igd.h"
 #include "pmp_igd.h"
 
@@ -66,14 +65,15 @@ public:
     // Renew pmp_igd.
     void searchForIgd() override;
 
+    // Get the IGD list.
+    void getIgdList(std::list<std::shared_ptr<IGD>>& igdList) const override;
+
     // Tries to add mapping.
-    void requestMappingAdd(IGD* igd, const Mapping& mapping) override;
+    void requestMappingAdd(const IGD* igd, const Mapping& mapping) override;
 
     // Removes a mapping.
     void requestMappingRemove(const Mapping& igdMapping) override;
 
-    // Removes all local mappings of IGD that we're added by the application.
-    void removeAllLocalMappings(IGD* igd) override;
 
 private:
     void searchForPmpIgd();
@@ -82,11 +82,10 @@ private:
     void addPortMapping(Mapping& mapping, bool renew);
     // Removes a port mapping.
     void removePortMapping(Mapping& mapping);
-    // void addPortMapping(const PMPIGD& pmp_igd, natpmp_t& natpmp, GlobalMapping& mapping, bool
-    // remove=false) const;
-
     // Deletes all port mappings.
     void deleteAllPortMappings(int proto);
+    // Removes all local mappings of IGD that we're added by the application.
+    void removeAllLocalMappings();
 
 private:
     NON_COPYABLE(NatPmp);
@@ -108,6 +107,9 @@ private:
     void clearNatPmpHdl(natpmp_t& hdl);
     // Gets NAT-PMP error code string.
     const char* getNatPmpErrorStr(int errorCode);
+
+    mutable std::mutex
+        validIgdMutex_; // Mutex used to access these lists and IGDs in a thread-safe manner.
 };
 
 } // namespace upnp
