@@ -33,7 +33,6 @@
 #include "protocol/pupnp/pupnp.h"
 #endif
 #include "protocol/igd.h"
-#include "protocol/global_mapping.h"
 
 #include "logger.h"
 #include "ip_utils.h"
@@ -43,19 +42,16 @@
 
 #include <set>
 #include <map>
-#include <list>
 #include <mutex>
 #include <memory>
 #include <string>
 #include <chrono>
 #include <random>
 #include <atomic>
-#include <thread>
-#include <vector>
-#include <condition_variable>
 #include <cstdlib>
 
 #include "manager.h"
+#include "upnp_thread_util.h"
 
 using random_device = dht::crypto::random_device;
 
@@ -68,150 +64,206 @@ class IpAddr;
 namespace jami {
 namespace upnp {
 
-using MapCb = std::function<void(const Mapping&, bool)>;
-using ConnectionChangeCb = std::function<void()>;
-struct ControllerData
-{
-    uint64_t id;
-    bool keepCb;
-    MapCb onMapAdded;
-    MapCb onMapRemoved;
-    ConnectionChangeCb onConnectionChanged;
-};
-
-const constexpr auto MAP_REQUEST_TIMEOUT = std::chrono::seconds(1);
-
-class UPnPContext
+class UPnPContext : public UpnpMappingObserver, protected UpnpThreadUtil
 {
 public:
-    struct PendingMapRequest
+    constexpr static uint16_t UPNP_TCP_PORT_MIN = 10000;
+    constexpr static uint16_t UPNP_TCP_PORT_MAX = UPNP_TCP_PORT_MIN + 5000;
+    constexpr static uint16_t UPNP_UDP_PORT_MIN = 20000;
+    constexpr static uint16_t UPNP_UDP_PORT_MAX = UPNP_UDP_PORT_MIN + 5000;
+
+private:
+    constexpr static auto NAT_MAP_REQUEST_TIMEOUT_UNIT = std::chrono::seconds(1);
+    constexpr static auto PUPNP_MAP_REQUEST_TIMEOUT_UNIT = std::chrono::seconds(5);
+    constexpr static auto MAP_UPDATE_INTERVAL = std::chrono::seconds(30);
+    constexpr static int MAX_REQUEST_RETRIES = 20;
+    constexpr static int MAX_REQUEST_REMOVE_COUNT = 5;
+
+    struct MappingStatus
     {
-        Mapping map;
-        std::shared_ptr<Task> cleanupMapRequest;
+        int openCount_ {0};
+        int readyCount_ {0};
+        int pendingCount_ {0};
+        int inProgressCount_ {0};
+        int failedCount_ {0};
+
+        void reset()
+        {
+            openCount_ = 0;
+            readyCount_ = 0;
+            pendingCount_ = 0;
+            inProgressCount_ = 0;
+            failedCount_ = 0;
+        };
+        int sum() { return openCount_ + pendingCount_ + inProgressCount_ + failedCount_; }
     };
 
+public:
     UPnPContext();
     ~UPnPContext();
 
     // Retrieve the UPnPContext singleton
     static std::shared_ptr<UPnPContext> getUPnPContext();
 
-    static uint16_t generateRandomPort(uint16_t min, uint16_t max, bool mustBeEven = false);
-
     // Check if there is a valid IGD in the IGD list.
-    bool hasValidIGD();
+    bool hasValidIGD() const;
 
     // Get external Ip of a chosen IGD.
     IpAddr getExternalIP() const;
 
-    // Get our local Ip.
-    IpAddr getLocalIP() const;
-
     // Inform the UPnP context that the network status has changed. This clears the list of known
     void connectivityChanged();
 
-    // Checks if the desired port is1 already in use by an IGD.
-    bool isMappingInUse(const unsigned int portDesired, PortType type);
+    // Returns a shared pointer of the mapping.
+    Mapping::sharedPtr_t reserveMapping(Mapping& requestedMap);
 
-    // Increments the number of users for a given port.
-    void incrementNbOfUsers(const unsigned int portDesired, PortType type);
+    // Release an used mapping (make it available for future use).
+    bool releaseMapping(const Mapping& map);
 
-    uint16_t requestMappingAdd(ControllerData&& ctrlData,
-                           const Mapping& map);
+    // Register a controller
+    void registerController(void* controller);
+    // Unregister a controller
+    void unregisterController(void* controller);
 
-    // Adds mapping to corresponding IGD.
-    void addMappingToIgd(IpAddr igdIp, const Mapping& map);
-    // Callback function for when mapping is added.
-    void onMappingAdded(IpAddr igdIp, const Mapping& map, bool success);
-    // Calls corresponding callback.
-    void dispatchOnAddCallback(const Mapping& map, bool success);
+    // Generate random port numbers
+    static uint16_t generateRandomPort(uint16_t min, uint16_t max, bool mustBeEven = false);
 
-    // Registers a timeout for a given pending add map request.
-    void registerAddMappingTimeout(const Mapping& map);
-    // Unregisters a timeout for a given pending add map request.
-    void unregisterAddMappingTimeout(const Mapping& map);
+private:
+    // Initialization
+    void init();
 
-    // Remove a mapping.
-    bool requestMappingRemove(const Mapping& map);
-    // Remove all mapping of a given type.
-    void requestAllMappingRemove(PortType type);
-    // Removes mapping from corresponding IGD.
-    void removeMappingFromIgd(IpAddr igdIp, const Mapping& map);
-    // Callback function for when mapping is removed.
-    void onMappingRemoved(IpAddr igdIp, const Mapping& map, bool success);
-    // Calls corresponding callback.
-    void dispatchOnRmCallback(const Mapping& map, bool success);
+    // Start/Stop
+    void StartUpnp();
+    void StopUpnp();
 
-    // Add callbacks to callback list.
-    void registerCallback(const Mapping& map, ControllerData&& ctrlData);
-    // Removes callback from callback list given a mapping.
-    void unregisterCallback(const Mapping& map);
-    // Removes all callback with a specific controller Id.
-    void unregisterAllCallbacks(uint64_t ctrlId);
+    // Create and register a new mapping.
+    Mapping::sharedPtr_t registerMapping(Mapping& map);
 
-    // Returns a selected provisioned port depending on the type of port that is being requested.
-    const Mapping selectProvisionedMapping(const Mapping& requestedMap);
-    // Releases a previously provisioned port.
-    void unselectProvisionedPort(const Mapping& map);
+    // Removes the mapping from the list.
+    std::map<Mapping::key_t, Mapping::sharedPtr_t>::iterator unregisterMapping(
+        std::map<Mapping::key_t, Mapping::sharedPtr_t>::iterator it);
+    void unregisterMapping(const Mapping::sharedPtr_t& map);
+
+    // Perform the request on the provided IGD.
+    void requestMapping(const std::shared_ptr<IGD>& igd, const Mapping::sharedPtr_t& map);
+
+    // Perform the request on all available IGDs
+    void requestMappingOnValidIgds(const Mapping::sharedPtr_t& map);
+
+    // Delete mapping from the list and and send remove request.
+    void deleteMapping(const Mapping::sharedPtr_t& map);
+
+    // Remove all mappings of the given type.
+    void deleteAllMappings(PortType type);
+
+    // Schedule a time-out timer for a in-progress request.
+    void registerAddMappingTimeout(const std::shared_ptr<IGD>& igd, const Mapping::sharedPtr_t& map);
+
+    // Callback invoked when a request times-out
+    void onRequestTimeOut(const std::shared_ptr<IGD>& igd, const Mapping::sharedPtr_t& map);
+
+    // Update the state and notify the listener
+    void updateMappingState(const Mapping::sharedPtr_t& map,
+                            MappingState newState,
+                            bool notify = true);
 
     // Provision ports.
     uint16_t getAvailablePortNumber(PortType type, uint16_t minPort = 0, uint16_t maxPort = 0);
-    bool provisionPort(IGD* igd, const Mapping& map);
-    bool preAllocateProvisionedPorts(PortType type, unsigned portCount, uint16_t minPort = 0,
-        uint16_t maxPort = 0);
 
-private:
-    // Checks if the IGD is in the list by checking the IGD's
-    // protocol and public Ip.
-    bool isIgdInList(const UPnPProtocol* protocol, const IpAddr& publicIpAddr);
+    // Check and prune the mapping list. Called periodically.
+    void updateMappingList(bool async);
 
-    // Returns a random port that is not yet used by the daemon for UPnP.
-    uint16_t chooseRandomPort(IGD& igd, PortType type);
+    // Provision (pre-allocate) the requested number of mappings.
+    bool provisionNewMappings(PortType type,
+                              int portCount,
+                              uint16_t minPort = 0,
+                              uint16_t maxPort = 0);
 
-    // Tries to add or remove IGD to the list via callback.
-    bool igdListChanged(UPnPProtocol* protocol, IGD* igd, const IpAddr publicIpAddr, bool added);
+    // Close unused mappings.
+    bool deleteUnneededMappings(PortType type, int portCount);
 
-    // Tries to add IGD to the list by getting it's public Ip address internally.
-    bool addIgdToList(UPnPProtocol* protocol, IGD* igd);
+    /**
+     * Prune the mapping list.To avoid competing with allocation
+     * requests, the pruning is performed only if there are no
+     * requests in progress.
+     */
+    void pruneMappingList();
 
-    // Removes IGD from list by specifying the IGD itself.
-    bool removeIgdFromList(IGD* igd);
+    /**
+     * Check if there are allocated mappings from previous instances,
+     * and try to close them.
+     * Only done for UPNP protocol. NAT-PMP allocations will expire
+     * anyway if not renewed.
+     */
+    void pruneUnMatchedMappings(const std::shared_ptr<IGD>& igd,
+                                const std::map<Mapping::key_t, Mapping>& remoteMapList);
 
-    // Removes IGD from list by specifying the IGD's public Ip address.
-    bool removeIgdFromList(IpAddr publicIpAddr);
+    /**
+     * Check the local mapping list against the list returned by the
+     * IGD and remove all mappings which do not have a match.
+     * Only done for UPNP protocol.
+     */
+    void pruneUnTrackedMappings(const std::shared_ptr<IGD>& igd,
+                                const std::map<Mapping::key_t, Mapping>& remoteMapList);
 
-    // Removes the corresponding mapping from the provision list.
-    bool unregisterProvisionedMapping(const Mapping& map);
+    void pruneMappingsWithInvalidIgds(const std::shared_ptr<IGD>& igd);
 
     // Get the mapping list
-    std::map<uint16_t, Mapping>& getMappingList(PortType type);
+    std::map<Mapping::key_t, Mapping::sharedPtr_t>& getMappingList(PortType type);
+    // Get the mapping from the key.
+    Mapping::sharedPtr_t getMappingWithKey(Mapping::key_t key);
 
-public:
-    constexpr static unsigned MAX_REQUEST_RETRIES = 20;
+    // Get the number of mappings per state.
+    void getMappingStatus(PortType type, MappingStatus& status);
+    void getMappingStatus(MappingStatus& status);
+
+#if HAVE_LIBNATPMP
+    void renewAllocations();
+#endif
+
+    void processPendingRequests(const std::shared_ptr<IGD>& igd);
+
+    // Implementation of UpnpMappingObserver interface.
+
+    // Callback used to report changes in IGD status.
+    void onIgdUpdated(const std::shared_ptr<IGD>& igd, UpnpIgdEvent event) override;
+    // Callback used to report add request status.
+    void onMappingAdded(const std::shared_ptr<IGD>& igd, const Mapping& map) override;
+#if HAVE_LIBNATPMP
+    // Callback used to report renew request status.
+    void onMappingRenewed(const std::shared_ptr<IGD>& igd, const Mapping& map) override;
+#endif
+    // Callback used to report remove request status.
+    void onMappingRemoved(const std::shared_ptr<IGD>& igd, const Mapping& map) override;
 
 private:
     NON_COPYABLE(UPnPContext);
 
-    std::vector<std::unique_ptr<UPnPProtocol>> protocolList_; // Vector of available protocols.
-    mutable std::mutex
-        igdListMutex_; // Mutex used to access these lists and IGDs in a thread-safe manner.
-    std::list<std::pair<UPnPProtocol*, IGD*>>
-        igdList_ {}; // List of IGDs with their corresponding public IPs.
+    bool started_ {false};
 
-    // Mutex that protects the provisioned mappings list.
-    std::mutex mapProvisionListMutex_;
-    // List of provisioned mappings.
-    std::map<uint16_t, Mapping> mapProvisionList_[2] {};
+    // Set of registered controllers
+    std::set<void*> controllerList_;
 
-    std::mutex pendindRequestMutex_; // Mutex that protects the pending map request lists.
-    std::vector<PendingMapRequest> pendingAddMapList_ {}; // Vector of pending add mapping requests.
-    std::mutex mapCbListMutex_;                           // Mutex that protects the callback list.
-    std::multimap<Mapping, ControllerData>
-        mapCbList_  {}; // List of mappings with their corresponding callbacks.
-    // Port ranges for UPD and TCP (in that order).
-    std::pair<uint16_t, uint16_t> portRange_[2] {};
+    // Map of available protocols.
+    std::map<NatProtocolType, std::shared_ptr<UPnPProtocol>> protocolList_;
+
+    // Port ranges for TCP and UDP (in that order).
+    std::map<PortType, std::pair<uint16_t, uint16_t>> portRange_ {};
+
+    // Min open ports limit
+    int minOpenPortLimit_[2] {4, 8};
+    // Max open ports limit
+    int maxOpenPortLimit_[2] {8, 12};
+
+    std::shared_ptr<Task> mappingListUpdateTimer_ {};
+
+    // This mutex must lock only these two members. All other
+    // members must be accessed only from the UPNP context thread.
+    std::mutex mutable mappingMutex_;
+    // List of mappings.
+    std::map<Mapping::key_t, Mapping::sharedPtr_t> mappingList_[2] {};
+    std::set<std::shared_ptr<IGD>> validIgdList_ {};
 };
-
 
 } // namespace upnp
 } // namespace jami
