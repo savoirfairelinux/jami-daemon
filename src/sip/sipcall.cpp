@@ -102,7 +102,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     , sdp_(new Sdp(id))
 {
     if (account->getUPnPActive())
-        upnp_.reset(new upnp::Controller(false));
+        upnp_.reset(new upnp::Controller());
 
     setCallMediaLocal();
 }
@@ -1422,43 +1422,16 @@ SIPCall::openPortsUPnP()
          * and marked as used, the old port should be "released"
          */
         JAMI_DBG("[call:%s] opening ports via UPNP for SDP session", getCallId().c_str());
-        upnp::Mapping mapAudioRtp {sdp_->getLocalAudioPort(), sdp_->getLocalAudioPort(),
-            upnp::PortType::UDP, "SIP Audio RTP port"};
-        upnp_->requestMappingAdd(
-            [this](uint16_t, bool success) {
-                if (!success)
-                    return;
-                upnp::Mapping mapAudioRtcp {sdp_->getLocalAudioControlPort(), sdp_->getLocalAudioControlPort(),
-                    upnp::PortType::UDP, "SIP Audio RTCP port"};
-                upnp_->requestMappingAdd(
-                    [this](uint16_t, bool success) {
-                        if (!success)
-                            return;
-                        sdp_->setLocalPublishedAudioPorts(sdp_->getLocalAudioPort(),
-                                                          sdp_->getLocalAudioControlPort());
-                    },
-                    mapAudioRtcp);
-            },
-            mapAudioRtp);
+
+        upnp_->reserveMapping(sdp_->getLocalAudioPort(), upnp::PortType::UDP);
+        // RTCP port.
+        upnp_->reserveMapping(sdp_->getLocalAudioControlPort(), upnp::PortType::UDP);
+
 #ifdef ENABLE_VIDEO
-        upnp::Mapping mapVideoRtp {sdp_->getLocalVideoPort(), sdp_->getLocalVideoPort(),
-            upnp::PortType::UDP, "SIP Video RTP port"};
-        upnp_->requestMappingAdd(
-            [this](uint16_t, bool success) {
-                if (!success)
-                    return;
-                upnp::Mapping mapVideoRtcp {sdp_->getLocalVideoControlPort(), sdp_->getLocalVideoControlPort(),
-                    upnp::PortType::UDP, "SIP Video RTCP port"};
-                upnp_->requestMappingAdd(
-                    [this](uint16_t, bool success) {
-                        if (!success)
-                            return;
-                        sdp_->setLocalPublishedVideoPorts(sdp_->getLocalVideoPort(),
-                                                          sdp_->getLocalVideoControlPort());
-                    },
-                    mapVideoRtcp);
-            },
-            mapVideoRtp);
+        // RTP port.
+        upnp_->reserveMapping(sdp_->getLocalVideoPort(), upnp::PortType::UDP);
+        // RTCP port.
+        upnp_->reserveMapping(sdp_->getLocalVideoControlPort(), upnp::PortType::UDP);
 #endif
     }
 }
