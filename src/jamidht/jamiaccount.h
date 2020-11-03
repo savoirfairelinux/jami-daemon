@@ -634,19 +634,21 @@ private:
     /**
      * DHT port preference
      */
-    in_port_t dhtPort_ {};
-    /* Current port mapping */
-    upnp::Mapping dhtPortMapping_ {};
-
-    bool dhtPeerDiscovery_ {false};
+    in_port_t dhtDefaultPort_ { 0 };
 
     /**
-     * DHT port actually used,
-     * this holds the actual port used for DHT, which may not be the port
+     * DHT port actually used.
+     * This holds the actual port used for DHT, which may not be the port
      * selected in the configuration in the case that UPnP is used and the
      * configured port is already used by another client
      */
-    UsedPort dhtPortUsed_ {};
+    in_port_t dhtPortUsed() { return (upnp_ and dhtUpnpMapping_ and dhtUpnpMapping_->isValid()) ?
+        dhtUpnpMapping_->getPortExternal() : dhtDefaultPort_;}
+
+    /* Current UPNP mapping */
+    upnp::Mapping::sharedPtr_t dhtUpnpMapping_;
+
+    bool dhtPeerDiscovery_ {false};
 
     /**
      * Proxy
