@@ -184,7 +184,7 @@ public:
      */
     std::string getPublishedAddress() const { return publishedIpAddress_; }
 
-    IpAddr getPublishedIpAddress() const { return publishedIp_; }
+    IpAddr getPublishedIpAddress() const;
 
     void setPublishedAddress(const IpAddr& ip_addr);
 
@@ -350,10 +350,11 @@ protected:
     bool publishedSameasLocal_ {true};
 
     /**
-     * Published IP address, used only if defined by the user in account
+     * Published IPv4/IPv6 addresses, used only if defined by the user in account
      * configuration
+     *
      */
-    IpAddr publishedIp_ {};
+    IpAddr publishedIp_[2] {};
 
     // This will be stored in the configuration
     std::string publishedIpAddress_ {};
@@ -412,49 +413,6 @@ protected:
      * Port range for video RTP ports
      */
     std::pair<uint16_t, uint16_t> videoPortRange_ {49152, (MAX_PORT) -2};
-
-    struct UsedPort
-    {
-        UsedPort() {};
-        UsedPort(UsedPort&& o) noexcept
-            : port_(o.port_)
-        {
-            o.port_ = 0;
-        }
-        UsedPort(in_port_t p)
-            : port_(p)
-        {
-            if (port_)
-                acquirePort(port_);
-        };
-        ~UsedPort()
-        {
-            if (port_)
-                releasePort(port_);
-        };
-        UsedPort& operator=(UsedPort&& o) noexcept
-        {
-            if (port_)
-                releasePort(port_);
-            port_ = o.port_;
-            o.port_ = 0;
-            return *this;
-        }
-        UsedPort& operator=(in_port_t p)
-        {
-            if (port_)
-                releasePort(port_);
-            port_ = p;
-            if (port_)
-                acquirePort(port_);
-            return *this;
-        }
-        explicit operator in_port_t() const { return port_; }
-
-    private:
-        in_port_t port_ {0};
-        NON_COPYABLE(UsedPort);
-    };
 
     static std::array<bool, HALF_MAX_PORT>& getPortsReservation() noexcept;
     static uint16_t acquirePort(uint16_t port);

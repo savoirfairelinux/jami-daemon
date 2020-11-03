@@ -7,7 +7,7 @@ diff --git a/pjnath/include/pjnath/stun_sock.h b/pjnath/include/pjnath/stun_sock
 index bfc9c14..21f3ec5 100644
 --- a/pjnath/include/pjnath/stun_sock.h
 +++ b/pjnath/include/pjnath/stun_sock.h
-@@ -276,6 +276,27 @@ typedef struct pj_stun_sock_cfg
+@@ -276,6 +276,28 @@ typedef struct pj_stun_sock_cfg
       */
      pj_sockaddr bound_addr;
  
@@ -22,6 +22,7 @@ index bfc9c14..21f3ec5 100644
 +    struct {
 +        pj_sockaddr local_addr;
 +        pj_sockaddr mapped_addr;
++        int tp_type;
 +    } user_mapping[PJ_ICE_MAX_COMP];
 +
 +    /**
@@ -39,7 +40,7 @@ diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
 index a1e9fde..5c686a1 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
-@@ -542,6 +542,123 @@ static pj_bool_t ice_cand_equals(pj_ice_sess_cand *lcand,
+@@ -542,6 +542,121 @@ static pj_bool_t ice_cand_equals(pj_ice_sess_cand *lcand,
      return PJ_TRUE;
  }
  
@@ -104,9 +105,7 @@ index a1e9fde..5c686a1 100644
 +    cand->local_pref = (pj_uint16_t)(SRFLX_PREF - idx);
 +    cand->transport_id = CREATE_TP_ID(TP_STUN, idx);
 +    cand->comp_id = (pj_uint8_t) comp->comp_id;
-+    cand->transport = nat_cfg->conn_type == PJ_STUN_TP_UDP ?
-+                                               PJ_CAND_UDP :
-+                                               PJ_CAND_TCP_PASSIVE;
++    cand->transport = nat_cfg->cfg.user_mapping[comp_idx].tp_type;
 +
 +    /* Set the user mappings if availlabe. */
 +    pj_sockaddr_cp(&sock_cfg->bound_addr, laddr);
@@ -163,7 +162,7 @@ index a1e9fde..5c686a1 100644
  static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
  				     pj_ice_strans_comp *comp,
  				     unsigned idx,
-@@ -867,20 +984,33 @@ static pj_status_t create_comp(pj_ice_strans *ice_st, unsigned comp_id)
+@@ -865,20 +982,33 @@ static pj_status_t create_comp(pj_ice_strans *ice_st, unsigned comp_id)
  
      /* Create STUN transport if configured */
      for (i=0; i<ice_st->cfg.stun_tp_cnt; ++i) {
