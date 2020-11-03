@@ -29,24 +29,22 @@ namespace upnp {
 bool
 PMPIGD::operator==(IGD& other) const
 {
-    return publicIp_ == other.publicIp_ and localIp_ == other.localIp_;
+    return getPublicIp() == other.getPublicIp() and getLocalIp() == other.getLocalIp();
 }
+
 bool
 PMPIGD::operator==(PMPIGD& other) const
 {
-    return publicIp_ == other.publicIp_ and localIp_ == other.localIp_;
+    return getPublicIp() == other.getPublicIp() and getLocalIp() == other.getLocalIp();
 }
-bool
-PMPIGD::isMapAdded(const Mapping& map)
-{
-    return isMapInUse(map);
-}
+
 void
 PMPIGD::addMapToAdd(Mapping map)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
     toAdd_.emplace_back(std::move(map));
 }
+
 void
 PMPIGD::removeMapToAdd(const Mapping& map)
 {
@@ -58,6 +56,7 @@ PMPIGD::removeMapToAdd(const Mapping& map)
         }
     }
 }
+
 void
 PMPIGD::addMapToRenew(Mapping map)
 {
@@ -124,7 +123,7 @@ PMPIGD::getRenewalTime()
         return time_point::min();
     auto nextTime = renewal_;
     for (const auto& m : toRenew_)
-        nextTime = std::min(nextTime, m.renewal_);
+        nextTime = std::min(nextTime, m.getRenewal());
     return nextTime;
 }
 } // namespace upnp
