@@ -413,49 +413,6 @@ protected:
      */
     std::pair<uint16_t, uint16_t> videoPortRange_ {49152, (MAX_PORT) -2};
 
-    struct UsedPort
-    {
-        UsedPort() {};
-        UsedPort(UsedPort&& o) noexcept
-            : port_(o.port_)
-        {
-            o.port_ = 0;
-        }
-        UsedPort(in_port_t p)
-            : port_(p)
-        {
-            if (port_)
-                acquirePort(port_);
-        };
-        ~UsedPort()
-        {
-            if (port_)
-                releasePort(port_);
-        };
-        UsedPort& operator=(UsedPort&& o) noexcept
-        {
-            if (port_)
-                releasePort(port_);
-            port_ = o.port_;
-            o.port_ = 0;
-            return *this;
-        }
-        UsedPort& operator=(in_port_t p)
-        {
-            if (port_)
-                releasePort(port_);
-            port_ = p;
-            if (port_)
-                acquirePort(port_);
-            return *this;
-        }
-        explicit operator in_port_t() const { return port_; }
-
-    private:
-        in_port_t port_ {0};
-        NON_COPYABLE(UsedPort);
-    };
-
     static std::array<bool, HALF_MAX_PORT>& getPortsReservation() noexcept;
     static uint16_t acquirePort(uint16_t port);
     uint16_t getRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const;
