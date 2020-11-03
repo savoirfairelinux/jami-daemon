@@ -736,38 +736,48 @@ SIPAccount::getVolatileAccountDetails() const
     return a;
 }
 
-void
+bool
 SIPAccount::mapPortUPnP()
 {
-    upnp::Mapping map {publishedPort_, localPort_, upnp::PortType::UDP, "SIP Account Port"};
-
-    upnp_->requestMappingAdd(
-        [this](uint16_t port_used, bool success) {
-            auto oldPort = static_cast<in_port_t>(publishedPortUsed_);
-            auto newPort = success ? port_used : publishedPort_;
-            if (not success and not isRegistered()) {
+    upnp::Mapping map {publishedPort_, localPort_, upnp::PortType::UDP};
+    map.setNotifyCallback([w = weak()](upnp::Mapping::sharedPtr_t mapRes) {
+        if (auto weakThis = w.lock()) {
+            auto oldPort = static_cast<in_port_t>(weakThis->publishedPortUsed_);
+            bool success = mapRes->getState() == upnp::MappingState::OPEN
+                           or mapRes->getState() == upnp::MappingState::IN_PROGRESS;
+            auto newPort = success ? mapRes->getExternalPort() : weakThis->publishedPort_;
+            if (not success and not weakThis->isRegistered()) {
                 JAMI_WARN("[Account %s] Failed to open port %u: registering SIP account anyway",
-                          getAccountID().c_str(),
+                          weakThis->getAccountID().c_str(),
                           oldPort);
-                doRegister1_();
+                weakThis->doRegister1_();
                 return;
             }
-            if ((oldPort != newPort) or (getRegistrationState() != RegistrationState::REGISTERED)) {
-                if (not isRegistered())
+            if ((oldPort != newPort)
+                or (weakThis->getRegistrationState() != RegistrationState::REGISTERED)) {
+                if (not weakThis->isRegistered())
                     JAMI_WARN("[Account %s] SIP port %u opened: registering SIP account",
-                              getAccountID().c_str(),
+                              weakThis->getAccountID().c_str(),
                               newPort);
                 else
                     JAMI_WARN("[Account %s] SIP port changed to %u: re-registering SIP account",
-                              getAccountID().c_str(),
+                              weakThis->getAccountID().c_str(),
                               newPort);
-                publishedPortUsed_ = newPort;
+                weakThis->publishedPortUsed_ = newPort;
             } else {
-                connectivityChanged();
+                weakThis->connectivityChanged();
             }
-            doRegister1_();
-        },
-        map);
+
+            weakThis->doRegister1_();
+        }
+    });
+
+    auto mapRes = upnp_->reserveMapping(map);
+    if (mapRes and mapRes->getState() == upnp::MappingState::OPEN) {
+        return true;
+    }
+
+    return false;
 }
 
 void
@@ -782,9 +792,12 @@ SIPAccount::doRegister()
 
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if (upnp_) {
-        setRegistrationState(RegistrationState::TRYING);
         JAMI_DBG("UPnP: waiting for IGD to register SIP account");
-        mapPortUPnP();
+        setRegistrationState(RegistrationState::TRYING);
+        if (not mapPortUPnP()) {
+            JAMI_DBG("UPnP: UPNP request failed, try to register SIP account anyway");
+            doRegister1_();
+        }
     } else {
         doRegister1_();
     }
