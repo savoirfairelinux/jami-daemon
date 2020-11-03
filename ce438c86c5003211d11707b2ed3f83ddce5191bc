@@ -164,6 +164,30 @@
       "revId": "ce438c86c5003211d11707b2ed3f83ddce5191bc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ee93edb9_35ab4c53",
+        "filename": "contrib/src/pjproject/rules.mak",
+        "patchSetId": 7
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-03T18:40:54Z",
+      "side": 1,
+      "message": "I intended to do it after the rebase. But sure, I can do it now.\nDone",
+      "parentUuid": "3ef3c84a_cd4b5d7f",
+      "range": {
+        "startLine": 55,
+        "startChar": 27,
+        "endLine": 55,
+        "endChar": 31
+      },
+      "revId": "ce438c86c5003211d11707b2ed3f83ddce5191bc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
