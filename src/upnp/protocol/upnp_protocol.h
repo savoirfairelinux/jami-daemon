@@ -24,6 +24,7 @@
 #include "config.h"
 #endif
 
+#include "manager.h"
 #include "igd.h"
 #include "mapping.h"
 
@@ -37,6 +38,9 @@
 #include <chrono>
 #include <functional>
 #include <condition_variable>
+#include <list>
+
+#include "upnp/upnp_thread_util.h"
 
 namespace jami {
 namespace upnp {
@@ -53,15 +57,16 @@ constexpr static const char* UPNP_WANPPP_SERVICE
     = "urn:schemas-upnp-org:service:WANPPPConnection:1";
 
 // Pure virtual interface class that UPnPContext uses to call protocol functions.
-class UPnPProtocol
+class UPnPProtocol : public std::enable_shared_from_this<UPnPProtocol>, protected UpnpThreadUtil
 {
 public:
     enum class UpnpError : int { INVALID_ERR = -1, ERROR_OK, CONFLICT_IN_MAPPING };
 
     enum class Type { UNKNOWN, PUPNP, NAT_PMP };
 
-    using IgdListChangedCallback = std::function<bool(UPnPProtocol*, IGD*, IpAddr, bool)>;
-    using NotifyContextCallback = std::function<void(IpAddr, Mapping, bool)>;
+    using IgdListChangedCallback
+        = std::function<void(std::shared_ptr<UPnPProtocol>, std::shared_ptr<IGD>, IpAddr, bool)>;
+    using NotifyContextCallback = std::function<void(IpAddr, Mapping)>;
 
     UPnPProtocol() {};
     virtual ~UPnPProtocol() {};
@@ -78,33 +83,47 @@ public:
     // Search for IGD.
     virtual void searchForIgd() = 0;
 
+    // Get the IGD instance.
+    virtual void getIgdList(std::list<std::shared_ptr<IGD>>& igdList) const = 0;
+    // Get the list of already allocated mappings if any.
+    virtual std::unique_ptr<std::map<Mapping::key_t, Mapping>> getMappingsListByDescr(
+        [[maybe_unused]] const std::shared_ptr<IGD>& igd,
+        [[maybe_unused]] const std::string& descr) const
+    {
+        return nullptr;
+    }
+
     // Sends a request to add a mapping.
-    virtual void requestMappingAdd(IGD* igd, const Mapping& map) = 0;
+    virtual void requestMappingAdd(const IGD* igd, const Mapping& map) = 0;
     // Sends a request to remove a mapping.
     virtual void requestMappingRemove(const Mapping& igdMapping) = 0;
 
-    // Removes all local mappings of IGD that we're added by the application.
-    virtual void removeAllLocalMappings(IGD* igd) = 0;
-
     // Set the IGD list callback handler.
-    void setOnIgdChanged(IgdListChangedCallback&& cb) { updateIgdListCb_ = std::move(cb); }
+    void setOnIgdChanged(IgdListChangedCallback&& cb)
+    {
+        userCallbacks_.onIgdChanged_ = std::move(cb);
+    }
 
     // Set the add port mapping callback handler.
-    void setOnPortMapAdd(NotifyContextCallback&& cb) { notifyContextPortOpenCb_ = std::move(cb); }
+    void setOnPortMapAdd(NotifyContextCallback&& cb)
+    {
+        userCallbacks_.notifyRequestAddCb_ = std::move(cb);
+    }
 
     // Set the remove port mapping callback handler.
     void setOnPortMapRemove(NotifyContextCallback&& cb)
     {
-        notifyContextPortCloseCb_ = std::move(cb);
+        userCallbacks_.notifyRequestRemoveCb_ = std::move(cb);
     }
 
-protected:
-    mutable std::mutex
-        validIgdMutex_; // Mutex used to access these lists and IGDs in a thread-safe manner.
+    struct UserCallbacks
+    {
+        IgdListChangedCallback onIgdChanged_;         // Report IGD change.
+        NotifyContextCallback notifyRequestAddCb_;    // Report add request result.
+        NotifyContextCallback notifyRequestRemoveCb_; // Report remove request result.
+    };
 
-    IgdListChangedCallback updateIgdListCb_;         // Callback for when the IGD list changes.
-    NotifyContextCallback notifyContextPortOpenCb_;  // Callback for when a port mapping is added.
-    NotifyContextCallback notifyContextPortCloseCb_; // Callback for when a port mapping is removed.
+    struct UserCallbacks userCallbacks_;
 };
 
 } // namespace upnp
