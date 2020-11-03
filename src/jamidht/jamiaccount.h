@@ -425,9 +425,14 @@ public:
     std::map<std::string, std::string> getNearbyPeers() const override;
 
     /**
-     * Add public addresses to ice transport
+     * Store the local/public addresses used to register
      */
-    void registerDhtAddress(IceTransport&);
+    void storeActiveIpAddress() override;
+
+    /**
+     * Create and return ICE options.
+     */
+    const IceTransportOptions getIceOptions() const noexcept override;
 
 #ifdef DRING_TESTABLE
     ConnectionManager& connectionManager() { return *connectionManager_; }
@@ -634,19 +639,23 @@ private:
     /**
      * DHT port preference
      */
-    in_port_t dhtPort_ {};
-    /* Current port mapping */
-    upnp::Mapping dhtPortMapping_ {};
-
-    bool dhtPeerDiscovery_ {false};
+    in_port_t dhtDefaultPort_ {0};
 
     /**
-     * DHT port actually used,
-     * this holds the actual port used for DHT, which may not be the port
-     * selected in the configuration in the case that UPnP is used and the
-     * configured port is already used by another client
+     * DHT port actually used.
+     * This holds the actual DHT port, which might different from the port
+     * set in the configuration. This can be the case if UPnP is used.
      */
-    UsedPort dhtPortUsed_ {};
+    in_port_t dhtPortUsed()
+    {
+        return (upnp_ and dhtUpnpMapping_.isValid()) ? dhtUpnpMapping_.getExternalPort()
+                                                     : dhtDefaultPort_;
+    }
+
+    /* Current UPNP mapping */
+    upnp::Mapping dhtUpnpMapping_ {};
+
+    bool dhtPeerDiscovery_ {false};
 
     /**
      * Proxy

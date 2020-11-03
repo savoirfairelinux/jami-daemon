@@ -25,8 +25,7 @@
 #include "config.h"
 #endif
 
-#include "../igd.h"
-#include "../global_mapping.h"
+#include "upnp/protocol/igd.h"
 
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -54,20 +53,46 @@ public:
             IpAddr&& localIp = {},
             IpAddr&& publicIp = {});
     ~UPnPIGD() {}
-    const std::string& getUDN() const { return UDN_; }
-    const std::string& getBaseURL() const { return baseURL_; }
-    const std::string& getFriendlyName() const { return friendlyName_; }
-    const std::string& getServiceType() const { return serviceType_; }
-    const std::string& getServiceId() const { return serviceId_; }
-    const std::string& getLocationURL() const { return locationURL_; }
-    const std::string& getControlURL() const { return controlURL_; }
-    const std::string& getEventSubURL() const { return eventSubURL_; }
+    const std::string& getBaseURL() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return baseURL_;
+    }
+    const std::string& getFriendlyName() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return friendlyName_;
+    }
+    const std::string& getServiceType() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return serviceType_;
+    }
+    const std::string& getServiceId() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return serviceId_;
+    }
+    const std::string& getLocationURL() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return locationURL_;
+    }
+    const std::string& getControlURL() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return controlURL_;
+    }
+    const std::string& getEventSubURL() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return eventSubURL_;
+    }
 
     bool operator==(IGD& other) const;
     bool operator==(UPnPIGD& other) const;
 
 private:
-    std::string UDN_ {};
     std::string baseURL_ {};
     std::string friendlyName_ {};
     std::string serviceType_ {};
