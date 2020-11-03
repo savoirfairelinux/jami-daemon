@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "627f284c_65b74540",
+        "filename": "test/unitTest/connectionManager/connectionManager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 904,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-03T16:29:57Z",
+      "side": 1,
+      "message": "could use cv to avoid always waiting",
+      "range": {
+        "startLine": 901,
+        "startChar": 0,
+        "endLine": 904,
+        "endChar": 38
+      },
+      "revId": "5c3d7aa31711b5fb8d0d2b42856c3e2b3cc2d616",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cfb62dd9_33ee1e89",
+        "filename": "test/unitTest/connectionManager/connectionManager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 951,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-03T16:29:57Z",
+      "side": 1,
+      "message": "could use cv to avoid always waiting",
+      "range": {
+        "startLine": 948,
+        "startChar": 0,
+        "endLine": 951,
+        "endChar": 38
+      },
+      "revId": "5c3d7aa31711b5fb8d0d2b42856c3e2b3cc2d616",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4c06ee27_8aa764c5",
+        "filename": "test/unitTest/connectionManager/connectionManager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 979,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-03T16:29:57Z",
+      "side": 1,
+      "message": "could use cv to avoid always waiting",
+      "range": {
+        "startLine": 977,
+        "startChar": 0,
+        "endLine": 979,
+        "endChar": 38
+      },
+      "revId": "5c3d7aa31711b5fb8d0d2b42856c3e2b3cc2d616",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
