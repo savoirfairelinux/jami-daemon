@@ -25,7 +25,6 @@
 #endif
 
 #include "../upnp_protocol.h"
-#include "../global_mapping.h"
 #include "../igd.h"
 #include "pmp_igd.h"
 
@@ -48,17 +47,31 @@ class IpAddr;
 namespace jami {
 namespace upnp {
 
+// Requested lifetime in seconds. The actual lifetime might be different.
+constexpr static unsigned int MAPPING_ALLOCATION_LIFETIME {60 * 60};
+// Max number of IGD search attempts before failure.
+constexpr static unsigned int MAX_RESTART_SEARCH_RETRIES {5};
+// Time-out between two successive read response.
+constexpr static auto TIMEOUT_BEFORE_READ_RETRY {std::chrono::milliseconds(300)};
+// Max number of read attempts before failure.
+constexpr static unsigned int MAX_READ_RETRIES {5};
+// Time-out between two successive IGD search.
+constexpr static auto TIMEOUT_BEFORE_IGD_SEARCH_RETRY {std::chrono::seconds(60)};
+
 class NatPmp : public UPnPProtocol
 {
 public:
     NatPmp();
     ~NatPmp();
 
+    // Set the observer.
+    void setObserver(UpnpMappingObserver* obs) override;
+
     // Returns the protocol type.
-    Type getProtocol() const override { return Type::NAT_PMP; }
+    NatProtocolType getProtocol() const override { return NatProtocolType::NAT_PMP; }
 
     // Get protocol type as string.
-    virtual std::string getProtocolName() const override { return {"NAT_PMP"};}
+    char const* getProtocolName() const override { return "NAT-PMP"; }
 
     // Notifies a change in network.
     void clearIgds() override;
@@ -66,48 +79,63 @@ public:
     // Renew pmp_igd.
     void searchForIgd() override;
 
-    // Tries to add mapping.
-    void requestMappingAdd(IGD* igd, const Mapping& mapping) override;
+    // Get the IGD list.
+    void getIgdList(std::list<std::shared_ptr<IGD>>& igdList) const override;
+
+    // Return true if it has at least one valid IGD.
+    bool hasValidIgd() const override;
+
+    // Increment errors counter.
+    void incrementErrorsCounter(const std::shared_ptr<IGD>& igd) override;
+
+    // Request a new mapping.
+    void requestMappingAdd(const std::shared_ptr<IGD>& igd, const Mapping& mapping) override;
+
+    // Renew an allocated mapping.
+    void requestMappingRenew(const Mapping& mapping) override;
 
     // Removes a mapping.
     void requestMappingRemove(const Mapping& igdMapping) override;
 
-    // Removes all local mappings of IGD that we're added by the application.
-    void removeAllLocalMappings(IGD* igd) override;
-
 private:
-    void searchForPmpIgd();
+    void initNatPmp();
+    void getIgdPublicAddress();
+    void removeAllMappings();
+    int readResponse(natpmp_t& handle, natpmpresp_t& response);
+    int sendMappingRequest(const Mapping& mapping, uint32_t& lifetime);
 
     // Adds a port mapping.
-    void addPortMapping(Mapping& mapping, bool renew);
+    void addPortMapping(const std::shared_ptr<IGD>& igd, Mapping& mapping, bool renew);
     // Removes a port mapping.
     void removePortMapping(Mapping& mapping);
-    // void addPortMapping(const PMPIGD& pmp_igd, natpmp_t& natpmp, GlobalMapping& mapping, bool
-    // remove=false) const;
+    // True if the error is fatal.
+    bool isErrorFatal(int error);
+    // Get local getaway.
+    std::unique_ptr<IpAddr> getLocalGateway() const;
 
-    // Deletes all port mappings.
-    void deleteAllPortMappings(int proto);
+    // Helpers to process user callbacks
+    void processIgdUpdate(UpnpIgdEvent event);
+    void processMappingAdded(const Mapping& map);
+    void processMappingRenewed(const Mapping& map);
+    void processMappingRemoved(const Mapping& map);
 
 private:
     NON_COPYABLE(NatPmp);
 
-    std::mutex pmpMutex_ {};           // NatPmp mutex.
-    std::condition_variable pmpCv_ {}; // Condition variable for thread-safe signaling.
-    std::atomic_bool pmpRun_ {true};   // Variable to allow the thread to run.
-    std::thread pmpThread_ {};         // NatPmp thread.
-
-    std::atomic_bool restart_ {
-        false}; // Variable to indicate we need to restart natpmp after a connectivity change.
-    unsigned int restartSearchRetry_ {
-        0}; // Keeps track of number of times we try to find an IGD after a connectivity change.
-
-    std::shared_ptr<PMPIGD> pmpIGD_ {}; // IGD discovered by NatPmp.
-    std::mutex natpmpMutex_;
-    natpmp_t natpmpHdl_; // NatPmp handle.
-    // Clears the natpmp struct.
-    void clearNatPmpHdl(natpmp_t& hdl);
     // Gets NAT-PMP error code string.
-    const char* getNatPmpErrorStr(int errorCode);
+    const char* getNatPmpErrorStr(int errorCode) const;
+
+    ScheduledExecutor* getNatpmpScheduler() { return &natpmpScheduler_; }
+    ScheduledExecutor* getUpnContextScheduler() { return UpnpThreadUtil::getScheduler(); }
+    bool validIgdInstance(const std::shared_ptr<IGD>& igdIn);
+    std::atomic_bool initialized_ {false};
+
+    // Data members
+    std::shared_ptr<PMPIGD> igd_;
+    natpmp_t natpmpHdl_;
+    ScheduledExecutor natpmpScheduler_ {};
+    std::shared_ptr<Task> searchForIgdTimer_ {};
+    unsigned int igdSearchCounter_ {0};
 };
 
 } // namespace upnp
