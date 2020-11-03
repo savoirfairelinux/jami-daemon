@@ -619,7 +619,7 @@ private:
     /**
      * Maps require port via UPnP
      */
-    void mapPortUPnP();
+    bool mapPortUPnP();
 
     /**
      * Resolved IP of hostname_ (for registration)
