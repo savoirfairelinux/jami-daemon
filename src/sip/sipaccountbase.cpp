@@ -598,13 +598,25 @@ SIPAccountBase::setMessageDisplayed(const std::string& contactId,
     return true;
 }
 
+IpAddr
+SIPAccountBase::getPublishedIpAddress() const
+{
+    // Prefere IPv4 if available. More likely to succeed behind NAT.
+    if (publishedIp_[0])
+        return publishedIp_[0];
+    if (publishedIp_[1])
+        return publishedIp_[1];
+    return {};
+}
+
 void
 SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr)
 {
-    publishedIp_ = ip_addr;
-    JAMI_DBG("[Account %s] Using public address %s",
-             getAccountID().c_str(),
-             publishedIp_.toString().c_str());
+    if (ip_addr.getFamily() == AF_INET) {
+        publishedIp_[0] = ip_addr;
+    } else {
+        publishedIp_[1] = ip_addr;
+    }
 }
 
 } // namespace jami

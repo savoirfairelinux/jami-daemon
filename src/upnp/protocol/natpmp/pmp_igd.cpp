@@ -26,106 +26,31 @@
 namespace jami {
 namespace upnp {
 
+PMPIGD::PMPIGD()
+    : IGD(NatProtocolType::NAT_PMP)
+{}
+
+PMPIGD::PMPIGD(const PMPIGD& other)
+    : PMPIGD()
+{
+    assert(protocol_ == NatProtocolType::NAT_PMP);
+    // protocol_ = other.protocol_;
+    localIp_ = other.localIp_;
+    publicIp_ = other.publicIp_;
+    uid_ = other.uid_;
+}
+
 bool
 PMPIGD::operator==(IGD& other) const
 {
-    return publicIp_ == other.publicIp_ and localIp_ == other.localIp_;
+    return getPublicIp() == other.getPublicIp() and getLocalIp() == other.getLocalIp();
 }
+
 bool
 PMPIGD::operator==(PMPIGD& other) const
 {
-    return publicIp_ == other.publicIp_ and localIp_ == other.localIp_;
-}
-bool
-PMPIGD::isMapAdded(const Mapping& map)
-{
-    return isMapInUse(map);
-}
-void
-PMPIGD::addMapToAdd(Mapping map)
-{
-    std::lock_guard<std::mutex> lk(mapListMutex_);
-    toAdd_.emplace_back(std::move(map));
-}
-void
-PMPIGD::removeMapToAdd(const Mapping& map)
-{
-    std::lock_guard<std::mutex> lk(mapListMutex_);
-    for (auto it = toAdd_.cbegin(); it != toAdd_.cend(); it++) {
-        if (*it == map) {
-            toAdd_.erase(it);
-            return;
-        }
-    }
-}
-void
-PMPIGD::addMapToRenew(Mapping map)
-{
-    std::lock_guard<std::mutex> lk(mapListMutex_);
-    for (auto it = toRenew_.cbegin(); it != toRenew_.cend(); it++) {
-        if (*it == map) {
-            return;
-        }
-    }
-    toRenew_.emplace_back(std::move(map));
+    return getPublicIp() == other.getPublicIp() and getLocalIp() == other.getLocalIp();
 }
 
-void
-PMPIGD::removeMapToRenew(const Mapping& map)
-{
-    std::lock_guard<std::mutex> lk(mapListMutex_);
-    for (auto it = toRenew_.cbegin(); it != toRenew_.cend(); it++) {
-        if (*it == map) {
-            toRenew_.erase(it);
-            return;
-        }
-    }
-}
-
-void
-PMPIGD::addMapToRemove(Mapping map)
-{
-    std::lock_guard<std::mutex> lk(mapListMutex_);
-    for (auto it = toRemove_.cbegin(); it != toRemove_.cend(); it++) {
-        if (*it == map) {
-            return;
-        }
-    }
-    toRemove_.emplace_back(std::move(map));
-}
-
-void
-PMPIGD::removeMapToRemove(const Mapping& map)
-{
-    std::lock_guard<std::mutex> lk(mapListMutex_);
-    for (auto it = toRemove_.cbegin(); it != toRemove_.cend(); it++) {
-        if (*it == map) {
-            toRemove_.erase(it);
-            return;
-        }
-    }
-}
-
-void
-PMPIGD::clearMappings()
-{
-    toRemove_.clear();
-    toRenew_.clear();
-    toAdd_.clear();
-    udpMappings_.clear();
-    tcpMappings_.clear();
-}
-
-time_point
-PMPIGD::getRenewalTime()
-{
-    std::unique_lock<std::mutex> lk(mapListMutex_);
-    if (clearAll_ or not toAdd_.empty() or not toRemove_.empty())
-        return time_point::min();
-    auto nextTime = renewal_;
-    for (const auto& m : toRenew_)
-        nextTime = std::min(nextTime, m.renewal_);
-    return nextTime;
-}
 } // namespace upnp
 } // namespace jami
