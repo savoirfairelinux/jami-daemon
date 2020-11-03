@@ -104,6 +104,9 @@ struct IceTransportOptions
     // See https://tools.ietf.org/html/rfc5245#section-8.1.1.2
     // Make negotiation aggressive by default to avoid latencies.
     bool aggressive {true};
+    // Addresses used by the account owning the transport instance.
+    IpAddr accountLocalAddr {};
+    IpAddr accountPublicAddr {};
 };
 
 struct SDP
@@ -144,8 +147,8 @@ public:
      * with the negotiation result when operation is really done.
      * Return false if negotiation cannot be started else true.
      */
-    bool start(const Attribute& rem_attrs, const std::vector<IceCandidate>& rem_candidates);
-    bool start(const SDP& sdp);
+    bool startIce(const Attribute& rem_attrs, const std::vector<IceCandidate>& rem_candidates);
+    bool startIce(const SDP& sdp);
 
     /**
      * Stop a started or completed transport.

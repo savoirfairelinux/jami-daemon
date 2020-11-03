@@ -102,7 +102,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     , sdp_(new Sdp(id))
 {
     if (account->getUPnPActive())
-        upnp_.reset(new upnp::Controller(false));
+        upnp_.reset(new upnp::Controller());
 
     setCallMediaLocal();
 }
@@ -400,9 +400,9 @@ SIPCall::requestKeyframe()
         return;
 
     constexpr auto BODY = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                                       "<media_control><vc_primitive><to_encoder>"
-                                       "<picture_fast_update/>"
-                                       "</to_encoder></vc_primitive></media_control>"sv;
+                          "<media_control><vc_primitive><to_encoder>"
+                          "<picture_fast_update/>"
+                          "</to_encoder></vc_primitive></media_control>"sv;
     JAMI_DBG("Sending video keyframe request via SIP INFO");
     try {
         sendSIPInfo(BODY, "media_control+xml");
@@ -897,11 +897,15 @@ SIPCall::carryingDTMFdigits(char code)
     if (code == '!') {
         ret = snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=16\r\nDuration=%d\r\n", duration);
     } else {
-        ret = snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
+        ret = snprintf(dtmf_body,
+                       sizeof dtmf_body - 1,
+                       "Signal=%c\r\nDuration=%d\r\n",
+                       code,
+                       duration);
     }
 
     try {
-        sendSIPInfo({dtmf_body, (size_t)ret}, "dtmf-relay");
+        sendSIPInfo({dtmf_body, (size_t) ret}, "dtmf-relay");
     } catch (const std::exception& e) {
         JAMI_ERR("Error sending DTMF: %s", e.what());
     }
@@ -1332,7 +1336,6 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
         if (not isSubcall())
             emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
         setMute(mute);
-
     }
 }
 
@@ -1399,7 +1402,7 @@ SIPCall::startIceMedia()
         onFailure(EIO);
         return;
     }
-    if (not ice->start(rem_ice_attrs, getAllRemoteCandidates())) {
+    if (not ice->startIce(rem_ice_attrs, getAllRemoteCandidates())) {
         JAMI_ERR("[call:%s] Media ICE start failed", getCallId().c_str());
         onFailure(EIO);
     }
@@ -1453,48 +1456,21 @@ SIPCall::openPortsUPnP()
          * if they are used, use the alternative port and update the SDP session with the newly
          * chosen port(s)
          *
-         * TODO: the initial ports were chosen from the list of available ports and were marked as
-         * used the newly selected port should possibly be checked against the list of used ports
-         * and marked as used, the old port should be "released"
+         * TODO:
+         * No need to request mappings for specfic port numbers. Set the port to '0' to
+         * request the first available port (faster and more likely to succeed).
          */
         JAMI_DBG("[call:%s] opening ports via UPNP for SDP session", getCallId().c_str());
-        upnp::Mapping mapAudioRtp {sdp_->getLocalAudioPort(), sdp_->getLocalAudioPort(),
-            upnp::PortType::UDP, "SIP Audio RTP port"};
-        upnp_->requestMappingAdd(
-            [this](uint16_t, bool success) {
-                if (!success)
-                    return;
-                upnp::Mapping mapAudioRtcp {sdp_->getLocalAudioControlPort(), sdp_->getLocalAudioControlPort(),
-                    upnp::PortType::UDP, "SIP Audio RTCP port"};
-                upnp_->requestMappingAdd(
-                    [this](uint16_t, bool success) {
-                        if (!success)
-                            return;
-                        sdp_->setLocalPublishedAudioPorts(sdp_->getLocalAudioPort(),
-                                                          sdp_->getLocalAudioControlPort());
-                    },
-                    mapAudioRtcp);
-            },
-            mapAudioRtp);
+
+        upnp_->reserveMapping(sdp_->getLocalAudioPort(), upnp::PortType::UDP);
+        // RTCP port.
+        upnp_->reserveMapping(sdp_->getLocalAudioControlPort(), upnp::PortType::UDP);
+
 #ifdef ENABLE_VIDEO
-        upnp::Mapping mapVideoRtp {sdp_->getLocalVideoPort(), sdp_->getLocalVideoPort(),
-            upnp::PortType::UDP, "SIP Video RTP port"};
-        upnp_->requestMappingAdd(
-            [this](uint16_t, bool success) {
-                if (!success)
-                    return;
-                upnp::Mapping mapVideoRtcp {sdp_->getLocalVideoControlPort(), sdp_->getLocalVideoControlPort(),
-                    upnp::PortType::UDP, "SIP Video RTCP port"};
-                upnp_->requestMappingAdd(
-                    [this](uint16_t, bool success) {
-                        if (!success)
-                            return;
-                        sdp_->setLocalPublishedVideoPorts(sdp_->getLocalVideoPort(),
-                                                          sdp_->getLocalVideoControlPort());
-                    },
-                    mapVideoRtcp);
-            },
-            mapVideoRtp);
+        // RTP port.
+        upnp_->reserveMapping(sdp_->getLocalVideoPort(), upnp::PortType::UDP);
+        // RTCP port.
+        upnp_->reserveMapping(sdp_->getLocalVideoControlPort(), upnp::PortType::UDP);
 #endif
     }
 }
@@ -1673,16 +1649,16 @@ SIPCall::initIceMediaTransport(bool master,
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
     auto transport = iceTransportFactory.createUTransport(getCallId().c_str(),
-                                                              channel_num,
-                                                              master,
-                                                              iceOptions);
+                                                          channel_num,
+                                                          master,
+                                                          iceOptions);
     std::lock_guard<std::mutex> lk(transportMtx_);
     // Destroy old ice on a separate io pool
     if (tmpMediaTransport_)
         dht::ThreadPool::io().run([ice = std::make_shared<decltype(tmpMediaTransport_)>(
-                                        std::move(tmpMediaTransport_))] {});
+                                       std::move(tmpMediaTransport_))] {});
     tmpMediaTransport_ = std::move(transport);
-    if (tmpMediaTransport_ != nullptr) {
+    if (tmpMediaTransport_) {
         JAMI_DBG("[call:%s] Successfully created media ICE transport", getCallId().c_str());
     } else {
         JAMI_ERR("[call:%s] Failed to create media ICE transport", getCallId().c_str());
