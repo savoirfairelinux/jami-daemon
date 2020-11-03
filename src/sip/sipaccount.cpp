@@ -478,7 +478,7 @@ SIPAccount::serialize(YAML::Emitter& out) const
 void
 SIPAccount::usePublishedAddressPortInVIA()
 {
-    publishedIpStr_ = publishedIp_.toString();
+    publishedIpStr_ = getPublishedIpAddress().toString();
     via_addr_.host.ptr = (char*) publishedIpStr_.c_str();
     via_addr_.host.slen = publishedIpStr_.size();
     via_addr_.port = publishedPort_;
@@ -736,38 +736,48 @@ SIPAccount::getVolatileAccountDetails() const
     return a;
 }
 
-void
+bool
 SIPAccount::mapPortUPnP()
 {
-    upnp::Mapping map {publishedPort_, localPort_, upnp::PortType::UDP, "SIP Account Port"};
-
-    upnp_->requestMappingAdd(
-        [this](uint16_t port_used, bool success) {
-            auto oldPort = static_cast<in_port_t>(publishedPortUsed_);
-            auto newPort = success ? port_used : publishedPort_;
-            if (not success and not isRegistered()) {
+    upnp::Mapping map {publishedPort_, localPort_, upnp::PortType::UDP};
+    map.setNotifyCallback([w = weak()](upnp::Mapping::sharedPtr_t mapRes) {
+        if (auto accPtr = w.lock()) {
+            auto oldPort = static_cast<in_port_t>(accPtr->publishedPortUsed_);
+            bool success = mapRes->getState() == upnp::MappingState::OPEN
+                           or mapRes->getState() == upnp::MappingState::IN_PROGRESS;
+            auto newPort = success ? mapRes->getExternalPort() : accPtr->publishedPort_;
+            if (not success and not accPtr->isRegistered()) {
                 JAMI_WARN("[Account %s] Failed to open port %u: registering SIP account anyway",
-                          getAccountID().c_str(),
+                          accPtr->getAccountID().c_str(),
                           oldPort);
-                doRegister1_();
+                accPtr->doRegister1_();
                 return;
             }
-            if ((oldPort != newPort) or (getRegistrationState() != RegistrationState::REGISTERED)) {
-                if (not isRegistered())
+            if ((oldPort != newPort)
+                or (accPtr->getRegistrationState() != RegistrationState::REGISTERED)) {
+                if (not accPtr->isRegistered())
                     JAMI_WARN("[Account %s] SIP port %u opened: registering SIP account",
-                              getAccountID().c_str(),
+                              accPtr->getAccountID().c_str(),
                               newPort);
                 else
                     JAMI_WARN("[Account %s] SIP port changed to %u: re-registering SIP account",
-                              getAccountID().c_str(),
+                              accPtr->getAccountID().c_str(),
                               newPort);
-                publishedPortUsed_ = newPort;
+                accPtr->publishedPortUsed_ = newPort;
             } else {
-                connectivityChanged();
+                accPtr->connectivityChanged();
             }
-            doRegister1_();
-        },
-        map);
+
+            accPtr->doRegister1_();
+        }
+    });
+
+    auto mapRes = upnp_->reserveMapping(map);
+    if (mapRes and mapRes->getState() == upnp::MappingState::OPEN) {
+        return true;
+    }
+
+    return false;
 }
 
 void
@@ -782,9 +792,12 @@ SIPAccount::doRegister()
 
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if (upnp_) {
-        setRegistrationState(RegistrationState::TRYING);
         JAMI_DBG("UPnP: waiting for IGD to register SIP account");
-        mapPortUPnP();
+        setRegistrationState(RegistrationState::TRYING);
+        if (not mapPortUPnP()) {
+            JAMI_DBG("UPnP: UPNP request failed, try to register SIP account anyway");
+            doRegister1_();
+        }
     } else {
         doRegister1_();
     }
@@ -1541,7 +1554,7 @@ SIPAccount::getContactHeader(pjsip_transport* t)
         useUPnPAddressPortInVIA();
         JAMI_DBG("Using UPnP address %s and port %d", address.c_str(), port);
     } else if (not publishedSameasLocal_) {
-        address = publishedIp_.toString();
+        address = getPublishedIpAddress().toString();
         port = publishedPort_;
         JAMI_DBG("Using published address %s and port %d", address.c_str(), port);
     } else if (stunEnabled_) {
