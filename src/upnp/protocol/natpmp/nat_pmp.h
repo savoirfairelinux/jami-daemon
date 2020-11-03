@@ -25,7 +25,6 @@
 #endif
 
 #include "../upnp_protocol.h"
-#include "../global_mapping.h"
 #include "../igd.h"
 #include "pmp_igd.h"
 
@@ -55,10 +54,10 @@ public:
     ~NatPmp();
 
     // Returns the protocol type.
-    Type getProtocol() const override { return Type::NAT_PMP; }
+    NatProtocolType getProtocol() const override { return NatProtocolType::NAT_PMP; }
 
     // Get protocol type as string.
-    virtual std::string getProtocolName() const override { return {"NAT_PMP"};}
+    virtual std::string getProtocolName() const override { return {"NAT_PMP"}; }
 
     // Notifies a change in network.
     void clearIgds() override;
@@ -66,14 +65,20 @@ public:
     // Renew pmp_igd.
     void searchForIgd() override;
 
+    // Get the IGD list.
+    void getIgdList(std::list<std::shared_ptr<IGD>>& igdList) const override;
+
+    // Return true if it has at least one valid IGD.
+    bool hasValidIgd() const override;
+
+    // Increment errors counter.
+    void incrementErrorsCounter(const std::shared_ptr<IGD>& igd) override;
+
     // Tries to add mapping.
-    void requestMappingAdd(IGD* igd, const Mapping& mapping) override;
+    void requestMappingAdd(const IGD* igd, const Mapping& mapping) override;
 
     // Removes a mapping.
     void requestMappingRemove(const Mapping& igdMapping) override;
-
-    // Removes all local mappings of IGD that we're added by the application.
-    void removeAllLocalMappings(IGD* igd) override;
 
 private:
     void searchForPmpIgd();
@@ -82,16 +87,18 @@ private:
     void addPortMapping(Mapping& mapping, bool renew);
     // Removes a port mapping.
     void removePortMapping(Mapping& mapping);
-    // void addPortMapping(const PMPIGD& pmp_igd, natpmp_t& natpmp, GlobalMapping& mapping, bool
-    // remove=false) const;
-
     // Deletes all port mappings.
     void deleteAllPortMappings(int proto);
+    // Removes all mappings.
+    void removeAllLocalMappings();
+    // True if the error is fatal.
+    bool isErrorFatal(int error);
+    // Get local getaway.
+    std::unique_ptr<IpAddr> getLocalGateway() const;
 
 private:
     NON_COPYABLE(NatPmp);
 
-    std::mutex pmpMutex_ {};           // NatPmp mutex.
     std::condition_variable pmpCv_ {}; // Condition variable for thread-safe signaling.
     std::atomic_bool pmpRun_ {true};   // Variable to allow the thread to run.
     std::thread pmpThread_ {};         // NatPmp thread.
@@ -108,6 +115,8 @@ private:
     void clearNatPmpHdl(natpmp_t& hdl);
     // Gets NAT-PMP error code string.
     const char* getNatPmpErrorStr(int errorCode);
+
+    mutable std::mutex validIgdMutex_; // Mutex used to protect IGD instances.
 };
 
 } // namespace upnp
