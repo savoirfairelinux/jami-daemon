@@ -140,6 +140,30 @@
       "revId": "ce438c86c5003211d11707b2ed3f83ddce5191bc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3ef3c84a_cd4b5d7f",
+        "filename": "contrib/src/pjproject/rules.mak",
+        "patchSetId": 7
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-03T17:08:43Z",
+      "side": 1,
+      "message": "Seems not removed in https://review.jami.net/c/ring-daemon/+/16199",
+      "parentUuid": "148f015c_e990faf4",
+      "range": {
+        "startLine": 55,
+        "startChar": 27,
+        "endLine": 55,
+        "endChar": 31
+      },
+      "revId": "ce438c86c5003211d11707b2ed3f83ddce5191bc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
