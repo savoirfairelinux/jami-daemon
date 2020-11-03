@@ -176,7 +176,7 @@ public:
 
     std::shared_ptr<upnp::Controller> upnp_ {};
     std::mutex upnpMutex_ {};
-    std::vector<std::unique_ptr<Mapping>> upnpMappings_;
+    std::map<Mapping::key_t, Mapping::sharedPtr_t> upnpMappings_;
     std::mutex upnpMappingsMutex_ {};
 
     bool onlyIPv4Private_ {true};
@@ -187,7 +187,7 @@ public:
     bool handleEvents(unsigned max_msec);
 
     // Wait data on components
-    pj_ssize_t lastSentLen_ {};
+    pj_size_t lastSentLen_ {};
     std::condition_variable waitDataCv_ = {};
 
     std::atomic_bool destroying_ {false};
@@ -306,7 +306,7 @@ IceTransport::Impl::Impl(const char* name,
 
     sip_utils::register_thread();
     if (options.upnpEnable)
-        upnp_.reset(new upnp::Controller(false));
+        upnp_.reset(new upnp::Controller());
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
     config_ = iceTransportFactory.getIceCfg(); // config copy
@@ -757,28 +757,62 @@ IceTransport::Impl::requestUpnpMappings()
     for (unsigned compId = 1; compId <= component_count_; compId++) {
         // Set port number to 0 to get any available port.
         Mapping map {0, 0, portType};
-        // Request the mapping
-        uint16_t port = upnp_->requestMappingAdd(
-            [this, map](uint16_t allocatedPort, bool success) {
-                if (success) {
+        // Set the notify callback.
+        map.setNotifyCallback([this, map](Mapping::sharedPtr_t mapRes) {
+                switch (mapRes->getState())
+                {
+                case MappingState::OPEN :
+                case MappingState::IN_PROGRESS : {
                     JAMI_DBG("[ice:%p]: Successfully allocated port %u [%s]",
-                        this, allocatedPort, map.getTypeStr().c_str());
-                } else {
-                    JAMI_WARN("[ice:%p]: Could not allocate for %s transport",
+                        this, mapRes->getPortExternal(), mapRes->getTypeStr().c_str());
+                    break;
+                }
+
+                case MappingState::FAILED : {
+
+                    JAMI_WARN("[ice:%p]: Mapping request for %s transport failed",
+                        this, map.getTypeStr().c_str());
+                    // The request failed, so release and remove
+                    // it from the local list.
+                    upnp_->releaseMapping(mapRes);
+                    std::lock_guard<std::mutex> lock(upnpMappingsMutex_);
+                    if (upnpMappings_.erase(mapRes->getMapKey()) != 1)
+                        JAMI_ERR("[ice:%p]: Failed to remove mapping %s from local list",
                         this, map.getTypeStr().c_str());
                 }
-            },
-        map);
+                break;
 
-        // Note that even if the returned port number is valid, the mapping
-        // might not be readily available. This is can happen if there is no
-        // port already provisioned. In this case a new mapping is requested
+                default:
+                    // Nothing todo.
+                    break;
+                }
+            });
+
+        // Request the mapping
+        Mapping::sharedPtr_t mapPtr = upnp_->reserveMapping(map);
+
+        // Note that even if the returned mapping is valid, it might
+        // not be readily available. This is can happen if there is no
+        // port already open. In this case a new mapping is requested
         // and may take time for the IGD to grant the mapping.
         // Hopefully, the mapping will be ready when the ICE connectivity
         // checks are performed.
-        if (port > 0) {
+
+        // TODO. Should we consider only "OPEN" mappings ?
+
+        if (mapPtr and mapPtr->getMapKey()) {
             std::lock_guard<std::mutex> lock(upnpMappingsMutex_);
-            upnpMappings_.emplace_back(std::make_unique<Mapping>(port, port, portType));
+            auto ret = upnpMappings_.emplace(mapPtr->getMapKey(), mapPtr);
+            if (ret.second) {
+                JAMI_DBG("[ice:%p]: UPNP mapping %s successfully allocated",
+                    this, map.toString().c_str());
+            } else {
+                JAMI_WARN("[ice:%p]: UPNP mapping %s already in the list !",
+                    this, map.toString().c_str());
+            }
+        } else {
+            JAMI_ERR("[ice:%p]: UPNP mapping request failed !",
+                this);
         }
     }
 }
@@ -824,28 +858,32 @@ IceTransport::Impl::setupHostAndUpnpCandidates()
     if (upnpMappings_.size() < component_count_)
         return;
 
-    // Reset user mapping counter.
+    // Reset counters.
     stun.cfg.user_mapping_cnt = 0;
+    unsigned compIdx = 0;
 
     // Add allocated mappings
-    for (unsigned compIdx = 0; compIdx < component_count_; compIdx++) {
-        if (stun.cfg.user_mapping_cnt < PJ_ICE_MAX_COMP) {
-            localIp.setPort(upnpMappings_[compIdx]->getPortInternal());
-            publicIp.setPort(upnpMappings_[compIdx]->getPortExternal());
+    for (auto const& [_, map] : upnpMappings_ ) {
+        assert (map);
+        assert (map->getMapKey());
+        localIp.setPort(map->getPortInternal());
+        publicIp.setPort(map->getPortExternal());
 
-            JAMI_DBG("[ice:%p]: Set upnp mapping %s (%s) -> %s (%s) for comp %u",
-                this,
-                localIp.toString(true).c_str(),
-                localIp.getFamily() == pj_AF_INET() ? "IPv4" : localIp.getFamily() == pj_AF_INET6() ? "IPv6" : "unknown",
-                publicIp.toString(true).c_str(),
-                publicIp.getFamily() == pj_AF_INET() ? "IPv4" : localIp.getFamily() == pj_AF_INET6() ? "IPv6" : "unknown",
-                compIdx+1);
+        JAMI_DBG("[ice:%p]: Set upnp mapping %s (%s) -> %s (%s) for comp %u",
+            this,
+            localIp.toString(true).c_str(),
+            localIp.getFamily() == pj_AF_INET() ? "IPv4" : localIp.getFamily() == pj_AF_INET6() ? "IPv6" : "unknown",
+            publicIp.toString(true).c_str(),
+            publicIp.getFamily() == pj_AF_INET() ? "IPv4" : localIp.getFamily() == pj_AF_INET6() ? "IPv6" : "unknown",
+            compIdx+1);
 
-            pj_sockaddr_cp(&stun.cfg.user_mapping[compIdx].mapped_addr, publicIp.pjPtr());
-            pj_sockaddr_cp(&stun.cfg.user_mapping[compIdx].local_addr, localIp.pjPtr());
+        pj_sockaddr_cp(&stun.cfg.user_mapping[compIdx].mapped_addr, publicIp.pjPtr());
+        pj_sockaddr_cp(&stun.cfg.user_mapping[compIdx].local_addr, localIp.pjPtr());
 
-            stun.cfg.user_mapping_cnt++;
-        }
+        stun.cfg.user_mapping_cnt ++;
+        compIdx ++;
+        if (compIdx == component_count_ or stun.cfg.user_mapping_cnt == PJ_ICE_MAX_COMP)
+            break;
     }
 }
 

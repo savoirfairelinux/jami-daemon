@@ -22,67 +22,81 @@
 #include "mapping.h"
 #include "logger.h"
 
+
+#define LOCK_MUTEX(mutexToLock)  \
+    std::lock_guard<std::mutex> lock(mutexToLock);
+
 namespace jami {
 namespace upnp {
+
+const std::string Mapping::MAPPING_STATE_STR[] = { "NEW", "PENDING", "IN_PROGRESS", "FAILED", "OPEN" };
+const std::string Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION = "JAMI";
 
 Mapping::Mapping(uint16_t portExternal,
                  uint16_t portInternal,
                  PortType type,
-                 const std::string& description,
                  bool available)
     : portExternal_(portExternal)
     , portInternal_(portInternal)
     , type_(type)
-    , description_(description)
     , available_(available)
-    , open_(false)
+    , state_(MappingState::NEW)
+    , notifyCb_(nullptr)
+    , timeoutTimer_(nullptr)
     {};
 
 Mapping::Mapping(Mapping&& other) noexcept
-    :
-#if HAVE_LIBNATPMP
-    renewal_(other.renewal_)
-    ,
-#endif
-    portExternal_(other.portExternal_)
+    : portExternal_(other.portExternal_)
     , portInternal_(other.portInternal_)
     , type_(other.type_)
-    , description_(std::move(other.description_))
     , available_(other.available_)
-    , open_(other.open_)
+    , state_(other.state_)
+    , notifyCb_(std::move(other.notifyCb_))
+    , timeoutTimer_(std::move(other.timeoutTimer_))
+#if HAVE_LIBNATPMP
+    , renewal_(other.renewal_)
+#endif
 {
     other.portExternal_ = 0;
     other.portInternal_ = 0;
 }
 
 Mapping::Mapping(const Mapping& other)
-    :
+{
+    LOCK_MUTEX(mutex_);
+    std::lock_guard<std::mutex> lockOther(other.mutex_);
+
+    portExternal_ = other.portExternal_;
+    portInternal_ = other.portInternal_;
+    type_ = other.type_;
+    available_ = other.available_;
+    state_ = other.state_;
+    notifyCb_ = other.notifyCb_;
+    timeoutTimer_ = other.timeoutTimer_;
 #if HAVE_LIBNATPMP
-    renewal_(other.renewal_)
-    ,
+    renewal_ = other.renewal_;
 #endif
-    portExternal_(other.portExternal_)
-    , portInternal_(other.portInternal_)
-    , type_(other.type_)
-    , description_(std::move(other.description_))
-    , available_ (other.available_)
-    , open_ (other.open_)
-{}
+}
 
 Mapping&
 Mapping::operator=(Mapping&& other) noexcept
 {
+    LOCK_MUTEX(mutex_);
+
     if (this != &other) {
         portExternal_ = other.portExternal_;
         other.portExternal_ = 0;
         portInternal_ = other.portInternal_;
         other.portInternal_ = 0;
         type_ = other.type_;
-        description_ = std::move(other.description_);
         available_ = other.available_;
         other.available_ = false;
-        open_ = other.open_;
-        other.open_ = false;
+        state_ = other.state_;
+        other.state_ = MappingState::NEW;
+        notifyCb_ = std::move(other.notifyCb_);
+        other.notifyCb_ = nullptr;
+        timeoutTimer_ = std::move(other.timeoutTimer_);
+        other.timeoutTimer_ = nullptr;
 
 #if HAVE_LIBNATPMP
         renewal_ = other.renewal_;
@@ -94,6 +108,10 @@ Mapping::operator=(Mapping&& other) noexcept
 bool
 Mapping::operator==(const Mapping& other) const noexcept
 {
+    LOCK_MUTEX(mutex_);
+    std::lock_guard<std::mutex> lockOther(other.mutex_);
+
+    // TODO. Must have the same IGD !
     return (portExternal_ == other.portExternal_ && portInternal_ == other.portInternal_
             && type_ == other.type_);
 }
@@ -101,109 +119,177 @@ Mapping::operator==(const Mapping& other) const noexcept
 bool
 Mapping::operator!=(const Mapping& other) const noexcept
 {
-    if (type_ != other.type_)
-        return true;
-    if (portExternal_ != other.portExternal_)
-        return true;
-    if (portInternal_ != other.portInternal_)
-        return true;
-    return false;
-}
-
-bool
-Mapping::operator<(const Mapping& other) const noexcept
-{
-    if (type_ != other.type_)
-        return (int) type_ < (int) other.type_;
-    if (portExternal_ != other.portExternal_)
-        return portExternal_ < other.portExternal_;
-    if (portInternal_ != other.portInternal_)
-        return portInternal_ < other.portInternal_;
-    return false;
-}
-
-bool
-Mapping::operator>(const Mapping& other) const noexcept
-{
-    if (type_ != other.type_)
-        return (int) type_ > (int) other.type_;
-    if (portExternal_ != other.portExternal_)
-        return portExternal_ > other.portExternal_;
-    if (portInternal_ != other.portInternal_)
-        return portInternal_ > other.portInternal_;
-    return false;
-}
-
-bool
-Mapping::operator<=(const Mapping& other) const noexcept
-{
-    if (type_ != other.type_)
-        return (int) type_ <= (int) other.type_;
-    if (portExternal_ != other.portExternal_)
-        return portExternal_ <= other.portExternal_;
-    if (portInternal_ != other.portInternal_)
-        return portInternal_ <= other.portInternal_;
-    return false;
-}
-
-bool
-Mapping::operator>=(const Mapping& other) const noexcept
-{
-    if (type_ != other.type_)
-        return (int) type_ >= (int) other.type_;
-    if (portExternal_ != other.portExternal_)
-        return portExternal_ >= other.portExternal_;
-    if (portInternal_ != other.portInternal_)
-        return portInternal_ >= other.portInternal_;
-    return false;
+    return not (*this == other);
 }
 
 void
 Mapping::setAvailable(bool val)
 {
-    JAMI_DBG("UPnP: Changing mapping %s state from %s to %s",
+    JAMI_DBG("Changing mapping %s state from %s to %s",
         toString().c_str(),
         available_ ? "AVAILABLE":"UNAVAILABLE", val ? "AVAILABLE":"UNAVAILABLE");
 
+    LOCK_MUTEX(mutex_);
     available_ = val;
 }
 
 void
-Mapping::setOpen(bool val)
+Mapping::setState(const MappingState& state)
 {
-    if (open_ == val) {
-        // This condition can occur if the NAT supports and responds
-        // to more than one protocol (i.e. UPNP-IGD and NAT-PMP).
-        JAMI_DBG("UPnP: Mapped port %s already %s",
-            toString().c_str(), open_ ? "OPEN":"CLOSED");
-        return;
+    {
+        LOCK_MUTEX(mutex_);
+        if (state_ == state)
+            return;
     }
 
-    JAMI_DBG("UPnP: Changing mapped port %s state from %s to %s",
-        toString().c_str(),
-        open_ ? "OPEN":"CLOSED", val ? "OPEN":"CLOSED");
+    JAMI_DBG("Changed mapping %s state from %s to %s",
+        toString().c_str(), getStateStr().c_str(), getStateStr(state).c_str());
 
-    open_ = val;
+    LOCK_MUTEX(mutex_);
+    state_ = state;
 }
 
-void
-Mapping::setDescription(const std::string& descr)
+const std::string& Mapping::getStateStr() const
 {
-    description_ = descr;
+    LOCK_MUTEX(mutex_);
+    return getStateStr(state_);
 }
 
 std::string
 Mapping::toString() const
 {
     return getPortExternalStr() + ":" + getPortInternalStr() + " [" + getTypeStr() + "]" +
-        " \"" + description_.c_str() + "\"";
+        " \"" + getDescription() + "\"";
 }
 
 bool
 Mapping::isValid() const
 {
+    LOCK_MUTEX(mutex_);
     return portExternal_ == 0 or portInternal_ == 0 ? false : true;
-};
+}
+void Mapping::setTimeoutTimer(std::shared_ptr<Task> timer)
+{
+    // Cancel current timer if any.
+    cancelTimeoutTimer();
+
+    LOCK_MUTEX(mutex_);
+    timeoutTimer_ = std::move(timer);
+}
+
+void Mapping::cancelTimeoutTimer()
+{
+    LOCK_MUTEX(mutex_);
+
+    if (timeoutTimer_ != nullptr) {
+        timeoutTimer_->cancel();
+        timeoutTimer_ = nullptr;
+    }
+}
+
+Mapping::key_t Mapping::getMapKey() const
+{
+    LOCK_MUTEX(mutex_);
+
+    key_t mapKey = portExternal_ << 1;
+    if (type_ == PortType::UDP)
+        mapKey |= 1;
+    return mapKey;
+}
+
+PortType Mapping::getTypeFromMapKey(key_t key) {
+    return key % 2 ? PortType::UDP : PortType::TCP;
+}
+
+uint16_t Mapping::getPortFromMapKey(key_t key) {
+    return static_cast<uint16_t>(key >> 1);
+}
+
+void Mapping::setPortExternal(uint16_t port)
+{
+    LOCK_MUTEX(mutex_);
+    portExternal_ = port;
+}
+
+uint16_t Mapping::getPortExternal() const
+{
+    LOCK_MUTEX(mutex_);
+    return portExternal_;
+}
+
+std::string Mapping::getPortExternalStr() const
+{
+    LOCK_MUTEX(mutex_);
+    return std::to_string(portExternal_);
+}
+
+void Mapping::setPortInternal(uint16_t port)
+{
+    LOCK_MUTEX(mutex_);
+    portInternal_ = port;
+}
+
+uint16_t Mapping::getPortInternal() const
+{
+    LOCK_MUTEX(mutex_);
+    return portInternal_;
+}
+
+std::string Mapping::getPortInternalStr() const
+{
+    LOCK_MUTEX(mutex_);
+    return std::to_string(portInternal_);
+}
+
+PortType Mapping::getType() const
+{
+    LOCK_MUTEX(mutex_);
+    return type_;
+}
+
+std::string Mapping::getTypeStr() const
+{
+    LOCK_MUTEX(mutex_);
+    return getTypeStr(type_);
+}
+
+bool Mapping::isAvailable() const
+{
+    LOCK_MUTEX(mutex_);
+    return available_;
+}
+
+const MappingState& Mapping::getState() const
+{
+    LOCK_MUTEX(mutex_);
+    return state_;
+}
+
+Mapping::NotifyCallback Mapping::getNotifyCallback() const
+{
+    LOCK_MUTEX(mutex_);
+    return notifyCb_;
+}
+
+void Mapping::setNotifyCallback(NotifyCallback cb)
+{
+    LOCK_MUTEX(mutex_);
+    notifyCb_ = std::move(cb);
+}
+
+#if HAVE_LIBNATPMP
+std::chrono::system_clock::time_point Mapping::getRenewal() const
+{
+    LOCK_MUTEX(mutex_);
+    return renewal_;
+}
+
+void Mapping::setRenewal(std::chrono::system_clock::time_point time)
+{
+    LOCK_MUTEX(mutex_);
+    renewal_ = time;
+}
+#endif
 
 } // namespace upnp
 } // namespace jami
