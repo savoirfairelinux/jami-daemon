@@ -740,11 +740,11 @@ void
 SIPAccount::mapPortUPnP()
 {
     upnp::Mapping map {publishedPort_, localPort_, upnp::PortType::UDP, "SIP Account Port"};
-
-    upnp_->requestMappingAdd(
-        [this](uint16_t port_used, bool success) {
+    map.setNotifyCallback([this](upnp::Mapping::sharedPtr_t mapRes) {
             auto oldPort = static_cast<in_port_t>(publishedPortUsed_);
-            auto newPort = success ? port_used : publishedPort_;
+            bool success = mapRes->getState() == upnp::MappingState::OPEN or
+                mapRes->getState() == upnp::MappingState::IN_PROGRESS;
+            auto newPort = success ? mapRes->getPortExternal() : publishedPort_;
             if (not success and not isRegistered()) {
                 JAMI_WARN("[Account %s] Failed to open port %u: registering SIP account anyway",
                           getAccountID().c_str(),
@@ -766,8 +766,9 @@ SIPAccount::mapPortUPnP()
                 connectivityChanged();
             }
             doRegister1_();
-        },
-        map);
+        });
+
+        upnp_->reserveMapping(map);
 }
 
 void
