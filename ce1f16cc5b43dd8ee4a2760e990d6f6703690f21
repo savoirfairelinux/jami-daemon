@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "49af856d_8bcb734a",
+        "filename": "src/preferences.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-03T14:54:54Z",
+      "side": 1,
+      "message": "constexpr std::string_view",
+      "range": {
+        "startLine": 81,
+        "startChar": 0,
+        "endLine": 81,
+        "endChar": 17
+      },
+      "revId": "ce1f16cc5b43dd8ee4a2760e990d6f6703690f21",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "42c0fa93_722390e2",
         "filename": "src/preferences.cpp",
         "patchSetId": 6
