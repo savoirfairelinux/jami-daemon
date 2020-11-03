@@ -25,8 +25,7 @@
 #include "config.h"
 #endif
 
-#include "../igd.h"
-#include "../global_mapping.h"
+#include "upnp/protocol/igd.h"
 
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -54,7 +53,7 @@ public:
             IpAddr&& localIp = {},
             IpAddr&& publicIp = {});
     ~UPnPIGD() {}
-    const std::string& getUDN() const { return UDN_; }
+    const std::string& getUDN() const { return uid_; }
     const std::string& getBaseURL() const { return baseURL_; }
     const std::string& getFriendlyName() const { return friendlyName_; }
     const std::string& getServiceType() const { return serviceType_; }
@@ -67,7 +66,7 @@ public:
     bool operator==(UPnPIGD& other) const;
 
 private:
-    std::string UDN_ {};
+    std::string uid_ {};
     std::string baseURL_ {};
     std::string friendlyName_ {};
     std::string serviceType_ {};
