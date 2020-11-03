@@ -216,6 +216,18 @@ ip_utils::getDeviceName()
     return getHostname();
 }
 
+IpAddr
+ip_utils::getLocalGateway()
+{
+    char localHostBuf[INET_ADDRSTRLEN];
+    if (ip_utils::getHostName(localHostBuf, INET_ADDRSTRLEN) < 0) {
+        JAMI_WARN("Couldn't find local host");
+        return {};
+    } else {
+        return IpAddr(ip_utils::getGateway(localHostBuf, ip_utils::subnet_mask::prefix_24bit));
+    }
+}
+
 std::vector<IpAddr>
 ip_utils::getAddrList(std::string_view name, pj_uint16_t family)
 {
@@ -504,5 +516,4 @@ IpAddr::isPrivate() const
         return false;
     }
 }
-
 } // namespace jami
