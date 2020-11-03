@@ -36,7 +36,7 @@ UPnPIGD::UPnPIGD(std::string&& UDN,
                  IpAddr&& publicIp)
     : IGD(std::move(localIp), std::move(publicIp))
 {
-    UDN_ = std::move(UDN);
+    uid_ = std::move(UDN);
     baseURL_ = std::move(baseURL);
     friendlyName_ = std::move(friendlyName);
     serviceType_ = std::move(serviceType);
@@ -49,7 +49,7 @@ UPnPIGD::UPnPIGD(std::string&& UDN,
 bool
 UPnPIGD::operator==(IGD& other) const
 {
-    return localIp_ == other.localIp_ and publicIp_ == other.publicIp_;
+    return localIp_ == other.getLocalIp() and publicIp_ == other.getPublicIp();
 }
 
 bool
@@ -61,7 +61,7 @@ UPnPIGD::operator==(UPnPIGD& other) const
         }
     }
 
-    return UDN_ == other.UDN_ and baseURL_ == other.baseURL_
+    return uid_ == other.uid_ and baseURL_ == other.baseURL_
            and friendlyName_ == other.friendlyName_ and serviceType_ == other.serviceType_
            and serviceId_ == other.serviceId_ and locationURL_ == other.locationURL_
            and controlURL_ == other.controlURL_ and eventSubURL_ == other.eventSubURL_;

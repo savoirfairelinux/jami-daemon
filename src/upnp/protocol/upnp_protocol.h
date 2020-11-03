@@ -24,6 +24,7 @@
 #include "config.h"
 #endif
 
+#include "manager.h"
 #include "igd.h"
 #include "mapping.h"
 
@@ -37,6 +38,9 @@
 #include <chrono>
 #include <functional>
 #include <condition_variable>
+#include <list>
+
+#include "upnp/upnp_thread_util.h"
 
 namespace jami {
 namespace upnp {
@@ -52,22 +56,23 @@ constexpr static const char* UPNP_WANIP_SERVICE = "urn:schemas-upnp-org:service:
 constexpr static const char* UPNP_WANPPP_SERVICE
     = "urn:schemas-upnp-org:service:WANPPPConnection:1";
 
+enum class UpnpIgdEvent { ADDED, REMOVED, FATAL_ERROR };
+
 // Pure virtual interface class that UPnPContext uses to call protocol functions.
-class UPnPProtocol
+class UPnPProtocol : public std::enable_shared_from_this<UPnPProtocol>, protected UpnpThreadUtil
 {
 public:
     enum class UpnpError : int { INVALID_ERR = -1, ERROR_OK, CONFLICT_IN_MAPPING };
 
-    enum class Type { UNKNOWN, PUPNP, NAT_PMP };
-
-    using IgdListChangedCallback = std::function<bool(UPnPProtocol*, IGD*, IpAddr, bool)>;
-    using NotifyContextCallback = std::function<void(IpAddr, Mapping, bool)>;
+    using IgdUpdateCallback = std::function<
+        void(std::shared_ptr<UPnPProtocol>, std::shared_ptr<IGD>, IpAddr, UpnpIgdEvent)>;
+    using NotifyCallback = std::function<void(IpAddr, Mapping)>;
 
     UPnPProtocol() {};
     virtual ~UPnPProtocol() {};
 
     // Get protocol type.
-    virtual Type getProtocol() const = 0;
+    virtual NatProtocolType getProtocol() const = 0;
 
     // Get protocol type as string.
     virtual std::string getProtocolName() const = 0;
@@ -78,33 +83,48 @@ public:
     // Search for IGD.
     virtual void searchForIgd() = 0;
 
+    // Get the IGD instance.
+    virtual void getIgdList(std::list<std::shared_ptr<IGD>>& igdList) const = 0;
+
+    // Return true if it has at least one valid IGD.
+    virtual bool hasValidIgd() const = 0;
+
+    // Get the list of already allocated mappings if any.
+    virtual std::unique_ptr<std::map<Mapping::key_t, Mapping>> getMappingsListByDescr(
+        [[maybe_unused]] const std::shared_ptr<IGD>& igd,
+        [[maybe_unused]] const std::string& descr) const
+    {
+        return nullptr;
+    }
+
     // Sends a request to add a mapping.
-    virtual void requestMappingAdd(IGD* igd, const Mapping& map) = 0;
+    virtual void requestMappingAdd(const IGD* igd, const Mapping& map) = 0;
     // Sends a request to remove a mapping.
     virtual void requestMappingRemove(const Mapping& igdMapping) = 0;
 
-    // Removes all local mappings of IGD that we're added by the application.
-    virtual void removeAllLocalMappings(IGD* igd) = 0;
-
     // Set the IGD list callback handler.
-    void setOnIgdChanged(IgdListChangedCallback&& cb) { updateIgdListCb_ = std::move(cb); }
+    void setOnIgdUpdate(IgdUpdateCallback&& cb) { userCallbacks_.onIgdUpdate_ = std::move(cb); }
 
     // Set the add port mapping callback handler.
-    void setOnPortMapAdd(NotifyContextCallback&& cb) { notifyContextPortOpenCb_ = std::move(cb); }
-
-    // Set the remove port mapping callback handler.
-    void setOnPortMapRemove(NotifyContextCallback&& cb)
+    void setOnPortMapAdd(NotifyCallback&& cb)
     {
-        notifyContextPortCloseCb_ = std::move(cb);
+        userCallbacks_.notifyRequestAddCb_ = std::move(cb);
     }
 
-protected:
-    mutable std::mutex
-        validIgdMutex_; // Mutex used to access these lists and IGDs in a thread-safe manner.
+    // Set the remove port mapping callback handler.
+    void setOnPortMapRemove(NotifyCallback&& cb)
+    {
+        userCallbacks_.notifyRequestRemoveCb_ = std::move(cb);
+    }
 
-    IgdListChangedCallback updateIgdListCb_;         // Callback for when the IGD list changes.
-    NotifyContextCallback notifyContextPortOpenCb_;  // Callback for when a port mapping is added.
-    NotifyContextCallback notifyContextPortCloseCb_; // Callback for when a port mapping is removed.
+    struct UserCallbacks
+    {
+        IgdUpdateCallback onIgdUpdate_;
+        NotifyCallback notifyRequestAddCb_;
+        NotifyCallback notifyRequestRemoveCb_;
+    };
+
+    struct UserCallbacks userCallbacks_;
 };
 
 } // namespace upnp
