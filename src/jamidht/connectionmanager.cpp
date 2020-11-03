@@ -269,10 +269,9 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
     auto& response = info->response_;
     if (!ice)
         return;
+
     auto sdp = IceTransport::parse_SDP(response.ice_msg, *ice);
-    auto hasPubIp = hasPublicIp(sdp);
-    if (!hasPubIp)
-        ice->setInitiatorSession();
+
     if (not ice->start({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
         JAMI_WARN("[Account:%s] start ICE failed", account.getAccountID().c_str());
         onError();
