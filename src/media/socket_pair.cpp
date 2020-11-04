@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2004-2020 Savoir-faire Linux Inc.
- *  Copyright (c) 2002 Fabrice Bellard
+ *  Copyright (c) 2007 The FFmpeg Project
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
