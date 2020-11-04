@@ -4,9 +4,6 @@
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
- *  Portions Copyright (c) 2000 Billy Biggs <bbiggs@div8.net>
- *  Portions Copyright (c) 2004 Wirlab <kphone@wirlab.net>
- *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -38,10 +35,8 @@ DTMF::startTone(char code)
     newTone_ = code;
 }
 
-using std::vector;
-
 bool
-DTMF::generateDTMF(vector<AudioSample>& buffer)
+DTMF::generateDTMF(std::vector<AudioSample>& buffer)
 {
     try {
         if (currentTone_ != 0) {
