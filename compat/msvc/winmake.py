@@ -54,7 +54,6 @@ contrib_build_dir = daemon_dir + r'\contrib\build'
 contrib_tmp_dir = daemon_dir + r'\contrib\tarballs'
 plugins_bin_dir = daemon_dir + r'\..\plugins\build'
 plugins_dir = daemon_dir + r'\..\plugins'
-pluginsList = ['GreenScreen']
 
 # SCM
 wget_args = [
@@ -192,8 +191,10 @@ def make_plugin(pkg_info, force, sdk_version, toolset):
         env_set = 'false' if pkg_info.get('with_env', '') == '' else 'true'
         sdk_to_use = sdk_version if env_set == 'false' else pkg_info.get(
             'with_env', '')
-        cmake_script = "cmake -G " + getCMakeGenerator(getLatestVSVersion(
-        )) + cmake_defines + "-S " + plugin_path + " -B " + plugin_path + "/msvc"
+        cmake_script = "cmake -DCMAKE_SYSTEM_VERSION=" + sdk_version + \
+            " -G " + getCMakeGenerator(getLatestVSVersion()) + cmake_defines + \
+            " -T " + toolset + \
+            " -S " + plugin_path + " -B " + plugin_path + "/msvc"
         root_logger.warning("Cmake generating vcxproj files")
         _ = getSHrunner().exec_batch(cmake_script)
         build(pkg_name,
@@ -203,7 +204,7 @@ def make_plugin(pkg_info, force, sdk_version, toolset):
               env_set,
               sdk_to_use,
               toolset)
-        track_build(pkg_name, version)
+        track_build(pkg_name, version, True)
 
 
 def make_daemon(pkg_info, force, sdk_version, toolset):
@@ -231,11 +232,11 @@ def make_daemon(pkg_info, force, sdk_version, toolset):
           conf=pkg_info.get('configuration', 'Release'))
 
 
-def make(pkg_info, force, sdk_version, toolset):
+def make(pkg_info, force, sdk_version, toolset, isPlugin):
     pkg_name = pkg_info.get('name')
     if pkg_name == 'daemon':
         return make_daemon(pkg_info, force, sdk_version, toolset)
-    if pkg_name in pluginsList:
+    if isPlugin:
         return make_plugin(pkg_info, force, sdk_version, toolset)
     version = pkg_info.get('version')
     pkg_build_uptodate = False
@@ -300,7 +301,7 @@ def make(pkg_info, force, sdk_version, toolset):
                  sdk_to_use,
                  toolset,
                  use_cmake=use_cmake):
-            track_build(pkg_name, version)
+            track_build(pkg_name, version, isPlugin)
         else:
             log.error("Couldn't build contrib " + pkg_name)
             exit(1)
@@ -429,10 +430,10 @@ def apply(pkg_name, patches, win_patches):
     os.chdir(tmp_dir)
 
 
-def get_pkg_file(pkg_name):
+def get_pkg_file(pkg_name, isPlugin):
     if pkg_name == 'daemon':
         pkg_location = daemon_msvc_dir
-    elif (pkg_name in pluginsList):
+    elif (isPlugin):
         pkg_location = plugins_dir + r'\\' + pkg_name
     else:
         pkg_location = daemon_dir + r'\contrib\src\\' + pkg_name
@@ -443,21 +444,21 @@ def get_pkg_file(pkg_name):
     return pkg_json_file
 
 
-def resolve(pkg_name, force=False, sdk_version='', toolset=''):
-    pkg_json_file = get_pkg_file(pkg_name)
+def resolve(pkg_name, force=False, sdk_version='', toolset='', isPlugin=False):
+    pkg_json_file = get_pkg_file(pkg_name, isPlugin)
     with open(pkg_json_file, encoding="utf8", errors='ignore') as json_file:
         log.info('Resolving: ' + pkg_name)
         pkg_info = json.load(json_file)
         try:
-            return make(pkg_info, force, sdk_version, toolset)
+            return make(pkg_info, force, sdk_version, toolset, isPlugin)
         except Exception as e:
             print(e)
             log.error('Make ' + pkg_name + ' failed!')
             sys.exit(1)
 
 
-def track_build(pkg_name, version):
-    if pkg_name in pluginsList:
+def track_build(pkg_name, version, isPlugin):
+    if isPlugin:
         build_file = plugins_bin_dir + '\\.' + pkg_name
     else:
         build_file = contrib_build_dir + '\\.' + pkg_name
@@ -727,6 +728,10 @@ def parse_args():
     ap.add_argument(
         '-t', '--toolset', default=win_toolset_default, type=str,
         help='Use specified platform toolset version')
+    ap.add_argument(
+        '-P', '--plugin', default=False, action='store_true',
+        help="Defines if we're building a plugin"
+    )
 
     parsed_args = ap.parse_args()
 
@@ -774,7 +779,7 @@ def main():
             pkg_json_file = get_pkg_file(parsed_args.clean)
             with open(pkg_json_file, encoding="utf8", errors='ignore') as json_file:
                 pkg_info = json.load(json_file)
-                if (parsed_args.clean not in pluginsList):
+                if (not parsed_args.plugin):
                     exclude_dirs = contrib_build_dir
                     dir_to_clean = exclude_dirs + '\\' + pkg_info['name']
                     file_to_clean = exclude_dirs + '\\.' + pkg_info['name']
@@ -805,7 +810,7 @@ def main():
             os.makedirs(contrib_build_dir)
         log.info('Making: ' + parsed_args.build)
         resolve(parsed_args.build, parsed_args.force,
-                parsed_args.sdk, parsed_args.toolset)
+                parsed_args.sdk, parsed_args.toolset, parsed_args.plugin)
         log.info('Make done for: ' + parsed_args.build)
 
     log.debug("--- %s ---" % secondsToStr(time.time() - start_time))
