@@ -563,8 +563,8 @@ AccountManager::forEachDevice(const dht::InfoHash& to,
             }
             return true;
         },
-        [=, end = std::move(end)](bool /*ok*/) {
-            JAMI_DBG("Found %lu devices for %s", treatedDevices->size(), to.to_c_str());
+        [=, end = std::move(end)](bool ok) {
+            JAMI_DBG("Found %lu devices for %s - ok: %u", treatedDevices->size(), to.to_c_str(), ok);
             if (end)
                 end(not treatedDevices->empty());
         });
