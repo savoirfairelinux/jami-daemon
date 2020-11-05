@@ -77,6 +77,7 @@ public:
     std::vector<std::string> haveRefs_ {};
     std::string cachedPkt_ {};
     std::atomic_bool isDestroying_ {false};
+    onFetchedCb onFetchedCb_ {};
 };
 
 bool
@@ -362,6 +363,8 @@ GitServer::Impl::sendPackData()
     // Clear sent data
     haveRefs_.clear();
     wantedReference_.clear();
+    if (onFetchedCb_)
+        onFetchedCb_();
 }
 
 std::map<std::string, std::string>
@@ -409,6 +412,14 @@ GitServer::~GitServer()
     stop();
     pimpl_.reset();
     JAMI_INFO("GitServer destroyed");
+}
+
+void
+GitServer::setOnFetched(const onFetchedCb& cb)
+{
+    if (!pimpl_)
+        return;
+    pimpl_->onFetchedCb_ = cb;
 }
 
 void
