@@ -29,6 +29,7 @@ public:
     virtual void messageReceived(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*message*/){}
     virtual void conversationRequestReceived(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*metadatas*/){}
     virtual void conversationReady(const std::string& /*accountId*/, const std::string& /* conversationId */){}
+    virtual void conversationRemoved(const std::string& /*accountId*/, const std::string& /* conversationId */){}
 };
 %}
 
@@ -62,4 +63,5 @@ public:
     virtual void messageReceived(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*message*/){}
     virtual void conversationRequestReceived(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*metadatas*/){}
     virtual void conversationReady(const std::string& /*accountId*/, const std::string& /* conversationId */){}
+    virtual void conversationRemoved(const std::string& /*accountId*/, const std::string& /* conversationId */){}
 };
