@@ -1,0 +1,88 @@
+ src/dht.cpp       | 15 ++++++++++++---
+ src/dhtrunner.cpp |  1 +
+ src/op_cache.cpp  |  6 +++++-
+ src/search.h      |  1 +
+ 4 files changed, 19 insertions(+), 4 deletions(-)
+
+diff --git a/src/dht.cpp b/src/dht.cpp
+index ef17480..0af4f56 100644
+--- a/src/dht.cpp
++++ b/src/dht.cpp
+@@ -771,8 +771,10 @@ Dht::search(const InfoHash& id, sa_family_t af, GetCallback gcb, QueryCallback q
+     if (!isRunning(af)) {
+         if (logger_)
+             logger_->e(id, "[search %s IPv%c] unsupported protocol", id.toString().c_str(), (af == AF_INET) ? '4' : '6');
+-        if (dcb)
++        if (dcb) {
++            printf("@@@ NOT RUNNING\n");
+             dcb(false, {});
++        }
+         return {};
+     }
+ 
+@@ -1107,8 +1109,15 @@ std::vector<Sp<Value>>
+ Dht::getLocal(const InfoHash& id, const Value::Filter& f) const
+ {
+     auto s = store.find(id);
+-    if (s == store.end()) return {};
+-    return s->second.get(f);
++    if (s == store.end()) {
++        printf("@@@ %s not found", id.to_c_str());
++        return {};
++    }
++    auto res =  s->second.get(f);
++    if (res.empty()) {
++        printf("@@@ %s empty", id.to_c_str());
++    }
++    return res;
+ }
+ 
+ Sp<Value>
+diff --git a/src/dhtrunner.cpp b/src/dhtrunner.cpp
+index 2ece5e2..cfcae36 100644
+--- a/src/dhtrunner.cpp
++++ b/src/dhtrunner.cpp
+@@ -691,6 +691,7 @@ void
+ DhtRunner::get(InfoHash hash, GetCallback vcb, DoneCallback dcb, Value::Filter f, Where w)
+ {
+     if (running != State::Running) {
++        printf("@@@ NOT RUNNING 2\n");
+         if (dcb) dcb(false, {});
+         return;
+     }
+diff --git a/src/op_cache.cpp b/src/op_cache.cpp
+index 6c6ebb7..e0d435b 100644
+--- a/src/op_cache.cpp
++++ b/src/op_cache.cpp
+@@ -178,7 +178,10 @@ SearchCache::listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value
+         op = ops.emplace(q, std::unique_ptr<OpCache>(new OpCache)).first;
+         auto& cache = *op->second;
+         cache.searchToken = onListen(q, [&](const std::vector<Sp<Value>>& values, bool expired){
+-            return cache.onValue(values, expired);
++            //printf("@@@ LISTEN %p\n", this);
++            auto res = cache.onValue(values, expired);
++            //printf("@@@ LISTEN END %p\n", this);
++            return res;
+         }, [&](ListenSyncStatus status) {
+             cache.onNodeChanged(status);
+         });
+@@ -236,6 +239,7 @@ SearchCache::get(const Value::Filter& f, const Sp<Query>& q, const GetCallback&
+     if (op != ops.end()) {
+         auto vals = op->second->get(f);
+         if ((not vals.empty() and not gcb(vals)) or op->second->isSynced()) {
++            printf("@@@ CALL DONE %u\n", vals.size());
+             dcb(true, {});
+             return true;
+         }
+diff --git a/src/search.h b/src/search.h
+index b7a5ffc..32b5952 100644
+--- a/src/search.h
++++ b/src/search.h
+@@ -408,6 +408,7 @@ struct Dht::Search {
+         if (opExpirationJob)
+             opExpirationJob->cancel();
+         for (auto& get : callbacks) {
++            printf("@@@ destroy\n");
+             get.second.done_cb(false, {});
+             get.second.done_cb = {};
+         }
