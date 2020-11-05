@@ -133,6 +133,7 @@ struct ConvInfo
     std::string id {};
     time_t created {0};
     time_t removed {0};
+    time_t erased {0};
 
     ConvInfo() = default;
     ConvInfo(const Json::Value& json)
@@ -140,6 +141,7 @@ struct ConvInfo
         id = json["id"].asString();
         created = json["created"].asLargestUInt();
         removed = json["removed"].asLargestUInt();
+        erased = json["erased"].asLargestUInt();
     }
 
     Json::Value toJson() const
@@ -150,10 +152,13 @@ struct ConvInfo
         if (removed) {
             json["removed"] = Json::Int64(removed);
         }
+        if (erased) {
+            json["erased"] = Json::Int64(erased);
+        }
         return json;
     }
 
-    MSGPACK_DEFINE_MAP(id, created, removed)
+    MSGPACK_DEFINE_MAP(id, created, removed, erased)
 };
 
 // ConversationRequest
@@ -2416,7 +2421,8 @@ JamiAccount::doRegister_()
                             return;
                         }
                     }
-                    if (conversations_.find(conversationId) == conversations_.end()) {
+                    auto itConv = conversations_.find(conversationId);
+                    if (itConv == conversations_.end()) {
                         JAMI_WARN("Git server requested, but for a non existing conversation (%s)",
                                   conversationId.c_str());
                         return;
@@ -2432,6 +2438,12 @@ JamiAccount::doRegister_()
                               deviceId.to_c_str(),
                               channel->channel());
                     auto gs = std::make_unique<GitServer>(accountId, conversationId, channel);
+                    gs->setOnFetched([w = weak(), conversationId](const std::string&) {
+                        auto shared = w.lock();
+                        if (!shared)
+                            return;
+                        shared->removeRepository(conversationId, true);
+                    });
                     const dht::Value::Id serverId = ValueIdDist()(rand);
                     {
                         std::lock_guard<std::mutex> lk(gitServersMtx_);
@@ -3823,6 +3835,53 @@ JamiAccount::declineConversationRequest(const std::string& conversationId)
 bool
 JamiAccount::removeConversation(const std::string& conversationId)
 {
+    // TODO lock convInfos + conversations_
+    auto it = conversations_.find(conversationId);
+    if (it == conversations_.end()) {
+        JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
+        return false;
+    }
+    auto members = it->second->getMembers();
+    auto hasMembers = !(members.size() == 1
+                        && username_.find(members[0]["uri"]) != std::string::npos);
+    // Update convInfos
+    for (auto& info : convInfos_) {
+        if (info.id == conversationId) {
+            info.removed = std::time(nullptr);
+            saveConvInfo();
+            if (hasMembers) {
+                // Sync now, because it can take some time to really removes the datas
+                runOnMainThread([w = weak()]() {
+                    // Invite connected devices for the same user
+                    auto shared = w.lock();
+                    if (!shared or !shared->accountManager_)
+                        return;
+
+                    // Send to connected devices
+                    shared->syncWithConnected();
+                });
+            }
+            break;
+        }
+    }
+    auto commitId = it->second->leave();
+    if (hasMembers) {
+        JAMI_DBG() << "Wait that someone sync that user left conversation " << conversationId;
+        // Commit that we left
+        if (!commitId.empty()) {
+            // Do not sync as it's synched by convInfos
+            sendMessageNotification(*it->second, commitId, false);
+        } else {
+            JAMI_ERR("Failed to send message to conversation %s", conversationId.c_str());
+        }
+        // In this case, we wait that another peer sync the conversation
+        // to definitely remove it from the device. This is to inform the
+        // peer that we left the conversation and never want to receives
+        // any messages
+        return true;
+    }
+    // Else we are the last member, so we can remove
+    removeRepository(conversationId, true);
     return true;
 }
 
@@ -3831,7 +3890,9 @@ JamiAccount::getConversations()
 {
     std::vector<std::string> result;
     result.reserve(conversations_.size());
-    for (const auto& [key, _] : conversations_) {
+    for (const auto& [key, conv] : conversations_) {
+        if (conv->isRemoving())
+            continue;
         result.emplace_back(key);
     }
     return result;
@@ -3917,20 +3978,7 @@ JamiAccount::sendMessage(const std::string& conversationId,
                                                                    messages.front());
         }
         if (!commitId.empty()) {
-            Json::Value message;
-            message["id"] = conversationId;
-            message["commit"] = commitId;
-            message["deviceId"] = getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
-            Json::StreamWriterBuilder builder;
-            const auto text = Json::writeString(builder, message);
-            for (const auto& members : conversation->second->getMembers()) {
-                auto uri = members.at("uri");
-                if (username_.find(uri) != std::string::npos)
-                    continue;
-                // Announce to all members that a new message is sent
-                if (announce)
-                    sendTextMessage(uri, {{"application/im-gitmessage-id", text}});
-            }
+            sendMessageNotification(*conversation->second, commitId, true);
         } else {
             JAMI_ERR("Failed to send message to conversation %s", conversationId.c_str());
         }
@@ -3975,6 +4023,10 @@ JamiAccount::onNewGitCommit(const std::string& peer,
                             const std::string& conversationId,
                             const std::string& commitId)
 {
+    for (auto& info : convInfos_)
+        if (info.id == conversationId)
+            if (info.removed) // ignore new commits for removed conversation
+                return;
     JAMI_DBG("on new commit notification from %s, for %s, commit %s",
              peer.c_str(),
              conversationId.c_str(),
@@ -4533,8 +4585,9 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
                     std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
                     conversationsRequests_.erase(convId);
                 }
+                auto itConv = conversations_.find(convId);
                 if (not removed) {
-                    if (conversations_.find(convId) == conversations_.end()) {
+                    if (itConv == conversations_.end()) {
                         {
                             std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
                             auto it = pendingConversationsFetch_.find(convId);
@@ -4579,6 +4632,11 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
                     for (auto& info : convInfos_) {
                         if (info.id == convId) {
                             info.removed = std::time(nullptr);
+                            if (jsonConv.isMember("erased")) {
+                                info.erased = std::time(nullptr);
+                                removeRepository(convId, false);
+                            }
+                            break;
                         }
                     }
                 }
@@ -4696,8 +4754,13 @@ JamiAccount::loadConvInfo()
         return;
     }
 
-    for (auto& info : convInfo)
+    for (auto& info : convInfo) {
         convInfos_.emplace_back(info);
+        auto itConv = conversations_.find(info.id);
+        if (itConv != conversations_.end() && info.removed) {
+            itConv->second->setRemovingFlag();
+        }
+    }
 }
 
 void
@@ -4729,6 +4792,54 @@ JamiAccount::saveConvRequests()
     std::ofstream file(idPath_ + DIR_SEPARATOR_STR "convRequests",
                        std::ios::trunc | std::ios::binary);
     msgpack::pack(file, conversationsRequests_);
+}
+
+void
+JamiAccount::removeRepository(const std::string& conversationId, bool sync)
+{
+    auto it = conversations_.find(conversationId);
+    if (it != conversations_.end() && it->second && it->second->isRemoving()) {
+        JAMI_DBG() << "Remove conversation: " << conversationId;
+        it->second->erase();
+        conversations_.erase(it);
+        // Update convInfos
+        if (!sync)
+            return;
+        for (auto& info : convInfos_) {
+            if (info.id == conversationId) {
+                info.erased = std::time(nullptr);
+                saveConvInfo();
+                runOnMainThread([w = weak()]() {
+                    // Send to connected devices
+                    if (auto shared = w.lock())
+                        shared->syncWithConnected();
+                });
+                break;
+            }
+        }
+    }
+}
+
+void
+JamiAccount::sendMessageNotification(const Conversation& conversation,
+                                     const std::string& commitId,
+                                     bool sync)
+{
+    Json::Value message;
+    message["id"] = conversation.id();
+    message["commit"] = commitId;
+    // TODO avoid lookup
+    message["deviceId"] = getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    Json::StreamWriterBuilder builder;
+    const auto text = Json::writeString(builder, message);
+    for (const auto& members : conversation.getMembers()) {
+        auto uri = members.at("uri");
+        // Do not send to ourself, it's synced via convInfos
+        if (sync && username_.find(uri) != std::string::npos)
+            continue;
+        // Announce to all members that a new message is sent
+        sendTextMessage(uri, {{"application/im-gitmessage-id", text}});
+    }
 }
 
 } // namespace jami
