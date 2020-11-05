@@ -55,7 +55,11 @@ public:
             throw std::logic_error("Couldn't open " + path);
         repository_ = {std::move(repo), git_repository_free};
     }
-    ~Impl() = default;
+    ~Impl()
+    {
+        if (repository_)
+            repository_.reset();
+    }
 
     GitSignature signature();
     bool mergeFastforward(const git_oid* target_oid, int is_unborn);
@@ -710,7 +714,7 @@ ConversationRepository::Impl::log(const std::string& from, const std::string& to
     git_revwalk* walker_ptr = nullptr;
     if (git_revwalk_new(&walker_ptr, repository_.get()) < 0
         || git_revwalk_push(walker_ptr, &oid) < 0) {
-        JAMI_ERR("Couldn't init revwalker for conversation %s", id_.c_str());
+        JAMI_DBG("Couldn't init revwalker for conversation %s", id_.c_str());
         return commits;
     }
     GitRevWalker walker {walker_ptr, git_revwalk_free};
@@ -1027,15 +1031,24 @@ ConversationRepository::commitMessage(const std::string& msg)
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::logN(const std::string& last, unsigned n)
+ConversationRepository::logN(const std::string& last, unsigned n) const
 {
     return pimpl_->log(last, "", n);
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::log(const std::string& from, const std::string& to)
+ConversationRepository::log(const std::string& from, const std::string& to) const
 {
     return pimpl_->log(from, to, 0);
+}
+
+std::optional<ConversationCommit>
+ConversationRepository::getCommit(const std::string& commitId) const
+{
+    auto commits = logN(commitId, 1);
+    if (commits.empty())
+        return std::nullopt;
+    return std::move(commits[0]);
 }
 
 bool
@@ -1157,8 +1170,6 @@ ConversationRepository::changedFiles(const std::string_view& diffStats)
 std::string
 ConversationRepository::join()
 {
-    if (!pimpl_)
-        return {};
     // Check that not already member
     std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
     auto account = pimpl_->account_.lock();
@@ -1205,6 +1216,87 @@ ConversationRepository::join()
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
     return pimpl_->commit(Json::writeString(wbuilder, json));
+}
+
+std::string
+ConversationRepository::leave()
+{
+    // TODO simplify
+    auto account = pimpl_->account_.lock();
+    if (!account)
+        return {};
+    auto details = account->getAccountDetails();
+    auto deviceId = details[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto uri = details[DRing::Account::ConfProperties::USERNAME];
+    auto name = details[DRing::Account::ConfProperties::DISPLAYNAME];
+    if (name.empty())
+        name = account
+                   ->getVolatileAccountDetails()[DRing::Account::VolatileProperties::REGISTERED_NAME];
+    if (name.empty())
+        name = deviceId;
+
+    // Remove related files
+    std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
+
+    std::string adminFile = repoPath + "admins" + DIR_SEPARATOR_STR + uri + ".crt";
+    std::string memberFile = repoPath + "members" + DIR_SEPARATOR_STR + uri + ".crt";
+    std::string crlsPath = repoPath + "CRLs";
+
+    if (fileutils::isFile(adminFile)) {
+        fileutils::removeAll(adminFile, true);
+    }
+
+    if (fileutils::isFile(memberFile)) {
+        fileutils::removeAll(memberFile, true);
+    }
+
+    // /CRLs
+    for (const auto& crl : account->identity().second->getRevocationLists()) {
+        if (!crl)
+            continue;
+        auto v = crl->getNumber();
+        std::stringstream ss;
+        ss << std::hex;
+        for (const auto& b : v)
+            ss << (unsigned) b;
+        std::string crlPath = crlsPath + DIR_SEPARATOR_STR + deviceId + DIR_SEPARATOR_STR + ss.str()
+                              + ".crl";
+
+        if (fileutils::isFile(crlPath)) {
+            fileutils::removeAll(crlPath, true);
+        }
+    }
+
+    // Devices
+    for (const auto& d : account->getKnownDevices()) {
+        std::string deviceFile = repoPath + "devices" + DIR_SEPARATOR_STR + d.first + ".crt";
+        if (fileutils::isFile(deviceFile)) {
+            fileutils::removeAll(deviceFile, true);
+        }
+    }
+
+    if (!git_add_all(pimpl_->repository_.get())) {
+        return {};
+    }
+
+    Json::Value json;
+    json["action"] = "remove";
+    json["uri"] = uri;
+    json["type"] = "member";
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    return pimpl_->commit(Json::writeString(wbuilder, json));
+}
+
+void
+ConversationRepository::erase()
+{
+    // First, we need to add the member file to the repository if not present
+    std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
+
+    JAMI_DBG() << "Erasing " << repoPath;
+    fileutils::removeAll(repoPath, true);
 }
 
 } // namespace jami
