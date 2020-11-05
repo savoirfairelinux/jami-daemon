@@ -93,6 +93,12 @@ struct DRING_PUBLIC ConversationSignal
         using cb_type = void(const std::string& /*accountId*/,
                              const std::string& /* conversationId */);
     };
+    struct DRING_PUBLIC ConversationRemoved
+    {
+        constexpr static const char* name = "ConversationRemoved";
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /* conversationId */);
+    };
 };
 
 } // namespace DRing
