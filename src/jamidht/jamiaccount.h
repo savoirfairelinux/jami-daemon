@@ -501,8 +501,8 @@ public:
     std::string startConversation();
     void acceptConversationRequest(const std::string& conversationId);
     void declineConversationRequest(const std::string& conversationId);
-    bool removeConversation(const std::string& conversationId);
     std::vector<std::string> getConversations();
+    bool removeConversation(const std::string& conversationId);
     std::vector<std::map<std::string, std::string>> getConversationRequests();
 
     // Member management
@@ -528,9 +528,17 @@ public:
                         const std::string& deviceId,
                         const std::string& conversationId,
                         const std::string& commitId) override;
+    /**
+     * Pull remote device (do not do it if commitId is already in the current repo)
+     * @param peer              Contact URI
+     * @param deviceId          Contact's device
+     * @param conversationId
+     * @param commitId (optional)
+     */
     void fetchNewCommits(const std::string& peer,
                          const std::string& deviceId,
-                         const std::string& conversationId);
+                         const std::string& conversationId,
+                         const std::string& commitId = "");
 
     // Invites
     void onConversationRequest(const std::string& from, const Json::Value&) override;
@@ -728,15 +736,8 @@ private:
     std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
 
     /** Conversations */
-        mutable std::mutex conversationsMtx_ {};
-    std::map<std::string, std::unique_ptr<Conversation>> conversations_;
-    std::map<std::string, Conversation*> conversationsUsed_;
-    void stopUseConversation(const std::string& convId)
-    {
-        std::lock_guard<std::mutex> lk(conversationsMtx_);
-        conversationsUsed_.erase(convId);
-	
-    }
+    mutable std::mutex conversationsMtx_ {};
+    std::map<std::string, std::shared_ptr<Conversation>> conversations_;
     bool isConversation(const std::string& convId) const
     {
         std::lock_guard<std::mutex> lk(conversationsMtx_);
@@ -800,6 +801,7 @@ private:
     pjsip_transport* via_tp_ {nullptr};
 
     std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
+    mutable std::mutex connManagerMtx_ {};
     std::unique_ptr<ConnectionManager> connectionManager_;
     GitSocketList gitSocketList_ {};
 
@@ -930,6 +932,23 @@ private:
     void syncInfos(const std::shared_ptr<ChannelSocket>& socket);
     void syncWithConnected();
     std::atomic_bool needsConvSync {true};
+
+    /**
+     * Remove a repository and all files
+     * @param convId
+     * @param sync      If we send an update to other account's devices
+     */
+    void removeRepository(const std::string& convId, bool sync);
+
+    /**
+     * Send a message notification to all members
+     * @param conversation
+     * @param commit
+     * @param sync      If we send an update to other account's devices
+     */
+    void sendMessageNotification(const Conversation& conversation,
+                                 const std::string& commitId,
+                                 bool sync);
 };
 
 static inline std::ostream&
