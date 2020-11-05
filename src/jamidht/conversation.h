@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <functional>
 #include <string>
 #include <vector>
 #include <map>
@@ -29,7 +30,11 @@ namespace jami {
 class JamiAccount;
 class ConversationRepository;
 
-class Conversation
+using OnPullCb = std::function<void(bool fetchOk,std::vector<std::map<std::string, std::string>>&& newMessages)>;
+using OnLoadMessages = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
+
+
+class Conversation : public std::enable_shared_from_this<Conversation>
 {
 public:
     Conversation(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId = "");
@@ -79,21 +84,23 @@ public:
                             const std::string& parent = "");
     /**
      * Get a range of messages
+     * @param cb        The callback when loaded
      * @param from      The most recent message ("" = last (default))
      * @param n         Number of messages to get (0 = no limit (default))
-     * @return the range of messages
      */
-    std::vector<std::map<std::string, std::string>> loadMessages(const std::string& fromMessage = "",
-                                                                 size_t n = 0);
+    void loadMessages(const OnLoadMessages& cb, const std::string& fromMessage = "", size_t n = 0);
     /**
      * Get a range of messages
+     * @param cb        The callback when loaded
      * @param fromMessage      The most recent message ("" = last (default))
      * @param toMessage        The oldest message ("" = last (default)), no limit
-     * @return the range of messages
      */
-    std::vector<std::map<std::string, std::string>> loadMessages(const std::string& fromMessage = "",
-                                                                 const std::string& toMessage = "");
-
+    void loadMessages(const OnLoadMessages& cb, const std::string& fromMessage = "", const std::string& toMessage = "");
+    /**
+     * Get last commit id
+     * @return last commit id
+     */
+    std::string lastCommitId() const;
     /**
      * Get new messages from peer
      * @param uri       the peer
@@ -109,12 +116,62 @@ public:
     bool mergeHistory(const std::string& uri);
 
     /**
+     * Fetch and merge from peer
+     * @param uri       Peer
+     * @param cb        On pulled callback
+     * @param commitId  Commit id that triggered this fetch
+     */
+    void pull(const std::string& uri, OnPullCb&& cb, std::string commitId = "");
+
+    /**
      * Generate an invitation to send to new contacts
      * @return the invite to send
      */
     std::map<std::string, std::string> generateInvitation() const;
 
+    /**
+     * Leave a conversation
+     * @return commit id to send
+     */
+    std::string leave();
+
+    /**
+     * Set a conversation as removing (when loading convInfo and still not sync)
+     * @todo: not a big fan to see this here. can be set in the constructor
+     * cause it's used by jamiaccount when loading conversations
+     */
+    void setRemovingFlag();
+
+    /**
+     * Check if we are removing the conversation
+     * @return true if left the room
+     */
+    bool isRemoving();
+
+    /**
+     * Erase all related datas
+     */
+    void erase();
+
 private:
+
+    std::shared_ptr<Conversation> shared()
+    {
+        return std::static_pointer_cast<Conversation>(shared_from_this());
+    }
+    std::shared_ptr<Conversation const> shared() const
+    {
+        return std::static_pointer_cast<Conversation const>(shared_from_this());
+    }
+    std::weak_ptr<Conversation> weak()
+    {
+        return std::static_pointer_cast<Conversation>(shared_from_this());
+    }
+    std::weak_ptr<Conversation const> weak() const
+    {
+        return std::static_pointer_cast<Conversation const>(shared_from_this());
+    }
+
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };
