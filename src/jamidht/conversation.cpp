@@ -58,6 +58,7 @@ public:
 
     std::unique_ptr<ConversationRepository> repository_;
     std::weak_ptr<JamiAccount> account_;
+    std::atomic_bool isRemoving_ {false};
     std::vector<std::map<std::string, std::string>> loadMessages(const std::string& fromMessage = "",
                                                                  const std::string& toMessage = "",
                                                                  size_t n = 0);
@@ -307,6 +308,40 @@ Conversation::generateInvitation() const
     wbuilder["indentation"] = "";
     invite["application/invite+json"] = Json::writeString(wbuilder, root);
     return invite;
+}
+
+std::string
+Conversation::leave()
+{
+    if (!pimpl_)
+        return {};
+    setRemovingFlag();
+    return pimpl_->repository_->leave();
+}
+
+void
+Conversation::setRemovingFlag()
+{
+    if (!pimpl_)
+        return;
+    pimpl_->isRemoving_ = true;
+}
+
+bool
+Conversation::isRemoving()
+{
+    if (!pimpl_)
+        return false;
+    // TODO commit
+    return pimpl_->isRemoving_;
+}
+
+void
+Conversation::erase()
+{
+    if (!pimpl_->repository_)
+        return;
+    pimpl_->repository_->erase();
 }
 
 } // namespace jami

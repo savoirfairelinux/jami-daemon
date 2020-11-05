@@ -58,6 +58,9 @@ public:
 private:
     void testCreateConversation();
     void testGetConversation();
+    void testGetConversationsAfterRm();
+    void testRemoveInvalidConversation();
+    void testRemoveConversationNoMember();
     void testAddMember();
     void testAddMemberInvalid();
     void testAddOfflineMemberThenConnects();
@@ -74,6 +77,9 @@ private:
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
     CPPUNIT_TEST(testGetConversation);
+    CPPUNIT_TEST(testGetConversationsAfterRm);
+    CPPUNIT_TEST(testRemoveInvalidConversation);
+    CPPUNIT_TEST(testRemoveConversationNoMember);
     CPPUNIT_TEST(testAddMember);
     CPPUNIT_TEST(testAddMemberInvalid);
     CPPUNIT_TEST(testAddOfflineMemberThenConnects);
@@ -234,6 +240,118 @@ ConversationTest::testGetConversation()
     auto conversations = aliceAccount->getConversations();
     CPPUNIT_ASSERT(conversations.size() == 1);
     CPPUNIT_ASSERT(conversations.front() == convId);
+}
+
+void
+ConversationTest::testGetConversationsAfterRm()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceDeviceId = aliceAccount
+                             ->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto uri = aliceAccount->getAccountDetails()[DRing::Account::ConfProperties::USERNAME];
+    if (uri.find("ring:") == 0)
+        uri = uri.substr(std::string("ring:").size());
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == aliceId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    // Start conversation
+    auto convId = aliceAccount->startConversation();
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
+
+    auto conversations = aliceAccount->getConversations();
+    CPPUNIT_ASSERT(conversations.size() == 1);
+    CPPUNIT_ASSERT(aliceAccount->removeConversation(convId));
+    conversations = aliceAccount->getConversations();
+    CPPUNIT_ASSERT(conversations.size() == 0);
+}
+
+void
+ConversationTest::testRemoveInvalidConversation()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceDeviceId = aliceAccount
+                             ->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto uri = aliceAccount->getAccountDetails()[DRing::Account::ConfProperties::USERNAME];
+    if (uri.find("ring:") == 0)
+        uri = uri.substr(std::string("ring:").size());
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == aliceId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    // Start conversation
+    auto convId = aliceAccount->startConversation();
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
+
+    auto conversations = aliceAccount->getConversations();
+    CPPUNIT_ASSERT(conversations.size() == 1);
+    CPPUNIT_ASSERT(!aliceAccount->removeConversation("foo"));
+    conversations = aliceAccount->getConversations();
+    CPPUNIT_ASSERT(conversations.size() == 1);
+}
+
+void
+ConversationTest::testRemoveConversationNoMember()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceDeviceId = aliceAccount
+                             ->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto uri = aliceAccount->getAccountDetails()[DRing::Account::ConfProperties::USERNAME];
+    if (uri.find("ring:") == 0)
+        uri = uri.substr(std::string("ring:").size());
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == aliceId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    // Start conversation
+    auto convId = aliceAccount->startConversation();
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
+
+    // Assert that repository exists
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+
+    auto conversations = aliceAccount->getConversations();
+    CPPUNIT_ASSERT(conversations.size() == 1);
+    // Removing the conversation will erase all related files
+    CPPUNIT_ASSERT(aliceAccount->removeConversation(convId));
+    conversations = aliceAccount->getConversations();
+    CPPUNIT_ASSERT(conversations.size() == 0);
+    CPPUNIT_ASSERT(!fileutils::isDirectory(repoPath));
 }
 
 void
