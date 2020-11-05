@@ -509,8 +509,8 @@ public:
     std::string startConversation();
     void acceptConversationRequest(const std::string& conversationId);
     void declineConversationRequest(const std::string& conversationId);
-    bool removeConversation(const std::string& conversationId);
     std::vector<std::string> getConversations();
+    bool removeConversation(const std::string& conversationId);
     std::vector<std::map<std::string, std::string>> getConversationRequests();
 
     // Member management
@@ -736,15 +736,8 @@ private:
     std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
 
     /** Conversations */
-        mutable std::mutex conversationsMtx_ {};
-    std::map<std::string, std::unique_ptr<Conversation>> conversations_;
-    std::map<std::string, Conversation*> conversationsUsed_;
-    void stopUseConversation(const std::string& convId)
-    {
-        std::lock_guard<std::mutex> lk(conversationsMtx_);
-        conversationsUsed_.erase(convId);
-	
-    }
+    mutable std::mutex conversationsMtx_ {};
+    std::map<std::string, std::shared_ptr<Conversation>> conversations_;
     bool isConversation(const std::string& convId) const
     {
         std::lock_guard<std::mutex> lk(conversationsMtx_);
@@ -932,6 +925,23 @@ private:
     void syncInfos(const std::shared_ptr<ChannelSocket>& socket);
     void syncWithConnected();
     std::atomic_bool needsConvSync {true};
+
+    /**
+     * Remove a repository and all files
+     * @param convId
+     * @param sync      If we send an update to other account's devices
+     */
+    void removeRepository(const std::string& convId, bool sync);
+
+    /**
+     * Send a message notification to all members
+     * @param conversation
+     * @param commit
+     * @param sync      If we send an update to other account's devices
+     */
+    void sendMessageNotification(const Conversation& conversation,
+                                 const std::string& commitId,
+                                 bool sync);
 };
 
 static inline std::ostream&
