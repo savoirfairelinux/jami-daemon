@@ -17,6 +17,7 @@
  */
 #pragma once
 
+#include <optional>
 #include <git2.h>
 #include <memory>
 #include <opendht/default_types.h>
@@ -141,8 +142,10 @@ public:
      * @param n     Max commits number to get (default: 0)
      * @return a list of commits
      */
-    std::vector<ConversationCommit> logN(const std::string& last = "", unsigned n = 0);
-    std::vector<ConversationCommit> log(const std::string& from = "", const std::string& to = "");
+    std::vector<ConversationCommit> logN(const std::string& last = "", unsigned n = 0) const;
+    std::vector<ConversationCommit> log(const std::string& from = "",
+                                        const std::string& to = "") const;
+    std::optional<ConversationCommit> getCommit(const std::string& commitId) const;
 
     /**
      * Merge another branch into the main branch
@@ -172,6 +175,17 @@ public:
      * @return commit Id
      */
     std::string join();
+
+    /**
+     * Erase self from repository
+     * @return commit Id
+     */
+    std::string leave();
+
+    /**
+     * Erase repository
+     */
+    void erase();
 
 private:
     ConversationRepository() = delete;
