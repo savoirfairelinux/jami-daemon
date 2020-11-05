@@ -52,7 +52,11 @@ public:
             throw std::logic_error("Couldn't open " + path);
         repository_ = {std::move(repo), git_repository_free};
     }
-    ~Impl() = default;
+    ~Impl()
+    {
+        if (repository_)
+            repository_.reset();
+    }
 
     GitSignature signature();
     bool mergeFastforward(const git_oid* target_oid, int is_unborn);
@@ -85,8 +89,7 @@ create_empty_repository(const std::string path)
     git_repository_init_options opts = GIT_REPOSITORY_INIT_OPTIONS_INIT;
     opts.flags |= GIT_REPOSITORY_INIT_MKPATH;
     opts.initial_head = "main";
-    if (git_repository_init_ext(&repo, path.c_str(), &opts)
-        < 0) {
+    if (git_repository_init_ext(&repo, path.c_str(), &opts) < 0) {
         JAMI_ERR("Couldn't create a git repository in %s", path.c_str());
     }
     return {std::move(repo), git_repository_free};
@@ -602,12 +605,7 @@ ConversationRepository::Impl::commit(const std::string& msg)
 
     // Move commit to main branch
     git_reference* ref_ptr = nullptr;
-    if (git_reference_create(&ref_ptr,
-                             repository_.get(),
-                             "refs/heads/main",
-                             &commit_id,
-                             true,
-                             nullptr)
+    if (git_reference_create(&ref_ptr, repository_.get(), "refs/heads/main", &commit_id, true, nullptr)
         < 0) {
         JAMI_WARN("Could not move commit to main");
     }
@@ -931,7 +929,6 @@ ConversationRepository::addMember(const std::shared_ptr<dht::crypto::Certificate
         return {};
     Json::Value json;
     json["body"] = "Add member " + memberId;
-    ;
     json["type"] = "member";
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
@@ -1165,6 +1162,89 @@ ConversationRepository::changedFiles(const std::string& diffStats)
         changedFiles.emplace_back(line.substr(1));
     }
     return changedFiles;
+}
+
+std::string
+ConversationRepository::leave()
+{
+    if (!pimpl_)
+        return {};
+
+    auto account = pimpl_->account_.lock();
+    if (!account)
+        return {};
+    auto details = account->getAccountDetails();
+    auto deviceId = details[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto uri = details[DRing::Account::ConfProperties::USERNAME];
+    auto name = details[DRing::Account::ConfProperties::DISPLAYNAME];
+    if (name.empty())
+        name = account
+                   ->getVolatileAccountDetails()[DRing::Account::VolatileProperties::REGISTERED_NAME];
+    if (name.empty())
+        name = deviceId;
+
+    // Remove related files
+    std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
+
+    std::string adminFile = repoPath + "admins" + DIR_SEPARATOR_STR + uri + ".crt";
+    std::string memberFile = repoPath + "members" + DIR_SEPARATOR_STR + uri + ".crt";
+    std::string crlsPath = repoPath + "CRLs";
+
+    if (fileutils::isFile(adminFile)) {
+        fileutils::removeAll(adminFile, true);
+    }
+
+    if (fileutils::isFile(memberFile)) {
+        fileutils::removeAll(memberFile, true);
+    }
+
+    // /CRLs
+    for (const auto& crl : account->identity().second->getRevocationLists()) {
+        if (!crl)
+            continue;
+        auto v = crl->getNumber();
+        std::stringstream ss;
+        ss << std::hex;
+        for (const auto& b : v)
+            ss << (unsigned) b;
+        std::string crlPath = crlsPath + DIR_SEPARATOR_STR + deviceId + DIR_SEPARATOR_STR + ss.str()
+                              + ".crl";
+
+        if (fileutils::isFile(crlPath)) {
+            fileutils::removeAll(crlPath, true);
+        }
+    }
+
+    // Devices
+    for (const auto& d : account->getKnownDevices()) {
+        std::string deviceFile = repoPath + "devices" + DIR_SEPARATOR_STR + d.first + ".crt";
+        if (fileutils::isFile(deviceFile)) {
+            fileutils::removeAll(deviceFile, true);
+        }
+    }
+
+    if (!pimpl_->add(repoPath.c_str()))
+        return {};
+    Json::Value json;
+    json["body"] = "Remove member " + uri;
+    json["type"] = "member";
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    return pimpl_->commit(Json::writeString(wbuilder, json));
+}
+
+void
+ConversationRepository::erase()
+{
+    if (!pimpl_)
+        return;
+
+    // First, we need to add the member file to the repository if not present
+    std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
+
+    JAMI_DBG() << "Erasing " << repoPath;
+    fileutils::removeAll(repoPath, true);
 }
 
 } // namespace jami

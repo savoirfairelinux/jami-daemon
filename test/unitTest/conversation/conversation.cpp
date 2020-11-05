@@ -58,6 +58,9 @@ public:
 private:
     void testCreateConversation();
     void testGetConversation();
+    void testGetConversationsAfterRm();
+    void testRemoveInvalidConversation();
+    void testRemoveConversationNoMember();
     void testAddMember();
     void testAddOfflineMemberThenConnects();
     void testGetMembers();
@@ -73,6 +76,9 @@ private:
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
     CPPUNIT_TEST(testGetConversation);
+    CPPUNIT_TEST(testGetConversationsAfterRm);
+    CPPUNIT_TEST(testRemoveInvalidConversation);
+    CPPUNIT_TEST(testRemoveConversationNoMember);
     CPPUNIT_TEST(testAddMember);
     CPPUNIT_TEST(testAddOfflineMemberThenConnects);
     CPPUNIT_TEST(testGetMembers);
@@ -232,6 +238,70 @@ ConversationTest::testGetConversation()
     auto conversations = aliceAccount->getConversations();
     CPPUNIT_ASSERT(conversations.size() == 1);
     CPPUNIT_ASSERT(conversations.front() == convId);
+}
+
+void
+ConversationTest::testGetConversationsAfterRm()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceDeviceId = aliceAccount
+                             ->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto uri = aliceAccount->getAccountDetails()[DRing::Account::ConfProperties::USERNAME];
+    if (uri.find("ring:") == 0)
+        uri = uri.substr(std::string("ring:").size());
+    auto convId = aliceAccount->startConversation();
+    auto convId2 = aliceAccount->startConversation();
+
+    auto conversations = aliceAccount->getConversations();
+    CPPUNIT_ASSERT(conversations.size() == 2);
+    CPPUNIT_ASSERT(aliceAccount->removeConversation(convId2));
+    conversations = aliceAccount->getConversations();
+    CPPUNIT_ASSERT(conversations.size() == 1);
+    CPPUNIT_ASSERT(conversations.front() == convId);
+}
+
+void
+ConversationTest::testRemoveInvalidConversation()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceDeviceId = aliceAccount
+                             ->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto uri = aliceAccount->getAccountDetails()[DRing::Account::ConfProperties::USERNAME];
+    if (uri.find("ring:") == 0)
+        uri = uri.substr(std::string("ring:").size());
+    auto convId = aliceAccount->startConversation();
+    auto convId2 = aliceAccount->startConversation();
+
+    auto conversations = aliceAccount->getConversations();
+    CPPUNIT_ASSERT(conversations.size() == 2);
+    CPPUNIT_ASSERT(!aliceAccount->removeConversation("foo"));
+    conversations = aliceAccount->getConversations();
+    CPPUNIT_ASSERT(conversations.size() == 2);
+}
+
+void
+ConversationTest::testRemoveConversationNoMember()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceDeviceId = aliceAccount
+                             ->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto uri = aliceAccount->getAccountDetails()[DRing::Account::ConfProperties::USERNAME];
+    if (uri.find("ring:") == 0)
+        uri = uri.substr(std::string("ring:").size());
+    auto convId = aliceAccount->startConversation();
+
+    // Assert that repository exists
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+
+    auto conversations = aliceAccount->getConversations();
+    CPPUNIT_ASSERT(conversations.size() == 1);
+    // Removing the conversation will erase all related files
+    CPPUNIT_ASSERT(aliceAccount->removeConversation(convId));
+    conversations = aliceAccount->getConversations();
+    CPPUNIT_ASSERT(conversations.size() == 0);
+    CPPUNIT_ASSERT(!fileutils::isDirectory(repoPath));
 }
 
 void

@@ -164,6 +164,17 @@ public:
      */
     static std::vector<std::string> changedFiles(const std::string& diffStats);
 
+    /**
+     * Erase self from repository
+     * @return commit Id
+     */
+    std::string leave();
+
+    /**
+     * Erase repository
+     */
+    void erase();
+
 private:
     ConversationRepository() = delete;
     class Impl;
