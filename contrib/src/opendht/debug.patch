@@ -1,0 +1,20 @@
+ src/dht.cpp | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/dht.cpp b/src/dht.cpp
+index ef17480..1060387 100644
+--- a/src/dht.cpp
++++ b/src/dht.cpp
+@@ -1108,7 +1108,11 @@ Dht::getLocal(const InfoHash& id, const Value::Filter& f) const
+ {
+     auto s = store.find(id);
+     if (s == store.end()) return {};
+-    return s->second.get(f);
++    auto res =  s->second.get(f);
++    if (res.empty()) {
++        printf("@@@ %s empty", id.to_c_str());
++    }
++    return res;
+ }
+ 
+ Sp<Value>
