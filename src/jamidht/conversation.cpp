@@ -24,6 +24,8 @@
 #include "conversationrepository.h"
 
 #include <json/json.h>
+#include <string_view>
+#include <opendht/thread_pool.h>
 
 namespace jami {
 
@@ -56,12 +58,28 @@ public:
     }
     ~Impl() = default;
 
+    std::string repoPath() const;
+
     std::unique_ptr<ConversationRepository> repository_;
     std::weak_ptr<JamiAccount> account_;
+    std::atomic_bool isRemoving_ {false};
     std::vector<std::map<std::string, std::string>> loadMessages(const std::string& fromMessage = "",
                                                                  const std::string& toMessage = "",
                                                                  size_t n = 0);
+    
+    std::mutex pullcbsMtx_ {};
+    std::vector<std::pair<std::string, OnPullCb>> pullcbs_ {};
 };
+
+std::string
+Conversation::Impl::repoPath() const
+{
+    auto shared = account_.lock();
+    if (!shared)
+        return {};
+    return fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
+           + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository_->id();
+}
 
 std::vector<std::map<std::string, std::string>>
 Conversation::Impl::loadMessages(const std::string& fromMessage,
@@ -255,16 +273,37 @@ Conversation::sendMessage(const std::string& message,
     return pimpl_->repository_->commitMessage(Json::writeString(wbuilder, json));
 }
 
-std::vector<std::map<std::string, std::string>>
-Conversation::loadMessages(const std::string& fromMessage, size_t n)
+void
+Conversation::loadMessages(const OnLoadMessages& cb, const std::string& fromMessage, size_t n)
 {
-    return pimpl_->loadMessages(fromMessage, "", n);
+    if (!cb)
+        return;
+    dht::ThreadPool::io().run([w=weak(), cb = std::move(cb), fromMessage, n] {
+        if (auto sthis = w.lock()) {
+            cb(sthis->pimpl_->loadMessages(fromMessage, "", n));
+        }
+    });
 }
 
-std::vector<std::map<std::string, std::string>>
-Conversation::loadMessages(const std::string& fromMessage, const std::string& toMessage)
+void
+Conversation::loadMessages(const OnLoadMessages& cb, const std::string& fromMessage, const std::string& toMessage)
 {
-    return pimpl_->loadMessages(fromMessage, toMessage, 0);
+    if (!cb)
+        return;
+    dht::ThreadPool::io().run([w=weak(), cb = std::move(cb), fromMessage, toMessage] {
+        if (auto sthis = w.lock()) {
+            cb(sthis->pimpl_->loadMessages(fromMessage, toMessage, 0));
+        }
+    });
+}
+
+std::string
+Conversation::lastCommitId() const
+{
+    auto messages = pimpl_->loadMessages("", "", 1);
+    if (messages.empty())
+        return {};
+    return messages.front().at("id");
 }
 
 bool
@@ -298,6 +337,46 @@ Conversation::mergeHistory(const std::string& uri)
     return true;
 }
 
+void
+Conversation::pull(const std::string& uri, OnPullCb&& cb)
+{
+    {
+        std::lock_guard<std::mutex> lk(pimpl_->pullcbsMtx_);
+        auto isInProgress = not pimpl_->pullcbs_.empty();
+        pimpl_->pullcbs_.emplace_back(std::make_pair<std::string, OnPullCb>(std::string(uri), std::move(cb)));
+        if (isInProgress)
+            return;
+    }
+    dht::ThreadPool::io().run([w=weak()] {
+        auto sthis_ = w.lock();
+        if (!sthis_)
+            return;
+        
+        std::string uri;
+        OnPullCb cb;
+        while(true) {
+            decltype(sthis_->pimpl_->pullcbs_)::value_type pullcb;
+            {
+                std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
+                if (sthis_->pimpl_->pullcbs_.empty())
+                    return;
+                auto elem = sthis_->pimpl_->pullcbs_.back();
+                uri = elem.first;
+                cb = std::move(elem.second);
+                sthis_->pimpl_->pullcbs_.pop_back();
+            }
+            if (!sthis_->fetchFrom(uri)) {
+                cb(false , {});
+                return;
+            }
+            //auto newCommits = sthis_->mergeHistory(uri);
+            //auto ok = newCommits.empty();
+            //if (cb) cb(true, std::move(newCommits));
+        }
+    });
+}
+
+
 std::map<std::string, std::string>
 Conversation::generateInvitation() const
 {
@@ -320,6 +399,39 @@ Conversation::generateInvitation() const
     wbuilder["indentation"] = "";
     invite["application/invite+json"] = Json::writeString(wbuilder, root);
     return invite;
+}
+
+std::string
+Conversation::leave()
+{
+    if (!pimpl_)
+        return {};
+    setRemovingFlag();
+    return pimpl_->repository_->leave();
+}
+
+void
+Conversation::setRemovingFlag()
+{
+    if (!pimpl_)
+        return;
+    pimpl_->isRemoving_ = true;
+}
+
+bool
+Conversation::isRemoving()
+{
+    if (!pimpl_)
+        return false;
+    return pimpl_->isRemoving_;
+}
+
+void
+Conversation::erase()
+{
+    if (!pimpl_->repository_)
+        return;
+    pimpl_->repository_->erase();
 }
 
 } // namespace jami
