@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <functional>
 #include <string>
 #include <vector>
 #include <map>
@@ -29,7 +30,9 @@ namespace jami {
 class JamiAccount;
 class ConversationRepository;
 
-class Conversation
+using OnPullCb = std::function<void(bool fetchOk,std::vector<std::map<std::string, std::string>>&& newMessages)>;
+
+class Conversation : public std::enable_shared_from_this<Conversation>
 {
 public:
     Conversation(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId = "");
@@ -109,12 +112,61 @@ public:
     bool mergeHistory(const std::string& uri);
 
     /**
+     * Fetch and merge from peer
+     * @param uri       Peer
+     * @param cb        On pulled callback
+     */
+    void pull(const std::string& uri, OnPullCb&& cb);
+
+    /**
      * Generate an invitation to send to new contacts
      * @return the invite to send
      */
     std::map<std::string, std::string> generateInvitation() const;
 
+    /**
+     * Leave a conversation
+     * @return commit id to send
+     */
+    std::string leave();
+
+    /**
+     * Set a conversation as removing (when loading convInfo and still not sync)
+     * @todo: not a big fan to see this here. can be set in the constructor
+     * cause it's used by jamiaccount when loading conversations
+     */
+    void setRemovingFlag();
+
+    /**
+     * Check if we are removing the conversation
+     * @return true if left the room
+     */
+    bool isRemoving();
+
+    /**
+     * Erase all related datas
+     */
+    void erase();
+
 private:
+
+    std::shared_ptr<Conversation> shared()
+    {
+        return std::static_pointer_cast<Conversation>(shared_from_this());
+    }
+    std::shared_ptr<Conversation const> shared() const
+    {
+        return std::static_pointer_cast<Conversation const>(shared_from_this());
+    }
+    std::weak_ptr<Conversation> weak()
+    {
+        return std::static_pointer_cast<Conversation>(shared_from_this());
+    }
+    std::weak_ptr<Conversation const> weak() const
+    {
+        return std::static_pointer_cast<Conversation const>(shared_from_this());
+    }
+
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };
