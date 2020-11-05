@@ -734,6 +734,9 @@ class DRingCtrl(Thread):
     def sendMessage(self, account, conversationId, message, parent=''):
         return self.configurationmanager.sendMessage(account, conversationId, message, parent)
 
+    def removeConversation(self, account, conversationId):
+        return self.configurationmanager.removeConversation(account, conversationId)
+
     def run(self):
         """Processing method for this thread"""
 
