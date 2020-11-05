@@ -44,15 +44,19 @@ public:
         auto shared = account.lock();
         if (!shared)
             throw std::logic_error("No account detected when loading conversation");
-        auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + id_;
+        path_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
+                + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + id_;
         git_repository* repo = nullptr;
         // TODO share this repo with GitServer
-        if (git_repository_open(&repo, path.c_str()) != 0)
-            throw std::logic_error("Couldn't open " + path);
+        if (git_repository_open(&repo, path_.c_str()) != 0)
+            throw std::logic_error("Couldn't open " + path_);
         repository_ = {std::move(repo), git_repository_free};
     }
-    ~Impl() = default;
+    ~Impl()
+    {
+        if (repository_)
+            repository_.reset();
+    }
 
     GitSignature signature();
     bool mergeFastforward(const git_oid* target_oid, int is_unborn);
@@ -68,6 +72,7 @@ public:
 
     std::weak_ptr<JamiAccount> account_;
     const std::string id_;
+    std::string path_;
     GitRepository repository_ {nullptr, git_repository_free};
 };
 
@@ -85,8 +90,7 @@ create_empty_repository(const std::string path)
     git_repository_init_options opts = GIT_REPOSITORY_INIT_OPTIONS_INIT;
     opts.flags |= GIT_REPOSITORY_INIT_MKPATH;
     opts.initial_head = "main";
-    if (git_repository_init_ext(&repo, path.c_str(), &opts)
-        < 0) {
+    if (git_repository_init_ext(&repo, path.c_str(), &opts) < 0) {
         JAMI_ERR("Couldn't create a git repository in %s", path.c_str());
     }
     return {std::move(repo), git_repository_free};
@@ -602,12 +606,7 @@ ConversationRepository::Impl::commit(const std::string& msg)
 
     // Move commit to main branch
     git_reference* ref_ptr = nullptr;
-    if (git_reference_create(&ref_ptr,
-                             repository_.get(),
-                             "refs/heads/main",
-                             &commit_id,
-                             true,
-                             nullptr)
+    if (git_reference_create(&ref_ptr, repository_.get(), "refs/heads/main", &commit_id, true, nullptr)
         < 0) {
         JAMI_WARN("Could not move commit to main");
     }
@@ -1165,6 +1164,15 @@ ConversationRepository::changedFiles(const std::string& diffStats)
         changedFiles.emplace_back(line.substr(1));
     }
     return changedFiles;
+}
+
+void
+ConversationRepository::erase()
+{
+    if (!pimpl_)
+        return;
+    JAMI_DBG() << "Erasing " << pimpl_->path_;
+    fileutils::removeAll(pimpl_->path_, true);
 }
 
 } // namespace jami
