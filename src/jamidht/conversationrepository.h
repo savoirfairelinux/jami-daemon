@@ -170,6 +170,17 @@ public:
      */
     std::string join();
 
+    /**
+     * Erase self from repository
+     * @return commit Id
+     */
+    std::string leave();
+
+    /**
+     * Erase repository
+     */
+    void erase();
+
 private:
     ConversationRepository() = delete;
     class Impl;
