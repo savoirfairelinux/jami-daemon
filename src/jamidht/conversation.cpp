@@ -309,4 +309,12 @@ Conversation::generateInvitation() const
     return invite;
 }
 
+void
+Conversation::erase()
+{
+    if (!pimpl_->repository_)
+        return;
+    pimpl_->repository_->erase();
+}
+
 } // namespace jami

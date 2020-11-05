@@ -101,6 +101,11 @@ public:
      */
     std::map<std::string, std::string> generateInvitation() const;
 
+    /**
+     * Erase all related datas
+     */
+    void erase();
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
