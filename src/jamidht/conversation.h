@@ -57,7 +57,7 @@ public:
      *  ...
      * }
      */
-    std::vector<std::map<std::string, std::string>> getMembers();
+    std::vector<std::map<std::string, std::string>> getMembers() const;
 
     /**
      * Join a conversation
@@ -112,6 +112,30 @@ public:
      * @return the invite to send
      */
     std::map<std::string, std::string> generateInvitation() const;
+
+    /**
+     * Leave a conversation
+     * @return commit id to send
+     */
+    std::string leave();
+
+    /**
+     * Set a conversation as removing (when loading convInfo and still not sync)
+     * @todo: not a big fan to see this here. can be set in the constructor
+     * cause it's used by jamiaccount when loading conversations
+     */
+    void setRemovingFlag();
+
+    /**
+     * Check if we are removing the conversation
+     * @return true if left the room
+     */
+    bool isRemoving();
+
+    /**
+     * Erase all related datas
+     */
+    void erase();
 
 private:
     class Impl;
