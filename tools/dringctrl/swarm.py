@@ -58,6 +58,7 @@ if __name__ == "__main__":
 6. Decline request
 7. Load messages
 8. Send message
+9. Remove conversation
         """)
         opt = int(input("> "))
         if opt == 0:
@@ -89,6 +90,9 @@ if __name__ == "__main__":
             conversationId = input('Conversation: ')
             message = input('Message: ')
             ctrl.sendMessage(args.account, conversationId, message)
+        elif opt == 9:
+            conversationId = input('Conversation: ')
+            ctrl.removeConversation(args.account, conversationId)
         else:
             print('Not implemented yet')
     ctrlThread.join()
