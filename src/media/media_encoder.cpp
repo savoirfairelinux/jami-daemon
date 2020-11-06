@@ -38,6 +38,7 @@
 
 extern "C" {
 #include <libavutil/parseutils.h>
+#include <libavutil/timestamp.h>
 }
 
 #include <algorithm>
@@ -47,6 +48,12 @@ extern "C" {
 #include <sstream>
 #include <thread> // hardware_concurrency
 #include <string_view>
+
+#undef av_ts2str
+#define av_ts2str(ts) av_ts_make_string(new char[AV_TS_MAX_STRING_SIZE], ts)
+
+#undef av_ts2timestr
+#define av_ts2timestr(ts, tb) av_ts_make_time_string(new char[AV_TS_MAX_STRING_SIZE], ts, tb)
 
 // Define following line if you need to debug libav SDP
 //#define DEBUG_SDP 1
@@ -65,8 +72,8 @@ MediaEncoder::MediaEncoder()
 MediaEncoder::~MediaEncoder()
 {
     if (outputCtx_) {
-        if (outputCtx_->priv_data && outputCtx_->pb)
-            av_write_trailer(outputCtx_);
+        // if (outputCtx_->priv_data && outputCtx_->pb)
+        //     av_write_trailer(outputCtx_);
         if (fileIO_) {
             avio_close(outputCtx_->pb);
         }
@@ -212,6 +219,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         throw MediaEncoderException("Could not allocate stream");
 
     currentStreamIdx_ = stream->index;
+    JAMI_ERR("@@@ type: %s, index: %d", mediaType == AVMEDIA_TYPE_VIDEO ? "video" : "audio", currentStreamIdx_);
 #ifdef RING_ACCEL
     // Get compatible list of Hardware API
     if (enableAccel_ && mediaType == AVMEDIA_TYPE_VIDEO) {
@@ -523,7 +531,16 @@ MediaEncoder::send(AVPacket& pkt, int streamIdx)
                                    outputCtx_->streams[streamIdx]->time_base);
     }
     // write the compressed frame
-    auto ret = av_write_frame(outputCtx_, &pkt);
+    // if (mode_ == RateMode::CQ) {
+    if (strcmp(outputCtx_->oformat->name, "webm") == 0) {
+        AVRational *time_base = &outputCtx_->streams[pkt.stream_index]->time_base;
+        JAMI_ERR("@@@ pts:%s pts_time:%s dts:%s dts_time:%s duration:%s duration_time:%s stream_index:%d\n",
+           av_ts2str(pkt.pts), av_ts2timestr(pkt.pts, time_base),
+           av_ts2str(pkt.dts), av_ts2timestr(pkt.dts, time_base),
+           av_ts2str(pkt.duration), av_ts2timestr(pkt.duration, time_base),
+           pkt.stream_index);
+    }
+    auto ret = av_interleaved_write_frame(outputCtx_, &pkt);
     if (ret < 0) {
         JAMI_ERR() << "av_write_frame failed: " << libav_utils::getError(ret);
     }
@@ -1096,6 +1113,13 @@ MediaEncoder::readConfig(AVCodecContext* encoderCtx)
             JAMI_ERR() << "Failed to load encoder configuration file: " << e.what();
         }
     }
+}
+
+void
+MediaEncoder::stopFormat()
+{
+    if (outputCtx_->priv_data && outputCtx_->pb)
+        av_write_trailer(outputCtx_);
 }
 
 std::string

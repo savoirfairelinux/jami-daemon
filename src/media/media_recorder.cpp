@@ -189,6 +189,7 @@ MediaRecorder::startRecording()
                     JAMI_ERR() << "Failed to record frame: " << e.what();
                 }
             }
+            rec->encoder_->stopFormat();
             rec->flush();
             rec->reset(); // allows recorder to be reused in same call
         });
@@ -319,6 +320,8 @@ MediaRecorder::initRecord()
     encoder_->enableAccel(false); // TODO recorder has problems with hardware encoding
 #endif
 
+
+    JAMI_ERR("@@@ will init video stream");
     videoFilter_.reset();
     if (hasVideo_) {
         const MediaStream& videoStream = setupVideoOutput();
@@ -332,6 +335,7 @@ MediaRecorder::initRecord()
         encoder_->setOptions(args);
     }
 
+    JAMI_ERR("@@@ will init audio stream");
     audioFilter_.reset();
     if (hasAudio_) {
         const MediaStream& audioStream = setupAudioOutput();
