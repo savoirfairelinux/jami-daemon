@@ -3222,4 +3222,13 @@ Manager::getNearbyPeers(const std::string& accountID)
     return {};
 }
 
+void
+Manager::setModerator(const std::string& confId, const std::string& peerId, const bool& state)
+{
+    if (auto conf = getConferenceFromID(confId)) {
+        conf->setModerator(peerId, state);
+    } else
+        JAMI_WARN("Fail to change moderator %s, conference %s not found", peerId.c_str(), confId.c_str());
+}
+
 } // namespace jami
