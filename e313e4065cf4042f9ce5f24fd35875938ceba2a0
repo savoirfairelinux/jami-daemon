@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b561f0e9_a47b9e0e",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 853,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-09T18:54:09Z",
+      "side": 1,
+      "message": "setModerator may be a better name?",
+      "range": {
+        "startLine": 853,
+        "startChar": 22,
+        "endLine": 853,
+        "endChar": 37
+      },
+      "revId": "e313e4065cf4042f9ce5f24fd35875938ceba2a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2f63e429_799b736e",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 854,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-09T18:54:09Z",
+      "side": 1,
+      "message": "this method was not added in version 1.0 of the daemon ;)\n\nAlso please bump daemon version",
+      "range": {
+        "startLine": 854,
+        "startChar": 31,
+        "endLine": 854,
+        "endChar": 37
+      },
+      "revId": "e313e4065cf4042f9ce5f24fd35875938ceba2a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7a0d2f1b_65e337e1",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 545,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-09T18:54:09Z",
+      "side": 1,
+      "message": "just rease uri, it\u0027s a set, no need for find_if",
+      "range": {
+        "startLine": 538,
+        "startChar": 32,
+        "endLine": 545,
+        "endChar": 13
+      },
+      "revId": "e313e4065cf4042f9ce5f24fd35875938ceba2a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3133a171_13f1d205",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 547,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-09T18:54:09Z",
+      "side": 1,
+      "message": "This must send the conferences informations to peers cause isModerator is  updated\n\nAlso the client should get the new infos too.",
+      "range": {
+        "startLine": 546,
+        "startChar": 9,
+        "endLine": 547,
+        "endChar": 5
+      },
+      "revId": "e313e4065cf4042f9ce5f24fd35875938ceba2a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
