@@ -467,10 +467,10 @@ SubOutgoingFileTransfer::emit(DRing::DataTransferEventCode code) const
     if (code == DRing::DataTransferEventCode::wait_peer_acceptance) {
         if (timeoutTask_)
             timeoutTask_->cancel();
-        timeoutTask_ = Manager::instance().scheduleTask([this]() {
+        timeoutTask_ = Manager::instance().scheduleTaskIn([this]() {
             JAMI_WARN() << "FTP#" << getId() << ": timeout. Cancel";
             closeAndEmit(DRing::DataTransferEventCode::timeout_expired);
-        }, std::chrono::steady_clock::now() + std::chrono::minutes(10));
+        }, std::chrono::minutes(10));
     } else if (timeoutTask_) {
         timeoutTask_->cancel();
         timeoutTask_.reset();

@@ -2457,12 +2457,11 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                                           /*.from_account = */ from_id,
                                           /*.from_cert = */ from_cert});
 
-    Manager::instance().scheduleTask(
+    Manager::instance().scheduleTaskIn(
         [w = weak(), callId = call->getCallId()]() {
             if (auto shared = w.lock())
                 shared->checkPendingCall(callId);
-        },
-        std::chrono::steady_clock::now() + ICE_NEGOTIATION_TIMEOUT);
+        }, ICE_NEGOTIATION_TIMEOUT);
 }
 
 void
@@ -3220,7 +3219,7 @@ JamiAccount::sendTextMessage(const std::string& to,
         });
 
     // Timeout cleanup
-    Manager::instance().scheduleTask(
+    Manager::instance().scheduleTaskIn(
         [w = weak(), confirm, to, token]() {
             std::unique_lock<std::mutex> l(confirm->lock);
             if (not confirm->replied) {
@@ -3235,8 +3234,7 @@ JamiAccount::sendTextMessage(const std::string& to,
                     this_->messageEngine_.onMessageSent(to, token, false);
                 }
             }
-        },
-        std::chrono::steady_clock::now() + std::chrono::minutes(1));
+        }, std::chrono::minutes(1));
 }
 
 void
