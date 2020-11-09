@@ -22,6 +22,52 @@
       "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "865de30e_d1bef91b",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 469,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-09T16:29:18Z",
+      "side": 1,
+      "message": "why copy object here ?",
+      "range": {
+        "startLine": 469,
+        "startChar": 4,
+        "endLine": 469,
+        "endChar": 30
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c6cb8b03_c6c9793a",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 480,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-09T16:29:18Z",
+      "side": 1,
+      "message": "emplace(requestedMap.getPortExternal(), requestedMap)",
+      "range": {
+        "startLine": 480,
+        "startChar": 33,
+        "endLine": 480,
+        "endChar": 100
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
