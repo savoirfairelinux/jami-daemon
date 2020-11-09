@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "60551e9c_6eb4e9bb",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-09T17:46:02Z",
+      "side": 1,
+      "message": "const std::string\u0026",
+      "range": {
+        "startLine": 286,
+        "startChar": 4,
+        "endLine": 286,
+        "endChar": 15
+      },
+      "revId": "a1500a00e0ecf07faef76dd4032dcbac3079d3ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
