@@ -826,7 +826,7 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
                         out->linkTransfer(std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)
                                               ->startNewOutgoing(out->peer()));
             },
-            [this, tid]() {
+            [this, tid](const std::string& device) {
                 if (auto transfer = pimpl_->getTransfer(tid))
                     if (not transfer->hasBeenStarted()) {
                         transfer->emit(DRing::DataTransferEventCode::unjoinable_peer);
