@@ -61,7 +61,8 @@ using ChannelRequestCallback
 /**
  * Used by connectDevice, when the socket is ready
  */
-using ConnectCallback = std::function<void(const std::shared_ptr<ChannelSocket>&)>;
+using ConnectCallback
+    = std::function<void(const std::shared_ptr<ChannelSocket>&, const std::string&)>;
 /**
  * Used when an incoming connection is ready
  */

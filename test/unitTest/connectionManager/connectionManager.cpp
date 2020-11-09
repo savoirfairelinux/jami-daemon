@@ -181,15 +181,16 @@ ConnectionManagerTest::testConnectDevice()
             return true;
         });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId,
-                                                    "git://*",
-                                                    [&cv, &successfullyConnected](
-                                                        std::shared_ptr<ChannelSocket> socket) {
-                                                        if (socket) {
-                                                            successfullyConnected = true;
-                                                        }
-                                                        cv.notify_one();
-                                                    });
+    aliceAccount->connectionManager()
+        .connectDevice(bobDeviceId,
+                       "git://*",
+                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
+                                                     const std::string&) {
+                           if (socket) {
+                               successfullyConnected = true;
+                           }
+                           cv.notify_one();
+                       });
     cvReceive.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(successfullyReceive);
     cv.wait_for(lk, std::chrono::seconds(30));
@@ -222,19 +223,21 @@ ConnectionManagerTest::testAcceptConnection()
     bobAccount->connectionManager().onConnectionReady(
         [&receiverConnected](const DeviceId&,
                              const std::string& name,
-                             std::shared_ptr<ChannelSocket> socket) {
+                             std::shared_ptr<ChannelSocket> socket,
+                             const std::string&) {
             receiverConnected = socket && (name == "git://*");
         });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId,
-                                                    "git://*",
-                                                    [&cv, &successfullyConnected](
-                                                        std::shared_ptr<ChannelSocket> socket) {
-                                                        if (socket) {
-                                                            successfullyConnected = true;
-                                                        }
-                                                        cv.notify_one();
-                                                    });
+    aliceAccount->connectionManager()
+        .connectDevice(bobDeviceId,
+                       "git://*",
+                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
+                                                     const std::string&) {
+                           if (socket) {
+                               successfullyConnected = true;
+                           }
+                           cv.notify_one();
+                       });
 
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(successfullyReceive);
@@ -265,30 +268,33 @@ ConnectionManagerTest::testMultipleChannels()
     bobAccount->connectionManager().onConnectionReady(
         [&receiverConnected](const DeviceId&,
                              const std::string&,
-                             std::shared_ptr<ChannelSocket> socket) {
+                             std::shared_ptr<ChannelSocket> socket,
+                             const std::string&) {
             if (socket)
                 receiverConnected += 1;
         });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId,
-                                                    "git://*",
-                                                    [&cv, &successfullyConnected](
-                                                        std::shared_ptr<ChannelSocket> socket) {
-                                                        if (socket) {
-                                                            successfullyConnected = true;
-                                                        }
-                                                        cv.notify_one();
-                                                    });
+    aliceAccount->connectionManager()
+        .connectDevice(bobDeviceId,
+                       "git://*",
+                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
+                                                     const std::string&) {
+                           if (socket) {
+                               successfullyConnected = true;
+                           }
+                           cv.notify_one();
+                       });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId,
-                                                    "sip://*",
-                                                    [&cv, &successfullyConnected2](
-                                                        std::shared_ptr<ChannelSocket> socket) {
-                                                        if (socket) {
-                                                            successfullyConnected2 = true;
-                                                        }
-                                                        cv.notify_one();
-                                                    });
+    aliceAccount->connectionManager()
+        .connectDevice(bobDeviceId,
+                       "sip://*",
+                       [&cv, &successfullyConnected2](std::shared_ptr<ChannelSocket> socket,
+                                                      const std::string&) {
+                           if (socket) {
+                               successfullyConnected2 = true;
+                           }
+                           cv.notify_one();
+                       });
 
     cv.wait_for(lk, std::chrono::seconds(30));
     cv.wait_for(lk, std::chrono::seconds(30));
@@ -320,31 +326,34 @@ ConnectionManagerTest::testMultipleChannelsSameName()
     bobAccount->connectionManager().onConnectionReady(
         [&receiverConnected](const DeviceId&,
                              const std::string&,
-                             std::shared_ptr<ChannelSocket> socket) {
+                             std::shared_ptr<ChannelSocket> socket,
+                             const std::string&) {
             if (socket)
                 receiverConnected += 1;
         });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId,
-                                                    "git://*",
-                                                    [&cv, &successfullyConnected](
-                                                        std::shared_ptr<ChannelSocket> socket) {
-                                                        if (socket) {
-                                                            successfullyConnected = true;
-                                                        }
-                                                        cv.notify_one();
-                                                    });
+    aliceAccount->connectionManager()
+        .connectDevice(bobDeviceId,
+                       "git://*",
+                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
+                                                     const std::string&) {
+                           if (socket) {
+                               successfullyConnected = true;
+                           }
+                           cv.notify_one();
+                       });
 
     // We can open two sockets with the same name, it will be two different channel
-    aliceAccount->connectionManager().connectDevice(bobDeviceId,
-                                                    "git://*",
-                                                    [&cv, &successfullyConnected2](
-                                                        std::shared_ptr<ChannelSocket> socket) {
-                                                        if (socket) {
-                                                            successfullyConnected2 = true;
-                                                        }
-                                                        cv.notify_one();
-                                                    });
+    aliceAccount->connectionManager()
+        .connectDevice(bobDeviceId,
+                       "git://*",
+                       [&cv, &successfullyConnected2](std::shared_ptr<ChannelSocket> socket,
+                                                      const std::string&) {
+                           if (socket) {
+                               successfullyConnected2 = true;
+                           }
+                           cv.notify_one();
+                       });
 
     cv.wait_for(lk, std::chrono::seconds(30));
     cv.wait_for(lk, std::chrono::seconds(30));
@@ -379,28 +388,31 @@ ConnectionManagerTest::testSendReceiveData()
             return true;
         });
 
-    bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
-            if (socket && (name == "test" || name == "other")) {
-                receiverConnected = true;
-                std::error_code ec;
-                auto res = socket->waitForData(std::chrono::milliseconds(5000), ec);
-                if (res == 4) {
-                    uint8_t buf[4];
-                    socket->read(&buf[0], 4, ec);
-                    if (name == "test")
-                        dataOk = std::equal(std::begin(buf), std::end(buf), std::begin(buf_test));
-                    else
-                        dataOk2 = std::equal(std::begin(buf), std::end(buf), std::begin(buf_other));
-                    events++;
-                    cv.notify_one();
-                }
+    bobAccount->connectionManager().onConnectionReady([&](const DeviceId&,
+                                                          const std::string& name,
+                                                          std::shared_ptr<ChannelSocket> socket,
+                                                          const std::string&) {
+        if (socket && (name == "test" || name == "other")) {
+            receiverConnected = true;
+            std::error_code ec;
+            auto res = socket->waitForData(std::chrono::milliseconds(5000), ec);
+            if (res == 4) {
+                uint8_t buf[4];
+                socket->read(&buf[0], 4, ec);
+                if (name == "test")
+                    dataOk = std::equal(std::begin(buf), std::end(buf), std::begin(buf_test));
+                else
+                    dataOk2 = std::equal(std::begin(buf), std::end(buf), std::begin(buf_other));
+                events++;
+                cv.notify_one();
             }
-        });
+        }
+    });
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "test",
-                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                        const std::string&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                             std::error_code ec;
@@ -412,7 +424,8 @@ ConnectionManagerTest::testSendReceiveData()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "other",
-                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                        const std::string&) {
                                                         if (socket) {
                                                             successfullyConnected2 = true;
                                                             std::error_code ec;
@@ -458,20 +471,22 @@ ConnectionManagerTest::testDeclineConnection()
     bobAccount->connectionManager().onConnectionReady(
         [&receiverConnected](const DeviceId&,
                              const std::string&,
-                             std::shared_ptr<ChannelSocket> socket) {
+                             std::shared_ptr<ChannelSocket> socket,
+                             const std::string&) {
             if (socket)
                 receiverConnected = true;
         });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId,
-                                                    "git://*",
-                                                    [&cv, &successfullyConnected](
-                                                        std::shared_ptr<ChannelSocket> socket) {
-                                                        if (socket) {
-                                                            successfullyConnected = true;
-                                                        }
-                                                        cv.notify_one();
-                                                    });
+    aliceAccount->connectionManager()
+        .connectDevice(bobDeviceId,
+                       "git://*",
+                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
+                                                     const std::string&) {
+                           if (socket) {
+                               successfullyConnected = true;
+                           }
+                           cv.notify_one();
+                       });
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(successfullyReceive);
     CPPUNIT_ASSERT(!successfullyConnected);
@@ -504,19 +519,21 @@ ConnectionManagerTest::testAcceptsICERequest()
     bobAccount->connectionManager().onConnectionReady(
         [&receiverConnected](const DeviceId&,
                              const std::string& name,
-                             std::shared_ptr<ChannelSocket> socket) {
+                             std::shared_ptr<ChannelSocket> socket,
+                             const std::string&) {
             receiverConnected = socket && (name == "git://*");
         });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId,
-                                                    "git://*",
-                                                    [&cv, &successfullyConnected](
-                                                        std::shared_ptr<ChannelSocket> socket) {
-                                                        if (socket) {
-                                                            successfullyConnected = true;
-                                                        }
-                                                        cv.notify_one();
-                                                    });
+    aliceAccount->connectionManager()
+        .connectDevice(bobDeviceId,
+                       "git://*",
+                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
+                                                     const std::string&) {
+                           if (socket) {
+                               successfullyConnected = true;
+                           }
+                           cv.notify_one();
+                       });
 
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(successfullyReceive);
@@ -550,19 +567,21 @@ ConnectionManagerTest::testDeclineICERequest()
     bobAccount->connectionManager().onConnectionReady(
         [&receiverConnected](const DeviceId&,
                              const std::string& name,
-                             std::shared_ptr<ChannelSocket> socket) {
+                             std::shared_ptr<ChannelSocket> socket,
+                             const std::string&) {
             receiverConnected = socket && (name == "git://*");
         });
 
-    aliceAccount->connectionManager().connectDevice(bobDeviceId,
-                                                    "git://*",
-                                                    [&cv, &successfullyConnected](
-                                                        std::shared_ptr<ChannelSocket> socket) {
-                                                        if (socket) {
-                                                            successfullyConnected = true;
-                                                        }
-                                                        cv.notify_one();
-                                                    });
+    aliceAccount->connectionManager()
+        .connectDevice(bobDeviceId,
+                       "git://*",
+                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
+                                                     const std::string&) {
+                           if (socket) {
+                               successfullyConnected = true;
+                           }
+                           cv.notify_one();
+                       });
 
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(successfullyReceive);
@@ -594,16 +613,19 @@ ConnectionManagerTest::testChannelRcvShutdown()
             return true;
         });
 
-    bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
-            receiverConnected = socket && (name == "git://*");
-            rcv.notify_one();
-            socket->shutdown();
-        });
+    bobAccount->connectionManager().onConnectionReady([&](const DeviceId&,
+                                                          const std::string& name,
+                                                          std::shared_ptr<ChannelSocket> socket,
+                                                          const std::string&) {
+        receiverConnected = socket && (name == "git://*");
+        rcv.notify_one();
+        socket->shutdown();
+    });
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                        const std::string&) {
                                                         if (socket) {
                                                             socket->onShutdown([&]() {
                                                                 shutdownReceived = true;
@@ -645,20 +667,23 @@ ConnectionManagerTest::testChannelSenderShutdown()
             return true;
         });
 
-    bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
-            if (socket) {
-                socket->onShutdown([&]() {
-                    shutdownReceived = true;
-                    scv.notify_one();
-                });
-            }
-            receiverConnected = socket && (name == "git://*");
-        });
+    bobAccount->connectionManager().onConnectionReady([&](const DeviceId&,
+                                                          const std::string& name,
+                                                          std::shared_ptr<ChannelSocket> socket,
+                                                          const std::string&) {
+        if (socket) {
+            socket->onShutdown([&]() {
+                shutdownReceived = true;
+                scv.notify_one();
+            });
+        }
+        receiverConnected = socket && (name == "git://*");
+    });
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                        const std::string&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                             rcv.notify_one();
@@ -698,20 +723,23 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
             return true;
         });
 
-    bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
-            if (socket) {
-                socket->onShutdown([&]() {
-                    events += 1;
-                    scv.notify_one();
-                });
-            }
-            receiverConnected = socket && (name == "git://*");
-        });
+    bobAccount->connectionManager().onConnectionReady([&](const DeviceId&,
+                                                          const std::string& name,
+                                                          std::shared_ptr<ChannelSocket> socket,
+                                                          const std::string&) {
+        if (socket) {
+            socket->onShutdown([&]() {
+                events += 1;
+                scv.notify_one();
+            });
+        }
+        receiverConnected = socket && (name == "git://*");
+    });
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                        const std::string&) {
                                                         if (socket) {
                                                             socket->onShutdown([&]() {
                                                                 events += 1;
@@ -764,13 +792,15 @@ ConnectionManagerTest::testShutdownCallbacks()
         });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
-            receiverConnected = socket && (name == "1");
-        });
+        [&](const DeviceId&,
+            const std::string& name,
+            std::shared_ptr<ChannelSocket> socket,
+            const std::string&) { receiverConnected = socket && (name == "1"); });
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "1",
-                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                        const std::string&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                             rcv.notify_one();
@@ -786,7 +816,8 @@ ConnectionManagerTest::testShutdownCallbacks()
     bool channel2NotConnected = false;
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "2",
-                                                    [&](std::shared_ptr<ChannelSocket> socket) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                        const std::string&) {
                                                         channel2NotConnected = !socket;
                                                         rcv.notify_one();
                                                     });

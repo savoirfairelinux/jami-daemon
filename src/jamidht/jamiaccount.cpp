@@ -3300,10 +3300,10 @@ JamiAccount::requestPeerConnection(
     bool isVCard,
     const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
         channeledConnectedCb,
-    const std::function<void()>& onChanneledCancelled)
+    const std::function<void(const std::string&)>& onChanneledCancelled)
 {
     if (not dhtPeerConnector_) {
-        runOnMainThread([onChanneledCancelled] { onChanneledCancelled(); });
+        runOnMainThread([onChanneledCancelled, peer_id] { onChanneledCancelled(peer_id); });
         return;
     }
     dhtPeerConnector_->requestConnection(peer_id,
@@ -3542,29 +3542,34 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
     JAMI_INFO("Ask %s for a new SIP channel", deviceId.to_c_str());
     if (!connectionManager_)
         return;
-    connectionManager_
-        ->connectDevice(deviceId, "sip", [w = weak(), id](std::shared_ptr<ChannelSocket> socket) {
-            auto shared = w.lock();
-            if (!shared)
-                return;
-            // NOTE: No need to cache Connection there.
-            // OnConnectionReady is called before this callback, so
-            // the socket is already cached if succeed. We just need
-            // to remove the pending request.
-            if (!socket) {
-                // If this is triggered, this means that the connectDevice
-                // didn't get any response from the DHT.
-                // Stop searching pending call.
-                shared->callConnectionClosed(id.second, true);
-                shared->forEachPendingCall(id.second, [](const auto& pc) { pc->onFailure(); });
-            }
+    connectionManager_->connectDevice(deviceId,
+                                      "sip",
+                                      [w = weak(), id](std::shared_ptr<ChannelSocket> socket,
+                                                       const std::string&) {
+                                          auto shared = w.lock();
+                                          if (!shared)
+                                              return;
+                                          // NOTE: No need to cache Connection there.
+                                          // OnConnectionReady is called before this callback, so
+                                          // the socket is already cached if succeed. We just need
+                                          // to remove the pending request.
+                                          if (!socket) {
+                                              // If this is triggered, this means that the
+                                              // connectDevice didn't get any response from the DHT.
+                                              // Stop searching pending call.
+                                              shared->callConnectionClosed(id.second, true);
+                                              shared->forEachPendingCall(id.second,
+                                                                         [](const auto& pc) {
+                                                                             pc->onFailure();
+                                                                         });
+                                          }
 
-            std::lock_guard<std::mutex> lk(shared->sipConnsMtx_);
-            auto it = shared->sipConns_.find(id);
-            if (it != shared->sipConns_.end() && it->second.empty()) {
-                shared->sipConns_.erase(it);
-            }
-        });
+                                          std::lock_guard<std::mutex> lk(shared->sipConnsMtx_);
+                                          auto it = shared->sipConns_.find(id);
+                                          if (it != shared->sipConns_.end() && it->second.empty()) {
+                                              shared->sipConns_.erase(it);
+                                          }
+                                      });
 }
 
 bool
@@ -3612,8 +3617,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
     pjsip_tx_data* tdata;
 
     // Build SIP message
-    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD,
-                                         sip_utils::CONST_PJ_STR("MESSAGE")};
+    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, sip_utils::CONST_PJ_STR("MESSAGE")};
     pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
     pj_str_t pjTo = sip_utils::CONST_PJ_STR(toURI);
 

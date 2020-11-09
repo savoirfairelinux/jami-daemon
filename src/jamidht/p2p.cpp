@@ -96,8 +96,10 @@ public:
     std::map<IpAddr, dht::InfoHash> connectedPeers_;
 
     bool validatePeerCertificate(const dht::crypto::Certificate&, dht::InfoHash&);
-    void closeConnection(const DRing::DataTransferId& tid);
-    void stateChanged(const DRing::DataTransferId& tid, const DRing::DataTransferEventCode& code);
+    void closeConnection(const DRing::DataTransferId& tid, const std::string& peer = "");
+    void stateChanged(const DRing::DataTransferId& tid,
+                      const DRing::DataTransferEventCode& code,
+                      const std::string& peer);
 
     std::shared_ptr<DhtPeerConnector::Impl> shared()
     {
@@ -120,6 +122,7 @@ public:
     std::mutex channeledIncomingMtx_;
     std::map<DRing::DataTransferId, std::unique_ptr<ChanneledIncomingTransfer>> channeledIncoming_;
     std::mutex channeledOutgoingMtx_;
+    // TODO change <<id, peer>, Channeled>
     std::map<DRing::DataTransferId, std::vector<std::shared_ptr<ChanneledOutgoingTransfer>>>
         channeledOutgoing_;
     std::mutex incomingTransfersMtx_;
@@ -144,29 +147,43 @@ DhtPeerConnector::Impl::validatePeerCertificate(const dht::crypto::Certificate& 
 
 void
 DhtPeerConnector::Impl::stateChanged(const DRing::DataTransferId& tid,
-                                     const DRing::DataTransferEventCode& code)
+                                     const DRing::DataTransferEventCode& code,
+                                     const std::string& peer)
 {
     if (code == DRing::DataTransferEventCode::finished
         or code == DRing::DataTransferEventCode::closed_by_peer
         or code == DRing::DataTransferEventCode::timeout_expired)
-        closeConnection(tid);
+        closeConnection(tid, peer);
 }
 
 void
-DhtPeerConnector::Impl::closeConnection(const DRing::DataTransferId& tid)
+DhtPeerConnector::Impl::closeConnection(const DRing::DataTransferId& tid, const std::string& peer)
 {
-    dht::ThreadPool::io().run([w = weak(), tid] {
+    dht::ThreadPool::io().run([w = weak(), tid, peer] {
         auto shared = w.lock();
         if (!shared)
             return;
-        // Cancel outgoing files
         {
             std::lock_guard<std::mutex> lk(shared->channeledIncomingMtx_);
             auto it = shared->channeledIncoming_.erase(tid);
         }
+        // Cancel outgoing files
+        std::vector<std::shared_ptr<ChanneledOutgoingTransfer>> files;
         {
             std::lock_guard<std::mutex> lk(shared->channeledOutgoingMtx_);
-            shared->channeledOutgoing_.erase(tid);
+            auto it = shared->channeledOutgoing_.find(tid);
+            if (it != shared->channeledOutgoing_.end()) {
+                for (auto chanIt = it->second.begin(); chanIt != it->second.end();) {
+                    if ((*chanIt)->peer() == peer) {
+                        files.emplace_back(std::move(*chanIt));
+                        chanIt = it->second.erase(chanIt);
+                    } else {
+                        ++chanIt;
+                    }
+                }
+                if (it->second.empty())
+                    shared->channeledOutgoing_.erase(it);
+            }
         }
     });
 }
@@ -186,7 +203,7 @@ DhtPeerConnector::requestConnection(
     bool isVCard,
     const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
         channeledConnectedCb,
-    const std::function<void()>& onChanneledCancelled)
+    const std::function<void(const std::string&)>& onChanneledCancelled)
 {
     auto acc = pimpl_->account.lock();
     if (!acc)
@@ -194,11 +211,14 @@ DhtPeerConnector::requestConnection(
 
     const auto peer_h = dht::InfoHash(peer_id);
 
-    auto channelReadyCb = [this, tid, peer_id, channeledConnectedCb, onChanneledCancelled](
-                              const std::shared_ptr<ChannelSocket>& channel) {
+    auto channelReadyCb = [this,
+                           tid,
+                           channeledConnectedCb,
+                           onChanneledCancelled](const std::shared_ptr<ChannelSocket>& channel,
+                                                 const std::string& deviceId) {
         auto shared = pimpl_->account.lock();
         if (!channel) {
-            onChanneledCancelled();
+            onChanneledCancelled(deviceId);
             return;
         }
         if (!shared)
@@ -207,8 +227,9 @@ DhtPeerConnector::requestConnection(
 
         auto outgoingFile = std::make_shared<ChanneledOutgoingTransfer>(
             channel,
-            [this](const DRing::DataTransferId& id, const DRing::DataTransferEventCode& code) {
-                pimpl_->stateChanged(id, code);
+            [this, deviceId](const DRing::DataTransferId& id,
+                             const DRing::DataTransferEventCode& code) {
+                pimpl_->stateChanged(id, code, deviceId);
             });
         if (!outgoingFile)
             return;
@@ -219,7 +240,7 @@ DhtPeerConnector::requestConnection(
 
         channel->onShutdown([this, tid, onChanneledCancelled, peer = outgoingFile->peer()]() {
             JAMI_INFO("Channel down for outgoing transfer with id(%lu)", tid);
-            onChanneledCancelled();
+            onChanneledCancelled(peer);
             dht::ThreadPool::io().run([w = pimpl_->weak(), tid, peer] {
                 auto shared = w.lock();
                 if (!shared)
@@ -242,7 +263,6 @@ DhtPeerConnector::requestConnection(
                             shared->channeledOutgoing_.erase(outgoingTransfers);
                     }
                 }
-                Manager::instance().dataTransfers->close(tid);
             });
         });
         channeledConnectedCb(outgoingFile);
@@ -284,7 +304,7 @@ DhtPeerConnector::requestConnection(
         [peer_h, onChanneledCancelled, accId = acc->getAccountID()](bool found) {
             if (!found) {
                 JAMI_WARN() << accId << "[CNX] aborted, no devices for " << peer_h;
-                onChanneledCancelled();
+                onChanneledCancelled(peer_h.toString());
             }
         });
 }
@@ -322,8 +342,8 @@ DhtPeerConnector::onIncomingConnection(const std::string& peer_id,
     auto incomingFile = std::make_unique<ChanneledIncomingTransfer>(
         channel,
         std::make_shared<FtpServer>(acc->getAccountID(), peer_id, tid, std::move(cb)),
-        [this](const DRing::DataTransferId& id, const DRing::DataTransferEventCode& code) {
-            pimpl_->stateChanged(id, code);
+        [this, peer_id](const DRing::DataTransferId& id, const DRing::DataTransferEventCode& code) {
+            pimpl_->stateChanged(id, code, peer_id);
         });
     {
         std::lock_guard<std::mutex> lk(pimpl_->channeledIncomingMtx_);
