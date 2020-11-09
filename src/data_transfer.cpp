@@ -283,6 +283,9 @@ public:
     bool read(std::vector<uint8_t>&) const override;
     bool write(std::string_view) override;
     void emit(DRing::DataTransferEventCode code) const override;
+    std::string peer() { return peerUri_; }
+
+    bool isFinished() const { return info_.lastEvent >= DRing::DataTransferEventCode::finished; }
 
     void cancel() override
     {
@@ -519,10 +522,16 @@ public:
 
     void close() noexcept override;
 
-    void cancel() override
+    bool cancelWithPeer(const std::string& peer)
     {
-        for (const auto& subtransfer : subtransfer_)
-            subtransfer->cancel();
+        auto allFinished = true;
+        for (const auto& subtransfer : subtransfer_) {
+            if (subtransfer->peer() == peer)
+                subtransfer->cancel();
+            else if (!subtransfer->isFinished())
+                allFinished = false;
+        }
+        return allFinished;
     }
 
 private:
@@ -826,12 +835,15 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
                         out->linkTransfer(std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)
                                               ->startNewOutgoing(out->peer()));
             },
-            [this, tid]() {
-                if (auto transfer = pimpl_->getTransfer(tid))
-                    if (not transfer->hasBeenStarted()) {
+            [this, tid](const std::string& peer) {
+                if (auto transfer = std::dynamic_pointer_cast<OutgoingFileTransfer>(
+                        pimpl_->getTransfer(tid))) {
+                    auto allCancelled = transfer->cancelWithPeer(peer);
+                    if (allCancelled and not transfer->hasBeenStarted()) {
                         transfer->emit(DRing::DataTransferEventCode::unjoinable_peer);
                         pimpl_->cancel(*transfer);
                     }
+                }
             });
         return DRing::DataTransferError::success;
     } catch (const std::exception& ex) {
