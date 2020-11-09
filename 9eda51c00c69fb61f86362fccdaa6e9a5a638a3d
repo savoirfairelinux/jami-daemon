@@ -33,6 +33,24 @@
       "revId": "9eda51c00c69fb61f86362fccdaa6e9a5a638a3d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "172cd287_8a94dedc",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3563,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-09T21:14:02Z",
+      "side": 1,
+      "message": "Honestly, for a single line callback (with no capture), I would rather see this here than in some other function which would make the code harder to follow !\n\nActually here, the real callback code is onFailure, and the lambda makes it clearer (instead of going through another callback function somewhere else in the file, which would just call pc-\u003eonFailure()).",
+      "parentUuid": "4d726f3f_ac11272c",
+      "revId": "9eda51c00c69fb61f86362fccdaa6e9a5a638a3d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
