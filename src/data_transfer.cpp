@@ -330,7 +330,7 @@ private:
 
     void sendFile() const
     {
-        dht::ThreadPool::computation().run([this]() {
+        dht::ThreadPool::io().run([this]() {
             while (!input_.eof() && onRecvCb_) {
                 std::vector<char> buf;
                 buf.resize(MAX_BUFFER_SIZE);
