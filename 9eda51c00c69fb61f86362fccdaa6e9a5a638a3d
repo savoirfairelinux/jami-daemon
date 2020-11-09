@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e2ce42d8_b651d738",
+        "filename": "src/jamidht/connectionmanager.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-09T20:18:39Z",
+      "side": 1,
+      "message": "\"/* deviceId */\" can be dropped I guess. Self explanatory. Below as well.",
+      "revId": "9eda51c00c69fb61f86362fccdaa6e9a5a638a3d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4d726f3f_ac11272c",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3563,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-09T20:18:39Z",
+      "side": 1,
+      "message": "I always find it hard to follow the code when there is lambda embedded in another lambda.\nAnyway, it was already that way before this patch. Just complaining.",
+      "revId": "9eda51c00c69fb61f86362fccdaa6e9a5a638a3d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
