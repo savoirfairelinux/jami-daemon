@@ -52,22 +52,20 @@ struct PeerConnectionRequest : public dht::EncryptedValue<PeerConnectionRequest>
 /**
  * Used to accept or not an incoming ICE connection (default accept)
  */
-using onICERequestCallback = std::function<bool(const dht::InfoHash& /* deviceId */)>;
+using onICERequestCallback = std::function<bool(const DeviceId&)>;
 /**
  * Used to accept or decline an incoming channel request
  */
-using ChannelRequestCallback
-    = std::function<bool(const dht::InfoHash& /* deviceId */, const std::string& /* name */)>;
+using ChannelRequestCallback = std::function<bool(const DeviceId&, const std::string& /* name */)>;
 /**
  * Used by connectDevice, when the socket is ready
  */
-using ConnectCallback = std::function<void(const std::shared_ptr<ChannelSocket>&)>;
+using ConnectCallback = std::function<void(const std::shared_ptr<ChannelSocket>&, const DeviceId&)>;
 /**
  * Used when an incoming connection is ready
  */
-using ConnectionReadyCallback = std::function<void(const dht::InfoHash& /* deviceId */,
-                                                   const std::string& /* channel_name */,
-                                                   std::shared_ptr<ChannelSocket>)>;
+using ConnectionReadyCallback = std::function<
+    void(const DeviceId&, const std::string& /* channel_name */, std::shared_ptr<ChannelSocket>)>;
 
 /**
  * Manages connections to other devices

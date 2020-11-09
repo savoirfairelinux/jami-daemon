@@ -2189,25 +2189,24 @@ JamiAccount::doRegister_()
             auto result = fut.get();
             return result;
         });
-        connectionManager_->onChannelRequest(
-            [this](const DeviceId& /* deviceId */, const std::string& name) {
-                auto isFile = name.substr(0, 7) == "file://";
-                auto isVCard = name.substr(0, 8) == "vcard://";
-                if (name == "sip") {
+        connectionManager_->onChannelRequest([this](const DeviceId&, const std::string& name) {
+            auto isFile = name.substr(0, 7) == "file://";
+            auto isVCard = name.substr(0, 8) == "vcard://";
+            if (name == "sip") {
+                return true;
+            } else if (isFile or isVCard) {
+                auto tid_str = isFile ? name.substr(7) : name.substr(8);
+                uint64_t tid;
+                std::istringstream iss(tid_str);
+                iss >> tid;
+                if (dhtPeerConnector_->onIncomingChannelRequest(tid)) {
+                    std::lock_guard<std::mutex> lk(transfersMtx_);
+                    incomingFileTransfers_.emplace(tid_str);
                     return true;
-                } else if (isFile or isVCard) {
-                    auto tid_str = isFile ? name.substr(7) : name.substr(8);
-                    uint64_t tid;
-                    std::istringstream iss(tid_str);
-                    iss >> tid;
-                    if (dhtPeerConnector_->onIncomingChannelRequest(tid)) {
-                        std::lock_guard<std::mutex> lk(transfersMtx_);
-                        incomingFileTransfers_.emplace(tid_str);
-                        return true;
-                    }
                 }
-                return false;
-            });
+            }
+            return false;
+        });
         connectionManager_->onConnectionReady([this](const DeviceId& deviceId,
                                                      const std::string& name,
                                                      std::shared_ptr<ChannelSocket> channel) {
@@ -2461,7 +2460,8 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
         [w = weak(), callId = call->getCallId()]() {
             if (auto shared = w.lock())
                 shared->checkPendingCall(callId);
-        }, ICE_NEGOTIATION_TIMEOUT);
+        },
+        ICE_NEGOTIATION_TIMEOUT);
 }
 
 void
@@ -3234,7 +3234,8 @@ JamiAccount::sendTextMessage(const std::string& to,
                     this_->messageEngine_.onMessageSent(to, token, false);
                 }
             }
-        }, std::chrono::minutes(1));
+        },
+        std::chrono::minutes(1));
 }
 
 void
@@ -3298,10 +3299,10 @@ JamiAccount::requestPeerConnection(
     bool isVCard,
     const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
         channeledConnectedCb,
-    const std::function<void()>& onChanneledCancelled)
+    const std::function<void(const std::string&)>& onChanneledCancelled)
 {
     if (not dhtPeerConnector_) {
-        runOnMainThread([onChanneledCancelled] { onChanneledCancelled(); });
+        runOnMainThread([onChanneledCancelled, peer_id] { onChanneledCancelled(peer_id); });
         return;
     }
     dhtPeerConnector_->requestConnection(peer_id,
@@ -3540,29 +3541,34 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
     JAMI_INFO("Ask %s for a new SIP channel", deviceId.to_c_str());
     if (!connectionManager_)
         return;
-    connectionManager_
-        ->connectDevice(deviceId, "sip", [w = weak(), id](std::shared_ptr<ChannelSocket> socket) {
-            auto shared = w.lock();
-            if (!shared)
-                return;
-            // NOTE: No need to cache Connection there.
-            // OnConnectionReady is called before this callback, so
-            // the socket is already cached if succeed. We just need
-            // to remove the pending request.
-            if (!socket) {
-                // If this is triggered, this means that the connectDevice
-                // didn't get any response from the DHT.
-                // Stop searching pending call.
-                shared->callConnectionClosed(id.second, true);
-                shared->forEachPendingCall(id.second, [](const auto& pc) { pc->onFailure(); });
-            }
+    connectionManager_->connectDevice(deviceId,
+                                      "sip",
+                                      [w = weak(), id](std::shared_ptr<ChannelSocket> socket,
+                                                       const DeviceId&) {
+                                          auto shared = w.lock();
+                                          if (!shared)
+                                              return;
+                                          // NOTE: No need to cache Connection there.
+                                          // OnConnectionReady is called before this callback, so
+                                          // the socket is already cached if succeed. We just need
+                                          // to remove the pending request.
+                                          if (!socket) {
+                                              // If this is triggered, this means that the
+                                              // connectDevice didn't get any response from the DHT.
+                                              // Stop searching pending call.
+                                              shared->callConnectionClosed(id.second, true);
+                                              shared->forEachPendingCall(id.second,
+                                                                         [](const auto& pc) {
+                                                                             pc->onFailure();
+                                                                         });
+                                          }
 
-            std::lock_guard<std::mutex> lk(shared->sipConnsMtx_);
-            auto it = shared->sipConns_.find(id);
-            if (it != shared->sipConns_.end() && it->second.empty()) {
-                shared->sipConns_.erase(it);
-            }
-        });
+                                          std::lock_guard<std::mutex> lk(shared->sipConnsMtx_);
+                                          auto it = shared->sipConns_.find(id);
+                                          if (it != shared->sipConns_.end() && it->second.empty()) {
+                                              shared->sipConns_.erase(it);
+                                          }
+                                      });
 }
 
 bool
@@ -3610,8 +3616,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
     pjsip_tx_data* tdata;
 
     // Build SIP message
-    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD,
-                                         sip_utils::CONST_PJ_STR("MESSAGE")};
+    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, sip_utils::CONST_PJ_STR("MESSAGE")};
     pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
     pj_str_t pjTo = sip_utils::CONST_PJ_STR(toURI);
 

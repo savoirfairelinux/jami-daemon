@@ -467,10 +467,12 @@ SubOutgoingFileTransfer::emit(DRing::DataTransferEventCode code) const
     if (code == DRing::DataTransferEventCode::wait_peer_acceptance) {
         if (timeoutTask_)
             timeoutTask_->cancel();
-        timeoutTask_ = Manager::instance().scheduleTaskIn([this]() {
-            JAMI_WARN() << "FTP#" << getId() << ": timeout. Cancel";
-            closeAndEmit(DRing::DataTransferEventCode::timeout_expired);
-        }, std::chrono::minutes(10));
+        timeoutTask_ = Manager::instance().scheduleTaskIn(
+            [this]() {
+                JAMI_WARN() << "FTP#" << getId() << ": timeout. Cancel";
+                closeAndEmit(DRing::DataTransferEventCode::timeout_expired);
+            },
+            std::chrono::minutes(10));
     } else if (timeoutTask_) {
         timeoutTask_->cancel();
         timeoutTask_.reset();
@@ -818,7 +820,7 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
                         out->linkTransfer(std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)
                                               ->startNewOutgoing(out->peer()));
             },
-            [this, tid]() {
+            [this, tid](const std::string& device) {
                 if (auto transfer = pimpl_->getTransfer(tid))
                     if (not transfer->hasBeenStarted()) {
                         transfer->emit(DRing::DataTransferEventCode::unjoinable_peer);
