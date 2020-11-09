@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "28d92199_08bab93e",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 845,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-09T20:27:53Z",
+      "side": 1,
+      "message": "Does not make a big difference, but I think allFinished is more appropriate than allCancelled.",
+      "range": {
+        "startLine": 845,
+        "startChar": 25,
+        "endLine": 845,
+        "endChar": 37
+      },
+      "revId": "e41147a3b1061e11c1069c27090252f090323702",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
