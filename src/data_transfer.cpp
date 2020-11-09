@@ -280,7 +280,6 @@ public:
 
     void close() noexcept override;
     void closeAndEmit(DRing::DataTransferEventCode code) const noexcept;
-    bool read(std::vector<uint8_t>&) const override;
     bool write(std::string_view) override;
     void emit(DRing::DataTransferEventCode code) const override;
 
@@ -398,41 +397,6 @@ SubOutgoingFileTransfer::closeAndEmit(DRing::DataTransferEventCode code) const n
 
     if (info_.lastEvent < DRing::DataTransferEventCode::finished)
         emit(code);
-}
-
-bool
-SubOutgoingFileTransfer::read(std::vector<uint8_t>& buf) const
-{
-    // Need to send headers?
-    if (!headerSent_) {
-        sendHeader(buf);
-        return true;
-    }
-
-    // Wait for peer ready reply?
-    if (!peerReady_) {
-        buf.resize(0);
-        return true;
-    }
-
-    // Sending file data...
-    input_.read(reinterpret_cast<char*>(&buf[0]), buf.size());
-    buf.resize(input_.gcount());
-    if (buf.size()) {
-        std::lock_guard<std::mutex> lk {infoMutex_};
-        info_.bytesProgress += buf.size();
-        metaInfo_->updateInfo(info_);
-        return true;
-    }
-
-    // File end reached?
-    if (input_.eof()) {
-        JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
-        emit(DRing::DataTransferEventCode::finished);
-        return false;
-    }
-
-    throw std::runtime_error("FileTransfer IO read failed"); // TODO: better exception?
 }
 
 bool
