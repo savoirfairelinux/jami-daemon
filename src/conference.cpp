@@ -53,11 +53,10 @@ Conference::Conference()
     // conference master. In the future, this should be
     // retrieven with another way
     auto accounts = jami::Manager::instance().getAllAccounts<JamiAccount>();
-    moderators_.reserve(accounts.size());
     for (const auto& account : accounts) {
         if (!account)
             continue;
-        moderators_.emplace_back(account->getUsername());
+        moderators_.emplace(account->getUsername());
     }
 
 #ifdef ENABLE_VIDEO
@@ -493,7 +492,7 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         auto uri = call->getPeerNumber();
         auto separator = uri.find('@');
         if (separator != std::string::npos)
-            uri = uri.substr(0, separator - 1);
+            uri = uri.substr(0, separator);
         if (!isModerator(uri)) {
             JAMI_WARN("Received conference order from a non master (%s)", uri.c_str());
             return;
@@ -525,6 +524,48 @@ Conference::isModerator(const std::string& uri) const
                             return moderator.find(uri) != std::string::npos;
                         })
            != moderators_.end();
+}
+
+void
+Conference::setModerator(const std::string& uri, const bool& state)
+{
+    for (const auto& p : participants_) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
+            auto partURI = call->getPeerNumber();
+            auto separator = partURI.find('@');
+            if (separator != std::string::npos)
+                partURI = partURI.substr(0, separator);
+            if (partURI == uri) {
+                if (state and not isModerator(uri)) {
+                    JAMI_DBG("Add %s as moderator", partURI.c_str());
+                    moderators_.emplace(uri);
+                    updateModerators();
+                } else if (not state and isModerator(uri)) {
+                    JAMI_DBG("Remove %s as moderator", partURI.c_str());
+                    moderators_.erase(uri);
+                    updateModerators();
+                }
+                return;
+            }
+        }
+    }
+    JAMI_WARN("Fail to set %s as moderator (participant not found)", uri.c_str());
+}
+
+void
+Conference::updateModerators()
+{
+    {
+        std::lock_guard<std::mutex> lk2(confInfoMutex_);
+        for (auto& info : confInfo_) {
+            auto uri = info.uri;
+            auto separator = uri.find('@');
+            if (separator != std::string::npos)
+                uri = uri.substr(0, separator);
+            info.isModerator = isModerator(uri);
+        }
+    }
+    sendConferenceInfos();
 }
 
 } // namespace jami
