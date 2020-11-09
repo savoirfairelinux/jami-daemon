@@ -1758,6 +1758,7 @@
            <tp:docstring>
                Add a member to a conversation
            </tp:docstring>
+           <arg type="b" name="success" direction="out"/>
            <arg type="s" name="accountId" direction="in"/>
            <arg type="s" name="conversationId" direction="in"/>
            <arg type="s" name="contactUri" direction="in"/>

@@ -41,7 +41,12 @@ public:
     std::string id() const;
 
     // Member management
-    bool addMember(const std::string& contactUri);
+    /**
+     * Add conversation member
+     * @param uri   Member to add
+     * @return Commit id or empty if fails
+     */
+    std::string addMember(const std::string& contactUri);
     bool removeMember(const std::string& contactUri);
     /**
      * @return a vector of member details:

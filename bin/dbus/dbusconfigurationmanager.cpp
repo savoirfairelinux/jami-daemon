@@ -538,7 +538,9 @@ DBusConfigurationManager::setAccountsOrder(const std::string& order)
 }
 
 auto
-DBusConfigurationManager::validateCertificate(const std::string& accountId, const std::string& certificate) -> decltype(DRing::validateCertificate(accountId, certificate))
+DBusConfigurationManager::validateCertificate(const std::string& accountId,
+                                              const std::string& certificate)
+    -> decltype(DRing::validateCertificate(accountId, certificate))
 {
     return DRing::validateCertificate(accountId, certificate);
 }
@@ -872,12 +874,12 @@ DBusConfigurationManager::getConversationRequests(const std::string& accountId)
     return DRing::getConversationRequests(accountId);
 }
 
-void
+bool
 DBusConfigurationManager::addConversationMember(const std::string& accountId,
                                                 const std::string& conversationId,
                                                 const std::string& contactUri)
 {
-    DRing::addConversationMember(accountId, conversationId, contactUri);
+    return DRing::addConversationMember(accountId, conversationId, contactUri);
 }
 
 bool

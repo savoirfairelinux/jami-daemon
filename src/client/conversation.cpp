@@ -81,13 +81,14 @@ getConversationRequests(const std::string& accountId)
 }
 
 // Member management
-void
+bool
 addConversationMember(const std::string& accountId,
                       const std::string& conversationId,
                       const std::string& contactUri)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        acc->addConversationMember(conversationId, contactUri);
+        return acc->addConversationMember(conversationId, contactUri);
+    return false;
 }
 
 bool

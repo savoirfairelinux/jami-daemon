@@ -3963,7 +3963,7 @@ JamiAccount::getConversationRequests()
 }
 
 // Member management
-void
+bool
 JamiAccount::addConversationMember(const std::string& conversationId,
                                    const std::string& contactUri,
                                    bool sendRequest)
@@ -3972,14 +3972,22 @@ JamiAccount::addConversationMember(const std::string& conversationId,
     auto it = conversations_.find(conversationId);
     if (it == conversations_.end()) {
         JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
-        return;
+        return false;
     }
-    if (!it->second->addMember(contactUri)) {
+    auto commitId = it->second->addMember(contactUri);
+    if (commitId.empty()) {
         JAMI_WARN("Couldn't add %s to %s", contactUri.c_str(), conversationId.c_str());
-        return;
+        return false;
     }
+    auto messages = it->second->loadMessages(commitId, 1);
+    if (messages.empty())
+        return false; // should not happen
+    emitSignal<DRing::ConversationSignal::MessageReceived>(getAccountID(),
+                                                           conversationId,
+                                                           messages.front());
     if (sendRequest)
         sendTextMessage(contactUri, it->second->generateInvitation());
+    return true;
 }
 
 bool

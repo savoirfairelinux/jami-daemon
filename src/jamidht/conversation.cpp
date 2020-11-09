@@ -142,17 +142,17 @@ Conversation::id() const
     return pimpl_->repository_ ? pimpl_->repository_->id() : "";
 }
 
-bool
+std::string
 Conversation::addMember(const std::string& contactUri)
 {
     // Retrieve certificate
     auto cert = tls::CertificateStore::instance().getCertificate(contactUri);
     if (!cert) {
         JAMI_WARN("Could not add member %s because no certificate is found", contactUri.c_str());
-        return false;
+        return {};
     }
     // Add member files and commit
-    return !pimpl_->repository_->addMember(cert).empty();
+    return pimpl_->repository_->addMember(cert);
 }
 
 bool

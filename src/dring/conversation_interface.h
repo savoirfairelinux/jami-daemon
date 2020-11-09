@@ -44,7 +44,7 @@ DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConversationRequ
     const std::string& accountId);
 
 // Member management
-DRING_PUBLIC void addConversationMember(const std::string& accountId,
+DRING_PUBLIC bool addConversationMember(const std::string& accountId,
                                         const std::string& conversationId,
                                         const std::string& contactUri);
 DRING_PUBLIC bool removeConversationMember(const std::string& accountId,
@@ -59,9 +59,9 @@ DRING_PUBLIC void sendMessage(const std::string& accountId,
                               const std::string& message,
                               const std::string& parent);
 DRING_PUBLIC uint32_t loadConversationMessages(const std::string& accountId,
-                                           const std::string& conversationId,
-                                           const std::string& fromMessage,
-                                           size_t n);
+                                               const std::string& conversationId,
+                                               const std::string& fromMessage,
+                                               size_t n);
 
 struct DRING_PUBLIC ConversationSignal
 {

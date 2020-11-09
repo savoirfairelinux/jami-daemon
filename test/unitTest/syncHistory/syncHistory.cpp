@@ -326,7 +326,8 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     auto alice2Account = Manager::instance().getAccount<JamiAccount>(alice2Id);
     std::vector<std::map<std::string, std::string>> messages;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationLoaded>(
-        [&](uint32_t, const std::string& accountId,
+        [&](uint32_t,
+            const std::string& accountId,
             const std::string& conversationId,
             std::vector<std::map<std::string, std::string>> msg) {
             if (accountId == alice2Id && conversationId == convId) {
@@ -364,7 +365,7 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
 
     // Start conversation for Alice
     auto convId = bobAccount->startConversation();
-    bobAccount->addConversationMember(convId, uri);
+    CPPUNIT_ASSERT(bobAccount->addConversationMember(convId, uri));
 
     // Check that alice receives the request
     std::mutex mtx;

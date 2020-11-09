@@ -72,38 +72,60 @@ public:
     // Methods
     std::map<std::string, std::string> getAccountDetails(const std::string& accountID);
     std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountID);
-    void setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details);
+    void setAccountDetails(const std::string& accountID,
+                           const std::map<std::string, std::string>& details);
     std::map<std::string, std::string> testAccountICEInitialization(const std::string& accountID);
     void setAccountActive(const std::string& accountID, const bool& active);
     std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
     std::string addAccount(const std::map<std::string, std::string>& details);
     bool exportOnRing(const std::string& accountID, const std::string& password);
-    bool exportToFile(const std::string& accountID, const std::string& destinationPath, const std::string& password = {});
-    bool revokeDevice(const std::string& accountID, const std::string& password, const std::string& device);
+    bool exportToFile(const std::string& accountID,
+                      const std::string& destinationPath,
+                      const std::string& password = {});
+    bool revokeDevice(const std::string& accountID,
+                      const std::string& password,
+                      const std::string& device);
     std::map<std::string, std::string> getKnownRingDevices(const std::string& accountID);
-    bool changeAccountPassword(const std::string& accountID, const std::string& password_old, const std::string& password_new);
-    bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name);
-    bool lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address);
-    bool registerName(const std::string& account, const std::string& password, const std::string& name);
+    bool changeAccountPassword(const std::string& accountID,
+                               const std::string& password_old,
+                               const std::string& password_new);
+    bool lookupName(const std::string& account,
+                    const std::string& nameserver,
+                    const std::string& name);
+    bool lookupAddress(const std::string& account,
+                       const std::string& nameserver,
+                       const std::string& address);
+    bool registerName(const std::string& account,
+                      const std::string& password,
+                      const std::string& name);
     bool searchUser(const std::string& account, const std::string& query);
     void removeAccount(const std::string& accoundID);
     std::vector<std::string> getAccountList();
     void sendRegister(const std::string& accoundID, const bool& enable);
     void registerAllAccounts(void);
-    uint64_t sendTextMessage(const std::string& accoundID, const std::string& to, const std::map<std::string, std::string>& payloads);
-    std::vector<RingDBusMessage> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
+    uint64_t sendTextMessage(const std::string& accoundID,
+                             const std::string& to,
+                             const std::map<std::string, std::string>& payloads);
+    std::vector<RingDBusMessage> getLastMessages(const std::string& accountID,
+                                                 const uint64_t& base_timestamp);
     std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
     int getMessageStatus(const uint64_t& id);
     int getMessageStatus(const std::string& accountID, const uint64_t& id);
     bool cancelMessage(const std::string& accountID, const uint64_t& messageId);
     void setIsComposing(const std::string& accountID, const std::string& to, const bool& isWriting);
-    bool setMessageDisplayed(const std::string& accountID, const std::string& contactId, const std::string& messageId, const int32_t& status);
+    bool setMessageDisplayed(const std::string& accountID,
+                             const std::string& contactId,
+                             const std::string& messageId,
+                             const int32_t& status);
     std::map<std::string, std::string> getTlsDefaultSettings();
     std::vector<std::string> getSupportedCiphers(const std::string& accountID);
     std::vector<unsigned> getCodecList();
     std::vector<std::string> getSupportedTlsMethod();
-    std::map<std::string, std::string> getCodecDetails(const std::string& accountID, const unsigned& codecId);
-    bool setCodecDetails(const std::string& accountID, const unsigned& codecId, const std::map<std::string, std::string>& details);
+    std::map<std::string, std::string> getCodecDetails(const std::string& accountID,
+                                                       const unsigned& codecId);
+    bool setCodecDetails(const std::string& accountID,
+                         const unsigned& codecId,
+                         const std::map<std::string, std::string>& details);
     std::vector<unsigned> getActiveCodecList(const std::string& accountID);
     void setActiveCodecList(const std::string& accountID, const std::vector<unsigned>& list);
     std::vector<std::string> getAudioPluginList();
@@ -146,65 +168,90 @@ public:
     int32_t getRingingTimeout();
     void setAccountsOrder(const std::string& order);
     std::vector<std::map<std::string, std::string>> getCredentials(const std::string& accountID);
-    void setCredentials(const std::string& accountID, const std::vector<std::map<std::string, std::string>>& details);
+    void setCredentials(const std::string& accountID,
+                        const std::vector<std::map<std::string, std::string>>& details);
     std::string getAddrFromInterfaceName(const std::string& interface);
     std::vector<std::string> getAllIpInterface();
     std::vector<std::string> getAllIpInterfaceByName();
     std::map<std::string, std::string> getShortcuts();
-    void setShortcuts(const std::map<std::string, std::string> &shortcutsMap);
+    void setShortcuts(const std::map<std::string, std::string>& shortcutsMap);
     void setVolume(const std::string& device, const double& value);
     double getVolume(const std::string& device);
-    std::map<std::string, std::string> validateCertificate(const std::string& accountId, const std::string& certificate);
-    std::map<std::string, std::string> validateCertificatePath(const std::string& accountId, const std::string& certificatePath, const std::string& privateKey, const std::string& privateKeyPass, const std::string& caList);
+    std::map<std::string, std::string> validateCertificate(const std::string& accountId,
+                                                           const std::string& certificate);
+    std::map<std::string, std::string> validateCertificatePath(const std::string& accountId,
+                                                               const std::string& certificatePath,
+                                                               const std::string& privateKey,
+                                                               const std::string& privateKeyPass,
+                                                               const std::string& caList);
     std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
-    std::map<std::string, std::string> getCertificateDetailsPath(const std::string& certificatePath, const std::string& privateKey, const std::string& privateKeyPass);
+    std::map<std::string, std::string> getCertificateDetailsPath(const std::string& certificatePath,
+                                                                 const std::string& privateKey,
+                                                                 const std::string& privateKeyPass);
     std::vector<std::string> getPinnedCertificates();
-    std::vector<std::string> pinCertificate(const std::vector<uint8_t>& certificate, const bool& local);
+    std::vector<std::string> pinCertificate(const std::vector<uint8_t>& certificate,
+                                            const bool& local);
     bool unpinCertificate(const std::string& certId);
     void pinCertificatePath(const std::string& path);
     unsigned unpinCertificatePath(const std::string& path);
     bool pinRemoteCertificate(const std::string& accountId, const std::string& certId);
-    bool setCertificateStatus(const std::string& account, const std::string& certId, const std::string& status);
-    std::vector<std::string> getCertificatesByStatus(const std::string& account, const std::string& status);
+    bool setCertificateStatus(const std::string& account,
+                              const std::string& certId,
+                              const std::string& status);
+    std::vector<std::string> getCertificatesByStatus(const std::string& account,
+                                                     const std::string& status);
     std::vector<std::map<std::string, std::string>> getTrustRequests(const std::string& accountId);
     bool acceptTrustRequest(const std::string& accountId, const std::string& from);
     bool discardTrustRequest(const std::string& accountId, const std::string& from);
-    void sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload);
+    void sendTrustRequest(const std::string& accountId,
+                          const std::string& to,
+                          const std::vector<uint8_t>& payload);
     void addContact(const std::string& accountId, const std::string& uri);
     void removeContact(const std::string& accountId, const std::string& uri, const bool& ban);
-    std::map<std::string, std::string> getContactDetails(const std::string& accountId, const std::string& uri);
+    std::map<std::string, std::string> getContactDetails(const std::string& accountId,
+                                                         const std::string& uri);
     std::vector<std::map<std::string, std::string>> getContacts(const std::string& accountId);
-    int exportAccounts(const std::vector<std::string>& accountIDs, const std::string& filepath, const std::string& password);
+    int exportAccounts(const std::vector<std::string>& accountIDs,
+                       const std::string& filepath,
+                       const std::string& password);
     int importAccounts(const std::string& archivePath, const std::string& password);
     void connectivityChanged();
     std::vector<uint64_t> dataTransferList();
     void sendFile(const RingDBusDataTransferInfo& info, uint32_t& error, DRing::DataTransferId& id);
-    void dataTransferInfo(const DRing::DataTransferId& id, uint32_t& error, RingDBusDataTransferInfo& info);
-    void dataTransferBytesProgress(const uint64_t& id, uint32_t& error, int64_t& total, int64_t& progress);
-    uint32_t acceptFileTransfer(const uint64_t& id, const std::string& file_path, const int64_t& offset);
+    void dataTransferInfo(const DRing::DataTransferId& id,
+                          uint32_t& error,
+                          RingDBusDataTransferInfo& info);
+    void dataTransferBytesProgress(const uint64_t& id,
+                                   uint32_t& error,
+                                   int64_t& total,
+                                   int64_t& progress);
+    uint32_t acceptFileTransfer(const uint64_t& id,
+                                const std::string& file_path,
+                                const int64_t& offset);
     uint32_t cancelDataTransfer(const uint64_t& id);
     std::string startConversation(const std::string& accountId);
     void acceptConversationRequest(const std::string& accountId, const std::string& conversationId);
     void declineConversationRequest(const std::string& accountId, const std::string& conversationId);
     bool removeConversation(const std::string& accountId, const std::string& conversationId);
     std::vector<std::string> getConversations(const std::string& accountId);
-    std::vector<std::map<std::string, std::string>> getConversationRequests(const std::string& accountId);
-    void addConversationMember(const std::string& accountId,
-                            const std::string& conversationId,
-                            const std::string& contactUri);
+    std::vector<std::map<std::string, std::string>> getConversationRequests(
+        const std::string& accountId);
+    bool addConversationMember(const std::string& accountId,
+                               const std::string& conversationId,
+                               const std::string& contactUri);
     bool removeConversationMember(const std::string& accountId,
-                                const std::string& conversationId,
-                                const std::string& contactUri);
+                                  const std::string& conversationId,
+                                  const std::string& contactUri);
     std::vector<std::map<std::string, std::string>> getConversationMembers(
         const std::string& accountId, const std::string& conversationId);
     void sendMessage(const std::string& accountId,
-                    const std::string& conversationId,
-                    const std::string& message,
-                    const std::string& parent);
+                     const std::string& conversationId,
+                     const std::string& message,
+                     const std::string& parent);
     uint32_t loadConversationMessages(const std::string& accountId,
-                                const std::string& conversationId,
-                                const std::string& fromMessage,
-                                const uint32_t& n);
+                                      const std::string& conversationId,
+                                      const std::string& fromMessage,
+                                      const uint32_t& n);
 
     bool isAudioMeterActive(const std::string& id);
     void setAudioMeterState(const std::string& id, const bool& state);

@@ -62,6 +62,7 @@ private:
     void testRemoveInvalidConversation();
     void testRemoveConversationNoMember();
     void testAddMember();
+    void testAddMemberInvalid();
     void testAddOfflineMemberThenConnects();
     void testGetMembers();
     void testSendMessage();
@@ -366,7 +367,7 @@ ConversationTest::testAddMember()
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, requestReceived = false;
+    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false;
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
@@ -382,9 +383,19 @@ ConversationTest::testAddMember()
                 cv.notify_one();
             }
         }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
+                memberMessageGenerated = true;
+                cv.notify_one();
+            }
+        }));
     DRing::registerSignalHandlers(confHandlers);
 
-    aliceAccount->addConversationMember(convId, bobUri);
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
+    CPPUNIT_ASSERT(memberMessageGenerated);
 
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
@@ -403,6 +414,19 @@ ConversationTest::testAddMember()
     auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                       + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(fileutils::isDirectory(clonedPath));
+}
+
+void
+ConversationTest::testAddMemberInvalid()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
+    if (bobUri.find("ring:") == 0)
+        bobUri = bobUri.substr(std::string("ring:").size());
+    auto convId = aliceAccount->startConversation();
+
+    CPPUNIT_ASSERT(!aliceAccount->addConversationMember(convId, "invalid"));
 }
 
 void
@@ -438,7 +462,7 @@ ConversationTest::testAddOfflineMemberThenConnects()
             }));
     DRing::registerSignalHandlers(confHandlers);
 
-    aliceAccount->addConversationMember(convId, carlaUri);
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, carlaUri));
     Manager::instance().sendRegister(carlaId, true);
     cv.wait_for(lk, std::chrono::seconds(60));
     CPPUNIT_ASSERT(requestReceived);
@@ -461,7 +485,7 @@ ConversationTest::testGetMembers()
         bobUri = bobUri.substr(std::string("ring:").size());
     auto convId = aliceAccount->startConversation();
 
-    aliceAccount->addConversationMember(convId, bobUri);
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
 
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
@@ -525,7 +549,7 @@ ConversationTest::testSendMessage()
 
     auto convId = aliceAccount->startConversation();
 
-    aliceAccount->addConversationMember(convId, bobUri);
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(requestReceived);
 
@@ -603,7 +627,7 @@ ConversationTest::testGetRequests()
 
     auto convId = aliceAccount->startConversation();
 
-    aliceAccount->addConversationMember(convId, bobUri);
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(requestReceived);
 
@@ -637,7 +661,7 @@ ConversationTest::testMissedRequestRetrieveWithFirstMessage()
 
     auto convId = aliceAccount->startConversation();
 
-    aliceAccount->addConversationMember(convId, bobUri, false);
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri, false));
     aliceAccount->sendMessage(convId, "hi");
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(requestReceived);
@@ -673,7 +697,7 @@ ConversationTest::testDeclineRequest()
 
     auto convId = aliceAccount->startConversation();
 
-    aliceAccount->addConversationMember(convId, bobUri);
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(requestReceived);
 
@@ -754,8 +778,8 @@ ConversationTest::testSendMessageToMultipleParticipants()
 
     auto convId = aliceAccount->startConversation();
 
-    aliceAccount->addConversationMember(convId, bobUri);
-    aliceAccount->addConversationMember(convId, carlaUri);
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, carlaUri));
     cv.wait_for(lk, std::chrono::seconds(60));
     CPPUNIT_ASSERT(requestReceived == 2);
 
@@ -816,7 +840,7 @@ ConversationTest::testReceiveMessagesWhenLoadingAccount()
     DRing::registerSignalHandlers(confHandlers);
 
     // Add alice to member WITHOUT ANNOUNCING IT
-    aliceAccount->addConversationMember(convId, carlaUri, false);
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, carlaUri, false));
 
     auto originPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                       + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
@@ -888,7 +912,7 @@ ConversationTest::testPingPongMessages()
         }));
     DRing::registerSignalHandlers(confHandlers);
     auto convId = aliceAccount->startConversation();
-    aliceAccount->addConversationMember(convId, bobUri);
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(requestReceived);
     bobAccount->acceptConversationRequest(convId);

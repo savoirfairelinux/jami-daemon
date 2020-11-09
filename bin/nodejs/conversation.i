@@ -58,7 +58,7 @@ namespace DRing {
   std::vector<std::map<std::string, std::string>> getConversationRequests(const std::string& accountId);
 
   // Member management
-  void addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
+  bool addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
   bool removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
   std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId, const std::string& conversationId);
 
