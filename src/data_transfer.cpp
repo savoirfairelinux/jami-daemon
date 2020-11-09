@@ -355,8 +355,7 @@ private:
     mutable bool headerSent_ {false};
     bool peerReady_ {false};
     const std::string peerUri_;
-    mutable std::unique_ptr<std::thread> timeoutThread_;
-    mutable std::atomic_bool stopTimeout_ {false};
+    mutable std::shared_ptr<Task> timeoutTask_;
     std::mutex onRecvCbMtx_;
     std::function<void(std::string_view)> onRecvCb_ {};
 };
@@ -378,10 +377,8 @@ SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
 
 SubOutgoingFileTransfer::~SubOutgoingFileTransfer()
 {
-    if (timeoutThread_ && timeoutThread_->joinable()) {
-        stopTimeout_ = true;
-        timeoutThread_->join();
-    }
+    if (timeoutTask_)
+        timeoutTask_->cancel();
 }
 
 void
@@ -468,20 +465,15 @@ SubOutgoingFileTransfer::emit(DRing::DataTransferEventCode code) const
         stateChangedCb_(id, code);
     metaInfo_->updateInfo(info_);
     if (code == DRing::DataTransferEventCode::wait_peer_acceptance) {
-        timeoutThread_ = std::unique_ptr<std::thread>(new std::thread([this]() {
-            const auto TEN_MIN = 1000 * 60 * 10;
-            const auto SLEEP_DURATION = 100;
-            for (auto i = 0; i < TEN_MIN / SLEEP_DURATION; ++i) {
-                // 10 min before timeout
-                std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_DURATION));
-                if (stopTimeout_.load())
-                    return; // not waiting anymore
-            }
-            JAMI_WARN() << "FTP#" << this->getId() << ": timeout. Cancel";
-            this->closeAndEmit(DRing::DataTransferEventCode::timeout_expired);
-        }));
-    } else if (timeoutThread_) {
-        stopTimeout_ = true;
+        if (timeoutTask_)
+            timeoutTask_->cancel();
+        timeoutTask_ = Manager::instance().scheduleTask([this]() {
+            JAMI_WARN() << "FTP#" << getId() << ": timeout. Cancel";
+            closeAndEmit(DRing::DataTransferEventCode::timeout_expired);
+        }, std::chrono::minutes(10));
+    } else if (timeoutTask_) {
+        timeoutTask_->cancel();
+        timeoutTask_.reset();
     }
 }
 
