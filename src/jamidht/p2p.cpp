@@ -186,7 +186,7 @@ DhtPeerConnector::requestConnection(
     bool isVCard,
     const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
         channeledConnectedCb,
-    const std::function<void()>& onChanneledCancelled)
+    const std::function<void(const std::string&)>& onChanneledCancelled)
 {
     auto acc = pimpl_->account.lock();
     if (!acc)
@@ -194,11 +194,15 @@ DhtPeerConnector::requestConnection(
 
     const auto peer_h = dht::InfoHash(peer_id);
 
-    auto channelReadyCb = [this, tid, peer_id, channeledConnectedCb, onChanneledCancelled](
-                              const std::shared_ptr<ChannelSocket>& channel) {
+    auto channelReadyCb = [this,
+                           tid,
+                           peer_id,
+                           channeledConnectedCb,
+                           onChanneledCancelled](const std::shared_ptr<ChannelSocket>& channel,
+                                                 const DeviceId&) {
         auto shared = pimpl_->account.lock();
         if (!channel) {
-            onChanneledCancelled();
+            onChanneledCancelled("");
             return;
         }
         if (!shared)
@@ -219,7 +223,7 @@ DhtPeerConnector::requestConnection(
 
         channel->onShutdown([this, tid, onChanneledCancelled, peer = outgoingFile->peer()]() {
             JAMI_INFO("Channel down for outgoing transfer with id(%lu)", tid);
-            onChanneledCancelled();
+            onChanneledCancelled("");
             dht::ThreadPool::io().run([w = pimpl_->weak(), tid, peer] {
                 auto shared = w.lock();
                 if (!shared)
@@ -284,7 +288,7 @@ DhtPeerConnector::requestConnection(
         [peer_h, onChanneledCancelled, accId = acc->getAccountID()](bool found) {
             if (!found) {
                 JAMI_WARN() << accId << "[CNX] aborted, no devices for " << peer_h;
-                onChanneledCancelled();
+                onChanneledCancelled("");
             }
         });
 }
