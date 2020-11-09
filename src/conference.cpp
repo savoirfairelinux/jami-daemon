@@ -527,4 +527,24 @@ Conference::isModerator(const std::string& uri) const
            != moderators_.end();
 }
 
+void
+Conference::changeModerator(const std::string& uri, const bool state)
+{
+    for (const auto& p : participants_) {
+        if (p == uri) {
+            if (state and not isModerator(uri))
+                moderators_.emplace_back(uri);
+            else if (not state) {
+                const auto& it = std::find_if(moderators_.begin(),
+                                              moderators_.end(),
+                                              [&uri](const std::string& moderator) {
+                                                  return moderator.find(uri) != std::string::npos;
+                                              });
+                if (it != moderators_.end())
+                    moderators_.erase(it);
+            }
+        }
+    }
+}
+
 } // namespace jami

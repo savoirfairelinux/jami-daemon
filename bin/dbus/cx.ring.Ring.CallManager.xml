@@ -849,5 +849,12 @@
             <arg type="s" name="peerNumber" />
             <arg type="b" name="remoteRecordingState" />
         </signal>
+
+        <signal name="changeModerator" tp:name-for-bindings="changeModerator">
+            <tp:added version="1.0.0"/>
+            <arg type="s" name="confId" />
+            <arg type="s" name="peerId" />
+            <arg type="b" name="state" />
+        </signal>
     </interface>
 </node>

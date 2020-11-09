@@ -932,6 +932,8 @@ public:
     JamiPluginManager& getJamiPluginManager() const;
 #endif
 
+    void changeModerator(const std::string& confId, const std::string& peerId, const bool state);
+
 private:
     Manager();
     ~Manager();

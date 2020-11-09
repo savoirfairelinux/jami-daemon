@@ -202,6 +202,7 @@ public:
     void detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame);
 
     void onConfOrder(const std::string& callId, const std::string& order);
+    void changeModerator(const std::string& uri, const bool state);
 
 #ifdef ENABLE_VIDEO
     std::shared_ptr<video::VideoMixer> getVideoMixer();
