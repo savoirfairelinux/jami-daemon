@@ -345,7 +345,10 @@ private:
             JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
             if (internalCompletionCb_)
                 internalCompletionCb_(info_.path);
-            emit(DRing::DataTransferEventCode::finished);
+            if (info_.bytesProgress != info_.totalSize)
+                emit(DRing::DataTransferEventCode::closed_by_peer);
+            else
+                emit(DRing::DataTransferEventCode::finished);
         });
     }
 
