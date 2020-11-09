@@ -136,36 +136,6 @@ FtpServer::closeCurrentFile()
 }
 
 bool
-FtpServer::read(std::vector<uint8_t>& buffer) const
-{
-    if (!out_.stream) {
-        if (closed_.exchange(false)) {
-            if (rx_ < fileSize_) {
-                buffer.resize(4);
-                buffer[0] = 'N';
-                buffer[1] = 'G';
-                buffer[2] = 'O';
-                buffer[3] = '\n';
-                JAMI_DBG() << "[FTP] sending NGO (cancel) order";
-                return true;
-            }
-        }
-        buffer.resize(0);
-    } else if (go_) {
-        go_ = false;
-        buffer.resize(3);
-        buffer[0] = 'G';
-        buffer[1] = 'O';
-        buffer[2] = '\n';
-        JAMI_DBG() << "[FTP] sending GO order";
-    } else {
-        // Nothing to send. Avoid to have an useless buffer filled with 0.
-        buffer.resize(0);
-    }
-    return true;
-}
-
-bool
 FtpServer::write(std::string_view buffer)
 {
     switch (state_) {
@@ -191,7 +161,8 @@ FtpServer::write(std::string_view buffer)
             closeCurrentFile();
             // data may remains into the buffer: copy into the header stream for next header parsing
             if (read_size < buffer.size())
-                headerStream_.write((const char*)(buffer.data() + read_size), buffer.size() - read_size);
+                headerStream_.write((const char*) (buffer.data() + read_size),
+                                    buffer.size() - read_size);
             state_ = FtpState::PARSE_HEADERS;
         }
     } break;
@@ -242,7 +213,7 @@ FtpServer::handleHeader(std::string_view key, std::string_view value)
     JAMI_DBG() << "[FTP] header: '" << key << "' = '" << value << "'";
 
     if (key == "Content-Length") {
-        auto [p, ec] = std::from_chars(value.data(), value.data()+value.size(), fileSize_);
+        auto [p, ec] = std::from_chars(value.data(), value.data() + value.size(), fileSize_);
         if (ec != std::errc()) {
             throw std::runtime_error("[FTP] header parsing error");
         }
