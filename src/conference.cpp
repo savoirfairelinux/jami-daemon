@@ -53,11 +53,10 @@ Conference::Conference()
     // conference master. In the future, this should be
     // retrieven with another way
     auto accounts = jami::Manager::instance().getAllAccounts<JamiAccount>();
-    moderators_.reserve(accounts.size());
     for (const auto& account : accounts) {
         if (!account)
             continue;
-        moderators_.emplace_back(account->getUsername());
+        moderators_.emplace(account->getUsername());
     }
 
 #ifdef ENABLE_VIDEO
@@ -513,6 +512,9 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         if (root.isMember("activeParticipant")) {
             setActiveParticipant(root["activeParticipant"].asString());
         }
+        if (root.isMember("muteParticipant")) {
+            setActiveParticipant(root["activeParticipant"].asString());
+        }
     }
 }
 
@@ -525,6 +527,30 @@ Conference::isModerator(const std::string& uri) const
                             return moderator.find(uri) != std::string::npos;
                         })
            != moderators_.end();
+}
+
+void
+Conference::setModerator(const std::string& uri, const bool& state)
+{
+    for (const auto& p : participants_) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
+            auto partURI = call->getPeerNumber();
+            string_replace(partURI, "@ring.dht", "");
+            if (partURI.compare(uri) == 0) {
+                if (state and not isModerator(uri)) {
+                    JAMI_DBG("Add %s as moderator", partURI.c_str());
+                    moderators_.emplace(uri);
+                }
+                else if (not state and isModerator(uri)) {
+                    JAMI_DBG("Remove %s as moderator", partURI.c_str());
+                    moderators_.erase(uri);
+                }
+                sendConferenceInfos();
+                return;
+            }
+        }
+    }
+    JAMI_WARN("Fail to set %s as moderator (participant not found)", uri.c_str());
 }
 
 } // namespace jami

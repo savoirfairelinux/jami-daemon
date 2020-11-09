@@ -251,6 +251,12 @@
             <arg type="s" name="callId" direction="in"/>
         </method>
 
+        <method name="setModerator" tp:name-for-bindings="setModerator">
+            <tp:added version="9.6.0"/>
+            <arg type="s" name="confId" direction="in"/>
+            <arg type="s" name="peerId" direction="in"/>
+            <arg type="b" name="state" direction="in"/>
+        </method>
 
         <method name="isConferenceParticipant" tp:name-for-bindings="isConferenceParticipant">
             <arg type="s" name="callID" direction="in"/>
@@ -849,5 +855,6 @@
             <arg type="s" name="peerNumber" />
             <arg type="b" name="remoteRecordingState" />
         </signal>
+
     </interface>
 </node>
