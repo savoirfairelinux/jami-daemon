@@ -1034,8 +1034,12 @@ SIPCall::setupLocalSDPFromIce()
 std::vector<IceCandidate>
 SIPCall::getAllRemoteCandidates()
 {
-    std::vector<IceCandidate> rem_candidates;
     auto media_tr = getIceMediaTransport();
+
+    if (not media_tr) {
+        JAMI_WARN("[call:%s] no media ICE transport", getCallId().c_str());
+        return {};
+    }
 
     auto addSDPCandidates = [&, this](unsigned sdpMediaId, std::vector<IceCandidate>& out) {
         IceCandidate cand;
@@ -1049,6 +1053,7 @@ SIPCall::getAllRemoteCandidates()
         }
     };
 
+    std::vector<IceCandidate> rem_candidates;
     addSDPCandidates(SDP_AUDIO_MEDIA_ID, rem_candidates);
 #ifdef ENABLE_VIDEO
     addSDPCandidates(SDP_VIDEO_MEDIA_ID, rem_candidates);
