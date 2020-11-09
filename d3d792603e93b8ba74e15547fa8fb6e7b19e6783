@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "04739c68_955886ed",
+        "filename": "src/jamidht/channeled_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 297,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-11-09T16:58:06Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\naddress of function \u0027socket\u0027 will always evaluate to \u0027true\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-pointer-bool-conversion",
+      "revId": "d3d792603e93b8ba74e15547fa8fb6e7b19e6783",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
