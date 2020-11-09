@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "beabaa5b_b613b402",
+        "filename": "src/jamidht/channeled_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 300,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-09T19:17:15Z",
+      "side": 1,
+      "message": "unecessary because function always return after this",
+      "range": {
+        "startLine": 300,
+        "startChar": 8,
+        "endLine": 300,
+        "endChar": 20
+      },
+      "revId": "8a312b1aeb4c0ed9f925cf80beaae3d3d9ee7032",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "595c8067_13e34306",
+        "filename": "src/jamidht/channeled_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-09T19:17:15Z",
+      "side": 1,
+      "message": "return ec ? PJ_EINVAL : PJ_SUCCESS;",
+      "range": {
+        "startLine": 301,
+        "startChar": 8,
+        "endLine": 303,
+        "endChar": 26
+      },
+      "revId": "8a312b1aeb4c0ed9f925cf80beaae3d3d9ee7032",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c2f7cb50_74c7f2ec",
+        "filename": "src/jamidht/channeled_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 304,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-09T19:17:15Z",
+      "side": 1,
+      "message": "if (txQueue_.empty()) {\n    if (socket_) {\n        std::error_code ec;\n        socket_-\u003ewrite(reinterpret_cast\u003cconst uint8_t*\u003e(tdata-\u003ebuf.start), size, ec);\n        if (!ec)\n            return PJ_SUCCESS;\n    }\n    return PJ_EINVAL;\n}",
+      "range": {
+        "startLine": 295,
+        "startChar": 4,
+        "endLine": 304,
+        "endChar": 5
+      },
+      "revId": "8a312b1aeb4c0ed9f925cf80beaae3d3d9ee7032",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
