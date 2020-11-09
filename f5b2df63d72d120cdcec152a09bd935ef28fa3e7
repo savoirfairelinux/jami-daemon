@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4ed8097c_36a778db",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 330,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-09T19:50:48Z",
+      "side": 1,
+      "message": "io ?",
+      "range": {
+        "startLine": 330,
+        "startChar": 25,
+        "endLine": 330,
+        "endChar": 36
+      },
+      "revId": "f5b2df63d72d120cdcec152a09bd935ef28fa3e7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
