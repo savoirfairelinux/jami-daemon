@@ -22,6 +22,30 @@
       "revId": "feb02c2245aa130f24ab41aff10c8dc51d5813ba",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "037c0f0e_78cc9efe",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 153,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-11-10T22:07:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cd52dde3_aac2d0c0",
+      "range": {
+        "startLine": 149,
+        "startChar": 0,
+        "endLine": 153,
+        "endChar": 0
+      },
+      "revId": "feb02c2245aa130f24ab41aff10c8dc51d5813ba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
