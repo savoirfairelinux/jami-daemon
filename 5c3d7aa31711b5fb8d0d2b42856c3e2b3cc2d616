@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "4a57e1c5_72d9d2cf",
+        "filename": "test/unitTest/connectionManager/connectionManager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 904,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-10T14:29:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "627f284c_65b74540",
+      "range": {
+        "startLine": 901,
+        "startChar": 0,
+        "endLine": 904,
+        "endChar": 38
+      },
+      "revId": "5c3d7aa31711b5fb8d0d2b42856c3e2b3cc2d616",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "cfb62dd9_33ee1e89",
         "filename": "test/unitTest/connectionManager/connectionManager.cpp",
         "patchSetId": 2
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "25a3c8a4_cb73bd23",
+        "filename": "test/unitTest/connectionManager/connectionManager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 951,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-10T14:29:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cfb62dd9_33ee1e89",
+      "range": {
+        "startLine": 948,
+        "startChar": 0,
+        "endLine": 951,
+        "endChar": 38
+      },
+      "revId": "5c3d7aa31711b5fb8d0d2b42856c3e2b3cc2d616",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4c06ee27_8aa764c5",
         "filename": "test/unitTest/connectionManager/connectionManager.cpp",
         "patchSetId": 2
@@ -68,6 +116,30 @@
       "revId": "5c3d7aa31711b5fb8d0d2b42856c3e2b3cc2d616",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5f0f1951_ce6e1db6",
+        "filename": "test/unitTest/connectionManager/connectionManager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 979,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-10T14:29:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4c06ee27_8aa764c5",
+      "range": {
+        "startLine": 977,
+        "startChar": 0,
+        "endLine": 979,
+        "endChar": 38
+      },
+      "revId": "5c3d7aa31711b5fb8d0d2b42856c3e2b3cc2d616",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
