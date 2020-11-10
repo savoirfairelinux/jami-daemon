@@ -172,12 +172,12 @@ expand_path(const std::string& path)
 #endif
 }
 
-std::map<std::string, std::mutex> fileLocks {};
-std::mutex fileLockLock {};
-
 std::mutex&
 getFileLock(const std::string& path)
 {
+    static std::mutex fileLockLock {};
+    static std::map<std::string, std::mutex> fileLocks {};
+
     std::lock_guard<std::mutex> l(fileLockLock);
     return fileLocks[path];
 }
@@ -585,7 +585,7 @@ get_home_dir()
 #else
 
     // 1) try getting user's home directory from the environment
-    const std::string home(PROTECTED_GETENV("HOME"));
+    std::string home(PROTECTED_GETENV("HOME"));
     if (not home.empty())
         return home;
 
