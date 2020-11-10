@@ -22,6 +22,30 @@
       "revId": "a4be3a694ea9c0902c6b0cc4ddcb6725cd6dfe3e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "17ff9522_b1f84920",
+        "filename": "bin/dbus/dbuspluginmanagerinterface.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-11-10T22:06:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "912e6b55_4e042e9c",
+      "range": {
+        "startLine": 78,
+        "startChar": 27,
+        "endLine": 78,
+        "endChar": 41
+      },
+      "revId": "a4be3a694ea9c0902c6b0cc4ddcb6725cd6dfe3e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
