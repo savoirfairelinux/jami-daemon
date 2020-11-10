@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "912e6b55_4e042e9c",
+        "filename": "bin/dbus/dbuspluginmanagerinterface.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-10T21:28:09Z",
+      "side": 1,
+      "message": "callId",
+      "range": {
+        "startLine": 78,
+        "startChar": 27,
+        "endLine": 78,
+        "endChar": 41
+      },
+      "revId": "a4be3a694ea9c0902c6b0cc4ddcb6725cd6dfe3e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
