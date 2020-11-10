@@ -25,6 +25,121 @@
     },
     {
       "key": {
+        "uuid": "591416ff_dc23d201",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 215,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-10T18:53:12Z",
+      "side": 1,
+      "message": "[_, map] :",
+      "range": {
+        "startLine": 215,
+        "startChar": 15,
+        "endLine": 215,
+        "endChar": 17
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7ba4ad19_afca4cfb",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-10T18:53:12Z",
+      "side": 1,
+      "message": "note, if available is atomic, can be done in a single step witch atomic_bool.exchange()",
+      "range": {
+        "startLine": 240,
+        "startChar": 23,
+        "endLine": 242,
+        "endChar": 42
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3da027e6_6e64d7c0",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 292,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-10T18:53:12Z",
+      "side": 1,
+      "message": "[protocol, igd]",
+      "range": {
+        "startLine": 292,
+        "startChar": 21,
+        "endLine": 292,
+        "endChar": 25
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "70deb3ad_f8479318",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 324,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-10T18:53:12Z",
+      "side": 1,
+      "message": "std::move(ctrlData)",
+      "range": {
+        "startLine": 324,
+        "startChar": 30,
+        "endLine": 324,
+        "endChar": 55
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "adb6badc_232dc0eb",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 339,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-10T18:53:12Z",
+      "side": 1,
+      "message": "[protocol, igd]",
+      "range": {
+        "startLine": 339,
+        "startChar": 21,
+        "endLine": 339,
+        "endChar": 25
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "865de30e_d1bef91b",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 12
