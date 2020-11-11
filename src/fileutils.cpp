@@ -72,6 +72,8 @@
 #include <wordexp.h>
 #endif
 
+#include <nettle/sha3.h>
+
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -944,29 +946,72 @@ ofstream(const std::string& path, std::ios_base::openmode mode)
 #endif
 }
 
-std::string
-md5File(const std::string& path)
+int64_t
+size(const std::string& path)
 {
-    return md5sum(loadFile(path));
+    std::ifstream file;
+    int64_t size;
+    try {
+        openStream(file, path);
+        file.seekg(0, std::ios_base::end);
+        size = file.tellg();
+        file.close();
+    } catch (...) {
+    }
+    return size;
 }
 
 std::string
-md5sum(const std::vector<uint8_t>& buffer)
+sha3File(const std::string& path)
 {
-    pj_md5_context pms;
+    sha3_512_ctx ctx;
+    sha3_512_init(&ctx);
 
-    pj_md5_init(&pms);
-    pj_md5_update(&pms, (const uint8_t*) buffer.data(), buffer.size());
+    std::ifstream file;
+    try {
+        if (!fileutils::isFile(path))
+            return {};
+        openStream(file, path);
+        if (!file)
+            return {};
+        std::vector<char> buffer(8192, 0);
+        while (!file.eof()) {
+            file.read(buffer.data(), buffer.size());
+            std::streamsize readSize = file.gcount();
+            sha3_512_update(&ctx, readSize, (const uint8_t*) buffer.data());
+        }
+        file.close();
+    } catch (...) {
+        return {};
+    }
 
-    unsigned char digest[16];
-    pj_md5_final(&pms, digest);
+    unsigned char digest[SHA3_512_DIGEST_SIZE];
+    sha3_512_digest(&ctx, SHA3_512_DIGEST_SIZE, digest);
 
-    char hash[32];
+    char hash[SHA3_512_DIGEST_SIZE * 2];
 
-    for (int i = 0; i < 16; ++i)
+    for (int i = 0; i < SHA3_512_DIGEST_SIZE; ++i)
         pj_val_to_hex_digit(digest[i], &hash[2 * i]);
 
-    return {hash, 32};
+    return {hash, SHA3_512_DIGEST_SIZE * 2};
+}
+
+std::string
+sha3sum(const std::vector<uint8_t>& buffer)
+{
+    sha3_512_ctx ctx;
+    sha3_512_init(&ctx);
+    sha3_512_update(&ctx, buffer.size(), (const uint8_t*) buffer.data());
+
+    unsigned char digest[SHA3_512_DIGEST_SIZE];
+    sha3_512_digest(&ctx, SHA3_512_DIGEST_SIZE, digest);
+
+    char hash[SHA3_512_DIGEST_SIZE * 2];
+
+    for (int i = 0; i < SHA3_512_DIGEST_SIZE; ++i)
+        pj_val_to_hex_digit(digest[i], &hash[2 * i]);
+
+    return {hash, SHA3_512_DIGEST_SIZE * 2};
 }
 
 int
