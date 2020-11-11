@@ -595,12 +595,12 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
                 auto raddr = getRemoteAddress(i);
 
                 if (laddr and raddr) {
-                    out << " [" << i+1 << "] "
-                        << laddr.toString(true, true) << " [" << getCandidateType(getSelectedCandidate(i, false)) << "] "
-                        << " <-> "
-                        << raddr.toString(true, true) << " [" << getCandidateType(getSelectedCandidate(i, true)) << "] " << '\n';
+                    out << " [" << i + 1 << "] " << laddr.toString(true, true) << " ["
+                        << getCandidateType(getSelectedCandidate(i, false)) << "] "
+                        << " <-> " << raddr.toString(true, true) << " ["
+                        << getCandidateType(getSelectedCandidate(i, true)) << "] " << '\n';
                 } else {
-                    out << " [" << i+1 << "] disabled\n";
+                    out << " [" << i + 1 << "] disabled\n";
                 }
             }
 
@@ -983,7 +983,11 @@ IceTransport::IceTransport(const char* name,
     : pimpl_ {std::make_unique<Impl>(name, component_count, master, options)}
 {}
 
-IceTransport::~IceTransport() {}
+IceTransport::~IceTransport()
+{
+    isStopped_ = true;
+    cancelOperations();
+}
 
 bool
 IceTransport::isInitialized() const
@@ -1149,6 +1153,7 @@ IceTransport::stop()
 void
 IceTransport::cancelOperations()
 {
+    isCancelled_ = true;
     for (auto& c : pimpl_->peerChannels_) {
         c.stop();
     }
@@ -1535,16 +1540,16 @@ IceTransport::parseSDPList(const std::vector<uint8_t>& msg)
         size_t off = 0;
         while (off != msg.size()) {
             msgpack::unpacked result;
-            msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+            msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
             SDP sdp;
             if (result.get().type == msgpack::type::POSITIVE_INTEGER) {
                 // Version 1
-                msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+                msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
                 std::tie(sdp.ufrag, sdp.pwd) = result.get().as<std::pair<std::string, std::string>>();
-                msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+                msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
                 auto comp_cnt = result.get().as<uint8_t>();
                 while (comp_cnt-- > 0) {
-                    msgpack::unpack(result, (const char*)msg.data(), msg.size(), off);
+                    msgpack::unpack(result, (const char*) msg.data(), msg.size(), off);
                     auto candidates = result.get().as<std::vector<std::string>>();
                     sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
                     sdp.candidates.insert(sdp.candidates.end(),
