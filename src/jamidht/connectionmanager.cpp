@@ -359,7 +359,9 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
                                                         true);
 
     // Negotiate a TLS session
-    JAMI_DBG() << account << "Start TLS session";
+    JAMI_DBG() << account
+               << "Start TLS session - Initied by connectDevice(). Launched by channel: " << name
+               << " - device:" << deviceId << " - vid: " << vid;
     info->tls_ = std::make_unique<TlsSocketEndpoint>(std::move(endpoint),
                                                      account.identity(),
                                                      account.dhParams(),
@@ -785,6 +787,8 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
 
     // init TLS session
     auto ph = req.from;
+    JAMI_DBG() << account << "Start TLS session - Initied by DHT request. Device:" << req.from
+               << " - vid: " << req.id;
     info->tls_ = std::make_unique<TlsSocketEndpoint>(
         std::move(endpoint),
         account.identity(),
