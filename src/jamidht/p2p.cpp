@@ -198,7 +198,7 @@ DhtPeerConnector::~DhtPeerConnector() = default;
 
 void
 DhtPeerConnector::requestConnection(
-    const std::string& peer_id,
+    const DRing::DataTransferInfo& info,
     const DRing::DataTransferId& tid,
     bool isVCard,
     const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
@@ -208,8 +208,6 @@ DhtPeerConnector::requestConnection(
     auto acc = pimpl_->account.lock();
     if (!acc)
         return;
-
-    const auto peer_h = dht::InfoHash(peer_id);
 
     auto channelReadyCb = [this,
                            tid,
@@ -269,7 +267,7 @@ DhtPeerConnector::requestConnection(
     };
 
     if (isVCard) {
-        acc->connectionManager().connectDevice(peer_h,
+        acc->connectionManager().connectDevice(DeviceId(info.peer),
                                                "vcard://" + std::to_string(tid),
                                                channelReadyCb);
         return;
@@ -283,30 +281,41 @@ DhtPeerConnector::requestConnection(
     // 2) anyway its good to keep this processing here in case of multiple device
     //    as the result is the same for each device.
     auto addresses = acc->publicAddresses();
+    std::vector<DeviceId> devices;
+    if (info.peer.empty()) {
+        for (const auto& member : acc->getConversationMembers(info.conversationId)) {
+            devices.emplace_back(DeviceId(member.at("uri")));
+        }
+    } else {
+        devices.emplace_back(DeviceId(info.peer));
+    }
 
-    acc->forEachDevice(
-        peer_h,
-        [this, addresses, tid, channelReadyCb = std::move(channelReadyCb)](
-            const dht::InfoHash& dev_h) {
-            auto acc = pimpl_->account.lock();
-            if (!acc)
-                return;
-            if (dev_h == acc->dht()->getId()) {
-                JAMI_ERR() << acc->getAccountID() << "[CNX] no connection to yourself, bad person!";
-                return;
-            }
+    for (const auto& peer_h : devices) {
+        acc->forEachDevice(
+            peer_h,
+            [this, addresses, tid, channelReadyCb = std::move(channelReadyCb)](
+                const dht::InfoHash& dev_h) {
+                auto acc = pimpl_->account.lock();
+                if (!acc)
+                    return;
+                if (dev_h == acc->dht()->getId()) {
+                    JAMI_ERR() << acc->getAccountID()
+                               << "[CNX] no connection to yourself, bad person!";
+                    return;
+                }
 
-            acc->connectionManager().connectDevice(dev_h,
-                                                   "file://" + std::to_string(tid),
-                                                   channelReadyCb);
-        },
+                acc->connectionManager().connectDevice(dev_h,
+                                                       "file://" + std::to_string(tid),
+                                                       channelReadyCb);
+            },
 
-        [peer_h, onChanneledCancelled, accId = acc->getAccountID()](bool found) {
-            if (!found) {
-                JAMI_WARN() << accId << "[CNX] aborted, no devices for " << peer_h;
-                onChanneledCancelled(peer_h.toString());
-            }
-        });
+            [peer_h, onChanneledCancelled, accId = acc->getAccountID()](bool found) {
+                if (!found) {
+                    JAMI_WARN() << accId << "[CNX] aborted, no devices for " << peer_h;
+                    onChanneledCancelled(peer_h.toString());
+                }
+            });
+    }
 }
 
 void

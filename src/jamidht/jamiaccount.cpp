@@ -2289,7 +2289,8 @@ JamiAccount::doRegister_()
 
             connectionManager().connectDevice(crt->getId(),
                                               "sync://" + deviceId,
-                                              [this](std::shared_ptr<ChannelSocket> socket, const DeviceId& deviceId) {
+                                              [this](std::shared_ptr<ChannelSocket> socket,
+                                                     const DeviceId& deviceId) {
                                                   if (socket)
                                                       syncWith(deviceId.toString(), socket);
                                                   {
@@ -3531,8 +3532,8 @@ JamiAccount::publicAddresses()
 }
 
 void
-JamiAccount::requestPeerConnection(
-    const std::string& peer_id,
+JamiAccount::requestConnection(
+    const DRing::DataTransferInfo& info,
     const DRing::DataTransferId& tid,
     bool isVCard,
     const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
@@ -3540,10 +3541,25 @@ JamiAccount::requestPeerConnection(
     const std::function<void(const std::string&)>& onChanneledCancelled)
 {
     if (not dhtPeerConnector_) {
-        runOnMainThread([onChanneledCancelled, peer_id] { onChanneledCancelled(peer_id); });
+        runOnMainThread([w = weak(), onChanneledCancelled, info] {
+            if (auto shared = w.lock()) {
+                if (info.peer.empty()) {
+                    auto it = shared->conversations_.find(info.conversationId);
+                    if (it == shared->conversations_.end()) {
+                        JAMI_ERR("Conversation %s doesn't exist", info.conversationId.c_str());
+                        return;
+                    }
+                    for (const auto& member : it->second->getMembers()) {
+                        onChanneledCancelled(member.at("uri"));
+                    }
+                } else {
+                    onChanneledCancelled(info.peer);
+                }
+            }
+        });
         return;
     }
-    dhtPeerConnector_->requestConnection(peer_id,
+    dhtPeerConnector_->requestConnection(info,
                                          tid,
                                          isVCard,
                                          channeledConnectedCb,
@@ -4089,8 +4105,9 @@ JamiAccount::fetchNewCommits(const std::string& peer,
                 [this,
                  conversation,
                  conversationId,
-                 announceMessages = std::move(announceMessages)](
-                    std::shared_ptr<ChannelSocket> socket, const DeviceId& deviceId) {
+                 announceMessages = std::move(
+                     announceMessages)](std::shared_ptr<ChannelSocket> socket,
+                                        const DeviceId& deviceId) {
                     if (socket) {
                         addGitSocket(deviceId.toString(), conversationId, socket);
                         if (!conversation->second->fetchFrom(deviceId.toString()))
@@ -4584,7 +4601,8 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
                         connectionManager().connectDevice(
                             DeviceId(deviceId),
                             "git://" + deviceId + "/" + convId,
-                            [this, convId](std::shared_ptr<ChannelSocket> socket, const DeviceId& deviceId) {
+                            [this, convId](std::shared_ptr<ChannelSocket> socket,
+                                           const DeviceId& deviceId) {
                                 if (socket) {
                                     std::unique_lock<std::mutex> lk(pendingConversationsFetchMtx_);
                                     auto& pending = pendingConversationsFetch_[convId];
