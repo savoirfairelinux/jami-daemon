@@ -21,6 +21,7 @@
 #pragma once
 
 #include "dring/datatransfer_interface.h"
+#include "noncopyable.h"
 
 #include <memory>
 #include <string>
@@ -39,53 +40,31 @@ typedef std::function<void(const std::string&)> InternalCompletionCb;
 typedef std::function<void(const DRing::DataTransferId&, const DRing::DataTransferEventCode&)>
     OnStateChangedCb;
 
-/// Front-end to data transfer service
-class DataTransferFacade
+class TransferManager
 {
 public:
-    DataTransferFacade();
-    ~DataTransferFacade();
+    TransferManager(const std::string& accountId, const std::string& to, bool isConversation = true);
+    ~TransferManager();
 
-    /// \see DRing::dataTransferList
-    std::vector<DRing::DataTransferId> list() const noexcept;
+    DRing::DataTransferId sendFile(const std::string& path, const InternalCompletionCb& icb = {});
 
-    /// \see DRing::sendFile
-    DRing::DataTransferError sendFile(const DRing::DataTransferInfo& info,
-                                      DRing::DataTransferId& id,
-                                      const InternalCompletionCb& cb = {}) noexcept;
+    bool acceptFile(const DRing::DataTransferId& id, const std::string& path);
 
-    /// \see DRing::acceptFileTransfer
-    DRing::DataTransferError acceptAsFile(const DRing::DataTransferId& id,
-                                          const std::string& file_path,
-                                          int64_t offset) noexcept;
+    bool cancel(const DRing::DataTransferId& id);
 
-    /// \see DRing::cancelDataTransfer
-    DRing::DataTransferError cancel(const DRing::DataTransferId& id) noexcept;
+    bool info(const DRing::DataTransferId& id, DRing::DataTransferInfo& info) const noexcept;
 
-    /// Used by p2p.cpp
-    void close(const DRing::DataTransferId& id) noexcept;
+    bool bytesProgress(const DRing::DataTransferId& id,
+                       int64_t& total,
+                       int64_t& progress) const noexcept;
 
-    /// \see DRing::dataTransferInfo
-    DRing::DataTransferError info(const DRing::DataTransferId& id,
-                                  DRing::DataTransferInfo& info) const noexcept;
-
-    /// \see DRing::dataTransferBytesProgress
-    DRing::DataTransferError bytesProgress(const DRing::DataTransferId& id,
-                                           int64_t& total,
-                                           int64_t& progress) const noexcept;
-
-    /// Used by p2p.cpp
-    DRing::DataTransferId createIncomingTransfer(const DRing::DataTransferInfo& info,
-                                                 const DRing::DataTransferId& internal_id,
-                                                 const InternalCompletionCb& cb);
-
-    /// Create an IncomingFileTransfer object.
-    /// @param id of the transfer
-    /// @param a shared pointer on created Stream object, or nullptr in case of error
-    void onIncomingFileRequest(const DRing::DataTransferId& id,
-                               const std::function<void(const IncomingFileInfo&)>& cb);
+    void onIncomingFileRequest(const DRing::DataTransferInfo& info,
+                               const DRing::DataTransferId& id,
+                               const std::function<void(const IncomingFileInfo&)>& cb,
+                               const InternalCompletionCb& icb = {});
 
 private:
+    NON_COPYABLE(TransferManager);
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };

@@ -359,7 +359,9 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
                                                         true);
 
     // Negotiate a TLS session
-    JAMI_DBG() << account << "Start TLS session";
+    JAMI_DBG() << account
+               << "Start TLS session - Initied by connectDevice(). Launched by channel: " << name
+               << " - device:" << deviceId << " - vid: " << vid;
     info->tls_ = std::make_unique<TlsSocketEndpoint>(std::move(endpoint),
                                                      account.identity(),
                                                      account.dhParams(),
@@ -791,6 +793,8 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
 
     // init TLS session
     auto ph = req.from;
+    JAMI_DBG() << account << "Start TLS session - Initied by DHT request. Device:" << req.from
+               << " - vid: " << req.id;
     info->tls_ = std::make_unique<TlsSocketEndpoint>(
         std::move(endpoint),
         account.identity(),
@@ -1053,12 +1057,16 @@ void
 ConnectionManager::monitor() const
 {
     std::lock_guard<std::mutex> lk(pimpl_->infosMtx_);
-    JAMI_DBG("ConnectionManager for account %s (%s), current status:", pimpl_->account.getAccountID().c_str(), pimpl_->account.getUserUri().c_str());
+    JAMI_DBG("ConnectionManager for account %s (%s), current status:",
+             pimpl_->account.getAccountID().c_str(),
+             pimpl_->account.getUserUri().c_str());
     for (const auto& [_, ci] : pimpl_->infos_) {
         if (ci->socket_)
             ci->socket_->monitor();
     }
-    JAMI_DBG("ConnectionManager for account %s (%s), end status.", pimpl_->account.getAccountID().c_str(), pimpl_->account.getUserUri().c_str());
+    JAMI_DBG("ConnectionManager for account %s (%s), end status.",
+             pimpl_->account.getAccountID().c_str(),
+             pimpl_->account.getUserUri().c_str());
 }
 
 } // namespace jami
