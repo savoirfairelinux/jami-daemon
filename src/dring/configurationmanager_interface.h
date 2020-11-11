@@ -383,17 +383,17 @@ struct DRING_PUBLIC ConfigurationSignal
     {
         constexpr static const char* name = "IncomingAccountMessage";
         using cb_type = void(const std::string& /*account_id*/,
-                             const std::string& /*message_id*/,
                              const std::string& /*from*/,
+                             const std::string& /*message_id*/,
                              const std::map<std::string, std::string>& /*payloads*/);
     };
     struct DRING_PUBLIC AccountMessageStatusChanged
     {
         constexpr static const char* name = "AccountMessageStatusChanged";
         using cb_type = void(const std::string& /*account_id*/,
-                             const std::string& /*message_id*/,
                              const std::string& /*conversation_id*/,
                              const std::string& /*peer*/,
+                             const std::string& /*message_id*/,
                              int /*state*/);
     };
     struct DRING_PUBLIC ProfileReceived
@@ -416,6 +416,7 @@ struct DRING_PUBLIC ConfigurationSignal
         constexpr static const char* name = "IncomingTrustRequest";
         using cb_type = void(const std::string& /*account_id*/,
                              const std::string& /*from*/,
+                             const std::string& /*conversationId*/,
                              const std::vector<uint8_t>& payload,
                              time_t received);
     };
