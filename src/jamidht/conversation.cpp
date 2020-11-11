@@ -511,10 +511,17 @@ Conversation::mergeHistory(const std::string& uri)
     }
 
     // If validated, merge
-    if (!pimpl_->repository_->merge(remoteHead)) {
+    auto [ok, cid] = pimpl_->repository_->merge(remoteHead);
+    if (!ok) {
         JAMI_ERR("Could not merge history with %s", uri.c_str());
         pimpl_->repository_->removeBranchWith(uri);
         return {};
+    }
+    if (!cid.empty()) {
+        // A merge commit was generated, should be added in new commits
+        auto commit = pimpl_->repository_->getCommit(cid);
+        if (commit != std::nullopt)
+            newCommits.emplace_back(*commit);
     }
     lk.unlock();
 
@@ -579,7 +586,8 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
                 it = itr.first;
             }
             // If recently fetched, the commit can already be there, so no need to do complex operations
-            if (commitId != "" && sthis_->pimpl_->repository_->getCommit(commitId) != std::nullopt) {
+            if (commitId != ""
+                && sthis_->pimpl_->repository_->getCommit(commitId, false) != std::nullopt) {
                 cb(true, {});
                 std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
                 sthis_->pimpl_->fetchingRemotes_.erase(it);
