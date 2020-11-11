@@ -137,7 +137,7 @@ void init(const SWIGV8_VALUE& funcMap){
         exportable_callback<ConfigurationSignal::IncomingAccountMessage>(bind(&incomingAccountMessage, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::AccountMessageStatusChanged>(bind(&accountMessageStatusChanged, _1, _2, _3, _4, _5 )),
         exportable_callback<ConfigurationSignal::ProfileReceived>(bind(&profileReceived, _1, _2, _3, _4 )),
-        exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4 )),
+        exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4, _5 )),
     };
 
     if (!DRing::init(static_cast<DRing::InitFlag>(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG)))

@@ -33,12 +33,12 @@ public:
     virtual void registrationStateChanged(const std::string& account_id, const std::string& state, int code, const std::string& detail_str){}
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
     virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*payload*/){}
-    virtual void accountMessageStatusChanged(const std::string& /*account_id*/, const std::string& /*message_id*/, const std::string& /*conversationId*/, const std::string& /*peer*/, int /*state*/){}
+    virtual void accountMessageStatusChanged(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*peer*/, const std::string& /*message_id*/, int /*state*/){}
     virtual void profileReceived(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*path*/){}
     virtual void knownDevicesChanged(const std::string& /*account_id*/, const std::map<std::string, std::string>& /*devices*/){}
     virtual void exportOnRingEnded(const std::string& /*account_id*/, int /*state*/, const std::string& /*pin*/){}
 
-    virtual void incomingTrustRequest(const std::string& /*account_id*/, const std::string& /*from*/, const std::vector<uint8_t>& /*payload*/, time_t received){}
+    virtual void incomingTrustRequest(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*from*/, const std::vector<uint8_t>& /*payload*/, time_t received){}
     virtual void contactAdded(const std::string& /*account_id*/, const std::string& /*uri*/, bool confirmed){}
     virtual void contactRemoved(const std::string& /*account_id*/, const std::string& /*uri*/, bool banned){}
 
@@ -231,16 +231,12 @@ public:
     virtual void registrationStateChanged(const std::string& account_id, const std::string& state, int code, const std::string& detail_str){}
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
     virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*payload*/){}
-<<<<<<< HEAD
-    virtual void accountMessageStatusChanged(const std::string& /*account_id*/, uint64_t /*message_id*/, const std::string& /*to*/, int /*state*/){}
-=======
-    virtual void accountMessageStatusChanged(const std::string& /*account_id*/, const std::string& /*message_id*/, const std::string& /*conversationId*/, const std::string& /*peer*/, int /*state*/){}
+    virtual void accountMessageStatusChanged(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*peer*/, const std::string& /*message_id*/, int /*state*/){}
     virtual void profileReceived(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*path*/){}
->>>>>>> 503df0a61 (swarm: relink setMessageDisplayed)
     virtual void knownDevicesChanged(const std::string& /*account_id*/, const std::map<std::string, std::string>& /*devices*/){}
     virtual void exportOnRingEnded(const std::string& /*account_id*/, int /*state*/, const std::string& /*pin*/){}
 
-    virtual void incomingTrustRequest(const std::string& /*account_id*/, const std::string& /*from*/, const std::vector<uint8_t>& /*payload*/, time_t received){}
+    virtual void incomingTrustRequest(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*from*/, const std::vector<uint8_t>& /*payload*/, time_t received){}
     virtual void contactAdded(const std::string& /*account_id*/, const std::string& /*uri*/, bool confirmed){}
     virtual void contactRemoved(const std::string& /*account_id*/, const std::string& /*uri*/, bool banned){}
 
