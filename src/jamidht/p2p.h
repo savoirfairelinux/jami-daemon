@@ -40,7 +40,7 @@ public:
     ~DhtPeerConnector();
 
     void requestConnection(
-        const std::string& peer_id,
+        const DRing::DataTransferInfo& info,
         const DRing::DataTransferId& tid,
         bool isVCard,
         const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
