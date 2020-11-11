@@ -23,6 +23,7 @@
 #include "manager.h"
 #include "data_transfer.h"
 #include "client/ring_signal.h"
+#include "jamidht/jamiaccount.h"
 
 namespace DRing {
 
@@ -32,40 +33,73 @@ registerDataXferHandlers(const std::map<std::string, std::shared_ptr<CallbackWra
     registerSignalHandlers(handlers);
 }
 
-std::vector<DataTransferId>
-dataTransferList() noexcept
-{
-    return jami::Manager::instance().dataTransfers->list();
-}
-
 DataTransferError
 sendFile(const DataTransferInfo& info, DataTransferId& id) noexcept
 {
-    return jami::Manager::instance().dataTransfers->sendFile(info, id);
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(info.accountId)) {
+        auto to = info.conversationId;
+        if (to.empty())
+            to = info.peer;
+        id = acc->sendFile(to, info.path);
+        if (id != 0)
+            return DRing::DataTransferError::success;
+    }
+    return DRing::DataTransferError::invalid_argument;
 }
 
 DataTransferError
-acceptFileTransfer(const DataTransferId& id, const std::string& file_path, int64_t offset) noexcept
+acceptFileTransfer(const std::string& accountId,
+                   const std::string& conversationId,
+                   const DataTransferId& id,
+                   const std::string& file_path,
+                   int64_t offset) noexcept
 {
-    return jami::Manager::instance().dataTransfers->acceptAsFile(id, file_path, offset);
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        return acc->acceptFile(conversationId, id, file_path, offset)
+                   ? DRing::DataTransferError::success
+                   : DRing::DataTransferError::invalid_argument;
+    }
+    return DRing::DataTransferError::invalid_argument;
 }
 
 DataTransferError
-cancelDataTransfer(const DataTransferId& id) noexcept
+cancelDataTransfer(const std::string& accountId,
+                   const std::string& conversationId,
+                   const DataTransferId& id) noexcept
 {
-    return jami::Manager::instance().dataTransfers->cancel(id);
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        return acc->cancel(conversationId, id) ? DRing::DataTransferError::success
+                                               : DRing::DataTransferError::invalid_argument;
+    }
+    return DRing::DataTransferError::invalid_argument;
 }
 
 DataTransferError
-dataTransferBytesProgress(const DataTransferId& id, int64_t& total, int64_t& progress) noexcept
+dataTransferBytesProgress(const std::string& accountId,
+                          const std::string& conversationId,
+                          const DataTransferId& id,
+                          int64_t& total,
+                          int64_t& progress) noexcept
 {
-    return jami::Manager::instance().dataTransfers->bytesProgress(id, total, progress);
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        return acc->bytesProgress(conversationId, id, total, progress)
+                   ? DRing::DataTransferError::success
+                   : DRing::DataTransferError::invalid_argument;
+    }
+    return DRing::DataTransferError::invalid_argument;
 }
 
 DataTransferError
-dataTransferInfo(const DataTransferId& id, DataTransferInfo& info) noexcept
+dataTransferInfo(const std::string& accountId,
+                 const std::string& conversationId,
+                 const DataTransferId& id,
+                 DataTransferInfo& info) noexcept
 {
-    return jami::Manager::instance().dataTransfers->info(id, info);
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        return acc->info(conversationId, id, info) ? DRing::DataTransferError::success
+                                                   : DRing::DataTransferError::invalid_argument;
+    }
+    return DRing::DataTransferError::invalid_argument;
 }
 
 } // namespace DRing
