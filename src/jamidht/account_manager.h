@@ -29,7 +29,7 @@
 #endif
 
 #include <opendht/crypto.h>
-
+#include <optional>
 #include <functional>
 #include <map>
 #include <string>
@@ -215,18 +215,13 @@ public:
     std::vector<std::map<std::string, std::string>> getContacts() const;
 
     // Conversations
-    void setConversations(const std::vector<ConvInfo>& newConv)
-    {
-        if (info_) {
-            info_->conversations = newConv;
-        }
-    }
-    void setConversationsRequests(const std::map<std::string, ConversationRequest>& newConvReq)
-    {
-        if (info_) {
-            info_->conversationsRequests = newConvReq;
-        }
-    }
+    void setConversations(const std::vector<ConvInfo>& newConv);
+    void addConversation(const ConvInfo& info);
+    void setConversationsRequests(const std::map<std::string, ConversationRequest>& newConvReq);
+    std::optional<ConversationRequest> getRequest(const std::string& id) const;
+    void addConversationRequest(const std::string& id, const ConversationRequest& req);
+    void rmConversationRequest(const std::string& id);
+    mutable std::mutex conversationsRequestsMtx;
 
     /** Obtain details about one account contact in serializable form. */
     std::map<std::string, std::string> getContactDetails(const std::string& uri) const;
