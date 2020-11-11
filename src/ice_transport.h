@@ -258,6 +258,8 @@ public:
 
 private:
     class Impl;
+    bool isStopped_ {false};
+    bool isCancelled_ {false};
     std::unique_ptr<Impl> pimpl_;
 };
 
