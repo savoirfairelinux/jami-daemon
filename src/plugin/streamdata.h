@@ -29,7 +29,7 @@ struct StreamData
         , source {std::move(s)}
     {}
     const std::string id;
-    const bool direction;
+    const bool direction; // 0 when local; 1 when received
     const StreamType type;
     const std::string source;
 };
