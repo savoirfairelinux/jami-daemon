@@ -577,7 +577,8 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
                 it = itr.first;
             }
             // If recently fetched, the commit can already be there, so no need to do complex operations
-            if (commitId != "" && sthis_->pimpl_->repository_->getCommit(commitId) != std::nullopt) {
+            if (commitId != ""
+                && sthis_->pimpl_->repository_->getCommit(commitId, false) != std::nullopt) {
                 cb(true, {});
                 std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
                 sthis_->pimpl_->fetchingRemotes_.erase(it);
