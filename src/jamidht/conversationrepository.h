@@ -182,14 +182,19 @@ public:
 
     /**
      * Get commits from [last-n, last]
-     * @param last  last commit (default empty)
-     * @param n     Max commits number to get (default: 0)
+     * @param last              last commit (default empty)
+     * @param n                 Max commits number to get (default: 0)
+     * @param logIfNotFound     Log if commit is found (false for detect commit before pulling)
      * @return a list of commits
      */
-    std::vector<ConversationCommit> logN(const std::string& last = "", unsigned n = 0) const;
+    std::vector<ConversationCommit> logN(const std::string& last = "",
+                                         unsigned n = 0,
+                                         bool logIfNotFound = true) const;
     std::vector<ConversationCommit> log(const std::string& from = "",
-                                        const std::string& to = "") const;
-    std::optional<ConversationCommit> getCommit(const std::string& commitId) const;
+                                        const std::string& to = "",
+                                        bool logIfNotFound = true) const;
+    std::optional<ConversationCommit> getCommit(const std::string& commitId,
+                                                bool logIfNotFound = true) const;
 
     /**
      * Get parent via topological + date sort in branch main of a commit
@@ -200,9 +205,10 @@ public:
     /**
      * Merge another branch into the main branch
      * @param merge_id      The reference to merge
-     * @return if the merge was successful
+     * @return a pair containing if the merge was successful and the merge commit id
+     * generated if one (can be a fast forward merge without commit)
      */
-    bool merge(const std::string& merge_id);
+    std::pair<bool, std::string> merge(const std::string& merge_id);
 
     /**
      * Get current diff stats between two commits

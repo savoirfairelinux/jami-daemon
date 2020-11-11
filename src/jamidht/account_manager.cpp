@@ -421,6 +421,61 @@ AccountManager::getContacts() const
     return ret;
 }
 
+void
+AccountManager::setConversations(const std::vector<ConvInfo>& newConv)
+{
+    if (info_) {
+        info_->conversations = newConv;
+    }
+}
+
+void
+AccountManager::addConversation(const ConvInfo& info)
+{
+    if (info_) {
+        info_->conversations.emplace_back(info);
+    }
+}
+
+void
+AccountManager::setConversationsRequests(const std::map<std::string, ConversationRequest>& newConvReq)
+{
+    if (info_) {
+        std::lock_guard<std::mutex> lk(conversationsRequestsMtx);
+        info_->conversationsRequests = newConvReq;
+    }
+}
+
+std::optional<ConversationRequest>
+AccountManager::getRequest(const std::string& id) const
+{
+    if (info_) {
+        std::lock_guard<std::mutex> lk(conversationsRequestsMtx);
+        auto it = info_->conversationsRequests.find(id);
+        if (it != info_->conversationsRequests.end())
+            return it->second;
+    }
+    return std::nullopt;
+}
+
+void
+AccountManager::addConversationRequest(const std::string& id, const ConversationRequest& req)
+{
+    if (info_) {
+        std::lock_guard<std::mutex> lk(conversationsRequestsMtx);
+        info_->conversationsRequests[id] = req;
+    }
+}
+
+void
+AccountManager::rmConversationRequest(const std::string& id)
+{
+    if (info_) {
+        std::lock_guard<std::mutex> lk(conversationsRequestsMtx);
+        info_->conversationsRequests.erase(id);
+    }
+}
+
 /** Obtain details about one account contact in serializable form. */
 std::map<std::string, std::string>
 AccountManager::getContactDetails(const std::string& uri) const
