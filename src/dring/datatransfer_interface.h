@@ -73,14 +73,14 @@ struct DRING_PUBLIC DataTransferInfo
     uint32_t flags {0};                  ///< Transfer global information.
     int64_t totalSize {0};               ///< Total number of bytes to sent/receive, 0 if not known
     int64_t bytesProgress {0};           ///< Number of bytes sent/received
+    std::string author;
     std::string peer; ///< Identifier of the remote peer (in the semantic of the associated account)
+    std::string conversationId;
     std::string displayName; ///< Human oriented transfer name
     std::string path;        ///< associated local file path if supported (empty, if not)
     std::string mimetype;    ///< MimeType of transferred data
                              ///< (https://www.iana.org/assignments/media-types/media-types.xhtml)
 };
-
-DRING_PUBLIC std::vector<DataTransferId> dataTransferList() noexcept;
 
 /// Asynchronously send a file to a peer using given account connection.
 ///
@@ -125,7 +125,9 @@ DRING_PUBLIC DataTransferError sendFile(const DataTransferInfo& info, DataTransf
 /// \return DataTransferError::invalid_argument if id is unknown.
 /// \note unknown \a id results to a no-op call.
 ///
-DRING_PUBLIC DataTransferError acceptFileTransfer(const DataTransferId& id,
+DRING_PUBLIC DataTransferError acceptFileTransfer(const std::string& accountId,
+                                                  const std::string& conversationId,
+                                                  const DataTransferId& id,
                                                   const std::string& file_path,
                                                   int64_t offset) noexcept;
 
@@ -141,7 +143,9 @@ DRING_PUBLIC DataTransferError acceptFileTransfer(const DataTransferId& id,
 /// \return DataTransferError::invalid_argument if id is unknown.
 /// \note unknown \a id results to a no-op call.
 ///
-DataTransferError cancelDataTransfer(const DataTransferId& id) noexcept DRING_PUBLIC;
+DataTransferError cancelDataTransfer(const std::string& accountId,
+                                     const std::string& conversationId,
+                                     const DataTransferId& id) noexcept DRING_PUBLIC;
 
 /// Return some information on given data transfer.
 ///
@@ -151,7 +155,9 @@ DataTransferError cancelDataTransfer(const DataTransferId& id) noexcept DRING_PU
 /// \return DataTransferError::invalid_argument if id is unknown.
 /// \note \a info structure is in undefined state in case of error.
 ///
-DRING_PUBLIC DataTransferError dataTransferInfo(const DataTransferId& id,
+DRING_PUBLIC DataTransferError dataTransferInfo(const std::string& accountId,
+                                                const std::string& conversationId,
+                                                const DataTransferId& id,
                                                 DataTransferInfo& info) noexcept;
 
 /// Return the amount of sent/received bytes of an existing data transfer.
@@ -163,7 +169,9 @@ DRING_PUBLIC DataTransferError dataTransferInfo(const DataTransferId& id,
 /// \return DataTransferError::success if \a total and \a progress is set with valid values.
 /// DataTransferError::invalid_argument if the id is unknown.
 ///
-DRING_PUBLIC DataTransferError dataTransferBytesProgress(const DataTransferId& id,
+DRING_PUBLIC DataTransferError dataTransferBytesProgress(const std::string& accountId,
+                                                         const std::string& conversationId,
+                                                         const DataTransferId& id,
                                                          int64_t& total,
                                                          int64_t& progress) noexcept;
 
@@ -173,7 +181,10 @@ struct DRING_PUBLIC DataTransferSignal
     struct DRING_PUBLIC DataTransferEvent
     {
         constexpr static const char* name = "DataTransferEvent";
-        using cb_type = void(const DataTransferId& transferId, int eventCode);
+        using cb_type = void(const std::string& accountId,
+                             const std::string& conversationId,
+                             const DataTransferId& transferId,
+                             int eventCode);
     };
 };
 
