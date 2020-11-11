@@ -1024,9 +1024,9 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
                                                       const std::string& parentId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert && cert->issuer)
+    if (!cert)
         return false;
-    auto userUri = cert->issuer->getId().toString();
+    auto userUri = cert->getIssuerUID();
     auto valid = false;
     {
         std::lock_guard<std::mutex> lk(membersMtx_);
@@ -2722,10 +2722,7 @@ ConversationRepository::pinCertificates()
                                       repoPath + DIR_SEPARATOR_STR + "devices"};
 
     for (const auto& path : paths) {
-        tls::CertificateStore::instance().pinCertificatePath(path, [](auto& ids) {
-            for (const auto& id : ids)
-                JAMI_ERR("@@@ LOADED %s", id.c_str());
-        });
+        tls::CertificateStore::instance().pinCertificatePath(path, {});
     }
 }
 
