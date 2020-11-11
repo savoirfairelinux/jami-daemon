@@ -1212,9 +1212,9 @@ ConversationTest::testSetMessageDisplayed()
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
             [&](const std::string& accountId,
-                const std::string& msgId,
                 const std::string& conversationId,
                 const std::string& peer,
+                const std::string& msgId,
                 int status) {
                 if (accountId == bobId && conversationId == convId && msgId == conversationId
                     && peer == aliceUri && status == 3) {
@@ -3240,6 +3240,7 @@ ConversationTest::testAddContact()
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
             const std::string& /*from*/,
+            const std::string& /*conversationId*/,
             const std::vector<uint8_t>& /*payload*/,
             time_t /*received*/) {
             if (account_id == bobId)
@@ -3304,6 +3305,7 @@ ConversationTest::testAddContactDeleteAndReAdd()
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
             const std::string& /*from*/,
+            const std::string& /*conversationId*/,
             const std::vector<uint8_t>& /*payload*/,
             time_t /*received*/) {
             if (account_id == bobId)
@@ -3373,6 +3375,7 @@ ConversationTest::testFailAddMemberInOneToOne()
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
             const std::string& /*from*/,
+            const std::string& /*conversationId*/,
             const std::vector<uint8_t>& /*payload*/,
             time_t /*received*/) {
             if (account_id == bobId)
@@ -3482,6 +3485,7 @@ ConversationTest::testRemoveContact()
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
             const std::string& /*from*/,
+            const std::string& /*conversationId*/,
             const std::vector<uint8_t>& /*payload*/,
             time_t /*received*/) {
             if (account_id == bobId)
@@ -3550,6 +3554,7 @@ ConversationTest::testBanContact()
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
             const std::string& /*from*/,
+            const std::string& /*conversationId*/,
             const std::vector<uint8_t>& /*payload*/,
             time_t /*received*/) {
             if (account_id == bobId)
@@ -3614,6 +3619,7 @@ ConversationTest::testOneToOneFetchWithNewMemberRefused()
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
             const std::string& /*from*/,
+            const std::string& /*conversationId*/,
             const std::vector<uint8_t>& /*payload*/,
             time_t /*received*/) {
             if (account_id == bobId)
@@ -3747,6 +3753,7 @@ ConversationTest::testAddOfflineContactThenConnect()
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
             const std::string& /*from*/,
+            const std::string& /*conversationId*/,
             const std::vector<uint8_t>& /*payload*/,
             time_t /*received*/) {
             if (account_id == carlaId)
@@ -3804,6 +3811,7 @@ ConversationTest::testDeclineTrustRequestDoNotGenerateAnother()
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
             const std::string& /*from*/,
+            const std::string& /*conversationId*/,
             const std::vector<uint8_t>& /*payload*/,
             time_t /*received*/) {
             if (account_id == bobId)
@@ -3997,6 +4005,7 @@ END:VCARD";
     confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
         [&](const std::string& account_id,
             const std::string& /*from*/,
+            const std::string& /*conversationId*/,
             const std::vector<uint8_t>& payload,
             time_t /*received*/) {
             auto pstr = std::string(payload.begin(), payload.begin() + payload.size());
