@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "f5d3f55d_f6f79244",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 853,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-11-11T15:12:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b561f0e9_a47b9e0e",
+      "range": {
+        "startLine": 853,
+        "startChar": 22,
+        "endLine": 853,
+        "endChar": 37
+      },
+      "revId": "e313e4065cf4042f9ce5f24fd35875938ceba2a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "2f63e429_799b736e",
         "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
         "patchSetId": 1
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "a6666e21_a3f95e30",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 854,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-11-11T15:12:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2f63e429_799b736e",
+      "range": {
+        "startLine": 854,
+        "startChar": 31,
+        "endLine": 854,
+        "endChar": 37
+      },
+      "revId": "e313e4065cf4042f9ce5f24fd35875938ceba2a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "7a0d2f1b_65e337e1",
         "filename": "src/conference.cpp",
         "patchSetId": 1
@@ -59,6 +107,30 @@
       "writtenOn": "2020-11-09T18:54:09Z",
       "side": 1,
       "message": "just rease uri, it\u0027s a set, no need for find_if",
+      "range": {
+        "startLine": 538,
+        "startChar": 32,
+        "endLine": 545,
+        "endChar": 13
+      },
+      "revId": "e313e4065cf4042f9ce5f24fd35875938ceba2a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "389357b3_4e3f7537",
+        "filename": "src/conference.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 545,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-11-11T15:12:15Z",
+      "side": 1,
+      "message": "moderators_ is a vector for now, but I was thinking to change it for a set",
+      "parentUuid": "7a0d2f1b_65e337e1",
       "range": {
         "startLine": 538,
         "startChar": 32,
