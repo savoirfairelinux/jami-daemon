@@ -548,6 +548,14 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             dev_call->setIPToIP(true);
             dev_call->setSecure(isTlsEnabled());
             dev_call->setState(Call::ConnectionState::TRYING);
+            call->addStateListener(
+                [w = weak(), deviceId](Call::CallState, Call::ConnectionState state, int) {
+                    if (state != Call::ConnectionState::PROGRESSING
+                        and state != Call::ConnectionState::TRYING) {
+                        if (auto shared = w.lock())
+                            shared->callConnectionClosed(deviceId, true);
+                    }
+                });
             call->addSubCall(*dev_call);
             {
                 std::lock_guard<std::mutex> lk(pendingCallsMutex_);
@@ -3519,8 +3527,14 @@ JamiAccount::callConnectionClosed(const DeviceId& deviceId, bool eraseDummy)
         std::lock_guard<std::mutex> lk(onConnectionClosedMtx_);
         auto it = onConnectionClosed_.find(deviceId);
         if (it != onConnectionClosed_.end()) {
-            cb = std::move(it->second);
-            onConnectionClosed_.erase(it);
+            if (eraseDummy) {
+                cb = std::move(it->second);
+                onConnectionClosed_.erase(it);
+            } else {
+                // In this case a new subcall is created and the callback
+                // will be re-called once with eraseDummy = true
+                cb = it->second;
+            }
         }
     }
     if (cb)
