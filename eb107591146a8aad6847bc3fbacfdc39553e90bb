@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d0f3eb9d_6b3f84cb",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 536,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-11T16:53:46Z",
+      "side": 1,
+      "message": "partUri \u003d\u003d uri works too",
+      "range": {
+        "startLine": 536,
+        "startChar": 12,
+        "endLine": 536,
+        "endChar": 44
+      },
+      "revId": "eb107591146a8aad6847bc3fbacfdc39553e90bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d91cc6a3_734f6726",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 545,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-11T16:53:46Z",
+      "side": 1,
+      "message": "not necessary if nothing changed",
+      "range": {
+        "startLine": 545,
+        "startChar": 16,
+        "endLine": 545,
+        "endChar": 35
+      },
+      "revId": "eb107591146a8aad6847bc3fbacfdc39553e90bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
