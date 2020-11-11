@@ -909,10 +909,53 @@ ofstream(const std::string& path, std::ios_base::openmode mode)
 #endif
 }
 
+int64_t
+size(const std::string& path)
+{
+    std::ifstream file;
+    int64_t size;
+    try {
+        openStream(file, path);
+        file.seekg(0, std::ios_base::end);
+        size = file.tellg();
+        file.close();
+    } catch (...) {}
+    return size;
+}
+
+
 std::string
 md5File(const std::string& path)
 {
-    return md5sum(loadFile(path));
+    pj_md5_context pms;
+
+    pj_md5_init(&pms);
+
+    std::ifstream file;
+    try {
+        openStream(file, path);
+        std::vector<char> buffer(8192,0);
+        std::streamsize readSize = file.gcount();
+        while(!file.eof()) {
+            file.read(buffer.data(), buffer.size());
+            std::streamsize newReadSize = file.gcount();
+            pj_md5_update(&pms, (const uint8_t*) buffer.data(), newReadSize - readSize);
+            readSize = newReadSize;
+        }
+        file.close();
+    } catch (...) {
+        return {};
+    }
+
+    unsigned char digest[16];
+    pj_md5_final(&pms, digest);
+
+    char hash[32];
+
+    for (int i = 0; i < 16; ++i)
+        pj_val_to_hex_digit(digest[i], &hash[2 * i]);
+
+    return {hash, 32};
 }
 
 std::string
