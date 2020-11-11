@@ -339,38 +339,41 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
                                                         true);
 
     // Negotiate a TLS session
-    JAMI_DBG() << account << "Start TLS session";
+    JAMI_DBG() << account
+               << "Start TLS session - Initied by connectDevice(). Launched by channel: " << name
+               << " - device:" << deviceId << " - vid: " << vid;
     info->tls_ = std::make_unique<TlsSocketEndpoint>(std::move(endpoint),
                                                      account.identity(),
                                                      account.dhParams(),
                                                      *cert);
 
-    info->tls_->setOnReady([w = weak(),
-                            deviceId = std::move(deviceId),
-                            vid = std::move(vid),
-                            name = std::move(name)](bool ok) {
-        auto sthis = w.lock();
-        if (!sthis)
-            return;
-        auto info = sthis->getInfo(deviceId, vid);
-        if (!info)
-            return;
-        if (!ok) {
-            JAMI_ERR() << "TLS connection failure for peer " << deviceId;
-            for (const auto& pending : sthis->getPendingCallbacks(deviceId, true))
-                pending.cb(nullptr, deviceId);
-        } else {
-            // The socket is ready, store it
-            sthis->addNewMultiplexedSocket(deviceId, vid);
-            // Finally, open the channel and launch pending callbacks
-            if (info->socket_) {
-                // Note: do not remove pending there it's done in sendChannelRequest
-                for (const auto& pending : sthis->getPendingCallbacks(deviceId)) {
-                    JAMI_DBG("Send request on TLS socket for channel %s to %s",
-                             pending.name.c_str(),
-                             deviceId.to_c_str());
-                    sthis->sendChannelRequest(info->socket_, pending.name, deviceId, pending.vid);
-                }
+    info->tls_->setOnReady(
+        [w = weak(), deviceId = std::move(deviceId), vid = std::move(vid), name = std::move(name)](
+            bool ok) {
+            auto sthis = w.lock();
+            if (!sthis)
+                return;
+            auto info = sthis->getInfo(deviceId, vid);
+            if (!info)
+                return;
+            if (!ok) {
+                JAMI_ERR() << "TLS connection failure for peer " << deviceId
+                           << " - Initied by connectDevice(). Launched by channel: " << name
+                           << " - vid: " << vid;
+                for (const auto& pending : sthis->getPendingCallbacks(deviceId, true))
+                    pending.cb(nullptr, deviceId);
+            } else {
+                // The socket is ready, store it
+                sthis->addNewMultiplexedSocket(deviceId, vid);
+                // Finally, open the channel and launch pending callbacks
+                if (info->socket_) {
+                    // Note: do not remove pending there it's done in sendChannelRequest
+                    for (const auto& pending : sthis->getPendingCallbacks(deviceId)) {
+                        JAMI_DBG("Send request on TLS socket for channel %s to %s",
+                                pending.name.c_str(),
+                                deviceId.to_c_str());
+                        sthis->sendChannelRequest(info->socket_, pending.name, deviceId, pending.vid);
+                    }
             }
         }
     });
@@ -680,7 +683,7 @@ ConnectionManager::Impl::onRequestStartIce(const PeerConnectionRequest& req)
     auto sdp = IceTransport::parse_SDP(req.ice_msg, *ice);
     answerTo(*ice, req.id, req.from);
     if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
-        JAMI_ERR("[Account:%s] start ICE failed - fallback to TURN", account.getAccountID().c_str());
+        JAMI_ERR("[Account:%s] start ICE failed", account.getAccountID().c_str());
         ice = nullptr;
         if (connReadyCb_)
             connReadyCb_(req.from, "", nullptr);
@@ -711,6 +714,8 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
 
     // init TLS session
     auto ph = req.from;
+    JAMI_DBG() << account << "Start TLS session - Initied by DHT request. Device:" << req.from
+               << " - vid: " << req.id;
     info->tls_ = std::make_unique<TlsSocketEndpoint>(
         std::move(endpoint),
         account.identity(),
@@ -734,7 +739,8 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
             if (!info)
                 return;
             if (!ok) {
-                JAMI_ERR() << "TLS connection failure for peer " << deviceId;
+                JAMI_ERR() << "TLS connection failure for peer " << deviceId
+                           << " - Initied by DHT request. Vid: " << vid;
                 if (shared->connReadyCb_)
                     shared->connReadyCb_(deviceId, "", nullptr);
             } else {
@@ -964,12 +970,16 @@ void
 ConnectionManager::monitor() const
 {
     std::lock_guard<std::mutex> lk(pimpl_->infosMtx_);
-    JAMI_DBG("ConnectionManager for account %s (%s), current status:", pimpl_->account.getAccountID().c_str(), pimpl_->account.getUserUri().c_str());
+    JAMI_DBG("ConnectionManager for account %s (%s), current status:",
+             pimpl_->account.getAccountID().c_str(),
+             pimpl_->account.getUserUri().c_str());
     for (const auto& [_, ci] : pimpl_->infos_) {
         if (ci->socket_)
             ci->socket_->monitor();
     }
-    JAMI_DBG("ConnectionManager for account %s (%s), end status.", pimpl_->account.getAccountID().c_str(), pimpl_->account.getUserUri().c_str());
+    JAMI_DBG("ConnectionManager for account %s (%s), end status.",
+             pimpl_->account.getAccountID().c_str(),
+             pimpl_->account.getUserUri().c_str());
 }
 
 } // namespace jami
