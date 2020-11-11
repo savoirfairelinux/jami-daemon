@@ -730,7 +730,6 @@ Manager::Manager()
 #endif
     , callFactory()
     , accountFactory()
-    , dataTransfers(std::make_unique<DataTransferFacade>())
     , pimpl_(new ManagerPimpl(*this))
 {}
 
@@ -3318,7 +3317,9 @@ Manager::setModerator(const std::string& confId, const std::string& peerId, cons
 }
 
 void
-Manager::muteParticipant(const std::string& confId, const std::string& participant, const bool& state)
+Manager::muteParticipant(const std::string& confId,
+                         const std::string& participant,
+                         const bool& state)
 {
     if (auto conf = getConferenceFromID(confId)) {
         conf->muteParticipant(participant, state);
