@@ -142,8 +142,10 @@ void openStream(std::ofstream& file,
 std::ifstream ifstream(const std::string& path, std::ios_base::openmode mode = std::ios_base::in);
 std::ofstream ofstream(const std::string& path, std::ios_base::openmode mode = std::ios_base::out);
 
-std::string md5File(const std::string& path);
-std::string md5sum(const std::vector<uint8_t>& buffer);
+int64_t size(const std::string& path);
+
+std::string sha3File(const std::string& path);
+std::string sha3sum(const std::vector<uint8_t>& buffer);
 
 /**
  * Windows compatibility wrapper for checking read-only attribute
