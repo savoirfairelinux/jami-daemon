@@ -55,14 +55,17 @@ public:
 
     std::string aliceId;
     std::string bobId;
+    std::string carlaId;
 
 private:
-    void testCachedFileTransfer();
+    void testFileTransfer();
     void testMultipleFileTransfer();
+    void testConversationFileTransfer();
 
     CPPUNIT_TEST_SUITE(FileTransferTest);
-    CPPUNIT_TEST(testCachedFileTransfer);
+    CPPUNIT_TEST(testFileTransfer);
     CPPUNIT_TEST(testMultipleFileTransfer);
+    CPPUNIT_TEST(testConversationFileTransfer);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -108,9 +111,20 @@ FileTransferTest::setUp()
     details[ConfProperties::ARCHIVE_PATH] = "";
     bobId = Manager::instance().addAccount(details);
 
+    details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "CARLA";
+    details[ConfProperties::ALIAS] = "CARLA";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = "";
+    carlaId = Manager::instance().addAccount(details);
+
     JAMI_INFO("Initialize account...");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -123,6 +137,9 @@ FileTransferTest::setUp()
                 auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
                 ready = (daemonStatus == "REGISTERED");
                 details = bobAccount->getVolatileAccountDetails();
+                daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                ready &= (daemonStatus == "REGISTERED");
+                details = carlaAccount->getVolatileAccountDetails();
                 daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
                 ready &= (daemonStatus == "REGISTERED");
             }));
@@ -158,7 +175,7 @@ FileTransferTest::tearDown()
 }
 
 void
-FileTransferTest::testCachedFileTransfer()
+FileTransferTest::testFileTransfer()
 {
     std::this_thread::sleep_for(std::chrono::seconds(5));
     // TODO remove. This sleeps is because it take some time for the DHT to be connected
@@ -333,6 +350,109 @@ FileTransferTest::testMultipleFileTransfer()
     std::remove("RECV2");
     JAMI_INFO("Waiting....");
     std::this_thread::sleep_for(std::chrono::seconds(3));
+}
+
+void
+FileTransferTest::testConversationFileTransfer()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
+    if (bobUri.find("ring:") == 0)
+        bobUri = bobUri.substr(std::string("ring:").size());
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto carlaUri = carlaAccount->getAccountDetails()[ConfProperties::USERNAME];
+    if (carlaUri.find("ring:") == 0)
+        carlaUri = carlaUri.substr(std::string("ring:").size());
+    aliceAccount->trackBuddyPresence(carlaUri, true);
+
+    // Enable carla
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = carlaAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    cv.notify_one();
+                }
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    Manager::instance().sendRegister(carlaId, true);
+    cv.wait_for(lk, std::chrono::seconds(30));
+    confHandlers.clear();
+    DRing::unregisterSignalHandlers();
+
+    auto messageReceivedBob = 0;
+    auto messageReceivedCarla = 0;
+    auto requestReceived = 0;
+    auto conversationReady = 0;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*message*/) {
+            if (accountId == bobId)
+                messageReceivedBob += 1;
+            if (accountId == carlaId)
+                messageReceivedCarla += 1;
+            if (messageReceivedBob > 0 && messageReceivedCarla > 0)
+                cv.notify_one();
+        }));
+
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived += 1;
+                if (requestReceived >= 2)
+                    cv.notify_one();
+            }));
+
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
+            conversationReady += 1;
+            if (conversationReady >= 3)
+                cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    auto convId = aliceAccount->startConversation();
+
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, carlaUri));
+    cv.wait_for(lk, std::chrono::seconds(60));
+    CPPUNIT_ASSERT(requestReceived == 2);
+
+    bobAccount->acceptConversationRequest(convId);
+    carlaAccount->acceptConversationRequest(convId);
+    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(conversationReady == 3);
+
+    // Send file
+    std::ofstream sendFile("SEND");
+    CPPUNIT_ASSERT(sendFile.is_open());
+    sendFile << std::string("A", 64000);
+    sendFile.close();
+
+    // Send File
+    DRing::DataTransferInfo info;
+    uint64_t id;
+    info.accountId = aliceAccount->getAccountID();
+    info.conversationId = convId;
+    info.path = "SEND";
+    info.displayName = "SEND";
+    info.bytesProgress = 0;
+    JAMI_ERR("@@@@@@@@@@@@@@@@@@@@@@2");
+    CPPUNIT_ASSERT(DRing::sendFile(info, id) == DRing::DataTransferError::success);
+
+    cv.wait_for(lk, std::chrono::seconds(120));
+
+    DRing::unregisterSignalHandlers();
 }
 
 } // namespace test
