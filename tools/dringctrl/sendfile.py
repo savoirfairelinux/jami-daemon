@@ -25,7 +25,7 @@ import signal
 import os.path
 
 class Controller(DRingCtrl):
-    def onDataTransferEvent(self, transferId, code):
+    def onDataTransferEvent(self, conversationId, peer, transferId, code):
         if code == 6:
             print("transfer %u has been cancelled by host" % transferId)
             self.stopThread()

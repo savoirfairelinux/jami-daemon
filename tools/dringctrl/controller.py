@@ -126,7 +126,6 @@ class DRingCtrl(Thread):
             proxy_callmgr.connect_to_signal('callStateChanged', self.onCallStateChanged)
             proxy_callmgr.connect_to_signal('conferenceCreated', self.onConferenceCreated)
             proxy_confmgr.connect_to_signal('accountsChanged', self.onAccountsChanged)
-            proxy_confmgr.connect_to_signal('dataTransferEvent', self.onDataTransferEvent)
             proxy_confmgr.connect_to_signal('conversationReady', self.onConversationReady)
             proxy_confmgr.connect_to_signal('conversationRequestReceived', self.onConversationRequestReceived)
             proxy_confmgr.connect_to_signal('messageReceived', self.onMessageReceived)
@@ -304,9 +303,6 @@ class DRingCtrl(Thread):
         self.currentConfId = confId
         self.onConferenceCreated_cb()
         self.onConferenceCreated_callback(confId)
-
-    def onDataTransferEvent(self, transferId, code):
-        pass
 
     def onConversationReady(self, account, conversationId):
         print(f'New conversation ready for {account} with id {conversationId}')
