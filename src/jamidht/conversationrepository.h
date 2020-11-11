@@ -241,7 +241,6 @@ public:
      */
     void refreshMembers() const;
 
-
     /**
      * Because conversations can contains non contacts certificates, this methods
      * loads certificates in conversations into the cert store

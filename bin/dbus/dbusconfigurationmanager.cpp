@@ -767,12 +767,6 @@ DBusConfigurationManager::connectivityChanged()
     DRing::connectivityChanged();
 }
 
-auto
-DBusConfigurationManager::dataTransferList() -> decltype(DRing::dataTransferList())
-{
-    return DRing::dataTransferList();
-}
-
 void
 DBusConfigurationManager::sendFile(const RingDBusDataTransferInfo& in,
                                    uint32_t& error,
@@ -785,19 +779,22 @@ DBusConfigurationManager::sendFile(const RingDBusDataTransferInfo& in,
     info.totalSize = in._4;
     info.bytesProgress = in._5;
     info.peer = in._6;
-    info.displayName = in._7;
-    info.path = in._8;
-    info.mimetype = in._9;
+    info.conversationId = in._7;
+    info.displayName = in._8;
+    info.path = in._9;
+    info.mimetype = in._10;
     error = uint32_t(DRing::sendFile(info, id));
 }
 
 void
-DBusConfigurationManager::dataTransferInfo(const DRing::DataTransferId& id,
+DBusConfigurationManager::dataTransferInfo(const std::string& accountId,
+                                           const std::string& conversationId,
+                                           const DRing::DataTransferId& id,
                                            uint32_t& error,
                                            RingDBusDataTransferInfo& out)
 {
     DRing::DataTransferInfo info;
-    auto res = DRing::dataTransferInfo(id, info);
+    auto res = DRing::dataTransferInfo(accountId, conversationId, id, info);
     if (res == DRing::DataTransferError::success) {
         out._1 = info.accountId;
         out._2 = uint32_t(info.lastEvent);
@@ -805,34 +802,42 @@ DBusConfigurationManager::dataTransferInfo(const DRing::DataTransferId& id,
         out._4 = info.totalSize;
         out._5 = info.bytesProgress;
         out._6 = info.peer;
-        out._7 = info.displayName;
-        out._8 = info.path;
-        out._9 = info.mimetype;
+        out._7 = info.conversationId;
+        out._8 = info.displayName;
+        out._9 = info.path;
+        out._10 = info.mimetype;
     }
     error = uint32_t(res);
 }
 
 void
-DBusConfigurationManager::dataTransferBytesProgress(const uint64_t& id,
+DBusConfigurationManager::dataTransferBytesProgress(const std::string& accountId,
+                                                    const std::string& conversationId,
+                                                    const uint64_t& id,
                                                     uint32_t& error,
                                                     int64_t& total,
                                                     int64_t& progress)
 {
-    error = uint32_t(DRing::dataTransferBytesProgress(id, total, progress));
+    error = uint32_t(
+        DRing::dataTransferBytesProgress(accountId, conversationId, id, total, progress));
 }
 
 uint32_t
-DBusConfigurationManager::acceptFileTransfer(const uint64_t& id,
+DBusConfigurationManager::acceptFileTransfer(const std::string& accountId,
+                                             const std::string& conversationId,
+                                             const uint64_t& id,
                                              const std::string& file_path,
                                              const int64_t& offset)
 {
-    return uint32_t(DRing::acceptFileTransfer(id, file_path, offset));
+    return uint32_t(DRing::acceptFileTransfer(accountId, conversationId, id, file_path, offset));
 }
 
 uint32_t
-DBusConfigurationManager::cancelDataTransfer(const uint64_t& id)
+DBusConfigurationManager::cancelDataTransfer(const std::string& accountId,
+                                             const std::string& conversationId,
+                                             const uint64_t& id)
 {
-    return uint32_t(DRing::cancelDataTransfer(id));
+    return uint32_t(DRing::cancelDataTransfer(accountId, conversationId, id));
 }
 
 std::string
