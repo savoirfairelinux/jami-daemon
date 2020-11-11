@@ -130,38 +130,59 @@ SIPCall::getSIPAccount() const
 void
 SIPCall::createCallAVStreams()
 {
+    /**
+     *   Map: maps the AudioFrame to an AVFrame
+     **/
+    auto audioMap = [](const std::shared_ptr<jami::MediaFrame> m) -> AVFrame* {
+        return std::static_pointer_cast<AudioFrame>(m)->pointer();
+    };
+
+    // Preview
+    if (auto& localAudio = avformatrtp_->getAudioLocal()) {
+        auto previewSubject = std::make_shared<MediaStreamSubject>(audioMap);
+        StreamData microStreamData {getCallId(), 0, StreamType::audio, getPeerNumber()};
+        createCallAVStream(microStreamData, *localAudio, previewSubject);
+    }
+
+    // Receive
+    if (auto& audioReceive = avformatrtp_->getAudioReceive()) {
+        auto receiveSubject = std::make_shared<MediaStreamSubject>(audioMap);
+        StreamData phoneStreamData {getCallId(), 1, StreamType::audio, getPeerNumber()};
+        createCallAVStream(phoneStreamData, (AVMediaStream&) *audioReceive, receiveSubject);
+    }
+#ifdef ENABLE_VIDEO
     if (hasVideo()) {
         /**
          *   Map: maps the VideoFrame to an AVFrame
          **/
-        auto map = [](const std::shared_ptr<jami::MediaFrame> m) -> AVFrame* {
+        auto videoMap = [](const std::shared_ptr<jami::MediaFrame> m) -> AVFrame* {
             return std::static_pointer_cast<VideoFrame>(m)->pointer();
         };
 
         // Preview
         if (auto& videoPreview = videortp_->getVideoLocal()) {
-            auto previewSubject = std::make_shared<MediaStreamSubject>(map);
+            auto previewSubject = std::make_shared<MediaStreamSubject>(videoMap);
             StreamData previewStreamData {getCallId(), 0, StreamType::video, getPeerNumber()};
             createCallAVStream(previewStreamData, *videoPreview, previewSubject);
         }
 
         // Receive
-        auto& videoReceive = videortp_->getVideoReceive();
-
-        if (videoReceive) {
-            auto receiveSubject = std::make_shared<MediaStreamSubject>(map);
+        if (auto& videoReceive = videortp_->getVideoReceive()) {
+            auto receiveSubject = std::make_shared<MediaStreamSubject>(videoMap);
             StreamData receiveStreamData {getCallId(), 1, StreamType::video, getPeerNumber()};
             createCallAVStream(receiveStreamData, *videoReceive, receiveSubject);
         }
     }
+#endif
 }
 
 void
 SIPCall::createCallAVStream(const StreamData& StreamData,
-                            MediaStream& streamSource,
+                            AVMediaStream& streamSource,
                             const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject)
 {
-    const std::string AVStreamId = StreamData.id + std::to_string(StreamData.direction);
+    const std::string AVStreamId = StreamData.id + std::to_string(static_cast<int>(StreamData.type))
+                                   + std::to_string(StreamData.direction);
     callAVStreams[AVStreamId] = mediaStreamSubject;
     streamSource.attachPriorityObserver(callAVStreams[AVStreamId]);
     jami::Manager::instance()
@@ -1251,8 +1272,10 @@ SIPCall::stopAllMedia()
     videortp_->stop();
 #endif
 #ifdef ENABLE_PLUGIN
-    callAVStreams.erase(getCallId() + "0");
-    callAVStreams.erase(getCallId() + "1");
+    callAVStreams.erase(getCallId() + "00"); // audio out
+    callAVStreams.erase(getCallId() + "01"); // audio in
+    callAVStreams.erase(getCallId() + "10"); // video out
+    callAVStreams.erase(getCallId() + "11"); // video in
     jami::Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(
         getCallId());
 #endif

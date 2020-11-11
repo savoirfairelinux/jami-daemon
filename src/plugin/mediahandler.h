@@ -40,8 +40,8 @@ public:
      * The id is the path of the plugin that created this MediaHandler
      * @return
      */
-    std::string id() const { return id_;}
-    virtual void setId(const std::string& id) final {id_ = id;}
+    std::string id() const { return id_; }
+    virtual void setId(const std::string& id) final { id_ = id; }
 
 private:
     std::string id_;
