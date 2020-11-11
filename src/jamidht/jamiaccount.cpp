@@ -609,6 +609,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                                                                        manager.getNewCallID(),
                                                                        Call::CallType::OUTGOING,
                                                                        call->getDetails());
+    JAMI_ERR("@@@ CALL %s", dummyCall->getCallId().c_str());
     dummyCall->setIPToIP(true);
     dummyCall->setSecure(isTlsEnabled());
     call->addSubCall(*dummyCall);
@@ -634,6 +635,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 Manager::instance().getNewCallID(),
                 Call::CallType::OUTGOING,
                 call->getDetails());
+            JAMI_ERR("@@@ CALL %s", dev_call->getCallId().c_str());
 
             dev_call->setIPToIP(true);
             dev_call->setSecure(isTlsEnabled());
@@ -673,6 +675,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                                                                           manager.getNewCallID(),
                                                                           Call::CallType::OUTGOING,
                                                                           call->getDetails());
+        JAMI_ERR("@@@ CALL %s", dev_call->getCallId().c_str());
         dev_call->setIPToIP(true);
         dev_call->setSecure(isTlsEnabled());
         dev_call->setTransport(transport);
@@ -690,6 +693,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         call->addStateListener(
             [w = weak(), deviceId = key.second](Call::CallState, Call::ConnectionState state, int) {
+                JAMI_ERR("@@@@@@@@@ STATE %u", state);
                 if (state != Call::ConnectionState::PROGRESSING
                     and state != Call::ConnectionState::TRYING) {
                     if (auto shared = w.lock())
