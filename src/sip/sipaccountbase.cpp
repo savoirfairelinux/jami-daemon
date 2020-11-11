@@ -589,9 +589,9 @@ SIPAccountBase::onTextMessage(const std::string& id,
                     JAMI_DBG() << "[message " << messageId << "] Displayed by peer";
                     emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
                         accountID_,
-                        messageId,
                         conversationId,
                         from,
+                        messageId,
                         static_cast<int>(DRing::Account::MessageStates::DISPLAYED));
                     return;
                 }
@@ -617,6 +617,7 @@ SIPAccountBase::onTextMessage(const std::string& id,
                            json["deviceId"].asString(),
                            json["id"].asString(),
                            json["commit"].asString());
+            return;
         } else if (m.first == MIME_TYPE_INVITE_JSON) {
             Json::Value json;
             std::string err;
@@ -627,8 +628,10 @@ SIPAccountBase::onTextMessage(const std::string& id,
                 return;
             }
             onConversationRequest(from, json);
+            return;
         } else if (m.first == MIME_TYPE_INVITE) {
             onNeedConversationRequest(from, m.second);
+            return;
         }
     }
 
@@ -638,13 +641,13 @@ SIPAccountBase::onTextMessage(const std::string& id,
     std::shared_ptr<JamiMessage> cm = std::make_shared<JamiMessage>(
         accountID_, from, true, const_cast<std::map<std::string, std::string>&>(payloads), false);
     pluginChatManager.publishMessage(cm);
-    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, cm->data);
+    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, id, cm->data);
 
     DRing::Message message;
     message.from = from;
     message.payloads = cm->data;
 #else
-    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, payloads);
+    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, id, payloads);
 
     DRing::Message message;
     message.from = from;
