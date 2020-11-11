@@ -1033,9 +1033,9 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
                                                       const std::string& parentId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert && cert->issuer)
+    if (!cert)
         return false;
-    auto userUri = cert->issuer->getId().toString();
+    auto userUri = cert->getIssuerUID();
     auto valid = false;
     {
         std::lock_guard<std::mutex> lk(membersMtx_);
@@ -1440,6 +1440,8 @@ ConversationRepository::Impl::log(const std::string& from, const std::string& to
 
     git_oid oid;
     auto repo = repository();
+    if (!repo)
+        return commits;
     if (from.empty()) {
         if (git_reference_name_to_id(&oid, repo.get(), "HEAD") < 0) {
             JAMI_ERR("Cannot get reference for HEAD");
@@ -2739,10 +2741,7 @@ ConversationRepository::pinCertificates()
                                       repoPath + DIR_SEPARATOR_STR + "devices"};
 
     for (const auto& path : paths) {
-        tls::CertificateStore::instance().pinCertificatePath(path, [](auto& ids) {
-            for (const auto& id : ids)
-                JAMI_ERR("@@@ LOADED %s", id.c_str());
-        });
+        tls::CertificateStore::instance().pinCertificatePath(path, {});
     }
 }
 
