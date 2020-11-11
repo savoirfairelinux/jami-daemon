@@ -787,8 +787,8 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
         // IMPLEMENTATION NOTE: requestPeerConnection() may call the given callback a multiple time.
         // This happen when multiple agents handle communications of the given peer for the given
         // account. Example: Jami account supports multi-devices, each can answer to the request.
-        account->requestPeerConnection(
-            info.peer,
+        account->requestConnection(
+            info,
             tid,
             static_cast<bool>(cb),
             [this, tid](const std::shared_ptr<ChanneledOutgoingTransfer>& out) {
