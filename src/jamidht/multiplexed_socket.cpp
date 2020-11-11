@@ -61,14 +61,25 @@ public:
                 endpoint->setOnStateChange({});
             shutdown();
         } else {
-            std::lock_guard<std::mutex> lkSockets(socketsMutex);
-            for (auto& socket : sockets) {
-                if (socket.second)
-                    socket.second->stop();
-            }
-            sockets.clear();
+            clearSockets();
         }
         eventLoopThread_.join();
+    }
+
+    void clearSockets()
+    {
+        decltype(sockets) socks;
+        {
+            std::lock_guard<std::mutex> lkSockets(socketsMutex);
+            socks = std::move(sockets);
+        }
+        for (auto& socket : socks) {
+            // Just trigger onShutdown() to make client know
+            // No need to write the EOF for the channel, the write will fail because endpoint is
+            // already shutdown
+            if (socket.second)
+                socket.second->stop();
+        }
     }
 
     void shutdown()
@@ -83,15 +94,7 @@ public:
             std::unique_lock<std::mutex> lk(writeMtx);
             endpoint->shutdown();
         }
-        std::lock_guard<std::mutex> lkSockets(socketsMutex);
-        for (auto& socket : sockets) {
-            // Just trigger onShutdown() to make client know
-            // No need to write the EOF for the channel, the write will fail because endpoint is
-            // already shutdown
-            if (socket.second)
-                socket.second->stop();
-        }
-        sockets.clear();
+        clearSockets();
     }
 
     /**
