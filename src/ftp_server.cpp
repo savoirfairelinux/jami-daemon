@@ -23,6 +23,7 @@
 #include "logger.h"
 #include "string_utils.h"
 #include "manager.h"
+#include "jamidht/jamiaccount.h"
 
 #include <opendht/thread_pool.h>
 
@@ -38,15 +39,13 @@ namespace jami {
 
 //==============================================================================
 
-FtpServer::FtpServer(const std::string& account_id,
-                     const std::string& peer_uri,
-                     const DRing::DataTransferId& outId,
-                     InternalCompletionCb&& cb)
+FtpServer::FtpServer(const DRing::DataTransferInfo& info,
+                     const DRing::DataTransferId& id,
+                     const InternalCompletionCb& cb)
     : Stream()
-    , accountId_ {account_id}
-    , peerUri_ {peer_uri}
-    , outId_ {outId}
-    , cb_ {std::move(cb)}
+    , info_ {info}
+    , transferId_(id)
+    , cb_(cb)
 {}
 
 DRing::DataTransferId
@@ -70,60 +69,62 @@ void
 FtpServer::startNewFile()
 {
     // Request filename from client (WARNING: synchrone call!)
-    DRing::DataTransferInfo info {};
-    info.accountId = accountId_;
-    info.peer = peerUri_;
-    info.displayName = displayName_;
-    info.totalSize = fileSize_;
-    info.bytesProgress = 0;
+    info_.totalSize = fileSize_;
+    info_.bytesProgress = 0;
     rx_ = 0;
-    transferId_ = Manager::instance()
-                      .dataTransfers->createIncomingTransfer(info,
-                                                             outId_,
-                                                             cb_); // return immediately
     isTreatingRequest_ = true;
-    Manager::instance().dataTransfers->onIncomingFileRequest(
-        transferId_, [w = weak()](const IncomingFileInfo& fileInfo) {
-            auto shared = w.lock();
-            if (!shared)
-                return;
-            shared->out_ = fileInfo;
-            shared->isTreatingRequest_ = false;
-            if (!shared->out_.stream) {
-                JAMI_DBG() << "[FTP] transfer aborted by client";
-                shared->closed_ = true; // send NOK msg at next read()
-            } else {
-                if (shared->tmpOnStateChangedCb_)
-                    shared->out_.stream->setOnStateChangedCb(
-                        std::move(shared->tmpOnStateChangedCb_));
-                shared->go_ = true;
-            }
 
-            if (shared->onRecvCb_) {
-                shared->onRecvCb_(shared->go_ ? "GO\n"sv : "NGO\n"sv);
-            }
+    auto to = info_.conversationId;
+    if (to.empty())
+        to = info_.peer;
 
-            if (shared->out_.stream) {
-                shared->state_ = FtpState::READ_DATA;
-                while (shared->headerStream_) {
-                    shared->headerStream_.read(&shared->line_[0], shared->line_.size());
-                    std::size_t count = shared->headerStream_.gcount();
-                    if (!count)
-                        break;
-                    auto size_needed = shared->fileSize_ - shared->rx_;
-                    count = std::min(count, size_needed);
-                    shared->out_.stream->write(std::string_view(shared->line_.data(), count));
-                    shared->rx_ += count;
-                    if (shared->rx_ == shared->fileSize_) {
-                        shared->closeCurrentFile();
-                        shared->state_ = FtpState::PARSE_HEADERS;
-                        return;
+    if (auto acc = Manager::instance().getAccount<JamiAccount>(info_.accountId)) {
+        acc->onIncomingFileRequest(
+            info_,
+            transferId_,
+            [w = weak()](const IncomingFileInfo& fileInfo) {
+                auto shared = w.lock();
+                if (!shared)
+                    return;
+                shared->out_ = fileInfo;
+                shared->isTreatingRequest_ = false;
+                if (!shared->out_.stream) {
+                    JAMI_DBG() << "[FTP] transfer aborted by client";
+                    shared->closed_ = true; // send NOK msg at next read()
+                } else {
+                    if (shared->tmpOnStateChangedCb_)
+                        shared->out_.stream->setOnStateChangedCb(
+                            std::move(shared->tmpOnStateChangedCb_));
+                    shared->go_ = true;
+                }
+
+                if (shared->onRecvCb_) {
+                    shared->onRecvCb_(shared->go_ ? "GO\n"sv : "NGO\n"sv);
+                }
+
+                if (shared->out_.stream) {
+                    shared->state_ = FtpState::READ_DATA;
+                    while (shared->headerStream_) {
+                        shared->headerStream_.read(&shared->line_[0], shared->line_.size());
+                        std::size_t count = shared->headerStream_.gcount();
+                        if (!count)
+                            break;
+                        auto size_needed = shared->fileSize_ - shared->rx_;
+                        count = std::min(count, size_needed);
+                        shared->out_.stream->write(std::string_view(shared->line_.data(), count));
+                        shared->rx_ += count;
+                        if (shared->rx_ == shared->fileSize_) {
+                            shared->closeCurrentFile();
+                            shared->state_ = FtpState::PARSE_HEADERS;
+                            return;
+                        }
                     }
                 }
-            }
-            shared->headerStream_.clear();
-            shared->headerStream_.str({}); // reset
-        });
+                shared->headerStream_.clear();
+                shared->headerStream_.str({}); // reset
+            },
+            std::move(cb_));
+    }
 }
 
 void
@@ -218,7 +219,7 @@ FtpServer::handleHeader(std::string_view key, std::string_view value)
             throw std::runtime_error("[FTP] header parsing error");
         }
     } else if (key == "Display-Name") {
-        displayName_ = value;
+        info_.displayName = value;
     }
 }
 
