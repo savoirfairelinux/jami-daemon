@@ -136,38 +136,40 @@ public:
         auto find = mediaHandlerToggled_.find(callId);
         if (find == mediaHandlerToggled_.end())
             mediaHandlerToggled_[callId] = {};
-
+        bool applyRestart = false;
         for (auto it = callAVsubjects.begin(); it != callAVsubjects.end(); ++it) {
             if (it->first.id == callId) {
                 for (auto& mediaHandler : callMediaHandlers) {
                     if (getCallHandlerId(mediaHandler) == mediaHandlerId) {
                         if (toggle) {
-                            if (mediaHandlerToggled_[callId].find(mediaHandlerId)
-                                == mediaHandlerToggled_[callId].end())
+                            notifyAVSubject(mediaHandler, it->first, it->second);
+                            if (isAttached(mediaHandler)
+                                && mediaHandlerToggled_[callId].find(mediaHandlerId)
+                                       == mediaHandlerToggled_[callId].end())
                                 mediaHandlerToggled_[callId].insert(mediaHandlerId);
-                            listAvailableSubjects(callId, mediaHandler);
                         } else {
                             mediaHandler->detach();
                             if (mediaHandlerToggled_[callId].find(mediaHandlerId)
                                 != mediaHandlerToggled_[callId].end())
                                 mediaHandlerToggled_[callId].erase(mediaHandlerId);
                         }
-
-                        /* In the case when the mediaHandler receives a hardware format
-                         * frame and converts it to main memory, we need to restart the
-                         * sender to unlink ours encoder and decoder.
-                         *
-                         * When we deactivate a mediaHandler, we try to relink the encoder
-                         * and decoder by restarting the sender.
-                         */
-                        Manager::instance()
-                            .callFactory.getCall<SIPCall>(callId)
-                            ->getVideoRtp()
-                            .restartSender();
+                        if (it->first.type == StreamType::video && isVideoType(mediaHandler))
+                            applyRestart = true;
+                        break;
                     }
                 }
             }
         }
+
+        /* In the case when the mediaHandler receives a hardware format
+         * frame and converts it to main memory, we need to restart the
+         * sender to unlink ours encoder and decoder.
+         *
+         * When we deactivate a mediaHandler, we try to relink the encoder
+         * and decoder by restarting the sender.
+         */
+        if (applyRestart)
+            Manager::instance().callFactory.getCall<SIPCall>(callId)->getVideoRtp().restartSender();
     }
 
     /**
@@ -183,6 +185,36 @@ public:
             }
         }
         return {};
+    }
+
+    bool isVideoType(const CallMediaHandlerPtr& mediaHandler)
+    {
+        const auto& details = mediaHandler->getCallMediaHandlerDetails();
+        const auto& it = details.find("dataType");
+        if (it != details.end()) {
+            JAMI_INFO() << "type: ";
+            bool status;
+            std::istringstream(it->second) >> status;
+            JAMI_INFO() << status;
+            return status;
+        }
+        JAMI_INFO() << "dataType not found";
+        return true;
+    }
+
+    bool isAttached(const CallMediaHandlerPtr& mediaHandler)
+    {
+        const auto& details = mediaHandler->getCallMediaHandlerDetails();
+        const auto& it = details.find("attached");
+        if (it != details.end()) {
+            JAMI_INFO() << "status: ";
+            bool status;
+            std::istringstream(it->second) >> status;
+            JAMI_INFO() << status;
+            return status;
+        }
+        JAMI_INFO() << "attached not found";
+        return true;
     }
 
     std::map<std::string, std::vector<std::string>> getCallMediaHandlerStatus(
@@ -220,9 +252,8 @@ private:
                          const StreamData& data,
                          AVSubjectSPtr& subject)
     {
-        if (auto soSubject = subject.lock()) {
+        if (auto soSubject = subject.lock())
             callMediaHandlerPtr->notifyAVFrameSubject(data, soSubject);
-        }
     }
 
     /**
@@ -258,7 +289,7 @@ private:
     /**
      * @brief callMediaHandlers
      * Components that a plugin can register through registerCallMediaHandler service
-     * These objects can then be notified with notify notifyAVFrameSubject
+     * These objects can then be notified with notifySubject
      * whenever there is a new CallAVSubject like a video receive
      */
     std::list<CallMediaHandlerPtr> callMediaHandlers;
