@@ -40,7 +40,7 @@ public:
     virtual void knownDevicesChanged(const std::string& /*account_id*/, const std::map<std::string, std::string>& /*devices*/){}
     virtual void exportOnRingEnded(const std::string& /*account_id*/, int /*state*/, const std::string& /*pin*/){}
 
-    virtual void incomingTrustRequest(const std::string& /*account_id*/, const std::string& /*from*/, const std::vector<uint8_t>& /*payload*/, time_t received){}
+    virtual void incomingTrustRequest(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*conversationId*/,const std::vector<uint8_t>& /*payload*/, time_t received){}
     virtual void contactAdded(const std::string& /*account_id*/, const std::string& /*uri*/, bool confirmed){}
     virtual void contactRemoved(const std::string& /*account_id*/, const std::string& /*uri*/, bool banned){}
 
@@ -255,7 +255,7 @@ public:
     virtual void knownDevicesChanged(const std::string& /*account_id*/, const std::map<std::string, std::string>& /*devices*/){}
     virtual void exportOnRingEnded(const std::string& /*account_id*/, int /*state*/, const std::string& /*pin*/){}
 
-    virtual void incomingTrustRequest(const std::string& /*account_id*/, const std::string& /*from*/, const std::vector<uint8_t>& /*payload*/, time_t received){}
+    virtual void incomingTrustRequest(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*conversationId*/,const std::vector<uint8_t>& /*payload*/, time_t received){}
     virtual void contactAdded(const std::string& /*account_id*/, const std::string& /*uri*/, bool confirmed){}
     virtual void contactRemoved(const std::string& /*account_id*/, const std::string& /*uri*/, bool banned){}
 
