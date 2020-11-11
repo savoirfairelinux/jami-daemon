@@ -53,6 +53,9 @@ public:
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
+    std::shared_ptr<AudioInput>& getAudioLocal() { return audioInput_; }
+    std::unique_ptr<AudioReceiveThread>& getAudioReceive() { return receiveThread_; }
+
 private:
     void startSender();
     void startReceiver();
