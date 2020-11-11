@@ -142,14 +142,15 @@ public:
                 for (auto& mediaHandler : callMediaHandlers) {
                     if (getCallHandlerId(mediaHandler) == mediaHandlerId) {
                         if (toggle) {
-                            if (mediaHandlerToggled_[callId].find(mediaHandlerId)
-                                == mediaHandlerToggled_[callId].end())
+                            if (notifyAVSubject(mediaHandler, it->first, it->second)
+                                && mediaHandlerToggled_[callId].find(mediaHandlerId)
+                                       == mediaHandlerToggled_[callId].end())
                                 mediaHandlerToggled_[callId].insert(mediaHandlerId);
-                            listAvailableSubjects(callId, mediaHandler);
-                            /* In the case when the mediHandler receives a hardware format
-                             * frame and converts it to main memory, we need to restart the
-                             * sender to unlink ours encoder and decoder. 
-                             */
+                        /* In the case when the mediaHandler receives a hardware format
+                        * frame and converts it to main memory, we need to restart the
+                        * sender to unlink ours encoder and decoder.
+                        */
+                        if (it->first.type == StreamType::video)
                             Manager::instance()
                                 .callFactory.getCall<SIPCall>(callId)
                                 ->getVideoRtp()
@@ -162,10 +163,11 @@ public:
                             /* When we deactivate a mediaHandler, we try to relink the encoder
                              * and decoder by restarting the sender.
                              */
-                            Manager::instance()
-                                .callFactory.getCall<SIPCall>(callId)
-                                ->getVideoRtp()
-                                .restartSender();
+                            if (it->first.type == StreamType::video)
+                                Manager::instance()
+                                    .callFactory.getCall<SIPCall>(callId)
+                                    ->getVideoRtp()
+                                    .restartSender();
                         }
                     }
                 }
@@ -219,12 +221,12 @@ private:
      * @param data
      * @param subject
      */
-    void notifyAVSubject(CallMediaHandlerPtr& callMediaHandlerPtr,
+    bool notifyAVSubject(CallMediaHandlerPtr& callMediaHandlerPtr,
                          const StreamData& data,
                          AVSubjectSPtr& subject)
     {
         if (auto soSubject = subject.lock()) {
-            callMediaHandlerPtr->notifyAVFrameSubject(data, soSubject);
+            return callMediaHandlerPtr->notifyAVFrameSubject(data, soSubject);
         }
     }
 
