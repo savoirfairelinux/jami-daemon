@@ -60,7 +60,6 @@ struct VideoManager;
 class Conference;
 class AudioLoop;
 class IceTransportFactory;
-class DataTransferFacade;
 class JamiAccount;
 class SIPVoIPLink;
 class JamiPluginManager;
@@ -923,8 +922,6 @@ public:
     std::atomic<unsigned> dhtLogLevel {0}; // default = disable
     AccountFactory accountFactory;
 
-    std::unique_ptr<DataTransferFacade> dataTransfers;
-
     std::vector<DRing::Message> getLastMessages(const std::string& accountID,
                                                 const uint64_t& base_timestamp);
 
@@ -932,14 +929,16 @@ public:
 #ifdef ENABLE_PLUGIN
     JamiPluginManager& getJamiPluginManager() const;
 #endif
-        /**
-         * Return current git socket used for a conversation
-         * @param accountId         Related account
-         * @param deviceId          Related device
-         * @param conversationId    Related conversation
-         * @return shared_ptr<ChannelSocket> the related socket
-         */
-        std::shared_ptr<ChannelSocket> gitSocket(const std::string& accountId, const std::string& deviceId, const std::string& conversationId);
+    /**
+     * Return current git socket used for a conversation
+     * @param accountId         Related account
+     * @param deviceId          Related device
+     * @param conversationId    Related conversation
+     * @return shared_ptr<ChannelSocket> the related socket
+     */
+    std::shared_ptr<ChannelSocket> gitSocket(const std::string& accountId,
+                                             const std::string& deviceId,
+                                             const std::string& conversationId);
 
     void setModerator(const std::string& confId, const std::string& peerId, const bool& state);
     void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
