@@ -280,7 +280,8 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
         saveTrustRequests();
     }
     // Note: call JamiAccount's callback to build ConversationRequest anyway
-    callbacks_.trustRequest(peer_account.toString(), conversationId, std::move(payload), received);
+    if (!confirm)
+        callbacks_.trustRequest(peer_account.toString(), conversationId, std::move(payload), received);
     return accept;
 }
 
