@@ -33,6 +33,7 @@
 #include "dring/datatransfer_interface.h"
 #include "jamidht/conversation.h"
 #include "multiplexed_socket.h"
+#include "data_transfer.h"
 
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -366,8 +367,8 @@ public:
     /// /// \param[in] peer RingID on request's recipient
     /// /// \param[in] tid linked outgoing data transfer
     ///
-    void requestPeerConnection(
-        const std::string& peer,
+    void requestConnection(
+        const DRing::DataTransferInfo& info,
         const DRing::DataTransferId& tid,
         bool isVCard,
         const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
@@ -567,6 +568,28 @@ public:
      * @param convId
      */
     void cloneConversation(const std::string& deviceId, const std::string& convId);
+
+    // File transfer
+    DRing::DataTransferId sendFile(const std::string& to,
+                                   const std::string& path,
+                                   const InternalCompletionCb& icb = {});
+
+    void onIncomingFileRequest(const DRing::DataTransferInfo& info,
+                               const DRing::DataTransferId& id,
+                               const std::function<void(const IncomingFileInfo&)>& cb,
+                               const InternalCompletionCb& icb);
+
+    bool acceptFile(const std::string& to,
+                    DRing::DataTransferId id,
+                    const std::string& path,
+                    int64_t progress);
+
+    bool cancel(const std::string& to, DRing::DataTransferId id);
+    bool info(const std::string& to, DRing::DataTransferId id, DRing::DataTransferInfo& info);
+    bool bytesProgress(const std::string& to,
+                       DRing::DataTransferId id,
+                       int64_t& total,
+                       int64_t& progress);
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -954,8 +977,6 @@ private:
     void sendProfile(const std::string& deviceId);
 
     // Conversations
-    std::mutex conversationsRequestsMtx_ {};
-    std::map<std::string, ConversationRequest> conversationsRequests_ {};
     std::mutex pendingConversationsFetchMtx_ {};
     std::map<std::string, PendingConversationFetch> pendingConversationsFetch_;
 
@@ -998,6 +1019,10 @@ private:
      * @return the conversation id if found else empty
      */
     std::string getOneToOneConversation(const std::string& uri) const;
+
+    //// File transfer
+    std::mutex transferMutex_ {};
+    std::map<std::string, TransferManager> transferManagers_ {};
 };
 
 static inline std::ostream&
