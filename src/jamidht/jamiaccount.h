@@ -383,8 +383,8 @@ public:
     /// /// \param[in] peer RingID on request's recipient
     /// /// \param[in] tid linked outgoing data transfer
     ///
-    void requestPeerConnection(
-        const std::string& peer,
+    void requestConnection(
+        const DRing::DataTransferInfo& info,
         const DRing::DataTransferId& tid,
         bool isVCard,
         const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&

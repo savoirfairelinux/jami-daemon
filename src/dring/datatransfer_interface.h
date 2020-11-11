@@ -74,6 +74,7 @@ struct DRING_PUBLIC DataTransferInfo
     int64_t totalSize {0};               ///< Total number of bytes to sent/receive, 0 if not known
     int64_t bytesProgress {0};           ///< Number of bytes sent/received
     std::string peer; ///< Identifier of the remote peer (in the semantic of the associated account)
+    std::string conversationId;
     std::string displayName; ///< Human oriented transfer name
     std::string path;        ///< associated local file path if supported (empty, if not)
     std::string mimetype;    ///< MimeType of transferred data
