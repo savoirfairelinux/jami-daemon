@@ -142,10 +142,10 @@ public:
                 for (auto& mediaHandler : callMediaHandlers) {
                     if (getCallHandlerId(mediaHandler) == mediaHandlerId) {
                         if (toggle) {
-                            if (mediaHandlerToggled_[callId].find(mediaHandlerId)
-                                == mediaHandlerToggled_[callId].end())
+                            if (notifyAVSubject(mediaHandler, it->first, it->second)
+                                && mediaHandlerToggled_[callId].find(mediaHandlerId)
+                                       == mediaHandlerToggled_[callId].end())
                                 mediaHandlerToggled_[callId].insert(mediaHandlerId);
-                            listAvailableSubjects(callId, mediaHandler);
                         } else {
                             mediaHandler->detach();
                             if (mediaHandlerToggled_[callId].find(mediaHandlerId)
@@ -160,10 +160,11 @@ public:
                          * When we deactivate a mediaHandler, we try to relink the encoder
                          * and decoder by restarting the sender.
                          */
-                        Manager::instance()
-                            .callFactory.getCall<SIPCall>(callId)
-                            ->getVideoRtp()
-                            .restartSender();
+                        if (it->first.type == StreamType::video)
+                            Manager::instance()
+                                .callFactory.getCall<SIPCall>(callId)
+                                ->getVideoRtp()
+                                .restartSender();
                     }
                 }
             }
@@ -216,13 +217,19 @@ private:
      * @param data
      * @param subject
      */
-    void notifyAVSubject(CallMediaHandlerPtr& callMediaHandlerPtr,
+    bool notifyAVSubject(CallMediaHandlerPtr& callMediaHandlerPtr,
                          const StreamData& data,
                          AVSubjectSPtr& subject)
     {
         if (auto soSubject = subject.lock()) {
-            callMediaHandlerPtr->notifyAVFrameSubject(data, soSubject);
+            if (data.type == StreamType::video) {
+                callMediaHandlerPtr->notifyAVFrameSubject(data, soSubject);
+                return true;
+            } else if (data.type == StreamType::audio) {
+                return callMediaHandlerPtr->notifyAVAudioSubject(data, soSubject);
+            }
         }
+        return true;
     }
 
     /**
@@ -258,7 +265,7 @@ private:
     /**
      * @brief callMediaHandlers
      * Components that a plugin can register through registerCallMediaHandler service
-     * These objects can then be notified with notify notifyAVFrameSubject
+     * These objects can then be notified with notifySubject
      * whenever there is a new CallAVSubject like a video receive
      */
     std::list<CallMediaHandlerPtr> callMediaHandlers;

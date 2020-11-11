@@ -40,8 +40,8 @@ public:
      * The id is the path of the plugin that created this MediaHandler
      * @return
      */
-    std::string id() const { return id_;}
-    virtual void setId(const std::string& id) final {id_ = id;}
+    std::string id() const { return id_; }
+    virtual void setId(const std::string& id) final { id_ = id; }
 
 private:
     std::string id_;
@@ -55,6 +55,7 @@ class CallMediaHandler : public MediaHandler
 {
 public:
     virtual void notifyAVFrameSubject(const StreamData& data, avSubjectPtr subject) = 0;
+    virtual bool notifyAVAudioSubject(const StreamData& data, avSubjectPtr subject) = 0;
     virtual std::map<std::string, std::string> getCallMediaHandlerDetails() = 0;
     virtual void detach() = 0;
     virtual void setPreferenceAttribute(const std::string& key, const std::string& value) = 0;
