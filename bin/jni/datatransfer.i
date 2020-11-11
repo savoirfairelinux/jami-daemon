@@ -24,6 +24,7 @@
 %apply uint32_t { DRing::DataTransferError };
 %apply uint64_t { DRing::DataTransferId };
 %apply uint64_t { const DRing::DataTransferId };
+%apply int64_t& INOUT { DRing::DataTransferId& id };
 
 %header %{
 #include "dring/dring.h"
@@ -32,7 +33,7 @@
 class DataTransferCallback {
 public:
     virtual ~DataTransferCallback(){}
-    virtual void dataTransferEvent(const DRing::DataTransferId transferId, int eventCode){}
+    virtual void dataTransferEvent(const std::string& accountId, const std::string& conversationId, const DRing::DataTransferId transferId, int eventCode){}
 };
 %}
 
@@ -47,22 +48,24 @@ namespace DRing {
     uint32_t flags;
     int64_t totalSize;
     int64_t bytesProgress;
+    std::string author;
     std::string peer;
+    std::string conversationId;
     std::string displayName;
     std::string path;
     std::string mimetype;
   };
 
-  DRing::DataTransferError sendFile(const DRing::DataTransferInfo info, DRing::DataTransferId id);
-  DRing::DataTransferError acceptFileTransfer(const DRing::DataTransferId id, const std::string file_path, int64_t offset);
-  DRing::DataTransferError cancelDataTransfer(const DRing::DataTransferId id);
-  DRing::DataTransferError dataTransferInfo(const DRing::DataTransferId id, DRing::DataTransferInfo &info);
-  DRing::DataTransferError dataTransferBytesProgress(const DRing::DataTransferId id, int64_t &total, int64_t &progress);
+  DRing::DataTransferError sendFile(const DRing::DataTransferInfo info, DRing::DataTransferId& id);
+  DRing::DataTransferError acceptFileTransfer(const std::string& accountId, const std::string& conversationId, const DRing::DataTransferId id, const std::string file_path, int64_t offset);
+  DRing::DataTransferError cancelDataTransfer(const std::string& accountId, const std::string& conversationId, const DRing::DataTransferId id);
+  DRing::DataTransferError dataTransferInfo(const std::string& accountId, const std::string& conversationId, const DRing::DataTransferId id, DRing::DataTransferInfo &info);
+  DRing::DataTransferError dataTransferBytesProgress(const std::string& accountId, const std::string& conversationId, const DRing::DataTransferId id, int64_t &total, int64_t &progress);
 
 }
 
 class DataTransferCallback {
 public:
     virtual ~DataTransferCallback(){}
-    virtual void dataTransferEvent(const DRing::DataTransferId transferId, int eventCode){}
+    virtual void dataTransferEvent(const std::string& accountId, const std::string& conversationId, const DRing::DataTransferId transferId, int eventCode){}
 };

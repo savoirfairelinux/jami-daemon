@@ -291,7 +291,16 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
         saveTrustRequests();
     }
     // Note: call JamiAccount's callback to build ConversationRequest anyway
-    callbacks_.trustRequest(peer_account.toString(), conversationId, std::move(payload), received);
+    JAMI_ERR("@@@ onTrustRequest for contact %s, conv %s - confirm %u ; active %u",
+             peer_account.to_c_str(),
+             conversationId.c_str(),
+             confirm,
+             active);
+    if (!confirm)
+        callbacks_.trustRequest(peer_account.toString(),
+                                conversationId,
+                                std::move(payload),
+                                received);
     return accept;
 }
 
@@ -449,9 +458,7 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
     // insert device
     auto it = knownDevices_.emplace(id, KnownDevice {crt, name, updated});
     if (it.second) {
-        JAMI_DBG("[Contacts] Found account device: %s %s",
-                 name.c_str(),
-                 id.toString().c_str());
+        JAMI_DBG("[Contacts] Found account device: %s %s", name.c_str(), id.toString().c_str());
         tls::CertificateStore::instance().pinCertificate(crt);
         if (crt->ocspResponse) {
             unsigned int status = crt->ocspResponse->getCertificateStatus();
@@ -474,9 +481,7 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
     } else {
         // update device name
         if (not name.empty() and it.first->second.name != name) {
-            JAMI_DBG("[Contacts] updating device name: %s %s",
-                     name.c_str(),
-                     id.to_c_str());
+            JAMI_DBG("[Contacts] updating device name: %s %s", name.c_str(), id.to_c_str());
             it.first->second.name = name;
             saveKnownDevices();
             callbacks_.devicesChanged(knownDevices_);
