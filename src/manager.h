@@ -61,7 +61,6 @@ struct VideoManager;
 class Conference;
 class AudioLoop;
 class IceTransportFactory;
-class DataTransferFacade;
 class JamiAccount;
 class SIPVoIPLink;
 class JamiPluginManager;
@@ -923,8 +922,6 @@ public:
 
     std::atomic<unsigned> dhtLogLevel {0}; // default = disable
     AccountFactory accountFactory;
-
-    std::unique_ptr<DataTransferFacade> dataTransfers;
 
     std::vector<DRing::Message> getLastMessages(const std::string& accountID,
                                                 const uint64_t& base_timestamp);
