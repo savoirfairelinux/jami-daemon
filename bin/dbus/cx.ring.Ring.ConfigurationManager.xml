@@ -589,9 +589,9 @@
                Notify clients that a sent text message status have changed
            </tp:docstring>
            <arg type="s" name="accountID"/>
-           <arg type="s" name="id"/>
            <arg type="s" name="conversationId"/>
            <arg type="s" name="peer"/>
+           <arg type="s" name="id"/>
            <arg type="i" name="status">
               <tp:docstring>The new status of the message, see getMessageStatus for possible values.</tp:docstring>
            </arg>
@@ -1458,6 +1458,8 @@
            </tp:docstring>
            <arg type="s" name="accountID">
            </arg>
+           <arg type="s" name="conversationId">
+           </arg>
            <arg type="s" name="from">
            </arg>
            <arg type="ay" name="payload">
@@ -1581,47 +1583,49 @@
            </arg>
        </method>
 
-       <method name="dataTransferList" tp:name-for-bindings="dataTransferList">
-           <tp:added version="4.2.0"/>
-           <arg type="at" name="dataTransferList" direction="out"/>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorULongLong"/>
-       </method>
-
        <method name="sendFile" tp:name-for-bindings="sendFile">
-           <tp:added version="4.2.0"/>
+           <tp:added version="10.0.0"/>
            <arg type="u" name="dataTransferError" direction="out"/>
-           <arg type="(suuxxssss)" name="DataTransferInfo" direction="in"/>
+           <arg type="(suuxxssssss)" name="DataTransferInfo" direction="in"/>
            <arg type="t" name="dataTransferId" direction="out"/>
            <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="DataTransferInfo"/>
        </method>
 
        <method name="dataTransferInfo" tp:name-for-bindings="dataTransferInfo">
-           <tp:added version="5.0.0"/>
+           <tp:added version="10.0.0"/>
            <arg type="u" name="dataTransferError" direction="out"/>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="to" direction="in"/>
            <arg type="t" name="dataTransferId" direction="in"/>
-           <arg type="(suuxxssss)" name="dataTransferInfo" direction="out"/>
+           <arg type="(suuxxssssss)" name="dataTransferInfo" direction="out"/>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="DataTransferInfo"/>
        </method>
 
        <method name="dataTransferBytesProgress" tp:name-for-bindings="dataTransferBytesProgress">
-           <tp:added version="5.0.0"/>
+           <tp:added version="10.0.0"/>
            <arg type="u" name="dataTransferError" direction="out"/>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="to" direction="in"/>
            <arg type="t" name="dataTransferId" direction="in"/>
            <arg type="x" name="totalSize" direction="out"/>
            <arg type="x" name="bytesProgress" direction="out"/>
        </method>
 
        <method name="acceptFileTransfer" tp:name-for-bindings="acceptFileTransfer">
-           <tp:added version="5.0.0"/>
+           <tp:added version="10.0.0"/>
            <arg type="u" name="dataTransferError" direction="out"/>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="to" direction="in"/>
            <arg type="t" name="dataTransferId" direction="in"/>
            <arg type="s" name="filePath" direction="in"/>
            <arg type="x" name="offset" direction="in"/>
        </method>
 
        <method name="cancelDataTransfer" tp:name-for-bindings="cancelDataTransfer">
-           <tp:added version="5.0.0"/>
+           <tp:added version="10.0.0"/>
            <arg type="u" name="dataTransferError" direction="out"/>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="to" direction="in"/>
            <arg type="t" name="dataTransferId" direction="in"/>
        </method>
 
@@ -1810,10 +1814,20 @@
        </signal>
 
        <signal name="dataTransferEvent" tp:name-for-bindings="dataTransferEvent">
-           <tp:added version="4.2.0"/>
+           <tp:added version="10.0.0"/>
            <tp:docstring>
                Notify clients when a data transfer state change.
            </tp:docstring>
+           <arg type="s" name="accountId">
+               <tp:docstring>
+                   An account id.
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="to">
+               <tp:docstring>
+                   The peer or conversation id.
+               </tp:docstring>
+           </arg>
            <arg type="t" name="id">
                <tp:docstring>
                    Data transfer unique id.

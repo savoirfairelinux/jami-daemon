@@ -998,7 +998,11 @@ IceTransport::IceTransport(const char* name, const IceTransportOptions& options)
     : pimpl_ {std::make_unique<Impl>(name, options)}
 {}
 
-IceTransport::~IceTransport() {}
+IceTransport::~IceTransport()
+{
+    isStopped_ = true;
+    cancelOperations();
+}
 
 bool
 IceTransport::isInitialized() const
@@ -1210,6 +1214,7 @@ IceTransport::stop()
 void
 IceTransport::cancelOperations()
 {
+    isCancelled_ = true;
     for (auto& c : pimpl_->peerChannels_) {
         c.stop();
     }
