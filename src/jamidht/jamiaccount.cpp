@@ -3568,8 +3568,8 @@ JamiAccount::publicAddresses()
 }
 
 void
-JamiAccount::requestPeerConnection(
-    const std::string& peer_id,
+JamiAccount::requestConnection(
+    const DRing::DataTransferInfo& info,
     const DRing::DataTransferId& tid,
     bool isVCard,
     const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
@@ -3577,10 +3577,27 @@ JamiAccount::requestPeerConnection(
     const std::function<void(const std::string&)>& onChanneledCancelled)
 {
     if (not dhtPeerConnector_) {
-        runOnMainThread([onChanneledCancelled, peer_id] { onChanneledCancelled(peer_id); });
+        runOnMainThread([w = weak(), onChanneledCancelled, info] {
+            if (auto shared = w.lock()) {
+                if (info.peer.empty()) {
+                    std::unique_lock<std::mutex> lk(shared->conversationsMtx_);
+                    auto it = shared->conversations_.find(info.conversationId);
+                    if (it == shared->conversations_.end()) {
+                        JAMI_ERR("Conversation %s doesn't exist", info.conversationId.c_str());
+                        return;
+                    }
+                    auto members = it->second->getMembers();
+                    lk.unlock();
+                    for (const auto& member : members)
+                        onChanneledCancelled(member.at("uri"));
+                } else {
+                    onChanneledCancelled(info.peer);
+                }
+            }
+        });
         return;
     }
-    dhtPeerConnector_->requestConnection(peer_id,
+    dhtPeerConnector_->requestConnection(info,
                                          tid,
                                          isVCard,
                                          channeledConnectedCb,
