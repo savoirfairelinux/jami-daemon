@@ -614,6 +614,7 @@ SIPAccountBase::onTextMessage(const std::string& id,
                            json["deviceId"].asString(),
                            json["id"].asString(),
                            json["commit"].asString());
+            return;
         } else if (m.first == MIME_TYPE_INVITE_JSON) {
             Json::Value json;
             std::string err;
@@ -624,8 +625,10 @@ SIPAccountBase::onTextMessage(const std::string& id,
                 return;
             }
             onConversationRequest(from, json);
+            return;
         } else if (m.first == MIME_TYPE_INVITE) {
             onNeedConversationRequest(from, m.second);
+            return;
         }
     }
 
