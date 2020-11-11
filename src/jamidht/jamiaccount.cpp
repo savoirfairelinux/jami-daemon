@@ -638,6 +638,14 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             dev_call->setIPToIP(true);
             dev_call->setSecure(isTlsEnabled());
             dev_call->setState(Call::ConnectionState::TRYING);
+            call->addStateListener(
+                [w = weak(), deviceId](Call::CallState, Call::ConnectionState state, int) {
+                    if (state != Call::ConnectionState::PROGRESSING
+                        and state != Call::ConnectionState::TRYING) {
+                        if (auto shared = w.lock())
+                            shared->callConnectionClosed(deviceId, true);
+                    }
+                });
             call->addSubCall(*dev_call);
             {
                 std::lock_guard<std::mutex> lk(pendingCallsMutex_);
