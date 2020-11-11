@@ -97,7 +97,8 @@ MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout)
     // avoid locking while calling callback
     for (const auto& p : pending) {
         JAMI_DBG() << "[message " << p.token << "] Retry sending";
-        emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+        if (p.payloads.find("application/im-gitmessage-id") == p.payloads.end())
+            emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
             account_.getAccountID(),
             "",
             std::to_string(p.token),
@@ -126,8 +127,10 @@ MessageEngine::cancel(MessageToken t)
     for (auto& p : messages_) {
         auto m = p.second.find(t);
         if (m != p.second.end()) {
+            auto emit = m->second.payloads.find("application/im-gitmessage-id") == m->second.payloads.end();
             m->second.status = MessageStatus::CANCELLED;
-            emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+            if (emit)
+                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
                 account_.getAccountID(),
                 "",
                 std::to_string(t),
@@ -152,11 +155,13 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
     }
     auto f = p->second.find(token);
     if (f != p->second.end()) {
+        auto emit = f->second.payloads.find("application/im-gitmessage-id") == f->second.payloads.end();
         if (f->second.status == MessageStatus::SENDING) {
             if (ok) {
                 f->second.status = MessageStatus::SENT;
                 JAMI_DBG() << "[message " << token << "] Status changed to SENT";
-                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                if (emit)
+                    emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
                     account_.getAccountID(),
                     "",
                     std::to_string(token),
@@ -166,7 +171,8 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
             } else if (f->second.retried >= MAX_RETRIES) {
                 f->second.status = MessageStatus::FAILURE;
                 JAMI_DBG() << "[message " << token << "] Status changed to FAILURE";
-                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                if (emit)
+                    emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
                     account_.getAccountID(),
                     "",
                     std::to_string(token),
