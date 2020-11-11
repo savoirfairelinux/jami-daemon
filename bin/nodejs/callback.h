@@ -26,12 +26,14 @@ Persistent<Function> callStateChangedCb;
 Persistent<Function> incomingMessageCb;
 Persistent<Function> incomingCallCb;
 
-std::queue<std::function<void() >> pendingSignals;
+std::queue<std::function<void()>> pendingSignals;
 std::mutex pendingSignalsLock;
 
 uv_async_t signalAsync;
 
-Persistent<Function>* getPresistentCb(const std::string &signal) {
+Persistent<Function>*
+getPresistentCb(const std::string& signal)
+{
     if (signal == "AccountsChanged")
         return &accountsChangedCb;
     else if (signal == "RegistrationStateChanged")
@@ -62,20 +64,27 @@ Persistent<Function>* getPresistentCb(const std::string &signal) {
         return &incomingMessageCb;
     else if (signal == "IncomingCall")
         return &incomingCallCb;
-    else return nullptr;
+    else
+        return nullptr;
 }
 
-void intVectToJsArray(const std::vector<uint8_t>& intVect, const Local<Array>& jsArray) {
+void
+intVectToJsArray(const std::vector<uint8_t>& intVect, const Local<Array>& jsArray)
+{
     for (unsigned int i = 0; i < intVect.size(); i++)
         jsArray->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_INTEGER_NEW_UNS(i), SWIGV8_INTEGER_NEW(intVect[i]));
 }
 
-void stringMapToJsMap(const std::map<std::string, std::string>& strmap, const Local<Object> &jsMap) {
+void
+stringMapToJsMap(const std::map<std::string, std::string>& strmap, const Local<Object>& jsMap)
+{
     for (auto& kvpair : strmap)
         jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_NEW_LOCAL(std::get<0>(kvpair)), V8_STRING_NEW_LOCAL(std::get<1>(kvpair)));
 }
 
-void setCallback(const std::string& signal, Local<Function>& func) {
+void
+setCallback(const std::string& signal, Local<Function>& func)
+{
     if (auto* presistentCb = getPresistentCb(signal)) {
         if (func->IsObject() && func->IsFunction()) {
             presistentCb->Reset(Isolate::GetCurrent(), func);
@@ -99,7 +108,9 @@ void parseCbMap(const Local<Value>& callbackMap) {
     }
 }
 
-void handlePendingSignals(uv_async_t* async_data) {
+void
+handlePendingSignals(uv_async_t* async_data)
+{
     SWIGV8_HANDLESCOPE();
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     while (not pendingSignals.empty()) {
@@ -108,11 +119,16 @@ void handlePendingSignals(uv_async_t* async_data) {
     }
 }
 
-void registrationStateChanged(const std::string& account_id, const std::string& state, int code, const std::string& detail_str) {
-
+void
+registrationStateChanged(const std::string& account_id,
+                         const std::string& state,
+                         int code,
+                         const std::string& detail_str)
+{
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, state, code, detail_str]() {
-        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), registrationStateChangedCb);
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
+                                                    registrationStateChangedCb);
         if (!func.IsEmpty()) {
             Local<Value> callback_args[] = {
                 V8_STRING_NEW_LOCAL(account_id),
@@ -126,8 +142,10 @@ void registrationStateChanged(const std::string& account_id, const std::string& 
     uv_async_send(&signalAsync);
 }
 
-void volatileDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details) {
-
+void
+volatileDetailsChanged(const std::string& account_id,
+                       const std::map<std::string, std::string>& details)
+{
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, details]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), volatileDetailsChangedCb);
@@ -142,8 +160,9 @@ void volatileDetailsChanged(const std::string& account_id, const std::map<std::s
     uv_async_send(&signalAsync);
 }
 
-void accountsChanged() {
-
+void
+accountsChanged()
+{
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), accountsChangedCb);
@@ -156,8 +175,9 @@ void accountsChanged() {
     uv_async_send(&signalAsync);
 }
 
-void contactAdded(const std::string& account_id, const std::string& uri, bool confirmed) {
-
+void
+contactAdded(const std::string& account_id, const std::string& uri, bool confirmed)
+{
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, uri, confirmed]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), contactAddedCb);
@@ -170,8 +190,9 @@ void contactAdded(const std::string& account_id, const std::string& uri, bool co
     uv_async_send(&signalAsync);
 }
 
-void contactRemoved(const std::string& account_id, const std::string& uri, bool banned) {
-
+void
+contactRemoved(const std::string& account_id, const std::string& uri, bool banned)
+{
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, uri, banned]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), contactRemovedCb);
@@ -184,8 +205,9 @@ void contactRemoved(const std::string& account_id, const std::string& uri, bool 
     uv_async_send(&signalAsync);
 }
 
-void exportOnRingEnded(const std::string& account_id, int state, const std::string& pin) {
-
+void
+exportOnRingEnded(const std::string& account_id, int state, const std::string& pin)
+{
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, state, pin]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), exportOnRingEndedCb);
@@ -198,8 +220,9 @@ void exportOnRingEnded(const std::string& account_id, int state, const std::stri
     uv_async_send(&signalAsync);
 }
 
-void nameRegistrationEnded(const std::string& account_id, int state, const std::string& name) {
-
+void
+nameRegistrationEnded(const std::string& account_id, int state, const std::string& name)
+{
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, state, name]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), nameRegistrationEndedCb);
@@ -212,8 +235,12 @@ void nameRegistrationEnded(const std::string& account_id, int state, const std::
     uv_async_send(&signalAsync);
 }
 
-void registeredNameFound(const std::string& account_id, int state, const std::string& address, const std::string& name) {
-
+void
+registeredNameFound(const std::string& account_id,
+                    int state,
+                    const std::string& address,
+                    const std::string& name)
+{
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, state, address, name]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), registeredNameFoundCb);
@@ -226,11 +253,17 @@ void registeredNameFound(const std::string& account_id, int state, const std::st
     uv_async_send(&signalAsync);
 }
 
-void accountMessageStatusChanged(const std::string& account_id, const std::string& message_id, const std::string& conversationId, const std::string& peer, int state) {
-
+void
+accountMessageStatusChanged(const std::string& account_id,
+                            const std::string& conversationId,
+                            const std::string& peer,
+                            const std::string& message_id,
+                            int state)
+{
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, message_id, peer, state]() {
-        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), accountMessageStatusChangedCb);
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
+                                                    accountMessageStatusChangedCb);
         if (!func.IsEmpty()) {
             Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id), SWIGV8_INTEGER_NEW_UNS(message_id), V8_STRING_NEW_LOCAL(to), SWIGV8_INTEGER_NEW(state)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
@@ -256,8 +289,9 @@ void incomingAccountMessage(const std::string& account_id, const std::string& me
     uv_async_send(&signalAsync);
 }
 
-void knownDevicesChanged(const std::string& account_id, const std::map<std::string, std::string>& devices) {
-
+void
+knownDevicesChanged(const std::string& account_id, const std::map<std::string, std::string>& devices)
+{
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, devices]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), knownDevicesChangedCb);
@@ -272,9 +306,12 @@ void knownDevicesChanged(const std::string& account_id, const std::map<std::stri
     uv_async_send(&signalAsync);
 }
 
-void incomingTrustRequest(const std::string& account_id, const std::string& from, const std::vector<uint8_t>& payload, time_t received) {
-
-
+void
+incomingTrustRequest(const std::string& account_id,
+                     const std::string& from,
+                     const std::vector<uint8_t>& payload,
+                     time_t received)
+{
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, from, payload, received]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), incomingTrustRequestCb);
@@ -288,8 +325,9 @@ void incomingTrustRequest(const std::string& account_id, const std::string& from
     uv_async_send(&signalAsync);
 }
 
-void callStateChanged(const std::string& call_id, const std::string& state, int detail_code) {
-
+void
+callStateChanged(const std::string& call_id, const std::string& state, int detail_code)
+{
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([call_id, state, detail_code]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), callStateChangedCb);
@@ -302,8 +340,11 @@ void callStateChanged(const std::string& call_id, const std::string& state, int 
     uv_async_send(&signalAsync);
 }
 
-void incomingMessage(const std::string& id, const std::string& from, const std::map<std::string, std::string>& messages) {
-
+void
+incomingMessage(const std::string& id,
+                const std::string& from,
+                const std::map<std::string, std::string>& messages)
+{
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([id, from, messages]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), incomingMessageCb);
@@ -318,8 +359,9 @@ void incomingMessage(const std::string& id, const std::string& from, const std::
     uv_async_send(&signalAsync);
 }
 
-void incomingCall(const std::string& account_id, const std::string& call_id, const std::string& from) {
-
+void
+incomingCall(const std::string& account_id, const std::string& call_id, const std::string& from)
+{
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, call_id, from]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), incomingCallCb);
