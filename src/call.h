@@ -145,7 +145,7 @@ public:
      * not protected by mutex (when created)
      * @return std::string The peer number
      */
-    std::string getPeerNumber() const { return peerNumber_; }
+    const std::string& getPeerNumber() const { return peerNumber_; }
     /**
      * Set the display name (caller in ingoing)
      * not protected by mutex (when created)

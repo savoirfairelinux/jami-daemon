@@ -221,19 +221,8 @@ public:
      */
     pj_str_t getContactHeader(pjsip_transport* = nullptr) override;
 
-    void setReceivedParameter(const std::string& received)
-    {
-        receivedParameter_ = received;
-        via_addr_.host.ptr = (char*) receivedParameter_.c_str();
-        via_addr_.host.slen = receivedParameter_.size();
-    }
-
-    std::string getReceivedParameter() const { return receivedParameter_; }
-
-    pjsip_host_port* getViaAddr() { return &via_addr_; }
-
     /* Returns true if the username and/or hostname match this account */
-    MatchRank matches(const std::string& username, const std::string& hostname) const override;
+    MatchRank matches(std::string_view username, std::string_view hostname) const override;
 
     /**
      * Implementation of Account::newOutgoingCall()
@@ -670,18 +659,8 @@ private:
     bool allowPeersFromContact_ {true};
     bool allowPeersFromTrusted_ {true};
 
-    /**
-     * Optional: "received" parameter from VIA header
-     */
-    std::string receivedParameter_ {};
-
     std::string managerUri_ {};
     std::string managerUsername_ {};
-
-    /**
-     * Optional: "rport" parameter from VIA header
-     */
-    int rPort_ {-1};
 
     /**
      * Optional: via_addr construct from received parameters

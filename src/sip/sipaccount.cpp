@@ -353,13 +353,12 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     // Add Ice headers to local SDP if ice transport exist
     call->setupLocalSDPFromIce();
 
-    std::string toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
-
-    pj_str_t pjTo = pj_str((char*) toUri.c_str());
+    const std::string& toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
+    pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);
 
     // Create the from header
     std::string from(getFromUri());
-    pj_str_t pjFrom = pj_str((char*) from.c_str());
+    pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
 
     auto transport = call->getTransport();
     if (!transport) {
@@ -1015,10 +1014,10 @@ SIPAccount::sendRegister()
 
     // Generate the FROM header
     std::string from(getFromUri());
-    pj_str_t pjFrom {(char*) from.data(), (pj_ssize_t) from.size()};
+    pj_str_t pjFrom(sip_utils::CONST_PJ_STR(from));
 
     // Get the received header
-    std::string received(getReceivedParameter());
+    const std::string& received(getReceivedParameter());
 
     // Get the contact header
     const pj_str_t pjContact(getContactHeader());
@@ -1353,19 +1352,19 @@ SIPAccount::loadConfig()
 }
 
 bool
-SIPAccount::fullMatch(const std::string& username, const std::string& hostname) const
+SIPAccount::fullMatch(std::string_view username, std::string_view hostname) const
 {
     return userMatch(username) and hostnameMatch(hostname);
 }
 
 bool
-SIPAccount::userMatch(const std::string& username) const
+SIPAccount::userMatch(std::string_view username) const
 {
     return !username.empty() and username == username_;
 }
 
 bool
-SIPAccount::hostnameMatch(const std::string& hostname) const
+SIPAccount::hostnameMatch(std::string_view hostname) const
 {
     if (hostname == hostname_)
         return true;
@@ -1375,7 +1374,7 @@ SIPAccount::hostnameMatch(const std::string& hostname) const
 }
 
 bool
-SIPAccount::proxyMatch(const std::string& hostname) const
+SIPAccount::proxyMatch(std::string_view hostname) const
 {
     if (hostname == serviceRoute_)
         return true;
@@ -1804,21 +1803,21 @@ SIPAccount::supportPresence(int function, bool enabled)
 }
 
 MatchRank
-SIPAccount::matches(const std::string& userName, const std::string& server) const
+SIPAccount::matches(std::string_view userName, std::string_view server) const
 {
     if (fullMatch(userName, server)) {
-        JAMI_DBG("Matching account id in request is a fullmatch %s@%s",
-                 userName.c_str(),
-                 server.c_str());
+        JAMI_DBG("Matching account id in request is a fullmatch %.*s@%.*s",
+                 (int)userName.size(), userName.data(),
+                 (int)server.size(), server.data());
         return MatchRank::FULL;
     } else if (hostnameMatch(server)) {
-        JAMI_DBG("Matching account id in request with hostname %s", server.c_str());
+        JAMI_DBG("Matching account id in request with hostname %.*s", (int)server.size(), server.data());
         return MatchRank::PARTIAL;
     } else if (userMatch(userName)) {
-        JAMI_DBG("Matching account id in request with username %s", userName.c_str());
+        JAMI_DBG("Matching account id in request with username %.*s", (int)userName.size(), userName.data());
         return MatchRank::PARTIAL;
     } else if (proxyMatch(server)) {
-        JAMI_DBG("Matching account id in request with proxy %s", server.c_str());
+        JAMI_DBG("Matching account id in request with proxy %.*s", (int)server.size(), server.data());
         return MatchRank::PARTIAL;
     } else {
         return MatchRank::NONE;
@@ -2132,8 +2131,8 @@ SIPAccount::sendTextMessage(const std::string& to,
 
     constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
     std::string from(getFromUri());
-    pj_str_t pjFrom = pj_str((char*) from.c_str());
-    pj_str_t pjTo = pj_str((char*) toUri.c_str());
+    pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
+    pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);
 
     /* Create request. */
     pjsip_tx_data* tdata;
