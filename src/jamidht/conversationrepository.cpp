@@ -68,7 +68,7 @@ public:
 
     GitSignature signature();
     bool mergeFastforward(const git_oid* target_oid, int is_unborn);
-    bool createMergeCommit(git_index* index, const std::string& wanted_ref);
+    std::string createMergeCommit(git_index* index, const std::string& wanted_ref);
 
     bool validCommits(const std::vector<ConversationCommit>& commits) const;
     bool checkOnlyDeviceCertificate(const std::string& userDevice,
@@ -107,7 +107,8 @@ public:
     std::vector<ConversationCommit> behind(const std::string& from) const;
     std::vector<ConversationCommit> log(const std::string& from,
                                         const std::string& to,
-                                        unsigned n) const;
+                                        unsigned n,
+                                        bool logIfNotFound = false) const;
     std::optional<std::string> linearizedParent(const std::string& commitId) const;
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
@@ -388,7 +389,7 @@ ConversationRepository::Impl::signature()
     return {sig_ptr, git_signature_free};
 }
 
-bool
+std::string
 ConversationRepository::Impl::createMergeCommit(git_index* index, const std::string& wanted_ref)
 {
     // The merge will occur between current HEAD and wanted_ref
@@ -396,7 +397,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     auto repo = repository();
     if (git_repository_head(&head_ref_ptr, repo.get()) < 0) {
         JAMI_ERR("Could not get HEAD reference");
-        return false;
+        return {};
     }
     GitReference head_ref {head_ref_ptr, git_reference_free};
 
@@ -423,22 +424,22 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     git_commit* parent = nullptr;
     if (git_reference_peel((git_object**) &parent, head_ref.get(), GIT_OBJ_COMMIT) < 0) {
         JAMI_ERR("Could not peel HEAD reference");
-        return false;
+        return {};
     }
     parents[0] = {parent, git_commit_free};
     git_oid commit_id;
     if (git_oid_fromstr(&commit_id, wanted_ref.c_str()) < 0) {
-        return false;
+        return {};
     }
     git_annotated_commit* annotated_ptr = nullptr;
     if (git_annotated_commit_lookup(&annotated_ptr, repo.get(), &commit_id) < 0) {
         JAMI_ERR("Couldn't lookup commit %s", wanted_ref.c_str());
-        return false;
+        return {};
     }
     GitAnnotatedCommit annotated {annotated_ptr, git_annotated_commit_free};
     if (git_commit_lookup(&parent, repo.get(), git_annotated_commit_id(annotated.get())) < 0) {
         JAMI_ERR("Couldn't lookup commit %s", wanted_ref.c_str());
-        return false;
+        return {};
     }
     parents[1] = {parent, git_commit_free};
 
@@ -450,11 +451,11 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
         if (err)
             JAMI_ERR("XXX checkout index: %s", err->message);
         JAMI_ERR("Couldn't write index");
-        return false;
+        return {};
     }
     if (git_tree_lookup(&tree, repo.get(), &tree_oid) < 0) {
         JAMI_ERR("Couldn't lookup tree");
-        return false;
+        return {};
     }
 
     // Commit
@@ -471,12 +472,12 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
                                  &parents_ptr[0])
         < 0) {
         JAMI_ERR("Could not create commit buffer");
-        return false;
+        return {};
     }
 
     auto account = account_.lock();
     if (!account)
-        return false;
+        return {};
     // git commit -S
     auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
     auto signed_buf = account->identity().first->sign(to_sign_vec);
@@ -489,7 +490,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
                                          "signature")
         < 0) {
         JAMI_ERR("Could not sign commit");
-        return false;
+        return {};
     }
 
     auto commit_str = git_oid_tostr_s(&commit_oid);
@@ -510,13 +511,13 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     git_object* target_ptr = nullptr;
     if (git_object_lookup(&target_ptr, repo.get(), &commit_oid, GIT_OBJ_COMMIT) != 0) {
         JAMI_ERR("failed to lookup OID %s", git_oid_tostr_s(&commit_oid));
-        return false;
+        return {};
     }
     GitObject target {target_ptr, git_object_free};
 
     git_reset(repo.get(), target.get(), GIT_RESET_HARD, nullptr);
 
-    return true;
+    return commit_str ? commit_str : "";
 }
 
 bool
@@ -1028,9 +1029,9 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
                                                       const std::string& parentId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert && cert->issuer)
+    if (!cert)
         return false;
-    auto userUri = cert->issuer->getId().toString();
+    auto userUri = cert->getIssuerUID();
     auto valid = false;
     {
         std::lock_guard<std::mutex> lk(membersMtx_);
@@ -1433,12 +1434,17 @@ ConversationRepository::Impl::behind(const std::string& from) const
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::Impl::log(const std::string& from, const std::string& to, unsigned n) const
+ConversationRepository::Impl::log(const std::string& from,
+                                  const std::string& to,
+                                  unsigned n,
+                                  bool logIfNotFound) const
 {
     std::vector<ConversationCommit> commits {};
 
     git_oid oid;
     auto repo = repository();
+    if (!repo)
+        return commits;
     if (from.empty()) {
         if (git_reference_name_to_id(&oid, repo.get(), "HEAD") < 0) {
             JAMI_ERR("Cannot get reference for HEAD");
@@ -1455,7 +1461,10 @@ ConversationRepository::Impl::log(const std::string& from, const std::string& to
     if (git_revwalk_new(&walker_ptr, repo.get()) < 0 || git_revwalk_push(walker_ptr, &oid) < 0) {
         if (walker_ptr)
             git_revwalk_free(walker_ptr);
-        JAMI_DBG("Couldn't init revwalker for conversation %s", id_.c_str());
+        // This fail can be ok in the case we check if a commit exists before pulling (so can fail
+        // there). only log if the fail is unwanted.
+        if (logIfNotFound)
+            JAMI_DBG("Couldn't init revwalker for conversation %s", id_.c_str());
         return commits;
     }
     GitRevWalker walker {walker_ptr, git_revwalk_free};
@@ -2292,27 +2301,27 @@ ConversationRepository::commitMessage(const std::string& msg)
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::logN(const std::string& last, unsigned n) const
+ConversationRepository::logN(const std::string& last, unsigned n, bool logIfNotFound) const
 {
-    return pimpl_->log(last, "", n);
+    return pimpl_->log(last, "", n, logIfNotFound);
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::log(const std::string& from, const std::string& to) const
+ConversationRepository::log(const std::string& from, const std::string& to, bool logIfNotFound) const
 {
-    return pimpl_->log(from, to, 0);
+    return pimpl_->log(from, to, 0, logIfNotFound);
 }
 
 std::optional<ConversationCommit>
-ConversationRepository::getCommit(const std::string& commitId) const
+ConversationRepository::getCommit(const std::string& commitId, bool logIfNotFound) const
 {
-    auto commits = logN(commitId, 1);
+    auto commits = logN(commitId, 1, logIfNotFound);
     if (commits.empty())
         return std::nullopt;
     return std::move(commits[0]);
 }
 
-bool
+std::pair<bool, std::string>
 ConversationRepository::merge(const std::string& merge_id)
 {
     // First, the repository must be in a clean state
@@ -2320,24 +2329,24 @@ ConversationRepository::merge(const std::string& merge_id)
     int state = git_repository_state(repo.get());
     if (state != GIT_REPOSITORY_STATE_NONE) {
         JAMI_ERR("Merge operation aborted: repository is in unexpected state %d", state);
-        return false;
+        return {false, ""};
     }
     // Checkout main (to do a `git_merge branch`)
     if (git_repository_set_head(repo.get(), "refs/heads/main") < 0) {
         JAMI_ERR("Merge operation aborted: couldn't checkout main branch");
-        return false;
+        return {false, ""};
     }
 
     // Then check that merge_id exists
     git_oid commit_id;
     if (git_oid_fromstr(&commit_id, merge_id.c_str()) < 0) {
         JAMI_ERR("Merge operation aborted: couldn't lookup commit %s", merge_id.c_str());
-        return false;
+        return {false, ""};
     }
     git_annotated_commit* annotated_ptr = nullptr;
     if (git_annotated_commit_lookup(&annotated_ptr, repo.get(), &commit_id) < 0) {
         JAMI_ERR("Merge operation aborted: couldn't lookup commit %s", merge_id.c_str());
-        return false;
+        return {false, ""};
     }
     GitAnnotatedCommit annotated {annotated_ptr, git_annotated_commit_free};
 
@@ -2347,13 +2356,13 @@ ConversationRepository::merge(const std::string& merge_id)
     const git_annotated_commit* const_annotated = annotated.get();
     if (git_merge_analysis(&analysis, &preference, repo.get(), &const_annotated, 1) < 0) {
         JAMI_ERR("Merge operation aborted: repository analysis failed");
-        return false;
+        return {false, ""};
     }
 
     // Handle easy merges
     if (analysis & GIT_MERGE_ANALYSIS_UP_TO_DATE) {
         JAMI_INFO("Already up-to-date");
-        return true;
+        return {true, ""};
     } else if (analysis & GIT_MERGE_ANALYSIS_UNBORN
                || (analysis & GIT_MERGE_ANALYSIS_FASTFORWARD
                    && !(preference & GIT_MERGE_PREFERENCE_NO_FASTFORWARD))) {
@@ -2367,29 +2376,29 @@ ConversationRepository::merge(const std::string& merge_id)
             const git_error* err = giterr_last();
             if (err)
                 JAMI_ERR("Fast forward merge failed: %s", err->message);
-            return false;
+            return {false, ""};
         }
-        return true;
+        return {true, ""}; // fast forward so no commit generated;
     }
 
     // Else we want to check for conflicts
     git_oid head_commit_id;
     if (git_reference_name_to_id(&head_commit_id, repo.get(), "HEAD") < 0) {
         JAMI_ERR("Cannot get reference for HEAD");
-        return false;
+        return {false, ""};
     }
 
     git_commit* head_ptr = nullptr;
     if (git_commit_lookup(&head_ptr, repo.get(), &head_commit_id) < 0) {
         JAMI_ERR("Could not look up HEAD commit");
-        return false;
+        return {false, ""};
     }
     GitCommit head_commit {head_ptr, git_commit_free};
 
     git_commit* other__ptr = nullptr;
     if (git_commit_lookup(&other__ptr, repo.get(), &commit_id) < 0) {
         JAMI_ERR("Could not look up HEAD commit");
-        return false;
+        return {false, ""};
     }
     GitCommit other_commit {other__ptr, git_commit_free};
 
@@ -2401,21 +2410,21 @@ ConversationRepository::merge(const std::string& merge_id)
         const git_error* err = giterr_last();
         if (err)
             JAMI_ERR("Git merge failed: %s", err->message);
-        return false;
+        return {false, ""};
     }
     GitIndex index {index_ptr, git_index_free};
     if (git_index_has_conflicts(index.get())) {
         JAMI_INFO("Some conflicts were detected during the merge operations. Resolution phase.");
         if (!pimpl_->resolveConflicts(index.get(), merge_id) or !git_add_all(repo.get())) {
             JAMI_ERR("Merge operation aborted; Can't automatically resolve conflicts");
-            return false;
+            return {false, ""};
         }
     }
 
     auto result = pimpl_->createMergeCommit(index.get(), merge_id);
     JAMI_INFO("Merge done between %s and main", merge_id.c_str());
 
-    return result;
+    return {!result.empty(), result};
 }
 
 std::string
@@ -2829,10 +2838,7 @@ ConversationRepository::pinCertificates()
                                       repoPath + "devices"};
 
     for (const auto& path : paths) {
-        tls::CertificateStore::instance().pinCertificatePath(path, [](auto& ids) {
-            for (const auto& id : ids)
-                JAMI_ERR("@@@ LOADED %s", id.c_str());
-        });
+        tls::CertificateStore::instance().pinCertificatePath(path, {});
     }
 }
 

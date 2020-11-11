@@ -37,7 +37,7 @@ Persistent<Function> conferenceChangedCb;
 Persistent<Function> conferenceRemovedCb;
 Persistent<Function> onConferenceInfosUpdatedCb;
 
-std::queue<std::function<void() >> pendingSignals;
+std::queue<std::function<void()>> pendingSignals;
 std::mutex pendingSignalsLock;
 
 uv_async_t signalAsync;
@@ -330,11 +330,17 @@ registeredNameFound(const std::string& accountId,
     uv_async_send(&signalAsync);
 }
 
-void accountMessageStatusChanged(const std::string& account_id, const std::string& message_id, const std::string& conversationId, const std::string& peer, int state) {
-
+void
+accountMessageStatusChanged(const std::string& account_id,
+                            const std::string& conversationId,
+                            const std::string& peer,
+                            const std::string& message_id,
+                            int state)
+{
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, message_id, peer, state]() {
-        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), accountMessageStatusChangedCb);
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
+                                                    accountMessageStatusChangedCb);
         if (!func.IsEmpty()) {
             Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id), SWIGV8_INTEGER_NEW_UNS(message_id), V8_STRING_NEW_LOCAL(to), SWIGV8_INTEGER_NEW(state)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
