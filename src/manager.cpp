@@ -732,7 +732,6 @@ Manager::Manager()
 #endif
     , callFactory(rand_)
     , accountFactory()
-    , dataTransfers(std::make_unique<DataTransferFacade>())
     , pimpl_(new ManagerPimpl(*this))
 {}
 
