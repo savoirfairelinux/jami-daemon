@@ -105,7 +105,8 @@ public:
     std::vector<ConversationCommit> behind(const std::string& from) const;
     std::vector<ConversationCommit> log(const std::string& from,
                                         const std::string& to,
-                                        unsigned n) const;
+                                        unsigned n,
+                                        bool logIfNotFound = true) const;
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
     // NOTE! GitDiff needs to be deteleted before repo
@@ -1033,9 +1034,9 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
                                                       const std::string& parentId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert && cert->issuer)
+    if (!cert)
         return false;
-    auto userUri = cert->issuer->getId().toString();
+    auto userUri = cert->getIssuerUID();
     auto valid = false;
     {
         std::lock_guard<std::mutex> lk(membersMtx_);
@@ -1434,12 +1435,17 @@ ConversationRepository::Impl::behind(const std::string& from) const
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::Impl::log(const std::string& from, const std::string& to, unsigned n) const
+ConversationRepository::Impl::log(const std::string& from,
+                                  const std::string& to,
+                                  unsigned n,
+                                  bool logIfNotFound) const
 {
     std::vector<ConversationCommit> commits {};
 
     git_oid oid;
     auto repo = repository();
+    if (!repo)
+        return commits;
     if (from.empty()) {
         if (git_reference_name_to_id(&oid, repo.get(), "HEAD") < 0) {
             JAMI_ERR("Cannot get reference for HEAD");
@@ -1456,7 +1462,10 @@ ConversationRepository::Impl::log(const std::string& from, const std::string& to
     if (git_revwalk_new(&walker_ptr, repo.get()) < 0 || git_revwalk_push(walker_ptr, &oid) < 0) {
         if (walker_ptr)
             git_revwalk_free(walker_ptr);
-        JAMI_DBG("Couldn't init revwalker for conversation %s", id_.c_str());
+        // This fail can be ok in the case we check if a commit exists before pulling (so can fail
+        // there). only log if the fail is unwanted.
+        if (logIfNotFound)
+            JAMI_DBG("Couldn't init revwalker for conversation %s", id_.c_str());
         return commits;
     }
     GitRevWalker walker {walker_ptr, git_revwalk_free};
@@ -2243,21 +2252,21 @@ ConversationRepository::commitMessage(const std::string& msg)
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::logN(const std::string& last, unsigned n) const
+ConversationRepository::logN(const std::string& last, unsigned n, bool logIfNotFound) const
 {
-    return pimpl_->log(last, "", n);
+    return pimpl_->log(last, "", n, logIfNotFound);
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::log(const std::string& from, const std::string& to) const
+ConversationRepository::log(const std::string& from, const std::string& to, bool logIfNotFound) const
 {
-    return pimpl_->log(from, to, 0);
+    return pimpl_->log(from, to, 0, logIfNotFound);
 }
 
 std::optional<ConversationCommit>
-ConversationRepository::getCommit(const std::string& commitId) const
+ConversationRepository::getCommit(const std::string& commitId, bool logIfNotFound) const
 {
-    auto commits = logN(commitId, 1);
+    auto commits = logN(commitId, 1, logIfNotFound);
     if (commits.empty())
         return std::nullopt;
     return std::move(commits[0]);
@@ -2459,7 +2468,6 @@ ConversationRepository::join()
             pimpl_->members_.emplace_back(ConversationMember {uri, MemberRole::MEMBER});
     }
 
-
     return commitMessage(Json::writeString(wbuilder, json));
 }
 
@@ -2538,7 +2546,9 @@ ConversationRepository::leave()
 
     {
         std::lock_guard<std::mutex> lk(pimpl_->membersMtx_);
-        std::remove_if(pimpl_->members_.begin(), pimpl_->members_.end(), [&](auto& member) { return member.uri == account->getUsername(); });
+        std::remove_if(pimpl_->members_.begin(), pimpl_->members_.end(), [&](auto& member) {
+            return member.uri == account->getUsername();
+        });
     }
 
     return commitMessage(Json::writeString(wbuilder, json));
@@ -2783,10 +2793,7 @@ ConversationRepository::pinCertificates()
                                       repoPath + DIR_SEPARATOR_STR + "devices"};
 
     for (const auto& path : paths) {
-        tls::CertificateStore::instance().pinCertificatePath(path, [](auto& ids) {
-            for (const auto& id : ids)
-                JAMI_ERR("@@@ LOADED %s", id.c_str());
-        });
+        tls::CertificateStore::instance().pinCertificatePath(path, {});
     }
 }
 
