@@ -264,7 +264,7 @@ private:
     /**
      * Call Streams and some typedefs
      */
-    using MediaStream = Observable<std::shared_ptr<MediaFrame>>;
+    using AVMediaStream = Observable<std::shared_ptr<MediaFrame>>;
     using MediaStreamSubject = PublishMapSubject<std::shared_ptr<MediaFrame>, AVFrame*>;
 
 #ifdef ENABLE_PLUGIN
@@ -276,7 +276,7 @@ private:
      * @param mediaStreamSubject
      */
     void createCallAVStream(const StreamData& StreamData,
-                            MediaStream& streamSource,
+                            AVMediaStream& streamSource,
                             const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject);
     /**
      * @brief createCallAVStreams
