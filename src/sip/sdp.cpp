@@ -733,6 +733,10 @@ Sdp::getIceCandidates(unsigned media_index) const
         JAMI_ERR("getIceCandidates failed: no remote session");
         return {};
     }
+    if (not localSession) {
+        JAMI_ERR("getIceCandidates failed: no local session");
+        return {};
+    }
     if (media_index >= session->media_count || media_index >= localSession->media_count) {
         JAMI_ERR("getIceCandidates failed: cannot access media#%u (may be deactivated)",
                  media_index);
