@@ -75,6 +75,11 @@ public:
                     info->tls_->shutdown();
                 if (info->socket_)
                     info->socket_->shutdown();
+                if (info->ice_) {
+                    info->ice_->cancelOperations();
+                    info->ice_->stop();
+                }
+                info->responseCv_.notify_all();
                 if (deviceId && key.first == deviceId) {
                     erased = true;
                     it = infos_.erase(it);
@@ -96,24 +101,6 @@ public:
         {
             std::lock_guard<std::mutex> lk(connectCbsMtx_);
             pendingCbs_.clear();
-        }
-        {
-            std::lock_guard<std::mutex> lk(infosMtx_);
-            for (auto& [key, connInfo] : infos_) {
-                if (!connInfo)
-                    continue;
-                if (connInfo->ice_) {
-                    connInfo->ice_->cancelOperations();
-                    connInfo->ice_->stop();
-                }
-                connInfo->responseCv_.notify_all();
-            }
-            // This is called when the account is only disabled.
-            // Move this on the thread pool because each
-            // IceTransport takes 500ms to delete, and it's sequential
-            // So, it can increase quickly the time to unregister an account
-            dht::ThreadPool::io().run(
-                [co = std::make_shared<decltype(infos_)>(std::move(infos_))] { co->clear(); });
         }
         removeUnusedConnections();
     }
