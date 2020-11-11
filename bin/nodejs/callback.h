@@ -221,7 +221,7 @@ void registeredNameFound(const std::string& account_id, int state, const std::st
     uv_async_send(&signalAsync);
 }
 
-void accountMessageStatusChanged(const std::string& account_id, const std::string& message_id, const std::string& conversationId, const std::string& peer, int state) {
+void accountMessageStatusChanged(const std::string& account_id, const std::string& conversationId, const std::string& peer, const std::string& message_id, int state) {
 
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, message_id, peer, state]() {
