@@ -58,6 +58,7 @@ class Task;
 
 namespace Conf {
 // SIP specific configuration keys
+const char* const PROXY_SERVER_KEY = "proxyServer";
 const char* const BIND_ADDRESS_KEY = "bindAddress";
 const char* const INTERFACE_KEY = "interface";
 const char* const PORT_KEY = "port";
