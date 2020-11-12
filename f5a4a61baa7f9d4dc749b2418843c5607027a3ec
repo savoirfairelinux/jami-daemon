@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "7f91747c_d19cfaed",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-12T15:25:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fa109c9c_3388c84f",
+      "range": {
+        "startLine": 58,
+        "startChar": 22,
+        "endLine": 58,
+        "endChar": 26
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "591416ff_dc23d201",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 12
@@ -45,6 +69,30 @@
       "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "44648b52_0846db22",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 215,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-12T15:25:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "591416ff_dc23d201",
+      "range": {
+        "startLine": 215,
+        "startChar": 15,
+        "endLine": 215,
+        "endChar": 17
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "b54b41bb_cd2e93a6",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-12T15:25:25Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "7ba4ad19_afca4cfb",
+      "range": {
+        "startLine": 240,
+        "startChar": 23,
+        "endLine": 242,
+        "endChar": 42
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "3da027e6_6e64d7c0",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 12
@@ -91,6 +163,30 @@
       "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b736839a_f79594d2",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 292,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-12T15:25:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3da027e6_6e64d7c0",
+      "range": {
+        "startLine": 292,
+        "startChar": 21,
+        "endLine": 292,
+        "endChar": 25
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "a173f87e_e2ed918b",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 324,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-12T15:25:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "70deb3ad_f8479318",
+      "range": {
+        "startLine": 324,
+        "startChar": 30,
+        "endLine": 324,
+        "endChar": 55
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "adb6badc_232dc0eb",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 12
@@ -140,6 +260,30 @@
     },
     {
       "key": {
+        "uuid": "aced4f46_892b2881",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 339,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-12T15:25:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "adb6badc_232dc0eb",
+      "range": {
+        "startLine": 339,
+        "startChar": 21,
+        "endLine": 339,
+        "endChar": 25
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "865de30e_d1bef91b",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 12
@@ -151,6 +295,30 @@
       "writtenOn": "2020-11-09T16:29:18Z",
       "side": 1,
       "message": "why copy object here ?",
+      "range": {
+        "startLine": 469,
+        "startChar": 4,
+        "endLine": 469,
+        "endChar": 30
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "393425cd_a940b282",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 469,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-12T15:25:25Z",
+      "side": 1,
+      "message": "Need to modify the port numbers",
+      "parentUuid": "865de30e_d1bef91b",
       "range": {
         "startLine": 469,
         "startChar": 4,
@@ -186,6 +354,30 @@
     },
     {
       "key": {
+        "uuid": "bfc09dc6_1cf8dc09",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 480,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-12T15:25:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c6cb8b03_c6c9793a",
+      "range": {
+        "startLine": 480,
+        "startChar": 33,
+        "endLine": 480,
+        "endChar": 100
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "995d0751_395f5610",
         "filename": "src/upnp/upnp_control.cpp",
         "patchSetId": 12
@@ -206,6 +398,30 @@
       "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "52033050_91efc8f5",
+        "filename": "src/upnp/upnp_control.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-12T15:25:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "995d0751_395f5610",
+      "range": {
+        "startLine": 37,
+        "startChar": 26,
+        "endLine": 37,
+        "endChar": 28
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -232,6 +448,30 @@
     },
     {
       "key": {
+        "uuid": "53a982cb_2dd9d94d",
+        "filename": "src/upnp/upnp_control.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-12T15:25:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a17bb342_b4c54bb7",
+      "range": {
+        "startLine": 78,
+        "startChar": 43,
+        "endLine": 78,
+        "endChar": 68
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "20d68a03_c4f886a1",
         "filename": "src/upnp/upnp_control.cpp",
         "patchSetId": 12
@@ -252,6 +492,30 @@
       "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d503e190_ae831604",
+        "filename": "src/upnp/upnp_control.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-12T15:25:25Z",
+      "side": 1,
+      "message": "I cant make upnpContext_ unique, because it\u0027s shared by all Controller instances.\nI\u0027ll go with the second.\n\nNote that these callbacks are being completely reworked (ControllerData struct will be completely gone in the next patch).",
+      "parentUuid": "20d68a03_c4f886a1",
+      "range": {
+        "startLine": 111,
+        "startChar": 45,
+        "endLine": 111,
+        "endChar": 49
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -278,6 +542,30 @@
     },
     {
       "key": {
+        "uuid": "4870fd5b_31ade279",
+        "filename": "src/upnp/upnp_control.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-12T15:25:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "14c727c7_5e1410e7",
+      "range": {
+        "startLine": 128,
+        "startChar": 29,
+        "endLine": 128,
+        "endChar": 54
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "20bf331d_64bf08ee",
         "filename": "src/upnp/upnp_control.cpp",
         "patchSetId": 12
@@ -298,6 +586,30 @@
       "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "07c85fc0_11d0615b",
+        "filename": "src/upnp/upnp_control.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 156,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-12T15:25:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "20bf331d_64bf08ee",
+      "range": {
+        "startLine": 156,
+        "startChar": 21,
+        "endLine": 156,
+        "endChar": 23
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -324,6 +636,30 @@
     },
     {
       "key": {
+        "uuid": "27bd20c8_40e0480d",
+        "filename": "src/upnp/upnp_control.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-12T15:25:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "de79da49_c073e42f",
+      "range": {
+        "startLine": 157,
+        "startChar": 13,
+        "endLine": 157,
+        "endChar": 29
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "c35d9baf_2a144b1a",
         "filename": "src/upnp/upnp_control.cpp",
         "patchSetId": 12
@@ -344,6 +680,30 @@
       "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2b037e0d_316dbf4f",
+        "filename": "src/upnp/upnp_control.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 196,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-11-12T15:25:25Z",
+      "side": 1,
+      "message": "length ?",
+      "parentUuid": "c35d9baf_2a144b1a",
+      "range": {
+        "startLine": 195,
+        "startChar": 3,
+        "endLine": 196,
+        "endChar": 4
+      },
+      "revId": "f5a4a61baa7f9d4dc749b2418843c5607027a3ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
