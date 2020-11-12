@@ -463,13 +463,11 @@ public:
 #ifndef _MSC_VER
     template<class T = SIPCall>
     std::shared_ptr<enable_if_base_of<T, SIPCall>> newOutgoingCall(
-        std::string_view toUrl,
-        const std::map<std::string, std::string>& volatileCallDetails = {});
+        std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
 #else
     template<class T>
     std::shared_ptr<T> newOutgoingCall(
-        std::string_view toUrl,
-        const std::map<std::string, std::string>& volatileCallDetails = {});
+        std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
 #endif
 
     /**
@@ -506,6 +504,8 @@ public:
 private:
     void doRegister1_();
     void doRegister2_();
+
+    void setUpTransmissionData(pjsip_tx_data* tdata, long transportKeyType);
 
     /**
      * Set the internal state for this account, mainly used to manage account details from the
@@ -642,7 +642,7 @@ private:
     int registrationExpire_;
 
     /**
-     * Optional list of SIP service this
+     * Input Outbound Proxy Server Address
      */
     std::string serviceRoute_;
 
