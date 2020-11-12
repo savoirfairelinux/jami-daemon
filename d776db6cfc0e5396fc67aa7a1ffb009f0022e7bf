@@ -22,6 +22,30 @@
       "revId": "d776db6cfc0e5396fc67aa7a1ffb009f0022e7bf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "de6d1206_e90cfeef",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 1077,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2020-11-12T21:30:59Z",
+      "side": 1,
+      "message": "As mentions in chat,\n\nAlso, on thing to point out is that this will also trigger multiple re-registration\n\nour keepalive mech seems better since only one is triggered",
+      "parentUuid": "72863de2_8fa93e42",
+      "range": {
+        "startLine": 1077,
+        "startChar": 34,
+        "endLine": 1077,
+        "endChar": 42
+      },
+      "revId": "d776db6cfc0e5396fc67aa7a1ffb009f0022e7bf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
