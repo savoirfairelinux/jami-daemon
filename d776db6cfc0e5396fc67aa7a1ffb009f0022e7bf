@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "72863de2_8fa93e42",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 1077,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-12T21:09:11Z",
+      "side": 1,
+      "message": "question, why not true?",
+      "range": {
+        "startLine": 1077,
+        "startChar": 34,
+        "endLine": 1077,
+        "endChar": 42
+      },
+      "revId": "d776db6cfc0e5396fc67aa7a1ffb009f0022e7bf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
