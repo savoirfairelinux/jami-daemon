@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "814f5f94_41162b15",
+        "filename": "src/conference.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 567,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-12T14:39:35Z",
+      "side": 1,
+      "message": "double lock occurs causing deadlock",
+      "range": {
+        "startLine": 567,
+        "startChar": 5,
+        "endLine": 567,
+        "endChar": 26
+      },
+      "revId": "471758b5d08f9475403f6011e4fbb5cd2249724b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
