@@ -39,7 +39,6 @@ constexpr const char* const RING_ACCOUNT_RECEIPT_SIG = "ringAccountReceiptSignat
 constexpr const char* const RING_ACCOUNT_CRL = "ringAccountCRL";
 constexpr const char* const RING_ACCOUNT_CONTACTS = "ringAccountContacts";
 constexpr const char* const PROXY_ENABLED_KEY = "proxyEnabled";
-constexpr const char* const PROXY_SERVER_KEY = "proxyServer";
 constexpr const char* const PROXY_PUSH_TOKEN_KEY = "proxyPushToken";
 
 } // namespace Conf
