@@ -218,7 +218,7 @@ static constexpr const char* DEFAULT_TURN_USERNAME = "ring";
 static constexpr const char* DEFAULT_TURN_PWD = "ring";
 static constexpr const char* DEFAULT_TURN_REALM = "ring";
 static const auto PROXY_REGEX = std::regex(
-    "(https?://)?([\\w\\.\\-\\_\\~]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
+    "(https?://)?([\\w\\.\\-_\\~]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
 static const std::string PEER_DISCOVERY_JAMI_SERVICE = "jami";
 const constexpr auto PEER_DISCOVERY_EXPIRATION = std::chrono::minutes(1);
 
