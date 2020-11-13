@@ -920,13 +920,13 @@ ConversationRepository::addMember(const std::shared_ptr<dht::crypto::Certificate
         return {};
     }
 
-    std::string membersPath = repoPath + "members";
-    if (!fileutils::recursive_mkdir(membersPath, 0700)) {
-        JAMI_ERR("Error when creating %s.", membersPath.c_str());
+    std::string invitedPath = repoPath + "invited";
+    if (!fileutils::recursive_mkdir(invitedPath, 0700)) {
+        JAMI_ERR("Error when creating %s.", invitedPath.c_str());
         return {};
     }
     std::string memberId = memberCert->getId().toString();
-    std::string devicePath = membersPath + DIR_SEPARATOR_STR + memberId + ".crt";
+    std::string devicePath = invitedPath + DIR_SEPARATOR_STR + memberId + ".crt";
     if (fileutils::isFile(devicePath)) {
         JAMI_WARN("Member %s already present!", memberId.c_str());
         return {};
@@ -938,7 +938,7 @@ ConversationRepository::addMember(const std::shared_ptr<dht::crypto::Certificate
         return {};
     }
     file << memberCert->toString(true);
-    std::string path = "members/" + memberId + ".crt";
+    std::string path = "invited/" + memberId + ".crt";
     if (!pimpl_->add(path.c_str()))
         return {};
     Json::Value json;
@@ -1176,6 +1176,59 @@ ConversationRepository::changedFiles(const std::string& diffStats)
         changedFiles.emplace_back(line.substr(1));
     }
     return changedFiles;
+}
+
+std::string
+ConversationRepository::join()
+{
+    if (!pimpl_)
+        return {};
+
+    // Remove invited/uri.crt
+    auto account = pimpl_->account_.lock();
+    if (!account)
+        return {};
+    auto cert = account->identity().second;
+    auto parentCert = cert->issuer;
+    if (!parentCert) {
+        JAMI_ERR("Parent cert is null!");
+        return {};
+    }
+    auto uri = parentCert->getId().toString();
+
+    std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
+
+    std::string invitedPath = repoPath + "invited";
+    fileutils::remove(fileutils::getFullPath(invitedPath, uri + ".crt"));
+
+    // Add members/uri.crt
+
+    std::string membersPath = repoPath + "members";
+    if (!fileutils::recursive_mkdir(membersPath, 0700)) {
+        JAMI_ERR("Error when creating %s. Abort", membersPath.c_str());
+        return {};
+    }
+    std::string memberPath = membersPath + DIR_SEPARATOR_STR + uri + ".crt";
+    auto file = fileutils::ofstream(memberPath, std::ios::trunc | std::ios::binary);
+    if (!file.is_open()) {
+        JAMI_ERR("Could not write data to %s", memberPath.c_str());
+        return {};
+    }
+    file << parentCert->toString(true);
+    file.close();
+
+    // git add -A
+    if (!git_add_all(pimpl_->repository_.get())) {
+        return {};
+    }
+
+    Json::Value json;
+    json["body"] = uri + " joins the conversation";
+    json["type"] = "member";
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    return pimpl_->commit(Json::writeString(wbuilder, json));
 }
 
 std::string

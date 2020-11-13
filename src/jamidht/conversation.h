@@ -63,7 +63,7 @@ public:
      * @param uri       URI to test
      * @return true if uri is a member
      */
-    bool isMember(const std::string& uri); // TODO test
+    bool isMember(const std::string& uri, bool includInvited = false); // TODO test
 
     // Message send
     std::string sendMessage(const std::string& message,
@@ -105,6 +105,12 @@ public:
      * @return the invite to send
      */
     std::map<std::string, std::string> generateInvitation() const;
+
+    /**
+     * Leave a conversation
+     * @return commit id to send
+     */
+    std::string join();
 
     /**
      * Leave a conversation
