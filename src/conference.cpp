@@ -91,7 +91,11 @@ Conference::Conference()
                                  and not videoMixer->getActiveParticipant()); // by default, local
                                                                               // is shown as active
                 subCalls.erase(it->second);
-                auto isModerator = shared->isModerator(uri);
+                auto partURI = uri;
+                auto separator = partURI.find('@');
+                if (separator != std::string::npos)
+                    partURI = partURI.substr(0, separator);
+                auto isModerator = shared->isModerator(partURI);
                 newInfo.emplace_back(ParticipantInfo {std::move(uri),
                                                       active,
                                                       info.x,
