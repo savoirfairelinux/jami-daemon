@@ -171,6 +171,12 @@ public:
     std::string leave();
 
     /**
+     * Join a repository
+     * @return commit Id
+     */
+    std::string join();
+
+    /**
      * Erase repository
      */
     void erase();
