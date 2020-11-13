@@ -351,4 +351,20 @@ setModerator(const std::string& confId,
     jami::Manager::instance().setModerator(confId, peerId, state);
 }
 
+void
+muteParticipant(const std::string& confId,
+             const std::string& peerId,
+             const bool& state)
+{
+    JAMI_ERR("@@@ mute participant");
+    jami::Manager::instance().muteParticipant(confId, peerId, state);
+}
+
+void
+hangupParticipant(const std::string& confId,
+             const std::string& peerId)
+{
+    jami::Manager::instance().hangupParticipant(confId, peerId);
+}
+
 } // namespace DRing

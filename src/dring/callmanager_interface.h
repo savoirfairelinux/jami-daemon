@@ -78,6 +78,8 @@ DRING_PUBLIC std::map<std::string, std::string> getConferenceDetails(const std::
 DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConferenceInfos(
     const std::string& confId);
 DRING_PUBLIC void setModerator(const std::string& confId, const std::string& peerId, const bool& state);
+DRING_PUBLIC void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
+DRING_PUBLIC void hangupParticipant(const std::string& confId, const std::string& peerId);
 
 /* Statistic related methods */
 DRING_PUBLIC void startSmartInfo(uint32_t refreshTimeMs);
