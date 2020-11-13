@@ -474,6 +474,7 @@ Manager::ManagerPimpl::parseConfiguration()
             JAMI_WARN("Errors while parsing %s", path_.c_str());
             result = false;
         }
+        parsedFile.reset();
     } catch (const YAML::BadFile& e) {
         JAMI_WARN("Could not open configuration file");
         result = false;
@@ -1683,8 +1684,8 @@ Manager::scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::t
     return pimpl_->scheduler_.schedule(std::move(task), when);
 }
 
-std::shared_ptr<Task> Manager::scheduleTaskIn(std::function<void()>&& task,
-                                std::chrono::steady_clock::duration timeout)
+std::shared_ptr<Task>
+Manager::scheduleTaskIn(std::function<void()>&& task, std::chrono::steady_clock::duration timeout)
 {
     return pimpl_->scheduler_.scheduleIn(std::move(task), timeout);
 }
@@ -3228,7 +3229,9 @@ Manager::setModerator(const std::string& confId, const std::string& peerId, cons
     if (auto conf = getConferenceFromID(confId)) {
         conf->setModerator(peerId, state);
     } else
-        JAMI_WARN("Fail to change moderator %s, conference %s not found", peerId.c_str(), confId.c_str());
+        JAMI_WARN("Fail to change moderator %s, conference %s not found",
+                  peerId.c_str(),
+                  confId.c_str());
 }
 
 } // namespace jami
