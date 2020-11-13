@@ -541,8 +541,6 @@ public:
 
     // Invites
     void onConversationRequest(const Json::Value&) override;
-    void onNeedConversationRequest(const std::string& from,
-                                   const std::string& conversationId) override;
 
 private:
     NON_COPYABLE(JamiAccount);

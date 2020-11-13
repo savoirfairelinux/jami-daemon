@@ -200,7 +200,7 @@ Conversation::getMembers() const
 }
 
 bool
-Conversation::isMember(const std::string& uri)
+Conversation::isMember(const std::string& uri, bool includeInvited)
 {
     auto shared = pimpl_->account_.lock();
     if (!shared)
@@ -209,25 +209,22 @@ Conversation::isMember(const std::string& uri)
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR
                     + pimpl_->repository_->id();
+    auto invitedPath = repoPath + DIR_SEPARATOR_STR + "invited";
     auto adminsPath = repoPath + DIR_SEPARATOR_STR + "admins";
     auto membersPath = repoPath + DIR_SEPARATOR_STR + "members";
-    for (const auto& certificate : fileutils::readDirectory(adminsPath)) {
-        if (certificate.find(".crt") == std::string::npos) {
-            JAMI_WARN("Incorrect file found: %s/%s", adminsPath.c_str(), certificate.c_str());
-            continue;
+    std::vector<std::string> pathsToCheck = {adminsPath, membersPath};
+    if (includeInvited)
+        pathsToCheck.emplace_back(invitedPath);
+    for (const auto& path : pathsToCheck) {
+        for (const auto& certificate : fileutils::readDirectory(path)) {
+            if (certificate.find(".crt") == std::string::npos) {
+                JAMI_WARN("Incorrect file found: %s/%s", path.c_str(), certificate.c_str());
+                continue;
+            }
+            auto crtUri = certificate.substr(0, certificate.size() - std::string(".crt").size());
+            if (crtUri == uri)
+                return true;
         }
-        auto crtUri = certificate.substr(0, certificate.size() - std::string(".crt").size());
-        if (crtUri == uri)
-            return true;
-    }
-    for (const auto& certificate : fileutils::readDirectory(membersPath)) {
-        if (certificate.find(".crt") == std::string::npos) {
-            JAMI_WARN("Incorrect file found: %s/%s", membersPath.c_str(), certificate.c_str());
-            continue;
-        }
-        auto crtUri = certificate.substr(0, certificate.size() - std::string(".crt").size());
-        if (crtUri == uri)
-            return true;
     }
 
     return false;
@@ -284,6 +281,15 @@ Conversation::mergeHistory(const std::string& uri)
     }
     JAMI_DBG("Successfully merge history with %s", uri.c_str());
     return true;
+}
+
+std::string
+Conversation::join()
+{
+    auto shared = pimpl_->account_.lock();
+    if (!shared)
+        return {};
+    return pimpl_->repository_->join();
 }
 
 std::map<std::string, std::string>

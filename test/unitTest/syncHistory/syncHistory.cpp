@@ -275,6 +275,8 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     aliceAccount->sendMessage(convId, "Message 2");
     aliceAccount->sendMessage(convId, "Message 3");
 
+    JAMI_ERR("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ADD");
+
     // Now create alice2
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
     std::remove(aliceArchive.c_str());
@@ -293,6 +295,7 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto conversationReady = false;
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string&, const std::map<std::string, std::string>&) {
@@ -302,13 +305,6 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
                 if (daemonStatus == "REGISTERED")
                     cv.notify_one();
             }));
-    DRing::registerSignalHandlers(confHandlers);
-
-    cv.wait_for(lk, std::chrono::seconds(30));
-    DRing::unregisterSignalHandlers();
-    confHandlers.clear();
-
-    auto conversationReady = false;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == alice2Id && conversationId == convId) {
@@ -317,16 +313,17 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
             }
         }));
     DRing::registerSignalHandlers(confHandlers);
-    cv.wait_for(lk, std::chrono::seconds(30));
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() { return conversationReady; }));
     DRing::unregisterSignalHandlers();
     confHandlers.clear();
 
     // Check if conversation is ready
-    CPPUNIT_ASSERT(conversationReady);
     auto alice2Account = Manager::instance().getAccount<JamiAccount>(alice2Id);
     std::vector<std::map<std::string, std::string>> messages;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationLoaded>(
-        [&](uint32_t, const std::string& accountId,
+        [&](uint32_t,
+            const std::string& accountId,
             const std::string& conversationId,
             std::vector<std::map<std::string, std::string>> msg) {
             if (accountId == alice2Id && conversationId == convId) {

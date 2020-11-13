@@ -387,6 +387,7 @@ FileTransferTest::testConversationFileTransfer()
     confHandlers.clear();
     DRing::unregisterSignalHandlers();
 
+    auto messageReceivedAlice = 0;
     auto messageReceivedBob = 0;
     auto messageReceivedCarla = 0;
     auto requestReceived = 0;
@@ -396,12 +397,13 @@ FileTransferTest::testConversationFileTransfer()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> /*message*/) {
+            if (accountId == aliceId)
+                messageReceivedAlice += 1;
             if (accountId == bobId)
                 messageReceivedBob += 1;
             if (accountId == carlaId)
                 messageReceivedCarla += 1;
-            if (messageReceivedBob > 0 && messageReceivedCarla > 0)
-                cv.notify_one();
+            cv.notify_one();
         }));
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
@@ -440,9 +442,12 @@ FileTransferTest::testConversationFileTransfer()
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, carlaUri));
     cv.wait_for(lk, std::chrono::seconds(60), [&]() { return requestReceived == 2; });
 
+    messageReceivedAlice = 0;
     bobAccount->acceptConversationRequest(convId);
     carlaAccount->acceptConversationRequest(convId);
-    cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady == 3; });
+    cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return conversationReady == 3 && messageReceivedAlice >= 2;
+    });
 
     // Send file
     std::ofstream sendFile("SEND");

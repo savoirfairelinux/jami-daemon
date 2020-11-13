@@ -832,9 +832,8 @@ bool
 JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
 {
     call.setupLocalSDPFromIce();
-    std::string toUri(
-        getToUri(call.getPeerNumber() + "@"
-                 + target.toString(true))); // expecting a fully well formed sip uri
+    std::string toUri(getToUri(call.getPeerNumber() + "@"
+                               + target.toString(true))); // expecting a fully well formed sip uri
 
     pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);
 
@@ -1951,7 +1950,6 @@ JamiAccount::doRegister()
     }
     loadConvInfo();
     loadConvRequests();
-    JAMI_INFO("[Account %s] Conversations loaded!", getAccountID().c_str());
 
     // invalid state transitions:
     // INITIALIZING: generating/loading certificates, can't register
@@ -3090,7 +3088,9 @@ JamiAccount::matches(std::string_view userName, std::string_view server) const
     if (userName == accountManager_->getInfo()->accountId
         || server == accountManager_->getInfo()->accountId
         || userName == accountManager_->getInfo()->deviceId) {
-        JAMI_DBG("Matching account id in request with username %.*s", (int)userName.size(), userName.data());
+        JAMI_DBG("Matching account id in request with username %.*s",
+                 (int) userName.size(),
+                 userName.data());
         return MatchRank::FULL;
     } else {
         return MatchRank::NONE;
@@ -3383,6 +3383,11 @@ JamiAccount::sendTextMessage(const std::string& to,
             const dht::InfoHash& dev) {
             // Test if already sent
             if (devices.find(dev) != devices.end()) {
+                return;
+            }
+            // TODO do not use getAccountDetails(), accountInfo
+            if (dev.toString()
+                == getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID]) {
                 return;
             }
 
@@ -3814,12 +3819,23 @@ JamiAccount::handlePendingConversations()
                                                                    it->second.deviceId,
                                                                    conversationId);
                 if (conversation) {
+                    auto commitId = conversation->join();
                     ConvInfo info;
                     info.id = conversationId;
                     info.created = std::time(nullptr);
                     convInfos_.emplace_back(info);
-                    saveConvInfo();
                     conversations_.emplace(conversationId, std::move(conversation));
+                    if (!commitId.empty()) {
+                        runOnMainThread([w = weak(), conversationId, commitId]() {
+                            if (auto shared = w.lock()) {
+                                auto it = shared->conversations_.find(conversationId);
+                                // Do not sync as it's synched by convInfos
+                                if (it != shared->conversations_.end())
+                                    shared->sendMessageNotification(*it->second, commitId, false);
+                            }
+                        });
+                    }
+                    saveConvInfo();
                     // Inform user that the conversation is ready
                     emitSignal<DRing::ConversationSignal::ConversationReady>(accountID_,
                                                                              conversationId);
@@ -4057,7 +4073,7 @@ JamiAccount::fetchNewCommits(const std::string& peer,
 {
     auto conversation = conversations_.find(conversationId);
     if (conversation != conversations_.end() && conversation->second) {
-        if (!conversation->second->isMember(peer)) {
+        if (!conversation->second->isMember(peer, true)) {
             JAMI_WARN("%s is not a member of %s", peer.c_str(), conversationId.c_str());
             return;
         }
@@ -4150,10 +4166,7 @@ JamiAccount::fetchNewCommits(const std::string& peer,
             if (pendingConversationsFetch_.find(conversationId) != pendingConversationsFetch_.end())
                 return;
         }
-        JAMI_WARN("Could not find conversation %s, ask for an invite", conversationId.c_str());
-        // If not, ask sender for an invite!
-        std::map<std::string, std::string> askInvite = {{"application/invite", conversationId}};
-        sendTextMessage(peer, askInvite);
+        JAMI_WARN("Could not find conversation %s", conversationId.c_str());
     }
 }
 
@@ -4183,16 +4196,6 @@ JamiAccount::onConversationRequest(const Json::Value& value)
     emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(accountID_,
                                                                        convId,
                                                                        metadatas);
-}
-
-void
-JamiAccount::onNeedConversationRequest(const std::string& from, const std::string& conversationId)
-{
-    auto conversation = conversations_.find(conversationId);
-    if (conversation == conversations_.end() or not conversation->second)
-        return; // No conversation found, ignore
-    JAMI_INFO() << from << " asks for a new invite for conversation " << conversationId;
-    sendTextMessage(from, conversation->second->generateInvitation());
 }
 
 void
@@ -4612,7 +4615,6 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
                                 return len;
                             pendingConversationsFetch_[convId] = PendingConversationFetch {};
                         }
-
                         connectionManager().connectDevice(
                             DeviceId(deviceId),
                             "git://" + deviceId + "/" + convId,
@@ -4636,11 +4638,11 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
                                 }
                             });
 
-                        JAMI_INFO(
-                            "[Account %s] New conversation detected: %s. Ask device %s to clone it",
-                            getAccountID().c_str(),
-                            convId.c_str(),
-                            deviceId.c_str());
+                        JAMI_ERR("[Account %s] @@ New conversation detected: %s. Ask device %s to "
+                                 "clone it",
+                                 getAccountID().c_str(),
+                                 convId.c_str(),
+                                 deviceId.c_str());
                     } else {
                         JAMI_INFO("[Account %s] Already have conversation %s",
                                   getAccountID().c_str(),
@@ -4853,7 +4855,7 @@ JamiAccount::sendMessageNotification(const Conversation& conversation,
     for (const auto& members : conversation.getMembers()) {
         auto uri = members.at("uri");
         // Do not send to ourself, it's synced via convInfos
-        if (sync && username_.find(uri) != std::string::npos)
+        if (!sync && username_.find(uri) != std::string::npos)
             continue;
         // Announce to all members that a new message is sent
         sendTextMessage(uri, {{"application/im-gitmessage-id", text}});
