@@ -363,9 +363,10 @@ Account::getVolatileAccountDetails() const
 }
 
 void
-Account::onIsComposing(const std::string& peer, bool isComposing)
+Account::onIsComposing(const std::string& conversationId, const std::string& peer, bool isComposing)
 {
     emitSignal<DRing::ConfigurationSignal::ComposingStatusChanged>(accountID_,
+                                                                   conversationId,
                                                                    peer,
                                                                    isComposing ? 1 : 0);
 }
