@@ -175,9 +175,15 @@ public:
         return 0;
     }
 
+    virtual void sendInstantMessage(const std::string& /*convId*/,
+                                    const std::map<std::string, std::string>& /*msg*/)
+    {}
+
     virtual void setIsComposing(const std::string& /*to*/, bool /*isWriting*/) {};
 
-    virtual void onIsComposing(const std::string& /*peer*/, bool /*isWriting*/);
+    virtual void onIsComposing(const std::string& /*conversationId*/,
+                               const std::string& /*peer*/,
+                               bool /*isWriting*/);
 
     virtual bool setMessageDisplayed(const std::string& /*contactId*/,
                                      const std::string& /*messageId*/,
