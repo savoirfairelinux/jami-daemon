@@ -3486,21 +3486,22 @@ void
 JamiAccount::sendTextMessage(const std::string& to,
                              const std::map<std::string, std::string>& payloads,
                              uint64_t token,
-                             bool retryOnTimeout)
+                             bool retryOnTimeout,
+                             bool onlyConnected)
 {
     std::string toUri;
     try {
         toUri = parseJamiUri(to);
     } catch (...) {
         JAMI_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
-        messageEngine_.onMessageSent(to, token, false);
+        messageEngine_.onMessageSent(to, token, onlyConnected);
         return;
     }
     if (payloads.size() != 1) {
         // Multi-part message
         // TODO: not supported yet
         JAMI_ERR("Multi-part im is not supported yet by JamiAccount");
-        messageEngine_.onMessageSent(toUri, token, false);
+        messageEngine_.onMessageSent(toUri, token, onlyConnected);
         return;
     }
 
@@ -3508,12 +3509,18 @@ JamiAccount::sendTextMessage(const std::string& to,
     auto now = clock::to_time_t(clock::now());
 
     auto confirm = std::make_shared<PendingConfirmation>();
+    if (onlyConnected) {
+        messageEngine_.onMessageSent(to, token, true);
+        confirm->replied = true;
+    }
 
     std::shared_ptr<std::set<DeviceId>> devices = std::make_shared<std::set<DeviceId>>();
     std::unique_lock<std::mutex> lk(sipConnsMtx_);
     sip_utils::register_thread();
+
     for (auto it = sipConns_.begin(); it != sipConns_.end();) {
         auto& [key, value] = *it;
+        JAMI_ERR("@@@ %s %s", to.c_str(), key.first.c_str());
         if (key.first != to or value.empty()) {
             ++it;
             continue;
@@ -3577,6 +3584,9 @@ JamiAccount::sendTextMessage(const std::string& to,
         ++it;
     }
     lk.unlock();
+
+    if (onlyConnected)
+        return;
 
     // Find listening devices for this account
     accountManager_->forEachDevice(
@@ -3703,11 +3713,13 @@ JamiAccount::sendTextMessage(const std::string& to,
 }
 
 void
-JamiAccount::onIsComposing(const std::string& peer, bool isWriting)
+JamiAccount::onIsComposing(const std::string& conversationId,
+                           const std::string& peer,
+                           bool isWriting)
 {
     try {
         const std::string fromUri {parseJamiUri(peer)};
-        Account::onIsComposing(fromUri, isWriting);
+        Account::onIsComposing(conversationId, fromUri, isWriting);
     } catch (...) {
         JAMI_ERR("[Account %s] Can't parse URI: %s", getAccountID().c_str(), peer.c_str());
     }
@@ -4410,6 +4422,26 @@ JamiAccount::sendMessage(const std::string& conversationId,
         } else {
             JAMI_ERR("Failed to send message to conversation %s", conversationId.c_str());
         }
+    }
+}
+
+void
+JamiAccount::sendInstantMessage(const std::string& convId,
+                                const std::map<std::string, std::string>& msg)
+{
+    std::unique_lock<std::mutex> lk(conversationsMtx_);
+    auto conversation = conversations_.find(convId);
+    if (conversation != conversations_.end() && conversation->second) {
+        for (const auto& members : conversation->second->getMembers()) {
+            auto uri = members.at("uri");
+            auto token = std::uniform_int_distribution<uint64_t> {1, DRING_ID_MAX_VAL}(rand);
+            // Announce to all members that a new message is sent
+            sendTextMessage(uri, msg, token, false, true);
+        }
+    } else {
+        lk.unlock();
+        // TODO remove, it's for old API for contacts
+        sendTextMessage(convId, msg);
     }
 }
 

@@ -663,11 +663,12 @@
        </method>
 
        <signal name="composingStatusChanged" tp:name-for-bindings="composingStatusChanged">
-           <tp:added version="7.9.0"/>
+           <tp:added version="10.0.0"/>
            <tp:docstring>
                Notify clients that a message composition status changed
            </tp:docstring>
            <arg type="s" name="accountId"/>
+           <arg type="s" name="conversationId"/>
            <arg type="s" name="contactId"/>
            <arg type="i" name="status">
               <tp:docstring>The new status of the message, 0 for Idle, 1 for Active</tp:docstring>
