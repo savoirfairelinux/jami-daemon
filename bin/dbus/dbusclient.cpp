@@ -157,30 +157,50 @@ DBusClient::initLibrary(int flags)
 #endif
 
     // Call event handlers
-    const std::map<std::string, SharedCallback> callEvHandlers = {
-        exportable_callback<CallSignal::StateChange>(bind(&DBusCallManager::callStateChanged, callM, _1, _2, _3)),
-        exportable_callback<CallSignal::TransferFailed>(bind(&DBusCallManager::transferFailed, callM)),
-        exportable_callback<CallSignal::TransferSucceeded>(bind(&DBusCallManager::transferSucceeded, callM)),
-        exportable_callback<CallSignal::RecordPlaybackStopped>(bind(&DBusCallManager::recordPlaybackStopped, callM, _1)),
-        exportable_callback<CallSignal::VoiceMailNotify>(bind(&DBusCallManager::voiceMailNotify, callM, _1, _2, _3, _4)),
-        exportable_callback<CallSignal::IncomingMessage>(bind(&DBusCallManager::incomingMessage, callM, _1, _2, _3)),
-        exportable_callback<CallSignal::IncomingCall>(bind(&DBusCallManager::incomingCall, callM, _1, _2, _3)),
-        exportable_callback<CallSignal::RecordPlaybackFilepath>(bind(&DBusCallManager::recordPlaybackFilepath, callM, _1, _2)),
-        exportable_callback<CallSignal::ConferenceCreated>(bind(&DBusCallManager::conferenceCreated, callM, _1)),
-        exportable_callback<CallSignal::ConferenceChanged>(bind(&DBusCallManager::conferenceChanged, callM, _1, _2)),
-        exportable_callback<CallSignal::UpdatePlaybackScale>(bind(&DBusCallManager::updatePlaybackScale, callM, _1, _2, _3)),
-        exportable_callback<CallSignal::ConferenceRemoved>(bind(&DBusCallManager::conferenceRemoved, callM, _1)),
-        exportable_callback<CallSignal::RecordingStateChanged>(bind(&DBusCallManager::recordingStateChanged, callM, _1, _2)),
-        exportable_callback<CallSignal::SecureSdesOn>(bind(&DBusCallManager::secureSdesOn, callM, _1)),
-        exportable_callback<CallSignal::SecureSdesOff>(bind(&DBusCallManager::secureSdesOff, callM, _1)),
-        exportable_callback<CallSignal::RtcpReportReceived>(bind(&DBusCallManager::onRtcpReportReceived, callM, _1, _2)),
-        exportable_callback<CallSignal::OnConferenceInfosUpdated>(bind(&DBusCallManager::onConferenceInfosUpdated, callM, _1, _2)),
-        exportable_callback<CallSignal::PeerHold>(bind(&DBusCallManager::peerHold, callM, _1, _2)),
-        exportable_callback<CallSignal::AudioMuted>(bind(&DBusCallManager::audioMuted, callM, _1, _2)),
-        exportable_callback<CallSignal::VideoMuted>(bind(&DBusCallManager::videoMuted, callM, _1, _2)),
-        exportable_callback<CallSignal::SmartInfo>(bind(&DBusCallManager::SmartInfo, callM, _1)),
-        exportable_callback<CallSignal::RemoteRecordingChanged>(bind(&DBusCallManager::remoteRecordingChanged, callM, _1, _2, _3))
-    };
+    const std::map<std::string, SharedCallback> callEvHandlers
+        = {exportable_callback<CallSignal::StateChange>(
+               bind(&DBusCallManager::callStateChanged, callM, _1, _2, _3)),
+           exportable_callback<CallSignal::TransferFailed>(
+               bind(&DBusCallManager::transferFailed, callM)),
+           exportable_callback<CallSignal::TransferSucceeded>(
+               bind(&DBusCallManager::transferSucceeded, callM)),
+           exportable_callback<CallSignal::RecordPlaybackStopped>(
+               bind(&DBusCallManager::recordPlaybackStopped, callM, _1)),
+           exportable_callback<CallSignal::VoiceMailNotify>(
+               bind(&DBusCallManager::voiceMailNotify, callM, _1, _2, _3, _4)),
+           exportable_callback<CallSignal::IncomingMessage>(
+               bind(&DBusCallManager::incomingMessage, callM, _1, _2, _3)),
+           exportable_callback<CallSignal::IncomingCall>(
+               bind(&DBusCallManager::incomingCall, callM, _1, _2, _3)),
+           exportable_callback<CallSignal::RecordPlaybackFilepath>(
+               bind(&DBusCallManager::recordPlaybackFilepath, callM, _1, _2)),
+           exportable_callback<CallSignal::ConferenceCreated>(
+               bind(&DBusCallManager::conferenceCreated, callM, _1)),
+           exportable_callback<CallSignal::ConferenceChanged>(
+               bind(&DBusCallManager::conferenceChanged, callM, _1, _2)),
+           exportable_callback<CallSignal::UpdatePlaybackScale>(
+               bind(&DBusCallManager::updatePlaybackScale, callM, _1, _2, _3)),
+           exportable_callback<CallSignal::ConferenceRemoved>(
+               bind(&DBusCallManager::conferenceRemoved, callM, _1)),
+           exportable_callback<CallSignal::RecordingStateChanged>(
+               bind(&DBusCallManager::recordingStateChanged, callM, _1, _2)),
+           exportable_callback<CallSignal::SecureSdesOn>(
+               bind(&DBusCallManager::secureSdesOn, callM, _1)),
+           exportable_callback<CallSignal::SecureSdesOff>(
+               bind(&DBusCallManager::secureSdesOff, callM, _1)),
+           exportable_callback<CallSignal::RtcpReportReceived>(
+               bind(&DBusCallManager::onRtcpReportReceived, callM, _1, _2)),
+           exportable_callback<CallSignal::OnConferenceInfosUpdated>(
+               bind(&DBusCallManager::onConferenceInfosUpdated, callM, _1, _2)),
+           exportable_callback<CallSignal::PeerHold>(
+               bind(&DBusCallManager::peerHold, callM, _1, _2)),
+           exportable_callback<CallSignal::AudioMuted>(
+               bind(&DBusCallManager::audioMuted, callM, _1, _2)),
+           exportable_callback<CallSignal::VideoMuted>(
+               bind(&DBusCallManager::videoMuted, callM, _1, _2)),
+           exportable_callback<CallSignal::SmartInfo>(bind(&DBusCallManager::SmartInfo, callM, _1)),
+           exportable_callback<CallSignal::RemoteRecordingChanged>(
+               bind(&DBusCallManager::remoteRecordingChanged, callM, _1, _2, _3))};
 
     // Configuration event handlers
     const std::map<std::string, SharedCallback> configEvHandlers = {
@@ -205,7 +225,7 @@ DBusClient::initLibrary(int flags)
         exportable_callback<ConfigurationSignal::ProfileReceived>(
             bind(&DBusConfigurationManager::profileReceived, confM, _1, _2, _3)),
         exportable_callback<ConfigurationSignal::ComposingStatusChanged>(
-            bind(&DBusConfigurationManager::composingStatusChanged, confM, _1, _2, _3)),
+            bind(&DBusConfigurationManager::composingStatusChanged, confM, _1, _2, _3, _4)),
         exportable_callback<ConfigurationSignal::IncomingTrustRequest>(
             bind(&DBusConfigurationManager::incomingTrustRequest, confM, _1, _2, _3, _4)),
         exportable_callback<ConfigurationSignal::ContactAdded>(
