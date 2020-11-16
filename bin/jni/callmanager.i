@@ -93,6 +93,7 @@ std::string getConferenceId(const std::string& callID);
 std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 std::vector<std::map<std::string, std::string>> getConferenceInfos(const std::string& confId);
 void setModerator(const std::string& confId, const std::string& peerId, const bool& state);
+void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
 
 /* File Playback methods */
 bool startRecordedFilePlayback(const std::string& filepath);

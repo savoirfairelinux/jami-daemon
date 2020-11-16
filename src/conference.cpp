@@ -381,6 +381,13 @@ Conference::bindParticipant(const std::string& participant_id)
     }
 }
 
+void
+Conference::unbindParticipant(const std::string& participant_id)
+{
+    JAMI_INFO("Unbind participant %s from conference %s", participant_id.c_str(), id_.c_str());
+    Manager::instance().getRingBufferPool().unBindAll(participant_id);
+}
+
 const ParticipantSet&
 Conference::getParticipantList() const
 {
@@ -516,6 +523,9 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         if (root.isMember("activeParticipant")) {
             setActiveParticipant(root["activeParticipant"].asString());
         }
+        if (root.isMember("muteParticipant")) {
+            setActiveParticipant(root["muteParticipant"].asString());
+        }
     }
 }
 
@@ -570,6 +580,40 @@ Conference::updateModerators()
         }
     }
     sendConferenceInfos();
+}
+
+void
+Conference::muteParticipant(const std::string& participant_id, const bool& state)
+{
+    for (const auto& p : participants_) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
+            auto partURI = call->getPeerNumber();
+            auto separator = partURI.find('@');
+            if (separator != std::string::npos)
+                partURI = partURI.substr(0, separator);
+            if (partURI == participant_id) {
+                if (state) {
+                    JAMI_ERR("@@@ Do Mute participant");
+                    unbindParticipant(p);
+                } else {
+                    JAMI_ERR("@@@ Do unMute participant");
+                    bindParticipant(p);
+                }
+                // Update confInfo
+                {
+                    std::lock_guard<std::mutex> lk2(confInfoMutex_);
+                    for (auto& info : confInfo_) {
+                        if (call->getPeerNumber() == info.uri) {
+                            info.audioMuted = state;
+                            break;
+                        }
+                    }
+                }
+                sendConferenceInfos();
+                return;
+            }
+        }
+    }
 }
 
 } // namespace jami

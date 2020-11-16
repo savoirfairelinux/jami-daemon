@@ -179,6 +179,11 @@ public:
     void bindParticipant(const std::string& participant_id);
 
     /**
+     * unbind a participant to the conference
+     */
+    void unbindParticipant(const std::string& participant_id);
+
+    /**
      * Get the participant list for this conference
      */
     const ParticipantSet& getParticipantList() const;
@@ -203,6 +208,7 @@ public:
 
     void onConfOrder(const std::string& callId, const std::string& order);
     void setModerator(const std::string& uri, const bool& state);
+    void muteParticipant(const std::string& uri, const bool& state);
 
 #ifdef ENABLE_VIDEO
     std::shared_ptr<video::VideoMixer> getVideoMixer();
