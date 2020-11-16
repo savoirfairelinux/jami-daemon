@@ -501,7 +501,8 @@ public:
     virtual void sendTextMessage(const std::string& to,
                                  const std::map<std::string, std::string>& payloads,
                                  uint64_t id,
-                                 bool retryOnTimeout = true) override;
+                                 bool retryOnTimeout = true,
+                                 bool onlyConnected = false) override;
 
     void connectivityChanged() override;
 
