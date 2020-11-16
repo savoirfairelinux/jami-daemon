@@ -179,6 +179,11 @@ public:
     void bindParticipant(const std::string& participant_id);
 
     /**
+     * unbind a participant to the conference
+     */
+    void unbindParticipant(const std::string& participant_id);
+
+    /**
      * Get the participant list for this conference
      */
     const ParticipantSet& getParticipantList() const;
@@ -202,7 +207,6 @@ public:
     void detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame);
 
     void onConfOrder(const std::string& callId, const std::string& order);
-    void setModerator(const std::string& uri, const bool& state);
 
 #ifdef ENABLE_VIDEO
     std::shared_ptr<video::VideoMixer> getVideoMixer();
@@ -215,6 +219,9 @@ public:
         return confInfo_.toVectorMapStringString();
     }
 
+    void setModerator(const std::string& uri, const bool& state);
+    void muteParticipant(const std::string& uri, const bool& state);
+
 private:
     std::weak_ptr<Conference> weak()
     {
@@ -222,6 +229,7 @@ private:
     }
 
     bool isModerator(const std::string& uri) const;
+    void updateModerators();
 
     std::string id_;
     State confState_ {State::ACTIVE_ATTACHED};
@@ -242,11 +250,13 @@ private:
 
     std::shared_ptr<jami::AudioInput> audioMixer_;
     std::set<std::string> moderators_ {};
+    std::set<std::string> participantsMuted_ {};
 
     void initRecorder(std::shared_ptr<MediaRecorder>& rec);
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec);
 
-    void updateModerators();
+    bool isMuted(const std::string& uri) const;
+    void updateMuted();
 };
 
 } // namespace jami
