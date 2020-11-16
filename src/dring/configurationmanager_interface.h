@@ -302,8 +302,7 @@ DRING_PUBLIC bool isLocalModeratorsEnabled(const std::string& accountID);
 /**
  * Enable/disable all moderators for conferences
  */
-DRING_PUBLIC void setAllModerators(const std::string& accountID,
-                                        bool allModerators);
+DRING_PUBLIC void setAllModerators(const std::string& accountID, bool allModerators);
 
 /**
  * Get all moderators state
@@ -397,6 +396,7 @@ struct DRING_PUBLIC ConfigurationSignal
     {
         constexpr static const char* name = "ComposingStatusChanged";
         using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
                              const std::string& /*from*/,
                              int /*status*/);
     };
