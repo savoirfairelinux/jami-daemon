@@ -167,9 +167,15 @@ public:
         return 0;
     }
 
+    virtual void sendInstantMessage(const std::string& /*convId*/,
+                                    const std::map<std::string, std::string>& /*msg*/)
+    {}
+
     virtual void setIsComposing(const std::string& /*to*/, bool /*isWriting*/) {};
 
-    virtual void onIsComposing(const std::string& /*peer*/, bool /*isWriting*/);
+    virtual void onIsComposing(const std::string& /*conversationId*/,
+                               const std::string& /*peer*/,
+                               bool /*isWriting*/);
 
     virtual bool setMessageDisplayed(const std::string& /*contactId*/,
                                      const std::string& /*messageId*/,
@@ -340,7 +346,10 @@ public:
     bool isLocalModeratorsEnabled() const { return localModeratorsEnabled_; }
     void enableLocalModerators(bool isModEnabled) { localModeratorsEnabled_ = isModEnabled; }
     bool isAllModerators() const { return allModeratorsEnabled_; }
-    void setAllModerators(bool isAllModeratorEnabled) { allModeratorsEnabled_ = isAllModeratorEnabled; }
+    void setAllModerators(bool isAllModeratorEnabled)
+    {
+        allModeratorsEnabled_ = isAllModeratorEnabled;
+    }
 
 public: // virtual methods that has to be implemented by concrete classes
     /**
