@@ -313,10 +313,15 @@ public:
     void sendTextMessage(const std::string& to,
                          const std::map<std::string, std::string>& payloads,
                          uint64_t id,
-                         bool retryOnTimeout = true) override;
+                         bool retryOnTimeout = true,
+                         bool onlyConnected = false) override;
     uint64_t sendTextMessage(const std::string& to,
                              const std::map<std::string, std::string>& payloads) override;
-    void onIsComposing(const std::string& peer, bool isWriting) override;
+    void sendInstantMessage(const std::string& convId,
+                            const std::map<std::string, std::string>& msg) override;
+    void onIsComposing(const std::string& conversationId,
+                       const std::string& peer,
+                       bool isWriting) override;
 
     /* Devices */
     void addDevice(const std::string& password);
