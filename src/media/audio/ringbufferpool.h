@@ -73,6 +73,8 @@ public:
      */
     void unBindHalfDuplexOut(const std::string& process_id, const std::string& call_id);
 
+    void unBindAllHalfDuplexOut(const std::string& call_id);
+
     void unBindAll(const std::string& call_id);
 
     bool waitForDataAvailable(const std::string& call_id,
