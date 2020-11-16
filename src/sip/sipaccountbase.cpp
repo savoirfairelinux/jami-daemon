@@ -121,12 +121,15 @@ SIPAccountBase::flush()
 }
 
 std::string
-getIsComposing(bool isWriting)
+getIsComposing(const std::string& conversationId, bool isWriting)
 {
     // implementing https://tools.ietf.org/rfc/rfc3994.txt
     std::ostringstream ss;
     ss << "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" << std::endl
-       << "<isComposing><state>" << (isWriting ? "active" : "idle") << "</state></isComposing>";
+       << "<isComposing><state>" << (isWriting ? "active" : "idle") << "</state>";
+    if (!conversationId.empty())
+        ss << "<conversation>" << conversationId << "</conversation>";
+    ss << "</isComposing>";
     return ss.str();
 }
 
@@ -147,6 +150,7 @@ getDisplayed(const std::string& messageId)
 void
 SIPAccountBase::setIsComposing(const std::string& to, bool isWriting)
 {
+    JAMI_ERR("@@@ setIsComposing");
     if (not isWriting and to != composingUri_)
         return;
 
@@ -156,14 +160,16 @@ SIPAccountBase::setIsComposing(const std::string& to, bool isWriting)
     }
     if (isWriting) {
         if (not composingUri_.empty() and composingUri_ != to) {
-            sendTextMessage(composingUri_, {{MIME_TYPE_IM_COMPOSING, getIsComposing(false)}});
+            JAMI_ERR("@@@ setIsComposing1");
+            sendInstantMessage(composingUri_, {{MIME_TYPE_IM_COMPOSING, getIsComposing(to, false)}});
             composingTime_ = std::chrono::steady_clock::time_point::min();
         }
         composingUri_.clear();
         composingUri_.insert(composingUri_.end(), to.begin(), to.end());
         auto now = std::chrono::steady_clock::now();
         if (now >= composingTime_ + COMPOSING_TIMEOUT) {
-            sendTextMessage(composingUri_, {{MIME_TYPE_IM_COMPOSING, getIsComposing(true)}});
+            JAMI_ERR("@@@ setIsComposing2");
+            sendInstantMessage(composingUri_, {{MIME_TYPE_IM_COMPOSING, getIsComposing(to, true)}});
             composingTime_ = now;
         }
         std::weak_ptr<SIPAccountBase> weak = std::static_pointer_cast<SIPAccountBase>(
@@ -171,14 +177,17 @@ SIPAccountBase::setIsComposing(const std::string& to, bool isWriting)
         composingTimeout_ = Manager::instance().scheduleTask(
             [weak, to]() {
                 if (auto sthis = weak.lock()) {
-                    sthis->sendTextMessage(to, {{MIME_TYPE_IM_COMPOSING, getIsComposing(false)}});
+                    JAMI_ERR("@@@ setIsComposing3");
+                    sthis->sendInstantMessage(to,
+                                              {{MIME_TYPE_IM_COMPOSING, getIsComposing(to, false)}});
                     sthis->composingUri_.clear();
                     sthis->composingTime_ = std::chrono::steady_clock::time_point::min();
                 }
             },
             now + COMPOSING_TIMEOUT);
     } else {
-        sendTextMessage(to, {{MIME_TYPE_IM_COMPOSING, getIsComposing(false)}});
+        JAMI_ERR("@@@ setIsComposing4");
+        sendInstantMessage(to, {{MIME_TYPE_IM_COMPOSING, getIsComposing(to, false)}});
         composingUri_.clear();
         composingTime_ = std::chrono::steady_clock::time_point::min();
     }
@@ -523,7 +532,16 @@ SIPAccountBase::onTextMessage(const std::string& id,
                     && matched_pattern[1].matched) {
                     isComposing = matched_pattern[1] == "active";
                 }
-                onIsComposing(from, isComposing);
+                static const std::regex CONVID_REGEX(
+                    "<conversation>\\s*(\\w+)\\s*<\\/conversation>");
+                std::regex_search(m.second, matched_pattern, CONVID_REGEX);
+                std::string conversationId = "";
+                if (matched_pattern.ready() && !matched_pattern.empty()
+                    && matched_pattern[1].matched) {
+                    conversationId = matched_pattern[1];
+                }
+                JAMI_WARN("@@@ %s", m.second.c_str());
+                onIsComposing(conversationId, from, isComposing);
                 if (payloads.size() == 1)
                     return;
             } catch (const std::exception& e) {
