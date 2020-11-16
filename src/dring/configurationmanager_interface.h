@@ -407,6 +407,7 @@ struct DRING_PUBLIC ConfigurationSignal
     {
         constexpr static const char* name = "ComposingStatusChanged";
         using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*convId*/,
                              const std::string& /*from*/,
                              int /*status*/);
     };
