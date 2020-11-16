@@ -23,6 +23,7 @@
 #include "account_const.h"
 
 #include <fstream>
+#include <gnutls/ocsp.h>
 
 namespace jami {
 
@@ -418,6 +419,21 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
                  name.c_str(),
                  crt->getId().toString().c_str());
         tls::CertificateStore::instance().pinCertificate(crt);
+        if (crt->ocspResponse){
+            unsigned int status = crt->ocspResponse->getCertificateStatus();
+            if (status == GNUTLS_OCSP_CERT_GOOD){
+                JAMI_DBG("Certificate %s has good OCSP status", crt->getId().to_c_str());
+                trust_.setCertificateStatus(crt->getId().toString(), tls::TrustStore::PermissionStatus::ALLOWED);
+            }
+            else if (status == GNUTLS_OCSP_CERT_REVOKED){
+                JAMI_ERR("Certificate %s has revoked OCSP status", crt->getId().to_c_str());
+                trust_.setCertificateStatus(crt->getId().toString(), tls::TrustStore::PermissionStatus::BANNED);
+            }
+            else {
+                JAMI_ERR("Certificate %s has unknown OCSP status", crt->getId().to_c_str());
+                trust_.setCertificateStatus(crt->getId().toString(), tls::TrustStore::PermissionStatus::UNDEFINED);
+            }
+        }
         saveKnownDevices();
         callbacks_.devicesChanged(knownDevices_);
     } else {
