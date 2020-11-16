@@ -2235,6 +2235,7 @@ void
 SIPAccount::sendTextMessage(const std::string& to,
                             const std::map<std::string, std::string>& payloads,
                             uint64_t id,
+                            bool,
                             bool)
 {
     if (to.empty() or payloads.empty()) {
