@@ -270,7 +270,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<ConfigurationSignal::IncomingAccountMessage>(bind(&ConfigurationCallback::incomingAccountMessage, confM, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::AccountMessageStatusChanged>(bind(&ConfigurationCallback::accountMessageStatusChanged, confM, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::ProfileReceived>(bind(&ConfigurationCallback::profileReceived, confM, _1, _2, _3 )),
-        exportable_callback<ConfigurationSignal::ComposingStatusChanged>(bind(&ConfigurationCallback::composingStatusChanged, confM, _1, _2, _3 )),
+        exportable_callback<ConfigurationSignal::ComposingStatusChanged>(bind(&ConfigurationCallback::composingStatusChanged, confM, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&ConfigurationCallback::incomingTrustRequest, confM, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::ContactAdded>(bind(&ConfigurationCallback::contactAdded, confM, _1, _2, _3 )),
         exportable_callback<ConfigurationSignal::ContactRemoved>(bind(&ConfigurationCallback::contactRemoved, confM, _1, _2, _3 )),
