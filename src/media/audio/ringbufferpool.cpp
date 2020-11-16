@@ -237,6 +237,29 @@ RingBufferPool::unBindHalfDuplexOut(const std::string& process_id, const std::st
 }
 
 void
+RingBufferPool::unBindAllHalfDuplexOut(const std::string& call_id)
+{
+    JAMI_INFO("@@@ Unbind out call %s from all bound calls", call_id.c_str());
+
+    const auto& rb_call = getRingBuffer(call_id);
+    if (not rb_call) {
+        JAMI_ERR("No ringbuffer associated to call '%s'", call_id.c_str());
+        return;
+    }
+
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+
+    auto bindings = getReadBindings(call_id);
+    if (not bindings)
+        return;
+
+    const auto bindings_copy = *bindings; // temporary copy
+    for (const auto& rbuf : bindings_copy) {
+        removeReaderFromRingBuffer(rb_call, rbuf->getId());
+    }
+}
+
+void
 RingBufferPool::unBindAll(const std::string& call_id)
 {
     JAMI_INFO("Unbind call %s from all bound calls", call_id.c_str());

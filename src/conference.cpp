@@ -95,6 +95,7 @@ Conference::Conference()
                 auto separator = partURI.find('@');
                 if (separator != std::string::npos)
                     partURI = partURI.substr(0, separator);
+                auto isMuted = shared->isMuted(partURI);
                 auto isModerator = shared->isModerator(partURI);
                 newInfo.emplace_back(ParticipantInfo {std::move(uri),
                                                       active,
@@ -103,7 +104,7 @@ Conference::Conference()
                                                       info.w,
                                                       info.h,
                                                       !info.hasVideo,
-                                                      false,
+                                                      isMuted,
                                                       isModerator});
             }
             lk.unlock();
@@ -381,6 +382,14 @@ Conference::bindParticipant(const std::string& participant_id)
     }
 }
 
+void
+Conference::unbindParticipant(const std::string& participant_id)
+{
+    JAMI_INFO("Unbind participant %s from conference %s", participant_id.c_str(), id_.c_str());
+    // Manager::instance().getRingBufferPool().unBindAll(participant_id);
+    Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(participant_id);
+}
+
 const ParticipantSet&
 Conference::getParticipantList() const
 {
@@ -516,6 +525,9 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         if (root.isMember("activeParticipant")) {
             setActiveParticipant(root["activeParticipant"].asString());
         }
+        if (root.isMember("muteParticipant")) {
+            muteParticipant(root["muteParticipant"].asString(), root["muteState"].asBool());
+        }
     }
 }
 
@@ -567,6 +579,59 @@ Conference::updateModerators()
             if (separator != std::string::npos)
                 uri = uri.substr(0, separator);
             info.isModerator = isModerator(uri);
+        }
+    }
+    sendConferenceInfos();
+}
+
+bool
+Conference::isMuted(const std::string& uri) const
+{
+    return std::find_if(participantsMuted_.begin(),
+                        participantsMuted_.end(),
+                        [&uri](const std::string& pMuted) {
+                            return pMuted.find(uri) != std::string::npos;
+                        })
+           != participantsMuted_.end();
+}
+
+void
+Conference::muteParticipant(const std::string& participant_id, const bool& state)
+{
+    for (const auto& p : participants_) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
+            auto partURI = call->getPeerNumber();
+            auto separator = partURI.find('@');
+            if (separator != std::string::npos)
+                partURI = partURI.substr(0, separator);
+            if (partURI == participant_id) {
+                if (state) {
+                    JAMI_DBG("Mute participant %s", partURI.c_str());
+                    participantsMuted_.emplace(partURI);
+                    unbindParticipant(p);
+                    updateMuted();
+                } else {
+                    JAMI_DBG("Unmute participant %s", partURI.c_str());
+                    participantsMuted_.erase(partURI);
+                    bindParticipant(p);
+                    updateMuted();
+                }
+            }
+        }
+    }
+}
+
+void
+Conference::updateMuted()
+{
+    {
+        std::lock_guard<std::mutex> lk2(confInfoMutex_);
+        for (auto& info : confInfo_) {
+            auto uri = info.uri;
+            auto separator = uri.find('@');
+            if (separator != std::string::npos)
+                uri = uri.substr(0, separator);
+            info.audioMuted = isMuted(uri);
         }
     }
     sendConferenceInfos();
