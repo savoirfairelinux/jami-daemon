@@ -42,7 +42,6 @@ GNUTLS_CONF := \
 	--disable-cxx \
 	--disable-srp-authentication \
 	--disable-psk-authentication-FIXME \
-	--with-included-libtasn1 \
 	--with-included-unistring \
 	--disable-openpgp-authentication \
 	--disable-openssl-compatibility \
@@ -52,6 +51,10 @@ GNUTLS_CONF := \
 	--without-libintl-prefix \
 	--without-idn \
 	$(HOSTCONF)
+
+ifndef HAVE_DARWIN_OS
+	GNUTLS_CONF += --with-included-libtasn1
+endif
 
 ifdef HAVE_IOS
 	GNUTLS_CONF += --disable-hardware-acceleration
