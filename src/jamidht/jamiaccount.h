@@ -518,7 +518,9 @@ public:
     bool addConversationMember(const std::string& conversationId,
                                const std::string& contactUri,
                                bool sendRequest = true);
-    bool removeConversationMember(const std::string& conversationId, const std::string& contactUri);
+    bool removeConversationMember(const std::string& conversationId,
+                                  const std::string& contactUri,
+                                  bool isDevice = false);
     std::vector<std::map<std::string, std::string>> getConversationMembers(
         const std::string& conversationId);
 

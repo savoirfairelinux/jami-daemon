@@ -4102,6 +4102,15 @@ JamiAccount::addConversationMember(const std::string& conversationId,
         JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
         return false;
     }
+
+    if (it->second->isMember(contactUri, true)) {
+        JAMI_DBG("%s is already a member of %s, resend invite", contactUri.c_str(), conversationId.c_str());
+        // Note: This should not be necessary, but if for whatever reason the other side didn't join
+        // we should not forbid new invites
+        sendTextMessage(contactUri, it->second->generateInvitation());
+        return true;
+    }
+
     auto commitId = it->second->addMember(contactUri);
     if (commitId.empty()) {
         JAMI_WARN("Couldn't add %s to %s", contactUri.c_str(), conversationId.c_str());
@@ -4128,11 +4137,34 @@ JamiAccount::addConversationMember(const std::string& conversationId,
 
 bool
 JamiAccount::removeConversationMember(const std::string& conversationId,
-                                      const std::string& contactUri)
+                                      const std::string& contactUri,
+                                      bool isDevice)
 {
     std::lock_guard<std::mutex> lk(conversationsMtx_);
-    conversations_[conversationId]->removeMember(contactUri);
-    return true;
+    auto conversation = conversations_.find(conversationId);
+    if (conversation != conversations_.end() && conversation->second) {
+        auto lastCommit = conversation->second->lastCommitId();
+        if (conversation->second->removeMember(contactUri, isDevice)) {
+            conversation->second->loadMessages([w=weak(), lastCommit, conversationId] (auto&& messages) {
+                if (auto shared = w.lock()) {
+                    std::reverse(messages.begin(), messages.end());
+                    // Announce new commits
+                    for (const auto& msg : messages) {
+                        emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
+                                                                                conversationId,
+                                                                                msg);
+                    }
+                    std::lock_guard<std::mutex> lk(shared->conversationsMtx_);
+                    auto conversation = shared->conversations_.find(conversationId);
+                    // Send notification for others
+                    if (conversation != shared->conversations_.end() && conversation->second)
+                        shared->sendMessageNotification(*conversation->second, lastCommit, true);
+                }
+            }, "", lastCommit);
+            return true;
+        }
+    }
+    return false;
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -4222,6 +4254,21 @@ JamiAccount::fetchNewCommits(const std::string& peer,
     std::unique_lock<std::mutex> lk(conversationsMtx_);
     auto conversation = conversations_.find(conversationId);
     if (conversation != conversations_.end() && conversation->second) {
+        if (!conversation->second->isMember(peer, true)) {
+            JAMI_WARN("[Account %s] %s is not a member of %s",
+                      getAccountID().c_str(),
+                      peer.c_str(),
+                      conversationId.c_str());
+            return;
+        }
+        if (conversation->second->isBanned(deviceId)) {
+            JAMI_WARN("[Account %s] %s is a banned device in conversation %s",
+                      getAccountID().c_str(),
+                      deviceId.c_str(),
+                      conversationId.c_str());
+            return;
+        }
+
         // Retrieve current last message
         auto lastMessageId = conversation->second->lastCommitId();
         if (lastMessageId.empty()) {
