@@ -52,7 +52,7 @@ public:
      * @return Commit id or empty if fails
      */
     std::string addMember(const std::string& contactUri);
-    bool removeMember(const std::string& contactUri);
+    bool removeMember(const std::string& contactUri, bool isDevice);
     /**
      * @param includeInvited        If we want invited members
      * @return a vector of member details:
@@ -76,7 +76,8 @@ public:
      * @param uri       URI to test
      * @return true if uri is a member
      */
-    bool isMember(const std::string& uri, bool includInvited = false);
+    bool isMember(const std::string& uri, bool includeInvited = false) const;
+    bool isBanned(const std::string& uri, bool isDevice = false) const;
 
     // Message send
     std::string sendMessage(const std::string& message,
