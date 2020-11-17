@@ -24,6 +24,7 @@
 #include "conversationrepository.h"
 
 #include <json/json.h>
+#include <string_view>
 
 namespace jami {
 
@@ -56,6 +57,9 @@ public:
     }
     ~Impl() = default;
 
+    bool isAdmin() const;
+    std::string repoPath() const;
+
     std::unique_ptr<ConversationRepository> repository_;
     std::weak_ptr<JamiAccount> account_;
     std::atomic_bool isRemoving_ {false};
@@ -63,6 +67,34 @@ public:
                                                                  const std::string& toMessage = "",
                                                                  size_t n = 0);
 };
+
+bool
+Conversation::Impl::isAdmin() const
+{
+    auto shared = account_.lock();
+    if (!shared)
+        return false;
+
+    auto adminsPath = repoPath() + DIR_SEPARATOR_STR + "admins";
+    auto cert = shared->identity().second;
+    auto parentCert = cert->issuer;
+    if (!parentCert) {
+        JAMI_ERR("Parent cert is null!");
+        return false;
+    }
+    auto uri = parentCert->getId().toString();
+    return fileutils::isFile(fileutils::getFullPath(adminsPath, uri + ".crt"));
+}
+
+std::string
+Conversation::Impl::repoPath() const
+{
+    auto shared = account_.lock();
+    if (!shared)
+        return {};
+    return fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
+           + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository_->id();
+}
 
 std::vector<std::map<std::string, std::string>>
 Conversation::Impl::loadMessages(const std::string& fromMessage,
@@ -145,6 +177,10 @@ Conversation::id() const
 std::string
 Conversation::addMember(const std::string& contactUri)
 {
+    if (isBanned(contactUri)) {
+        JAMI_WARN("Could not add member %s because this member is banned", contactUri.c_str());
+        return {};
+    }
     // Retrieve certificate
     auto cert = tls::CertificateStore::instance().getCertificate(contactUri);
     if (!cert) {
@@ -156,9 +192,24 @@ Conversation::addMember(const std::string& contactUri)
 }
 
 bool
-Conversation::removeMember(const std::string& contactUri)
+Conversation::removeMember(const std::string& contactUri, bool isDevice)
 {
-    // TODO
+    // Check if admin
+    if (!pimpl_->isAdmin()) {
+        JAMI_WARN("You're not an admin of this repo. Cannot ban %s", contactUri.c_str());
+        return false;
+    }
+    // Vote for removal
+    if (pimpl_->repository_->voteKick(contactUri, isDevice).empty()) {
+        JAMI_WARN("Kicking %s failed", contactUri.c_str());
+        return false;
+    }
+    // If admin, check vote
+    if (!pimpl_->repository_->resolveVote(contactUri, isDevice).empty()) {
+        JAMI_WARN("Vote solved for %s. %s banned",
+                  contactUri.c_str(),
+                  isDevice ? "Device" : "Member");
+    }
     return true;
 }
 
@@ -170,11 +221,8 @@ Conversation::getMembers() const
     if (!shared)
         return result;
 
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR
-                    + pimpl_->repository_->id();
-    auto adminsPath = repoPath + DIR_SEPARATOR_STR + "admins";
-    auto membersPath = repoPath + DIR_SEPARATOR_STR + "members";
+    auto adminsPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "admins";
+    auto membersPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "members";
     for (const auto& certificate : fileutils::readDirectory(adminsPath)) {
         if (certificate.find(".crt") == std::string::npos) {
             JAMI_WARN("Incorrect file found: %s/%s", adminsPath.c_str(), certificate.c_str());
@@ -209,18 +257,15 @@ Conversation::join()
 }
 
 bool
-Conversation::isMember(const std::string& uri, bool includeInvited)
+Conversation::isMember(const std::string& uri, bool includeInvited) const
 {
     auto shared = pimpl_->account_.lock();
     if (!shared)
         return false;
 
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR
-                    + pimpl_->repository_->id();
-    auto invitedPath = repoPath + DIR_SEPARATOR_STR + "invited";
-    auto adminsPath = repoPath + DIR_SEPARATOR_STR + "admins";
-    auto membersPath = repoPath + DIR_SEPARATOR_STR + "members";
+    auto invitedPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "invited";
+    auto adminsPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "admins";
+    auto membersPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "members";
     std::vector<std::string> pathsToCheck = {adminsPath, membersPath};
     if (includeInvited)
         pathsToCheck.emplace_back(invitedPath);
@@ -237,6 +282,19 @@ Conversation::isMember(const std::string& uri, bool includeInvited)
     }
 
     return false;
+}
+
+bool
+Conversation::isBanned(const std::string& uri, bool isDevice) const
+{
+    auto shared = pimpl_->account_.lock();
+    if (!shared)
+        return true;
+
+    auto type = isDevice ? "devices" : "members";
+    auto bannedPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "banned" + DIR_SEPARATOR_STR + type
+                      + DIR_SEPARATOR_STR + uri + ".crt";
+    return fileutils::isFile(bannedPath);
 }
 
 std::string
