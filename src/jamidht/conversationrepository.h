@@ -184,6 +184,9 @@ public:
      */
     void erase();
 
+    std::string voteKick(const std::string& uri, bool isDevice);
+    std::string resolveVote(const std::string& uri, bool isDevice);
+
 private:
     ConversationRepository() = delete;
     class Impl;
