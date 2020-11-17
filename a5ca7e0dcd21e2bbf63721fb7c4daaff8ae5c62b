@@ -22,6 +22,30 @@
       "revId": "a5ca7e0dcd21e2bbf63721fb7c4daaff8ae5c62b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3d970dfd_3015aed1",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 739,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-17T18:32:35Z",
+      "side": 1,
+      "message": "This is for the signal. If we have a group with 10 people, we want to know \"Contact is typing...\" and a same contact can be in several conversation.\n\nHowever for the setIsComposing, we can use the conversationId as the contactId cause you send the message to a conversation",
+      "parentUuid": "5af31aaa_73e80cb6",
+      "range": {
+        "startLine": 738,
+        "startChar": 0,
+        "endLine": 739,
+        "endChar": 43
+      },
+      "revId": "a5ca7e0dcd21e2bbf63721fb7c4daaff8ae5c62b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
