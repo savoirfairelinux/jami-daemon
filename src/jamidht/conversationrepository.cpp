@@ -1210,7 +1210,7 @@ ConversationRepository::join()
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
-    return pimpl_->commit(Json::writeString(wbuilder, json));
+    return commitMessage(Json::writeString(wbuilder, json));
 }
 
 std::string
@@ -1281,7 +1281,7 @@ ConversationRepository::leave()
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
-    return pimpl_->commit(Json::writeString(wbuilder, json));
+    return commitMessage(Json::writeString(wbuilder, json));
 }
 
 void
@@ -1292,6 +1292,148 @@ ConversationRepository::erase()
 
     JAMI_DBG() << "Erasing " << repoPath;
     fileutils::removeAll(repoPath, true);
+}
+
+std::string
+ConversationRepository::voteKick(const std::string& uri, bool isDevice)
+{
+    // Add vote + commit
+    // TODO simplify
+    std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
+    auto account = pimpl_->account_.lock();
+    if (!account)
+        return {};
+    auto cert = account->identity().second;
+    auto parentCert = cert->issuer;
+    if (!parentCert) {
+        JAMI_ERR("Parent cert is null!");
+        return {};
+    }
+    auto adminUri = parentCert->getId().toString();
+    if (adminUri == uri) {
+        JAMI_WARN("Admin tried to ban theirself");
+        return {};
+    }
+
+    // TODO avoid duplicate
+    auto relativeVotePath = std::string("votes") + DIR_SEPARATOR_STR
+                            + (isDevice ? "devices" : "members") + DIR_SEPARATOR_STR + uri;
+    auto voteDirectory = repoPath + DIR_SEPARATOR_STR + relativeVotePath;
+    if (!fileutils::recursive_mkdir(voteDirectory, 0700)) {
+        JAMI_ERR("Error when creating %s. Abort vote", voteDirectory.c_str());
+        return {};
+    }
+    auto votePath = fileutils::getFullPath(voteDirectory, adminUri);
+    auto voteFile = fileutils::ofstream(votePath, std::ios::trunc | std::ios::binary);
+    if (!voteFile.is_open()) {
+        JAMI_ERR("Could not write data to %s", votePath.c_str());
+        return {};
+    }
+    voteFile.close();
+
+    auto toAdd = fileutils::getFullPath(relativeVotePath, adminUri);
+    if (!pimpl_->add(toAdd.c_str()))
+        return {};
+
+    Json::Value json;
+    json["uri"] = uri;
+    json["type"] = "vote";
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    return commitMessage(Json::writeString(wbuilder, json));
+}
+
+std::string
+ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
+{
+    // Count ratio admin/votes
+    auto nbAdmins = 0, nbVote = 0;
+    // For each admin, check if voted
+    std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
+    std::string adminsPath = repoPath + "admins";
+    std::string membersPath = repoPath + "members";
+    std::string devicesPath = repoPath + "devices";
+    std::string bannedPath = repoPath + "banned";
+    auto isAdmin = fileutils::isFile(fileutils::getFullPath(adminsPath, uri + ".crt"));
+    std::string type = "members";
+    if (isDevice)
+        type = "devices";
+    else if (isAdmin)
+        type = "admins";
+
+    auto voteDirectory = repoPath + DIR_SEPARATOR_STR + "votes" + DIR_SEPARATOR_STR
+                         + (isDevice ? "devices" : "members") + DIR_SEPARATOR_STR + uri;
+    for (const auto& certificate : fileutils::readDirectory(adminsPath)) {
+        if (certificate.find(".crt") == std::string::npos) {
+            JAMI_WARN("Incorrect file found: %s/%s", adminsPath.c_str(), certificate.c_str());
+            continue;
+        }
+        auto adminUri = certificate.substr(0, certificate.size() - std::string(".crt").size());
+        nbAdmins += 1;
+        if (fileutils::isFile(fileutils::getFullPath(voteDirectory, adminUri)))
+            nbVote += 1;
+    }
+
+    if (nbAdmins > 0 && (static_cast<double>(nbVote) / static_cast<double>(nbAdmins)) > .5) {
+        JAMI_WARN("More than half of the admins voted to ban %s, apply the ban", uri.c_str());
+
+        // Remove vote directory
+        fileutils::removeAll(voteDirectory, true);
+
+        // Move from device or members file into banned
+        std::string originFilePath = membersPath;
+        if (isDevice)
+            originFilePath = devicesPath;
+        else if (isAdmin)
+            originFilePath = adminsPath;
+        originFilePath += DIR_SEPARATOR_STR + uri + ".crt";
+        auto destPath = bannedPath + DIR_SEPARATOR_STR + (isDevice ? "devices" : "members");
+        auto destFilePath = destPath + DIR_SEPARATOR_STR + uri + ".crt";
+        if (!fileutils::recursive_mkdir(destPath, 0700)) {
+            JAMI_ERR("Error when creating %s. Abort resolving vote", destPath.c_str());
+            return {};
+        }
+
+        if (std::rename(originFilePath.c_str(), destFilePath.c_str())) {
+            JAMI_ERR("Error when moving %s to %s. Abort resolving vote",
+                     originFilePath.c_str(),
+                     destFilePath.c_str());
+            return {};
+        }
+
+        // If members, remove related devices
+        if (!isDevice) {
+            for (const auto& certificate : fileutils::readDirectory(devicesPath)) {
+                auto certPath = fileutils::getFullPath(devicesPath, certificate);
+                auto deviceCert = fileutils::loadTextFile(certPath);
+                try {
+                    crypto::Certificate cert(deviceCert);
+                    if (auto issuer = cert.issuer)
+                        if (issuer->toString() == uri)
+                            fileutils::remove(certPath, true);
+                } catch (...) {
+                    continue;
+                }
+            }
+        }
+
+        // Commit
+        if (!git_add_all(pimpl_->repository_.get()))
+            return {};
+
+        Json::Value json;
+        json["action"] = "ban";
+        json["uri"] = uri;
+        json["type"] = "member";
+        Json::StreamWriterBuilder wbuilder;
+        wbuilder["commentStyle"] = "None";
+        wbuilder["indentation"] = "";
+        return commitMessage(Json::writeString(wbuilder, json));
+    }
+
+    // If vote nok
+    return {};
 }
 
 } // namespace jami
