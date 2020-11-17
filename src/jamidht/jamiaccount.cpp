@@ -3330,7 +3330,6 @@ JamiAccount::sendTextMessage(const std::string& to,
 
     for (auto it = sipConns_.begin(); it != sipConns_.end();) {
         auto& [key, value] = *it;
-        JAMI_ERR("@@@ %s %s", to.c_str(), key.first.c_str());
         if (key.first != to or value.empty()) {
             ++it;
             continue;
@@ -4004,6 +4003,7 @@ JamiAccount::addConversationMember(const std::string& conversationId,
         JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
         return false;
     }
+
     auto commitId = it->second->addMember(contactUri);
     if (commitId.empty()) {
         JAMI_WARN("Couldn't add %s to %s", contactUri.c_str(), conversationId.c_str());
@@ -4023,11 +4023,34 @@ JamiAccount::addConversationMember(const std::string& conversationId,
 
 bool
 JamiAccount::removeConversationMember(const std::string& conversationId,
-                                      const std::string& contactUri)
+                                      const std::string& contactUri,
+                                      bool isDevice)
 {
     std::lock_guard<std::mutex> lk(conversationsMtx_);
-    conversations_[conversationId]->removeMember(contactUri);
-    return true;
+    auto conversation = conversations_.find(conversationId);
+    if (conversation != conversations_.end() && conversation->second) {
+        // TODO simplify
+        std::string lastCommit = {};
+        auto messages = conversation->second->loadMessages("", 1);
+        if (!messages.empty()) {
+            lastCommit = messages.front().at("id");
+        }
+        if (conversation->second->removeMember(contactUri, isDevice)) {
+            messages = conversation->second->loadMessages("", lastCommit);
+            std::reverse(messages.begin(), messages.end());
+            // Announce new commits
+            for (const auto& msg : messages) {
+                lastCommit = msg.at("id");
+                emitSignal<DRing::ConversationSignal::MessageReceived>(getAccountID(),
+                                                                       conversationId,
+                                                                       msg);
+            }
+            // Send notification for others
+            sendMessageNotification(*conversation->second, lastCommit, true);
+            return true;
+        }
+    }
+    return false;
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -4156,6 +4179,25 @@ JamiAccount::fetchNewCommits(const std::string& peer,
         }
         conversationsUsed_[conversationId] = conversation->second.get();
         itUsed = conversationsUsed_.find(conversationId);
+
+        if (!itUsed->second->isMember(peer, true)) {
+            JAMI_WARN("[Account %s] %s is not a member of %s",
+                      getAccountID().c_str(),
+                      peer.c_str(),
+                      conversationId.c_str());
+            lk.unlock();
+            stopUseConversation(conversationId);
+            return;
+        }
+        if (itUsed->second->isBanned(deviceId)) {
+            JAMI_WARN("[Account %s] %s is a banned device in conversation %s",
+                      getAccountID().c_str(),
+                      deviceId.c_str(),
+                      conversationId.c_str());
+            lk.unlock();
+            stopUseConversation(conversationId);
+            return;
+        }
 
         // Retrieve current last message
         std::string lastMessageId = "";
