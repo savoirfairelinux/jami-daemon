@@ -47,7 +47,7 @@ public:
      * @return Commit id or empty if fails
      */
     std::string addMember(const std::string& contactUri);
-    bool removeMember(const std::string& contactUri);
+    bool removeMember(const std::string& contactUri, bool isDevice);
     /**
      * @return a vector of member details:
      * {
