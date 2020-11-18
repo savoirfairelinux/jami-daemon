@@ -3231,4 +3231,23 @@ Manager::setModerator(const std::string& confId, const std::string& peerId, cons
         JAMI_WARN("Fail to change moderator %s, conference %s not found", peerId.c_str(), confId.c_str());
 }
 
+void
+Manager::muteParticipant(const std::string& confId, const std::string& participant, const bool& state)
+{
+    if (auto conf = getConferenceFromID(confId)) {
+        conf->muteParticipant(participant, state);
+    } else if (auto call = getCallFromCallID(confId)) {
+        std::map<std::string, std::string> messages;
+        Json::Value root;
+        root["muteParticipant"] = participant;
+        root["muteState"] = state ? TRUE_STR : FALSE_STR;
+        Json::StreamWriterBuilder wbuilder;
+        wbuilder["commentStyle"] = "None";
+        wbuilder["indentation"] = "";
+        auto output = Json::writeString(wbuilder, root);
+        messages["application/confOrder+json"] = output;
+        call->sendTextMessage(messages, call->getPeerDisplayName());
+    }
+}
+
 } // namespace jami
