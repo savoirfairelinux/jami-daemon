@@ -437,6 +437,9 @@ public:
      */
     void shutdownConnections();
 
+    std::string_view accountUri() const;
+    std::string_view currentDeviceId() const;
+
 private:
     NON_COPYABLE(JamiAccount);
 
