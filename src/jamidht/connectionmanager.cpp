@@ -345,6 +345,12 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
         cb(nullptr, deviceId);
         return;
     }
+
+    if (deviceId.toString()
+        == account.getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID]) {
+        cb(nullptr, deviceId);
+        return;
+    }
     account.findCertificate(
         deviceId,
         [w = weak(), deviceId, name, cb = std::move(cb)](
