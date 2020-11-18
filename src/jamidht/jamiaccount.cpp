@@ -741,9 +741,8 @@ bool
 JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
 {
     call.setupLocalSDPFromIce();
-    std::string toUri(
-        getToUri(call.getPeerNumber() + "@"
-                 + target.toString(true))); // expecting a fully well formed sip uri
+    std::string toUri(getToUri(call.getPeerNumber() + "@"
+                               + target.toString(true))); // expecting a fully well formed sip uri
 
     pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);
 
@@ -1146,7 +1145,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                                                      std::move(callbacks))) {
             // normal loading path
             id_ = std::move(id);
-            username_ = RING_URI_PREFIX + info->accountId;
+            username_ = info->accountId;
             JAMI_WARN("[Account %s] loaded account identity", getAccountID().c_str());
             if (not isEnabled()) {
                 setRegistrationState(RegistrationState::UNREGISTERED);
@@ -1221,7 +1220,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     id_ = std::move(id);
                     tlsPassword_ = {};
 
-                    username_ = RING_URI_PREFIX + info.accountId;
+                    username_ = info.accountId;
                     registeredName_ = managerUsername_;
                     ringDeviceName_ = accountManager_->getAccountDeviceName();
 
@@ -2851,7 +2850,9 @@ JamiAccount::matches(std::string_view userName, std::string_view server) const
     if (userName == accountManager_->getInfo()->accountId
         || server == accountManager_->getInfo()->accountId
         || userName == accountManager_->getInfo()->deviceId) {
-        JAMI_DBG("Matching account id in request with username %.*s", (int)userName.size(), userName.data());
+        JAMI_DBG("Matching account id in request with username %.*s",
+                 (int) userName.size(),
+                 userName.data());
         return MatchRank::FULL;
     } else {
         return MatchRank::NONE;
@@ -3363,7 +3364,7 @@ JamiAccount::getUserUri() const
     if (not registeredName_.empty())
         return RING_URI_PREFIX + registeredName_;
 #endif
-    return username_;
+    return RING_URI_PREFIX + username_;
 }
 
 std::vector<DRing::Message>
@@ -3803,6 +3804,14 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
             }
         }
     });
+}
+
+std::string_view
+JamiAccount::currentDeviceId() const
+{
+    if (!accountManager_)
+        return {};
+    return accountManager_->getInfo()->deviceId;
 }
 
 } // namespace jami
