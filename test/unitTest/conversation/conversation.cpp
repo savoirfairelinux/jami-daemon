@@ -1199,6 +1199,7 @@ ConversationTest::testBanDevice()
     // Assert that bob2 get the message, not Bob
     CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::seconds(10), [&]() { return bobGetMessage; }));
     CPPUNIT_ASSERT(bob2GetMessage && !bobGetMessage);
+    DRing::unregisterSignalHandlers();
 }
 
 void

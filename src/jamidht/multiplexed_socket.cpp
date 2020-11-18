@@ -403,6 +403,7 @@ MultiplexedSocket::read(const uint16_t& channel, uint8_t* buf, std::size_t len, 
         ec = std::make_error_code(std::errc::broken_pipe);
         return -1;
     }
+    std::lock_guard<std::mutex> lkSockets(pimpl_->socketsMutex);
     auto dataIt = pimpl_->channelDatas_.find(channel);
     if (dataIt == pimpl_->channelDatas_.end() || !dataIt->second) {
         ec = std::make_error_code(std::errc::broken_pipe);
