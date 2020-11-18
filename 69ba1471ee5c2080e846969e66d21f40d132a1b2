@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b96dcd60_ed92c527",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 686,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-11-18T20:27:00Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "69ba1471ee5c2080e846969e66d21f40d132a1b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "69448bcc_eb620178",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 53
+      },
+      "lineNbr": 763,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-11-18T20:27:00Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "69ba1471ee5c2080e846969e66d21f40d132a1b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
