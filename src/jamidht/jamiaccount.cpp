@@ -3791,4 +3791,10 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     });
 }
 
+const std::string&
+JamiAccount::getURI() const
+{
+    return accountManager_->getInfo()->accountId;
+}
+
 } // namespace jami

@@ -437,6 +437,8 @@ public:
      */
     void shutdownConnections();
 
+    const std::string& getURI() const;
+
 private:
     NON_COPYABLE(JamiAccount);
 
