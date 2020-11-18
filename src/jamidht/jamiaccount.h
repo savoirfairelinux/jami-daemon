@@ -743,7 +743,21 @@ private:
     std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
 
     /** Conversations */
+    mutable std::mutex conversationsMtx_ {};
     std::map<std::string, std::unique_ptr<Conversation>> conversations_;
+    std::map<std::string, Conversation*> conversationsUsed_;
+    void stopUseConversation(const std::string& convId)
+    {
+        std::lock_guard<std::mutex> lk(conversationsMtx_);
+        conversationsUsed_.erase(convId);
+        JAMI_WARN("@@@@ CONV NOT USED: %s", convId.c_str());
+    }
+    bool isConversation(const std::string& convId) const
+    {
+        std::lock_guard<std::mutex> lk(conversationsMtx_);
+        return conversations_.find(convId) != conversations_.end();
+    }
+
     std::vector<ConvInfo> convInfos_;
 
     mutable std::mutex dhtValuesMtx_;
