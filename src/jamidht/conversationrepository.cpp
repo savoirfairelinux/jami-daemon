@@ -53,11 +53,6 @@ public:
             throw std::logic_error("Couldn't open " + path);
         repository_ = {std::move(repo), git_repository_free};
     }
-    ~Impl()
-    {
-        if (repository_)
-            repository_.reset();
-    }
 
     GitSignature signature();
     bool mergeFastforward(const git_oid* target_oid, int is_unborn);
@@ -944,6 +939,8 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     git_remote* remote_ptr = nullptr;
     git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
 
+    auto lastCommit = logN("", 1)[0].id;
+
     // Assert that repository exists
     std::string channelName = "git://" + remoteDeviceId + '/' + pimpl_->id_;
     auto res = git_remote_lookup(&remote_ptr, pimpl_->repository_.get(), remoteDeviceId.c_str());
@@ -973,11 +970,16 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
         return false;
     }
 
+    for (const auto& commit : log(remoteHead(remoteDeviceId, "main"), lastCommit)) {
+        JAMI_WARN("@@@ WILL MERGE %s", commit.id.c_str());
+    }
+
     return true;
 }
 
 std::string
-ConversationRepository::remoteHead(const std::string& remoteDeviceId, const std::string& branch)
+ConversationRepository::remoteHead(const std::string& remoteDeviceId,
+                                   const std::string& branch) const
 {
     git_remote* remote_ptr = nullptr;
     if (git_remote_lookup(&remote_ptr, pimpl_->repository_.get(), remoteDeviceId.c_str()) < 0) {
@@ -1030,7 +1032,10 @@ ConversationRepository::commitMessage(const std::string& msg)
             JAMI_WARN("Couldn't add file %s", devicePath.c_str());
     }
 
-    return pimpl_->commit(msg);
+    auto lastCommit = logN("", 1)[0].id;
+    auto result = pimpl_->commit(msg);
+    JAMI_WARN() << "@@@ DIFF:\n" << diffStats("HEAD", lastCommit);
+    return result;
 }
 
 std::vector<ConversationCommit>
@@ -1182,7 +1187,7 @@ ConversationRepository::join()
         return {};
     }
     auto uri = parentCert->getId().toString();
-    std::string membersPath = repoPath + "members" + DIR_SEPARATOR_STR + uri + ".crt";
+    std::string membersPath = repoPath + "members" + DIR_SEPARATOR_STR;
     std::string memberFile = membersPath + DIR_SEPARATOR_STR + uri + ".crt";
     std::string adminsPath = repoPath + "admins" + DIR_SEPARATOR_STR + uri + ".crt";
     if (fileutils::isFile(memberFile) or fileutils::isFile(adminsPath)) {
@@ -1445,6 +1450,70 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
 
     // If vote nok
     return {};
+}
+
+bool
+ConversationRepository::validFetch(const std::string& remoteDevice) const
+{
+    auto newCommit = remoteHead(remoteDevice);
+    if (not pimpl_ or newCommit.empty()) {
+        return false;
+    }
+    auto commitsToValidate = pimpl_->log(newCommit, "HEAD", 0);
+    std::reverse(std::begin(commitsToValidate), std::end(commitsToValidate));
+    for (const auto& commit : commitsToValidate) {
+        if (commit.parents.size() == 0) {
+            JAMI_WARN("@@@ TODO validate initial commit");
+            // Check that admin cert is added
+            // Check that device cert is added
+            // Check CRLs added
+            // Check that no other file is added
+        } else if (commit.parents.size() == 1) {
+            // TODO check if member or plain/text or vote
+            JAMI_WARN("@@@ TODO validate %s", commit.commit_msg.c_str());
+            // If text
+            //      Check signature from certif in repo
+            //      Check that no weird file is added outside device cert nor removed
+            // If vote
+            //      Check that vote is for user that sign the commit
+            //      Check that vote is from an admin and device present & not banned
+            //      Check that no weird file is added nor removed
+            // If member
+            //      If adds
+            //          Check that member is not banned
+            //          Check that commit is correctly signed
+            //          Check that certificate is added in /invited
+            //          Check that no weird file is added nor removed
+            //      If joins
+            //          Check that commit is correctly signed
+            //          Check that device is added
+            //          Check that invitation is moved to members
+            //          Check that no weird file is added nor removed
+            //      If kickban
+            //          Check that vote is valid
+            //          Check that the user is ban via an admin
+            //          Check that member or device certificate is moved to banned/
+            //          Check that only files related to the vote is removed
+            //          Check that no weird file is added nor removed
+            // else fail? (pas flexible, mais évite d'accepter des cochoneries)
+
+        } else {
+            // Merge commit, for now, nothing to validate
+        }
+        // For all commit: check device is authorized (device added) and commit signature
+        // If fail, warn about Jami version may be not up to date and explain error
+        JAMI_WARN("@@@ WILL MERGE %s", commit.id.c_str());
+    }
+    /*
+        std::string id {};
+        std::vector<std::string> parents {};
+        GitAuthor author {};
+        std::vector<uint8_t> signed_content {};
+        std::vector<uint8_t> signature {};
+        std::string commit_msg {};
+        int64_t timestamp {0};
+    */
+    return true;
 }
 
 } // namespace jami
