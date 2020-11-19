@@ -127,7 +127,6 @@ Conversation::Impl::loadMessages(const std::string& fromMessage,
         if (parentsSize > 1) {
             type = "merge";
         }
-        // TODO check diff for member
         std::string body {};
         if (type.empty()) {
             std::string err;
