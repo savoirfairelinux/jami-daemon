@@ -118,7 +118,8 @@ public:
      * @param branch                Remote branch to check (default: main)
      * @return the commit id pointed
      */
-    std::string remoteHead(const std::string& remoteDeviceId, const std::string& branch = "main");
+    std::string remoteHead(const std::string& remoteDeviceId,
+                           const std::string& branch = "main") const;
 
     /**
      * Return the conversation id
@@ -183,6 +184,8 @@ public:
 
     std::string voteKick(const std::string& uri, bool isDevice);
     std::string resolveVote(const std::string& uri, bool isDevice);
+
+    bool validFetch(const std::string& remoteDevice) const;
 
 private:
     ConversationRepository() = delete;
