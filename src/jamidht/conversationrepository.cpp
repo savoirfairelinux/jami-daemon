@@ -34,6 +34,7 @@ using random_device = dht::crypto::random_device;
 
 using namespace std::string_view_literals;
 constexpr auto DIFF_REGEX = " +\\| +[0-9]+.*"sv;
+constexpr size_t MAX_FETCH_SIZE {256*1024*1024}; // 256Mb
 
 namespace jami {
 
@@ -55,23 +56,48 @@ public:
             throw std::logic_error("Couldn't open " + path);
         repository_ = {std::move(repo), git_repository_free};
     }
-    ~Impl()
-    {
-        if (repository_)
-            repository_.reset();
-    }
 
     GitSignature signature();
     bool mergeFastforward(const git_oid* target_oid, int is_unborn);
     bool createMergeCommit(git_index* index, const std::string& wanted_ref);
 
+    bool validCommits(const std::vector<ConversationCommit>& commits) const;
+    bool checkOnlyDeviceCertificate(const std::string& userDevice,
+                                    const std::string& commitId,
+                                    const std::string& parentId) const;
+    bool checkVote(const std::string& userDevice,
+                   const std::string& commitId,
+                   const std::string& parentId) const;
+    bool isValidUserAtCommit(const std::string& userDevice, const std::string& commitId) const;
+    bool checkInitialCommit(const std::string& userDevice, const std::string& commitId) const;
+    bool checkValidAdd(const std::string& userDevice,
+                       const std::string& uriMember,
+                       const std::string& commitid,
+                       const std::string& parentId) const;
+    bool checkValidJoins(const std::string& userDevice,
+                         const std::string& uriMember,
+                         const std::string& commitid,
+                         const std::string& parentId) const;
+    bool checkValidRemove(const std::string& userDevice,
+                          const std::string& uriMember,
+                          const std::string& commitid,
+                          const std::string& parentId) const;
+
     bool add(const std::string& path);
     std::string commit(const std::string& msg);
 
     GitDiff diff(const std::string& idNew, const std::string& idOld) const;
+    std::string diffStats(const std::string& newId, const std::string& oldId) const;
     std::string diffStats(const GitDiff& diff) const;
 
-    std::vector<ConversationCommit> log(const std::string& from, const std::string& to, unsigned n);
+    std::vector<ConversationCommit> behind(const std::string& from) const;
+    std::vector<ConversationCommit> log(const std::string& from,
+                                        const std::string& to,
+                                        unsigned n) const;
+
+    GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
+    GitTree treeAtCommit(const std::string& commitId) const;
+    std::string getCommitType(const std::string& commitMsg) const;
 
     std::weak_ptr<JamiAccount> account_;
     const std::string id_;
@@ -519,6 +545,486 @@ ConversationRepository::Impl::add(const std::string& path)
     return git_index_write(index.get()) == 0;
 }
 
+bool
+ConversationRepository::Impl::checkOnlyDeviceCertificate(const std::string& userDevice,
+                                                         const std::string& commitId,
+                                                         const std::string& parentId) const
+{
+    // Here, we check that a file device is modified or not.
+    auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
+    if (changedFiles.size() == 0)
+        return true;
+    else if (changedFiles.size() > 1)
+        return false;
+    // If modified, it's the first commit of a device, we check
+    // that the file wasn't there previously
+    std::string deviceFile = std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt";
+    if (changedFiles[0] != deviceFile) {
+        return false;
+    }
+
+    // Retrieve tree for recent commit
+    auto treeNew = treeAtCommit(commitId);
+    auto treeOld = treeAtCommit(parentId);
+    if (not treeNew or not treeOld)
+        return false;
+    if (!fileAtTree(deviceFile, treeNew)) {
+        JAMI_ERR("%s announced but not found", deviceFile.c_str());
+        return false;
+    }
+    return !fileAtTree(deviceFile, treeOld);
+}
+
+bool
+ConversationRepository::Impl::checkVote(const std::string& userDevice,
+                                        const std::string& commitId,
+                                        const std::string& parentId) const
+{
+    // Check that maximum deviceFile and a vote is added
+    auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
+    if (changedFiles.size() == 0) {
+        return true;
+    } else if (changedFiles.size() > 2) {
+        return false;
+    }
+    // If modified, it's the first commit of a device, we check
+    // that the file wasn't there previously. And the vote MUST be added
+    std::string deviceFile = "";
+    std::string votedFile = "";
+    for (const auto& changedFile : changedFiles) {
+        if (changedFile == std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt") {
+            deviceFile = changedFile;
+        } else if (changedFile.find("votes") == 0) {
+            votedFile = changedFile;
+        } else {
+            // Invalid file detected
+            JAMI_ERR("Invalid vote file detected: %s", changedFile.c_str());
+            return false;
+        }
+    }
+
+    if (votedFile.empty()) {
+        JAMI_WARN("No vote detected for commit %s", commitId.c_str());
+        return false;
+    }
+
+    auto treeNew = treeAtCommit(commitId);
+    auto treeOld = treeAtCommit(parentId);
+    if (not treeNew or not treeOld)
+        return false;
+
+    if (not deviceFile.empty()) {
+        if (fileAtTree(deviceFile, treeOld)) {
+            JAMI_ERR("Invalid device file modified: %s", deviceFile.c_str());
+            return false;
+        }
+    }
+
+    auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
+    if (!cert && cert->issuer)
+        return false;
+    auto userUri = cert->issuer->getId().toString();
+    // Check that voter is admin
+    auto adminFile = std::string("admins") + DIR_SEPARATOR_STR + userUri + ".crt";
+
+    if (!fileAtTree(adminFile, treeOld)) {
+        JAMI_ERR("Vote from non admin: %s", userUri.c_str());
+        return false;
+    }
+
+    // Check votedFile path
+    const std::regex regex_votes("votes.(members|devices).(\\w+).(\\w+)");
+    std::smatch base_match;
+    if (!std::regex_match(votedFile, base_match, regex_votes) or base_match.size() != 4) {
+        JAMI_WARN("Invalid votes path: %s", votedFile.c_str());
+        return false;
+    }
+
+    if (base_match[3] != userUri) {
+        JAMI_ERR("Admin voted for other user: %s vs %s", userUri.c_str(), base_match[3]);
+        return false;
+    }
+    std::string votedUri = base_match[2];
+    std::string type = base_match[1];
+
+    // Check that vote file is empty and wasn't modified
+    if (fileAtTree(votedFile, treeOld)) {
+        JAMI_ERR("Invalid voted file modified: %s", votedFile.c_str());
+        return false;
+    }
+    auto vote = fileAtTree(votedFile, treeNew);
+    if (!vote) {
+        JAMI_ERR("No vote file found for: %s", userUri.c_str());
+        return false;
+    }
+    auto* blob = reinterpret_cast<git_blob*>(vote.get());
+    auto voteContent = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)), git_blob_rawsize(blob));
+    if (!voteContent.empty()) {
+        JAMI_ERR("Vote file not empty: %s", votedFile.c_str());
+        return false;
+    }
+
+    // Check that peer voted is only other device or other member
+    if (type == "members") {
+        // Voted uri = not self
+        if (votedUri == userUri) {
+            JAMI_ERR("Detected vote for self: %s", votedUri.c_str());
+            return false;
+        }
+        // file in members or admin
+        adminFile = std::string("admins") + DIR_SEPARATOR_STR + votedUri + ".crt";
+        auto memberFile = std::string("members") + DIR_SEPARATOR_STR + votedUri + ".crt";
+        if (!fileAtTree(adminFile, treeOld) && !fileAtTree(memberFile, treeOld)) {
+            JAMI_ERR("No member file found for vote: %s", votedUri.c_str());
+            return false;
+        }
+    } else if (type == "devices") {
+        // Check not current device
+        if (votedUri == userDevice) {
+            JAMI_ERR("Detected vote for self: %s", votedUri.c_str());
+            return false;
+        }
+        // File in devices
+        deviceFile = std::string("devices") + DIR_SEPARATOR_STR + votedUri + ".crt";
+        if (!fileAtTree(deviceFile, treeOld)) {
+            JAMI_ERR("No device file found for vote: %s", votedUri.c_str());
+            return false;
+        }
+    } else {
+        JAMI_ERR("Unknown vote type: %s", type.c_str());
+        return false;
+    }
+
+    return true;
+}
+
+bool
+ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
+                                            const std::string& uriMember,
+                                            const std::string& commitId,
+                                            const std::string& parentId) const
+{
+    auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
+    if (!cert && cert->issuer)
+        return false;
+    auto userUri = cert->issuer->getId().toString();
+
+    std::string repoPath = git_repository_workdir(repository_.get());
+    // Check that only /invited/uri.crt is added & deviceFile & CRLs
+    auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
+    if (changedFiles.size() == 0) {
+        return false;
+    } else if (changedFiles.size() > 3) {
+        return false;
+    }
+
+    // Check that user added is not sender
+    if (userUri == uriMember) {
+        JAMI_ERR("Member tried to add self: %s", userUri.c_str());
+        return false;
+    }
+
+    // If modified, it's the first commit of a device, we check
+    // that the file wasn't there previously. And the member MUST be added
+    std::string deviceFile = "";
+    std::string invitedFile = "";
+    std::string crlFile = std::string("CRLs") + DIR_SEPARATOR_STR + userUri;
+    for (const auto& changedFile : changedFiles) {
+        if (changedFile == std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt") {
+            deviceFile = changedFile;
+        } else if (changedFile == std::string("invited") + DIR_SEPARATOR_STR + uriMember) {
+            invitedFile = changedFile;
+        } else if (changedFile == crlFile) {
+            // Nothing to do
+        } else {
+            // Invalid file detected
+            JAMI_ERR("Invalid add file detected: %s", changedFile.c_str());
+            return false;
+        }
+    }
+
+    auto treeOld = treeAtCommit(parentId);
+    if (not treeOld)
+        return false;
+    auto treeNew = treeAtCommit(commitId);
+    if (not treeNew)
+        return false;
+    auto blob_invite = fileAtTree(invitedFile, treeNew);
+    if (!blob_invite) {
+        JAMI_ERR("Invitation not found for commit %s", commitId.c_str());
+        return false;
+    }
+
+    auto* blob = reinterpret_cast<git_blob*>(blob_invite.get());
+    auto invitation = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)), git_blob_rawsize(blob));
+    if (!invitation.empty()) {
+        JAMI_ERR("Invitation not empty for commit %s", commitId.c_str());
+        return false;
+    }
+
+    // Check that user not in /banned
+    std::string bannedFile = std::string("banned") + DIR_SEPARATOR_STR + "members"
+                             + DIR_SEPARATOR_STR + uriMember + ".crt";
+    if (fileAtTree(bannedFile, treeOld)) {
+        JAMI_ERR("Tried to add banned member: %s", bannedFile.c_str());
+        return false;
+    }
+
+    return true;
+}
+
+bool
+ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
+                                              const std::string& uriMember,
+                                              const std::string& commitId,
+                                              const std::string& parentId) const
+{
+    auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
+    if (!cert && cert->issuer)
+        return false;
+    auto userUri = cert->issuer->getId().toString();
+    // Check no other files changed
+    auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
+    if (changedFiles.size() != 3) {
+        return false;
+    }
+
+    auto invitedFile = std::string("invited") + DIR_SEPARATOR_STR + uriMember;
+    auto membersFile = std::string("members") + DIR_SEPARATOR_STR + uriMember + ".crt";
+    auto deviceFile = std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt";
+
+    // Retrieve tree for commits
+    auto treeNew = treeAtCommit(commitId);
+    auto treeOld = treeAtCommit(parentId);
+    if (not treeNew or not treeOld)
+        return false;
+
+    // Check /invited removed
+    if (fileAtTree(invitedFile, treeNew)) {
+        JAMI_ERR("%s invited not removed", userUri.c_str());
+        return false;
+    }
+    if (!fileAtTree(invitedFile, treeOld)) {
+        JAMI_ERR("%s invited not found", userUri.c_str());
+        return false;
+    }
+
+    // Check /members added
+    if (!fileAtTree(membersFile, treeNew)) {
+        JAMI_ERR("%s members not found", userUri.c_str());
+        return false;
+    }
+    if (fileAtTree(membersFile, treeOld)) {
+        JAMI_ERR("%s members found too soon", userUri.c_str());
+        return false;
+    }
+
+    // Check /devices added
+    if (!fileAtTree(deviceFile, treeNew)) {
+        JAMI_ERR("%s devices not found", userUri.c_str());
+        return false;
+    }
+    if (fileAtTree(deviceFile, treeOld)) {
+        JAMI_ERR("%s devices found too soon", userUri.c_str());
+        return false;
+    }
+
+    return true;
+}
+
+bool
+ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
+                                               const std::string& uriMember,
+                                               const std::string& commitId,
+                                               const std::string& parentId) const
+{
+    auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
+    if (!cert && cert->issuer)
+        return false;
+    auto userUri = cert->issuer->getId().toString();
+    auto removeSelf = userUri == uriMember;
+
+    // Retrieve tree for recent commit
+    auto treeNew = treeAtCommit(commitId);
+    auto treeOld = treeAtCommit(parentId);
+    if (not treeNew or not treeOld)
+        return false;
+
+    auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
+    std::string deviceFile = std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt";
+    std::string adminFile = std::string("admins") + DIR_SEPARATOR_STR + uriMember + ".crt";
+    std::string memberFile = std::string("members") + DIR_SEPARATOR_STR + uriMember + ".crt";
+    std::string crlFile = std::string("CRLs") + DIR_SEPARATOR_STR + uriMember;
+    std::vector<std::string> voters;
+    std::vector<std::string> devicesRemoved;
+    std::vector<std::string> bannedFiles;
+    // Check that no weird file is added nor removed
+
+    const std::regex regex_votes("votes.(members|devices).(\\w+).(\\w+)");
+    const std::regex regex_devices("devices.(\\w+)\\.crt");
+    const std::regex regex_banned("banned.(members|devices).(\\w+)\\.crt");
+    std::smatch base_match;
+    for (const auto& f : changedFiles) {
+        if (f == deviceFile || f == adminFile || f == memberFile || f == crlFile) {
+            // Ignore
+        } else if (std::regex_match(f, base_match, regex_votes)) {
+            if (base_match.size() != 4 or base_match[2] != uriMember) {
+                JAMI_ERR("Invalid vote file detected :%s", f.c_str());
+                return false;
+            }
+            voters.emplace_back(base_match[3]);
+            // Check that votes were not added here
+            if (!fileAtTree(f, treeOld)) {
+                JAMI_ERR("invalid vote added (%s)", f.c_str());
+                return false;
+            }
+        } else if (std::regex_match(f, base_match, regex_devices)) {
+            if (base_match.size() == 2)
+                devicesRemoved.emplace_back(base_match[1]);
+        } else if (std::regex_match(f, base_match, regex_banned)) {
+            bannedFiles.emplace_back(f);
+            if (base_match.size() != 3 or base_match[2] != uriMember) {
+                JAMI_ERR("Invalid banned file detected :%s", f.c_str());
+                return false;
+            }
+        } else {
+            JAMI_ERR("Unwanted changed file detected: %s", f.c_str());
+            return false;
+        }
+    }
+
+    // Check that removed devices are for removed member (or directly uriMember)
+    for (const auto& deviceUri : devicesRemoved) {
+        deviceFile = std::string("devices") + DIR_SEPARATOR_STR + deviceUri + ".crt";
+        if (!fileAtTree(deviceFile, treeOld)) {
+            JAMI_ERR("device not found added (%s)", deviceFile.c_str());
+            return false;
+        }
+        cert = tls::CertificateStore::instance().getCertificate(deviceUri);
+        if (!cert && cert->issuer)
+            return false;
+        if (uriMember != cert->issuer->getId().toString()
+            and uriMember != deviceUri /* If device is removed */) {
+            JAMI_ERR("device removed but not for removed user (%s)", deviceFile.c_str());
+            return false;
+        }
+    }
+
+    if (removeSelf) {
+        return bannedFiles.empty() && voters.empty();
+    }
+
+    // If not for self check that user device is admin
+    adminFile = std::string("admins") + DIR_SEPARATOR_STR + userUri + ".crt";
+    if (!fileAtTree(adminFile, treeOld)) {
+        JAMI_ERR("admin file (%s) not found", adminFile.c_str());
+        return false;
+    }
+
+    // If not for self check that vote is valid and not added
+    auto nbAdmins = 0;
+    auto nbVotes = 0;
+    std::string repoPath = git_repository_workdir(repository_.get());
+    for (const auto& certificate : fileutils::readDirectory(repoPath + "admins")) {
+        if (certificate.find(".crt") == std::string::npos) {
+            JAMI_WARN("Incorrect file found: %s", certificate.c_str());
+            continue;
+        }
+        nbAdmins += 1;
+        auto adminUri = certificate.substr(0, certificate.size() - std::string(".crt").size());
+        if (std::find(voters.begin(), voters.end(), adminUri) != voters.end()) {
+            nbVotes += 1;
+        }
+    }
+
+    if (nbAdmins == 0 or (static_cast<double>(nbVotes) / static_cast<double>(nbAdmins)) < .5) {
+        JAMI_ERR("Incomplete vote detected (commit: %s)", commitId.c_str());
+        return false;
+    }
+
+    // If not for self check that member or device certificate is moved to banned/
+    return !bannedFiles.empty();
+}
+
+bool
+ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
+                                                  const std::string& commitId) const
+{
+    auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
+    if (!cert && cert->issuer)
+        return false;
+    auto userUri = cert->issuer->getId().toString();
+
+    // Retrieve tree for commit
+    auto tree = treeAtCommit(commitId);
+    if (not tree)
+        return false;
+
+    // Check that /devices/userDevice.crt exists
+    std::string deviceFile = std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt";
+    auto blob_device = fileAtTree(deviceFile, tree);
+    if (!fileAtTree(deviceFile, tree)) {
+        JAMI_ERR("%s announced but not found", deviceFile.c_str());
+        return false;
+    }
+
+    // Check that /(members|admins)/userUri.crt exists
+    std::string membersFile = std::string("members") + DIR_SEPARATOR_STR + userUri + ".crt";
+    std::string adminsFile = std::string("admins") + DIR_SEPARATOR_STR + userUri + ".crt";
+    auto blob_parent = fileAtTree(membersFile, tree);
+    if (not blob_parent)
+        blob_parent = fileAtTree(adminsFile, tree);
+    if (not blob_parent) {
+        JAMI_ERR("Certificate not found for %s", userUri.c_str());
+        return false;
+    }
+
+    // Check that certificate matches
+    auto* blob = reinterpret_cast<git_blob*>(blob_device.get());
+    auto deviceCert = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)), git_blob_rawsize(blob));
+    blob = reinterpret_cast<git_blob*>(blob_parent.get());
+    auto parentCert = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)), git_blob_rawsize(blob));
+    auto deviceCertStr = cert->toString(false);
+    auto parentCertStr = cert->issuer->toString(true);
+
+    return deviceCert == deviceCertStr && parentCert == parentCertStr;
+}
+
+bool
+ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
+                                                 const std::string& commitId) const
+{
+    auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
+    if (!cert && cert->issuer)
+        return false;
+    auto userUri = cert->issuer->getId().toString();
+    auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, ""));
+
+    auto hasDevice = false, hasAdmin = false;
+    std::string adminsFile = std::string("admins") + DIR_SEPARATOR_STR + userUri + ".crt";
+    std::string deviceFile = std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt";
+    std::string crlFile = std::string("CRLs") + DIR_SEPARATOR_STR + userUri;
+    // Check that admin cert is added
+    // Check that device cert is added
+    // Check CRLs added
+    // Check that no other file is added
+    for (const auto& changedFile : changedFiles) {
+        if (changedFile == adminsFile) {
+            hasAdmin = true;
+        } else if (changedFile == deviceFile) {
+            hasDevice = true;
+        } else if (changedFile == crlFile) {
+            // Nothing to do
+        } else {
+            // Invalid file detected
+            JAMI_ERR("Invalid add file detected: %s", changedFile.c_str());
+            return false;
+        }
+    }
+
+    return hasDevice && hasAdmin;
+}
+
 std::string
 ConversationRepository::Impl::commit(const std::string& msg)
 {
@@ -620,6 +1126,14 @@ ConversationRepository::Impl::commit(const std::string& msg)
     return commit_str ? commit_str : "";
 }
 
+std::string
+ConversationRepository::Impl::diffStats(const std::string& newId, const std::string& oldId) const
+{
+    if (auto d = diff(newId, oldId))
+        return diffStats(d);
+    return {};
+}
+
 GitDiff
 ConversationRepository::Impl::diff(const std::string& idNew, const std::string& idOld) const
 {
@@ -689,7 +1203,32 @@ ConversationRepository::Impl::diff(const std::string& idNew, const std::string& 
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::Impl::log(const std::string& from, const std::string& to, unsigned n)
+ConversationRepository::Impl::behind(const std::string& from) const
+{
+    git_oid oid_local, oid_remote;
+    if (git_reference_name_to_id(&oid_local, repository_.get(), "HEAD") < 0) {
+        JAMI_ERR("Cannot get reference for HEAD");
+        return {};
+    }
+    if (git_oid_fromstr(&oid_remote, from.c_str()) < 0) {
+        JAMI_ERR("Cannot get reference for commit %s", from.c_str());
+        return {};
+    }
+    size_t ahead = 0, behind = 0;
+    if (git_graph_ahead_behind(&ahead, &behind, repository_.get(), &oid_local, &oid_remote) != 0) {
+        JAMI_ERR("Cannot get commits ahead for commit %s", from.c_str());
+        return {};
+    }
+
+    if (behind == 0) {
+        return {}; // Nothing to validate
+    }
+
+    return log(from, "", behind);
+}
+
+std::vector<ConversationCommit>
+ConversationRepository::Impl::log(const std::string& from, const std::string& to, unsigned n) const
 {
     std::vector<ConversationCommit> commits {};
 
@@ -769,6 +1308,55 @@ ConversationRepository::Impl::log(const std::string& from, const std::string& to
     }
 
     return commits;
+}
+
+GitObject
+ConversationRepository::Impl::fileAtTree(const std::string& path, const GitTree& tree) const
+{
+    git_object* blob_ptr = nullptr;
+    if (git_object_lookup_bypath(&blob_ptr,
+                                 reinterpret_cast<git_object*>(tree.get()),
+                                 path.c_str(),
+                                 GIT_OBJECT_BLOB)
+        != 0) {
+        return GitObject {nullptr, git_object_free};
+    }
+    return GitObject {blob_ptr, git_object_free};
+}
+
+GitTree
+ConversationRepository::Impl::treeAtCommit(const std::string& commitId) const
+{
+    git_oid oid;
+    git_commit* commit = nullptr;
+    if (git_oid_fromstr(&oid, commitId.c_str()) < 0
+        || git_commit_lookup(&commit, repository_.get(), &oid) < 0) {
+        JAMI_WARN("Failed to look up commit %s", commitId.c_str());
+        return GitTree {nullptr, git_tree_free};
+    }
+    GitCommit gc = {commit, git_commit_free};
+    git_tree* tree = nullptr;
+    if (git_commit_tree(&tree, gc.get()) < 0) {
+        JAMI_ERR("Could not look up initial tree");
+        return GitTree {nullptr, git_tree_free};
+    }
+    return GitTree {tree, git_tree_free};
+}
+
+std::string
+ConversationRepository::Impl::getCommitType(const std::string& commitMsg) const
+{
+    std::string type = {};
+    std::string err;
+    Json::Value cm;
+    Json::CharReaderBuilder rbuilder;
+    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+    if (reader->parse(commitMsg.data(), commitMsg.data() + commitMsg.size(), &cm, &err)) {
+        type = cm["type"].asString();
+    } else {
+        JAMI_WARN("%s", err.c_str());
+    }
+    return type;
 }
 
 std::string
@@ -860,6 +1448,21 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
     git_repository* rep = nullptr;
     std::stringstream url;
     url << "git://" << deviceId << '/' << conversationId;
+
+    git_clone_options clone_options;
+    git_clone_options_init(&clone_options, GIT_CLONE_OPTIONS_VERSION);
+    clone_options.fetch_opts = GIT_FETCH_OPTIONS_INIT;
+    size_t received_bytes = 0;
+    clone_options.fetch_opts.callbacks.payload = static_cast<void*>(&received_bytes);
+    clone_options.fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats, void* payload) {
+        *(static_cast<size_t*>(payload)) += stats->received_bytes;
+        if (*(static_cast<size_t*>(payload)) > MAX_FETCH_SIZE) {
+            JAMI_ERR("Abort fetching repository, the fetch is too big: %lu bytes", *(static_cast<size_t*>(payload)));
+            return -1;
+        }
+        return 0;
+    };
+
     if (git_clone(&rep, url.str().c_str(), path.c_str(), nullptr) < 0) {
         const git_error* err = giterr_last();
         if (err)
@@ -867,8 +1470,127 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
         return nullptr;
     }
     git_repository_free(rep);
+    auto repo = std::make_unique<ConversationRepository>(account, conversationId);
+    if (!repo->validClone()) {
+        JAMI_ERR("Error when validating remote conversation");
+        return nullptr;
+    }
     JAMI_INFO("New conversation cloned in %s", path.c_str());
-    return std::make_unique<ConversationRepository>(account, conversationId);
+    return repo;
+}
+
+bool
+ConversationRepository::Impl::validCommits(
+    const std::vector<ConversationCommit>& commitsToValidate) const
+{
+    for (const auto& commit : commitsToValidate) {
+        auto userDevice = commit.author.email;
+        auto validUserAtCommit = commit.id;
+        if (commit.parents.size() == 0) {
+            if (!checkInitialCommit(userDevice, commit.id)) {
+                JAMI_WARN("Malformed initial commit %s. Please check you use the latest "
+                          "version of Jami, or that your contact is not doing unwanted stuff.",
+                          commit.id.c_str());
+                return false;
+            }
+        } else if (commit.parents.size() == 1) {
+            auto type = getCommitType(commit.commit_msg);
+            if (type == "vote") {
+                // Check that vote is valid
+                if (!checkVote(userDevice, commit.id, commit.parents[0])) {
+                    JAMI_WARN("Malformed vote commit %s. Please check you use the latest version "
+                              "of Jami, or that your contact is not doing unwanted stuff.",
+                              commit.id.c_str());
+                    return false;
+                }
+            } else if (type == "member") {
+                std::string err;
+                Json::Value root;
+                Json::CharReaderBuilder rbuilder;
+                auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+                if (!reader->parse(commit.commit_msg.data(),
+                                   commit.commit_msg.data() + commit.commit_msg.size(),
+                                   &root,
+                                   &err)) {
+                    JAMI_ERR() << "Failed to parse " << err;
+                    return false;
+                }
+                std::string action = root["action"].asString();
+                std::string uriMember = root["uri"].asString();
+                if (action == "add") {
+                    if (!checkValidAdd(userDevice, uriMember, commit.id, commit.parents[0])) {
+                        JAMI_WARN(
+                            "Malformed add commit %s. Please check you use the latest version "
+                            "of Jami, or that your contact is not doing unwanted stuff.",
+                            commit.id.c_str());
+                        return false;
+                    }
+                } else if (action == "join") {
+                    if (!checkValidJoins(userDevice, uriMember, commit.id, commit.parents[0])) {
+                        JAMI_WARN(
+                            "Malformed joins commit %s. Please check you use the latest version "
+                            "of Jami, or that your contact is not doing unwanted stuff.",
+                            commit.id.c_str());
+                        return false;
+                    }
+                } else if (action == "remove") {
+                    // In this case, we remove the user. So if self, the user will not be
+                    // valid for this commit. Check previous commit
+                    validUserAtCommit = commit.parents[0];
+                    if (!checkValidRemove(userDevice, uriMember, commit.id, commit.parents[0])) {
+                        JAMI_WARN(
+                            "Malformed removes commit %s. Please check you use the latest version "
+                            "of Jami, or that your contact is not doing unwanted stuff.",
+                            commit.id.c_str());
+                        return false;
+                    }
+                } else if (action == "ban") {
+                    // Note device.size() == "member".size()
+                    if (!checkValidRemove(userDevice, uriMember, commit.id, commit.parents[0])) {
+                        JAMI_WARN(
+                            "Malformed removes commit %s. Please check you use the latest version "
+                            "of Jami, or that your contact is not doing unwanted stuff.",
+                            commit.id.c_str());
+                        return false;
+                    }
+                } else {
+                    JAMI_WARN("Malformed member commit %s with action %s. Please check you use the "
+                              "latest "
+                              "version of Jami, or that your contact is not doing unwanted stuff.",
+                              commit.id.c_str(),
+                              action.c_str());
+                    return false;
+                }
+            } else {
+                // Note: accept all mimetype here, as we can have new mimetypes
+                // Just avoid to add weird files
+                // Check that no weird file is added outside device cert nor removed
+                if (!checkOnlyDeviceCertificate(userDevice, commit.id, commit.parents[0])) {
+                    JAMI_WARN("Malformed %s commit %s. Please check you use the latest "
+                              "version of Jami, or that your contact is not doing unwanted stuff.",
+                              type.c_str(),
+                              commit.id.c_str());
+                    return false;
+                }
+            }
+
+            // For all commit, check that user is valid,
+            // So that user certificate MUST be in /members or /admins
+            // and device cert MUST be in /devices
+            if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
+                JAMI_WARN(
+                    "Malformed commit %s. Please check you use the latest version of Jami, or "
+                    "that your contact is not doing unwanted stuff. %s",
+                    validUserAtCommit.c_str(),
+                    commit.commit_msg.c_str());
+                return false;
+            }
+        } else {
+            // Merge commit, for now, nothing to validate
+        }
+        JAMI_DBG("Validate commit %s", commit.id.c_str());
+    }
+    return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -929,12 +1651,75 @@ ConversationRepository::addMember(const std::string& uri)
     return pimpl_->commit(Json::writeString(wbuilder, json));
 }
 
+std::string
+ConversationRepository::amend(const std::string& id, const std::string& msg)
+{
+    auto account = pimpl_->account_.lock();
+    if (!account)
+        return {};
+    auto deviceId = std::string(account->currentDeviceId());
+    auto name = account->getDisplayName();
+    if (name.empty())
+        name = deviceId;
+
+    git_signature* sig_ptr = nullptr;
+    git_oid tree_id, commit_id;
+
+    // Sign commit's buffer
+    if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
+        JAMI_ERR("Unable to create a commit signature.");
+        return {};
+    }
+    GitSignature sig {sig_ptr, git_signature_free};
+
+    git_commit* commit_ptr = nullptr;
+    if (git_oid_fromstr(&tree_id, id.c_str()) < 0
+        || git_commit_lookup(&commit_ptr, pimpl_->repository_.get(), &tree_id) < 0) {
+        JAMI_WARN("Failed to look up commit %s", id.c_str());
+        return {};
+    }
+    GitCommit commit {commit_ptr, git_commit_free};
+
+    if (git_commit_amend(
+            &commit_id, commit.get(), nullptr, sig.get(), sig.get(), nullptr, msg.c_str(), nullptr)
+        < 0) {
+        JAMI_ERR("Could not amend commit");
+        return {};
+    }
+
+    // Move commit to main branch
+    git_reference* ref_ptr = nullptr;
+    if (git_reference_create(&ref_ptr,
+                             pimpl_->repository_.get(),
+                             "refs/heads/main",
+                             &commit_id,
+                             true,
+                             nullptr)
+        < 0) {
+        JAMI_WARN("Could not move commit to main");
+    }
+    git_reference_free(ref_ptr);
+
+    auto commit_str = git_oid_tostr_s(&commit_id);
+    if (commit_str) {
+        JAMI_DBG("Commit %s amended (new id: %s)", id.c_str(), commit_str);
+        return commit_str;
+    }
+    return {};
+}
+
 bool
 ConversationRepository::fetch(const std::string& remoteDeviceId)
 {
     // Fetch distant repository
     git_remote* remote_ptr = nullptr;
     git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
+
+    auto lastMsg = logN("", 1);
+    if (lastMsg.size() == 0) {
+        return false;
+    }
+    auto lastCommit = lastMsg[0].id;
 
     // Assert that repository exists
     std::string channelName = "git://" + remoteDeviceId + '/' + pimpl_->id_;
@@ -956,6 +1741,16 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     }
     GitRemote remote {remote_ptr, git_remote_free};
 
+    size_t received_bytes = 0;
+    fetch_opts.callbacks.payload = static_cast<void*>(&received_bytes);
+    fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats, void* payload) {
+        *(static_cast<size_t*>(payload)) += stats->received_bytes;
+        if (*(static_cast<size_t*>(payload)) > MAX_FETCH_SIZE) {
+            JAMI_ERR("Abort fetching repository, the fetch is too big: %lu bytes", *(static_cast<size_t*>(payload)));
+            return -1;
+        }
+        return 0;
+    };
     if (git_remote_fetch(remote.get(), nullptr, &fetch_opts, "fetch") < 0) {
         const git_error* err = giterr_last();
         if (err)
@@ -969,7 +1764,8 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
 }
 
 std::string
-ConversationRepository::remoteHead(const std::string& remoteDeviceId, const std::string& branch)
+ConversationRepository::remoteHead(const std::string& remoteDeviceId,
+                                   const std::string& branch) const
 {
     git_remote* remote_ptr = nullptr;
     if (git_remote_lookup(&remote_ptr, pimpl_->repository_.get(), remoteDeviceId.c_str()) < 0) {
@@ -1141,10 +1937,7 @@ ConversationRepository::merge(const std::string& merge_id)
 std::string
 ConversationRepository::diffStats(const std::string& newId, const std::string& oldId) const
 {
-    auto diff = pimpl_->diff(newId, oldId);
-    if (!diff)
-        return {};
-    return pimpl_->diffStats(diff);
+    return pimpl_->diffStats(newId, oldId);
 }
 
 std::vector<std::string>
@@ -1177,7 +1970,7 @@ ConversationRepository::join()
         return {};
     }
     auto uri = parentCert->getId().toString();
-    std::string membersPath = repoPath + "members" + DIR_SEPARATOR_STR + uri + ".crt";
+    std::string membersPath = repoPath + "members" + DIR_SEPARATOR_STR;
     std::string memberFile = membersPath + DIR_SEPARATOR_STR + uri + ".crt";
     std::string adminsPath = repoPath + "admins" + DIR_SEPARATOR_STR + uri + ".crt";
     if (fileutils::isFile(memberFile) or fileutils::isFile(adminsPath)) {
@@ -1186,7 +1979,7 @@ ConversationRepository::join()
     }
     // Remove invited/uri.crt
     std::string invitedPath = repoPath + "invited";
-    fileutils::remove(fileutils::getFullPath(invitedPath, uri + ".crt"));
+    fileutils::remove(fileutils::getFullPath(invitedPath, uri));
     // Add members/uri.crt
     if (!fileutils::recursive_mkdir(membersPath, 0700)) {
         JAMI_ERR("Error when creating %s. Abort create conversations", membersPath.c_str());
@@ -1348,7 +2141,7 @@ std::string
 ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
 {
     // Count ratio admin/votes
-    auto nbAdmins = 0, nbVote = 0;
+    auto nbAdmins = 0, nbVotes = 0;
     // For each admin, check if voted
     std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
     std::string adminsPath = repoPath + "admins";
@@ -1372,10 +2165,10 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
         auto adminUri = certificate.substr(0, certificate.size() - std::string(".crt").size());
         nbAdmins += 1;
         if (fileutils::isFile(fileutils::getFullPath(voteDirectory, adminUri)))
-            nbVote += 1;
+            nbVotes += 1;
     }
 
-    if (nbAdmins > 0 && (static_cast<double>(nbVote) / static_cast<double>(nbAdmins)) > .5) {
+    if (nbAdmins > 0 && (static_cast<double>(nbVotes) / static_cast<double>(nbAdmins)) > .5) {
         JAMI_WARN("More than half of the admins voted to ban %s, apply the ban", uri.c_str());
 
         // Remove vote directory
@@ -1434,6 +2227,24 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
 
     // If vote nok
     return {};
+}
+
+bool
+ConversationRepository::validFetch(const std::string& remoteDevice) const
+{
+    auto newCommit = remoteHead(remoteDevice);
+    if (not pimpl_ or newCommit.empty()) {
+        return false;
+    }
+    auto commitsToValidate = pimpl_->behind(newCommit);
+    std::reverse(std::begin(commitsToValidate), std::end(commitsToValidate));
+    return pimpl_->validCommits(commitsToValidate);
+}
+
+bool
+ConversationRepository::validClone() const
+{
+    return pimpl_->validCommits(logN("", 0));
 }
 
 } // namespace jami
