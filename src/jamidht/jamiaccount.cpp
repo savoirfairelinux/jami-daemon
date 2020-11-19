@@ -3507,6 +3507,9 @@ JamiAccount::sendTextMessage(const std::string& to,
             std::unique_lock<std::mutex> l(confirm->lock);
             if (not confirm->replied) {
                 if (auto this_ = w.lock()) {
+                    for (const auto& [key, value] : payloads) {
+                        JAMI_WARN("@@@ %s %s", key.c_str(), value.c_str());
+                    }
                     JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token
                                << "] Timeout";
                     for (auto& t : confirm->listenTokens)
@@ -4180,11 +4183,6 @@ JamiAccount::fetchNewCommits(const std::string& peer,
         }
         conversationsUsed_[conversationId] = conversation->second.get();
         itUsed = conversationsUsed_.find(conversationId);
-        if (itUsed != conversationsUsed_.end()) {
-            JAMI_WARN("@@@ FOUND!");
-        }
-
-        JAMI_WARN("@@@@ CONV USED: %s", conversationId.c_str());
 
         if (!itUsed->second->isMember(peer, true)) {
             JAMI_WARN("[Account %s] %s is not a member of %s",
