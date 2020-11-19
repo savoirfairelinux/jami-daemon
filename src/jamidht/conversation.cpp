@@ -127,7 +127,6 @@ Conversation::Impl::loadMessages(const std::string& fromMessage,
         if (parentsSize > 1) {
             type = "merge";
         }
-        // TODO check diff for member
         std::string body {};
         if (type.empty()) {
             std::string err;
@@ -181,14 +180,8 @@ Conversation::addMember(const std::string& contactUri)
         JAMI_WARN("Could not add member %s because this member is banned", contactUri.c_str());
         return {};
     }
-    // Retrieve certificate
-    auto cert = tls::CertificateStore::instance().getCertificate(contactUri);
-    if (!cert) {
-        JAMI_WARN("Could not add member %s because no certificate is found", contactUri.c_str());
-        return {};
-    }
     // Add member files and commit
-    return pimpl_->repository_->addMember(cert);
+    return pimpl_->repository_->addMember(contactUri);
 }
 
 bool
@@ -343,9 +336,13 @@ Conversation::mergeHistory(const std::string& uri)
         return false;
     }
 
-    // In the future, the diff should be analyzed to know if the
-    // history presented by the peer is correct or not.
+    // Validate commit
+    if (!pimpl_->repository_->validFetch(uri)) {
+        JAMI_ERR("Could not validate history with %s", uri.c_str());
+        return false;
+    }
 
+    // If validated, merge
     if (!pimpl_->repository_->merge(remoteHead)) {
         JAMI_ERR("Could not merge history with %s", uri.c_str());
         return false;
