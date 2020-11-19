@@ -122,7 +122,8 @@ public:
      * @param branch                Remote branch to check (default: main)
      * @return the commit id pointed
      */
-    std::string remoteHead(const std::string& remoteDeviceId, const std::string& branch = "main");
+    std::string remoteHead(const std::string& remoteDeviceId,
+                           const std::string& branch = "main") const;
 
     /**
      * Return the conversation id
@@ -135,6 +136,14 @@ public:
      * @return <empty> on failure, else the message id
      */
     std::string commitMessage(const std::string& msg);
+
+    /**
+     * Amend a commit message
+     * @param id      The commit to amend
+     * @param msg     The commit message of the commit
+     * @return <empty> on failure, else the message id
+     */
+    std::string amend(const std::string& id, const std::string& msg);
 
     /**
      * Get commits from [last-n, last]
@@ -189,6 +198,10 @@ public:
 
     std::string voteKick(const std::string& uri, bool isDevice);
     std::string resolveVote(const std::string& uri, bool isDevice);
+
+    bool validFetch(const std::string& remoteDevice) const;
+    bool validClone() const;
+    std::string getCommitType(const std::string& commitMsg) const;
 
 private:
     ConversationRepository() = delete;
