@@ -245,6 +245,7 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
                         JAMI_WARN(
                             "[call:%s] Ending call because underlying SIP transport was closed",
                             this_->getCallId().c_str());
+                        this_->stopAllMedia();
                         this_->onFailure(ECONNRESET);
                     }
                 }
