@@ -3508,6 +3508,9 @@ JamiAccount::sendTextMessage(const std::string& to,
             std::unique_lock<std::mutex> l(confirm->lock);
             if (not confirm->replied) {
                 if (auto this_ = w.lock()) {
+                    for (const auto& [key, value] : payloads) {
+                        JAMI_WARN("@@@ %s %s", key.c_str(), value.c_str());
+                    }
                     JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token
                                << "] Timeout";
                     for (auto& t : confirm->listenTokens)
