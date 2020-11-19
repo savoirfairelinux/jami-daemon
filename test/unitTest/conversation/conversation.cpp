@@ -90,29 +90,29 @@ private:
     // void testAdminRemoveConversationShouldPromoteOther();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
-    // CPPUNIT_TEST(testCreateConversation);
-    // CPPUNIT_TEST(testGetConversation);
-    // CPPUNIT_TEST(testGetConversationsAfterRm);
-    // CPPUNIT_TEST(testRemoveInvalidConversation);
-    // CPPUNIT_TEST(testRemoveConversationNoMember);
-    // CPPUNIT_TEST(testRemoveConversationWithMember);
-    // CPPUNIT_TEST(testAddMember);
-    // CPPUNIT_TEST(testAddMemberInvalid);
-    // CPPUNIT_TEST(testAddOfflineMemberThenConnects);
-    // CPPUNIT_TEST(testGetMembers);
-    // CPPUNIT_TEST(testSendMessage);
-    // CPPUNIT_TEST(testSendMessageTriggerMessageReceived);
-    // CPPUNIT_TEST(testGetRequests);
-    // CPPUNIT_TEST(testDeclineRequest);
-    // CPPUNIT_TEST(testSendMessageToMultipleParticipants);
-    // CPPUNIT_TEST(testPingPongMessages);
-    // CPPUNIT_TEST(testIsComposing);
-    // CPPUNIT_TEST(testRemoveMember);
-    // CPPUNIT_TEST(testBanDevice);
-    // CPPUNIT_TEST(testMemberTryToRemoveAdmin);
-    // CPPUNIT_TEST(testBannedMemberCannotSendMessage);
+    CPPUNIT_TEST(testCreateConversation);
+    CPPUNIT_TEST(testGetConversation);
+    CPPUNIT_TEST(testGetConversationsAfterRm);
+    CPPUNIT_TEST(testRemoveInvalidConversation);
+    CPPUNIT_TEST(testRemoveConversationNoMember);
+    CPPUNIT_TEST(testRemoveConversationWithMember);
+    CPPUNIT_TEST(testAddMember);
+    CPPUNIT_TEST(testAddMemberInvalid);
+    CPPUNIT_TEST(testAddOfflineMemberThenConnects);
+    CPPUNIT_TEST(testGetMembers);
+    CPPUNIT_TEST(testSendMessage);
+    CPPUNIT_TEST(testSendMessageTriggerMessageReceived);
+    CPPUNIT_TEST(testGetRequests);
+    CPPUNIT_TEST(testDeclineRequest);
+    CPPUNIT_TEST(testSendMessageToMultipleParticipants);
+    CPPUNIT_TEST(testPingPongMessages);
+    CPPUNIT_TEST(testIsComposing);
+    CPPUNIT_TEST(testRemoveMember);
+    CPPUNIT_TEST(testBanDevice);
+    CPPUNIT_TEST(testMemberTryToRemoveAdmin);
+    CPPUNIT_TEST(testBannedMemberCannotSendMessage);
     CPPUNIT_TEST(testAddBannedMember);
-    // CPPUNIT_TEST(testAdminCannotKickTheirself);
+    CPPUNIT_TEST(testAdminCannotKickTheirself);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -500,7 +500,7 @@ ConversationTest::testAddMember()
     CPPUNIT_ASSERT(!fileutils::isFile(bobInvited));
     auto bobMember = clonedPath + DIR_SEPARATOR_STR + "members" + DIR_SEPARATOR_STR + bobUri
                      + ".crt";
-    CPPUNIT_ASSERT(!fileutils::isFile(bobMember));
+    CPPUNIT_ASSERT(fileutils::isFile(bobMember));
 }
 
 void
@@ -1168,6 +1168,8 @@ ConversationTest::testBanDevice()
         DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string&, const std::map<std::string, std::string>&) {
                 auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
+                if (!bob2Account)
+                    return;
                 auto details = bob2Account->getVolatileAccountDetails();
                 auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
                 if (daemonStatus == "REGISTERED")
@@ -1293,7 +1295,7 @@ ConversationTest::testBannedMemberCannotSendMessage()
                        && message["type"] == "member") {
                 memberMessageGenerated = true;
             } else if (accountId == aliceId && conversationId == convId
-                       && message["type"] == "plain/text") {
+                       && message["type"] == "text/plain") {
                 aliceMessageReceived = true;
             }
             cv.notify_one();
@@ -1421,7 +1423,7 @@ ConversationTest::testAdminCannotKickTheirself()
                        && message["type"] == "member") {
                 memberMessageGenerated = true;
             } else if (accountId == aliceId && conversationId == convId
-                       && message["type"] == "plain/text") {
+                       && message["type"] == "text/plain") {
                 aliceMessageReceived = true;
             }
             cv.notify_one();
