@@ -371,7 +371,7 @@ JamiAccount::newIncomingCall(const std::string& from,
                     auto call = Manager::instance()
                                     .callFactory.newSipCall(shared(),
                                                                   Call::CallType::INCOMING);
-                    call->setPeerUri(RING_URI_PREFIX + from);
+                    call->setPeerUri(JAMI_URI_PREFIX + from);
                     call->setPeerNumber(from);
                     call->updateDetails(details);
                     return call;
@@ -489,7 +489,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);
 
     call->setPeerNumber(toUri + "@ring.dht");
-    call->setPeerUri(RING_URI_PREFIX + toUri);
+    call->setPeerUri(JAMI_URI_PREFIX + toUri);
     call->setState(Call::ConnectionState::TRYING);
     std::weak_ptr<SIPCall> wCall = call;
 
@@ -500,7 +500,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                                        if (response == NameDirectory::Response::found)
                                            if (auto call = wCall.lock()) {
                                                call->setPeerRegisteredName(result);
-                                               call->setPeerUri(RING_URI_PREFIX + result);
+                                               call->setPeerUri(JAMI_URI_PREFIX + result);
                                            }
                                    });
 #endif
@@ -2460,7 +2460,7 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                                    const dht::InfoHash& from_id)
 {
     auto from = from_id.toString();
-    call->setPeerUri(RING_URI_PREFIX + from);
+    call->setPeerUri(JAMI_URI_PREFIX + from);
     std::weak_ptr<SIPCall> wcall = call;
 #if HAVE_RINGNS
     accountManager_->lookupAddress(from,
@@ -2469,7 +2469,7 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                                        if (response == NameDirectory::Response::found)
                                            if (auto call = wcall.lock()) {
                                                call->setPeerRegisteredName(result);
-                                               call->setPeerUri(RING_URI_PREFIX + result);
+                                               call->setPeerUri(JAMI_URI_PREFIX + result);
                                            }
                                    });
 #endif
@@ -3441,9 +3441,9 @@ JamiAccount::getUserUri() const
 {
 #ifdef HAVE_RINGNS
     if (not registeredName_.empty())
-        return RING_URI_PREFIX + registeredName_;
+        return JAMI_URI_PREFIX + registeredName_;
 #endif
-    return RING_URI_PREFIX + username_;
+    return JAMI_URI_PREFIX + username_;
 }
 
 std::vector<DRing::Message>
