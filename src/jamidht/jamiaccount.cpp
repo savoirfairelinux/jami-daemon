@@ -2489,7 +2489,7 @@ JamiAccount::doRegister_()
                         // Check if wanted remote it's our side (git://removeDevice/conversationId)
                         return;
                     }
-	
+
                     if (!isConversation(conversationId)) {
                         JAMI_WARN("[Account %s] Git server requested, but for a non existing "
                                   "conversation (%s)",
@@ -4542,7 +4542,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
     }
     sipConns_[id] = {};
     // If not present, create it
-        // If not present, create it
+    // If not present, create it
     JAMI_INFO("[Account %s] Ask %s for a new SIP channel",
               getAccountID().c_str(),
               deviceId.to_c_str());
