@@ -63,7 +63,8 @@ public:
         } else {
             clearSockets();
         }
-        eventLoopThread_.join();
+        if (eventLoopThread_.joinable())
+            eventLoopThread_.join();
     }
 
     void clearSockets()
@@ -72,6 +73,10 @@ public:
         {
             std::lock_guard<std::mutex> lkSockets(socketsMutex);
             socks = std::move(sockets);
+            for (auto& [key, channelData]: channelDatas_) {
+                if (channelData)
+                    channelData->cv.notify_all();
+            }
         }
         for (auto& socket : socks) {
             // Just trigger onShutdown() to make client know
@@ -293,6 +298,7 @@ MultiplexedSocket::Impl::handleControlPacket(std::vector<uint8_t>&& pkt)
 void
 MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, std::vector<uint8_t>&& pkt)
 {
+    std::lock_guard<std::mutex> lkSockets(socketsMutex);
     auto sockIt = sockets.find(channel);
     auto dataIt = channelDatas_.find(channel);
     if (channel > 0 && sockIt->second && dataIt->second) {
@@ -300,7 +306,6 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, std::vector<uint8
             sockIt->second->shutdown();
             dataIt->second->cv.notify_all();
             channelDatas_.erase(dataIt);
-            std::lock_guard<std::mutex> lkSockets(socketsMutex);
             sockets.erase(sockIt);
         } else {
             GenericSocket<uint8_t>::RecvCb cb;
@@ -415,6 +420,7 @@ MultiplexedSocket::read(const uint16_t& channel, uint8_t* buf, std::size_t len, 
         ec = std::make_error_code(std::errc::broken_pipe);
         return -1;
     }
+    std::lock_guard<std::mutex> lkSockets(pimpl_->socketsMutex);
     auto dataIt = pimpl_->channelDatas_.find(channel);
     if (dataIt == pimpl_->channelDatas_.end() || !dataIt->second) {
         ec = std::make_error_code(std::errc::broken_pipe);
@@ -491,7 +497,7 @@ MultiplexedSocket::waitForData(const uint16_t& channel,
         return -1;
     }
     std::unique_lock<std::mutex> lk {channelData->mutex};
-    channelData->cv.wait_for(lk, timeout, [&] { return !channelData->buf.empty(); });
+    channelData->cv.wait_for(lk, timeout, [&] { return !channelData->buf.empty() or pimpl_->isShutdown_; });
     return channelData->buf.size();
 }
 
