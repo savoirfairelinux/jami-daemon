@@ -2531,6 +2531,11 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
         pendingCalls_.clear();
     }
 
+    // Stop all current p2p connections if account is disabled
+    // Else, we let the system managing if the co is down or not
+    if (not isEnabled())
+        shutdownConnections();
+
     dht_->join();
 
     // Release current upnp mapping if any.
@@ -2540,11 +2545,6 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     }
 
     lock.unlock();
-
-    // Stop all current p2p connections if account is disabled
-    // Else, we let the system managing if the co is down or not
-    if (not isEnabled())
-        shutdownConnections();
 
     setRegistrationState(RegistrationState::UNREGISTERED);
 
