@@ -63,7 +63,8 @@ public:
         } else {
             clearSockets();
         }
-        eventLoopThread_.join();
+        if (eventLoopThread_.joinable())
+            eventLoopThread_.join();
     }
 
     void clearSockets()
