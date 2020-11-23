@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3886dbae_9d8c5313",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 52
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-11-23T21:22:35Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027path\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "d51a1de5b7a76413dcff02d03ca7b99a2a8ad41a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "bc70b549_8812d013",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 52
+      },
+      "lineNbr": 460,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-11-23T21:22:35Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027socket\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "d51a1de5b7a76413dcff02d03ca7b99a2a8ad41a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d54cce2a_1ab98208",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 52
+      },
+      "lineNbr": 460,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-11-23T21:22:35Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027socket\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "d51a1de5b7a76413dcff02d03ca7b99a2a8ad41a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "dd169c25_5235e134",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 52
+      },
+      "lineNbr": 315,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-11-23T21:22:35Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "d51a1de5b7a76413dcff02d03ca7b99a2a8ad41a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
