@@ -97,6 +97,7 @@ Conference::Conference()
                     partURI = partURI.substr(0, separator);
                 auto isModerator = shared->isModerator(partURI);
                 newInfo.emplace_back(ParticipantInfo {std::move(uri),
+                                                      "",
                                                       active,
                                                       info.x,
                                                       info.y,
@@ -114,7 +115,7 @@ Conference::Conference()
                     uri = call->getPeerNumber();
                 auto isModerator = shared->isModerator(uri);
                 newInfo.emplace_back(
-                    ParticipantInfo {std::move(uri), false, 0, 0, 0, 0, true, false, isModerator});
+                    ParticipantInfo {std::move(uri), "", false, 0, 0, 0, 0, true, false, isModerator});
             }
 
             {
@@ -249,33 +250,38 @@ ConfInfo::toVectorMapStringString() const
 void
 Conference::sendConferenceInfos()
 {
-    Json::Value jsonArray;
-    std::vector<std::map<std::string, std::string>> toSend;
-    {
-        std::lock_guard<std::mutex> lk2(confInfoMutex_);
-        for (const auto& info : confInfo_) {
-            jsonArray.append(info.toJson());
-        }
-        toSend = confInfo_.toVectorMapStringString();
-    }
-
-    Json::StreamWriterBuilder builder;
-    const auto confInfo = Json::writeString(builder, jsonArray);
     // Inform calls that the layout has changed
     for (const auto& participant_id : participants_) {
+        // Produce specific JSON for each participant (2 separate accounts can host ...
+        // a conference on a same device, the conference is not link to one account).
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
             auto w = call->getAccount();
             auto account = w.lock();
             if (!account)
                 continue;
+
+            ConfInfo confInfo = std::move(getConfInfoHostUri(account->getUsername()+ "@ring.dht"));
+            Json::Value jsonArray = {};
+            std::vector<std::map<std::string, std::string>> toSend = {};
+            {
+                std::lock_guard<std::mutex> lk2(confInfoMutex_);
+                for (const auto& info : confInfo) {
+                    jsonArray.append(info.toJson());
+                }
+                toSend = confInfo.toVectorMapStringString();
+            }
+
+            Json::StreamWriterBuilder builder = {};
+            const auto confInfoStr = Json::writeString(builder, jsonArray);
+            JAMI_ERR("@@@ confInfoStr: %s", confInfoStr.c_str());
             call->sendTextMessage(std::map<std::string, std::string> {{"application/confInfo+json",
-                                                                       confInfo}},
-                                  account->getFromUri());
+                                                                    confInfoStr}},
+                                account->getFromUri());
         }
     }
 
     // Inform client that layout has changed
-    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, std::move(toSend));
+    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, confInfo_.toVectorMapStringString());
 }
 
 void
@@ -570,6 +576,19 @@ Conference::updateModerators()
         }
     }
     sendConferenceInfos();
+}
+
+ConfInfo
+Conference::getConfInfoHostUri(const std::string& uri)
+{
+    ConfInfo newInfo = confInfo_;
+    for (auto& info : newInfo) {
+        if (info.uri.empty()) {
+            info.uri = uri;
+            break;
+        }
+    }
+    return newInfo;
 }
 
 } // namespace jami
