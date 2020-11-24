@@ -41,6 +41,7 @@
 #include "dring/media_const.h"
 #include "client/ring_signal.h"
 #include "ice_transport.h"
+#include "conference.h"
 #ifdef ENABLE_PLUGIN
 // Plugin manager
 #include "plugin/jamipluginmanager.h"
@@ -1283,6 +1284,7 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
         avformatrtp_->setMuted(isAudioMuted_);
         if (not isSubcall())
             emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
+
     }
 }
 
@@ -1702,6 +1704,20 @@ SIPCall::setRemoteRecording(bool state)
         emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), false);
     }
     peerRecording_ = state;
+}
+
+void
+SIPCall::setPeerMute(bool state)
+{
+    if (state) {
+        JAMI_WARN("SIP Peer muted");
+    } else {
+        JAMI_WARN("SIP Peer ummuted");
+    }
+    peerMuted_ = state;
+    if (auto conf = Manager::instance().getConferenceFromID(getConfId())) {
+        conf->setMutedParticipant(getPeerNumber(), state);
+    }
 }
 
 } // namespace jami
