@@ -46,6 +46,7 @@ class VideoMixer;
 struct ParticipantInfo
 {
     std::string uri;
+    std::string devURI;
     bool active {false};
     int x {0};
     int y {0};
@@ -58,6 +59,7 @@ struct ParticipantInfo
     void fromJson(const Json::Value& v)
     {
         uri = v["uri"].asString();
+        devURI = v["devURI"].asString();
         active = v["active"].asBool();
         x = v["x"].asInt();
         y = v["y"].asInt();
@@ -72,6 +74,7 @@ struct ParticipantInfo
     {
         Json::Value val;
         val["uri"] = uri;
+        val["devURI"] = devURI;
         val["active"] = active;
         val["x"] = x;
         val["y"] = y;
@@ -86,6 +89,7 @@ struct ParticipantInfo
     std::map<std::string, std::string> toMap() const
     {
         return {{"uri", uri},
+                {"devURI", devURI},
                 {"active", active ? "true" : "false"},
                 {"x", std::to_string(x)},
                 {"y", std::to_string(y)},
@@ -247,6 +251,8 @@ private:
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec);
 
     void updateModerators();
+
+    ConfInfo getConfInfoHostUri(const std::string& uri);
 };
 
 } // namespace jami
