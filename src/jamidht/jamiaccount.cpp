@@ -217,8 +217,7 @@ static constexpr const char* DEFAULT_TURN_SERVER = "turn.jami.net";
 static constexpr const char* DEFAULT_TURN_USERNAME = "ring";
 static constexpr const char* DEFAULT_TURN_PWD = "ring";
 static constexpr const char* DEFAULT_TURN_REALM = "ring";
-static const auto PROXY_REGEX = std::regex(
-    "(https?://)?([\\w\\.\\-_\\~]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
+static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
 static const std::string PEER_DISCOVERY_JAMI_SERVICE = "jami";
 const constexpr auto PEER_DISCOVERY_EXPIRATION = std::chrono::minutes(1);
 
@@ -548,14 +547,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             dev_call->setIPToIP(true);
             dev_call->setSecure(isTlsEnabled());
             dev_call->setState(Call::ConnectionState::TRYING);
-            call->addStateListener(
-                [w = weak(), deviceId](Call::CallState, Call::ConnectionState state, int) {
-                    if (state != Call::ConnectionState::PROGRESSING
-                        and state != Call::ConnectionState::TRYING) {
-                        if (auto shared = w.lock())
-                            shared->callConnectionClosed(deviceId, true);
-                    }
-                });
             call->addSubCall(*dev_call);
             {
                 std::lock_guard<std::mutex> lk(pendingCallsMutex_);
@@ -577,10 +568,12 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         auto& sipConn = value.back();
 
         auto transport = sipConn.transport;
+
         if (!sipConn.channel->underlyingICE()) {
             JAMI_WARN("A SIP transport exists without Channel, this is a bug. Please report");
             continue;
         }
+
         if (!transport)
             continue;
 
@@ -741,8 +734,9 @@ bool
 JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
 {
     call.setupLocalSDPFromIce();
-    std::string toUri(getToUri(call.getPeerNumber() + "@"
-                               + target.toString(true))); // expecting a fully well formed sip uri
+    std::string toUri(
+        getToUri(call.getPeerNumber() + "@"
+                 + target.toString(true).c_str())); // expecting a fully well formed sip uri
 
     pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);
 
@@ -844,7 +838,7 @@ JamiAccount::serialize(YAML::Emitter& out) const
 
     out << YAML::BeginMap;
     SIPAccountBase::serialize(out);
-    out << YAML::Key << Conf::DHT_PORT_KEY << YAML::Value << dhtPort_;
+    out << YAML::Key << Conf::DHT_PORT_KEY << YAML::Value << dhtDefaultPort_;
     out << YAML::Key << Conf::DHT_PUBLIC_IN_CALLS << YAML::Value << dhtPublicInCalls_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_HISTORY << YAML::Value << allowPeersFromHistory_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_CONTACT << YAML::Value << allowPeersFromContact_;
@@ -946,10 +940,9 @@ JamiAccount::unserialize(const YAML::Node& node)
     // to make the DHT unusable (Address already in use, and SO_REUSEADDR & SO_REUSEPORT
     // doesn't seems to work). For now, use a random port
     // See https://git.jami.net/savoirfairelinux/ring-client-macosx/issues/221
-    // TODO: parseValueOptional(node, Conf::DHT_PORT_KEY, dhtPort_);
-    if (not dhtPort_)
-        dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
-    dhtPortUsed_ = dhtPort_;
+    // TODO: parseValueOptional(node, Conf::DHT_PORT_KEY, dhtDefaultPort_);
+    if (not dhtDefaultPort_)
+        dhtDefaultPort_ = getRandomEvenPort(DHT_PORT_RANGE);
 
     parseValueOptional(node, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
     parseValueOptional(node,
@@ -1145,7 +1138,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                                                      std::move(callbacks))) {
             // normal loading path
             id_ = std::move(id);
-            username_ = info->accountId;
+            username_ = RING_URI_PREFIX + info->accountId;
             JAMI_WARN("[Account %s] loaded account identity", getAccountID().c_str());
             if (not isEnabled()) {
                 setRegistrationState(RegistrationState::UNREGISTERED);
@@ -1182,7 +1175,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     acreds->scheme = "dht";
                     acreds->uri = archive_pin;
                     acreds->dhtBootstrap = loadBootstrap();
-                    acreds->dhtPort = (in_port_t) dhtPortUsed_;
+                    acreds->dhtPort = dhtPortUsed();
                 } else if (hasArchive) {
                     // Migrating local account
                     acreds->scheme = "local";
@@ -1220,7 +1213,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     id_ = std::move(id);
                     tlsPassword_ = {};
 
-                    username_ = info.accountId;
+                    username_ = RING_URI_PREFIX + info.accountId;
                     registeredName_ = managerUsername_;
                     ringDeviceName_ = accountManager_->getAccountDeviceName();
 
@@ -1301,7 +1294,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     if (hostname_.empty())
         hostname_ = DHT_DEFAULT_BOOTSTRAP;
     parseString(details, DRing::Account::ConfProperties::BOOTSTRAP_LIST_URL, bootstrapListUrl_);
-    parseInt(details, Conf::CONFIG_DHT_PORT, dhtPort_);
+    parseInt(details, Conf::CONFIG_DHT_PORT, dhtDefaultPort_);
     parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
     parseBool(details, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
     parseBool(details,
@@ -1317,9 +1310,8 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     parseBool(details,
               DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED,
               allowPeersFromTrusted_);
-    if (not dhtPort_)
-        dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
-    dhtPortUsed_ = dhtPort_;
+    if (not dhtDefaultPort_)
+        dhtDefaultPort_ = getRandomEvenPort(DHT_PORT_RANGE);
 
     parseString(details, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
     parseString(details, DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
@@ -1372,7 +1364,7 @@ JamiAccount::getAccountDetails() const
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
-    a.emplace(Conf::CONFIG_DHT_PORT, std::to_string(dhtPort_));
+    a.emplace(Conf::CONFIG_DHT_PORT, std::to_string(dhtDefaultPort_));
     a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::DHT_PEER_DISCOVERY,
               dhtPeerDiscovery_ ? TRUE_STR : FALSE_STR);
@@ -1801,46 +1793,63 @@ JamiAccount::registerAsyncOps()
     loadCachedProxyServer([onLoad](const std::string&) { onLoad(); });
 
     if (upnp_!= nullptr) {
+        // TODO. May be we dont need to release, and wait for the callback
+        // to do the clean up.
         // Release current mapping if any.
-        if (dhtPortMapping_.getPortExternal()) {
-            upnp_->requestMappingRemove(dhtPortMapping_);
-            dhtPortMapping_ = upnp::Mapping {};
+        if (dhtUpnpMapping_) {
+            upnp_->releaseMapping(dhtUpnpMapping_);
+            dhtUpnpMapping_.reset();
         }
-        upnp::Mapping map {dhtPort_, dhtPort_, upnp::PortType::UDP, "JAMI-DHT"};
-        upnp_->requestMappingAdd(
-            [this, onLoad, update = std::make_shared<bool>(false)](uint16_t port_used,
-                                                                   bool success) {
+
+        upnp::Mapping map {0, 0, upnp::PortType::UDP};
+
+        // Set the notify callback.
+        // TODO. Use weak_ptr for 'this';
+        map.setNotifyCallback(
+            [this, onLoad, update = std::make_shared<bool>(false)](upnp::Mapping::sharedPtr_t mapRes) {
+
+            // TODO. For now, also considere IN_PROGRESS as success.
+            bool success = mapRes->isValid() and
+                (mapRes->getState() == upnp::MappingState::OPEN or mapRes->getState() == upnp::MappingState::IN_PROGRESS);
+
+            if (*update) {
+                // Account already loaded, only process connectivity
+                // change if any.
+                if (success and (dhtUpnpMapping_ != mapRes or not dht_->isRunning())) {
+                    // Update the mapping and process the connectivity change.
+                    dhtUpnpMapping_ = mapRes;
+                    JAMI_WARN("[Account %s] DHT port changed to %u: restarting network",
+                        getAccountID().c_str(), dhtUpnpMapping_->getPortExternal());
+                    // TODO. dht_->connectivityChanged() is called twice: here and in
+                    // JamiAccount::connectivityChange().
+                    dht_->connectivityChanged();
+                }
+            } else {
+                *update = true;
+                // Set connection info and load the account.
                 if (success) {
-                    dhtPortMapping_ = upnp::Mapping { port_used, port_used, upnp::PortType::UDP, "DHT Port" };
+                    dhtUpnpMapping_ = mapRes;
+                    JAMI_DBG("[Account %s] Port %u successfully opened: starting DHT.",
+                        getAccountID().c_str(), dhtUpnpMapping_->getPortExternal());
                 } else {
-                    dhtPortMapping_ = upnp::Mapping {};
+                    JAMI_WARN("[Account %s] Failed to open port %u: starting DHT anyway",
+                        getAccountID().c_str(), mapRes->getPortExternal());
                 }
 
-                auto oldPort = static_cast<in_port_t>(dhtPortUsed_);
-                auto newPort = success ? port_used : dhtPort_;
-                if (*update) {
-                    if (oldPort != newPort or not dht_->isRunning()) {
-                        JAMI_WARN("[Account %s] DHT port changed to %u: restarting network",
-                                  getAccountID().c_str(),
-                                  newPort);
-                        dht_->connectivityChanged();
-                    }
-                } else {
-                    *update = true;
-                    if (success)
-                        JAMI_DBG("[Account %s] Starting DHT on port %u",
-                                  getAccountID().c_str(),
-                                  newPort);
-                    else
-                        JAMI_WARN("[Account %s] Failed to open port %u: starting DHT anyway",
-                                  getAccountID().c_str(),
-                                  oldPort);
-                }
-            },
-            map);
+                // Load the account and start the DHT.
+                onLoad();
+            }
+        });
+
+        // Request the mapping.
+        upnp_->reserveMapping(map);
+
+    } else {
+        // No UPNP. Load the account and start the DHT.
+        // The local DHT will not be reachable for peers if we
+        // behind a NAT.
+        onLoad();
     }
-    // DHT will be started regardless if UPNP is available and/or successful.
-    onLoad();
 }
 
 void
@@ -2174,7 +2183,7 @@ JamiAccount::doRegister_()
         };
 
         setRegistrationState(RegistrationState::TRYING);
-        dht_->run((in_port_t) dhtPortUsed_, config, std::move(context));
+        dht_->run(dhtPortUsed(), config, std::move(context));
 
         for (const auto& bootstrap : loadBootstrap())
             dht_->bootstrap(bootstrap);
@@ -2207,24 +2216,25 @@ JamiAccount::doRegister_()
             auto result = fut.get();
             return result;
         });
-        connectionManager_->onChannelRequest([this](const DeviceId&, const std::string& name) {
-            auto isFile = name.substr(0, 7) == "file://";
-            auto isVCard = name.substr(0, 8) == "vcard://";
-            if (name == "sip") {
-                return true;
-            } else if (isFile or isVCard) {
-                auto tid_str = isFile ? name.substr(7) : name.substr(8);
-                uint64_t tid;
-                std::istringstream iss(tid_str);
-                iss >> tid;
-                if (dhtPeerConnector_->onIncomingChannelRequest(tid)) {
-                    std::lock_guard<std::mutex> lk(transfersMtx_);
-                    incomingFileTransfers_.emplace(tid_str);
+        connectionManager_->onChannelRequest(
+            [this](const DeviceId& /* deviceId */, const std::string& name) {
+                auto isFile = name.substr(0, 7) == "file://";
+                auto isVCard = name.substr(0, 8) == "vcard://";
+                if (name == "sip") {
                     return true;
+                } else if (isFile or isVCard) {
+                    auto tid_str = isFile ? name.substr(7) : name.substr(8);
+                    uint64_t tid;
+                    std::istringstream iss(tid_str);
+                    iss >> tid;
+                    if (dhtPeerConnector_->onIncomingChannelRequest(tid)) {
+                        std::lock_guard<std::mutex> lk(transfersMtx_);
+                        incomingFileTransfers_.emplace(tid_str);
+                        return true;
+                    }
                 }
-            }
-            return false;
-        });
+                return false;
+            });
         connectionManager_->onConnectionReady([this](const DeviceId& deviceId,
                                                      const std::string& name,
                                                      std::shared_ptr<ChannelSocket> channel) {
@@ -2474,12 +2484,12 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                                           /*.from_account = */ from_id,
                                           /*.from_cert = */ from_cert});
 
-    Manager::instance().scheduleTaskIn(
+    Manager::instance().scheduleTask(
         [w = weak(), callId = call->getCallId()]() {
             if (auto shared = w.lock())
                 shared->checkPendingCall(callId);
         },
-        ICE_NEGOTIATION_TIMEOUT);
+        std::chrono::steady_clock::now() + ICE_NEGOTIATION_TIMEOUT);
 }
 
 void
@@ -2513,9 +2523,9 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     dht_->join();
 
     // Release current upnp mapping if any.
-    if (upnp_ and dhtPortMapping_.getPortExternal()) {
-        upnp_->requestMappingRemove(dhtPortMapping_);
-        dhtPortMapping_ = upnp::Mapping {};
+    if (upnp_ and dhtUpnpMapping_) {
+        upnp_->releaseMapping(dhtUpnpMapping_);
+        dhtUpnpMapping_.reset();
     }
 
     lock.unlock();
@@ -2539,8 +2549,9 @@ JamiAccount::connectivityChanged()
         // nothing to do
         return;
     }
-
-    dht_->connectivityChanged();
+    // Let UPNP handle connectivity change if enabled.
+    if (upnp_ == nullptr)
+        dht_->connectivityChanged();
     // reset cache
     setPublishedAddress({});
     cacheTurnServers();
@@ -2855,7 +2866,7 @@ JamiAccount::generateDhParams()
 }
 
 MatchRank
-JamiAccount::matches(std::string_view userName, std::string_view server) const
+JamiAccount::matches(const std::string& userName, const std::string& server) const
 {
     if (not accountManager_ or not accountManager_->getInfo())
         return MatchRank::NONE;
@@ -2863,9 +2874,7 @@ JamiAccount::matches(std::string_view userName, std::string_view server) const
     if (userName == accountManager_->getInfo()->accountId
         || server == accountManager_->getInfo()->accountId
         || userName == accountManager_->getInfo()->deviceId) {
-        JAMI_DBG("Matching account id in request with username %.*s",
-                 (int) userName.size(),
-                 userName.data());
+        JAMI_DBG("Matching account id in request with username %s", userName.c_str());
         return MatchRank::FULL;
     } else {
         return MatchRank::NONE;
@@ -3242,7 +3251,7 @@ JamiAccount::sendTextMessage(const std::string& to,
         });
 
     // Timeout cleanup
-    Manager::instance().scheduleTaskIn(
+    Manager::instance().scheduleTask(
         [w = weak(), confirm, to, token]() {
             std::unique_lock<std::mutex> l(confirm->lock);
             if (not confirm->replied) {
@@ -3258,7 +3267,7 @@ JamiAccount::sendTextMessage(const std::string& to,
                 }
             }
         },
-        std::chrono::minutes(1));
+        std::chrono::steady_clock::now() + std::chrono::minutes(1));
 }
 
 void
@@ -3320,10 +3329,10 @@ JamiAccount::requestPeerConnection(
     bool isVCard,
     const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
         channeledConnectedCb,
-    const std::function<void(const std::string&)>& onChanneledCancelled)
+    const std::function<void()>& onChanneledCancelled)
 {
     if (not dhtPeerConnector_) {
-        runOnMainThread([onChanneledCancelled, peer_id] { onChanneledCancelled(peer_id); });
+        runOnMainThread([onChanneledCancelled] { onChanneledCancelled(); });
         return;
     }
     dhtPeerConnector_->requestConnection(peer_id,
@@ -3375,7 +3384,7 @@ JamiAccount::getUserUri() const
     if (not registeredName_.empty())
         return RING_URI_PREFIX + registeredName_;
 #endif
-    return RING_URI_PREFIX + username_;
+    return username_;
 }
 
 std::vector<DRing::Message>
@@ -3539,14 +3548,8 @@ JamiAccount::callConnectionClosed(const DeviceId& deviceId, bool eraseDummy)
         std::lock_guard<std::mutex> lk(onConnectionClosedMtx_);
         auto it = onConnectionClosed_.find(deviceId);
         if (it != onConnectionClosed_.end()) {
-            if (eraseDummy) {
-                cb = std::move(it->second);
-                onConnectionClosed_.erase(it);
-            } else {
-                // In this case a new subcall is created and the callback
-                // will be re-called once with eraseDummy = true
-                cb = it->second;
-            }
+            cb = std::move(it->second);
+            onConnectionClosed_.erase(it);
         }
     }
     if (cb)
@@ -3559,43 +3562,40 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
     // If a connection already exists or is in progress, no need to do this
     std::lock_guard<std::mutex> lk(sipConnsMtx_);
     auto id = std::make_pair(peerId, deviceId);
+
     if (sipConns_.find(id) != sipConns_.end()) {
         JAMI_DBG("A SIP connection with %s already exists", deviceId.to_c_str());
         return;
     }
+
     sipConns_[id] = {};
     // If not present, create it
     JAMI_INFO("Ask %s for a new SIP channel", deviceId.to_c_str());
     if (!connectionManager_)
         return;
-    connectionManager_->connectDevice(deviceId,
-                                      "sip",
-                                      [w = weak(), id](std::shared_ptr<ChannelSocket> socket,
-                                                       const DeviceId&) {
-                                          auto shared = w.lock();
-                                          if (!shared)
-                                              return;
-                                          // NOTE: No need to cache Connection there.
-                                          // OnConnectionReady is called before this callback, so
-                                          // the socket is already cached if succeed. We just need
-                                          // to remove the pending request.
-                                          if (!socket) {
-                                              // If this is triggered, this means that the
-                                              // connectDevice didn't get any response from the DHT.
-                                              // Stop searching pending call.
-                                              shared->callConnectionClosed(id.second, true);
-                                              shared->forEachPendingCall(id.second,
-                                                                         [](const auto& pc) {
-                                                                             pc->onFailure();
-                                                                         });
-                                          }
+    connectionManager_
+        ->connectDevice(deviceId, "sip", [w = weak(), id](std::shared_ptr<ChannelSocket> socket) {
+            auto shared = w.lock();
+            if (!shared)
+                return;
+            // NOTE: No need to cache Connection there.
+            // OnConnectionReady is called before this callback, so
+            // the socket is already cached if succeed. We just need
+            // to remove the pending request.
+            if (!socket) {
+                // If this is triggered, this means that the connectDevice
+                // didn't get any response from the DHT.
+                // Stop searching pending call.
+                shared->callConnectionClosed(id.second, true);
+                shared->forEachPendingCall(id.second, [](const auto& pc) { pc->onFailure(); });
+            }
 
-                                          std::lock_guard<std::mutex> lk(shared->sipConnsMtx_);
-                                          auto it = shared->sipConns_.find(id);
-                                          if (it != shared->sipConns_.end() && it->second.empty()) {
-                                              shared->sipConns_.erase(it);
-                                          }
-                                      });
+            std::lock_guard<std::mutex> lk(shared->sipConnsMtx_);
+            auto it = shared->sipConns_.find(id);
+            if (it != shared->sipConns_.end() && it->second.empty()) {
+                shared->sipConns_.erase(it);
+            }
+        });
 }
 
 bool
@@ -3643,7 +3643,8 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
     pjsip_tx_data* tdata;
 
     // Build SIP message
-    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, sip_utils::CONST_PJ_STR("MESSAGE")};
+    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD,
+                                         sip_utils::CONST_PJ_STR("MESSAGE")};
     pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
     pj_str_t pjTo = sip_utils::CONST_PJ_STR(toURI);
 
@@ -3815,14 +3816,6 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
             }
         }
     });
-}
-
-std::string_view
-JamiAccount::currentDeviceId() const
-{
-    if (!accountManager_)
-        return {};
-    return accountManager_->getInfo()->deviceId;
 }
 
 } // namespace jami

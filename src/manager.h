@@ -893,8 +893,6 @@ public:
     void addTask(std::function<bool()>&& task);
     std::shared_ptr<Task> scheduleTask(std::function<void()>&& task,
                                        std::chrono::steady_clock::time_point when);
-    std::shared_ptr<Task> scheduleTaskIn(std::function<void()>&& task,
-                                       std::chrono::steady_clock::duration timeout);
 
     std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
 
@@ -933,8 +931,6 @@ public:
 #ifdef ENABLE_PLUGIN
     JamiPluginManager& getJamiPluginManager() const;
 #endif
-
-    void setModerator(const std::string& confId, const std::string& peerId, const bool& state);
 
 private:
     Manager();

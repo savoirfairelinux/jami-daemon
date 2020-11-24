@@ -343,12 +343,4 @@ sendTextMessage(const std::string& callID,
     });
 }
 
-void
-setModerator(const std::string& confId,
-             const std::string& peerId,
-             const bool& state)
-{
-    jami::Manager::instance().setModerator(confId, peerId, state);
-}
-
 } // namespace DRing

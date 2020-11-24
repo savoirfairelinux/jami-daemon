@@ -297,9 +297,3 @@ DBusCallManager::stopSmartInfo()
 {
     DRing::stopSmartInfo();
 }
-
-void
-DBusCallManager::setModerator(const std::string& confId, const std::string& peerId, const bool& state)
-{
-    DRing::setModerator(confId, peerId, state);
-}

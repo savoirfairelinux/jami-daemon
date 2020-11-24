@@ -63,6 +63,11 @@ public:
     virtual ~Stream() { close(); }
     virtual void close() noexcept {}
     virtual DRing::DataTransferId getId() const = 0;
+    virtual bool read(std::vector<uint8_t>& buffer) const
+    {
+        (void) buffer;
+        return false;
+    }
     virtual bool write(std::string_view) { return false; };
     virtual void setOnRecv(std::function<void(std::string_view)>&&)
     {

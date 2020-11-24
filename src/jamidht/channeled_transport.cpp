@@ -292,14 +292,14 @@ ChanneledSIPTransport::send(pjsip_tx_data* tdata,
     // Check in we are able to send it in synchronous way first
     const std::size_t size = tdata->buf.cur - tdata->buf.start;
     std::unique_lock<std::mutex> lk {txMutex_};
-    if (txQueue_.empty()) {
-        if (socket_) {
-            std::error_code ec;
-            socket_->write(reinterpret_cast<const uint8_t*>(tdata->buf.start), size, ec);
-            if (!ec)
-                return PJ_SUCCESS;
+    if (/*TODO handle disconned: syncTx_ and*/ txQueue_.empty()) {
+        std::error_code ec;
+        socket_->write(reinterpret_cast<const uint8_t*>(tdata->buf.start), size, ec);
+        lk.unlock();
+        if (ec) {
+            return PJ_EINVAL;
         }
-        return PJ_EINVAL;
+        return PJ_SUCCESS;
     }
 
     // Asynchronous sending

@@ -66,8 +66,6 @@ private:
     void testChannelSenderShutdown();
     void testCloseConnectionWithDevice();
     void testShutdownCallbacks();
-    void testFloodSocket();
-    void testDestroyWhileSending();
 
     CPPUNIT_TEST_SUITE(ConnectionManagerTest);
     CPPUNIT_TEST(testConnectDevice);
@@ -82,8 +80,6 @@ private:
     CPPUNIT_TEST(testChannelSenderShutdown);
     CPPUNIT_TEST(testCloseConnectionWithDevice);
     CPPUNIT_TEST(testShutdownCallbacks);
-    CPPUNIT_TEST(testFloodSocket);
-    CPPUNIT_TEST(testDestroyWhileSending);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -146,11 +142,12 @@ ConnectionManagerTest::tearDown()
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     auto currentAccSize = Manager::instance().getAccountList().size();
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&] {
-        if (Manager::instance().getAccountList().size() <= currentAccSize - 2) {
-            cv.notify_one();
-        }
-    }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
+            if (Manager::instance().getAccountList().size() <= currentAccSize - 2) {
+                cv.notify_one();
+            }
+        }));
     DRing::registerSignalHandlers(confHandlers);
 
     Manager::instance().removeAccount(aliceId, true);
@@ -184,19 +181,19 @@ ConnectionManagerTest::testConnectDevice()
             return true;
         });
 
-    aliceAccount->connectionManager()
-        .connectDevice(bobDeviceId,
-                       "git://*",
-                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
-                                                     const DeviceId&) {
-                           if (socket) {
-                               successfullyConnected = true;
-                           }
-                           cv.notify_one();
-                       });
-    CPPUNIT_ASSERT(
-        cvReceive.wait_for(lk, std::chrono::seconds(60), [&] { return successfullyReceive; }));
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] { return successfullyConnected; }));
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
+    cvReceive.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(successfullyReceive);
+    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(successfullyConnected);
 }
 
 void
@@ -229,20 +226,20 @@ ConnectionManagerTest::testAcceptConnection()
             receiverConnected = socket && (name == "git://*");
         });
 
-    aliceAccount->connectionManager()
-        .connectDevice(bobDeviceId,
-                       "git://*",
-                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
-                                                     const DeviceId&) {
-                           if (socket) {
-                               successfullyConnected = true;
-                           }
-                           cv.notify_one();
-                       });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] {
-        return successfullyReceive && successfullyConnected && receiverConnected;
-    }));
+    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(successfullyReceive);
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
 }
 
 void
@@ -273,31 +270,31 @@ ConnectionManagerTest::testMultipleChannels()
                 receiverConnected += 1;
         });
 
-    aliceAccount->connectionManager()
-        .connectDevice(bobDeviceId,
-                       "git://*",
-                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
-                                                     const DeviceId&) {
-                           if (socket) {
-                               successfullyConnected = true;
-                           }
-                           cv.notify_one();
-                       });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
 
-    aliceAccount->connectionManager()
-        .connectDevice(bobDeviceId,
-                       "sip://*",
-                       [&cv, &successfullyConnected2](std::shared_ptr<ChannelSocket> socket,
-                                                      const DeviceId&) {
-                           if (socket) {
-                               successfullyConnected2 = true;
-                           }
-                           cv.notify_one();
-                       });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "sip://*",
+                                                    [&cv, &successfullyConnected2](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected2 = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] {
-        return successfullyConnected && successfullyConnected2 && receiverConnected == 2;
-    }));
+    cv.wait_for(lk, std::chrono::seconds(30));
+    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(successfullyConnected2);
+    CPPUNIT_ASSERT(receiverConnected == 2);
 }
 
 void
@@ -328,32 +325,32 @@ ConnectionManagerTest::testMultipleChannelsSameName()
                 receiverConnected += 1;
         });
 
-    aliceAccount->connectionManager()
-        .connectDevice(bobDeviceId,
-                       "git://*",
-                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
-                                                     const DeviceId&) {
-                           if (socket) {
-                               successfullyConnected = true;
-                           }
-                           cv.notify_one();
-                       });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
 
     // We can open two sockets with the same name, it will be two different channel
-    aliceAccount->connectionManager()
-        .connectDevice(bobDeviceId,
-                       "git://*",
-                       [&cv, &successfullyConnected2](std::shared_ptr<ChannelSocket> socket,
-                                                      const DeviceId&) {
-                           if (socket) {
-                               successfullyConnected2 = true;
-                           }
-                           cv.notify_one();
-                       });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected2](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected2 = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] {
-        return successfullyConnected && successfullyConnected2 && receiverConnected == 2;
-    }));
+    cv.wait_for(lk, std::chrono::seconds(30));
+    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(successfullyConnected2);
+    CPPUNIT_ASSERT(receiverConnected == 2);
 }
 
 void
@@ -403,8 +400,7 @@ ConnectionManagerTest::testSendReceiveData()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "test",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                             std::error_code ec;
@@ -416,8 +412,7 @@ ConnectionManagerTest::testSendReceiveData()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "other",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
                                                         if (socket) {
                                                             successfullyConnected2 = true;
                                                             std::error_code ec;
@@ -427,10 +422,14 @@ ConnectionManagerTest::testSendReceiveData()
                                                         cv.notify_one();
                                                     });
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] {
-        return events == 4 && successfullyReceive && successfullyConnected && successfullyConnected2
-               && dataOk && dataOk2;
-    }));
+    auto expiration = std::chrono::system_clock::now() + std::chrono::seconds(10);
+    cv.wait_until(lk, expiration, [&events]() { return events == 4; });
+    CPPUNIT_ASSERT(successfullyReceive);
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(successfullyConnected2);
+    CPPUNIT_ASSERT(receiverConnected);
+    CPPUNIT_ASSERT(dataOk);
+    CPPUNIT_ASSERT(dataOk2);
 }
 
 void
@@ -464,16 +463,15 @@ ConnectionManagerTest::testDeclineConnection()
                 receiverConnected = true;
         });
 
-    aliceAccount->connectionManager()
-        .connectDevice(bobDeviceId,
-                       "git://*",
-                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
-                                                     const DeviceId&) {
-                           if (socket) {
-                               successfullyConnected = true;
-                           }
-                           cv.notify_one();
-                       });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(successfullyReceive);
     CPPUNIT_ASSERT(!successfullyConnected);
@@ -510,20 +508,20 @@ ConnectionManagerTest::testAcceptsICERequest()
             receiverConnected = socket && (name == "git://*");
         });
 
-    aliceAccount->connectionManager()
-        .connectDevice(bobDeviceId,
-                       "git://*",
-                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
-                                                     const DeviceId&) {
-                           if (socket) {
-                               successfullyConnected = true;
-                           }
-                           cv.notify_one();
-                       });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
-        return successfullyReceive && successfullyConnected && receiverConnected;
-    }));
+    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(successfullyReceive);
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
 }
 
 void
@@ -556,16 +554,15 @@ ConnectionManagerTest::testDeclineICERequest()
             receiverConnected = socket && (name == "git://*");
         });
 
-    aliceAccount->connectionManager()
-        .connectDevice(bobDeviceId,
-                       "git://*",
-                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
-                                                     const DeviceId&) {
-                           if (socket) {
-                               successfullyConnected = true;
-                           }
-                           cv.notify_one();
-                       });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "git://*",
+                                                    [&cv, &successfullyConnected](
+                                                        std::shared_ptr<ChannelSocket> socket) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                        }
+                                                        cv.notify_one();
+                                                    });
 
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(successfullyReceive);
@@ -606,10 +603,9 @@ ConnectionManagerTest::testChannelRcvShutdown()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
                                                         if (socket) {
-                                                            socket->onShutdown([&] {
+                                                            socket->onShutdown([&]() {
                                                                 shutdownReceived = true;
                                                                 scv.notify_one();
                                                             });
@@ -652,7 +648,7 @@ ConnectionManagerTest::testChannelSenderShutdown()
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
             if (socket) {
-                socket->onShutdown([&] {
+                socket->onShutdown([&]() {
                     shutdownReceived = true;
                     scv.notify_one();
                 });
@@ -662,8 +658,7 @@ ConnectionManagerTest::testChannelSenderShutdown()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                             rcv.notify_one();
@@ -706,7 +701,7 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
             if (socket) {
-                socket->onShutdown([&] {
+                socket->onShutdown([&]() {
                     events += 1;
                     scv.notify_one();
                 });
@@ -716,10 +711,9 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
                                                         if (socket) {
-                                                            socket->onShutdown([&] {
+                                                            socket->onShutdown([&]() {
                                                                 events += 1;
                                                                 scv.notify_one();
                                                             });
@@ -731,9 +725,12 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
     rcv.wait_for(lk, std::chrono::seconds(30));
     // This should trigger onShutdown
     aliceAccount->connectionManager().closeConnectionsWith(bobDeviceId);
-    CPPUNIT_ASSERT(scv.wait_for(lk, std::chrono::seconds(60), [&] {
-        return events == 2 && successfullyReceive && successfullyConnected && receiverConnected;
-    }));
+    auto expiration = std::chrono::system_clock::now() + std::chrono::seconds(10);
+    scv.wait_until(lk, expiration, [&events]() { return events == 2; });
+    CPPUNIT_ASSERT(events == 2);
+    CPPUNIT_ASSERT(successfullyReceive);
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
 }
 
 void
@@ -773,24 +770,23 @@ ConnectionManagerTest::testShutdownCallbacks()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "1",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                             rcv.notify_one();
                                                         }
                                                     });
     // Connect first channel. This will initiate a mx sock
-    CPPUNIT_ASSERT(rcv.wait_for(lk, std::chrono::seconds(30), [&] {
-        return successfullyReceive && successfullyConnected && receiverConnected;
-    }));
+    rcv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(successfullyReceive);
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
 
     // Connect another channel, but close the connection
     bool channel2NotConnected = false;
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "2",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket) {
                                                         channel2NotConnected = !socket;
                                                         rcv.notify_one();
                                                     });
@@ -798,205 +794,8 @@ ConnectionManagerTest::testShutdownCallbacks()
 
     // This should trigger onShutdown for second callback
     bobAccount->connectionManager().closeConnectionsWith(aliceDeviceId);
-    CPPUNIT_ASSERT(rcv.wait_for(lk, std::chrono::seconds(30), [&] { return channel2NotConnected; }));
-}
-
-void
-ConnectionManagerTest::testFloodSocket()
-{
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
-    bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
-    aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    bool successfullyConnected = false;
-    bool successfullyReceive = false;
-    bool receiverConnected = false;
-    std::shared_ptr<ChannelSocket> rcvSock1, rcvSock2, rcvSock3, sendSock, sendSock2, sendSock3;
-    bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string& name) {
-            successfullyReceive = name == "1";
-            return true;
-        });
-    bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
-            receiverConnected = socket != nullptr;
-            if (name == "1")
-                rcvSock1 = socket;
-            else if (name == "2")
-                rcvSock2 = socket;
-            else if (name == "3")
-                rcvSock3 = socket;
-        });
-    aliceAccount->connectionManager().connectDevice(bobDeviceId,
-                                                    "1",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
-                                                        if (socket) {
-                                                            sendSock = socket;
-                                                            successfullyConnected = true;
-                                                        }
-                                                        cv.notify_one();
-                                                    });
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
-        return successfullyReceive && successfullyConnected && receiverConnected;
-    }));
-    CPPUNIT_ASSERT(receiverConnected);
-    successfullyConnected = false;
-    receiverConnected = false;
-    aliceAccount->connectionManager().connectDevice(bobDeviceId,
-                                                    "2",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
-                                                        if (socket) {
-                                                            sendSock2 = socket;
-                                                            successfullyConnected = true;
-                                                        }
-                                                        cv.notify_one();
-                                                    });
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
-        return successfullyConnected && receiverConnected;
-    }));
-    successfullyConnected = false;
-    receiverConnected = false;
-    aliceAccount->connectionManager().connectDevice(bobDeviceId,
-                                                    "3",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
-                                                        if (socket) {
-                                                            sendSock3 = socket;
-                                                            successfullyConnected = true;
-                                                        }
-                                                        cv.notify_one();
-                                                    });
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
-        return successfullyConnected && receiverConnected;
-    }));
-    std::mutex mtxRcv {};
-    std::string alphabet, shouldRcv, rcv1, rcv2, rcv3;
-    for (int i = 0; i < 100; ++i)
-        alphabet += "QWERTYUIOPASDFGHJKLZXCVBNM";
-    rcvSock1->setOnRecv([&](const uint8_t* buf, size_t len) {
-        rcv1 += std::string(buf, buf + len);
-        return len;
-    });
-    rcvSock2->setOnRecv([&](const uint8_t* buf, size_t len) {
-        rcv2 += std::string(buf, buf + len);
-        return len;
-    });
-    rcvSock3->setOnRecv([&](const uint8_t* buf, size_t len) {
-        rcv3 += std::string(buf, buf + len);
-        return len;
-    });
-    for (uint64_t i = 0; i < alphabet.size(); ++i) {
-        auto send = std::string(8000, alphabet[i]);
-        shouldRcv += send;
-        std::error_code ec;
-        sendSock->write(reinterpret_cast<unsigned char*>(send.data()), send.size(), ec);
-        sendSock2->write(reinterpret_cast<unsigned char*>(send.data()), send.size(), ec);
-        sendSock3->write(reinterpret_cast<unsigned char*>(send.data()), send.size(), ec);
-        CPPUNIT_ASSERT(!ec);
-    }
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] {
-        return shouldRcv == rcv1 && shouldRcv == rcv2 && shouldRcv == rcv3;
-    }));
-}
-
-void
-ConnectionManagerTest::testDestroyWhileSending()
-{
-    // Same as test before, but destroy the accounts while sending.
-    // This test if a segfault occurs
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
-    bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
-    aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    bool successfullyConnected = false;
-    bool successfullyReceive = false;
-    bool receiverConnected = false;
-    std::shared_ptr<ChannelSocket> rcvSock1, rcvSock2, rcvSock3, sendSock, sendSock2, sendSock3;
-    bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string& name) {
-            successfullyReceive = name == "1";
-            return true;
-        });
-    bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
-            receiverConnected = socket != nullptr;
-            if (name == "1")
-                rcvSock1 = socket;
-            else if (name == "2")
-                rcvSock2 = socket;
-            else if (name == "3")
-                rcvSock3 = socket;
-        });
-    aliceAccount->connectionManager().connectDevice(bobDeviceId,
-                                                    "1",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
-                                                        if (socket) {
-                                                            sendSock = socket;
-                                                            successfullyConnected = true;
-                                                        }
-                                                        cv.notify_one();
-                                                    });
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
-        return successfullyReceive && successfullyConnected && receiverConnected;
-    }));
-    successfullyConnected = false;
-    receiverConnected = false;
-    aliceAccount->connectionManager().connectDevice(bobDeviceId,
-                                                    "2",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
-                                                        if (socket) {
-                                                            sendSock2 = socket;
-                                                            successfullyConnected = true;
-                                                        }
-                                                        cv.notify_one();
-                                                    });
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
-        return successfullyConnected && receiverConnected;
-    }));
-    successfullyConnected = false;
-    receiverConnected = false;
-    aliceAccount->connectionManager().connectDevice(bobDeviceId,
-                                                    "3",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
-                                                        const DeviceId&) {
-                                                        if (socket) {
-                                                            sendSock3 = socket;
-                                                            successfullyConnected = true;
-                                                        }
-                                                        cv.notify_one();
-                                                    });
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
-        return successfullyConnected && receiverConnected;
-    }));
-    std::mutex mtxRcv {};
-    std::string alphabet;
-    for (int i = 0; i < 100; ++i)
-        alphabet += "QWERTYUIOPASDFGHJKLZXCVBNM";
-    rcvSock1->setOnRecv([&](const uint8_t*, size_t len) { return len; });
-    rcvSock2->setOnRecv([&](const uint8_t*, size_t len) { return len; });
-    rcvSock3->setOnRecv([&](const uint8_t*, size_t len) { return len; });
-    for (uint64_t i = 0; i < alphabet.size(); ++i) {
-        auto send = std::string(8000, alphabet[i]);
-        std::error_code ec;
-        sendSock->write(reinterpret_cast<unsigned char*>(send.data()), send.size(), ec);
-        sendSock2->write(reinterpret_cast<unsigned char*>(send.data()), send.size(), ec);
-        sendSock3->write(reinterpret_cast<unsigned char*>(send.data()), send.size(), ec);
-        CPPUNIT_ASSERT(!ec);
-    }
-
-    // No need to wait, immediately destroy, no segfault must occurs
+    rcv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(channel2NotConnected);
 }
 
 } // namespace test

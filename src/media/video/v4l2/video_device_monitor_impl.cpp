@@ -151,9 +151,7 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
                 monitor_->addDevice(unique_name, {{{"devPath", path}}});
                 currentPathToId_.emplace(path, unique_name);
             } catch (const std::exception& e) {
-                JAMI_WARN("udev: %s, fallback on path (your camera may be a fake camera)", e.what());
-                monitor_->addDevice(path, {{{"devPath", path}}});
-                currentPathToId_.emplace(path, path);
+                JAMI_ERR("%s", e.what());
             }
         }
         udev_device_unref(dev);

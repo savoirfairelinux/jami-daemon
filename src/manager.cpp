@@ -1683,12 +1683,6 @@ Manager::scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::t
     return pimpl_->scheduler_.schedule(std::move(task), when);
 }
 
-std::shared_ptr<Task> Manager::scheduleTaskIn(std::function<void()>&& task,
-                                std::chrono::steady_clock::duration timeout)
-{
-    return pimpl_->scheduler_.scheduleIn(std::move(task), timeout);
-}
-
 // Must be invoked periodically by a timer from the main event loop
 void
 Manager::pollEvents()
@@ -3220,15 +3214,6 @@ Manager::getNearbyPeers(const std::string& accountID)
     if (const auto acc = getAccount<JamiAccount>(accountID))
         return acc->getNearbyPeers();
     return {};
-}
-
-void
-Manager::setModerator(const std::string& confId, const std::string& peerId, const bool& state)
-{
-    if (auto conf = getConferenceFromID(confId)) {
-        conf->setModerator(peerId, state);
-    } else
-        JAMI_WARN("Fail to change moderator %s, conference %s not found", peerId.c_str(), confId.c_str());
 }
 
 } // namespace jami

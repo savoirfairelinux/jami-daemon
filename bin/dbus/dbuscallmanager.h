@@ -101,7 +101,6 @@ class DRING_PUBLIC DBusCallManager :
         void sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const bool& isMixed);
         void startSmartInfo(const uint32_t& refreshTimeMs);
         void stopSmartInfo();
-        void setModerator(const std::string& confId, const std::string& peerId, const bool& state);
 };
 
 #endif // __RING_CALLMANAGER_H__

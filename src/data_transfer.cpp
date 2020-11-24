@@ -280,11 +280,9 @@ public:
 
     void close() noexcept override;
     void closeAndEmit(DRing::DataTransferEventCode code) const noexcept;
+    bool read(std::vector<uint8_t>&) const override;
     bool write(std::string_view) override;
     void emit(DRing::DataTransferEventCode code) const override;
-    const std::string& peer() { return peerUri_; }
-
-    bool isFinished() const { return info_.lastEvent >= DRing::DataTransferEventCode::finished; }
 
     void cancel() override
     {
@@ -329,7 +327,7 @@ private:
 
     void sendFile() const
     {
-        dht::ThreadPool::io().run([this]() {
+        dht::ThreadPool::computation().run([this]() {
             while (!input_.eof() && onRecvCb_) {
                 std::vector<char> buf;
                 buf.resize(MAX_BUFFER_SIZE);
@@ -347,11 +345,7 @@ private:
             JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
             if (internalCompletionCb_)
                 internalCompletionCb_(info_.path);
-
-            if (info_.bytesProgress != info_.totalSize)
-                emit(DRing::DataTransferEventCode::closed_by_peer);
-            else
-                emit(DRing::DataTransferEventCode::finished);
+            emit(DRing::DataTransferEventCode::finished);
         });
     }
 
@@ -361,7 +355,8 @@ private:
     mutable bool headerSent_ {false};
     bool peerReady_ {false};
     const std::string peerUri_;
-    mutable std::shared_ptr<Task> timeoutTask_;
+    mutable std::unique_ptr<std::thread> timeoutThread_;
+    mutable std::atomic_bool stopTimeout_ {false};
     std::mutex onRecvCbMtx_;
     std::function<void(std::string_view)> onRecvCb_ {};
 };
@@ -383,8 +378,10 @@ SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
 
 SubOutgoingFileTransfer::~SubOutgoingFileTransfer()
 {
-    if (timeoutTask_)
-        timeoutTask_->cancel();
+    if (timeoutThread_ && timeoutThread_->joinable()) {
+        stopTimeout_ = true;
+        timeoutThread_->join();
+    }
 }
 
 void
@@ -401,6 +398,41 @@ SubOutgoingFileTransfer::closeAndEmit(DRing::DataTransferEventCode code) const n
 
     if (info_.lastEvent < DRing::DataTransferEventCode::finished)
         emit(code);
+}
+
+bool
+SubOutgoingFileTransfer::read(std::vector<uint8_t>& buf) const
+{
+    // Need to send headers?
+    if (!headerSent_) {
+        sendHeader(buf);
+        return true;
+    }
+
+    // Wait for peer ready reply?
+    if (!peerReady_) {
+        buf.resize(0);
+        return true;
+    }
+
+    // Sending file data...
+    input_.read(reinterpret_cast<char*>(&buf[0]), buf.size());
+    buf.resize(input_.gcount());
+    if (buf.size()) {
+        std::lock_guard<std::mutex> lk {infoMutex_};
+        info_.bytesProgress += buf.size();
+        metaInfo_->updateInfo(info_);
+        return true;
+    }
+
+    // File end reached?
+    if (input_.eof()) {
+        JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
+        emit(DRing::DataTransferEventCode::finished);
+        return false;
+    }
+
+    throw std::runtime_error("FileTransfer IO read failed"); // TODO: better exception?
 }
 
 bool
@@ -436,17 +468,20 @@ SubOutgoingFileTransfer::emit(DRing::DataTransferEventCode code) const
         stateChangedCb_(id, code);
     metaInfo_->updateInfo(info_);
     if (code == DRing::DataTransferEventCode::wait_peer_acceptance) {
-        if (timeoutTask_)
-            timeoutTask_->cancel();
-        timeoutTask_ = Manager::instance().scheduleTaskIn(
-            [this]() {
-                JAMI_WARN() << "FTP#" << getId() << ": timeout. Cancel";
-                closeAndEmit(DRing::DataTransferEventCode::timeout_expired);
-            },
-            std::chrono::minutes(10));
-    } else if (timeoutTask_) {
-        timeoutTask_->cancel();
-        timeoutTask_.reset();
+        timeoutThread_ = std::unique_ptr<std::thread>(new std::thread([this]() {
+            const auto TEN_MIN = 1000 * 60 * 10;
+            const auto SLEEP_DURATION = 100;
+            for (auto i = 0; i < TEN_MIN / SLEEP_DURATION; ++i) {
+                // 10 min before timeout
+                std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_DURATION));
+                if (stopTimeout_.load())
+                    return; // not waiting anymore
+            }
+            JAMI_WARN() << "FTP#" << this->getId() << ": timeout. Cancel";
+            this->closeAndEmit(DRing::DataTransferEventCode::timeout_expired);
+        }));
+    } else if (timeoutThread_) {
+        stopTimeout_ = true;
     }
 }
 
@@ -484,16 +519,10 @@ public:
 
     void close() noexcept override;
 
-    bool cancelWithPeer(const std::string& peer)
+    void cancel() override
     {
-        auto allFinished = true;
-        for (const auto& subtransfer : subtransfer_) {
-            if (subtransfer->peer() == peer)
-                subtransfer->cancel();
-            else if (!subtransfer->isFinished())
-                allFinished = false;
-        }
-        return allFinished;
+        for (const auto& subtransfer : subtransfer_)
+            subtransfer->cancel();
     }
 
 private:
@@ -797,15 +826,12 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
                         out->linkTransfer(std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)
                                               ->startNewOutgoing(out->peer()));
             },
-            [this, tid](const std::string& peer) {
-                if (auto transfer = std::dynamic_pointer_cast<OutgoingFileTransfer>(
-                        pimpl_->getTransfer(tid))) {
-                    auto allFinished = transfer->cancelWithPeer(peer);
-                    if (allFinished and not transfer->hasBeenStarted()) {
+            [this, tid]() {
+                if (auto transfer = pimpl_->getTransfer(tid))
+                    if (not transfer->hasBeenStarted()) {
                         transfer->emit(DRing::DataTransferEventCode::unjoinable_peer);
                         pimpl_->cancel(*transfer);
                     }
-                }
             });
         return DRing::DataTransferError::success;
     } catch (const std::exception& ex) {

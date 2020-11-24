@@ -54,8 +54,7 @@ AudioRecorder::processSLCallback(SLAndroidSimpleBufferQueueItf bq)
         /*if (devShadowQueue_.size() == 0) {
             (*recItf_)->SetRecordState(recItf_, SL_RECORDSTATE_STOPPED);
         }*/
-        if (callback_)
-            callback_();
+        callback_();
     } catch (const std::exception& e) {
         JAMI_ERR("processSLCallback exception: %s", e.what());
     }
@@ -251,8 +250,6 @@ AudioRecorder::stop()
 
     result = (*recItf_)->SetRecordState(recItf_, SL_RECORDSTATE_STOPPED);
     SLASSERT(result);
-    callback_ = {};
-
     result = (*recBufQueueItf_)->Clear(recBufQueueItf_);
     SLASSERT(result);
 

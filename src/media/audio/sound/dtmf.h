@@ -4,6 +4,9 @@
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
+ * 	Portions Copyright (c) 2000 Billy Biggs <bbiggs@div8.net>
+ *  Portions Copyright (c) 2004 Wirlab <kphone@wirlab.net>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -19,7 +22,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#pragma once
+#ifndef __DTMF_H_
+#define __DTMF_H_
 
 #include "dtmfgenerator.h"
 
@@ -27,6 +31,7 @@
  * @file dtmf.h
  * @brief DMTF library to generate a dtmf sample
  */
+
 namespace jami {
 
 class DTMF
@@ -58,3 +63,5 @@ private:
 };
 
 } // namespace jami
+
+#endif // __KEY_DTMF_H_

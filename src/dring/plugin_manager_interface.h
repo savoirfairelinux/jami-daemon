@@ -27,7 +27,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <list>
 
 #if __APPLE__
 #import "TargetConditionals.h"
@@ -50,13 +49,9 @@ DRING_PUBLIC std::vector<std::string> listLoadedPlugins();
 DRING_PUBLIC int installPlugin(const std::string& jplPath, bool force);
 DRING_PUBLIC int uninstallPlugin(const std::string& pluginRootPath);
 DRING_PUBLIC std::vector<std::string> listCallMediaHandlers();
-DRING_PUBLIC void toggleCallMediaHandler(const std::string& mediaHandlerId,
-                                         const std::string& callId,
-                                         bool toggle);
-DRING_PUBLIC std::map<std::string, std::string> getCallMediaHandlerDetails(
-    const std::string& mediaHandlerId);
+DRING_PUBLIC void toggleCallMediaHandler(const std::string& id, bool toggle);
+DRING_PUBLIC std::map<std::string, std::string> getCallMediaHandlerDetails(const std::string& id);
 DRING_PUBLIC bool getPluginsEnabled();
 DRING_PUBLIC void setPluginsEnabled(bool state);
-DRING_PUBLIC std::map<std::string, std::vector<std::string>> getCallMediaHandlerStatus(
-    const std::string& callId);
+DRING_PUBLIC std::map<std::string, std::string> getCallMediaHandlerStatus();
 } // namespace DRing

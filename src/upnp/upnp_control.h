@@ -26,7 +26,7 @@
 #endif
 
 #include "upnp_context.h"
-#include "protocol/global_mapping.h"
+#include "protocol/mapping_request_observer.h"
 
 #include "noncopyable.h"
 #include "logger.h"
@@ -45,12 +45,11 @@ namespace upnp {
 
 class UPnPContext;
 
-class Controller : public std::enable_shared_from_this<Controller>
+class Controller
 {
 public:
-    using NotifyServiceCallback = std::function<void(uint16_t, bool)>;
 
-    Controller(bool keepCb = false);
+    Controller();
     ~Controller();
 
     // Checks if a valid IGD is available.
@@ -63,45 +62,26 @@ public:
     IpAddr getLocalIP() const;
 
     // Request port mapping.
-    // Returns the port number for which a mapping is being requested. The
-    // mapping might not be ready when the method. The final result is
-    // returned through the provided callback.
-    uint16_t requestMappingAdd(NotifyServiceCallback&& cb, const Mapping& map);
+    // Returns a shared pointer on the allocated mapping. The shared
+    // pointer may point to nothing on failure.
+    Mapping::sharedPtr_t reserveMapping(Mapping& map);
+    Mapping::sharedPtr_t reserveMapping(uint16_t port, PortType type);
 
     // Remove port mapping.
-    bool requestMappingRemove( const Mapping& map);
+    bool releaseMapping(Mapping::sharedPtr_t map);
 
-    // Checks if the map is present locally given a port and type.
-    bool isLocalMapPresent(uint16_t portExternal, PortType type) const;
-
-    // Generates provision ports to be used throughout the application's lifetime.
-    bool preAllocateProvisionedPorts(upnp::PortType type, unsigned portCount, uint16_t minPort, uint16_t maxPort);
-
-    // Generates random port number.
-    static uint16_t generateRandomPort(uint16_t min, uint16_t max, bool mustBeEven = false);
-
-private:
-    std::shared_ptr<UPnPContext>
-        upnpContext_; // Context from which the controller executes the wanted commands.
-
-    mutable std::mutex mapListMutex_; // Mutex to protect mappings list.
-    PortMapLocal udpMappings_;        // List of UDP mappings created by this instance.
-    PortMapLocal tcpMappings_;        // List of TCP mappings created by this instance.
-
-    size_t listToken_ {0}; // IGD listener token.
-    uint64_t id_ {0}; // Variable to store string of address to be used as the unique identifier.
-    bool keepCb_ {false}; // Variable that indicates if the controller wants to keep it's callbacks
-                          // in the list after a connectivity change.
-
-    // Try to provision a UPNP port.
-    uint16_t requestMappingAdd(ControllerData&& ctrlData, const Mapping& map);
 private:
     // Adds a mapping locally to the list.
-    void addLocalMap(const Mapping& map);
-    // Removes a mapping locally from the list.
-    bool removeLocalMap(const Mapping& map);
+    void addLocalMap(Mapping::sharedPtr_t map);
+    // Removes a mapping from the local list.
+    bool removeLocalMap(Mapping::sharedPtr_t map);
     // Removes all mappings of the given type.
-    void requestAllMappingRemove(PortType type);
+    void releaseAllMappings();
+
+    std::shared_ptr<UPnPContext> upnpContext_;
+
+    mutable std::mutex mapListMutex_;
+    std::map<Mapping::key_t, Mapping::sharedPtr_t> mappingList_;
 };
 
 } // namespace upnp

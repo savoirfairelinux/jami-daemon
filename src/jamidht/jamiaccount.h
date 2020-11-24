@@ -223,8 +223,19 @@ public:
      */
     pj_str_t getContactHeader(pjsip_transport* = nullptr) override;
 
+    void setReceivedParameter(const std::string& received)
+    {
+        receivedParameter_ = received;
+        via_addr_.host.ptr = (char*) receivedParameter_.c_str();
+        via_addr_.host.slen = receivedParameter_.size();
+    }
+
+    std::string getReceivedParameter() const { return receivedParameter_; }
+
+    pjsip_host_port* getViaAddr() { return &via_addr_; }
+
     /* Returns true if the username and/or hostname match this account */
-    MatchRank matches(std::string_view username, std::string_view hostname) const override;
+    MatchRank matches(const std::string& username, const std::string& hostname) const override;
 
     /**
      * Implementation of Account::newOutgoingCall()
@@ -357,7 +368,7 @@ public:
         bool isVCard,
         const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
             channeledConnectedCb,
-        const std::function<void(const std::string&)>& onChanneledCancelled);
+        const std::function<void()>& onChanneledCancelled);
 
     ///
     /// Close a E2E connection between a given peer and a given transfer id.
@@ -438,8 +449,6 @@ public:
      * ConnectionManager needs the account to exists
      */
     void shutdownConnections();
-
-    std::string_view currentDeviceId() const;
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -634,19 +643,21 @@ private:
     /**
      * DHT port preference
      */
-    in_port_t dhtPort_ {};
-    /* Current port mapping */
-    upnp::Mapping dhtPortMapping_ {};
-
-    bool dhtPeerDiscovery_ {false};
+    in_port_t dhtDefaultPort_ { 0 };
 
     /**
-     * DHT port actually used,
-     * this holds the actual port used for DHT, which may not be the port
+     * DHT port actually used.
+     * This holds the actual port used for DHT, which may not be the port
      * selected in the configuration in the case that UPnP is used and the
      * configured port is already used by another client
      */
-    UsedPort dhtPortUsed_ {};
+    in_port_t dhtPortUsed() { return (upnp_ and dhtUpnpMapping_ and dhtUpnpMapping_->isValid()) ?
+        dhtUpnpMapping_->getPortExternal() : dhtDefaultPort_;}
+
+    /* Current UPNP mapping */
+    upnp::Mapping::sharedPtr_t dhtUpnpMapping_;
+
+    bool dhtPeerDiscovery_ {false};
 
     /**
      * Proxy
@@ -665,8 +676,18 @@ private:
     bool allowPeersFromContact_ {true};
     bool allowPeersFromTrusted_ {true};
 
+    /**
+     * Optional: "received" parameter from VIA header
+     */
+    std::string receivedParameter_ {};
+
     std::string managerUri_ {};
     std::string managerUsername_ {};
+
+    /**
+     * Optional: "rport" parameter from VIA header
+     */
+    int rPort_ {-1};
 
     /**
      * Optional: via_addr construct from received parameters

@@ -274,7 +274,7 @@ public:
                                const std::map<std::string, std::string>& payloads);
 
     /* Returns true if the username and/or hostname match this account */
-    virtual MatchRank matches(std::string_view username, std::string_view hostname) const = 0;
+    virtual MatchRank matches(const std::string& username, const std::string& hostname) const = 0;
 
     void connectivityChanged() override {};
 
@@ -412,49 +412,6 @@ protected:
      * Port range for video RTP ports
      */
     std::pair<uint16_t, uint16_t> videoPortRange_ {49152, (MAX_PORT) -2};
-
-    struct UsedPort
-    {
-        UsedPort() {};
-        UsedPort(UsedPort&& o) noexcept
-            : port_(o.port_)
-        {
-            o.port_ = 0;
-        }
-        UsedPort(in_port_t p)
-            : port_(p)
-        {
-            if (port_)
-                acquirePort(port_);
-        };
-        ~UsedPort()
-        {
-            if (port_)
-                releasePort(port_);
-        };
-        UsedPort& operator=(UsedPort&& o) noexcept
-        {
-            if (port_)
-                releasePort(port_);
-            port_ = o.port_;
-            o.port_ = 0;
-            return *this;
-        }
-        UsedPort& operator=(in_port_t p)
-        {
-            if (port_)
-                releasePort(port_);
-            port_ = p;
-            if (port_)
-                acquirePort(port_);
-            return *this;
-        }
-        explicit operator in_port_t() const { return port_; }
-
-    private:
-        in_port_t port_ {0};
-        NON_COPYABLE(UsedPort);
-    };
 
     static std::array<bool, HALF_MAX_PORT>& getPortsReservation() noexcept;
     static uint16_t acquirePort(uint16_t port);

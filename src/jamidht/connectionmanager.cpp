@@ -75,11 +75,6 @@ public:
                     info->tls_->shutdown();
                 if (info->socket_)
                     info->socket_->shutdown();
-                if (info->ice_) {
-                    info->ice_->cancelOperations();
-                    info->ice_->stop();
-                }
-                info->responseCv_.notify_all();
                 if (deviceId && key.first == deviceId) {
                     erased = true;
                     it = infos_.erase(it);
@@ -101,6 +96,24 @@ public:
         {
             std::lock_guard<std::mutex> lk(connectCbsMtx_);
             pendingCbs_.clear();
+        }
+        {
+            std::lock_guard<std::mutex> lk(infosMtx_);
+            for (auto& [key, connInfo] : infos_) {
+                if (!connInfo)
+                    continue;
+                if (connInfo->ice_) {
+                    connInfo->ice_->cancelOperations();
+                    connInfo->ice_->stop();
+                }
+                connInfo->responseCv_.notify_all();
+            }
+            // This is called when the account is only disabled.
+            // Move this on the thread pool because each
+            // IceTransport takes 500ms to delete, and it's sequential
+            // So, it can increase quickly the time to unregister an account
+            dht::ThreadPool::io().run(
+                [co = std::make_shared<decltype(infos_)>(std::move(infos_))] { co->clear(); });
         }
         removeUnusedConnections();
     }
@@ -222,7 +235,7 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
     auto onError = [&]() {
         ice.reset();
         if (auto cb = getPendingCallback({deviceId, vid}))
-            cb(nullptr, deviceId);
+            cb(nullptr);
     };
 
     if (!ice) {
@@ -297,7 +310,7 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
     if (!ice || !ice->isRunning()) {
         JAMI_ERR("No ICE detected or not running");
         if (auto cb = getPendingCallback({deviceId, vid}))
-            cb(nullptr, deviceId);
+            cb(nullptr);
         return;
     }
 
@@ -325,7 +338,7 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
             if (!ok) {
                 JAMI_ERR() << "TLS connection failure for peer " << deviceId;
                 if (auto cb = sthis->getPendingCallback({deviceId, vid}))
-                    cb(nullptr, deviceId);
+                    cb(nullptr);
             } else {
                 // The socket is ready, store it
                 sthis->addNewMultiplexedSocket(deviceId, vid);
@@ -342,7 +355,7 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                                        ConnectCallback cb)
 {
     if (!account.dht()) {
-        cb(nullptr, deviceId);
+        cb(nullptr);
         return;
     }
     account.findCertificate(
@@ -351,7 +364,7 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
             const std::shared_ptr<dht::crypto::Certificate>& cert) {
             if (!cert) {
                 JAMI_ERR("Invalid certificate found for device %s", deviceId.to_c_str());
-                cb(nullptr, deviceId);
+                cb(nullptr);
                 return;
             }
 
@@ -363,7 +376,7 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                              cb = std::move(cb)] {
                 auto sthis = w.lock();
                 if (!sthis || sthis->isDestroying_) {
-                    cb(nullptr, deviceId);
+                    cb(nullptr);
                     return;
                 }
                 auto vid = ValueIdDist()(sthis->account.rand);
@@ -405,7 +418,7 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                     if (!ok) {
                         JAMI_ERR("Cannot initialize ICE session.");
                         if (auto cb = sthis->getPendingCallback(cbId))
-                            cb(nullptr, deviceId);
+                            cb(nullptr);
                         return;
                     }
 
@@ -427,7 +440,7 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                     if (!ok) {
                         JAMI_ERR("ICE negotiation failed.");
                         if (auto cb = sthis->getPendingCallback(cbId))
-                            cb(nullptr, deviceId);
+                            cb(nullptr);
                         return;
                     }
 
@@ -458,7 +471,7 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                 if (!info->ice_) {
                     JAMI_ERR("Cannot initialize ICE session.");
                     if (auto cb = sthis->getPendingCallback(cbId))
-                        cb(nullptr, deviceId);
+                        cb(nullptr);
                     return;
                 }
             });
@@ -482,7 +495,7 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
     sock->setOnChannelReady(channelSock->channel(), [channelSock, deviceId, vid, w = weak()]() {
         if (auto shared = w.lock()) {
             if (auto cb = shared->getPendingCallback({deviceId, vid}))
-                cb(channelSock, deviceId);
+                cb(channelSock);
         }
     });
     std::error_code ec;
@@ -799,7 +812,7 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const
             }
             for (const auto& cbId : ids) {
                 if (auto cb = sthis->getPendingCallback(cbId)) {
-                    cb(nullptr, deviceId);
+                    cb(nullptr);
                 }
             }
 
@@ -836,7 +849,7 @@ ConnectionManager::closeConnectionsWith(const DeviceId& deviceId)
         while (it != pimpl_->pendingCbs_.end()) {
             if (it->first.first == deviceId) {
                 if (it->second)
-                    it->second(nullptr, deviceId);
+                    it->second(nullptr);
                 it = pimpl_->pendingCbs_.erase(it);
             } else {
                 ++it;

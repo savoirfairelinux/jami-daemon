@@ -87,7 +87,6 @@ using yaml_utils::parseValue;
 using yaml_utils::parseVectorMap;
 using sip_utils::CONST_PJ_STR;
 
-static constexpr int KEEP_ALIVE_DELAY = 10;                       // seconds
 static constexpr int MIN_REGISTRATION_TIME = 60;                  // seconds
 static constexpr unsigned DEFAULT_REGISTRATION_TIME = 3600;       // seconds
 static constexpr unsigned REGISTRATION_FIRST_RETRY_INTERVAL = 60; // seconds
@@ -143,7 +142,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , tlsRequireClientCertificate_(true)
     , tlsNegotiationTimeoutSec_("2")
     , registrationStateDetailed_()
-    , keepAliveEnabled_(true)
+    , keepAliveEnabled_(false)
     , keepAliveTimer_()
     , keepAliveTimerActive_(false)
     , receivedParameter_("")
@@ -223,7 +222,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
         // FIXME : for now, use the same address family as the SIP transport
         family = pjsip_transport_type_get_af(getTransportType());
 
-        JAMI_DBG("UserAgent: New registered account call to %.*s", (int) toUrl.size(), toUrl.data());
+        JAMI_DBG("UserAgent: New registered account call to %.*s", (int)toUrl.size(), toUrl.data());
     }
 
     auto toUri = getToUri(to);
@@ -354,12 +353,13 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     // Add Ice headers to local SDP if ice transport exist
     call->setupLocalSDPFromIce();
 
-    const std::string& toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
-    pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);
+    std::string toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
+
+    pj_str_t pjTo = pj_str((char*) toUri.c_str());
 
     // Create the from header
     std::string from(getFromUri());
-    pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
+    pj_str_t pjFrom = pj_str((char*) from.c_str());
 
     auto transport = call->getTransport();
     if (!transport) {
@@ -408,8 +408,6 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         JAMI_ERR("Unable to associate transport for invite session dialog");
         return false;
     }
-
-    setUpTransmissionData(tdata, tp_sel.u.transport->key.type);
 
     // Add user-agent header
     sip_utils::addUserAgenttHeader(getUserAgentName(), tdata);
@@ -740,11 +738,11 @@ void
 SIPAccount::mapPortUPnP()
 {
     upnp::Mapping map {publishedPort_, localPort_, upnp::PortType::UDP, "SIP Account Port"};
-
-    upnp_->requestMappingAdd(
-        [this](uint16_t port_used, bool success) {
+    map.setNotifyCallback([this](upnp::Mapping::sharedPtr_t mapRes) {
             auto oldPort = static_cast<in_port_t>(publishedPortUsed_);
-            auto newPort = success ? port_used : publishedPort_;
+            bool success = mapRes->getState() == upnp::MappingState::OPEN or
+                mapRes->getState() == upnp::MappingState::IN_PROGRESS;
+            auto newPort = success ? mapRes->getPortExternal() : publishedPort_;
             if (not success and not isRegistered()) {
                 JAMI_WARN("[Account %s] Failed to open port %u: registering SIP account anyway",
                           getAccountID().c_str(),
@@ -766,8 +764,9 @@ SIPAccount::mapPortUPnP()
                 connectivityChanged();
             }
             doRegister1_();
-        },
-        map);
+        });
+
+        upnp_->reserveMapping(map);
 }
 
 void
@@ -910,6 +909,8 @@ SIPAccount::doUnregister(std::function<void(bool)> released_cb)
     std::unique_lock<std::mutex> lock(configurationMutex_);
 
     tlsListener_.reset();
+    if (transport_)
+        setTransport();
 
     if (!isIP2IP()) {
         try {
@@ -918,9 +919,6 @@ SIPAccount::doUnregister(std::function<void(bool)> released_cb)
             JAMI_ERR("doUnregister %s", e.what());
         }
     }
-
-    if (transport_)
-        setTransport();
     resetAutoRegistration();
 
     lock.unlock();
@@ -971,10 +969,10 @@ SIPAccount::startKeepAliveTimer()
     pj_time_val keepAliveDelay_;
     if (registrationExpire_ == 0) {
         JAMI_DBG("Registration Expire: 0, taking 60 instead");
-        keepAliveDelay_.sec = MIN_REGISTRATION_TIME;
+        keepAliveDelay_.sec = 3600;
     } else {
         JAMI_DBG("Registration Expire: %d", registrationExpire_);
-        keepAliveDelay_.sec = registrationExpire_ + KEEP_ALIVE_DELAY;
+        keepAliveDelay_.sec = registrationExpire_ + MIN_REGISTRATION_TIME;
     }
     keepAliveDelay_.msec = 0;
     keepAliveTimerActive_ = true;
@@ -991,7 +989,7 @@ SIPAccount::stopKeepAliveTimer()
         keepAliveTimerActive_ = false;
         link_.cancelKeepAliveTimer(keepAliveTimer_);
         if (keepAliveTimer_.user_data) {
-            delete ((std::weak_ptr<SIPAccount>*) keepAliveTimer_.user_data);
+            delete ((std::weak_ptr<SIPAccount>*)keepAliveTimer_.user_data);
             keepAliveTimer_.user_data = nullptr;
         }
     }
@@ -1017,10 +1015,10 @@ SIPAccount::sendRegister()
 
     // Generate the FROM header
     std::string from(getFromUri());
-    pj_str_t pjFrom(sip_utils::CONST_PJ_STR(from));
+    pj_str_t pjFrom {(char*) from.data(), (pj_ssize_t) from.size()};
 
     // Get the received header
-    const std::string& received(getReceivedParameter());
+    std::string received(getReceivedParameter());
 
     // Get the contact header
     const pj_str_t pjContact(getContactHeader());
@@ -1073,49 +1071,32 @@ SIPAccount::sendRegister()
     pjsip_regc_add_headers(regc, &hdr_list);
 
     pjsip_tx_data* tdata;
-    if (pjsip_regc_register(regc, PJ_FALSE, &tdata) != PJ_SUCCESS)
+    if (pjsip_regc_register(regc, PJ_TRUE, &tdata) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize transaction data for account registration");
 
     const pjsip_tpselector tp_sel = getTransportSelector();
     if (pjsip_regc_set_transport(regc, &tp_sel) != PJ_SUCCESS)
         throw VoipLinkException("Unable to set transport");
 
-    setUpTransmissionData(tdata, tp_sel.u.transport->key.type);
+    if (hostIp_) {
+        auto ai = &tdata->dest_info;
+        ai->name = pj_strdup3(tdata->pool, hostname_.c_str());
+        ai->addr.count = 1;
+        ai->addr.entry[0].type = (pjsip_transport_type_e) tp_sel.u.transport->key.type;
+        pj_memcpy(&ai->addr.entry[0].addr, hostIp_.pjPtr(), sizeof(pj_sockaddr));
+        ai->addr.entry[0].addr_len = hostIp_.getLength();
+        ai->cur_addr = 0;
+    }
 
     // pjsip_regc_send increment the transport ref count by one,
     if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
-        JAMI_ERR("pjsip_regc_send failed with error %d: %s",
+        JAMI_ERR("pjsip_regc_init failed with error %d: %s",
                  status,
                  sip_utils::sip_strerror(status).c_str());
         throw VoipLinkException("Unable to send account registration request");
     }
 
     setRegistrationInfo(regc);
-}
-
-void
-SIPAccount::setUpTransmissionData(pjsip_tx_data* tdata, long transportKeyType)
-{
-    if (hasServiceRoute()) {
-        IpAddr proxyServer {getServiceRoute()};
-        if (proxyServer.getPort() == 0)
-            proxyServer.setPort(sip_utils::DEFAULT_SIP_PORT);
-        auto ai = &tdata->dest_info;
-        ai->name = pj_strdup3(tdata->pool, hostname_.c_str());
-        ai->addr.count = 1;
-        ai->addr.entry[0].type = (pjsip_transport_type_e) transportKeyType;
-        pj_memcpy(&ai->addr.entry[0].addr, proxyServer.pjPtr(), sizeof(pj_sockaddr));
-        ai->addr.entry[0].addr_len = proxyServer.getLength();
-        ai->cur_addr = 0;
-    } else if (hostIp_) {
-        auto ai = &tdata->dest_info;
-        ai->name = pj_strdup3(tdata->pool, hostname_.c_str());
-        ai->addr.count = 1;
-        ai->addr.entry[0].type = (pjsip_transport_type_e) transportKeyType;
-        pj_memcpy(&ai->addr.entry[0].addr, hostIp_.pjPtr(), sizeof(pj_sockaddr));
-        ai->addr.entry[0].addr_len = hostIp_.getLength();
-        ai->cur_addr = 0;
-    }
 }
 
 void
@@ -1227,12 +1208,6 @@ SIPAccount::sendUnregister()
     pjsip_tx_data* tdata = nullptr;
     if (pjsip_regc_unregister(regc, &tdata) != PJ_SUCCESS)
         throw VoipLinkException("Unable to unregister sip account");
-
-    const pjsip_tpselector tp_sel = getTransportSelector();
-    if (pjsip_regc_set_transport(regc, &tp_sel) != PJ_SUCCESS)
-        throw VoipLinkException("Unable to set transport");
-
-    setUpTransmissionData(tdata, tp_sel.u.transport->key.type);
 
     pj_status_t status;
     if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
@@ -1378,19 +1353,19 @@ SIPAccount::loadConfig()
 }
 
 bool
-SIPAccount::fullMatch(std::string_view username, std::string_view hostname) const
+SIPAccount::fullMatch(const std::string& username, const std::string& hostname) const
 {
     return userMatch(username) and hostnameMatch(hostname);
 }
 
 bool
-SIPAccount::userMatch(std::string_view username) const
+SIPAccount::userMatch(const std::string& username) const
 {
     return !username.empty() and username == username_;
 }
 
 bool
-SIPAccount::hostnameMatch(std::string_view hostname) const
+SIPAccount::hostnameMatch(const std::string& hostname) const
 {
     if (hostname == hostname_)
         return true;
@@ -1400,7 +1375,7 @@ SIPAccount::hostnameMatch(std::string_view hostname) const
 }
 
 bool
-SIPAccount::proxyMatch(std::string_view hostname) const
+SIPAccount::proxyMatch(const std::string& hostname) const
 {
     if (hostname == serviceRoute_)
         return true;
@@ -1829,29 +1804,21 @@ SIPAccount::supportPresence(int function, bool enabled)
 }
 
 MatchRank
-SIPAccount::matches(std::string_view userName, std::string_view server) const
+SIPAccount::matches(const std::string& userName, const std::string& server) const
 {
     if (fullMatch(userName, server)) {
-        JAMI_DBG("Matching account id in request is a fullmatch %.*s@%.*s",
-                 (int) userName.size(),
-                 userName.data(),
-                 (int) server.size(),
-                 server.data());
+        JAMI_DBG("Matching account id in request is a fullmatch %s@%s",
+                 userName.c_str(),
+                 server.c_str());
         return MatchRank::FULL;
     } else if (hostnameMatch(server)) {
-        JAMI_DBG("Matching account id in request with hostname %.*s",
-                 (int) server.size(),
-                 server.data());
+        JAMI_DBG("Matching account id in request with hostname %s", server.c_str());
         return MatchRank::PARTIAL;
     } else if (userMatch(userName)) {
-        JAMI_DBG("Matching account id in request with username %.*s",
-                 (int) userName.size(),
-                 userName.data());
+        JAMI_DBG("Matching account id in request with username %s", userName.c_str());
         return MatchRank::PARTIAL;
     } else if (proxyMatch(server)) {
-        JAMI_DBG("Matching account id in request with proxy %.*s",
-                 (int) server.size(),
-                 server.data());
+        JAMI_DBG("Matching account id in request with proxy %s", server.c_str());
         return MatchRank::PARTIAL;
     } else {
         return MatchRank::NONE;
@@ -1873,7 +1840,7 @@ SIPAccount::resetAutoRegistration()
     auto_rereg_.active = PJ_FALSE;
     auto_rereg_.attempt_cnt = 0;
     if (auto_rereg_.timer.user_data) {
-        delete ((std::weak_ptr<SIPAccount>*) auto_rereg_.timer.user_data);
+        delete ((std::weak_ptr<SIPAccount>*)auto_rereg_.timer.user_data);
         auto_rereg_.timer.user_data = nullptr;
     }
 }
@@ -2165,8 +2132,8 @@ SIPAccount::sendTextMessage(const std::string& to,
 
     constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
     std::string from(getFromUri());
-    pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
-    pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);
+    pj_str_t pjFrom = pj_str((char*) from.c_str());
+    pj_str_t pjTo = pj_str((char*) toUri.c_str());
 
     /* Create request. */
     pjsip_tx_data* tdata;
@@ -2236,8 +2203,6 @@ SIPAccount::sendTextMessage(const std::string& to,
         messageEngine_.onMessageSent(to, id, false);
         return;
     }
-
-    setUpTransmissionData(tdata, tp_sel.u.transport->key.type);
 
     im::fillPJSIPMessageBody(*tdata, payloads);
 

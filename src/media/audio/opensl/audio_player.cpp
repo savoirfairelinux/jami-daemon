@@ -67,8 +67,7 @@ AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq)
         }
     }
 
-    if (callback_)
-        callback_();
+    callback_();
 
     while (playQueue_->front(&buf) && devShadowQueue_.push(buf)) {
         if ((*bq)->Enqueue(bq, buf->buf_, buf->size_) != SL_RESULT_SUCCESS) {
@@ -231,7 +230,6 @@ AudioPlayer::stop()
 {
     JAMI_DBG("OpenSL playback stop");
     std::lock_guard<std::mutex> lk(m_);
-    callback_ = {};
     SLuint32 state;
 
     SLresult result = (*playItf_)->GetPlayState(playItf_, &state);

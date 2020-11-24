@@ -67,13 +67,10 @@ public:
     int installPlugin(const std::string& jplPath, const bool& force);
     int uninstallPlugin(const std::string& pluginRootPath);
     std::vector<std::string> listCallMediaHandlers();
-    void toggleCallMediaHandler(const std::string& mediaHandlerId,
-                                const std::string& callId,
-                                const bool& toggle);
-    std::map<std::string, std::string> getCallMediaHandlerDetails(const std::string& mediaHandlerId);
+    void toggleCallMediaHandler(const std::string& id, const bool& toggle);
+    std::map<std::string, std::string> getCallMediaHandlerDetails(const std::string& id);
 
     bool getPluginsEnabled();
     void setPluginsEnabled(const bool& state);
-    std::map<std::string, std::vector<std::string>> getCallMediaHandlerStatus(
-        const std::string& callId);
+    std::map<std::string, std::string> getCallMediaHandlerStatus();
 };

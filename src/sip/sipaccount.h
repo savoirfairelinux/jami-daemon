@@ -385,10 +385,11 @@ public:
     void setReceivedParameter(const std::string& received)
     {
         receivedParameter_ = received;
-        via_addr_.host = sip_utils::CONST_PJ_STR(receivedParameter_);
+        via_addr_.host.ptr = (char*) receivedParameter_.c_str();
+        via_addr_.host.slen = receivedParameter_.size();
     }
 
-    const std::string& getReceivedParameter() const { return receivedParameter_; }
+    std::string getReceivedParameter() const { return receivedParameter_; }
 
     pjsip_host_port* getViaAddr() { return &via_addr_; }
 
@@ -426,7 +427,7 @@ public:
     pjsip_tpselector getTransportSelector();
 
     /* Returns true if the username and/or hostname match this account */
-    MatchRank matches(std::string_view username, std::string_view hostname) const override;
+    MatchRank matches(const std::string& username, const std::string& hostname) const override;
 
     /**
      * Presence management
@@ -463,11 +464,13 @@ public:
 #ifndef _MSC_VER
     template<class T = SIPCall>
     std::shared_ptr<enable_if_base_of<T, SIPCall>> newOutgoingCall(
-        std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
+        std::string_view toUrl,
+        const std::map<std::string, std::string>& volatileCallDetails = {});
 #else
     template<class T>
     std::shared_ptr<T> newOutgoingCall(
-        std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
+        std::string_view toUrl,
+        const std::map<std::string, std::string>& volatileCallDetails = {});
 #endif
 
     /**
@@ -505,8 +508,6 @@ private:
     void doRegister1_();
     void doRegister2_();
 
-    void setUpTransmissionData(pjsip_tx_data* tdata, long transportKeyType);
-
     /**
      * Set the internal state for this account, mainly used to manage account details from the
      * client application.
@@ -527,10 +528,10 @@ private:
 
     void usePublishedAddressPortInVIA();
     void useUPnPAddressPortInVIA();
-    bool fullMatch(std::string_view username, std::string_view hostname) const;
-    bool userMatch(std::string_view username) const;
-    bool hostnameMatch(std::string_view hostname) const;
-    bool proxyMatch(std::string_view hostname) const;
+    bool fullMatch(const std::string& username, const std::string& hostname) const;
+    bool userMatch(const std::string& username) const;
+    bool hostnameMatch(const std::string& hostname) const;
+    bool proxyMatch(const std::string& hostname) const;
 
     bool isSrtpEnabled() const { return srtpKeyExchange_ != sip_utils::KeyExchangeProtocol::NONE; }
 
@@ -642,7 +643,7 @@ private:
     int registrationExpire_;
 
     /**
-     * Input Outbound Proxy Server Address
+     * Optional list of SIP service this
      */
     std::string serviceRoute_;
 

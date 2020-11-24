@@ -217,7 +217,7 @@ ip_utils::getDeviceName()
 }
 
 std::vector<IpAddr>
-ip_utils::getAddrList(std::string_view name, pj_uint16_t family)
+ip_utils::getAddrList(const std::string& name, pj_uint16_t family)
 {
     std::vector<IpAddr> ipList;
     if (name.empty())
@@ -235,7 +235,7 @@ ip_utils::getAddrList(std::string_view name, pj_uint16_t family)
     if (status != PJ_SUCCESS) {
         JAMI_ERR("Error resolving %.*s : %s",
                  (int) name.size(),
-                 name.data(),
+                 name.c_str(),
                  sip_utils::sip_strerror(status).c_str());
         return ipList;
     }

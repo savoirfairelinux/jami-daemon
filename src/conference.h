@@ -202,7 +202,6 @@ public:
     void detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame);
 
     void onConfOrder(const std::string& callId, const std::string& order);
-    void setModerator(const std::string& uri, const bool& state);
 
 #ifdef ENABLE_VIDEO
     std::shared_ptr<video::VideoMixer> getVideoMixer();
@@ -241,12 +240,10 @@ private:
 #endif
 
     std::shared_ptr<jami::AudioInput> audioMixer_;
-    std::set<std::string> moderators_ {};
+    std::vector<std::string> moderators_ {};
 
     void initRecorder(std::shared_ptr<MediaRecorder>& rec);
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec);
-
-    void updateModerators();
 };
 
 } // namespace jami

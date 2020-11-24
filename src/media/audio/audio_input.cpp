@@ -179,6 +179,7 @@ AudioInput::readFromFile()
 bool
 AudioInput::initDevice(const std::string& device)
 {
+    JAMI_WARN("AudioInput::initDevice %s", device.c_str());
     devOpts_ = {};
     devOpts_.input = device;
     devOpts_.channel = format_.nb_channels;

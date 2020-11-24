@@ -350,7 +350,7 @@ std::vector<std::string> getAllIpInterfaceByName();
  */
 std::vector<std::string> getAllIpInterface();
 
-std::vector<IpAddr> getAddrList(std::string_view name, pj_uint16_t family = pj_AF_UNSPEC());
+std::vector<IpAddr> getAddrList(const std::string& name, pj_uint16_t family = pj_AF_UNSPEC());
 
 bool haveCommonAddr(const std::vector<IpAddr>& a, const std::vector<IpAddr>& b);
 

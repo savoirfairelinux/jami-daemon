@@ -113,9 +113,9 @@ public:
     /**
      * Guess the account related to an incoming SIP call.
      */
-    std::shared_ptr<SIPAccountBase> guessAccount(std::string_view userName,
-                                                 std::string_view server,
-                                                 std::string_view fromUri) const;
+    std::shared_ptr<SIPAccountBase> guessAccount(const std::string& userName,
+                                                 const std::string& server,
+                                                 const std::string& fromUri) const;
 
     int getModId();
     pjsip_endpoint* getEndpoint();

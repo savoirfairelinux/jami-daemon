@@ -267,22 +267,20 @@ RingBufferPool::getData(const std::string& call_id)
 
     const auto bindings = getReadBindings(call_id);
     if (not bindings)
-        return {};
+        return 0;
 
     // No mixing
     if (bindings->size() == 1)
         return (*bindings->cbegin())->get(call_id);
 
     auto mixBuffer = std::make_shared<AudioFrame>(internalAudioFormat_);
-    auto mixed = false;
     for (const auto& rbuf : *bindings) {
         if (auto b = rbuf->get(call_id)) {
-            mixed = true;
             mixBuffer->mix(*b);
         }
     }
 
-    return mixed ? mixBuffer : nullptr;
+    return mixBuffer;
 }
 
 bool

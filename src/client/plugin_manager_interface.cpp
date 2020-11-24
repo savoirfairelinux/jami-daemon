@@ -114,21 +114,21 @@ listCallMediaHandlers()
 }
 
 void
-toggleCallMediaHandler(const std::string& mediaHandlerId, const std::string& callId, bool toggle)
+toggleCallMediaHandler(const std::string& id, bool toggle)
 {
     return jami::Manager::instance()
         .getJamiPluginManager()
         .getCallServicesManager()
-        .toggleCallMediaHandler(mediaHandlerId, callId, toggle);
+        .toggleCallMediaHandler(id, toggle);
 }
 
 std::map<std::string, std::string>
-getCallMediaHandlerDetails(const std::string& mediaHandlerId)
+getCallMediaHandlerDetails(const std::string& id)
 {
     return jami::Manager::instance()
         .getJamiPluginManager()
         .getCallServicesManager()
-        .getCallMediaHandlerDetails(mediaHandlerId);
+        .getCallMediaHandlerDetails(id);
 }
 
 bool
@@ -144,12 +144,12 @@ setPluginsEnabled(bool state)
     jami::Manager::instance().saveConfig();
 }
 
-std::map<std::string, std::vector<std::string>>
-getCallMediaHandlerStatus(const std::string& callId)
+std::map<std::string, std::string>
+getCallMediaHandlerStatus()
 {
     return jami::Manager::instance()
         .getJamiPluginManager()
         .getCallServicesManager()
-        .getCallMediaHandlerStatus(callId);
+        .getCallMediaHandlerStatus();
 }
 } // namespace DRing

@@ -117,6 +117,15 @@ void writeArchive(const std::string& data,
 
 std::mutex& getFileLock(const std::string& path);
 
+struct FileHandle
+{
+    int fd;
+    const std::string name;
+    FileHandle(const std::string& name);
+    ~FileHandle();
+};
+FileHandle create_pidfile();
+
 /**
  * Remove a file with optional erasing of content.
  * Return the same value as std::remove().

@@ -1,5 +1,7 @@
 /*
  *  Copyright (C) 2004-2020 Savoir-faire Linux Inc.
+ *  Copyright (C) 2010 Michael Kerrisk
+ *  Copyright (C) 2007-2009 Rémi Denis-Courmont
  *
  *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
  *
@@ -129,6 +131,73 @@ check_dir(const char* path, mode_t UNUSED dirmode, mode_t parentmode)
     return true;
 }
 
+#ifndef _WIN32
+/* Lock a file region */
+static int
+lockReg(int fd, int cmd, int type, int whence, int start, off_t len)
+{
+    struct flock fl;
+
+    fl.l_type = type;
+    fl.l_whence = whence;
+    fl.l_start = start;
+    fl.l_len = len;
+
+    return fcntl(fd, cmd, &fl);
+}
+
+static int /* Lock a file region using nonblocking F_SETLK */
+lockRegion(int fd, int type, int whence, int start, int len)
+{
+    return lockReg(fd, F_SETLK, type, whence, start, len);
+}
+
+FileHandle
+create_pidfile()
+{
+    const std::string name(get_home_dir() + DIR_SEPARATOR_STR PIDFILE);
+    FileHandle f(name);
+    char buf[100];
+    f.fd = open(f.name.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    if (f.fd == -1) {
+        JAMI_ERR("Could not open PID file %s", f.name.c_str());
+        return f;
+    }
+
+    if (lockRegion(f.fd, F_WRLCK, SEEK_SET, 0, 0) == -1) {
+        if (errno == EAGAIN or errno == EACCES)
+            JAMI_ERR("PID file '%s' is locked; probably "
+                     "'%s' is already running",
+                     f.name.c_str(),
+                     PACKAGE_NAME);
+        else
+            JAMI_ERR("Unable to lock PID file '%s'", f.name.c_str());
+        close(f.fd);
+        f.fd = -1;
+        return f;
+    }
+
+    if (ftruncate(f.fd, 0) == -1) {
+        JAMI_ERR("Could not truncate PID file '%s'", f.name.c_str());
+        close(f.fd);
+        f.fd = -1;
+        return f;
+    }
+
+    snprintf(buf, sizeof(buf), "%ld\n", (long) getpid());
+
+    const int buf_strlen = strlen(buf);
+    if (write(f.fd, buf, buf_strlen) != buf_strlen) {
+        JAMI_ERR("Problem writing to PID file '%s'", f.name.c_str());
+        close(f.fd);
+        f.fd = -1;
+        return f;
+    }
+
+    return f;
+}
+#endif // !_WIN32
+
 std::string
 expand_path(const std::string& path)
 {
@@ -172,12 +241,12 @@ expand_path(const std::string& path)
 #endif
 }
 
+std::map<std::string, std::mutex> fileLocks {};
+std::mutex fileLockLock {};
+
 std::mutex&
 getFileLock(const std::string& path)
 {
-    static std::mutex fileLockLock {};
-    static std::map<std::string, std::mutex> fileLocks {};
-
     std::lock_guard<std::mutex> l(fileLockLock);
     return fileLocks[path];
 }
@@ -503,6 +572,21 @@ writeArchive(const std::string& archive_str, const std::string& path, const std:
     }
 }
 
+FileHandle::FileHandle(const std::string& n)
+    : fd(-1)
+    , name(n)
+{}
+
+FileHandle::~FileHandle()
+{
+    // we will only delete the file if it was created by this process
+    if (fd != -1) {
+        close(fd);
+        if (unlink(name.c_str()) == -1)
+            JAMI_ERR("%s", strerror(errno));
+    }
+}
+
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 #else
 static char* program_dir = NULL;
@@ -585,7 +669,7 @@ get_home_dir()
 #else
 
     // 1) try getting user's home directory from the environment
-    std::string home(PROTECTED_GETENV("HOME"));
+    const std::string home(PROTECTED_GETENV("HOME"));
     if (not home.empty())
         return home;
 
