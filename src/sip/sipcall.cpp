@@ -41,6 +41,7 @@
 #include "dring/media_const.h"
 #include "client/ring_signal.h"
 #include "ice_transport.h"
+#include "conference.h"
 #ifdef ENABLE_PLUGIN
 // Plugin manager
 #include "plugin/jamipluginmanager.h"
@@ -1283,6 +1284,44 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
         avformatrtp_->setMuted(isAudioMuted_);
         if (not isSubcall())
             emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
+
+        // Update conference information if any (just for the current user)
+        if (confInfo_.size() == 0)
+            return;
+
+        ParticipantInfo newInfo {};
+        auto account = getAccount().lock();
+        if (!account)
+            return;
+
+        std::unique_lock<std::mutex> lk(confInfoMutex_);
+        for (const ParticipantInfo& info : confInfo_) {
+            std::string_view partURI = account->getUsername();
+            auto separator = partURI.find('@');
+            if (separator != std::string_view::npos)
+                partURI = partURI.substr(0, separator);
+
+            std::string_view partUsername = account->getUsername();
+            separator = partUsername.find(':');
+            if (separator != std::string_view::npos)
+                partUsername = partUsername.substr(separator+1, partUsername.size());
+            JAMI_ERR("@@@ partURI: %s, partUsername: %s",
+                partURI.data(),
+                partUsername.data());
+            if (partURI == partUsername) {
+                newInfo = info;
+                lk.unlock();
+                newInfo.audioMuted = mute;
+                Json::StreamWriterBuilder builder;
+                const auto callInfo = Json::writeString(builder, newInfo.toJson());
+                JAMI_ERR("@@@ callInfo: %s", callInfo.c_str());
+                sendTextMessage(std::map<std::string, std::string> {{"application/confInfo+json",
+                                                                            callInfo}},
+                                        account->getFromUri());
+                return;
+            }
+        }
+        lk.unlock();
     }
 }
 

@@ -364,6 +364,9 @@ protected:
     /** Protect every attribute that can be changed by two threads */
     mutable std::recursive_mutex callMutex_ {};
 
+    mutable std::mutex confInfoMutex_ {};
+    mutable ConfInfo confInfo_ {};
+
 private:
     bool validStateTransition(CallState newState);
 
@@ -409,8 +412,6 @@ private:
     ///< MultiDevice: message received by subcall to merged yet
     MsgList pendingInMessages_;
 
-    mutable std::mutex confInfoMutex_ {};
-    mutable ConfInfo confInfo_ {};
 };
 
 // Helpers

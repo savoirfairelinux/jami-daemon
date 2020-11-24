@@ -303,3 +303,10 @@ DBusCallManager::setModerator(const std::string& confId, const std::string& peer
 {
     DRing::setModerator(confId, peerId, state);
 }
+
+void
+DBusCallManager::muteParticipant(const std::string& confId, const std::string& peerId, const bool& state)
+{
+    DRing::muteParticipant(confId, peerId, state);
+}
+
