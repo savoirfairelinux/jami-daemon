@@ -223,7 +223,7 @@ static const std::string PEER_DISCOVERY_JAMI_SERVICE = "jami";
 const constexpr auto PEER_DISCOVERY_EXPIRATION = std::chrono::minutes(1);
 
 constexpr const char* const JamiAccount::ACCOUNT_TYPE;
-/* constexpr */ const std::pair<uint16_t, uint16_t> JamiAccount::DHT_PORT_RANGE {4000, 8888};
+constexpr const std::pair<uint16_t, uint16_t> JamiAccount::DHT_PORT_RANGE {4000, 8888};
 
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
 
