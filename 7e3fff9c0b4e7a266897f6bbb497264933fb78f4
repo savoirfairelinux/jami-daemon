@@ -22,6 +22,29 @@
       "revId": "7e3fff9c0b4e7a266897f6bbb497264933fb78f4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b60ae0b7_53bc23ac",
+        "filename": "src/upnp/upnp_context.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-25T20:54:02Z",
+      "side": 1,
+      "message": "Should be part of manager instead of independant Singleton",
+      "range": {
+        "startLine": 95,
+        "startChar": 0,
+        "endLine": 97,
+        "endChar": 57
+      },
+      "revId": "7e3fff9c0b4e7a266897f6bbb497264933fb78f4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
