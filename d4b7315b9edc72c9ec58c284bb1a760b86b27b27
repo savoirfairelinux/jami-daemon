@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "44ce5fc0_c14c83f2",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 412,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-25T21:25:14Z",
+      "side": 1,
+      "message": "can be keeped as a InfoHash and use to_c_str()",
+      "range": {
+        "startLine": 411,
+        "startChar": 5,
+        "endLine": 412,
+        "endChar": 38
+      },
+      "revId": "d4b7315b9edc72c9ec58c284bb1a760b86b27b27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e7ecb2c4_1028887e",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 683,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-25T21:25:14Z",
+      "side": 1,
+      "message": "not formatted by clang ;)",
+      "range": {
+        "startLine": 683,
+        "startChar": 0,
+        "endLine": 683,
+        "endChar": 4
+      },
+      "revId": "d4b7315b9edc72c9ec58c284bb1a760b86b27b27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
