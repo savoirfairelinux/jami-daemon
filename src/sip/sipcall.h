@@ -284,7 +284,8 @@ private:
 
     void setCallMediaLocal();
 
-    void waitForIceAndStartMedia();
+    void startIceMedia();
+    void onIceNegoSucceed();
 
     void startAllMedia();
     void stopAllMedia();
@@ -380,6 +381,8 @@ private:
     OnReadyCb offHoldCb_ {};
 
     bool peerRecording_ {false};
+
+    std::atomic_bool waitForIceInit_ {false};
 };
 
 // Helpers
