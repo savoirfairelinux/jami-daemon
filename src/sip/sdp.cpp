@@ -142,11 +142,6 @@ Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session* sdp)
 void
 Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session* sdp)
 {
-    if (!sdp) {
-        JAMI_ERR("Remote sdp is NULL");
-        return;
-    }
-
     activeRemoteSession_ = sdp;
 }
 
