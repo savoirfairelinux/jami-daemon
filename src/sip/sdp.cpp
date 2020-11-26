@@ -587,6 +587,8 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, uns
 std::vector<MediaDescription>
 Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
 {
+    if (!session)
+        return {};
     static constexpr pj_str_t STR_RTPMAP {sip_utils::CONST_PJ_STR("rtpmap")};
     static constexpr pj_str_t STR_FMTP {sip_utils::CONST_PJ_STR("fmtp")};
 

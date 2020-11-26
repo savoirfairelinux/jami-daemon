@@ -1081,7 +1081,7 @@ SIPCall::getAudioCodec() const
 void
 SIPCall::startAllMedia()
 {
-    if (!transport_)
+    if (!transport_ or !sdp_)
         return;
     JAMI_WARN("[call:%s] startAllMedia()", getCallId().c_str());
     if (isSecure() && not transport_->isSecure()) {
@@ -1313,82 +1313,64 @@ SIPCall::onMediaUpdate()
                 return;
             }
             if (not this_->isSubcall())
-                this_->waitForIceAndStartMedia();
+                this_->startIceMedia();
         }
     });
 }
 
 void
-SIPCall::waitForIceAndStartMedia()
+SIPCall::startIceMedia()
 {
-    // Initialization waiting task
-    Manager::instance().addTask([weak_call = weak()] {
-        // TODO: polling algo, to it by event
-        if (auto call = weak_call.lock()) {
-            auto ice = call->getIceMediaTransport();
+    auto ice = getIceMediaTransport();
 
-            if (not ice or ice->isFailed()) {
-                JAMI_ERR("[call:%s] Media ICE init failed", call->getCallId().c_str());
-                call->onFailure(EIO);
-                return false;
-            }
+    if (not ice or ice->isFailed()) {
+        JAMI_ERR("[call:%s] Media ICE init failed", getCallId().c_str());
+        onFailure(EIO);
+        return;
+    }
 
-            if (!ice->isInitialized())
-                return true;
+    if (ice->isStarted()) {
+        // NOTE: for incoming calls, the ice is already there and running
+        if (ice->isRunning())
+            onIceNegoSucceed();
+        return;
+    }
 
-            // Start transport on SDP data and wait for negotiation
-            auto rem_ice_attrs = call->sdp_->getIceAttributes();
-            if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
-                JAMI_ERR("[call:%s] Media ICE attributes empty", call->getCallId().c_str());
-                call->onFailure(EIO);
-                return false;
-            }
-            if (not ice->start(rem_ice_attrs, call->getAllRemoteCandidates())) {
-                JAMI_ERR("[call:%s] Media ICE start failed", call->getCallId().c_str());
-                call->onFailure(EIO);
-                return false;
-            }
+    if (!ice->isInitialized()) {
+        // In this case, onInitDone will occurs after the startIceMedia
+        waitForIceInit_ = true;
+        return;
+    }
 
-            // Negotiation waiting task
-            Manager::instance().addTask([weak_call] {
-                if (auto call = weak_call.lock()) {
-                    std::lock_guard<std::recursive_mutex> lk {call->callMutex_};
-                    auto ice = call->getIceMediaTransport();
+    // Start transport on SDP data and wait for negotiation
+    auto rem_ice_attrs = sdp_->getIceAttributes();
+    if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
+        JAMI_ERR("[call:%s] Media ICE attributes empty", getCallId().c_str());
+        onFailure(EIO);
+        return;
+    }
+    if (not ice->start(rem_ice_attrs, getAllRemoteCandidates())) {
+        JAMI_ERR("[call:%s] Media ICE start failed", getCallId().c_str());
+        onFailure(EIO);
+    }
+}
 
-                    if (not ice or ice->isFailed()) {
-                        JAMI_ERR("[call:%s] Media ICE negotiation failed",
-                                 call->getCallId().c_str());
-                        call->onFailure(EIO);
-                        return false;
-                    }
-
-                    if (not ice->isRunning())
-                        return true;
-
-                    // Nego succeed: move to the new media transport
-                    call->stopAllMedia();
-                    {
-                        std::lock_guard<std::mutex> lk(call->transportMtx_);
-                        if (call->tmpMediaTransport_) {
-                            // Destroy the ICE media transport on another thread. This can take
-                            // quite some time.
-                            if (call->mediaTransport_)
-                                dht::ThreadPool::io().run(
-                                    [ice = std::make_shared<decltype(call->mediaTransport_)>(
-                                         std::move(call->mediaTransport_))] {});
-                            call->mediaTransport_ = std::move(call->tmpMediaTransport_);
-                        }
-                    }
-                    call->startAllMedia();
-                    return false;
-                }
-                return false;
-            });
-
-            return false;
+void
+SIPCall::onIceNegoSucceed()
+{
+    // Nego succeed: move to the new media transport
+    stopAllMedia();
+    {
+        std::lock_guard<std::mutex> lk(transportMtx_);
+        if (tmpMediaTransport_) {
+            // Destroy the ICE media transport on another thread. This can take
+            // quite some time.
+            if (mediaTransport_)
+                dht::ThreadPool::io().run([ice = std::move(mediaTransport_)] {});
+            mediaTransport_ = std::move(tmpMediaTransport_);
         }
-        return false;
-    });
+    }
+    startAllMedia();
 }
 
 void
@@ -1603,6 +1585,43 @@ SIPCall::initIceMediaTransport(bool master,
     JAMI_DBG("[call:%s] create media ICE transport", getCallId().c_str());
     auto iceOptions = options == std::nullopt ? acc->getIceOptions() : *options;
 
+    auto optOnInitDone = std::move(iceOptions.onInitDone);
+    auto optOnNegoDone = std::move(iceOptions.onNegoDone);
+    iceOptions.onInitDone = [w = weak(), cb = std::move(optOnInitDone)](bool ok) {
+        runOnMainThread([w = std::move(w), cb = std::move(cb), ok] {
+            auto call = w.lock();
+            if (cb)
+                cb(ok);
+            if (!ok or !call or !call->waitForIceInit_.exchange(false))
+                return;
+
+            std::lock_guard<std::recursive_mutex> lk {call->callMutex_};
+            auto rem_ice_attrs = call->sdp_->getIceAttributes();
+            // Init done but no remote_ice_attributes, the ice->start will be triggered lated
+            if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty())
+                return;
+            call->startIceMedia();
+        });
+    };
+    iceOptions.onNegoDone = [w = weak(), cb = std::move(optOnNegoDone)](bool ok) {
+        runOnMainThread([w = std::move(w), cb = std::move(cb), ok] {
+            if (cb)
+                cb(ok);
+            if (auto call = w.lock()) {
+                // The ICE is related to subcalls, but medias are handled by parent call
+                std::lock_guard<std::recursive_mutex> lk {call->callMutex_};
+                call = call->isSubcall() ? std::dynamic_pointer_cast<SIPCall>(call->parent_) : call;
+                if (!ok) {
+                    JAMI_ERR("[call:%s] Media ICE negotiation failed", call->getCallId().c_str());
+                    call->onFailure(EIO);
+                    return;
+                }
+
+                call->onIceNegoSucceed();
+            }
+        });
+    };
+
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
     tmpMediaTransport_ = iceTransportFactory.createUTransport(getCallId().c_str(),
                                                               channel_num,
@@ -1639,8 +1658,7 @@ SIPCall::merge(Call& call)
     }
 
     Call::merge(subcall);
-
-    waitForIceAndStartMedia();
+    startIceMedia();
 }
 
 void
@@ -1659,7 +1677,7 @@ SIPCall::setRemoteSdp(const pjmedia_sdp_session* sdp)
     if (not initIceMediaTransport(false)) {
         // Fatal condition
         // TODO: what's SIP rfc says about that?
-        // (same question in waitForIceAndStartMedia)
+        // (same question in startIceMedia)
         onFailure(EIO);
         return;
     }
