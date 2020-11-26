@@ -283,7 +283,7 @@ private:
 
     void setCallMediaLocal();
 
-    void waitForIceAndStartMedia();
+    void startIceMedia();
 
     void startAllMedia();
     void stopAllMedia();
