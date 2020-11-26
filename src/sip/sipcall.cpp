@@ -913,6 +913,10 @@ SIPCall::removeCall()
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     JAMI_WARN("[call:%s] removeCall()", getCallId().c_str());
+    if (sdp_) {
+        sdp_->setActiveLocalSdpSession(nullptr);
+        sdp_->setActiveRemoteSdpSession(nullptr);
+    }
     Call::removeCall();
     mediaTransport_.reset();
     tmpMediaTransport_.reset();
