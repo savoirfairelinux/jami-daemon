@@ -39,6 +39,7 @@
 #include "call_factory.h"
 
 #include "logger.h"
+#include "dring/media_const.h"
 
 using namespace std::literals;
 
@@ -623,7 +624,7 @@ Conference::isMuted(const std::string_view uri) const
 }
 
 void
-Conference::muteParticipant(const std::string& participant_id, const bool& state)
+Conference::muteParticipant(const std::string& participant_id, const bool& state, const std::string& mediaType)
 {
     // Mute host
     if (isHost(participant_id)) {
@@ -650,9 +651,10 @@ Conference::muteParticipant(const std::string& participant_id, const bool& state
                 if (auto mixer = getVideoMixer()) {
                     mixer->switchInput(mediaInput_);
                 }
+            }
+            return;
+#endif
         }
-        setMutedParticipant("host", state);
-        return;
     }
 
     // Mute participant
