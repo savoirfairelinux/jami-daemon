@@ -162,12 +162,16 @@ SIPCall::createCallAVStream(const StreamData& StreamData,
                             const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject)
 {
     const std::string AVStreamId = StreamData.id + std::to_string(StreamData.direction);
-    callAVStreams[AVStreamId] = mediaStreamSubject;
-    streamSource.attachPriorityObserver(callAVStreams[AVStreamId]);
+    std::lock_guard<std::mutex> lk(avStreamsMtx_);
+    auto it = callAVStreams.find(AVStreamId);
+    if (it != callAVStreams.end())
+        return;
+    it = callAVStreams.insert(it, {AVStreamId, mediaStreamSubject});
+    streamSource.attachPriorityObserver(it->second);
     jami::Manager::instance()
         .getJamiPluginManager()
         .getCallServicesManager()
-        .createAVSubject(StreamData, callAVStreams[AVStreamId]);
+        .createAVSubject(StreamData, it->second);
 }
 #endif // ENABLE_PLUGIN
 
@@ -1251,8 +1255,11 @@ SIPCall::stopAllMedia()
     videortp_->stop();
 #endif
 #ifdef ENABLE_PLUGIN
-    callAVStreams.erase(getCallId() + "0");
-    callAVStreams.erase(getCallId() + "1");
+    {
+        std::lock_guard<std::mutex> lk(avStreamsMtx_);
+        callAVStreams.erase(getCallId() + "0");
+        callAVStreams.erase(getCallId() + "1");
+    }
     jami::Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(
         getCallId());
 #endif

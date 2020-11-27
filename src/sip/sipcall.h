@@ -279,6 +279,7 @@ private:
     void createCallAVStreams();
 #endif // ENABLE_PLUGIN
 
+    std::mutex avStreamsMtx_ {};
     std::map<std::string, std::shared_ptr<MediaStreamSubject>> callAVStreams;
 
     void setCallMediaLocal();
