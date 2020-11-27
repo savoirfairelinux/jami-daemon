@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5d58351c_6b8132c8",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 644,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-11-27T21:41:34Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027char *\u0027 but the argument has type \u0027const std::__cxx11::match_results\u003c__gnu_cxx::__normal_iterator\u003cconst char *, std::__cxx11::basic_string\u003cchar\u003e \u003e, std::allocator\u003cstd::__cxx11::sub_match\u003c__gnu_cxx::__normal_iterator\u003cconst char *, std::__cxx11::basic_string\u003cchar\u003e \u003e \u003e \u003e \u003e::value_type\u0027 (aka \u0027const sub_match\u003c__gnu_cxx::__normal_iterator\u003cconst char *, std::__cxx11::basic_string\u003cchar\u003e \u003e \u003e\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "0927e6c3c33da93cc372a2df367e8d986b7b693a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
