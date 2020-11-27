@@ -395,6 +395,26 @@ SIPCall::requestKeyframe()
 }
 
 void
+SIPCall::setMute(bool state)
+{
+    std::string BODY = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                       "<media_control><vc_primitive><to_encoder>"
+                       "<mute_state="
+                       + std::to_string(state)
+                       + "/>"
+                         "</to_encoder></vc_primitive></media_control>";
+    // see https://tools.ietf.org/html/rfc5168 for XML Schema for Media Control details
+
+    JAMI_DBG("Sending mute state via SIP INFO");
+
+    try {
+        sendSIPInfo(BODY.c_str(), "media_control+xml");
+    } catch (const std::exception& e) {
+        JAMI_ERR("Error sending mute state: %s", e.what());
+    }
+}
+
+void
 SIPCall::updateSDPFromSTUN()
 {
     JAMI_WARN("[call:%s] SIPCall::updateSDPFromSTUN() not implemented", getCallId().c_str());
@@ -1294,6 +1314,8 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
         avformatrtp_->setMuted(isAudioMuted_);
         if (not isSubcall())
             emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
+        setMute(mute);
+
     }
 }
 
@@ -1731,6 +1753,20 @@ SIPCall::setRemoteRecording(bool state)
         emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), false);
     }
     peerRecording_ = state;
+}
+
+void
+SIPCall::setPeerMute(bool state)
+{
+    if (state) {
+        JAMI_WARN("SIP Peer muted");
+    } else {
+        JAMI_WARN("SIP Peer ummuted");
+    }
+    peerMuted_ = state;
+    if (auto conf = Manager::instance().getConferenceFromID(getConfId())) {
+        conf->muteParticipant(getPeerNumber(), state);
+    }
 }
 
 } // namespace jami
