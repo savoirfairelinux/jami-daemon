@@ -242,6 +242,12 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     bool isPeerRecording() { return peerRecording_; }
 
+    void setMute(bool state);
+
+    void setPeerMute(bool state);
+
+    bool isPeerMuted() { return peerMuted_; }
+
 private:
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
@@ -381,6 +387,7 @@ private:
     OnReadyCb offHoldCb_ {};
 
     bool peerRecording_ {false};
+    bool peerMuted_ {false};
 
     std::atomic_bool waitForIceInit_ {false};
 };
