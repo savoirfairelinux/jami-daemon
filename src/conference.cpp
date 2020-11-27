@@ -38,6 +38,7 @@
 #include "call_factory.h"
 
 #include "logger.h"
+#include "dring/media_const.h"
 
 using namespace std::literals;
 
@@ -608,19 +609,33 @@ Conference::isMuted(const std::string_view uri) const
 }
 
 void
-Conference::muteParticipant(const std::string& participant_id, const bool& state)
+Conference::muteParticipant(const std::string& participant_id, const bool& state, const std::string& mediaType)
 {
     // Mute host
     if (isHost(participant_id)) {
-        if (state) {
-            JAMI_DBG("Mute host");
-            unbindHost();
-        } else {
-            JAMI_DBG("Unmute host");
-            bindHost();
+        if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
+            if (state and not isMuted("host")) {
+                JAMI_DBG("Mute host");
+                unbindHost();
+            } else if (not state and isMuted("host")) {
+                JAMI_DBG("Unmute host");
+                bindHost();
+            }
+            setMutedParticipant("host", state);
+            return;
+        } else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
+#ifdef ENABLE_VIDEO
+            if (state) {
+                if (auto mixer = getVideoMixer()) {
+                    mixer->stopInput();
+                }
+            } else {
+                if (auto mixer = getVideoMixer()) {
+                    mixer->switchInput(mediaInput_);
+                }
+            }
+#endif
         }
-        setMutedParticipant("host", state);
-        return;
     }
 
     // Mute participant
