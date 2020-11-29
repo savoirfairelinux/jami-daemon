@@ -41,10 +41,13 @@ bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void* ctx)
 {
     (static_cast<AudioPlayer*>(ctx))->processSLCallback(bq);
 }
+
 void
 AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq)
 {
-    std::lock_guard<std::mutex> lk(m_);
+    std::unique_lock<std::mutex> lk(m_, std::defer_lock);
+    if (!lk.try_lock())
+        return;
 
     // retrieve the finished device buf and put onto the free queue
     // so recorder could re-use it
