@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e66763c6_3f329d99",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1602,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-29T06:16:30Z",
+      "side": 1,
+      "message": "sp\u003csp\u003cIceTransport\u003e\u003e",
+      "range": {
+        "startLine": 1601,
+        "startChar": 35,
+        "endLine": 1602,
+        "endChar": 66
+      },
+      "revId": "c3d2255536d2a5ee6f3722daf790561a4ab87884",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
