@@ -1,9 +1,5 @@
 # JSONCPP
-ifdef HAVE_LINUX
-JSONCPP_VERSION := 1.7.2
-else
-JSONCPP_VERSION := 1.9.3
-endif
+JSONCPP_VERSION := 6515246e2d22b4f52d98ee07e75613a73e93f824
 JSONCPP_URL := https://github.com/open-source-parsers/jsoncpp/archive/$(JSONCPP_VERSION).tar.gz
 
 PKGS += jsoncpp
