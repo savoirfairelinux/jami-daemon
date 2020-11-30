@@ -133,4 +133,6 @@ std::vector<unsigned> split_string_to_unsigned(const std::string& s, char sep);
 
 void string_replace(std::string& str, const std::string& from, const std::string& to);
 
+std::string_view string_remove_suffix(std::string_view str, char separator);
+
 } // namespace jami

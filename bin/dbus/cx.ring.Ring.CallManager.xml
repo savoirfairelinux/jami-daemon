@@ -258,6 +258,13 @@
             <arg type="b" name="state" direction="in"/>
         </method>
 
+        <method name="muteParticipant" tp:name-for-bindings="muteParticipant">
+            <tp:added version="9.7.0"/>
+            <arg type="s" name="confId" direction="in"/>
+            <arg type="s" name="peerId" direction="in"/>
+            <arg type="b" name="state" direction="in"/>
+        </method>
+
         <method name="isConferenceParticipant" tp:name-for-bindings="isConferenceParticipant">
             <arg type="s" name="callID" direction="in"/>
             <arg type="b" name="isParticipant" direction="out"/>
