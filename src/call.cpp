@@ -628,6 +628,8 @@ Call::safePopSubcalls()
 void
 Call::setConferenceInfo(const std::string& msg)
 {
+    JAMI_ERR("@@@ setConferenceInfo : %s", msg.c_str());
+
     ConfInfo newInfo;
     Json::Value json;
     std::string err;
@@ -643,15 +645,44 @@ Call::setConferenceInfo(const std::string& msg)
         }
     }
 
-    std::vector<std::map<std::string, std::string>> toSend;
     {
         std::lock_guard<std::mutex> lk(confInfoMutex_);
-        confInfo_ = std::move(newInfo);
-        toSend = confInfo_.toVectorMapStringString();
+        if (confID_.empty()) {
+            // confID_ empty -> participant set confInfo with the received one
+            JAMI_ERR("@@@ setConferenceInfo confID empty");
+            confInfo_ = std::move(newInfo);
+            std::vector<std::map<std::string, std::string>> toSend =
+                                        confInfo_.toVectorMapStringString();
+
+            // Inform client that layout has changed
+            jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, std::move(toSend));
+        } else {
+            // confID_ not empty -> host merge confInfo with the received confInfo
+            JAMI_ERR("@@@ setConferenceInfo confID not empty");
+            auto oldInfo = confInfo_;
+            for (auto& newI : newInfo) {
+                bool isNewParticipant = true;
+                for (auto& oldI : oldInfo) {
+                    if (newI.uri == oldI.uri) {
+                        oldI = newI;
+                        isNewParticipant = false;
+                        break;
+                    }
+                }
+                if (isNewParticipant) {
+                    // ParticipantInfo not present in confInfo -> the sender of newInfo ...
+                    // is currently hosting another conference. Add the unknown participant ...
+                    // to the confInfo
+                    oldInfo.emplace_back(newI);
+                }
+            }
+            confInfo_ = std::move(oldInfo);
+
+            if (auto conf = Manager::instance().getConferenceFromID(confID_))
+                conf->updateConferenceInfo(confInfo_);
+        }
     }
 
-    // Inform client that layout has changed
-    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, std::move(toSend));
 }
 
 } // namespace jami
