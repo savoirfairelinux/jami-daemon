@@ -19,7 +19,41 @@
     },
     {
       "key": {
+        "uuid": "fa2ae02d_f5e6f5a7",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 462,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-11-30T17:57:13Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nloop variable is copied but only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "ef1cc5d8_84003905",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 468,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-11-30T17:57:13Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nloop variable is copied but only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9dcca35a_4429896a",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 8
       },
@@ -53,7 +87,41 @@
     },
     {
       "key": {
+        "uuid": "65ff5e1d_451d2696",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 784,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-11-30T17:57:13Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027map\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "17166110_b4de75a4",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 859,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-11-30T17:57:13Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027map\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d7a5437c_57a1f880",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 8
       },
@@ -87,7 +155,41 @@
     },
     {
       "key": {
+        "uuid": "b86225d4_51d6d53b",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 879,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-11-30T17:57:13Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027map\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0030790d_7e5e1ce8",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 903,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-11-30T17:57:13Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027map\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "54b1b9ff_c8ac157e",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 8
       },
