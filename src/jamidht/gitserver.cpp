@@ -53,6 +53,7 @@ public:
         socket_->setOnRecv([this](const uint8_t* buf, std::size_t len) {
             if (isDestroying_)
                 return len;
+            std::string data(buf, buf + len);
             auto needMoreParsing = parseOrder(buf, len);
             while (needMoreParsing) {
                 needMoreParsing = parseOrder();
@@ -66,6 +67,9 @@ public:
 
     void sendReferenceCapabilities(bool sendVersion = false);
     void answerToWantOrder();
+    void NAK();
+    void ACKCommon();
+    void ACKFirst();
     void sendPackData();
     std::map<std::string, std::string> getParameters(const std::string& pkt_line);
 
@@ -163,9 +167,19 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
         // not do multi-ack, just send ACK + pack file
         // In case of no common base, send NAK
         JAMI_INFO("Peer negotiation is done. Answering to want order");
-        answerToWantOrder();
+        if (common_.empty())
+            NAK();
+        else
+            ACKFirst();
+        sendPackData();
     } else if (pkt == FLUSH_PKT) {
-        // Nothing to do for now
+        if (!haveRefs_.empty()) {
+            // Reference:
+            // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L390
+            // Do not do multi-ack, just send ACK + pack file In case of no common base ACK
+            ACKCommon();
+            NAK();
+        }
     } else {
         JAMI_WARN("Unwanted packet received: %s", pkt.c_str());
     }
@@ -247,7 +261,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
 }
 
 void
-GitServer::Impl::answerToWantOrder()
+GitServer::Impl::ACKCommon()
 {
     std::error_code ec;
     // Ack common base
@@ -260,16 +274,36 @@ GitServer::Impl::answerToWantOrder()
         socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
         if (ec) {
             JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
-            return;
         }
     }
+}
+
+void
+GitServer::Impl::ACKFirst()
+{
+    std::error_code ec;
+    // Ack common base
+    if (!common_.empty()) {
+        std::stringstream packet;
+        packet << std::setw(4) << std::setfill('0') << std::hex
+               << ((9 /* size + ACK + space + \n */ + common_.size()) & 0x0FFFF);
+        packet << "ACK " << common_ << "\n";
+        auto toSend = packet.str();
+        socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
+        if (ec) {
+            JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
+        }
+    }
+}
+
+void
+GitServer::Impl::NAK()
+{
+    std::error_code ec;
     // NAK
     socket_->write(reinterpret_cast<const unsigned char*>(NAK_PKT.data()), NAK_PKT.size(), ec);
-    if (ec) {
+    if (ec)
         JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
-        return;
-    }
-    sendPackData();
 }
 
 void
@@ -365,6 +399,7 @@ GitServer::Impl::sendPackData()
     // Clear sent data
     haveRefs_.clear();
     wantedReference_.clear();
+    common_.clear();
     if (onFetchedCb_)
         onFetchedCb_(fetched);
 }

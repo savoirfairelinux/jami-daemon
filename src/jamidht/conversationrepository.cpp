@@ -1209,6 +1209,10 @@ ConversationRepository::Impl::behind(const std::string& from)
         return {};
     }
 
+    if (behind == 0) {
+        return {}; // Nothing to validate
+    }
+
     return log(from, "", behind);
 }
 
@@ -1499,7 +1503,11 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     git_remote* remote_ptr = nullptr;
     git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
 
-    auto lastCommit = logN("", 1)[0].id;
+    auto lastMsg = logN("", 1);
+    if (lastMsg.size() == 0) {
+        return false;
+    }
+    auto lastCommit = lastMsg[0].id;
 
     // Assert that repository exists
     std::string channelName = "git://" + remoteDeviceId + '/' + pimpl_->id_;
