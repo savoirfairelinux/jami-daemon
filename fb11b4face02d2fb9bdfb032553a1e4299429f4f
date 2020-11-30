@@ -2,6 +2,328 @@
   "comments": [
     {
       "key": {
+        "uuid": "11d06ca6_aff3c3f8",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 765,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-30T22:11:27Z",
+      "side": 1,
+      "message": "can be replaced to auto",
+      "range": {
+        "startLine": 765,
+        "startChar": 42,
+        "endLine": 765,
+        "endChar": 62
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "523709e3_8b8ec92d",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 772,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-30T22:11:27Z",
+      "side": 1,
+      "message": "double log for 2 states, can just be done for one state?",
+      "range": {
+        "startLine": 768,
+        "startChar": 45,
+        "endLine": 772,
+        "endChar": 55
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dec7626a_58e98ec6",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 772,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-30T22:11:27Z",
+      "side": 1,
+      "message": "getTypeStr() can just return a const char* or string_view for UDP or TCP. It\u0027s only used once as a string, else it\u0027s always a c_str()",
+      "range": {
+        "startLine": 772,
+        "startChar": 26,
+        "endLine": 772,
+        "endChar": 53
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6f5e67ff_2e46a4e6",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 810,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-30T22:11:27Z",
+      "side": 1,
+      "message": "can be done in the future to avoid useless candidates. And it\u0027s better to have the less candidates possible.",
+      "range": {
+        "startLine": 808,
+        "startChar": 32,
+        "endLine": 810,
+        "endChar": 58
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "875de05d_cde593a7",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 820,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-30T22:11:27Z",
+      "side": 1,
+      "message": "little typo, there is no space before ! generally (except in french)",
+      "range": {
+        "startLine": 820,
+        "startChar": 67,
+        "endLine": 820,
+        "endChar": 74
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "407ef788_4fcf8cdd",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 953,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-30T22:11:27Z",
+      "side": 1,
+      "message": "does it really fix the issue? Need testing imho",
+      "range": {
+        "startLine": 949,
+        "startChar": 57,
+        "endLine": 953,
+        "endChar": 60
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "92b3162e_ac69f4be",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1814,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-30T22:11:27Z",
+      "side": 1,
+      "message": "TODO",
+      "range": {
+        "startLine": 1814,
+        "startChar": 7,
+        "endLine": 1814,
+        "endChar": 41
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "731554f0_e39def75",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 746,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-30T22:11:27Z",
+      "side": 1,
+      "message": "is it really a success in this case?",
+      "range": {
+        "startLine": 746,
+        "startChar": 17,
+        "endLine": 746,
+        "endChar": 68
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1c286bde_5ca0a9f1",
+        "filename": "src/upnp/protocol/igd.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-30T22:11:27Z",
+      "side": 1,
+      "message": "can be a string_view",
+      "range": {
+        "startLine": 58,
+        "startChar": 4,
+        "endLine": 58,
+        "endChar": 22
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "12a81a9d_5db7fc80",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 200,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-30T22:11:27Z",
+      "side": 1,
+      "message": "do we support ipv6?",
+      "range": {
+        "startLine": 200,
+        "startChar": 15,
+        "endLine": 200,
+        "endChar": 32
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ffdcab5c_71a2e277",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 309,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-30T22:11:27Z",
+      "side": 1,
+      "message": "shared? cannot be unique, moreover it\u0027s moved from a up",
+      "range": {
+        "startLine": 309,
+        "startChar": 4,
+        "endLine": 309,
+        "endChar": 42
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7e45a120_94a78837",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 485,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-30T22:11:27Z",
+      "side": 1,
+      "message": "TODO",
+      "range": {
+        "startLine": 484,
+        "startChar": 1,
+        "endLine": 485,
+        "endChar": 33
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "67bd6c2b_4cf31e41",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 523,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-30T22:11:27Z",
+      "side": 1,
+      "message": "if the remove fails, what do we do actually? Imho we just ignore this case. Maybe a warning can be interessant to add, but we can\u0027t really do much",
+      "range": {
+        "startLine": 522,
+        "startChar": 30,
+        "endLine": 523,
+        "endChar": 28
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7567c4f3_e78617a0",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 229,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-11-30T22:11:27Z",
+      "side": 1,
+      "message": "bool wasAvailable \u003d map-\u003eisAvailable();\n\nand return this",
+      "range": {
+        "startLine": 229,
+        "startChar": 4,
+        "endLine": 229,
+        "endChar": 20
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "19df725d_04816c00",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 8
