@@ -29,6 +29,7 @@
 #include <stdexcept>
 #include <ios>
 #include <charconv>
+#include <string_view>
 #ifdef _WIN32
 #include <windows.h>
 #include <oleauto.h>
@@ -134,6 +135,15 @@ string_replace(std::string& str, const std::string& from, const std::string& to)
         str.replace(start_pos, from.length(), to);
         start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
     }
+}
+
+std::string_view
+string_remove_suffix(std::string_view str, char separator)
+{
+    auto it = str.find(separator);
+    if (it != std::string_view::npos)
+        str = str.substr(0, it);
+    return str;
 }
 
 } // namespace jami
