@@ -42,8 +42,6 @@ getSignalHandlers()
         exported_callback<DRing::CallSignal::UpdatePlaybackScale>(),
         exported_callback<DRing::CallSignal::ConferenceRemoved>(),
         exported_callback<DRing::CallSignal::RecordingStateChanged>(),
-        exported_callback<DRing::CallSignal::SecureSdesOn>(),
-        exported_callback<DRing::CallSignal::SecureSdesOff>(),
         exported_callback<DRing::CallSignal::RtcpReportReceived>(),
         exported_callback<DRing::CallSignal::PeerHold>(),
         exported_callback<DRing::CallSignal::VideoMuted>(),

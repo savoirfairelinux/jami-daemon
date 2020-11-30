@@ -22,8 +22,6 @@ libsiplink_la_SOURCES = \
 	./sip/pres_sub_server.cpp\
 	./sip/pres_sub_server.h\
 	./sip/pres_sub_client.cpp\
-	./sip/pres_sub_client.h \
-	./sip/sdes_negotiator.cpp \
-	./sip/sdes_negotiator.h
+	./sip/pres_sub_client.h
 
 libring_la_LIBADD += libsiplink.la

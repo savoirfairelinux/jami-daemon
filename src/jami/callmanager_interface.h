@@ -212,16 +212,6 @@ struct DRING_PUBLIC CallSignal
         constexpr static const char* name = "RecordingStateChanged";
         using cb_type = void(const std::string&, int);
     };
-    struct DRING_PUBLIC SecureSdesOn
-    {
-        constexpr static const char* name = "SecureSdesOn";
-        using cb_type = void(const std::string&);
-    };
-    struct DRING_PUBLIC SecureSdesOff
-    {
-        constexpr static const char* name = "SecureSdesOff";
-        using cb_type = void(const std::string&);
-    };
     struct DRING_PUBLIC RtcpReportReceived
     {
         constexpr static const char* name = "RtcpReportReceived";
