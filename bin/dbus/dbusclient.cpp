@@ -185,10 +185,6 @@ DBusClient::initLibrary(int flags)
                bind(&DBusCallManager::conferenceRemoved, callM, _1)),
            exportable_callback<CallSignal::RecordingStateChanged>(
                bind(&DBusCallManager::recordingStateChanged, callM, _1, _2)),
-           exportable_callback<CallSignal::SecureSdesOn>(
-               bind(&DBusCallManager::secureSdesOn, callM, _1)),
-           exportable_callback<CallSignal::SecureSdesOff>(
-               bind(&DBusCallManager::secureSdesOff, callM, _1)),
            exportable_callback<CallSignal::RtcpReportReceived>(
                bind(&DBusCallManager::onRtcpReportReceived, callM, _1, _2)),
            exportable_callback<CallSignal::OnConferenceInfosUpdated>(

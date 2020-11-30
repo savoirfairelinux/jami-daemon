@@ -928,26 +928,6 @@
             </tp:docstring>
         </signal>
 
-        <signal name="secureSdesOn" tp:name-for-bindings="secureSdesOn">
-            <tp:added version="0.9.7"/>
-            <tp:docstring>
-              <p>Signal sent on SDES session success. Media transmission is encripted
-              for this call only. It does not apply for a conference.</p>
-              <p>A conference can be considered to be secured if and only if each
-              participant is secured.</p>
-            </tp:docstring>
-            <arg type="s" name="callID"/>
-        </signal>
-
-        <signal name="secureSdesOff" tp:name-for-bindings="secureSdesOff">
-            <tp:added version="0.9.7"/>
-            <tp:docstring>
-              <p>Signal sent to notify that SDES session failed.</p>
-              <p>Media transmission is not encrypted.</p>
-            </tp:docstring>
-            <arg type="s" name="callID" />
-        </signal>
-
         <signal name="recordingStateChanged" tp:name-for-bindings="recordingStateChange">
            <tp:added version="1.3.0"/>
            <arg type="s" name="callID" />
