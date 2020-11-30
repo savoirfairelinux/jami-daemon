@@ -88,9 +88,6 @@ systems. This function is required for `alloca.c' support on those systems.
 /* Define if you have pulseaudio */
 #define HAVE_PULSE 0
 
-/* Define if you have sdes support */
-#define HAVE_SDES 1
-
 /* Define if you have shared memory support */
 #define HAVE_SHM 0
 

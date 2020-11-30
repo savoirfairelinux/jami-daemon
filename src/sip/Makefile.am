@@ -24,7 +24,6 @@ libsiplink_la_SOURCES+=sippresence.cpp \
                        pres_sub_server.cpp\
                        pres_sub_server.h\
                        pres_sub_client.cpp\
-                       pres_sub_client.h
-
-libsiplink_la_SOURCES+= sdes_negotiator.cpp \
-            sdes_negotiator.h
+                       pres_sub_client.h \
+                       sdes_negotiator.cpp \
+                       sdes_negotiator.h
