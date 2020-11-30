@@ -93,6 +93,29 @@
       "revId": "7e3fff9c0b4e7a266897f6bbb497264933fb78f4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "27ff9f8b_c47f9220",
+        "filename": "src/upnp/upnp_control.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-11-30T19:02:38Z",
+      "side": 1,
+      "message": "should not be shared",
+      "range": {
+        "startLine": 48,
+        "startChar": 16,
+        "endLine": 48,
+        "endChar": 66
+      },
+      "revId": "7e3fff9c0b4e7a266897f6bbb497264933fb78f4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
