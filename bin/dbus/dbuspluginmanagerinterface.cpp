@@ -105,6 +105,12 @@ DBusPluginManagerInterface::listCallMediaHandlers() -> decltype(DRing::listCallM
     return DRing::listCallMediaHandlers();
 }
 
+auto
+DBusPluginManagerInterface::listChatHandlers() -> decltype(DRing::listChatHandlers())
+{
+    return DRing::listChatHandlers();
+}
+
 void
 DBusPluginManagerInterface::toggleCallMediaHandler(const std::string& mediaHandlerId,
                                                    const std::string& callId,
@@ -113,10 +119,38 @@ DBusPluginManagerInterface::toggleCallMediaHandler(const std::string& mediaHandl
     DRing::toggleCallMediaHandler(mediaHandlerId, callId, toggle);
 }
 
+void
+DBusPluginManagerInterface::toggleChatHandler(const std::string& chatHandlerId,
+                                              const std::string& accountId,
+                                              const std::string& peerId,
+                                              const bool& toggle)
+{
+    DRing::toggleChatHandler(chatHandlerId, accountId, peerId, toggle);
+}
+
 std::map<std::string, std::string>
 DBusPluginManagerInterface::getCallMediaHandlerDetails(const std::string& mediaHanlderId)
 {
     return DRing::getCallMediaHandlerDetails(mediaHanlderId);
+}
+
+std::vector<std::string>
+DBusPluginManagerInterface::getCallMediaHandlerStatus(const std::string& callId)
+{
+    return DRing::getCallMediaHandlerStatus(callId);
+}
+
+std::map<std::string, std::string>
+DBusPluginManagerInterface::getChatHandlerDetails(const std::string& chatHanlderId)
+{
+    return DRing::getChatHandlerDetails(chatHanlderId);
+}
+
+std::vector<std::string>
+DBusPluginManagerInterface::getChatHandlerStatus(const std::string& accountId,
+                                                 const std::string& peerId)
+{
+    return DRing::getChatHandlerStatus(accountId, peerId);
 }
 
 bool
@@ -129,10 +163,4 @@ void
 DBusPluginManagerInterface::setPluginsEnabled(const bool& state)
 {
     DRing::setPluginsEnabled(state);
-}
-
-std::map<std::string, std::vector<std::string>>
-DBusPluginManagerInterface::getCallMediaHandlerStatus(const std::string& callId)
-{
-    return DRing::getCallMediaHandlerStatus(callId);
 }
