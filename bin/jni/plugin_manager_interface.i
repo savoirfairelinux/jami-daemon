@@ -37,9 +37,13 @@ std::vector<std::string> listLoadedPlugins();
 int installPlugin(const std::string& jplPath, bool force);
 int uninstallPlugin(const std::string& pluginRootPath);
 std::vector<std::string> listCallMediaHandlers();
+std::vector<std::string> listChatHandlers();
 void toggleCallMediaHandler(const std::string& mediaHandlerId, const std::string& callId, bool toggle);
+void toggleChatHandler(const std::string& chatHandlerId, const std::string& accountId, const std::string& peerId, bool toggle);
 std::map<std::string,std::string> getCallMediaHandlerDetails(const std::string& mediaHandlerId);
+std::vector<std::string> getCallMediaHandlerStatus(const std::string& callId);
+std::map<std::string,std::string> getChatHandlerDetails(const std::string& chatHandlerId);
+std::vector<std::string> getChatHandlerStatus(const std::string& accountId, const std::string& peerId);
 bool getPluginsEnabled();
 void setPluginsEnabled(bool state);
-std::map<std::string, std::vector<std::string>> getCallMediaHandlerStatus(const std::string& callId);
 }

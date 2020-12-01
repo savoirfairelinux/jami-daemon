@@ -375,5 +375,4 @@ PluginManager::registerObjectFactory_(const JAMI_PluginAPI* api, const char* typ
     const auto factory = reinterpret_cast<JAMI_PluginObjectFactory*>(data);
     return manager->registerObjectFactory(type, *factory) ? 0 : -1;
 }
-
 } // namespace jami
