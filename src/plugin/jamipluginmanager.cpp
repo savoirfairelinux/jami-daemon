@@ -34,9 +34,6 @@ extern "C" {
 #include <archive.h>
 }
 
-#include <json/json.h>
-#include <msgpack.hpp>
-
 #if defined(__arm__)
 #if defined(__ARM_ARCH_7A__)
 #define ABI "armeabi-v7a"
@@ -145,46 +142,6 @@ uncompressJplFunction(const std::string& relativeFileName)
         }
     }
     return std::make_pair(false, std::string {""});
-}
-
-std::string
-convertArrayToString(const Json::Value& jsonArray)
-{
-    std::string stringArray = "";
-
-    if (jsonArray.size()) {
-        for (unsigned i = 0; i < jsonArray.size() - 1; i++) {
-            if (jsonArray[i].isString()) {
-                stringArray += jsonArray[i].asString() + ",";
-            } else if (jsonArray[i].isArray()) {
-                stringArray += convertArrayToString(jsonArray[i]) + ",";
-            }
-        }
-
-        unsigned lastIndex = jsonArray.size() - 1;
-        if (jsonArray[lastIndex].isString()) {
-            stringArray += jsonArray[lastIndex].asString();
-        }
-    }
-
-    return stringArray;
-}
-
-std::map<std::string, std::string>
-parsePreferenceConfig(const Json::Value& jsonPreference, const std::string& type)
-{
-    std::map<std::string, std::string> preferenceMap;
-    const auto& members = jsonPreference.getMemberNames();
-    // Insert other fields
-    for (const auto& member : members) {
-        const Json::Value& value = jsonPreference[member];
-        if (value.isString()) {
-            preferenceMap.emplace(member, jsonPreference[member].asString());
-        } else if (value.isArray()) {
-            preferenceMap.emplace(member, convertArrayToString(jsonPreference[member]));
-        }
-    }
-    return preferenceMap;
 }
 
 std::map<std::string, std::string>
@@ -365,81 +322,13 @@ JamiPluginManager::listLoadedPlugins() const
 std::vector<std::map<std::string, std::string>>
 JamiPluginManager::getPluginPreferences(const std::string& rootPath)
 {
-    const std::string preferenceFilePath = getPreferencesConfigFilePath(rootPath);
-    std::ifstream file(preferenceFilePath);
-    Json::Value root;
-    Json::CharReaderBuilder rbuilder;
-    rbuilder["collectComments"] = false;
-    std::string errs;
-    std::set<std::string> keys;
-    std::vector<std::map<std::string, std::string>> preferences;
-    if (file) {
-        bool ok = Json::parseFromStream(rbuilder, file, &root, &errs);
-        if (ok && root.isArray()) {
-            for (unsigned i = 0; i < root.size(); i++) {
-                const Json::Value& jsonPreference = root[i];
-                std::string category = jsonPreference.get("category", "NoCategory").asString();
-                std::string type = jsonPreference.get("type", "None").asString();
-                std::string key = jsonPreference.get("key", "None").asString();
-                if (type != "None" && key != "None") {
-                    if (keys.find(key) == keys.end()) {
-                        auto preferenceAttributes = parsePreferenceConfig(jsonPreference, type);
-                        // If the parsing of the attributes was successful, commit the map and the keys
-                        auto defaultValue = preferenceAttributes.find("defaultValue");
-                        if (type == "Path" && defaultValue != preferenceAttributes.end()) {
-                            defaultValue->second = rootPath + DIR_SEPARATOR_STR
-                                                   + defaultValue->second;
-                        }
-
-                        if (!preferenceAttributes.empty()) {
-                            preferences.push_back(std::move(preferenceAttributes));
-                            keys.insert(key);
-                        }
-                    }
-                }
-            }
-        } else {
-            JAMI_ERR() << "PluginPreferencesParser:: Failed to parse preferences.json for plugin: "
-                       << preferenceFilePath;
-        }
-    }
-
-    return preferences;
+    return getPluginPreferencesInternal(rootPath);
 }
 
 std::map<std::string, std::string>
 JamiPluginManager::getPluginUserPreferencesValuesMap(const std::string& rootPath)
 {
-    const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePath(rootPath);
-    std::ifstream file(preferencesValuesFilePath, std::ios::binary);
-    std::map<std::string, std::string> rmap;
-
-    // If file is accessible
-    if (file.good()) {
-        std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
-        // Get file size
-        std::string str;
-        file.seekg(0, std::ios::end);
-        size_t fileSize = static_cast<size_t>(file.tellg());
-        // If not empty
-        if (fileSize > 0) {
-            // Read whole file content and put it in the string str
-            str.reserve(static_cast<size_t>(file.tellg()));
-            file.seekg(0, std::ios::beg);
-            str.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-            file.close();
-            try {
-                // Unpack the string
-                msgpack::object_handle oh = msgpack::unpack(str.data(), str.size());
-                // Deserialized object is valid during the msgpack::object_handle instance is alive.
-                msgpack::object deserialized = oh.get();
-                deserialized.convert(rmap);
-            } catch (const std::exception& e) {
-                JAMI_ERR() << e.what();
-            }
-        }
-    }
-    return rmap;
+    return getPluginUserPreferencesValuesMapInternal(rootPath);
 }
 
 bool
@@ -447,23 +336,26 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
                                        const std::string& key,
                                        const std::string& value)
 {
-    std::map<std::string, std::string> pluginUserPreferencesMap = getPluginUserPreferencesValuesMap(
-        rootPath);
-    std::map<std::string, std::string> pluginPreferencesMap = getPluginPreferencesValuesMap(
+    std::map<std::string, std::string> pluginUserPreferencesMap
+        = getPluginUserPreferencesValuesMapInternal(rootPath);
+    std::map<std::string, std::string> pluginPreferencesMap = getPluginPreferencesValuesMapInternal(
         rootPath);
 
     auto find = pluginPreferencesMap.find(key);
     if (find != pluginPreferencesMap.end()) {
-        std::vector<std::map<std::string, std::string>> preferences = getPluginPreferences(rootPath);
+        std::vector<std::map<std::string, std::string>> preferences = getPluginPreferencesInternal(
+            rootPath);
         for (auto& preference : preferences) {
             if (!preference["key"].compare(key)) {
-                csm_.setPreference(key, value, preference["scope"]);
+                callsm_.setPreference(key, value, preference["scope"]);
+                chatsm_.setPreference(key, value, preference["scope"]);
                 break;
             }
         }
 
         pluginUserPreferencesMap[key] = value;
-        const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePath(rootPath);
+        const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePathInternal(
+            rootPath);
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
         if (!fs.good()) {
             return false;
@@ -483,39 +375,13 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
 std::map<std::string, std::string>
 JamiPluginManager::getPluginPreferencesValuesMap(const std::string& rootPath)
 {
-    std::map<std::string, std::string> rmap;
-
-    std::vector<std::map<std::string, std::string>> preferences = getPluginPreferences(rootPath);
-    for (auto& preference : preferences) {
-        rmap[preference["key"]] = preference["defaultValue"];
-    }
-
-    for (const auto& pair : getPluginUserPreferencesValuesMap(rootPath)) {
-        rmap[pair.first] = pair.second;
-    }
-    return rmap;
+    return getPluginPreferencesValuesMapInternal(rootPath);
 }
 
 bool
 JamiPluginManager::resetPluginPreferencesValuesMap(const std::string& rootPath)
 {
-    bool returnValue = true;
-    std::map<std::string, std::string> pluginPreferencesMap {};
-
-    const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePath(rootPath);
-    std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
-    if (!fs.good()) {
-        return false;
-    }
-    try {
-        std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
-        msgpack::pack(fs, pluginPreferencesMap);
-    } catch (const std::exception& e) {
-        returnValue = false;
-        JAMI_ERR() << e.what();
-    }
-
-    return returnValue;
+    return resetPluginPreferencesValuesMapInternal(rootPath);
 }
 
 std::map<std::string, std::string>

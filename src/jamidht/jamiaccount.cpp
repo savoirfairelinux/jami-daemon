@@ -61,6 +61,11 @@
 #include "manager.h"
 #include "utf8_utils.h"
 
+#ifdef ENABLE_PLUGIN
+#include "plugin/jamipluginmanager.h"
+#include "plugin/chatservicesmanager.h"
+#endif
+
 #ifdef ENABLE_VIDEO
 #include "libav_utils.h"
 #endif
@@ -2514,6 +2519,10 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
 
     if (released_cb)
         released_cb(false);
+#ifdef ENABLE_PLUGIN
+    jami::Manager::instance().getJamiPluginManager().getChatServicesManager().cleanChatSubjects(
+        getAccountID());
+#endif
 }
 
 void
