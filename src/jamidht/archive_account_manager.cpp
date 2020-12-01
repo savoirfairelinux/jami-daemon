@@ -519,6 +519,7 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
                                        RING_DEVICE_NAME,
                                        Conf::CONFIG_DHT_PORT,
                                        DHT_PROXY_LIST_URL,
+                                       AUTOANSWER,
                                        PROXY_ENABLED,
                                        PROXY_SERVER,
                                        PROXY_PUSH_TOKEN};

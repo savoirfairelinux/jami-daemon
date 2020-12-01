@@ -54,6 +54,7 @@ AccountArchive::deserialize(const std::vector<uint8_t>& dat)
                 } else if (key.compare(DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
                 } else if (key.compare(DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0) {
                 } else if (key.compare(DRing::Account::ConfProperties::DHT_PROXY_LIST_URL) == 0) {
+                } else if (key.compare(DRing::Account::ConfProperties::AUTOANSWER) == 0) {
                 } else if (key.compare(DRing::Account::ConfProperties::PROXY_ENABLED) == 0) {
                 } else if (key.compare(DRing::Account::ConfProperties::PROXY_SERVER) == 0) {
                 } else if (key.compare(DRing::Account::ConfProperties::PROXY_PUSH_TOKEN) == 0) {
