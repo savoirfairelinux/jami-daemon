@@ -321,16 +321,8 @@ private:
     }
     inline std::weak_ptr<SIPCall> weak() { return std::weak_ptr<SIPCall>(shared()); }
 
-    std::unique_ptr<AudioRtpSession> avformatrtp_;
-
-#ifdef ENABLE_VIDEO
-    /**
-     * Video Rtp Session factory
-     */
-    std::unique_ptr<video::VideoRtpSession> videortp_;
-#endif
-
-    std::string mediaInput_;
+    std::vector<std::string> mediaInputs_;
+    std::vector<std::unique_ptr<RtpSession>> rtpSessions_;
 
     bool srtpEnabled_ {false};
 

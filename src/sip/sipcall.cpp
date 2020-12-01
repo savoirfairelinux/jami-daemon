@@ -93,12 +93,12 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  Call::CallType type,
                  const std::map<std::string, std::string>& details)
     : Call(account, id, type, details)
-    , avformatrtp_(new AudioRtpSession(id))
+/*    , avformatrtp_(new AudioRtpSession(id))
 #ifdef ENABLE_VIDEO
     // The ID is used to associate video streams to calls
     , videortp_(new video::VideoRtpSession(id, getVideoSettings()))
     , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
-#endif
+#endif*/
     , sdp_(new Sdp(id))
 {
     if (account->getUPnPActive())
@@ -1103,14 +1103,7 @@ SIPCall::startAllMedia()
     bool peer_holding {true};
     int slotN = -1;
 
-#ifdef ENABLE_VIDEO
-    videortp_->setChangeOrientationCallback([wthis = weak()](int angle) {
-        runOnMainThread([wthis, angle] {
-            if (auto this_ = wthis.lock())
-                this_->setVideoOrientation(angle);
-        });
-    });
-#endif
+    rtpSessions_.resize(slots.size());
 
     for (const auto& slot : slots) {
         ++slotN;
@@ -1124,13 +1117,13 @@ SIPCall::startAllMedia()
             continue;
         }
 
-        RtpSession* rtp = local.type == MEDIA_AUDIO ? static_cast<RtpSession*>(avformatrtp_.get())
-#ifdef ENABLE_VIDEO
-                                                    : static_cast<RtpSession*>(videortp_.get());
-#else
-                                                    : nullptr;
-#endif
+        if (not rtpSessions_[slotN]) {
+            rtpSessions_[slotN] = local.type == MEDIA_AUDIO 
+                ? std::make_unique<AudioRtpSession>(id_)
+                : std::make_unique<video::VideoRtpSession>(id_, getVideoSettings());
+        }
 
+        RtpSession* rtp = rtpSessions_[slotN].get();
         if (not rtp)
             continue;
 
@@ -1154,26 +1147,26 @@ SIPCall::startAllMedia()
         }
 
         auto new_mtu = transport_->getTlsMtu();
-        if (local.type & MEDIA_AUDIO)
-            avformatrtp_->switchInput(mediaInput_);
-        avformatrtp_->setMtu(new_mtu);
-
-#ifdef ENABLE_VIDEO
-        if (local.type & MEDIA_VIDEO)
-            videortp_->switchInput(mediaInput_);
-        videortp_->setMtu(new_mtu);
-#endif
+        rtp->switchInput(mediaInputs_[slotN]);
+        rtp->setMtu(new_mtu);
         rtp->updateMedia(remote, local);
-
         rtp->setSuccessfulSetupCb([this](MediaType type) { rtpSetupSuccess(type); });
 
 #ifdef ENABLE_VIDEO
-        videortp_->setRequestKeyFrameCallback([wthis = weak()] {
-            runOnMainThread([wthis] {
-                if (auto this_ = wthis.lock())
-                    this_->requestKeyframe();
+        if (auto videoRtp = dynamic_cast<video::VideoRtpSession>(rtp)) {
+            videoRtp->setRequestKeyFrameCallback([wthis = weak()] {
+                runOnMainThread([wthis] {
+                    if (auto this_ = wthis.lock())
+                        this_->requestKeyframe();
+                });
             });
-        });
+            videoRtp->setChangeOrientationCallback([wthis = weak()](int angle) {
+                runOnMainThread([wthis, angle] {
+                    if (auto this_ = wthis.lock())
+                        this_->setVideoOrientation(angle);
+                });
+            });
+        }
 #endif
 
         // Not restarting media loop on hold as it's a huge waste of CPU ressources
