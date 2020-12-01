@@ -140,14 +140,14 @@ SIPCall::createCallAVStreams()
     // Preview
     if (auto& localAudio = avformatrtp_->getAudioLocal()) {
         auto previewSubject = std::make_shared<MediaStreamSubject>(audioMap);
-        StreamData microStreamData {getCallId(), 0, StreamType::audio, getPeerNumber()};
+        StreamData microStreamData {getCallId(), false, StreamType::audio, getPeerNumber()};
         createCallAVStream(microStreamData, *localAudio, previewSubject);
     }
 
     // Receive
     if (auto& audioReceive = avformatrtp_->getAudioReceive()) {
         auto receiveSubject = std::make_shared<MediaStreamSubject>(audioMap);
-        StreamData phoneStreamData {getCallId(), 1, StreamType::audio, getPeerNumber()};
+        StreamData phoneStreamData {getCallId(), true, StreamType::audio, getPeerNumber()};
         createCallAVStream(phoneStreamData, (AVMediaStream&) *audioReceive, receiveSubject);
     }
 #ifdef ENABLE_VIDEO
@@ -162,14 +162,14 @@ SIPCall::createCallAVStreams()
         // Preview
         if (auto& videoPreview = videortp_->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(videoMap);
-            StreamData previewStreamData {getCallId(), 0, StreamType::video, getPeerNumber()};
+            StreamData previewStreamData {getCallId(), false, StreamType::video, getPeerNumber()};
             createCallAVStream(previewStreamData, *videoPreview, previewSubject);
         }
 
         // Receive
         if (auto& videoReceive = videortp_->getVideoReceive()) {
             auto receiveSubject = std::make_shared<MediaStreamSubject>(videoMap);
-            StreamData receiveStreamData {getCallId(), 1, StreamType::video, getPeerNumber()};
+            StreamData receiveStreamData {getCallId(), true, StreamType::video, getPeerNumber()};
             createCallAVStream(receiveStreamData, *videoReceive, receiveSubject);
         }
     }
