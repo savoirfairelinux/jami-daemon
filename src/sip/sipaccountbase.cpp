@@ -51,6 +51,7 @@
 #include "manager.h"
 #ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
+#include "plugin/streamdata.h"
 #endif
 namespace jami {
 
@@ -562,16 +563,16 @@ SIPAccountBase::onTextMessage(const std::string& id,
     }
 
 #ifdef ENABLE_PLUGIN
-    auto& convManager
-        = jami::Manager::instance().getJamiPluginManager().getConversationServicesManager();
-    std::shared_ptr<ConversationMessage> cm = std::make_shared<ConversationMessage>(
-        from, accountID_, const_cast<std::map<std::string, std::string>&>(payloads));
-    convManager.onTextMessage(cm);
-    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, cm->data_);
+    auto& pluginChatManager
+        = jami::Manager::instance().getJamiPluginManager().getChatServicesManager();
+    std::shared_ptr<JamiMessage> cm = std::make_shared<JamiMessage>(
+        accountID_, from, "0", const_cast<std::map<std::string, std::string>&>(payloads), false);
+    pluginChatManager.publishMessage(cm);
+    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, cm->data);
 
     DRing::Message message;
-    message.from = cm->author_;
-    message.payloads = cm->data_;
+    message.from = from;
+    message.payloads = cm->data;
 #else
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, payloads);
 

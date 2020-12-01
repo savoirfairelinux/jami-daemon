@@ -195,5 +195,4 @@ private:
     // references to plugins components, used for cleanup
     PluginComponentsMap pluginComponentsMap_ {};
 };
-
 } // namespace jami
