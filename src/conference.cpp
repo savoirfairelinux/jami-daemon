@@ -276,7 +276,6 @@ Conference::sendConferenceInfos()
 
             Json::StreamWriterBuilder builder = {};
             const auto confInfoStr = Json::writeString(builder, jsonArray);
-            JAMI_ERR("@@@ confInfoStr: %s", confInfoStr.c_str());
             call->sendTextMessage(std::map<std::string, std::string> {{"application/confInfo+json",
                                                                     confInfoStr}},
                                 account->getFromUri());
@@ -534,8 +533,6 @@ Conference::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
 void
 Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
 {
-    JAMI_ERR("@@@ received confOrder: %s", confOrder.c_str());
-
     // Check if the peer is a master
     if (auto call = Manager::instance().getCallFromCallID(callId)) {
         std::string_view uri = call->getPeerNumber();
