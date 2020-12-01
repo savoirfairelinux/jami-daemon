@@ -113,11 +113,29 @@
             </arg>
         </method>
 
+       <method name="listChatHandlers" tp:name-for-bindings="listChatHandlers">
+            <tp:added version="9.7.0"/>
+            <arg type="as" name="listChatHandlers" direction="out">
+            </arg>
+        </method>
+
        <method name="toggleCallMediaHandler" tp:name-for-bindings="toggleCallMediaHandler">
             <tp:added version="9.2.0"/>
             <arg type="s" name="mediaHandlerId" direction="in">
             </arg>
             <arg type="s" name="callId" direction="in">
+            </arg>
+            <arg type="b" name="toggle" direction="in">
+            </arg>
+        </method>
+
+       <method name="toggleChatHandler" tp:name-for-bindings="toggleChatHandler">
+            <tp:added version="9.7.0"/>
+            <arg type="s" name="chatHandlerId" direction="in">
+            </arg>
+            <arg type="s" name="accountId" direction="in">
+            </arg>
+            <arg type="s" name="peerId" direction="in">
             </arg>
             <arg type="b" name="toggle" direction="in">
             </arg>
@@ -133,6 +151,38 @@
             </arg>
         </method>
 
+       <method name="getCallMediaHandlerStatus" tp:name-for-bindings="getCallMediaHandlerStatus">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+            <tp:added version="9.3.0"/>
+            <arg type="s" name="callId" direction="in">
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+            <arg type="as" name="getCallMediaHandlerStatus" direction="out">
+            </arg>
+        </method>
+
+       <method name="getChatHandlerDetails" tp:name-for-bindings="getChatHandlerDetails">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <tp:added version="9.7.0"/>
+            <arg type="s" name="chatHandlerId" direction="in">
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <arg type="a{ss}" name="ChatHandlerDetails" direction="out">
+            </arg>
+        </method>
+
+       <method name="getChatHandlerStatus" tp:name-for-bindings="getChatHandlerStatus">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+            <tp:added version="9.7.0"/>
+            <arg type="s" name="accountId" direction="in">
+            </arg>
+            <arg type="s" name="peerId" direction="in">
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+            <arg type="as" name="getChatHandlerStatus" direction="out">
+            </arg>
+        </method>
+
         <method name="getPluginsEnabled" tp:name-for-bindings="getPluginsEnabled">
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="Bool"/>
             <tp:added version="9.3.0"/>
@@ -145,16 +195,6 @@
             <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="Bool"/>
             <tp:added version="9.3.0"/>
             <arg type="b" name="state" direction="in">
-            </arg>
-        </method>
-
-       <method name="getCallMediaHandlerStatus" tp:name-for-bindings="getCallMediaHandlerStatus">
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringVectorString"/>
-            <tp:added version="9.3.0"/>
-            <arg type="s" name="callId" direction="in">
-            </arg>
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringVectorString"/>
-            <arg type="a{sas}" name="getCallMediaHandlerStatus" direction="out">
             </arg>
         </method>
 
