@@ -206,9 +206,6 @@ private:
 
     NON_COPYABLE(Sdp);
 
-    std::string getLineFromSession(const pjmedia_sdp_session* sess,
-                                   const std::string& keyword) const;
-    std::string getOutgoingVideoField(const std::string& codec, const char* key) const;
     void getProfileLevelID(const pjmedia_sdp_session* session, std::string& dest, int payload) const;
 
     /**

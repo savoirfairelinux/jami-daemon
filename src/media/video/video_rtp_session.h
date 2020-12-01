@@ -93,8 +93,6 @@ public:
     void unbindMixer();
     void enterConference(Conference* conference);
     void exitConference();
-    void switchInput(const std::string& input) { input_ = input; }
-    const std::string& getInput() const { return input_; }
 
     void setChangeOrientationCallback(std::function<void(int)> cb);
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
@@ -112,7 +110,6 @@ private:
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
-    std::string input_;
     DeviceParams localVideoParams_;
 
     std::unique_ptr<VideoSender> sender_;

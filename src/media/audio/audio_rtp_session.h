@@ -48,8 +48,6 @@ public:
     void stop() override;
     void setMuted(bool isMuted);
 
-    void switchInput(const std::string& resource) { input_ = resource; }
-
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
@@ -64,7 +62,6 @@ private:
     uint16_t initSeqVal_ = 0;
     bool muteState_ = false;
     DeviceParams localAudioParams_;
-    std::string input_;
 };
 
 } // namespace jami
