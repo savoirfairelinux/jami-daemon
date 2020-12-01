@@ -377,6 +377,30 @@
     },
     {
       "key": {
+        "uuid": "716d5bae_fe4cf9be",
+        "filename": "src/upnp/protocol/igd.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "changed it to \"const ref\". requires less changes.",
+      "parentUuid": "1c286bde_5ca0a9f1",
+      "range": {
+        "startLine": 58,
+        "startChar": 4,
+        "endLine": 58,
+        "endChar": 22
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "12a81a9d_5db7fc80",
         "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
         "patchSetId": 8
@@ -397,6 +421,30 @@
       "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "40d80ce7_748e30f9",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 200,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "I dont think so.\nDont know if the protocols (UPNP/NAT-PMP) support it, but we dont.",
+      "parentUuid": "12a81a9d_5db7fc80",
+      "range": {
+        "startLine": 200,
+        "startChar": 15,
+        "endLine": 200,
+        "endChar": 32
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -423,6 +471,30 @@
     },
     {
       "key": {
+        "uuid": "da1cd92a_3ac2154e",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 309,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "The idea is to be able to use the IGD instance without the need to always hold a lock on validIgdListMutex_.\nAlthough I made changes to threading by dispatching many callbacks on the mainThread, but I think it\u0027s safer to use shared_ptr for now.",
+      "parentUuid": "ffdcab5c_71a2e277",
+      "range": {
+        "startLine": 309,
+        "startChar": 4,
+        "endLine": 309,
+        "endChar": 42
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "7e45a120_94a78837",
         "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
         "patchSetId": 8
@@ -443,6 +515,30 @@
       "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8aef95f0_996c6c4c",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 485,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7e45a120_94a78837",
+      "range": {
+        "startLine": 484,
+        "startChar": 1,
+        "endLine": 485,
+        "endChar": 33
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -469,6 +565,30 @@
     },
     {
       "key": {
+        "uuid": "e9624833_a1145dbd",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 523,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "we could do things but not worth it.\nBTW, UPnPContext::pruneMappingList() will take of it anyway.",
+      "parentUuid": "67bd6c2b_4cf31e41",
+      "range": {
+        "startLine": 522,
+        "startChar": 30,
+        "endLine": 523,
+        "endChar": 28
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "7567c4f3_e78617a0",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 8
@@ -489,6 +609,30 @@
       "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c457072b_20148b93",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 229,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "In fact, I could remove updateMappingList(true), I dont need to call here, could just wait for the timer.",
+      "parentUuid": "7567c4f3_e78617a0",
+      "range": {
+        "startLine": 229,
+        "startChar": 4,
+        "endLine": 229,
+        "endChar": 20
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -520,6 +664,42 @@
       "writtenOn": "2020-11-30T17:57:13Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nloop variable is copied but only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ab9a4505_ef9dc87b",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 462,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fa2ae02d_f5e6f5a7",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "45a299c2_bb26823c",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 462,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "19df725d_04816c00",
       "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
@@ -560,6 +740,42 @@
     },
     {
       "key": {
+        "uuid": "3281e828_c4f95bc8",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 468,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9dcca35a_4429896a",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "13e5716a_2741a36f",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 468,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ef1cc5d8_84003905",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "41b7f0e1_9f040ff6",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 8
@@ -588,6 +804,42 @@
       "writtenOn": "2020-11-30T17:57:13Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027map\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fa38ae21_4cf1eae5",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 784,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "41b7f0e1_9f040ff6",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "899466bb_45548aaa",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 784,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "65ff5e1d_451d2696",
       "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
@@ -628,6 +880,42 @@
     },
     {
       "key": {
+        "uuid": "018ef4f1_4bf7f2ab",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 859,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d7a5437c_57a1f880",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "e545a51c_907a7363",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 859,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "17166110_b4de75a4",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "2098341e_0970e2f4",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 8
@@ -662,6 +950,42 @@
     },
     {
       "key": {
+        "uuid": "3c007a4e_790a9bbd",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 879,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b86225d4_51d6d53b",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d3150c38_43118ece",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 879,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2098341e_0970e2f4",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0030790d_7e5e1ce8",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 8
@@ -690,6 +1014,42 @@
       "writtenOn": "2020-11-30T17:57:13Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027map\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fdf9c27f_5f653ab2",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 903,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0030790d_7e5e1ce8",
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "954485e6_bca66b02",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 903,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T23:20:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "54b1b9ff_c8ac157e",
       "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
