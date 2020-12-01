@@ -62,18 +62,25 @@ public:
                              const std::string& value);
     std::map<std::string, std::string> getPluginPreferencesValues(const std::string& path);
     bool resetPluginPreferencesValues(const std::string& path);
-    std::vector<std::string> listAvailablePlugins();
-    std::vector<std::string> listLoadedPlugins();
+    std::vector<std::string> getInstalledPlugins();
+    std::vector<std::string> getLoadedPlugins();
     int installPlugin(const std::string& jplPath, const bool& force);
     int uninstallPlugin(const std::string& pluginRootPath);
-    std::vector<std::string> listCallMediaHandlers();
+    std::vector<std::string> getCallMediaHandlers();
+    std::vector<std::string> getChatHandlers();
     void toggleCallMediaHandler(const std::string& mediaHandlerId,
                                 const std::string& callId,
                                 const bool& toggle);
+    void toggleChatHandler(const std::string& chatHandlerId,
+                           const std::string& accountId,
+                           const std::string& peerId,
+                           const bool& toggle);
     std::map<std::string, std::string> getCallMediaHandlerDetails(const std::string& mediaHandlerId);
+    std::vector<std::string> getCallMediaHandlerStatus(const std::string& callId);
+    std::map<std::string, std::string> getChatHandlerDetails(const std::string& chatHandlerId);
+    std::vector<std::string> getChatHandlerStatus(const std::string& accontId,
+                                                  const std::string& peerId);
 
     bool getPluginsEnabled();
     void setPluginsEnabled(const bool& state);
-    std::map<std::string, std::vector<std::string>> getCallMediaHandlerStatus(
-        const std::string& callId);
 };
