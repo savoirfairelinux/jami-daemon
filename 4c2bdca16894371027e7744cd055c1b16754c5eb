@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "df7e9b22_33a17603",
+        "filename": "src/upnp/upnp_thread_util.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T18:58:21Z",
+      "side": 1,
+      "message": "Removed. Not needed anyway.",
+      "parentUuid": "2274aaa2_105bebb4",
+      "range": {
+        "startLine": 43,
+        "startChar": 8,
+        "endLine": 43,
+        "endChar": 70
+      },
+      "revId": "4c2bdca16894371027e7744cd055c1b16754c5eb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "129c2f49_4ff596da",
         "filename": "src/upnp/upnp_thread_util.h",
         "patchSetId": 6
@@ -45,6 +69,30 @@
       "revId": "4c2bdca16894371027e7744cd055c1b16754c5eb",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b037eeb8_6fff471e",
+        "filename": "src/upnp/upnp_thread_util.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T18:58:21Z",
+      "side": 1,
+      "message": "I replaced it with the generic std::thread. See latest patch set.",
+      "parentUuid": "129c2f49_4ff596da",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 68,
+        "endChar": 0
+      },
+      "revId": "4c2bdca16894371027e7744cd055c1b16754c5eb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }

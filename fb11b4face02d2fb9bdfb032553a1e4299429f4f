@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "c440385b_f98f9651",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 765,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T18:58:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "11d06ca6_aff3c3f8",
+      "range": {
+        "startLine": 765,
+        "startChar": 42,
+        "endLine": 765,
+        "endChar": 62
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "523709e3_8b8ec92d",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 8
@@ -71,6 +95,54 @@
     },
     {
       "key": {
+        "uuid": "c77ba195_358f1bdb",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 772,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T18:58:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dec7626a_58e98ec6",
+      "range": {
+        "startLine": 772,
+        "startChar": 26,
+        "endLine": 772,
+        "endChar": 53
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ae638dca_4220b446",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 772,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T18:58:21Z",
+      "side": 1,
+      "message": "Done.\nIndeed, only OPEN is meaningful.",
+      "parentUuid": "523709e3_8b8ec92d",
+      "range": {
+        "startLine": 768,
+        "startChar": 45,
+        "endLine": 772,
+        "endChar": 55
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "6f5e67ff_2e46a4e6",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 8
@@ -91,6 +163,30 @@
       "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1a2cbc05_0d3e4c6e",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 810,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T18:58:21Z",
+      "side": 1,
+      "message": "Done.\nRemoved TODO and kept the comment for future modification.",
+      "parentUuid": "6f5e67ff_2e46a4e6",
+      "range": {
+        "startLine": 808,
+        "startChar": 32,
+        "endLine": 810,
+        "endChar": 58
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "6e406748_1df6a6e7",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 820,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T18:58:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "875de05d_cde593a7",
+      "range": {
+        "startLine": 820,
+        "startChar": 67,
+        "endLine": 820,
+        "endChar": 74
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "407ef788_4fcf8cdd",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 8
@@ -137,6 +257,30 @@
       "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b389f081_bb7f7835",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 953,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T18:58:21Z",
+      "side": 1,
+      "message": "I believe it does. The port number changes every start-up and every connectivity change.\nI agree though that it needs testing.",
+      "parentUuid": "407ef788_4fcf8cdd",
+      "range": {
+        "startLine": 949,
+        "startChar": 57,
+        "endLine": 953,
+        "endChar": 60
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -174,6 +318,30 @@
       "writtenOn": "2020-11-30T22:11:27Z",
       "side": 1,
       "message": "is it really a success in this case?",
+      "range": {
+        "startLine": 746,
+        "startChar": 17,
+        "endLine": 746,
+        "endChar": 68
+      },
+      "revId": "fb11b4face02d2fb9bdfb032553a1e4299429f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0f646478_aa170d09",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 746,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T18:58:21Z",
+      "side": 1,
+      "message": "To be checked/discussed. Now we have better information on mapping state, so we can use it accordingly.",
+      "parentUuid": "731554f0_e39def75",
       "range": {
         "startLine": 746,
         "startChar": 17,
