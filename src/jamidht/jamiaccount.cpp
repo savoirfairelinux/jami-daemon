@@ -562,8 +562,8 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 pendingCalls_[deviceId].emplace_back(dev_call);
             }
 
-            JAMI_WARN("[call %s] No channeled socket with this peer. Send request",
-                      call->getCallId().c_str());
+            JAMI_ERR("@@@[call %s] No channeled socket with this peer. Send request",
+                     call->getCallId().c_str());
             // Else, ask for a channel (for future calls/text messages)
             requestSIPConnection(toUri, deviceId);
         };
@@ -3106,6 +3106,9 @@ JamiAccount::sendTextMessage(const std::string& to,
                         JAMI_WARN("Timeout when send a message, close current connection");
                         {
                             std::unique_lock<std::mutex> lk(acc->sipConnsMtx_);
+                            JAMI_ERR("@@@ ERASE SIP CONNECTION WITH %s %s!",
+                                     c->to.c_str(),
+                                     c->deviceId.to_c_str());
                             acc->sipConns_.erase(std::make_pair(c->to, c->deviceId));
                         }
                         acc->connectionManager_->closeConnectionsWith(c->deviceId);
@@ -3129,6 +3132,9 @@ JamiAccount::sendTextMessage(const std::string& to,
             JAMI_WARN("%s", ex.what());
             messageEngine_.onMessageSent(to, token, false);
             // Remove connection in incorrect state
+            JAMI_ERR("@@@ ERASE SIP CONNECTION WITH %s %s!",
+                     it->first.first.c_str(),
+                     it->first.second.to_c_str());
             it = sipConns_.erase(it);
             continue;
         }
@@ -3547,11 +3553,13 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
 {
     // If a connection already exists or is in progress, no need to do this
     std::lock_guard<std::mutex> lk(sipConnsMtx_);
+    JAMI_ERR("@@@ ADD SIP CONNECTION WITH %s %s?", peerId.c_str(), deviceId.to_c_str());
     auto id = std::make_pair(peerId, deviceId);
     if (sipConns_.find(id) != sipConns_.end()) {
         JAMI_DBG("A SIP connection with %s already exists", deviceId.to_c_str());
         return;
     }
+    JAMI_ERR("@@@ ADD SIP CONNECTION WITH %s %s!", peerId.c_str(), deviceId.to_c_str());
     sipConns_[id] = {};
     // If not present, create it
     JAMI_INFO("Ask %s for a new SIP channel", deviceId.to_c_str());
@@ -3582,6 +3590,9 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
                                           std::lock_guard<std::mutex> lk(shared->sipConnsMtx_);
                                           auto it = shared->sipConns_.find(id);
                                           if (it != shared->sipConns_.end() && it->second.empty()) {
+                                              JAMI_ERR("@@@ ERASE SIP CONNECTION WITH %s %s!",
+                                                       id.first.c_str(),
+                                                       id.second.to_c_str());
                                               shared->sipConns_.erase(it);
                                           }
                                       });
@@ -3765,8 +3776,12 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
                 else
                     conn++;
             }
-            if (connections.empty())
+            if (connections.empty()) {
+                JAMI_ERR("@@@ ERASE SIP CONNECTION WITH %s %s!",
+                         key.first.c_str(),
+                         key.second.to_c_str());
                 shared->sipConns_.erase(it);
+            }
         }
         // The connection can be closed during the SIP initialization, so
         // if this happens, the request should be re-sent to ask for a new
