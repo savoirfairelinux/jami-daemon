@@ -113,11 +113,29 @@
             </arg>
         </method>
 
+       <method name="listChatHandlers" tp:name-for-bindings="listChatHandlers">
+            <tp:added version="9.7.0"/>
+            <arg type="as" name="listChatHandlers" direction="out">
+            </arg>
+        </method>
+
        <method name="toggleCallMediaHandler" tp:name-for-bindings="toggleCallMediaHandler">
             <tp:added version="9.2.0"/>
             <arg type="s" name="mediaHandlerId" direction="in">
             </arg>
             <arg type="s" name="callId" direction="in">
+            </arg>
+            <arg type="b" name="toggle" direction="in">
+            </arg>
+        </method>
+
+       <method name="toggleChatHandler" tp:name-for-bindings="toggleChatHandler">
+            <tp:added version="9.7.0"/>
+            <arg type="s" name="chatHandlerId" direction="in">
+            </arg>
+            <arg type="s" name="accountId" direction="in">
+            </arg>
+            <arg type="s" name="peerId" direction="in">
             </arg>
             <arg type="b" name="toggle" direction="in">
             </arg>

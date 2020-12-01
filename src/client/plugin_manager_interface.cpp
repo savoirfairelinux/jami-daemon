@@ -113,6 +113,15 @@ listCallMediaHandlers()
         .listCallMediaHandlers();
 }
 
+std::vector<std::string>
+listChatHandlers()
+{
+    return jami::Manager::instance()
+        .getJamiPluginManager()
+        .getChatServicesManager()
+        .listChatHandlers();
+}
+
 void
 toggleCallMediaHandler(const std::string& mediaHandlerId, const std::string& callId, bool toggle)
 {
@@ -120,6 +129,18 @@ toggleCallMediaHandler(const std::string& mediaHandlerId, const std::string& cal
         .getJamiPluginManager()
         .getCallServicesManager()
         .toggleCallMediaHandler(mediaHandlerId, callId, toggle);
+}
+
+void
+toggleChatHandler(const std::string& chatHandlerId,
+                  const std::string& accountId,
+                  const std::string& peerId,
+                  bool toggle)
+{
+    return jami::Manager::instance()
+        .getJamiPluginManager()
+        .getChatServicesManager()
+        .toggleChatHandler(chatHandlerId, accountId, peerId, toggle);
 }
 
 std::map<std::string, std::string>
