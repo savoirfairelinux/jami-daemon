@@ -23,6 +23,8 @@
 #include "noncopyable.h"
 #include "jamiplugin.h"
 #include "pluginloader.h"
+#include "logger.h"
+#include "fileutils.h"
 
 #include <functional>
 #include <map>
@@ -31,6 +33,7 @@
 #include <string>
 #include <vector>
 
+#include <json/json.h>
 #include <inttypes.h>
 
 namespace jami {
@@ -195,5 +198,24 @@ private:
     // references to plugins components, used for cleanup
     PluginComponentsMap pluginComponentsMap_ {};
 };
+
+std::string getPreferencesConfigFilePathInternal(const std::string& rootPath);
+
+std::string pluginPreferencesValuesFilePathInternal(const std::string& rootPath);
+
+std::string convertArrayToString(const Json::Value& jsonArray);
+
+std::map<std::string, std::string> parsePreferenceConfig(const Json::Value& jsonPreference,
+                                                         const std::string& type);
+
+std::vector<std::map<std::string, std::string>> getPluginPreferencesInternal(
+    const std::string& rootPath);
+
+std::map<std::string, std::string> getPluginUserPreferencesValuesMapInternal(
+    const std::string& rootPath);
+
+std::map<std::string, std::string> getPluginPreferencesValuesMapInternal(const std::string& rootPath);
+
+bool resetPluginPreferencesValuesMapInternal(const std::string& rootPath);
 
 } // namespace jami

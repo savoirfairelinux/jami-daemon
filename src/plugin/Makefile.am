@@ -4,8 +4,8 @@ noinst_LTLIBRARIES = libplugin.la
 
 noinst_HEADERS = \
 	callservicesmanager.h \
-	conversationhandler.h \
-	conversationservicesmanager.h \
+	chathandler.h \
+	chatservicesmanager.h \
 	jamiplugin.h \
 	jamipluginmanager.h \
 	mediahandler.h \
