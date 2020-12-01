@@ -76,15 +76,15 @@ DBusPluginManagerInterface::resetPluginPreferencesValues(const std::string& path
 }
 
 auto
-DBusPluginManagerInterface::listAvailablePlugins() -> decltype(DRing::listAvailablePlugins())
+DBusPluginManagerInterface::getInstalledPlugins() -> decltype(DRing::getInstalledPlugins())
 {
-    return DRing::listAvailablePlugins();
+    return DRing::getInstalledPlugins();
 }
 
 auto
-DBusPluginManagerInterface::listLoadedPlugins() -> decltype(DRing::listLoadedPlugins())
+DBusPluginManagerInterface::getLoadedPlugins() -> decltype(DRing::getLoadedPlugins())
 {
-    return DRing::listLoadedPlugins();
+    return DRing::getLoadedPlugins();
 }
 
 int
@@ -100,9 +100,15 @@ DBusPluginManagerInterface::uninstallPlugin(const std::string& pluginRootPath)
 }
 
 auto
-DBusPluginManagerInterface::listCallMediaHandlers() -> decltype(DRing::listCallMediaHandlers())
+DBusPluginManagerInterface::getCallMediaHandlers() -> decltype(DRing::getCallMediaHandlers())
 {
-    return DRing::listCallMediaHandlers();
+    return DRing::getCallMediaHandlers();
+}
+
+auto
+DBusPluginManagerInterface::getChatHandlers() -> decltype(DRing::getChatHandlers())
+{
+    return DRing::getChatHandlers();
 }
 
 void
@@ -113,10 +119,38 @@ DBusPluginManagerInterface::toggleCallMediaHandler(const std::string& mediaHandl
     DRing::toggleCallMediaHandler(mediaHandlerId, callId, toggle);
 }
 
+void
+DBusPluginManagerInterface::toggleChatHandler(const std::string& chatHandlerId,
+                                              const std::string& accountId,
+                                              const std::string& peerId,
+                                              const bool& toggle)
+{
+    DRing::toggleChatHandler(chatHandlerId, accountId, peerId, toggle);
+}
+
 std::map<std::string, std::string>
 DBusPluginManagerInterface::getCallMediaHandlerDetails(const std::string& mediaHanlderId)
 {
     return DRing::getCallMediaHandlerDetails(mediaHanlderId);
+}
+
+std::vector<std::string>
+DBusPluginManagerInterface::getCallMediaHandlerStatus(const std::string& callId)
+{
+    return DRing::getCallMediaHandlerStatus(callId);
+}
+
+std::map<std::string, std::string>
+DBusPluginManagerInterface::getChatHandlerDetails(const std::string& chatHanlderId)
+{
+    return DRing::getChatHandlerDetails(chatHanlderId);
+}
+
+std::vector<std::string>
+DBusPluginManagerInterface::getChatHandlerStatus(const std::string& accountId,
+                                                 const std::string& peerId)
+{
+    return DRing::getChatHandlerStatus(accountId, peerId);
 }
 
 bool
@@ -129,10 +163,4 @@ void
 DBusPluginManagerInterface::setPluginsEnabled(const bool& state)
 {
     DRing::setPluginsEnabled(state);
-}
-
-std::map<std::string, std::vector<std::string>>
-DBusPluginManagerInterface::getCallMediaHandlerStatus(const std::string& callId)
-{
-    return DRing::getCallMediaHandlerStatus(callId);
 }
