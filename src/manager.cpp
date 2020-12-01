@@ -88,6 +88,7 @@ using random_device = dht::crypto::random_device;
 #include "audio/tonecontrol.h"
 
 #include "data_transfer.h"
+#include "dring/media_const.h"
 
 #include <opendht/thread_pool.h>
 
@@ -1156,6 +1157,9 @@ Manager::muteMediaCall(const std::string& callId, const std::string& mediaType, 
 {
     if (auto call = getCallFromCallID(callId)) {
         call->muteMedia(mediaType, is_muted);
+        return true;
+    } else if (auto conf = getConferenceFromID(callId)) {
+        conf->muteParticipant("", is_muted, mediaType);     // Mute host
         return true;
     } else {
         JAMI_DBG("CallID %s doesn't exist in call muting", callId.c_str());

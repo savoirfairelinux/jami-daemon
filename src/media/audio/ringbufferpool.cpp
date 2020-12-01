@@ -239,8 +239,6 @@ RingBufferPool::unBindHalfDuplexOut(const std::string& process_id, const std::st
 void
 RingBufferPool::unBindAllHalfDuplexOut(const std::string& call_id)
 {
-    JAMI_INFO("@@@ Unbind out call %s from all bound calls", call_id.c_str());
-
     const auto& rb_call = getRingBuffer(call_id);
     if (not rb_call) {
         JAMI_ERR("No ringbuffer associated to call '%s'", call_id.c_str());
