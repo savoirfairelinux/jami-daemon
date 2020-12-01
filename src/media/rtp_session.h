@@ -47,6 +47,8 @@ public:
     virtual void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) = 0;
     virtual void restartSender() = 0;
     virtual void stop() = 0;
+    void switchInput(const std::string& resource) { input_ = resource; }
+    const std::string& getInput() const { return input_; }
 
     virtual void updateMedia(const MediaDescription& send, const MediaDescription& receive)
     {
@@ -70,6 +72,7 @@ protected:
     std::recursive_mutex mutex_;
     std::unique_ptr<SocketPair> socketPair_;
     const std::string callID_;
+    std::string input_;
 
     MediaDescription send_;
     MediaDescription receive_;
