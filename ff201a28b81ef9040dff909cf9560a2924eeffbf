@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "b78ae6cb_9f73ead0",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 860,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cafc9180_8b88ff69",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "04e1fa91_35e9737c",
         "filename": "src/upnp/protocol/mapping.cpp",
         "patchSetId": 1
@@ -36,6 +54,24 @@
     },
     {
       "key": {
+        "uuid": "826eacfe_89e506ed",
+        "filename": "src/upnp/protocol/mapping.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "04e1fa91_35e9737c",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "34a37c41_ee184fcd",
         "filename": "src/upnp/protocol/mapping.cpp",
         "patchSetId": 1
@@ -47,6 +83,24 @@
       "writtenOn": "2020-11-24T16:11:30Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nparameter \u0027cb\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "923235bd_ca80868a",
+        "filename": "src/upnp/protocol/mapping.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 277,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "34a37c41_ee184fcd",
       "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
@@ -100,6 +154,30 @@
     },
     {
       "key": {
+        "uuid": "f33e8073_9d0dac15",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "01563eb6_07399dd3",
+      "range": {
+        "startLine": 24,
+        "startChar": 0,
+        "endLine": 25,
+        "endChar": 50
+      },
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9855c4fb_a41e1a5a",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 1
@@ -111,6 +189,24 @@
       "writtenOn": "2020-11-24T16:11:30Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nloop variable is copied but only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "97d53df0_e3ad00da",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9855c4fb_a41e1a5a",
       "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
@@ -134,6 +230,24 @@
     },
     {
       "key": {
+        "uuid": "43fc2be3_c043f5de",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 204,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ce0d6788_b9073555",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0f69573d_3b7a3ad0",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 1
@@ -151,6 +265,24 @@
     },
     {
       "key": {
+        "uuid": "7cb0b777_061b40f1",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 235,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0f69573d_3b7a3ad0",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "69ade422_3c777b4a",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 1
@@ -162,6 +294,24 @@
       "writtenOn": "2020-11-24T16:11:30Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027protocol\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c9ff970c_43011bce",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 300,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "69ade422_3c777b4a",
       "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
@@ -202,6 +352,42 @@
     },
     {
       "key": {
+        "uuid": "f0ccc8c3_2445bd89",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 301,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d8f998ef_3da43d21",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "94ce2af2_4d093672",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 301,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bf5ef554_02d9a042",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "da9dd7fb_68cace13",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 1
@@ -213,6 +399,24 @@
       "writtenOn": "2020-11-24T16:11:30Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027map\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cf85fcbb_2b542e12",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 324,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "da9dd7fb_68cace13",
       "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
@@ -253,6 +457,42 @@
     },
     {
       "key": {
+        "uuid": "1d1fd451_24ea4c7a",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 469,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "553300e0_c4e73904",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "179719dc_7479b448",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 469,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "645644f8_ffada37e",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "741e0c19_4264a12a",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 1
@@ -264,6 +504,24 @@
       "writtenOn": "2020-11-24T16:11:30Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nloop variable is copied but only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4b14ca50_2a7e2c97",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 514,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "741e0c19_4264a12a",
       "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
@@ -287,6 +545,24 @@
     },
     {
       "key": {
+        "uuid": "06a959d9_4dcc58f6",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 534,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "338bec81_c7e4fea5",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "f48f2849_c9de97ec",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 1
@@ -298,6 +574,24 @@
       "writtenOn": "2020-11-24T16:11:30Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027map\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "bdc86821_bb29fa57",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 599,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f48f2849_c9de97ec",
       "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
@@ -321,6 +615,24 @@
     },
     {
       "key": {
+        "uuid": "eabe95c3_dc9a9ba2",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 641,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2a5bcc5c_a6b4b849",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "56076222_0bf90dd8",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 1
@@ -332,6 +644,24 @@
       "writtenOn": "2020-11-24T16:11:30Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027map\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "60e7c9a9_fe8c00e1",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 718,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "56076222_0bf90dd8",
       "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
@@ -355,6 +685,24 @@
     },
     {
       "key": {
+        "uuid": "ee7b0ead_8c5ecc33",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 767,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bc37c90d_63ec051b",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "a316ca5e_96565418",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 1
@@ -366,6 +714,24 @@
       "writtenOn": "2020-11-24T16:11:30Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027igd\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0b9fdc85_6b662126",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 800,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a316ca5e_96565418",
       "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
@@ -389,6 +755,24 @@
     },
     {
       "key": {
+        "uuid": "8bf39d9c_977aee27",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 822,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1f092251_e011e0dc",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "67dc1234_6258d630",
         "filename": "src/upnp/upnp_control.cpp",
         "patchSetId": 1
@@ -400,6 +784,24 @@
       "writtenOn": "2020-11-24T16:11:30Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027map\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1ccafc17_9c12688d",
+        "filename": "src/upnp/upnp_control.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "67dc1234_6258d630",
       "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
@@ -423,6 +825,24 @@
     },
     {
       "key": {
+        "uuid": "2ca2f1a4_f2d164de",
+        "filename": "src/upnp/upnp_control.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8df27e86_ea763d81",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5d4a5171_d550ac82",
         "filename": "src/upnp/upnp_control.cpp",
         "patchSetId": 1
@@ -434,6 +854,24 @@
       "writtenOn": "2020-11-24T16:11:30Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027map\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f7240fdf_a49470ab",
+        "filename": "src/upnp/upnp_control.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-01T16:25:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5d4a5171_d550ac82",
       "revId": "ff201a28b81ef9040dff909cf9560a2924eeffbf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
