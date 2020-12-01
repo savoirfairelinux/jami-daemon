@@ -457,7 +457,7 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
         std::vector<std::map<std::string, std::string>> preferences = getPluginPreferences(rootPath);
         for (auto& preference : preferences) {
             if (!preference["key"].compare(key)) {
-                csm_.setPreference(key, value, preference["scope"]);
+                callsm_.setPreference(key, value, preference["scope"]);
                 break;
             }
         }

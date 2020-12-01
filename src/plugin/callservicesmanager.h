@@ -257,19 +257,6 @@ private:
     }
 
     /**
-     * @brief listAvailableSubjects
-     * @param callMediaHandlerPtr
-     * This functions lets the call media handler component know which subjects are available
-     */
-    void listAvailableSubjects(const std::string& callID, CallMediaHandlerPtr& callMediaHandlerPtr)
-    {
-        for (auto it = callAVsubjects.begin(); it != callAVsubjects.end(); ++it) {
-            if (it->first.id == callID)
-                notifyAVSubject(callMediaHandlerPtr, it->first, it->second);
-        }
-    }
-
-    /**
      * @brief getCallHandlerId
      * Returns the callMediaHandler id from a callMediaHandler pointer
      * @param callMediaHandler
@@ -302,9 +289,9 @@ private:
      * It is pushed to this list list
      */
     std::list<std::pair<const StreamData, AVSubjectSPtr>> callAVsubjects;
-    // std::map<std::string, std::tuple<const StreamData, AVSubjectSPtr>> callAVsubjects;
 
-    std::map<std::string, std::set<std::string>> mediaHandlerToggled_;
+    std::map<std::string, std::set<std::string>>
+        mediaHandlerToggled_; // callId, list of mediaHandlers
 };
 
 } // namespace jami

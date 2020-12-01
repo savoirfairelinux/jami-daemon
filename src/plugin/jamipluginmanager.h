@@ -26,7 +26,7 @@
 
 // Services
 #include "callservicesmanager.h"
-#include "conversationservicesmanager.h"
+#include "chatservicesmanager.h"
 
 #include <vector>
 #include <map>
@@ -39,8 +39,8 @@ class JamiPluginManager
 {
 public:
     JamiPluginManager()
-        : csm_ {pm_}
-        , convsm_ {pm_}
+        : callsm_ {pm_}
+        , chatsm_ {pm_}
     {
         registerServices();
     }
@@ -127,9 +127,9 @@ public:
     bool resetPluginPreferencesValuesMap(const std::string& rootPath);
 
 public:
-    CallServicesManager& getCallServicesManager() { return csm_; }
+    CallServicesManager& getCallServicesManager() { return callsm_; }
 
-    ConversationServicesManager& getConversationServicesManager() { return convsm_; }
+    ChatServicesManager& getChatServicesManager() { return chatsm_; }
 
 private:
     NON_COPYABLE(JamiPluginManager);
@@ -214,7 +214,7 @@ private:
 
     // Services
 private:
-    CallServicesManager csm_;
-    ConversationServicesManager convsm_;
+    CallServicesManager callsm_;
+    ChatServicesManager chatsm_;
 };
 } // namespace jami

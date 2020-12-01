@@ -68,6 +68,7 @@ using random_device = dht::crypto::random_device;
 
 #ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
+#include "plugin/streamdata.h"
 #endif
 
 #ifdef ENABLE_VIDEO
@@ -1683,8 +1684,8 @@ Manager::scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::t
     return pimpl_->scheduler_.schedule(std::move(task), when);
 }
 
-std::shared_ptr<Task> Manager::scheduleTaskIn(std::function<void()>&& task,
-                                std::chrono::steady_clock::duration timeout)
+std::shared_ptr<Task>
+Manager::scheduleTaskIn(std::function<void()>&& task, std::chrono::steady_clock::duration timeout)
 {
     return pimpl_->scheduler_.scheduleIn(std::move(task), timeout);
 }
@@ -3046,14 +3047,13 @@ Manager::sendTextMessage(const std::string& accountID,
 {
     if (const auto acc = getAccount(accountID)) {
         try {
-#ifdef ENABLE_PLUGIN
-            auto& convManager
-                = jami::Manager::instance().getJamiPluginManager().getConversationServicesManager();
-            std::shared_ptr<jami::ConversationMessage> cm
-                = std::make_shared<jami::ConversationMessage>(
-                    accountID, to, const_cast<std::map<std::string, std::string>&>(payloads));
-            convManager.sendTextMessage(cm);
-            return acc->sendTextMessage(cm->to_, cm->data_);
+#ifdef ENABLE_PLUGIN // modifies send message
+            auto& pluginChatManager
+                = jami::Manager::instance().getJamiPluginManager().getChatServicesManager();
+            std::shared_ptr<PluginMessage> cm = std::make_shared<PluginMessage>(
+                accountID, to, "1", const_cast<std::map<std::string, std::string>&>(payloads));
+            pluginChatManager.publishMessage(cm);
+            return acc->sendTextMessage(cm->peerId, cm->data);
 #else
             return acc->sendTextMessage(to, payloads);
 #endif // ENABLE_PLUGIN
@@ -3228,7 +3228,9 @@ Manager::setModerator(const std::string& confId, const std::string& peerId, cons
     if (auto conf = getConferenceFromID(confId)) {
         conf->setModerator(peerId, state);
     } else
-        JAMI_WARN("Fail to change moderator %s, conference %s not found", peerId.c_str(), confId.c_str());
+        JAMI_WARN("Fail to change moderator %s, conference %s not found",
+                  peerId.c_str(),
+                  confId.c_str());
 }
 
 } // namespace jami

@@ -20,25 +20,28 @@
 
 #pragma once
 
-#include "streamdata.h"
 #include "observer.h"
-#include <libavutil/frame.h>
+#include "streamdata.h"
 #include <string>
-#include <memory>
 #include <map>
 
 namespace jami {
 
-using avSubjectPtr = std::shared_ptr<Observable<AVFrame*>>;
+using pluginMessagePtr = std::shared_ptr<PluginMessage>;
+using chatSubjectPtr = std::shared_ptr<PublishObservable<pluginMessagePtr>>;
 
-/**
- * @brief The MediaHandler class
- * Is the main object of the plugin
- */
-class MediaHandler
+class ChatHandler
 {
 public:
-    virtual ~MediaHandler() = default;
+    virtual ~ChatHandler() = default;
+    virtual void notifyChatSubject(std::pair<std::string, std::string>& subjectConnection,
+                                   chatSubjectPtr subject)
+        = 0;
+    virtual std::map<std::string, std::string> getChatHandlerDetails() = 0;
+    virtual void detach(chatSubjectPtr subject) = 0;
+    virtual void setPreferenceAttribute(const std::string& key, const std::string& value) = 0;
+    virtual bool preferenceMapHasKey(const std::string& key) = 0;
+
     /**
      * @brief id
      * The id is the path of the plugin that created this MediaHandler
@@ -49,19 +52,5 @@ public:
 
 private:
     std::string id_;
-};
-
-/**
- * @brief The CallMediaHandler class
- * It can hold multiple streams of data, and do processing on them
- */
-class CallMediaHandler : public MediaHandler
-{
-public:
-    virtual void notifyAVFrameSubject(const StreamData& data, avSubjectPtr subject) = 0;
-    virtual std::map<std::string, std::string> getCallMediaHandlerDetails() = 0;
-    virtual void detach() = 0;
-    virtual void setPreferenceAttribute(const std::string& key, const std::string& value) = 0;
-    virtual bool preferenceMapHasKey(const std::string& key) = 0;
 };
 } // namespace jami
