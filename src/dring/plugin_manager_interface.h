@@ -50,9 +50,14 @@ DRING_PUBLIC std::vector<std::string> listLoadedPlugins();
 DRING_PUBLIC int installPlugin(const std::string& jplPath, bool force);
 DRING_PUBLIC int uninstallPlugin(const std::string& pluginRootPath);
 DRING_PUBLIC std::vector<std::string> listCallMediaHandlers();
+DRING_PUBLIC std::vector<std::string> listChatHandlers();
 DRING_PUBLIC void toggleCallMediaHandler(const std::string& mediaHandlerId,
                                          const std::string& callId,
                                          bool toggle);
+DRING_PUBLIC void toggleChatHandler(const std::string& chatHandlerId,
+                                    const std::string& accountId,
+                                    const std::string& peerId,
+                                    bool toggle);
 DRING_PUBLIC std::map<std::string, std::string> getCallMediaHandlerDetails(
     const std::string& mediaHandlerId);
 DRING_PUBLIC bool getPluginsEnabled();

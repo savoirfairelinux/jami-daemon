@@ -67,9 +67,14 @@ public:
     int installPlugin(const std::string& jplPath, const bool& force);
     int uninstallPlugin(const std::string& pluginRootPath);
     std::vector<std::string> listCallMediaHandlers();
+    std::vector<std::string> listChatHandlers();
     void toggleCallMediaHandler(const std::string& mediaHandlerId,
                                 const std::string& callId,
                                 const bool& toggle);
+    void toggleChatHandler(const std::string& chatHandlerId,
+                           const std::string& accountId,
+                           const std::string& peerId,
+                           const bool& toggle);
     std::map<std::string, std::string> getCallMediaHandlerDetails(const std::string& mediaHandlerId);
 
     bool getPluginsEnabled();

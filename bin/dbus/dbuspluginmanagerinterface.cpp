@@ -105,12 +105,27 @@ DBusPluginManagerInterface::listCallMediaHandlers() -> decltype(DRing::listCallM
     return DRing::listCallMediaHandlers();
 }
 
+auto
+DBusPluginManagerInterface::listChatHandlers() -> decltype(DRing::listChatHandlers())
+{
+    return DRing::listChatHandlers();
+}
+
 void
 DBusPluginManagerInterface::toggleCallMediaHandler(const std::string& mediaHandlerId,
                                                    const std::string& callId,
                                                    const bool& toggle)
 {
     DRing::toggleCallMediaHandler(mediaHandlerId, callId, toggle);
+}
+
+void
+DBusPluginManagerInterface::toggleChatHandler(const std::string& chatHandlerId,
+                                              const std::string& accountId,
+                                              const std::string& peerId,
+                                              const bool& toggle)
+{
+    DRing::toggleChatHandler(chatHandlerId, accountId, peerId, toggle);
 }
 
 std::map<std::string, std::string>
