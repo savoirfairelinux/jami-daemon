@@ -54,6 +54,8 @@ struct GitAuthor
     std::string email {};
 };
 
+enum class ConversationMode : int { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC };
+
 struct ConversationCommit
 {
     std::string id {};
@@ -65,6 +67,30 @@ struct ConversationCommit
     int64_t timestamp {0};
 };
 
+enum class MemberRole { ADMIN = 0, MEMBER, INVITED, BANNED };
+
+struct ConversationMember
+{
+    std::string uri;
+    MemberRole role;
+
+    std::map<std::string, std::string> map() const
+    {
+        std::string rolestr;
+        if (role == MemberRole::ADMIN) {
+            rolestr = "admin";
+        } else if (role == MemberRole::MEMBER) {
+            rolestr = "member";
+        } else if (role == MemberRole::INVITED) {
+            rolestr = "invited";
+        } else if (role == MemberRole::BANNED) {
+            rolestr = "banned";
+        }
+
+        return {{"uri", uri}, {"role", rolestr}};
+    }
+};
+
 /**
  * This class gives access to the git repository that represents the conversation
  */
@@ -74,10 +100,14 @@ public:
     /**
      * Creates a new repository, with initial files, where the first commit hash is the conversation id
      * @param account       The related account
+     * @param mode          The wanted mode
+     * @param otherMember   The other uri
      * @return  the conversation repository object
      */
     static DRING_TESTABLE std::unique_ptr<ConversationRepository> createConversation(
-        const std::weak_ptr<JamiAccount>& account);
+        const std::weak_ptr<JamiAccount>& account,
+        ConversationMode mode = ConversationMode::INVITES_ONLY,
+        const std::string& otherMember = "");
 
     /**
      * Clones a conversation on a remote device
@@ -196,12 +226,34 @@ public:
      */
     void erase();
 
+    /**
+     * Get conversation's mode
+     * @return the mode
+     */
+    ConversationMode mode() const;
+
     std::string voteKick(const std::string& uri, bool isDevice);
     std::string resolveVote(const std::string& uri, bool isDevice);
 
-    bool validFetch(const std::string& remoteDevice) const;
+    std::vector<ConversationCommit> validFetch(const std::string& remoteDevice) const;
     bool validClone() const;
-    std::string getCommitType(const std::string& commitMsg) const;
+
+    /**
+     * One to one util, get initial members
+     * @return initial members
+     */
+    std::vector<std::string> getInitialMembers() const;
+
+    /**
+     * Get conversation's members
+     * @return members
+     */
+    std::vector<ConversationMember> members() const;
+
+    /**
+     * To use after a merge with member's events, refresh members knowledge
+     */
+    void refreshMembers() const;
 
 private:
     ConversationRepository() = delete;
