@@ -40,6 +40,7 @@
 #include "scheduled_executor.h"
 #include "connectionmanager.h"
 #include "gitserver.h"
+#include "conversationrepository.h"
 
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
@@ -339,7 +340,6 @@ public:
     std::map<std::string, std::string> getContactDetails(const std::string& uri) const;
 
     void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
-    void sendTrustRequestConfirm(const std::string& to);
     void sendTextMessage(const std::string& to,
                          const std::map<std::string, std::string>& payloads,
                          uint64_t id,
@@ -511,7 +511,7 @@ public:
 
     std::string_view currentDeviceId() const;
     // Conversation management
-    std::string startConversation();
+    std::string startConversation(ConversationMode mode = ConversationMode::INVITES_ONLY);
     void acceptConversationRequest(const std::string& conversationId);
     void declineConversationRequest(const std::string& conversationId);
     std::vector<std::string> getConversations();
@@ -937,8 +937,9 @@ private:
      * Remove a repository and all files
      * @param convId
      * @param sync      If we send an update to other account's devices
+     * @param force     True if ignore the removing flag
      */
-    void removeRepository(const std::string& convId, bool sync);
+    void removeRepository(const std::string& convId, bool sync, bool force = false);
 
     /**
      * Send a message notification to all members
