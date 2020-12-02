@@ -270,6 +270,12 @@
             <arg type="b" name="isParticipant" direction="out"/>
         </method>
 
+        <method name="hangupParticipant" tp:name-for-bindings="hangupParticipant">
+            <tp:added version="9.8.0"/>
+            <arg type="s" name="confId" direction="in"/>
+            <arg type="s" name="peerId" direction="in"/>
+        </method>
+
         <method name="addParticipant" tp:name-for-bindings="addParticipant">
             <tp:added version="0.9.7"/>
             <tp:docstring>
