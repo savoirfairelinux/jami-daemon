@@ -275,6 +275,7 @@ namespace TrustRequest {
 constexpr static const char FROM[] = "from";
 constexpr static const char RECEIVED[] = "received";
 constexpr static const char PAYLOAD[] = "payload";
+constexpr static const char CONVERSATIONID[] = "conversationId";
 
 } // namespace TrustRequest
 
