@@ -50,6 +50,8 @@ struct GitAuthor
     std::string email {};
 };
 
+enum class ConversationMode : int { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC };
+
 struct ConversationCommit
 {
     std::string id {};
@@ -70,10 +72,11 @@ public:
     /**
      * Creates a new repository, with initial files, where the first commit hash is the conversation id
      * @param account       The related account
+     * @param mode          The wanted mode
      * @return  the conversation repository object
      */
     static DRING_TESTABLE std::unique_ptr<ConversationRepository> createConversation(
-        const std::weak_ptr<JamiAccount>& account);
+        const std::weak_ptr<JamiAccount>& account, ConversationMode mode);
 
     /**
      * Clones a conversation on a remote device
@@ -98,7 +101,11 @@ public:
 
     /**
      * Write the certificate in /members and commit the change
+<<<<<<< HEAD
      * @param uri    Member to add
+=======
+     * @param uri    Uri to add
+>>>>>>> 21da66bc7... swarm: add support for modes
      * @return the commit id if successful
      */
     std::string addMember(const std::string& uri);
@@ -191,12 +198,17 @@ public:
      */
     void erase();
 
+    /**
+     * Get conversation's mode
+     * @return the mode
+     */
+    ConversationMode mode() const;
+
     std::string voteKick(const std::string& uri, bool isDevice);
     std::string resolveVote(const std::string& uri, bool isDevice);
 
     bool validFetch(const std::string& remoteDevice) const;
     bool validClone() const;
-    std::string getCommitType(const std::string& commitMsg) const;
 
 private:
     ConversationRepository() = delete;
