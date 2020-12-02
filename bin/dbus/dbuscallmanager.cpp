@@ -310,3 +310,8 @@ DBusCallManager::muteParticipant(const std::string& confId, const std::string& p
     DRing::muteParticipant(confId, peerId, state);
 }
 
+void
+DBusCallManager::hangupParticipant(const std::string& confId, const std::string& peerId)
+{
+    DRing::hangupParticipant(confId, peerId);
+}
