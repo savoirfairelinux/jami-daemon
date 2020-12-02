@@ -1509,6 +1509,24 @@ Manager::setActiveParticipant(const std::string& confId, const std::string& part
     }
 }
 
+void
+Manager::hangupParticipant(const std::string& confId, const std::string& participant)
+{
+    if (auto conf = getConferenceFromID(confId)) {
+        conf->hangupParticipant(participant);
+    } else if (auto call = getCallFromCallID(confId)) {
+        std::map<std::string, std::string> messages;
+        Json::Value root;
+        root["hangupParticipant"] = participant;
+        Json::StreamWriterBuilder wbuilder;
+        wbuilder["commentStyle"] = "None";
+        wbuilder["indentation"] = "";
+        auto output = Json::writeString(wbuilder, root);
+        messages["application/confOrder+json"] = output;
+        call->sendTextMessage(messages, call->getPeerDisplayName());
+    }
+}
+
 bool
 Manager::detachLocalParticipant(const std::string& conf_id)
 {
