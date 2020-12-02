@@ -24,11 +24,13 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <json/json.h>
 
 namespace jami {
 
 class JamiAccount;
 class ConversationRepository;
+enum class ConversationMode;
 
 using OnPullCb = std::function<void(bool fetchOk,std::vector<std::map<std::string, std::string>>&& newMessages)>;
 using OnLoadMessages = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
@@ -37,6 +39,7 @@ using OnLoadMessages = std::function<void(std::vector<std::map<std::string, std:
 class Conversation : public std::enable_shared_from_this<Conversation>
 {
 public:
+    Conversation(const std::weak_ptr<JamiAccount>& account, ConversationMode mode, const std::string& otherMember = "");
     Conversation(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId = "");
     Conversation(const std::weak_ptr<JamiAccount>& account,
                  const std::string& remoteDevice,
@@ -58,7 +61,7 @@ public:
      * @return a vector of member details:
      * {
      *  "uri":"xxx",
-     *  "role":"member/admin",
+     *  "role":"member/admin/invited",
      *  "lastRead":"id"
      *  ...
      * }
@@ -83,6 +86,7 @@ public:
     std::string sendMessage(const std::string& message,
                             const std::string& type = "text/plain",
                             const std::string& parent = "");
+    std::string sendMessage(const Json::Value& message, const std::string& parent = "");
     /**
      * Get a range of messages
      * @param cb        The callback when loaded
@@ -112,9 +116,9 @@ public:
     /**
      * Analyze if merge is possible and merge history
      * @param uri       the peer
-     * @return if the operation was successful
+     * @return new commits
      */
-    bool mergeHistory(const std::string& uri);
+    std::vector<std::map<std::string, std::string>> mergeHistory(const std::string& uri);
 
     /**
      * Fetch and merge from peer
@@ -154,6 +158,18 @@ public:
      */
     void erase();
 
+    /**
+     * Get conversation's mode
+     * @return the mode
+     */
+    ConversationMode mode() const;
+
+    /**
+     * One to one util, get initial members
+     * @return initial members
+     */
+    std::vector<std::string> getInitialMembers() const;
+    bool isInitialMember(const std::string& uri) const;
 private:
 
     std::shared_ptr<Conversation> shared()
