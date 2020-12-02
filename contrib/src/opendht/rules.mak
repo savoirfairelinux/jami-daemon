@@ -38,6 +38,7 @@ $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 opendht: opendht-$(OPENDHT_VERSION).tar.gz
 	$(UNPACK)
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
+	$(APPLY) $(SRC)/opendht/TrustRequest.patch
 	$(MOVE)
 
 .opendht: opendht .sum-opendht
