@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4f1b55c0_63e911d9",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 2370,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-12-02T15:22:00Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\n\u0027find_last_of\u0027 called with a string literal consisting of a single character; consider using the more effective overload accepting a character\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-faster-string-find",
+      "revId": "54fa4cf0fe8be5358f706d561fe5fcc8a2178db6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "25940995_b0acad55",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 4460,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-12-02T15:22:00Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nstring concatenation results in allocation of unnecessary temporary strings; consider using \u0027operator+\u003d\u0027 or \u0027string::append()\u0027 instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-inefficient-string-concatenation",
+      "revId": "54fa4cf0fe8be5358f706d561fe5fcc8a2178db6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
