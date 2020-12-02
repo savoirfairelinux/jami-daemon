@@ -18,7 +18,9 @@
         "OPENDHT_PUSH_NOTIFICATIONS=1",
         "OPENDHT_TOOLS=0"
     ],
-    "patches": [],
+    "patches": [
+        "TrustRequest.patch"
+    ],
     "win_patches": [],
     "project_paths": [],
     "with_env" : "",
