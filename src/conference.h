@@ -239,6 +239,8 @@ public:
 
     void updateConferenceInfo(ConfInfo confInfo);
 
+    void hangupParticipant(const std::string& participant_id);
+
 private:
     std::weak_ptr<Conference> weak()
     {
