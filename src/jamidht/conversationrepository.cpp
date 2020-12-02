@@ -228,10 +228,13 @@ add_initial_files(GitRepository& repo, const std::shared_ptr<JamiAccount>& accou
  * Sign and create the initial commit
  * @param repo      The git repository
  * @param account   The account who signs
+ * @param mode      The mode
  * @return          The first commit hash or empty if failed
  */
 std::string
-initial_commit(GitRepository& repo, const std::shared_ptr<JamiAccount>& account)
+initial_commit(GitRepository& repo,
+               const std::shared_ptr<JamiAccount>& account,
+               ConversationMode mode)
 {
     auto deviceId = std::string(account->currentDeviceId());
     auto name = account->getDisplayName();
@@ -268,12 +271,19 @@ initial_commit(GitRepository& repo, const std::shared_ptr<JamiAccount>& account)
     }
     GitTree tree = {tree_ptr, git_tree_free};
 
+    Json::Value json;
+    json["mode"] = static_cast<int>(mode);
+    json["type"] = "initial";
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+
     if (git_commit_create_buffer(&to_sign,
                                  repo.get(),
                                  sig.get(),
                                  sig.get(),
                                  nullptr,
-                                 "Initial commit",
+                                 Json::writeString(wbuilder, json).c_str(),
                                  tree.get(),
                                  0,
                                  nullptr)
@@ -731,7 +741,7 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
     for (const auto& changedFile : changedFiles) {
         if (changedFile == std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt") {
             deviceFile = changedFile;
-        } else if (changedFile == std::string("invited") + DIR_SEPARATOR_STR + uriMember + ".crt") {
+        } else if (changedFile == std::string("invited") + DIR_SEPARATOR_STR + uriMember) {
             invitedFile = changedFile;
         } else if (changedFile == crlFile) {
             // Nothing to do
@@ -742,8 +752,8 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
         }
     }
 
-    if (invitedFile.empty()) {
-        JAMI_WARN("No vote detected for commit %s", commitId.c_str());
+    if (!invitedFile.empty()) {
+        JAMI_WARN("Invitation not empty for commit %s", commitId.c_str());
         return false;
     }
 
@@ -778,7 +788,7 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
         return false;
     }
 
-    auto invitedFile = std::string("invited") + DIR_SEPARATOR_STR + uriMember + ".crt";
+    auto invitedFile = std::string("invited") + DIR_SEPARATOR_STR + uriMember;
     auto membersFile = std::string("members") + DIR_SEPARATOR_STR + uriMember + ".crt";
     auto deviceFile = std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt";
 
@@ -1355,7 +1365,8 @@ ConversationRepository::Impl::diffStats(const GitDiff& diff) const
 //////////////////////////////////
 
 std::unique_ptr<ConversationRepository>
-ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& account)
+ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& account,
+                                           ConversationMode mode)
 {
     auto shared = account.lock();
     if (!shared)
@@ -1387,7 +1398,7 @@ ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& acc
     }
 
     // Commit changes
-    auto id = initial_commit(repo, shared);
+    auto id = initial_commit(repo, shared, mode);
     if (id.empty()) {
         JAMI_ERR("Couldn't create initial commit in %s", tmpPath.c_str());
         fileutils::removeAll(tmpPath, true);
@@ -1448,7 +1459,7 @@ ConversationRepository::id() const
 }
 
 std::string
-ConversationRepository::addMember(const std::shared_ptr<dht::crypto::Certificate>& memberCert)
+ConversationRepository::addMember(const std::string& uri)
 {
     auto account = pimpl_->account_.lock();
     if (!account)
@@ -1461,20 +1472,14 @@ ConversationRepository::addMember(const std::shared_ptr<dht::crypto::Certificate
     // First, we need to add the member file to the repository if not present
     std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
 
-    if (!memberCert) {
-        JAMI_ERR("Cert is null!");
-        return {};
-    }
-
     std::string invitedPath = repoPath + "invited";
     if (!fileutils::recursive_mkdir(invitedPath, 0700)) {
         JAMI_ERR("Error when creating %s.", invitedPath.c_str());
         return {};
     }
-    std::string memberId = memberCert->getId().toString();
-    std::string devicePath = invitedPath + DIR_SEPARATOR_STR + memberId + ".crt";
+    std::string devicePath = invitedPath + DIR_SEPARATOR_STR + uri;
     if (fileutils::isFile(devicePath)) {
-        JAMI_WARN("Member %s already present!", memberId.c_str());
+        JAMI_WARN("Member %s already present!", uri.c_str());
         return {};
     }
 
@@ -1483,12 +1488,11 @@ ConversationRepository::addMember(const std::shared_ptr<dht::crypto::Certificate
         JAMI_ERR("Could not write data to %s", devicePath.c_str());
         return {};
     }
-    file << memberCert->toString(true);
-    std::string path = "invited/" + memberId + ".crt";
+    std::string path = "invited/" + uri;
     if (!pimpl_->add(path.c_str()))
         return {};
     Json::Value json;
-    json["body"] = "Add member " + memberId;
+    json["body"] = "Add member " + uri;
     json["type"] = "member";
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
@@ -1752,7 +1756,7 @@ ConversationRepository::join()
     }
     // Remove invited/uri.crt
     std::string invitedPath = repoPath + "invited";
-    fileutils::remove(fileutils::getFullPath(invitedPath, uri + ".crt"));
+    fileutils::remove(fileutils::getFullPath(invitedPath, uri));
     // Add members/uri.crt
     if (!fileutils::recursive_mkdir(membersPath, 0700)) {
         JAMI_ERR("Error when creating %s. Abort create conversations", membersPath.c_str());
@@ -1862,6 +1866,13 @@ ConversationRepository::erase()
 
     JAMI_DBG() << "Erasing " << repoPath;
     fileutils::removeAll(repoPath, true);
+}
+
+ConversationMode
+ConversationRepository::mode() const
+{
+    // TODO
+    return ConversationMode::ONE_TO_ONE;
 }
 
 std::string

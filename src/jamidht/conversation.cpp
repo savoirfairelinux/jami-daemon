@@ -31,13 +31,19 @@ namespace jami {
 class Conversation::Impl
 {
 public:
+    Impl(const std::weak_ptr<JamiAccount>& account, ConversationMode mode)
+        : account_(account)
+    {
+        repository_ = ConversationRepository::createConversation(account, mode);
+        if (!repository_) {
+            throw std::logic_error("Couldn't create repository");
+        }
+    }
+
     Impl(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId)
         : account_(account)
     {
-        if (conversationId.empty())
-            repository_ = ConversationRepository::createConversation(account);
-        else
-            repository_ = std::make_unique<ConversationRepository>(account, conversationId);
+        repository_ = std::make_unique<ConversationRepository>(account, conversationId);
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
@@ -154,6 +160,10 @@ Conversation::Impl::loadMessages(const std::string& fromMessage,
     return result;
 }
 
+Conversation::Conversation(const std::weak_ptr<JamiAccount>& account, ConversationMode mode)
+    : pimpl_ {new Impl {account, mode}}
+{}
+
 Conversation::Conversation(const std::weak_ptr<JamiAccount>& account,
                            const std::string& conversationId)
     : pimpl_ {new Impl {account, conversationId}}
@@ -180,14 +190,8 @@ Conversation::addMember(const std::string& contactUri)
         JAMI_WARN("Could not add member %s because this member is banned", contactUri.c_str());
         return {};
     }
-    // Retrieve certificate
-    auto cert = tls::CertificateStore::instance().getCertificate(contactUri);
-    if (!cert) {
-        JAMI_WARN("Could not add member %s because no certificate is found", contactUri.c_str());
-        return {};
-    }
     // Add member files and commit
-    return pimpl_->repository_->addMember(cert);
+    return pimpl_->repository_->addMember(contactUri);
 }
 
 bool
@@ -270,11 +274,13 @@ Conversation::isMember(const std::string& uri, bool includeInvited) const
         pathsToCheck.emplace_back(invitedPath);
     for (const auto& path : pathsToCheck) {
         for (const auto& certificate : fileutils::readDirectory(path)) {
-            if (certificate.find(".crt") == std::string::npos) {
+            if (path != invitedPath && certificate.find(".crt") == std::string::npos) {
                 JAMI_WARN("Incorrect file found: %s/%s", path.c_str(), certificate.c_str());
                 continue;
             }
-            auto crtUri = certificate.substr(0, certificate.size() - std::string(".crt").size());
+            auto crtUri = certificate;
+            if (crtUri.find(".crt") != std::string::npos)
+                crtUri = crtUri.substr(0, crtUri.size() - std::string(".crt").size());
             if (crtUri == uri)
                 return true;
         }
@@ -412,6 +418,12 @@ Conversation::erase()
     if (!pimpl_->repository_)
         return;
     pimpl_->repository_->erase();
+}
+
+ConversationMode
+Conversation::mode() const
+{
+    pimpl_->repository_->mode();
 }
 
 } // namespace jami
