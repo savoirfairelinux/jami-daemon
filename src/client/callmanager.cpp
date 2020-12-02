@@ -358,4 +358,11 @@ muteParticipant(const std::string& confId,
 {
     jami::Manager::instance().muteParticipant(confId, peerId, state);
 }
+
+void
+hangupParticipant(const std::string& confId,
+             const std::string& participant)
+{
+    jami::Manager::instance().hangupParticipant(confId, participant);
+}
 } // namespace DRing

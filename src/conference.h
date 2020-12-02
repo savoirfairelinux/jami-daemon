@@ -238,6 +238,7 @@ public:
 
     void setModerator(const std::string& uri, const bool& state);
     void muteParticipant(const std::string& uri, const bool& state, const std::string& mediaType = "MEDIA_TYPE_AUDIO");
+    void hangupParticipant(const std::string& participant_id);
 
 private:
     std::weak_ptr<Conference> weak()
