@@ -936,6 +936,7 @@ public:
 
     void setModerator(const std::string& confId, const std::string& peerId, const bool& state);
     void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
+    void hangupParticipant(const std::string& confId, const std::string& participant);
 
 private:
     Manager();
