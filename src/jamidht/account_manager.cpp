@@ -233,16 +233,18 @@ AccountManager::startSync(const OnNewDeviceCb& cb)
                       true,
                       [this, v](const std::shared_ptr<dht::crypto::Certificate>&,
                                 dht::InfoHash peer_account) mutable {
-                          JAMI_WARN("Got trust request from: %s / %s",
+                          JAMI_WARN("Got trust request from: %s / %s. ConversationId: %s",
                                     peer_account.toString().c_str(),
-                                    v.from.toString().c_str());
+                                    v.from.toString().c_str(),
+                                    v.conversationId.c_str());
                           if (info_)
                               if (info_->contacts->onTrustRequest(peer_account,
                                                                   v.from,
                                                                   time(nullptr),
                                                                   v.confirm,
+                                                                  v.conversationId,
                                                                   std::move(v.payload))) {
-                                  sendTrustRequestConfirm(peer_account);
+                                  sendTrustRequestConfirm(peer_account, v.conversationId);
                                   info_->contacts->saveTrustRequests();
                               }
                       });
@@ -306,7 +308,7 @@ AccountManager::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>&
     }
 
     // Check cached OCSP response
-    if (crt->ocspResponse and crt->ocspResponse->getCertificateStatus() != GNUTLS_OCSP_CERT_GOOD){
+    if (crt->ocspResponse and crt->ocspResponse->getCertificateStatus() != GNUTLS_OCSP_CERT_GOOD) {
         JAMI_ERR("Certificate %s is disabled by cached OCSP response", crt->getId().to_c_str());
         return false;
     }
@@ -490,9 +492,12 @@ bool
 AccountManager::acceptTrustRequest(const std::string& from)
 {
     dht::InfoHash f(from);
-    if (info_ and info_->contacts->acceptTrustRequest(f)) {
-        sendTrustRequestConfirm(f);
-        syncDevices();
+    if (info_) {
+        auto req = info_->contacts->getTrustRequest(dht::InfoHash(from));
+        if (info_->contacts->acceptTrustRequest(f)) {
+            sendTrustRequestConfirm(f, req[DRing::Account::TrustRequest::CONVERSATIONID]);
+            syncDevices();
+        }
         return true;
     }
     return false;
@@ -506,7 +511,9 @@ AccountManager::discardTrustRequest(const std::string& from)
 }
 
 void
-AccountManager::sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload)
+AccountManager::sendTrustRequest(const std::string& to,
+                                 const std::string& convId,
+                                 const std::vector<uint8_t>& payload)
 {
     JAMI_WARN("AccountManager::sendTrustRequest");
     auto toH = dht::InfoHash(to);
@@ -521,22 +528,27 @@ AccountManager::sendTrustRequest(const std::string& to, const std::vector<uint8_
     if (info_->contacts->addContact(toH)) {
         syncDevices();
     }
-    forEachDevice(toH, [this, toH, payload](const dht::InfoHash& dev) {
+    forEachDevice(toH, [this, toH, convId, payload](const dht::InfoHash& dev) {
         JAMI_WARN("sending trust request to: %s / %s",
                   toH.toString().c_str(),
                   dev.toString().c_str());
         dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev.toString()),
                            dev,
-                           dht::TrustRequest(DHT_TYPE_NS, "", payload));
+                           dht::TrustRequest(DHT_TYPE_NS, convId, payload));
     });
 }
 
 void
-AccountManager::sendTrustRequestConfirm(const dht::InfoHash& toH)
+AccountManager::sendTrustRequestConfirm(const dht::InfoHash& toH, const std::string& convId)
 {
     JAMI_WARN("AccountManager::sendTrustRequestConfirm");
-    dht::TrustRequest answer {DHT_TYPE_NS};
+    dht::TrustRequest answer {DHT_TYPE_NS, ""};
     answer.confirm = true;
+    answer.conversationId = convId;
+
+    if (!convId.empty() && info_)
+        info_->contacts->acceptConversation(convId);
+
     forEachDevice(toH, [this, toH, answer](const dht::InfoHash& dev) {
         JAMI_WARN("sending trust request reply: %s / %s",
                   toH.toString().c_str(),
