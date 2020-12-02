@@ -75,7 +75,7 @@ struct TlsParams
     // Diffie-Hellman computed by gnutls_dh_params_init/gnutls_dh_params_generateX
     std::shared_future<DhParams> dh_params;
 
-    // DTLS timeout
+    // handshake timeout
     duration timeout;
 
     // Callback for certificate checkings

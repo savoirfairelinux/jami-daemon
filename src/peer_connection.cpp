@@ -28,6 +28,7 @@
 #include "security/tls_session.h"
 
 #include <algorithm>
+#include <chrono>
 #include <future>
 #include <vector>
 #include <atomic>
@@ -115,8 +116,7 @@ IceSocketEndpoint::waitForData(std::chrono::milliseconds timeout, std::error_cod
     if (ice_) {
         if (!ice_->isRunning())
             return -1;
-        return iceIsSender ? ice_->isDataAvailable(compId_)
-                           : ice_->waitForData(compId_, timeout, ec);
+        return ice_->waitForData(compId_, timeout, ec);
     }
     return -1;
 }
@@ -161,7 +161,7 @@ IceSocketEndpoint::write(const ValueType* buf, std::size_t len, std::error_code&
 class TlsSocketEndpoint::Impl
 {
 public:
-    static constexpr auto TLS_TIMEOUT = std::chrono::seconds(20);
+    static constexpr auto TLS_TIMEOUT = std::chrono::seconds(40);
 
     Impl(std::unique_ptr<IceSocketEndpoint>&& ep,
          const dht::crypto::Certificate& peer_cert,
@@ -187,7 +187,7 @@ public:
             /*.cert = */ local_identity.second,
             /*.cert_key = */ local_identity.first,
             /*.dh_params = */ dh_params,
-            /*.timeout = */ Impl::TLS_TIMEOUT,
+            /*.timeout = */ TLS_TIMEOUT,
             /*.cert_check = */ nullptr,
         };
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
@@ -220,7 +220,7 @@ public:
             /*.cert = */ local_identity.second,
             /*.cert_key = */ local_identity.first,
             /*.dh_params = */ dh_params,
-            /*.timeout = */ Impl::TLS_TIMEOUT,
+            /*.timeout = */ std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
             /*.cert_check = */ nullptr,
         };
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
@@ -258,9 +258,6 @@ public:
     std::unique_ptr<tls::TlsSession> tls;
     const IceSocketEndpoint* ep_;
 };
-
-// Declaration at namespace scope is necessary (until C++17)
-constexpr std::chrono::seconds TlsSocketEndpoint::Impl::TLS_TIMEOUT;
 
 int
 TlsSocketEndpoint::Impl::verifyCertificate(gnutls_session_t session)
