@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d7c07274_873d8b35",
+        "filename": "src/upnp/upnp_thread_util.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-02T16:13:41Z",
+      "side": 1,
+      "message": "not needed",
+      "range": {
+        "startLine": 22,
+        "startChar": 4,
+        "endLine": 22,
+        "endChar": 83
+      },
+      "revId": "aac1490e53958d12a0c1688876ef4cf31f0d4b93",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "caf3245e_ee2d90e1",
+        "filename": "src/upnp/upnp_thread_util.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-02T16:13:41Z",
+      "side": 1,
+      "message": "not needed",
+      "range": {
+        "startLine": 27,
+        "startChar": 4,
+        "endLine": 27,
+        "endChar": 89
+      },
+      "revId": "aac1490e53958d12a0c1688876ef4cf31f0d4b93",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "536dac8f_8a193358",
+        "filename": "src/upnp/upnp_thread_util.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-02T16:13:41Z",
+      "side": 1,
+      "message": "never initialized ?",
+      "range": {
+        "startLine": 36,
+        "startChar": 20,
+        "endLine": 36,
+        "endChar": 29
+      },
+      "revId": "aac1490e53958d12a0c1688876ef4cf31f0d4b93",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5a8d389b_a68dbe81",
+        "filename": "src/upnp/upnp_thread_util.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-02T16:13:41Z",
+      "side": 1,
+      "message": "not needed, simply always schedule on main thread directly",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 40,
+        "endChar": 19
+      },
+      "revId": "aac1490e53958d12a0c1688876ef4cf31f0d4b93",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
