@@ -2303,7 +2303,15 @@ JamiAccount::doRegister_()
                     }
                     std::map<std::string, std::string> payloads = {
                         {datatype, utf8_make_valid(v.msg)}};
-                    onTextMessage(msgId, peer_account.toString(), payloads);
+                    // onTextMessage do a lot of computation, so avoid to run in the same thread as
+                    // the Listen
+                    dht::ThreadPool::computation().run([w = weak(),
+                                                        msgId,
+                                                        peerId = peer_account.toString(),
+                                                        payloads = std::move(payloads)] {
+                        if (auto acc = w.lock())
+                            acc->onTextMessage(msgId, peerId, payloads);
+                    });
                     JAMI_DBG() << "Sending message confirmation " << v.id;
                     dht_->putEncrypted(inboxDeviceKey,
                                        v.from,
