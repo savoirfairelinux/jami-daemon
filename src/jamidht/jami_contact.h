@@ -121,9 +121,10 @@ struct Contact
 struct TrustRequest
 {
     dht::InfoHash device;
+    std::string conversationId;
     time_t received;
     std::vector<uint8_t> payload;
-    MSGPACK_DEFINE_MAP(device, received, payload)
+    MSGPACK_DEFINE_MAP(device, conversationId, received, payload)
 };
 
 struct DeviceAnnouncement : public dht::SignedValue<DeviceAnnouncement>
