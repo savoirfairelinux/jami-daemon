@@ -32,13 +32,19 @@ namespace jami {
 class Conversation::Impl
 {
 public:
+    Impl(const std::weak_ptr<JamiAccount>& account, ConversationMode mode)
+        : account_(account)
+    {
+        repository_ = ConversationRepository::createConversation(account, mode);
+        if (!repository_) {
+            throw std::logic_error("Couldn't create repository");
+        }
+    }
+
     Impl(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId)
         : account_(account)
     {
-        if (conversationId.empty())
-            repository_ = ConversationRepository::createConversation(account);
-        else
-            repository_ = std::make_unique<ConversationRepository>(account, conversationId);
+        repository_ = std::make_unique<ConversationRepository>(account, conversationId);
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
@@ -158,6 +164,10 @@ Conversation::Impl::loadMessages(const std::string& fromMessage,
     return result;
 }
 
+Conversation::Conversation(const std::weak_ptr<JamiAccount>& account, ConversationMode mode)
+    : pimpl_ {new Impl {account, mode}}
+{}
+
 Conversation::Conversation(const std::weak_ptr<JamiAccount>& account,
                            const std::string& conversationId)
     : pimpl_ {new Impl {account, conversationId}}
@@ -180,6 +190,23 @@ Conversation::id() const
 std::string
 Conversation::addMember(const std::string& contactUri)
 {
+    try {
+        if (mode() == ConversationMode::ONE_TO_ONE) {
+            auto invitedPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "invited";
+            auto bannedPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "banned";
+            auto membersPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "members";
+            auto isOtherMember = fileutils::readDirectory(invitedPath).size() > 0
+                                 || fileutils::readDirectory(bannedPath).size() > 0
+                                 || fileutils::readDirectory(membersPath).size() > 0;
+            if (isOtherMember) {
+                JAMI_WARN("Cannot add new member in one to one conversation");
+                return {};
+            }
+        }
+    } catch (const std::exception& e) {
+        JAMI_WARN("Cannot get mode: %s", e.what());
+        return {};
+    }
     if (isBanned(contactUri)) {
         JAMI_WARN("Could not add member %s because this member is banned", contactUri.c_str());
         return {};
@@ -243,9 +270,7 @@ Conversation::getMembers(bool includeInvited) const
     }
     if (includeInvited) {
         for (const auto& uri : fileutils::readDirectory(invitedPath)) {
-            std::map<std::string, std::string>
-                details {{"uri", uri },
-                        {"role", "invited"}};
+            std::map<std::string, std::string> details {{"uri", uri}, {"role", "invited"}};
             result.emplace_back(details);
         }
     }
@@ -277,11 +302,13 @@ Conversation::isMember(const std::string& uri, bool includeInvited) const
         pathsToCheck.emplace_back(invitedPath);
     for (const auto& path : pathsToCheck) {
         for (const auto& certificate : fileutils::readDirectory(path)) {
-            if (certificate.find(".crt") == std::string::npos) {
+            if (path != invitedPath && certificate.find(".crt") == std::string::npos) {
                 JAMI_WARN("Incorrect file found: %s/%s", path.c_str(), certificate.c_str());
                 continue;
             }
-            auto crtUri = certificate.substr(0, certificate.size() - std::string(".crt").size());
+            auto crtUri = certificate;
+            if (crtUri.find(".crt") != std::string::npos)
+                crtUri = crtUri.substr(0, crtUri.size() - std::string(".crt").size());
             if (crtUri == uri)
                 return true;
         }
@@ -459,6 +486,12 @@ Conversation::erase()
     if (!pimpl_->repository_)
         return;
     pimpl_->repository_->erase();
+}
+
+ConversationMode
+Conversation::mode() const
+{
+    return pimpl_->repository_->mode();
 }
 
 } // namespace jami
