@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "132c5027_4e8d1471",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-02T19:50:38Z",
+      "side": 1,
+      "message": "exact constant value could get lost during duration conversions. Maybe use 0 as default value ?",
+      "range": {
+        "startLine": 211,
+        "startChar": 62,
+        "endLine": 211,
+        "endChar": 94
+      },
+      "revId": "ec0b1ef8cd425da0603a0ac6061e0905d8424f06",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0c83522d_832a3ae7",
+        "filename": "src/peer_connection.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 191,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-02T19:50:38Z",
+      "side": 1,
+      "message": "duration_cast should not be necessary (it\u0027s only necessary in case of precision loss, should not be the case here)",
+      "range": {
+        "startLine": 191,
+        "startChar": 28,
+        "endLine": 191,
+        "endChar": 54
+      },
+      "revId": "ec0b1ef8cd425da0603a0ac6061e0905d8424f06",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
