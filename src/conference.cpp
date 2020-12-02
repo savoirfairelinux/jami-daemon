@@ -559,6 +559,9 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         if (root.isMember("muteParticipant")  and root.isMember("muteState")) {
             muteParticipant(root["muteParticipant"].asString(), root["muteState"].asString() == "true");
         }
+        if (root.isMember("hangupParticipant")) {
+            hangupParticipant(root["hangupParticipant"].asString());
+        }
     }
 }
 
@@ -738,6 +741,20 @@ Conference::updateConferenceInfo(ConfInfo confInfo)
 {
     confInfo_ = std::move(confInfo);
     sendConferenceInfos();
+}
+
+void
+Conference::hangupParticipant(const std::string& participant_id)
+{
+    for (const auto& p : participants_) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
+            std::string_view partURI = call->getPeerNumber();
+            partURI = string_remove_suffix(partURI, '@');
+            if (partURI == participant_id) {
+                Manager::instance().hangupCall(call->getCallId());
+            }
+        }
+    }
 }
 
 } // namespace jami
