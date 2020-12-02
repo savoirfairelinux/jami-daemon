@@ -97,26 +97,6 @@ testAccountICEInitialization(const std::string& accountID)
 }
 
 std::map<std::string, std::string>
-getTlsDefaultSettings()
-{
-    std::stringstream portstr;
-    portstr << jami::sip_utils::DEFAULT_SIP_TLS_PORT;
-
-    return {{jami::Conf::CONFIG_TLS_LISTENER_PORT, portstr.str()},
-            {jami::Conf::CONFIG_TLS_CA_LIST_FILE, ""},
-            {jami::Conf::CONFIG_TLS_CERTIFICATE_FILE, ""},
-            {jami::Conf::CONFIG_TLS_PRIVATE_KEY_FILE, ""},
-            {jami::Conf::CONFIG_TLS_PASSWORD, ""},
-            {jami::Conf::CONFIG_TLS_METHOD, "Default"},
-            {jami::Conf::CONFIG_TLS_CIPHERS, ""},
-            {jami::Conf::CONFIG_TLS_SERVER_NAME, ""},
-            {jami::Conf::CONFIG_TLS_VERIFY_SERVER, "true"},
-            {jami::Conf::CONFIG_TLS_VERIFY_CLIENT, "true"},
-            {jami::Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, "true"},
-            {jami::Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, "2"}};
-}
-
-std::map<std::string, std::string>
 validateCertificate(const std::string&, const std::string& certificate)
 {
     try {
