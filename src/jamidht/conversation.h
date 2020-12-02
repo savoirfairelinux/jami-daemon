@@ -28,10 +28,12 @@ namespace jami {
 
 class JamiAccount;
 class ConversationRepository;
+enum class ConversationMode;
 
 class Conversation
 {
 public:
+    Conversation(const std::weak_ptr<JamiAccount>& account, ConversationMode mode);
     Conversation(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId = "");
     Conversation(const std::weak_ptr<JamiAccount>& account,
                  const std::string& remoteDevice,
@@ -138,6 +140,12 @@ public:
      * Erase all related datas
      */
     void erase();
+
+    /**
+     * Get conversation's mode
+     * @return the mode
+     */
+    ConversationMode mode() const;
 
 private:
     class Impl;

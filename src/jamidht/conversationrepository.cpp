@@ -81,6 +81,7 @@ public:
 
     bool add(const std::string& path);
     std::string commit(const std::string& msg);
+    ConversationMode mode() const;
 
     GitDiff diff(const std::string& idNew, const std::string& idOld) const;
     std::string diffStats(const std::string& newId, const std::string& oldId) const;
@@ -98,6 +99,7 @@ public:
     std::weak_ptr<JamiAccount> account_;
     const std::string id_;
     GitRepository repository_ {nullptr, git_repository_free};
+    mutable std::optional<ConversationMode> mode_ {};
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -232,10 +234,13 @@ add_initial_files(GitRepository& repo, const std::shared_ptr<JamiAccount>& accou
  * Sign and create the initial commit
  * @param repo      The git repository
  * @param account   The account who signs
+ * @param mode      The mode
  * @return          The first commit hash or empty if failed
  */
 std::string
-initial_commit(GitRepository& repo, const std::shared_ptr<JamiAccount>& account)
+initial_commit(GitRepository& repo,
+               const std::shared_ptr<JamiAccount>& account,
+               ConversationMode mode)
 {
     auto deviceId = std::string(account->currentDeviceId());
     auto name = account->getDisplayName();
@@ -272,12 +277,19 @@ initial_commit(GitRepository& repo, const std::shared_ptr<JamiAccount>& account)
     }
     GitTree tree = {tree_ptr, git_tree_free};
 
+    Json::Value json;
+    json["mode"] = static_cast<int>(mode);
+    json["type"] = "initial";
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+
     if (git_commit_create_buffer(&to_sign,
                                  repo.get(),
                                  sig.get(),
                                  sig.get(),
                                  nullptr,
-                                 "Initial commit",
+                                 Json::writeString(wbuilder, json).c_str(),
                                  tree.get(),
                                  0,
                                  nullptr)
@@ -715,6 +727,36 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
     auto userUri = cert->issuer->getId().toString();
 
     std::string repoPath = git_repository_workdir(repository_.get());
+    if (mode() == ConversationMode::ONE_TO_ONE) {
+        auto bannedPath = repoPath + "banned";
+        auto invitedPath = repoPath + "invited";
+        auto membersPath = repoPath + "members";
+        auto adminsPath = repoPath + "admins";
+        std::vector<std::string> otherMembers;
+        for (const auto& f : fileutils::readDirectory(invitedPath)) {
+            if (f != userUri && f != uriMember) {
+                JAMI_ERR("Invalid add in one to one conversation: %s", uriMember.c_str());
+                return false;
+            }
+        }
+        for (const auto& f : fileutils::readDirectory(membersPath)) {
+            if (f != userUri + ".crt" && f != uriMember + ".crt") {
+                JAMI_ERR("Invalid add in one to one conversation: %s", uriMember.c_str());
+                return false;
+            }
+        }
+        for (const auto& f : fileutils::readDirectory(adminsPath)) {
+            if (f != userUri + ".crt" && f != uriMember + ".crt") {
+                JAMI_ERR("Invalid add in one to one conversation: %s", uriMember.c_str());
+                return false;
+            }
+        }
+        if (fileutils::readDirectory(bannedPath).size() > 0) {
+            JAMI_ERR("Invalid add in one to one conversation: %s", uriMember.c_str());
+            return false;
+        }
+    }
+
     // Check that only /invited/uri.crt is added & deviceFile & CRLs
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
     if (changedFiles.size() == 0) {
@@ -1005,6 +1047,13 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
     auto userUri = cert->issuer->getId().toString();
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, ""));
 
+    try {
+        mode();
+    } catch (...) {
+        JAMI_ERR("Invalid mode detected for commit: %s", commitId.c_str());
+        return false;
+    }
+
     auto hasDevice = false, hasAdmin = false;
     std::string adminsFile = std::string("admins") + DIR_SEPARATOR_STR + userUri + ".crt";
     std::string deviceFile = std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt";
@@ -1129,6 +1178,47 @@ ConversationRepository::Impl::commit(const std::string& msg)
         JAMI_INFO("New message added with id: %s", commit_str);
     }
     return commit_str ? commit_str : "";
+}
+
+ConversationMode
+ConversationRepository::Impl::mode() const
+{
+    // If already retrieven, return it, else get it from first commit
+    if (mode_ != std::nullopt)
+        return mode_.value();
+
+    auto lastMsg = log(id_, "", 1);
+    if (lastMsg.size() == 0)
+        throw std::logic_error("Can't retrieve first commit");
+    auto commitMsg = lastMsg[0].commit_msg;
+
+    std::string err;
+    Json::Value root;
+    Json::CharReaderBuilder rbuilder;
+    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+    if (!reader->parse(commitMsg.data(), commitMsg.data() + commitMsg.size(), &root, &err)) {
+        throw std::logic_error("Can't retrieve first commit");
+    }
+    int mode = root["mode"].asInt();
+
+    switch (mode) {
+    case 0:
+        mode_ = ConversationMode::ONE_TO_ONE;
+        break;
+    case 1:
+        mode_ = ConversationMode::ADMIN_INVITES_ONLY;
+        break;
+    case 2:
+        mode_ = ConversationMode::INVITES_ONLY;
+        break;
+    case 3:
+        mode_ = ConversationMode::PUBLIC;
+        break;
+    default:
+        throw std::logic_error("Incorrect mode detected");
+        break;
+    }
+    return mode_.value();
 }
 
 std::string
@@ -1387,7 +1477,8 @@ ConversationRepository::Impl::diffStats(const GitDiff& diff) const
 //////////////////////////////////
 
 std::unique_ptr<ConversationRepository>
-ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& account)
+ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& account,
+                                           ConversationMode mode)
 {
     auto shared = account.lock();
     if (!shared)
@@ -1419,7 +1510,7 @@ ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& acc
     }
 
     // Commit changes
-    auto id = initial_commit(repo, shared);
+    auto id = initial_commit(repo, shared, mode);
     if (id.empty()) {
         JAMI_ERR("Couldn't create initial commit in %s", tmpPath.c_str());
         fileutils::removeAll(tmpPath, true);
@@ -2066,6 +2157,12 @@ ConversationRepository::erase()
 
     JAMI_DBG() << "Erasing " << repoPath;
     fileutils::removeAll(repoPath, true);
+}
+
+ConversationMode
+ConversationRepository::mode() const
+{
+    return pimpl_->mode();
 }
 
 std::string
