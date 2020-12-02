@@ -195,8 +195,11 @@ public:
     bool acceptTrustRequest(const std::string& from);
     bool discardTrustRequest(const std::string& from);
 
-    void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
-    void sendTrustRequestConfirm(const dht::InfoHash& to);
+    void sendTrustRequest(const std::string& to,
+                          const std::string& convId,
+                          const std::vector<uint8_t>& payload);
+    void sendTrustRequestConfirm(const dht::InfoHash& to,
+                                 const std::string& conversationId); // TODO ideally no convId here
 
     // Contact
 
