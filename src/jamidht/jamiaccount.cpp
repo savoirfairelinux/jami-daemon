@@ -1188,14 +1188,37 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 emitSignal<DRing::ConfigurationSignal::ContactRemoved>(id, uri, banned);
             });
         },
-        [this](const std::string& uri, const std::vector<uint8_t>& payload, time_t received) {
-            dht::ThreadPool::computation().run(
-                [id = getAccountID(), uri, payload = std::move(payload), received] {
-                    emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(id,
+        [this](const std::string& uri,
+               const std::string& conversationId,
+               const std::vector<uint8_t>& payload,
+               time_t received) {
+            dht::ThreadPool::computation().run([w = weak(),
+                                                uri,
+                                                payload = std::move(payload),
+                                                received,
+                                                conversationId] {
+                if (auto acc = w.lock()) {
+                    emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(acc->getAccountID(),
                                                                                  uri,
                                                                                  payload,
                                                                                  received);
-                });
+
+                    std::lock_guard<std::mutex> lk(acc->conversationsRequestsMtx_);
+                    auto it = acc->conversationsRequests_.find(conversationId);
+                    if (it != acc->conversationsRequests_.end()) {
+                        JAMI_INFO(
+                            "[Account %s] Received a request for a conversation already existing. "
+                            "Ignore",
+                            acc->getAccountID().c_str());
+                        return;
+                    }
+                    ConversationRequest req;
+                    req.conversationId = conversationId;
+                    req.received = std::time(nullptr);
+                    req.members.emplace_back(uri);
+                    acc->conversationsRequests_[conversationId] = std::move(req);
+                }
+            });
         },
         [this](const std::map<dht::InfoHash, KnownDevice>& devices) {
             std::map<std::string, std::string> ids;
@@ -1206,6 +1229,13 @@ JamiAccount::loadAccount(const std::string& archive_password,
             }
             dht::ThreadPool::computation().run([id = getAccountID(), devices = std::move(ids)] {
                 emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(id, devices);
+            });
+        },
+        [this](const std::string& conversationId) {
+            dht::ThreadPool::computation().run([w = weak(), conversationId] {
+                if (auto acc = w.lock()) {
+                    acc->acceptConversationRequest(conversationId);
+                }
             });
         }};
 
@@ -2425,7 +2455,7 @@ JamiAccount::doRegister_()
                         // Check if wanted remote it's our side (git://removeDevice/conversationId)
                         return;
                     }
-	
+
                     if (!isConversation(conversationId)) {
                         JAMI_WARN("[Account %s] Git server requested, but for a non existing "
                                   "conversation (%s)",
@@ -3248,22 +3278,14 @@ JamiAccount::discardTrustRequest(const std::string& from)
 void
 JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload)
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
-    if (accountManager_)
-        accountManager_->sendTrustRequest(to, payload);
-    else
-        JAMI_WARN("[Account %s] sendTrustRequest: account not loaded", getAccountID().c_str());
-}
-
-void
-JamiAccount::sendTrustRequestConfirm(const std::string& to)
-{
-    std::lock_guard<std::mutex> lock(configurationMutex_);
-    if (accountManager_)
-        accountManager_->sendTrustRequestConfirm(dht::InfoHash(to));
-    else
-        JAMI_WARN("[Account %s] sendTrustRequestConfirm: account not loaded",
-                  getAccountID().c_str());
+    auto conversation = startConversation(ConversationMode::ONE_TO_ONE);
+    if (addConversationMember(conversation, to, false)) {
+        std::lock_guard<std::mutex> lock(configurationMutex_);
+        if (accountManager_)
+            accountManager_->sendTrustRequest(to, conversation, payload);
+        else
+            JAMI_WARN("[Account %s] sendTrustRequest: account not loaded", getAccountID().c_str());
+    }
 }
 
 void
@@ -3508,9 +3530,6 @@ JamiAccount::sendTextMessage(const std::string& to,
             std::unique_lock<std::mutex> l(confirm->lock);
             if (not confirm->replied) {
                 if (auto this_ = w.lock()) {
-                    for (const auto& [key, value] : payloads) {
-                        JAMI_WARN("@@@ %s %s", key.c_str(), value.c_str());
-                    }
                     JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token
                                << "] Timeout";
                     for (auto& t : confirm->listenTokens)
@@ -3743,10 +3762,10 @@ JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
 }
 
 std::string
-JamiAccount::startConversation()
+JamiAccount::startConversation(ConversationMode mode)
 {
     // Create the conversation object
-    auto conversation = std::make_unique<Conversation>(weak());
+    auto conversation = std::make_unique<Conversation>(weak(), mode);
     auto convId = conversation->id();
     {
         std::lock_guard<std::mutex> lk(conversationsMtx_);
@@ -4483,7 +4502,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
     }
     sipConns_[id] = {};
     // If not present, create it
-        // If not present, create it
+    // If not present, create it
     JAMI_INFO("[Account %s] Ask %s for a new SIP channel",
               getAccountID().c_str(),
               deviceId.to_c_str());

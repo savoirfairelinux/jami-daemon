@@ -50,6 +50,8 @@ struct GitAuthor
     std::string email {};
 };
 
+enum class ConversationMode : int { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC };
+
 struct ConversationCommit
 {
     std::string id {};
@@ -70,10 +72,11 @@ public:
     /**
      * Creates a new repository, with initial files, where the first commit hash is the conversation id
      * @param account       The related account
+     * @param mode          The wanted mode
      * @return  the conversation repository object
      */
     static DRING_TESTABLE std::unique_ptr<ConversationRepository> createConversation(
-        const std::weak_ptr<JamiAccount>& account);
+        const std::weak_ptr<JamiAccount>& account, ConversationMode mode);
 
     /**
      * Clones a conversation on a remote device
@@ -98,10 +101,10 @@ public:
 
     /**
      * Write the certificate in /members and commit the change
-     * @param memberCert    Certificate to write
+     * @param uri    Uri to add
      * @return the commit id if successful
      */
-    std::string addMember(const std::shared_ptr<dht::crypto::Certificate>& memberCert);
+    std::string addMember(const std::string& uri);
 
     /**
      * Fetch a remote repository via the given socket
@@ -181,6 +184,12 @@ public:
      * Erase repository
      */
     void erase();
+
+    /**
+     * Get conversation's mode
+     * @return the mode
+     */
+    ConversationMode mode() const;
 
     std::string voteKick(const std::string& uri, bool isDevice);
     std::string resolveVote(const std::string& uri, bool isDevice);

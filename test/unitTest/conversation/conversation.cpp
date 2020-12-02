@@ -444,8 +444,7 @@ ConversationTest::testRemoveConversationWithMember()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
     // Check created files
-    auto bobInvitedFile = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri
-                          + ".crt";
+    auto bobInvitedFile = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
     CPPUNIT_ASSERT(fileutils::isFile(bobInvitedFile));
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
@@ -455,8 +454,7 @@ ConversationTest::testRemoveConversationWithMember()
     auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                       + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(fileutils::isDirectory(clonedPath));
-    bobInvitedFile = clonedPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri
-                     + ".crt";
+    bobInvitedFile = clonedPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
     CPPUNIT_ASSERT(!fileutils::isFile(bobInvitedFile));
     // Remove conversation from alice once member confirmed
     CPPUNIT_ASSERT(
@@ -513,8 +511,7 @@ ConversationTest::testAddMember()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
     // Check created files
-    auto bobInvited = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri
-                      + ".crt";
+    auto bobInvited = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
     CPPUNIT_ASSERT(fileutils::isFile(bobInvited));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
     bobAccount->acceptConversationRequest(convId);
@@ -522,7 +519,7 @@ ConversationTest::testAddMember()
     auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                       + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(fileutils::isDirectory(clonedPath));
-    bobInvited = clonedPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri + ".crt";
+    bobInvited = clonedPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
     CPPUNIT_ASSERT(!fileutils::isFile(bobInvited));
     auto bobMember = clonedPath + DIR_SEPARATOR_STR + "members" + DIR_SEPARATOR_STR + bobUri
                      + ".crt";
@@ -784,15 +781,15 @@ ConversationTest::testMergeTwoDifferentHeads()
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, carlaUri, false));
 
     // Cp conversations & convInfo
-    auto repoPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations";
-    auto repoPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations";
+    auto repoPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR
+                         + aliceAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
+    auto repoPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR
+                         + carlaAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
     std::filesystem::copy(repoPathAlice, repoPathCarla, std::filesystem::copy_options::recursive);
     auto ciPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "convInfo";
+                       + DIR_SEPARATOR_STR + "convInfo";
     auto ciPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "convInfo";
+                       + DIR_SEPARATOR_STR + "convInfo";
     std::filesystem::copy(ciPathAlice, ciPathCarla);
 
     // Accept for alice and makes different heads
@@ -1104,8 +1101,7 @@ ConversationTest::testIsComposing()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
     // Check created files
-    auto bobInvited = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri
-                      + ".crt";
+    auto bobInvited = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
     CPPUNIT_ASSERT(fileutils::isFile(bobInvited));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
     memberMessageGenerated = false;
