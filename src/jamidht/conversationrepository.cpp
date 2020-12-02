@@ -57,6 +57,7 @@ public:
     bool mergeFastforward(const git_oid* target_oid, int is_unborn);
     bool createMergeCommit(git_index* index, const std::string& wanted_ref);
 
+    bool validCommits(const std::vector<ConversationCommit>& commits) const;
     bool checkOnlyDeviceCertificate(const std::string& userDevice,
                                     const std::string& commitId,
                                     const std::string& parentId) const;
@@ -80,20 +81,25 @@ public:
 
     bool add(const std::string& path);
     std::string commit(const std::string& msg);
+    ConversationMode mode() const;
 
     GitDiff diff(const std::string& idNew, const std::string& idOld) const;
     std::string diffStats(const std::string& newId, const std::string& oldId) const;
     std::string diffStats(const GitDiff& diff) const;
 
-    std::vector<ConversationCommit> behind(const std::string& from);
-    std::vector<ConversationCommit> log(const std::string& from, const std::string& to, unsigned n);
+    std::vector<ConversationCommit> behind(const std::string& from) const;
+    std::vector<ConversationCommit> log(const std::string& from,
+                                        const std::string& to,
+                                        unsigned n) const;
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
     GitTree treeAtCommit(const std::string& commitId) const;
+    std::string getCommitType(const std::string& commitMsg) const;
 
     std::weak_ptr<JamiAccount> account_;
     const std::string id_;
     GitRepository repository_ {nullptr, git_repository_free};
+    mutable std::optional<ConversationMode> mode_ {};
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -228,10 +234,13 @@ add_initial_files(GitRepository& repo, const std::shared_ptr<JamiAccount>& accou
  * Sign and create the initial commit
  * @param repo      The git repository
  * @param account   The account who signs
+ * @param mode      The mode
  * @return          The first commit hash or empty if failed
  */
 std::string
-initial_commit(GitRepository& repo, const std::shared_ptr<JamiAccount>& account)
+initial_commit(GitRepository& repo,
+               const std::shared_ptr<JamiAccount>& account,
+               ConversationMode mode)
 {
     auto deviceId = std::string(account->currentDeviceId());
     auto name = account->getDisplayName();
@@ -268,12 +277,19 @@ initial_commit(GitRepository& repo, const std::shared_ptr<JamiAccount>& account)
     }
     GitTree tree = {tree_ptr, git_tree_free};
 
+    Json::Value json;
+    json["mode"] = static_cast<int>(mode);
+    json["type"] = "initial";
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+
     if (git_commit_create_buffer(&to_sign,
                                  repo.get(),
                                  sig.get(),
                                  sig.get(),
                                  nullptr,
-                                 "Initial commit",
+                                 Json::writeString(wbuilder, json).c_str(),
                                  tree.get(),
                                  0,
                                  nullptr)
@@ -709,6 +725,38 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
     if (!cert && cert->issuer)
         return false;
     auto userUri = cert->issuer->getId().toString();
+
+    std::string repoPath = git_repository_workdir(repository_.get());
+    if (mode() == ConversationMode::ONE_TO_ONE) {
+        auto bannedPath = repoPath + "banned";
+        auto invitedPath = repoPath + "invited";
+        auto membersPath = repoPath + "members";
+        auto adminsPath = repoPath + "admins";
+        std::vector<std::string> otherMembers;
+        for (const auto& f : fileutils::readDirectory(invitedPath)) {
+            if (f != userUri && f != uriMember) {
+                JAMI_ERR("Invalid add in one to one conversation: %s", uriMember.c_str());
+                return false;
+            }
+        }
+        for (const auto& f : fileutils::readDirectory(membersPath)) {
+            if (f != userUri + ".crt" && f != uriMember + ".crt") {
+                JAMI_ERR("Invalid add in one to one conversation: %s", uriMember.c_str());
+                return false;
+            }
+        }
+        for (const auto& f : fileutils::readDirectory(adminsPath)) {
+            if (f != userUri + ".crt" && f != uriMember + ".crt") {
+                JAMI_ERR("Invalid add in one to one conversation: %s", uriMember.c_str());
+                return false;
+            }
+        }
+        if (fileutils::readDirectory(bannedPath).size() > 0) {
+            JAMI_ERR("Invalid add in one to one conversation: %s", uriMember.c_str());
+            return false;
+        }
+    }
+
     // Check that only /invited/uri.crt is added & deviceFile & CRLs
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
     if (changedFiles.size() == 0) {
@@ -731,7 +779,7 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
     for (const auto& changedFile : changedFiles) {
         if (changedFile == std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt") {
             deviceFile = changedFile;
-        } else if (changedFile == std::string("invited") + DIR_SEPARATOR_STR + uriMember + ".crt") {
+        } else if (changedFile == std::string("invited") + DIR_SEPARATOR_STR + uriMember) {
             invitedFile = changedFile;
         } else if (changedFile == crlFile) {
             // Nothing to do
@@ -742,8 +790,9 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
         }
     }
 
-    if (invitedFile.empty()) {
-        JAMI_WARN("No vote detected for commit %s", commitId.c_str());
+    auto invitation = fileutils::loadTextFile(repoPath + invitedFile);
+    if (!invitation.empty()) {
+        JAMI_WARN("Invitation not empty for commit %s", commitId.c_str());
         return false;
     }
 
@@ -778,7 +827,7 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
         return false;
     }
 
-    auto invitedFile = std::string("invited") + DIR_SEPARATOR_STR + uriMember + ".crt";
+    auto invitedFile = std::string("invited") + DIR_SEPARATOR_STR + uriMember;
     auto membersFile = std::string("members") + DIR_SEPARATOR_STR + uriMember + ".crt";
     auto deviceFile = std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt";
 
@@ -989,6 +1038,13 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
     auto userUri = cert->issuer->getId().toString();
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, ""));
 
+    try {
+        mode();
+    } catch (...) {
+        JAMI_ERR("Invalid mode detected for commit: %s", commitId.c_str());
+        return false;
+    }
+
     auto hasDevice = false, hasAdmin = false;
     std::string adminsFile = std::string("admins") + DIR_SEPARATOR_STR + userUri + ".crt";
     std::string deviceFile = std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt";
@@ -1115,6 +1171,47 @@ ConversationRepository::Impl::commit(const std::string& msg)
     return commit_str ? commit_str : "";
 }
 
+ConversationMode
+ConversationRepository::Impl::mode() const
+{
+    // If already retrieven, return it, else get it from first commit
+    if (mode_ != std::nullopt)
+        return mode_.value();
+
+    auto lastMsg = log(id_, "", 1);
+    if (lastMsg.size() == 0)
+        throw std::logic_error("Can't retrieve first commit");
+    auto commitMsg = lastMsg[0].commit_msg;
+
+    std::string err;
+    Json::Value root;
+    Json::CharReaderBuilder rbuilder;
+    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+    if (!reader->parse(commitMsg.data(), commitMsg.data() + commitMsg.size(), &root, &err)) {
+        throw std::logic_error("Can't retrieve first commit");
+    }
+    int mode = root["mode"].asInt();
+
+    switch (mode) {
+    case 0:
+        mode_ = ConversationMode::ONE_TO_ONE;
+        break;
+    case 1:
+        mode_ = ConversationMode::ADMIN_INVITES_ONLY;
+        break;
+    case 2:
+        mode_ = ConversationMode::INVITES_ONLY;
+        break;
+    case 3:
+        mode_ = ConversationMode::PUBLIC;
+        break;
+    default:
+        throw std::logic_error("Incorrect mode detected");
+        break;
+    }
+    return mode_.value();
+}
+
 std::string
 ConversationRepository::Impl::diffStats(const std::string& newId, const std::string& oldId) const
 {
@@ -1192,7 +1289,7 @@ ConversationRepository::Impl::diff(const std::string& idNew, const std::string& 
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::Impl::behind(const std::string& from)
+ConversationRepository::Impl::behind(const std::string& from) const
 {
     git_oid oid_local, oid_remote;
     if (git_reference_name_to_id(&oid_local, repository_.get(), "HEAD") < 0) {
@@ -1217,7 +1314,7 @@ ConversationRepository::Impl::behind(const std::string& from)
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::Impl::log(const std::string& from, const std::string& to, unsigned n)
+ConversationRepository::Impl::log(const std::string& from, const std::string& to, unsigned n) const
 {
     std::vector<ConversationCommit> commits {};
 
@@ -1333,6 +1430,22 @@ ConversationRepository::Impl::treeAtCommit(const std::string& commitId) const
 }
 
 std::string
+ConversationRepository::Impl::getCommitType(const std::string& commitMsg) const
+{
+    std::string type = {};
+    std::string err;
+    Json::Value cm;
+    Json::CharReaderBuilder rbuilder;
+    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+    if (reader->parse(commitMsg.data(), commitMsg.data() + commitMsg.size(), &cm, &err)) {
+        type = cm["type"].asString();
+    } else {
+        JAMI_WARN("%s", err.c_str());
+    }
+    return type;
+}
+
+std::string
 ConversationRepository::Impl::diffStats(const GitDiff& diff) const
 {
     git_diff_stats* stats_ptr = nullptr;
@@ -1355,7 +1468,8 @@ ConversationRepository::Impl::diffStats(const GitDiff& diff) const
 //////////////////////////////////
 
 std::unique_ptr<ConversationRepository>
-ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& account)
+ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& account,
+                                           ConversationMode mode)
 {
     auto shared = account.lock();
     if (!shared)
@@ -1387,7 +1501,7 @@ ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& acc
     }
 
     // Commit changes
-    auto id = initial_commit(repo, shared);
+    auto id = initial_commit(repo, shared, mode);
     if (id.empty()) {
         JAMI_ERR("Couldn't create initial commit in %s", tmpPath.c_str());
         fileutils::removeAll(tmpPath, true);
@@ -1428,8 +1542,134 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
         return nullptr;
     }
     git_repository_free(rep);
+    auto repo = std::make_unique<ConversationRepository>(account, conversationId);
+    if (!repo->validClone()) {
+        JAMI_ERR("Error when validating remote conversation");
+        return nullptr;
+    }
     JAMI_INFO("New conversation cloned in %s", path.c_str());
-    return std::make_unique<ConversationRepository>(account, conversationId);
+    return repo;
+}
+
+bool
+ConversationRepository::Impl::validCommits(
+    const std::vector<ConversationCommit>& commitsToValidate) const
+{
+    for (const auto& commit : commitsToValidate) {
+        auto userDevice = commit.author.email;
+        auto validUserAtCommit = commit.id;
+        if (commit.parents.size() == 0) {
+            if (!checkInitialCommit(userDevice, commit.id)) {
+                JAMI_WARN("Malformed initial commit %s. Please check you use the latest "
+                          "version of Jami, or that your contact is not doing unwanted stuff.",
+                          commit.id.c_str());
+                return false;
+            }
+        } else if (commit.parents.size() == 1) {
+            auto type = getCommitType(commit.commit_msg);
+            if (type == "text/plain") {
+                // Check that no weird file is added outside device cert nor removed
+                if (!checkOnlyDeviceCertificate(userDevice, commit.id, commit.parents[0])) {
+                    JAMI_WARN("Malformed text/plain commit %s. Please check you use the latest "
+                              "version of Jami, or that your contact is not doing unwanted stuff.",
+                              commit.id.c_str());
+                    return false;
+                }
+            } else if (type == "vote") {
+                // Check that vote is valid
+                if (!checkVote(userDevice, commit.id, commit.parents[0])) {
+                    JAMI_WARN("Malformed vote commit %s. Please check you use the latest version "
+                              "of Jami, or that your contact is not doing unwanted stuff.",
+                              commit.id.c_str());
+                    return false;
+                }
+            } else if (type == "member") {
+                // TODO avoid body to store "add member", "remove/joins"
+                std::string err;
+                Json::Value root;
+                Json::CharReaderBuilder rbuilder;
+                auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+                if (!reader->parse(commit.commit_msg.data(),
+                                   commit.commit_msg.data() + commit.commit_msg.size(),
+                                   &root,
+                                   &err)) {
+                    JAMI_ERR() << "Failed to parse " << err;
+                    return false;
+                }
+                std::string body = root["body"].asString();
+                auto posJoin = body.find(" joins the conversation");
+                if (body.find("Add member ") == 0) {
+                    auto uriMember = body.substr(std::string("Add member ").size());
+                    if (!checkValidAdd(userDevice, uriMember, commit.id, commit.parents[0])) {
+                        JAMI_WARN(
+                            "Malformed add commit %s. Please check you use the latest version "
+                            "of Jami, or that your contact is not doing unwanted stuff.",
+                            commit.id.c_str());
+                        return false;
+                    }
+                } else if (posJoin != std::string::npos) {
+                    auto uriMember = body.substr(0, posJoin);
+                    if (!checkValidJoins(userDevice, uriMember, commit.id, commit.parents[0])) {
+                        JAMI_WARN(
+                            "Malformed joins commit %s. Please check you use the latest version "
+                            "of Jami, or that your contact is not doing unwanted stuff.",
+                            commit.id.c_str());
+                        return false;
+                    }
+                } else if (body.find("Remove member ") == 0) {
+                    // In this case, we remove the user. So if self, the user will not be
+                    // valid for this commit. Check previous commit
+                    validUserAtCommit = commit.parents[0];
+                    auto uriMember = body.substr(std::string("Remove member ").size());
+                    if (!checkValidRemove(userDevice, uriMember, commit.id, commit.parents[0])) {
+                        JAMI_WARN(
+                            "Malformed removes commit %s. Please check you use the latest version "
+                            "of Jami, or that your contact is not doing unwanted stuff.",
+                            commit.id.c_str());
+                        return false;
+                    }
+                } else if (body.find("Ban device ") == 0 || body.find("Ban member ") == 0) {
+                    // Note device.size() == "member".size()
+                    auto uriDevice = body.substr(std::string("Ban device ").size());
+                    if (!checkValidRemove(userDevice, uriDevice, commit.id, commit.parents[0])) {
+                        JAMI_WARN(
+                            "Malformed removes commit %s. Please check you use the latest version "
+                            "of Jami, or that your contact is not doing unwanted stuff.",
+                            commit.id.c_str());
+                        return false;
+                    }
+                } else {
+                    JAMI_WARN("Malformed member commit %s. Please check you use the latest version "
+                              "of Jami, or that your contact is not doing unwanted stuff: %s",
+                              commit.id.c_str(),
+                              body.c_str());
+                    return false;
+                }
+            } else {
+                // Else, refuse commits
+                JAMI_ERR("Invalid commit type detected: %s. Please check you use the latest "
+                         "version of Jami, or that your contact is not doing unwanted stuff.",
+                         type.c_str());
+                return false;
+            }
+
+            // For all commit, check that user is valid,
+            // So that user certificate MUST be in /members or /admins
+            // and device cert MUST be in /devices
+            if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
+                JAMI_WARN(
+                    "Malformed commit %s. Please check you use the latest version of Jami, or "
+                    "that your contact is not doing unwanted stuff. %s",
+                    validUserAtCommit.c_str(),
+                    commit.commit_msg.c_str());
+                return false;
+            }
+        } else {
+            // Merge commit, for now, nothing to validate
+        }
+        JAMI_DBG("Validate commit %s", commit.id.c_str());
+    }
+    return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -1448,7 +1688,7 @@ ConversationRepository::id() const
 }
 
 std::string
-ConversationRepository::addMember(const std::shared_ptr<dht::crypto::Certificate>& memberCert)
+ConversationRepository::addMember(const std::string& uri)
 {
     auto account = pimpl_->account_.lock();
     if (!account)
@@ -1461,20 +1701,14 @@ ConversationRepository::addMember(const std::shared_ptr<dht::crypto::Certificate
     // First, we need to add the member file to the repository if not present
     std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
 
-    if (!memberCert) {
-        JAMI_ERR("Cert is null!");
-        return {};
-    }
-
     std::string invitedPath = repoPath + "invited";
     if (!fileutils::recursive_mkdir(invitedPath, 0700)) {
         JAMI_ERR("Error when creating %s.", invitedPath.c_str());
         return {};
     }
-    std::string memberId = memberCert->getId().toString();
-    std::string devicePath = invitedPath + DIR_SEPARATOR_STR + memberId + ".crt";
+    std::string devicePath = invitedPath + DIR_SEPARATOR_STR + uri;
     if (fileutils::isFile(devicePath)) {
-        JAMI_WARN("Member %s already present!", memberId.c_str());
+        JAMI_WARN("Member %s already present!", uri.c_str());
         return {};
     }
 
@@ -1483,12 +1717,11 @@ ConversationRepository::addMember(const std::shared_ptr<dht::crypto::Certificate
         JAMI_ERR("Could not write data to %s", devicePath.c_str());
         return {};
     }
-    file << memberCert->toString(true);
-    std::string path = "invited/" + memberId + ".crt";
+    std::string path = "invited/" + uri;
     if (!pimpl_->add(path.c_str()))
         return {};
     Json::Value json;
-    json["body"] = "Add member " + memberId;
+    json["body"] = "Add member " + uri;
     json["type"] = "member";
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
@@ -1599,14 +1832,71 @@ ConversationRepository::commitMessage(const std::string& msg)
     return pimpl_->commit(msg);
 }
 
+std::string
+ConversationRepository::amend(const std::string& id, const std::string& msg)
+{
+    auto account = pimpl_->account_.lock();
+    if (!account)
+        return {};
+    auto deviceId = std::string(account->currentDeviceId());
+    auto name = account->getDisplayName();
+    if (name.empty())
+        name = deviceId;
+
+    git_signature* sig_ptr = nullptr;
+    git_oid tree_id, commit_id;
+
+    // Sign commit's buffer
+    if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
+        JAMI_ERR("Unable to create a commit signature.");
+        return {};
+    }
+    GitSignature sig {sig_ptr, git_signature_free};
+
+    git_commit* commit_ptr = nullptr;
+    if (git_oid_fromstr(&tree_id, id.c_str()) < 0
+        || git_commit_lookup(&commit_ptr, pimpl_->repository_.get(), &tree_id) < 0) {
+        JAMI_WARN("Failed to look up commit %s", id.c_str());
+        return {};
+    }
+    GitCommit commit {commit_ptr, git_commit_free};
+
+    if (git_commit_amend(
+            &commit_id, commit.get(), nullptr, sig.get(), sig.get(), nullptr, msg.c_str(), nullptr)
+        < 0) {
+        JAMI_ERR("Could not amend commit");
+        return {};
+    }
+
+    // Move commit to main branch
+    git_reference* ref_ptr = nullptr;
+    if (git_reference_create(&ref_ptr,
+                             pimpl_->repository_.get(),
+                             "refs/heads/main",
+                             &commit_id,
+                             true,
+                             nullptr)
+        < 0) {
+        JAMI_WARN("Could not move commit to main");
+    }
+    git_reference_free(ref_ptr);
+
+    auto commit_str = git_oid_tostr_s(&commit_id);
+    if (commit_str) {
+        JAMI_DBG("Commit %s amended (new id: %s)", id.c_str(), commit_str);
+        return commit_str;
+    }
+    return {};
+}
+
 std::vector<ConversationCommit>
-ConversationRepository::logN(const std::string& last, unsigned n)
+ConversationRepository::logN(const std::string& last, unsigned n) const
 {
     return pimpl_->log(last, "", n);
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::log(const std::string& from, const std::string& to)
+ConversationRepository::log(const std::string& from, const std::string& to) const
 {
     return pimpl_->log(from, to, 0);
 }
@@ -1752,7 +2042,7 @@ ConversationRepository::join()
     }
     // Remove invited/uri.crt
     std::string invitedPath = repoPath + "invited";
-    fileutils::remove(fileutils::getFullPath(invitedPath, uri + ".crt"));
+    fileutils::remove(fileutils::getFullPath(invitedPath, uri));
     // Add members/uri.crt
     if (!fileutils::recursive_mkdir(membersPath, 0700)) {
         JAMI_ERR("Error when creating %s. Abort create conversations", membersPath.c_str());
@@ -1862,6 +2152,12 @@ ConversationRepository::erase()
 
     JAMI_DBG() << "Erasing " << repoPath;
     fileutils::removeAll(repoPath, true);
+}
+
+ConversationMode
+ConversationRepository::mode() const
+{
+    return pimpl_->mode();
 }
 
 std::string
@@ -2015,146 +2311,13 @@ ConversationRepository::validFetch(const std::string& remoteDevice) const
     }
     auto commitsToValidate = pimpl_->behind(newCommit);
     std::reverse(std::begin(commitsToValidate), std::end(commitsToValidate));
-    for (const auto& commit : commitsToValidate) {
-        auto userDevice = commit.author.email;
-        auto validUserAtCommit = commit.id;
-        if (commit.parents.size() == 0) {
-            if (!pimpl_->checkInitialCommit(userDevice, commit.id)) {
-                JAMI_WARN("Malformed initial commit %s. Please check you use the latest "
-                          "version of Jami, or that your contact is not doing unwanted stuff.",
-                          commit.id.c_str());
-                return false;
-            }
-        } else if (commit.parents.size() == 1) {
-            auto type = getCommitType(commit.commit_msg);
-            if (type == "text/plain") {
-                // Check that no weird file is added outside device cert nor removed
-                if (!pimpl_->checkOnlyDeviceCertificate(userDevice, commit.id, commit.parents[0])) {
-                    JAMI_WARN("Malformed text/plain commit %s. Please check you use the latest "
-                              "version of Jami, or that your contact is not doing unwanted stuff.",
-                              commit.id.c_str());
-                    return false;
-                }
-            } else if (type == "vote") {
-                // Check that vote is valid
-                if (!pimpl_->checkVote(userDevice, commit.id, commit.parents[0])) {
-                    JAMI_WARN("Malformed vote commit %s. Please check you use the latest version "
-                              "of Jami, or that your contact is not doing unwanted stuff.",
-                              commit.id.c_str());
-                    return false;
-                }
-            } else if (type == "member") {
-                // TODO avoid body to store "add member", "remove/joins"
-                std::string err;
-                Json::Value root;
-                Json::CharReaderBuilder rbuilder;
-                auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-                if (!reader->parse(commit.commit_msg.data(),
-                                   commit.commit_msg.data() + commit.commit_msg.size(),
-                                   &root,
-                                   &err)) {
-                    JAMI_ERR() << "Failed to parse " << err;
-                    return false;
-                }
-                std::string body = root["body"].asString();
-                auto posJoin = body.find(" joins the conversation");
-                if (body.find("Add member ") == 0) {
-                    auto uriMember = body.substr(std::string("Add member ").size());
-                    if (!pimpl_->checkValidAdd(userDevice, uriMember, commit.id, commit.parents[0])) {
-                        JAMI_WARN(
-                            "Malformed add commit %s. Please check you use the latest version "
-                            "of Jami, or that your contact is not doing unwanted stuff.",
-                            commit.id.c_str());
-                        return false;
-                    }
-                } else if (posJoin != std::string::npos) {
-                    auto uriMember = body.substr(0, posJoin);
-                    if (!pimpl_->checkValidJoins(userDevice,
-                                                 uriMember,
-                                                 commit.id,
-                                                 commit.parents[0])) {
-                        JAMI_WARN(
-                            "Malformed joins commit %s. Please check you use the latest version "
-                            "of Jami, or that your contact is not doing unwanted stuff.",
-                            commit.id.c_str());
-                        return false;
-                    }
-                } else if (body.find("Remove member ") == 0) {
-                    // In this case, we remove the user. So if self, the user will not be
-                    // valid for this commit. Check previous commit
-                    validUserAtCommit = commit.parents[0];
-                    auto uriMember = body.substr(std::string("Remove member ").size());
-                    if (!pimpl_->checkValidRemove(userDevice,
-                                                  uriMember,
-                                                  commit.id,
-                                                  commit.parents[0])) {
-                        JAMI_WARN(
-                            "Malformed removes commit %s. Please check you use the latest version "
-                            "of Jami, or that your contact is not doing unwanted stuff.",
-                            commit.id.c_str());
-                        return false;
-                    }
-                } else if (body.find("Ban device ") == 0 || body.find("Ban member ") == 0) {
-                    // Note device.size() == "member".size()
-                    auto uriDevice = body.substr(std::string("Ban device ").size());
-                    if (!pimpl_->checkValidRemove(userDevice,
-                                                  uriDevice,
-                                                  commit.id,
-                                                  commit.parents[0])) {
-                        JAMI_WARN(
-                            "Malformed removes commit %s. Please check you use the latest version "
-                            "of Jami, or that your contact is not doing unwanted stuff.",
-                            commit.id.c_str());
-                        return false;
-                    }
-                } else {
-                    JAMI_WARN("Malformed member commit %s. Please check you use the latest version "
-                              "of Jami, or that your contact is not doing unwanted stuff: %s",
-                              commit.id.c_str(),
-                              body.c_str());
-                    return false;
-                }
-            } else {
-                // Else, refuse commits
-                JAMI_ERR("Invalid commit type detected: %s. Please check you use the latest "
-                         "version of Jami, or that your contact is not doing unwanted stuff.",
-                         type.c_str());
-                return false;
-            }
-
-            // For all commit, check that user is valid,
-            // So that user certificate MUST be in /members or /admins
-            // and device cert MUST be in /devices
-            if (!pimpl_->isValidUserAtCommit(userDevice, validUserAtCommit)) {
-                JAMI_WARN(
-                    "Malformed commit %s. Please check you use the latest version of Jami, or "
-                    "that your contact is not doing unwanted stuff. %s",
-                    validUserAtCommit.c_str(),
-                    commit.commit_msg.c_str());
-                return false;
-            }
-        } else {
-            // Merge commit, for now, nothing to validate
-        }
-        JAMI_DBG("Validate commit %s", commit.id.c_str());
-    }
-    return true;
+    return pimpl_->validCommits(commitsToValidate);
 }
 
-std::string
-ConversationRepository::getCommitType(const std::string& commitMsg) const
+bool
+ConversationRepository::validClone() const
 {
-    std::string type = {};
-    std::string err;
-    Json::Value cm;
-    Json::CharReaderBuilder rbuilder;
-    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-    if (reader->parse(commitMsg.data(), commitMsg.data() + commitMsg.size(), &cm, &err)) {
-        type = cm["type"].asString();
-    } else {
-        JAMI_WARN("%s", err.c_str());
-    }
-    return type;
+    return pimpl_->validCommits(logN("", 0));
 }
 
 } // namespace jami

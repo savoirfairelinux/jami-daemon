@@ -50,6 +50,8 @@ struct GitAuthor
     std::string email {};
 };
 
+enum class ConversationMode : int { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC };
+
 struct ConversationCommit
 {
     std::string id {};
@@ -70,10 +72,11 @@ public:
     /**
      * Creates a new repository, with initial files, where the first commit hash is the conversation id
      * @param account       The related account
+     * @param mode          The wanted mode
      * @return  the conversation repository object
      */
     static DRING_TESTABLE std::unique_ptr<ConversationRepository> createConversation(
-        const std::weak_ptr<JamiAccount>& account);
+        const std::weak_ptr<JamiAccount>& account, ConversationMode mode);
 
     /**
      * Clones a conversation on a remote device
@@ -98,10 +101,10 @@ public:
 
     /**
      * Write the certificate in /members and commit the change
-     * @param memberCert    Certificate to write
+     * @param uri    Uri to add
      * @return the commit id if successful
      */
-    std::string addMember(const std::shared_ptr<dht::crypto::Certificate>& memberCert);
+    std::string addMember(const std::string& uri);
 
     /**
      * Fetch a remote repository via the given socket
@@ -134,13 +137,22 @@ public:
     std::string commitMessage(const std::string& msg);
 
     /**
+     * Amend a commit message
+     * @param id      The commit to amend
+     * @param msg     The commit message of the commit
+     * @return <empty> on failure, else the message id
+     */
+    std::string amend(const std::string& id, const std::string& msg);
+
+    /**
      * Get commits from [last-n, last]
      * @param last  last commit (default empty)
      * @param n     Max commits number to get (default: 0)
      * @return a list of commits
      */
-    std::vector<ConversationCommit> logN(const std::string& last = "", unsigned n = 0);
-    std::vector<ConversationCommit> log(const std::string& from = "", const std::string& to = "");
+    std::vector<ConversationCommit> logN(const std::string& last = "", unsigned n = 0) const;
+    std::vector<ConversationCommit> log(const std::string& from = "",
+                                        const std::string& to = "") const;
 
     /**
      * Merge another branch into the main branch
@@ -182,11 +194,17 @@ public:
      */
     void erase();
 
+    /**
+     * Get conversation's mode
+     * @return the mode
+     */
+    ConversationMode mode() const;
+
     std::string voteKick(const std::string& uri, bool isDevice);
     std::string resolveVote(const std::string& uri, bool isDevice);
 
     bool validFetch(const std::string& remoteDevice) const;
-    std::string getCommitType(const std::string& commitMsg) const;
+    bool validClone() const;
 
 private:
     ConversationRepository() = delete;
