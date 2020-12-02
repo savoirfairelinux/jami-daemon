@@ -1,6 +1,6 @@
 {
     "name": "opendht",
-    "version": "2.1.9.1",
+    "version": "2.1.9.3",
     "url": "https://github.com/savoirfairelinux/opendht/archive/__VERSION__.tar.gz",
     "deps": [
         "argon2",
@@ -18,7 +18,9 @@
         "OPENDHT_PUSH_NOTIFICATIONS=1",
         "OPENDHT_TOOLS=0"
     ],
-    "patches": [],
+    "patches": [
+        "TrustRequest.patch"
+    ],
     "win_patches": [],
     "project_paths": [],
     "with_env" : "",
