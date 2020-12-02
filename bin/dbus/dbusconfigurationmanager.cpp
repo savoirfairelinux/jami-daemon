@@ -205,12 +205,6 @@ DBusConfigurationManager::setMessageDisplayed(const std::string& accountID, cons
 }
 
 auto
-DBusConfigurationManager::getTlsDefaultSettings() -> decltype(DRing::getTlsDefaultSettings())
-{
-    return DRing::getTlsDefaultSettings();
-}
-
-auto
 DBusConfigurationManager::getCodecList() -> decltype(DRing::getCodecList())
 {
     return DRing::getCodecList();

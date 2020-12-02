@@ -109,8 +109,6 @@ DRING_PUBLIC bool setMessageDisplayed(const std::string& accountID,
                                       const std::string& messageId,
                                       int status);
 
-DRING_PUBLIC std::map<std::string, std::string> getTlsDefaultSettings();
-
 DRING_PUBLIC std::vector<unsigned> getCodecList();
 DRING_PUBLIC std::vector<std::string> getSupportedTlsMethod();
 DRING_PUBLIC std::vector<std::string> getSupportedCiphers(const std::string& accountID);

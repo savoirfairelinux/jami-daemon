@@ -1202,12 +1202,6 @@
            </arg>
        </method>
 
-       <method name="getTlsDefaultSettings" tp:name-for-bindings="getTlsDefaultSettings">
-                   <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-           <arg type="a{ss}" name="details" direction="out">
-           </arg>
-       </method>
-
        <method name="validateCertificate" tp:name-for-bindings="validateCertificate">
            <arg type="s" name="accountId" direction="in"></arg>
            <arg type="s" name="certificate" direction="in">
