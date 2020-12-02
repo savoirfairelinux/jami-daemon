@@ -96,8 +96,6 @@ bool lookupAddress(const std::string& account, const std::string& nameserver, co
 bool registerName(const std::string& account, const std::string& password, const std::string& name);
 bool searchUser(const std::string& account, const std::string& query);
 
-std::map<std::string, std::string> getTlsDefaultSettings();
-
 std::vector<unsigned> getCodecList();
 std::vector<std::string> getSupportedTlsMethod();
 std::vector<std::string> getSupportedCiphers(const std::string& accountID);
