@@ -237,6 +237,7 @@ ContactList::loadTrustRequests()
                        tr.second.device,
                        tr.second.received,
                        false,
+                       tr.second.conversationId,
                        std::move(tr.second.payload));
 }
 
@@ -245,6 +246,7 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
                             const dht::InfoHash& peer_device,
                             time_t received,
                             bool confirm,
+                            const std::string& conversationId,
                             std::vector<uint8_t>&& payload)
 {
     bool accept = false;
@@ -273,7 +275,10 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
             // Add trust request
             req = trustRequests_
                       .emplace(peer_account,
-                               TrustRequest {peer_device, received, std::move(payload)})
+                               TrustRequest {peer_device,
+                                             conversationId,
+                                             received,
+                                             std::move(payload)})
                       .first;
         } else {
             // Update trust request
@@ -286,8 +291,10 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
                          peer_account.toString().c_str());
             }
         }
-        callbacks_.trustRequest(req->first.toString(), req->second.payload, received);
+        saveTrustRequests();
     }
+    // Note: call JamiAccount's callback to build ConversationRequest anyway
+    callbacks_.trustRequest(peer_account.toString(), conversationId, payload, received);
     return accept;
 }
 
@@ -303,10 +310,25 @@ ContactList::getTrustRequests() const
         ret.emplace_back(
             Map {{DRing::Account::TrustRequest::FROM, r.first.toString()},
                  {DRing::Account::TrustRequest::RECEIVED, std::to_string(r.second.received)},
+                 {DRing::Account::TrustRequest::CONVERSATIONID, r.second.conversationId},
                  {DRing::Account::TrustRequest::PAYLOAD,
                   std::string(r.second.payload.begin(), r.second.payload.end())}});
     }
     return ret;
+}
+
+std::map<std::string, std::string>
+ContactList::getTrustRequest(const dht::InfoHash& from) const
+{
+    using Map = std::map<std::string, std::string>;
+    auto r = trustRequests_.find(from);
+    if (r == trustRequests_.end())
+        return {};
+    return Map {{DRing::Account::TrustRequest::FROM, r->first.toString()},
+                {DRing::Account::TrustRequest::RECEIVED, std::to_string(r->second.received)},
+                {DRing::Account::TrustRequest::CONVERSATIONID, r->second.conversationId},
+                {DRing::Account::TrustRequest::PAYLOAD,
+                 std::string(r->second.payload.begin(), r->second.payload.end())}};
 }
 
 bool
@@ -320,13 +342,16 @@ ContactList::acceptTrustRequest(const dht::InfoHash& from)
         return false;
 
     // Clear trust request
-    auto treq = std::move(i->second);
     trustRequests_.erase(i);
     saveTrustRequests();
-
-    // Send confirmation
-    // account_.get().sendTrustRequestConfirm(from);
     return true;
+}
+
+void
+ContactList::acceptConversation(const std::string& convId)
+{
+    if (callbacks_.acceptConversation)
+        callbacks_.acceptConversation(convId);
 }
 
 bool
@@ -506,16 +531,22 @@ ContactList::getSyncData() const
     static constexpr size_t MAX_TRUST_REQUESTS = 20;
     if (trustRequests_.size() <= MAX_TRUST_REQUESTS)
         for (const auto& req : trustRequests_)
-            sync_data.trust_requests
-                .emplace(req.first, TrustRequest {req.second.device, req.second.received, {}});
+            sync_data.trust_requests.emplace(req.first,
+                                             TrustRequest {req.second.device,
+                                                           req.second.conversationId,
+                                                           req.second.received,
+                                                           {}});
     else {
         size_t inserted = 0;
         auto req = trustRequests_.lower_bound(dht::InfoHash::getRandom());
         while (inserted++ < MAX_TRUST_REQUESTS) {
             if (req == trustRequests_.end())
                 req = trustRequests_.begin();
-            sync_data.trust_requests
-                .emplace(req->first, TrustRequest {req->second.device, req->second.received, {}});
+            sync_data.trust_requests.emplace(req->first,
+                                             TrustRequest {req->second.device,
+                                                           req->second.conversationId,
+                                                           req->second.received,
+                                                           {}});
             ++req;
         }
     }
@@ -542,42 +573,4 @@ ContactList::syncDevice(const dht::InfoHash& device, const time_point& syncDate)
     return true;
 }
 
-/*
-void
-ContactList::onSyncData(DeviceSync&& sync)
-{
-    auto it = knownDevices_.find(sync.from);
-    if (it == knownDevices_.end()) {
-        JAMI_WARN("[Contacts] dropping sync data from unknown device");
-        return;
-    }
-    auto sync_date = clock::time_point(clock::duration(sync.date));
-    if (it->second.last_sync >= sync_date) {
-        JAMI_DBG("[Contacts] dropping outdated sync data");
-        return;
-    }
-
-    // Sync known devices
-    JAMI_DBG("[Contacts] received device sync data (%lu devices, %lu contacts)",
-sync.devices_known.size(), sync.peers.size()); for (const auto& d : sync.devices_known) {
-        account_.get().findCertificate(d.first, [this,d](const
-std::shared_ptr<dht::crypto::Certificate>& crt) { if (not crt) return;
-            //std::lock_guard<std::mutex> lock(deviceListMutex_);
-            foundAccountDevice(crt, d.second);
-        });
-    }
-    saveKnownDevices();
-
-    // Sync contacts
-    for (const auto& peer : sync.peers)
-        updateContact(peer.first, peer.second);
-    saveContacts();
-
-    // Sync trust requests
-    for (const auto& tr : sync.trust_requests)
-        onTrustRequest(tr.first, tr.second.device, tr.second.received, false, {});
-
-    it->second.last_sync = sync_date;
-}
-*/
 } // namespace jami
