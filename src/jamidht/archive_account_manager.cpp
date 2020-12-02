@@ -501,7 +501,12 @@ ArchiveAccountManager::onSyncData(DeviceSync&& sync)
 
     // Sync trust requests
     for (const auto& tr : sync.trust_requests)
-        info_->contacts->onTrustRequest(tr.first, tr.second.device, tr.second.received, false, {});
+        info_->contacts->onTrustRequest(tr.first,
+                                        tr.second.device,
+                                        tr.second.received,
+                                        false,
+                                        tr.second.conversationId,
+                                        {});
     info_->contacts->saveTrustRequests();
 }
 
