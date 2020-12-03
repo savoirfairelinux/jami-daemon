@@ -184,6 +184,14 @@ void
 Conference::add(const std::string& participant_id)
 {
     if (participants_.insert(participant_id).second) {
+        // Check if participant was muted before conference
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+            if (call->isPeerMuted()) {
+                auto uri = call->getPeerNumber();
+                uri = string_remove_suffix(uri, '@');
+                participantsMuted_.emplace(uri);
+            }
+        }
 #ifdef ENABLE_VIDEO
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
             call->getVideoRtp().enterConference(this);
