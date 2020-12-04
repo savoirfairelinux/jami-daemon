@@ -23,7 +23,6 @@
 
 #include "account_schema.h"
 #include "jamiaccount.h"
-#include "channel.h"
 #include "ice_transport.h"
 #include "ftp_server.h"
 #include "manager.h"
