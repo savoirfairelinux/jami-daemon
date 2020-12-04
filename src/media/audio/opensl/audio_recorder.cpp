@@ -36,32 +36,35 @@ void
 AudioRecorder::processSLCallback(SLAndroidSimpleBufferQueueItf bq)
 {
     try {
-        assert(bq == recBufQueueItf_);
+        SLASSERT(bq == recBufQueueItf_);
         sample_buf* dataBuf {nullptr};
-        devShadowQueue_.front(&dataBuf);
-        devShadowQueue_.pop();
-        dataBuf->size_ = dataBuf->cap_; // device only calls us when it is really full
-        recQueue_->push(dataBuf);
+        if (devShadowQueue_.front(&dataBuf)) {
+            devShadowQueue_.pop();
+            dataBuf->size_ = dataBuf->cap_; // device only calls us when it is really full
+            if (dataBuf != &silentBuf_)
+                recQueue_->push(dataBuf);
+        }
 
         sample_buf* freeBuf;
         while (freeQueue_->front(&freeBuf) && devShadowQueue_.push(freeBuf)) {
             freeQueue_->pop();
-            SLresult result = (*bq)->Enqueue(bq, freeBuf->buf_, freeBuf->cap_);
-            SLASSERT(result);
+            SLASSERT((*bq)->Enqueue(bq, freeBuf->buf_, freeBuf->cap_));
         }
 
         // should leave the device to sleep to save power if no buffers
-        /*if (devShadowQueue_.size() == 0) {
-            (*recItf_)->SetRecordState(recItf_, SL_RECORDSTATE_STOPPED);
-        }*/
+        if (devShadowQueue_.size() == 0) {
+            // JAMI_WARN("OpenSL: processSLCallback empty queue");
+            (*bq)->Enqueue(bq, silentBuf_.buf_, silentBuf_.cap_);
+            devShadowQueue_.push(&silentBuf_);
+        }
         if (callback_)
             callback_();
     } catch (const std::exception& e) {
-        JAMI_ERR("processSLCallback exception: %s", e.what());
+        JAMI_ERR("OpenSL: processSLCallback exception: %s", e.what());
     }
 }
 
-AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngine)
+AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLEngineItf slEngine)
     : sampleInfo_(sampleFormat)
 {
     JAMI_DBG("Creating OpenSL record stream");
@@ -199,6 +202,10 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngin
 
     result = (*recBufQueueItf_)->RegisterCallback(recBufQueueItf_, bqRecorderCallback, this);
     SLASSERT(result);
+
+    silentBuf_ = {(format_pcm.containerSize >> 3) * format_pcm.numChannels * bufSize};
+    silentBuf_.size_ = silentBuf_.cap_;
+    memset(silentBuf_.buf_, 0, silentBuf_.cap_);
 }
 
 bool

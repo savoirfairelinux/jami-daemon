@@ -39,12 +39,13 @@ class AudioRecorder
     AudioQueue* recQueue_ {nullptr};                             // user
     AudioQueue devShadowQueue_ {DEVICE_SHADOW_BUFFER_QUEUE_LEN}; // owner
     uint32_t audioBufCount;
+    sample_buf silentBuf_;
 
     EngineCallback callback_ {};
     bool hasNativeAEC_ {false};
 
 public:
-    explicit AudioRecorder(jami::AudioFormat, SLEngineItf engineEngine);
+    explicit AudioRecorder(jami::AudioFormat, size_t bufSize, SLEngineItf engineEngine);
     ~AudioRecorder();
     NON_COPYABLE(AudioRecorder);
 
