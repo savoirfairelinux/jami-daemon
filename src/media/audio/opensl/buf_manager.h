@@ -180,6 +180,10 @@ struct sample_buf
         : buf_(new uint8_t[alloc])
         , cap_(size)
     {}
+    sample_buf(size_t alloc)
+        : buf_(new uint8_t[alloc])
+        , cap_(alloc)
+    {}
     sample_buf(sample_buf&& o)
         : buf_(o.buf_)
         , cap_(o.cap_)

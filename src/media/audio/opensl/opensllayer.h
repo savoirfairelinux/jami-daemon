@@ -93,13 +93,12 @@ public:
     void initAudioEngine();
     void shutdownAudioEngine();
 
-    void initAudioCapture();
     void startAudioCapture();
     void stopAudioCapture();
 
-    virtual int getAudioDeviceIndex(const std::string&, AudioDeviceType) const { return 0; }
+    virtual int getAudioDeviceIndex(const std::string&, AudioDeviceType) const override { return 0; }
 
-    virtual std::string getAudioDeviceName(int, AudioDeviceType) const { return ""; }
+    virtual std::string getAudioDeviceName(int, AudioDeviceType) const override { return ""; }
 
     void engineServicePlay();
     void engineServiceRing();
@@ -111,21 +110,21 @@ private:
      * @return int The index of the card used for capture
      *                     0 for the first available card on the system, 1 ...
      */
-    virtual int getIndexCapture() const { return 0; }
+    virtual int getIndexCapture() const override { return 0; }
 
     /**
      * Get the index of the audio card for playback
      * @return int The index of the card used for playback
      *                     0 for the first available card on the system, 1 ...
      */
-    virtual int getIndexPlayback() const { return 0; }
+    virtual int getIndexPlayback() const override { return 0; }
 
     /**
      * Get the index of the audio card for ringtone (could be differnet from playback)
      * @return int The index of the card used for ringtone
      *                 0 for the first available card on the system, 1 ...
      */
-    virtual int getIndexRingtone() const { return 0; }
+    virtual int getIndexRingtone() const override { return 0; }
 
     uint32_t dbgEngineGetBufCount();
 
@@ -133,7 +132,7 @@ private:
 
     NON_COPYABLE(OpenSLLayer);
 
-    virtual void updatePreference(AudioPreference& pref, int index, AudioDeviceType type);
+    virtual void updatePreference(AudioPreference& pref, int index, AudioDeviceType type) override;
 
     std::mutex recMtx {};
     std::condition_variable recCv {};

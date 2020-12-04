@@ -93,7 +93,7 @@ OpenSLLayer::startStream(AudioDeviceType stream)
         if (not recorder_) {
             std::lock_guard<std::mutex> lck(recMtx);
             try {
-                recorder_.reset(new opensl::AudioRecorder(hardwareFormat_, engineInterface_));
+                recorder_.reset(new opensl::AudioRecorder(hardwareFormat_, hardwareBuffSize_, engineInterface_));
                 recorder_->setBufQueues(&freeRecBufQueue_, &recBufQueue_);
                 recorder_->registerCallback(std::bind(&OpenSLLayer::engineServiceRec, this));
                 setHasNativeAEC(recorder_->hasNativeAEC());
@@ -282,21 +282,6 @@ OpenSLLayer::engineServiceRec()
 {
     recCv.notify_one();
     return;
-}
-
-void
-OpenSLLayer::initAudioCapture()
-{
-    using namespace std::placeholders;
-    std::lock_guard<std::mutex> lck(recMtx);
-    try {
-        recorder_.reset(new opensl::AudioRecorder(hardwareFormat_, engineInterface_));
-        recorder_->setBufQueues(&freeRecBufQueue_, &recBufQueue_);
-        recorder_->registerCallback(std::bind(&OpenSLLayer::engineServiceRec, this));
-        setHasNativeAEC(recorder_->hasNativeAEC());
-    } catch (const std::exception& e) {
-        JAMI_ERR("Error initializing audio capture: %s", e.what());
-    }
 }
 
 void

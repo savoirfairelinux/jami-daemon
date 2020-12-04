@@ -165,10 +165,9 @@ AudioPlayer::AudioPlayer(jami::AudioFormat sampleFormat,
     result = (*playItf_)->SetPlayState(playItf_, SL_PLAYSTATE_STOPPED);
     SLASSERT(result);
 
-    silentBuf_.cap_ = (format_pcm.containerSize >> 3) * format_pcm.numChannels * bufSize;
-    silentBuf_.buf_ = new uint8_t[silentBuf_.cap_];
-    memset(silentBuf_.buf_, 0, silentBuf_.cap_);
+    silentBuf_ = {(format_pcm.containerSize >> 3) * format_pcm.numChannels * bufSize};
     silentBuf_.size_ = silentBuf_.cap_;
+    memset(silentBuf_.buf_, 0, silentBuf_.cap_);
 }
 
 AudioPlayer::~AudioPlayer()
@@ -197,7 +196,6 @@ AudioPlayer::setBufQueue(AudioQueue* playQ, AudioQueue* freeQ)
 bool
 AudioPlayer::start()
 {
-    std::lock_guard<std::mutex> lk(m_);
     JAMI_DBG("OpenSL playback start");
     SLuint32 state;
     SLresult result = (*playItf_)->GetPlayState(playItf_, &state);
@@ -233,8 +231,6 @@ void
 AudioPlayer::stop()
 {
     JAMI_DBG("OpenSL playback stop");
-    std::lock_guard<std::mutex> lk(m_);
-    callback_ = {};
     SLuint32 state;
 
     SLresult result = (*playItf_)->GetPlayState(playItf_, &state);
@@ -243,6 +239,8 @@ AudioPlayer::stop()
     if (state == SL_PLAYSTATE_STOPPED)
         return;
 
+    std::lock_guard<std::mutex> lk(m_);
+    callback_ = {};
     result = (*playItf_)->SetPlayState(playItf_, SL_PLAYSTATE_STOPPED);
     SLASSERT(result);
 
