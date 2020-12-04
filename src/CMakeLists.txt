@@ -20,7 +20,6 @@ list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/call.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/call_factory.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/call_factory.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/channel.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/compiler_intrinsics.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/conference.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/conference.h"

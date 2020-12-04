@@ -25,7 +25,6 @@
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
 #include "string_utils.h"
-#include "channel.h"
 #include "security/tls_session.h"
 
 #include <algorithm>
