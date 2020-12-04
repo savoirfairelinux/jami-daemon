@@ -694,15 +694,8 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         std::condition_variable cv {};
         bool ready {false};
     };
-    auto iceReady = std::make_shared<IceReady>();
     auto ice_config = account.getIceOptions();
     ice_config.tcpEnable = true;
-    ice_config.onRecvReady = [iceReady]() {
-        auto& ir = *iceReady;
-        std::lock_guard<std::mutex> lk {ir.mtx};
-        ir.ready = true;
-        ir.cv.notify_one();
-    };
     ice_config.onInitDone = [w = weak(), req](bool ok) {
         auto shared = w.lock();
         if (!shared)
@@ -734,10 +727,8 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         }
 
         dht::ThreadPool::io().run([w = std::move(w), req = std::move(req)] {
-            auto shared = w.lock();
-            if (!shared)
-                return;
-            shared->onRequestOnNegoDone(req);
+            if (auto shared = w.lock())
+                shared->onRequestOnNegoDone(req);
         });
     };
 
