@@ -189,22 +189,18 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceS
     : rtp_sock_(std::move(rtp_sock))
     , rtcp_sock_(std::move(rtcp_sock))
 {
-    auto queueRtpPacket = [this](uint8_t* buf, size_t len) {
+    rtp_sock_->setOnRecv([this](uint8_t* buf, size_t len) {
         std::lock_guard<std::mutex> l(dataBuffMutex_);
         rtpDataBuff_.emplace_back(buf, buf + len);
         cv_.notify_one();
         return len;
-    };
-
-    auto queueRtcpPacket = [this](uint8_t* buf, size_t len) {
+    });
+    rtcp_sock_->setOnRecv([this](uint8_t* buf, size_t len) {
         std::lock_guard<std::mutex> l(dataBuffMutex_);
         rtcpDataBuff_.emplace_back(buf, buf + len);
         cv_.notify_one();
         return len;
-    };
-
-    rtp_sock_->setOnRecv(queueRtpPacket);
-    rtcp_sock_->setOnRecv(queueRtcpPacket);
+    });
 }
 
 SocketPair::~SocketPair()

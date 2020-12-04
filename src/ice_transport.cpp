@@ -1957,6 +1957,8 @@ IceSocketTransport::remoteAddr() const
 void
 IceSocket::close()
 {
+    if (ice_transport_)
+        ice_transport_->setOnRecv(compId_, {});
     ice_transport_.reset();
 }
 
