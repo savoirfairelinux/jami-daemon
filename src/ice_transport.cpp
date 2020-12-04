@@ -316,7 +316,6 @@ IceTransport::Impl::Impl(const char* name,
             })
     , on_initdone_cb_(options.onInitDone)
     , on_negodone_cb_(options.onNegoDone)
-    , on_recv_cb_(options.onRecvReady)
     , component_count_(component_count)
     , compIO_(component_count)
     , initiatorSession_(master)
@@ -959,10 +958,6 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void* pkt, pj_size_t size)
         return;
     auto& io = compIO_[comp_id - 1];
     std::unique_lock<std::mutex> lk(io.mutex);
-    if (on_recv_cb_) {
-        on_recv_cb_();
-    }
-
     if (io.cb) {
         io.cb((uint8_t*) pkt, size);
     } else {
@@ -1767,9 +1762,8 @@ IceSocket::waitForData(std::chrono::milliseconds timeout)
 void
 IceSocket::setOnRecv(IceRecvCb cb)
 {
-    if (!ice_transport_.get())
-        return;
-    return ice_transport_->setOnRecv(compId_, cb);
+    if (ice_transport_)
+        ice_transport_->setOnRecv(compId_, cb);
 }
 
 uint16_t
