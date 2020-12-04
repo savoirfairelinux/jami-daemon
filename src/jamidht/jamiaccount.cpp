@@ -2350,14 +2350,13 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg,
         return;
     }
     auto callId = call->getCallId();
-    auto onNegoDone = [callId, w = weak()](bool) {
+    auto iceOptions = getIceOptions();
+    iceOptions.onNegoDone = [callId, w = weak()](bool) {
         runOnMainThread([callId, w]() {
             if (auto shared = w.lock())
                 shared->checkPendingCall(callId);
         });
     };
-    auto iceOptions = getIceOptions();
-    iceOptions.onNegoDone = onNegoDone;
     auto ice = createIceTransport(("sip:" + call->getCallId()).c_str(),
                                   ICE_COMPONENTS,
                                   false,

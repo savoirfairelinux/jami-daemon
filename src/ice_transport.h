@@ -98,7 +98,6 @@ struct IceTransportOptions
     bool upnpEnable {false};
     IceTransportCompleteCb onInitDone {};
     IceTransportCompleteCb onNegoDone {};
-    IceRecvInfo onRecvReady {}; // Detect that we have data to read but without destroying the buffer
     std::vector<StunServerInfo> stunServers;
     std::vector<TurnServerInfo> turnServers;
     bool tcpEnable {false}; // If we want to use TCP
