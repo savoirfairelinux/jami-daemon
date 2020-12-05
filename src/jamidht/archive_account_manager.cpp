@@ -429,6 +429,10 @@ ArchiveAccountManager::needsMigration(const dht::crypto::Identity& id)
 void
 ArchiveAccountManager::syncDevices()
 {
+    if (not dht_ or not dht_->isRunning()) {
+        JAMI_WARN("Not syncing devices: DHT is not running");
+        return;
+    }
     JAMI_DBG("Building device sync from %s", info_->deviceId.c_str());
     auto sync_data = info_->contacts->getSyncData();
 
