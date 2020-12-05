@@ -687,13 +687,6 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
     }
 
     // Because the connection is accepted, create an ICE socket.
-    auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    struct IceReady
-    {
-        std::mutex mtx {};
-        std::condition_variable cv {};
-        bool ready {false};
-    };
     auto ice_config = account.getIceOptions();
     ice_config.tcpEnable = true;
     ice_config.onInitDone = [w = weak(), req](bool ok) {
@@ -739,7 +732,8 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         infos_[{req.from, req.id}] = info;
     }
     std::unique_lock<std::mutex> lk {info->mutex_};
-    info->ice_ = iceTransportFactory.createUTransport(account.getAccountID().c_str(),
+    info->ice_ = Manager::instance()
+        .getIceTransportFactory().createUTransport(account.getAccountID().c_str(),
                                                       1,
                                                       true,
                                                       ice_config);

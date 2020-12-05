@@ -1605,7 +1605,6 @@ SIPAccount::getHostPortFromSTUN(pj_pool_t* pool)
         emitSignal<DRing::ConfigurationSignal::StunStatusFailed>(getAccountID());
     pjsip_host_port result;
     pj_strdup2(pool, &result.host, addr.c_str());
-    result.host.slen = addr.length();
     result.port = port;
     return result;
 }
