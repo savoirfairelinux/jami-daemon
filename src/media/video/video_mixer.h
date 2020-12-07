@@ -72,6 +72,7 @@ public:
     void stopInput();
 
     void setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob);
+    void setActiveHost();
 
     Observable<std::shared_ptr<MediaFrame>>* getActiveParticipant() { return activeSource_; }
 
