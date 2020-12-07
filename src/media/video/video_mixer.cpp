@@ -137,9 +137,16 @@ VideoMixer::stopInput()
 }
 
 void
+VideoMixer::setActiveHost()
+{
+    activeSource_ = videoLocal_.get();
+    layoutUpdated_ += 1;
+}
+
+void
 VideoMixer::setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
-    activeSource_ = ob ? ob : videoLocal_.get();
+    activeSource_ = ob;
     layoutUpdated_ += 1;
 }
 
