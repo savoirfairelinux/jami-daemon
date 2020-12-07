@@ -32,6 +32,7 @@
 #include "call_const.h"
 
 using namespace jami;
+using namespace std::literals;
 
 static pthread_mutex_t count_mutex;
 static pthread_cond_t count_nb_thread;
@@ -329,7 +330,6 @@ void test_SIP::testSIPURI()
 {
     std::cout << ">>>> test SIPURI <<<< " << '\n';
 
-    std::string foo("<sip:17771234567@callcentric.com>");
-    sip_utils::stripSipUriPrefix(foo);
-    CPPUNIT_ASSERT(foo == "17771234567");
+    auto foo = sip_utils::stripSipUriPrefix("<sip:17771234567@callcentric.com>"sv);
+    CPPUNIT_ASSERT_EQUAL("17771234567"sv, foo);
 }
