@@ -128,10 +128,9 @@ getSubscriptions(const std::string& accountID)
             ret.reserve(subs.size());
             for (const auto& s : subs) {
                 ret.push_back(
-                    {{DRing::Presence::BUDDY_KEY, s->getURI()},
-                     {DRing::Presence::STATUS_KEY,
-                      s->isPresent() ? DRing::Presence::ONLINE_KEY : DRing::Presence::OFFLINE_KEY},
-                     {DRing::Presence::LINESTATUS_KEY, s->getLineStatus()}});
+                    {{DRing::Presence::BUDDY_KEY, std::string(s->getURI())},
+                     {DRing::Presence::STATUS_KEY, s->isPresent() ? DRing::Presence::ONLINE_KEY : DRing::Presence::OFFLINE_KEY},
+                     {DRing::Presence::LINESTATUS_KEY, std::string(s->getLineStatus())}});
             }
         } else
             JAMI_ERR("Presence not initialized");
