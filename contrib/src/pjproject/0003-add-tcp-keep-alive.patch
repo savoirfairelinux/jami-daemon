@@ -246,10 +246,10 @@ index ab83af956..966a9fc43 100644
  PJ_EXPORT_SYMBOL(PJ_SOL_UDP)
  PJ_EXPORT_SYMBOL(PJ_SOL_IPV6)
 diff --git a/pjnath/include/pjnath/ice_session.h b/pjnath/include/pjnath/ice_session.h
-index 39c197c29..d44e3e896 100644
+index 4cccd7c64..9f29b828e 100644
 --- a/pjnath/include/pjnath/ice_session.h
 +++ b/pjnath/include/pjnath/ice_session.h
-@@ -639,6 +639,11 @@ typedef struct pj_ice_sess_cb
+@@ -628,6 +628,11 @@ typedef struct pj_ice_sess_cb
                                          pj_ice_sess_checklist *clist,
                                          unsigned check_id);
  
@@ -280,14 +280,14 @@ index 9eb74b35f..1269442cd 100644
  
  
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index a50c21c94..4ba44f38b 100644
+index 20ba47a48..f1094932b 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
 @@ -1435,6 +1435,12 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
  					  PJ_FALSE, PJ_FALSE, 
  					  &the_check->rcand->addr, 
  					  addr_len, tdata);
-+	if (status == 120032) {
++	if (status != PJ_SUCCESS && status != PJ_EPENDING && status != PJ_EBUSY) {
 +	    if (ice->cb.on_ice_destroy) {
 +		ice->cb.on_ice_destroy(ice);
 +	    }
@@ -297,7 +297,7 @@ index a50c21c94..4ba44f38b 100644
  	/* Restore FINGERPRINT usage */
  	pj_stun_session_use_fingerprint(comp->stun_sess, saved);
 diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
-index 8ba2172e5..4adc9bc70 100644
+index 82175e9e8..c1647bebf 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
 @@ -98,6 +98,7 @@ static pj_uint16_t GETVAL16H(const pj_uint8_t *buf1, const pj_uint8_t *buf2)
@@ -308,15 +308,15 @@ index 8ba2172e5..4adc9bc70 100644
  static void	   on_ice_complete(pj_ice_sess *ice, pj_status_t status);
  static pj_status_t ice_tx_pkt(pj_ice_sess *ice,
  			      unsigned comp_id,
-@@ -1322,6 +1323,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
-     ice_cb.select_turn_dataconn     = &ice_select_turn_dataconn;
+@@ -1313,6 +1314,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
+     ice_cb.wait_tcp_connection      = &ice_wait_tcp_connection;
      ice_cb.reconnect_tcp_connection = &ice_reconnect_tcp_connection;
      ice_cb.close_tcp_connection     = &ice_close_tcp_connection;
 +    ice_cb.on_ice_destroy           = &on_ice_destroy;
  #endif
  
      /* Create! */
-@@ -1938,6 +1940,14 @@ PJ_DEF(pj_status_t) pj_ice_strans_sendto2(pj_ice_strans *ice_st,
+@@ -1935,6 +1937,14 @@ PJ_DEF(pj_status_t) pj_ice_strans_sendto2(pj_ice_strans *ice_st,
      		     dst_addr_len, PJ_TRUE, PJ_FALSE);
  }
  
@@ -332,5 +332,4 @@ index 8ba2172e5..4adc9bc70 100644
  /*
   * Callback called by ICE session when ICE processing is complete, either
 -- 
-2.24.1
-
+2.26.2
