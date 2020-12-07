@@ -96,7 +96,7 @@ std::string parseDisplayName(const pjsip_name_addr* sip_name_addr);
 std::string parseDisplayName(const pjsip_from_hdr* header);
 std::string parseDisplayName(const pjsip_contact_hdr* header);
 
-std::string getHostFromUri(const std::string& sipUri);
+std::string_view getHostFromUri(std::string_view sipUri);
 
 void addContactHeader(const pj_str_t* contactStr, pjsip_tx_data* tdata);
 void addUserAgenttHeader(const std::string& userAgent, pjsip_tx_data* tdata);
