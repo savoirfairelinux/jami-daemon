@@ -89,7 +89,7 @@ public:
     /**
      * Return the pres_client URI
      */
-    std::string getURI();
+    std::string_view getURI();
 
     /**
      * Is the buddy present
@@ -99,7 +99,7 @@ public:
     /**
      * A message from the URIs
      */
-    std::string getLineStatus();
+    std::string_view getLineStatus();
 
     /**
      * TODO: explain this:
