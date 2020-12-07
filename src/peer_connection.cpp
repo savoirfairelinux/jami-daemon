@@ -129,7 +129,9 @@ IceSocketEndpoint::read(ValueType* buf, std::size_t len, std::error_code& ec)
             return 0;
         try {
             auto res = ice_->recvfrom(compId_, reinterpret_cast<char*>(buf), len, ec);
-            return (res >= 0) ? res : 0;
+            if (res < 0)
+                shutdown();
+            return res;
         } catch (const std::exception& e) {
             JAMI_ERR("IceSocketEndpoint::read exception: %s", e.what());
         }
@@ -148,10 +150,11 @@ IceSocketEndpoint::write(const ValueType* buf, std::size_t len, std::error_code&
         res = ice_->send(compId_, reinterpret_cast<const unsigned char*>(buf), len);
         if (res < 0) {
             ec.assign(errno, std::generic_category());
+            shutdown();
         } else {
             ec.clear();
         }
-        return (res >= 0) ? res : 0;
+        return res;
     }
     return -1;
 }
