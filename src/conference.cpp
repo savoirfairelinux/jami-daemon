@@ -90,10 +90,7 @@ Conference::Conference()
                 }
                 auto active = false;
                 if (auto videoMixer = shared->getVideoMixer())
-                    active = info.source == videoMixer->getActiveParticipant()
-                             or (uri.empty()
-                                 and not videoMixer->getActiveParticipant()); // by default, local
-                                                                              // is shown as active
+                    active = info.source == videoMixer->getActiveParticipant();
                 subCalls.erase(it->second);
                 std::string_view partURI = uri;
                 partURI = string_remove_suffix(partURI, '@');
@@ -216,6 +213,10 @@ Conference::setActiveParticipant(const std::string& participant_id)
 {
     if (!videoMixer_)
         return;
+    if (isHost(participant_id)) {
+        videoMixer_->setActiveHost();
+        return;
+    }
     for (const auto& item : participants_) {
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(item)) {
             if (participant_id == item
@@ -225,7 +226,7 @@ Conference::setActiveParticipant(const std::string& participant_id)
             }
         }
     }
-    // Set local by default
+    // Unset active participant by default
     videoMixer_->setActiveParticipant(nullptr);
 }
 
@@ -235,6 +236,9 @@ Conference::setLayout(int layout)
     switch (layout) {
     case 0:
         getVideoMixer()->setVideoLayout(video::Layout::GRID);
+        // The layout shouldn't have an active participant
+        if (videoMixer_->getActiveParticipant())
+            videoMixer_->setActiveParticipant(nullptr);
         break;
     case 1:
         getVideoMixer()->setVideoLayout(video::Layout::ONE_BIG_WITH_SMALL);
