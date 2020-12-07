@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c58086d1_98663444",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-07T18:17:19Z",
+      "side": 1,
+      "message": "fix comment",
+      "revId": "70dc4a0f857e861229379f82a9f736da7120eb70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "33b90b43_2507749e",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 936,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-07T18:17:19Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "70dc4a0f857e861229379f82a9f736da7120eb70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}

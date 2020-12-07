@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "d59558ab_2868e83b",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 1813,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-07T18:17:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "64b203b7_19cec867",
+      "range": {
+        "startLine": 1812,
+        "startChar": 35,
+        "endLine": 1813,
+        "endChar": 41
+      },
+      "revId": "561d6ffa3f48dacc80f4684d323f78c21ae499e8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "3fae6245_5865eaff",
         "filename": "src/upnp/protocol/mapping.cpp",
         "patchSetId": 17
@@ -45,6 +69,30 @@
       "revId": "561d6ffa3f48dacc80f4684d323f78c21ae499e8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d46bec35_e5eb0bee",
+        "filename": "src/upnp/protocol/mapping.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-07T18:17:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3fae6245_5865eaff",
+      "range": {
+        "startLine": 28,
+        "startChar": 0,
+        "endLine": 29,
+        "endChar": 68
+      },
+      "revId": "561d6ffa3f48dacc80f4684d323f78c21ae499e8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
