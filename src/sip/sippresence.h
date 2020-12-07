@@ -146,7 +146,7 @@ public:
      * Send a signal to the client on DBus. The signal contain the status
      * of a remote user.
      */
-    void reportPresSubClientNotification(const std::string& uri, pjsip_pres_status* status);
+    void reportPresSubClientNotification(std::string_view uri, pjsip_pres_status* status);
     /**
      * Send a SUBSCRIBE request to PBX/IP2IP
      * @param buddyUri  Remote user that we want to subscribe
