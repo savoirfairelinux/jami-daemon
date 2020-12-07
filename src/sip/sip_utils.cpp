@@ -159,19 +159,18 @@ stripSipUriPrefix(std::string_view sipUri)
     return sipUri;
 }
 
-std::string
-getHostFromUri(const std::string& sipUri)
+std::string_view
+getHostFromUri(std::string_view uri)
 {
-    std::string hostname(sipUri);
-    size_t found = hostname.find('@');
-    if (found != std::string::npos)
-        hostname.erase(0, found + 1);
+    auto found = uri.find('@');
+    if (found != std::string_view::npos)
+        uri = uri.substr(found + 1);
 
-    found = hostname.find('>');
-    if (found != std::string::npos)
-        hostname.erase(found, 1);
+    found = uri.find('>');
+    if (found != std::string_view::npos)
+        uri = uri.substr(0, found);
 
-    return hostname;
+    return uri;
 }
 
 void
