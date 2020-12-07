@@ -1060,22 +1060,20 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
 
     if (body->len and pj_stricmp(&body->content_type.type, &STR_APPLICATION) == 0
         and pj_stricmp(&body->content_type.subtype, &STR_MEDIA_CONTROL_XML) == 0) {
-        pj_str_t control_st;
+        auto body_msg = std::string_view((char*)body->data, (size_t)body->len);
 
         /* Apply and answer the INFO request */
-        pj_strset(&control_st, (char*) body->data, body->len);
-        static constexpr pj_str_t PICT_FAST_UPDATE = CONST_PJ_STR("picture_fast_update");
-        static constexpr pj_str_t DEVICE_ORIENTATION = CONST_PJ_STR("device_orientation");
-        static constexpr pj_str_t RECORDING_STATE = CONST_PJ_STR("recording_state");
+        static constexpr auto PICT_FAST_UPDATE = "picture_fast_update"sv;
+        static constexpr auto DEVICE_ORIENTATION = "device_orientation"sv;
+        static constexpr auto RECORDING_STATE = "recording_state"sv;
 
-        if (pj_strstr(&control_st, &PICT_FAST_UPDATE)) {
+        if (body_msg.find(PICT_FAST_UPDATE) != std::string_view::npos) {
             call.sendKeyframe();
             return true;
-        } else if (pj_strstr(&control_st, &DEVICE_ORIENTATION)) {
+        } else if (body_msg.find(DEVICE_ORIENTATION) != std::string_view::npos) {
             static const std::regex ORIENTATION_REGEX("device_orientation=([-+]?[0-9]+)");
 
-            std::string body_msg(control_st.ptr, control_st.slen);
-            std::smatch matched_pattern;
+            std::svmatch matched_pattern;
             std::regex_search(body_msg, matched_pattern, ORIENTATION_REGEX);
 
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
@@ -1094,10 +1092,9 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
                 }
                 return true;
             }
-        } else if (pj_strstr(&control_st, &RECORDING_STATE)) {
+        } else if (body_msg.find(RECORDING_STATE) != std::string_view::npos) {
             static const std::regex REC_REGEX("recording_state=([0-1])");
-            std::string body_msg(control_st.ptr, control_st.slen);
-            std::smatch matched_pattern;
+            std::svmatch matched_pattern;
             std::regex_search(body_msg, matched_pattern, REC_REGEX);
 
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
