@@ -1193,7 +1193,9 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     if (not call)
         return;
 
+#ifdef DEBUG_SIP_REQUEST_MSG
     processInviteResponseHelper(inv, event);
+#endif
 
     // We process here only incoming request message
     if (tsx->role != PJSIP_ROLE_UAS or tsx->state != PJSIP_TSX_STATE_TRYING
@@ -1214,9 +1216,8 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     }
 
     // Using method name to dispatch
-    const std::string methodName {msg->line.req.method.name.ptr,
-                                  (unsigned) msg->line.req.method.name.slen};
-    JAMI_DBG("[INVITE:%p] RX SIP method %d (%s)", inv, msg->line.req.method.id, methodName.c_str());
+    auto methodName = sip_utils::as_view(msg->line.req.method.name);
+    JAMI_DBG("[INVITE:%p] RX SIP method %d (%.*s)", inv, msg->line.req.method.id, (int)methodName.size(), methodName.data());
 
 #ifdef DEBUG_SIP_REQUEST_MSG
     char msgbuf[1000];
@@ -1262,9 +1263,9 @@ processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* event)
         return;
     }
 
-    JAMI_INFO("[INVITE:%p] SIP RX response: reason %s, status code %i",
+    JAMI_INFO("[INVITE:%p] SIP RX response: reason %.*s, status code %i",
               inv,
-              std::string(msg->line.status.reason.ptr, msg->line.status.reason.slen).c_str(),
+              (int)msg->line.status.reason.slen, msg->line.status.reason.ptr,
               msg->line.status.code);
 
     sip_utils::logMessageHeaders(&msg->hdr);
