@@ -1735,18 +1735,22 @@ IceSocketTransport::remoteAddr() const
 
 //==============================================================================
 
+IceSocket::~IceSocket()
+{
+    close();
+}
+
 void
 IceSocket::close()
 {
-    if (ice_transport_)
-        ice_transport_->setOnRecv(compId_, {});
+    setOnRecv({});
     ice_transport_.reset();
 }
 
 ssize_t
 IceSocket::send(const unsigned char* buf, size_t len)
 {
-    if (!ice_transport_.get())
+    if (not ice_transport_)
         return -1;
     return ice_transport_->send(compId_, buf, len);
 }
@@ -1754,9 +1758,8 @@ IceSocket::send(const unsigned char* buf, size_t len)
 ssize_t
 IceSocket::waitForData(std::chrono::milliseconds timeout)
 {
-    if (!ice_transport_.get())
+    if (not ice_transport_)
         return -1;
-
     std::error_code ec;
     return ice_transport_->waitForData(compId_, timeout, ec);
 }
