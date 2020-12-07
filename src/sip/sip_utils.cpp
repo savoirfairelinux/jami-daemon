@@ -42,6 +42,8 @@
 #include <vector>
 #include <algorithm>
 
+using namespace std::literals;
+
 namespace jami {
 namespace sip_utils {
 
@@ -131,29 +133,30 @@ parseDisplayName(const pjsip_contact_hdr* header)
     return parseDisplayName(reinterpret_cast<pjsip_name_addr*>(header->uri));
 }
 
-void
-stripSipUriPrefix(std::string& sipUri)
+std::string_view
+stripSipUriPrefix(std::string_view sipUri)
 {
     // Remove sip: prefix
-    static const char SIP_PREFIX[] = "sip:";
+    static constexpr auto SIP_PREFIX = "sip:"sv;
     size_t found = sipUri.find(SIP_PREFIX);
 
-    if (found != std::string::npos)
-        sipUri.erase(found, (sizeof SIP_PREFIX) - 1);
+    if (found != std::string_view::npos)
+        sipUri = sipUri.substr(found + SIP_PREFIX.size());
 
     // URI may or may not be between brackets
     found = sipUri.find('<');
-    if (found != std::string::npos)
-        sipUri.erase(found, 1);
+    if (found != std::string_view::npos)
+        sipUri = sipUri.substr(found + 1);
 
     found = sipUri.find('@');
-
-    if (found != std::string::npos)
-        sipUri.erase(found);
+    if (found != std::string_view::npos)
+        sipUri = {sipUri.begin(), found};
 
     found = sipUri.find('>');
-    if (found != std::string::npos)
-        sipUri.erase(found, 1);
+    if (found != std::string_view::npos)
+        sipUri = {sipUri.begin(), found};
+
+    return sipUri;
 }
 
 std::string
