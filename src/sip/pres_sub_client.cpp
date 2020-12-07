@@ -56,7 +56,7 @@ void
 PresSubClient::pres_client_timer_cb(pj_timer_heap_t* /*th*/, pj_timer_entry* entry)
 {
     PresSubClient* c = (PresSubClient*) entry->user_data;
-    JAMI_DBG("timeout for %s", c->getURI().c_str());
+    JAMI_DBG("timeout for %.*s", (int)c->getURI().size(), c->getURI().data());
 }
 
 /* Callback called when *client* subscription state has changed. */
@@ -73,8 +73,8 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
         return;
     }
 
-    JAMI_DBG("Subscription for pres_client '%s' is '%s'",
-             pres_client->getURI().c_str(),
+    JAMI_DBG("Subscription for pres_client '%.*s' is '%s'",
+             (int)pres_client->getURI().size(), pres_client->getURI().data(),
              pjsip_evsub_get_state_name(sub) ? pjsip_evsub_get_state_name(sub) : "null");
 
     pjsip_evsub_state state = pjsip_evsub_get_state(sub);
@@ -85,7 +85,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
         pres_client->enable(true);
         emitSignal<DRing::PresenceSignal::SubscriptionStateChanged>(pres->getAccount()
                                                                         ->getAccountID(),
-                                                                    pres_client->getURI().c_str(),
+                                                                    std::string(pres_client->getURI()),
                                                                     PJ_TRUE);
 
         pres->getAccount()->supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, true);
@@ -98,7 +98,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
 
         emitSignal<DRing::PresenceSignal::SubscriptionStateChanged>(pres->getAccount()
                                                                         ->getAccountID(),
-                                                                    pres_client->getURI().c_str(),
+                                                                    std::string(pres_client->getURI()),
                                                                     PJ_FALSE);
 
         pres_client->term_code_ = 200;
@@ -112,8 +112,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
                 std::ostringstream os;
                 os << pres_client->term_code_;
                 const std::string error = os.str() + "/"
-                                          + std::string(pres_client->term_reason_.ptr,
-                                                        pres_client->term_reason_.slen);
+                                          + sip_utils::as_view(pres_client->term_reason_);
 
                 std::string msg;
                 bool subscribe_allowed = PJ_FALSE;
@@ -158,9 +157,8 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
                 emitSignal<DRing::PresenceSignal::ServerError>(
                     pres_client->getPresence()->getAccount()->getAccountID(), error, msg);
 
-                std::string account_host = std::string(pj_gethostname()->ptr,
-                                                       pj_gethostname()->slen);
-                std::string sub_host = sip_utils::getHostFromUri(pres_client->getURI());
+                auto account_host = sip_utils::as_view(*pj_gethostname());
+                auto sub_host = sip_utils::getHostFromUri(pres_client->getURI());
 
                 if (not subscribe_allowed and account_host == sub_host)
                     pres_client->getPresence()
@@ -363,11 +361,10 @@ PresSubClient::isSubscribed()
     return monitored_;
 }
 
-std::string
+std::string_view
 PresSubClient::getURI()
 {
-    std::string res(uri_.ptr, uri_.slen);
-    return res;
+    return {uri_.ptr, (size_t)uri_.slen};
 }
 
 SIPPresence*
@@ -382,16 +379,16 @@ PresSubClient::isPresent()
     return status_.info[0].basic_open;
 }
 
-std::string
+std::string_view
 PresSubClient::getLineStatus()
 {
-    return std::string(status_.info[0].rpid.note.ptr, status_.info[0].rpid.note.slen);
+    return {status_.info[0].rpid.note.ptr, (size_t)status_.info[0].rpid.note.slen};
 }
 
 bool
 PresSubClient::isTermReason(const std::string& reason)
 {
-    const std::string myReason(term_reason_.ptr, term_reason_.slen);
+    const std::string_view myReason(term_reason_.ptr, (size_t)term_reason_.slen);
     return not myReason.compare(reason);
 }
 
@@ -429,7 +426,7 @@ PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
 void
 PresSubClient::enable(bool flag)
 {
-    JAMI_DBG("pres_client %s is %s monitored.", getURI().c_str(), flag ? "" : "NOT");
+    JAMI_DBG("pres_client %.*s is %s monitored.", (int)getURI().size(), getURI().data(), flag ? "" : "NOT");
     if (flag and not monitored_)
         pres_->addPresSubClient(this);
     monitored_ = flag;

@@ -178,16 +178,15 @@ SIPPresence::sendPresence(bool status, const std::string& note)
 }
 
 void
-SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_pres_status* status)
+SIPPresence::reportPresSubClientNotification(std::string_view uri, pjsip_pres_status* status)
 {
     /* Update our info. See pjsua_buddy_get_info() for additionnal ideas*/
-    const std::string acc_ID = acc_->getAccountID();
-    const std::string basic(status->info[0].basic_open ? "open" : "closed");
+    const std::string& acc_ID = acc_->getAccountID();
     const std::string note(status->info[0].rpid.note.ptr, status->info[0].rpid.note.slen);
-    JAMI_DBG(" Received status of PresSubClient  %s(acc:%s): status=%s note=%s",
-             uri.c_str(),
+    JAMI_DBG(" Received status of PresSubClient %.*s(acc:%s): status=%s note=%s",
+             (int)uri.size(), uri.data(),
              acc_ID.c_str(),
-             basic.c_str(),
+             status->info[0].basic_open ? "open" : "closed",
              note.c_str());
 
     if (uri == acc_->getFromUri()) {
@@ -197,7 +196,7 @@ SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_pres_
     }
     // report status to client signal
     emitSignal<DRing::PresenceSignal::NewBuddyNotification>(acc_ID,
-                                                            uri,
+                                                            std::string(uri),
                                                             status->info[0].basic_open,
                                                             note);
 }
