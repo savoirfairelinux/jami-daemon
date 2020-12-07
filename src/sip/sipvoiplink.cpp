@@ -204,12 +204,14 @@ transaction_request_cb(pjsip_rx_data* rdata)
     std::string_view viaHostname(sip_via.host.ptr, sip_via.host.slen);
     const std::string_view remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
     const std::string_view remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
-    char tmp[PJSIP_MAX_URL_SIZE];
-    size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
-    std::string peerNumber(tmp, length);
-    sip_utils::stripSipUriPrefix(peerNumber);
+    std::string peerNumber;
     if (not remote_user.empty() and not remote_hostname.empty())
         peerNumber = remote_user + "@" + remote_hostname;
+    else {
+        char tmp[PJSIP_MAX_URL_SIZE];
+        size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
+        peerNumber = sip_utils::stripSipUriPrefix(std::string_view(tmp, length));
+    }
 
     auto account(
         Manager::instance().sipVoIPLink().guessAccount(toUsername, viaHostname, remote_hostname));
