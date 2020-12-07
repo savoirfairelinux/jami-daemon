@@ -131,6 +131,12 @@ CONST_PJ_STR(const std::string_view& str) noexcept
     return {const_cast<char*>(str.data()), (pj_ssize_t) str.size()};
 }
 
+inline constexpr std::string_view
+as_view(const pj_str_t& str) noexcept
+{
+    return {str.ptr, (size_t) str.slen};
+}
+
 // PJSIP dialog locking in RAII way
 // Usage: declare local variable like this: sip_utils::PJDialogLock lock {dialog};
 // The lock is kept until the local variable is deleted
