@@ -68,6 +68,14 @@ regex_match(string_view sv,
 {
     return regex_match(sv.begin(), sv.end(), e, flags);
 }
+inline bool
+regex_search(string_view sv,
+            svmatch& m,
+            const regex& e,
+            regex_constants::match_flag_type flags = regex_constants::match_default)
+{
+    return regex_search(sv.begin(), sv.end(), m, e, flags);
+}
 } // namespace std
 
 namespace jami {
