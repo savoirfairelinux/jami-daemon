@@ -139,7 +139,7 @@ VideoMixer::stopInput()
 void
 VideoMixer::setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
-    activeSource_ = ob ? ob : videoLocal_.get();
+    activeSource_ = ob;
     layoutUpdated_ += 1;
 }
 

@@ -90,10 +90,7 @@ Conference::Conference()
                 }
                 auto active = false;
                 if (auto videoMixer = shared->getVideoMixer())
-                    active = info.source == videoMixer->getActiveParticipant()
-                             or (uri.empty()
-                                 and not videoMixer->getActiveParticipant()); // by default, local
-                                                                              // is shown as active
+                    active = info.source == videoMixer->getActiveParticipant();
                 subCalls.erase(it->second);
                 std::string_view partURI = uri;
                 partURI = string_remove_suffix(partURI, '@');
