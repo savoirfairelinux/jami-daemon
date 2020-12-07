@@ -227,27 +227,27 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
         if (request.find("NOTIFY") != std::string_view::npos) {
             if (body and body->data) {
-                int newCount {0};
-                int oldCount {0};
-                int urgentCount {0};
+                std::string_view body_view(static_cast<char*>(body->data), body->len);
+                auto pos = body_view.find("Voice-Message: ");
+                if (pos != std::string_view::npos) {
+                    int newCount {0};
+                    int oldCount {0};
+                    int urgentCount {0};
+                    std::string sp(body_view.substr(pos));
+                    int ret = sscanf(sp.c_str(),
+                                    "Voice-Message: %d/%d (%d/",
+                                    &newCount,
+                                    &oldCount,
+                                    &urgentCount);
 
-                std::string sp(static_cast<char*>(body->data), body->len);
-                auto pos = sp.find("Voice-Message: ");
-                sp = sp.substr(pos);
-
-                int ret = sscanf(sp.c_str(),
-                                 "Voice-Message: %d/%d (%d/",
-                                 &newCount,
-                                 &oldCount,
-                                 &urgentCount);
-
-                // According to rfc3842
-                // urgent messages are optional
-                if (ret >= 2)
-                    emitSignal<DRing::CallSignal::VoiceMailNotify>(account_id,
-                                                                   newCount,
-                                                                   oldCount,
-                                                                   urgentCount);
+                    // According to rfc3842
+                    // urgent messages are optional
+                    if (ret >= 2)
+                        emitSignal<DRing::CallSignal::VoiceMailNotify>(account_id,
+                                                                       newCount,
+                                                                       oldCount,
+                                                                       urgentCount);
+                }
             }
         } else if (request.find("MESSAGE") != std::string_view::npos) {
             // Reply 200 immediately (RFC 3428, ch. 7)
