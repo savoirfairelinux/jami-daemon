@@ -440,7 +440,8 @@ ArchiveAccountManager::syncDevices()
                  dev.second.name.c_str(),
                  dev.first.toString().c_str());
         auto syncDeviceKey = dht::InfoHash::get("inbox:" + dev.first.toString());
-        dht_->putEncrypted(syncDeviceKey, dev.first, sync_data);
+        if (dht_)
+            dht_->putEncrypted(syncDeviceKey, dev.first, sync_data);
     }
 }
 
