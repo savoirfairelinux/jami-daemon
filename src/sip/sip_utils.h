@@ -90,7 +90,7 @@ std::string fetchHeaderValue(pjsip_msg* msg, const std::string& field);
 
 pjsip_route_hdr* createRouteSet(const std::string& route, pj_pool_t* hdr_pool);
 
-void stripSipUriPrefix(std::string& sipUri);
+std::string_view stripSipUriPrefix(std::string_view sipUri);
 
 std::string parseDisplayName(const pjsip_name_addr* sip_name_addr);
 std::string parseDisplayName(const pjsip_from_hdr* header);
