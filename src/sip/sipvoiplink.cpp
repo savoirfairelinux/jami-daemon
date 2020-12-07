@@ -1412,8 +1412,7 @@ SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport* transport,
     port = pjsip_transport_get_default_port_for_type(transportType);
 
     // Initialize the sip address with the hostname
-    const auto pjMachineName = pj_gethostname();
-    addr = std::string(pjMachineName->ptr, pjMachineName->slen);
+    addr = sip_utils::as_view(*pj_gethostname());
 
     // Update address and port with active transport
     RETURN_IF_NULL(transport,
@@ -1441,7 +1440,7 @@ SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport* transport,
     }
 
     // Update local address based on the transport type
-    addr = std::string(param.ret_addr.ptr, param.ret_addr.slen);
+    addr = sip_utils::as_view(param.ret_addr);
 
     // Determine the local port based on transport information
     port = param.ret_port;
