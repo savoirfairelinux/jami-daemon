@@ -1434,7 +1434,9 @@ SIPAccount::getFromUri() const
 {
     std::string scheme;
     std::string transport;
-    std::string username(username_);
+
+    // Get login name if username is not specified
+    std::string username(username_.empty() ? getLoginName() : username_);
     std::string hostname(hostname_);
 
     // UDP does not require the transport specification
@@ -1444,18 +1446,15 @@ SIPAccount::getFromUri() const
     } else
         scheme = "sip:";
 
-    // Get login name if username is not specified
-    if (username_.empty())
-        username = getLoginName();
-
     // Get machine hostname if not provided
-    if (hostname_.empty())
-        hostname = std::string(pj_gethostname()->ptr, pj_gethostname()->slen);
+    if (hostname_.empty()) {
+        hostname = sip_utils::as_view(*pj_gethostname());
+    }
 
     if (IpAddr::isIpv6(hostname))
         hostname = IpAddr(hostname).toString(false, true);
 
-    const std::string uri = "<" + scheme + username + "@" + hostname + transport + ">";
+    std::string uri = "<" + scheme + username + "@" + hostname + transport + ">";
     if (not displayName_.empty())
         return "\"" + displayName_ + "\" " + uri;
     return uri;
