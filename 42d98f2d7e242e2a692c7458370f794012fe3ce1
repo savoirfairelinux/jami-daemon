@@ -22,6 +22,30 @@
       "revId": "42d98f2d7e242e2a692c7458370f794012fe3ce1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a8f50e72_b868825b",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-07T20:10:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "04a9b4b8_b14ee361",
+      "range": {
+        "startLine": 247,
+        "startChar": 68,
+        "endLine": 249,
+        "endChar": 81
+      },
+      "revId": "42d98f2d7e242e2a692c7458370f794012fe3ce1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
