@@ -368,57 +368,62 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
 #ifdef RING_ACCEL
     auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input.format()));
     bool isHardware = desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL);
+    try {
 #if defined(TARGET_OS_IOS) && TARGET_OS_IOS
-    if (accel_) {
-        auto pix = accel_->getSoftwareFormat();
-        if (input.format() != pix) {
-            std::unique_ptr<VideoFrame> framePtr;
-            framePtr = scaler_.convertFormat(input, pix);
+        if (accel_) {
+            auto pix = accel_->getSoftwareFormat();
+            if (input.format() != pix) {
+                std::unique_ptr<VideoFrame> framePtr;
+                framePtr = scaler_.convertFormat(input, pix);
+                frame = framePtr->pointer();
+            } else {
+                frame = input.pointer();
+            }
+        } else {
+#elif !defined(__APPLE__)
+        std::unique_ptr<VideoFrame> framePtr;
+        if (accel_ && accel_->isLinked() && isHardware) {
+            // Fully accelerated pipeline, skip main memory
+            // We have to check if the frame is hardware even if
+            // we are using linked HW encoder and decoder because after
+            // conference mixing the frame become software (prevent crashes)
+            frame = input.pointer();
+        } else if (isHardware) {
+            // Hardware decoded frame, transfer back to main memory
+            // Transfer to GPU if we have a hardware encoder
+            // Hardware decoders decode to NV12, but Jami's supported software encoders want YUV420P
+            AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_NV12);
+            framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
+            if (!accel_)
+                framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
+            else
+                framePtr = accel_->transfer(*framePtr);
+            frame = framePtr->pointer();
+        } else if (accel_) {
+            // Software decoded frame with a hardware encoder, convert to accepted format first
+            auto pix = accel_->getSoftwareFormat();
+            if (input.format() != pix) {
+                framePtr = scaler_.convertFormat(input, pix);
+                framePtr = accel_->transfer(*framePtr);
+            } else {
+                framePtr = accel_->transfer(input);
+            }
             frame = framePtr->pointer();
         } else {
-            frame = input.pointer();
-        }
-    } else {
-#elif !defined(__APPLE__)
-    std::unique_ptr<VideoFrame> framePtr;
-    if (accel_ && accel_->isLinked() && isHardware) {
-        // Fully accelerated pipeline, skip main memory
-        // We have to check if the frame is hardware even if
-        // we are using linked HW encoder and decoder because after
-        // conference mixing the frame become software (prevent crashes)
-        frame = input.pointer();
-    } else if (isHardware) {
-        // Hardware decoded frame, transfer back to main memory
-        // Transfer to GPU if we have a hardware encoder
-        // Hardware decoders decode to NV12, but Jami's supported software encoders want YUV420P
-        AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_NV12);
-        framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
-        if (!accel_)
-            framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
-        else
-            framePtr = accel_->transfer(*framePtr);
-        frame = framePtr->pointer();
-    } else if (accel_) {
-        // Software decoded frame with a hardware encoder, convert to accepted format first
-        auto pix = accel_->getSoftwareFormat();
-        if (input.format() != pix) {
-            framePtr = scaler_.convertFormat(input, pix);
-            framePtr = accel_->transfer(*framePtr);
-        } else {
-            framePtr = accel_->transfer(input);
-        }
-        frame = framePtr->pointer();
-    } else {
 #else
-    {
+        {
 #endif // defined(TARGET_OS_IOS) && TARGET_OS_IOS
 #endif
-        libav_utils::fillWithBlack(scaledFrame_.pointer());
-        scaler_.scale_with_aspect(input, scaledFrame_);
-        frame = scaledFrame_.pointer();
+            libav_utils::fillWithBlack(scaledFrame_.pointer());
+            scaler_.scale_with_aspect(input, scaledFrame_);
+            frame = scaledFrame_.pointer();
 #ifdef RING_ACCEL
-    }
+        }
 #endif
+    } catch (const std::runtime_error& e) {
+        JAMI_ERR("Accel failure: %s", e.what());
+        return -1;
+    }
 
     AVCodecContext* enc = encoders_[currentStreamIdx_];
     frame->pts = frame_number;
