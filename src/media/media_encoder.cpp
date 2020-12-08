@@ -392,20 +392,41 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
         // Transfer to GPU if we have a hardware encoder
         // Hardware decoders decode to NV12, but Jami's supported software encoders want YUV420P
         AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_NV12);
-        framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
+        try {
+            framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
+        } catch (const std::runtime_error& e) {
+            JAMI_ERR("Accel failure: %s", e.what());
+            return -1;
+        }
         if (!accel_)
             framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
-        else
-            framePtr = accel_->transfer(*framePtr);
+        else {
+            try {
+                framePtr = accel_->transfer(*framePtr);
+            } catch (const std::runtime_error& e) {
+                JAMI_ERR("Accel failure: %s", e.what());
+                return -1;
+            }
+        }
         frame = framePtr->pointer();
     } else if (accel_) {
         // Software decoded frame with a hardware encoder, convert to accepted format first
         auto pix = accel_->getSoftwareFormat();
         if (input.format() != pix) {
             framePtr = scaler_.convertFormat(input, pix);
-            framePtr = accel_->transfer(*framePtr);
+            try {
+                framePtr = accel_->transfer(*framePtr);
+            } catch (const std::runtime_error& e) {
+                JAMI_ERR("Accel failure: %s", e.what());
+                return -1;
+            }
         } else {
-            framePtr = accel_->transfer(input);
+            try {
+                framePtr = accel_->transfer(input);
+            } catch (const std::runtime_error& e) {
+                JAMI_ERR("Accel failure: %s", e.what());
+                return -1;
+            }
         }
         frame = framePtr->pointer();
     } else {
