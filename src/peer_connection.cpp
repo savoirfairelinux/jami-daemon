@@ -129,7 +129,7 @@ IceSocketEndpoint::read(ValueType* buf, std::size_t len, std::error_code& ec)
             return 0;
         try {
             auto res = ice_->recvfrom(compId_, reinterpret_cast<char*>(buf), len, ec);
-            if (res < 0)
+            if (res < 0 && ec && ec.value() != EAGAIN)
                 shutdown();
             return res;
         } catch (const std::exception& e) {
@@ -150,7 +150,8 @@ IceSocketEndpoint::write(const ValueType* buf, std::size_t len, std::error_code&
         res = ice_->send(compId_, reinterpret_cast<const unsigned char*>(buf), len);
         if (res < 0) {
             ec.assign(errno, std::generic_category());
-            shutdown();
+            if (errno != EAGAIN)
+                shutdown();
         } else {
             ec.clear();
         }
