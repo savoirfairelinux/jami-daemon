@@ -77,9 +77,15 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
 #ifdef RING_ACCEL
             auto desc = av_pix_fmt_desc_get(
                 (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(m))->format());
-            if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL))
-                framePtr = jami::video::HardwareAccel::transferToMainMemory(
-                    *std::static_pointer_cast<VideoFrame>(m), AV_PIX_FMT_NV12);
+            if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
+                try {
+                    framePtr = jami::video::HardwareAccel::transferToMainMemory(
+                        *std::static_pointer_cast<VideoFrame>(m), AV_PIX_FMT_NV12);
+                } catch (const std::runtime_error& e) {
+                    JAMI_ERR("Accel failure: %s", e.what());
+                    return;
+                }
+            }
             else
 #endif
                 framePtr = std::static_pointer_cast<VideoFrame>(m);
@@ -257,10 +263,15 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
         auto desc = av_pix_fmt_desc_get(
             (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
-            clone = video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
-                                                                   frame),
-                                                               static_cast<AVPixelFormat>(
-                                                                   ms.format));
+            try {
+                clone = video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
+                                                                    frame),
+                                                                static_cast<AVPixelFormat>(
+                                                                    ms.format));
+            } catch (const std::runtime_error& e) {
+                JAMI_ERR("Accel failure: %s", e.what());
+                return;
+            }
         } else {
             clone = std::make_unique<MediaFrame>();
             clone->copyFrom(*frame);
