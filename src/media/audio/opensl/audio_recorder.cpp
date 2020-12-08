@@ -36,7 +36,6 @@ void
 AudioRecorder::processSLCallback(SLAndroidSimpleBufferQueueItf bq)
 {
     try {
-        SLASSERT(bq == recBufQueueItf_);
         sample_buf* dataBuf {nullptr};
         if (devShadowQueue_.front(&dataBuf)) {
             devShadowQueue_.pop();
