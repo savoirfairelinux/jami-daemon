@@ -19,8 +19,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef SIPTRANSPORT_H_
-#define SIPTRANSPORT_H_
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -53,6 +52,7 @@ struct Certificate;
 namespace jami {
 
 class ChannelSocket;
+class SIPAccountBase;
 using onShutdownCb = std::function<void(void)>;
 
 struct TlsListener
@@ -115,6 +115,12 @@ public:
 
     void setIsIceTransport() { isIceTransport_ = true; }
     void setIsChanneledTransport() { isChanneledTransport_ = true; }
+    inline void setAccount(const std::shared_ptr<SIPAccountBase>& account) {
+        account_ = account;
+    }
+    inline const std::weak_ptr<SIPAccountBase>& getAccount() const {
+        return account_;
+    }
 
     uint16_t getTlsMtu();
 
@@ -125,8 +131,9 @@ private:
 
     std::unique_ptr<pjsip_transport, decltype(deleteTransport)&> transport_;
     std::shared_ptr<TlsListener> tlsListener_;
-    std::map<uintptr_t, SipTransportStateCallback> stateListeners_;
     std::mutex stateListenersMutex_;
+    std::map<uintptr_t, SipTransportStateCallback> stateListeners_;
+    std::weak_ptr<SIPAccountBase> account_ {};
 
     bool connected_ {false};
     bool isIceTransport_ {false};
@@ -202,5 +209,3 @@ private:
 };
 
 } // namespace jami
-
-#endif // SIPTRANSPORT_H_
