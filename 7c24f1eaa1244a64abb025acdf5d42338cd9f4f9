@@ -22,6 +22,30 @@
       "revId": "7c24f1eaa1244a64abb025acdf5d42338cd9f4f9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c965aacc_56bdc355",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 743,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-08T22:47:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "611fd129_a0f3e106",
+      "range": {
+        "startLine": 743,
+        "startChar": 27,
+        "endLine": 743,
+        "endChar": 31
+      },
+      "revId": "7c24f1eaa1244a64abb025acdf5d42338cd9f4f9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }

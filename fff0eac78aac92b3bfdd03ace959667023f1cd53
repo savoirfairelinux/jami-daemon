@@ -22,6 +22,30 @@
       "revId": "fff0eac78aac92b3bfdd03ace959667023f1cd53",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "152ba9dc_d09ebcf4",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 255,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-08T22:47:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "444fc2db_2a4ea8f7",
+      "range": {
+        "startLine": 255,
+        "startChar": 12,
+        "endLine": 255,
+        "endChar": 24
+      },
+      "revId": "fff0eac78aac92b3bfdd03ace959667023f1cd53",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
