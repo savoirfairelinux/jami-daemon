@@ -305,7 +305,13 @@ VideoMixer::render_frame(VideoFrame& output,
         return false;
 
 #ifdef RING_ACCEL
-    std::shared_ptr<VideoFrame> frame {HardwareAccel::transferToMainMemory(input, AV_PIX_FMT_NV12)};
+    std::shared_ptr<VideoFrame> frame;
+    try {
+        frame = HardwareAccel::transferToMainMemory(input, AV_PIX_FMT_NV12);
+    } catch (const std::runtime_error& e) {
+        JAMI_ERR("Accel failure: %s", e.what());
+        return false;
+    }
 #else
     std::shared_ptr<VideoFrame> frame = input;
 #endif
