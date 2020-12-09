@@ -96,6 +96,7 @@
 #include <sstream>
 #include <string>
 #include <system_error>
+#include <charconv>
 
 using namespace std::placeholders;
 
@@ -2197,18 +2198,18 @@ JamiAccount::doRegister_()
             return result;
         });
         connectionManager_->onChannelRequest([this](const DeviceId&, const std::string& name) {
-            auto isFile = name.substr(0, 7) == "file://";
-            auto isVCard = name.substr(0, 8) == "vcard://";
+            std::string_view name_view(name);
+            auto isFile = name_view.substr(0, 7) == "file://";
+            auto isVCard = name_view.substr(0, 8) == "vcard://";
             if (name == "sip") {
                 return true;
             } else if (isFile or isVCard) {
-                auto tid_str = isFile ? name.substr(7) : name.substr(8);
+                auto tid_str = isFile ? name_view.substr(7) : name_view.substr(8);
                 uint64_t tid;
-                std::istringstream iss(tid_str);
-                iss >> tid;
-                if (dhtPeerConnector_->onIncomingChannelRequest(tid)) {
+                auto [p, ec] = std::from_chars(tid_str.begin(), tid_str.end(), tid);
+                if (ec == std::errc() && dhtPeerConnector_->onIncomingChannelRequest(tid)) {
                     std::lock_guard<std::mutex> lk(transfersMtx_);
-                    incomingFileTransfers_.emplace(tid_str);
+                    incomingFileTransfers_.emplace(tid);
                     return true;
                 }
             }
@@ -2222,22 +2223,21 @@ JamiAccount::doRegister_()
                 if (!cert || !cert->issuer)
                     return;
                 auto peerId = cert->issuer->getId().toString();
-                auto isFile = name.substr(0, 7) == "file://";
-                auto isVCard = name.substr(0, 8) == "vcard://";
+                std::string_view name_view(name);
+                auto isFile = name_view.substr(0, 7) == "file://";
+                auto isVCard = name_view.substr(0, 8) == "vcard://";
                 if (name == "sip") {
                     cacheSIPConnection(std::move(channel), peerId, deviceId);
                 } else if (isFile or isVCard) {
-                    auto tid_str = isFile ? name.substr(7) : name.substr(8);
-                    std::unique_lock<std::mutex> lk(transfersMtx_);
-                    auto it = incomingFileTransfers_.find(tid_str);
-                    // Note, outgoing file transfers are ignored.
-                    if (it == incomingFileTransfers_.end())
-                        return;
-                    incomingFileTransfers_.erase(it);
-                    lk.unlock();
+                    auto tid_str = isFile ? name_view.substr(7) : name_view.substr(8);
                     uint64_t tid;
-                    std::istringstream iss(tid_str);
-                    iss >> tid;
+                    auto [p, ec] = std::from_chars(tid_str.begin(), tid_str.end(), tid);
+                    {
+                        std::unique_lock<std::mutex> lk(transfersMtx_);
+                        // Note, outgoing file transfers are ignored.
+                        if (ec != std::errc() || incomingFileTransfers_.erase(tid))
+                            return;
+                    }
                     std::function<void(const std::string&)> cb;
                     if (isVCard)
                         cb = [peerId, accountId = getAccountID()](const std::string& path) {

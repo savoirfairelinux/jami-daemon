@@ -740,7 +740,7 @@ private:
 
     // File transfers
     std::mutex transfersMtx_ {};
-    std::set<std::string> incomingFileTransfers_ {};
+    std::set<uint64_t> incomingFileTransfers_ {};
 
     /**
      * Helper used to send SIP messages on a channeled connection
