@@ -73,6 +73,7 @@
 #include <thread>
 #include <chrono>
 #include <ctime>
+#include <charconv>
 
 #ifdef _WIN32
 #include <lmcons.h>
@@ -991,10 +992,7 @@ SIPAccount::doRegister2_()
     }
 
     // Init STUN settings for this account if the user selected it
-    if (stunEnabled_)
-        initStunConfiguration();
-    else
-        stunServerName_ = pj_str((char*) stunServer_.c_str());
+    initStunConfiguration();
 
     // In our definition of the ip2ip profile (aka Direct IP Calls),
     // no registration should be performed
@@ -1401,23 +1399,15 @@ SIPAccount::initTlsConfiguration()
 void
 SIPAccount::initStunConfiguration()
 {
-    size_t pos;
-    std::string stunServer, serverName, serverPort;
-
-    stunServer = stunServer_;
-    // Init STUN socket
-    pos = stunServer.find(':');
-
-    if (pos == std::string::npos) {
-        stunServerName_ = pj_str((char*) stunServer.data());
+    std::string_view stunServer(stunServer_);
+    auto pos = stunServer.find(':');
+    if (pos == std::string_view::npos) {
+        stunServerName_ = sip_utils::CONST_PJ_STR(stunServer);
         stunPort_ = PJ_STUN_PORT;
-        // stun_status = pj_sockaddr_in_init (&stun_srv.ipv4, &stun_adr, (pj_uint16_t) 3478);
     } else {
-        serverName = stunServer.substr(0, pos);
-        serverPort = stunServer.substr(pos + 1);
-        stunPort_ = atoi(serverPort.data());
-        stunServerName_ = pj_str((char*) serverName.data());
-        // stun_status = pj_sockaddr_in_init (&stun_srv.ipv4, &stun_adr, (pj_uint16_t) nPort);
+        stunServerName_ = sip_utils::CONST_PJ_STR(stunServer.substr(0, pos));
+        auto serverPort = stunServer.substr(pos + 1);
+        std::from_chars(serverPort.begin(), serverPort.end(), stunPort_);
     }
 }
 
