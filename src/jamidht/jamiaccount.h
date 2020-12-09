@@ -526,10 +526,20 @@ public:
 
     // Message send/load
     void sendMessage(const std::string& conversationId,
+                     const Json::Value& value,
+                     const std::string& parent = "",
+                     bool announce = true);
+    void sendMessage(const std::string& conversationId,
                      const std::string& message,
                      const std::string& parent = "",
                      const std::string& type = "text/plain",
                      bool announce = true);
+    /**
+     * Add to the related conversation the call history message
+     * @param uri           Peer number
+     * @param duration_ms   The call duration in ms
+     */
+    void addCallHistoryMessage(const std::string& uri, uint64_t duration_ms);
     uint32_t loadConversationMessages(const std::string& conversationId,
                                       const std::string& fromMessage = "",
                                       size_t n = 0);
@@ -963,15 +973,16 @@ private:
     void sendMessageNotification(const Conversation& conversation,
                                  const std::string& commitId,
                                  bool sync);
+
+    void announceMemberMessage(const std::string& convId,
+                               const std::map<std::string, std::string>& message) const;
+
     /**
      * Get related conversation with member
      * @param uri       The member to search for
      * @return the conversation id if found else empty
      */
     std::string getOneToOneConversation(const std::string& uri) const;
-
-    void announceMemberMessage(const std::string& convId,
-                               const std::map<std::string, std::string>& message) const;
 };
 
 static inline std::ostream&
