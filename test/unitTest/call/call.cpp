@@ -183,7 +183,7 @@ CallTest::testCall()
     DRing::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Start call between alice and Bob");
-    auto call = aliceAccount->newOutgoingCall(bobUri, {});
+    auto call = aliceAccount->newOutgoingCall(bobUri);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callReceived.load(); }));
 
@@ -242,7 +242,7 @@ CallTest::testCachedCall()
         cv.wait_for(lk, std::chrono::seconds(30), [&] { return successfullyConnected.load(); }));
 
     JAMI_INFO("Start call between alice and Bob");
-    auto call = aliceAccount->newOutgoingCall(bobUri, {});
+    auto call = aliceAccount->newOutgoingCall(bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callReceived.load(); }));
 
     callStopped = 0;
@@ -281,7 +281,7 @@ CallTest::testStopSearching()
     DRing::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Start call between alice and Bob");
-    auto call = aliceAccount->newOutgoingCall(bobUri, {});
+    auto call = aliceAccount->newOutgoingCall(bobUri);
 
     // Bob not there, so we should get a SEARCHING STATUS
     JAMI_INFO("Wait OVER state");

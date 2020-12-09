@@ -48,13 +48,6 @@ CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subje
         std::size_t found = callMediaHandler->id().find_last_of(DIR_SEPARATOR_CH);
         auto preferences = PluginPreferencesUtils::getPreferencesValuesMap(
             callMediaHandler->id().substr(0, found));
-        bool toggle = preferences.at("always") == "1";
-        for (const auto& toggledMediaHandlerPair : mediaHandlerToggled_[data.id]) {
-            if (toggledMediaHandlerPair.first == (uintptr_t) callMediaHandler.get()) {
-                toggle = toggledMediaHandlerPair.second;
-                break;
-            }
-        }
 #ifndef __ANDROID__
         if (toggle)
             toggleCallMediaHandler((uintptr_t) callMediaHandler.get(), data.id, true);
@@ -225,8 +218,8 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
             if (handlerIt != callMediaHandlers_.end()) {
                 if (toggle) {
                     notifyAVSubject((*handlerIt), subject.first, subject.second);
-                    if (isAttached((*handlerIt)))
-                        handlers[mediaHandlerId] = true;
+                    if (isAttached((*handlerIt)) && handlers.find(mediaHandlerId) == handlers.end())
+                        handlers.insert(mediaHandlerId);
                 } else {
                     (*handlerIt)->detach();
                     handlers[mediaHandlerId] = false;
@@ -241,7 +234,9 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
         auto sipCall = std::dynamic_pointer_cast<SIPCall>(
             Manager::instance().callFactory.getCall(callId));
         assert(sipCall);
-        sipCall->getVideoRtp().restartSender();
+        if (auto const& videoRtp = sipCall->getVideoRtp()) {
+            videoRtp->restartSender();
+        }
     }
 #endif
 }
