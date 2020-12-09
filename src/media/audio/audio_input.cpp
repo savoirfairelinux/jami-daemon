@@ -384,6 +384,7 @@ AudioInput::setFormat(const AudioFormat& fmt)
 void
 AudioInput::setMuted(bool isMuted)
 {
+    JAMI_WARN("Audio Input muted [%s]", isMuted ? "YES" : "NO");
     muteState_ = isMuted;
 }
 

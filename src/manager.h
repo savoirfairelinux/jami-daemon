@@ -64,13 +64,13 @@ class JamiAccount;
 class SIPVoIPLink;
 class JamiPluginManager;
 
-
 /** Manager (controller) of daemon */
 // TODO DRING_PUBLIC only if tests
 class DRING_TESTABLE Manager
 {
 private:
     std::mt19937_64 rand_;
+
 public:
     // TODO DRING_PUBLIC only if tests
     static DRING_TESTABLE Manager& instance();
@@ -150,6 +150,28 @@ public:
                              const std::string& to,
                              const std::string& conf_id = "",
                              const std::map<std::string, std::string>& volatileCallDetails = {});
+
+    /**
+     * Place a new call
+     * @param accountId the user's account ID
+     * @param callee the callee
+     * @param mediaList a list of medias to include
+     * @param confId the conference ID if any
+     * @return the call ID on success, empty string otherwise
+     */
+    std::string outgoingCall(const std::string& accountId,
+                             const std::string& callee,
+                             const std::vector<DRing::MediaMap>& mediaList,
+                             const std::string& confId = "");
+
+    /**
+     * Request a media change of an ongoing call
+     * @param callID the call ID.
+     * @param mediaList a list of the new media
+     * @return true on success
+     */
+    bool requestMediaChange(const std::string& callID,
+                            const std::vector<DRing::MediaMap>& mediaList);
 
     /**
      * Functions which occur with a user's action
@@ -596,6 +618,7 @@ public:
     bool isAGCEnabled() const;
     void setAGCState(bool enabled);
 
+    // TODO. Delete me.
     bool switchInput(const std::string& callid, const std::string& res);
 
     /**
@@ -878,6 +901,18 @@ public:
         const std::string& accountId,
         const std::map<std::string, std::string>& volatileCallDetails = {});
 
+    /**
+     * Create a new outgoing call
+     * @param toUrl Destination address
+     * @param accountId local account
+     * @param mediaList the list of medias
+     * @return A (shared) pointer of Call class type.
+     * @note This function raises VoipLinkException() on error.
+     */
+    std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
+                                          const std::string& accountId,
+                                          const std::vector<DRing::MediaMap>& mediaList);
+
     CallFactory callFactory;
 
     IceTransportFactory& getIceTransportFactory();
@@ -934,15 +969,12 @@ public:
     void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
     void hangupParticipant(const std::string& confId, const std::string& participant);
 
-    void setDefaultModerator(const std::string& accountID,
-                                const std::string& peerURI,
-                                bool state);
+    void setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state);
     std::vector<std::string> getDefaultModerators(const std::string& accountID);
     void enableLocalModerators(const std::string& accountID, bool state);
     bool isLocalModeratorsEnabled(const std::string& accountID);
     void setAllModerators(const std::string& accountID, bool allModerators);
     bool isAllModerators(const std::string& accountID);
-
 
 private:
     Manager();
