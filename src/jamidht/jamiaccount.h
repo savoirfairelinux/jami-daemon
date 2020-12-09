@@ -969,6 +969,9 @@ private:
      * @return the conversation id if found else empty
      */
     std::string getOneToOneConversation(const std::string& uri) const;
+
+    void announceMemberMessage(const std::string& convId,
+                               const std::map<std::string, std::string>& message) const;
 };
 
 static inline std::ostream&
