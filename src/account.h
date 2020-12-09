@@ -221,12 +221,12 @@ public:
                                       const std::string& detail_str = {});
 
     /* They should be treated like macro definitions by the C++ compiler */
-    std::string getUsername() const { return username_; }
+    const std::string& getUsername() const { return username_; }
 
-    std::string getHostname() const { return hostname_; }
+    const std::string& getHostname() const { return hostname_; }
     void setHostname(const std::string& hostname) { hostname_ = hostname; }
 
-    std::string getAlias() const { return alias_; }
+    const std::string& getAlias() const { return alias_; }
 
     void setAlias(const std::string& alias) { alias_ = alias; }
 
