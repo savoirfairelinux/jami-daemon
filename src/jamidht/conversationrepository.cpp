@@ -2307,16 +2307,18 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
     return {};
 }
 
-bool
+std::vector<ConversationCommit>
 ConversationRepository::validFetch(const std::string& remoteDevice) const
 {
     auto newCommit = remoteHead(remoteDevice);
-    if (not pimpl_ or newCommit.empty()) {
-        return false;
-    }
+    if (not pimpl_ or newCommit.empty())
+        return {};
     auto commitsToValidate = pimpl_->behind(newCommit);
     std::reverse(std::begin(commitsToValidate), std::end(commitsToValidate));
-    return pimpl_->validCommits(commitsToValidate);
+    auto isValid = pimpl_->validCommits(commitsToValidate);
+    if (isValid)
+        return commitsToValidate;
+    return {};
 }
 
 bool
