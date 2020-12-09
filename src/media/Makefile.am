@@ -16,6 +16,7 @@ libmedia_la_SOURCES = \
 	media_encoder.cpp \
 	media_io_handle.cpp \
 	media_codec.cpp \
+	media_attribute.cpp \
 	system_codec_container.cpp \
 	srtp.c \
 	recordable.cpp \
