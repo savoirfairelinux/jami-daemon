@@ -33,7 +33,7 @@ using random_device = dht::crypto::random_device;
 #include <exception>
 #include <optional>
 
-constexpr size_t MAX_FETCH_SIZE {256*1024*1024}; // 256Mb
+constexpr size_t MAX_FETCH_SIZE {256 * 1024 * 1024}; // 256Mb
 
 namespace jami {
 
@@ -44,16 +44,26 @@ public:
         : account_(account)
         , id_(id)
     {
-        auto shared = account.lock();
+        repository_ = repository();
+        if (!repository_)
+            throw std::logic_error("Couldn't initialize repo");
+
+        initMembers();
+    }
+
+    GitRepository repository() const
+    {
+        // TODO use only one object
+        auto shared = account_.lock();
         if (!shared)
-            throw std::logic_error("No account detected when loading conversation");
+            return {nullptr, git_repository_free};
         auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + id_;
         git_repository* repo = nullptr;
         // TODO share this repo with GitServer
         if (git_repository_open(&repo, path.c_str()) != 0)
-            throw std::logic_error("Couldn't open " + path);
-        repository_ = {std::move(repo), git_repository_free};
+            return {nullptr, git_repository_free};
+        return {std::move(repo), git_repository_free};
     }
 
     GitSignature signature();
@@ -99,10 +109,24 @@ public:
     GitTree treeAtCommit(const std::string& commitId) const;
     std::string getCommitType(const std::string& commitMsg) const;
 
+    std::vector<std::string> getInitialMembers() const;
+
+    GitRepository repository_ {nullptr, git_repository_free};
+
     std::weak_ptr<JamiAccount> account_;
     const std::string id_;
-    GitRepository repository_ {nullptr, git_repository_free};
     mutable std::optional<ConversationMode> mode_ {};
+
+    // Members utils
+    mutable std::mutex membersMtx_ {};
+    std::vector<ConversationMember> members_ {};
+
+    std::vector<ConversationMember> members() const {
+        std::lock_guard<std::mutex> lk(membersMtx_);
+        return members_;
+    }
+
+    void initMembers();
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -116,7 +140,8 @@ GitRepository
 create_empty_repository(const std::string path)
 {
     git_repository* repo = nullptr;
-    git_repository_init_options opts = GIT_REPOSITORY_INIT_OPTIONS_INIT;
+    git_repository_init_options opts;
+    git_repository_init_options_init(&opts, GIT_REPOSITORY_INIT_OPTIONS_VERSION);
     opts.flags |= GIT_REPOSITORY_INIT_MKPATH;
     opts.initial_head = "main";
     if (git_repository_init_ext(&repo, path.c_str(), &opts) < 0) {
@@ -135,7 +160,7 @@ git_add_all(git_repository* repo)
 {
     // git add -A
     git_index* index_ptr = nullptr;
-    git_strarray array = {0};
+    git_strarray array {nullptr, 0};
     if (git_repository_index(&index_ptr, repo) < 0) {
         JAMI_ERR("Could not open repository index");
         return false;
@@ -235,15 +260,16 @@ add_initial_files(GitRepository& repo, const std::shared_ptr<JamiAccount>& accou
 
 /**
  * Sign and create the initial commit
- * @param repo      The git repository
- * @param account   The account who signs
- * @param mode      The mode
+ * @param repo          The git repository
+ * @param account       The account who signs
+ * @param mode          The mode
+ * @param otherMember   If one to one
  * @return          The first commit hash or empty if failed
  */
 std::string
 initial_commit(GitRepository& repo,
                const std::shared_ptr<JamiAccount>& account,
-               ConversationMode mode)
+               ConversationMode mode, const std::string& otherMember = "")
 {
     auto deviceId = std::string(account->currentDeviceId());
     auto name = account->getDisplayName();
@@ -282,6 +308,9 @@ initial_commit(GitRepository& repo,
 
     Json::Value json;
     json["mode"] = static_cast<int>(mode);
+    if (mode == ConversationMode::ONE_TO_ONE) {
+        json["invited"] = otherMember;
+    }
     json["type"] = "initial";
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
@@ -400,8 +429,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
         return false;
     }
     GitAnnotatedCommit annotated {annotated_ptr, git_annotated_commit_free};
-    if (git_commit_lookup(&parent, repository_.get(), git_annotated_commit_id(annotated.get()))
-        < 0) {
+    if (git_commit_lookup(&parent, repository_.get(), git_annotated_commit_id(annotated.get())) < 0) {
         JAMI_ERR("Couldn't lookup commit %s", wanted_ref.c_str());
         return false;
     }
@@ -438,7 +466,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
 
     auto account = account_.lock();
     if (!account)
-        false;
+        return false;
     // git commit -S
     auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
     auto signed_buf = account->identity().first->sign(to_sign_vec);
@@ -459,12 +487,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
         JAMI_INFO("New merge commit added with id: %s", commit_str);
         // Move commit to main branch
         git_reference* ref_ptr = nullptr;
-        if (git_reference_create(&ref_ptr,
-                                 repository_.get(),
-                                 "refs/heads/main",
-                                 &commit_oid,
-                                 true,
-                                 nullptr)
+        if (git_reference_create(&ref_ptr, repository_.get(), "refs/heads/main", &commit_oid, true, nullptr)
             < 0) {
             JAMI_WARN("Could not move commit to main");
         }
@@ -482,6 +505,7 @@ ConversationRepository::Impl::mergeFastforward(const git_oid* target_oid, int is
 {
     // Initialize target
     git_reference* target_ref_ptr = nullptr;
+    auto repo = repository();
     if (is_unborn) {
         git_reference* head_ref_ptr = nullptr;
         // HEAD reference is unborn, lookup manually so we don't try to resolve it
@@ -495,12 +519,7 @@ ConversationRepository::Impl::mergeFastforward(const git_oid* target_oid, int is
         const auto* symbolic_ref = git_reference_symbolic_target(head_ref.get());
 
         // Create our main reference on the target OID
-        if (git_reference_create(&target_ref_ptr,
-                                 repository_.get(),
-                                 symbolic_ref,
-                                 target_oid,
-                                 0,
-                                 nullptr)
+        if (git_reference_create(&target_ref_ptr, repository_.get(), symbolic_ref, target_oid, 0, nullptr)
             < 0) {
             JAMI_ERR("failed to create main reference");
             return false;
@@ -538,13 +557,14 @@ ConversationRepository::Impl::mergeFastforward(const git_oid* target_oid, int is
     }
     git_reference_free(new_target_ref);
 
-    return 0;
+    return true;
 }
 
 bool
 ConversationRepository::Impl::add(const std::string& path)
 {
-    if (!repository_)
+    auto repo = repository();
+    if (!repo)
         return false;
     git_index* index_ptr = nullptr;
     if (git_repository_index(&index_ptr, repository_.get()) < 0) {
@@ -661,8 +681,9 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
         return false;
     }
 
-    if (base_match[3] != userUri) {
-        JAMI_ERR("Admin voted for other user: %s vs %s", userUri.c_str(), base_match[3]);
+    std::string matchedUri = base_match[3];
+    if (matchedUri != userUri) {
+        JAMI_ERR("Admin voted for other user: %s vs %s", userUri.c_str(), matchedUri.c_str());
         return false;
     }
     std::string votedUri = base_match[2];
@@ -730,32 +751,12 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
         return false;
     auto userUri = cert->issuer->getId().toString();
 
+    auto repo = repository();
     std::string repoPath = git_repository_workdir(repository_.get());
     if (mode() == ConversationMode::ONE_TO_ONE) {
-        auto bannedPath = repoPath + "banned";
-        auto invitedPath = repoPath + "invited";
-        auto membersPath = repoPath + "members";
-        auto adminsPath = repoPath + "admins";
-        std::vector<std::string> otherMembers;
-        for (const auto& f : fileutils::readDirectory(invitedPath)) {
-            if (f != userUri && f != uriMember) {
-                JAMI_ERR("Invalid add in one to one conversation: %s", uriMember.c_str());
-                return false;
-            }
-        }
-        for (const auto& f : fileutils::readDirectory(membersPath)) {
-            if (f != userUri + ".crt" && f != uriMember + ".crt") {
-                JAMI_ERR("Invalid add in one to one conversation: %s", uriMember.c_str());
-                return false;
-            }
-        }
-        for (const auto& f : fileutils::readDirectory(adminsPath)) {
-            if (f != userUri + ".crt" && f != uriMember + ".crt") {
-                JAMI_ERR("Invalid add in one to one conversation: %s", uriMember.c_str());
-                return false;
-            }
-        }
-        if (fileutils::readDirectory(bannedPath).size() > 0) {
+        auto initialMembers = getInitialMembers();
+        auto it = std::find(initialMembers.begin(), initialMembers.end(), uriMember);
+        if (it == initialMembers.end()) {
             JAMI_ERR("Invalid add in one to one conversation: %s", uriMember.c_str());
             return false;
         }
@@ -836,7 +837,9 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
     auto userUri = cert->issuer->getId().toString();
     // Check no other files changed
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
-    if (changedFiles.size() != 3) {
+    auto oneone = mode() == ConversationMode::ONE_TO_ONE;
+    std::size_t wantedChanged = oneone? 2 : 3;
+    if (changedFiles.size() != wantedChanged) {
         return false;
     }
 
@@ -851,13 +854,15 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
         return false;
 
     // Check /invited removed
-    if (fileAtTree(invitedFile, treeNew)) {
-        JAMI_ERR("%s invited not removed", userUri.c_str());
-        return false;
-    }
-    if (!fileAtTree(invitedFile, treeOld)) {
-        JAMI_ERR("%s invited not found", userUri.c_str());
-        return false;
+    if (!oneone) {
+        if (fileAtTree(invitedFile, treeNew)) {
+            JAMI_ERR("%s invited not removed", userUri.c_str());
+            return false;
+        }
+        if (!fileAtTree(invitedFile, treeOld)) {
+            JAMI_ERR("%s invited not found", userUri.c_str());
+            return false;
+        }
     }
 
     // Check /members added
@@ -975,6 +980,7 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
     // If not for self check that vote is valid and not added
     auto nbAdmins = 0;
     auto nbVotes = 0;
+    auto repo = repository();
     std::string repoPath = git_repository_workdir(repository_.get());
     for (const auto& certificate : fileutils::readDirectory(repoPath + "admins")) {
         if (certificate.find(".crt") == std::string::npos) {
@@ -1086,9 +1092,6 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
 std::string
 ConversationRepository::Impl::commit(const std::string& msg)
 {
-    if (!repository_)
-        return {};
-
     auto account = account_.lock();
     if (!account)
         return {};
@@ -1107,6 +1110,7 @@ ConversationRepository::Impl::commit(const std::string& msg)
 
     // Retrieve current index
     git_index* index_ptr = nullptr;
+    auto repo = repository();
     if (git_repository_index(&index_ptr, repository_.get()) < 0) {
         JAMI_ERR("Could not open repository index");
         return {};
@@ -1239,8 +1243,10 @@ ConversationRepository::Impl::diffStats(const std::string& newId, const std::str
 GitDiff
 ConversationRepository::Impl::diff(const std::string& idNew, const std::string& idOld) const
 {
-    if (!repository_)
+    if (!repository_) {
+        JAMI_ERR("Cannot get reference for HEAD");
         return {nullptr, git_diff_free};
+    }
 
     // Retrieve tree for commit new
     git_oid oid;
@@ -1308,6 +1314,7 @@ std::vector<ConversationCommit>
 ConversationRepository::Impl::behind(const std::string& from) const
 {
     git_oid oid_local, oid_remote;
+    auto repo = repository();
     if (git_reference_name_to_id(&oid_local, repository_.get(), "HEAD") < 0) {
         JAMI_ERR("Cannot get reference for HEAD");
         return {};
@@ -1335,6 +1342,7 @@ ConversationRepository::Impl::log(const std::string& from, const std::string& to
     std::vector<ConversationCommit> commits {};
 
     git_oid oid;
+    auto repo = repository();
     if (from.empty()) {
         if (git_reference_name_to_id(&oid, repository_.get(), "HEAD") < 0) {
             JAMI_ERR("Cannot get reference for HEAD");
@@ -1348,16 +1356,14 @@ ConversationRepository::Impl::log(const std::string& from, const std::string& to
     }
 
     git_revwalk* walker_ptr = nullptr;
-    if (git_revwalk_new(&walker_ptr, repository_.get()) < 0
-        || git_revwalk_push(walker_ptr, &oid) < 0) {
+    if (git_revwalk_new(&walker_ptr, repository_.get()) < 0 || git_revwalk_push(walker_ptr, &oid) < 0) {
         JAMI_ERR("Couldn't init revwalker for conversation %s", id_.c_str());
         return commits;
     }
     GitRevWalker walker {walker_ptr, git_revwalk_free};
     git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL);
 
-    auto x = git_oid_tostr_s(&oid);
-    for (auto idx = 0; !git_revwalk_next(&oid, walker.get()); ++idx) {
+    for (auto idx = 0u; !git_revwalk_next(&oid, walker.get()); ++idx) {
         if (n != 0 && idx == n) {
             break;
         }
@@ -1393,11 +1399,7 @@ ConversationRepository::Impl::log(const std::string& from, const std::string& to
         cc->author = author;
         cc->parents = parents;
         git_buf signature = {}, signed_data = {};
-        if (git_commit_extract_signature(&signature,
-                                         &signed_data,
-                                         repository_.get(),
-                                         &oid,
-                                         "signature")
+        if (git_commit_extract_signature(&signature, &signed_data, repository_.get(), &oid, "signature")
             < 0) {
             JAMI_WARN("Could not extract signature for commit %s", id.c_str());
         } else {
@@ -1431,6 +1433,7 @@ ConversationRepository::Impl::treeAtCommit(const std::string& commitId) const
 {
     git_oid oid;
     git_commit* commit = nullptr;
+    auto repo = repository();
     if (git_oid_fromstr(&oid, commitId.c_str()) < 0
         || git_commit_lookup(&commit, repository_.get(), &oid) < 0) {
         JAMI_WARN("Failed to look up commit %s", commitId.c_str());
@@ -1461,6 +1464,79 @@ ConversationRepository::Impl::getCommitType(const std::string& commitMsg) const
     return type;
 }
 
+std::vector<std::string>
+ConversationRepository::Impl::getInitialMembers() const
+{
+    auto firstCommit = log(id_, "", 1);
+    if (firstCommit.size() == 0) {
+        return {};
+    }
+    auto commit = firstCommit[0];
+    
+    auto authorDevice = commit.author.email;
+    auto cert = tls::CertificateStore::instance().getCertificate(authorDevice);
+    if (!cert && cert->issuer) {
+        return {};
+    }
+    auto authorId = cert->issuer->getId().toString();
+    if (mode() == ConversationMode::ONE_TO_ONE) {
+        std::string err;
+        Json::Value root;
+        Json::CharReaderBuilder rbuilder;
+        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+        if (!reader->parse(commit.commit_msg.data(), commit.commit_msg.data() + commit.commit_msg.size(), &root, &err)) {
+            return {authorId};
+        }
+        if (root.isMember("invited"))
+            return {authorId, root["invited"].asString()};
+    }
+    return {authorId};
+}
+
+void
+ConversationRepository::Impl::initMembers()
+{
+    if (!repository_)
+        return;
+
+    std::vector<std::string> uris;
+    std::lock_guard<std::mutex> lk(membersMtx_);
+    members_.clear();
+    std::string repoPath = git_repository_workdir(repository_.get());
+    std::vector<std::string> paths = {
+        repoPath + DIR_SEPARATOR_STR + "invited",
+        repoPath + DIR_SEPARATOR_STR + "admins",
+        repoPath + DIR_SEPARATOR_STR + "members",
+        repoPath + DIR_SEPARATOR_STR + "banned" + DIR_SEPARATOR_STR + "members"
+    };
+    std::vector<MemberRole> roles = {
+        MemberRole::INVITED,
+        MemberRole::ADMIN,
+        MemberRole::MEMBER,
+        MemberRole::BANNED,
+    };
+
+    auto i = 0;
+    for (const auto& p: paths) {
+        for (const auto& f : fileutils::readDirectory(p)) {
+            auto pos = f.find(".crt");
+            auto uri = f.substr(0, pos);
+            uris.emplace_back(uri);
+            members_.emplace_back(ConversationMember {uri, roles[i]});
+        }
+        ++i;
+    }
+
+    if (mode() == ConversationMode::ONE_TO_ONE) {
+        for (const auto& member : getInitialMembers()) {
+            auto it = std::find(uris.begin(), uris.end(), member);
+            if (it == uris.end()) {
+                members_.emplace_back(ConversationMember {member, MemberRole::INVITED});
+            }
+        }
+    }
+}
+
 std::string
 ConversationRepository::Impl::diffStats(const GitDiff& diff) const
 {
@@ -1485,7 +1561,7 @@ ConversationRepository::Impl::diffStats(const GitDiff& diff) const
 
 std::unique_ptr<ConversationRepository>
 ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& account,
-                                           ConversationMode mode)
+                                           ConversationMode mode, const std::string& otherMember)
 {
     auto shared = account.lock();
     if (!shared)
@@ -1517,7 +1593,7 @@ ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& acc
     }
 
     // Commit changes
-    auto id = initial_commit(repo, shared, mode);
+    auto id = initial_commit(repo, shared, mode, otherMember);
     if (id.empty()) {
         JAMI_ERR("Couldn't create initial commit in %s", tmpPath.c_str());
         fileutils::removeAll(tmpPath, true);
@@ -1554,13 +1630,15 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
 
     git_clone_options clone_options;
     git_clone_options_init(&clone_options, GIT_CLONE_OPTIONS_VERSION);
-    clone_options.fetch_opts = GIT_FETCH_OPTIONS_INIT;
+    git_fetch_options_init(&clone_options.fetch_opts, GIT_FETCH_OPTIONS_VERSION);
     size_t received_bytes = 0;
     clone_options.fetch_opts.callbacks.payload = static_cast<void*>(&received_bytes);
-    clone_options.fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats, void* payload) {
+    clone_options.fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats,
+                                                              void* payload) {
         *(static_cast<size_t*>(payload)) += stats->received_bytes;
         if (*(static_cast<size_t*>(payload)) > MAX_FETCH_SIZE) {
-            JAMI_ERR("Abort fetching repository, the fetch is too big: %lu bytes", *(static_cast<size_t*>(payload)));
+            JAMI_ERR("Abort fetching repository, the fetch is too big: %lu bytes",
+                     *(static_cast<size_t*>(payload)));
             return -1;
         }
         return 0;
@@ -1792,12 +1870,7 @@ ConversationRepository::amend(const std::string& id, const std::string& msg)
 
     // Move commit to main branch
     git_reference* ref_ptr = nullptr;
-    if (git_reference_create(&ref_ptr,
-                             pimpl_->repository_.get(),
-                             "refs/heads/main",
-                             &commit_id,
-                             true,
-                             nullptr)
+    if (git_reference_create(&ref_ptr, pimpl_->repository_.get(), "refs/heads/main", &commit_id, true, nullptr)
         < 0) {
         JAMI_WARN("Could not move commit to main");
     }
@@ -1816,7 +1889,8 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
 {
     // Fetch distant repository
     git_remote* remote_ptr = nullptr;
-    git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
+    git_fetch_options fetch_opts;
+    git_fetch_options_init(&fetch_opts, GIT_FETCH_OPTIONS_VERSION);
 
     auto lastMsg = logN("", 1);
     if (lastMsg.size() == 0) {
@@ -1832,10 +1906,7 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
             JAMI_ERR("Couldn't lookup for remote %s", remoteDeviceId.c_str());
             return false;
         }
-        if (git_remote_create(&remote_ptr,
-                              pimpl_->repository_.get(),
-                              remoteDeviceId.c_str(),
-                              channelName.c_str())
+        if (git_remote_create(&remote_ptr, pimpl_->repository_.get(), remoteDeviceId.c_str(), channelName.c_str())
             < 0) {
             JAMI_ERR("Could not create remote for repository for conversation %s",
                      pimpl_->id_.c_str());
@@ -1849,7 +1920,8 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     fetch_opts.callbacks.transfer_progress = [](const git_indexer_progress* stats, void* payload) {
         *(static_cast<size_t*>(payload)) += stats->received_bytes;
         if (*(static_cast<size_t*>(payload)) > MAX_FETCH_SIZE) {
-            JAMI_ERR("Abort fetching repository, the fetch is too big: %lu bytes", *(static_cast<size_t*>(payload)));
+            JAMI_ERR("Abort fetching repository, the fetch is too big: %lu bytes",
+                     *(static_cast<size_t*>(payload)));
             return -1;
         }
         return 0;
@@ -1968,8 +2040,7 @@ ConversationRepository::merge(const std::string& merge_id)
     git_merge_analysis_t analysis;
     git_merge_preference_t preference;
     const git_annotated_commit* const_annotated = annotated.get();
-    if (git_merge_analysis(&analysis, &preference, pimpl_->repository_.get(), &const_annotated, 1)
-        < 0) {
+    if (git_merge_analysis(&analysis, &preference, pimpl_->repository_.get(), &const_annotated, 1) < 0) {
         JAMI_ERR("Merge operation aborted: repository analysis failed");
         return false;
     }
@@ -1986,7 +2057,7 @@ ConversationRepository::merge(const std::string& merge_id)
             JAMI_INFO("Merge analysis result: Fast-forward");
         const auto* target_oid = git_annotated_commit_id(annotated.get());
 
-        if (pimpl_->mergeFastforward(target_oid, (analysis & GIT_MERGE_ANALYSIS_UNBORN)) < 0) {
+        if (!pimpl_->mergeFastforward(target_oid, (analysis & GIT_MERGE_ANALYSIS_UNBORN))) {
             const git_error* err = giterr_last();
             if (err)
                 JAMI_ERR("Fast forward merge failed: %s", err->message);
@@ -1994,9 +2065,11 @@ ConversationRepository::merge(const std::string& merge_id)
         }
         return true;
     } else if (analysis & GIT_MERGE_ANALYSIS_NORMAL) {
-        git_merge_options merge_opts = GIT_MERGE_OPTIONS_INIT;
+        git_merge_options merge_opts;
+        git_merge_options_init(&merge_opts, GIT_MERGE_OPTIONS_VERSION);
         merge_opts.file_flags = GIT_MERGE_FILE_STYLE_DIFF3;
-        git_checkout_options checkout_opts = GIT_CHECKOUT_OPTIONS_INIT;
+        git_checkout_options checkout_opts;
+        git_checkout_options_init(&checkout_opts, GIT_CHECKOUT_OPTIONS_VERSION);
         checkout_opts.checkout_strategy = GIT_CHECKOUT_FORCE | GIT_CHECKOUT_ALLOW_CONFLICTS;
 
         if (preference & GIT_MERGE_PREFERENCE_FASTFORWARD_ONLY) {
@@ -2004,8 +2077,7 @@ ConversationRepository::merge(const std::string& merge_id)
             return false;
         }
 
-        if (git_merge(pimpl_->repository_.get(), &const_annotated, 1, &merge_opts, &checkout_opts)
-            < 0) {
+        if (git_merge(pimpl_->repository_.get(), &const_annotated, 1, &merge_opts, &checkout_opts) < 0) {
             const git_error* err = giterr_last();
             if (err)
                 JAMI_ERR("Git merge failed: %s", err->message);
@@ -2339,22 +2411,42 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
     return {};
 }
 
-bool
+std::vector<ConversationCommit>
 ConversationRepository::validFetch(const std::string& remoteDevice) const
 {
     auto newCommit = remoteHead(remoteDevice);
-    if (not pimpl_ or newCommit.empty()) {
-        return false;
-    }
+    if (not pimpl_ or newCommit.empty())
+        return {};
     auto commitsToValidate = pimpl_->behind(newCommit);
     std::reverse(std::begin(commitsToValidate), std::end(commitsToValidate));
-    return pimpl_->validCommits(commitsToValidate);
+    auto isValid = pimpl_->validCommits(commitsToValidate);
+    if (isValid)
+        return commitsToValidate;
+    return {};
 }
 
 bool
 ConversationRepository::validClone() const
 {
     return pimpl_->validCommits(logN("", 0));
+}
+
+std::vector<std::string>
+ConversationRepository::getInitialMembers() const
+{
+    return pimpl_->getInitialMembers();
+}
+
+std::vector<ConversationMember>
+ConversationRepository::members() const
+{
+    return pimpl_->members();
+}
+
+void
+ConversationRepository::refreshMembers() const
+{
+    return pimpl_->initMembers();
 }
 
 } // namespace jami
