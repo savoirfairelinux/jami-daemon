@@ -88,10 +88,8 @@ public:
             if (!erased)
                 ++it;
         }
-        if (!deviceId) {
-            dht::ThreadPool::io().run([infos = std::make_shared<decltype(infos_)>(
-                                           std::move(infos_))] { infos->clear(); });
-        }
+        if (!deviceId)
+            dht::ThreadPool::io().run([infos = std::move(infos_)]() mutable { infos.clear(); });
     }
     void shutdown()
     {
@@ -733,10 +731,8 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
     }
     std::unique_lock<std::mutex> lk {info->mutex_};
     info->ice_ = Manager::instance()
-        .getIceTransportFactory().createUTransport(account.getAccountID().c_str(),
-                                                      1,
-                                                      true,
-                                                      ice_config);
+                     .getIceTransportFactory()
+                     .createUTransport(account.getAccountID().c_str(), 1, true, ice_config);
     if (not info->ice_) {
         JAMI_ERR("Cannot initialize ICE session.");
         if (connReadyCb_)
@@ -849,7 +845,8 @@ ConnectionManager::closeConnectionsWith(const DeviceId& deviceId)
         info->responseCv_.notify_all();
         if (info->ice_) {
             std::unique_lock<std::mutex> lk {info->mutex_};
-            info->ice_.reset();
+            dht::ThreadPool::io().run(
+                [ice = std::shared_ptr<IceTransport>(std::move(info->ice_))] {});
         }
     }
     // This will close the TLS Session
