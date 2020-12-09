@@ -120,7 +120,7 @@ P2PStreamWrite(git_smart_subtransport_stream* stream, const char* buffer, size_t
     }
     std::error_code ec;
     auto written = fs->socket->write(reinterpret_cast<const unsigned char*>(buffer), len, ec);
-    if (written < 0) {
+    if (ec) {
         giterr_set_str(GITERR_NET, ec.message().c_str());
         return -1;
     }
