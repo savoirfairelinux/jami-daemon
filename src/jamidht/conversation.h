@@ -24,6 +24,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <json/json.h>
 
 namespace jami {
 
@@ -85,6 +86,7 @@ public:
     std::string sendMessage(const std::string& message,
                             const std::string& type = "text/plain",
                             const std::string& parent = "");
+    std::string sendMessage(const Json::Value& message, const std::string& parent = "");
     /**
      * Get a range of messages
      * @param cb        The callback when loaded
