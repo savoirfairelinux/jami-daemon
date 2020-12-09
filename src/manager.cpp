@@ -851,7 +851,6 @@ Manager::init(const std::string& config_file)
 void
 Manager::finish() noexcept
 {
-    git_libgit2_shutdown();
     bool expected = false;
     if (not pimpl_->finished_.compare_exchange_strong(expected, true))
         return;
@@ -899,6 +898,7 @@ Manager::finish() noexcept
         pimpl_->sipLink_.reset();
 
         pj_shutdown();
+        git_libgit2_shutdown();
 
         if (!pimpl_->ioContext_->stopped()) {
             pimpl_->ioContext_->reset(); // allow to finish
