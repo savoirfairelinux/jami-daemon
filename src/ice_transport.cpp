@@ -195,7 +195,7 @@ public:
     bool handleEvents(unsigned max_msec);
 
     // Wait data on components
-    pj_ssize_t lastSentLen_ {};
+    pj_size_t lastSentLen_ {};
     std::condition_variable waitDataCv_ = {};
 
     std::atomic_bool destroying_ {false};
@@ -931,7 +931,7 @@ void
 IceTransport::Impl::setDefaultRemoteAddress(int comp_id, const IpAddr& addr)
 {
     // Component ID must be valid.
-    assert(comp_id < component_count_);
+    assert(static_cast<unsigned>(comp_id) < component_count_);
 
     iceDefaultRemoteAddr_[comp_id] = addr;
     // The port does not matter. Set it 0 to avoid confusion.
@@ -942,7 +942,7 @@ const IpAddr&
 IceTransport::Impl::getDefaultRemoteAddress(int comp_id) const
 {
     // Component ID must be valid.
-    assert(comp_id < component_count_);
+    assert(static_cast<unsigned>(comp_id) < component_count_);
 
     return iceDefaultRemoteAddr_[comp_id];
 }
