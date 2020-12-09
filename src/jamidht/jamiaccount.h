@@ -956,6 +956,9 @@ private:
     void sendMessageNotification(const Conversation& conversation,
                                  const std::string& commitId,
                                  bool sync);
+
+    void announceMemberMessage(const std::string& convId,
+                               const std::map<std::string, std::string>& message) const;
 };
 
 static inline std::ostream&

@@ -4047,9 +4047,10 @@ JamiAccount::addConversationMember(const std::string& conversationId,
     auto messages = it->second->loadMessages(commitId, 1);
     if (messages.empty())
         return false; // should not happen
-    emitSignal<DRing::ConversationSignal::MessageReceived>(getAccountID(),
-                                                           conversationId,
-                                                           messages.front());
+    auto message = messages.front();
+    if (message.at("type") == "member")
+        announceMemberMessage(conversationId, message);
+    emitSignal<DRing::ConversationSignal::MessageReceived>(getAccountID(), conversationId, message);
     if (sendRequest)
         sendTextMessage(contactUri, it->second->generateInvitation());
     sendMessageNotification(*it->second, commitId, true);
@@ -4076,6 +4077,8 @@ JamiAccount::removeConversationMember(const std::string& conversationId,
             // Announce new commits
             for (const auto& msg : messages) {
                 lastCommit = msg.at("id");
+                if (msg.at("type") == "member")
+                    announceMemberMessage(conversationId, msg);
                 emitSignal<DRing::ConversationSignal::MessageReceived>(getAccountID(),
                                                                        conversationId,
                                                                        msg);
@@ -4233,17 +4236,18 @@ JamiAccount::fetchNewCommits(const std::string& peer,
         else
             lastMessageId = lastMessage.front().at("id");
 
-        auto announceMessages = [w = weak(), conversationId, lastMessageId]() {
+        auto announceMessages = [w = weak(), conversationId](
+                                    const std::vector<std::map<std::string, std::string>>& messages) {
             auto shared = w.lock();
             if (!shared)
                 return;
             std::unique_lock<std::mutex> lk(shared->conversationsMtx_);
             auto conversation = shared->conversations_.find(conversationId);
             if (conversation != shared->conversations_.end() && conversation->second) {
-                // Do a diff between last message, and current new message when merged
-                auto messages = conversation->second->loadMessages("", lastMessageId);
                 lk.unlock();
                 for (const auto& message : messages) {
+                    if (message.at("type") == "member")
+                        shared->announceMemberMessage(conversationId, message);
                     JAMI_DBG("[Account %s] New message received for conversation %s with id %s",
                              shared->getAccountID().c_str(),
                              conversationId.c_str(),
@@ -4276,8 +4280,8 @@ JamiAccount::fetchNewCommits(const std::string& peer,
                       conversationId.c_str());
             auto merged = itUsed->second->mergeHistory(deviceId);
             stopUseConversation(conversationId);
-            if (merged)
-                announceMessages();
+            if (!merged.empty())
+                announceMessages(merged);
         } else {
             lk.unlock();
             // Else we need to add a new gitSocket
@@ -4327,8 +4331,8 @@ JamiAccount::fetchNewCommits(const std::string& peer,
                                           conversationId.c_str());
                             auto merged = itUsed->second->mergeHistory(deviceId.toString());
                             shared->stopUseConversation(conversationId);
-                            if (merged)
-                                announceMessages();
+                            if (!merged.empty())
+                                announceMessages(merged);
                         } else {
                             lk.unlock();
                             shared->stopUseConversation(conversationId);
@@ -5074,6 +5078,34 @@ JamiAccount::sendMessageNotification(const Conversation& conversation,
             continue;
         // Announce to all members that a new message is sent
         sendTextMessage(uri, {{"application/im-gitmessage-id", text}});
+    }
+}
+
+void
+JamiAccount::announceMemberMessage(const std::string& convId,
+                                   const std::map<std::string, std::string>& message) const
+{
+    if (message.at("type") == "member") {
+        if (message.find("uri") == message.end() || message.find("action") == message.end())
+            return;
+        auto uri = message.at("uri");
+        auto actionStr = message.at("action");
+        auto action = 0;
+        if (actionStr == "add")
+            action = 0;
+        else if (actionStr == "join")
+            action = 1;
+        else if (actionStr == "remove")
+            action = 2;
+        else if (actionStr == "ban")
+            action = 3;
+        else
+            return;
+
+        emitSignal<DRing::ConversationSignal::ConversationMemberEvent>(getAccountID(),
+                                                                       convId,
+                                                                       uri,
+                                                                       action);
     }
 }
 

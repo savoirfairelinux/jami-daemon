@@ -69,6 +69,8 @@ public:
     std::unique_ptr<ConversationRepository> repository_;
     std::weak_ptr<JamiAccount> account_;
     std::atomic_bool isRemoving_ {false};
+    std::vector<std::map<std::string, std::string>> convCommitToMap(
+        const std::vector<ConversationCommit>& commits) const;
     std::vector<std::map<std::string, std::string>> loadMessages(const std::string& fromMessage = "",
                                                                  const std::string& toMessage = "",
                                                                  size_t n = 0);
@@ -103,19 +105,10 @@ Conversation::Impl::repoPath() const
 }
 
 std::vector<std::map<std::string, std::string>>
-Conversation::Impl::loadMessages(const std::string& fromMessage,
-                                 const std::string& toMessage,
-                                 size_t n)
+Conversation::Impl::convCommitToMap(const std::vector<ConversationCommit>& commits) const
 {
-    if (!repository_)
-        return {};
-    std::vector<ConversationCommit> convCommits;
-    if (toMessage.empty())
-        convCommits = repository_->logN(fromMessage, n);
-    else
-        convCommits = repository_->log(fromMessage, toMessage);
     std::vector<std::map<std::string, std::string>> result = {};
-    for (const auto& commit : convCommits) {
+    for (const auto& commit : commits) {
         auto authorDevice = commit.author.email;
         auto cert = tls::CertificateStore::instance().getCertificate(authorDevice);
         if (!cert && cert->issuer) {
@@ -134,6 +127,7 @@ Conversation::Impl::loadMessages(const std::string& fromMessage,
             type = "merge";
         }
         std::string body {};
+        std::map<std::string, std::string> message;
         if (type.empty()) {
             std::string err;
             Json::Value cm;
@@ -143,21 +137,40 @@ Conversation::Impl::loadMessages(const std::string& fromMessage,
                               commit.commit_msg.data() + commit.commit_msg.size(),
                               &cm,
                               &err)) {
-                type = cm["type"].asString();
-                body = cm["body"].asString();
+                for (auto const& id : cm.getMemberNames()) {
+                    if (id == "type") {
+                        type = cm[id].asString();
+                        continue;
+                    }
+                    message.insert({id, cm[id].asString()});
+                }
             } else {
                 JAMI_WARN("%s", err.c_str());
             }
         }
-        std::map<std::string, std::string> message {{"id", commit.id},
-                                                    {"parents", parents},
-                                                    {"author", authorId},
-                                                    {"type", type},
-                                                    {"body", body},
-                                                    {"timestamp", std::to_string(commit.timestamp)}};
+        message["id"] = commit.id;
+        message["parents"] = parents;
+        message["author"] = authorId;
+        message["type"] = type;
+        message["timestamp"] = std::to_string(commit.timestamp);
         result.emplace_back(message);
     }
     return result;
+}
+
+std::vector<std::map<std::string, std::string>>
+Conversation::Impl::loadMessages(const std::string& fromMessage,
+                                 const std::string& toMessage,
+                                 size_t n)
+{
+    if (!repository_)
+        return {};
+    std::vector<ConversationCommit> convCommits;
+    if (toMessage.empty())
+        convCommits = repository_->logN(fromMessage, n);
+    else
+        convCommits = repository_->log(fromMessage, toMessage);
+    return convCommitToMap(convCommits);
 }
 
 Conversation::Conversation(const std::weak_ptr<JamiAccount>& account, ConversationMode mode)
@@ -355,36 +368,36 @@ Conversation::loadMessages(const std::string& fromMessage, const std::string& to
 bool
 Conversation::fetchFrom(const std::string& uri)
 {
-    // TODO check if device id or account id
     return pimpl_->repository_->fetch(uri);
 }
 
-bool
+std::vector<std::map<std::string, std::string>>
 Conversation::mergeHistory(const std::string& uri)
 {
     if (not pimpl_ or not pimpl_->repository_) {
         JAMI_WARN("Invalid repo. Abort merge");
-        return false;
+        return {};
     }
     auto remoteHead = pimpl_->repository_->remoteHead(uri);
     if (remoteHead.empty()) {
         JAMI_WARN("Could not get HEAD of %s", uri.c_str());
-        return false;
+        return {};
     }
 
     // Validate commit
-    if (!pimpl_->repository_->validFetch(uri)) {
+    auto newCommits = pimpl_->repository_->validFetch(uri);
+    if (newCommits.empty()) {
         JAMI_ERR("Could not validate history with %s", uri.c_str());
-        return false;
+        return {};
     }
 
     // If validated, merge
     if (!pimpl_->repository_->merge(remoteHead)) {
         JAMI_ERR("Could not merge history with %s", uri.c_str());
-        return false;
+        return {};
     }
     JAMI_DBG("Successfully merge history with %s", uri.c_str());
-    return true;
+    return pimpl_->convCommitToMap(newCommits);
 }
 
 std::map<std::string, std::string>
