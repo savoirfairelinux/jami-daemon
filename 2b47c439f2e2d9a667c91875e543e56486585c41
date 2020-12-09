@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e2cda0a0_5c2cbc1d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 649,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-12-09T22:32:14Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027char *\u0027 but the argument has type \u0027const std::__cxx11::match_results\u003c__gnu_cxx::__normal_iterator\u003cconst char *, std::__cxx11::basic_string\u003cchar\u003e \u003e, std::allocator\u003cstd::__cxx11::sub_match\u003c__gnu_cxx::__normal_iterator\u003cconst char *, std::__cxx11::basic_string\u003cchar\u003e \u003e \u003e \u003e \u003e::value_type\u0027 (aka \u0027const sub_match\u003c__gnu_cxx::__normal_iterator\u003cconst char *, std::__cxx11::basic_string\u003cchar\u003e \u003e \u003e\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "2b47c439f2e2d9a667c91875e543e56486585c41",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3e70cf61_135c173e",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 1561,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-12-09T22:32:14Z",
+      "side": 1,
+      "message": "CRITICAL SonarQube violation:\n\n\ncannot pass non-trivial object of type \u0027std::__cxx11::basic_string\u003cchar\u003e\u0027 to variadic function; expected type from format string was \u0027char *\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-non-pod-varargs",
+      "revId": "2b47c439f2e2d9a667c91875e543e56486585c41",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
