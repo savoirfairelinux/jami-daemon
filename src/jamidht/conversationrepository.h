@@ -101,11 +101,7 @@ public:
 
     /**
      * Write the certificate in /members and commit the change
-<<<<<<< HEAD
      * @param uri    Member to add
-=======
-     * @param uri    Uri to add
->>>>>>> 21da66bc7... swarm: add support for modes
      * @return the commit id if successful
      */
     std::string addMember(const std::string& uri);
@@ -207,7 +203,7 @@ public:
     std::string voteKick(const std::string& uri, bool isDevice);
     std::string resolveVote(const std::string& uri, bool isDevice);
 
-    bool validFetch(const std::string& remoteDevice) const;
+    std::vector<ConversationCommit> validFetch(const std::string& remoteDevice) const;
     bool validClone() const;
 
 private:
