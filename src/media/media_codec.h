@@ -37,6 +37,8 @@
 
 namespace jami {
 
+enum class KeyExchangeProtocol { NONE, SDES };
+
 enum CodecType : unsigned {
     CODEC_NONE = 0, // indicates that no codec is used or defined
     CODEC_ENCODER = 1,
@@ -261,7 +263,7 @@ struct MediaDescription
     /** Audio / video */
     MediaType type {};
     bool enabled {false};
-    bool holding {false};
+    bool onHold {false};
 
     /** Endpoint socket address */
     IpAddr addr {};
@@ -287,5 +289,59 @@ struct MediaDescription
     /** Crypto parameters */
     CryptoAttribute crypto {};
 };
+
+using MediaMap = std::map<std::string, std::string>;
+class MediaAttribute
+{
+public:
+    MediaAttribute(MediaType type = MediaType::MEDIA_NONE,
+                   bool muted = false,
+                   KeyExchangeProtocol security = KeyExchangeProtocol::SDES,
+                   bool enabled = true,
+                   std::string_view source = {},
+                   std::string_view label = {})
+        : type_(type)
+        , muted_(muted)
+        , security_(security)
+        , enabled_(enabled)
+        , sourceUri_(source)
+        , label_(label) {};
+
+    ~MediaAttribute() {};
+
+    // Media list parser
+    static std::vector<MediaAttribute> parseMediaList(const std::vector<MediaMap>& mediaList);
+    static std::pair<bool, MediaType> getMediaType(const std::vector<MediaMap>& mediaList,
+                                                   unsigned index);
+    static std::pair<bool, bool> getBoolValue(const std::vector<MediaMap>& mediaList,
+                                              unsigned index,
+                                              const std::string& key);
+    static std::pair<bool, std::string> getStringValue(const std::vector<MediaMap>& mediaList,
+                                                       unsigned index,
+                                                       const std::string& key);
+
+    MediaType type_;
+    bool muted_;
+    KeyExchangeProtocol security_;
+    bool enabled_;
+    std::string_view sourceUri_;
+    std::string_view label_;
+};
+
+namespace MediaAttributeKey {
+constexpr static char MEDIA_TYPE[] = "MEDIA_TYPE"; // string
+constexpr static char ENABLED[] = "ENABLED";       // bool
+constexpr static char MUTED[] = "MUTED";           // bool
+constexpr static char SECURE[] = "SECURE";         // bool
+constexpr static char SOURCE[] = "SOURCE";         // string
+constexpr static char LABEL[] = "LABEL";           // string
+} // namespace MediaAttributeKey
+
+namespace MediaAttributeValue {
+constexpr static char TRUE_VAL[] = "true";
+constexpr static char FALSE_VAL[] = "false";
+constexpr static char AUDIO[] = "audio";
+constexpr static char VIDEO[] = "video";
+} // namespace MediaAttributeValue
 
 } // namespace jami

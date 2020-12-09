@@ -163,19 +163,18 @@ public:
 
         /* In the case when the mediaHandler receives a hardware format
          * frame and converts it to main memory, we need to restart the
-         * sender to unlink ours encoder and decoder.
+         * sender to unlink our encoder and decoder.
          *
          * When we deactivate a mediaHandler, we try to relink the encoder
          * and decoder by restarting the sender.
          */
         if (applyRestart) {
-            auto call = std::dynamic_pointer_cast<SIPCall>(
+            auto sipCall = std::dynamic_pointer_cast<SIPCall>(
                 Manager::instance().callFactory.getCall(callId));
-            assert(call);
-            auto videoRtp = call->getVideoRtp();
-            if (videoRtp != nullptr) {
-                videoRtp->restartSender();
-            }
+            assert(sipCall);
+            auto rtp = sipCall->getVideoRtp();
+            assert(rtp != nullptr);
+            rtp->restartSender();
         }
     }
 
