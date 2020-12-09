@@ -29,6 +29,7 @@
 #include "ice_transport.h"
 #include "media_codec.h"
 #include "sip_utils.h"
+#include "media_codec.h"
 
 #include <pjmedia/sdp.h>
 #include <pjmedia/sdp_neg.h>
@@ -73,6 +74,13 @@ public:
     ~Sdp();
 
     /**
+     * Set the local media capabilities.
+     * @param List of codec in preference order
+     */
+    void setLocalMediaCapabilities(
+        MediaType type, const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedCodecs);
+
+    /**
      *  Read accessor. Get the local passive sdp session information before negotiation
      *
      *  @return The structure that describes a SDP session
@@ -109,10 +117,7 @@ public:
      * SDP negotiator instance with it.
      * @returns true if offer was created, false otherwise
      */
-    bool createOffer(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
-                     const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
-                     sip_utils::KeyExchangeProtocol,
-                     bool holding = false);
+    bool createOffer(const std::vector<MediaAttributes>& mediasList);
 
     /*
      * On receiving an invite outside a dialog, build the local offer and create the
@@ -121,10 +126,7 @@ public:
      * @param remote    The remote offer
      */
     void receiveOffer(const pjmedia_sdp_session* remote,
-                      const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
-                      const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
-                      sip_utils::KeyExchangeProtocol,
-                      bool holding = false);
+                      const std::vector<MediaAttributes>& mediasList);
 
     /**
      * Start the sdp negotiation.
@@ -149,10 +151,7 @@ public:
 
     std::string_view getPublishedIP() const { return publishedIpAddr_; }
 
-    void setLocalPublishedAudioPort(uint16_t port)
-    {
-        setLocalPublishedAudioPorts(port, port + 1);
-    }
+    void setLocalPublishedAudioPort(uint16_t port) { setLocalPublishedAudioPorts(port, port + 1); }
 
     void setLocalPublishedAudioPorts(uint16_t audio_port, uint16_t control_port)
     {
@@ -160,10 +159,7 @@ public:
         localAudioControlPort_ = control_port;
     }
 
-    void setLocalPublishedVideoPort(uint16_t port)
-    {
-        setLocalPublishedVideoPorts(port, port + 1);
-    }
+    void setLocalPublishedVideoPort(uint16_t port) { setLocalPublishedVideoPorts(port, port + 1); }
 
     void setLocalPublishedVideoPorts(uint16_t video_port, uint16_t control_port)
     {
@@ -171,6 +167,7 @@ public:
         localVideoControlPort_ = control_port;
     }
 
+#if 0
     uint16_t getLocalVideoPort() const { return localVideoDataPort_; }
 
     uint16_t getLocalVideoControlPort() const { return localVideoControlPort_; }
@@ -178,9 +175,12 @@ public:
     uint16_t getLocalAudioPort() const { return localAudioDataPort_; }
 
     uint16_t getLocalAudioControlPort() const { return localAudioControlPort_; }
+#endif
 
-    std::vector<MediaDescription> getMediaSlots(const pjmedia_sdp_session* session,
-                                                bool remote) const;
+    std::vector<MediaDescription> getLocalMediaDescriptions() const;
+
+    std::vector<MediaDescription> getMediaDescriptions(const pjmedia_sdp_session* session,
+                                                       bool remote) const;
 
     using MediaSlot = std::pair<MediaDescription, MediaDescription>;
     std::vector<MediaSlot> getMediaSlots() const;
@@ -272,29 +272,20 @@ private:
      * Build the sdp media section
      * Add rtpmap field if necessary
      */
-    pjmedia_sdp_media* setMediaDescriptorLines(bool audio,
-                                               bool holding,
-                                               sip_utils::KeyExchangeProtocol);
+    pjmedia_sdp_media* addMediaDescription(MediaType type, bool onHold, KeyExchangeProtocol);
     pjmedia_sdp_attr* generateSdesAttribute();
 
     void setTelephoneEventRtpmap(pjmedia_sdp_media* med);
 
-    /**
-     * Build the local media capabilities for this session
-     * @param List of codec in preference order
+    /*
+     * Create a new SDP
      */
-    void setLocalMediaAudioCapabilities(
-        const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs);
-    void setLocalMediaVideoCapabilities(
-        const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs);
+    void createLocalSession();
 
     /*
-     * Build the local SDP offer
+     * Validate SDP
      */
-    int createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
-                           const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
-                           sip_utils::KeyExchangeProtocol,
-                           bool holding);
+    int validateSession() const;
 
     /*
      * Adds a sdes attribute to the given media section.

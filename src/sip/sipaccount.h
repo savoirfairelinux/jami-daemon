@@ -373,10 +373,10 @@ public:
 
     virtual bool isTlsEnabled() const override { return tlsEnable_; }
 
-    virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const override
+    virtual KeyExchangeProtocol getSrtpKeyExchange() const override
     {
-        if (tlsEnable_ && srtpKeyExchange_ == sip_utils::KeyExchangeProtocol::NONE)
-            return sip_utils::KeyExchangeProtocol::SDES;
+        if (tlsEnable_ && srtpKeyExchange_ == KeyExchangeProtocol::NONE)
+            return KeyExchangeProtocol::SDES;
         return srtpKeyExchange_;
     }
 
@@ -532,7 +532,7 @@ private:
     bool hostnameMatch(std::string_view hostname) const;
     bool proxyMatch(std::string_view hostname) const;
 
-    bool isSrtpEnabled() const { return srtpKeyExchange_ != sip_utils::KeyExchangeProtocol::NONE; }
+    bool isSrtpEnabled() const { return srtpKeyExchange_ != KeyExchangeProtocol::NONE; }
 
     /**
      * Callback called by the transport layer when the registration
@@ -705,7 +705,7 @@ private:
      * Specifies the type of key exchange used for SRTP, if any.
      * This only determine if the media channel is secured.
      */
-    sip_utils::KeyExchangeProtocol srtpKeyExchange_ {sip_utils::KeyExchangeProtocol::NONE};
+    KeyExchangeProtocol srtpKeyExchange_ {KeyExchangeProtocol::NONE};
 
     /**
      * Determine if the softphone should fallback on non secured media channel if SRTP negotiation

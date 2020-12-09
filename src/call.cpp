@@ -370,6 +370,7 @@ Call::getDetails() const
         {DRing::Call::Details::ACCOUNTID, getAccountId()},
         {DRing::Call::Details::AUDIO_MUTED, std::string(bool_to_str(isAudioMuted_))},
         {DRing::Call::Details::VIDEO_MUTED, std::string(bool_to_str(isVideoMuted_))},
+        // TODO_MC. AUDIO_ONLY flag is not really needed. Just use VIDEO_MUTED to disable VIDEO.
         {DRing::Call::Details::AUDIO_ONLY, std::string(bool_to_str(isAudioOnly_))},
     };
 }
@@ -672,7 +673,6 @@ Call::setConferenceInfo(const std::string& msg)
                 conf->updateConferenceInfo(confInfo_);
         }
     }
-
 }
 
 } // namespace jami

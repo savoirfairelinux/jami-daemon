@@ -83,7 +83,9 @@ static void transaction_state_changed_cb(pjsip_inv_session* inv,
                                          pjsip_transaction* tsx,
                                          pjsip_event* e);
 static std::shared_ptr<SIPCall> getCallFromInvite(pjsip_inv_session* inv);
+#ifdef DEBUG_SIP_REQUEST_MSG
 static void processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* e);
+#endif
 
 static void
 handleIncomingOptions(pjsip_rx_data* rdata)
@@ -165,10 +167,12 @@ try_respond_stateless(pjsip_endpoint* endpt,
     return !PJ_SUCCESS;
 }
 
-template <typename T>
-bool is_uninitialized(std::weak_ptr<T> const& weak) {
+template<typename T>
+bool
+is_uninitialized(std::weak_ptr<T> const& weak)
+{
     using wt = std::weak_ptr<T>;
-    return !weak.owner_before(wt{}) && !wt{}.owner_before(weak);
+    return !weak.owner_before(wt {}) && !wt {}.owner_before(weak);
 }
 
 static pj_bool_t
@@ -215,7 +219,10 @@ transaction_request_cb(pjsip_rx_data* rdata)
         peerNumber = remote_user + "@" + remote_hostname;
     else {
         char tmp[PJSIP_MAX_URL_SIZE];
-        size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
+        size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR,
+                                        sip_from_uri,
+                                        tmp,
+                                        PJSIP_MAX_URL_SIZE);
         peerNumber = sip_utils::stripSipUriPrefix(std::string_view(tmp, length));
     }
 
@@ -224,13 +231,15 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     std::shared_ptr<SIPAccountBase> account;
     // If transport account is default-constructed, guessing account is allowed
-    const auto& waccount = transport ? transport->getAccount() : std::weak_ptr<SIPAccountBase>{};
+    const auto& waccount = transport ? transport->getAccount() : std::weak_ptr<SIPAccountBase> {};
     if (is_uninitialized(waccount)) {
-        account = Manager::instance().sipVoIPLink().guessAccount(toUsername, viaHostname, remote_hostname);
+        account = Manager::instance().sipVoIPLink().guessAccount(toUsername,
+                                                                 viaHostname,
+                                                                 remote_hostname);
         if (not account)
             return PJ_FALSE;
         if (not transport and not ::strcmp(account->getAccountType(), SIPAccount::ACCOUNT_TYPE)) {
-            if (not (transport = std::static_pointer_cast<SIPAccount>(account)->getTransport())) {
+            if (not(transport = std::static_pointer_cast<SIPAccount>(account)->getTransport())) {
                 JAMI_ERR("No suitable transport to answer this call.");
                 return PJ_FALSE;
             }
@@ -256,10 +265,10 @@ transaction_request_cb(pjsip_rx_data* rdata)
                     int urgentCount {0};
                     std::string sp(body_view.substr(pos));
                     int ret = sscanf(sp.c_str(),
-                                    "Voice-Message: %d/%d (%d/",
-                                    &newCount,
-                                    &oldCount,
-                                    &urgentCount);
+                                     "Voice-Message: %d/%d (%d/",
+                                     &newCount,
+                                     &oldCount,
+                                     &urgentCount);
 
                     // According to rfc3842
                     // urgent messages are optional
@@ -402,12 +411,12 @@ transaction_request_cb(pjsip_rx_data* rdata)
     if (account->isStunEnabled())
         call->updateSDPFromSTUN();
 
-    call->getSDP().receiveOffer(r_sdp,
-                                account->getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                                account->getActiveAccountCodecInfoList(
-                                    account->isVideoEnabled() and hasVideo ? MEDIA_VIDEO
-                                                                           : MEDIA_NONE),
-                                account->getSrtpKeyExchange());
+    // TODO_MC. This list should be provided by the client.
+    std::vector<MediaAttributes> mediasList;
+    account->createDefaultMediaList(mediasList, account->isVideoEnabled() and hasVideo);
+
+    call->getSDP().receiveOffer(r_sdp, mediasList);
+
     call->setRemoteSdp(r_sdp);
 
     pjsip_dialog* dialog = nullptr;
@@ -732,9 +741,12 @@ SIPVoIPLink::guessAccount(std::string_view userName,
                           std::string_view fromUri) const
 {
     JAMI_DBG("username = %.*s, server = %.*s, from = %.*s",
-             (int)userName.size(), userName.data(),
-             (int)server.size(), server.data(),
-             (int)fromUri.size(), fromUri.data());
+             (int) userName.size(),
+             userName.data(),
+             (int) server.size(),
+             server.data(),
+             (int) fromUri.size(),
+             fromUri.data());
     // Try to find the account id from username and server name by full match
 
     std::shared_ptr<SIPAccountBase> result;
@@ -949,16 +961,17 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
     if (not address)
         address = ifaceAddr;
 
-    auto& localSDP = call->getSDP();
-    localSDP.setPublishedIP(address);
-    const bool created = localSDP.createOffer(account->getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                                              account->getActiveAccountCodecInfoList(
-                                                  account->isVideoEnabled() ? MEDIA_VIDEO
-                                                                            : MEDIA_NONE),
-                                              account->getSrtpKeyExchange());
+    auto& sdp = call->getSDP();
+    sdp.setPublishedIP(address);
+
+    // TODO_MC. This list should be provided by the client.
+    std::vector<MediaAttributes> mediasList;
+    account->createDefaultMediaList(mediasList, account->isVideoEnabled());
+
+    const bool created = sdp.createOffer(mediasList);
 
     if (created)
-        *p_offer = localSDP.getLocalSdpSession();
+        *p_offer = sdp.getLocalSdpSession();
 }
 
 static const pjmedia_sdp_session*
@@ -1047,7 +1060,7 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
 
     if (body->len and pj_stricmp(&body->content_type.type, &STR_APPLICATION) == 0
         and pj_stricmp(&body->content_type.subtype, &STR_MEDIA_CONTROL_XML) == 0) {
-        auto body_msg = std::string_view((char*)body->data, (size_t)body->len);
+        auto body_msg = std::string_view((char*) body->data, (size_t) body->len);
 
         /* Apply and answer the INFO request */
         static constexpr auto PICT_FAST_UPDATE = "picture_fast_update"sv;
@@ -1073,7 +1086,9 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
                         rotation -= 360;
                     JAMI_WARN("Rotate video %d deg.", rotation);
 #ifdef ENABLE_VIDEO
-                    call.getVideoRtp().setRotation(rotation);
+                    auto rtpSession = call.getVideoRtp();
+                    if (rtpSession != nullptr)
+                        rtpSession->setRotation(rotation);
 #endif
                 } catch (const std::exception& e) {
                     JAMI_WARN("Error parsing angle: %s", e.what());
@@ -1219,7 +1234,11 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
 
     // Using method name to dispatch
     auto methodName = sip_utils::as_view(msg->line.req.method.name);
-    JAMI_DBG("[INVITE:%p] RX SIP method %d (%.*s)", inv, msg->line.req.method.id, (int)methodName.size(), methodName.data());
+    JAMI_DBG("[INVITE:%p] RX SIP method %d (%.*s)",
+             inv,
+             msg->line.req.method.id,
+             (int) methodName.size(),
+             methodName.data());
 
 #ifdef DEBUG_SIP_REQUEST_MSG
     char msgbuf[1000];
@@ -1241,6 +1260,7 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     }
 }
 
+#ifdef DEBUG_SIP_REQUEST_MSG
 static void
 processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* event)
 {
@@ -1267,11 +1287,13 @@ processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* event)
 
     JAMI_INFO("[INVITE:%p] SIP RX response: reason %.*s, status code %i",
               inv,
-              (int)msg->line.status.reason.slen, msg->line.status.reason.ptr,
+              (int) msg->line.status.reason.slen,
+              msg->line.status.reason.ptr,
               msg->line.status.code);
 
     sip_utils::logMessageHeaders(&msg->hdr);
 }
+#endif
 
 int
 SIPVoIPLink::getModId()

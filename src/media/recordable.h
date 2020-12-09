@@ -73,6 +73,7 @@ protected:
     mutable std::mutex apiMutex_;
     bool recording_ {false};
     std::shared_ptr<MediaRecorder> recorder_;
+    // TODO_MC. Get rid of this flag.
     bool isAudioOnly_ {false};
 };
 
