@@ -31,8 +31,8 @@ namespace jami {
 
 ChanneledOutgoingTransfer::ChanneledOutgoingTransfer(const std::shared_ptr<ChannelSocket>& channel,
                                                      OnStateChangedCb&& cb)
-    : channel_(channel)
-    , stateChangedCb_(cb)
+    : stateChangedCb_(cb)
+    , channel_(channel)
 {}
 
 ChanneledOutgoingTransfer::~ChanneledOutgoingTransfer()
