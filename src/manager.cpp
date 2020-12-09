@@ -975,6 +975,56 @@ Manager::outgoingCall(const std::string& account_id,
     return call_id;
 }
 
+std::string
+Manager::outgoingCall(const std::string& account_id,
+                      const std::string& to,
+                      const std::vector<MediaMap>& mediaList,
+                      const std::string& conf_id)
+{
+    if (not conf_id.empty() and not isConference(conf_id)) {
+        JAMI_ERR("outgoingCall() failed, invalid conference id");
+        return {};
+    }
+
+    JAMI_DBG() << "try outgoing call to '" << to << "'"
+               << " with account '" << account_id << "'";
+
+    std::shared_ptr<Call> call;
+
+    try {
+        call = newOutgoingCall(trim(to), account_id, mediaList);
+    } catch (const std::exception& e) {
+        JAMI_ERR("%s", e.what());
+        return {};
+    }
+
+    if (not call)
+        return {};
+
+    auto call_id = call->getCallId();
+
+    stopTone();
+
+    pimpl_->switchCall(call);
+    call->setConfId(conf_id);
+
+    return call_id;
+}
+
+bool
+Manager::updateMediaStreams(const std::string& callID, const std::vector<DRing::MediaMap>& mediaList)
+{
+    auto call = getCallFromCallID(callID);
+    if (not call) {
+        JAMI_ERR("No call with ID %s", callID.c_str());
+        return false;
+    }
+
+    auto const& mediaAttrList = MediaAttribute::parseMediaList(mediaList);
+
+    return call->updateMediaStreams(mediaAttrList);
+}
+
 // THREAD=Main : for outgoing Call
 bool
 Manager::answerCall(const std::string& call_id)
@@ -1705,8 +1755,8 @@ Manager::scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::t
     return pimpl_->scheduler_.schedule(std::move(task), when);
 }
 
-std::shared_ptr<Task> Manager::scheduleTaskIn(std::function<void()>&& task,
-                                std::chrono::steady_clock::duration timeout)
+std::shared_ptr<Task>
+Manager::scheduleTaskIn(std::function<void()>&& task, std::chrono::steady_clock::duration timeout)
 {
     return pimpl_->scheduler_.scheduleIn(std::move(task), timeout);
 }
@@ -2073,7 +2123,7 @@ void
 Manager::peerHungupCall(Call& call)
 {
     const auto& call_id = call.getCallId();
-    JAMI_DBG("[call:%s] Peer hungup", call_id.c_str());
+    JAMI_DBG("[call:%s] Peer hung up", call_id.c_str());
 
     if (isConferenceParticipant(call_id)) {
         removeParticipant(call_id);
@@ -3161,6 +3211,27 @@ Manager::newOutgoingCall(std::string_view toUrl,
     return account->newOutgoingCall(toUrl, volatileCallDetails);
 }
 
+std::shared_ptr<Call>
+Manager::newOutgoingCall(std::string_view toUrl,
+                         const std::string& accountId,
+                         const std::vector<MediaMap>& mediaList)
+{
+    auto account = getAccount(accountId);
+    if (not account) {
+        JAMI_WARN("No account matches ID %s", accountId.c_str());
+        ;
+        return nullptr;
+    }
+
+    if (not account->isUsable()) {
+        JAMI_WARN("Account %s is not usable", accountId.c_str());
+        ;
+        return nullptr;
+    }
+
+    return account->newOutgoingCall(toUrl, mediaList);
+}
+
 #ifdef ENABLE_VIDEO
 std::shared_ptr<video::SinkClient>
 Manager::createSinkClient(const std::string& id, bool mixer)
@@ -3250,11 +3321,15 @@ Manager::setModerator(const std::string& confId, const std::string& peerId, cons
     if (auto conf = getConferenceFromID(confId)) {
         conf->setModerator(peerId, state);
     } else
-        JAMI_WARN("Fail to change moderator %s, conference %s not found", peerId.c_str(), confId.c_str());
+        JAMI_WARN("Fail to change moderator %s, conference %s not found",
+                  peerId.c_str(),
+                  confId.c_str());
 }
 
 void
-Manager::muteParticipant(const std::string& confId, const std::string& participant, const bool& state)
+Manager::muteParticipant(const std::string& confId,
+                         const std::string& participant,
+                         const bool& state)
 {
     if (auto conf = getConferenceFromID(confId)) {
         conf->muteParticipant(participant, state);
@@ -3276,7 +3351,7 @@ void
 Manager::setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to change default moderator, account %s not found", accountID.c_str());
         return;
     }
@@ -3292,7 +3367,7 @@ std::vector<std::string>
 Manager::getDefaultModerators(const std::string& accountID)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to get default moderators, account %s not found", accountID.c_str());
         return {};
     }
@@ -3305,7 +3380,7 @@ void
 Manager::enableLocalModerators(const std::string& accountID, bool isModEnabled)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to set local moderators, account %s not found", accountID.c_str());
         return;
     }
@@ -3317,9 +3392,9 @@ bool
 Manager::isLocalModeratorsEnabled(const std::string& accountID)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to get local moderators, account %s not found", accountID.c_str());
-        return true;    // Default value
+        return true; // Default value
     }
     return acc->isLocalModeratorsEnabled();
 }
