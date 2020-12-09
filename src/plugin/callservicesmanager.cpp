@@ -45,7 +45,8 @@ CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subje
 
     for (auto& callMediaHandler : callMediaHandlers_) {
         std::size_t found = callMediaHandler->id().find_last_of(DIR_SEPARATOR_CH);
-        auto preferences = PluginPreferencesUtils::getPreferencesValuesMap(callMediaHandler->id().substr(0, found));
+        auto preferences = PluginPreferencesUtils::getPreferencesValuesMap(
+            callMediaHandler->id().substr(0, found));
 #ifndef __ANDROID__
         if (preferences.at("always") == "1")
             toggleCallMediaHandler((uintptr_t) callMediaHandler.get(), data.id, true);
@@ -112,8 +113,8 @@ CallServicesManager::getCallMediaHandlers()
 
 void
 CallServicesManager::toggleCallMediaHandler(const std::string& mediaHandlerId,
-                            const std::string& callId,
-                            const bool toggle)
+                                            const std::string& callId,
+                                            const bool toggle)
 {
     toggleCallMediaHandler(std::stoull(mediaHandlerId), callId, toggle);
 }
@@ -170,11 +171,12 @@ CallServicesManager::getCallMediaHandlerStatus(const std::string& callId)
 }
 
 void
-CallServicesManager::setPreference(const std::string& key, const std::string& value, const std::string& scopeStr)
+CallServicesManager::setPreference(const std::string& key,
+                                   const std::string& value,
+                                   const std::string& scopeStr)
 {
     for (auto& mediaHandler : callMediaHandlers_) {
-        if (scopeStr.find(mediaHandler->getCallMediaHandlerDetails()["name"])
-            != std::string::npos) {
+        if (scopeStr.find(mediaHandler->getCallMediaHandlerDetails()["name"]) != std::string::npos) {
             mediaHandler->setPreferenceAttribute(key, value);
         }
     }
@@ -182,8 +184,8 @@ CallServicesManager::setPreference(const std::string& key, const std::string& va
 
 void
 CallServicesManager::notifyAVSubject(CallMediaHandlerPtr& callMediaHandlerPtr,
-                        const StreamData& data,
-                        AVSubjectSPtr& subject)
+                                     const StreamData& data,
+                                     AVSubjectSPtr& subject)
 {
     if (auto soSubject = subject.lock())
         callMediaHandlerPtr->notifyAVFrameSubject(data, soSubject);
@@ -191,8 +193,8 @@ CallServicesManager::notifyAVSubject(CallMediaHandlerPtr& callMediaHandlerPtr,
 
 void
 CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
-                            const std::string& callId,
-                            const bool toggle)
+                                            const std::string& callId,
+                                            const bool toggle)
 {
     auto& handlers = mediaHandlerToggled_[callId];
 
@@ -200,17 +202,16 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
 
     for (auto subject : callAVsubjects_) {
         if (subject.first.id == callId) {
-
-            auto handlerIt = std::find_if(callMediaHandlers_.begin(), callMediaHandlers_.end(),
-                    [mediaHandlerId](CallMediaHandlerPtr& handler) {
-                        return ((uintptr_t) handler.get() == mediaHandlerId);
-                        });
+            auto handlerIt = std::find_if(callMediaHandlers_.begin(),
+                                          callMediaHandlers_.end(),
+                                          [mediaHandlerId](CallMediaHandlerPtr& handler) {
+                                              return ((uintptr_t) handler.get() == mediaHandlerId);
+                                          });
 
             if (handlerIt != callMediaHandlers_.end()) {
                 if (toggle) {
                     notifyAVSubject((*handlerIt), subject.first, subject.second);
-                    if (isAttached((*handlerIt))
-                        && handlers.find(mediaHandlerId) == handlers.end())
+                    if (isAttached((*handlerIt)) && handlers.find(mediaHandlerId) == handlers.end())
                         handlers.insert(mediaHandlerId);
                 } else {
                     (*handlerIt)->detach();
@@ -226,7 +227,9 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
         auto sipCall = std::dynamic_pointer_cast<SIPCall>(
             Manager::instance().callFactory.getCall(callId));
         assert(sipCall);
-        sipCall->getVideoRtp().restartSender();
+        if (auto const& videoRtp = sipCall->getVideoRtp()) {
+            videoRtp->restartSender();
+        }
     }
 #endif
 }
