@@ -3652,6 +3652,14 @@ JamiAccount::requestConnection(
                                          isVCard,
                                          channeledConnectedCb,
                                          onChanneledCancelled);
+    auto convId = getOneToOneConversation(info.peer);
+    if (!convId.empty()) {
+        Json::Value value;
+        value["tid"] = std::to_string(tid);
+        value["to"] = info.peer;
+        value["type"] = "application/data-transfer+json";
+        sendMessage(convId, value);
+    }
 }
 
 void
@@ -4113,10 +4121,22 @@ JamiAccount::sendMessage(const std::string& conversationId,
                          const std::string& type,
                          bool announce)
 {
+    Json::Value json;
+    json["body"] = message;
+    json["type"] = type;
+    sendMessage(conversationId, json, parent, announce);
+}
+
+void
+JamiAccount::sendMessage(const std::string& conversationId,
+                         const Json::Value& value,
+                         const std::string& parent,
+                         bool announce)
+{
     std::lock_guard<std::mutex> lk(conversationsMtx_);
     auto conversation = conversations_.find(conversationId);
     if (conversation != conversations_.end() && conversation->second) {
-        auto commitId = conversation->second->sendMessage(message, type, parent);
+        auto commitId = conversation->second->sendMessage(value, parent);
         // TODO make async/non blocking
         auto messages = conversation->second->loadMessages(commitId, 1);
         if (!messages.empty()) {
@@ -5081,6 +5101,32 @@ JamiAccount::announceMemberMessage(const std::string& convId,
                                                                        convId,
                                                                        uri,
                                                                        action);
+    }
+}
+
+std::string
+JamiAccount::getOneToOneConversation(const std::string& uri) const
+{
+    std::lock_guard<std::mutex> lk(conversationsMtx_);
+    for (const auto& [key, conv] : conversations_) {
+        if (conv->mode() == ConversationMode::ONE_TO_ONE
+            && (conv->isMember(uri, true) || conv->getMembers().size() == 1 /* Peer left */))
+            return key;
+    }
+    return {};
+}
+
+void
+JamiAccount::addCallHistoryMessage(const std::string& uri, uint64_t duration_ms)
+{
+    auto finalUri = uri.substr(0, uri.find("@ring.dht"));
+    auto convId = getOneToOneConversation(finalUri);
+    if (!convId.empty()) {
+        Json::Value value;
+        value["to"] = finalUri;
+        value["type"] = "application/call-history+json";
+        value["duration"] = std::to_string(duration_ms);
+        sendMessage(convId, value);
     }
 }
 
