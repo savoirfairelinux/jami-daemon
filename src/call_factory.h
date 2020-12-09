@@ -38,7 +38,9 @@ class SIPCall;
 class CallFactory
 {
 public:
-    CallFactory(std::mt19937_64& rand) : rand_(rand) {}
+    CallFactory(std::mt19937_64& rand)
+        : rand_(rand)
+    {}
 
     /**
      * Create and register a new SIPCall instance.
@@ -51,6 +53,16 @@ public:
                                         const std::map<std::string, std::string>& details = {});
 
     std::string getNewCallID() const;
+
+    /**
+     * Create a new call instance.
+     * @param account Account used to create this call
+     * @param type Set definitely this call as incoming/outgoing
+     * @param mediaList The list of media to include
+     */
+    std::shared_ptr<SIPCall> newSipCall(const std::shared_ptr<Account>& account,
+                                        Call::CallType type,
+                                        const std::vector<MediaAttribute>& mediaList);
 
     /**
      * Forbid creation of new calls.
@@ -74,7 +86,8 @@ public:
     std::shared_ptr<Call> getCall(const std::string& id, Call::LinkType link) const;
 
     template<class C>
-    std::shared_ptr<C> getCall(const std::string& id) {
+    std::shared_ptr<C> getCall(const std::string& id)
+    {
         return std::dynamic_pointer_cast<C>(getCall(id, C::LINK_TYPE));
     }
 

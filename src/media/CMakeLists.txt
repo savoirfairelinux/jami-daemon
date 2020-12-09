@@ -61,6 +61,6 @@ if(MSVC)
    if(WINDOWS_STORE)
       set (Source_Files__media__video__uwpvideo ${Source_Files__media__video__uwpvideo} PARENT_SCOPE)
    endif()
-   
+
    set (Source_Files__media__video__winvideo ${Source_Files__media__video__winvideo} PARENT_SCOPE)
 endif()
