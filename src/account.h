@@ -152,6 +152,17 @@ public:
         std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {})
         = 0;
 
+    /**
+     * Create a new outgoing call.
+     *
+     * @param toUrl The address to call
+     * @param mediaList A list of media
+     * @return The created call
+     */
+    virtual std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
+                                                  const std::vector<MediaMap>& mediaList)
+        = 0;
+
     /* Note: we forbid incoming call creation from an instance of Account.
      * This is why no newIncomingCall() method exist here.
      */
@@ -326,10 +337,11 @@ public:
     void addDefaultModerator(const std::string& peerURI);
     void removeDefaultModerator(const std::string& peerURI);
 
-    bool isLocalModeratorsEnabled() const { return localModeratorsEnabled_;  }
+    bool isLocalModeratorsEnabled() const { return localModeratorsEnabled_; }
     void enableLocalModerators(bool isModEnabled) { localModeratorsEnabled_ = isModEnabled; }
 
-public: // virtual methods that has to be implemented by concrete classes
+public:
+    // virtual methods that has to be implemented by concrete classes
     /**
      * This method is called to request removal of possible account traces on the system,
      * like internal account setup files.
