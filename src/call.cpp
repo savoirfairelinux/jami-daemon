@@ -22,6 +22,7 @@
 
 #include "call.h"
 #include "account.h"
+#include "jamidht/jamiaccount.h"
 #include "manager.h"
 #include "audio/ringbufferpool.h"
 #include "dring/call_const.h"
@@ -119,6 +120,22 @@ Call::Call(const std::shared_ptr<Account>& account,
                         }
                     },
                     std::chrono::seconds(timeout));
+            }
+
+            if (!isSubcall() && getCallType() == CallType::OUTGOING) {
+                if (cnx_state == ConnectionState::CONNECTED && duration_start_ == time_point::min())
+                    duration_start_ = clock::now();
+                else if (cnx_state == ConnectionState::DISCONNECTED) {
+                    if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(
+                            getAccount().lock())) {
+                        auto duration = duration_start_ == time_point::min()
+                                            ? 0
+                                            : std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                  clock::now() - duration_start_)
+                                                  .count();
+                        jamiAccount->addCallHistoryMessage(getPeerNumber(), duration);
+                    }
+                }
             }
 
             // kill pending subcalls at disconnect
