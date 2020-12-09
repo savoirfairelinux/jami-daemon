@@ -32,10 +32,10 @@ namespace jami {
 class Conversation::Impl
 {
 public:
-    Impl(const std::weak_ptr<JamiAccount>& account, ConversationMode mode)
+    Impl(const std::weak_ptr<JamiAccount>& account, ConversationMode mode, const std::string& otherMember = "")
         : account_(account)
     {
-        repository_ = ConversationRepository::createConversation(account, mode);
+        repository_ = ConversationRepository::createConversation(account, mode, otherMember);
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
@@ -70,10 +70,12 @@ public:
     std::unique_ptr<ConversationRepository> repository_;
     std::weak_ptr<JamiAccount> account_;
     std::atomic_bool isRemoving_ {false};
+    std::vector<std::map<std::string, std::string>> convCommitToMap(
+        const std::vector<ConversationCommit>& commits) const;
     std::vector<std::map<std::string, std::string>> loadMessages(const std::string& fromMessage = "",
                                                                  const std::string& toMessage = "",
                                                                  size_t n = 0);
-    
+
     std::mutex pullcbsMtx_ {};
     std::vector<std::pair<std::string, OnPullCb>> pullcbs_ {};
 };
@@ -107,6 +109,60 @@ Conversation::Impl::repoPath() const
 }
 
 std::vector<std::map<std::string, std::string>>
+Conversation::Impl::convCommitToMap(const std::vector<ConversationCommit>& commits) const
+{
+    std::vector<std::map<std::string, std::string>> result = {};
+    for (const auto& commit : commits) {
+        auto authorDevice = commit.author.email;
+        auto cert = tls::CertificateStore::instance().getCertificate(authorDevice);
+        if (!cert && cert->issuer) {
+            JAMI_WARN("No author found for commit %s", commit.id.c_str());
+        }
+        auto authorId = cert->issuer->getId().toString();
+        std::string parents;
+        auto parentsSize = commit.parents.size();
+        for (std::size_t i = 0; i < parentsSize; ++i) {
+            parents += commit.parents[i];
+            if (i != parentsSize - 1)
+                parents += ",";
+        }
+        std::string type {};
+        if (parentsSize > 1) {
+            type = "merge";
+        }
+        std::string body {};
+        std::map<std::string, std::string> message;
+        if (type.empty()) {
+            std::string err;
+            Json::Value cm;
+            Json::CharReaderBuilder rbuilder;
+            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+            if (reader->parse(commit.commit_msg.data(),
+                              commit.commit_msg.data() + commit.commit_msg.size(),
+                              &cm,
+                              &err)) {
+                for (auto const& id : cm.getMemberNames()) {
+                    if (id == "type") {
+                        type = cm[id].asString();
+                        continue;
+                    }
+                    message.insert({id, cm[id].asString()});
+                }
+            } else {
+                JAMI_WARN("%s", err.c_str());
+            }
+        }
+        message["id"] = commit.id;
+        message["parents"] = parents;
+        message["author"] = authorId;
+        message["type"] = type;
+        message["timestamp"] = std::to_string(commit.timestamp);
+        result.emplace_back(message);
+    }
+    return result;
+}
+
+std::vector<std::map<std::string, std::string>>
 Conversation::Impl::loadMessages(const std::string& fromMessage,
                                  const std::string& toMessage,
                                  size_t n)
@@ -118,54 +174,11 @@ Conversation::Impl::loadMessages(const std::string& fromMessage,
         convCommits = repository_->logN(fromMessage, n);
     else
         convCommits = repository_->log(fromMessage, toMessage);
-    std::vector<std::map<std::string, std::string>> result = {};
-    for (const auto& commit : convCommits) {
-        auto authorDevice = commit.author.email;
-        auto cert = tls::CertificateStore::instance().getCertificate(authorDevice);
-        if (!cert && cert->issuer) {
-            JAMI_WARN("No author found for commit %s", commit.id.c_str());
-        }
-        auto authorId = cert->issuer->getId().toString();
-        std::string parents;
-        auto parentsSize = commit.parents.size();
-        for (auto i = 0; i < parentsSize; ++i) {
-            parents += commit.parents[i];
-            if (i != parentsSize - 1)
-                parents += ",";
-        }
-        std::string type {};
-        if (parentsSize > 1) {
-            type = "merge";
-        }
-        std::string body {};
-        if (type.empty()) {
-            std::string err;
-            Json::Value cm;
-            Json::CharReaderBuilder rbuilder;
-            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-            if (reader->parse(commit.commit_msg.data(),
-                              commit.commit_msg.data() + commit.commit_msg.size(),
-                              &cm,
-                              &err)) {
-                type = cm["type"].asString();
-                body = cm["body"].asString();
-            } else {
-                JAMI_WARN("%s", err.c_str());
-            }
-        }
-        std::map<std::string, std::string> message {{"id", commit.id},
-                                                    {"parents", parents},
-                                                    {"author", authorId},
-                                                    {"type", type},
-                                                    {"body", body},
-                                                    {"timestamp", std::to_string(commit.timestamp)}};
-        result.emplace_back(message);
-    }
-    return result;
+    return convCommitToMap(convCommits);
 }
 
-Conversation::Conversation(const std::weak_ptr<JamiAccount>& account, ConversationMode mode)
-    : pimpl_ {new Impl {account, mode}}
+Conversation::Conversation(const std::weak_ptr<JamiAccount>& account, ConversationMode mode, const std::string& otherMember)
+    : pimpl_ {new Impl {account, mode, otherMember}}
 {}
 
 Conversation::Conversation(const std::weak_ptr<JamiAccount>& account,
@@ -192,13 +205,10 @@ Conversation::addMember(const std::string& contactUri)
 {
     try {
         if (mode() == ConversationMode::ONE_TO_ONE) {
-            auto invitedPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "invited";
-            auto bannedPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "banned";
-            auto membersPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "members";
-            auto isOtherMember = fileutils::readDirectory(invitedPath).size() > 0
-                                 || fileutils::readDirectory(bannedPath).size() > 0
-                                 || fileutils::readDirectory(membersPath).size() > 0;
-            if (isOtherMember) {
+            // Only authorize to add left members
+            auto initialMembers = getInitialMembers();
+            auto it = std::find(initialMembers.begin(), initialMembers.end(), contactUri);
+            if (it == initialMembers.end()) {
                 JAMI_WARN("Cannot add new member in one to one conversation");
                 return {};
             }
@@ -244,7 +254,9 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice)
 std::vector<std::map<std::string, std::string>>
 Conversation::getMembers(bool includeInvited) const
 {
+    // TODO cache and update for member events
     std::vector<std::map<std::string, std::string>> result;
+    std::vector<std::string> uris;
     auto shared = pimpl_->account_.lock();
     if (!shared)
         return result;
@@ -257,8 +269,10 @@ Conversation::getMembers(bool includeInvited) const
             JAMI_WARN("Incorrect file found: %s/%s", adminsPath.c_str(), certificate.c_str());
             continue;
         }
+        auto uri = certificate.substr(0, certificate.size() - std::string(".crt").size());
+        uris.emplace_back(uri);
         std::map<std::string, std::string>
-            details {{"uri", certificate.substr(0, certificate.size() - std::string(".crt").size())},
+            details {{"uri", uri},
                      {"role", "admin"}};
         result.emplace_back(details);
     }
@@ -267,15 +281,28 @@ Conversation::getMembers(bool includeInvited) const
             JAMI_WARN("Incorrect file found: %s/%s", membersPath.c_str(), certificate.c_str());
             continue;
         }
+        auto uri = certificate.substr(0, certificate.size() - std::string(".crt").size());
+        uris.emplace_back(uri);
         std::map<std::string, std::string>
-            details {{"uri", certificate.substr(0, certificate.size() - std::string(".crt").size())},
+            details {{"uri", uri},
                      {"role", "member"}};
         result.emplace_back(details);
     }
     if (includeInvited) {
         for (const auto& uri : fileutils::readDirectory(invitedPath)) {
+            uris.emplace_back(uri);
             std::map<std::string, std::string> details {{"uri", uri}, {"role", "invited"}};
             result.emplace_back(details);
+        }
+
+        if (mode() == ConversationMode::ONE_TO_ONE) {
+            for (const auto& member: getInitialMembers()) {
+                auto it = std::find(uris.begin(), uris.end(), member);
+                if (it == uris.end()) {
+                    std::map<std::string, std::string> details {{"uri", member}, {"role", "invited"}};
+                    result.emplace_back(details);
+                }
+            }
         }
     }
 
@@ -318,6 +345,13 @@ Conversation::isMember(const std::string& uri, bool includeInvited) const
         }
     }
 
+    if (includeInvited && mode() == ConversationMode::ONE_TO_ONE) {
+        for (const auto& member: getInitialMembers()) {
+            if (member == uri)
+                return true;
+        }
+    }
+
     return false;
 }
 
@@ -353,7 +387,7 @@ Conversation::loadMessages(const OnLoadMessages& cb, const std::string& fromMess
 {
     if (!cb)
         return;
-    dht::ThreadPool::io().run([w=weak(), cb = std::move(cb), fromMessage, n] {
+    dht::ThreadPool::io().run([w = weak(), cb = std::move(cb), fromMessage, n] {
         if (auto sthis = w.lock()) {
             cb(sthis->pimpl_->loadMessages(fromMessage, "", n));
         }
@@ -361,11 +395,13 @@ Conversation::loadMessages(const OnLoadMessages& cb, const std::string& fromMess
 }
 
 void
-Conversation::loadMessages(const OnLoadMessages& cb, const std::string& fromMessage, const std::string& toMessage)
+Conversation::loadMessages(const OnLoadMessages& cb,
+                           const std::string& fromMessage,
+                           const std::string& toMessage)
 {
     if (!cb)
         return;
-    dht::ThreadPool::io().run([w=weak(), cb = std::move(cb), fromMessage, toMessage] {
+    dht::ThreadPool::io().run([w = weak(), cb = std::move(cb), fromMessage, toMessage] {
         if (auto sthis = w.lock()) {
             cb(sthis->pimpl_->loadMessages(fromMessage, toMessage, 0));
         }
@@ -384,36 +420,36 @@ Conversation::lastCommitId() const
 bool
 Conversation::fetchFrom(const std::string& uri)
 {
-    // TODO check if device id or account id
     return pimpl_->repository_->fetch(uri);
 }
 
-bool
+std::vector<std::map<std::string, std::string>>
 Conversation::mergeHistory(const std::string& uri)
 {
     if (not pimpl_ or not pimpl_->repository_) {
         JAMI_WARN("Invalid repo. Abort merge");
-        return false;
+        return {};
     }
     auto remoteHead = pimpl_->repository_->remoteHead(uri);
     if (remoteHead.empty()) {
         JAMI_WARN("Could not get HEAD of %s", uri.c_str());
-        return false;
+        return {};
     }
 
     // Validate commit
-    if (!pimpl_->repository_->validFetch(uri)) {
+    auto newCommits = pimpl_->repository_->validFetch(uri);
+    if (newCommits.empty()) {
         JAMI_ERR("Could not validate history with %s", uri.c_str());
-        return false;
+        return {};
     }
 
     // If validated, merge
     if (!pimpl_->repository_->merge(remoteHead)) {
         JAMI_ERR("Could not merge history with %s", uri.c_str());
-        return false;
+        return {};
     }
     JAMI_DBG("Successfully merge history with %s", uri.c_str());
-    return true;
+    return pimpl_->convCommitToMap(newCommits);
 }
 
 void
@@ -422,18 +458,19 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb)
     {
         std::lock_guard<std::mutex> lk(pimpl_->pullcbsMtx_);
         auto isInProgress = not pimpl_->pullcbs_.empty();
-        pimpl_->pullcbs_.emplace_back(std::make_pair<std::string, OnPullCb>(std::string(uri), std::move(cb)));
+        pimpl_->pullcbs_.emplace_back(
+            std::make_pair<std::string, OnPullCb>(std::string(uri), std::move(cb)));
         if (isInProgress)
             return;
     }
-    dht::ThreadPool::io().run([w=weak()] {
+    dht::ThreadPool::io().run([w = weak()] {
         auto sthis_ = w.lock();
         if (!sthis_)
             return;
-        
+
         std::string uri;
         OnPullCb cb;
-        while(true) {
+        while (true) {
             decltype(sthis_->pimpl_->pullcbs_)::value_type pullcb;
             {
                 std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
@@ -445,16 +482,16 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb)
                 sthis_->pimpl_->pullcbs_.pop_back();
             }
             if (!sthis_->fetchFrom(uri)) {
-                cb(false , {});
+                cb(false, {});
                 return;
             }
-            //auto newCommits = sthis_->mergeHistory(uri);
-            //auto ok = newCommits.empty();
-            //if (cb) cb(true, std::move(newCommits));
+            auto newCommits = sthis_->mergeHistory(uri);
+            auto ok = newCommits.empty();
+            if (cb)
+                cb(ok, std::move(newCommits));
         }
     });
 }
-
 
 std::map<std::string, std::string>
 Conversation::generateInvitation() const
@@ -517,6 +554,19 @@ ConversationMode
 Conversation::mode() const
 {
     return pimpl_->repository_->mode();
+}
+
+std::vector<std::string>
+Conversation::getInitialMembers() const
+{
+    return pimpl_->repository_->getInitialMembers();
+}
+
+bool
+Conversation::isInitialMember(const std::string& uri) const
+{
+    auto members = getInitialMembers();
+    return std::find(members.begin(), members.end(), uri) != members.end();
 }
 
 } // namespace jami

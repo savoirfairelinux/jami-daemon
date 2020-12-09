@@ -38,7 +38,7 @@ using OnLoadMessages = std::function<void(std::vector<std::map<std::string, std:
 class Conversation : public std::enable_shared_from_this<Conversation>
 {
 public:
-    Conversation(const std::weak_ptr<JamiAccount>& account, ConversationMode mode);
+    Conversation(const std::weak_ptr<JamiAccount>& account, ConversationMode mode, const std::string& otherMember = "");
     Conversation(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId = "");
     Conversation(const std::weak_ptr<JamiAccount>& account,
                  const std::string& remoteDevice,
@@ -60,7 +60,7 @@ public:
      * @return a vector of member details:
      * {
      *  "uri":"xxx",
-     *  "role":"member/admin",
+     *  "role":"member/admin/invited",
      *  "lastRead":"id"
      *  ...
      * }
@@ -114,9 +114,9 @@ public:
     /**
      * Analyze if merge is possible and merge history
      * @param uri       the peer
-     * @return if the operation was successful
+     * @return new commits
      */
-    bool mergeHistory(const std::string& uri);
+    std::vector<std::map<std::string, std::string>> mergeHistory(const std::string& uri);
 
     /**
      * Fetch and merge from peer
@@ -161,6 +161,12 @@ public:
      */
     ConversationMode mode() const;
 
+    /**
+     * One to one util, get initial members
+     * @return initial members
+     */
+    std::vector<std::string> getInitialMembers() const;
+    bool isInitialMember(const std::string& uri) const;
 private:
 
     std::shared_ptr<Conversation> shared()
