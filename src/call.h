@@ -33,6 +33,7 @@
 #include "peerrecorder.h"
 #include "ip_utils.h"
 #include "conference.h"
+#include "media_codec.h"
 
 #include <atomic>
 #include <mutex>
@@ -63,7 +64,6 @@ using CallMap = std::map<std::string, std::shared_ptr<Call>>;
 
 class Call : public Recordable, public PeerRecorder, public std::enable_shared_from_this<Call>
 {
-
 public:
     using MediaMap = std::map<std::string, std::string>;
     /**
@@ -166,7 +166,6 @@ public:
      * @return std::string The peer name
      */
     const std::string& getPeerDisplayName() const { return peerDisplayName_; }
-
     /**
      * Tell if the call is incoming
      * @return true if yes false otherwise
@@ -177,7 +176,7 @@ public:
      * Set the state of the call (protected by mutex)
      * @param call_state The call state
      * @param cnx_state The call connection state
-     * @param code Optionnal state dependent error code (used to report more information)
+     * @param code Optional error-dependent code (used to report more information)
      * @return true if the requested state change was valid, false otherwise
      */
     bool setState(CallState call_state, signed code = 0);
@@ -284,7 +283,10 @@ public:
 public: // media management
     virtual bool toggleRecording();
 
-    virtual void switchInput(const std::string&) {};
+    virtual std::vector<MediaAttribute> getMediaAttributeList() const = 0;
+
+    // TODO. Delete me.
+    virtual void switchInput(const std::string& = {}) {};
 
     /**
      * mute/unmute a media of a call
@@ -298,6 +300,20 @@ public: // media management
      * @param code  The char code
      */
     virtual void carryingDTMFdigits(char code) = 0;
+
+    /**
+     * Replace the current media with the new medias
+     * @param mediaList the new media list
+     * @return true on success
+     */
+    virtual bool updateMediaStreams(const std::vector<MediaAttribute>& mediaList) = 0;
+
+    /**
+     * Update the media attributes
+     * @param mediaAttr the new media attribute
+     * @return true on success
+     */
+    virtual bool updateMediaStream(const MediaAttribute& mediaAttr) = 0;
 
     /**
      * Send a message to a call identified by its callid
@@ -325,7 +341,7 @@ public: // media management
      */
     void updateDetails(const std::map<std::string, std::string>& details);
 
-    bool hasVideo() const { return not isAudioOnly_; }
+    bool hasVideo() const { return not isVideoMuted_; }
 
     /**
      * A Call can be in a conference. If this is the case, the other side
