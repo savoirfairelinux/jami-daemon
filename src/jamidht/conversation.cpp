@@ -70,10 +70,12 @@ public:
     std::unique_ptr<ConversationRepository> repository_;
     std::weak_ptr<JamiAccount> account_;
     std::atomic_bool isRemoving_ {false};
+    std::vector<std::map<std::string, std::string>> convCommitToMap(
+        const std::vector<ConversationCommit>& commits) const;
     std::vector<std::map<std::string, std::string>> loadMessages(const std::string& fromMessage = "",
                                                                  const std::string& toMessage = "",
                                                                  size_t n = 0);
-    
+
     std::mutex pullcbsMtx_ {};
     std::vector<std::pair<std::string, OnPullCb>> pullcbs_ {};
 };
@@ -107,19 +109,10 @@ Conversation::Impl::repoPath() const
 }
 
 std::vector<std::map<std::string, std::string>>
-Conversation::Impl::loadMessages(const std::string& fromMessage,
-                                 const std::string& toMessage,
-                                 size_t n)
+Conversation::Impl::convCommitToMap(const std::vector<ConversationCommit>& commits) const
 {
-    if (!repository_)
-        return {};
-    std::vector<ConversationCommit> convCommits;
-    if (toMessage.empty())
-        convCommits = repository_->logN(fromMessage, n);
-    else
-        convCommits = repository_->log(fromMessage, toMessage);
     std::vector<std::map<std::string, std::string>> result = {};
-    for (const auto& commit : convCommits) {
+    for (const auto& commit : commits) {
         auto authorDevice = commit.author.email;
         auto cert = tls::CertificateStore::instance().getCertificate(authorDevice);
         if (!cert && cert->issuer) {
@@ -138,6 +131,7 @@ Conversation::Impl::loadMessages(const std::string& fromMessage,
             type = "merge";
         }
         std::string body {};
+        std::map<std::string, std::string> message;
         if (type.empty()) {
             std::string err;
             Json::Value cm;
@@ -147,21 +141,40 @@ Conversation::Impl::loadMessages(const std::string& fromMessage,
                               commit.commit_msg.data() + commit.commit_msg.size(),
                               &cm,
                               &err)) {
-                type = cm["type"].asString();
-                body = cm["body"].asString();
+                for (auto const& id : cm.getMemberNames()) {
+                    if (id == "type") {
+                        type = cm[id].asString();
+                        continue;
+                    }
+                    message.insert({id, cm[id].asString()});
+                }
             } else {
                 JAMI_WARN("%s", err.c_str());
             }
         }
-        std::map<std::string, std::string> message {{"id", commit.id},
-                                                    {"parents", parents},
-                                                    {"author", authorId},
-                                                    {"type", type},
-                                                    {"body", body},
-                                                    {"timestamp", std::to_string(commit.timestamp)}};
+        message["id"] = commit.id;
+        message["parents"] = parents;
+        message["author"] = authorId;
+        message["type"] = type;
+        message["timestamp"] = std::to_string(commit.timestamp);
         result.emplace_back(message);
     }
     return result;
+}
+
+std::vector<std::map<std::string, std::string>>
+Conversation::Impl::loadMessages(const std::string& fromMessage,
+                                 const std::string& toMessage,
+                                 size_t n)
+{
+    if (!repository_)
+        return {};
+    std::vector<ConversationCommit> convCommits;
+    if (toMessage.empty())
+        convCommits = repository_->logN(fromMessage, n);
+    else
+        convCommits = repository_->log(fromMessage, toMessage);
+    return convCommitToMap(convCommits);
 }
 
 Conversation::Conversation(const std::weak_ptr<JamiAccount>& account, ConversationMode mode)
@@ -353,7 +366,7 @@ Conversation::loadMessages(const OnLoadMessages& cb, const std::string& fromMess
 {
     if (!cb)
         return;
-    dht::ThreadPool::io().run([w=weak(), cb = std::move(cb), fromMessage, n] {
+    dht::ThreadPool::io().run([w = weak(), cb = std::move(cb), fromMessage, n] {
         if (auto sthis = w.lock()) {
             cb(sthis->pimpl_->loadMessages(fromMessage, "", n));
         }
@@ -361,11 +374,13 @@ Conversation::loadMessages(const OnLoadMessages& cb, const std::string& fromMess
 }
 
 void
-Conversation::loadMessages(const OnLoadMessages& cb, const std::string& fromMessage, const std::string& toMessage)
+Conversation::loadMessages(const OnLoadMessages& cb,
+                           const std::string& fromMessage,
+                           const std::string& toMessage)
 {
     if (!cb)
         return;
-    dht::ThreadPool::io().run([w=weak(), cb = std::move(cb), fromMessage, toMessage] {
+    dht::ThreadPool::io().run([w = weak(), cb = std::move(cb), fromMessage, toMessage] {
         if (auto sthis = w.lock()) {
             cb(sthis->pimpl_->loadMessages(fromMessage, toMessage, 0));
         }
@@ -384,36 +399,36 @@ Conversation::lastCommitId() const
 bool
 Conversation::fetchFrom(const std::string& uri)
 {
-    // TODO check if device id or account id
     return pimpl_->repository_->fetch(uri);
 }
 
-bool
+std::vector<std::map<std::string, std::string>>
 Conversation::mergeHistory(const std::string& uri)
 {
     if (not pimpl_ or not pimpl_->repository_) {
         JAMI_WARN("Invalid repo. Abort merge");
-        return false;
+        return {};
     }
     auto remoteHead = pimpl_->repository_->remoteHead(uri);
     if (remoteHead.empty()) {
         JAMI_WARN("Could not get HEAD of %s", uri.c_str());
-        return false;
+        return {};
     }
 
     // Validate commit
-    if (!pimpl_->repository_->validFetch(uri)) {
+    auto newCommits = pimpl_->repository_->validFetch(uri);
+    if (newCommits.empty()) {
         JAMI_ERR("Could not validate history with %s", uri.c_str());
-        return false;
+        return {};
     }
 
     // If validated, merge
     if (!pimpl_->repository_->merge(remoteHead)) {
         JAMI_ERR("Could not merge history with %s", uri.c_str());
-        return false;
+        return {};
     }
     JAMI_DBG("Successfully merge history with %s", uri.c_str());
-    return true;
+    return pimpl_->convCommitToMap(newCommits);
 }
 
 void
@@ -422,18 +437,19 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb)
     {
         std::lock_guard<std::mutex> lk(pimpl_->pullcbsMtx_);
         auto isInProgress = not pimpl_->pullcbs_.empty();
-        pimpl_->pullcbs_.emplace_back(std::make_pair<std::string, OnPullCb>(std::string(uri), std::move(cb)));
+        pimpl_->pullcbs_.emplace_back(
+            std::make_pair<std::string, OnPullCb>(std::string(uri), std::move(cb)));
         if (isInProgress)
             return;
     }
-    dht::ThreadPool::io().run([w=weak()] {
+    dht::ThreadPool::io().run([w = weak()] {
         auto sthis_ = w.lock();
         if (!sthis_)
             return;
-        
+
         std::string uri;
         OnPullCb cb;
-        while(true) {
+        while (true) {
             decltype(sthis_->pimpl_->pullcbs_)::value_type pullcb;
             {
                 std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
@@ -445,16 +461,16 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb)
                 sthis_->pimpl_->pullcbs_.pop_back();
             }
             if (!sthis_->fetchFrom(uri)) {
-                cb(false , {});
+                cb(false, {});
                 return;
             }
-            //auto newCommits = sthis_->mergeHistory(uri);
-            //auto ok = newCommits.empty();
-            //if (cb) cb(true, std::move(newCommits));
+            auto newCommits = sthis_->mergeHistory(uri);
+            auto ok = newCommits.empty();
+            if (cb)
+                cb(true, std::move(newCommits));
         }
     });
 }
-
 
 std::map<std::string, std::string>
 Conversation::generateInvitation() const

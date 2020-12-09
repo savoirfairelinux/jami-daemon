@@ -124,6 +124,7 @@ private:
     void testRemoveContact();
     void testBanContact();
     void testOneToOneFetchWithNewMemberRefused();
+    void testConversationMemberEvent();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -160,6 +161,7 @@ private:
     CPPUNIT_TEST(testRemoveContact);
     CPPUNIT_TEST(testBanContact);
     CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
+    CPPUNIT_TEST(testConversationMemberEvent);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -231,6 +233,7 @@ ConversationTest::setUp()
 void
 ConversationTest::tearDown()
 {
+    DRing::unregisterSignalHandlers();
     auto currentAccSize = Manager::instance().getAccountList().size();
     Manager::instance().removeAccount(aliceId, true);
     Manager::instance().removeAccount(bobId, true);
@@ -448,11 +451,14 @@ ConversationTest::testRemoveConversationWithMember()
         [&](const std::string& accountId,
             const std::string& conversationId,
             std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
+            auto itFind = message.find("type");
+            if (itFind == message.end())
+                return;
+            if (accountId == aliceId && conversationId == convId && itFind->second == "member") {
                 memberMessageGenerated = true;
                 cv.notify_one();
             } else if (accountId == bobId && conversationId == convId
-                       && message["type"] == "member") {
+                       && itFind->second == "member") {
                 bobSeeAliceRemoved = true;
                 cv.notify_one();
             }
@@ -460,7 +466,8 @@ ConversationTest::testRemoveConversationWithMember()
     DRing::registerSignalHandlers(confHandlers);
 
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
-    CPPUNIT_ASSERT(memberMessageGenerated);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberMessageGenerated; }));
 
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
@@ -528,7 +535,8 @@ ConversationTest::testAddMember()
         }));
     DRing::registerSignalHandlers(confHandlers);
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
-    CPPUNIT_ASSERT(memberMessageGenerated);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberMessageGenerated; }));
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
@@ -709,12 +717,10 @@ ConversationTest::testSendMessage()
     auto convId = aliceAccount->startConversation();
 
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
-    cv.wait_for(lk, std::chrono::seconds(30));
-    CPPUNIT_ASSERT(requestReceived);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
     bobAccount->acceptConversationRequest(convId);
-    cv.wait_for(lk, std::chrono::seconds(30));
-    CPPUNIT_ASSERT(conversationReady);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
 
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
@@ -847,8 +853,7 @@ ConversationTest::testGetRequests()
     auto convId = aliceAccount->startConversation();
 
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
-    cv.wait_for(lk, std::chrono::seconds(30));
-    CPPUNIT_ASSERT(requestReceived);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
     auto requests = bobAccount->getConversationRequests();
     CPPUNIT_ASSERT(requests.size() == 1);
@@ -880,8 +885,7 @@ ConversationTest::testDeclineRequest()
     auto convId = aliceAccount->startConversation();
 
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
-    cv.wait_for(lk, std::chrono::seconds(30));
-    CPPUNIT_ASSERT(requestReceived);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
     bobAccount->declineConversationRequest(convId);
     // Decline request
@@ -1028,8 +1032,7 @@ ConversationTest::testPingPongMessages()
     DRing::registerSignalHandlers(confHandlers);
     auto convId = aliceAccount->startConversation();
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
-    cv.wait_for(lk, std::chrono::seconds(30));
-    CPPUNIT_ASSERT(requestReceived);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
     messageAliceReceived = 0;
     bobAccount->acceptConversationRequest(convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() {
@@ -1111,7 +1114,8 @@ ConversationTest::testIsComposing()
             }));
     DRing::registerSignalHandlers(confHandlers);
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
-    CPPUNIT_ASSERT(memberMessageGenerated);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberMessageGenerated; }));
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
@@ -1526,39 +1530,6 @@ ConversationTest::generateFakeVote(std::shared_ptr<JamiAccount> account,
 
     account->sendMessage(convId, "trigger the fake history to be pulled");
 }
-void
-ConversationTest::addAll(std::shared_ptr<JamiAccount> account, const std::string& convId)
-{
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-
-    git_repository* repo = nullptr;
-    if (git_repository_open(&repo, repoPath.c_str()) != 0)
-        return;
-    GitRepository rep = {std::move(repo), git_repository_free};
-
-    // git add -A
-    git_index* index_ptr = nullptr;
-    git_strarray array = {0};
-    if (git_repository_index(&index_ptr, repo) < 0)
-        return;
-    GitIndex index {index_ptr, git_index_free};
-    git_index_add_all(index.get(), &array, 0, nullptr, nullptr);
-    git_index_write(index.get());
-}
-
-void
-ConversationTest::commit(std::shared_ptr<JamiAccount> account,
-                         const std::string& convId,
-                         Json::Value& message)
-{
-    ConversationRepository cr(account->weak(), convId);
-
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    cr.commitMessage(Json::writeString(wbuilder, message));
-}
 
 void
 ConversationTest::generateFakeInvite(std::shared_ptr<JamiAccount> account,
@@ -1907,8 +1878,7 @@ ConversationTest::testPlainTextNoBadFile()
     auto convId = aliceAccount->startConversation();
 
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
-    cv.wait_for(lk, std::chrono::seconds(30));
-    CPPUNIT_ASSERT(requestReceived);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
     bobAccount->acceptConversationRequest(convId);
     cv.wait_for(lk, std::chrono::seconds(30));
@@ -2506,6 +2476,68 @@ ConversationTest::testOneToOneFetchWithNewMemberRefused()
     messageBob = false;
     generateFakeInvite(aliceAccount, convId, carlaUri);
     CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageBob; }));
+}
+
+void
+ConversationTest::testConversationMemberEvent()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto convId = aliceAccount->startConversation();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false, memberAddGenerated = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationMemberEvent>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                const std::string& uri,
+                uint32_t event) {
+                if (accountId == aliceId && conversationId == convId && uri == bobUri
+                    && event == 0) {
+                    memberAddGenerated = true;
+                }
+                cv.notify_one();
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberAddGenerated; }));
+    // Assert that repository exists
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    // Check created files
+    auto bobInvited = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
+    CPPUNIT_ASSERT(fileutils::isFile(bobInvited));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    bobAccount->acceptConversationRequest(convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
+    auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
+                      + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(clonedPath));
+    bobInvited = clonedPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
+    CPPUNIT_ASSERT(!fileutils::isFile(bobInvited));
+    auto bobMember = clonedPath + DIR_SEPARATOR_STR + "members" + DIR_SEPARATOR_STR + bobUri
+                     + ".crt";
+    CPPUNIT_ASSERT(fileutils::isFile(bobMember));
 }
 
 } // namespace test
