@@ -32,6 +32,7 @@
 #include "recordable.h"
 #include "ip_utils.h"
 #include "conference.h"
+#include "media_codec.h"
 
 #include <atomic>
 #include <mutex>
@@ -159,7 +160,6 @@ public:
      * @return std::string The peer name
      */
     const std::string& getPeerDisplayName() const { return peerDisplayName_; }
-
     /**
      * Tell if the call is incoming
      * @return true if yes false otherwise
@@ -315,7 +315,7 @@ public: // media management
      */
     void updateDetails(const std::map<std::string, std::string>& details);
 
-    bool hasVideo() const { return not isAudioOnly_; }
+    bool hasVideo() const { return not isVideoMuted_; }
 
     /**
      * A Call can be in a conference. If this is the case, the other side
@@ -367,6 +367,9 @@ protected:
     mutable std::mutex confInfoMutex_ {};
     mutable ConfInfo confInfo_ {};
 
+    /** Unique ID of the call */
+    std::string id_;
+
 private:
     bool validStateTransition(CallState newState);
 
@@ -380,10 +383,7 @@ private:
 
     std::vector<std::function<void(CallState, ConnectionState, int)>> stateChangedListeners_ {};
 
-    /** Unique ID of the call */
-    std::string id_;
-
-    /** Unique conference ID, used exclusively in case of a conferece */
+    /** Unique conference ID, used exclusively in case of a conference */
     std::string confID_ {};
 
     /** Type of the call */
@@ -411,7 +411,6 @@ private:
 
     ///< MultiDevice: message received by subcall to merged yet
     MsgList pendingInMessages_;
-
 };
 
 // Helpers

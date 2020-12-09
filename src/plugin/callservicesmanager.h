@@ -163,13 +163,13 @@ public:
 
         /* In the case when the mediaHandler receives a hardware format
          * frame and converts it to main memory, we need to restart the
-         * sender to unlink ours encoder and decoder.
+         * sender to unlink our encoder and decoder.
          *
          * When we deactivate a mediaHandler, we try to relink the encoder
          * and decoder by restarting the sender.
          */
         if (applyRestart)
-            Manager::instance().callFactory.getCall<SIPCall>(callId)->getVideoRtp().restartSender();
+            Manager::instance().callFactory.getCall<SIPCall>(callId)->getVideoRtp()->restartSender();
     }
 
     /**

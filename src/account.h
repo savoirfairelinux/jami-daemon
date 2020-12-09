@@ -314,7 +314,7 @@ public:
      */
     const std::string& getUserAgentName();
 
-public: // virtual methods that has to be implemented by concrete classes
+    // virtual methods that has to be implemented by concrete classes
     /**
      * This method is called to request removal of possible account traces on the system,
      * like internal account setup files.
