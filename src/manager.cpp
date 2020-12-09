@@ -975,6 +975,56 @@ Manager::outgoingCall(const std::string& account_id,
     return call_id;
 }
 
+std::string
+Manager::outgoingCall(const std::string& account_id,
+                      const std::string& to,
+                      const std::vector<MediaMap>& mediaList,
+                      const std::string& conf_id)
+{
+    if (not conf_id.empty() and not isConference(conf_id)) {
+        JAMI_ERR("outgoingCall() failed, invalid conference id");
+        return {};
+    }
+
+    JAMI_DBG() << "try outgoing call to '" << to << "'"
+               << " with account '" << account_id << "'";
+
+    std::shared_ptr<Call> call;
+
+    try {
+        call = newOutgoingCall(trim(to), account_id, mediaList);
+    } catch (const std::exception& e) {
+        JAMI_ERR("%s", e.what());
+        return {};
+    }
+
+    if (not call)
+        return {};
+
+    auto call_id = call->getCallId();
+
+    stopTone();
+
+    pimpl_->switchCall(call);
+    call->setConfId(conf_id);
+
+    return call_id;
+}
+
+bool
+Manager::updateMedias(const std::string& callID, const std::vector<DRing::MediaMap>& mediaList)
+{
+    auto call = getCallFromCallID(callID);
+    if (not call) {
+        JAMI_ERR("No call with ID %s", callID.c_str());
+        return false;
+    }
+
+    auto const& mediaAttrList = MediaAttribute::parseMediaList(mediaList);
+
+    return call->updateMedias(mediaAttrList);
+}
+
 // THREAD=Main : for outgoing Call
 bool
 Manager::answerCall(const std::string& call_id)
@@ -1152,6 +1202,48 @@ Manager::offHoldCall(const std::string& callId)
     return result;
 }
 
+#ifdef _MULTISTREAM_DEV_
+// Version mof mute to test update medias
+bool
+Manager::muteMediaCall(const std::string& callId, const std::string& mediaType, bool mute)
+{
+    // Handle conf as usual
+    if (auto conf = getConferenceFromID(callId)) {
+        conf->muteLocalHost(mute, mediaType);
+        return true;
+    }
+
+    auto call = getCallFromCallID(callId);
+    if (not call) {
+        JAMI_WARN("CallID %s not found", callId.c_str());
+        return false;
+    }
+
+    auto type = MediaAttribute::stringToMediaType(mediaType);
+
+    JAMI_WARN("CallID %s: %s all [%s] medias",
+              callId.c_str(),
+              mute ? "muting " : "un-muting ",
+              type == MediaType::MEDIA_AUDIO ? "AUDIO" : "VIDEO");
+
+    std::vector<MediaAttribute> mediaList;
+    call->getMediaAttributeList(mediaList);
+
+    if (type != MediaType::MEDIA_AUDIO and type != MediaType::MEDIA_VIDEO) {
+        JAMI_ERR("CallID %s: invalid media type %s", callId.c_str(), mediaType.c_str());
+    }
+
+    // Mute/Un-mute all medias with matching media type.
+    for (auto& mediaAttr : mediaList) {
+        if (mediaAttr.type_ == type) {
+            mediaAttr.muted_ = mute;
+        }
+    }
+
+    // Apply
+    return call->updateMedias(mediaList);
+}
+#else
 bool
 Manager::muteMediaCall(const std::string& callId, const std::string& mediaType, bool is_muted)
 {
@@ -1166,6 +1258,7 @@ Manager::muteMediaCall(const std::string& callId, const std::string& mediaType, 
         return false;
     }
 }
+#endif
 
 // THREAD=Main
 bool
@@ -1705,8 +1798,8 @@ Manager::scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::t
     return pimpl_->scheduler_.schedule(std::move(task), when);
 }
 
-std::shared_ptr<Task> Manager::scheduleTaskIn(std::function<void()>&& task,
-                                std::chrono::steady_clock::duration timeout)
+std::shared_ptr<Task>
+Manager::scheduleTaskIn(std::function<void()>&& task, std::chrono::steady_clock::duration timeout)
 {
     return pimpl_->scheduler_.scheduleIn(std::move(task), timeout);
 }
@@ -3161,6 +3254,27 @@ Manager::newOutgoingCall(std::string_view toUrl,
     return account->newOutgoingCall(toUrl, volatileCallDetails);
 }
 
+std::shared_ptr<Call>
+Manager::newOutgoingCall(std::string_view toUrl,
+                         const std::string& accountId,
+                         const std::vector<MediaMap>& mediaList)
+{
+    auto account = getAccount(accountId);
+    if (not account) {
+        JAMI_WARN("No account matches ID %s", accountId.c_str());
+        ;
+        return nullptr;
+    }
+
+    if (not account->isUsable()) {
+        JAMI_WARN("Account %s is not usable", accountId.c_str());
+        ;
+        return nullptr;
+    }
+
+    return account->newOutgoingCall(toUrl, mediaList);
+}
+
 #ifdef ENABLE_VIDEO
 std::shared_ptr<video::SinkClient>
 Manager::createSinkClient(const std::string& id, bool mixer)
@@ -3250,11 +3364,15 @@ Manager::setModerator(const std::string& confId, const std::string& peerId, cons
     if (auto conf = getConferenceFromID(confId)) {
         conf->setModerator(peerId, state);
     } else
-        JAMI_WARN("Fail to change moderator %s, conference %s not found", peerId.c_str(), confId.c_str());
+        JAMI_WARN("Fail to change moderator %s, conference %s not found",
+                  peerId.c_str(),
+                  confId.c_str());
 }
 
 void
-Manager::muteParticipant(const std::string& confId, const std::string& participant, const bool& state)
+Manager::muteParticipant(const std::string& confId,
+                         const std::string& participant,
+                         const bool& state)
 {
     if (auto conf = getConferenceFromID(confId)) {
         conf->muteParticipant(participant, state);

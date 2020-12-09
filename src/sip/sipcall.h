@@ -80,14 +80,26 @@ public:
     ~SIPCall();
 
     /**
-     * Constructor (protected)
-     * @param id    The call identifier
-     * @param type  The type of the call. Could be Incoming or Outgoing
+     * Constructor
+     * @param id The call identifier
+     * @param type The type of the call. Could be Incoming or Outgoing
+     * @param details Extra infos
      */
     SIPCall(const std::shared_ptr<SIPAccountBase>& account,
             const std::string& id,
             Call::CallType type,
             const std::map<std::string, std::string>& details = {});
+
+    /**
+     * Constructor
+     * @param id The call identifier
+     * @param type The type of the call (incoming/outgoing)
+     * @param mediaList A list of medias to include in the call
+     */
+    SIPCall(const std::shared_ptr<SIPAccountBase>& account,
+            const std::string& id,
+            Call::CallType type,
+            const std::vector<MediaAttribute>& mediaList);
 
     // Inherited from Call class
     void answer() override;
@@ -111,6 +123,8 @@ public:
                          const std::string& from) override;
     void removeCall() override;
     void muteMedia(const std::string& mediaType, bool isMuted) override;
+    bool updateMedias(const std::vector<MediaAttribute>& mediaList) override;
+    void getMediaAttributeList(std::vector<MediaAttribute>& mediaList) const override;
     void restartMediaSender() override;
     std::shared_ptr<AccountCodecInfo> getAudioCodec() const override;
     std::shared_ptr<AccountCodecInfo> getVideoCodec() const override;
@@ -121,10 +135,12 @@ public:
     virtual bool toggleRecording()
         override; // SIPCall needs to spread recorder to rtp sessions, so override
 
-public: // SIP related
+    // SIP related
+
     /**
      * Return the SDP's manager of this call
      */
+    // TODO_MC. Should not give access to this instance. Add API to Call class to modify it.
     Sdp& getSDP() { return *sdp_; }
 
     /**
@@ -198,16 +214,12 @@ public: // SIP related
     std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inv;
 
 public: // NOT SIP RELATED (good candidates to be moved elsewhere)
-    /**
-     * Returns a pointer to the AudioRtpSession object
-     */
-    AudioRtpSession& getAVFormatRTP() const { return *avformatrtp_; }
-
+    AudioRtpSession* getAudioRtp() const;
 #ifdef ENABLE_VIDEO
     /**
      * Returns a pointer to the VideoRtp object
      */
-    video::VideoRtpSession& getVideoRtp() { return *videortp_; }
+    video::VideoRtpSession* getVideoRtp() const;
 #endif
 
     void setSecure(bool sec);
@@ -243,6 +255,8 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
     void setPeerMute(bool state);
 
     bool isPeerMuted() const { return peerMuted_; }
+
+    size_t initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList);
 
 private:
     using clock = std::chrono::steady_clock;
@@ -287,7 +301,6 @@ private:
     static std::shared_ptr<SIPCall> getSipCall(const std::string& callId);
 
     void setCallMediaLocal();
-
     void startIceMedia();
     void onIceNegoSucceed();
 
@@ -307,6 +320,8 @@ private:
 
     int SIPSessionReinvite();
 
+    int SIPSessionReinvite(const std::vector<MediaAttribute>& mediaList);
+
     std::vector<IceCandidate> getAllRemoteCandidates();
 
     void merge(Call& call) override; // not public - only called by Call
@@ -325,16 +340,44 @@ private:
     }
     inline std::weak_ptr<SIPCall> weak() { return std::weak_ptr<SIPCall>(shared()); }
 
-    std::unique_ptr<AudioRtpSession> avformatrtp_;
+    // Create a new stream from SDP description.
+    std::shared_ptr<RtpSession> addRtpStream(unsigned int streamIndex,
+                                             const MediaAttribute& mediaAttr);
 
-#ifdef ENABLE_VIDEO
-    /**
-     * Video Rtp Session factory
-     */
-    std::unique_ptr<video::VideoRtpSession> videortp_;
-#endif
+    // Configure the RTP session from SDP description.
+    void configureRtpSession(std::shared_ptr<RtpSession> rtpSession,
+                             const std::string& source,
+                             const MediaDescription& localMedia,
+                             const MediaDescription& remoteMedia);
 
-    std::string mediaInput_;
+    void dumpMediaAttribute(const MediaAttribute& mediaAttr, size_t idx) const;
+
+    class RtpStream
+    {
+    public:
+        RtpStream() {};
+
+        std::shared_ptr<RtpSession> rtpSession_ {};
+        std::shared_ptr<MediaAttribute> mediaAttribute_ {};
+    };
+
+    // Find the index of the matching stream
+    int findRtpStreamIndex(const std::string label) const;
+
+    // Get the rtp session at the specific index
+    std::shared_ptr<RtpSession> getRtpSessionAtIndex(unsigned index);
+
+    // Get the media attribute at the specific index
+    std::shared_ptr<MediaAttribute> getMediaAttributeAtIndex(unsigned index);
+
+    // Get the rtp session with the matching label
+    std::shared_ptr<RtpSession> getRtpSession(const std::string label);
+
+    // Vector holding the current RTP sessions.
+    std::vector<RtpStream> rtpStreams_;
+
+    // TODO_MC. This is temporary until the APIs are modified.
+    std::string selectedSource_ {};
 
     bool srtpEnabled_ {false};
 
@@ -348,7 +391,7 @@ private:
     /**
      * The SDP session
      */
-    std::unique_ptr<Sdp> sdp_;
+    std::unique_ptr<Sdp> sdp_ {};
     bool peerHolding_ {false};
 
     bool isWaitingForIceAndMedia_ {false};
@@ -362,9 +405,9 @@ private:
 
     std::unique_ptr<jami::upnp::Controller> upnp_;
 
+    // TODO_MC. The port must be set per media stream.
     /** Local audio port, as seen by me. */
     unsigned int localAudioPort_ {0};
-
     /** Local video port, as seen by me. */
     unsigned int localVideoPort_ {0};
 

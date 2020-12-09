@@ -39,17 +39,23 @@ class MediaRecorder;
 class RtpSession
 {
 public:
-    RtpSession(const std::string& callID)
+    RtpSession(const std::string& callID, MediaType type, unsigned index)
         : callID_(callID)
+        , mediaType_(type)
+        , streamIndex_(index)
     {}
     virtual ~RtpSession() {};
 
     virtual void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) = 0;
     virtual void restartSender() = 0;
     virtual void stop() = 0;
-    void switchInput(const std::string& resource) { input_ = resource; }
+    void setMediaSource(const std::string& resource) { input_ = resource; }
+    unsigned getStreamIndex() { return streamIndex_; }
     const std::string& getInput() const { return input_; }
-
+    MediaType getMediaType() const { return mediaType_; };
+    void setLabel(const std::string& label) { label_ = label; };
+    const std::string& getLabel() const { return label_; };
+    virtual void setMuted(bool mute) { muteState_ = mute; };
     virtual void updateMedia(const MediaDescription& send, const MediaDescription& receive)
     {
         send_ = send;
@@ -65,19 +71,24 @@ public:
 
     virtual void initRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
     virtual void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
-
     std::shared_ptr<AccountCodecInfo> getCodec() const { return send_.codec; }
+    const IpAddr& getSendAddr() const { return send_.addr; };
+    const IpAddr& getRecvAddr() const { return receive_.addr; };
 
 protected:
     std::recursive_mutex mutex_;
-    std::unique_ptr<SocketPair> socketPair_;
     const std::string callID_;
-    std::string input_;
-
+    MediaType mediaType_;
+    // Stream label. Must be unique.
+    std::string label_;
+    // Stream index as presented in the local SDP.
+    unsigned streamIndex_;
+    std::unique_ptr<SocketPair> socketPair_;
+    std::string input_ {};
     MediaDescription send_;
     MediaDescription receive_;
-
     uint16_t mtu_;
+    bool muteState_ {false};
 
     std::function<void(MediaType)> onSuccessfulSetup_;
 

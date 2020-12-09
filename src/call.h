@@ -32,6 +32,7 @@
 #include "recordable.h"
 #include "ip_utils.h"
 #include "conference.h"
+#include "media_codec.h"
 
 #include <atomic>
 #include <mutex>
@@ -163,7 +164,6 @@ public:
      * @return std::string The peer name
      */
     const std::string& getPeerDisplayName() const { return peerDisplayName_; }
-
     /**
      * Tell if the call is incoming
      * @return true if yes false otherwise
@@ -275,6 +275,8 @@ public:
 public: // media management
     virtual bool toggleRecording();
 
+    virtual void getMediaAttributeList(std::vector<MediaAttribute>& mediaList) const = 0;
+
     virtual void switchInput(const std::string&) {};
 
     /**
@@ -289,6 +291,12 @@ public: // media management
      * @param code  The char code
      */
     virtual void carryingDTMFdigits(char code) = 0;
+
+    /**
+     * Update the medias
+     * @param mediaList the new media list
+     */
+    virtual bool updateMedias(const std::vector<MediaAttribute>& mediaList) = 0;
 
     /**
      * Send a message to a call identified by its callid
@@ -316,7 +324,7 @@ public: // media management
      */
     void updateDetails(const std::map<std::string, std::string>& details);
 
-    bool hasVideo() const { return not isAudioOnly_; }
+    bool hasVideo() const { return not isVideoMuted_; }
 
     /**
      * A Call can be in a conference. If this is the case, the other side
@@ -349,7 +357,9 @@ protected:
 
     // TODO all these members are not protected against multi-thread access
 
-    std::string id_ {};
+    /** Unique ID of the call */
+    std::string id_;
+
     bool isAudioMuted_ {false};
     bool isVideoMuted_ {false};
 

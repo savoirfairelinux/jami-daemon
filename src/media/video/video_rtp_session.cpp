@@ -59,8 +59,10 @@ constexpr auto EXPIRY_TIME_RTCP = std::chrono::seconds(2);
 constexpr auto DELAY_AFTER_REMB_INC = std::chrono::seconds(1);
 constexpr auto DELAY_AFTER_REMB_DEC = std::chrono::milliseconds(500);
 
-VideoRtpSession::VideoRtpSession(const string& callID, const DeviceParams& localVideoParams)
-    : RtpSession(callID)
+VideoRtpSession::VideoRtpSession(const string& callID,
+                                 unsigned index,
+                                 const DeviceParams& localVideoParams)
+    : RtpSession(callID, MediaType::MEDIA_VIDEO, index)
     , localVideoParams_(localVideoParams)
     , videoBitrateInfo_ {}
     , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
@@ -92,7 +94,7 @@ VideoRtpSession::setRequestKeyFrameCallback(std::function<void(void)> cb)
 void
 VideoRtpSession::startSender()
 {
-    if (send_.enabled and not send_.holding) {
+    if (send_.enabled and not send_.onHold) {
         if (sender_) {
             if (videoLocal_)
                 videoLocal_->detach(sender_.get());
@@ -145,21 +147,18 @@ VideoRtpSession::startSender()
         try {
             sender_.reset();
             socketPair_->stopSendOp(false);
-            MediaStream ms = !conference_ ?
-                        MediaStream("video sender",
-                            AV_PIX_FMT_YUV420P,
-                            1 / static_cast<rational<int>>(localVideoParams_.framerate),
-                            localVideoParams_.width,
-                            localVideoParams_.height,
-                            send_.bitrate,
-                            static_cast<rational<int>>(localVideoParams_.framerate)) :
-                        conference_->getVideoMixer()->getStream("Video Sender");
-            sender_.reset(new VideoSender(getRemoteRtpUri(),
-                                        ms,
-                                        send_,
-                                        *socketPair_,
-                                        initSeqVal_ + 1,
-                                        mtu_));
+            MediaStream ms
+                = !conference_
+                      ? MediaStream("video sender",
+                                    AV_PIX_FMT_YUV420P,
+                                    1 / static_cast<rational<int>>(localVideoParams_.framerate),
+                                    localVideoParams_.width,
+                                    localVideoParams_.height,
+                                    send_.bitrate,
+                                    static_cast<rational<int>>(localVideoParams_.framerate))
+                      : conference_->getVideoMixer()->getStream("Video Sender");
+            sender_.reset(
+                new VideoSender(getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_));
             if (changeOrientationCallback_)
                 sender_->setChangeOrientationCallback(changeOrientationCallback_);
             if (socketPair_)
@@ -195,7 +194,7 @@ VideoRtpSession::restartSender()
 void
 VideoRtpSession::startReceiver()
 {
-    if (receive_.enabled and not receive_.holding) {
+    if (receive_.enabled and not receive_.onHold) {
         if (receiveThread_)
             JAMI_WARN("Restarting video receiver");
         receiveThread_.reset(new VideoReceiveThread(callID_, receive_.receiving_sdp, mtu_));
@@ -349,15 +348,15 @@ VideoRtpSession::enterConference(Conference* conference)
     // TODO is this correct? The video Mixer should be enabled for a detached conference even if we
     // are not sending values
     videoMixer_ = conference->getVideoMixer();
-    auto conf_res = split_string_to_unsigned(jami::Manager::instance().videoPreferences.getConferenceResolution(), 'x');
+    auto conf_res = split_string_to_unsigned(jami::Manager::instance()
+                                                 .videoPreferences.getConferenceResolution(),
+                                             'x');
     if (conf_res.size() != 2 or conf_res[0] <= 0 or conf_res[1] <= 0) {
         JAMI_ERR("Conference resolution is invalid");
         return;
     }
 #if defined(__APPLE__) && TARGET_OS_MAC
-    videoMixer_->setParameters(conf_res[0],
-                               conf_res[1],
-                               AV_PIX_FMT_NV12);
+    videoMixer_->setParameters(conf_res[0], conf_res[1], AV_PIX_FMT_NV12);
 #else
     videoMixer_->setParameters(conf_res[0], conf_res[1]);
 #endif
