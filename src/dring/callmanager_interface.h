@@ -35,6 +35,8 @@
 
 namespace DRing {
 
+using MediaMap = std::map<std::string, std::string>;
+
 [[deprecated("Replaced by registerSignalHandlers")]] DRING_PUBLIC void registerCallHandlers(
     const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
@@ -54,6 +56,14 @@ DRING_PUBLIC bool transfer(const std::string& callID, const std::string& to);
 DRING_PUBLIC bool attendedTransfer(const std::string& transferID, const std::string& targetID);
 DRING_PUBLIC std::map<std::string, std::string> getCallDetails(const std::string& callID);
 DRING_PUBLIC std::vector<std::string> getCallList();
+
+/* APIs that supports arbitrary number of medias*/
+DRING_PUBLIC std::string placeCall(const std::string& accountID,
+                                   const std::string& to,
+                                   const std::vector<DRing::MediaMap>& mediaList);
+DRING_PUBLIC bool accept(const std::string& callID, const std::vector<DRing::MediaMap>& mediaList);
+DRING_PUBLIC bool updateMediaStreams(const std::string& callID,
+                                     const std::vector<DRing::MediaMap>& mediaList);
 
 /* Conference related methods */
 DRING_PUBLIC void removeConference(const std::string& conference_id);
@@ -77,8 +87,12 @@ DRING_PUBLIC std::string getConferenceId(const std::string& callID);
 DRING_PUBLIC std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConferenceInfos(
     const std::string& confId);
-DRING_PUBLIC void setModerator(const std::string& confId, const std::string& peerId, const bool& state);
-DRING_PUBLIC void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
+DRING_PUBLIC void setModerator(const std::string& confId,
+                               const std::string& peerId,
+                               const bool& state);
+DRING_PUBLIC void muteParticipant(const std::string& confId,
+                                  const std::string& peerId,
+                                  const bool& state);
 DRING_PUBLIC void hangupParticipant(const std::string& confId, const std::string& participant);
 
 /* Statistic related methods */
