@@ -1969,6 +1969,33 @@
            </arg>
        </signal>
 
+       <signal name="conversationMemberEvent" tp:name-for-bindings="conversationMemberEvent">
+           <tp:added version="10.0.0"/>
+           <tp:docstring>
+               Notify clients when a member is invited/added/removed/banned
+           </tp:docstring>
+           <arg type="s" name="account_id">
+               <tp:docstring>
+                   Account id related
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="conversation_id">
+               <tp:docstring>
+                   Conversation id
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="member_uri">
+               <tp:docstring>
+                   The URI of the member added
+               </tp:docstring>
+           </arg>
+           <arg type="i" name="event">
+               <tp:docstring>
+                   event: 0 = add, 1 = joins, 2 = leave, 3 = banned
+               </tp:docstring>
+           </arg>
+       </signal>
+
        <signal name="debugMessageReceived" tp:name-for-bindings="debugMessageReceived">
            <tp:added version="5.2.0"/>
            <tp:docstring>
