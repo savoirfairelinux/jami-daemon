@@ -15,6 +15,8 @@ list (APPEND Source_Files__media
       "${CMAKE_CURRENT_SOURCE_DIR}/localrecorder.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/localrecordermanager.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/localrecordermanager.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/media_attribute.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/media_attribute.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/media_buffer.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/media_buffer.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/media_codec.cpp"
@@ -61,6 +63,6 @@ if(MSVC)
    if(WINDOWS_STORE)
       set (Source_Files__media__video__uwpvideo ${Source_Files__media__video__uwpvideo} PARENT_SCOPE)
    endif()
-   
+
    set (Source_Files__media__video__winvideo ${Source_Files__media__video__winvideo} PARENT_SCOPE)
 endif()

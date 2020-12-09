@@ -151,6 +151,8 @@ DRING_PUBLIC void registerSignalHandlers(
     const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 DRING_PUBLIC void unregisterSignalHandlers();
 
+using MediaMap = std::map<std::string, std::string>;
+
 } // namespace DRing
 
 #endif /* DRING_H */

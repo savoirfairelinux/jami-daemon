@@ -1207,9 +1207,8 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
         std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
         if (!pimpl_->icest_)
             return res;
-        if (pj_ice_strans_enum_cands(pimpl_->icest_.get(), comp_id + 1, &cand_cnt, cand)
-            != PJ_SUCCESS) {
-            JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", pimpl_.get());
+        if (pj_ice_strans_enum_cands(pimpl_->icest_.get(), comp_id, &cand_cnt, cand) != PJ_SUCCESS) {
+            JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", this);
             return res;
         }
     }
@@ -1269,13 +1268,13 @@ IceTransport::packIceMsg(uint8_t version) const
         msgpack::pack(buffer, version);
         msgpack::pack(buffer, std::make_pair(pimpl_->local_ufrag_, pimpl_->local_pwd_));
         msgpack::pack(buffer, static_cast<uint8_t>(pimpl_->component_count_));
-        for (unsigned i = 0; i < pimpl_->component_count_; i++)
+        for (unsigned i = 1; i <= pimpl_->component_count_; i++)
             msgpack::pack(buffer, getLocalCandidates(i));
     } else {
         SDP sdp;
         sdp.ufrag = pimpl_->local_ufrag_;
         sdp.pwd = pimpl_->local_pwd_;
-        for (unsigned i = 0; i < pimpl_->component_count_; i++) {
+        for (unsigned i = 1; i <= pimpl_->component_count_; i++) {
             auto candidates = getLocalCandidates(i);
             sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
             sdp.candidates.insert(sdp.candidates.end(), candidates.begin(), candidates.end());
