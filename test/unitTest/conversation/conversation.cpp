@@ -734,7 +734,7 @@ ConversationTest::testSendMessage()
     // Wait that alice sees Bob
     cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageAliceReceived == 1; });
 
-    aliceAccount->sendMessage(convId, "hi");
+    aliceAccount->sendMessage(convId, std::string("hi"));
     cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageBobReceived == 1; });
     DRing::unregisterSignalHandlers();
 }
@@ -767,7 +767,7 @@ ConversationTest::testSendMessageTriggerMessageReceived()
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(conversationReady);
 
-    aliceAccount->sendMessage(convId, "hi");
+    aliceAccount->sendMessage(convId, std::string("hi"));
     cv.wait_for(lk, std::chrono::seconds(30), [&] { return messageReceived == 1; });
     CPPUNIT_ASSERT(messageReceived == 1);
     DRing::unregisterSignalHandlers();
@@ -823,9 +823,9 @@ ConversationTest::testMergeTwoDifferentHeads()
     ConversationRepository repo(carlaAccount, convId);
     repo.join();
 
-    aliceAccount->sendMessage(convId, "hi");
-    aliceAccount->sendMessage(convId, "sup");
-    aliceAccount->sendMessage(convId, "jami");
+    aliceAccount->sendMessage(convId, std::string("hi"));
+    aliceAccount->sendMessage(convId, std::string("sup"));
+    aliceAccount->sendMessage(convId, std::string("jami"));
 
     // Start Carla, should merge and all messages should be there
     Manager::instance().sendRegister(carlaId, true);
@@ -986,7 +986,7 @@ ConversationTest::testSendMessageToMultipleParticipants()
                + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
 
-    aliceAccount->sendMessage(convId, "hi");
+    aliceAccount->sendMessage(convId, std::string("hi"));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() {
         return messageReceivedBob >= 1 && messageReceivedCarla >= 1;
     }));
@@ -1049,19 +1049,19 @@ ConversationTest::testPingPongMessages()
     CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
     messageBobReceived = 0;
     messageAliceReceived = 0;
-    aliceAccount->sendMessage(convId, "ping");
+    aliceAccount->sendMessage(convId, std::string("ping"));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return messageBobReceived == 1 && messageAliceReceived == 1;
     }));
-    bobAccount->sendMessage(convId, "pong");
+    bobAccount->sendMessage(convId, std::string("pong"));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return messageBobReceived == 2 && messageAliceReceived == 2;
     }));
-    bobAccount->sendMessage(convId, "ping");
+    bobAccount->sendMessage(convId, std::string("ping"));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return messageBobReceived == 3 && messageAliceReceived == 3;
     }));
-    aliceAccount->sendMessage(convId, "pong");
+    aliceAccount->sendMessage(convId, std::string("pong"));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return messageBobReceived == 4 && messageAliceReceived == 4;
     }));
@@ -1434,7 +1434,7 @@ ConversationTest::testBannedMemberCannotSendMessage()
 
     // Now check that alice doesn't receive a message from Bob
     aliceMessageReceived = false;
-    bobAccount->sendMessage(convId, "hi");
+    bobAccount->sendMessage(convId, std::string("hi"));
     CPPUNIT_ASSERT(
         !cv.wait_for(lk, std::chrono::seconds(30), [&]() { return aliceMessageReceived; }));
 }
@@ -1542,7 +1542,7 @@ ConversationTest::generateFakeVote(std::shared_ptr<JamiAccount> account,
     wbuilder["indentation"] = "";
     cr.commitMessage(Json::writeString(wbuilder, json));
 
-    account->sendMessage(convId, "trigger the fake history to be pulled");
+    account->sendMessage(convId, std::string("trigger the fake history to be pulled"));
 }
 
 void
@@ -1584,7 +1584,7 @@ ConversationTest::generateFakeInvite(std::shared_ptr<JamiAccount> account,
     wbuilder["indentation"] = "";
     cr.commitMessage(Json::writeString(wbuilder, json));
 
-    account->sendMessage(convId, "trigger the fake history to be pulled");
+    account->sendMessage(convId, std::string("trigger the fake history to be pulled"));
 }
 void
 ConversationTest::addAll(std::shared_ptr<JamiAccount> account, const std::string& convId)
@@ -1726,7 +1726,7 @@ ConversationTest::testMemberCannotBanOther()
     generateFakeVote(carlaAccount, convId, bobUri);
     CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageBobReceived; }));
 
-    aliceAccount->sendMessage(convId, "hi");
+    aliceAccount->sendMessage(convId, std::string("hi"));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageBobReceived; }));
 }
 
@@ -1909,7 +1909,7 @@ ConversationTest::testPlainTextNoBadFile()
     cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageAliceReceived == 1; });
 
     addFile(aliceAccount, convId, "BADFILE");
-    aliceAccount->sendMessage(convId, "hi");
+    aliceAccount->sendMessage(convId, std::string("hi"));
     // Check not received due to the unwanted file
     CPPUNIT_ASSERT(
         !cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageBobReceived == 1; }));
@@ -2001,7 +2001,7 @@ ConversationTest::testVoteNoBadFile()
     }));
 
     messageCarlaReceived = false;
-    bobAccount->sendMessage(convId, "final");
+    bobAccount->sendMessage(convId, std::string("final"));
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageCarlaReceived; }));
 }
