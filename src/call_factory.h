@@ -47,6 +47,18 @@ private:
                                         Call::CallType type,
                                         const std::map<std::string, std::string>& details = {});
 
+    /**
+     * Create a new call instance.
+     * @param account Account used to create this call
+     * @param id Unique identifier of the call
+     * @param type Set definitely this call as incoming/outgoing
+     * @param mediaList The list of media to include
+     */
+    std::shared_ptr<Call> createSipCall(const std::shared_ptr<Account>& account,
+                                        const std::string& id,
+                                        Call::CallType type,
+                                        const std::vector<MediaAttribute>& mediaList);
+
 public:
     template<class A>
     std::shared_ptr<Call> newCall(std::shared_ptr<A> account,
@@ -55,6 +67,15 @@ public:
                                   const std::map<std::string, std::string>& details = {})
     {
         return createSipCall(account, id, type, details);
+    }
+
+    template<class A>
+    std::shared_ptr<Call> newCall(std::shared_ptr<A> account,
+                                  const std::string& id,
+                                  Call::CallType type,
+                                  const std::vector<MediaAttribute>& mediaList)
+    {
+        return createSipCall(account, id, type, mediaList);
     }
 
     /**
@@ -129,6 +150,8 @@ private:
 
         return nullptr;
     }
+
+    const CallMap* getMap(Call::LinkType link) const;
 
     mutable std::recursive_mutex callMapsMutex_ {};
 

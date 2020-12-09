@@ -233,8 +233,7 @@ Conference::setActiveParticipant(const std::string& participant_id)
         if (auto call = getCall(item)) {
             if (participant_id == item
                 || call->getPeerNumber().find(participant_id) != std::string::npos) {
-                auto videoRecv = reinterpret_cast<Observable<std::shared_ptr<MediaFrame>>*>(
-                    call->getVideoReceiver());
+                Observable<std::shared_ptr<MediaFrame>>* videoRecv = call->getVideoReceiver();
                 videoMixer_->setActiveParticipant(videoRecv);
                 return;
             }

@@ -73,23 +73,50 @@ class Controller;
  */
 class SIPCall : public Call
 {
+private:
+    using clock = std::chrono::steady_clock;
+    using time_point = clock::time_point;
+
+    NON_COPYABLE(SIPCall);
+
 public:
+    struct RtpStream
+    {
+        std::shared_ptr<RtpSession> rtpSession_ {};
+        std::shared_ptr<MediaAttribute> mediaAttribute_ {};
+    };
+
     /**
      * Destructor
      */
     ~SIPCall();
 
     /**
-     * Constructor (protected)
-     * @param id    The call identifier
-     * @param type  The type of the call. Could be Incoming or Outgoing
+     * Constructor
+     * @param id The call identifier
+     * @param type The type of the call. Could be Incoming or Outgoing
+     * @param details Extra infos
      */
     SIPCall(const std::shared_ptr<SIPAccountBase>& account,
             const std::string& id,
             Call::CallType type,
             const std::map<std::string, std::string>& details = {});
 
-    // Inherited from Call class
+    /**
+     * Constructor
+     * @param id The call identifier
+     * @param type The type of the call (incoming/outgoing)
+     * @param mediaList A list of medias to include in the call
+     */
+    SIPCall(const std::shared_ptr<SIPAccountBase>& account,
+            const std::string& id,
+            Call::CallType type,
+            const std::vector<MediaAttribute>& mediaList);
+
+    // Override of Call class
+private:
+    void merge(Call& call) override; // not public - only called by Call
+public:
     LinkType getLinkType() const { return LinkType::SIP; }
     void answer() override;
     void hangup(int reason) override;
@@ -98,77 +125,82 @@ public:
     bool attendedTransfer(const std::string& to) override;
     bool onhold(OnReadyCb&& cb) override;
     bool offhold(OnReadyCb&& cb) override;
-    void switchInput(const std::string& resource) override;
+    void switchInput(const std::string& resource = {}) override;
     void peerHungup() override;
     void carryingDTMFdigits(char code) override;
-
-    /**
-     * Send device orientation through SIP INFO
-     * @param rotation Device orientation (0/90/180/270) (counterclockwise)
-     */
-    void setVideoOrientation(int rotation);
-
+    bool requestMediaUpdate(const std::vector<MediaAttribute>& mediaList) override;
     void sendTextMessage(const std::map<std::string, std::string>& messages,
                          const std::string& from) override;
     void removeCall() override;
     void muteMedia(const std::string& mediaType, bool isMuted) override;
+    std::vector<MediaAttribute> getMediaAttributeList() const override;
     void restartMediaSender() override;
     std::shared_ptr<AccountCodecInfo> getAudioCodec() const override;
     std::shared_ptr<AccountCodecInfo> getVideoCodec() const override;
-
     void sendKeyframe() override;
     std::map<std::string, std::string> getDetails() const override;
-
     void enterConference(const std::string& confId) override;
     void exitConference() override;
     video::VideoGenerator* getVideoReceiver() override
     {
-        return videortp_->getVideoReceive().get();
-    }
+        auto const& rtp = getVideoRtp();
+        if (rtp)
+            rtp->getVideoReceive().get();
 
-    // Overrides of Recordable base class.
+        return nullptr;
+    }
+    // End of override of Call class
+
+    // Override of Recordable class
     bool toggleRecording() override;
     void peerRecording(bool state) override;
     void peerMuted(bool state) override;
+    // End of override of Recordable class
 
     /**
      * Return the SDP's manager of this call
      */
     Sdp& getSDP() { return *sdp_; }
 
+    // Implementation of events reported by SipVoipLink.
     /**
      * Tell the user that the call is ringing
-     * @param
      */
     void onPeerRinging();
 
     /**
      * Tell the user that the call was answered
-     * @param
      */
     void onAnswered();
 
     /**
      * To call in case of server/internal error
-     * @param cause Optionnal error code
+     * @param cause Optional error code
      */
     void onFailure(signed cause = 0);
 
     /**
      * Peer answered busy
-     * @param
      */
     void onBusyHere();
 
     /**
      * Peer close the connection
-     * @param
      */
     void onClosed();
 
+    /**
+     * Report a new offer from peer on a existing invite session
+     * (aka re-invite)
+     */
     void onReceiveOffer(const pjmedia_sdp_session* offer);
 
+    /**
+     * Called when the media negotiation (SDP offer/answer) has
+     * completed.
+     */
     void onMediaUpdate();
+    // End fo SiPVoipLink events
 
     void setContactHeader(pj_str_t* contact);
 
@@ -204,17 +236,13 @@ public:
         void operator()(pjsip_inv_session*) const noexcept;
     };
 
-public: // NOT SIP RELATED (good candidates to be moved elsewhere)
-    /**
-     * Returns a pointer to the AudioRtpSession object
-     */
-    AudioRtpSession& getAVFormatRTP() const { return *avformatrtp_; }
-
+    // NOT SIP RELATED (good candidates to be moved elsewhere)
+    std::shared_ptr<AudioRtpSession> getAudioRtp() const;
 #ifdef ENABLE_VIDEO
     /**
      * Returns a pointer to the VideoRtp object
      */
-    video::VideoRtpSession& getVideoRtp() { return *videortp_; }
+    std::shared_ptr<video::VideoRtpSession> getVideoRtp() const;
 #endif
 
     void setSecure(bool sec);
@@ -248,10 +276,11 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
     std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
 
 private:
-    using clock = std::chrono::steady_clock;
-    using time_point = clock::time_point;
-
-    NON_COPYABLE(SIPCall);
+    /**
+     * Send device orientation through SIP INFO
+     * @param rotation Device orientation (0/90/180/270) (counterclockwise)
+     */
+    void setVideoOrientation(int rotation);
 
     mutable std::mutex transportMtx_ {};
     IceTransport* getIceMediaTransport() const
@@ -288,7 +317,6 @@ private:
     std::map<std::string, std::shared_ptr<MediaStreamSubject>> callAVStreams;
 
     void setCallMediaLocal();
-
     void startIceMedia();
     void onIceNegoSucceed();
 
@@ -305,12 +333,18 @@ private:
     bool hold();
 
     bool unhold();
-
+    /**
+     * Update the attributes of a media stream
+     * @param newMediaAttr the new attributes
+     * @param streamIdx the index of the stream to update
+     * @return true if the update requires a new SDP and SIP re-invite.
+     */
+    bool updateMediaStreamInternal(const MediaAttribute& newMediaAttr, size_t streamIdx);
+    void requestReinvite();
+    int SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList);
     int SIPSessionReinvite();
 
     std::vector<IceCandidate> getAllRemoteCandidates();
-
-    void merge(Call& call) override; // not public - only called by Call
 
     inline std::shared_ptr<const SIPCall> shared() const
     {
@@ -326,16 +360,32 @@ private:
     }
     inline std::weak_ptr<SIPCall> weak() { return std::weak_ptr<SIPCall>(shared()); }
 
-    std::unique_ptr<AudioRtpSession> avformatrtp_;
+    // Add a media stream to the call.
+    void addMediaStream(const MediaAttribute& mediaAttr);
 
-#ifdef ENABLE_VIDEO
+    // Init media streams
+    size_t initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList);
+
+    // Create a new stream from SDP description.
+    void createRtpSession(RtpStream& rtpStream);
+
+    // Configure the RTP session from SDP description.
+    void configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
+                             const std::shared_ptr<MediaAttribute>& mediaAttr,
+                             const MediaDescription& localMedia,
+                             const MediaDescription& remoteMedia);
+
+    void dumpMediaAttribute(const MediaAttribute& mediaAttr, size_t idx) const;
+
     /**
-     * Video Rtp Session factory
+     * Find the stream index of the matching label.
+     * @param label the stream label
+     * @return the stream index on success, the last index past one otherwise.
      */
-    std::unique_ptr<video::VideoRtpSession> videortp_;
-#endif
+    size_t findRtpStreamIndex(const std::string& label) const;
 
-    std::string mediaInput_;
+    // Vector holding the current RTP sessions.
+    std::vector<RtpStream> rtpStreams_;
 
     bool srtpEnabled_ {false};
 
@@ -349,7 +399,7 @@ private:
     /**
      * The SDP session
      */
-    std::unique_ptr<Sdp> sdp_;
+    std::unique_ptr<Sdp> sdp_ {};
     bool peerHolding_ {false};
 
     bool isWaitingForIceAndMedia_ {false};
@@ -365,7 +415,6 @@ private:
 
     /** Local audio port, as seen by me. */
     unsigned int localAudioPort_ {0};
-
     /** Local video port, as seen by me. */
     unsigned int localVideoPort_ {0};
 

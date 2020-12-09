@@ -60,6 +60,40 @@ CallFactory::createSipCall(const std::shared_ptr<Account>& account,
     return call;
 }
 
+std::shared_ptr<Call>
+CallFactory::createSipCall(const std::shared_ptr<Account>& account,
+                           const std::string& id,
+                           Call::CallType type,
+                           const std::vector<MediaAttribute>& mediaList)
+{
+    if (not allowNewCall_) {
+        JAMI_WARN("Creation of new calls is not allowed");
+        return nullptr;
+    }
+
+    if (hasCall(id)) {
+        JAMI_ERR("Call %s already exists", id.c_str());
+        return nullptr;
+    }
+
+    if (std::strcmp(account->getAccountType(), "SIP") != 0
+        and std::strcmp(account->getAccountType(), "RING") != 0) {
+        JAMI_ERR("Invalid account type %s!", account->getAccountType());
+        assert(false);
+    }
+
+    auto accountBase = std::dynamic_pointer_cast<SIPAccountBase>(account);
+    assert(accountBase);
+
+    auto call = std::make_shared<SIPCall>(accountBase, id, type, mediaList);
+    if (call) {
+        std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+        callMaps_[call->getLinkType()].insert(std::make_pair(id, call));
+    }
+
+    return call;
+}
+
 void
 CallFactory::forbid()
 {
