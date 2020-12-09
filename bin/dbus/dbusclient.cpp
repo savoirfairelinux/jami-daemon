@@ -146,9 +146,6 @@ DBusClient::initLibrary(int flags)
     auto confM = configurationManager_.get();
     auto presM = presenceManager_.get();
 
-#ifdef ENABLE_PLUGIN
-    auto plugM = pluginManagerInterface_.get();
-#endif
 #ifdef ENABLE_VIDEO
     using DRing::VideoSignal;
     auto videoM = videoManager_.get();
@@ -199,7 +196,7 @@ DBusClient::initLibrary(int flags)
            exportable_callback<CallSignal::SmartInfo>(bind(&DBusCallManager::SmartInfo, callM, _1)),
            exportable_callback<CallSignal::RemoteRecordingChanged>(
                bind(&DBusCallManager::remoteRecordingChanged, callM, _1, _2, _3)),
-            exportable_callback<CallSignal::MediaStateChanged>(
+           exportable_callback<CallSignal::MediaStateChanged>(
                bind(&DBusCallManager::mediaStateChanged, callM, _1, _2))};
 
     // Configuration event handlers

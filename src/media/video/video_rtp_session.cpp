@@ -64,7 +64,7 @@ constexpr auto DELAY_AFTER_REMB_INC = std::chrono::seconds(1);
 constexpr auto DELAY_AFTER_REMB_DEC = std::chrono::milliseconds(500);
 
 VideoRtpSession::VideoRtpSession(const string& callID, const DeviceParams& localVideoParams)
-    : RtpSession(callID)
+    : RtpSession(callID, MediaType::MEDIA_VIDEO)
     , localVideoParams_(localVideoParams)
     , videoBitrateInfo_ {}
     , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
@@ -96,7 +96,11 @@ VideoRtpSession::setRequestKeyFrameCallback(std::function<void(void)> cb)
 void
 VideoRtpSession::startSender()
 {
-    if (send_.enabled and not send_.holding) {
+    JAMI_DBG("Start video RTP sender: input [%s] - muted [%s]",
+             input_.c_str(),
+             muteState_ ? "YES" : "NO");
+
+    if (send_.enabled and not send_.onHold) {
         if (sender_) {
             if (videoLocal_)
                 videoLocal_->detach(sender_.get());
@@ -198,7 +202,7 @@ VideoRtpSession::restartSender()
 void
 VideoRtpSession::startReceiver()
 {
-    if (receive_.enabled and not receive_.holding) {
+    if (receive_.enabled and not receive_.onHold) {
         if (receiveThread_)
             JAMI_WARN("Restarting video receiver");
         receiveThread_.reset(new VideoReceiveThread(callID_, receive_.receiving_sdp, mtu_));
