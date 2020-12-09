@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "81a5f2ca_d5e95ee8",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 48
+      },
+      "lineNbr": 715,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-12-09T19:25:19Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nValue stored to \u0027x\u0027 during its initialization is never read\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-deadcode.DeadStores",
+      "revId": "bceca1e1bad7d891b6754f16c26f550f073704c5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3ba54299_480e6b4e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 48
+      },
+      "lineNbr": 2286,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-12-09T19:25:19Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\n\u0027find_last_of\u0027 called with a string literal consisting of a single character; consider using the more effective overload accepting a character\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-faster-string-find",
+      "revId": "bceca1e1bad7d891b6754f16c26f550f073704c5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
