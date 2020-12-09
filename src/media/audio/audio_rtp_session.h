@@ -40,7 +40,7 @@ class RingBuffer;
 class AudioRtpSession : public RtpSession
 {
 public:
-    AudioRtpSession(const std::string& id);
+    AudioRtpSession(const std::string& id, unsigned index);
     virtual ~AudioRtpSession();
 
     void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) override;

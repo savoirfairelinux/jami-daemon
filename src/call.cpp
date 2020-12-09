@@ -86,8 +86,8 @@ Call::Call(const std::shared_ptr<Account>& account,
            const std::string& id,
            Call::CallType type,
            const std::map<std::string, std::string>& details)
-    : linkType_(linkType)
-    , id_(id)
+    : id_(id)
+    , linkType_(linkType)
     , type_(type)
     , account_(account)
 {
@@ -675,7 +675,6 @@ Call::setConferenceInfo(const std::string& msg)
                 conf->updateConferenceInfo(confInfo_);
         }
     }
-
 }
 
 } // namespace jami
