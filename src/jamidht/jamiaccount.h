@@ -511,7 +511,7 @@ public:
 
     std::string_view currentDeviceId() const;
     // Conversation management
-    std::string startConversation(ConversationMode mode = ConversationMode::INVITES_ONLY);
+    std::string startConversation(ConversationMode mode = ConversationMode::INVITES_ONLY, const std::string& otherMember = "");
     void acceptConversationRequest(const std::string& conversationId);
     void declineConversationRequest(const std::string& conversationId);
     std::vector<std::string> getConversations();
@@ -950,6 +950,9 @@ private:
     void sendMessageNotification(const Conversation& conversation,
                                  const std::string& commitId,
                                  bool sync);
+
+    void announceMemberMessage(const std::string& convId,
+                               const std::map<std::string, std::string>& message) const;
 };
 
 static inline std::ostream&
