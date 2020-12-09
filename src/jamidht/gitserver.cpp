@@ -211,6 +211,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
                        ec);
         if (ec) {
             JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
+            git_repository_free(repo);
             return;
         }
     }
@@ -236,10 +237,10 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     // Now, add other references
     git_strarray refs;
     if (git_reference_list(&refs, repo) == 0) {
-        for (int i = 0; i < refs.count; ++i) {
+        for (std::size_t i = 0; i < refs.count; ++i) {
             std::string ref = refs.strings[i];
             if (git_reference_name_to_id(&commit_id, repo, ref.c_str()) < 0) {
-                JAMI_WARN("Cannot get reference for %s");
+                JAMI_WARN("Cannot get reference for %s", ref.c_str());
                 continue;
             }
             currentHead = git_oid_tostr_s(&commit_id);
@@ -335,16 +336,16 @@ GitServer::Impl::sendPackData()
             JAMI_WARN("Couldn't open reference %s for %s",
                       wantedReference_.c_str(),
                       repository_.c_str());
-            git_repository_free(repo);
             git_packbuilder_free(pb);
+            git_repository_free(repo);
             return;
         }
         if (git_packbuilder_insert_commit(pb, &commit_id) != 0) {
             JAMI_WARN("Couldn't open insert commit %s for %s",
                       git_oid_tostr_s(&commit_id),
                       repository_.c_str());
-            git_repository_free(repo);
             git_packbuilder_free(pb);
+            git_repository_free(repo);
             return;
         }
 
@@ -353,6 +354,7 @@ GitServer::Impl::sendPackData()
         if (git_commit_lookup(&current_commit, repo, &commit_id) < 0) {
             JAMI_ERR("Could not look up current commit");
             git_packbuilder_free(pb);
+            git_repository_free(repo);
             return;
         }
         git_commit* parent_commit;
@@ -366,6 +368,7 @@ GitServer::Impl::sendPackData()
             git_commit_free(parent_commit);
             git_commit_free(current_commit);
             JAMI_ERR("Could not look up current commit");
+            git_repository_free(repo);
             return;
         }
         wantedReference_ = oid_str;
@@ -380,8 +383,8 @@ GitServer::Impl::sendPackData()
         return;
     }
 
-    auto sent = 0;
-    auto len = data.size;
+    std::size_t sent = 0;
+    std::size_t len = data.size;
     std::error_code ec;
     do {
         // cf https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L166
@@ -422,7 +425,7 @@ GitServer::Impl::getParameters(const std::string& pkt_line)
     std::string key, value;
     auto isKey = true;
     auto nullChar = 0;
-    for (auto i = 0; i < pkt_line.size(); ++i) {
+    for (std::size_t i = 0; i < pkt_line.size(); ++i) {
         auto letter = pkt_line[i];
         if (letter == '\0') {
             // parameters such as host or version are after the first \0
