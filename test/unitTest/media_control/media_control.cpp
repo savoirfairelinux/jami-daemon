@@ -1,6 +1,5 @@
 /*
- *  Copyright (C) 2020 Savoir-faire Linux Inc.
- *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
+ *  Copyright (C) 2021 Savoir-faire Linux Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -54,16 +53,12 @@ public:
     std::string bobId;
 
 private:
-    void waitForRegistration();
     void testCall();
-    void testCachedCall();
-    void testStopSearching();
     void testCallWithMediaList();
 
     CPPUNIT_TEST_SUITE(CallTest);
     CPPUNIT_TEST(testCall);
-    CPPUNIT_TEST(testCachedCall);
-    CPPUNIT_TEST(testStopSearching);
+    CPPUNIT_TEST(testCallWithMediaList);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -196,24 +191,25 @@ CallTest::testCall()
 }
 
 void
-CallTest::testCachedCall()
+CallTest::testCallWithMediaList()
 {
+#if 1
     JAMI_INFO("Waiting....");
     // TODO remove. This sleeps is because it take some time for the DHT to be connected
     // and account announced
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+#endif
 
+    std::this_thread::sleep_for(std::chrono::seconds(5));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
     auto aliceUri = aliceAccount->getAccountDetails()[ConfProperties::USERNAME];
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    std::atomic_bool callReceived {false}, successfullyConnected {false};
+    std::atomic_bool callReceived {false};
     std::atomic<int> callStopped {0};
     // Watch signals
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCall>(
@@ -231,66 +227,37 @@ CallTest::testCachedCall()
         }));
     DRing::registerSignalHandlers(confHandlers);
 
-    JAMI_INFO("Connect Alice's device and Bob's device");
-    aliceAccount->connectionManager()
-        .connectDevice(bobDeviceId,
-                       "sip",
-                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
-                                                     const DeviceId&) {
-                           if (socket)
-                               successfullyConnected = true;
-                           cv.notify_one();
-                       });
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(30), [&] { return successfullyConnected.load(); }));
+    // Create the list of medias
+    std::vector<std::map<std::string, std::string>> mediaList;
+    bool isAudioOnly = true;
+
+    std::map<std::string, std::string> mediaMap;
+    mediaMap.emplace("MEDIA_TYPE", MediaAttributeValue::AUDIO);
+    mediaMap.emplace("ENABLED", "true");
+    mediaMap.emplace("MUTED", "false");
+    mediaMap.emplace("SECURE", "true");
+    mediaMap.emplace("LABEL", "main audio");
+    mediaList.emplace_back(mediaMap);
+
+    if (not isAudioOnly) {
+        mediaMap.clear();
+        mediaMap.emplace("MEDIA_TYPE", MediaAttributeValue::VIDEO);
+        mediaMap.emplace("ENABLED", "true");
+        mediaMap.emplace("MUTED", "false");
+        mediaMap.emplace("SECURE", "true");
+        mediaMap.emplace("LABEL", "main video");
+        mediaList.emplace_back(mediaMap);
+    }
 
     JAMI_INFO("Start call between alice and Bob");
-    auto call = aliceAccount->newOutgoingCall(bobUri);
+    auto call = aliceAccount->newOutgoingCall(bobUri, mediaList);
+
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callReceived.load(); }));
 
-    callStopped = 0;
     JAMI_INFO("Stop call between alice and Bob");
+    callStopped = 0;
     Manager::instance().hangupCall(call->getCallId());
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callStopped == 2; }));
-}
-
-void
-CallTest::testStopSearching()
-{
-    JAMI_INFO("Waiting....");
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
-    auto aliceUri = aliceAccount->getAccountDetails()[ConfProperties::USERNAME];
-
-    Manager::instance().sendRegister(bobId, false);
-
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    std::atomic_bool callStopped {false};
-    // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-        [&](const std::string&, const std::string& state, signed) {
-            if (state == "OVER") {
-                callStopped = true;
-                cv.notify_one();
-            }
-        }));
-    DRing::registerSignalHandlers(confHandlers);
-
-    JAMI_INFO("Start call between alice and Bob");
-    auto call = aliceAccount->newOutgoingCall(bobUri);
-
-    // Bob not there, so we should get a SEARCHING STATUS
-    JAMI_INFO("Wait OVER state");
-    // Then wait for the DHT no answer. this can take some times
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] { return callStopped.load(); }));
 }
 
 } // namespace test
