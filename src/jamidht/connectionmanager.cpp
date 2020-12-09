@@ -780,7 +780,7 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
 
 void
 ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
-                                          const std::shared_ptr<dht::crypto::Certificate>& cert)
+                                          const std::shared_ptr<dht::crypto::Certificate>& /*cert*/)
 {
     auto deviceId = req.from.toString();
     JAMI_INFO() << account << "New connection requested by " << deviceId.c_str();
