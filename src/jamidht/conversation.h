@@ -58,7 +58,7 @@ public:
      * @return a vector of member details:
      * {
      *  "uri":"xxx",
-     *  "role":"member/admin",
+     *  "role":"member/admin/invited",
      *  "lastRead":"id"
      *  ...
      * }
@@ -110,9 +110,9 @@ public:
     /**
      * Analyze if merge is possible and merge history
      * @param uri       the peer
-     * @return if the operation was successful
+     * @return new commits
      */
-    bool mergeHistory(const std::string& uri);
+    std::vector<std::map<std::string, std::string>> mergeHistory(const std::string& uri);
 
     /**
      * Fetch and merge from peer
