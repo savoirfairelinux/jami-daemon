@@ -347,10 +347,16 @@ Conversation::sendMessage(const std::string& message,
     Json::Value json;
     json["body"] = message;
     json["type"] = type;
+    return sendMessage(json, parent);
+}
+
+std::string
+Conversation::sendMessage(const Json::Value& value, const std::string& parent)
+{
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
-    return pimpl_->repository_->commitMessage(Json::writeString(wbuilder, json));
+    return pimpl_->repository_->commitMessage(Json::writeString(wbuilder, value));
 }
 
 std::vector<std::map<std::string, std::string>>
