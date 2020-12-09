@@ -129,6 +129,7 @@ public: // SIP related
     /**
      * Return the SDP's manager of this call
      */
+    // TODO_MC. Should not give access to this instance. Add API to Call class to modify it.
     Sdp& getSDP() { return *sdp_; }
 
     /**
@@ -202,16 +203,12 @@ public: // SIP related
     std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inv;
 
 public: // NOT SIP RELATED (good candidates to be moved elsewhere)
-    /**
-     * Returns a pointer to the AudioRtpSession object
-     */
-    AudioRtpSession& getAVFormatRTP() const { return *avformatrtp_; }
-
+    AudioRtpSession* getAudioRtp() const;
 #ifdef ENABLE_VIDEO
     /**
      * Returns a pointer to the VideoRtp object
      */
-    video::VideoRtpSession& getVideoRtp() { return *videortp_; }
+    video::VideoRtpSession* getVideoRtp() const;
 #endif
 
     void setSecure(bool sec);
@@ -220,7 +217,7 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     void generateMediaPorts();
 
-    void openPortsUPnP();
+    bool openPortsUPnP(int portCount);
 
     void setPeerRegisteredName(const std::string& name) { peerRegisteredName_ = name; }
 
@@ -247,6 +244,8 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
     void setPeerMute(bool state);
 
     bool isPeerMuted() const { return peerMuted_; }
+
+    size_t initMediaStreams(std::vector<MediaAttributes> mediasList);
 
 private:
     using clock = std::chrono::steady_clock;
@@ -289,7 +288,6 @@ private:
     std::map<std::string, std::shared_ptr<MediaStreamSubject>> callAVStreams;
 
     void setCallMediaLocal();
-
     void startIceMedia();
     void onIceNegoSucceed();
 
@@ -327,16 +325,20 @@ private:
     }
     inline std::weak_ptr<SIPCall> weak() { return std::weak_ptr<SIPCall>(shared()); }
 
-    std::unique_ptr<AudioRtpSession> avformatrtp_;
+    // Create a new stream from SDP description.
+    RtpSession* addRtpSession(unsigned int streamIndex, MediaType type);
+    // Configure the RTP session from SDP description.
+    void configureRtpSession(RtpSession* rtpSession,
+                             const std::string& source,
+                             const MediaDescription& localMedia,
+                             const MediaDescription& remoteMedia);
+    // Get the rtp session of matching the local/remote media descriptions
+    RtpSession* getRptSessionAtIndex(unsigned index);
 
-#ifdef ENABLE_VIDEO
-    /**
-     * Video Rtp Session factory
-     */
-    std::unique_ptr<video::VideoRtpSession> videortp_;
-#endif
-
-    std::string mediaInput_;
+    // Vector holding the current RTP sessions.
+    std::vector<std::unique_ptr<RtpSession>> rtpStreams_;
+    // TODO_MC. This is temporary until the APIs are modified.
+    std::string selectedSource_ {};
 
     bool srtpEnabled_ {false};
 
@@ -350,7 +352,7 @@ private:
     /**
      * The SDP session
      */
-    std::unique_ptr<Sdp> sdp_;
+    std::unique_ptr<Sdp> sdp_ {};
     bool peerHolding_ {false};
 
     bool isWaitingForIceAndMedia_ {false};
@@ -364,9 +366,9 @@ private:
 
     std::shared_ptr<jami::upnp::Controller> upnp_;
 
+    // TODO_MC. The port must be set per media stream.
     /** Local audio port, as seen by me. */
     unsigned int localAudioPort_ {0};
-
     /** Local video port, as seen by me. */
     unsigned int localVideoPort_ {0};
 

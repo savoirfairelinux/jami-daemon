@@ -138,7 +138,9 @@ Conference::~Conference()
 #ifdef ENABLE_VIDEO
     for (const auto& participant_id : participants_) {
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
-            call->getVideoRtp().exitConference();
+            auto rtpVideoSession = call->getVideoRtp();
+            if (rtpVideoSession != nullptr)
+                rtpVideoSession->exitConference();
             // Reset distant callInfo
             auto w = call->getAccount();
             auto account = w.lock();
@@ -191,7 +193,10 @@ Conference::add(const std::string& participant_id)
         }
 #ifdef ENABLE_VIDEO
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
-            call->getVideoRtp().enterConference(this);
+            auto rtpVideoSession = call->getVideoRtp();
+            if (rtpVideoSession != nullptr)
+                rtpVideoSession->enterConference(this);
+
             // Continue the recording for the conference if one participant was recording
             if (call->isRecording()) {
                 JAMI_DBG("Stop recording for call %s", call->getCallId().c_str());
@@ -221,7 +226,9 @@ Conference::setActiveParticipant(const std::string& participant_id)
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(item)) {
             if (participant_id == item
                 || call->getPeerNumber().find(participant_id) != std::string::npos) {
-                videoMixer_->setActiveParticipant(call->getVideoRtp().getVideoReceive().get());
+                auto rtpVideoSession = call->getVideoRtp();
+                if (rtpVideoSession != nullptr)
+                    videoMixer_->setActiveParticipant(rtpVideoSession->getVideoReceive().get());
                 return;
             }
         }
@@ -277,7 +284,7 @@ Conference::sendConferenceInfos()
             if (!account)
                 continue;
 
-            ConfInfo confInfo = std::move(getConfInfoHostUri(account->getUsername()+ "@ring.dht"));
+            ConfInfo confInfo = std::move(getConfInfoHostUri(account->getUsername() + "@ring.dht"));
             Json::Value jsonArray = {};
             {
                 std::lock_guard<std::mutex> lk2(confInfoMutex_);
@@ -289,13 +296,15 @@ Conference::sendConferenceInfos()
             Json::StreamWriterBuilder builder = {};
             const auto confInfoStr = Json::writeString(builder, jsonArray);
             call->sendTextMessage(std::map<std::string, std::string> {{"application/confInfo+json",
-                                                                    confInfoStr}},
-                                account->getFromUri());
+                                                                       confInfoStr}},
+                                  account->getFromUri());
         }
     }
 
     // Inform client that layout has changed
-    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, confInfo_.toVectorMapStringString());
+    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_,
+                                                                  confInfo_
+                                                                      .toVectorMapStringString());
 }
 
 void
@@ -323,7 +332,10 @@ Conference::remove(const std::string& participant_id)
     if (participants_.erase(participant_id)) {
 #ifdef ENABLE_VIDEO
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
-            call->getVideoRtp().exitConference();
+            auto rtpVideoSession = call->getVideoRtp();
+            if (rtpVideoSession != nullptr)
+                rtpVideoSession->exitConference();
+
             if (call->isPeerRecording())
                 call->setRemoteRecording(false);
         }
@@ -426,7 +438,6 @@ Conference::bindHost()
         }
     }
 }
-
 
 void
 Conference::unbindHost()
@@ -568,8 +579,9 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         if (root.isMember("activeParticipant")) {
             setActiveParticipant(root["activeParticipant"].asString());
         }
-        if (root.isMember("muteParticipant")  and root.isMember("muteState")) {
-            muteParticipant(root["muteParticipant"].asString(), root["muteState"].asString() == "true");
+        if (root.isMember("muteParticipant") and root.isMember("muteState")) {
+            muteParticipant(root["muteParticipant"].asString(),
+                            root["muteState"].asString() == "true");
         }
         if (root.isMember("hangupParticipant")) {
             hangupParticipant(root["hangupParticipant"].asString());
@@ -585,7 +597,8 @@ Conference::isModerator(std::string_view uri) const
                         [&uri](std::string_view moderator) {
                             return moderator.find(uri) != std::string_view::npos;
                         })
-           != moderators_.end() or isHost(uri);
+               != moderators_.end()
+           or isHost(uri);
 }
 
 void
@@ -710,7 +723,6 @@ Conference::updateMuted()
     }
     sendConferenceInfos();
 }
-
 
 ConfInfo
 Conference::getConfInfoHostUri(std::string_view uri)

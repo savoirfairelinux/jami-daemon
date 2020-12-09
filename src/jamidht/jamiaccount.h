@@ -273,9 +273,9 @@ public:
 
     virtual bool isSrtpEnabled() const { return true; }
 
-    virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const override
+    virtual KeyExchangeProtocol getSrtpKeyExchange() const override
     {
-        return sip_utils::KeyExchangeProtocol::SDES;
+        return KeyExchangeProtocol::SDES;
     }
 
     virtual bool getSrtpFallback() const override { return false; }

@@ -162,21 +162,36 @@ Sdp::generateSdesAttribute()
 }
 
 pjmedia_sdp_media*
-Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangeProtocol kx)
+Sdp::addMediaDescription(MediaType type, bool onHold, KeyExchangeProtocol kx)
 {
     pjmedia_sdp_media* med = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_media);
 
-    med->desc.media = audio ? sip_utils::CONST_PJ_STR("audio") : sip_utils::CONST_PJ_STR("video");
+    switch (type) {
+    case MediaType::MEDIA_AUDIO:
+        med->desc.media = sip_utils::CONST_PJ_STR("audio");
+        med->desc.port = localAudioDataPort_;
+        med->desc.fmt_count = audio_codec_list_.size();
+        break;
+    case MediaType::MEDIA_VIDEO:
+        med->desc.media = sip_utils::CONST_PJ_STR("video");
+        med->desc.port = localVideoDataPort_;
+        med->desc.fmt_count = video_codec_list_.size();
+        break;
+    default:
+        assert(false);
+        break;
+    }
+
     med->desc.port_count = 1;
-    med->desc.port = audio ? localAudioDataPort_ : localVideoDataPort_;
 
     // in case of sdes, media are tagged as "RTP/SAVP", RTP/AVP elsewhere
-    med->desc.transport = kx == sip_utils::KeyExchangeProtocol::NONE ? sip_utils::CONST_PJ_STR("RTP/AVP") : sip_utils::CONST_PJ_STR("RTP/SAVP");
+    med->desc.transport = kx == KeyExchangeProtocol::NONE ? sip_utils::CONST_PJ_STR("RTP/AVP")
+                                                          : sip_utils::CONST_PJ_STR("RTP/SAVP");
 
+    // TODO_MC. Use a static member to keep track of dynamic payload type.
     unsigned dynamic_payload = 96;
 
-    med->desc.fmt_count = audio ? audio_codec_list_.size() : video_codec_list_.size();
-    for (unsigned i = 0; i < med->desc.fmt_count; ++i) {
+    for (unsigned i = 0; i < med->desc.fmt_count; i++) {
         pjmedia_sdp_rtpmap rtpmap;
         rtpmap.param.slen = 0;
 
@@ -184,7 +199,7 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
         std::string enc_name;
         unsigned payload;
 
-        if (audio) {
+        if (type == MediaType::MEDIA_AUDIO) {
             auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(
                 audio_codec_list_[i]);
             payload = accountAudioCodec->payloadType;
@@ -240,18 +255,16 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
 #endif
     }
 
-    if (audio) {
+    if (type == MediaType::MEDIA_AUDIO) {
         setTelephoneEventRtpmap(med);
+        // TODO_MC: Why ?
         addRTCPAttribute(med); // video has its own RTCP
     }
+    char const* mediaDirection = onHold ? (type == MediaType::MEDIA_AUDIO ? "sendonly" : "inactive")
+                                        : "sendrecv";
+    med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), mediaDirection, NULL);
 
-    med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(),
-                                                           holding
-                                                               ? (audio ? "sendonly" : "inactive")
-                                                               : "sendrecv",
-                                                           NULL);
-
-    if (kx == sip_utils::KeyExchangeProtocol::SDES) {
+    if (kx == KeyExchangeProtocol::SDES) {
         if (pjmedia_sdp_media_add_attr(med, generateSdesAttribute()) != PJ_SUCCESS)
             throw SdpException("Could not add sdes attribute to media");
     }
@@ -316,26 +329,35 @@ Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media* med)
 }
 
 void
-Sdp::setLocalMediaVideoCapabilities(
-    const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedCodecs)
+Sdp::setLocalMediaCapabilities(MediaType type,
+                               const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedCodecs)
 {
-#ifdef ENABLE_VIDEO
-    video_codec_list_ = selectedCodecs;
-    // Do not expose H265 if accel is disactivated
-    if (not jami::Manager::instance().videoPreferences.getEncodingAccelerated()) {
-        video_codec_list_.erase(std::remove_if(video_codec_list_.begin(), video_codec_list_.end(),
-                       [](const std::shared_ptr<AccountCodecInfo>& i){ return i->systemCodecInfo.name == "H265"; }), video_codec_list_.end());
-    }
-#else
-    (void) selectedCodecs;
-#endif
-}
+    switch (type) {
+    case MediaType::MEDIA_AUDIO:
+        audio_codec_list_ = selectedCodecs;
+        break;
 
-void
-Sdp::setLocalMediaAudioCapabilities(
-    const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedCodecs)
-{
-    audio_codec_list_ = selectedCodecs;
+    case MediaType::MEDIA_VIDEO:
+#ifdef ENABLE_VIDEO
+        video_codec_list_ = selectedCodecs;
+        // Do not expose H265 if accel is disactivated
+        if (not jami::Manager::instance().videoPreferences.getEncodingAccelerated()) {
+            video_codec_list_.erase(std::remove_if(video_codec_list_.begin(),
+                                                   video_codec_list_.end(),
+                                                   [](const std::shared_ptr<AccountCodecInfo>& i) {
+                                                       return i->systemCodecInfo.name == "H265";
+                                                   }),
+                                    video_codec_list_.end());
+        }
+#else
+        (void) selectedCodecs;
+#endif
+        break;
+
+    default:
+        assert(false);
+        break;
+    }
 }
 
 void
@@ -372,15 +394,9 @@ Sdp::printSession(const pjmedia_sdp_session* session, const char* header)
     JAMI_DBG("%s%s", header, &buffer[0]);
 }
 
-int
-Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
-                        const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
-                        sip_utils::KeyExchangeProtocol security,
-                        bool holding)
+void
+Sdp::createLocalSession()
 {
-    setLocalMediaAudioCapabilities(selectedAudioCodecs);
-    setLocalMediaVideoCapabilities(selectedVideoCodecs);
-
     localSession_ = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_session);
     localSession_->conn = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_conn);
 
@@ -408,32 +424,40 @@ Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>& se
     // should have a value of "0 0".
     localSession_->time.start = 0;
     localSession_->time.stop = 0;
+}
 
-    // For DTMF RTP events
-    constexpr bool audio = true;
-    localSession_->media_count = 1;
-    localSession_->media[0] = setMediaDescriptorLines(audio, holding, security);
-    if (not selectedVideoCodecs.empty()) {
-        localSession_->media[1] = setMediaDescriptorLines(!audio, holding, security);
-        ++localSession_->media_count;
-    }
-
-    printSession(localSession_, "SDP: Local SDP Session:\n");
-
+int
+Sdp::validateSession() const
+{
     return pjmedia_sdp_validate(localSession_);
 }
 
 bool
-Sdp::createOffer(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
-                 const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
-                 sip_utils::KeyExchangeProtocol security,
-                 bool holding)
+Sdp::createOffer(const std::vector<MediaAttributes>& mediasList)
 {
-    if (createLocalSession(selectedAudioCodecs, selectedVideoCodecs, security, holding)
-        != PJ_SUCCESS) {
+    assert(mediasList.size() < PJMEDIA_MAX_SDP_MEDIA);
+
+    createLocalSession();
+
+    if (validateSession() != PJ_SUCCESS) {
         JAMI_ERR("Failed to create initial offer");
         return false;
     }
+
+    localSession_->media_count = 0;
+
+    for (auto const& media : mediasList) {
+        localSession_->media[localSession_->media_count++] = addMediaDescription(media.type_,
+                                                                                 media.onHold_,
+                                                                                 media.security_);
+    }
+
+    if (validateSession() != PJ_SUCCESS) {
+        JAMI_ERR("Failed to add medias");
+        return false;
+    }
+
+    printSession(localSession_, "SDP: Local SDP Session:\n");
 
     if (pjmedia_sdp_neg_create_w_local_offer(memPool_.get(), localSession_, &negotiator_)
         != PJ_SUCCESS) {
@@ -445,11 +469,7 @@ Sdp::createOffer(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedA
 }
 
 void
-Sdp::receiveOffer(const pjmedia_sdp_session* remote,
-                  const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
-                  const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
-                  sip_utils::KeyExchangeProtocol kx,
-                  bool holding)
+Sdp::receiveOffer(const pjmedia_sdp_session* remote, const std::vector<MediaAttributes>& mediasList)
 {
     if (!remote) {
         JAMI_ERR("Remote session is NULL");
@@ -458,10 +478,25 @@ Sdp::receiveOffer(const pjmedia_sdp_session* remote,
 
     printSession(remote, "Remote SDP Session:\n");
 
-    if (not localSession_
-        and createLocalSession(selectedAudioCodecs, selectedVideoCodecs, kx, holding)
-                != PJ_SUCCESS) {
-        JAMI_ERR("Failed to create initial offer");
+    // TODO_MC. Should not we always create a new local session ?
+    if (not localSession_) {
+        createLocalSession();
+        if (validateSession() != PJ_SUCCESS) {
+            JAMI_ERR("Failed to create initial offer");
+            return;
+        }
+    }
+
+    localSession_->media_count = 0;
+
+    for (auto const& media : mediasList) {
+        localSession_->media[localSession_->media_count++] = addMediaDescription(media.type_,
+                                                                                 media.onHold_,
+                                                                                 media.security_);
+    }
+
+    if (validateSession() != PJ_SUCCESS) {
+        JAMI_ERR("Failed to add medias");
         return;
     }
 
@@ -471,8 +506,9 @@ Sdp::receiveOffer(const pjmedia_sdp_session* remote,
                                               localSession_,
                                               remoteSession_,
                                               &negotiator_)
-        != PJ_SUCCESS)
-        JAMI_ERR("Failed to initialize negotiator");
+        != PJ_SUCCESS) {
+        JAMI_ERR("Failed to initialize media negotiation");
+    }
 }
 
 void
@@ -580,7 +616,13 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, uns
 }
 
 std::vector<MediaDescription>
-Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
+Sdp::getLocalMediaDescriptions() const
+{
+    return getMediaDescriptions(localSession_, false);
+}
+
+std::vector<MediaDescription>
+Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
 {
     if (!session)
         return {};
@@ -624,11 +666,11 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
             }
         }
 
-        descr.holding = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "sendonly", nullptr)
-                        || pjmedia_sdp_attr_find2(media->attr_count,
-                                                  media->attr,
-                                                  "inactive",
-                                                  nullptr);
+        descr.onHold = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "sendonly", nullptr)
+                       || pjmedia_sdp_attr_find2(media->attr_count,
+                                                 media->attr,
+                                                 "inactive",
+                                                 nullptr);
 
         // get codecs infos
         for (unsigned j = 0; j < media->desc.fmt_count; j++) {
@@ -691,8 +733,10 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
 std::vector<Sdp::MediaSlot>
 Sdp::getMediaSlots() const
 {
-    auto loc = getMediaSlots(activeLocalSession_, false);
-    auto rem = getMediaSlots(activeRemoteSession_, true);
+    auto loc = getMediaDescriptions(activeLocalSession_, false);
+    auto rem = getMediaDescriptions(activeRemoteSession_, true);
+    // TODO_MC. The number of medias in the local and remote SDPs must match, as
+    // per RFC-3264 (see https://tools.ietf.org/html/rfc3264#section-6).
     size_t slot_n = std::min(loc.size(), rem.size());
     std::vector<MediaSlot> s;
     s.reserve(slot_n);

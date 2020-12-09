@@ -37,6 +37,8 @@
 
 namespace jami {
 
+enum class KeyExchangeProtocol { NONE, SDES };
+
 enum CodecType : unsigned {
     CODEC_NONE = 0, // indicates that no codec is used or defined
     CODEC_ENCODER = 1,
@@ -261,7 +263,7 @@ struct MediaDescription
     /** Audio / video */
     MediaType type {};
     bool enabled {false};
-    bool holding {false};
+    bool onHold {false};
 
     /** Endpoint socket address */
     IpAddr addr {};
@@ -286,6 +288,27 @@ struct MediaDescription
 
     /** Crypto parameters */
     CryptoAttribute crypto {};
+};
+
+// TODO_MC. Check if we use MediaDescription instead.
+struct MediaAttributes
+{
+    MediaAttributes(MediaType type,
+                    KeyExchangeProtocol security = KeyExchangeProtocol::SDES,
+                    bool onHold = false,
+                    uint16_t rtpPort = 0,
+                    uint16_t rtcpPort = 0)
+        : type_(type)
+        , security_(security)
+        , onHold_(onHold)
+        , rtpPort_(rtpPort)
+        , rtcpPort_(rtcpPort) {};
+
+    MediaType type_;
+    KeyExchangeProtocol security_;
+    bool onHold_;
+    uint16_t rtpPort_;
+    uint16_t rtcpPort_;
 };
 
 } // namespace jami

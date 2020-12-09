@@ -370,6 +370,7 @@ Call::getDetails() const
         {DRing::Call::Details::ACCOUNTID, getAccountId()},
         {DRing::Call::Details::AUDIO_MUTED, std::string(bool_to_str(isAudioMuted_))},
         {DRing::Call::Details::VIDEO_MUTED, std::string(bool_to_str(isVideoMuted_))},
+        // TODO_MC. AUDIO_ONLY flag is not really needed. Just use VIDEO_MUTED to disable VIDEO.
         {DRing::Call::Details::AUDIO_ONLY, std::string(bool_to_str(isAudioOnly_))},
     };
 }
@@ -648,8 +649,8 @@ Call::setConferenceInfo(const std::string& msg)
         if (confID_.empty()) {
             // confID_ empty -> participant set confInfo with the received one
             confInfo_ = std::move(newInfo);
-            std::vector<std::map<std::string, std::string>> toSend =
-                                        confInfo_.toVectorMapStringString();
+            std::vector<std::map<std::string, std::string>> toSend = confInfo_
+                                                                         .toVectorMapStringString();
 
             // Inform client that layout has changed
             jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, std::move(toSend));
@@ -678,7 +679,6 @@ Call::setConferenceInfo(const std::string& msg)
                 conf->updateConferenceInfo(confInfo_);
         }
     }
-
 }
 
 } // namespace jami

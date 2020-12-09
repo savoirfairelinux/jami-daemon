@@ -700,16 +700,18 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
         auto& sdp = call->getSDP();
 
         sdp.setPublishedIP(addrSdp);
-        const bool created = sdp.createOffer(shared->getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                                             shared->getActiveAccountCodecInfoList(
-                                                 shared->videoEnabled_ and not call->isAudioOnly()
-                                                     ? MEDIA_VIDEO
-                                                     : MEDIA_NONE),
-                                             shared->getSrtpKeyExchange());
+
+        // TODO_MC. This list should be provided by the client.
+        std::vector<MediaAttributes> mediasList;
+        shared->createDefaultMediaList(mediasList,
+                                       shared->videoEnabled_ and not call->isAudioOnly());
+        const bool created = sdp.createOffer(mediasList);
+
         if (not created) {
             JAMI_ERR("Could not send outgoing INVITE request for new call");
             return;
         }
+
         // Note: pj_ice_strans_create can call onComplete in the same thread
         // This means that iceMutex_ in IceTransport can be locked when onInitDone is called
         // So, we need to run the call creation in the main thread

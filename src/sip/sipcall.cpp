@@ -89,22 +89,34 @@ static constexpr int ICE_VIDEO_RTCP_COMPID {3};
 const char* const SIPCall::LINK_TYPE = SIPAccount::ACCOUNT_TYPE;
 
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
-                 const std::string& id,
+                 const std::string& callId,
                  Call::CallType type,
                  const std::map<std::string, std::string>& details)
-    : Call(account, id, type, details)
-    , avformatrtp_(new AudioRtpSession(id))
+    : Call(account, callId, type, details)
 #ifdef ENABLE_VIDEO
-    // The ID is used to associate video streams to calls
-    , videortp_(new video::VideoRtpSession(id, getVideoSettings()))
-    , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
+    , selectedSource_(
+          Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
 #endif
-    , sdp_(new Sdp(id))
+    , sdp_(new Sdp(callId))
 {
     if (account->getUPnPActive())
         upnp_.reset(new upnp::Controller());
 
     setCallMediaLocal();
+
+    // Set the media caps.
+    sdp_->setLocalMediaCapabilities(MediaType::MEDIA_AUDIO,
+                                    account->getActiveAccountCodecInfoList(MEDIA_AUDIO));
+#ifdef ENABLE_VIDEO
+    sdp_->setLocalMediaCapabilities(MediaType::MEDIA_VIDEO,
+                                    account->getActiveAccountCodecInfoList(MEDIA_VIDEO));
+#endif
+    // TODO_MC. This list should be provided by the client.
+    std::vector<MediaAttributes> mediasList;
+    getSIPAccount()->createDefaultMediaList(mediasList,
+                                            getSIPAccount()->isVideoEnabled() and not isAudioOnly(),
+                                            getState() == CallState::HOLD);
+    initMediaStreams(mediasList);
 }
 
 SIPCall::~SIPCall()
@@ -120,6 +132,86 @@ SIPCall::~SIPCall()
     inv.reset(); // prevents callback usage
 }
 
+RtpSession*
+SIPCall::getRptSessionAtIndex(unsigned index)
+{
+    if (index < rtpStreams_.size()) {
+        return rtpStreams_.at(index).get();
+    }
+
+    JAMI_ERR("[call:%s] Media stream index %u is out of range (max %lu)",
+             getCallId().c_str(),
+             index,
+             rtpStreams_.size());
+
+    return nullptr;
+}
+
+RtpSession*
+SIPCall::addRtpSession(unsigned int streamIndex, MediaType type)
+{
+    RtpSession* rtpSession = nullptr;
+
+    if (type == MediaType::MEDIA_AUDIO) {
+        auto& it = rtpStreams_.emplace_back(std::make_unique<AudioRtpSession>(id_, streamIndex));
+        rtpSession = it.get();
+    }
+#ifdef ENABLE_VIDEO
+    else if (type == MediaType::MEDIA_VIDEO) {
+        auto& it = rtpStreams_.emplace_back(
+            std::make_unique<video::VideoRtpSession>(id_, streamIndex, getVideoSettings()));
+        rtpSession = it.get();
+    }
+#endif
+    else {
+        assert(false);
+    }
+
+    // Must be valid at this point.
+    assert(rtpSession != nullptr);
+
+    JAMI_DBG("[call:%s] Added media stream - type: %s -index: %u",
+             getCallId().c_str(),
+             type == MediaType::MEDIA_AUDIO ? "AUDIO" : "VIDEO",
+             streamIndex);
+
+    return rtpSession;
+}
+
+void
+SIPCall::configureRtpSession(RtpSession* rtpSession,
+                             const std::string& source,
+                             const MediaDescription& localMedia,
+                             const MediaDescription& remoteMedia)
+{
+    assert(rtpSession != nullptr);
+    // Configure the media stream
+    auto new_mtu = transport_->getTlsMtu();
+    rtpSession->setMediaSource(source);
+    rtpSession->setMtu(new_mtu);
+    rtpSession->updateMedia(remoteMedia, localMedia);
+    rtpSession->setSuccessfulSetupCb([this](MediaType type) { rtpSetupSuccess(type); });
+
+#ifdef ENABLE_VIDEO
+    if (localMedia.type == MediaType::MEDIA_VIDEO) {
+        auto videoRtp = dynamic_cast<video::VideoRtpSession*>(rtpSession);
+        assert(videoRtp != nullptr);
+        videoRtp->setRequestKeyFrameCallback([wthis = weak()] {
+            runOnMainThread([wthis] {
+                if (auto this_ = wthis.lock())
+                    this_->requestKeyframe();
+            });
+        });
+        videoRtp->setChangeOrientationCallback([wthis = weak()](int angle) {
+            runOnMainThread([wthis, angle] {
+                if (auto this_ = wthis.lock())
+                    this_->setVideoOrientation(angle);
+            });
+        });
+    }
+#endif
+}
+
 std::shared_ptr<SIPAccountBase>
 SIPCall::getSIPAccount() const
 {
@@ -131,22 +223,23 @@ void
 SIPCall::createCallAVStreams()
 {
     if (hasVideo()) {
-        /**
-         *   Map: maps the VideoFrame to an AVFrame
-         **/
+        auto rtpSession = getVideoRtp();
+        if (rtpSession == nullptr)
+            return;
+
+        // Map: maps the VideoFrame to an AVFrame
         auto map = [](const std::shared_ptr<jami::MediaFrame> m) -> AVFrame* {
             return std::static_pointer_cast<VideoFrame>(m)->pointer();
         };
-
         // Preview
-        if (auto& videoPreview = videortp_->getVideoLocal()) {
+        if (auto& videoPreview = rtpSession->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(map);
             StreamData previewStreamData {getCallId(), 0, StreamType::video, getPeerNumber()};
             createCallAVStream(previewStreamData, *videoPreview, previewSubject);
         }
 
         // Receive
-        auto& videoReceive = videortp_->getVideoReceive();
+        auto& videoReceive = rtpSession->getVideoReceive();
 
         if (videoReceive) {
             auto receiveSubject = std::make_shared<MediaStreamSubject>(map);
@@ -283,12 +376,14 @@ SIPCall::SIPSessionReinvite()
         JAMI_ERR("No account detected");
         return !PJ_SUCCESS;
     }
-    if (not sdp_->createOffer(acc->getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                              acc->getActiveAccountCodecInfoList(
-                                  acc->isVideoEnabled() and not isAudioOnly() ? MEDIA_VIDEO
-                                                                              : MEDIA_NONE),
-                              acc->getSrtpKeyExchange(),
-                              getState() == CallState::HOLD))
+
+    // TODO_MC. This list should be provided by the client.
+    std::vector<MediaAttributes> mediasList;
+    acc->createDefaultMediaList(mediasList,
+                                acc->isVideoEnabled() and not isAudioOnly(),
+                                getState() == CallState::HOLD);
+
+    if (not sdp_->createOffer(mediasList))
         return !PJ_SUCCESS;
 
     if (initIceMediaTransport(true))
@@ -842,9 +937,10 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 }
 
 void
-SIPCall::switchInput(const std::string& resource)
+SIPCall::switchInput(const std::string& source)
 {
-    mediaInput_ = resource;
+    JAMI_DBG("[call:%s] Set selected source to %s", getCallId().c_str(), source.c_str());
+    selectedSource_ = source;
     if (isWaitingForIceAndMedia_) {
         remainingRequest_ = Request::SwitchInput;
     } else {
@@ -1010,7 +1106,10 @@ SIPCall::sendKeyframe()
     dht::ThreadPool::computation().run([w = weak()] {
         if (auto sthis = w.lock()) {
             JAMI_DBG("handling picture fast update request");
-            sthis->getVideoRtp().forceKeyFrame();
+            auto rtpSession = sthis->getVideoRtp();
+            if (rtpSession != nullptr) {
+                rtpSession->forceKeyFrame();
+            }
         }
     });
 #endif
@@ -1044,7 +1143,7 @@ SIPCall::setupLocalSDPFromIce()
         return;
     }
 
-    JAMI_WARN("[call:%s] fill SDP with ICE transport %p", getCallId().c_str(), media_tr);
+    JAMI_DBG("[call:%s] fill SDP with ICE transport %p", getCallId().c_str(), media_tr);
     sdp_->addIceAttributes(media_tr->getLocalAttributes());
 
     // Add video and audio channels
@@ -1091,7 +1190,9 @@ std::shared_ptr<AccountCodecInfo>
 SIPCall::getVideoCodec() const
 {
 #ifdef ENABLE_VIDEO
-    return videortp_->getCodec();
+    auto rtpSession = getVideoRtp();
+    if (rtpSession != nullptr)
+        return rtpSession->getCodec();
 #endif
     return {};
 }
@@ -1099,7 +1200,36 @@ SIPCall::getVideoCodec() const
 std::shared_ptr<AccountCodecInfo>
 SIPCall::getAudioCodec() const
 {
-    return avformatrtp_->getCodec();
+    auto rtpSession = getAudioRtp();
+    if (rtpSession != nullptr)
+        return rtpSession->getCodec();
+    return {};
+}
+
+size_t
+SIPCall::initMediaStreams(std::vector<MediaAttributes> mediasList)
+{
+    for (size_t idx = 0; idx < mediasList.size(); idx++) {
+        const auto& local = mediasList.at(idx);
+
+        if (local.type_ != MEDIA_AUDIO && local.type_ != MEDIA_VIDEO) {
+            JAMI_ERR("[call:%s] Unexpected media type %u", getCallId().c_str(), local.type_);
+            assert(false);
+        }
+
+        // Create and the RTP session.
+        auto rtpSession = addRtpSession(idx, local.type_);
+        assert(rtpSession != nullptr);
+    }
+
+    auto size = rtpStreams_.size();
+    if (size > 0) {
+        JAMI_DBG("[call:%s] Created %lu RTP sessions", getCallId().c_str(), size);
+    } else {
+        JAMI_ERR("[call:%s] Failed to create initial RTP sessions", getCallId().c_str());
+    }
+
+    return size;
 }
 
 void
@@ -1114,41 +1244,28 @@ SIPCall::startAllMedia()
         onFailure(EPROTONOSUPPORT);
         return;
     }
+
     auto slots = sdp_->getMediaSlots();
     unsigned ice_comp_id = 0;
     bool peer_holding {true};
     int slotN = -1;
-
-#ifdef ENABLE_VIDEO
-    videortp_->setChangeOrientationCallback([wthis = weak()](int angle) {
-        runOnMainThread([wthis, angle] {
-            if (auto this_ = wthis.lock())
-                this_->setVideoOrientation(angle);
-        });
-    });
-#endif
 
     for (const auto& slot : slots) {
         ++slotN;
         const auto& local = slot.first;
         const auto& remote = slot.second;
 
+        if (local.type != MEDIA_AUDIO && local.type != MEDIA_VIDEO) {
+            JAMI_ERR("[call:%s] Unexpected media type %u", getCallId().c_str(), local.type);
+            assert(false);
+        }
+
         if (local.type != remote.type) {
-            JAMI_ERR("[call:%s] [SDP:slot#%u] Inconsistent media types between local and remote",
+            JAMI_ERR("[call:%s] [SDP:slot#%u] Inconsistent media type between local and remote",
                      getCallId().c_str(),
                      slotN);
             continue;
         }
-
-        RtpSession* rtp = local.type == MEDIA_AUDIO ? static_cast<RtpSession*>(avformatrtp_.get())
-#ifdef ENABLE_VIDEO
-                                                    : static_cast<RtpSession*>(videortp_.get());
-#else
-                                                    : nullptr;
-#endif
-
-        if (not rtp)
-            continue;
 
         if (!local.codec) {
             JAMI_WARN("[call:%s] [SDP:slot#%u] Missing local codec", getCallId().c_str(), slotN);
@@ -1159,8 +1276,6 @@ SIPCall::startAllMedia()
             continue;
         }
 
-        peer_holding &= remote.holding;
-
         if (isSecure() && (not local.crypto || not remote.crypto)) {
             JAMI_ERR(
                 "[call:%s] [SDP:slot#%u] Can't perform secure call over insecure RTP transport",
@@ -1169,48 +1284,35 @@ SIPCall::startAllMedia()
             continue;
         }
 
-        auto new_mtu = transport_->getTlsMtu();
-        if (local.type & MEDIA_AUDIO)
-            avformatrtp_->switchInput(mediaInput_);
-        avformatrtp_->setMtu(new_mtu);
+        auto rtpSession = getRptSessionAtIndex(slotN);
+        assert(rtpSession != nullptr);
 
-#ifdef ENABLE_VIDEO
-        if (local.type & MEDIA_VIDEO)
-            videortp_->switchInput(mediaInput_);
-        videortp_->setMtu(new_mtu);
-#endif
-        rtp->updateMedia(remote, local);
-
-        rtp->setSuccessfulSetupCb([this](MediaType type) { rtpSetupSuccess(type); });
-
-#ifdef ENABLE_VIDEO
-        videortp_->setRequestKeyFrameCallback([wthis = weak()] {
-            runOnMainThread([wthis] {
-                if (auto this_ = wthis.lock())
-                    this_->requestKeyframe();
-            });
-        });
-#endif
+        // Configure media.
+        configureRtpSession(rtpSession, selectedSource_, local, remote);
 
         // Not restarting media loop on hold as it's a huge waste of CPU ressources
         // because of the audio loop
         if (getState() != CallState::HOLD) {
             if (isIceRunning()) {
-                rtp->start(newIceSocket(ice_comp_id + 0), newIceSocket(ice_comp_id + 1));
+                rtpSession->start(newIceSocket(ice_comp_id + 0), newIceSocket(ice_comp_id + 1));
                 ice_comp_id += 2;
             } else
-                rtp->start(nullptr, nullptr);
+                rtpSession->start(nullptr, nullptr);
         }
 
         switch (local.type) {
 #ifdef ENABLE_VIDEO
         case MEDIA_VIDEO:
-            isVideoMuted_ = mediaInput_.empty();
+            // TODO_MC. Re-assess this logic
+            isVideoMuted_ = selectedSource_.empty();
             break;
 #endif
         default:
             break;
         }
+
+        // Aggregate holding info over all remote streams
+        peer_holding &= remote.onHold;
     }
 
     if (not isSubcall() and peerHolding_ != peer_holding) {
@@ -1256,9 +1358,16 @@ void
 SIPCall::restartMediaSender()
 {
     JAMI_DBG("[call:%s] restarting TX media streams", getCallId().c_str());
-    avformatrtp_->restartSender();
+    auto rtpSession = getAudioRtp();
+    if (rtpSession != nullptr)
+        rtpSession->restartSender();
+
 #ifdef ENABLE_VIDEO
-    videortp_->restartSender();
+    if (hasVideo()) {
+        auto rtpSession = getVideoRtp();
+        if (rtpSession != nullptr)
+            rtpSession->restartSender();
+    }
 #endif
 }
 
@@ -1270,10 +1379,15 @@ SIPCall::stopAllMedia()
         deinitRecorder();
         stopRecording(); // if call stops, finish recording
     }
-    avformatrtp_->stop();
+    auto rtpAudioSession = getAudioRtp();
+    if (rtpAudioSession != nullptr)
+        rtpAudioSession->stop();
 #ifdef ENABLE_VIDEO
-    videortp_->stop();
+    auto rtpVideoSession = getVideoRtp();
+    if (rtpVideoSession != nullptr)
+        rtpVideoSession->stop();
 #endif
+
 #ifdef ENABLE_PLUGIN
     {
         std::lock_guard<std::mutex> lk(avStreamsMtx_);
@@ -1294,11 +1408,11 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
             return;
         JAMI_WARN("[call:%s] video muting %s", getCallId().c_str(), bool_to_str(mute));
         isVideoMuted_ = mute;
-        mediaInput_ = isVideoMuted_ ? ""
-                                    : Manager::instance()
-                                          .getVideoManager()
-                                          .videoDeviceMonitor.getMRLForDefaultDevice();
-        DRing::switchInput(getCallId(), mediaInput_);
+        selectedSource_ = isVideoMuted_ ? ""
+                                        : Manager::instance()
+                                              .getVideoManager()
+                                              .videoDeviceMonitor.getMRLForDefaultDevice();
+        DRing::switchInput(getCallId(), selectedSource_);
         if (not isSubcall())
             emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), isVideoMuted_);
 #endif
@@ -1307,11 +1421,12 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
             return;
         JAMI_WARN("[call:%s] audio muting %s", getCallId().c_str(), bool_to_str(mute));
         isAudioMuted_ = mute;
-        avformatrtp_->setMuted(isAudioMuted_);
+        auto rtpSession = getAudioRtp();
+        if (rtpSession != nullptr)
+            rtpSession->setMuted(isAudioMuted_);
         if (not isSubcall())
             emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
         setMute(mute);
-
     }
 }
 
@@ -1319,7 +1434,7 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
 ///
 /// This method has to be called by link (ie SipVoIpLink) when SDP is negotiated and
 /// media streams structures are knows.
-/// In case of ICE transport used, the medias streams are launched asynchonously when
+/// In case of ICE transport used, the medias streams are launched asynchronously when
 /// the transport is negotiated.
 void
 SIPCall::onMediaUpdate()
@@ -1411,44 +1526,46 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer)
         JAMI_ERR("No account detected");
         return;
     }
-    sdp_->receiveOffer(offer,
-                       acc->getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                       acc->getActiveAccountCodecInfoList(acc->isVideoEnabled() ? MEDIA_VIDEO
-                                                                                : MEDIA_NONE),
-                       acc->getSrtpKeyExchange(),
-                       getState() == CallState::HOLD);
+
+    // TODO_MC. If ICE is enabled, it must server-reflexive candidates if available.
+    openPortsUPnP(acc->isVideoEnabled() ? 4 : 2);
+
+    // TODO_MC. WARNING. If this is an ongoing audio-only call, and the peer added
+    // video in a subsequent offer, the local user MUST first accept the new media(s).
+    // TODO_MC. This list should be provided by the client.
+    std::vector<MediaAttributes> mediasList;
+    acc->createDefaultMediaList(mediasList, acc->isVideoEnabled(), getState() == CallState::HOLD);
+
+    sdp_->receiveOffer(offer, mediasList);
+
     setRemoteSdp(offer);
     sdp_->startNegotiation();
     pjsip_inv_set_sdp_answer(inv.get(), sdp_->getLocalSdpSession());
-    openPortsUPnP();
 }
 
-void
-SIPCall::openPortsUPnP()
+bool
+SIPCall::openPortsUPnP(int portCount)
 {
-    if (upnp_) {
-        /**
-         * Try to open the desired ports with UPnP,
-         * if they are used, use the alternative port and update the SDP session with the newly
-         * chosen port(s)
-         *
-         * TODO:
-         * No need to request mappings for specfic port numbers. Set the port to '0' to
-         * request the first available port (faster and more likely to succeed).
-         */
-        JAMI_DBG("[call:%s] opening ports via UPNP for SDP session", getCallId().c_str());
+    if (not upnp_)
+        return false;
 
-        upnp_->reserveMapping(sdp_->getLocalAudioPort(), upnp::PortType::UDP);
-        // RTCP port.
-        upnp_->reserveMapping(sdp_->getLocalAudioControlPort(), upnp::PortType::UDP);
+    // Try to allocate the requested number of port mappings.
+    JAMI_DBG("[call:%s] Opening ports via UPNP for SDP session", getCallId().c_str());
 
-#ifdef ENABLE_VIDEO
-        // RTP port.
-        upnp_->reserveMapping(sdp_->getLocalVideoPort(), upnp::PortType::UDP);
-        // RTCP port.
-        upnp_->reserveMapping(sdp_->getLocalVideoControlPort(), upnp::PortType::UDP);
-#endif
+    for (int i = 0; i < portCount; i++) {
+        auto map = upnp_->reserveMapping(0, upnp::PortType::UDP);
+        if (map and map->isValid()) {
+            // Append
+        } else {
+            // Abort on first error.
+            JAMI_WARN("[call:%s] Failed to allocate %i requested mapping",
+                      getCallId().c_str(),
+                      portCount);
+            return false;
+        }
     }
+
+    return true;
 }
 
 std::map<std::string, std::string>
@@ -1465,9 +1582,13 @@ SIPCall::getDetails() const
 
 #ifdef ENABLE_VIDEO
     // If Video is not enabled return an empty string
-    details.emplace(DRing::Call::Details::VIDEO_SOURCE, acc->isVideoEnabled() ? mediaInput_ : "");
-    if (auto codec = videortp_->getCodec())
-        details.emplace(DRing::Call::Details::VIDEO_CODEC, codec->systemCodecInfo.name);
+    details.emplace(DRing::Call::Details::VIDEO_SOURCE,
+                    acc->isVideoEnabled() ? selectedSource_ : "");
+    auto rtpSession = getVideoRtp();
+    if (rtpSession != nullptr) {
+        if (auto codec = rtpSession->getCodec())
+            details.emplace(DRing::Call::Details::VIDEO_CODEC, codec->systemCodecInfo.name);
+    }
 #endif
 
 #if HAVE_RINGNS
@@ -1505,6 +1626,35 @@ SIPCall::getDetails() const
     return details;
 }
 
+// TODO_MC. WARN. Raw pointer. Check lifetime of the pointer.
+AudioRtpSession*
+SIPCall::getAudioRtp() const
+{
+    // TODO_MC. For the moment, we support only one audio stream.
+
+    for (auto const& stream : rtpStreams_) {
+        if (stream->getMediaType() == MediaType::MEDIA_AUDIO) {
+            return dynamic_cast<AudioRtpSession*>(stream.get());
+        }
+    }
+
+    return nullptr;
+}
+
+#ifdef ENABLE_VIDEO
+video::VideoRtpSession*
+SIPCall::getVideoRtp() const
+{
+    for (auto const& stream : rtpStreams_) {
+        if (stream->getMediaType() == MediaType::MEDIA_VIDEO) {
+            return dynamic_cast<video::VideoRtpSession*>(stream.get());
+        }
+    }
+
+    return nullptr;
+}
+#endif
+
 bool
 SIPCall::toggleRecording()
 {
@@ -1523,11 +1673,14 @@ SIPCall::toggleRecording()
         }
         ss << "Conversation at %TIMESTAMP between " << account->getUserUri() << " and " << peerUri_;
         recorder_->setMetadata(ss.str(), ""); // use default description
-        if (avformatrtp_)
-            avformatrtp_->initRecorder(recorder_);
+        auto rtpSession = getAudioRtp();
+        if (rtpSession != nullptr)
+            rtpSession->initRecorder(recorder_);
 #ifdef ENABLE_VIDEO
-        if (!isAudioOnly_ && videortp_)
-            videortp_->initRecorder(recorder_);
+        if (not isAudioOnly_) {
+            auto rtpSession = getVideoRtp();
+            rtpSession->initRecorder(recorder_);
+        }
 #endif
     } else {
         updateRecState(false);
@@ -1541,11 +1694,15 @@ void
 SIPCall::deinitRecorder()
 {
     if (Call::isRecording()) {
-        if (avformatrtp_)
-            avformatrtp_->deinitRecorder(recorder_);
+        auto rtpSession = getAudioRtp();
+        if (rtpSession != nullptr)
+            rtpSession->deinitRecorder(recorder_);
 #ifdef ENABLE_VIDEO
-        if (!isAudioOnly_ && videortp_)
-            videortp_->deinitRecorder(recorder_);
+        if (not isAudioOnly_) {
+            auto rtpSession = getVideoRtp();
+            if (rtpSession != nullptr)
+                rtpSession->deinitRecorder(recorder_);
+        }
 #endif
     }
 }
@@ -1599,7 +1756,7 @@ SIPCall::initIceMediaTransport(bool master,
 
             std::lock_guard<std::recursive_mutex> lk {call->callMutex_};
             auto rem_ice_attrs = call->sdp_->getIceAttributes();
-            // Init done but no remote_ice_attributes, the ice->start will be triggered lated
+            // Init done but no remote_ice_attributes, the ice->start will be triggered later
             if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty())
                 return;
             call->startIceMedia();

@@ -255,11 +255,10 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
     else
         sdp.setPublishedIP(getPublishedAddress());
 
-    const bool created = sdp.createOffer(getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                                         getActiveAccountCodecInfoList(
-                                             videoEnabled_ and not call->isAudioOnly() ? MEDIA_VIDEO
-                                                                                       : MEDIA_NONE),
-                                         getSrtpKeyExchange());
+    // TODO_MC. This list should be provided by the client.
+    std::vector<MediaAttributes> mediasList;
+    createDefaultMediaList(mediasList, videoEnabled_ and not call->isAudioOnly());
+    const bool created = sdp.createOffer(mediasList);
 
     if (created) {
         std::weak_ptr<SIPCall> weak_call = call;
