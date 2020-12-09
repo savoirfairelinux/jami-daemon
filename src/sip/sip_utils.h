@@ -43,8 +43,6 @@ static constexpr int DEFAULT_SIP_PORT {5060};
 static constexpr int DEFAULT_SIP_TLS_PORT {5061};
 static constexpr int DEFAULT_AUTO_SELECT_PORT {0};
 
-enum class KeyExchangeProtocol { NONE, SDES };
-
 /// PjsipErrorCategory - a PJSIP error category for std::error_code
 class PjsipErrorCategory final : public std::error_category
 {

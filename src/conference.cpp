@@ -125,8 +125,11 @@ Conference::~Conference()
 
 #ifdef ENABLE_VIDEO
     for (const auto& participant_id : participants_) {
-        if (auto call = getSipCall(participant_id)) {
-            call->getVideoRtp().exitConference();
+        if (auto call = std::dynamic_pointer_cast<SIPCall>(
+                Manager::instance().callFactory.getCall(participant_id))) {
+            auto rtpVideoSession = call->getVideoRtp();
+            if (rtpVideoSession != nullptr)
+                rtpVideoSession->exitConference();
             // Reset distant callInfo
             auto w = call->getAccount();
             auto account = w.lock();
@@ -175,7 +178,7 @@ Conference::add(const std::string& participant_id)
                 participantsMuted_.emplace(string_remove_suffix(call->getPeerNumber(), '@'));
             }
         }
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+        if (auto call = Manager::instance().callFactory.getCall(participant_id)) {
             auto w = call->getAccount();
             auto account = w.lock();
             if (account) {
@@ -195,8 +198,12 @@ Conference::add(const std::string& participant_id)
             }
         }
 #ifdef ENABLE_VIDEO
-        if (auto call = getSipCall(participant_id)) {
-            call->getVideoRtp().enterConference(this);
+        if (auto call = std::dynamic_pointer_cast<SIPCall>(
+                Manager::instance().callFactory.getCall(participant_id))) {
+            auto rtpVideoSession = call->getVideoRtp();
+            if (rtpVideoSession != nullptr)
+                rtpVideoSession->enterConference(this);
+
             // Continue the recording for the conference if one participant was recording
             if (call->isRecording()) {
                 JAMI_DBG("Stop recording for call %s", call->getCallId().c_str());
@@ -226,7 +233,9 @@ Conference::setActiveParticipant(const std::string& participant_id)
         if (auto call = getSipCall(item)) {
             if (participant_id == item
                 || call->getPeerNumber().find(participant_id) != std::string::npos) {
-                videoMixer_->setActiveParticipant(call->getVideoRtp().getVideoReceive().get());
+                auto rtpVideoSession = call->getVideoRtp();
+                if (rtpVideoSession != nullptr)
+                    videoMixer_->setActiveParticipant(rtpVideoSession->getVideoReceive().get());
                 return;
             }
         }
@@ -324,8 +333,12 @@ Conference::remove(const std::string& participant_id)
 {
     if (participants_.erase(participant_id)) {
 #ifdef ENABLE_VIDEO
-        if (auto call = getSipCall(participant_id)) {
-            call->getVideoRtp().exitConference();
+        if (auto call = std::dynamic_pointer_cast<SIPCall>(
+                Manager::instance().callFactory.getCall(participant_id))) {
+            auto rtpVideoSession = call->getVideoRtp();
+            if (rtpVideoSession != nullptr)
+                rtpVideoSession->exitConference();
+
             if (call->isPeerRecording())
                 call->setRemoteRecording(false);
         }
