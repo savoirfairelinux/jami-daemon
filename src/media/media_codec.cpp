@@ -253,4 +253,118 @@ AccountVideoCodecInfo::setCodecSpecifications(const std::map<std::string, std::s
     *this = std::move(copy);
 }
 
+std::vector<MediaAttribute>
+MediaAttribute::parseMediaList(const std::vector<MediaMap>& mediaList)
+{
+    std::vector<MediaAttribute> mediaAttrList;
+
+    for (unsigned index = 0; index < mediaList.size(); index++) {
+        MediaAttribute mediaAttr;
+        std::pair<bool, MediaType> pairType = getMediaType(mediaList, index);
+        if (pairType.first)
+            mediaAttr.type_ = pairType.second;
+
+        std::pair<bool, bool> pairBool;
+
+        pairBool = getBoolValue(mediaList, index, MediaAttributeKey::SECURE);
+        if (pairBool.first)
+            mediaAttr.security_ = pairBool.second ? KeyExchangeProtocol::SDES
+                                                  : KeyExchangeProtocol::NONE;
+
+        pairBool = getBoolValue(mediaList, index, MediaAttributeKey::MUTED);
+        if (pairBool.first)
+            mediaAttr.muted_ = pairBool.second;
+
+        pairBool = getBoolValue(mediaList, index, MediaAttributeKey::ENABLED);
+        if (pairBool.first)
+            mediaAttr.enabled_ = pairBool.second;
+
+        std::pair<bool, std::string> pairString;
+        pairString = getStringValue(mediaList, index, MediaAttributeKey::SOURCE);
+        if (pairBool.first)
+            mediaAttr.sourceUri_ = pairString.second;
+
+        pairString = getStringValue(mediaList, index, MediaAttributeKey::LABEL);
+        if (pairBool.first)
+            mediaAttr.label_ = pairString.second;
+
+        mediaAttrList.emplace_back(std::move(mediaAttr));
+    }
+
+    return mediaAttrList;
+}
+
+MediaType
+MediaAttribute::stringToMediaType(const std::string& mediaType)
+{
+    if (mediaType.compare(MediaAttributeValue::AUDIO) == 0)
+        return {MediaType::MEDIA_AUDIO};
+    if (mediaType.compare(MediaAttributeValue::VIDEO) == 0)
+        return {MediaType::MEDIA_VIDEO};
+    return {MediaType::MEDIA_NONE};
+}
+
+std::pair<bool, MediaType>
+MediaAttribute::getMediaType(const std::vector<MediaMap>& mediaList, unsigned index)
+{
+    assert(index < mediaList.size());
+    auto map = mediaList[index];
+
+    const auto& iter = map.find(MediaAttributeKey::MEDIA_TYPE);
+    if (iter == map.end()) {
+        JAMI_WARN("[MEDIA_TYPE] key not found for media @ index %u", index);
+        return {false, MediaType::MEDIA_NONE};
+    }
+
+    auto type = stringToMediaType(iter->second);
+    if (type == MediaType::MEDIA_NONE) {
+        JAMI_ERR("Invalid value [%s] for a media type key for media @ index %u",
+                 iter->second.c_str(),
+                 index);
+        return {false, type};
+    }
+
+    return {true, type};
+}
+
+std::pair<bool, bool>
+MediaAttribute::getBoolValue(const std::vector<MediaMap>& mediaList,
+                             unsigned index,
+                             const std::string& key)
+{
+    assert(index < mediaList.size());
+    auto map = mediaList[index];
+
+    const auto& iter = map.find(key);
+    if (iter == map.end()) {
+        JAMI_WARN("[%s] key not found for media @ index %u", key.c_str(), index);
+        return {false, false};
+    }
+    auto const& value = iter->second;
+    if (value.compare(MediaAttributeValue::TRUE_VAL) == 0)
+        return {true, true};
+    if (value.compare(MediaAttributeValue::FALSE_VAL) == 0)
+        return {true, false};
+
+    JAMI_ERR("Invalid value %s for a boolean key for media @ index %u", value.c_str(), index);
+    return {false, false};
+}
+
+std::pair<bool, std::string>
+MediaAttribute::getStringValue(const std::vector<MediaMap>& mediaList,
+                               unsigned index,
+                               const std::string& key)
+{
+    assert(index < mediaList.size());
+    auto map = mediaList[index];
+
+    const auto& iter = map.find(key);
+    if (iter == map.end()) {
+        JAMI_WARN("[%s] key not found for media @ index %u", key.c_str(), index);
+        return {false, {}};
+    }
+
+    return {true, iter->second};
+}
+
 } // namespace jami
