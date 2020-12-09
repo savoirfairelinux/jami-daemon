@@ -210,7 +210,7 @@ public:
      */
     bool getPublishedSameasLocal() const { return publishedSameasLocal_; }
 
-    virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const = 0;
+    virtual KeyExchangeProtocol getSrtpKeyExchange() const = 0;
 
     virtual bool getSrtpFallback() const = 0;
 
@@ -281,19 +281,10 @@ public:
 
     virtual std::string getUserUri() const = 0;
 
-    std::vector<DRing::Message> getLastMessages(const uint64_t& base_timestamp) override
-    {
-        std::lock_guard<std::mutex> lck(mutexLastMessages_);
-        auto it = lastMessages_.begin();
-        size_t num = lastMessages_.size();
-        while (it != lastMessages_.end() and it->received <= base_timestamp) {
-            num--;
-            ++it;
-        }
-        if (num == 0)
-            return {};
-        return {it, lastMessages_.end()};
-    }
+    std::vector<DRing::Message> getLastMessages(const uint64_t& base_timestamp) override;
+
+    // Build the list of medias to be included in the SDP (offer/answer)
+    std::vector<MediaAttribute> createDefaultMediaList(bool addVideo, bool onHold = false);
 
 public: // overloaded methods
     virtual void flush() override;
