@@ -975,6 +975,42 @@ Manager::outgoingCall(const std::string& account_id,
     return call_id;
 }
 
+std::string
+Manager::outgoingCall(const std::string& account_id,
+                      const std::string& to,
+                      const std::vector<MediaMap>& mediaList,
+                      const std::string& conf_id)
+{
+    if (not conf_id.empty() and not isConference(conf_id)) {
+        JAMI_ERR("outgoingCall() failed, invalid conference id");
+        return {};
+    }
+
+    JAMI_DBG() << "try outgoing call to '" << to << "'"
+               << " with account '" << account_id << "'";
+
+    std::shared_ptr<Call> call;
+
+    try {
+        call = newOutgoingCall(trim(to), account_id, mediaList);
+    } catch (const std::exception& e) {
+        JAMI_ERR("%s", e.what());
+        return {};
+    }
+
+    if (not call)
+        return {};
+
+    auto call_id = call->getCallId();
+
+    stopTone();
+
+    pimpl_->switchCall(call);
+    call->setConfId(conf_id);
+
+    return call_id;
+}
+
 // THREAD=Main : for outgoing Call
 bool
 Manager::answerCall(const std::string& call_id)
@@ -1159,7 +1195,7 @@ Manager::muteMediaCall(const std::string& callId, const std::string& mediaType, 
         call->muteMedia(mediaType, is_muted);
         return true;
     } else if (auto conf = getConferenceFromID(callId)) {
-        conf->muteParticipant("", is_muted, mediaType);     // Mute host
+        conf->muteParticipant("", is_muted, mediaType); // Mute host
         return true;
     } else {
         JAMI_DBG("CallID %s doesn't exist in call muting", callId.c_str());
@@ -1705,8 +1741,8 @@ Manager::scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::t
     return pimpl_->scheduler_.schedule(std::move(task), when);
 }
 
-std::shared_ptr<Task> Manager::scheduleTaskIn(std::function<void()>&& task,
-                                std::chrono::steady_clock::duration timeout)
+std::shared_ptr<Task>
+Manager::scheduleTaskIn(std::function<void()>&& task, std::chrono::steady_clock::duration timeout)
 {
     return pimpl_->scheduler_.scheduleIn(std::move(task), timeout);
 }
@@ -3161,6 +3197,27 @@ Manager::newOutgoingCall(std::string_view toUrl,
     return account->newOutgoingCall(toUrl, volatileCallDetails);
 }
 
+std::shared_ptr<Call>
+Manager::newOutgoingCall(std::string_view toUrl,
+                         const std::string& accountId,
+                         const std::vector<MediaMap>& mediaList)
+{
+    auto account = getAccount(accountId);
+    if (not account) {
+        JAMI_WARN("No account matches ID %s", accountId.c_str());
+        ;
+        return nullptr;
+    }
+
+    if (not account->isUsable()) {
+        JAMI_WARN("Account %s is not usable", accountId.c_str());
+        ;
+        return nullptr;
+    }
+
+    return account->newOutgoingCall(toUrl, mediaList);
+}
+
 #ifdef ENABLE_VIDEO
 std::shared_ptr<video::SinkClient>
 Manager::createSinkClient(const std::string& id, bool mixer)
@@ -3250,11 +3307,15 @@ Manager::setModerator(const std::string& confId, const std::string& peerId, cons
     if (auto conf = getConferenceFromID(confId)) {
         conf->setModerator(peerId, state);
     } else
-        JAMI_WARN("Fail to change moderator %s, conference %s not found", peerId.c_str(), confId.c_str());
+        JAMI_WARN("Fail to change moderator %s, conference %s not found",
+                  peerId.c_str(),
+                  confId.c_str());
 }
 
 void
-Manager::muteParticipant(const std::string& confId, const std::string& participant, const bool& state)
+Manager::muteParticipant(const std::string& confId,
+                         const std::string& participant,
+                         const bool& state)
 {
     if (auto conf = getConferenceFromID(confId)) {
         conf->muteParticipant(participant, state);

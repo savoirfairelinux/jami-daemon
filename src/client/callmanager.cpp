@@ -68,6 +68,21 @@ placeCall(const std::string& accountID,
     }
 }
 
+// TODO_MC. Could we merge the two APIs ?
+std::string
+placeCall(const std::string& accountID,
+          const std::string& to,
+          const std::vector<MediaMap>& mediaList)
+{
+    // Check if a destination number is available
+    if (to.empty()) {
+        JAMI_DBG("No number entered - Call aborted");
+        return {};
+    } else {
+        return jami::Manager::instance().outgoingCall(accountID, to, mediaList);
+    }
+}
+
 bool
 refuse(const std::string& callID)
 {

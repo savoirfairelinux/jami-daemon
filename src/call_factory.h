@@ -49,6 +49,11 @@ public:
                                      Call::CallType type,
                                      const std::map<std::string, std::string>& details = {});
 
+    std::shared_ptr<Call> CreateCall(const std::shared_ptr<Account>& account,
+                                     const std::string& id,
+                                     Call::CallType type,
+                                     const std::vector<MediaAttribute>& mediaList);
+
     template<class A>
     std::shared_ptr<Call> newCall(std::shared_ptr<A> account,
                                   const std::string& id,
@@ -62,7 +67,7 @@ public:
     std::shared_ptr<Call> newCall(std::shared_ptr<A> account,
                                   const std::string& id,
                                   Call::CallType type,
-                                  const std::vector<Account::MediaMap>& mediaList)
+                                  const std::vector<MediaAttribute>& mediaList)
     {
         return CreateCall(account, id, type, mediaList);
     }

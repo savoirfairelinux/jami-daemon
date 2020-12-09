@@ -151,6 +151,19 @@ public:
                              const std::map<std::string, std::string>& volatileCallDetails = {});
 
     /**
+     * Handler of user's action
+     * Place a new call
+     * @param accountId The account to make the call with
+     * @param to  The recipient of the call
+     * @param conf_id The conference identifier if any
+     * @return id The call ID on success, empty string otherwise
+     */
+    std::string outgoingCall(const std::string& accountId,
+                             const std::string& to,
+                             const std::vector<MediaMap>& mediaList,
+                             const std::string& conf_id = "");
+
+    /**
      * Functions which occur with a user's action
      * Answer the call
      * @param id  The call identifier
@@ -882,6 +895,18 @@ public:
         const std::string& accountId,
         const std::map<std::string, std::string>& volatileCallDetails = {});
 
+    /**
+     * Create a new outgoing call
+     * @param toUrl Destination address
+     * @param accountId local account
+     * @param mediaList the list of medias
+     * @return A (shared) pointer of Call class type.
+     * @note This function raises VoipLinkException() on error.
+     */
+    std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
+                                          const std::string& accountId,
+                                          const std::vector<MediaMap>& mediaList);
+
     CallFactory callFactory;
 
     IceTransportFactory& getIceTransportFactory();
@@ -894,7 +919,7 @@ public:
     std::shared_ptr<Task> scheduleTask(std::function<void()>&& task,
                                        std::chrono::steady_clock::time_point when);
     std::shared_ptr<Task> scheduleTaskIn(std::function<void()>&& task,
-                                       std::chrono::steady_clock::duration timeout);
+                                         std::chrono::steady_clock::duration timeout);
 
     std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
 
