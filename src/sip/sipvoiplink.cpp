@@ -165,6 +165,12 @@ try_respond_stateless(pjsip_endpoint* endpt,
     return !PJ_SUCCESS;
 }
 
+template <typename T>
+bool is_uninitialized(std::weak_ptr<T> const& weak) {
+    using wt = std::weak_ptr<T>;
+    return !weak.owner_before(wt{}) && !wt{}.owner_before(weak);
+}
+
 static pj_bool_t
 transaction_request_cb(pjsip_rx_data* rdata)
 {
@@ -213,19 +219,32 @@ transaction_request_cb(pjsip_rx_data* rdata)
         peerNumber = sip_utils::stripSipUriPrefix(std::string_view(tmp, length));
     }
 
-    auto account(
-        Manager::instance().sipVoIPLink().guessAccount(toUsername, viaHostname, remote_hostname));
-    if (!account) {
-        JAMI_ERR("NULL account");
+    auto transport = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(
+        rdata->tp_info.transport);
+
+    std::shared_ptr<SIPAccountBase> account;
+    // If transport account is default-constructed, guessing account is allowed
+    const auto& waccount = transport ? transport->getAccount() : std::weak_ptr<SIPAccountBase>{};
+    if (is_uninitialized(waccount)) {
+        account = Manager::instance().sipVoIPLink().guessAccount(toUsername, viaHostname, remote_hostname);
+        if (not account)
+            return PJ_FALSE;
+        if (not transport and not ::strcmp(account->getAccountType(), SIPAccount::ACCOUNT_TYPE)) {
+            if (not (transport = std::static_pointer_cast<SIPAccount>(account)->getTransport())) {
+                JAMI_ERR("No suitable transport to answer this call.");
+                return PJ_FALSE;
+            }
+            JAMI_WARN("Using transport from account.");
+        }
+    } else if (!(account = waccount.lock())) {
+        JAMI_ERR("Dropping SIP request: account is expired.");
         return PJ_FALSE;
     }
 
-    const auto& account_id = account->getAccountID();
     pjsip_msg_body* body = rdata->msg_info.msg->body;
 
     if (method->id == PJSIP_OTHER_METHOD) {
-        pj_str_t* str = &method->name;
-        std::string_view request(str->ptr, str->slen);
+        std::string_view request = sip_utils::as_view(method->name);
 
         if (request.find("NOTIFY") != std::string_view::npos) {
             if (body and body->data) {
@@ -245,7 +264,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
                     // According to rfc3842
                     // urgent messages are optional
                     if (ret >= 2)
-                        emitSignal<DRing::CallSignal::VoiceMailNotify>(account_id,
+                        emitSignal<DRing::CallSignal::VoiceMailNotify>(account->getAccountID(),
                                                                        newCount,
                                                                        oldCount,
                                                                        urgentCount);
@@ -334,36 +353,21 @@ transaction_request_cb(pjsip_rx_data* rdata)
         }
     }
 
-    auto transport = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(
-        rdata->tp_info.transport);
     auto call = account->newIncomingCall(std::string(remote_user),
                                          {{"AUDIO_ONLY", (hasVideo ? "false" : "true")}},
                                          transport);
     if (!call) {
         return PJ_FALSE;
     }
+    call->setTransport(transport);
 
     // JAMI_DBG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s
     // peerNumber: %s" , viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(),
     // addrSdp.toString().c_str(), peerNumber.c_str());
 
-    // Append PJSIP transport to the broker's SipTransport list
-    if (!transport) {
-        if (not ::strcmp(account->getAccountType(), SIPAccount::ACCOUNT_TYPE)) {
-            JAMI_WARN("Using transport from account.");
-            transport = std::static_pointer_cast<SIPAccount>(account)->getTransport();
-        }
-        if (!transport) {
-            JAMI_ERR("No suitable transport to answer this call.");
-            return PJ_FALSE;
-        }
-    }
-    call->setTransport(transport);
-
     // FIXME : for now, use the same address family as the SIP transport
     auto family = pjsip_transport_type_get_af(
         pjsip_transport_get_type_from_flag(transport->get()->flag));
-    IpAddr addrToUse = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
 
     IpAddr addrSdp;
     if (account->getUPnPActive()) {
@@ -373,12 +377,12 @@ transaction_request_cb(pjsip_rx_data* rdata)
     } else {
         addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
                       ? account->getPublishedIpAddress()
-                      : addrToUse;
+                      : ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
     }
 
     /* fallback on local address */
     if (not addrSdp)
-        addrSdp = addrToUse;
+        addrSdp = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
 
     // Try to obtain display name from From: header first, fallback on Contact:
     auto peerDisplayName = sip_utils::parseDisplayName(rdata->msg_info.from);
@@ -506,7 +510,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     call->setState(Call::ConnectionState::RINGING);
 
-    Manager::instance().incomingCall(*call, account_id);
+    Manager::instance().incomingCall(*call, account->getAccountID());
 
     if (replaced_dlg) {
         // Get the INVITE session associated with the replaced dialog.
@@ -737,25 +741,8 @@ SIPVoIPLink::guessAccount(std::string_view userName,
     std::shared_ptr<SIPAccountBase> IP2IPAccount;
     MatchRank best = MatchRank::NONE;
 
-    // DHT accounts
-    for (const auto& account : Manager::instance().getAllAccounts<JamiAccount>()) {
-        if (!account)
-            continue;
-        const MatchRank match(account->matches(userName, server));
-
-        // return right away if this is a full match
-        if (match == MatchRank::FULL) {
-            return account;
-        } else if (match > best) {
-            best = match;
-            result = account;
-        }
-    }
-
     // SIP accounts
     for (const auto& account : Manager::instance().getAllAccounts<SIPAccount>()) {
-        if (!account)
-            continue;
         const MatchRank match(account->matches(userName, server));
 
         // return right away if this is a full match

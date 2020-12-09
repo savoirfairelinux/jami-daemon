@@ -371,7 +371,6 @@ JamiAccount::newIncomingCall(const std::string& from,
                     std::weak_ptr<SIPCall> wcall = call;
                     call->setPeerUri(RING_URI_PREFIX + from);
                     call->setPeerNumber(from);
-
                     call->updateDetails(details);
                     return call;
                 }
@@ -568,8 +567,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             requestSIPConnection(toUri, deviceId);
         };
 
-    for (auto it = sipConns_.begin(); it != sipConns_.end(); ++it) {
-        auto& [key, value] = *it;
+    for (auto& [key, value] : sipConns_) {
         if (key.first != toUri)
             continue;
         if (value.empty())
@@ -1729,6 +1727,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
     if (!transport)
         throw std::runtime_error("transport creation failed");
 
+    transport->setAccount(shared());
     call->setTransport(transport);
 
     if (incoming) {
@@ -3735,9 +3734,9 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     SipConnectionKey key(peerId, deviceId);
     auto it = sipConns_.find(key);
     if (it == sipConns_.end())
-        it = sipConns_.insert(it, std::make_pair(key, std::vector<SipConnection> {}));
+        it = sipConns_.emplace(key, std::vector<SipConnection> {}).first;
     auto& connections = it->second;
-    auto conn = std::find_if(connections.begin(), connections.end(), [socket](auto v) {
+    auto conn = std::find_if(connections.begin(), connections.end(), [&](auto v) {
         return v.channel == socket;
     });
     if (conn != connections.end()) {
@@ -3773,6 +3772,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         shared->callConnectionClosed(key.second, false);
     };
     auto sip_tr = link_.sipTransportBroker->getChanneledTransport(socket, std::move(onShutdown));
+    sip_tr->setAccount(shared());
     // Store the connection
     connections.emplace_back(SipConnection {sip_tr, socket});
     JAMI_WARN("New SIP channel opened with %s", deviceId.to_c_str());
