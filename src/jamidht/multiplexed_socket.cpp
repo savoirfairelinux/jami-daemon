@@ -330,7 +330,7 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, std::vector<uint8
         }
     } else if (pkt.size() != 0) {
         std::string p = std::string(pkt.begin(), pkt.end());
-        JAMI_WARN("Non existing channel: %u - %s - %u", channel, p.c_str(), pkt.size());
+        JAMI_WARN("Non existing channel: %u - %s - %lu", channel, p.c_str(), pkt.size());
     }
 }
 
