@@ -124,6 +124,7 @@ private:
     void testRemoveContact();
     void testBanContact();
     void testOneToOneFetchWithNewMemberRefused();
+    void testConversationMemberEvent();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -160,6 +161,7 @@ private:
     CPPUNIT_TEST(testRemoveContact);
     CPPUNIT_TEST(testBanContact);
     CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
+    CPPUNIT_TEST(testConversationMemberEvent);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -2506,6 +2508,68 @@ ConversationTest::testOneToOneFetchWithNewMemberRefused()
     messageBob = false;
     generateFakeInvite(aliceAccount, convId, carlaUri);
     CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageBob; }));
+}
+
+void
+ConversationTest::testConversationMemberEvent()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto convId = aliceAccount->startConversation();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false, memberAddGenerated = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationMemberEvent>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                const std::string& uri,
+                uint32_t event) {
+                if (accountId == aliceId && conversationId == convId && uri == bobUri
+                    && event == 0) {
+                    memberAddGenerated = true;
+                }
+                cv.notify_one();
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
+    CPPUNIT_ASSERT(memberAddGenerated);
+    // Assert that repository exists
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    // Check created files
+    auto bobInvited = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
+    CPPUNIT_ASSERT(fileutils::isFile(bobInvited));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    bobAccount->acceptConversationRequest(convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
+    auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
+                      + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(clonedPath));
+    bobInvited = clonedPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
+    CPPUNIT_ASSERT(!fileutils::isFile(bobInvited));
+    auto bobMember = clonedPath + DIR_SEPARATOR_STR + "members" + DIR_SEPARATOR_STR + bobUri
+                     + ".crt";
+    CPPUNIT_ASSERT(fileutils::isFile(bobMember));
 }
 
 } // namespace test
