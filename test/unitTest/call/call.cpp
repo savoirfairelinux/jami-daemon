@@ -35,17 +35,17 @@ using namespace DRing::Account;
 namespace jami {
 namespace test {
 
-class CallTest : public CppUnit::TestFixture
+class MediaControlTest : public CppUnit::TestFixture
 {
 public:
-    CallTest()
+    MediaControlTest()
     {
         // Init daemon
         DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
             CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
     }
-    ~CallTest() { DRing::fini(); }
+    ~MediaControlTest() { DRing::fini(); }
     static std::string name() { return "Call"; }
     void setUp();
     void tearDown();
@@ -54,21 +54,23 @@ public:
     std::string bobId;
 
 private:
+    void waitForRegistration();
     void testCall();
     void testCachedCall();
     void testStopSearching();
+    void testCallWithMediaList();
 
-    CPPUNIT_TEST_SUITE(CallTest);
+    CPPUNIT_TEST_SUITE(MediaControlTest);
     CPPUNIT_TEST(testCall);
     CPPUNIT_TEST(testCachedCall);
     CPPUNIT_TEST(testStopSearching);
     CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(CallTest, CallTest::name());
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaControlTest, MediaControlTest::name());
 
 void
-CallTest::setUp()
+MediaControlTest::setUp()
 {
     std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
@@ -119,7 +121,7 @@ CallTest::setUp()
 }
 
 void
-CallTest::tearDown()
+MediaControlTest::tearDown()
 {
     JAMI_INFO("Remove created accounts...");
 
@@ -148,12 +150,13 @@ CallTest::tearDown()
 }
 
 void
-CallTest::testCall()
+MediaControlTest::testCall()
 {
+    JAMI_INFO("Waiting....");
     // TODO remove. This sleeps is because it take some time for the DHT to be connected
     // and account announced
-    JAMI_INFO("Waiting....");
     std::this_thread::sleep_for(std::chrono::seconds(5));
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
@@ -182,7 +185,7 @@ CallTest::testCall()
     DRing::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Start call between alice and Bob");
-    auto call = aliceAccount->newOutgoingCall(bobUri, {});
+    auto call = aliceAccount->newOutgoingCall(bobUri);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callReceived.load(); }));
 
@@ -193,12 +196,13 @@ CallTest::testCall()
 }
 
 void
-CallTest::testCachedCall()
+MediaControlTest::testCachedCall()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    JAMI_INFO("Waiting....");
     // TODO remove. This sleeps is because it take some time for the DHT to be connected
     // and account announced
-    JAMI_INFO("Waiting....");
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
@@ -241,7 +245,7 @@ CallTest::testCachedCall()
         cv.wait_for(lk, std::chrono::seconds(30), [&] { return successfullyConnected.load(); }));
 
     JAMI_INFO("Start call between alice and Bob");
-    auto call = aliceAccount->newOutgoingCall(bobUri, {});
+    auto call = aliceAccount->newOutgoingCall(bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callReceived.load(); }));
 
     callStopped = 0;
@@ -251,12 +255,13 @@ CallTest::testCachedCall()
 }
 
 void
-CallTest::testStopSearching()
+MediaControlTest::testStopSearching()
 {
     JAMI_INFO("Waiting....");
     // TODO remove. This sleeps is because it take some time for the DHT to be connected
     // and account announced
     std::this_thread::sleep_for(std::chrono::seconds(5));
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
@@ -280,7 +285,7 @@ CallTest::testStopSearching()
     DRing::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Start call between alice and Bob");
-    auto call = aliceAccount->newOutgoingCall(bobUri, {});
+    auto call = aliceAccount->newOutgoingCall(bobUri);
 
     // Bob not there, so we should get a SEARCHING STATUS
     JAMI_INFO("Wait OVER state");
@@ -291,4 +296,4 @@ CallTest::testStopSearching()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::CallTest::name())
+RING_TEST_RUNNER(jami::test::MediaControlTest::name())

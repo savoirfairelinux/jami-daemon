@@ -151,6 +151,28 @@ public:
                              const std::map<std::string, std::string>& volatileCallDetails = {});
 
     /**
+     * Place a new call
+     * @param accountId the user's account ID
+     * @param callee the callee
+     * @param mediaList a list of medias to include
+     * @param confId the conference ID if any
+     * @return the call ID on success, empty string otherwise
+     */
+    std::string outgoingCall(const std::string& accountId,
+                             const std::string& callee,
+                             const std::vector<MediaMap>& mediaList,
+                             const std::string& confId = "");
+
+    /**
+     * Update the list of medias of an ongoing call
+     * @param callID the call ID.
+     * @param mediaList a list of medias to include
+     * @return true on success
+     */
+    bool updateMediaStreams(const std::string& callID,
+                            const std::vector<DRing::MediaMap>& mediaList);
+
+    /**
      * Functions which occur with a user's action
      * Answer the call
      * @param id  The call identifier
@@ -882,6 +904,18 @@ public:
         const std::string& accountId,
         const std::map<std::string, std::string>& volatileCallDetails = {});
 
+    /**
+     * Create a new outgoing call
+     * @param toUrl Destination address
+     * @param accountId local account
+     * @param mediaList the list of medias
+     * @return A (shared) pointer of Call class type.
+     * @note This function raises VoipLinkException() on error.
+     */
+    std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
+                                          const std::string& accountId,
+                                          const std::vector<MediaMap>& mediaList);
+
     CallFactory callFactory;
 
     IceTransportFactory& getIceTransportFactory();
@@ -894,7 +928,7 @@ public:
     std::shared_ptr<Task> scheduleTask(std::function<void()>&& task,
                                        std::chrono::steady_clock::time_point when);
     std::shared_ptr<Task> scheduleTaskIn(std::function<void()>&& task,
-                                       std::chrono::steady_clock::duration timeout);
+                                         std::chrono::steady_clock::duration timeout);
 
     std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
 
@@ -938,13 +972,10 @@ public:
     void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
     void hangupParticipant(const std::string& confId, const std::string& participant);
 
-    void setDefaultModerator(const std::string& accountID,
-                                const std::string& peerURI,
-                                bool state);
+    void setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state);
     std::vector<std::string> getDefaultModerators(const std::string& accountID);
     void enableLocalModerators(const std::string& accountID, bool state);
     bool isLocalModeratorsEnabled(const std::string& accountID);
-
 
 private:
     Manager();
