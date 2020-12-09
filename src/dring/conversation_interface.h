@@ -59,9 +59,9 @@ DRING_PUBLIC void sendMessage(const std::string& accountId,
                               const std::string& message,
                               const std::string& parent);
 DRING_PUBLIC uint32_t loadConversationMessages(const std::string& accountId,
-                                           const std::string& conversationId,
-                                           const std::string& fromMessage,
-                                           size_t n);
+                                               const std::string& conversationId,
+                                               const std::string& fromMessage,
+                                               size_t n);
 
 struct DRING_PUBLIC ConversationSignal
 {
@@ -98,6 +98,14 @@ struct DRING_PUBLIC ConversationSignal
         constexpr static const char* name = "ConversationRemoved";
         using cb_type = void(const std::string& /*accountId*/,
                              const std::string& /* conversationId */);
+    };
+    struct DRING_PUBLIC ConversationMemberEvent
+    {
+        constexpr static const char* name = "ConversationMemberEvent";
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /* conversationId */,
+                             const std::string& /* memberUri */,
+                             int /* event 0 = add, 1 = joins, 2 = leave, 3 = banned */);
     };
 };
 
