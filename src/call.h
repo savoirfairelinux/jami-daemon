@@ -365,6 +365,9 @@ protected:
     mutable std::recursive_mutex callMutex_ {};
 
 private:
+    using clock = std::chrono::steady_clock;
+    using time_point = clock::time_point;
+
     bool validStateTransition(CallState newState);
 
     void checkPendingIM();
@@ -405,6 +408,7 @@ private:
     std::string peerDisplayName_ {};
 
     time_t timestamp_start_ {0};
+    time_point duration_start_ {time_point::min()};
 
     ///< MultiDevice: message received by subcall to merged yet
     MsgList pendingInMessages_;
