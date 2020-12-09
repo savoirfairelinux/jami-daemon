@@ -138,7 +138,7 @@ public:
 
 private:
     NotifyCallback getNotifyCallback() const;
-    // TODO_MC. Remove SetXXadress. already have IGD. Set ports instead.
+    // TODO_MC. Remove SetXXaddress. already have IGD. Set ports instead.
     void setExternalAddress(const std::string& addr);
     void setExternalPort(uint16_t port);
     void setInternalAddress(const std::string& addr);
