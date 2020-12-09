@@ -135,4 +135,10 @@ ut_connectionManager_SOURCES = connectionManager/connectionManager.cpp
 check_PROGRAMS += ut_fileTransfer
 ut_fileTransfer_SOURCES = fileTransfer/fileTransfer.cpp
 
+#
+# media_control
+#
+check_PROGRAMS += ut_media_control
+ut_media_control_SOURCES = media_control/media_control.cpp
+
 TESTS = $(check_PROGRAMS)
