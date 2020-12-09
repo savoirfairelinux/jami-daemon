@@ -48,7 +48,7 @@ public:
     std::shared_ptr<Call> newCall(std::shared_ptr<A> account,
                                   const std::string& id,
                                   Call::CallType type,
-                                  const std::vector<Call::MediaMap>& mediaList)
+                                  const std::vector<MediaAttribute>& mediaList)
     {
         return createCall(account, id, type, mediaList);
     }
@@ -95,6 +95,20 @@ private:
                                      const std::string& id,
                                      Call::CallType type,
                                      const std::map<std::string, std::string>& details = {});
+
+    /**
+     * Create a new call instance.
+     * @param account Account used to create this call
+     * @param id Unique identifier of the call
+     * @param type Set definitely this call as incoming/outgoing
+     * @param mediaList The list of media to include
+     */
+    std::shared_ptr<Call> createCall(const std::shared_ptr<Account>& account,
+                                     const std::string& id,
+                                     Call::CallType type,
+                                     const std::vector<MediaAttribute>& mediaList);
+
+    const CallMap* getMap(Call::LinkType link) const;
 
     mutable std::recursive_mutex callMapsMutex_ {};
 

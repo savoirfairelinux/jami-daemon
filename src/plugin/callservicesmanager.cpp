@@ -247,7 +247,9 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
         auto sipCall = std::dynamic_pointer_cast<SIPCall>(
             Manager::instance().callFactory.getCall(callId));
         assert(sipCall);
-        sipCall->getVideoRtp().restartSender();
+        if (auto const& videoRtp = sipCall->getVideoRtp()) {
+            videoRtp->restartSender();
+        }
     }
 #endif
 }
