@@ -432,8 +432,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
         return false;
     }
     GitAnnotatedCommit annotated {annotated_ptr, git_annotated_commit_free};
-    if (git_commit_lookup(&parent, repository_.get(), git_annotated_commit_id(annotated.get()))
-        < 0) {
+    if (git_commit_lookup(&parent, repository_.get(), git_annotated_commit_id(annotated.get())) < 0) {
         JAMI_ERR("Couldn't lookup commit %s", wanted_ref.c_str());
         return false;
     }
@@ -491,12 +490,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
         JAMI_INFO("New merge commit added with id: %s", commit_str);
         // Move commit to main branch
         git_reference* ref_ptr = nullptr;
-        if (git_reference_create(&ref_ptr,
-                                 repository_.get(),
-                                 "refs/heads/main",
-                                 &commit_oid,
-                                 true,
-                                 nullptr)
+        if (git_reference_create(&ref_ptr, repository_.get(), "refs/heads/main", &commit_oid, true, nullptr)
             < 0) {
             JAMI_WARN("Could not move commit to main");
         }
@@ -528,12 +522,7 @@ ConversationRepository::Impl::mergeFastforward(const git_oid* target_oid, int is
         const auto* symbolic_ref = git_reference_symbolic_target(head_ref.get());
 
         // Create our main reference on the target OID
-        if (git_reference_create(&target_ref_ptr,
-                                 repository_.get(),
-                                 symbolic_ref,
-                                 target_oid,
-                                 0,
-                                 nullptr)
+        if (git_reference_create(&target_ref_ptr, repository_.get(), symbolic_ref, target_oid, 0, nullptr)
             < 0) {
             JAMI_ERR("failed to create main reference");
             return false;
@@ -1410,11 +1399,7 @@ ConversationRepository::Impl::log(const std::string& from, const std::string& to
         cc->author = std::move(author);
         cc->parents = std::move(parents);
         git_buf signature = {}, signed_data = {};
-        if (git_commit_extract_signature(&signature,
-                                         &signed_data,
-                                         repository_.get(),
-                                         &oid,
-                                         "signature")
+        if (git_commit_extract_signature(&signature, &signed_data, repository_.get(), &oid, "signature")
             < 0) {
             JAMI_WARN("Could not extract signature for commit %s", id.c_str());
         } else {
@@ -1487,7 +1472,6 @@ ConversationRepository::Impl::getInitialMembers() const
         return {};
     }
     auto commit = firstCommit[0];
-
     auto authorDevice = commit.author.email;
     auto cert = tls::CertificateStore::instance().getCertificate(authorDevice);
     if (!cert && cert->issuer) {
@@ -1895,12 +1879,7 @@ ConversationRepository::amend(const std::string& id, const std::string& msg)
 
     // Move commit to main branch
     git_reference* ref_ptr = nullptr;
-    if (git_reference_create(&ref_ptr,
-                             pimpl_->repository_.get(),
-                             "refs/heads/main",
-                             &commit_id,
-                             true,
-                             nullptr)
+    if (git_reference_create(&ref_ptr, pimpl_->repository_.get(), "refs/heads/main", &commit_id, true, nullptr)
         < 0) {
         JAMI_WARN("Could not move commit to main");
     }
@@ -1936,10 +1915,7 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
             JAMI_ERR("Couldn't lookup for remote %s", remoteDeviceId.c_str());
             return false;
         }
-        if (git_remote_create(&remote_ptr,
-                              pimpl_->repository_.get(),
-                              remoteDeviceId.c_str(),
-                              channelName.c_str())
+        if (git_remote_create(&remote_ptr, pimpl_->repository_.get(), remoteDeviceId.c_str(), channelName.c_str())
             < 0) {
             JAMI_ERR("Could not create remote for repository for conversation %s",
                      pimpl_->id_.c_str());
@@ -2083,8 +2059,7 @@ ConversationRepository::merge(const std::string& merge_id)
     git_merge_analysis_t analysis;
     git_merge_preference_t preference;
     const git_annotated_commit* const_annotated = annotated.get();
-    if (git_merge_analysis(&analysis, &preference, pimpl_->repository_.get(), &const_annotated, 1)
-        < 0) {
+    if (git_merge_analysis(&analysis, &preference, pimpl_->repository_.get(), &const_annotated, 1) < 0) {
         JAMI_ERR("Merge operation aborted: repository analysis failed");
         return false;
     }
@@ -2121,8 +2096,7 @@ ConversationRepository::merge(const std::string& merge_id)
             return false;
         }
 
-        if (git_merge(pimpl_->repository_.get(), &const_annotated, 1, &merge_opts, &checkout_opts)
-            < 0) {
+        if (git_merge(pimpl_->repository_.get(), &const_annotated, 1, &merge_opts, &checkout_opts) < 0) {
             const git_error* err = giterr_last();
             if (err)
                 JAMI_ERR("Git merge failed: %s", err->message);
