@@ -2,6 +2,144 @@
   "comments": [
     {
       "key": {
+        "uuid": "3ec2ce35_0117fdce",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 20
+      },
+      "lineNbr": 262,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-10T19:33:26Z",
+      "side": 1,
+      "message": "api change, also not 9.7.0. So ideally bump version in configure.ac + add correct version there",
+      "range": {
+        "startLine": 262,
+        "startChar": 21,
+        "endLine": 262,
+        "endChar": 39
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3498c588_9505bb95",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 20
+      },
+      "lineNbr": 264,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-10T19:33:26Z",
+      "side": 1,
+      "message": "peerUri",
+      "range": {
+        "startLine": 264,
+        "startChar": 32,
+        "endLine": 264,
+        "endChar": 38
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3f6b4245_1e5e8b7a",
+        "filename": "src/call.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 631,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-10T19:33:26Z",
+      "side": 1,
+      "message": "remove",
+      "range": {
+        "startLine": 630,
+        "startChar": 1,
+        "endLine": 631,
+        "endChar": 56
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ff53f7f2_19636848",
+        "filename": "src/call.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 652,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-10T19:33:26Z",
+      "side": 1,
+      "message": "remove",
+      "range": {
+        "startLine": 652,
+        "startChar": 38,
+        "endLine": 652,
+        "endChar": 59
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "500a2bda_a8cb3aca",
+        "filename": "src/call.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 661,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-10T19:33:26Z",
+      "side": 1,
+      "message": "remove",
+      "range": {
+        "startLine": 661,
+        "startChar": 34,
+        "endLine": 661,
+        "endChar": 43
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4d86ae5e_c3a6a679",
+        "filename": "src/call.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 682,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-10T19:33:26Z",
+      "side": 1,
+      "message": "to move in previous commit as related to previous one",
+      "range": {
+        "startLine": 650,
+        "startChar": 26,
+        "endLine": 682,
+        "endChar": 21
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "00e14ca4_57235499",
         "filename": "src/conference.cpp",
         "patchSetId": 20
@@ -18,6 +156,52 @@
         "startChar": 0,
         "endLine": 24,
         "endChar": 22
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "256f0e2c_7033b989",
+        "filename": "src/conference.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 537,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-10T19:33:26Z",
+      "side": 1,
+      "message": "rm",
+      "range": {
+        "startLine": 536,
+        "startChar": 1,
+        "endLine": 537,
+        "endChar": 62
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f2ebc681_495c40fd",
+        "filename": "src/conference.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 629,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-10T19:33:26Z",
+      "side": 1,
+      "message": "uri instead id can be a better name to avoid to use a callid there",
+      "range": {
+        "startLine": 629,
+        "startChar": 47,
+        "endLine": 629,
+        "endChar": 61
       },
       "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
@@ -179,6 +363,29 @@
         "startChar": 16,
         "endLine": 279,
         "endChar": 21
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "76eca212_26c86733",
+        "filename": "src/media/audio/ringbufferpool.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-10T19:33:26Z",
+      "side": 1,
+      "message": "rm",
+      "range": {
+        "startLine": 242,
+        "startChar": 28,
+        "endLine": 242,
+        "endChar": 40
       },
       "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
