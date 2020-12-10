@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6246b972_e97dfa28",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-10T19:34:21Z",
+      "side": 1,
+      "message": "const",
+      "range": {
+        "startLine": 248,
+        "startChar": 0,
+        "endLine": 249,
+        "endChar": 45
+      },
+      "revId": "6dc43176797222f33847ff7b7664990de8585dc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
