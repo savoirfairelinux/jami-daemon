@@ -1,0 +1,188 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "00e14ca4_57235499",
+        "filename": "src/conference.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-10T16:35:28Z",
+      "side": 1,
+      "message": "not needed here but in the header",
+      "range": {
+        "startLine": 24,
+        "startChar": 0,
+        "endLine": 24,
+        "endChar": 22
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6d3b71b0_9973039e",
+        "filename": "src/conference.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 668,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-10T16:35:28Z",
+      "side": 1,
+      "message": "just do this once, not in the loop",
+      "range": {
+        "startLine": 668,
+        "startChar": 12,
+        "endLine": 668,
+        "endChar": 77
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "093d1b47_3105ddab",
+        "filename": "src/conference.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 694,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-10T16:35:28Z",
+      "side": 1,
+      "message": "auto uri \u003d string_remove_suffix(info.uri, \u0027@\u0027);",
+      "range": {
+        "startLine": 693,
+        "startChar": 12,
+        "endLine": 694,
+        "endChar": 49
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6c124e5f_166d192b",
+        "filename": "src/conference.h",
+        "patchSetId": 20
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-10T16:35:28Z",
+      "side": 1,
+      "message": "not needed here",
+      "range": {
+        "startLine": 33,
+        "startChar": 0,
+        "endLine": 33,
+        "endChar": 33
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3cc3e276_4c701fcf",
+        "filename": "src/conference.h",
+        "patchSetId": 20
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-10T16:35:28Z",
+      "side": 1,
+      "message": "const not needed: string_view point to immutable string",
+      "range": {
+        "startLine": 248,
+        "startChar": 21,
+        "endLine": 248,
+        "endChar": 26
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8ebce710_81dacc33",
+        "filename": "src/conference.h",
+        "patchSetId": 20
+      },
+      "lineNbr": 275,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-10T16:35:28Z",
+      "side": 1,
+      "message": "const not needed: string_view point to immutable string",
+      "range": {
+        "startLine": 275,
+        "startChar": 17,
+        "endLine": 275,
+        "endChar": 23
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "88a0aa59_7f6ca59e",
+        "filename": "src/conference.h",
+        "patchSetId": 20
+      },
+      "lineNbr": 278,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-10T16:35:28Z",
+      "side": 1,
+      "message": "const not needed: string_view point to immutable string",
+      "range": {
+        "startLine": 278,
+        "startChar": 32,
+        "endLine": 278,
+        "endChar": 37
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7885d2a7_2de3398a",
+        "filename": "src/conference.h",
+        "patchSetId": 20
+      },
+      "lineNbr": 279,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-10T16:35:28Z",
+      "side": 1,
+      "message": "const not needed: string_view point to immutable string",
+      "range": {
+        "startLine": 279,
+        "startChar": 16,
+        "endLine": 279,
+        "endChar": 21
+      },
+      "revId": "14df3622fa6fc65bb6ac35f532c2e82bc23239e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
