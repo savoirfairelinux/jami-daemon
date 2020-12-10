@@ -460,7 +460,7 @@ ServerAccountManager::revokeDevice(const std::string& password,
             cb(RevokeDeviceResult::ERROR_CREDENTIALS);
         return false;
     }
-    const std::string url = managerHostname_ + PATH_DEVICE + "?deviceId=" + device;
+    const std::string url = managerHostname_ + PATH_DEVICE + "/" + device;
     JAMI_WARN("[Revoke] Revoking device of %s at %s", info_->username.c_str(), url.c_str());
     auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, [cb, onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
         onAsync([=] (AccountManager& accountManager) {
