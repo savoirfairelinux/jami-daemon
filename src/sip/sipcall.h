@@ -122,6 +122,8 @@ public: // overridden
     void sendKeyframe() override;
     std::map<std::string, std::string> getDetails() const override;
 
+    void monitor() const override;
+
     virtual bool toggleRecording()
         override; // SIPCall needs to spread recorder to rtp sessions, so override
 
