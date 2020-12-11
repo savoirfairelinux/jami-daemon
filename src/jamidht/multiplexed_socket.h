@@ -129,6 +129,8 @@ public:
 
     std::shared_ptr<IceTransport> underlyingICE() const;
 
+    void monitor() const;
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;

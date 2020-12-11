@@ -119,6 +119,8 @@ public:
      */
     void onConnectionReady(ConnectionReadyCallback&& cb);
 
+    void monitor() const;
+
 private:
     ConnectionManager() = delete;
     class Impl;
