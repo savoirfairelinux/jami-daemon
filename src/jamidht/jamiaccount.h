@@ -770,6 +770,8 @@ private:
      * @param deviceId      Device that will receive the profile
      */
     void sendProfile(const std::string& deviceId);
+
+    void monitor() const;
 };
 
 static inline std::ostream&

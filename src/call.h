@@ -331,7 +331,11 @@ public: // media management
 
     std::unique_ptr<AudioDeviceGuard> audioGuard;
 
+    virtual void monitor() const = 0;
+
 protected:
+    using clock = std::chrono::steady_clock;
+    using time_point = clock::time_point;
     virtual void merge(Call& scall);
 
     /**
@@ -366,6 +370,7 @@ protected:
 
     mutable std::mutex confInfoMutex_ {};
     mutable ConfInfo confInfo_ {};
+    time_point duration_start_ {time_point::min()};
 
 private:
     bool validStateTransition(CallState newState);
