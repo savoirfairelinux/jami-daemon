@@ -131,6 +131,7 @@ public:
     bool toggleRecording() override;
     void peerRecording(bool state) override;
     void peerMuted(bool state) override;
+    void monitor() const override;
 
     /**
      * Return the SDP's manager of this call

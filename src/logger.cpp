@@ -91,6 +91,7 @@ static constexpr auto ENDL = "\n";
 #endif
 
 static int consoleLog;
+static bool monitorLog;
 static int debugMode;
 static std::mutex logMutex;
 
@@ -168,10 +169,22 @@ setDebugMode(int d)
     debugMode = d;
 }
 
+void
+setMonitorLog(bool m)
+{
+    monitorLog = m;
+}
+
 int
 getDebugMode(void)
 {
     return debugMode;
+}
+
+bool
+getMonitorLog(void)
+{
+    return monitorLog;
 }
 
 static const char*
@@ -212,19 +225,29 @@ void
 Logger::log(int level, const char* file, int line, bool linefeed, const char* const format, ...)
 {
 #if defined(TARGET_OS_IOS) && TARGET_OS_IOS
-    if (!debugMode)
+    if (!debugMode && !monitorLog)
         return;
 #endif
-    if (!debugMode && level == LOG_DEBUG)
+    if (!debugMode && !monitorLog && level == LOG_DEBUG)
         return;
 
     va_list ap;
     va_start(ap, format);
+    va_list cp;
+    if (monitorLog)
+        va_copy(cp, ap);
 #ifdef __ANDROID__
     __android_log_vprint(level, APP_NAME, format, ap);
 #else
     Logger::vlog(level, file, line, linefeed, format, ap);
 #endif
+
+    if (monitorLog) {
+        std::array<char, 4096> tmp;
+        vsnprintf(tmp.data(), tmp.size(), format, cp);
+        jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(contextHeader(file, line)
+                                                                  + tmp.data());
+    }
     va_end(ap);
 }
 
@@ -243,7 +266,7 @@ Logger::vlog(
     // follow strictly POSIX rules... so we lock our mutex in any cases.
     std::lock_guard<std::mutex> lk {logMutex};
 
-    if (consoleLog) {
+    if (consoleLog or monitorLog) {
 #ifndef _WIN32
         const char* color_header = CYAN;
         const char* color_prefix = "";
@@ -278,7 +301,8 @@ Logger::vlog(
 #ifdef _MSC_VER
         std::array<char, 4096> tmp;
         vsnprintf(tmp.data(), tmp.size(), format, ap);
-        jami::emitSignal<DRing::DebugSignal::MessageSend>(contextHeader(file, line) + tmp.data());
+        jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(contextHeader(file, line)
+                                                                  + tmp.data());
 #endif
 #ifndef _WIN32
         fputs(END_COLOR, stderr);
