@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "575ab2c2_66e458fb",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 607,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-11T19:02:25Z",
+      "side": 1,
+      "message": "I think it\u0027s relevant to add the transport (UPD/TCP/...) to the link description",
+      "revId": "bc6773ce89cfaa9a2a6fd6dfec2fbb4fc668dbd5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "15d233ae_b8f3782e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1811,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-11T19:02:25Z",
+      "side": 1,
+      "message": "it could be a bit shorter (3~5 mn) ?",
+      "revId": "bc6773ce89cfaa9a2a6fd6dfec2fbb4fc668dbd5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b5acbf76_d6fc7934",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 514,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2020-12-11T19:02:25Z",
+      "side": 1,
+      "message": "It could be \"auto const\u0026 ice \u003d ...\" since it\u0027s not modified.",
+      "revId": "bc6773ce89cfaa9a2a6fd6dfec2fbb4fc668dbd5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
