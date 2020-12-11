@@ -21,6 +21,7 @@
 #include "multiplexed_socket.h"
 #include "peer_connection.h"
 #include "ice_transport.h"
+#include "security/certstore.h"
 
 #include <deque>
 #include <opendht/thread_pool.h>
@@ -28,6 +29,9 @@
 namespace jami {
 
 static constexpr std::size_t IO_BUFFER_SIZE {8192}; ///< Size of char buffer used by IO operations
+
+using clock = std::chrono::steady_clock;
+using time_point = clock::time_point;
 
 struct ChannelInfo
 {
@@ -149,6 +153,8 @@ public:
     std::atomic_bool isShutdown_ {false};
 
     std::mutex writeMtx {};
+
+    time_point start_ {clock::now()};
 };
 
 void
@@ -542,6 +548,27 @@ std::shared_ptr<IceTransport>
 MultiplexedSocket::underlyingICE() const
 {
     return pimpl_->endpoint->underlyingICE();
+}
+
+void
+MultiplexedSocket::monitor() const
+{
+    auto cert = tls::CertificateStore::instance().getCertificate(deviceId().toString());
+    if (!cert)
+        return;
+    auto userUri = cert->getIssuerUID();
+    JAMI_DBG("- Socket with device: %s - account: %s", deviceId().to_c_str(), userUri.c_str());
+    auto now = clock::now();
+    JAMI_DBG("- Duration: %lu",
+             std::chrono::duration_cast<std::chrono::milliseconds>(now - pimpl_->start_).count());
+    const auto& ice = underlyingICE();
+    if (ice)
+        JAMI_DBG("\t- Ice connection: %s", ice->link().c_str());
+    std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
+    for (const auto& [_, channel] : pimpl_->sockets) {
+        if (channel)
+            JAMI_DBG("\t\t- Channel with name %s", channel->name().c_str());
+    }
 }
 
 ////////////////////////////////////////////////////////////////
