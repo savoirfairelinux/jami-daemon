@@ -126,6 +126,8 @@ public:
      */
     void finish() noexcept;
 
+    void monitor();
+
     /**
      * Accessor to audiodriver.
      * it's multi-thread and use mutex internally
