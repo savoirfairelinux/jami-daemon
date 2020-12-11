@@ -5261,4 +5261,11 @@ JamiAccount::addCallHistoryMessage(const std::string& uri, uint64_t duration_ms)
     }
 }
 
+void
+JamiAccount::monitor() const
+{
+    if (connectionManager_)
+        connectionManager_->monitor();
+}
+
 } // namespace jami
