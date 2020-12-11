@@ -970,6 +970,7 @@ private:
      * @return the conversation id if found else empty
      */
     std::string getOneToOneConversation(const std::string& uri) const;
+    void monitor() const;
 };
 
 static inline std::ostream&
