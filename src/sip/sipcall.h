@@ -171,7 +171,7 @@ public: // SIP related
 
     SipTransport* getTransport() { return transport_.get(); }
 
-    void sendSIPInfo(const char* const body, const char* const subtype);
+    void sendSIPInfo(std::string_view body, std::string_view subtype);
 
     void requestKeyframe();
 

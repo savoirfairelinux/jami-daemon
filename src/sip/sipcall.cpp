@@ -342,7 +342,7 @@ SIPCall::SIPSessionReinvite()
 }
 
 void
-SIPCall::sendSIPInfo(const char* const body, const char* const subtype)
+SIPCall::sendSIPInfo(std::string_view body, std::string_view subtype)
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     if (not inv or not inv->dlg)
@@ -356,17 +356,14 @@ SIPCall::sendSIPInfo(const char* const body, const char* const subtype)
 
     /* Create request message. */
     pjsip_tx_data* tdata;
-
     if (pjsip_dlg_create_request(inv->dlg, &method, -1, &tdata) != PJ_SUCCESS) {
         JAMI_ERR("[call:%s] Could not create dialog", getCallId().c_str());
         return;
     }
 
     /* Create "application/<subtype>" message body. */
-    pj_str_t content;
-    pj_cstr(&content, body);
-    pj_str_t pj_subtype;
-    pj_cstr(&pj_subtype, subtype);
+    pj_str_t content = CONST_PJ_STR(body);
+    pj_str_t pj_subtype = CONST_PJ_STR(subtype);
     tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &pj_subtype, &content);
     if (tdata->msg->body == NULL)
         pjsip_tx_data_dec_ref(tdata);
@@ -388,7 +385,7 @@ SIPCall::updateRecState(bool state)
     JAMI_DBG("Sending recording state via SIP INFO");
 
     try {
-        sendSIPInfo(BODY.c_str(), "media_control+xml");
+        sendSIPInfo(BODY, "media_control+xml");
     } catch (const std::exception& e) {
         JAMI_ERR("Error sending recording state: %s", e.what());
     }
@@ -402,10 +399,10 @@ SIPCall::requestKeyframe()
         and lastKeyFrameReq_ != time_point::min())
         return;
 
-    constexpr const char* const BODY = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+    constexpr auto BODY = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                                        "<media_control><vc_primitive><to_encoder>"
                                        "<picture_fast_update/>"
-                                       "</to_encoder></vc_primitive></media_control>";
+                                       "</to_encoder></vc_primitive></media_control>"sv;
     JAMI_DBG("Sending video keyframe request via SIP INFO");
     try {
         sendSIPInfo(BODY, "media_control+xml");
@@ -429,7 +426,7 @@ SIPCall::setMute(bool state)
     JAMI_DBG("Sending mute state via SIP INFO");
 
     try {
-        sendSIPInfo(BODY.c_str(), "media_control+xml");
+        sendSIPInfo(BODY, "media_control+xml");
     } catch (const std::exception& e) {
         JAMI_ERR("Error sending mute state: %s", e.what());
     }
@@ -894,16 +891,17 @@ SIPCall::carryingDTMFdigits(char code)
 {
     int duration = Manager::instance().voipPreferences.getPulseLength();
     char dtmf_body[1000];
+    int ret;
 
     // handle flash code
     if (code == '!') {
-        snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=16\r\nDuration=%d\r\n", duration);
+        ret = snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=16\r\nDuration=%d\r\n", duration);
     } else {
-        snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
+        ret = snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
     }
 
     try {
-        sendSIPInfo(dtmf_body, "dtmf-relay");
+        sendSIPInfo({dtmf_body, (size_t)ret}, "dtmf-relay");
     } catch (const std::exception& e) {
         JAMI_ERR("Error sending DTMF: %s", e.what());
     }
@@ -921,7 +919,7 @@ SIPCall::setVideoOrientation(int rotation)
 
     JAMI_DBG("Sending device orientation via SIP INFO");
 
-    sendSIPInfo(sip_body.c_str(), "media_control+xml");
+    sendSIPInfo(sip_body, "media_control+xml");
 }
 
 void
