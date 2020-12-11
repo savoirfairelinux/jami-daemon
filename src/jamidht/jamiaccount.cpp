@@ -2331,8 +2331,8 @@ JamiAccount::doRegister_()
                 auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
                                std::chrono::steady_clock::now().time_since_epoch())
                                .count();
-                jami::emitSignal<DRing::DebugSignal::MessageSend>(std::to_string(now) + " "
-                                                                  + std::string(tmp));
+                jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(std::to_string(now) + " "
+                                                                          + std::string(tmp));
             };
             context.logger = std::make_shared<dht::Logger>(log_all, log_all, silent);
 #else
@@ -5274,6 +5274,13 @@ JamiAccount::addCallHistoryMessage(const std::string& uri, uint64_t duration_ms)
         value["duration"] = std::to_string(duration_ms);
         sendMessage(convId, value);
     }
+}
+
+void
+JamiAccount::monitor() const
+{
+    if (connectionManager_)
+        connectionManager_->monitor();
 }
 
 } // namespace jami
