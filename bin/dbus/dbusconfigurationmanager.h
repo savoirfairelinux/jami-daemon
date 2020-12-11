@@ -76,6 +76,7 @@ public:
         std::map<std::string, std::string> testAccountICEInitialization(const std::string& accountID);
         void setAccountActive(const std::string& accountID, const bool& active);
         std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
+        void monitor(const bool& continuous);
         std::string addAccount(const std::map<std::string, std::string>& details);
         bool exportOnRing(const std::string& accountID, const std::string& password);
         bool exportToFile(const std::string& accountID, const std::string& destinationPath, const std::string& password = {});
