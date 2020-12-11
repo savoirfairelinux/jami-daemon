@@ -164,6 +164,8 @@ public:
     void peerMuted(bool state) override;
     // End of override of Recordable class
 
+    void monitor() const override;
+
     /**
      * Return the SDP's manager of this call
      */
