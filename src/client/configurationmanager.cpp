@@ -442,6 +442,12 @@ addAccount(const std::map<std::string, std::string>& details)
 }
 
 void
+monitor(bool continuous)
+{
+    return jami::Manager::instance().monitor(continuous);
+}
+
+void
 removeAccount(const std::string& accountID)
 {
     return jami::Manager::instance().removeAccount(accountID, true); // with 'flush' enabled

@@ -76,6 +76,12 @@ DBusConfigurationManager::addAccount(const std::map<std::string, std::string>& d
 }
 
 auto
+DBusConfigurationManager::monitor(const bool& continuous) -> decltype(DRing::monitor(continuous))
+{
+    return DRing::monitor(continuous);
+}
+
+auto
 DBusConfigurationManager::exportOnRing(const std::string& accountID, const std::string& password)
     -> decltype(DRing::exportOnRing(accountID, password))
 {
@@ -905,14 +911,15 @@ DBusConfigurationManager::setAudioMeterState(const std::string& id, const bool& 
 
 void
 DBusConfigurationManager::setDefaultModerator(const std::string& accountID,
-                                                const std::string& peerURI,
-                                                const bool& state)
+                                              const std::string& peerURI,
+                                              const bool& state)
 {
     DRing::setDefaultModerator(accountID, peerURI, state);
 }
 
 auto
-DBusConfigurationManager::getDefaultModerators(const std::string& accountID) -> decltype(DRing::getDefaultModerators(accountID))
+DBusConfigurationManager::getDefaultModerators(const std::string& accountID)
+    -> decltype(DRing::getDefaultModerators(accountID))
 {
     return DRing::getDefaultModerators(accountID);
 }
@@ -942,4 +949,3 @@ DBusConfigurationManager::isAllModerators(const std::string& accountID)
 {
     return DRing::isAllModerators(accountID);
 }
-

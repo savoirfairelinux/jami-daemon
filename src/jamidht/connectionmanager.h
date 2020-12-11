@@ -132,6 +132,7 @@ public:
      * @return the number of active sockets
      */
     std::size_t activeSockets() const;
+    void monitor() const;
 
 private:
     ConnectionManager() = delete;
