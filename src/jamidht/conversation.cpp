@@ -351,7 +351,7 @@ Conversation::sendMessage(const std::string& message,
 }
 
 std::string
-Conversation::sendMessage(const Json::Value& value, const std::string& parent)
+Conversation::sendMessage(const Json::Value& value, const std::string& /*parent*/)
 {
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";

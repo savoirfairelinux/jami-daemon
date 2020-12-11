@@ -924,6 +924,32 @@ Manager::finish() noexcept
     }
 }
 
+void
+Manager::monitor(bool continuous)
+{
+    setMonitorLog(true);
+    JAMI_DBG("############## START MONITORING ##############");
+    JAMI_DBG("Using PJSIP version %s for %s", pj_get_version(), PJ_OS_NAME);
+    JAMI_DBG("Using GnuTLS version %s", gnutls_check_version(nullptr));
+    JAMI_DBG("Using OpenDHT version %s", dht::version());
+
+#ifdef __linux__
+#if defined(__ANDROID__)
+#else
+    auto opened_files = fileutils::readDirectory("/proc/" + std::to_string(getpid()) + "/fd").size();
+    JAMI_DBG("Opened files: %lu", opened_files);
+#endif
+#endif
+
+    for (const auto& call : callFactory.getAllCalls())
+        call->monitor();
+    for (const auto& account : getAllAccounts())
+        if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account))
+            acc->monitor();
+    JAMI_DBG("############## END MONITORING ##############");
+    setMonitorLog(continuous);
+}
+
 bool
 Manager::isCurrentCall(const Call& call) const
 {
