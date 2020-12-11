@@ -369,6 +369,9 @@ TlsSession::TlsSessionImpl::TlsSessionImpl(std::unique_ptr<SocketType>&& transpo
 TlsSession::TlsSessionImpl::~TlsSessionImpl()
 {
     state_ = TlsSessionState::SHUTDOWN;
+    for (auto& request : requests_)
+        request->cancel();
+    requests_.clear();
     stateCondition_.notify_all();
     rxCv_.notify_all();
     thread_.join();
@@ -675,6 +678,9 @@ TlsSession::TlsSessionImpl::verifyCertificateWrapper(gnutls_session_t session)
     for (unsigned i = 0; i < cert_list_size; i++)
         crt_data.emplace_back(cert_list[i].data, cert_list[i].data + cert_list[i].size);
     auto cert = dht::crypto::Certificate(crt_data);
+    if (not cert.cert) {
+        return false;
+    }
 
     std::string ocspUrl = getOcspUrl(cert.cert);
     if (ocspUrl.empty()) {
