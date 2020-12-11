@@ -507,6 +507,20 @@ MultiplexedSocket::underlyingICE() const
     return pimpl_->endpoint->underlyingICE();
 }
 
+void
+MultiplexedSocket::monitor() const
+{
+    JAMI_DBG("- Socket with device: %s", deviceId().to_c_str());
+    auto ice = underlyingICE();
+    if (ice)
+        JAMI_DBG("\t- Ice connection: %s", ice->link().c_str());
+    std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
+    for (const auto& [_, channel] : pimpl_->sockets) {
+        if (channel)
+            JAMI_DBG("\t\t- Channel with name %s", channel->name().c_str());
+    }
+}
+
 ////////////////////////////////////////////////////////////////
 
 class ChannelSocket::Impl

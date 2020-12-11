@@ -733,10 +733,8 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
     }
     std::unique_lock<std::mutex> lk {info->mutex_};
     info->ice_ = Manager::instance()
-        .getIceTransportFactory().createUTransport(account.getAccountID().c_str(),
-                                                      1,
-                                                      true,
-                                                      ice_config);
+                     .getIceTransportFactory()
+                     .createUTransport(account.getAccountID().c_str(), 1, true, ice_config);
     if (not info->ice_) {
         JAMI_ERR("Cannot initialize ICE session.");
         if (connReadyCb_)
@@ -878,6 +876,18 @@ void
 ConnectionManager::onConnectionReady(ConnectionReadyCallback&& cb)
 {
     pimpl_->connReadyCb_ = std::move(cb);
+}
+
+void
+ConnectionManager::monitor() const
+{
+    std::lock_guard<std::mutex> lk(pimpl_->infosMtx_);
+    JAMI_DBG("ConnectionManager %p, current status:", this);
+    for (const auto& [_, ci] : pimpl_->infos_) {
+        if (ci->socket_)
+            ci->socket_->monitor();
+    }
+    JAMI_DBG("ConnectionManager %p, end status", this);
 }
 
 } // namespace jami
