@@ -76,6 +76,13 @@ DBusConfigurationManager::addAccount(const std::map<std::string, std::string>& d
 }
 
 auto
+DBusConfigurationManager::monitor()
+    -> decltype(DRing::monitor())
+{
+    return DRing::monitor();
+}
+
+auto
 DBusConfigurationManager::exportOnRing(const std::string& accountID, const std::string& password)
     -> decltype(DRing::exportOnRing(accountID, password))
 {
