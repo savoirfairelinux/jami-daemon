@@ -48,6 +48,9 @@ void setDebugMode(int d);
  */
 int getDebugMode(void);
 
+void setMonitorLog(bool m);
+bool getMonitorLog(void);
+
 /**
  * Thread-safe function to print the stringified contents of errno
  */
