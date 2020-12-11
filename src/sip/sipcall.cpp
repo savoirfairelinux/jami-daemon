@@ -53,6 +53,7 @@
 #include <chrono>
 #include <libavutil/display.h>
 #endif
+#include "jamidht/channeled_transport.h"
 
 #include "errno.h"
 
@@ -1588,6 +1589,36 @@ SIPCall::exitConference()
 #ifdef ENABLE_VIDEO
     getVideoRtp().exitConference();
 #endif
+}
+
+void
+SIPCall::monitor() const
+{
+    if (isSubcall())
+        return;
+    auto acc = getSIPAccount();
+    if (!acc) {
+        JAMI_ERR("No account detected");
+        return;
+    }
+    JAMI_DBG("- Call %s with %s:", getCallId().c_str(), getPeerNumber().c_str());
+    // TODO move in getCallDuration
+    auto duration = duration_start_ == time_point::min()
+                                            ? 0
+                                            : std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                  clock::now() - duration_start_)
+                                                  .count();
+    JAMI_DBG("\t- Duration: %lu", duration);
+#ifdef ENABLE_VIDEO
+    JAMI_DBG("\t- Video source: %s", acc->isVideoEnabled() ? mediaInput_.c_str() : "");
+    if (auto codec = videortp_->getCodec()) {
+        JAMI_DBG("\t- Video codec: %s", codec->systemCodecInfo.name.c_str());
+    }
+#endif
+    auto media_tr = getIceMediaTransport();
+    if (media_tr) {
+        JAMI_DBG("\t- Medias: %s", media_tr->link().c_str());
+    }
 }
 
 bool
