@@ -913,6 +913,32 @@ Manager::finish() noexcept
     }
 }
 
+void
+Manager::monitor(bool continuous)
+{
+    setMonitorLog(true);
+    JAMI_DBG("############## START MONITORING ##############");
+    JAMI_DBG("Using PJSIP version %s for %s", pj_get_version(), PJ_OS_NAME);
+    JAMI_DBG("Using GnuTLS version %s", gnutls_check_version(nullptr));
+    JAMI_DBG("Using OpenDHT version %s", dht::version());
+
+#ifdef __linux__
+#if defined(__ANDROID__)
+#else
+    auto opened_files = fileutils::readDirectory("/proc/" + std::to_string(getpid()) + "/fd").size();
+    JAMI_DBG("Opened files: %lu", opened_files);
+#endif
+#endif
+
+    for (const auto& call : callFactory.getAllCalls())
+        call->monitor();
+    for (const auto& account : getAllAccounts())
+        if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account))
+            acc->monitor();
+    JAMI_DBG("############## END MONITORING ##############");
+    setMonitorLog(continuous);
+}
+
 bool
 Manager::isCurrentCall(const Call& call) const
 {
@@ -3314,7 +3340,7 @@ void
 Manager::setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to change default moderator, account %s not found", accountID.c_str());
         return;
     }
@@ -3330,7 +3356,7 @@ std::vector<std::string>
 Manager::getDefaultModerators(const std::string& accountID)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to get default moderators, account %s not found", accountID.c_str());
         return {};
     }
@@ -3343,7 +3369,7 @@ void
 Manager::enableLocalModerators(const std::string& accountID, bool isModEnabled)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to set local moderators, account %s not found", accountID.c_str());
         return;
     }
@@ -3355,9 +3381,9 @@ bool
 Manager::isLocalModeratorsEnabled(const std::string& accountID)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to get local moderators, account %s not found", accountID.c_str());
-        return true;    // Default value
+        return true; // Default value
     }
     return acc->isLocalModeratorsEnabled();
 }
