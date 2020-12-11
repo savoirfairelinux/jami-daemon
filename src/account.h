@@ -324,7 +324,7 @@ public:
                                 const std::string& /*commitId*/) {};
 
     // Invites
-    virtual void onConversationRequest(const std::string& from, const Json::Value&) {};
+    virtual void onConversationRequest(const std::string& /* from */, const Json::Value&) {};
 
     /**
      * Helper function used to load the default codec order from the codec factory

@@ -257,6 +257,8 @@ public:
 
     void setDefaultRemoteAddress(int comp_id, const IpAddr& addr);
 
+    std::string link() const;
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
