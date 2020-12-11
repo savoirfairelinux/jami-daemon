@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "9ce35136_15d51c1c",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 607,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-11T19:10:27Z",
+      "side": 1,
+      "message": "For now it\u0027s implicit as we only log TLS connections",
+      "parentUuid": "575ab2c2_66e458fb",
+      "revId": "bc6773ce89cfaa9a2a6fd6dfec2fbb4fc668dbd5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "15d233ae_b8f3782e",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 2
@@ -36,6 +54,24 @@
     },
     {
       "key": {
+        "uuid": "df0f2d42_833b79f1",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1811,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-11T19:10:27Z",
+      "side": 1,
+      "message": "cf the TODO, for now I don\u0027t plan to let the task. I want this to be available through the API, it\u0027s more for debugging purpose than a task",
+      "parentUuid": "15d233ae_b8f3782e",
+      "revId": "bc6773ce89cfaa9a2a6fd6dfec2fbb4fc668dbd5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "b5acbf76_d6fc7934",
         "filename": "src/jamidht/multiplexed_socket.cpp",
         "patchSetId": 2
@@ -47,6 +83,24 @@
       "writtenOn": "2020-12-11T19:02:25Z",
       "side": 1,
       "message": "It could be \"auto const\u0026 ice \u003d ...\" since it\u0027s not modified.",
+      "revId": "bc6773ce89cfaa9a2a6fd6dfec2fbb4fc668dbd5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "726d4240_67b82ed8",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 514,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-11T19:10:27Z",
+      "side": 1,
+      "message": "indeed",
+      "parentUuid": "b5acbf76_d6fc7934",
       "revId": "bc6773ce89cfaa9a2a6fd6dfec2fbb4fc668dbd5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
