@@ -261,6 +261,8 @@ DBusClient::initLibrary(int flags)
             bind(&DBusConfigurationManager::hardwareDecodingChanged, confM, _1)),
         exportable_callback<ConfigurationSignal::HardwareEncodingChanged>(
             bind(&DBusConfigurationManager::hardwareEncodingChanged, confM, _1)),
+        exportable_callback<ConfigurationSignal::MessageSend>(
+            bind(&DBusConfigurationManager::messageSend, confM, _1)),
     };
 
     // Presence event handlers

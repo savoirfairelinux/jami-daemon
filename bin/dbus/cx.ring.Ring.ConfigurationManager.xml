@@ -1642,6 +1642,15 @@
            <arg type="t" name="dataTransferId" direction="in"/>
        </method>
 
+       <method name="monitor" tp:name-for-bindings="monitor">
+           <tp:added version="10.0.0"/>
+           <tp:docstring>
+               Monitor
+           </tp:docstring>
+           <arg type="b" name="continuous" direction="in">
+           </arg>
+       </method>
+
        <method name="startConversation" tp:name-for-bindings="startConversation">
            <tp:added version="10.0.0"/>
            <tp:docstring>
@@ -1650,7 +1659,6 @@
            <arg type="s" name="conversationId" direction="out"/>
            <arg type="s" name="accountId" direction="in"/>
        </method>
-
        <method name="acceptConversationRequest" tp:name-for-bindings="acceptConversationRequest">
            <tp:added version="10.0.0"/>
            <tp:docstring>
@@ -1996,5 +2004,14 @@
            <arg type="s" name="accountID" direction="in"/>
            <arg type="b" name="allModerators" direction="out"/>
        </method>
+
+        <signal name="messageSend" tp:name-for-bindings="messageSend">
+           <arg type="s" name="message">
+               <tp:docstring>
+                   Message from daemon
+               </tp:docstring>
+           </arg>
+           <tp:docstring>Signal triggered when a log is done in the daemon.</tp:docstring>
+        </signal>
    </interface>
 </node>
