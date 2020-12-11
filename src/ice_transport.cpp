@@ -107,6 +107,8 @@ public:
 
     void getDefaultCanditates();
 
+    std::string link() const;
+
     // Non-mutex protected of public versions
     bool _isInitialized() const;
     bool _isStarted() const;
@@ -614,6 +616,28 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
 
     // Unlock waitForXXX APIs
     iceCV_.notify_all();
+}
+
+std::string
+IceTransport::Impl::link() const
+{
+    std::ostringstream out;
+    for (unsigned i = 0; i < component_count_; ++i) {
+        auto laddr = getLocalAddress(i);
+        auto raddr = getRemoteAddress(i);
+
+        if (laddr and raddr) {
+            out << " [" << i + 1 << "] " << laddr.toString(true, true) << " ["
+                << getCandidateType(getSelectedCandidate(i, false)) << "] "
+                << " <-> " << raddr.toString(true, true) << " ["
+                << getCandidateType(getSelectedCandidate(i, true)) << "] ";
+        } else {
+            out << " [" << i + 1 << "] disabled";
+        }
+        if (i + 1 != component_count_)
+            out << "\n";
+    }
+    return out.str();
 }
 
 bool
@@ -1591,6 +1615,12 @@ void
 IceTransport::setDefaultRemoteAddress(int comp_id, const IpAddr& addr)
 {
     pimpl_->setDefaultRemoteAddress(comp_id, addr);
+}
+
+std::string
+IceTransport::link() const
+{
+    return pimpl_->link();
 }
 
 //==============================================================================

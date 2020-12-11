@@ -568,6 +568,8 @@ public:
     // Invites
     void onConversationRequest(const std::string& from, const Json::Value&) override;
 
+    void monitor() const;
+
 private:
     NON_COPYABLE(JamiAccount);
 
