@@ -63,6 +63,7 @@ DRING_PUBLIC std::map<std::string, std::string> testAccountICEInitialization(
 DRING_PUBLIC void setAccountActive(const std::string& accountID, bool active);
 DRING_PUBLIC std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
 DRING_PUBLIC std::string addAccount(const std::map<std::string, std::string>& details);
+DRING_PUBLIC void monitor(bool continuous);
 DRING_PUBLIC bool exportOnRing(const std::string& accountID, const std::string& password);
 DRING_PUBLIC bool exportToFile(const std::string& accountID,
                                const std::string& destinationPath,
@@ -290,8 +291,8 @@ DRING_PUBLIC void setAudioMeterState(const std::string& id, bool state);
  * Add/remove default moderator for conferences
  */
 DRING_PUBLIC void setDefaultModerator(const std::string& accountID,
-                                        const std::string& peerURI,
-                                        bool state);
+                                      const std::string& peerURI,
+                                      bool state);
 
 /**
  * Get default moderators for an account
@@ -301,8 +302,7 @@ DRING_PUBLIC std::vector<std::string> getDefaultModerators(const std::string& ac
 /**
  * Enable/disable local moderators for conferences
  */
-DRING_PUBLIC void enableLocalModerators(const std::string& accountID,
-                                        bool isModEnabled);
+DRING_PUBLIC void enableLocalModerators(const std::string& accountID, bool isModEnabled);
 
 /**
  * Get local moderators state
@@ -544,11 +544,6 @@ struct DRING_PUBLIC ConfigurationSignal
         constexpr static const char* name = "HardwareEncodingChanged";
         using cb_type = void(bool /* state */);
     };
-};
-
-// Can be used when a client's stdout is not available
-struct DRING_PUBLIC DebugSignal
-{
     struct DRING_PUBLIC MessageSend
     {
         constexpr static const char* name = "MessageSend";
