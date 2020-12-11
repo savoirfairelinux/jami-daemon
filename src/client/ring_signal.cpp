@@ -88,9 +88,7 @@ getSignalHandlers()
 #endif
         exported_callback<DRing::ConfigurationSignal::HardwareDecodingChanged>(),
         exported_callback<DRing::ConfigurationSignal::HardwareEncodingChanged>(),
-
-        /* Debug */
-        exported_callback<DRing::DebugSignal::MessageSend>(),
+        exported_callback<DRing::ConfigurationSignal::MessageSend>(),
 
         /* Presence */
         exported_callback<DRing::PresenceSignal::NewServerSubscriptionRequest>(),
