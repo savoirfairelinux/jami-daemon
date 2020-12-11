@@ -1920,6 +1920,17 @@ JamiAccount::registerAsyncOps()
 
     loadCachedProxyServer([onLoad](const std::string&) { onLoad(); });
 
+    // TODO remove, only call monitor through API
+    Manager::instance().scheduler().scheduleAtFixedRate(
+        [w = weak()] {
+            if (auto acc = w.lock()) {
+                acc->monitor();
+                return true;
+            }
+            return false;
+        },
+        std::chrono::minutes(10));
+
     if (upnp_) {
         upnp_->requestMappingAdd(
             [this, onLoad, update = std::make_shared<bool>(false)](uint16_t port_used,
@@ -5149,6 +5160,13 @@ JamiAccount::addCallHistoryMessage(const std::string& uri, uint64_t duration_ms)
         value["duration"] = std::to_string(duration_ms);
         sendMessage(convId, value);
     }
+}
+
+void
+JamiAccount::monitor() const
+{
+    if (connectionManager_)
+        connectionManager_->monitor();
 }
 
 } // namespace jami

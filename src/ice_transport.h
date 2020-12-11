@@ -256,6 +256,8 @@ public:
 
     void setDefaultRemoteAddress(int comp_id, const IpAddr& addr);
 
+    std::string link() const;
+
 private:
     class Impl;
     bool isStopped_ {false};
