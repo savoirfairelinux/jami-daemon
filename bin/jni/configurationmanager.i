@@ -66,6 +66,7 @@ public:
     virtual void hardwareEncodingChanged(bool /*state*/){}
 
     virtual void audioMeter(const std::string& /*id*/, float /*level*/){}
+    virtual void messageSend(const std::string& /*message*/){}
 };
 %}
 
@@ -86,6 +87,7 @@ std::map<std::string, std::string> getVolatileAccountDetails(const std::string& 
 void setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details);
 void setAccountActive(const std::string& accountID, bool active);
 std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
+void monitor(bool continuous);
 std::string addAccount(const std::map<std::string, std::string>& details);
 void removeAccount(const std::string& accountID);
 std::vector<std::string> getAccountList();
@@ -282,4 +284,5 @@ public:
     virtual void hardwareEncodingChanged(bool /*state*/){}
 
     virtual void audioMeter(const std::string& /*id*/, float /*level*/){}
+    virtual void messageSend(const std::string& /*message*/){}
 };
