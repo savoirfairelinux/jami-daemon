@@ -1036,4 +1036,16 @@ ConnectionManager::activeSockets() const
     return pimpl_->infos_.size();
 }
 
+void
+ConnectionManager::monitor() const
+{
+    std::lock_guard<std::mutex> lk(pimpl_->infosMtx_);
+    JAMI_DBG("ConnectionManager for account %s (%s), current status:", pimpl_->account.getAccountID().c_str(), pimpl_->account.getUserUri().c_str());
+    for (const auto& [_, ci] : pimpl_->infos_) {
+        if (ci->socket_)
+            ci->socket_->monitor();
+    }
+    JAMI_DBG("ConnectionManager for account %s (%s), end status.", pimpl_->account.getAccountID().c_str(), pimpl_->account.getUserUri().c_str());
+}
+
 } // namespace jami

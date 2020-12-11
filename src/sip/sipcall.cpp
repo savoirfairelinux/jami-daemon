@@ -54,6 +54,7 @@
 #include <chrono>
 #include <libavutil/display.h>
 #endif
+#include "jamidht/channeled_transport.h"
 
 #include "errno.h"
 
@@ -2005,6 +2006,36 @@ SIPCall::getVideoRtp() const
     return nullptr;
 }
 #endif
+
+void
+SIPCall::monitor() const
+{
+    if (isSubcall())
+        return;
+    auto acc = getSIPAccount();
+    if (!acc) {
+        JAMI_ERR("No account detected");
+        return;
+    }
+    JAMI_DBG("- Call %s with %s:", getCallId().c_str(), getPeerNumber().c_str());
+    // TODO move in getCallDuration
+    auto duration = duration_start_ == time_point::min()
+                        ? 0
+                        : std::chrono::duration_cast<std::chrono::milliseconds>(clock::now()
+                                                                                - duration_start_)
+                              .count();
+    JAMI_DBG("\t- Duration: %lu", duration);
+    for (auto& mediaAttr : getMediaAttributeList())
+        JAMI_DBG("\t- Media: %s", mediaAttr.toString(true).c_str());
+#ifdef ENABLE_VIDEO
+    if (auto codec = getVideoCodec())
+        JAMI_DBG("\t- Video codec: %s", codec->systemCodecInfo.name.c_str());
+#endif
+    auto media_tr = getIceMediaTransport();
+    if (media_tr) {
+        JAMI_DBG("\t- Medias: %s", media_tr->link().c_str());
+    }
+}
 
 bool
 SIPCall::toggleRecording()
