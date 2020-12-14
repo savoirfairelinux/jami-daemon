@@ -37,12 +37,6 @@ DBusPluginManagerInterface::unloadPlugin(const std::string& path)
     return DRing::unloadPlugin(path);
 }
 
-void
-DBusPluginManagerInterface::togglePlugin(const std::string& path, const bool& toggle)
-{
-    DRing::togglePlugin(path, toggle);
-}
-
 std::map<std::string, std::string>
 DBusPluginManagerInterface::getPluginDetails(const std::string& path)
 {
