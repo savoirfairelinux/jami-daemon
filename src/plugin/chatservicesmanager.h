@@ -61,7 +61,7 @@ public:
                          ++toggledIt)
                         for (auto handlerIdIt = toggledIt->second.begin();
                              handlerIdIt != toggledIt->second.end();)
-                            if (*handlerIdIt == getChatHandlerId(*it)) {
+                            if (*handlerIdIt == (uintptr_t) it->get()) {
                                 handlerIdIt = toggledIt->second.erase(handlerIdIt);
                                 (*it)->detach(chatSubjects[toggledIt->first]);
                             } else
@@ -92,38 +92,33 @@ public:
     std::vector<std::string> listChatHandlers()
     {
         std::vector<std::string> res;
+        res.reserve(chatHandlers.size());
         for (const auto& chatHandler : chatHandlers) {
-            res.emplace_back(getChatHandlerId(chatHandler));
+            res.emplace_back(std::to_string((uintptr_t) chatHandler.get()));
         }
         return res;
     }
 
     void publishMessage(pluginMessagePtr& cm)
     {
+        if (cm->fromPlugin)
+            return;
         std::pair<std::string, std::string> mPair(cm->accountId, cm->peerId);
-        if (chatHandlerToggled_.find(mPair) == chatHandlerToggled_.end())
-            chatHandlerToggled_[mPair] = {};
+        auto& handlers = chatHandlerToggled_[mPair];
         for (auto& chatHandler : chatHandlers) {
             std::size_t found = chatHandler->id().find_last_of(DIR_SEPARATOR_CH);
-            auto toDir = chatHandler->id().substr(0, found);
-            auto preferences = getPluginPreferencesValuesMapInternal(toDir);
-            std::string always = "0";
+            auto preferences = getPluginPreferencesValuesMapInternal(
+                chatHandler->id().substr(0, found));
             bool toggled = false;
-            if (preferences.find("always") != preferences.end())
-                always = preferences["always"];
-            auto toggledIt = chatHandlerToggled_.find(mPair);
-            if (toggledIt != chatHandlerToggled_.end())
-                if (toggledIt->second.find(getChatHandlerId(chatHandler)) != toggledIt->second.end())
-                    toggled = true;
-            if (always == "1" || toggled) {
-                if (chatSubjects.find(mPair) == chatSubjects.end())
-                    chatSubjects[mPair] = std::make_shared<PublishObservable<pluginMessagePtr>>();
+            if (handlers.find((uintptr_t) chatHandler.get()) != handlers.end())
+                toggled = true;
+            if (preferences.at("always") == "1" || toggled) {
+                chatSubjects.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>());
                 if (!toggled) {
-                    chatHandlerToggled_[mPair].insert(getChatHandlerId(chatHandler));
+                    handlers.insert((uintptr_t) chatHandler.get());
                     chatHandler->notifyChatSubject(mPair, chatSubjects[mPair]);
                 }
-                if (!cm->fromPlugin)
-                    chatSubjects[mPair]->publish(cm);
+                chatSubjects[mPair]->publish(cm);
             }
         }
     }
@@ -146,35 +141,7 @@ public:
                            const std::string& peerId,
                            const bool toggle)
     {
-        if (chatHandlerId.empty() || peerId.empty())
-            return;
-
-        std::pair<std::string, std::string> mPair(accountId, peerId);
-
-        auto find = chatHandlerToggled_.find(mPair);
-        if (find == chatHandlerToggled_.end())
-            chatHandlerToggled_[mPair] = {};
-
-        auto peerChatSubjectIt = chatSubjects.find(mPair);
-        if (peerChatSubjectIt == chatSubjects.end())
-            chatSubjects[mPair] = std::make_shared<PublishObservable<pluginMessagePtr>>();
-
-        for (auto& chatHandler : chatHandlers) {
-            if (getChatHandlerId(chatHandler) == chatHandlerId) {
-                if (toggle) {
-                    chatHandler->notifyChatSubject(mPair, chatSubjects[mPair]);
-                    if (chatHandlerToggled_[mPair].find(getChatHandlerId(chatHandler))
-                        == chatHandlerToggled_[mPair].end())
-                        chatHandlerToggled_[mPair].insert(getChatHandlerId(chatHandler));
-                } else {
-                    chatHandler->detach(chatSubjects[mPair]);
-                    if (chatHandlerToggled_[mPair].find(getChatHandlerId(chatHandler))
-                        != chatHandlerToggled_[mPair].end())
-                        chatHandlerToggled_[mPair].erase(getChatHandlerId(chatHandler));
-                }
-                break;
-            }
-        }
+        toggleChatHandler(std::stoull(chatHandlerId), accountId, peerId, toggle);
     }
 
     std::vector<std::string> getChatHandlerStatus(const std::string& accountId,
@@ -182,30 +149,15 @@ public:
     {
         std::pair<std::string, std::string> mPair(accountId, peerId);
         const auto& it = chatHandlerToggled_.find(mPair);
+        std::vector<std::string> ret;
         if (it != chatHandlerToggled_.end()) {
-            std::vector<std::string> ret;
+            ret.reserve(it->second.size());
             for (const auto& chatHandlerId : it->second)
-                ret.push_back(chatHandlerId);
+                ret.emplace_back(std::to_string(chatHandlerId));
             return ret;
         }
 
-        return {};
-    }
-
-    /**
-     * @brief getChatHandlerId
-     * Returns the chatHandlerId id from a chatHandlerId pointer
-     * @param chatHandlerId
-     * @return string id
-     */
-    std::string getChatHandlerId(const ChatHandlerPtr& chatHandlerId)
-    {
-        if (chatHandlerId) {
-            std::ostringstream chatHandlerIdStream;
-            chatHandlerIdStream << chatHandlerId.get();
-            return chatHandlerIdStream.str();
-        }
-        return "";
+        return std::move(ret);
     }
 
     /**
@@ -213,10 +165,11 @@ public:
      * @param id of the chat handler
      * @return map of Chat Handler Details
      */
-    std::map<std::string, std::string> getChatHandlerDetails(const std::string& chatHandlerId)
+    std::map<std::string, std::string> getChatHandlerDetails(const std::string& chatHandlerIdStr)
     {
+        auto chatHandlerId = std::stoull(chatHandlerIdStr);
         for (auto& chatHandler : chatHandlers) {
-            if (getChatHandlerId(chatHandler) == chatHandlerId) {
+            if ((uintptr_t) chatHandler.get() == chatHandlerId) {
                 return chatHandler->getChatHandlerDetails();
             }
         }
@@ -233,8 +186,32 @@ public:
     }
 
 private:
+    void toggleChatHandler(const uintptr_t chatHandlerId,
+                           const std::string& accountId,
+                           const std::string& peerId,
+                           const bool toggle)
+    {
+        std::pair<std::string, std::string> mPair(accountId, peerId);
+        auto& handlers = chatHandlerToggled_[mPair];
+        chatSubjects.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>());
+
+        for (auto& chatHandler : chatHandlers) {
+            if ((uintptr_t) chatHandler.get() == chatHandlerId) {
+                if (toggle) {
+                    chatHandler->notifyChatSubject(mPair, chatSubjects[mPair]);
+                    if (handlers.find(chatHandlerId) == handlers.end())
+                        handlers.insert(chatHandlerId);
+                } else {
+                    chatHandler->detach(chatSubjects[mPair]);
+                    handlers.erase(chatHandlerId);
+                }
+                break;
+            }
+        }
+    }
+
     std::list<ChatHandlerPtr> chatHandlers;
-    std::map<std::pair<std::string, std::string>, std::set<std::string>>
+    std::map<std::pair<std::string, std::string>, std::set<uintptr_t>>
         chatHandlerToggled_; // {account,peer}, list of chatHandlers
 
     std::map<std::pair<std::string, std::string>, chatSubjectPtr> chatSubjects;

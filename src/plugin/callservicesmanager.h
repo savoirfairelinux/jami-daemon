@@ -59,17 +59,14 @@ public:
     void createAVSubject(const StreamData& data, AVSubjectSPtr subject)
     {
         // This guarantees unicity of subjects by id
-        callAVsubjects.push_back(std::make_pair(data, subject));
+        callAVsubjects.emplace_back(data, subject);
 
         for (auto& callMediaHandler : callMediaHandlers) {
             std::size_t found = callMediaHandler->id().find_last_of(DIR_SEPARATOR_CH);
-            auto toDir = callMediaHandler->id().substr(0, found);
-            auto preferences = getPluginPreferencesValuesMapInternal(toDir);
-            std::string always = "0";
-            if (preferences.find("always") != preferences.end())
-                always = preferences["always"];
-            if (always == "1")
-                toggleCallMediaHandler(getCallHandlerId(callMediaHandler), data.id, true);
+            auto preferences = getPluginPreferencesValuesMapInternal(
+                callMediaHandler->id().substr(0, found));
+            if (preferences.at("always") == "1")
+                toggleCallMediaHandler((uintptr_t) callMediaHandler.get(), data.id, true);
             else {
                 for (const auto& toggledMediaHandler : mediaHandlerToggled_[data.id]) {
                     toggleCallMediaHandler(toggledMediaHandler, data.id, true);
@@ -127,8 +124,9 @@ public:
     std::vector<std::string> listCallMediaHandlers()
     {
         std::vector<std::string> res;
+        res.reserve(callMediaHandlers.size());
         for (const auto& mediaHandler : callMediaHandlers) {
-            res.emplace_back(getCallHandlerId(mediaHandler));
+            res.emplace_back(std::to_string((uintptr_t) mediaHandler.get()));
         }
         return res;
     }
@@ -143,46 +141,7 @@ public:
                                 const std::string& callId,
                                 const bool toggle)
     {
-        if (mediaHandlerId.empty() || callId.empty())
-            return;
-
-        auto find = mediaHandlerToggled_.find(callId);
-        if (find == mediaHandlerToggled_.end())
-            mediaHandlerToggled_[callId] = {};
-        bool applyRestart = false;
-        for (auto it = callAVsubjects.begin(); it != callAVsubjects.end(); ++it) {
-            if (it->first.id == callId) {
-                for (auto& mediaHandler : callMediaHandlers) {
-                    if (getCallHandlerId(mediaHandler) == mediaHandlerId) {
-                        if (toggle) {
-                            notifyAVSubject(mediaHandler, it->first, it->second);
-                            if (isAttached(mediaHandler)
-                                && mediaHandlerToggled_[callId].find(mediaHandlerId)
-                                       == mediaHandlerToggled_[callId].end())
-                                mediaHandlerToggled_[callId].insert(mediaHandlerId);
-                        } else {
-                            mediaHandler->detach();
-                            if (mediaHandlerToggled_[callId].find(mediaHandlerId)
-                                != mediaHandlerToggled_[callId].end())
-                                mediaHandlerToggled_[callId].erase(mediaHandlerId);
-                        }
-                        if (it->first.type == StreamType::video && isVideoType(mediaHandler))
-                            applyRestart = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        /* In the case when the mediaHandler receives a hardware format
-         * frame and converts it to main memory, we need to restart the
-         * sender to unlink ours encoder and decoder.
-         *
-         * When we deactivate a mediaHandler, we try to relink the encoder
-         * and decoder by restarting the sender.
-         */
-        if (applyRestart)
-            Manager::instance().callFactory.getCall<SIPCall>(callId)->getVideoRtp().restartSender();
+        toggleCallMediaHandler(std::stoull(mediaHandlerId), callId, toggle);
     }
 
     /**
@@ -190,10 +149,12 @@ public:
      * @param id of the call media handler
      * @return map of Call Media Handler Details
      */
-    std::map<std::string, std::string> getCallMediaHandlerDetails(const std::string& mediaHandlerId)
+    std::map<std::string, std::string> getCallMediaHandlerDetails(
+        const std::string& mediaHandlerIdStr)
     {
+        auto mediaHandlerId = std::stoull(mediaHandlerIdStr);
         for (auto& mediaHandler : callMediaHandlers) {
-            if (getCallHandlerId(mediaHandler) == mediaHandlerId) {
+            if ((uintptr_t) mediaHandler.get() == mediaHandlerId) {
                 return mediaHandler->getCallMediaHandlerDetails();
             }
         }
@@ -205,13 +166,10 @@ public:
         const auto& details = mediaHandler->getCallMediaHandlerDetails();
         const auto& it = details.find("dataType");
         if (it != details.end()) {
-            JAMI_INFO() << "type: ";
             bool status;
             std::istringstream(it->second) >> status;
-            JAMI_INFO() << status;
             return status;
         }
-        JAMI_INFO() << "dataType not found";
         return true;
     }
 
@@ -220,27 +178,23 @@ public:
         const auto& details = mediaHandler->getCallMediaHandlerDetails();
         const auto& it = details.find("attached");
         if (it != details.end()) {
-            JAMI_INFO() << "status: ";
             bool status;
             std::istringstream(it->second) >> status;
-            JAMI_INFO() << status;
             return status;
         }
-        JAMI_INFO() << "attached not found";
         return true;
     }
 
     std::vector<std::string> getCallMediaHandlerStatus(const std::string& callId)
     {
+        std::vector<std::string> ret;
         const auto& it = mediaHandlerToggled_.find(callId);
         if (it != mediaHandlerToggled_.end()) {
-            std::vector<std::string> ret;
+            ret.reserve(it->second.size());
             for (const auto& mediaHandlerId : it->second)
-                ret.push_back(mediaHandlerId);
-            return ret;
+                ret.emplace_back(std::to_string(mediaHandlerId));
         }
-
-        return {};
+        return std::move(ret);
     }
 
     void setPreference(const std::string& key, const std::string& value, const std::string& scopeStr)
@@ -269,22 +223,50 @@ private:
     }
 
     /**
-     * @brief getCallHandlerId
-     * Returns the callMediaHandler id from a callMediaHandler pointer
-     * @param callMediaHandler
-     * @return string id
+     * @brief toggleCallMediaHandler
+     * Toggle CallMediaHandler, if on, notify with new subjects
+     * if off, detach it
+     * @param id
      */
-    std::string getCallHandlerId(const CallMediaHandlerPtr& callMediaHandler)
+    void toggleCallMediaHandler(const uintptr_t mediaHandlerId,
+                                const std::string& callId,
+                                const bool toggle)
     {
-        if (callMediaHandler) {
-            std::ostringstream callHandlerIdStream;
-            callHandlerIdStream << callMediaHandler.get();
-            return callHandlerIdStream.str();
+        auto& handlers = mediaHandlerToggled_[callId];
+
+        bool applyRestart = false;
+        for (auto it = callAVsubjects.begin(); it != callAVsubjects.end(); ++it) {
+            if (it->first.id == callId) {
+                for (auto& mediaHandler : callMediaHandlers) {
+                    if ((uintptr_t) mediaHandler.get() == mediaHandlerId) {
+                        if (toggle) {
+                            notifyAVSubject(mediaHandler, it->first, it->second);
+                            if (isAttached(mediaHandler)
+                                && handlers.find(mediaHandlerId) == handlers.end())
+                                handlers.insert(mediaHandlerId);
+                        } else {
+                            mediaHandler->detach();
+                            handlers.erase(mediaHandlerId);
+                        }
+                        if (it->first.type == StreamType::video && isVideoType(mediaHandler))
+                            applyRestart = true;
+                        break;
+                    }
+                }
+            }
         }
-        return "";
+
+        /* In the case when the mediaHandler receives a hardware format
+         * frame and converts it to main memory, we need to restart the
+         * sender to unlink ours encoder and decoder.
+         *
+         * When we deactivate a mediaHandler, we try to relink the encoder
+         * and decoder by restarting the sender.
+         */
+        if (applyRestart)
+            Manager::instance().callFactory.getCall<SIPCall>(callId)->getVideoRtp().restartSender();
     }
 
-private:
     /**
      * @brief callMediaHandlers
      * Components that a plugin can register through registerCallMediaHandler service
@@ -302,8 +284,7 @@ private:
      */
     std::list<std::pair<const StreamData, AVSubjectSPtr>> callAVsubjects;
 
-    std::map<std::string, std::set<std::string>>
-        mediaHandlerToggled_; // callId, list of mediaHandlers
+    std::map<std::string, std::set<uintptr_t>> mediaHandlerToggled_; // callId, list of mediaHandlers
 };
 
 } // namespace jami
