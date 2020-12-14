@@ -29,6 +29,12 @@
 #include <opendht/thread_pool.h>
 #include <tuple>
 
+#ifdef ENABLE_PLUGIN
+#include "manager.h"
+#include "plugin/jamipluginmanager.h"
+#include "plugin/streamdata.h"
+#endif
+
 namespace jami {
 
 ConvInfo::ConvInfo(const Json::Value& json)
@@ -196,6 +202,19 @@ public:
                                 shared->getAccountID(), convId, uri, action);
                     }
                 }
+#ifdef ENABLE_PLUGIN
+                auto& pluginChatManager
+                    = jami::Manager::instance().getJamiPluginManager().getChatServicesManager();
+                std::shared_ptr<JamiMessage> cm
+                    = std::make_shared<JamiMessage>(shared->getAccountID(),
+                                                    convId,
+                                                    c.at("author") != shared->getUsername(),
+                                                    const_cast<std::map<std::string, std::string>&>(
+                                                        c),
+                                                    false);
+                cm->isSwarm = true;
+                pluginChatManager.publishMessage(cm);
+#endif
                 // announce message
                 emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
                                                                        convId,
@@ -244,6 +263,7 @@ Conversation::Impl::repoPath() const
 std::vector<std::map<std::string, std::string>>
 Conversation::Impl::convCommitToMap(const std::vector<ConversationCommit>& commits) const
 {
+    auto shared = account_.lock();
     std::vector<std::map<std::string, std::string>> result = {};
     for (const auto& commit : commits) {
         auto authorDevice = commit.author.email;
@@ -309,6 +329,19 @@ Conversation::Impl::convCommitToMap(const std::vector<ConversationCommit>& commi
         message["type"] = type;
         message["timestamp"] = std::to_string(commit.timestamp);
         result.emplace_back(message);
+#ifdef ENABLE_PLUGIN
+        auto& pluginChatManager
+            = jami::Manager::instance().getJamiPluginManager().getChatServicesManager();
+        std::shared_ptr<JamiMessage> cm
+            = std::make_shared<JamiMessage>(shared->getAccountID(),
+                                            repository_->id(),
+                                            authorId != shared->getUsername(),
+                                            const_cast<std::map<std::string, std::string>&>(message),
+                                            false);
+        cm->isSwarm = true;
+        cm->fromHistory = true;
+        pluginChatManager.publishMessage(cm);
+#endif
     }
     return result;
 }
