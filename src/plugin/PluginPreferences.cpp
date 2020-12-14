@@ -176,8 +176,7 @@ getPluginPreferencesValuesMapInternal(const std::string& rootPath)
         rmap[pair.first] = pair.second;
     }
 
-    if (rmap.find("always") == rmap.end())
-        rmap["always"] = "0";
+    rmap.emplace("always", "0");
 
     return rmap;
 }
