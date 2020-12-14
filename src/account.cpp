@@ -87,6 +87,7 @@ const char* const Account::PRESENCE_MODULE_ENABLED_KEY = "presenceModuleEnabled"
 const char* const Account::UPNP_ENABLED_KEY = "upnpEnabled";
 const char* const Account::ACTIVE_CODEC_KEY = "activeCodecs";
 const std::string Account::DEFAULT_USER_AGENT = Account::setDefaultUserAgent();
+const char* const Account::DEFAULT_MODERATORS_KEY = "defaultModerators";
 
 #ifdef __ANDROID__
 constexpr const char* const DEFAULT_RINGTONE_PATH
@@ -114,6 +115,7 @@ Account::Account(const std::string& accountID)
     , customUserAgent_("")
     , hasCustomUserAgent_(false)
     , mailBox_()
+    , defaultModerators_("")
 {
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
@@ -237,6 +239,7 @@ Account::serialize(YAML::Emitter& out) const
     out << YAML::Key << DISPLAY_NAME_KEY << YAML::Value << displayName_;
     out << YAML::Key << HOSTNAME_KEY << YAML::Value << hostname_;
     out << YAML::Key << UPNP_ENABLED_KEY << YAML::Value << upnpEnabled_;
+    out << YAML::Key << DEFAULT_MODERATORS_KEY << YAML::Value << defaultModerators_;
 }
 
 void
@@ -287,6 +290,8 @@ Account::unserialize(const YAML::Node& node)
 
     parseValue(node, UPNP_ENABLED_KEY, upnpEnabled_);
     enableUpnp(upnpEnabled_ && isEnabled());
+
+    parseValueOptional(node, DEFAULT_MODERATORS_KEY, defaultModerators_);
 }
 
 void
@@ -678,4 +683,22 @@ Account::setDefaultUserAgent()
 
     return defaultUA;
 }
+
+void
+Account::addDefaultModerator(const std::string& peerURI)
+{
+    if (not defaultModerators_.empty())
+        defaultModerators_.insert(0, peerURI + "/");
+    else
+        defaultModerators_ = peerURI + "/";
+}
+
+void
+Account::removeDefaultModerator(const std::string& peerURI)
+{
+    const size_t start = defaultModerators_.find(peerURI + "/");
+    if (start != std::string::npos)
+        defaultModerators_.erase(start, peerURI.length() + 1);
+}
+
 } // namespace jami
