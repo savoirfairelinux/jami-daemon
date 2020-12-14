@@ -127,41 +127,41 @@ private:
     void testConversationMemberEvent();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
-    CPPUNIT_TEST(testCreateConversation);
-    CPPUNIT_TEST(testGetConversation);
-    CPPUNIT_TEST(testGetConversationsAfterRm);
-    CPPUNIT_TEST(testRemoveInvalidConversation);
-    CPPUNIT_TEST(testRemoveConversationNoMember);
-    CPPUNIT_TEST(testRemoveConversationWithMember);
-    CPPUNIT_TEST(testAddMember);
-    CPPUNIT_TEST(testAddOfflineMemberThenConnects);
-    CPPUNIT_TEST(testGetMembers);
-    CPPUNIT_TEST(testSendMessage);
-    CPPUNIT_TEST(testSendMessageTriggerMessageReceived);
-    CPPUNIT_TEST(testGetRequests);
-    CPPUNIT_TEST(testDeclineRequest);
-    CPPUNIT_TEST(testSendMessageToMultipleParticipants);
-    CPPUNIT_TEST(testPingPongMessages);
-    CPPUNIT_TEST(testIsComposing);
-    CPPUNIT_TEST(testRemoveMember);
-    CPPUNIT_TEST(testBanDevice);
-    CPPUNIT_TEST(testMemberTryToRemoveAdmin);
-    CPPUNIT_TEST(testBannedMemberCannotSendMessage);
-    CPPUNIT_TEST(testAddBannedMember);
-    CPPUNIT_TEST(testMemberCannotBanOther);
-    CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
-    CPPUNIT_TEST(testAdminCannotKickTheirself);
-    CPPUNIT_TEST(testPlainTextNoBadFile);
-    CPPUNIT_TEST(testVoteNoBadFile);
+    //CPPUNIT_TEST(testCreateConversation);
+    //CPPUNIT_TEST(testGetConversation);
+    //CPPUNIT_TEST(testGetConversationsAfterRm);
+    //CPPUNIT_TEST(testRemoveInvalidConversation);
+    //CPPUNIT_TEST(testRemoveConversationNoMember);
+    //CPPUNIT_TEST(testRemoveConversationWithMember);
+    //CPPUNIT_TEST(testAddMember);
+    //CPPUNIT_TEST(testAddOfflineMemberThenConnects);
+    //CPPUNIT_TEST(testGetMembers);
+    //CPPUNIT_TEST(testSendMessage);
+    //CPPUNIT_TEST(testSendMessageTriggerMessageReceived);
+    //CPPUNIT_TEST(testGetRequests);
+    //CPPUNIT_TEST(testDeclineRequest);
+    //CPPUNIT_TEST(testSendMessageToMultipleParticipants);
+    //CPPUNIT_TEST(testPingPongMessages);
+    //CPPUNIT_TEST(testIsComposing);
+    //CPPUNIT_TEST(testRemoveMember);
+    //CPPUNIT_TEST(testBanDevice);
+    //CPPUNIT_TEST(testMemberTryToRemoveAdmin);
+    //CPPUNIT_TEST(testBannedMemberCannotSendMessage);
+    //CPPUNIT_TEST(testAddBannedMember);
+    //CPPUNIT_TEST(testMemberCannotBanOther);
+    //CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
+    //CPPUNIT_TEST(testAdminCannotKickTheirself);
+    //CPPUNIT_TEST(testPlainTextNoBadFile);
+    //CPPUNIT_TEST(testVoteNoBadFile);
     CPPUNIT_TEST(testETooBigClone);
     CPPUNIT_TEST(testETooBigFetch);
-    CPPUNIT_TEST(testAddContact);
-    CPPUNIT_TEST(testFailAddMemberInOneToOne);
-    CPPUNIT_TEST(testUnknownModeDetected);
-    CPPUNIT_TEST(testRemoveContact);
-    CPPUNIT_TEST(testBanContact);
-    CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
-    CPPUNIT_TEST(testConversationMemberEvent);
+    //CPPUNIT_TEST(testAddContact);
+    //CPPUNIT_TEST(testFailAddMemberInOneToOne);
+    //CPPUNIT_TEST(testUnknownModeDetected);
+    //CPPUNIT_TEST(testRemoveContact);
+    //CPPUNIT_TEST(testBanContact);
+    //CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
+    //CPPUNIT_TEST(testConversationMemberEvent);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1527,39 +1527,6 @@ ConversationTest::generateFakeVote(std::shared_ptr<JamiAccount> account,
     cr.commitMessage(Json::writeString(wbuilder, json));
 
     account->sendMessage(convId, std::string("trigger the fake history to be pulled"));
-}
-void
-ConversationTest::addAll(std::shared_ptr<JamiAccount> account, const std::string& convId)
-{
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-
-    git_repository* repo = nullptr;
-    if (git_repository_open(&repo, repoPath.c_str()) != 0)
-        return;
-    GitRepository rep = {std::move(repo), git_repository_free};
-
-    // git add -A
-    git_index* index_ptr = nullptr;
-    git_strarray array = {0};
-    if (git_repository_index(&index_ptr, repo) < 0)
-        return;
-    GitIndex index {index_ptr, git_index_free};
-    git_index_add_all(index.get(), &array, 0, nullptr, nullptr);
-    git_index_write(index.get());
-}
-
-void
-ConversationTest::commit(std::shared_ptr<JamiAccount> account,
-                         const std::string& convId,
-                         Json::Value& message)
-{
-    ConversationRepository cr(account->weak(), convId);
-
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    cr.commitMessage(Json::writeString(wbuilder, message));
 }
 
 void
