@@ -20,6 +20,11 @@
 #include "jamiaccount.h"
 #include "fileutils.h"
 
+#ifdef ENABLE_PLUGIN
+#include "manager.h"
+#include "plugin/jamipluginmanager.h"
+#endif
+
 #include "account_const.h"
 
 #include <fstream>
@@ -103,6 +108,14 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
     if (ban and trustRequests_.erase(h) > 0)
         saveTrustRequests();
     saveContacts();
+#ifdef ENABLE_PLUGIN
+    std::size_t found = path_.find_last_of(DIR_SEPARATOR_CH);
+    auto filename = path_.substr(found + 1);
+    jami::Manager::instance()
+        .getJamiPluginManager()
+        .getChatServicesManager()
+        .cleanChatSubjects(filename, uri);
+#endif
     callbacks_.contactRemoved(uri, ban);
     // syncDevices();
     return true;
