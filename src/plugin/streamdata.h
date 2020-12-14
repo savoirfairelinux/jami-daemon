@@ -56,4 +56,6 @@ struct JamiMessage // for chat
     const bool direction;  // 0 -> send; 1 -> received
     std::map<std::string, std::string> data;
     bool fromPlugin;
+    bool isSwarm {false};
+    bool fromHistory {false};
 };
