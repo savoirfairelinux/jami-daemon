@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d76fc23e_c85c26ed",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 314,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-14T21:26:42Z",
+      "side": 1,
+      "message": "should be in the locked section",
+      "range": {
+        "startLine": 314,
+        "startChar": 12,
+        "endLine": 314,
+        "endChar": 44
+      },
+      "revId": "bfa1a624f4762ddbf67725e1e5f96c7df6a46de0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d76c9c7a_18568c81",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 645,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-14T21:26:42Z",
+      "side": 1,
+      "message": "duplicated variable",
+      "range": {
+        "startLine": 645,
+        "startChar": 4,
+        "endLine": 645,
+        "endChar": 24
+      },
+      "revId": "bfa1a624f4762ddbf67725e1e5f96c7df6a46de0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "83b5dfe6_196da029",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 646,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-14T21:26:42Z",
+      "side": 1,
+      "message": "* move in the \u0027if\u0027 block\n* should be size_t instead of int",
+      "range": {
+        "startLine": 646,
+        "startChar": 4,
+        "endLine": 646,
+        "endChar": 18
+      },
+      "revId": "bfa1a624f4762ddbf67725e1e5f96c7df6a46de0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
