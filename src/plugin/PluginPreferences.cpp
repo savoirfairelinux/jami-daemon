@@ -1,0 +1,205 @@
+/*
+ *  Copyright (C) 2004-2020 Savoir-faire Linux Inc.
+ *
+ *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA.
+ */
+
+#include "PluginPreferences.h"
+
+#include <msgpack.hpp>
+#include <sstream>
+#include <fstream>
+#include "logger.h"
+#include "fileutils.h"
+
+namespace jami {
+
+std::string
+getPreferencesConfigFilePathInternal(const std::string& rootPath)
+{
+    return rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "preferences.json";
+}
+
+std::string
+pluginPreferencesValuesFilePathInternal(const std::string& rootPath)
+{
+    return rootPath + DIR_SEPARATOR_CH + "preferences.msgpack";
+}
+
+std::string
+convertArrayToString(const Json::Value& jsonArray)
+{
+    std::string stringArray = "";
+
+    if (jsonArray.size()) {
+        for (unsigned i = 0; i < jsonArray.size() - 1; i++) {
+            if (jsonArray[i].isString()) {
+                stringArray += jsonArray[i].asString() + ",";
+            } else if (jsonArray[i].isArray()) {
+                stringArray += convertArrayToString(jsonArray[i]) + ",";
+            }
+        }
+
+        unsigned lastIndex = jsonArray.size() - 1;
+        if (jsonArray[lastIndex].isString()) {
+            stringArray += jsonArray[lastIndex].asString();
+        }
+    }
+
+    return stringArray;
+}
+
+std::map<std::string, std::string>
+parsePreferenceConfig(const Json::Value& jsonPreference, const std::string& type)
+{
+    std::map<std::string, std::string> preferenceMap;
+    const auto& members = jsonPreference.getMemberNames();
+    // Insert other fields
+    for (const auto& member : members) {
+        const Json::Value& value = jsonPreference[member];
+        if (value.isString()) {
+            preferenceMap.emplace(member, jsonPreference[member].asString());
+        } else if (value.isArray()) {
+            preferenceMap.emplace(member, convertArrayToString(jsonPreference[member]));
+        }
+    }
+    return preferenceMap;
+}
+
+std::vector<std::map<std::string, std::string>>
+getPluginPreferencesInternal(const std::string& rootPath)
+{
+    const std::string preferenceFilePath = getPreferencesConfigFilePathInternal(rootPath);
+    std::ifstream file(preferenceFilePath);
+    Json::Value root;
+    Json::CharReaderBuilder rbuilder;
+    rbuilder["collectComments"] = false;
+    std::string errs;
+    std::set<std::string> keys;
+    std::vector<std::map<std::string, std::string>> preferences;
+    if (file) {
+        bool ok = Json::parseFromStream(rbuilder, file, &root, &errs);
+        if (ok && root.isArray()) {
+            for (unsigned i = 0; i < root.size(); i++) {
+                const Json::Value& jsonPreference = root[i];
+                std::string category = jsonPreference.get("category", "NoCategory").asString();
+                std::string type = jsonPreference.get("type", "None").asString();
+                std::string key = jsonPreference.get("key", "None").asString();
+                if (type != "None" && key != "None") {
+                    if (keys.find(key) == keys.end()) {
+                        auto preferenceAttributes = parsePreferenceConfig(jsonPreference, type);
+                        // If the parsing of the attributes was successful, commit the map and the keys
+                        auto defaultValue = preferenceAttributes.find("defaultValue");
+                        if (type == "Path" && defaultValue != preferenceAttributes.end()) {
+                            defaultValue->second = rootPath + DIR_SEPARATOR_STR
+                                                   + defaultValue->second;
+                        }
+
+                        if (!preferenceAttributes.empty()) {
+                            preferences.push_back(std::move(preferenceAttributes));
+                            keys.insert(key);
+                        }
+                    }
+                }
+            }
+        } else {
+            JAMI_ERR() << "PluginPreferencesParser:: Failed to parse preferences.json for plugin: "
+                       << preferenceFilePath;
+        }
+    }
+
+    return preferences;
+}
+
+std::map<std::string, std::string>
+getPluginUserPreferencesValuesMapInternal(const std::string& rootPath)
+{
+    const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePathInternal(rootPath);
+    std::ifstream file(preferencesValuesFilePath, std::ios::binary);
+    std::map<std::string, std::string> rmap;
+
+    // If file is accessible
+    if (file.good()) {
+        std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
+        // Get file size
+        std::string str;
+        file.seekg(0, std::ios::end);
+        size_t fileSize = static_cast<size_t>(file.tellg());
+        // If not empty
+        if (fileSize > 0) {
+            // Read whole file content and put it in the string str
+            str.reserve(static_cast<size_t>(file.tellg()));
+            file.seekg(0, std::ios::beg);
+            str.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            file.close();
+            try {
+                // Unpack the string
+                msgpack::object_handle oh = msgpack::unpack(str.data(), str.size());
+                // Deserialized object is valid during the msgpack::object_handle instance is alive.
+                msgpack::object deserialized = oh.get();
+                deserialized.convert(rmap);
+            } catch (const std::exception& e) {
+                JAMI_ERR() << e.what();
+            }
+        }
+    }
+    return rmap;
+}
+
+std::map<std::string, std::string>
+getPluginPreferencesValuesMapInternal(const std::string& rootPath)
+{
+    std::map<std::string, std::string> rmap;
+
+    std::vector<std::map<std::string, std::string>> preferences = getPluginPreferencesInternal(
+        rootPath);
+    for (auto& preference : preferences) {
+        rmap[preference["key"]] = preference["defaultValue"];
+    }
+
+    for (const auto& pair : getPluginUserPreferencesValuesMapInternal(rootPath)) {
+        rmap[pair.first] = pair.second;
+    }
+
+    rmap.emplace("always", "0");
+
+    return rmap;
+}
+
+bool
+resetPluginPreferencesValuesMapInternal(const std::string& rootPath)
+{
+    bool returnValue = true;
+    std::map<std::string, std::string> pluginPreferencesMap {};
+
+    const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePathInternal(rootPath);
+    std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
+    if (!fs.good()) {
+        return false;
+    }
+    try {
+        std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
+        msgpack::pack(fs, pluginPreferencesMap);
+    } catch (const std::exception& e) {
+        returnValue = false;
+        JAMI_ERR() << e.what();
+    }
+
+    return returnValue;
+}
+} // namespace jami

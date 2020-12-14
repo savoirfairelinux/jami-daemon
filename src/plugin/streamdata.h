@@ -1,5 +1,7 @@
 /*
- *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
+ *  Copyright (C) 2020 Savoir-faire Linux Inc.
+ *
+ *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,10 +19,11 @@
  */
 #pragma once
 #include <string>
+#include <map>
 
 enum class StreamType { audio, video };
 
-struct StreamData
+struct StreamData // for calls
 {
     StreamData(const std::string& i, bool d, StreamType&& t, const std::string& s)
         : id {std::move(i)}
@@ -32,4 +35,36 @@ struct StreamData
     const bool direction;
     const StreamType type;
     const std::string source;
+};
+
+struct JamiMessage // for chat
+{
+    JamiMessage(const std::string& accId,
+                const std::string& pId,
+                const std::string& direction,
+                std::map<std::string, std::string>& dataMap)
+        : accountId {accId}
+        , peerId {pId}
+        , direction {direction}
+        , data {dataMap}
+        , swarm {false}
+    {}
+
+    JamiMessage(const std::string& accId,
+                const std::string& pId,
+                const std::string& direction,
+                std::map<std::string, std::string>& dataMap,
+                bool pSwarm)
+        : accountId {accId}
+        , peerId {pId}
+        , direction {direction}
+        , data {dataMap}
+        , swarm {pSwarm}
+    {}
+
+    std::string accountId; // accountID
+    std::string peerId;    // peer
+    std::string direction; // 1 -> send; 0 -> received
+    std::map<std::string, std::string> data;
+    bool swarm;
 };

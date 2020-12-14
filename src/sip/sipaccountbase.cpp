@@ -52,6 +52,7 @@
 #include "manager.h"
 #ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
+#include "plugin/streamdata.h"
 #endif
 namespace jami {
 
@@ -510,6 +511,7 @@ SIPAccountBase::onTextMessage(const std::string& id,
                               const std::map<std::string, std::string>& payloads)
 {
     JAMI_DBG("Text message received from %s, %zu part(s)", from.c_str(), payloads.size());
+    bool isSwarm {false};
     for (const auto& m : payloads) {
         if (!utf8_validate(m.first))
             return;
@@ -574,6 +576,7 @@ SIPAccountBase::onTextMessage(const std::string& id,
                 JAMI_WARN("Error parsing display notification: %s", e.what());
             }
         } else if (m.first == MIME_TYPE_GIT) {
+            isSwarm = true;
             Json::Value json;
             std::string err;
             Json::CharReaderBuilder rbuilder;
@@ -604,16 +607,17 @@ SIPAccountBase::onTextMessage(const std::string& id,
     }
 
 #ifdef ENABLE_PLUGIN
-    auto& convManager
-        = jami::Manager::instance().getJamiPluginManager().getConversationServicesManager();
-    std::shared_ptr<ConversationMessage> cm = std::make_shared<ConversationMessage>(
-        from, accountID_, const_cast<std::map<std::string, std::string>&>(payloads));
-    convManager.onTextMessage(cm);
-    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, cm->data_);
+    auto& pluginChatManager
+        = jami::Manager::instance().getJamiPluginManager().getChatServicesManager();
+    std::shared_ptr<JamiMessage> cm = std::make_shared<JamiMessage>(
+        accountID_, from, "0", const_cast<std::map<std::string, std::string>&>(payloads), false);
+    if (!isSwarm)
+        pluginChatManager.publishMessage(cm);
+    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, cm->data);
 
     DRing::Message message;
-    message.from = cm->author_;
-    message.payloads = cm->data_;
+    message.from = from;
+    message.payloads = cm->data;
 #else
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, payloads);
 

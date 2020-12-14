@@ -61,6 +61,11 @@
 #include "manager.h"
 #include "utf8_utils.h"
 
+#ifdef ENABLE_PLUGIN
+#include "plugin/jamipluginmanager.h"
+#include "plugin/chatservicesmanager.h"
+#endif
+
 #ifdef ENABLE_VIDEO
 #include "libav_utils.h"
 #endif
@@ -2807,6 +2812,10 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
 
     if (released_cb)
         released_cb(false);
+#ifdef ENABLE_PLUGIN
+    jami::Manager::instance().getJamiPluginManager().getChatServicesManager().cleanChatSubjects(
+        getAccountID());
+#endif
 }
 
 void
@@ -3215,7 +3224,8 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
         for (const auto& [key, conv] : conversations_) {
             try {
                 if (conv->mode() == ConversationMode::ONE_TO_ONE
-                    && (conv->isMember(uri, true) || conv->getMembers().size() == 1 /* Peer left */))
+                    && (conv->isMember(uri, true)
+                        || conv->getMembers().size() == 1 /* Peer left */))
                     toRm.emplace_back(key);
             } catch (const std::exception& e) {
                 JAMI_WARN("%s", e.what());
@@ -4275,6 +4285,17 @@ JamiAccount::fetchNewCommits(const std::string& peer,
                     emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
                                                                            conversationId,
                                                                            message);
+#ifdef ENABLE_PLUGIN
+                    auto& pluginChatManager
+                        = jami::Manager::instance().getJamiPluginManager().getChatServicesManager();
+                    std::shared_ptr<JamiMessage> cm = std::make_shared<JamiMessage>(
+                        shared->getAccountID(),
+                        conversationId,
+                        "0",
+                        const_cast<std::map<std::string, std::string>&>(message),
+                        true);
+                    pluginChatManager.publishMessage(cm);
+#endif
                 }
             } else {
                 JAMI_WARN("[Account %s] Unknown conversation %s",
@@ -4284,20 +4305,25 @@ JamiAccount::fetchNewCommits(const std::string& peer,
         };
 
         if (gitSocket(deviceId, conversationId)) {
-            conversation->second->pull(deviceId, [deviceId, conversationId, w=weak(), announceMessages = std::move(announceMessages)](bool ok, auto messages) {
-                auto shared = w.lock();
-                if (!shared)
-                    return;
-                if (!ok) {
-                    JAMI_WARN("[Account %s] Could not fetch new commit from %s for %s",
-                            shared->getAccountID().c_str(),
-                            deviceId.c_str(),
-                            conversationId.c_str());
-                    shared->removeGitSocket(deviceId, conversationId);
-                }
-                if (!messages.empty())
-                    announceMessages(messages);
-            });
+            conversation->second
+                ->pull(deviceId,
+                       [deviceId,
+                        conversationId,
+                        w = weak(),
+                        announceMessages = std::move(announceMessages)](bool ok, auto messages) {
+                           auto shared = w.lock();
+                           if (!shared)
+                               return;
+                           if (!ok) {
+                               JAMI_WARN("[Account %s] Could not fetch new commit from %s for %s",
+                                         shared->getAccountID().c_str(),
+                                         deviceId.c_str(),
+                                         conversationId.c_str());
+                               shared->removeGitSocket(deviceId, conversationId);
+                           }
+                           if (!messages.empty())
+                               announceMessages(messages);
+                       });
         } else {
             lk.unlock();
             // Else we need to add a new gitSocket
@@ -4327,20 +4353,28 @@ JamiAccount::fetchNewCommits(const std::string& peer,
                             return;
                         if (socket) {
                             shared->addGitSocket(deviceId.toString(), conversationId, socket);
-                            conversation->second->pull(deviceId.toString(), [deviceId, conversationId, w, announceMessages = std::move(announceMessages)](bool ok, auto messages) {
-                                auto shared = w.lock();
-                                if (!shared)
-                                    return;
-                                if (!ok) {
-                                    JAMI_WARN("[Account %s] Could not fetch new commit from %s for %s",
-                                            shared->getAccountID().c_str(),
-                                            deviceId.to_c_str(),
-                                            conversationId.c_str());
-                                    shared->removeGitSocket(deviceId.toString(), conversationId);
-                                }
-                                if (!messages.empty())
-                                    announceMessages(messages);
-                            });
+                            conversation->second
+                                ->pull(deviceId.toString(),
+                                       [deviceId,
+                                        conversationId,
+                                        w,
+                                        announceMessages = std::move(
+                                            announceMessages)](bool ok, auto messages) {
+                                           auto shared = w.lock();
+                                           if (!shared)
+                                               return;
+                                           if (!ok) {
+                                               JAMI_WARN("[Account %s] Could not fetch new commit "
+                                                         "from %s for %s",
+                                                         shared->getAccountID().c_str(),
+                                                         deviceId.to_c_str(),
+                                                         conversationId.c_str());
+                                               shared->removeGitSocket(deviceId.toString(),
+                                                                       conversationId);
+                                           }
+                                           if (!messages.empty())
+                                               announceMessages(messages);
+                                       });
                         } else {
                             JAMI_ERR("[Account %s] Couldn't open a new git channel with %s for "
                                      "conversation %s",
