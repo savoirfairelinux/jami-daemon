@@ -749,3 +749,18 @@ DBusConfigurationManager::setAudioMeterState(const std::string& id, const bool& 
 {
     return DRing::setAudioMeterState(id, state);
 }
+
+void
+DBusConfigurationManager::setDefaultModerator(const std::string& accountID,
+                                                const std::string& peerURI,
+                                                const bool& state)
+{
+    return DRing::setDefaultModerator(accountID, peerURI, state);
+}
+
+auto
+DBusConfigurationManager::getDefaultModerators(const std::string& accountID) -> decltype(DRing::getDefaultModerators(accountID))
+{
+    return DRing::getDefaultModerators(accountID);
+}
+

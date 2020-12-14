@@ -1080,4 +1080,16 @@ setAudioMeterState(const std::string& id, bool state)
     jami::Manager::instance().getRingBufferPool().setAudioMeterState(id, state);
 }
 
+void
+setDefaultModerator(const std::string& accountID, const std::string& peerURI, const bool& state)
+{
+    jami::Manager::instance().setDefaultModerator(accountID, peerURI, state);
+}
+
+std::vector<std::string>
+getDefaultModerators(const std::string& accountID)
+{
+    return jami::Manager::instance().getDefaultModerators(accountID);
+}
+
 } // namespace DRing
