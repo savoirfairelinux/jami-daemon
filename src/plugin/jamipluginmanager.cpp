@@ -286,26 +286,6 @@ JamiPluginManager::unloadPlugin(const std::string& rootPath)
     return false;
 }
 
-void
-JamiPluginManager::togglePlugin(const std::string& rootPath, bool toggle)
-{
-    // This function should not be used as is
-    // One should modify it to perform plugin install followed by load
-    // rootPath should be the jplpath!
-    try {
-        std::string soPath = getPluginDetails(rootPath).at("soPath");
-        // remove the previous plugin object if it was registered
-        pm_.destroyPluginComponents(soPath);
-        // If toggle, register a new instance of the plugin
-        // function
-        if (toggle) {
-            pm_.callPluginInitFunction(soPath);
-        }
-    } catch (const std::exception& e) {
-        JAMI_ERR() << e.what();
-    }
-}
-
 std::vector<std::string>
 JamiPluginManager::getLoadedPlugins() const
 {
