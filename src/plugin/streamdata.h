@@ -88,4 +88,6 @@ struct JamiMessage
     std::map<std::string, std::string> data;
     // True if message is originated from Plugin code.
     bool fromPlugin;
+    bool isSwarm {false};
+    bool fromHistory {false};
 };
