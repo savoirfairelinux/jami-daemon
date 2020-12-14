@@ -189,6 +189,17 @@ Conference::add(const std::string& participant_id)
                 participantsMuted_.emplace(uri);
             }
         }
+        // Add defined moderators for the account link to the call
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+            auto w = call->getAccount();
+            auto account = w.lock();
+            if (account) {
+                auto defautlMod = split_string(account->getDefaultModerators(), "/");
+                for (const auto& mod : defautlMod) {
+                    moderators_.emplace(mod);
+                }
+            }
+        }
 #ifdef ENABLE_VIDEO
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
             call->getVideoRtp().enterConference(this);
