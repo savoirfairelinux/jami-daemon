@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3b4530f5_72b17255",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 197,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-14T21:29:59Z",
+      "side": 1,
+      "message": "return value is always moved implicitly",
+      "range": {
+        "startLine": 197,
+        "startChar": 15,
+        "endLine": 197,
+        "endChar": 30
+      },
+      "revId": "9185f9698351e56e3ab6700a33a61bef34e33594",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
