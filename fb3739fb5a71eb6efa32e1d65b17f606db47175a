@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f8f8d2f2_3c45b95d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 4058,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-14T17:33:57Z",
+      "side": 1,
+      "message": "blocking load from disk in addMember ?",
+      "range": {
+        "startLine": 4051,
+        "startChar": 0,
+        "endLine": 4058,
+        "endChar": 0
+      },
+      "revId": "fb3739fb5a71eb6efa32e1d65b17f606db47175a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fbc532f1_a06355ad",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 4089,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-14T17:33:57Z",
+      "side": 1,
+      "message": "blocking load from disk in removeMember ?",
+      "range": {
+        "startLine": 4079,
+        "startChar": 12,
+        "endLine": 4089,
+        "endChar": 13
+      },
+      "revId": "fb3739fb5a71eb6efa32e1d65b17f606db47175a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
