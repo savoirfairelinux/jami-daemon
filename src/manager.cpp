@@ -3272,4 +3272,33 @@ Manager::muteParticipant(const std::string& confId, const std::string& participa
     }
 }
 
+void
+Manager::setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state)
+{
+    auto acc = getAccount(accountID);
+    if(!acc) {
+        JAMI_ERR("Fail to change default moderator, account %s not found", accountID.c_str());
+        return;
+    }
+
+    if (state)
+        acc->addDefaultModerator(peerURI);
+    else
+        acc->removeDefaultModerator(peerURI);
+    saveConfig(acc);
+}
+
+std::vector<std::string>
+Manager::getDefaultModerators(const std::string& accountID)
+{
+    auto acc = getAccount(accountID);
+    if(!acc) {
+        JAMI_ERR("Fail to get default moderators, account %s not found", accountID.c_str());
+        return {};
+    }
+
+    auto set = acc->getDefaultModerators();
+    return std::vector<std::string>(set.begin(), set.end());
+}
+
 } // namespace jami
