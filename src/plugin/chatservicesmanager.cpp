@@ -20,6 +20,7 @@
 #include "pluginpreferencesutils.h"
 #include "logger.h"
 #include "manager.h"
+#include "jamidht/jamiaccount.h"
 #include "fileutils.h"
 
 namespace jami {
@@ -43,17 +44,19 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
     };
 
     auto unregisterChatHandler = [this](void* data) {
-        auto handlerIt = std::find_if(chatHandlers_.begin(), chatHandlers_.end(),
-                            [data](ChatHandlerPtr& handler) {
-                                return (handler.get() == data);
-                                });
+        auto handlerIt = std::find_if(chatHandlers_.begin(),
+                                      chatHandlers_.end(),
+                                      [data](ChatHandlerPtr& handler) {
+                                          return (handler.get() == data);
+                                      });
 
         if (handlerIt != chatHandlers_.end()) {
-            for (auto& toggledList: chatHandlerToggled_) {
-                auto handlerId = std::find_if(toggledList.second.begin(), toggledList.second.end(),
-                            [this, handlerIt](uintptr_t handlerId) {
-                                return (handlerId == (uintptr_t) handlerIt->get());
-                                });
+            for (auto& toggledList : chatHandlerToggled_) {
+                auto handlerId = std::find_if(toggledList.second.begin(),
+                                              toggledList.second.end(),
+                                              [this, handlerIt](uintptr_t handlerId) {
+                                                  return (handlerId == (uintptr_t) handlerIt->get());
+                                              });
                 if (handlerId != toggledList.second.end()) {
                     handlerId = toggledList.second.erase(handlerId);
                     (*handlerIt)->detach(chatSubjects_[toggledList.first]);
@@ -64,9 +67,7 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
         return 0;
     };
 
-    pm.registerComponentManager("ChatHandlerManager",
-                                registerChatHandler,
-                                unregisterChatHandler);
+    pm.registerComponentManager("ChatHandlerManager", registerChatHandler, unregisterChatHandler);
 }
 
 void
@@ -74,7 +75,20 @@ ChatServicesManager::registerChatService(PluginManager& pm)
 {
     auto sendTextMessage = [this](const DLPlugin*, void* data) {
         auto cm = static_cast<JamiMessage*>(data);
-        jami::Manager::instance().sendTextMessage(cm->accountId, cm->peerId, cm->data, true);
+        if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(
+                cm->accountId)) {
+            try {
+                if (cm->isSwarm)
+                    acc->sendMessage(cm->peerId, cm->data.at("body"));
+                else
+                    jami::Manager::instance().sendTextMessage(cm->accountId,
+                                                              cm->peerId,
+                                                              cm->data,
+                                                              true);
+            } catch (const std::exception& e) {
+                JAMI_ERR("Exception during text message sending: %s", e.what());
+            }
+        }
         return 0;
     };
 
@@ -133,16 +147,15 @@ ChatServicesManager::cleanChatSubjects(const std::string& accountId, const std::
 
 void
 ChatServicesManager::toggleChatHandler(const std::string& chatHandlerId,
-                        const std::string& accountId,
-                        const std::string& peerId,
-                        const bool toggle)
+                                       const std::string& accountId,
+                                       const std::string& peerId,
+                                       const bool toggle)
 {
     toggleChatHandler(std::stoull(chatHandlerId), accountId, peerId, toggle);
 }
 
 std::vector<std::string>
-ChatServicesManager::getChatHandlerStatus(const std::string& accountId,
-                                                const std::string& peerId)
+ChatServicesManager::getChatHandlerStatus(const std::string& accountId, const std::string& peerId)
 {
     std::pair<std::string, std::string> mPair(accountId, peerId);
     const auto& it = chatHandlerToggled_.find(mPair);
@@ -170,7 +183,9 @@ ChatServicesManager::getChatHandlerDetails(const std::string& chatHandlerIdStr)
 }
 
 void
-ChatServicesManager::setPreference(const std::string& key, const std::string& value, const std::string& scopeStr)
+ChatServicesManager::setPreference(const std::string& key,
+                                   const std::string& value,
+                                   const std::string& scopeStr)
 {
     for (auto& chatHandler : chatHandlers_) {
         if (scopeStr.find(chatHandler->getChatHandlerDetails()["name"]) != std::string::npos) {
@@ -181,18 +196,19 @@ ChatServicesManager::setPreference(const std::string& key, const std::string& va
 
 void
 ChatServicesManager::toggleChatHandler(const uintptr_t chatHandlerId,
-                        const std::string& accountId,
-                        const std::string& peerId,
-                        const bool toggle)
+                                       const std::string& accountId,
+                                       const std::string& peerId,
+                                       const bool toggle)
 {
     std::pair<std::string, std::string> mPair(accountId, peerId);
     auto& handlers = chatHandlerToggled_[mPair];
     chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>());
 
-    auto chatHandlerIt = std::find_if(chatHandlers_.begin(), chatHandlers_.end(),
-                    [chatHandlerId](ChatHandlerPtr& handler) {
-                        return ((uintptr_t) handler.get() == chatHandlerId);
-                        });
+    auto chatHandlerIt = std::find_if(chatHandlers_.begin(),
+                                      chatHandlers_.end(),
+                                      [chatHandlerId](ChatHandlerPtr& handler) {
+                                          return ((uintptr_t) handler.get() == chatHandlerId);
+                                      });
 
     if (chatHandlerIt != chatHandlers_.end()) {
         if (toggle) {
