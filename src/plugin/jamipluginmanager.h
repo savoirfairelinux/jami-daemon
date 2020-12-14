@@ -103,15 +103,6 @@ public:
     bool unloadPlugin(const std::string& rootPath);
 
     /**
-     * @brief togglePlugin
-     * @param rootPath of the plugin folder
-     * @param toggle: if true, register a new instance of the plugin
-     * else, remove the existing instance
-     * N.B: before adding a new instance, remove any existing one
-     */
-    void togglePlugin(const std::string& rootPath, bool toggle);
-
-    /**
      * @brief getLoadedPlugins
      * @return vector of rootpaths of the loaded plugins
      */
@@ -127,7 +118,6 @@ public:
 
     bool resetPluginPreferencesValuesMap(const std::string& rootPath);
 
-public:
     CallServicesManager& getCallServicesManager() { return callsm_; }
 
     ChatServicesManager& getChatServicesManager() { return chatsm_; }
@@ -209,12 +199,10 @@ private:
 
     void registerServices();
 
-private:
     PluginManager pm_;
     std::map<std::string, std::map<std::string, std::string>> pluginDetailsMap_;
 
     // Services
-private:
     CallServicesManager callsm_;
     ChatServicesManager chatsm_;
 };

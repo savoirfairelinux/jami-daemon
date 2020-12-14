@@ -36,7 +36,6 @@
 namespace DRing {
 DRING_PUBLIC bool loadPlugin(const std::string& path);
 DRING_PUBLIC bool unloadPlugin(const std::string& path);
-DRING_PUBLIC void togglePlugin(const std::string& path, bool toggle);
 DRING_PUBLIC std::map<std::string, std::string> getPluginDetails(const std::string& path);
 DRING_PUBLIC std::vector<std::map<std::string, std::string>> getPluginPreferences(
     const std::string& path);
