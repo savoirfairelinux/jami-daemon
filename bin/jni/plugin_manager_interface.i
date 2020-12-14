@@ -26,7 +26,6 @@
 namespace DRing {
 bool loadPlugin(const std::string& path);
 bool unloadPlugin(const std::string& path);
-void togglePlugin(const std::string& path, bool toggle);
 std::map<std::string,std::string> getPluginDetails(const std::string& path);
 std::vector<std::map<std::string,std::string>> getPluginPreferences(const std::string& path);
 bool setPluginPreference(const std::string& path, const std::string& key, const std::string& value);

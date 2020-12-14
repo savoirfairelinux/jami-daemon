@@ -45,12 +45,6 @@ unloadPlugin(const std::string& path)
     return status;
 }
 
-void
-togglePlugin(const std::string& path, bool toggle)
-{
-    jami::Manager::instance().getJamiPluginManager().togglePlugin(path, toggle);
-}
-
 std::map<std::string, std::string>
 getPluginDetails(const std::string& path)
 {
