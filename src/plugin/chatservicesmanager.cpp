@@ -20,6 +20,7 @@
 #include "pluginmanager.h"
 #include "logger.h"
 #include "manager.h"
+#include "jamidht/jamiaccount.h"
 #include "fileutils.h"
 
 namespace jami {
@@ -90,7 +91,20 @@ ChatServicesManager::registerChatService(PluginManager& pluginManager)
     // sendTextMessage is a service that allows plugins to send a message in a conversation.
     auto sendTextMessage = [this](const DLPlugin*, void* data) {
         auto cm = static_cast<JamiMessage*>(data);
-        jami::Manager::instance().sendTextMessage(cm->accountId, cm->peerId, cm->data, true);
+        if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(
+                cm->accountId)) {
+            try {
+                if (cm->isSwarm)
+                    acc->sendMessage(cm->peerId, cm->data.at("body"));
+                else
+                    jami::Manager::instance().sendTextMessage(cm->accountId,
+                                                              cm->peerId,
+                                                              cm->data,
+                                                              true);
+            } catch (const std::exception& e) {
+                JAMI_ERR("Exception during text message sending: %s", e.what());
+            }
+        }
         return 0;
     };
 
