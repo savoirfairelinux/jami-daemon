@@ -1759,5 +1759,20 @@
                </tp:docstring>
            </arg>
        </signal>
+
+       <method name="setDefaultModerator" tp:name-for-bindings="setDefaultModerator">
+           <tp:added version="9.9.0"/>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="s" name="peerURI" direction="in"/>
+           <arg type="b" name="state" direction="in"/>
+       </method>
+
+       <method name="getDefaultModerators" tp:name-for-bindings="getDefaultModerators">
+           <tp:added version="9.9.0"/>
+           <arg type="s" name="accountID" direction="in"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="list" direction="out">
+           </arg>
+       </method>
    </interface>
 </node>

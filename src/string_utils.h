@@ -23,6 +23,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 #include <algorithm>
 #include <regex>
 #include <iterator>
@@ -142,5 +143,9 @@ std::vector<unsigned> split_string_to_unsigned(const std::string& s, char sep);
 void string_replace(std::string& str, const std::string& from, const std::string& to);
 
 std::string_view string_remove_suffix(std::string_view str, char separator);
+
+std::string string_join(std::set<std::string> set, std::string_view separator = "/");
+
+std::set<std::string> string_split_set(std::string& str, std::string_view separator = "/");
 
 } // namespace jami

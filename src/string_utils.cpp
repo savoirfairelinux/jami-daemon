@@ -146,4 +146,27 @@ string_remove_suffix(std::string_view str, char separator)
     return str;
 }
 
+std::string
+string_join(std::set<std::string> set, std::string_view separator)
+{
+    if (set.empty())
+        return "";
+    std::string output;
+    for (const auto &s : set)
+        output += s+separator;
+    return output;
+}
+
+std::set<std::string>
+string_split_set(std::string& str, std::string_view separator)
+{
+    std::set<std::string> output;
+    for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last; first = second + 1) {
+        second = std::find_first_of(first, last, std::cbegin(separator), std::cend(separator));
+        if (first != second)
+            output.emplace(first, second - first);
+    }
+    return output;
+}
+
 } // namespace jami

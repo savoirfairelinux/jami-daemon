@@ -69,6 +69,7 @@ static const char* const CONFIG_LOCAL_PORT = "Account.localPort";
 static const char* const CONFIG_PUBLISHED_PORT = "Account.publishedPort";
 static const char* const CONFIG_PUBLISHED_ADDRESS = "Account.publishedAddress";
 static const char* const CONFIG_UPNP_ENABLED = "Account.upnpEnabled";
+static const char* const CONFIG_DEFAULT_MODERATORS = "Account.defaultModerator";
 
 // SIP specific parameters
 static const char* const CONFIG_STUN_SERVER = "STUN.server";
