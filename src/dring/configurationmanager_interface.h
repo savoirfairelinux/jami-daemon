@@ -286,6 +286,18 @@ DRING_PUBLIC bool isAudioMeterActive(const std::string& id);
  */
 DRING_PUBLIC void setAudioMeterState(const std::string& id, bool state);
 
+/**
+ * Add/remove default moderator for conferences
+ */
+DRING_PUBLIC void setDefaultModerator(const std::string& accountID,
+                                        const std::string& peerURI,
+                                        const bool& state);
+
+/**
+ * Get default moderators for an account
+ */
+DRING_PUBLIC std::vector<std::string> getDefaultModerators(const std::string& accountID);
+
 struct DRING_PUBLIC AudioSignal
 {
     struct DRING_PUBLIC DeviceEvent

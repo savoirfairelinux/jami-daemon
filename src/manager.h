@@ -938,6 +938,11 @@ public:
     void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
     void hangupParticipant(const std::string& confId, const std::string& participant);
 
+    void setDefaultModerator(const std::string& accountID,
+                                const std::string& peerURI,
+                                const bool& state);
+    std::vector<std::string> getDefaultModerators(const std::string& accountID);
+
 private:
     Manager();
     ~Manager();

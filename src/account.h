@@ -314,6 +314,11 @@ public:
      */
     const std::string& getUserAgentName();
 
+    const std::string& getDefaultModerators() const { return defaultModerators_; }
+
+    void addDefaultModerator(const std::string& peerURI);
+    void removeDefaultModerator(const std::string& peerURI);
+
 public: // virtual methods that has to be implemented by concrete classes
     /**
      * This method is called to request removal of possible account traces on the system,
@@ -385,6 +390,7 @@ protected:
     static const char* const PROXY_SERVER_KEY;
     static const char* const PROXY_PUSH_TOKEN_KEY;
     static const char* const ACTIVE_CODEC_KEY;
+    static const char* const DEFAULT_MODERATORS_KEY;
 
     static const std::string DEFAULT_USER_AGENT;
 
@@ -501,6 +507,8 @@ protected:
     bool upnpEnabled_;
     mutable std::mutex upnp_mtx {};
     std::unique_ptr<jami::upnp::Controller> upnp_;
+
+    std::string defaultModerators_;
 
     /**
      * private account codec searching functions
