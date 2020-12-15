@@ -1786,7 +1786,7 @@ SIPCall::setPeerMute(bool state)
     }
     peerMuted_ = state;
     if (auto conf = Manager::instance().getConferenceFromID(getConfId())) {
-        conf->muteParticipant(getPeerNumber(), state);
+        conf->updateMuted();
     }
 }
 
