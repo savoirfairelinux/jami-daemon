@@ -100,7 +100,16 @@ DRING_PUBLIC std::string getCurrentAudioCodecName(const std::string& callID);
 DRING_PUBLIC void playDTMF(const std::string& key);
 DRING_PUBLIC void startTone(int32_t start, int32_t type);
 
+/* Switch resource for the first video input */
 DRING_PUBLIC bool switchInput(const std::string& callID, const std::string& resource);
+/* Switch resource for inputId */
+DRING_PUBLIC bool switchInput(const std::string& callID, int inputId, const std::string& resource);
+/* Add new input to the call, returns inputId or negative error code */
+DRING_PUBLIC int addInput(const std::string& callID, const std::string& resource, int type);
+/* Remove input inputId */
+DRING_PUBLIC bool removeInput(const std::string& callID, int inputId);
+/* Get list of inputs, inputId is the index in the vector */
+DRING_PUBLIC std::vector<std::string> getInputs(const std::string& callID);
 
 /* Instant messaging */
 DRING_PUBLIC void sendTextMessage(const std::string& callID,
