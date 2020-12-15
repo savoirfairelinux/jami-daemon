@@ -78,6 +78,7 @@ Conference::Conference()
                 auto it = shared->videoToCall_.find(info.source);
                 if (it == shared->videoToCall_.end())
                     it = shared->videoToCall_.emplace_hint(it, info.source, std::string());
+                bool isLocalMuted = false;
                 // If not local
                 if (!it->second.empty()) {
                     // Retrieve calls participants
@@ -85,8 +86,10 @@ Conference::Conference()
                     // a master of a conference and there is only one remote
                     // In the future, we should retrieve confInfo from the call
                     // To merge layouts informations
-                    if (auto call = Manager::instance().callFactory.getCall<SIPCall>(it->second))
+                    if (auto call = Manager::instance().callFactory.getCall<SIPCall>(it->second)) {
                         uri = call->getPeerNumber();
+                        isLocalMuted = call->isPeerMuted();
+                    }
                 }
                 auto active = false;
                 if (auto videoMixer = shared->getVideoMixer())
@@ -97,7 +100,7 @@ Conference::Conference()
                 auto isModerator = shared->isModerator(partURI);
                 if (uri.empty())
                     partURI = "host";
-                auto isMuted = shared->isMuted(partURI);
+                auto isModeratorMuted = shared->isMuted(partURI);
                 newInfo.emplace_back(ParticipantInfo {std::move(uri),
                                                       "",
                                                       active,
@@ -106,7 +109,8 @@ Conference::Conference()
                                                       info.w,
                                                       info.h,
                                                       !info.hasVideo,
-                                                      isMuted,
+                                                      isLocalMuted,
+                                                      isModeratorMuted,
                                                       isModerator});
             }
             lk.unlock();
@@ -117,7 +121,7 @@ Conference::Conference()
                     uri = call->getPeerNumber();
                 auto isModerator = shared->isModerator(uri);
                 newInfo.emplace_back(
-                    ParticipantInfo {std::move(uri), "", false, 0, 0, 0, 0, true, false, isModerator});
+                    ParticipantInfo {std::move(uri), "", false, 0, 0, 0, 0, true, false, false, isModerator});
             }
 
             {
@@ -703,14 +707,28 @@ Conference::updateMuted()
         std::lock_guard<std::mutex> lk2(confInfoMutex_);
         for (auto& info : confInfo_) {
             auto uri = string_remove_suffix(info.uri, '@');
-            if (uri.empty())
+            if (uri.empty()) {
                 uri = "host";
-            info.audioMuted = isMuted(uri);
+                info.audioModeratorMuted = isMuted(uri);
+                // Check if one of the subcall is muted
+                info.audioLocalMuted = false;
+                for (const auto& participant_id : participants_) {
+                    if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+                        if(call->isAudioMuted()) {
+                            info.audioLocalMuted = true;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                info.audioModeratorMuted = isMuted(uri);
+                if (auto call = Manager::instance().callFactory.getCall<SIPCall>(info.uri)) // To check, string_remove_suffix maybe needed
+                    info.audioLocalMuted = call->isPeerMuted();
+            }
         }
     }
     sendConferenceInfos();
 }
-
 
 ConfInfo
 Conference::getConfInfoHostUri(std::string_view uri)
