@@ -54,7 +54,8 @@ struct ParticipantInfo
     int w {0};
     int h {0};
     bool videoMuted {false};
-    bool audioMuted {false};
+    bool audioLocalMuted {false};
+    bool audioModeratorMuted {false};
     bool isModerator {false};
 
     void fromJson(const Json::Value& v)
@@ -67,7 +68,8 @@ struct ParticipantInfo
         w = v["w"].asInt();
         h = v["h"].asInt();
         videoMuted = v["videoMuted"].asBool();
-        audioMuted = v["audioMuted"].asBool();
+        audioLocalMuted = v["audioLocalMuted"].asBool();
+        audioModeratorMuted = v["audioModeratorMuted"].asBool();
         isModerator = v["isModerator"].asBool();
     }
 
@@ -82,7 +84,8 @@ struct ParticipantInfo
         val["w"] = w;
         val["h"] = h;
         val["videoMuted"] = videoMuted;
-        val["audioMuted"] = audioMuted;
+        val["audioLocalMuted"] = audioLocalMuted;
+        val["audioModeratorMuted"] = audioModeratorMuted;
         val["isModerator"] = isModerator;
         return val;
     }
@@ -97,7 +100,8 @@ struct ParticipantInfo
                 {"w", std::to_string(w)},
                 {"h", std::to_string(h)},
                 {"videoMuted", videoMuted ? "true" : "false"},
-                {"audioMuted", audioMuted ? "true" : "false"},
+                {"audioLocalMuted", audioLocalMuted ? "true" : "false"},
+                {"audioModeratorMuted", audioModeratorMuted ? "true" : "false"},
                 {"isModerator", isModerator ? "true" : "false"}};
     }
 };
@@ -239,6 +243,8 @@ public:
     void setModerator(const std::string& uri, const bool& state);
     void muteParticipant(const std::string& uri, const bool& state, const std::string& mediaType = "MEDIA_TYPE_AUDIO");
     void hangupParticipant(const std::string& participant_id);
+    void sendConferenceInfos();
+    void updateMuted();
 
 private:
     std::weak_ptr<Conference> weak()
@@ -255,7 +261,6 @@ private:
 
     mutable std::mutex confInfoMutex_ {};
     mutable ConfInfo confInfo_ {};
-    void sendConferenceInfos();
     // We need to convert call to frame
     std::mutex videoToCallMtx_;
     std::map<Observable<std::shared_ptr<MediaFrame>>*, std::string> videoToCall_ {};
@@ -274,7 +279,6 @@ private:
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec);
 
     bool isMuted(std::string_view uri) const;
-    void updateMuted();
 
     ConfInfo getConfInfoHostUri(std::string_view uri);
     bool isHost(std::string_view uri) const;
