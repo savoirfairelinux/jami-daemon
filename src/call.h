@@ -331,6 +331,9 @@ public: // media management
 
     std::unique_ptr<AudioDeviceGuard> audioGuard;
 
+    bool isAudioMuted() { return isAudioMuted_; }
+    bool isVideoMuted() { return isVideoMuted_; }
+
 protected:
     virtual void merge(Call& scall);
 
