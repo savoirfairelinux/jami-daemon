@@ -1159,7 +1159,7 @@ Manager::muteMediaCall(const std::string& callId, const std::string& mediaType, 
         call->muteMedia(mediaType, is_muted);
         return true;
     } else if (auto conf = getConferenceFromID(callId)) {
-        conf->muteParticipant("", is_muted, mediaType);     // Mute host
+        conf->muteHost(is_muted, mediaType);
         return true;
     } else {
         JAMI_DBG("CallID %s doesn't exist in call muting", callId.c_str());

@@ -78,6 +78,7 @@ Conference::Conference()
                 auto it = shared->videoToCall_.find(info.source);
                 if (it == shared->videoToCall_.end())
                     it = shared->videoToCall_.emplace_hint(it, info.source, std::string());
+                bool isLocalMuted = false;
                 // If not local
                 if (!it->second.empty()) {
                     // Retrieve calls participants
@@ -85,8 +86,10 @@ Conference::Conference()
                     // a master of a conference and there is only one remote
                     // In the future, we should retrieve confInfo from the call
                     // To merge layouts informations
-                    if (auto call = Manager::instance().callFactory.getCall<SIPCall>(it->second))
+                    if (auto call = Manager::instance().callFactory.getCall<SIPCall>(it->second)) {
                         uri = call->getPeerNumber();
+                        isLocalMuted = call->isPeerMuted();
+                    }
                 }
                 auto active = false;
                 if (auto videoMixer = shared->getVideoMixer())
@@ -96,7 +99,7 @@ Conference::Conference()
                 auto isModerator = shared->isModerator(partURI);
                 if (uri.empty())
                     partURI = "host"sv;
-                auto isMuted = shared->isMuted(partURI);
+                auto isModeratorMuted = shared->isMuted(partURI);
                 newInfo.emplace_back(ParticipantInfo {std::move(uri),
                                                       "",
                                                       active,
@@ -105,7 +108,8 @@ Conference::Conference()
                                                       info.w,
                                                       info.h,
                                                       !info.hasVideo,
-                                                      isMuted,
+                                                      isLocalMuted,
+                                                      isModeratorMuted,
                                                       isModerator});
             }
             lk.unlock();
@@ -116,7 +120,7 @@ Conference::Conference()
                     uri = call->getPeerNumber();
                 auto isModerator = shared->isModerator(uri);
                 newInfo.emplace_back(
-                    ParticipantInfo {std::move(uri), "", false, 0, 0, 0, 0, true, false, isModerator});
+                    ParticipantInfo {std::move(uri), "", false, 0, 0, 0, 0, true, false, false, isModerator});
             }
 
             shared->updateConferenceInfo(std::move(newInfo));
@@ -630,38 +634,23 @@ Conference::isMuted(std::string_view uri) const
 }
 
 void
-Conference::muteParticipant(const std::string& uri, const bool& state, const std::string& mediaType)
+Conference::muteParticipant(const std::string& uri, const bool& state)
 {
     // Mute host
     if (isHost(uri)) {
-        if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
-            if (state and not isMuted("host")) {
-                JAMI_DBG("Mute host");
-                participantsMuted_.emplace("host");
-                unbindHost();
-                updateMuted();
-            } else if (not state and isMuted("host")) {
-                JAMI_DBG("Unmute host");
-                participantsMuted_.erase("host");
-                bindHost();
-                updateMuted();
-            }
-            emitSignal<DRing::CallSignal::AudioMuted>(id_, state);
-            return;
-        } else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
-#ifdef ENABLE_VIDEO
-            if (state) {
-                if (auto mixer = getVideoMixer()) {
-                    mixer->stopInput();
-                }
-            } else {
-                if (auto mixer = getVideoMixer()) {
-                    mixer->switchInput(mediaInput_);
-                }
-            }
-            return;
-#endif
+        if (state and not isMuted("host")) {
+            JAMI_DBG("Mute host");
+            participantsMuted_.emplace("host");
+            unbindHost();
+            updateMuted();
+        } else if (not state and isMuted("host")) {
+            JAMI_DBG("Unmute host");
+            participantsMuted_.erase("host");
+            bindHost();
+            updateMuted();
         }
+        emitSignal<DRing::CallSignal::AudioMuted>(id_, state);
+        return;
     }
 
     // Mute participant
@@ -690,16 +679,27 @@ Conference::muteParticipant(const std::string& uri, const bool& state, const std
 void
 Conference::updateMuted()
 {
-    std::lock_guard<std::mutex> lk(confInfoMutex_);
     for (auto& info : confInfo_) {
         auto uri = string_remove_suffix(info.uri, '@');
-        if (uri.empty())
+        if (uri.empty()) {
             uri = "host"sv;
-        info.audioMuted = isMuted(uri);
+            info.audioModeratorMuted = isMuted(uri);
+            info.audioLocalMuted = audioMuted_;
+        } else {
+            info.audioModeratorMuted = isMuted(uri);
+            for (const auto& item : participants_) {
+                if (auto call = Manager::instance().callFactory.getCall<SIPCall>(item)) {
+                    if (uri == string_remove_suffix(call->getPeerNumber(), '@')) {
+                        info.audioLocalMuted = call->isPeerMuted();
+                        break;
+                    }
+                }
+            }
+
+        }
     }
     sendConferenceInfos();
 }
-
 
 ConfInfo
 Conference::getConfInfoHostUri(std::string_view uri)
@@ -757,6 +757,42 @@ Conference::hangupParticipant(const std::string& participant_id)
                 return;
             }
         }
+    }
+}
+
+void
+Conference::muteHost(bool is_muted, const std::string& mediaType)
+{
+    if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
+        if (is_muted == audioMuted_)
+            return;
+        if (is_muted) {
+            JAMI_DBG("Local audio mute host");
+            unbindHost();
+        } else {
+            JAMI_DBG("Local audio unmute host");
+            bindHost();
+        }
+        audioMuted_ = is_muted;
+        updateMuted();
+        emitSignal<DRing::CallSignal::AudioMuted>(id_, is_muted);
+        return;
+    } else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
+#ifdef ENABLE_VIDEO
+        if (is_muted == videoMuted_)
+            return;
+        if (is_muted) {
+            if (auto mixer = getVideoMixer()) {
+                mixer->stopInput();
+            }
+        } else {
+            if (auto mixer = getVideoMixer()) {
+                mixer->switchInput(mediaInput_);
+            }
+        }
+        videoMuted_ = is_muted;
+        return;
+#endif
     }
 }
 
