@@ -101,6 +101,7 @@ DRING_PUBLIC void playDTMF(const std::string& key);
 DRING_PUBLIC void startTone(int32_t start, int32_t type);
 
 DRING_PUBLIC bool switchInput(const std::string& callID, const std::string& resource);
+DRING_PUBLIC bool switchSecondaryInput(const std::string& confId, const std::string& resource);
 
 /* Instant messaging */
 DRING_PUBLIC void sendTextMessage(const std::string& callID,

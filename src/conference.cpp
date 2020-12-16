@@ -64,7 +64,7 @@ Conference::Conference()
     }
 
 #ifdef ENABLE_VIDEO
-    getVideoMixer()->setOnSourcesUpdated([this](const std::vector<video::SourceInfo>&& infos) {
+    getVideoMixer()->setOnSourcesUpdated([this](std::vector<video::SourceInfo>&& infos) {
         runOnMainThread([w = weak(), infos = std::move(infos)] {
             auto shared = w.lock();
             if (!shared)
@@ -92,11 +92,10 @@ Conference::Conference()
                 if (auto videoMixer = shared->getVideoMixer())
                     active = info.source == videoMixer->getActiveParticipant();
                 subCalls.erase(it->second);
-                std::string_view partURI = uri;
-                partURI = string_remove_suffix(partURI, '@');
+                std::string_view partURI = string_remove_suffix(partURI, '@');
                 auto isModerator = shared->isModerator(partURI);
                 if (uri.empty())
-                    partURI = "host";
+                    partURI = "host"sv;
                 auto isMuted = shared->isMuted(partURI);
                 newInfo.emplace_back(ParticipantInfo {std::move(uri),
                                                       "",
@@ -348,6 +347,8 @@ Conference::attach()
 #ifdef ENABLE_VIDEO
         if (auto mixer = getVideoMixer()) {
             mixer->switchInput(mediaInput_);
+            if (not mediaSecondaryInput_.empty())
+                mixer->switchSecondaryInput(mediaSecondaryInput_);
         }
 #endif
         setState(State::ACTIVE_ATTACHED);
@@ -489,6 +490,15 @@ Conference::switchInput(const std::string& input)
 #endif
 }
 
+void
+Conference::switchSecondaryInput(const std::string& input)
+{
+#ifdef ENABLE_VIDEO
+    mediaSecondaryInput_ = input;
+    getVideoMixer()->switchSecondaryInput(input);
+#endif
+}
+
 #ifdef ENABLE_VIDEO
 std::shared_ptr<video::VideoMixer>
 Conference::getVideoMixer()
@@ -593,15 +603,14 @@ Conference::setModerator(const std::string& uri, const bool& state)
 {
     for (const auto& p : participants_) {
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
-            std::string_view partURI = call->getPeerNumber();
-            partURI = string_remove_suffix(partURI, '@');
+            auto partURI = string_remove_suffix(call->getPeerNumber(), '@');
             if (partURI == uri) {
                 if (state and not isModerator(uri)) {
-                    JAMI_DBG("Add %s as moderator", partURI.data());
+                    JAMI_DBG("Add %.*s as moderator", (int) partURI.size(), partURI.data());
                     moderators_.emplace(uri);
                     updateModerators();
                 } else if (not state and isModerator(uri)) {
-                    JAMI_DBG("Remove %s as moderator", partURI.data());
+                    JAMI_DBG("Remove %.*s as moderator", (int) partURI.size(), partURI.data());
                     moderators_.erase(uri);
                     updateModerators();
                 }
@@ -673,11 +682,10 @@ Conference::muteParticipant(const std::string& uri, const bool& state, const std
     }
 
     // Mute participant
+    std::string_view peerURI = string_remove_suffix(uri, '@');
     for (const auto& p : participants_) {
-        std::string_view peerURI = string_remove_suffix(uri, '@');
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
-            std::string_view partURI = call->getPeerNumber();
-            partURI = string_remove_suffix(partURI, '@');
+            std::string_view partURI = string_remove_suffix(call->getPeerNumber(), '@');
             if (partURI == peerURI) {
                 if (state and not isMuted(partURI)) {
                     JAMI_DBG("Mute participant %s", partURI.data());
@@ -704,7 +712,7 @@ Conference::updateMuted()
         for (auto& info : confInfo_) {
             auto uri = string_remove_suffix(info.uri, '@');
             if (uri.empty())
-                uri = "host";
+                uri = "host"sv;
             info.audioMuted = isMuted(uri);
         }
     }

@@ -332,6 +332,17 @@ switchInput(const std::string& callID, const std::string& resource)
     return jami::Manager::instance().switchInput(callID, resource);
 }
 
+bool
+switchSecondaryInput(const std::string& confId, const std::string& resource)
+{
+    if (auto conf = jami::Manager::instance().getConferenceFromID(confId)) {
+        conf->switchSecondaryInput(res);
+        return true;
+    }
+    return false;
+}
+
+
 void
 sendTextMessage(const std::string& callID,
                 const std::map<std::string, std::string>& messages,
