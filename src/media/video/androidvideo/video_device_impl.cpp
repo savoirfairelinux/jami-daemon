@@ -167,11 +167,7 @@ DeviceParams
 VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
-    std::stringstream ss1, ss2;
-
-    ss1 << fmt_->ring_format;
-    ss1 >> params.format;
-
+    params.format = std::to_string(fmt_->ring_format);
     params.unique_id = name;
     params.name = name;
     params.input = name;
@@ -179,7 +175,6 @@ VideoDeviceImpl::getDeviceParams() const
     params.width = size_.first;
     params.height = size_.second;
     params.framerate = rate_;
-
     return params;
 }
 

@@ -140,11 +140,7 @@ VideoInput::getPixelFormat() const
     if (!videoManagedByClient()) {
         return decoder_->getPixelFormat();
     }
-    int format;
-    std::stringstream ss;
-    ss << decOpts_.format;
-    ss >> format;
-    return (AVPixelFormat) format;
+    return (AVPixelFormat) std::stoi(decOpts_.format);
 }
 
 void

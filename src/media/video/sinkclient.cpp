@@ -332,10 +332,9 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
     ++frameCount_;
     if (seconds.count() > 1) {
-        std::ostringstream fps;
-        fps << frameCount_ / seconds.count();
+        auto fps = frameCount_ / seconds.count();
         // Send the framerate in smartInfo
-        Smartools::getInstance().setFrameRate(id_, fps.str());
+        Smartools::getInstance().setFrameRate(id_, std::to_string(fps));
         frameCount_ = 0;
         lastFrameDebug_ = currentTime;
     }
