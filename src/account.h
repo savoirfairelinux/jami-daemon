@@ -316,6 +316,7 @@ public:
 
     const std::string& getDefaultModerators() const { return defaultModerators_; }
 
+    bool isLocalModeratorsEnabled() const { return localModeratorsEnabled_;  }
 public: // virtual methods that has to be implemented by concrete classes
     /**
      * This method is called to request removal of possible account traces on the system,
@@ -388,6 +389,7 @@ protected:
     static const char* const PROXY_PUSH_TOKEN_KEY;
     static const char* const ACTIVE_CODEC_KEY;
     static const char* const DEFAULT_MODERATORS_KEY;
+    static const char* const LOCAL_MODERATORS_KEY;
 
     static const std::string DEFAULT_USER_AGENT;
 
@@ -506,6 +508,7 @@ protected:
     std::unique_ptr<jami::upnp::Controller> upnp_;
 
     std::string defaultModerators_;
+    bool localModeratorsEnabled_;
 
     /**
      * private account codec searching functions
