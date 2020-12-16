@@ -588,7 +588,7 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
     else if (op == PJ_ICE_STRANS_OP_NEGOTIATION) {
         if (done) {
             // Dump of connection pairs
-            std::stringstream out;
+            std::ostringstream out;
             for (unsigned i = 0; i < component_count_; ++i) {
                 auto laddr = getLocalAddress(i);
                 auto raddr = getRemoteAddress(i);

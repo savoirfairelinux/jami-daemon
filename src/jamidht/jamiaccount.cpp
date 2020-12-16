@@ -1871,7 +1871,7 @@ JamiAccount::loadBootstrap() const
 {
     std::vector<std::string> bootstrap;
     if (!hostname_.empty()) {
-        std::stringstream ss(hostname_);
+        std::istringstream ss(hostname_);
         std::string node_addr;
         while (std::getline(ss, node_addr, ';'))
             bootstrap.emplace_back(std::move(node_addr));

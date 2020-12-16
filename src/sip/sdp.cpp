@@ -208,9 +208,9 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
             rtpmap.clock_rate = 90000;
         }
 
-        std::ostringstream s;
-        s << payload;
-        pj_strdup2(memPool_.get(), &med->desc.fmt[i], s.str().c_str());
+        auto payloadStr = std::to_string(payload);
+        auto pjPayload = sip_utils::CONST_PJ_STR(payloadStr);
+        pj_strdup(memPool_.get(), &med->desc.fmt[i], &pjPayload);
 
         // Add a rtpmap field for each codec
         // We could add one only for dynamic payloads because the codecs with static RTP payloads

@@ -369,7 +369,7 @@ ArchiveAccountManager::computeKeys(const std::string& password,
     auto tseed = now.count() / std::chrono::seconds(EXPORT_KEY_RENEWAL_TIME).count();
     if (previous)
         tseed--;
-    std::stringstream ss;
+    std::ostringstream ss;
     ss << std::hex << tseed;
     auto tseed_str = ss.str();
 
