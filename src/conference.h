@@ -288,6 +288,8 @@ private:
     bool isHost(std::string_view uri) const;
     bool audioMuted_ {false};
     bool videoMuted_ {false};
+
+    bool localModAdded_ {false};
 };
 
 } // namespace jami

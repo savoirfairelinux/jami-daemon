@@ -219,6 +219,8 @@ void setAudioMeterState(const std::string& id, bool state);
 
 void setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state);
 std::vector<std::string> getDefaultModerators(const std::string& accountID);
+void enableLocalModerators(const std::string& accountID, bool isModEnabled);
+bool isLocalModeratorsEnabled(const std::string& accountID);
 }
 
 class ConfigurationCallback {
