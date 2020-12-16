@@ -235,13 +235,12 @@ MultiplexedSocket::Impl::onRequest(const std::string& name, uint16_t channel)
     val.channel = channel;
     val.name = name;
     val.state = accept ? ChannelRequestState::ACCEPT : ChannelRequestState::DECLINE;
-    std::stringstream ss;
-    msgpack::pack(ss, val);
+    msgpack::sbuffer buffer(512);
+    msgpack::pack(buffer, val);
     std::error_code ec;
-    auto toSend = ss.str();
     int wr = parent_.write(CONTROL_CHANNEL,
-                            reinterpret_cast<const uint8_t*>(&toSend[0]),
-                            toSend.size(),
+                            reinterpret_cast<const uint8_t*>(buffer.data()),
+                            buffer.size(),
                             ec);
     if (wr < 0) {
         if (ec)
