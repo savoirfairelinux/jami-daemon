@@ -298,6 +298,12 @@ DRING_PUBLIC void setDefaultModerator(const std::string& accountID,
  */
 DRING_PUBLIC std::vector<std::string> getDefaultModerators(const std::string& accountID);
 
+/**
+ * Enable/disable local moderators for conferences
+ */
+DRING_PUBLIC void enableLocalModerators(const std::string& accountID,
+                                        const bool& isModEnabled);
+
 struct DRING_PUBLIC AudioSignal
 {
     struct DRING_PUBLIC DeviceEvent

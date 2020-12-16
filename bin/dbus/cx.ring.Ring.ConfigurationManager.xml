@@ -1774,5 +1774,11 @@
            <arg type="as" name="list" direction="out">
            </arg>
        </method>
+
+       <method name="enableLocalModerators" tp:name-for-bindings="enableLocalModerators">
+           <tp:added version="10.0.0"/>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="b" name="isModEnabled" direction="in"/>
+       </method>
    </interface>
 </node>

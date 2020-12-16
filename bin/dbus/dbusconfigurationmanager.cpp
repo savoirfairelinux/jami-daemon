@@ -764,3 +764,10 @@ DBusConfigurationManager::getDefaultModerators(const std::string& accountID) -> 
     return DRing::getDefaultModerators(accountID);
 }
 
+void
+DBusConfigurationManager::enableLocalModerators(const std::string& accountID,
+                                                const bool& isModEnabled)
+{
+    return DRing::enableLocalModerators(accountID, isModEnabled);
+}
+

@@ -1092,4 +1092,10 @@ getDefaultModerators(const std::string& accountID)
     return jami::Manager::instance().getDefaultModerators(accountID);
 }
 
+void
+enableLocalModerators(const std::string& accountID, const bool& isModEnabled)
+{
+    jami::Manager::instance().enableLocalModerators(accountID, isModEnabled);
+}
+
 } // namespace DRing
