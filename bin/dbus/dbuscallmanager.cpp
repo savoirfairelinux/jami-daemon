@@ -256,10 +256,16 @@ DBusCallManager::getIsRecording(const std::string& callID) -> decltype(DRing::ge
     return DRing::getIsRecording(callID);
 }
 
-void
+bool
 DBusCallManager::switchInput(const std::string& callID, const std::string& input)
 {
-    DRing::switchInput(callID, input);
+    return DRing::switchInput(callID, input);
+}
+
+bool
+DBusCallManager::switchSecondaryInput(const std::string& conferenceId, const std::string& input)
+{
+    return DRing::switchSecondaryInput(conferenceId, input);
 }
 
 auto

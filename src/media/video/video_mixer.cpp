@@ -94,6 +94,11 @@ VideoMixer::~VideoMixer()
         // prefer to release it now than after the next join
         videoLocal_.reset();
     }
+    if (videoLocalSecondary_) {
+        videoLocalSecondary_->detach(this);
+        // prefer to release it now than after the next join
+        videoLocalSecondary_.reset();
+    }
 
     loop_.join();
 }
@@ -129,6 +134,33 @@ VideoMixer::switchInput(const std::string& input)
 }
 
 void
+VideoMixer::switchSecondaryInput(const std::string& input) {
+    if (auto local = videoLocalSecondary_) {
+        // Detach videoInput from mixer
+        local->detach(this);
+#if !VIDEO_CLIENT_INPUT
+        if (auto localInput = std::dynamic_pointer_cast<VideoInput>(local)) {
+            // Stop old VideoInput
+            localInput->stopInput();
+        }
+#endif
+    }
+    videoLocalSecondary_ = getVideoInput(input);
+
+    if (input.empty()) {
+        JAMI_DBG("Input is empty, don't add it in the mixer");
+        return;
+    }
+
+    // Re-attach videoInput to mixer
+    if (videoLocalSecondary_) {
+        if (auto videoInput = std::dynamic_pointer_cast<VideoInput>(videoLocalSecondary_))
+            videoInput->switchInput(input);
+        videoLocalSecondary_->attach(this);
+    }
+}
+
+void
 VideoMixer::stopInput()
 {
     if (auto local = std::move(videoLocal_)) {
@@ -139,7 +171,7 @@ VideoMixer::stopInput()
 void
 VideoMixer::setActiveHost()
 {
-    activeSource_ = videoLocal_.get();
+    activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get() : videoLocal_.get();
     layoutUpdated_ += 1;
 }
 
@@ -171,7 +203,7 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
             // Handle the case where the current shown source leave the conference
             if (activeSource_ == ob) {
                 currentLayout_ = Layout::GRID;
-                activeSource_ = videoLocal_.get();
+                activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get() : videoLocal_.get();
             }
             sources_.remove(x);
             layoutUpdated_ += 1;

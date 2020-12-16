@@ -743,7 +743,7 @@ getVideoInput(const std::string& id, video::VideoInputMode inputMode)
         }
     }
 
-    auto input = std::make_shared<video::VideoInput>(inputMode);
+    auto input = std::make_shared<video::VideoInput>(inputMode, id);
     vmgr.videoInputs[id] = input;
     return input;
 }
