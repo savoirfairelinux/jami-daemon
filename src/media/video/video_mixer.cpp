@@ -94,6 +94,11 @@ VideoMixer::~VideoMixer()
         // prefer to release it now than after the next join
         videoLocal_.reset();
     }
+    if (videoLocalSecondary_) {
+        videoLocalSecondary_->detach(this);
+        // prefer to release it now than after the next join
+        videoLocalSecondary_.reset();
+    }
 
     loop_.join();
 }
@@ -101,7 +106,7 @@ VideoMixer::~VideoMixer()
 void
 VideoMixer::switchInput(const std::string& input)
 {
-    if (auto local = videoLocal_) {
+    if (auto local = std::move(videoLocal_)) {
         // Detach videoInput from mixer
         local->detach(this);
 #if !VIDEO_CLIENT_INPUT
@@ -110,8 +115,6 @@ VideoMixer::switchInput(const std::string& input)
             localInput->stopInput();
         }
 #endif
-    } else {
-        videoLocal_ = getVideoCamera();
     }
 
     if (input.empty()) {
@@ -120,11 +123,32 @@ VideoMixer::switchInput(const std::string& input)
     }
 
     // Re-attach videoInput to mixer
-    if (videoLocal_) {
-        if (auto localInput = std::dynamic_pointer_cast<VideoInput>(videoLocal_)) {
-            localInput->switchInput(input);
-        }
+    if (videoLocal_ = getVideoInput(input)) {
         videoLocal_->attach(this);
+    }
+}
+
+void
+VideoMixer::switchSecondaryInput(const std::string& input) {
+    if (auto local = std::move(videoLocalSecondary_)) {
+        // Detach videoInput from mixer
+        local->detach(this);
+#if !VIDEO_CLIENT_INPUT
+        if (auto localInput = std::dynamic_pointer_cast<VideoInput>(local)) {
+            // Stop old VideoInput
+            localInput->stopInput();
+        }
+#endif
+    }
+
+    if (input.empty()) {
+        JAMI_DBG("Input is empty, don't add it in the mixer");
+        return;
+    }
+
+    // Re-attach videoInput to mixer
+    if (videoLocalSecondary_ = getVideoInput(input)) {
+        videoLocalSecondary_->attach(this);
     }
 }
 
@@ -139,7 +163,7 @@ VideoMixer::stopInput()
 void
 VideoMixer::setActiveHost()
 {
-    activeSource_ = videoLocal_.get();
+    activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get() : videoLocal_.get();
     layoutUpdated_ += 1;
 }
 
@@ -171,7 +195,7 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
             // Handle the case where the current shown source leave the conference
             if (activeSource_ == ob) {
                 currentLayout_ = Layout::GRID;
-                activeSource_ = videoLocal_.get();
+                activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get() : videoLocal_.get();
             }
             sources_.remove(x);
             layoutUpdated_ += 1;

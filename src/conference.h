@@ -214,6 +214,7 @@ public:
     bool toggleRecording() override;
 
     void switchInput(const std::string& input);
+    void switchSecondaryInput(const std::string& input);
 
     void setActiveParticipant(const std::string& participant_id);
     void setLayout(int layout);
@@ -263,6 +264,7 @@ private:
 
 #ifdef ENABLE_VIDEO
     std::string mediaInput_ {};
+    std::string mediaSecondaryInput_ {};
     std::shared_ptr<video::VideoMixer> videoMixer_;
 #endif
 
