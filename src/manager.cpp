@@ -3300,7 +3300,27 @@ Manager::getDefaultModerators(const std::string& accountID)
     // convert std::vector<std::string_view> to std::vector<std::string>
     auto vec = split_string(acc->getDefaultModerators(), "/");
     return std::vector<std::string>(vec.begin(), vec.end());
+}
 
+void
+Manager::enableLocalModerators(const std::string& accountID, const bool& isModEnabled)
+{
+    auto acc = getAccount(accountID);
+    if(!acc) {
+        JAMI_ERR("Fail to set local moderators, account %s not found", accountID.c_str());
+    }
+    acc->enableLocalModerators(isModEnabled);
+    saveConfig(acc);
+}
+
+bool
+Manager::isLocalModeratorsEnabled(const std::string& accountID)
+{
+    auto acc = getAccount(accountID);
+    if(!acc) {
+        JAMI_ERR("Fail to get local moderators, account %s not found", accountID.c_str());
+    }
+    return acc->isLocalModeratorsEnabled();
 }
 
 } // namespace jami
