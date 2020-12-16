@@ -279,6 +279,8 @@ private:
 
     ConfInfo getConfInfoHostUri(std::string_view uri);
     bool isHost(std::string_view uri) const;
+
+    bool localModAdded_ {false};
 };
 
 } // namespace jami

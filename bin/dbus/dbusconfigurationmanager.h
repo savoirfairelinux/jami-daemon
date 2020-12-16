@@ -179,6 +179,8 @@ class DRING_PUBLIC DBusConfigurationManager :
         void setAudioMeterState(const std::string& id, const bool& state);
         void setDefaultModerator(const std::string& accountID, const std::string& peerURI, const bool& state);
         std::vector<std::string> getDefaultModerators(const std::string& accountID);
+        void enableLocalModerators(const std::string& accountID, const bool& isModEnabled);
+        bool isLocalModeratorsEnabled(const std::string& accountID);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__
