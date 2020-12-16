@@ -942,6 +942,9 @@ public:
                                 const std::string& peerURI,
                                 const bool& state);
     std::vector<std::string> getDefaultModerators(const std::string& accountID);
+    void enableLocalModerators(const std::string& accountID, const bool& state);
+    bool isLocalModeratorsEnabled(const std::string& accountID);
+
 
 private:
     Manager();
