@@ -88,6 +88,7 @@ const char* const Account::UPNP_ENABLED_KEY = "upnpEnabled";
 const char* const Account::ACTIVE_CODEC_KEY = "activeCodecs";
 const std::string Account::DEFAULT_USER_AGENT = Account::setDefaultUserAgent();
 const char* const Account::DEFAULT_MODERATORS_KEY = "defaultModerators";
+const char* const Account::LOCAL_MODERATORS_KEY = "localModeratorsEnabled";
 
 #ifdef __ANDROID__
 constexpr const char* const DEFAULT_RINGTONE_PATH
@@ -116,6 +117,7 @@ Account::Account(const std::string& accountID)
     , hasCustomUserAgent_(false)
     , mailBox_()
     , defaultModerators_("")
+    , localModeratorsEnabled_(true)
 {
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
@@ -240,6 +242,7 @@ Account::serialize(YAML::Emitter& out) const
     out << YAML::Key << HOSTNAME_KEY << YAML::Value << hostname_;
     out << YAML::Key << UPNP_ENABLED_KEY << YAML::Value << upnpEnabled_;
     out << YAML::Key << DEFAULT_MODERATORS_KEY << YAML::Value << defaultModerators_;
+    out << YAML::Key << LOCAL_MODERATORS_KEY << YAML::Value << localModeratorsEnabled_;
 }
 
 void
@@ -292,6 +295,7 @@ Account::unserialize(const YAML::Node& node)
     enableUpnp(upnpEnabled_ && isEnabled());
 
     parseValueOptional(node, DEFAULT_MODERATORS_KEY, defaultModerators_);
+    parseValueOptional(node, LOCAL_MODERATORS_KEY, localModeratorsEnabled_);
 }
 
 void
