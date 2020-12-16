@@ -152,6 +152,7 @@ constexpr static const char MANAGER_USERNAME[] = "Account.managerUsername";
 constexpr static const char BOOTSTRAP_LIST_URL[] = "Account.bootstrapListUrl";
 constexpr static const char DHT_PROXY_LIST_URL[] = "Account.dhtProxyListUrl";
 constexpr static const char DEFAULT_MODERATORS[] = "Account.defaultModerators";
+constexpr static const char LOCAL_MODERATORS_ENABLED[] = "Account.localModeratorsEnabled";
 
 namespace Audio {
 
