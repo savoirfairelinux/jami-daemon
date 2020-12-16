@@ -64,7 +64,7 @@ Conference::Conference()
     }
 
 #ifdef ENABLE_VIDEO
-    getVideoMixer()->setOnSourcesUpdated([this](const std::vector<video::SourceInfo>&& infos) {
+    getVideoMixer()->setOnSourcesUpdated([this](std::vector<video::SourceInfo>&& infos) {
         runOnMainThread([w = weak(), infos = std::move(infos)] {
             auto shared = w.lock();
             if (!shared)
@@ -336,6 +336,8 @@ Conference::attach()
 #ifdef ENABLE_VIDEO
         if (auto mixer = getVideoMixer()) {
             mixer->switchInput(mediaInput_);
+            if (not mediaSecondaryInput_.empty())
+                mixer->switchSecondaryInput(mediaSecondaryInput_);
         }
 #endif
         setState(State::ACTIVE_ATTACHED);
@@ -473,6 +475,15 @@ Conference::switchInput(const std::string& input)
 #ifdef ENABLE_VIDEO
     mediaInput_ = input;
     getVideoMixer()->switchInput(input);
+#endif
+}
+
+void
+Conference::switchSecondaryInput(const std::string& input)
+{
+#ifdef ENABLE_VIDEO
+    mediaSecondaryInput_ = input;
+    getVideoMixer()->switchSecondaryInput(input);
 #endif
 }
 

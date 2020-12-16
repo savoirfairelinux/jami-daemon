@@ -94,7 +94,8 @@ class DRING_PUBLIC DBusCallManager :
         void setRecording(const std::string& callID);
         void recordPlaybackSeek(const double& value);
         bool getIsRecording(const std::string& callID);
-        void switchInput(const std::string& callID, const std::string& input);
+        bool switchInput(const std::string& callID, const std::string& input);
+        bool switchSecondaryInput(const std::string& conferenceId, const std::string& input);
         std::string getCurrentAudioCodecName(const std::string& callID);
         void playDTMF(const std::string& key);
         void startTone(const int32_t& start, const int32_t& type);

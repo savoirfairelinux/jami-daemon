@@ -46,7 +46,7 @@ struct SourceInfo
     int h;
     bool hasVideo;
 };
-using OnSourcesUpdatedCb = std::function<void(const std::vector<SourceInfo>&&)>;
+using OnSourcesUpdatedCb = std::function<void(std::vector<SourceInfo>&&)>;
 
 enum class Layout { GRID, ONE_BIG_WITH_SMALL, ONE_BIG };
 
@@ -69,6 +69,7 @@ public:
     void detached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
 
     void switchInput(const std::string& input);
+    void switchSecondaryInput(const std::string& input);
     void stopInput();
 
     void setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob);
@@ -111,6 +112,8 @@ private:
 
     std::chrono::time_point<std::chrono::steady_clock> nextProcess_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
+    std::shared_ptr<VideoFrameActiveWriter> videoLocalSecondary_;
+
     VideoScaler scaler_;
 
     ThreadLoop loop_; // as to be last member
