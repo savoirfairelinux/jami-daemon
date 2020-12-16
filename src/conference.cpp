@@ -64,7 +64,7 @@ Conference::Conference()
     }
 
 #ifdef ENABLE_VIDEO
-    getVideoMixer()->setOnSourcesUpdated([this](const std::vector<video::SourceInfo>&& infos) {
+    getVideoMixer()->setOnSourcesUpdated([this](std::vector<video::SourceInfo>&& infos) {
         runOnMainThread([w = weak(), infos = std::move(infos)] {
             auto shared = w.lock();
             if (!shared)
@@ -336,6 +336,8 @@ Conference::attach()
 #ifdef ENABLE_VIDEO
         if (auto mixer = getVideoMixer()) {
             mixer->switchInput(mediaInput_);
+            if (not mediaSecondaryInput_.empty())
+                mixer->switchSecondaryInput(mediaSecondaryInput_);
         }
 #endif
         setState(State::ACTIVE_ATTACHED);
@@ -476,6 +478,15 @@ Conference::switchInput(const std::string& input)
 #endif
 }
 
+void
+Conference::switchSecondaryInput(const std::string& input)
+{
+#ifdef ENABLE_VIDEO
+    mediaSecondaryInput_ = input;
+    getVideoMixer()->switchSecondaryInput(input);
+#endif
+}
+
 #ifdef ENABLE_VIDEO
 std::shared_ptr<video::VideoMixer>
 Conference::getVideoMixer()
@@ -582,11 +593,11 @@ Conference::setModerator(const std::string& uri, const bool& state)
             auto partURI = string_remove_suffix(call->getPeerNumber(), '@');
             if (partURI == uri) {
                 if (state and not isModerator(uri)) {
-                    JAMI_DBG("Add %s as moderator", partURI.data());
+                    JAMI_DBG("Add %.*s as moderator", (int) partURI.size(), partURI.data());
                     moderators_.emplace(uri);
                     updateModerators();
                 } else if (not state and isModerator(uri)) {
-                    JAMI_DBG("Remove %s as moderator", partURI.data());
+                    JAMI_DBG("Remove %.*s as moderator", (int) partURI.size(), partURI.data());
                     moderators_.erase(uri);
                     updateModerators();
                 }
