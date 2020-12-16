@@ -53,16 +53,6 @@ Conference::Conference()
 {
     JAMI_INFO("Create new conference %s", id_.c_str());
 
-    // TODO: For now, add all accounts on the same device as
-    // conference master. In the future, this should be
-    // retrieven with another way
-    auto accounts = jami::Manager::instance().getAllAccounts<JamiAccount>();
-    for (const auto& account : accounts) {
-        if (!account)
-            continue;
-        moderators_.emplace(account->getUsername());
-    }
-
 #ifdef ENABLE_VIDEO
     getVideoMixer()->setOnSourcesUpdated([this](const std::vector<video::SourceInfo>&& infos) {
         runOnMainThread([w = weak(), infos = std::move(infos)] {
@@ -189,14 +179,25 @@ Conference::add(const std::string& participant_id)
                 participantsMuted_.emplace(uri);
             }
         }
-        // Add defined moderators for the account link to the call
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
             auto w = call->getAccount();
             auto account = w.lock();
             if (account) {
+                // Add defined moderators for the account link to the call
                 auto defaultMods = split_string(account->getDefaultModerators(), "/");
                 for (const auto& mod : defaultMods) {
                     moderators_.emplace(mod);
+                }
+
+                // Check for localModeratorEnabled preference
+                if (account->isLocalModeratorsEnabled() && not localModAdded_) {
+                    auto accounts = jami::Manager::instance().getAllAccounts<JamiAccount>();
+                    for (const auto& account : accounts) {
+                        if (!account)
+                            continue;
+                        moderators_.emplace(account->getUsername());
+                    }
+                    localModAdded_ = true;
                 }
             }
         }
