@@ -23,6 +23,7 @@
 #include "fileutils.h"
 #include "gittransport.h"
 #include "string_utils.h"
+#include "client/ring_signal.h"
 
 using random_device = dht::crypto::random_device;
 
@@ -123,7 +124,8 @@ public:
     mutable std::mutex membersMtx_ {};
     std::vector<ConversationMember> members_ {};
 
-    std::vector<ConversationMember> members() const {
+    std::vector<ConversationMember> members() const
+    {
         std::lock_guard<std::mutex> lk(membersMtx_);
         return members_;
     }
@@ -432,7 +434,8 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
         return false;
     }
     GitAnnotatedCommit annotated {annotated_ptr, git_annotated_commit_free};
-    if (git_commit_lookup(&parent, repository_.get(), git_annotated_commit_id(annotated.get())) < 0) {
+    if (git_commit_lookup(&parent, repository_.get(), git_annotated_commit_id(annotated.get()))
+        < 0) {
         JAMI_ERR("Couldn't lookup commit %s", wanted_ref.c_str());
         return false;
     }
@@ -490,7 +493,12 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
         JAMI_INFO("New merge commit added with id: %s", commit_str);
         // Move commit to main branch
         git_reference* ref_ptr = nullptr;
-        if (git_reference_create(&ref_ptr, repository_.get(), "refs/heads/main", &commit_oid, true, nullptr)
+        if (git_reference_create(&ref_ptr,
+                                 repository_.get(),
+                                 "refs/heads/main",
+                                 &commit_oid,
+                                 true,
+                                 nullptr)
             < 0) {
             JAMI_WARN("Could not move commit to main");
         }
@@ -522,7 +530,12 @@ ConversationRepository::Impl::mergeFastforward(const git_oid* target_oid, int is
         const auto* symbolic_ref = git_reference_symbolic_target(head_ref.get());
 
         // Create our main reference on the target OID
-        if (git_reference_create(&target_ref_ptr, repository_.get(), symbolic_ref, target_oid, 0, nullptr)
+        if (git_reference_create(&target_ref_ptr,
+                                 repository_.get(),
+                                 symbolic_ref,
+                                 target_oid,
+                                 0,
+                                 nullptr)
             < 0) {
             JAMI_ERR("failed to create main reference");
             return false;
@@ -660,9 +673,9 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
     }
 
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert && cert->issuer)
+    if (!cert)
         return false;
-    auto userUri = cert->issuer->getId().toString();
+    auto userUri = cert->getIssuerUID();
     // Check that voter is admin
     auto adminFile = std::string("admins") + DIR_SEPARATOR_STR + userUri + ".crt";
     // Retrieve tree for recent commit
@@ -750,9 +763,9 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
                                             const std::string& parentId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert && cert->issuer)
+    if (!cert)
         return false;
-    auto userUri = cert->issuer->getId().toString();
+    auto userUri = cert->getIssuerUID();
 
     auto repo = repository();
     std::string repoPath = git_repository_workdir(repository_.get());
@@ -835,9 +848,9 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
                                               const std::string& parentId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert && cert->issuer)
+    if (!cert)
         return false;
-    auto userUri = cert->issuer->getId().toString();
+    auto userUri = cert->getIssuerUID();
     // Check no other files changed
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
     auto oneone = mode() == ConversationMode::ONE_TO_ONE;
@@ -898,9 +911,9 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
                                                const std::string& parentId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert && cert->issuer)
+    if (!cert)
         return false;
-    auto userUri = cert->issuer->getId().toString();
+    auto userUri = cert->getIssuerUID();
     auto removeSelf = userUri == uriMember;
 
     // Retrieve tree for recent commit
@@ -928,7 +941,7 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
             // Ignore
         } else if (std::regex_match(f, base_match, regex_votes)) {
             if (base_match.size() != 4 or base_match[2] != uriMember) {
-                JAMI_ERR("Invalid vote file detected :%s", f.c_str());
+                JAMI_ERR("Invalid vote file detected: %s", f.c_str());
                 return false;
             }
             voters.emplace_back(base_match[3]);
@@ -960,9 +973,9 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
             return false;
         }
         cert = tls::CertificateStore::instance().getCertificate(deviceUri);
-        if (!cert && cert->issuer)
+        if (!cert)
             return false;
-        if (uriMember != cert->issuer->getId().toString()
+        if (uriMember != cert->getIssuerUID()
             and uriMember != deviceUri /* If device is removed */) {
             JAMI_ERR("device removed but not for removed user (%s)", deviceFile.c_str());
             return false;
@@ -1011,9 +1024,9 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
                                                   const std::string& commitId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert && cert->issuer)
+    if (!cert || !cert->issuer)
         return false;
-    auto userUri = cert->issuer->getId().toString();
+    auto userUri = cert->getIssuerUID();
 
     // Retrieve tree for commit
     auto tree = treeAtCommit(commitId);
@@ -1055,9 +1068,11 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
                                                  const std::string& commitId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert && cert->issuer)
+    if (!cert) {
+        JAMI_ERR("Cannot find certificate for %s", userDevice.c_str());
         return false;
-    auto userUri = cert->issuer->getId().toString();
+    }
+    auto userUri = cert->getIssuerUID();
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, ""));
 
     try {
@@ -1201,6 +1216,12 @@ ConversationRepository::Impl::mode() const
     auto lastMsg = log(id_, "", 1);
     if (lastMsg.size() == 0) {
         throw std::logic_error("Can't retrieve first commit");
+        if (auto shared = account_.lock()) {
+            emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
+                                                                       id_,
+                                                                       EINVALIDMODE,
+                                                                       "No initial commit");
+        }
     }
     auto commitMsg = lastMsg[0].commit_msg;
 
@@ -1210,9 +1231,21 @@ ConversationRepository::Impl::mode() const
     auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
     if (!reader->parse(commitMsg.data(), commitMsg.data() + commitMsg.size(), &root, &err)) {
         throw std::logic_error("Can't retrieve first commit");
+        if (auto shared = account_.lock()) {
+            emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
+                                                                       id_,
+                                                                       EINVALIDMODE,
+                                                                       "No initial commit");
+        }
     }
     if (!root.isMember("mode")) {
         throw std::logic_error("No mode detected for initial commit");
+        if (auto shared = account_.lock()) {
+            emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
+                                                                       id_,
+                                                                       EINVALIDMODE,
+                                                                       "No mode detected");
+        }
     }
     int mode = root["mode"].asInt();
 
@@ -1230,6 +1263,12 @@ ConversationRepository::Impl::mode() const
         mode_ = ConversationMode::PUBLIC;
         break;
     default:
+        if (auto shared = account_.lock()) {
+            emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
+                                                                       id_,
+                                                                       EINVALIDMODE,
+                                                                       "Incorrect mode detected");
+        }
         throw std::logic_error("Incorrect mode detected");
         break;
     }
@@ -1404,7 +1443,11 @@ ConversationRepository::Impl::log(const std::string& from, const std::string& to
         cc->author = std::move(author);
         cc->parents = std::move(parents);
         git_buf signature = {}, signed_data = {};
-        if (git_commit_extract_signature(&signature, &signed_data, repository_.get(), &oid, "signature")
+        if (git_commit_extract_signature(&signature,
+                                         &signed_data,
+                                         repository_.get(),
+                                         &oid,
+                                         "signature")
             < 0) {
             JAMI_WARN("Could not extract signature for commit %s", id.c_str());
         } else {
@@ -1477,12 +1520,12 @@ ConversationRepository::Impl::getInitialMembers() const
         return {};
     }
     auto commit = firstCommit[0];
+
     auto authorDevice = commit.author.email;
     auto cert = tls::CertificateStore::instance().getCertificate(authorDevice);
-    if (!cert && cert->issuer) {
+    if (!cert)
         return {};
-    }
-    auto authorId = cert->issuer->getId().toString();
+    auto authorId = cert->getIssuerUID();
     if (mode() == ConversationMode::ONE_TO_ONE) {
         std::string err;
         Json::Value root;
@@ -1510,12 +1553,11 @@ ConversationRepository::Impl::initMembers()
     std::lock_guard<std::mutex> lk(membersMtx_);
     members_.clear();
     std::string repoPath = git_repository_workdir(repository_.get());
-    std::vector<std::string> paths = {
-        repoPath + DIR_SEPARATOR_STR + "invited",
-        repoPath + DIR_SEPARATOR_STR + "admins",
-        repoPath + DIR_SEPARATOR_STR + "members",
-        repoPath + DIR_SEPARATOR_STR + "banned" + DIR_SEPARATOR_STR + "members"
-    };
+    std::vector<std::string> paths = {repoPath + DIR_SEPARATOR_STR + "invited",
+                                      repoPath + DIR_SEPARATOR_STR + "admins",
+                                      repoPath + DIR_SEPARATOR_STR + "members",
+                                      repoPath + DIR_SEPARATOR_STR + "banned" + DIR_SEPARATOR_STR
+                                          + "members"};
     std::vector<MemberRole> roles = {
         MemberRole::INVITED,
         MemberRole::ADMIN,
@@ -1524,7 +1566,7 @@ ConversationRepository::Impl::initMembers()
     };
 
     auto i = 0;
-    for (const auto& p: paths) {
+    for (const auto& p : paths) {
         for (const auto& f : fileutils::readDirectory(p)) {
             auto pos = f.find(".crt");
             auto uri = f.substr(0, pos);
@@ -1660,6 +1702,7 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
     }
     git_repository_free(rep);
     auto repo = std::make_unique<ConversationRepository>(account, conversationId);
+    repo->pinCertificates(); // need to load certificates to validate non known members
     if (!repo->validClone()) {
         JAMI_ERR("Error when validating remote conversation");
         return nullptr;
@@ -1680,6 +1723,10 @@ ConversationRepository::Impl::validCommits(
                 JAMI_WARN("Malformed initial commit %s. Please check you use the latest "
                           "version of Jami, or that your contact is not doing unwanted stuff.",
                           commit.id.c_str());
+                if (auto shared = account_.lock()) {
+                    emitSignal<DRing::ConversationSignal::OnConversationError>(
+                        shared->getAccountID(), id_, EVALIDFETCH, "Malformed initial commit");
+                }
                 return false;
             }
         } else if (commit.parents.size() == 1) {
@@ -1690,6 +1737,10 @@ ConversationRepository::Impl::validCommits(
                     JAMI_WARN("Malformed vote commit %s. Please check you use the latest version "
                               "of Jami, or that your contact is not doing unwanted stuff.",
                               commit.id.c_str());
+                    if (auto shared = account_.lock()) {
+                        emitSignal<DRing::ConversationSignal::OnConversationError>(
+                            shared->getAccountID(), id_, EVALIDFETCH, "Malformed vote");
+                    }
                     return false;
                 }
             } else if (type == "member") {
@@ -1702,6 +1753,10 @@ ConversationRepository::Impl::validCommits(
                                    &root,
                                    &err)) {
                     JAMI_ERR() << "Failed to parse " << err;
+                    if (auto shared = account_.lock()) {
+                        emitSignal<DRing::ConversationSignal::OnConversationError>(
+                            shared->getAccountID(), id_, EVALIDFETCH, "Malformed member commit");
+                    }
                     return false;
                 }
                 std::string action = root["action"].asString();
@@ -1712,6 +1767,13 @@ ConversationRepository::Impl::validCommits(
                             "Malformed add commit %s. Please check you use the latest version "
                             "of Jami, or that your contact is not doing unwanted stuff.",
                             commit.id.c_str());
+                        if (auto shared = account_.lock()) {
+                            emitSignal<DRing::ConversationSignal::OnConversationError>(
+                                shared->getAccountID(),
+                                id_,
+                                EVALIDFETCH,
+                                "Malformed add member commit");
+                        }
                         return false;
                     }
                 } else if (action == "join") {
@@ -1720,6 +1782,13 @@ ConversationRepository::Impl::validCommits(
                             "Malformed joins commit %s. Please check you use the latest version "
                             "of Jami, or that your contact is not doing unwanted stuff.",
                             commit.id.c_str());
+                        if (auto shared = account_.lock()) {
+                            emitSignal<DRing::ConversationSignal::OnConversationError>(
+                                shared->getAccountID(),
+                                id_,
+                                EVALIDFETCH,
+                                "Malformed join member commit");
+                        }
                         return false;
                     }
                 } else if (action == "remove") {
@@ -1731,6 +1800,13 @@ ConversationRepository::Impl::validCommits(
                             "Malformed removes commit %s. Please check you use the latest version "
                             "of Jami, or that your contact is not doing unwanted stuff.",
                             commit.id.c_str());
+                        if (auto shared = account_.lock()) {
+                            emitSignal<DRing::ConversationSignal::OnConversationError>(
+                                shared->getAccountID(),
+                                id_,
+                                EVALIDFETCH,
+                                "Malformed remove member commit");
+                        }
                         return false;
                     }
                 } else if (action == "ban") {
@@ -1740,6 +1816,13 @@ ConversationRepository::Impl::validCommits(
                             "Malformed removes commit %s. Please check you use the latest version "
                             "of Jami, or that your contact is not doing unwanted stuff.",
                             commit.id.c_str());
+                        if (auto shared = account_.lock()) {
+                            emitSignal<DRing::ConversationSignal::OnConversationError>(
+                                shared->getAccountID(),
+                                id_,
+                                EVALIDFETCH,
+                                "Malformed ban member commit");
+                        }
                         return false;
                     }
                 } else {
@@ -1748,6 +1831,10 @@ ConversationRepository::Impl::validCommits(
                               "version of Jami, or that your contact is not doing unwanted stuff.",
                               commit.id.c_str(),
                               action.c_str());
+                    if (auto shared = account_.lock()) {
+                        emitSignal<DRing::ConversationSignal::OnConversationError>(
+                            shared->getAccountID(), id_, EVALIDFETCH, "Malformed member commit");
+                    }
                     return false;
                 }
             } else {
@@ -1759,6 +1846,10 @@ ConversationRepository::Impl::validCommits(
                               "version of Jami, or that your contact is not doing unwanted stuff.",
                               type.c_str(),
                               commit.id.c_str());
+                    if (auto shared = account_.lock()) {
+                        emitSignal<DRing::ConversationSignal::OnConversationError>(
+                            shared->getAccountID(), id_, EVALIDFETCH, "Malformed commit");
+                    }
                     return false;
                 }
             }
@@ -1772,6 +1863,12 @@ ConversationRepository::Impl::validCommits(
                     "that your contact is not doing unwanted stuff. %s",
                     validUserAtCommit.c_str(),
                     commit.commit_msg.c_str());
+                if (auto shared = account_.lock()) {
+                    emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
+                                                                               id_,
+                                                                               EVALIDFETCH,
+                                                                               "Malformed commit");
+                }
                 return false;
             }
         } else {
@@ -1884,7 +1981,12 @@ ConversationRepository::amend(const std::string& id, const std::string& msg)
 
     // Move commit to main branch
     git_reference* ref_ptr = nullptr;
-    if (git_reference_create(&ref_ptr, pimpl_->repository_.get(), "refs/heads/main", &commit_id, true, nullptr)
+    if (git_reference_create(&ref_ptr,
+                             pimpl_->repository_.get(),
+                             "refs/heads/main",
+                             &commit_id,
+                             true,
+                             nullptr)
         < 0) {
         JAMI_WARN("Could not move commit to main");
     }
@@ -1920,7 +2022,10 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
             JAMI_ERR("Couldn't lookup for remote %s", remoteDeviceId.c_str());
             return false;
         }
-        if (git_remote_create(&remote_ptr, pimpl_->repository_.get(), remoteDeviceId.c_str(), channelName.c_str())
+        if (git_remote_create(&remote_ptr,
+                              pimpl_->repository_.get(),
+                              remoteDeviceId.c_str(),
+                              channelName.c_str())
             < 0) {
             JAMI_ERR("Could not create remote for repository for conversation %s",
                      pimpl_->id_.c_str());
@@ -1946,6 +2051,13 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
             JAMI_ERR("Could not fetch remote repository for conversation %s: %s",
                      pimpl_->id_.c_str(),
                      err->message);
+
+            if (auto shared = pimpl_->account_.lock()) {
+                emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
+                                                                           pimpl_->id_,
+                                                                           EFETCH,
+                                                                           err->message);
+            }
         }
         return false;
     }
@@ -2064,7 +2176,8 @@ ConversationRepository::merge(const std::string& merge_id)
     git_merge_analysis_t analysis;
     git_merge_preference_t preference;
     const git_annotated_commit* const_annotated = annotated.get();
-    if (git_merge_analysis(&analysis, &preference, pimpl_->repository_.get(), &const_annotated, 1) < 0) {
+    if (git_merge_analysis(&analysis, &preference, pimpl_->repository_.get(), &const_annotated, 1)
+        < 0) {
         JAMI_ERR("Merge operation aborted: repository analysis failed");
         return false;
     }
@@ -2101,7 +2214,8 @@ ConversationRepository::merge(const std::string& merge_id)
             return false;
         }
 
-        if (git_merge(pimpl_->repository_.get(), &const_annotated, 1, &merge_opts, &checkout_opts) < 0) {
+        if (git_merge(pimpl_->repository_.get(), &const_annotated, 1, &merge_opts, &checkout_opts)
+            < 0) {
             const git_error* err = giterr_last();
             if (err)
                 JAMI_ERR("Git merge failed: %s", err->message);
@@ -2211,7 +2325,6 @@ ConversationRepository::join()
             pimpl_->members_.emplace_back(ConversationMember {uri, MemberRole::MEMBER});
     }
 
-
     return commitMessage(Json::writeString(wbuilder, json));
 }
 
@@ -2289,7 +2402,9 @@ ConversationRepository::leave()
 
     {
         std::lock_guard<std::mutex> lk(pimpl_->membersMtx_);
-        std::remove_if(pimpl_->members_.begin(), pimpl_->members_.end(), [&](auto& member) { return member.uri == account->getUsername(); });
+        std::remove_if(pimpl_->members_.begin(), pimpl_->members_.end(), [&](auto& member) {
+            return member.uri == account->getUsername();
+        });
     }
 
     return commitMessage(Json::writeString(wbuilder, json));
@@ -2324,12 +2439,7 @@ ConversationRepository::voteKick(const std::string& uri, bool isDevice)
     if (!account)
         return {};
     auto cert = account->identity().second;
-    auto parentCert = cert->issuer;
-    if (!parentCert) {
-        JAMI_ERR("Parent cert is null!");
-        return {};
-    }
-    auto adminUri = parentCert->getId().toString();
+    auto adminUri = cert->getIssuerUID();
     if (adminUri == uri) {
         JAMI_WARN("Admin tried to ban theirself");
         return {};
@@ -2507,6 +2617,26 @@ void
 ConversationRepository::refreshMembers() const
 {
     return pimpl_->initMembers();
+}
+
+void
+ConversationRepository::pinCertificates()
+{
+    auto repo = pimpl_->repository();
+    if (!repo)
+        return;
+
+    std::string repoPath = git_repository_workdir(repo.get());
+    std::vector<std::string> paths = {repoPath + "admins",
+                                      repoPath + "members",
+                                      repoPath + "devices"};
+
+    for (const auto& path : paths) {
+        tls::CertificateStore::instance().pinCertificatePath(path, [](auto& ids) {
+            for (const auto& id : ids)
+                JAMI_ERR("@@@ LOADED %s", id.c_str());
+        });
+    }
 }
 
 } // namespace jami
