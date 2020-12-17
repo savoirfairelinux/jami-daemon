@@ -1215,34 +1215,29 @@ JamiAccount::loadAccount(const std::string& archive_password,
                const std::string& conversationId,
                const std::vector<uint8_t>& payload,
                time_t received) {
-            dht::ThreadPool::computation().run([w = weak(),
-                                                uri,
-                                                payload = std::move(payload),
-                                                received,
-                                                conversationId] {
-                if (auto acc = w.lock()) {
-                    if (!conversationId.empty()) {
-                        std::lock_guard<std::mutex> lk(acc->conversationsRequestsMtx_);
-                        auto it = acc->conversationsRequests_.find(conversationId);
-                        if (it != acc->conversationsRequests_.end()) {
-                            JAMI_INFO(
-                                "[Account %s] Received a request for a conversation already existing. "
-                                "Ignore",
-                                acc->getAccountID().c_str());
-                            return;
+            dht::ThreadPool::computation().run(
+                [w = weak(), uri, payload = std::move(payload), received, conversationId] {
+                    if (auto acc = w.lock()) {
+                        if (!conversationId.empty()) {
+                            std::lock_guard<std::mutex> lk(acc->conversationsRequestsMtx_);
+                            auto it = acc->conversationsRequests_.find(conversationId);
+                            if (it != acc->conversationsRequests_.end()) {
+                                JAMI_INFO("[Account %s] Received a request for a conversation "
+                                          "already existing. "
+                                          "Ignore",
+                                          acc->getAccountID().c_str());
+                                return;
+                            }
+                            ConversationRequest req;
+                            req.from = uri;
+                            req.conversationId = conversationId;
+                            req.received = std::time(nullptr);
+                            acc->conversationsRequests_[conversationId] = std::move(req);
                         }
-                        ConversationRequest req;
-                        req.from = uri;
-                        req.conversationId = conversationId;
-                        req.received = std::time(nullptr);
-                        acc->conversationsRequests_[conversationId] = std::move(req);
+                        emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(
+                            acc->getAccountID(), uri, payload, received);
                     }
-                    emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(acc->getAccountID(),
-                                                                                 uri,
-                                                                                 payload,
-                                                                                 received);
-                }
-            });
+                });
         },
         [this](const std::map<dht::InfoHash, KnownDevice>& devices) {
             std::map<std::string, std::string> ids;
@@ -2209,11 +2204,15 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
         auto convId = getOneToOneConversation(id);
         if (convId.empty())
             return;
-        // In this case, the TrustRequest was sent but never confirmed (cause the contact was offline maybe)
-        // To avoid the contact to never receive the conv request, retry there
+        // In this case, the TrustRequest was sent but never confirmed (cause the contact was
+        // offline maybe) To avoid the contact to never receive the conv request, retry there
         std::lock_guard<std::mutex> lock(configurationMutex_);
         if (accountManager_)
-            accountManager_->sendTrustRequest(id, convId, {}); /* TODO payload?, MessageEngine not generic and will be able to move to conversation's requests */
+            accountManager_
+                ->sendTrustRequest(id,
+                                   convId,
+                                   {}); /* TODO payload?, MessageEngine not generic and will be able
+                                           to move to conversation's requests */
     }
 }
 
@@ -2454,11 +2453,11 @@ JamiAccount::doRegister_()
                     ->findCertificate(deviceId,
                                       [this, &accept](
                                           const std::shared_ptr<dht::crypto::Certificate>& cert) {
-                                          if (not cert or not cert->issuer) {
+                                          if (not cert) {
                                               accept.set_value(false);
                                               return;
                                           }
-                                          accept.set_value(cert->issuer->getId().toString()
+                                          accept.set_value(cert->getIssuerUID()
                                                            == accountManager_->getInfo()->accountId);
                                       });
                 fut.wait();
@@ -2534,20 +2533,19 @@ JamiAccount::doRegister_()
                         auto conversation = conversations_.find(conversationId);
                         if (conversation == conversations_.end()) {
                             JAMI_WARN("[Account %s] Git server requested, but for a non existing "
-                                    "conversation (%s)",
-                                    getAccountID().c_str(),
-                                    conversationId.c_str());
+                                      "conversation (%s)",
+                                      getAccountID().c_str(),
+                                      conversationId.c_str());
                             return;
                         }
                         if (conversation->second->isBanned(remoteDevice)) {
                             JAMI_WARN("[Account %s] %s is a banned device in conversation %s",
-                                    getAccountID().c_str(),
-                                    remoteDevice.c_str(),
-                                    conversationId.c_str());
+                                      getAccountID().c_str(),
+                                      remoteDevice.c_str(),
+                                      conversationId.c_str());
                             return;
                         }
                     }
-
 
                     if (gitSocket(deviceId.toString(), conversationId) == channel) {
                         // The onConnectionReady is already used as client (for retrieving messages)
@@ -3297,7 +3295,8 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
                 if (conv->mode() == ConversationMode::ONE_TO_ONE) {
                     auto initMembers = conv->getInitialMembers();
                     if ((isSelf && initMembers.size() == 1)
-                        || std::find(initMembers.begin(), initMembers.end(), uri) != initMembers.end())
+                        || std::find(initMembers.begin(), initMembers.end(), uri)
+                               != initMembers.end())
                         toRm.emplace_back(key);
                 }
             } catch (const std::exception& e) {
@@ -3719,8 +3718,8 @@ JamiAccount::requestPeerConnection(
                                          isVCard,
                                          channeledConnectedCb,
                                          onChanneledCancelled);
-    //auto convId = getOneToOneConversation(info.peer);
-    //if (!convId.empty()) {
+    // auto convId = getOneToOneConversation(info.peer);
+    // if (!convId.empty()) {
     //    Json::Value value;
     //    value["tid"] = std::to_string(tid);
     //    value["type"] = "application/data-transfer+json";
@@ -3919,7 +3918,6 @@ JamiAccount::acceptConversationRequest(const std::string& conversationId)
                         lk.unlock();
                         // Save the git socket
                         addGitSocket(dev.toString(), request.conversationId, socket);
-                        // TODO when do we remove the gitSocket?
                     } else {
                         lk.unlock();
                         socket->shutdown();
@@ -3960,8 +3958,8 @@ JamiAccount::handlePendingConversations()
     for (auto it = pendingConversationsFetch_.begin(); it != pendingConversationsFetch_.end();) {
         if (it->second.ready) {
             // Clone and store conversation
+            auto conversationId = it->first;
             try {
-                auto conversationId = it->first;
                 auto conversation = std::make_shared<Conversation>(weak(),
                                                                    it->second.deviceId,
                                                                    conversationId);
@@ -3992,6 +3990,10 @@ JamiAccount::handlePendingConversations()
                                                                              conversationId);
                 }
             } catch (const std::exception& e) {
+                emitSignal<DRing::ConversationSignal::OnConversationError>(getAccountID(),
+                                                                           conversationId,
+                                                                           EFETCH,
+                                                                           e.what());
                 JAMI_WARN("Something went wrong when cloning conversation: %s", e.what());
             }
             it = pendingConversationsFetch_.erase(it);
@@ -4115,7 +4117,9 @@ JamiAccount::addConversationMember(const std::string& conversationId,
     }
 
     if (it->second->isMember(contactUri, true)) {
-        JAMI_DBG("%s is already a member of %s, resend invite", contactUri.c_str(), conversationId.c_str());
+        JAMI_DBG("%s is already a member of %s, resend invite",
+                 contactUri.c_str(),
+                 conversationId.c_str());
         // Note: This should not be necessary, but if for whatever reason the other side didn't join
         // we should not forbid new invites
         sendTextMessage(contactUri, it->second->generateInvitation());
@@ -4127,24 +4131,29 @@ JamiAccount::addConversationMember(const std::string& conversationId,
         JAMI_WARN("Couldn't add %s to %s", contactUri.c_str(), conversationId.c_str());
         return false;
     }
-    it->second->loadMessages([w=weak(), conversationId, sendRequest, contactUri, commitId](auto&& messages) {
-        auto shared = w.lock();
-        if (not shared or messages.empty())
-            return; // should not happen
-        std::lock_guard<std::mutex> lk(shared->conversationsMtx_);
-        // Add a new member in the conversation
-        auto it = shared->conversations_.find(conversationId);
-        if (it == shared->conversations_.end()) {
-            return;
-        }
-        auto message = messages.front();
-        if (message.at("type") == "member")
-            shared->announceMemberMessage(conversationId, message);
-        emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(), conversationId, message);
-        if (sendRequest)
-            shared->sendTextMessage(contactUri, it->second->generateInvitation());
-        shared->sendMessageNotification(*it->second, commitId, true);
-    }, commitId, 1);
+    it->second->loadMessages(
+        [w = weak(), conversationId, sendRequest, contactUri, commitId](auto&& messages) {
+            auto shared = w.lock();
+            if (not shared or messages.empty())
+                return; // should not happen
+            std::lock_guard<std::mutex> lk(shared->conversationsMtx_);
+            // Add a new member in the conversation
+            auto it = shared->conversations_.find(conversationId);
+            if (it == shared->conversations_.end()) {
+                return;
+            }
+            auto message = messages.front();
+            if (message.at("type") == "member")
+                shared->announceMemberMessage(conversationId, message);
+            emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
+                                                                   conversationId,
+                                                                   message);
+            if (sendRequest)
+                shared->sendTextMessage(contactUri, it->second->generateInvitation());
+            shared->sendMessageNotification(*it->second, commitId, true);
+        },
+        commitId,
+        1);
     return true;
 }
 
@@ -4158,24 +4167,30 @@ JamiAccount::removeConversationMember(const std::string& conversationId,
     if (conversation != conversations_.end() && conversation->second) {
         auto lastCommit = conversation->second->lastCommitId();
         if (conversation->second->removeMember(contactUri, isDevice)) {
-            conversation->second->loadMessages([w=weak(), lastCommit, conversationId] (auto&& messages) {
-                if (auto shared = w.lock()) {
-                    std::reverse(messages.begin(), messages.end());
-                    // Announce new commits
-                    for (const auto& msg : messages) {
-                        if (msg.at("type") == "member")
-                            shared->announceMemberMessage(conversationId, msg);
-                        emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
-                                                                                conversationId,
-                                                                                msg);
+            conversation->second->loadMessages(
+                [w = weak(), conversationId](auto&& messages) {
+                    if (auto shared = w.lock()) {
+                        std::reverse(messages.begin(), messages.end());
+                        // Announce new commits
+                        auto lastId = std::string();
+                        for (const auto& msg : messages) {
+                            if (msg.at("type") == "member")
+                                shared->announceMemberMessage(conversationId, msg);
+                            emitSignal<DRing::ConversationSignal::MessageReceived>(
+                                shared->getAccountID(), conversationId, msg);
+                        }
+                        // Get last id
+                        if (messages.size() > 0)
+                            lastId = messages.rbegin()->at("id");
+                        std::lock_guard<std::mutex> lk(shared->conversationsMtx_);
+                        auto conversation = shared->conversations_.find(conversationId);
+                        // Send notification for others
+                        if (conversation != shared->conversations_.end() && conversation->second)
+                            shared->sendMessageNotification(*conversation->second, lastId, true);
                     }
-                    std::lock_guard<std::mutex> lk(shared->conversationsMtx_);
-                    auto conversation = shared->conversations_.find(conversationId);
-                    // Send notification for others
-                    if (conversation != shared->conversations_.end() && conversation->second)
-                        shared->sendMessageNotification(*conversation->second, lastCommit, true);
-                }
-            }, "", lastCommit);
+                },
+                "",
+                lastCommit);
             return true;
         }
     }
@@ -4219,13 +4234,16 @@ JamiAccount::sendMessage(const std::string& conversationId,
         if (!announce)
             return;
         if (!commitId.empty()) {
-            conversation->second->loadMessages([w=weak(), conversationId] (auto&& messages) {
-                auto shared = w.lock();
-                if (shared && !messages.empty())
-                    emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
-                                                                        conversationId,
-                                                                        messages.front());
-            }, commitId, 1);
+            conversation->second->loadMessages(
+                [w = weak(), conversationId](auto&& messages) {
+                    auto shared = w.lock();
+                    if (shared && !messages.empty())
+                        emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
+                                                                               conversationId,
+                                                                               messages.front());
+                },
+                commitId,
+                1);
             sendMessageNotification(*conversation->second, commitId, true);
         } else {
             JAMI_ERR("Failed to send message to conversation %s", conversationId.c_str());
@@ -4244,14 +4262,17 @@ JamiAccount::loadConversationMessages(const std::string& conversationId,
     std::lock_guard<std::mutex> lk(conversationsMtx_);
     auto conversation = conversations_.find(conversationId);
     if (conversation != conversations_.end() && conversation->second) {
-        conversation->second->loadMessages([w=weak(), conversationId, id](auto&& messages) {
-            if (auto shared = w.lock()) {
-                emitSignal<DRing::ConversationSignal::ConversationLoaded>(id,
-                                                                            shared->getAccountID(),
-                                                                            conversationId,
-                                                                            messages);
-            }
-        }, fromMessage, n);
+        conversation->second->loadMessages(
+            [w = weak(), conversationId, id](auto&& messages) {
+                if (auto shared = w.lock()) {
+                    emitSignal<DRing::ConversationSignal::ConversationLoaded>(id,
+                                                                              shared->getAccountID(),
+                                                                              conversationId,
+                                                                              messages);
+                }
+            },
+            fromMessage,
+            n);
     }
     return id;
 }
@@ -4333,25 +4354,26 @@ JamiAccount::fetchNewCommits(const std::string& peer,
         };
 
         if (gitSocket(deviceId, conversationId)) {
-            conversation->second
-                ->pull(deviceId,
-                       [deviceId,
-                        conversationId,
-                        w = weak(),
-                        announceMessages = std::move(announceMessages)](bool ok, auto messages) {
-                           auto shared = w.lock();
-                           if (!shared)
-                               return;
-                           if (!ok) {
-                               JAMI_WARN("[Account %s] Could not fetch new commit from %s for %s",
-                                         shared->getAccountID().c_str(),
-                                         deviceId.c_str(),
-                                         conversationId.c_str());
-                               shared->removeGitSocket(deviceId, conversationId);
-                           }
-                           if (!messages.empty())
-                               announceMessages(messages);
-                       }, commitId);
+            conversation->second->pull(
+                deviceId,
+                [deviceId,
+                 conversationId,
+                 w = weak(),
+                 announceMessages = std::move(announceMessages)](bool ok, auto messages) {
+                    auto shared = w.lock();
+                    if (!shared)
+                        return;
+                    if (!ok) {
+                        JAMI_WARN("[Account %s] Could not fetch new commit from %s for %s",
+                                  shared->getAccountID().c_str(),
+                                  deviceId.c_str(),
+                                  conversationId.c_str());
+                        shared->removeGitSocket(deviceId, conversationId);
+                    }
+                    if (!messages.empty())
+                        announceMessages(messages);
+                },
+                commitId);
         } else {
             lk.unlock();
             // Else we need to add a new gitSocket
@@ -4365,12 +4387,8 @@ JamiAccount::fetchNewCommits(const std::string& peer,
             connectionManager_->connectDevice(
                 DeviceId(deviceId),
                 "git://" + deviceId + "/" + conversationId,
-                [this,
-                 conversationId,
-                 commitId,
-                 announceMessages = std::move(
-                     announceMessages)](std::shared_ptr<ChannelSocket> socket,
-                                        const DeviceId& deviceId) {
+                [this, conversationId, commitId, announceMessages = std::move(announceMessages)](
+                    std::shared_ptr<ChannelSocket> socket, const DeviceId& deviceId) {
                     dht::ThreadPool::io().run([w = weak(),
                                                conversationId,
                                                socket = std::move(socket),
@@ -4387,28 +4405,28 @@ JamiAccount::fetchNewCommits(const std::string& peer,
                         if (socket) {
                             shared->addGitSocket(deviceId.toString(), conversationId, socket);
 
-                            conversation->second
-                                ->pull(deviceId.toString(),
-                                       [deviceId,
-                                        conversationId,
-                                        w,
-                                        announceMessages = std::move(
-                                            announceMessages)](bool ok, auto messages) {
-                                           auto shared = w.lock();
-                                           if (!shared)
-                                               return;
-                                           if (!ok) {
-                                               JAMI_WARN("[Account %s] Could not fetch new commit "
-                                                         "from %s for %s",
-                                                         shared->getAccountID().c_str(),
-                                                         deviceId.to_c_str(),
-                                                         conversationId.c_str());
-                                               shared->removeGitSocket(deviceId.toString(),
-                                                                       conversationId);
-                                           }
-                                           if (!messages.empty())
-                                               announceMessages(messages);
-                                       }, commitId);
+                            conversation->second->pull(
+                                deviceId.toString(),
+                                [deviceId,
+                                 conversationId,
+                                 w,
+                                 announceMessages = std::move(announceMessages)](bool ok,
+                                                                                 auto messages) {
+                                    auto shared = w.lock();
+                                    if (!shared)
+                                        return;
+                                    if (!ok) {
+                                        JAMI_WARN("[Account %s] Could not fetch new commit "
+                                                  "from %s for %s",
+                                                  shared->getAccountID().c_str(),
+                                                  deviceId.to_c_str(),
+                                                  conversationId.c_str());
+                                        shared->removeGitSocket(deviceId.toString(), conversationId);
+                                    }
+                                    if (!messages.empty())
+                                        announceMessages(messages);
+                                },
+                                commitId);
                         } else {
                             JAMI_ERR("[Account %s] Couldn't open a new git channel with %s for "
                                      "conversation %s",
@@ -4929,7 +4947,6 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
                                         // Save the git socket
                                         addGitSocket(deviceId.toString(), convId, socket);
                                         checkConversationsEvents();
-                                        // TODO when do we remove the gitSocket?
                                     } else {
                                         lk.unlock();
                                         socket->shutdown();
@@ -4952,7 +4969,8 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
                         std::lock_guard<std::mutex> lk(conversationsMtx_);
                         auto itConv = conversations_.find(convId);
                         if (itConv != conversations_.end() && !itConv->second->isRemoving()) {
-                            emitSignal<DRing::ConversationSignal::ConversationRemoved>(accountID_, convId);
+                            emitSignal<DRing::ConversationSignal::ConversationRemoved>(accountID_,
+                                                                                       convId);
                             itConv->second->setRemovingFlag();
                         }
                     }
@@ -5236,6 +5254,7 @@ JamiAccount::addCallHistoryMessage(const std::string& uri, uint64_t duration_ms)
 void
 JamiAccount::monitor() const
 {
+    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (connectionManager_)
         connectionManager_->monitor();
 }
