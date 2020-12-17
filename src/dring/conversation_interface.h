@@ -107,6 +107,14 @@ struct DRING_PUBLIC ConversationSignal
                              const std::string& /* memberUri */,
                              int /* event 0 = add, 1 = joins, 2 = leave, 3 = banned */);
     };
+    struct DRING_PUBLIC OnConversationError
+    {
+        constexpr static const char* name = "OnConversationError";
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /* conversationId */,
+                             int code,
+                             const std::string& what);
+    };
 };
 
 } // namespace DRing
