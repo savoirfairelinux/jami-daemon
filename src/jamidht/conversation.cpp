@@ -63,6 +63,10 @@ public:
                                                                 remoteDevice,
                                                                 conversationId);
         if (!repository_) {
+            if (auto shared = account.lock()) {
+                emitSignal<DRing::ConversationSignal::OnConversationError>(
+                    shared->getAccountID(), conversationId, EFETCH, "Couldn't clone repository");
+            }
             throw std::logic_error("Couldn't clone repository");
         }
     }
@@ -97,12 +101,7 @@ Conversation::Impl::isAdmin() const
 
     auto adminsPath = repoPath() + DIR_SEPARATOR_STR + "admins";
     auto cert = shared->identity().second;
-    auto parentCert = cert->issuer;
-    if (!parentCert) {
-        JAMI_ERR("Parent cert is null!");
-        return false;
-    }
-    auto uri = parentCert->getId().toString();
+    auto uri = cert->getIssuerUID();
     return fileutils::isFile(fileutils::getFullPath(adminsPath, uri + ".crt"));
 }
 
@@ -123,10 +122,24 @@ Conversation::Impl::convCommitToMap(const std::vector<ConversationCommit>& commi
     for (const auto& commit : commits) {
         auto authorDevice = commit.author.email;
         auto cert = tls::CertificateStore::instance().getCertificate(authorDevice);
-        if (!cert && cert->issuer) {
-            JAMI_WARN("No author found for commit %s", commit.id.c_str());
+        if (!cert) {
+            JAMI_WARN("No author found for commit %s, reload certificates", commit.id.c_str());
+            if (repository_)
+                repository_->pinCertificates();
+            // Get certificate from repo
+            try {
+                auto certPath = fileutils::getFullPath(repoPath(), std::string("devices") + DIR_SEPARATOR_STR + authorDevice + ".crt");
+                auto deviceCert = fileutils::loadTextFile(certPath);
+                cert = std::make_shared<crypto::Certificate>(deviceCert);
+                if (!cert) {
+                    JAMI_ERR("No author found for commit %s", commit.id.c_str());
+                    continue;
+                }
+            } catch (...) {
+                continue;
+            }
         }
-        auto authorId = cert->issuer->getId().toString();
+        auto authorId = cert->getIssuerUID();
         std::string parents;
         auto parentsSize = commit.parents.size();
         for (std::size_t i = 0; i < parentsSize; ++i) {
@@ -522,15 +535,6 @@ Conversation::generateInvitation() const
     std::map<std::string, std::string> invite;
     Json::Value root;
     root["conversationId"] = id();
-    // TODO remove, cause the peer cannot trust?
-    // Or add signatures?
-    for (const auto& member : getMembers()) {
-        Json::Value jsonMember;
-        for (const auto& [key, value] : member) {
-            jsonMember[key] = value;
-        }
-        root["members"].append(jsonMember);
-    }
     // TODO metadatas
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
