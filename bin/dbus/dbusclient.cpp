@@ -286,6 +286,8 @@ DBusClient::initLibrary(int flags)
             bind(&DBusConfigurationManager::conversationRemoved, confM, _1, _2)),
         exportable_callback<ConversationSignal::ConversationMemberEvent>(
             bind(&DBusConfigurationManager::conversationMemberEvent, confM, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::OnConversationError>(
+            bind(&DBusConfigurationManager::onConversationError, confM, _1, _2, _3, _4)),
     };
 
 #ifdef ENABLE_VIDEO
