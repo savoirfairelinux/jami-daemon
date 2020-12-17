@@ -63,6 +63,10 @@ public:
                                                                 remoteDevice,
                                                                 conversationId);
         if (!repository_) {
+            if (auto shared = account.lock()) {
+                emitSignal<DRing::ConversationSignal::OnConversationError>(
+                    shared->getAccountID(), conversationId, EFETCH, "Couldn't clone repository");
+            }
             throw std::logic_error("Couldn't clone repository");
         }
     }
