@@ -63,6 +63,10 @@ public:
                                                                 remoteDevice,
                                                                 conversationId);
         if (!repository_) {
+            if (auto shared = account.lock()) {
+                emitSignal<DRing::ConversationSignal::OnConversationError>(
+                    shared->getAccountID(), conversationId, EFETCH, "Couldn't clone repository");
+            }
             throw std::logic_error("Couldn't clone repository");
         }
     }
@@ -551,15 +555,6 @@ Conversation::generateInvitation() const
     std::map<std::string, std::string> invite;
     Json::Value root;
     root["conversationId"] = id();
-    // TODO remove, cause the peer cannot trust?
-    // Or add signatures?
-    for (const auto& member : getMembers()) {
-        Json::Value jsonMember;
-        for (const auto& [key, value] : member) {
-            jsonMember[key] = value;
-        }
-        root["members"].append(jsonMember);
-    }
     // TODO metadatas
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
