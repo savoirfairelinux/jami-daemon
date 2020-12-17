@@ -31,6 +31,7 @@ public:
     virtual void conversationReady(const std::string& /*accountId*/, const std::string& /* conversationId */){}
     virtual void conversationRemoved(const std::string& /*accountId*/, const std::string& /* conversationId */){}
     virtual void conversationMemberEvent(const std::string& /*accountId*/, const std::string& /* conversationId */, const std::string& /* memberUri */, int /* event */){}
+    virtual void onConversationError(const std::string& /*accountId*/, const std::string& /* conversationId */, uint32_t /* code */, const std::string& /* what */){}
 };
 %}
 
@@ -66,4 +67,5 @@ public:
     virtual void conversationReady(const std::string& /*accountId*/, const std::string& /* conversationId */){}
     virtual void conversationRemoved(const std::string& /*accountId*/, const std::string& /* conversationId */){}
     virtual void conversationMemberEvent(const std::string& /*accountId*/, const std::string& /* conversationId */, const std::string& /* memberUri */, int /* event */){}
+    virtual void onConversationError(const std::string& /*accountId*/, const std::string& /* conversationId */, uint32_t /* code */, const std::string& /* what */){}
 };
