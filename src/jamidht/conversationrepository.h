@@ -41,6 +41,10 @@ using GitDiffStats = std::unique_ptr<git_diff_stats, decltype(&git_diff_stats_fr
 
 namespace jami {
 
+constexpr auto EFETCH = 1;
+constexpr auto EINVALIDMODE = 2;
+constexpr auto EVALIDFETCH = 3;
+
 class JamiAccount;
 class ChannelSocket;
 
@@ -89,7 +93,9 @@ public:
      * @return  the conversation repository object
      */
     static DRING_TESTABLE std::unique_ptr<ConversationRepository> createConversation(
-        const std::weak_ptr<JamiAccount>& account, ConversationMode mode, const std::string& otherMember = "");
+        const std::weak_ptr<JamiAccount>& account,
+        ConversationMode mode,
+        const std::string& otherMember = "");
 
     /**
      * Clones a conversation on a remote device
