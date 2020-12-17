@@ -42,6 +42,10 @@ using GitDiffStats = std::unique_ptr<git_diff_stats, decltype(&git_diff_stats_fr
 
 namespace jami {
 
+constexpr auto EFETCH = 1;
+constexpr auto EINVALIDMODE = 2;
+constexpr auto EVALIDFETCH = 3;
+
 class JamiAccount;
 class ChannelSocket;
 
@@ -251,6 +255,13 @@ public:
      * To use after a merge with member's events, refresh members knowledge
      */
     void refreshMembers() const;
+
+
+    /**
+     * Because conversations can contains non contacts certificates, this methods
+     * loads certificates in conversations into the cert store
+     */
+    void pinCertificates();
 
 private:
     ConversationRepository() = delete;
