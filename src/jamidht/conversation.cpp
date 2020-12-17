@@ -22,6 +22,7 @@
 #include "fileutils.h"
 #include "jamiaccount.h"
 #include "conversationrepository.h"
+#include "client/ring_signal.h"
 
 #include <json/json.h>
 #include <string_view>
@@ -32,7 +33,9 @@ namespace jami {
 class Conversation::Impl
 {
 public:
-    Impl(const std::weak_ptr<JamiAccount>& account, ConversationMode mode, const std::string& otherMember = "")
+    Impl(const std::weak_ptr<JamiAccount>& account,
+         ConversationMode mode,
+         const std::string& otherMember = "")
         : account_(account)
     {
         repository_ = ConversationRepository::createConversation(account, mode, otherMember);
@@ -59,6 +62,10 @@ public:
                                                                 remoteDevice,
                                                                 conversationId);
         if (!repository_) {
+            if (auto shared = account.lock()) {
+                emitSignal<DRing::ConversationSignal::OnConversationError>(
+                    shared->getAccountID(), conversationId, EFETCH, "Couldn't clone repository");
+            }
             throw std::logic_error("Couldn't clone repository");
         }
     }
@@ -177,7 +184,9 @@ Conversation::Impl::loadMessages(const std::string& fromMessage,
     return convCommitToMap(convCommits);
 }
 
-Conversation::Conversation(const std::weak_ptr<JamiAccount>& account, ConversationMode mode, const std::string& otherMember)
+Conversation::Conversation(const std::weak_ptr<JamiAccount>& account,
+                           ConversationMode mode,
+                           const std::string& otherMember)
     : pimpl_ {new Impl {account, mode, otherMember}}
 {}
 
@@ -271,9 +280,7 @@ Conversation::getMembers(bool includeInvited) const
         }
         auto uri = certificate.substr(0, certificate.size() - std::string(".crt").size());
         uris.emplace_back(uri);
-        std::map<std::string, std::string>
-            details {{"uri", uri},
-                     {"role", "admin"}};
+        std::map<std::string, std::string> details {{"uri", uri}, {"role", "admin"}};
         result.emplace_back(details);
     }
     for (const auto& certificate : fileutils::readDirectory(membersPath)) {
@@ -283,9 +290,7 @@ Conversation::getMembers(bool includeInvited) const
         }
         auto uri = certificate.substr(0, certificate.size() - std::string(".crt").size());
         uris.emplace_back(uri);
-        std::map<std::string, std::string>
-            details {{"uri", uri},
-                     {"role", "member"}};
+        std::map<std::string, std::string> details {{"uri", uri}, {"role", "member"}};
         result.emplace_back(details);
     }
     if (includeInvited) {
@@ -296,10 +301,11 @@ Conversation::getMembers(bool includeInvited) const
         }
 
         if (mode() == ConversationMode::ONE_TO_ONE) {
-            for (const auto& member: getInitialMembers()) {
+            for (const auto& member : getInitialMembers()) {
                 auto it = std::find(uris.begin(), uris.end(), member);
                 if (it == uris.end()) {
-                    std::map<std::string, std::string> details {{"uri", member}, {"role", "invited"}};
+                    std::map<std::string, std::string> details {{"uri", member},
+                                                                {"role", "invited"}};
                     result.emplace_back(details);
                 }
             }
@@ -346,7 +352,7 @@ Conversation::isMember(const std::string& uri, bool includeInvited) const
     }
 
     if (includeInvited && mode() == ConversationMode::ONE_TO_ONE) {
-        for (const auto& member: getInitialMembers()) {
+        for (const auto& member : getInitialMembers()) {
             if (member == uri)
                 return true;
         }
