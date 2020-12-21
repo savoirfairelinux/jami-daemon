@@ -1,0 +1,1462 @@
+From 9ab7f592edf62a8b21f065ceeb949f10a3b92e00 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?S=C3=A9bastien=20Blin?=
+ <sebastien.blin@savoirfairelinux.com>
+Date: Tue, 23 Feb 2021 09:06:34 -0500
+Subject: [PATCH] debug put
+
+---
+ include/opendht/infohash.h       |   4 +
+ include/opendht/network_engine.h |   3 +
+ src/dht.cpp                      | 101 +++++++++++-
+ src/dht_proxy_server.cpp         |  41 ++++-
+ src/dhtrunner.cpp                |   4 +
+ src/infohash.cpp                 |  27 ++++
+ src/network_engine.cpp           |  95 ++++++++++-
+ src/node_cache.cpp               |   6 +-
+ src/op_cache.cpp                 |  40 +++--
+ src/op_cache.h                   |  20 +--
+ src/routing_table.cpp            |   3 +
+ src/search.h                     |  16 +-
+ tools/dhtnode.cpp                |   6 +-
+ tools/neighbors.html             | 264 +++++++++++++++++++++++++++++++
+ tools/testgetput.sh              | 230 +++++++++++++++++++++++++++
+ tools/testneighbors.sh           |  53 +++++++
+ 16 files changed, 871 insertions(+), 42 deletions(-)
+ create mode 100644 tools/neighbors.html
+ create mode 100755 tools/testgetput.sh
+ create mode 100755 tools/testneighbors.sh
+
+diff --git a/include/opendht/infohash.h b/include/opendht/infohash.h
+index cf774cd..99a2eac 100644
+--- a/include/opendht/infohash.h
++++ b/include/opendht/infohash.h
+@@ -392,6 +392,10 @@ Hash<N>::toString() const
+ 
+ const InfoHash zeroes {};
+ 
++extern InfoHash FOLLOW_HASH;
++
++void traceCache(const std::string& content);
++
+ struct OPENDHT_PUBLIC NodeExport {
+     InfoHash id;
+     sockaddr_storage ss;
+diff --git a/include/opendht/network_engine.h b/include/opendht/network_engine.h
+index 3523125..84a78e0 100644
+--- a/include/opendht/network_engine.h
++++ b/include/opendht/network_engine.h
+@@ -437,6 +437,9 @@ public:
+ 
+     Sp<Node> insertNode(const InfoHash& id, const SockAddr& addr) {
+         auto n = cache.getNode(id, addr, scheduler.time(), 0);
++        std::stringstream st;
++        st << "[NE " << this << "] insertNode node (" << n->getId() << ")";
++        traceCache(st.str());
+         onNewNode(n, 0);
+         return n;
+     }
+diff --git a/src/dht.cpp b/src/dht.cpp
+index ef17480..9032ada 100644
+--- a/src/dht.cpp
++++ b/src/dht.cpp
+@@ -204,9 +204,17 @@ Dht::onNewNode(const Sp<Node>& node, int confirm)
+     auto& b = buckets(node->getFamily());
+     auto wasEmpty = confirm < 2 && b.grow_time < now - std::chrono::minutes(5);
+     if (b.onNewNode(node, confirm, now, myid, network_engine) or confirm) {
+-        trySearchInsert(node);
++        auto res = trySearchInsert(node);
++
++        std::stringstream st;
++        st << "[dht " << this << "] insert node (" << node->getId() << ") res(" << res << ", confirm: " << confirm << ", wasEmpty: " << wasEmpty;
++        traceCache(st.str());
++
+         if (wasEmpty) {
+             scheduler.edit(nextNodesConfirmation, now + std::chrono::seconds(1));
++        } else if (res) {
++            scheduler.edit(nextNodesConfirmation, now);
++
+         }
+     }
+ }
+@@ -610,6 +618,13 @@ Dht::searchSynchedNodeListen(const Sp<Search>& sr, SearchNode& n)
+                         if (auto sr = ws.lock()) {
+                             scheduler.edit(sr->nextSearchStep, scheduler.time());
+                             sr->insertNode(node, scheduler.time(), answer.ntoken);
++
++                            if (sr->id == FOLLOW_HASH) {
++                                std::stringstream st;
++                                    st << "[dht " << this << "] searchSynchedNodeListen " << FOLLOW_HASH << " node (" << node->getId() << ") - new values size: " << answer.values.size() << "\n";
++                                traceCache(st.str());
++                            }
++
+                             if (auto sn = sr->getNode(node)) {
+                                 sn->onValues(query, std::move(answer), types, scheduler);
+                             }
+@@ -627,6 +642,13 @@ Dht::searchSynchedNodeListen(const Sp<Search>& sr, SearchNode& n)
+             [this,ws,query](const net::Request& req, net::RequestAnswer&& answer) mutable
+             { /* on done */
+                 if (auto sr = ws.lock()) {
++
++                    if (sr->id == FOLLOW_HASH) {
++                        std::stringstream st;
++                            st << "[dht " << this << "] searchSynchedNodeListen on done " << FOLLOW_HASH << " node (" << req.node->getId() << ") - new values size: " << answer.values.size() << "\n";
++                        traceCache(st.str());
++                    }
++
+                     scheduler.edit(sr->nextSearchStep, scheduler.time());
+                     if (auto sn = sr->getNode(req.node)) {
+                         scheduler.add(sn->getListenTime(query, getListenExpiration()), std::bind(&Dht::searchStep, this, sr));
+@@ -817,7 +839,7 @@ Dht::search(const InfoHash& id, sa_family_t af, GetCallback gcb, QueryCallback q
+             search_id++;
+     }
+ 
+-    sr->get(f, q, qcb, gcb, dcb, scheduler);
++    sr->get(f, q, qcb, gcb, dcb, scheduler, (id == FOLLOW_HASH));
+     refill(*sr);
+ 
+     return sr;
+@@ -856,16 +878,26 @@ Dht::listenTo(const InfoHash& id, sa_family_t af, ValueCallback cb, Value::Filte
+         throw DhtException("Can't create search");
+     if (logger_)
+         logger_->w(id, "[search %s IPv%c] listen", id.to_c_str(), (af == AF_INET) ? '4' : '6');
+-    return sr->listen(cb, f, q, scheduler);
++    return sr->listen(cb, f, q, scheduler, id == FOLLOW_HASH);
+ }
+ 
+ size_t
+ Dht::listen(const InfoHash& id, ValueCallback cb, Value::Filter f, Where where)
+ {
++    if (id == FOLLOW_HASH) {
++        std::stringstream st;
++        st << "[dht " << this << "] listen " << FOLLOW_HASH;
++        traceCache(st.str());
++    }
+     scheduler.syncTime();
+ 
+     auto token = ++listener_token;
+     auto gcb = OpValueCache::cacheCallback(std::move(cb), [this, id, token]{
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            st << "[dht " << this << "] cancel listen " << FOLLOW_HASH << " via cacheCallback";
++            traceCache(st.str());
++        }
+         cancelListen(id, token);
+     });
+ 
+@@ -896,6 +928,11 @@ Dht::listen(const InfoHash& id, ValueCallback cb, Value::Filter f, Where where)
+ bool
+ Dht::cancelListen(const InfoHash& id, size_t token)
+ {
++    if (id == FOLLOW_HASH) {
++        std::stringstream st;
++        st << "[dht " << this << "] cancel listen " << FOLLOW_HASH << " token " << token;
++        traceCache(st.str());
++    }
+     scheduler.syncTime();
+ 
+     auto it = listeners.find(token);
+@@ -944,6 +981,11 @@ struct GetStatus : public OpStatus {
+ void
+ Dht::put(const InfoHash& id, Sp<Value> val, DoneCallback callback, time_point created, bool permanent)
+ {
++    if (id == FOLLOW_HASH) {
++        std::stringstream st;
++        st << "[dht " << this << "] put on " << FOLLOW_HASH;
++        traceCache(st.str());
++    }
+     if (not val) {
+         if (callback)
+             callback(false, {});
+@@ -968,6 +1010,12 @@ Dht::put(const InfoHash& id, Sp<Value> val, DoneCallback callback, time_point cr
+         }
+     };
+     announce(id, AF_INET, val, [=](bool ok4, const std::vector<Sp<Node>>& nodes) {
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            for (const auto& node: nodes)
++                st << "[dht " << this << "] PUT FOR ID " << FOLLOW_HASH << " node (" << node->getId() << ") - expired: " << node->isExpired() << "\n";
++            traceCache(st.str());
++        }
+         if (logger_)
+             logger_->d(id, "Announce done IPv4 %d", ok4);
+         auto& o = *op;
+@@ -975,6 +1023,12 @@ Dht::put(const InfoHash& id, Sp<Value> val, DoneCallback callback, time_point cr
+         donecb(nodes, o);
+     }, created, permanent);
+     announce(id, AF_INET6, val, [=](bool ok6, const std::vector<Sp<Node>>& nodes) {
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            for (const auto& node: nodes)
++                st << "[dht " << this << "] PUTv6 FOR ID " << FOLLOW_HASH << " node (" << node->getId() << ") - expired: " << node->isExpired() << "\n";
++            traceCache(st.str());
++        }
+         if (logger_)
+             logger_->d(id, "Announce done IPv6 %d", ok6);
+         auto& o = *op;
+@@ -1017,7 +1071,19 @@ Dht::get(const InfoHash& id, GetCallback getcb, DoneCallback donecb, Value::Filt
+     scheduler.syncTime();
+ 
+     auto op = std::make_shared<GetStatus<std::map<Value::Id, Sp<Value>>>>();
+-    auto gcb = [getcb, donecb, op](const std::vector<Sp<Value>>& vals) {
++    auto gcb = [getcb, donecb, op, id, this](const std::vector<Sp<Value>>& vals) {
++        std::stringstream st;
++        if (id == FOLLOW_HASH) {
++            st << "###[dht " << this << "] call gcb " << FOLLOW_HASH << "Nb values: " << vals.size() << std::endl;
++        }
++
++        st << "###" << myid << ":";
++        auto closest_nodes = buckets(AF_INET).findClosestNodes(FOLLOW_HASH, scheduler.time(), 8);
++        for (const auto& node: closest_nodes)
++            st << node->getId() << ",";
++
++        traceCache(st.str());
++
+         auto& o = *op;
+         return callbackWrapper(getcb, donecb, vals, [&o](const std::vector<Sp<Value>>& values) {
+             std::vector<Sp<Value>> newvals {};
+@@ -1038,15 +1104,36 @@ Dht::get(const InfoHash& id, GetCallback getcb, DoneCallback donecb, Value::Filt
+     auto f = filter.chain(q->where.getFilter());
+ 
+     /* Try to answer this search locally. */
++    if (id == FOLLOW_HASH) {
++        std::stringstream st;
++        st << "[dht " << this << "] start get local for " << FOLLOW_HASH;
++        traceCache(st.str());
++    }
+     gcb(getLocal(id, f));
++    if (id == FOLLOW_HASH) {
++        std::stringstream st;
++        st << "[dht " << this << "] start search for  " << FOLLOW_HASH;
++        traceCache(st.str());
++    }
+ 
+     Dht::search(id, AF_INET, gcb, {}, [=](bool ok, const std::vector<Sp<Node>>& nodes) {
+-        //logger__WARN("DHT done IPv4");
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            for (const auto& node: nodes)
++                st << "[dht " << this << "] GET FOR ID " << FOLLOW_HASH << " node (" << node->getId() << ") - expired: " << node->isExpired() << "\n";
++            traceCache(st.str());
++        }
++
+         op->status4 = {true, ok};
+         doneCallbackWrapper(donecb, nodes, *op);
+     }, f, q);
+     Dht::search(id, AF_INET6, gcb, {}, [=](bool ok, const std::vector<Sp<Node>>& nodes) {
+-        //logger__WARN("DHT done IPv6");
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            for (const auto& node: nodes)
++                st << "[dht " << this << "] GETv6 FOR ID " << FOLLOW_HASH << " node (" << node->getId() << ") - expired: " << node->isExpired() << "\n";
++            traceCache(st.str());
++        }
+         op->status6 = {true, ok};
+         doneCallbackWrapper(donecb, nodes, *op);
+     }, f, q);
+@@ -1806,6 +1893,7 @@ bool
+ Dht::neighbourhoodMaintenance(RoutingTable& list)
+ {
+     //logger__DBG("neighbourhoodMaintenance");
++    printf("@@@neighbourhoodMaintenance0\n");
+     auto b = list.findBucket(myid);
+     if (b == list.end())
+         return false;
+@@ -1835,6 +1923,7 @@ Dht::neighbourhoodMaintenance(RoutingTable& list)
+                 n->toString().c_str(), id.toString().c_str());
+         /* Since our node-id is the same in both DHTs, it's probably
+            profitable to query both families. */
++        printf("@@@neighbourhoodMaintenance1\n");
+         network_engine.sendFindNode(n, id, network_engine.want());
+     }
+ 
+diff --git a/src/dht_proxy_server.cpp b/src/dht_proxy_server.cpp
+index d1f801c..768adda 100644
+--- a/src/dht_proxy_server.cpp
++++ b/src/dht_proxy_server.cpp
+@@ -649,6 +649,22 @@ DhtProxyServer::createRestRouter()
+ #endif
+ #endif // OPENDHT_PROXY_SERVER_IDENTITY
+ 
++    router->http_get("/trace/:hash", [&](restinio::request_handle_t request,
++        restinio::router::route_params_t params) {
++            try {
++                InfoHash infoHash(params["hash"].to_string());
++                FOLLOW_HASH = infoHash;
++                auto response = std::make_shared<ResponseByPartsBuilder>(
++                    initHttpResponse(request->create_response<ResponseByParts>()));
++                response->flush();
++                response->done();
++                return restinio::request_handling_status_t::accepted;
++            } catch (const std::exception& e){
++                return serverError(*request);
++            }
++        });
++
++
+     // **************************** NEW ROUTES ****************************
+     // node.info
+     router->http_get("/node/info", std::bind(&DhtProxyServer::getNodeInfo, this, _1, _2));
+@@ -733,7 +749,17 @@ DhtProxyServer::get(restinio::request_handle_t request,
+         auto response = std::make_shared<ResponseByPartsBuilder>(
+             initHttpResponse(request->create_response<ResponseByParts>()));
+         response->flush();
+-        dht_->get(infoHash, [this, response](const std::vector<Sp<Value>>& values) {
++        if (infoHash == FOLLOW_HASH) {
++            std::stringstream st;
++            st << "[proxy " << this << "] Get on " << FOLLOW_HASH;
++            traceCache(st.str());
++        }
++        dht_->get(infoHash, [this, response, infoHash](const std::vector<Sp<Value>>& values) {
++            if (infoHash == FOLLOW_HASH) {
++                std::stringstream st;
++                st << "[proxy " << this << "] Get on " << FOLLOW_HASH << ", new values, size: " << values.size();
++                traceCache(st.str());
++            }
+             std::stringstream output;
+             for (const auto& value : values) {
+                 output << Json::writeString(jsonBuilder_, value->toJson()) << "\n";
+@@ -742,7 +768,12 @@ DhtProxyServer::get(restinio::request_handle_t request,
+             response->flush();
+             return true;
+         },
+-        [response] (bool /*ok*/){
++        [response, infoHash, this] (bool ok){
++            if (infoHash == FOLLOW_HASH) {
++                std::stringstream st;
++                st << "[proxy " << this << "] Get on " << FOLLOW_HASH << ", finished with status: " << ok;
++                traceCache(st.str());
++            }
+             response->done();
+         });
+         return restinio::request_handling_status_t::accepted;
+@@ -1040,6 +1071,12 @@ DhtProxyServer::sendPushNotification(const std::string& token, Json::Value&& jso
+         request->set_header_field(restinio::http_field_t::accept, "*/*");
+         request->set_header_field(restinio::http_field_t::content_type, "application/json");
+ 
++        if (json.isMember("key") && json["key"].asString() == FOLLOW_HASH.toString()) {
++            std::stringstream st;
++            st << "[DhtProxyServer " << this << "] send push for " << FOLLOW_HASH << ", to device with token " << token;
++            traceCache(st.str());
++        }
++
+         // NOTE: see https://github.com/appleboy/gorush
+         Json::Value notification(Json::objectValue);
+         Json::Value tokens(Json::arrayValue);
+diff --git a/src/dhtrunner.cpp b/src/dhtrunner.cpp
+index 2ece5e2..ecbd92d 100644
+--- a/src/dhtrunner.cpp
++++ b/src/dhtrunner.cpp
+@@ -60,6 +60,10 @@ DhtRunner::DhtRunner() : dht_()
+ , dht_via_proxy_()
+ #endif //OPENDHT_PROXY_CLIENT
+ {
++    auto* h = getenv("TRACE_HASH");
++    if (h)
++        FOLLOW_HASH = InfoHash(h);
++
+ #ifdef _WIN32
+     WSADATA wsd;
+     if (WSAStartup(MAKEWORD(2,2), &wsd) != 0)
+diff --git a/src/infohash.cpp b/src/infohash.cpp
+index 69c79b8..cc060ea 100644
+--- a/src/infohash.cpp
++++ b/src/infohash.cpp
+@@ -17,15 +17,42 @@
+  */
+ 
+ #include "infohash.h"
++#include <unistd.h> 
+ 
+ #include <functional>
+ #include <sstream>
+ #include <cstdio>
++#include <fstream>
++#include <sys/time.h>
+ 
+ namespace dht {
+ 
+ const HexMap hex_map = {};
+ 
++InfoHash FOLLOW_HASH = {};
++
++void
++traceCache(const std::string& content)
++{
++    // Timestamp
++    unsigned int secs, milli;
++    struct timeval tv;
++
++    if (!gettimeofday(&tv, NULL)) {
++        secs = tv.tv_sec;
++        milli = tv.tv_usec / 1000; // suppose that milli < 1000
++    } else {
++        secs = time(NULL);
++        milli = 0;
++    }
++
++    std::ofstream file;
++    file.open("/tmp/" + FOLLOW_HASH.toString() + "_" + std::to_string(getpid()) + ".trace", std::ios_base::app); // append instead of overwrite
++    file << '[' << secs << '.' << std::right << std::setw(3) << std::setfill('0') << milli
++        << std::left << "]: " << content << std::endl;
++}
++
++
+ void
+ NodeExport::msgpack_unpack(msgpack::object o)
+ {
+diff --git a/src/network_engine.cpp b/src/network_engine.cpp
+index fe518da..15b33bd 100644
+--- a/src/network_engine.cpp
++++ b/src/network_engine.cpp
+@@ -261,6 +261,9 @@ NetworkEngine::clear()
+ {
+     for (auto& request : requests) {
+         request.second->cancel();
++        std::stringstream st;
++        st << "[dht " << this << "] NetworkEngine::clear() set node (" << request.second->node->getId() << ") expired\n";
++        traceCache(st.str());
+         request.second->node->setExpired();
+     }
+     requests.clear();
+@@ -276,14 +279,27 @@ void
+ NetworkEngine::requestStep(Sp<Request> sreq)
+ {
+     auto& req = *sreq;
+-    if (not req.pending())
+-        return;
+-
+     auto now = scheduler.time();
+     auto& node = *req.node;
++    if (not req.pending()) {
++        if (req.completed()) {
++
++            std::stringstream st;
++            st << "[NE " << this << "] response completed. node (" << node.getId() << ") done ";
++            st << "after " << print_duration(now-req.start);
++            traceCache(st.str());
++        }
++        return;
++    }
++
+     if (req.isExpired(now)) {
+         // if (logger_)
+         //     logger_->d(node.id, "[node %s] expired !", node.toString().c_str());
++        std::stringstream st;
++        st << "[NE " << this << "] NetworkEngine::requestStep via req.isExpired() set node (" << node.getId() << ") expired ";
++        st << "after " << print_duration(now-req.start);
++        traceCache(st.str());
++
+         node.setExpired();
+         if (not node.id)
+             requests.erase(req.tid);
+@@ -299,10 +315,18 @@ NetworkEngine::requestStep(Sp<Request> sreq)
+         err == EPIPE        ||
+         err == EPERM)
+     {
++        std::stringstream st;
++        st << "[dht " << this << "] NetworkEngine::requestStep set node (" << node.getId() << ") expired - send err " << err;
++        traceCache(st.str());
++
+         node.setExpired();
+         if (not node.id)
+             requests.erase(req.tid);
+     } else {
++        std::stringstream st;
++        st << "[dht " << this << "] NetworkEngine::requestStep set node (" << node.getId() << ") retry - send err " << err;
++        traceCache(st.str());
++
+         req.last_try = now;
+         if (err != EAGAIN) {
+             ++req.attempt_count;
+@@ -393,6 +417,9 @@ NetworkEngine::isMartian(const SockAddr& addr)
+ void
+ NetworkEngine::blacklistNode(const Sp<Node>& n)
+ {
++    std::stringstream st;
++    st << "[dht " << this << "] NetworkEngine::blacklistNode set node (" << n->getId() << ") expired\n";
++    traceCache(st.str());
+     n->setExpired();
+     blacklist.emplace(n->getAddr());
+ }
+@@ -522,6 +549,9 @@ NetworkEngine::process(std::unique_ptr<ParsedMessage>&& msg, const SockAddr& fro
+         if (not rsocket)
+             throw DhtProtocolException {DhtProtocolException::UNKNOWN_TID, "Can't find socket", msg->id};
+         node->received(now, {});
++        std::stringstream st;
++        st << "[NE " << this << "] onNewNode value update node (" << node->getId() << ")";
++        traceCache(st.str());
+         onNewNode(node, 2);
+         deserializeNodes(*msg, from);
+         rsocket->on_receive(node, std::move(*msg));
+@@ -539,8 +569,12 @@ NetworkEngine::process(std::unique_ptr<ParsedMessage>&& msg, const SockAddr& fro
+                 requests.erase(req_it);
+             } else {
+                 node->received(now, req);
+-                if (not node->isClient())
++                if (not node->isClient()) {
++                    std::stringstream st;
++                    st << "[NE " << this << "] onNewNode no resp node (" << node->getId() << ")";
++                    traceCache(st.str());
+                     onNewNode(node, 1);
++                }
+                 if (logger_)
+                     logger_->d(node->id, "[node %s] can't find transaction with id %u", node->toString().c_str(), msg->tid);
+                 return;
+@@ -549,11 +583,21 @@ NetworkEngine::process(std::unique_ptr<ParsedMessage>&& msg, const SockAddr& fro
+ 
+         node->received(now, req);
+ 
+-        if (not node->isClient())
++        if (not node->isClient()) {
++
++            std::stringstream st;
++            st << "[NE " << this << "] onNewNode isClient2 node (" << node->getId() << ")";
++            traceCache(st.str());
+             onNewNode(node, 2);
++        }
+         onReportedAddr(msg->id, msg->addr);
+ 
+         if (req and (req->cancelled() or req->expired() or req->completed())) {
++
++            std::stringstream st;
++            st << "[NE " << this << "] response to expired, cancelled or completed request. node (" << node->getId() << ") done ";
++            st << "after " << print_duration(now-req->start);
++            traceCache(st.str());
+             if (logger_)
+                 logger_->w(node->id, "[node %s] response to expired, cancelled or completed request", node->toString().c_str());
+             return;
+@@ -588,10 +632,16 @@ NetworkEngine::process(std::unique_ptr<ParsedMessage>&& msg, const SockAddr& fro
+                 }
+                 r.reply_time = scheduler.time();
+ 
++                std::stringstream st;
++                st << "[NE " << this << "] MessageType::Reply done (" << r.node->getId() << ")";
++                traceCache(st.str());
+                 deserializeNodes(*msg, from);
+                 r.setDone(std::move(*msg));
+                 break;
+             } else { /* request socket data */
++                std::stringstream st;
++                st << "[NE " << this << "] MessageType::Reply not done (" << req->node->getId() << ")";
++                traceCache(st.str());
+                 deserializeNodes(*msg, from);
+                 rsocket->on_receive(node, std::move(*msg));
+             }
+@@ -601,8 +651,13 @@ NetworkEngine::process(std::unique_ptr<ParsedMessage>&& msg, const SockAddr& fro
+         }
+     } else {
+         node->received(now, {});
+-        if (not node->isClient())
++        if (not node->isClient()) {
++
++            std::stringstream st;
++            st << "[NE " << this << "] onNewNode isClient node (" << node->getId() << ")";
++            traceCache(st.str());
+             onNewNode(node, 1);
++        }
+         try {
+             switch (msg->type) {
+             case MessageType::Ping:
+@@ -617,12 +672,20 @@ NetworkEngine::process(std::unique_ptr<ParsedMessage>&& msg, const SockAddr& fro
+                 // if (logger_)
+                 //     logger_->d(msg->target, node->id, "[node %s] got 'find' request for %s (%d)", node->toString().c_str(), msg->target.toString().c_str(), msg->want);
+                 ++in_stats.find;
++                
++                std::stringstream st;
++                st << "[NE " << this << "] GOT GET TO " << msg->info_hash << "  my: " << myid << ")";
++                traceCache(st.str());
+                 RequestAnswer answer = onFindNode(node, msg->target, msg->want);
+                 auto nnodes = bufferNodes(from.getFamily(), msg->target, msg->want, answer.nodes4, answer.nodes6);
+                 sendNodesValues(from, msg->tid, nnodes.first, nnodes.second, {}, {}, answer.ntoken);
+                 break;
+             }
+             case MessageType::GetValues: {
++                
++                std::stringstream st;
++                st << "[NE " << this << "] GOT GET TO " << msg->info_hash << "  my: " << myid << ")";
++                traceCache(st.str());
+                 // if (logger_)
+                 //     logger_->d(msg->info_hash, node->id, "[node %s] got 'get' request for %s", node->toString().c_str(), msg->info_hash.toString().c_str());
+                 ++in_stats.get;
+@@ -632,6 +695,12 @@ NetworkEngine::process(std::unique_ptr<ParsedMessage>&& msg, const SockAddr& fro
+                 break;
+             }
+             case MessageType::AnnounceValue: {
++                
++                std::stringstream st;
++                st << "[NE " << this << "] GOT ANNOUNCE TO " << msg->info_hash << "  my: " << myid << ")";
++                traceCache(st.str());
++
++
+                 if (logIncoming_ and logger_)
+                     logger_->d(msg->info_hash, node->id, "[node %s] got 'put' request for %s", node->toString().c_str(), msg->info_hash.toString().c_str());
+                 ++in_stats.put;
+@@ -877,6 +946,9 @@ SockAddr deserializeIPv6(const uint8_t* ni) {
+ void
+ NetworkEngine::deserializeNodes(ParsedMessage& msg, const SockAddr& from) {
+     if (msg.nodes4_raw.size() % NODE4_INFO_BUF_LEN != 0 || msg.nodes6_raw.size() % NODE6_INFO_BUF_LEN != 0) {
++        std::stringstream st;
++        st << "[NE " << this << "] WRRRROOOOONG my: " << myid << ")";
++        traceCache(st.str());
+         throw DhtProtocolException {DhtProtocolException::WRONG_NODE_INFO_BUF_LEN};
+     }
+     // deserialize nodes
+@@ -892,9 +964,17 @@ NetworkEngine::deserializeNodes(ParsedMessage& msg, const SockAddr& from) {
+             addr = from;
+             addr.setPort(port);
+         }
++        {
++            std::stringstream st;
++            st << "[NE " << this << "] onNewNode msg.nodes4.back() TEST (" << ni_id  << ") (my: " << myid << ")";
++            traceCache(st.str());
++        }
+         if (isMartian(addr) || isNodeBlacklisted(addr))
+             continue;
+         msg.nodes4.emplace_back(cache.getNode(ni_id, addr, now, false));
++        std::stringstream st;
++        st << "[NE " << this << "] onNewNode msg.nodes4.back() (" << msg.nodes4.back()->getId() << ")";
++        traceCache(st.str());
+         onNewNode(msg.nodes4.back(), 0);
+     }
+     for (unsigned i = 0, n = msg.nodes6_raw.size() / NODE6_INFO_BUF_LEN; i < n; i++) {
+@@ -911,6 +991,9 @@ NetworkEngine::deserializeNodes(ParsedMessage& msg, const SockAddr& from) {
+         if (isMartian(addr) || isNodeBlacklisted(addr))
+             continue;
+         msg.nodes6.emplace_back(cache.getNode(ni_id, addr, now, false));
++        std::stringstream st;
++        st << "[NE " << this << "] onNewNode msg.nodes6.back() (" << msg.nodes6.back()->getId() << ")";
++        traceCache(st.str());
+         onNewNode(msg.nodes6.back(), 0);
+     }
+ }
+diff --git a/src/node_cache.cpp b/src/node_cache.cpp
+index dc25b38..85d29e4 100644
+--- a/src/node_cache.cpp
++++ b/src/node_cache.cpp
+@@ -137,8 +137,12 @@ NodeCache::NodeMap::clearBadNodes() {
+ void
+ NodeCache::NodeMap::setExpired() {
+     for (auto& wn : *this)
+-        if (auto n = wn.second.lock())
++        if (auto n = wn.second.lock()) {
++            std::stringstream st;
++            st << "[dht " << this << "] NodeCache::NodeMap::setExpired set node (" << n->getId() << ") expired\n";
++            traceCache(st.str());
+             n->setExpired();
++        }
+     clear();
+     cleanup_counter = 0;
+ }
+diff --git a/src/op_cache.cpp b/src/op_cache.cpp
+index 6c6ebb7..a6e3ba0 100644
+--- a/src/op_cache.cpp
++++ b/src/op_cache.cpp
+@@ -78,21 +78,31 @@ OpValueCache::onValuesExpired(const std::vector<Value::Id>& vids, const system_c
+ }
+ 
+ std::vector<Sp<Value>>
+-OpValueCache::get(const Value::Filter& filter) const {
++OpValueCache::get(const Value::Filter& filter, bool log) const {
+     std::vector<Sp<Value>> ret;
+     if (not filter)
+         ret.reserve(values.size());
+     for (const auto& v : values)
+         if (not filter or filter(*v.second.data))
+             ret.emplace_back(v.second.data);
++    if (log) {
++        std::stringstream st;
++        st << "[OpValueCache " << this << "] OpValueCache for " << FOLLOW_HASH << ", get, nbValues " << ret << ", nodes " << nodes << ", total val " << values.size() << ", synced " << syncedNodes;
++        traceCache(st.str());
++    }
+     return ret;
+ }
+ 
+ Sp<Value>
+-OpValueCache::get(Value::Id id) const {
++OpValueCache::get(Value::Id id, bool log) const {
+     auto v = values.find(id);
+     if (v == values.end())
+         return {};
++    if (log){
++        std::stringstream st;
++        st << "[OpValueCache " << this << "] OpValueCache for " << FOLLOW_HASH << ", gget value with id " << id << ", nodes " << nodes << ", total val " << values.size() << ", synced " << syncedNodes;
++        traceCache(st.str());
++    }
+     return v->second.data;
+ }
+ 
+@@ -169,7 +179,7 @@ SearchCache::getOp(const Sp<Query>& q) const
+ }
+ 
+ size_t
+-SearchCache::listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value::Filter& filter, const OnListen& onListen)
++SearchCache::listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value::Filter& filter, const OnListen& onListen, bool log)
+ {
+     // find exact match
+     auto op = getOp(q);
+@@ -178,6 +188,11 @@ SearchCache::listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value
+         op = ops.emplace(q, std::unique_ptr<OpCache>(new OpCache)).first;
+         auto& cache = *op->second;
+         cache.searchToken = onListen(q, [&](const std::vector<Sp<Value>>& values, bool expired){
++            if (log){
++                std::stringstream st;
++                st << "[SearchCache " << this << "]  new values for " << FOLLOW_HASH << ", size: " << values.size();
++                traceCache(st.str());
++            }
+             return cache.onValue(values, expired);
+         }, [&](ListenSyncStatus status) {
+             cache.onNodeChanged(status);
+@@ -230,12 +245,17 @@ SearchCache::expire(const time_point& now, const std::function<void(size_t)>& on
+ }
+ 
+ bool
+-SearchCache::get(const Value::Filter& f, const Sp<Query>& q, const GetCallback& gcb, const DoneCallback& dcb) const
++SearchCache::get(const Value::Filter& f, const Sp<Query>& q, const GetCallback& gcb, const DoneCallback& dcb, bool log) const
+ {
+     auto op = getOp(q);
+     if (op != ops.end()) {
+-        auto vals = op->second->get(f);
++        auto vals = op->second->get(f, log);
+         if ((not vals.empty() and not gcb(vals)) or op->second->isSynced()) {
++            if (log){
++                std::stringstream st;
++                st << "[SearchCache " << this << "] call done cb for " << FOLLOW_HASH ;
++                traceCache(st.str());
++            }
+             dcb(true, {});
+             return true;
+         }
+@@ -244,12 +264,12 @@ SearchCache::get(const Value::Filter& f, const Sp<Query>& q, const GetCallback&
+ }
+ 
+ std::vector<Sp<Value>>
+-SearchCache::get(const Value::Filter& filter) const {
++SearchCache::get(const Value::Filter& filter, bool log) const {
+     if (ops.size() == 1)
+-        return ops.begin()->second->get(filter);
++        return ops.begin()->second->get(filter, log);
+     std::map<Value::Id, Sp<Value>> c;
+     for (const auto& op : ops) {
+-        for (const auto& v : op.second->get(filter))
++        for (const auto& v : op.second->get(filter, log))
+             c.emplace(v->id, v);
+     }
+     std::vector<Sp<Value>> ret;
+@@ -260,9 +280,9 @@ SearchCache::get(const Value::Filter& filter) const {
+ }
+ 
+ Sp<Value>
+-SearchCache::get(Value::Id id) const {
++SearchCache::get(Value::Id id, bool log) const {
+     for (const auto& op : ops)
+-        if (auto v = op.second->get(id))
++        if (auto v = op.second->get(id, log))
+             return v;
+     return {};
+ }
+diff --git a/src/op_cache.h b/src/op_cache.h
+index 5166815..9d773c9 100644
+--- a/src/op_cache.h
++++ b/src/op_cache.h
+@@ -71,8 +71,8 @@ public:
+ 
+     bool isSynced() const { return nodes > 0 and syncedNodes == nodes; }
+ 
+-    std::vector<Sp<Value>> get(const Value::Filter& filter) const;
+-    Sp<Value> get(Value::Id id) const;
++    std::vector<Sp<Value>> get(const Value::Filter& filter, bool log = false) const;
++    Sp<Value> get(Value::Id id, bool log = false) const;
+     std::vector<Sp<Value>> getValues() const;
+ 
+ private:
+@@ -128,12 +128,12 @@ public:
+         return listeners.empty();
+     }
+ 
+-    std::vector<Sp<Value>> get(const Value::Filter& filter) const {
+-        return cache.get(filter);
++    std::vector<Sp<Value>> get(const Value::Filter& filter, bool log = false) const {
++        return cache.get(filter, log);
+     }
+ 
+-    Sp<Value> get(Value::Id id) const {
+-        return cache.get(id);
++    Sp<Value> get(Value::Id id, bool log = false) const {
++        return cache.get(id, log);
+     }
+ 
+     bool isSynced() const {
+@@ -162,7 +162,7 @@ public:
+     SearchCache(SearchCache&&) = default;
+ 
+     using OnListen = std::function<size_t(Sp<Query>, ValueCallback, SyncCallback)>;
+-    size_t listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value::Filter& filter, const OnListen& onListen);
++    size_t listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value::Filter& filter, const OnListen& onListen, bool log = false);
+ 
+     bool cancelListen(size_t gtoken, const time_point& now);
+     void cancelAll(const std::function<void(size_t)>& onCancel);
+@@ -172,9 +172,9 @@ public:
+         return nextExpiration_;
+     }
+ 
+-    bool get(const Value::Filter& f, const Sp<Query>& q, const GetCallback& gcb, const DoneCallback& dcb) const;
+-    std::vector<Sp<Value>> get(const Value::Filter& filter) const;
+-    Sp<Value> get(Value::Id id) const;
++    bool get(const Value::Filter& f, const Sp<Query>& q, const GetCallback& gcb, const DoneCallback& dcb, bool log = false) const;
++    std::vector<Sp<Value>> get(const Value::Filter& filter, bool log = false) const;
++    Sp<Value> get(Value::Id id, bool log = false) const;
+ 
+ private:
+     SearchCache(const SearchCache&) = delete;
+diff --git a/src/routing_table.cpp b/src/routing_table.cpp
+index e8b9ea6..95c1d24 100644
+--- a/src/routing_table.cpp
++++ b/src/routing_table.cpp
+@@ -202,6 +202,9 @@ RoutingTable::split(const RoutingTable::iterator& b)
+ 
+ bool
+ RoutingTable::onNewNode(const Sp<Node>& node, int confirm, const time_point& now, const InfoHash& myid, net::NetworkEngine& ne) {
++    std::stringstream st;
++    st << "[rt " << this << "] onNewNode node (" << node->getId() << ")";
++    traceCache(st.str());
+     auto b = findBucket(node->id);
+     if (b == end()) return false;
+ 
+diff --git a/src/search.h b/src/search.h
+index b7a5ffc..bf507b6 100644
+--- a/src/search.h
++++ b/src/search.h
+@@ -162,8 +162,14 @@ struct Dht::SearchNode {
+             }
+         }
+ 
+-        return (not pending and now > last_get_reply + Node::NODE_EXPIRE_TIME) or
++        auto res = (not pending and now > last_get_reply + Node::NODE_EXPIRE_TIME) or
+                 not (completed_sq_status or pending_sq_status or hasStartedPagination(q));
++        if (!res) {
++            std::stringstream st;
++            st << "[NODE " << node->getId() << "] CANNOT GET NOW";
++            traceCache(st.str());
++        }
++        return res;
+     }
+ 
+     /**
+@@ -495,9 +501,9 @@ struct Dht::Search {
+     bool isAnnounced(Value::Id id) const;
+     bool isListening(time_point now, duration exp) const;
+ 
+-    void get(const Value::Filter& f, const Sp<Query>& q, const QueryCallback& qcb, const GetCallback& gcb, const DoneCallback& dcb, Scheduler& scheduler) {
++    void get(const Value::Filter& f, const Sp<Query>& q, const QueryCallback& qcb, const GetCallback& gcb, const DoneCallback& dcb, Scheduler& scheduler, bool log) {
+         if (gcb or qcb) {
+-            if (not cache.get(f, q, gcb, dcb)) {
++            if (not cache.get(f, q, gcb, dcb, log)) {
+                 const auto& now = scheduler.time();
+                 callbacks.emplace(now, Get { now, f, q, qcb, gcb, dcb });
+                 scheduler.edit(nextSearchStep, now);
+@@ -505,7 +511,7 @@ struct Dht::Search {
+         }
+     }
+ 
+-    size_t listen(const ValueCallback& cb, const Value::Filter& f, const Sp<Query>& q, Scheduler& scheduler) {
++    size_t listen(const ValueCallback& cb, const Value::Filter& f, const Sp<Query>& q, Scheduler& scheduler, bool log) {
+         //DHT_LOG.e(id, "[search %s IPv%c] listen", id.toString().c_str(), (af == AF_INET) ? '4' : '6');
+         return cache.listen(cb, q, f, [&](const Sp<Query>& q, ValueCallback vcb, SyncCallback scb){
+             done = false;
+@@ -513,7 +519,7 @@ struct Dht::Search {
+             listeners.emplace(token, SearchListener{q, vcb, scb});
+             scheduler.edit(nextSearchStep, scheduler.time());
+             return token;
+-        });
++        }, log);
+     }
+ 
+     void cancelListen(size_t token, Scheduler& scheduler) {
+diff --git a/tools/dhtnode.cpp b/tools/dhtnode.cpp
+index 8b8adb7..4dd6681 100644
+--- a/tools/dhtnode.cpp
++++ b/tools/dhtnode.cpp
+@@ -130,8 +130,10 @@ void cmd_loop(std::shared_ptr<DhtRunner>& node, dht_params& params
+     {
+         // using the GNU Readline API
+         std::string line = readLine();
+-        if (!line.empty() && line[0] == '\0')
+-            break;
++        if (!line.empty() && line[0] == '\0') {
++            std::this_thread::sleep_for(std::chrono::seconds(1));
++            continue;
++        }
+ 
+         std::istringstream iss(line);
+         std::string op, idstr, value, index, keystr, pushServer, deviceKey;
+diff --git a/tools/neighbors.html b/tools/neighbors.html
+new file mode 100644
+index 0000000..934b803
+--- /dev/null
++++ b/tools/neighbors.html
+@@ -0,0 +1,264 @@
++<html>
++<meta charset="UTF-8">
++
++
++<div id="fileContent"></div>
++
++<script>
++RESULT = `
++050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1:6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,81cba744a57ab06d0a2c885642f964a1f524f29f,8241b80abd5fac658787821afde7f62798b2efce,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,
++0644d38ec4af222bd78dc61d7626aa8c3a6f68d4:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,2a164b3eda02865d9f4228a164c466fe0136c167,292c962297c03f3459008c8c5bac81aca70a4d71,5f373d1a18d894bd48e51c6fba550c011c676d0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,
++079effacb9e5eacecca3180c0dfd5934faec65f7:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,d733df79c8d47afaa26c83b7e2da81d069abb852,
++07f4f0b566ac58d51e8a67358b0dd5d8f15c8f6e:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,5f373d1a18d894bd48e51c6fba550c011c676d0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7a51208380a9098271ea97d8bfd2436f86b0cd06,
++0ab3ea902aa1e187c0fab3e276735a2dd62bebcd:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,5f373d1a18d894bd48e51c6fba550c011c676d0a,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,
++12dd146991079f4f3fb82dba41b53e70acf6e967:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,5f373d1a18d894bd48e51c6fba550c011c676d0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,
++13bc42ad288317410a7047c1a7dcf21c53cca268:1f089987b2ba81b8837da92a906f568cdabc25ca,079effacb9e5eacecca3180c0dfd5934faec65f7,0644d38ec4af222bd78dc61d7626aa8c3a6f68d4,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,0ab3ea902aa1e187c0fab3e276735a2dd62bebcd,24d763dfe00e35b3ad081922e1682e849683c5be,292c962297c03f3459008c8c5bac81aca70a4d71,5f39daae67df74f8bb6ba6deb9abf163db65e6a5,
++145972493ce8fba3f24c91da125d35556e62e7cd:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,5f373d1a18d894bd48e51c6fba550c011c676d0a,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,
++182dce201c9a41ecac71b3449521a3b9b2778a2c:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,5f373d1a18d894bd48e51c6fba550c011c676d0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,
++1f089987b2ba81b8837da92a906f568cdabc25ca:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,d733df79c8d47afaa26c83b7e2da81d069abb852,fd420c5b941363272c108c1aa2972470bfe0e3d6,
++206ae346549b4d4e2a2c9b1d1e5d03db4afda6fc:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++24216aa8974eb1bb5c478fffbab07f0a5fe48aa3:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7a51208380a9098271ea97d8bfd2436f86b0cd06,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++24d763dfe00e35b3ad081922e1682e849683c5be:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++27dc3fca2bda643b57490bad9f4d24d1a08cd6fe:292c962297c03f3459008c8c5bac81aca70a4d71,30d584a9b3a96eb60cb81e8805063ce5ffdaac17,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,
++28b2ec6872a944c5b608c0f3db29ed74d043ad40:292c962297c03f3459008c8c5bac81aca70a4d71,0ab3ea902aa1e187c0fab3e276735a2dd62bebcd,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,
++292c962297c03f3459008c8c5bac81aca70a4d71:2a164b3eda02865d9f4228a164c466fe0136c167,30d584a9b3a96eb60cb81e8805063ce5ffdaac17,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,4aec14106ad41371cccd0eaa94d7575fbfec7ba9,
++2a164b3eda02865d9f4228a164c466fe0136c167:292c962297c03f3459008c8c5bac81aca70a4d71,3bca31bc7a5b3790c26c565fcf1b200d944a15cc,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7a51208380a9098271ea97d8bfd2436f86b0cd06,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,
++2ae12e5c64553d70e7f7c8a59ef819bde4d43b28:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,5f373d1a18d894bd48e51c6fba550c011c676d0a,eaad82be4d3ea2fa6989099d27eb91016b63a564,
++30d584a9b3a96eb60cb81e8805063ce5ffdaac17:7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,62dd392968f193fe8de03d80fdd68ac6e87c7b31,8241b80abd5fac658787821afde7f62798b2efce,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,fd420c5b941363272c108c1aa2972470bfe0e3d6,e9b0e0874660e570f010c0b50931242c69c393b7,
++31a89dd7a46419fea1132c20b573f840bad09a18:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++356b35e2506e1cf98c11815eef17bd5dbf25de4d:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7a51208380a9098271ea97d8bfd2436f86b0cd06,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++37944e22be55e87cc3487e95adbe95eba27c8ca1:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++3a5de8f59c3e2508051b722f7308052f1d959c9a:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,7a51208380a9098271ea97d8bfd2436f86b0cd06,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++3bca31bc7a5b3790c26c565fcf1b200d944a15cc:7ea3bfa744013be92adc49794c61533d3796615b,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,5f373d1a18d894bd48e51c6fba550c011c676d0a,81cba744a57ab06d0a2c885642f964a1f524f29f,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,e9b0e0874660e570f010c0b50931242c69c393b7,
++3f5e81b41308e7ca11cf503be6bd79ecc233b644:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++413c61d205d1b4651c73e45226e6b6493676ef1a:5f373d1a18d894bd48e51c6fba550c011c676d0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,
++4331abfdfab80a020ba2efaf6d209ea7f322df2b:5f373d1a18d894bd48e51c6fba550c011c676d0a,5f39daae67df74f8bb6ba6deb9abf163db65e6a5,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++4aec14106ad41371cccd0eaa94d7575fbfec7ba9:5f373d1a18d894bd48e51c6fba550c011c676d0a,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,
++5e52a288cce8429f21351bf5e9215730665135ef:7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,d733df79c8d47afaa26c83b7e2da81d069abb852,
++5f373d1a18d894bd48e51c6fba550c011c676d0a:7a51208380a9098271ea97d8bfd2436f86b0cd06,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,292c962297c03f3459008c8c5bac81aca70a4d71,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,
++5f39daae67df74f8bb6ba6deb9abf163db65e6a5:7a51208380a9098271ea97d8bfd2436f86b0cd06,292c962297c03f3459008c8c5bac81aca70a4d71,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,e05b35ae47f65635c13232e12e2108c24fc19a68,
++6012d37f22b7dc93d549a0ff84c335b06cb1e17b:62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,30d584a9b3a96eb60cb81e8805063ce5ffdaac17,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++60719bf86e1b3fde211dc6a226018331bfddac28:62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,750ba991d5bf47183dc5758c004e7dc0533b0071,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,
++62ac5c3dd8d8a3c1f84381b87c5a03d81501af02:62dd392968f193fe8de03d80fdd68ac6e87c7b31,7ea3bfa744013be92adc49794c61533d3796615b,e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,8241b80abd5fac658787821afde7f62798b2efce,
++62dd392968f193fe8de03d80fdd68ac6e87c7b31:6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,292c962297c03f3459008c8c5bac81aca70a4d71,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,8241b80abd5fac658787821afde7f62798b2efce,81cba744a57ab06d0a2c885642f964a1f524f29f,
++66d7dc8b3dae360ba3af07389a08cf9003339aff:62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++670f7b2788c23ea95f70e909a91a9c8be3c31565:62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++6865d7eda62f42042f701fc2c930d50d8430a32a:6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,27dc3fca2bda643b57490bad9f4d24d1a08cd6fe,
++6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a:62dd392968f193fe8de03d80fdd68ac6e87c7b31,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,
++6e5883b087fa05dd02196ddfd596d88005e42097:6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++735e89e24a5319e67de0e3e364212e744e4fb9b1:7a51208380a9098271ea97d8bfd2436f86b0cd06,7e90e089323c3ac2426050cdd445151a4b59d054,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,5f373d1a18d894bd48e51c6fba550c011c676d0a,27dc3fca2bda643b57490bad9f4d24d1a08cd6fe,
++73f399abd3162dc4cd8ad0351560e43a8bf8f4e7:7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,f34da3638add809710ea23b83b8501aede73697a,f54e818f8b43143cbe5488593992668eddaea131,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,
++750ba991d5bf47183dc5758c004e7dc0533b0071:7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,5f373d1a18d894bd48e51c6fba550c011c676d0a,30d584a9b3a96eb60cb81e8805063ce5ffdaac17,292c962297c03f3459008c8c5bac81aca70a4d71,
++7a51208380a9098271ea97d8bfd2436f86b0cd06:7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,e9b0e0874660e570f010c0b50931242c69c393b7,
++7ae9379e8f291d532f17a2ea465c0d897de800ce:7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,750ba991d5bf47183dc5758c004e7dc0533b0071,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,
++7c270da60d86a25f22e59c9c90726dd4608c180c:7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7a51208380a9098271ea97d8bfd2436f86b0cd06,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++7e243b411ce8d3a90f24f4435409e15bb26f4d76:7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7a51208380a9098271ea97d8bfd2436f86b0cd06,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d:7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,292c962297c03f3459008c8c5bac81aca70a4d71,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,
++7e90e089323c3ac2426050cdd445151a4b59d054:7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,735e89e24a5319e67de0e3e364212e744e4fb9b1,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,
++7ea3bfa744013be92adc49794c61533d3796615b:7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,
++816d263f606cdc1e1da491fcce812812109cc184:81cba744a57ab06d0a2c885642f964a1f524f29f,e05b35ae47f65635c13232e12e2108c24fc19a68,e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,fd420c5b941363272c108c1aa2972470bfe0e3d6,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++81cba744a57ab06d0a2c885642f964a1f524f29f:8241b80abd5fac658787821afde7f62798b2efce,d733df79c8d47afaa26c83b7e2da81d069abb852,e05b35ae47f65635c13232e12e2108c24fc19a68,e9b0e0874660e570f010c0b50931242c69c393b7,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,292c962297c03f3459008c8c5bac81aca70a4d71,5f39daae67df74f8bb6ba6deb9abf163db65e6a5,
++8241b80abd5fac658787821afde7f62798b2efce:81cba744a57ab06d0a2c885642f964a1f524f29f,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,
++841206daefcccd549bc3e5f3ac424de1ad617e88:81cba744a57ab06d0a2c885642f964a1f524f29f,e05b35ae47f65635c13232e12e2108c24fc19a68,e9b0e0874660e570f010c0b50931242c69c393b7,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,
++850cd9aa09501a82ce65693883b0cfc50f6e9166:81cba744a57ab06d0a2c885642f964a1f524f29f,d733df79c8d47afaa26c83b7e2da81d069abb852,e05b35ae47f65635c13232e12e2108c24fc19a68,e9b0e0874660e570f010c0b50931242c69c393b7,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,30d584a9b3a96eb60cb81e8805063ce5ffdaac17,
++89c0612a5389f092f9e46cdeda5dd458b2cc725d:81cba744a57ab06d0a2c885642f964a1f524f29f,92e6ea25e35ee86cced2b9a9f2ef5c05f406c18b,97ac80d4c7c76525442dd9fef44822264af7279a,aea9c9c2f77904b6eddd8c8562493a3c56bf0d49,ae2b572db22aa7f27a4dbc56ee708ecda3662f67,a1bd391c8f25593c5f3ef3789134fdb9953d3781,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,
++92b9747fcac918aafe55f26ee6b54074708aee6c:81cba744a57ab06d0a2c885642f964a1f524f29f,816d263f606cdc1e1da491fcce812812109cc184,b5e990db278c6594c855698424442568d4d12a63,a1bd391c8f25593c5f3ef3789134fdb9953d3781,ae2b572db22aa7f27a4dbc56ee708ecda3662f67,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,
++92e6ea25e35ee86cced2b9a9f2ef5c05f406c18b:81cba744a57ab06d0a2c885642f964a1f524f29f,850cd9aa09501a82ce65693883b0cfc50f6e9166,be13ad3d8e1a2a442d50a3b5e1f6fb39b5ffab67,ae2b572db22aa7f27a4dbc56ee708ecda3662f67,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,fd420c5b941363272c108c1aa2972470bfe0e3d6,
++95202317174d7a39e09d4cf5a87c69c6eb83fa92:816d263f606cdc1e1da491fcce812812109cc184,81cba744a57ab06d0a2c885642f964a1f524f29f,a1bd391c8f25593c5f3ef3789134fdb9953d3781,ae2b572db22aa7f27a4dbc56ee708ecda3662f67,d733df79c8d47afaa26c83b7e2da81d069abb852,f54e818f8b43143cbe5488593992668eddaea131,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,
++97ac80d4c7c76525442dd9fef44822264af7279a:850cd9aa09501a82ce65693883b0cfc50f6e9166,841206daefcccd549bc3e5f3ac424de1ad617e88,8241b80abd5fac658787821afde7f62798b2efce,81cba744a57ab06d0a2c885642f964a1f524f29f,b1bad39ad66af90e5fdae00d719b286c18840fd4,a1bd391c8f25593c5f3ef3789134fdb9953d3781,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,5f39daae67df74f8bb6ba6deb9abf163db65e6a5,
++9ee57170c9a3313d4c9ffb0374efb4881e952d8e:8241b80abd5fac658787821afde7f62798b2efce,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,eaad82be4d3ea2fa6989099d27eb91016b63a564,e9b0e0874660e570f010c0b50931242c69c393b7,
++a1bd391c8f25593c5f3ef3789134fdb9953d3781:e05b35ae47f65635c13232e12e2108c24fc19a68,e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f34da3638add809710ea23b83b8501aede73697a,f54e818f8b43143cbe5488593992668eddaea131,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,fd420c5b941363272c108c1aa2972470bfe0e3d6,d733df79c8d47afaa26c83b7e2da81d069abb852,
++a2fd0166d3914a88efe9b39fa8180132e24c647d:a1bd391c8f25593c5f3ef3789134fdb9953d3781,ae2b572db22aa7f27a4dbc56ee708ecda3662f67,be13ad3d8e1a2a442d50a3b5e1f6fb39b5ffab67,8241b80abd5fac658787821afde7f62798b2efce,850cd9aa09501a82ce65693883b0cfc50f6e9166,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,7ea3bfa744013be92adc49794c61533d3796615b,
++a8947c341350734b2bbcf493b8257d808895ed53:81cba744a57ab06d0a2c885642f964a1f524f29f,841206daefcccd549bc3e5f3ac424de1ad617e88,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,
++ae2b572db22aa7f27a4dbc56ee708ecda3662f67:81cba744a57ab06d0a2c885642f964a1f524f29f,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,292c962297c03f3459008c8c5bac81aca70a4d71,
++aea9c9c2f77904b6eddd8c8562493a3c56bf0d49:ae2b572db22aa7f27a4dbc56ee708ecda3662f67,850cd9aa09501a82ce65693883b0cfc50f6e9166,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,eaad82be4d3ea2fa6989099d27eb91016b63a564,e9b0e0874660e570f010c0b50931242c69c393b7,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,
++b186480ba6d95cbe495aaca5aab257104301ed9b:f34da3638add809710ea23b83b8501aede73697a,f54e818f8b43143cbe5488593992668eddaea131,f4a4fac253cc84b012b5e9c27fd2da4df428d35c,fd420c5b941363272c108c1aa2972470bfe0e3d6,e05b35ae47f65635c13232e12e2108c24fc19a68,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,
++b1bad39ad66af90e5fdae00d719b286c18840fd4:a1bd391c8f25593c5f3ef3789134fdb9953d3781,a2fd0166d3914a88efe9b39fa8180132e24c647d,aea9c9c2f77904b6eddd8c8562493a3c56bf0d49,ae2b572db22aa7f27a4dbc56ee708ecda3662f67,92e6ea25e35ee86cced2b9a9f2ef5c05f406c18b,97ac80d4c7c76525442dd9fef44822264af7279a,81cba744a57ab06d0a2c885642f964a1f524f29f,816d263f606cdc1e1da491fcce812812109cc184,
++b5e990db278c6594c855698424442568d4d12a63:f54e818f8b43143cbe5488593992668eddaea131,fd420c5b941363272c108c1aa2972470bfe0e3d6,e9b0e0874660e570f010c0b50931242c69c393b7,
++ba6c354db69fc532380e5ecae84a97a71999e20d:ae2b572db22aa7f27a4dbc56ee708ecda3662f67,a1bd391c8f25593c5f3ef3789134fdb9953d3781,92e6ea25e35ee86cced2b9a9f2ef5c05f406c18b,8241b80abd5fac658787821afde7f62798b2efce,81cba744a57ab06d0a2c885642f964a1f524f29f,850cd9aa09501a82ce65693883b0cfc50f6e9166,7a51208380a9098271ea97d8bfd2436f86b0cd06,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,
++be13ad3d8e1a2a442d50a3b5e1f6fb39b5ffab67:81cba744a57ab06d0a2c885642f964a1f524f29f,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,e05b35ae47f65635c13232e12e2108c24fc19a68,
++c2058d352598588dc9b3516f70dd1e95b7f80ea0:e05b35ae47f65635c13232e12e2108c24fc19a68,eaad82be4d3ea2fa6989099d27eb91016b63a564,e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,fd420c5b941363272c108c1aa2972470bfe0e3d6,
++cbbffe6422966538a5e098246db9e5659c9975b7:c2058d352598588dc9b3516f70dd1e95b7f80ea0,eaad82be4d3ea2fa6989099d27eb91016b63a564,e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,f54e818f8b43143cbe5488593992668eddaea131,
++cc11b7cd3e5cc26b2aac886a438dae884c458c2c:cbbffe6422966538a5e098246db9e5659c9975b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,
++cd32612db5a29cbb24590c025f6bdb33f9525057:d733df79c8d47afaa26c83b7e2da81d069abb852,d2d2b0c099fedce6857d60697f30885108e77c55,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f54e818f8b43143cbe5488593992668eddaea131,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,
++cfec822a7ef8bba08bc6eb15dfcf446767e1fae2:d733df79c8d47afaa26c83b7e2da81d069abb852,d2d2b0c099fedce6857d60697f30885108e77c55,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,e05b35ae47f65635c13232e12e2108c24fc19a68,fd67df5bfe05a3c8e4f0866ccfe2e25b3df4788b,fd420c5b941363272c108c1aa2972470bfe0e3d6,f54e818f8b43143cbe5488593992668eddaea131,
++d2d2b0c099fedce6857d60697f30885108e77c55:d733df79c8d47afaa26c83b7e2da81d069abb852,d9e33de414a026b2c70e412ed972aec6a41c4564,cfec822a7ef8bba08bc6eb15dfcf446767e1fae2,cd32612db5a29cbb24590c025f6bdb33f9525057,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,fd420c5b941363272c108c1aa2972470bfe0e3d6,
++d733df79c8d47afaa26c83b7e2da81d069abb852:f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,850cd9aa09501a82ce65693883b0cfc50f6e9166,8241b80abd5fac658787821afde7f62798b2efce,81cba744a57ab06d0a2c885642f964a1f524f29f,
++d9e33de414a026b2c70e412ed972aec6a41c4564:d2d2b0c099fedce6857d60697f30885108e77c55,d733df79c8d47afaa26c83b7e2da81d069abb852,fa33d040d337eff009d94a2521b833b7af2da906,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,f54e818f8b43143cbe5488593992668eddaea131,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,e9b0e0874660e570f010c0b50931242c69c393b7,
++dcbf0f4a590270a21dce9b44ce570639490f39c0:fd420c5b941363272c108c1aa2972470bfe0e3d6,f4a4fac253cc84b012b5e9c27fd2da4df428d35c,f54e818f8b43143cbe5488593992668eddaea131,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,e05b35ae47f65635c13232e12e2108c24fc19a68,
++de187fb6c0ff2d4765422d03efd2d376b2578799:d9e33de414a026b2c70e412ed972aec6a41c4564,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,eaad82be4d3ea2fa6989099d27eb91016b63a564,e9b0e0874660e570f010c0b50931242c69c393b7,
++e0157734fa1d8dd545281e5a05e57ddd51512519:e05b35ae47f65635c13232e12e2108c24fc19a68,e2e0b098da3f29365499808e226cb99c79b50e9b,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,eb24c0da674b88354a6a1f8796109b01da8c1ce7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f26814de086753e5fb8d67ef7a852333c42813c3,f34da3638add809710ea23b83b8501aede73697a,
++e05b35ae47f65635c13232e12e2108c24fc19a68:e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,fd420c5b941363272c108c1aa2972470bfe0e3d6,d733df79c8d47afaa26c83b7e2da81d069abb852,816d263f606cdc1e1da491fcce812812109cc184,81cba744a57ab06d0a2c885642f964a1f524f29f,
++e2e0b098da3f29365499808e226cb99c79b50e9b:e05b35ae47f65635c13232e12e2108c24fc19a68,e0157734fa1d8dd545281e5a05e57ddd51512519,eaad82be4d3ea2fa6989099d27eb91016b63a564,eb24c0da674b88354a6a1f8796109b01da8c1ce7,e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,
++e9b0e0874660e570f010c0b50931242c69c393b7:ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,d733df79c8d47afaa26c83b7e2da81d069abb852,81cba744a57ab06d0a2c885642f964a1f524f29f,8241b80abd5fac658787821afde7f62798b2efce,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,
++eaad82be4d3ea2fa6989099d27eb91016b63a564:e9b0e0874660e570f010c0b50931242c69c393b7,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,81cba744a57ab06d0a2c885642f964a1f524f29f,
++eb24c0da674b88354a6a1f8796109b01da8c1ce7:eaad82be4d3ea2fa6989099d27eb91016b63a564,e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e2e0b098da3f29365499808e226cb99c79b50e9b,e0157734fa1d8dd545281e5a05e57ddd51512519,e05b35ae47f65635c13232e12e2108c24fc19a68,cfec822a7ef8bba08bc6eb15dfcf446767e1fae2,d733df79c8d47afaa26c83b7e2da81d069abb852,
++ec73fa1c2cb4f6f323e6362c8448d5437a0312ce:ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,f34da3638add809710ea23b83b8501aede73697a,
++ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d:e9b0e0874660e570f010c0b50931242c69c393b7,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,81cba744a57ab06d0a2c885642f964a1f524f29f,8241b80abd5fac658787821afde7f62798b2efce,62dd392968f193fe8de03d80fdd68ac6e87c7b31,
++f26814de086753e5fb8d67ef7a852333c42813c3:f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f4a4fac253cc84b012b5e9c27fd2da4df428d35c,f54e818f8b43143cbe5488593992668eddaea131,f558adb32d101a6c11da5f30b1a1c95f2a49f775,e2e0b098da3f29365499808e226cb99c79b50e9b,e05b35ae47f65635c13232e12e2108c24fc19a68,e0157734fa1d8dd545281e5a05e57ddd51512519,
++f4a4fac253cc84b012b5e9c27fd2da4df428d35c:f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,f558adb32d101a6c11da5f30b1a1c95f2a49f775,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,fb8fb519789d4c4cd19d7848550048ed6ad569cb,e0157734fa1d8dd545281e5a05e57ddd51512519,e05b35ae47f65635c13232e12e2108c24fc19a68,
++f4de5b14ef041e390952fd636e8f4d060b5c2ea5:f54e818f8b43143cbe5488593992668eddaea131,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,f9f7f8c9fb7abe6e4264d4b8d04d9f3d61bdf21a,e05b35ae47f65635c13232e12e2108c24fc19a68,e0157734fa1d8dd545281e5a05e57ddd51512519,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,
++f54e818f8b43143cbe5488593992668eddaea131:f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,f26814de086753e5fb8d67ef7a852333c42813c3,fd420c5b941363272c108c1aa2972470bfe0e3d6,fd67df5bfe05a3c8e4f0866ccfe2e25b3df4788b,e05b35ae47f65635c13232e12e2108c24fc19a68,e0157734fa1d8dd545281e5a05e57ddd51512519,e2e0b098da3f29365499808e226cb99c79b50e9b,
++f558adb32d101a6c11da5f30b1a1c95f2a49f775:f54e818f8b43143cbe5488593992668eddaea131,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f4a4fac253cc84b012b5e9c27fd2da4df428d35c,f34da3638add809710ea23b83b8501aede73697a,f26814de086753e5fb8d67ef7a852333c42813c3,fd420c5b941363272c108c1aa2972470bfe0e3d6,fb8fb519789d4c4cd19d7848550048ed6ad569cb,e05b35ae47f65635c13232e12e2108c24fc19a68,
++f8bf444841964c14ca5c50dc120d06519e901dae:fd420c5b941363272c108c1aa2972470bfe0e3d6,f26814de086753e5fb8d67ef7a852333c42813c3,f34da3638add809710ea23b83b8501aede73697a,f4a4fac253cc84b012b5e9c27fd2da4df428d35c,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f558adb32d101a6c11da5f30b1a1c95f2a49f775,f54e818f8b43143cbe5488593992668eddaea131,e9b0e0874660e570f010c0b50931242c69c393b7,
++f9f7f8c9fb7abe6e4264d4b8d04d9f3d61bdf21a:fd420c5b941363272c108c1aa2972470bfe0e3d6,e9b0e0874660e570f010c0b50931242c69c393b7,
++fa33d040d337eff009d94a2521b833b7af2da906:fb8fb519789d4c4cd19d7848550048ed6ad569cb,f8bf444841964c14ca5c50dc120d06519e901dae,f9f7f8c9fb7abe6e4264d4b8d04d9f3d61bdf21a,fd420c5b941363272c108c1aa2972470bfe0e3d6,f26814de086753e5fb8d67ef7a852333c42813c3,f34da3638add809710ea23b83b8501aede73697a,f4a4fac253cc84b012b5e9c27fd2da4df428d35c,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,
++fb8fb519789d4c4cd19d7848550048ed6ad569cb:fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,f26814de086753e5fb8d67ef7a852333c42813c3,f54e818f8b43143cbe5488593992668eddaea131,f558adb32d101a6c11da5f30b1a1c95f2a49f775,f4a4fac253cc84b012b5e9c27fd2da4df428d35c,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,eaad82be4d3ea2fa6989099d27eb91016b63a564,
++fd67df5bfe05a3c8e4f0866ccfe2e25b3df4788b:fd420c5b941363272c108c1aa2972470bfe0e3d6,f54e818f8b43143cbe5488593992668eddaea131,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,e05b35ae47f65635c13232e12e2108c24fc19a68,
++`
++
++
++// PUT ON f642867a834a4b939cf4ae1d251acb89fe1fa11b
++RESULT = `
++050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1:6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,81cba744a57ab06d0a2c885642f964a1f524f29f,8241b80abd5fac658787821afde7f62798b2efce,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,
++0644d38ec4af222bd78dc61d7626aa8c3a6f68d4:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,2a164b3eda02865d9f4228a164c466fe0136c167,292c962297c03f3459008c8c5bac81aca70a4d71,5f373d1a18d894bd48e51c6fba550c011c676d0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,
++079effacb9e5eacecca3180c0dfd5934faec65f7:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,d733df79c8d47afaa26c83b7e2da81d069abb852,
++07f4f0b566ac58d51e8a67358b0dd5d8f15c8f6e:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,5f373d1a18d894bd48e51c6fba550c011c676d0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7a51208380a9098271ea97d8bfd2436f86b0cd06,
++0ab3ea902aa1e187c0fab3e276735a2dd62bebcd:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,5f373d1a18d894bd48e51c6fba550c011c676d0a,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,
++12dd146991079f4f3fb82dba41b53e70acf6e967:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,5f373d1a18d894bd48e51c6fba550c011c676d0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,
++13bc42ad288317410a7047c1a7dcf21c53cca268:1f089987b2ba81b8837da92a906f568cdabc25ca,079effacb9e5eacecca3180c0dfd5934faec65f7,0644d38ec4af222bd78dc61d7626aa8c3a6f68d4,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,0ab3ea902aa1e187c0fab3e276735a2dd62bebcd,24d763dfe00e35b3ad081922e1682e849683c5be,292c962297c03f3459008c8c5bac81aca70a4d71,5f39daae67df74f8bb6ba6deb9abf163db65e6a5,
++145972493ce8fba3f24c91da125d35556e62e7cd:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,5f373d1a18d894bd48e51c6fba550c011c676d0a,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,
++182dce201c9a41ecac71b3449521a3b9b2778a2c:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,5f373d1a18d894bd48e51c6fba550c011c676d0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,
++1f089987b2ba81b8837da92a906f568cdabc25ca:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,d733df79c8d47afaa26c83b7e2da81d069abb852,fd420c5b941363272c108c1aa2972470bfe0e3d6,
++206ae346549b4d4e2a2c9b1d1e5d03db4afda6fc:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++24216aa8974eb1bb5c478fffbab07f0a5fe48aa3:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7a51208380a9098271ea97d8bfd2436f86b0cd06,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++24d763dfe00e35b3ad081922e1682e849683c5be:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++27dc3fca2bda643b57490bad9f4d24d1a08cd6fe:292c962297c03f3459008c8c5bac81aca70a4d71,30d584a9b3a96eb60cb81e8805063ce5ffdaac17,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,
++28b2ec6872a944c5b608c0f3db29ed74d043ad40:292c962297c03f3459008c8c5bac81aca70a4d71,0ab3ea902aa1e187c0fab3e276735a2dd62bebcd,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,
++292c962297c03f3459008c8c5bac81aca70a4d71:2a164b3eda02865d9f4228a164c466fe0136c167,30d584a9b3a96eb60cb81e8805063ce5ffdaac17,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,4aec14106ad41371cccd0eaa94d7575fbfec7ba9,
++2a164b3eda02865d9f4228a164c466fe0136c167:292c962297c03f3459008c8c5bac81aca70a4d71,3bca31bc7a5b3790c26c565fcf1b200d944a15cc,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7a51208380a9098271ea97d8bfd2436f86b0cd06,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,
++2ae12e5c64553d70e7f7c8a59ef819bde4d43b28:050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,5f373d1a18d894bd48e51c6fba550c011c676d0a,eaad82be4d3ea2fa6989099d27eb91016b63a564,
++30d584a9b3a96eb60cb81e8805063ce5ffdaac17:7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,62dd392968f193fe8de03d80fdd68ac6e87c7b31,8241b80abd5fac658787821afde7f62798b2efce,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,fd420c5b941363272c108c1aa2972470bfe0e3d6,e9b0e0874660e570f010c0b50931242c69c393b7,
++31a89dd7a46419fea1132c20b573f840bad09a18:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++356b35e2506e1cf98c11815eef17bd5dbf25de4d:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7a51208380a9098271ea97d8bfd2436f86b0cd06,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++37944e22be55e87cc3487e95adbe95eba27c8ca1:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++3a5de8f59c3e2508051b722f7308052f1d959c9a:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,7a51208380a9098271ea97d8bfd2436f86b0cd06,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++3bca31bc7a5b3790c26c565fcf1b200d944a15cc:7ea3bfa744013be92adc49794c61533d3796615b,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,5f373d1a18d894bd48e51c6fba550c011c676d0a,81cba744a57ab06d0a2c885642f964a1f524f29f,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,e9b0e0874660e570f010c0b50931242c69c393b7,
++3f5e81b41308e7ca11cf503be6bd79ecc233b644:292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,5f373d1a18d894bd48e51c6fba550c011c676d0a,
++413c61d205d1b4651c73e45226e6b6493676ef1a:5f373d1a18d894bd48e51c6fba550c011c676d0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,
++4331abfdfab80a020ba2efaf6d209ea7f322df2b:5f373d1a18d894bd48e51c6fba550c011c676d0a,5f39daae67df74f8bb6ba6deb9abf163db65e6a5,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++4aec14106ad41371cccd0eaa94d7575fbfec7ba9:5f373d1a18d894bd48e51c6fba550c011c676d0a,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,
++5e52a288cce8429f21351bf5e9215730665135ef:7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,292c962297c03f3459008c8c5bac81aca70a4d71,d733df79c8d47afaa26c83b7e2da81d069abb852,
++5f373d1a18d894bd48e51c6fba550c011c676d0a:7a51208380a9098271ea97d8bfd2436f86b0cd06,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,292c962297c03f3459008c8c5bac81aca70a4d71,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,
++5f39daae67df74f8bb6ba6deb9abf163db65e6a5:7a51208380a9098271ea97d8bfd2436f86b0cd06,292c962297c03f3459008c8c5bac81aca70a4d71,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,e05b35ae47f65635c13232e12e2108c24fc19a68,
++6012d37f22b7dc93d549a0ff84c335b06cb1e17b:62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,30d584a9b3a96eb60cb81e8805063ce5ffdaac17,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++60719bf86e1b3fde211dc6a226018331bfddac28:62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,750ba991d5bf47183dc5758c004e7dc0533b0071,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,
++62ac5c3dd8d8a3c1f84381b87c5a03d81501af02:62dd392968f193fe8de03d80fdd68ac6e87c7b31,7ea3bfa744013be92adc49794c61533d3796615b,e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,8241b80abd5fac658787821afde7f62798b2efce,
++62dd392968f193fe8de03d80fdd68ac6e87c7b31:6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7a51208380a9098271ea97d8bfd2436f86b0cd06,292c962297c03f3459008c8c5bac81aca70a4d71,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,8241b80abd5fac658787821afde7f62798b2efce,81cba744a57ab06d0a2c885642f964a1f524f29f,
++66d7dc8b3dae360ba3af07389a08cf9003339aff:62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++670f7b2788c23ea95f70e909a91a9c8be3c31565:62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++6865d7eda62f42042f701fc2c930d50d8430a32a:6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,27dc3fca2bda643b57490bad9f4d24d1a08cd6fe,
++6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a:62dd392968f193fe8de03d80fdd68ac6e87c7b31,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,
++6e5883b087fa05dd02196ddfd596d88005e42097:6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++735e89e24a5319e67de0e3e364212e744e4fb9b1:7a51208380a9098271ea97d8bfd2436f86b0cd06,7e90e089323c3ac2426050cdd445151a4b59d054,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,5f373d1a18d894bd48e51c6fba550c011c676d0a,27dc3fca2bda643b57490bad9f4d24d1a08cd6fe,
++73f399abd3162dc4cd8ad0351560e43a8bf8f4e7:7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,f34da3638add809710ea23b83b8501aede73697a,f54e818f8b43143cbe5488593992668eddaea131,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,
++750ba991d5bf47183dc5758c004e7dc0533b0071:7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,5f373d1a18d894bd48e51c6fba550c011c676d0a,30d584a9b3a96eb60cb81e8805063ce5ffdaac17,292c962297c03f3459008c8c5bac81aca70a4d71,
++7a51208380a9098271ea97d8bfd2436f86b0cd06:7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,e9b0e0874660e570f010c0b50931242c69c393b7,
++7ae9379e8f291d532f17a2ea465c0d897de800ce:7a51208380a9098271ea97d8bfd2436f86b0cd06,7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,750ba991d5bf47183dc5758c004e7dc0533b0071,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,
++7c270da60d86a25f22e59c9c90726dd4608c180c:7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7a51208380a9098271ea97d8bfd2436f86b0cd06,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++7e243b411ce8d3a90f24f4435409e15bb26f4d76:7ea3bfa744013be92adc49794c61533d3796615b,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7a51208380a9098271ea97d8bfd2436f86b0cd06,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d:7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,292c962297c03f3459008c8c5bac81aca70a4d71,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,
++7e90e089323c3ac2426050cdd445151a4b59d054:7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,7ea3bfa744013be92adc49794c61533d3796615b,7a51208380a9098271ea97d8bfd2436f86b0cd06,735e89e24a5319e67de0e3e364212e744e4fb9b1,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,62dd392968f193fe8de03d80fdd68ac6e87c7b31,5f373d1a18d894bd48e51c6fba550c011c676d0a,292c962297c03f3459008c8c5bac81aca70a4d71,
++7ea3bfa744013be92adc49794c61533d3796615b:7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,
++816d263f606cdc1e1da491fcce812812109cc184:81cba744a57ab06d0a2c885642f964a1f524f29f,e05b35ae47f65635c13232e12e2108c24fc19a68,e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,fd420c5b941363272c108c1aa2972470bfe0e3d6,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,
++81cba744a57ab06d0a2c885642f964a1f524f29f:8241b80abd5fac658787821afde7f62798b2efce,d733df79c8d47afaa26c83b7e2da81d069abb852,e05b35ae47f65635c13232e12e2108c24fc19a68,e9b0e0874660e570f010c0b50931242c69c393b7,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,292c962297c03f3459008c8c5bac81aca70a4d71,5f39daae67df74f8bb6ba6deb9abf163db65e6a5,
++8241b80abd5fac658787821afde7f62798b2efce:81cba744a57ab06d0a2c885642f964a1f524f29f,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,62dd392968f193fe8de03d80fdd68ac6e87c7b31,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,
++841206daefcccd549bc3e5f3ac424de1ad617e88:81cba744a57ab06d0a2c885642f964a1f524f29f,e05b35ae47f65635c13232e12e2108c24fc19a68,e9b0e0874660e570f010c0b50931242c69c393b7,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,
++850cd9aa09501a82ce65693883b0cfc50f6e9166:81cba744a57ab06d0a2c885642f964a1f524f29f,d733df79c8d47afaa26c83b7e2da81d069abb852,e05b35ae47f65635c13232e12e2108c24fc19a68,e9b0e0874660e570f010c0b50931242c69c393b7,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,30d584a9b3a96eb60cb81e8805063ce5ffdaac17,
++89c0612a5389f092f9e46cdeda5dd458b2cc725d:81cba744a57ab06d0a2c885642f964a1f524f29f,92e6ea25e35ee86cced2b9a9f2ef5c05f406c18b,97ac80d4c7c76525442dd9fef44822264af7279a,aea9c9c2f77904b6eddd8c8562493a3c56bf0d49,ae2b572db22aa7f27a4dbc56ee708ecda3662f67,a1bd391c8f25593c5f3ef3789134fdb9953d3781,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,
++92b9747fcac918aafe55f26ee6b54074708aee6c:81cba744a57ab06d0a2c885642f964a1f524f29f,816d263f606cdc1e1da491fcce812812109cc184,b5e990db278c6594c855698424442568d4d12a63,a1bd391c8f25593c5f3ef3789134fdb9953d3781,ae2b572db22aa7f27a4dbc56ee708ecda3662f67,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,
++92e6ea25e35ee86cced2b9a9f2ef5c05f406c18b:81cba744a57ab06d0a2c885642f964a1f524f29f,850cd9aa09501a82ce65693883b0cfc50f6e9166,be13ad3d8e1a2a442d50a3b5e1f6fb39b5ffab67,ae2b572db22aa7f27a4dbc56ee708ecda3662f67,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,fd420c5b941363272c108c1aa2972470bfe0e3d6,
++95202317174d7a39e09d4cf5a87c69c6eb83fa92:816d263f606cdc1e1da491fcce812812109cc184,81cba744a57ab06d0a2c885642f964a1f524f29f,a1bd391c8f25593c5f3ef3789134fdb9953d3781,ae2b572db22aa7f27a4dbc56ee708ecda3662f67,d733df79c8d47afaa26c83b7e2da81d069abb852,f54e818f8b43143cbe5488593992668eddaea131,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,
++97ac80d4c7c76525442dd9fef44822264af7279a:850cd9aa09501a82ce65693883b0cfc50f6e9166,841206daefcccd549bc3e5f3ac424de1ad617e88,8241b80abd5fac658787821afde7f62798b2efce,81cba744a57ab06d0a2c885642f964a1f524f29f,b1bad39ad66af90e5fdae00d719b286c18840fd4,a1bd391c8f25593c5f3ef3789134fdb9953d3781,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,5f39daae67df74f8bb6ba6deb9abf163db65e6a5,
++9ee57170c9a3313d4c9ffb0374efb4881e952d8e:8241b80abd5fac658787821afde7f62798b2efce,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,eaad82be4d3ea2fa6989099d27eb91016b63a564,e9b0e0874660e570f010c0b50931242c69c393b7,
++a1bd391c8f25593c5f3ef3789134fdb9953d3781:e05b35ae47f65635c13232e12e2108c24fc19a68,e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f34da3638add809710ea23b83b8501aede73697a,f54e818f8b43143cbe5488593992668eddaea131,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,fd420c5b941363272c108c1aa2972470bfe0e3d6,d733df79c8d47afaa26c83b7e2da81d069abb852,
++a2fd0166d3914a88efe9b39fa8180132e24c647d:a1bd391c8f25593c5f3ef3789134fdb9953d3781,ae2b572db22aa7f27a4dbc56ee708ecda3662f67,be13ad3d8e1a2a442d50a3b5e1f6fb39b5ffab67,8241b80abd5fac658787821afde7f62798b2efce,850cd9aa09501a82ce65693883b0cfc50f6e9166,292c962297c03f3459008c8c5bac81aca70a4d71,050a78578a4edcc7f4b7bdf54f3f4dae30c4abc1,7ea3bfa744013be92adc49794c61533d3796615b,
++a8947c341350734b2bbcf493b8257d808895ed53:81cba744a57ab06d0a2c885642f964a1f524f29f,841206daefcccd549bc3e5f3ac424de1ad617e88,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,
++ae2b572db22aa7f27a4dbc56ee708ecda3662f67:81cba744a57ab06d0a2c885642f964a1f524f29f,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,292c962297c03f3459008c8c5bac81aca70a4d71,
++aea9c9c2f77904b6eddd8c8562493a3c56bf0d49:ae2b572db22aa7f27a4dbc56ee708ecda3662f67,850cd9aa09501a82ce65693883b0cfc50f6e9166,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,eaad82be4d3ea2fa6989099d27eb91016b63a564,e9b0e0874660e570f010c0b50931242c69c393b7,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,
++b186480ba6d95cbe495aaca5aab257104301ed9b:f34da3638add809710ea23b83b8501aede73697a,f54e818f8b43143cbe5488593992668eddaea131,f4a4fac253cc84b012b5e9c27fd2da4df428d35c,fd420c5b941363272c108c1aa2972470bfe0e3d6,e05b35ae47f65635c13232e12e2108c24fc19a68,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,
++b1bad39ad66af90e5fdae00d719b286c18840fd4:a1bd391c8f25593c5f3ef3789134fdb9953d3781,a2fd0166d3914a88efe9b39fa8180132e24c647d,aea9c9c2f77904b6eddd8c8562493a3c56bf0d49,ae2b572db22aa7f27a4dbc56ee708ecda3662f67,92e6ea25e35ee86cced2b9a9f2ef5c05f406c18b,97ac80d4c7c76525442dd9fef44822264af7279a,81cba744a57ab06d0a2c885642f964a1f524f29f,816d263f606cdc1e1da491fcce812812109cc184,
++b5e990db278c6594c855698424442568d4d12a63:f54e818f8b43143cbe5488593992668eddaea131,fd420c5b941363272c108c1aa2972470bfe0e3d6,e9b0e0874660e570f010c0b50931242c69c393b7,
++ba6c354db69fc532380e5ecae84a97a71999e20d:ae2b572db22aa7f27a4dbc56ee708ecda3662f67,a1bd391c8f25593c5f3ef3789134fdb9953d3781,92e6ea25e35ee86cced2b9a9f2ef5c05f406c18b,8241b80abd5fac658787821afde7f62798b2efce,81cba744a57ab06d0a2c885642f964a1f524f29f,850cd9aa09501a82ce65693883b0cfc50f6e9166,7a51208380a9098271ea97d8bfd2436f86b0cd06,7e8bc6f6bfd2d67e3c255d8ea27f16f3c655079d,
++be13ad3d8e1a2a442d50a3b5e1f6fb39b5ffab67:81cba744a57ab06d0a2c885642f964a1f524f29f,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,e05b35ae47f65635c13232e12e2108c24fc19a68,
++c2058d352598588dc9b3516f70dd1e95b7f80ea0:e05b35ae47f65635c13232e12e2108c24fc19a68,eaad82be4d3ea2fa6989099d27eb91016b63a564,e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,fd420c5b941363272c108c1aa2972470bfe0e3d6,
++cbbffe6422966538a5e098246db9e5659c9975b7:c2058d352598588dc9b3516f70dd1e95b7f80ea0,eaad82be4d3ea2fa6989099d27eb91016b63a564,e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,f54e818f8b43143cbe5488593992668eddaea131,
++cc11b7cd3e5cc26b2aac886a438dae884c458c2c:cbbffe6422966538a5e098246db9e5659c9975b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,
++cd32612db5a29cbb24590c025f6bdb33f9525057:d733df79c8d47afaa26c83b7e2da81d069abb852,d2d2b0c099fedce6857d60697f30885108e77c55,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f54e818f8b43143cbe5488593992668eddaea131,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,
++cfec822a7ef8bba08bc6eb15dfcf446767e1fae2:d733df79c8d47afaa26c83b7e2da81d069abb852,d2d2b0c099fedce6857d60697f30885108e77c55,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,e05b35ae47f65635c13232e12e2108c24fc19a68,fd67df5bfe05a3c8e4f0866ccfe2e25b3df4788b,fd420c5b941363272c108c1aa2972470bfe0e3d6,f54e818f8b43143cbe5488593992668eddaea131,
++d2d2b0c099fedce6857d60697f30885108e77c55:d733df79c8d47afaa26c83b7e2da81d069abb852,d9e33de414a026b2c70e412ed972aec6a41c4564,cfec822a7ef8bba08bc6eb15dfcf446767e1fae2,cd32612db5a29cbb24590c025f6bdb33f9525057,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,fd420c5b941363272c108c1aa2972470bfe0e3d6,
++d733df79c8d47afaa26c83b7e2da81d069abb852:f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,850cd9aa09501a82ce65693883b0cfc50f6e9166,8241b80abd5fac658787821afde7f62798b2efce,81cba744a57ab06d0a2c885642f964a1f524f29f,
++d9e33de414a026b2c70e412ed972aec6a41c4564:d2d2b0c099fedce6857d60697f30885108e77c55,d733df79c8d47afaa26c83b7e2da81d069abb852,fa33d040d337eff009d94a2521b833b7af2da906,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,f54e818f8b43143cbe5488593992668eddaea131,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,e9b0e0874660e570f010c0b50931242c69c393b7,
++dcbf0f4a590270a21dce9b44ce570639490f39c0:fd420c5b941363272c108c1aa2972470bfe0e3d6,f4a4fac253cc84b012b5e9c27fd2da4df428d35c,f54e818f8b43143cbe5488593992668eddaea131,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,e05b35ae47f65635c13232e12e2108c24fc19a68,
++de187fb6c0ff2d4765422d03efd2d376b2578799:d9e33de414a026b2c70e412ed972aec6a41c4564,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,eaad82be4d3ea2fa6989099d27eb91016b63a564,e9b0e0874660e570f010c0b50931242c69c393b7,
++e0157734fa1d8dd545281e5a05e57ddd51512519:e05b35ae47f65635c13232e12e2108c24fc19a68,e2e0b098da3f29365499808e226cb99c79b50e9b,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,eb24c0da674b88354a6a1f8796109b01da8c1ce7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f26814de086753e5fb8d67ef7a852333c42813c3,f34da3638add809710ea23b83b8501aede73697a,
++e05b35ae47f65635c13232e12e2108c24fc19a68:e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,fd420c5b941363272c108c1aa2972470bfe0e3d6,d733df79c8d47afaa26c83b7e2da81d069abb852,816d263f606cdc1e1da491fcce812812109cc184,81cba744a57ab06d0a2c885642f964a1f524f29f,
++e2e0b098da3f29365499808e226cb99c79b50e9b:e05b35ae47f65635c13232e12e2108c24fc19a68,e0157734fa1d8dd545281e5a05e57ddd51512519,eaad82be4d3ea2fa6989099d27eb91016b63a564,eb24c0da674b88354a6a1f8796109b01da8c1ce7,e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,
++e9b0e0874660e570f010c0b50931242c69c393b7:ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,d733df79c8d47afaa26c83b7e2da81d069abb852,81cba744a57ab06d0a2c885642f964a1f524f29f,8241b80abd5fac658787821afde7f62798b2efce,6c4cb5f6068e30208c38b0dea298e8b48d1bdc0a,
++eaad82be4d3ea2fa6989099d27eb91016b63a564:e9b0e0874660e570f010c0b50931242c69c393b7,fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,81cba744a57ab06d0a2c885642f964a1f524f29f,
++eb24c0da674b88354a6a1f8796109b01da8c1ce7:eaad82be4d3ea2fa6989099d27eb91016b63a564,e9b0e0874660e570f010c0b50931242c69c393b7,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e2e0b098da3f29365499808e226cb99c79b50e9b,e0157734fa1d8dd545281e5a05e57ddd51512519,e05b35ae47f65635c13232e12e2108c24fc19a68,cfec822a7ef8bba08bc6eb15dfcf446767e1fae2,d733df79c8d47afaa26c83b7e2da81d069abb852,
++ec73fa1c2cb4f6f323e6362c8448d5437a0312ce:ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,f34da3638add809710ea23b83b8501aede73697a,
++ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d:e9b0e0874660e570f010c0b50931242c69c393b7,e05b35ae47f65635c13232e12e2108c24fc19a68,fd420c5b941363272c108c1aa2972470bfe0e3d6,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,81cba744a57ab06d0a2c885642f964a1f524f29f,8241b80abd5fac658787821afde7f62798b2efce,62dd392968f193fe8de03d80fdd68ac6e87c7b31,
++f26814de086753e5fb8d67ef7a852333c42813c3:f34da3638add809710ea23b83b8501aede73697a,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f4a4fac253cc84b012b5e9c27fd2da4df428d35c,f54e818f8b43143cbe5488593992668eddaea131,f558adb32d101a6c11da5f30b1a1c95f2a49f775,e2e0b098da3f29365499808e226cb99c79b50e9b,e05b35ae47f65635c13232e12e2108c24fc19a68,e0157734fa1d8dd545281e5a05e57ddd51512519,
++f4a4fac253cc84b012b5e9c27fd2da4df428d35c:f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f54e818f8b43143cbe5488593992668eddaea131,f558adb32d101a6c11da5f30b1a1c95f2a49f775,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,fb8fb519789d4c4cd19d7848550048ed6ad569cb,e0157734fa1d8dd545281e5a05e57ddd51512519,e05b35ae47f65635c13232e12e2108c24fc19a68,
++f4de5b14ef041e390952fd636e8f4d060b5c2ea5:f54e818f8b43143cbe5488593992668eddaea131,f34da3638add809710ea23b83b8501aede73697a,fd420c5b941363272c108c1aa2972470bfe0e3d6,f9f7f8c9fb7abe6e4264d4b8d04d9f3d61bdf21a,e05b35ae47f65635c13232e12e2108c24fc19a68,e0157734fa1d8dd545281e5a05e57ddd51512519,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,
++f54e818f8b43143cbe5488593992668eddaea131:f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,f26814de086753e5fb8d67ef7a852333c42813c3,fd420c5b941363272c108c1aa2972470bfe0e3d6,fd67df5bfe05a3c8e4f0866ccfe2e25b3df4788b,e05b35ae47f65635c13232e12e2108c24fc19a68,e0157734fa1d8dd545281e5a05e57ddd51512519,e2e0b098da3f29365499808e226cb99c79b50e9b,
++f558adb32d101a6c11da5f30b1a1c95f2a49f775:f54e818f8b43143cbe5488593992668eddaea131,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f4a4fac253cc84b012b5e9c27fd2da4df428d35c,f34da3638add809710ea23b83b8501aede73697a,f26814de086753e5fb8d67ef7a852333c42813c3,fd420c5b941363272c108c1aa2972470bfe0e3d6,fb8fb519789d4c4cd19d7848550048ed6ad569cb,e05b35ae47f65635c13232e12e2108c24fc19a68,
++f8bf444841964c14ca5c50dc120d06519e901dae:fd420c5b941363272c108c1aa2972470bfe0e3d6,f26814de086753e5fb8d67ef7a852333c42813c3,f34da3638add809710ea23b83b8501aede73697a,f4a4fac253cc84b012b5e9c27fd2da4df428d35c,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f558adb32d101a6c11da5f30b1a1c95f2a49f775,f54e818f8b43143cbe5488593992668eddaea131,e9b0e0874660e570f010c0b50931242c69c393b7,
++f9f7f8c9fb7abe6e4264d4b8d04d9f3d61bdf21a:fd420c5b941363272c108c1aa2972470bfe0e3d6,e9b0e0874660e570f010c0b50931242c69c393b7,
++fa33d040d337eff009d94a2521b833b7af2da906:fb8fb519789d4c4cd19d7848550048ed6ad569cb,f8bf444841964c14ca5c50dc120d06519e901dae,f9f7f8c9fb7abe6e4264d4b8d04d9f3d61bdf21a,fd420c5b941363272c108c1aa2972470bfe0e3d6,f26814de086753e5fb8d67ef7a852333c42813c3,f34da3638add809710ea23b83b8501aede73697a,f4a4fac253cc84b012b5e9c27fd2da4df428d35c,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,
++fb8fb519789d4c4cd19d7848550048ed6ad569cb:fd420c5b941363272c108c1aa2972470bfe0e3d6,f34da3638add809710ea23b83b8501aede73697a,f26814de086753e5fb8d67ef7a852333c42813c3,f54e818f8b43143cbe5488593992668eddaea131,f558adb32d101a6c11da5f30b1a1c95f2a49f775,f4a4fac253cc84b012b5e9c27fd2da4df428d35c,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,eaad82be4d3ea2fa6989099d27eb91016b63a564,
++fd67df5bfe05a3c8e4f0866ccfe2e25b3df4788b:fd420c5b941363272c108c1aa2972470bfe0e3d6,f54e818f8b43143cbe5488593992668eddaea131,f4de5b14ef041e390952fd636e8f4d060b5c2ea5,f34da3638add809710ea23b83b8501aede73697a,ecd1ccd549cbe6bde6e0aeec62fc55edc2ec876d,e9b0e0874660e570f010c0b50931242c69c393b7,eaad82be4d3ea2fa6989099d27eb91016b63a564,e05b35ae47f65635c13232e12e2108c24fc19a68,
++`
++RESULT = RESULT.split("\n");
++var nodes = {};
++for (var i = 0; i < RESULT.length; ++i) {
++    const line = RESULT[i];
++    if (line === "")
++        continue;
++    var splitted = line.split(":");
++    if (splitted.length == 2) {
++        nodes[splitted[0]] = splitted[1].split(",")
++    }
++}
++
++function displayContents(nodes) {
++    var result = "";
++    var element = document.getElementById('fileContent');
++    for (const node in nodes) {
++        var nodeDiv = document.createElement("div");
++        nodeDiv.id = node;
++        nodeDiv.innerText = node;
++        nodeDiv.onmouseover = function(){
++            document.getElementById(node).style.color = "red";
++            var nb = nodes[node];
++            for (var i = 0; i < nb.length; ++i) {
++                if (nb[i] === "")
++                    continue;
++                try {
++                    document.getElementById(nb[i]).style.color = "yellow";
++                } catch {
++
++                }
++            }
++        };
++        nodeDiv.onmouseout = function(){
++            document.getElementById(node).style.color = "black";
++            var nb = nodes[node];
++            for (var i = 0; i < nb.length; ++i) {
++                if (nb[i] === "")
++                    continue;
++                try {
++                    document.getElementById(nb[i]).style.color = "black";
++                } catch {
++                    
++                }
++            }
++        };
++        element.appendChild(nodeDiv);
++    }
++}
++
++displayContents(nodes);
++</script>
++</html>
+\ No newline at end of file
+diff --git a/tools/testgetput.sh b/tools/testgetput.sh
+new file mode 100755
+index 0000000..c5454b8
+--- /dev/null
++++ b/tools/testgetput.sh
+@@ -0,0 +1,230 @@
++#!/bin/bash
++
++NB_NODES=100
++rm -rf /tmp/*.trace
++HASH=$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 40 | head -n 1)
++
++pids=()
++rm -rf input_*
++
++(TRACE_HASH=${HASH} ./tools/dhtnode -p5000)&
++bid=$!
++
++for num in {1..100}
++do
++  mkfifo input_${num}
++  (TRACE_HASH=${HASH} ./tools/dhtnode -b 127.0.0.1:5000 < input_${num})&
++  pi=$!
++  echo "Launching dhtnode with $pi, trace $HASH"
++  pids+=($pi)
++done
++
++echo "Wait for put (2 min to get a similar routing table)"
++sleep 120
++
++for num in {1..50}
++do
++  echo "Put with $num"
++  echo "p ${HASH} ${num}" > input_${num}
++done
++
++echo "Wait for get (1 min)"
++sleep 60
++
++for num in {51..100}
++do
++  echo "Get with $num"
++  echo "g ${HASH}" > input_${num}
++done
++
++echo "Wait to finish all get"
++sleep 20
++
++for pi in "${pids[@]}"
++do
++  kill -9 ${pi}
++done
++kill -9 ${bid}
++
++# TODO clean ugly duplicated code
++
++max_diff="0"
++max_f1=""
++max_f2=""
++for f in /tmp/*.trace;
++do
++    cat $f | grep -E 'GET|PUT' /etc/passwd | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f1
++    for f2 in /tmp/*.trace;
++    do
++        if [ "$f" != "$f2" ]; then
++            # TODO not performant as checked two times
++            cat $f2 | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f2
++            d=$(comm -13 nodes_f1 nodes_f2 | wc -l)
++            if [[ "$d" -gt "$max_diff" ]]; then
++                max_diff=$d
++                max_f1=$f
++                max_f2=$f2
++            fi
++        fi
++    done
++done
++
++echo "Max diff total with $max_diff diff nodes is between $max_f1 and $max_f2"
++
++max_diff="0"
++max_f1=""
++max_f2=""
++for f in /tmp/*.trace;
++do
++    cat $f | grep "PUTv6 " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f1
++    o=$(cat nodes_f1 | wc -l)
++    if [[ "$o" -eq "0" ]]; then
++        continue
++    fi
++    for f2 in /tmp/*.trace;
++    do
++        if [ "$f" != "$f2" ]; then
++            # TODO not performant as checked two times
++            cat $f2 | grep "PUTv6 " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f2
++            o=$(cat nodes_f2 | wc -l)
++            if [[ "$o" -eq "0" ]]; then
++                continue
++            fi
++            d=$(comm -13 nodes_f1 nodes_f2 | wc -l)
++            if [[ "$d" -eq "0" ]]; then
++                continue
++            fi
++            if [[ "$d" -gt "$max_diff" ]]; then
++                max_diff=$d
++                max_f1=$f
++                max_f2=$f2
++            fi
++        fi
++    done
++done
++
++if [[ "$max_diff" -eq "0" ]]; then
++    echo "PUT v6 is fine"
++else
++    echo "Max diff for PUT v6 with $max_diff diff nodes is between $max_f1 and $max_f2"
++fi
++
++max_diff="0"
++max_f1=""
++max_f2=""
++for f in /tmp/*.trace;
++do
++    cat $f | grep "PUT " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f1
++    o=$(cat nodes_f1 | wc -l)
++    if [[ "$o" -eq "0" ]]; then
++        continue
++    fi
++    for f2 in /tmp/*.trace;
++    do
++        if [ "$f" != "$f2" ]; then
++            # TODO not performant as checked two times
++            cat $f2 | grep "PUT " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f2
++            o=$(cat nodes_f2 | wc -l)
++            if [[ "$o" -eq "0" ]]; then
++                continue
++            fi
++            d=$(comm -13 nodes_f1 nodes_f2 | wc -l)
++            if [[ "$d" -eq "0" ]]; then
++                continue
++            fi
++            if [[ "$d" -gt "$max_diff" ]]; then
++                max_diff=$d
++                max_f1=$f
++                max_f2=$f2
++            fi
++        fi
++    done
++done
++
++if [[ "$max_diff" -eq "0" ]]; then
++    echo "PUT v4 is fine"
++else
++    echo "Max diff for PUT v4 with $max_diff diff nodes is between $max_f1 and $max_f2"
++fi
++
++max_diff="0"
++max_f1=""
++max_f2=""
++for f in /tmp/*.trace;
++do
++    cat $f | grep "GETv6 " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f1
++    o=$(cat nodes_f1 | wc -l)
++    if [[ "$o" -eq "0" ]]; then
++        continue
++    fi
++    for f2 in /tmp/*.trace;
++    do
++        if [ "$f" != "$f2" ]; then
++            # TODO not performant as checked two times
++            cat $f2 | grep "GETv6 " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f2
++            o=$(cat nodes_f2 | wc -l)
++            if [[ "$o" -eq "0" ]]; then
++                continue
++            fi
++            d=$(comm -13 nodes_f1 nodes_f2 | wc -l)
++            if [[ "$d" -eq "0" ]]; then
++                continue
++            fi
++            if [[ "$d" -gt "$max_diff" ]]; then
++                max_diff=$d
++                max_f1=$f
++                max_f2=$f2
++            fi
++        fi
++    done
++done
++
++if [[ "$max_diff" -eq "0" ]]; then
++    echo "GET v6 is fine"
++else
++    echo "Max diff for GET v6 with $max_diff diff nodes is between $max_f1 and $max_f2"
++fi
++
++max_diff="0"
++max_f1=""
++max_f2=""
++for f in /tmp/*.trace;
++do
++    cat $f | grep "GET " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f1
++    o=$(cat nodes_f1 | wc -l)
++    if [[ "$o" -eq "0" ]]; then
++        continue
++    fi
++    for f2 in /tmp/*.trace;
++    do
++        if [ "$f" != "$f2" ]; then
++            # TODO not performant as checked two times
++            cat $f2 | grep "GET " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f2
++            o=$(cat nodes_f2 | wc -l)
++            if [[ "$o" -eq "0" ]]; then
++                continue
++            fi
++            d=$(comm -13 nodes_f1 nodes_f2 | wc -l)
++            if [[ "$d" -eq "0" ]]; then
++                continue
++            fi
++            if [[ "$d" -gt "$max_diff" ]]; then
++                max_diff=$d
++                max_f1=$f
++                max_f2=$f2
++            fi
++        fi
++    done
++done
++
++if [[ "$max_diff" -eq "0" ]]; then
++    echo "GET v4 is fine"
++else
++    echo "Max diff for GET v4 with $max_diff diff nodes is between $max_f1 and $max_f2"
++fi
++
++grep "expired: 1" /tmp/*.trace | awk '{print substr($(NF-3), 2, 40)}' | sort | uniq -c
++
++
++vscodium $max_f1
++vscodium $max_f2
+\ No newline at end of file
+diff --git a/tools/testneighbors.sh b/tools/testneighbors.sh
+new file mode 100755
+index 0000000..5aaf715
+--- /dev/null
++++ b/tools/testneighbors.sh
+@@ -0,0 +1,53 @@
++#!/bin/bash
++
++NB_NODES=100
++rm -rf /tmp/*.trace
++HASH=$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 40 | head -n 1)
++
++pids=()
++rm -rf input_*
++
++(TRACE_HASH=${HASH} ./tools/dhtnode -p5000)&
++bid=$!
++
++for num in {1..100}
++do
++  mkfifo input_${num}
++  (TRACE_HASH=${HASH} ./tools/dhtnode -b 127.0.0.1:5000 < input_${num})&
++  pi=$!
++  echo "Launching dhtnode with $pi, trace $HASH"
++  pids+=($pi)
++done
++
++echo "Wait for put (2 min to get a similar routing table)"
++sleep 120
++
++echo "Put with 1"
++echo "p ${HASH} 1" > input_1
++
++echo "Wait for get (1 min)"
++sleep 60
++
++for num in {2..100}
++do
++  echo "Get with $num"
++  echo "g ${HASH}" > input_${num}
++done
++
++echo "Wait to finish all get"
++sleep 20
++
++for pi in "${pids[@]}"
++do
++  kill -9 ${pi}
++done
++kill -9 ${bid}
++
++rm -rf output output_sorted
++
++for f in /tmp/*.trace;
++do
++    grep "###" $f | tail -n 1 | sed --expression 's/###//g' >> output
++done
++
++cat output | sort > output_sorted
+\ No newline at end of file
+-- 
+2.29.2
+
