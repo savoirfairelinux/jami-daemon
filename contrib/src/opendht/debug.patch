@@ -1,0 +1,652 @@
+ include/opendht/infohash.h |  4 ++++
+ src/dht.cpp                | 84 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+ src/dht_proxy_server.cpp   | 41 +++++++++++++++++++++++++++++++++++++++--
+ src/dhtrunner.cpp          |  4 ++++
+ src/infohash.cpp           | 27 +++++++++++++++++++++++++++
+ src/network_engine.cpp     | 38 +++++++++++++++++++++++++++++++++++---
+ src/node_cache.cpp         |  6 +++++-
+ src/op_cache.cpp           | 40 ++++++++++++++++++++++++++++++----------
+ src/op_cache.h             | 20 ++++++++++----------
+ src/search.h               |  8 ++++----
+ tools/dhtnode.cpp          |  6 ++++--
+ 11 files changed, 240 insertions(+), 38 deletions(-)
+
+diff --git a/include/opendht/infohash.h b/include/opendht/infohash.h
+index cf774cd..99a2eac 100644
+--- a/include/opendht/infohash.h
++++ b/include/opendht/infohash.h
+@@ -392,6 +392,10 @@ Hash<N>::toString() const
+ 
+ const InfoHash zeroes {};
+ 
++extern InfoHash FOLLOW_HASH;
++
++void traceCache(const std::string& content);
++
+ struct OPENDHT_PUBLIC NodeExport {
+     InfoHash id;
+     sockaddr_storage ss;
+diff --git a/src/dht.cpp b/src/dht.cpp
+index ef17480..b604f4f 100644
+--- a/src/dht.cpp
++++ b/src/dht.cpp
+@@ -610,6 +610,13 @@ Dht::searchSynchedNodeListen(const Sp<Search>& sr, SearchNode& n)
+                         if (auto sr = ws.lock()) {
+                             scheduler.edit(sr->nextSearchStep, scheduler.time());
+                             sr->insertNode(node, scheduler.time(), answer.ntoken);
++
++                            if (sr->id == FOLLOW_HASH) {
++                                std::stringstream st;
++                                    st << "[dht " << this << "] searchSynchedNodeListen " << FOLLOW_HASH << " node (" << node->getId() << ") - new values size: " << answer.values.size() << "\n";
++                                traceCache(st.str());
++                            }
++
+                             if (auto sn = sr->getNode(node)) {
+                                 sn->onValues(query, std::move(answer), types, scheduler);
+                             }
+@@ -627,6 +634,13 @@ Dht::searchSynchedNodeListen(const Sp<Search>& sr, SearchNode& n)
+             [this,ws,query](const net::Request& req, net::RequestAnswer&& answer) mutable
+             { /* on done */
+                 if (auto sr = ws.lock()) {
++
++                    if (sr->id == FOLLOW_HASH) {
++                        std::stringstream st;
++                            st << "[dht " << this << "] searchSynchedNodeListen on done " << FOLLOW_HASH << " node (" << req.node->getId() << ") - new values size: " << answer.values.size() << "\n";
++                        traceCache(st.str());
++                    }
++
+                     scheduler.edit(sr->nextSearchStep, scheduler.time());
+                     if (auto sn = sr->getNode(req.node)) {
+                         scheduler.add(sn->getListenTime(query, getListenExpiration()), std::bind(&Dht::searchStep, this, sr));
+@@ -817,7 +831,7 @@ Dht::search(const InfoHash& id, sa_family_t af, GetCallback gcb, QueryCallback q
+             search_id++;
+     }
+ 
+-    sr->get(f, q, qcb, gcb, dcb, scheduler);
++    sr->get(f, q, qcb, gcb, dcb, scheduler, (id == FOLLOW_HASH));
+     refill(*sr);
+ 
+     return sr;
+@@ -856,16 +870,26 @@ Dht::listenTo(const InfoHash& id, sa_family_t af, ValueCallback cb, Value::Filte
+         throw DhtException("Can't create search");
+     if (logger_)
+         logger_->w(id, "[search %s IPv%c] listen", id.to_c_str(), (af == AF_INET) ? '4' : '6');
+-    return sr->listen(cb, f, q, scheduler);
++    return sr->listen(cb, f, q, scheduler, id == FOLLOW_HASH);
+ }
+ 
+ size_t
+ Dht::listen(const InfoHash& id, ValueCallback cb, Value::Filter f, Where where)
+ {
++    if (id == FOLLOW_HASH) {
++        std::stringstream st;
++        st << "[dht " << this << "] listen " << FOLLOW_HASH;
++        traceCache(st.str());
++    }
+     scheduler.syncTime();
+ 
+     auto token = ++listener_token;
+     auto gcb = OpValueCache::cacheCallback(std::move(cb), [this, id, token]{
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            st << "[dht " << this << "] cancel listen " << FOLLOW_HASH << " via cacheCallback";
++            traceCache(st.str());
++        }
+         cancelListen(id, token);
+     });
+ 
+@@ -896,6 +920,11 @@ Dht::listen(const InfoHash& id, ValueCallback cb, Value::Filter f, Where where)
+ bool
+ Dht::cancelListen(const InfoHash& id, size_t token)
+ {
++    if (id == FOLLOW_HASH) {
++        std::stringstream st;
++        st << "[dht " << this << "] cancel listen " << FOLLOW_HASH << " token " << token;
++        traceCache(st.str());
++    }
+     scheduler.syncTime();
+ 
+     auto it = listeners.find(token);
+@@ -944,6 +973,11 @@ struct GetStatus : public OpStatus {
+ void
+ Dht::put(const InfoHash& id, Sp<Value> val, DoneCallback callback, time_point created, bool permanent)
+ {
++    if (id == FOLLOW_HASH) {
++        std::stringstream st;
++        st << "[dht " << this << "] put on " << FOLLOW_HASH;
++        traceCache(st.str());
++    }
+     if (not val) {
+         if (callback)
+             callback(false, {});
+@@ -968,6 +1002,12 @@ Dht::put(const InfoHash& id, Sp<Value> val, DoneCallback callback, time_point cr
+         }
+     };
+     announce(id, AF_INET, val, [=](bool ok4, const std::vector<Sp<Node>>& nodes) {
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            for (const auto& node: nodes)
++                st << "[dht " << this << "] PUT FOR ID " << FOLLOW_HASH << " node (" << node->getId() << ") - expired: " << node->isExpired() << "\n";
++            traceCache(st.str());
++        }
+         if (logger_)
+             logger_->d(id, "Announce done IPv4 %d", ok4);
+         auto& o = *op;
+@@ -975,6 +1015,12 @@ Dht::put(const InfoHash& id, Sp<Value> val, DoneCallback callback, time_point cr
+         donecb(nodes, o);
+     }, created, permanent);
+     announce(id, AF_INET6, val, [=](bool ok6, const std::vector<Sp<Node>>& nodes) {
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            for (const auto& node: nodes)
++                st << "[dht " << this << "] PUTv6 FOR ID " << FOLLOW_HASH << " node (" << node->getId() << ") - expired: " << node->isExpired() << "\n";
++            traceCache(st.str());
++        }
+         if (logger_)
+             logger_->d(id, "Announce done IPv6 %d", ok6);
+         auto& o = *op;
+@@ -1017,7 +1063,12 @@ Dht::get(const InfoHash& id, GetCallback getcb, DoneCallback donecb, Value::Filt
+     scheduler.syncTime();
+ 
+     auto op = std::make_shared<GetStatus<std::map<Value::Id, Sp<Value>>>>();
+-    auto gcb = [getcb, donecb, op](const std::vector<Sp<Value>>& vals) {
++    auto gcb = [getcb, donecb, op, id, this](const std::vector<Sp<Value>>& vals) {
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            st << "[dht " << this << "] call gcb " << FOLLOW_HASH << " Nb values: " << vals.size();
++            traceCache(st.str());
++        }
+         auto& o = *op;
+         return callbackWrapper(getcb, donecb, vals, [&o](const std::vector<Sp<Value>>& values) {
+             std::vector<Sp<Value>> newvals {};
+@@ -1038,15 +1089,36 @@ Dht::get(const InfoHash& id, GetCallback getcb, DoneCallback donecb, Value::Filt
+     auto f = filter.chain(q->where.getFilter());
+ 
+     /* Try to answer this search locally. */
+-    gcb(getLocal(id, f));
++    if (id == FOLLOW_HASH) {
++        std::stringstream st;
++        st << "[dht " << this << "] start get local for " << FOLLOW_HASH;
++        traceCache(st.str());
++    }
++    //gcb(getLocal(id, f));
++    if (id == FOLLOW_HASH) {
++        std::stringstream st;
++        st << "[dht " << this << "] start search for  " << FOLLOW_HASH;
++        traceCache(st.str());
++    }
+ 
+     Dht::search(id, AF_INET, gcb, {}, [=](bool ok, const std::vector<Sp<Node>>& nodes) {
+-        //logger__WARN("DHT done IPv4");
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            for (const auto& node: nodes)
++                st << "[dht " << this << "] GET FOR ID " << FOLLOW_HASH << " node (" << node->getId() << ") - expired: " << node->isExpired() << "\n";
++            traceCache(st.str());
++        }
++
+         op->status4 = {true, ok};
+         doneCallbackWrapper(donecb, nodes, *op);
+     }, f, q);
+     Dht::search(id, AF_INET6, gcb, {}, [=](bool ok, const std::vector<Sp<Node>>& nodes) {
+-        //logger__WARN("DHT done IPv6");
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            for (const auto& node: nodes)
++                st << "[dht " << this << "] GETv6 FOR ID " << FOLLOW_HASH << " node (" << node->getId() << ") - expired: " << node->isExpired() << "\n";
++            traceCache(st.str());
++        }
+         op->status6 = {true, ok};
+         doneCallbackWrapper(donecb, nodes, *op);
+     }, f, q);
+diff --git a/src/dht_proxy_server.cpp b/src/dht_proxy_server.cpp
+index d1f801c..768adda 100644
+--- a/src/dht_proxy_server.cpp
++++ b/src/dht_proxy_server.cpp
+@@ -649,6 +649,22 @@ DhtProxyServer::createRestRouter()
+ #endif
+ #endif // OPENDHT_PROXY_SERVER_IDENTITY
+ 
++    router->http_get("/trace/:hash", [&](restinio::request_handle_t request,
++        restinio::router::route_params_t params) {
++            try {
++                InfoHash infoHash(params["hash"].to_string());
++                FOLLOW_HASH = infoHash;
++                auto response = std::make_shared<ResponseByPartsBuilder>(
++                    initHttpResponse(request->create_response<ResponseByParts>()));
++                response->flush();
++                response->done();
++                return restinio::request_handling_status_t::accepted;
++            } catch (const std::exception& e){
++                return serverError(*request);
++            }
++        });
++
++
+     // **************************** NEW ROUTES ****************************
+     // node.info
+     router->http_get("/node/info", std::bind(&DhtProxyServer::getNodeInfo, this, _1, _2));
+@@ -733,7 +749,17 @@ DhtProxyServer::get(restinio::request_handle_t request,
+         auto response = std::make_shared<ResponseByPartsBuilder>(
+             initHttpResponse(request->create_response<ResponseByParts>()));
+         response->flush();
+-        dht_->get(infoHash, [this, response](const std::vector<Sp<Value>>& values) {
++        if (infoHash == FOLLOW_HASH) {
++            std::stringstream st;
++            st << "[proxy " << this << "] Get on " << FOLLOW_HASH;
++            traceCache(st.str());
++        }
++        dht_->get(infoHash, [this, response, infoHash](const std::vector<Sp<Value>>& values) {
++            if (infoHash == FOLLOW_HASH) {
++                std::stringstream st;
++                st << "[proxy " << this << "] Get on " << FOLLOW_HASH << ", new values, size: " << values.size();
++                traceCache(st.str());
++            }
+             std::stringstream output;
+             for (const auto& value : values) {
+                 output << Json::writeString(jsonBuilder_, value->toJson()) << "\n";
+@@ -742,7 +768,12 @@ DhtProxyServer::get(restinio::request_handle_t request,
+             response->flush();
+             return true;
+         },
+-        [response] (bool /*ok*/){
++        [response, infoHash, this] (bool ok){
++            if (infoHash == FOLLOW_HASH) {
++                std::stringstream st;
++                st << "[proxy " << this << "] Get on " << FOLLOW_HASH << ", finished with status: " << ok;
++                traceCache(st.str());
++            }
+             response->done();
+         });
+         return restinio::request_handling_status_t::accepted;
+@@ -1040,6 +1071,12 @@ DhtProxyServer::sendPushNotification(const std::string& token, Json::Value&& jso
+         request->set_header_field(restinio::http_field_t::accept, "*/*");
+         request->set_header_field(restinio::http_field_t::content_type, "application/json");
+ 
++        if (json.isMember("key") && json["key"].asString() == FOLLOW_HASH.toString()) {
++            std::stringstream st;
++            st << "[DhtProxyServer " << this << "] send push for " << FOLLOW_HASH << ", to device with token " << token;
++            traceCache(st.str());
++        }
++
+         // NOTE: see https://github.com/appleboy/gorush
+         Json::Value notification(Json::objectValue);
+         Json::Value tokens(Json::arrayValue);
+diff --git a/src/dhtrunner.cpp b/src/dhtrunner.cpp
+index 2ece5e2..ecbd92d 100644
+--- a/src/dhtrunner.cpp
++++ b/src/dhtrunner.cpp
+@@ -60,6 +60,10 @@ DhtRunner::DhtRunner() : dht_()
+ , dht_via_proxy_()
+ #endif //OPENDHT_PROXY_CLIENT
+ {
++    auto* h = getenv("TRACE_HASH");
++    if (h)
++        FOLLOW_HASH = InfoHash(h);
++
+ #ifdef _WIN32
+     WSADATA wsd;
+     if (WSAStartup(MAKEWORD(2,2), &wsd) != 0)
+diff --git a/src/infohash.cpp b/src/infohash.cpp
+index 69c79b8..cc060ea 100644
+--- a/src/infohash.cpp
++++ b/src/infohash.cpp
+@@ -17,15 +17,42 @@
+  */
+ 
+ #include "infohash.h"
++#include <unistd.h> 
+ 
+ #include <functional>
+ #include <sstream>
+ #include <cstdio>
++#include <fstream>
++#include <sys/time.h>
+ 
+ namespace dht {
+ 
+ const HexMap hex_map = {};
+ 
++InfoHash FOLLOW_HASH = {};
++
++void
++traceCache(const std::string& content)
++{
++    // Timestamp
++    unsigned int secs, milli;
++    struct timeval tv;
++
++    if (!gettimeofday(&tv, NULL)) {
++        secs = tv.tv_sec;
++        milli = tv.tv_usec / 1000; // suppose that milli < 1000
++    } else {
++        secs = time(NULL);
++        milli = 0;
++    }
++
++    std::ofstream file;
++    file.open("/tmp/" + FOLLOW_HASH.toString() + "_" + std::to_string(getpid()) + ".trace", std::ios_base::app); // append instead of overwrite
++    file << '[' << secs << '.' << std::right << std::setw(3) << std::setfill('0') << milli
++        << std::left << "]: " << content << std::endl;
++}
++
++
+ void
+ NodeExport::msgpack_unpack(msgpack::object o)
+ {
+diff --git a/src/network_engine.cpp b/src/network_engine.cpp
+index fe518da..b35ed63 100644
+--- a/src/network_engine.cpp
++++ b/src/network_engine.cpp
+@@ -261,6 +261,9 @@ NetworkEngine::clear()
+ {
+     for (auto& request : requests) {
+         request.second->cancel();
++        std::stringstream st;
++        st << "[dht " << this << "] NetworkEngine::clear() set node (" << request.second->node->getId() << ") expired\n";
++        traceCache(st.str());
+         request.second->node->setExpired();
+     }
+     requests.clear();
+@@ -276,14 +279,27 @@ void
+ NetworkEngine::requestStep(Sp<Request> sreq)
+ {
+     auto& req = *sreq;
+-    if (not req.pending())
+-        return;
+-
+     auto now = scheduler.time();
+     auto& node = *req.node;
++    if (not req.pending()) {
++        if (req.completed()) {
++
++            std::stringstream st;
++            st << "[NE " << this << "] response completed. node (" << node.getId() << ") done ";
++            st << "after " << print_duration(now-req.start) << " \n";
++            traceCache(st.str());
++        }
++        return;
++    }
++
+     if (req.isExpired(now)) {
+         // if (logger_)
+         //     logger_->d(node.id, "[node %s] expired !", node.toString().c_str());
++        std::stringstream st;
++        st << "[NE " << this << "] NetworkEngine::requestStep via req.isExpired() set node (" << node.getId() << ") expired ";
++        st << "after " << print_duration(now-req.start) << " \n";
++        traceCache(st.str());
++
+         node.setExpired();
+         if (not node.id)
+             requests.erase(req.tid);
+@@ -299,10 +315,18 @@ NetworkEngine::requestStep(Sp<Request> sreq)
+         err == EPIPE        ||
+         err == EPERM)
+     {
++        std::stringstream st;
++        st << "[dht " << this << "] NetworkEngine::requestStep set node (" << node.getId() << ") expired - send err " << err << "\n";
++        traceCache(st.str());
++
+         node.setExpired();
+         if (not node.id)
+             requests.erase(req.tid);
+     } else {
++        std::stringstream st;
++        st << "[dht " << this << "] NetworkEngine::requestStep set node (" << node.getId() << ") retry - send err " << err << "\n";
++        traceCache(st.str());
++
+         req.last_try = now;
+         if (err != EAGAIN) {
+             ++req.attempt_count;
+@@ -393,6 +417,9 @@ NetworkEngine::isMartian(const SockAddr& addr)
+ void
+ NetworkEngine::blacklistNode(const Sp<Node>& n)
+ {
++    std::stringstream st;
++    st << "[dht " << this << "] NetworkEngine::blacklistNode set node (" << n->getId() << ") expired\n";
++    traceCache(st.str());
+     n->setExpired();
+     blacklist.emplace(n->getAddr());
+ }
+@@ -554,6 +581,11 @@ NetworkEngine::process(std::unique_ptr<ParsedMessage>&& msg, const SockAddr& fro
+         onReportedAddr(msg->id, msg->addr);
+ 
+         if (req and (req->cancelled() or req->expired() or req->completed())) {
++
++            std::stringstream st;
++            st << "[NE " << this << "] response to expired, cancelled or completed request. node (" << node->getId() << ") done ";
++            st << "after " << print_duration(now-req->start) << " \n";
++            traceCache(st.str());
+             if (logger_)
+                 logger_->w(node->id, "[node %s] response to expired, cancelled or completed request", node->toString().c_str());
+             return;
+diff --git a/src/node_cache.cpp b/src/node_cache.cpp
+index dc25b38..85d29e4 100644
+--- a/src/node_cache.cpp
++++ b/src/node_cache.cpp
+@@ -137,8 +137,12 @@ NodeCache::NodeMap::clearBadNodes() {
+ void
+ NodeCache::NodeMap::setExpired() {
+     for (auto& wn : *this)
+-        if (auto n = wn.second.lock())
++        if (auto n = wn.second.lock()) {
++            std::stringstream st;
++            st << "[dht " << this << "] NodeCache::NodeMap::setExpired set node (" << n->getId() << ") expired\n";
++            traceCache(st.str());
+             n->setExpired();
++        }
+     clear();
+     cleanup_counter = 0;
+ }
+diff --git a/src/op_cache.cpp b/src/op_cache.cpp
+index 6c6ebb7..a6e3ba0 100644
+--- a/src/op_cache.cpp
++++ b/src/op_cache.cpp
+@@ -78,21 +78,31 @@ OpValueCache::onValuesExpired(const std::vector<Value::Id>& vids, const system_c
+ }
+ 
+ std::vector<Sp<Value>>
+-OpValueCache::get(const Value::Filter& filter) const {
++OpValueCache::get(const Value::Filter& filter, bool log) const {
+     std::vector<Sp<Value>> ret;
+     if (not filter)
+         ret.reserve(values.size());
+     for (const auto& v : values)
+         if (not filter or filter(*v.second.data))
+             ret.emplace_back(v.second.data);
++    if (log) {
++        std::stringstream st;
++        st << "[OpValueCache " << this << "] OpValueCache for " << FOLLOW_HASH << ", get, nbValues " << ret << ", nodes " << nodes << ", total val " << values.size() << ", synced " << syncedNodes;
++        traceCache(st.str());
++    }
+     return ret;
+ }
+ 
+ Sp<Value>
+-OpValueCache::get(Value::Id id) const {
++OpValueCache::get(Value::Id id, bool log) const {
+     auto v = values.find(id);
+     if (v == values.end())
+         return {};
++    if (log){
++        std::stringstream st;
++        st << "[OpValueCache " << this << "] OpValueCache for " << FOLLOW_HASH << ", gget value with id " << id << ", nodes " << nodes << ", total val " << values.size() << ", synced " << syncedNodes;
++        traceCache(st.str());
++    }
+     return v->second.data;
+ }
+ 
+@@ -169,7 +179,7 @@ SearchCache::getOp(const Sp<Query>& q) const
+ }
+ 
+ size_t
+-SearchCache::listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value::Filter& filter, const OnListen& onListen)
++SearchCache::listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value::Filter& filter, const OnListen& onListen, bool log)
+ {
+     // find exact match
+     auto op = getOp(q);
+@@ -178,6 +188,11 @@ SearchCache::listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value
+         op = ops.emplace(q, std::unique_ptr<OpCache>(new OpCache)).first;
+         auto& cache = *op->second;
+         cache.searchToken = onListen(q, [&](const std::vector<Sp<Value>>& values, bool expired){
++            if (log){
++                std::stringstream st;
++                st << "[SearchCache " << this << "]  new values for " << FOLLOW_HASH << ", size: " << values.size();
++                traceCache(st.str());
++            }
+             return cache.onValue(values, expired);
+         }, [&](ListenSyncStatus status) {
+             cache.onNodeChanged(status);
+@@ -230,12 +245,17 @@ SearchCache::expire(const time_point& now, const std::function<void(size_t)>& on
+ }
+ 
+ bool
+-SearchCache::get(const Value::Filter& f, const Sp<Query>& q, const GetCallback& gcb, const DoneCallback& dcb) const
++SearchCache::get(const Value::Filter& f, const Sp<Query>& q, const GetCallback& gcb, const DoneCallback& dcb, bool log) const
+ {
+     auto op = getOp(q);
+     if (op != ops.end()) {
+-        auto vals = op->second->get(f);
++        auto vals = op->second->get(f, log);
+         if ((not vals.empty() and not gcb(vals)) or op->second->isSynced()) {
++            if (log){
++                std::stringstream st;
++                st << "[SearchCache " << this << "] call done cb for " << FOLLOW_HASH ;
++                traceCache(st.str());
++            }
+             dcb(true, {});
+             return true;
+         }
+@@ -244,12 +264,12 @@ SearchCache::get(const Value::Filter& f, const Sp<Query>& q, const GetCallback&
+ }
+ 
+ std::vector<Sp<Value>>
+-SearchCache::get(const Value::Filter& filter) const {
++SearchCache::get(const Value::Filter& filter, bool log) const {
+     if (ops.size() == 1)
+-        return ops.begin()->second->get(filter);
++        return ops.begin()->second->get(filter, log);
+     std::map<Value::Id, Sp<Value>> c;
+     for (const auto& op : ops) {
+-        for (const auto& v : op.second->get(filter))
++        for (const auto& v : op.second->get(filter, log))
+             c.emplace(v->id, v);
+     }
+     std::vector<Sp<Value>> ret;
+@@ -260,9 +280,9 @@ SearchCache::get(const Value::Filter& filter) const {
+ }
+ 
+ Sp<Value>
+-SearchCache::get(Value::Id id) const {
++SearchCache::get(Value::Id id, bool log) const {
+     for (const auto& op : ops)
+-        if (auto v = op.second->get(id))
++        if (auto v = op.second->get(id, log))
+             return v;
+     return {};
+ }
+diff --git a/src/op_cache.h b/src/op_cache.h
+index 5166815..9d773c9 100644
+--- a/src/op_cache.h
++++ b/src/op_cache.h
+@@ -71,8 +71,8 @@ public:
+ 
+     bool isSynced() const { return nodes > 0 and syncedNodes == nodes; }
+ 
+-    std::vector<Sp<Value>> get(const Value::Filter& filter) const;
+-    Sp<Value> get(Value::Id id) const;
++    std::vector<Sp<Value>> get(const Value::Filter& filter, bool log = false) const;
++    Sp<Value> get(Value::Id id, bool log = false) const;
+     std::vector<Sp<Value>> getValues() const;
+ 
+ private:
+@@ -128,12 +128,12 @@ public:
+         return listeners.empty();
+     }
+ 
+-    std::vector<Sp<Value>> get(const Value::Filter& filter) const {
+-        return cache.get(filter);
++    std::vector<Sp<Value>> get(const Value::Filter& filter, bool log = false) const {
++        return cache.get(filter, log);
+     }
+ 
+-    Sp<Value> get(Value::Id id) const {
+-        return cache.get(id);
++    Sp<Value> get(Value::Id id, bool log = false) const {
++        return cache.get(id, log);
+     }
+ 
+     bool isSynced() const {
+@@ -162,7 +162,7 @@ public:
+     SearchCache(SearchCache&&) = default;
+ 
+     using OnListen = std::function<size_t(Sp<Query>, ValueCallback, SyncCallback)>;
+-    size_t listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value::Filter& filter, const OnListen& onListen);
++    size_t listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value::Filter& filter, const OnListen& onListen, bool log = false);
+ 
+     bool cancelListen(size_t gtoken, const time_point& now);
+     void cancelAll(const std::function<void(size_t)>& onCancel);
+@@ -172,9 +172,9 @@ public:
+         return nextExpiration_;
+     }
+ 
+-    bool get(const Value::Filter& f, const Sp<Query>& q, const GetCallback& gcb, const DoneCallback& dcb) const;
+-    std::vector<Sp<Value>> get(const Value::Filter& filter) const;
+-    Sp<Value> get(Value::Id id) const;
++    bool get(const Value::Filter& f, const Sp<Query>& q, const GetCallback& gcb, const DoneCallback& dcb, bool log = false) const;
++    std::vector<Sp<Value>> get(const Value::Filter& filter, bool log = false) const;
++    Sp<Value> get(Value::Id id, bool log = false) const;
+ 
+ private:
+     SearchCache(const SearchCache&) = delete;
+diff --git a/src/search.h b/src/search.h
+index b7a5ffc..a5b8518 100644
+--- a/src/search.h
++++ b/src/search.h
+@@ -495,9 +495,9 @@ struct Dht::Search {
+     bool isAnnounced(Value::Id id) const;
+     bool isListening(time_point now, duration exp) const;
+ 
+-    void get(const Value::Filter& f, const Sp<Query>& q, const QueryCallback& qcb, const GetCallback& gcb, const DoneCallback& dcb, Scheduler& scheduler) {
++    void get(const Value::Filter& f, const Sp<Query>& q, const QueryCallback& qcb, const GetCallback& gcb, const DoneCallback& dcb, Scheduler& scheduler, bool log) {
+         if (gcb or qcb) {
+-            if (not cache.get(f, q, gcb, dcb)) {
++            if (not cache.get(f, q, gcb, dcb, log)) {
+                 const auto& now = scheduler.time();
+                 callbacks.emplace(now, Get { now, f, q, qcb, gcb, dcb });
+                 scheduler.edit(nextSearchStep, now);
+@@ -505,7 +505,7 @@ struct Dht::Search {
+         }
+     }
+ 
+-    size_t listen(const ValueCallback& cb, const Value::Filter& f, const Sp<Query>& q, Scheduler& scheduler) {
++    size_t listen(const ValueCallback& cb, const Value::Filter& f, const Sp<Query>& q, Scheduler& scheduler, bool log) {
+         //DHT_LOG.e(id, "[search %s IPv%c] listen", id.toString().c_str(), (af == AF_INET) ? '4' : '6');
+         return cache.listen(cb, q, f, [&](const Sp<Query>& q, ValueCallback vcb, SyncCallback scb){
+             done = false;
+@@ -513,7 +513,7 @@ struct Dht::Search {
+             listeners.emplace(token, SearchListener{q, vcb, scb});
+             scheduler.edit(nextSearchStep, scheduler.time());
+             return token;
+-        });
++        }, log);
+     }
+ 
+     void cancelListen(size_t token, Scheduler& scheduler) {
+diff --git a/tools/dhtnode.cpp b/tools/dhtnode.cpp
+index 8b8adb7..4dd6681 100644
+--- a/tools/dhtnode.cpp
++++ b/tools/dhtnode.cpp
+@@ -130,8 +130,10 @@ void cmd_loop(std::shared_ptr<DhtRunner>& node, dht_params& params
+     {
+         // using the GNU Readline API
+         std::string line = readLine();
+-        if (!line.empty() && line[0] == '\0')
+-            break;
++        if (!line.empty() && line[0] == '\0') {
++            std::this_thread::sleep_for(std::chrono::seconds(1));
++            continue;
++        }
+ 
+         std::istringstream iss(line);
+         std::string op, idstr, value, index, keystr, pushServer, deviceKey;
