@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "eaf56a49_b2b5bafa",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 417,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-21T18:16:12Z",
+      "side": 1,
+      "message": "* if blocking -\u003e on io thread\n* if non-blocking -\u003e do it here ?",
+      "range": {
+        "startLine": 417,
+        "startChar": 24,
+        "endLine": 417,
+        "endChar": 39
+      },
+      "revId": "a6055575585ad85ec8e84155eda793f7135fd2e6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
