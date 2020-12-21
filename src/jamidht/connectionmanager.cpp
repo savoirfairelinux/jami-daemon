@@ -684,10 +684,19 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         return;
     }
 
+    // Note: used when the ice negotiation fails to erase
+    // all stored structures.
+    auto eraseInfo = [w = weak(), req] {
+        if (auto shared = w.lock()) {
+            std::lock_guard<std::mutex> lk(shared->infosMtx_);
+            shared->infos_.erase({req.from, req.id});
+        }
+    };
+
     // Because the connection is accepted, create an ICE socket.
     auto ice_config = account.getIceOptions();
     ice_config.tcpEnable = true;
-    ice_config.onInitDone = [w = weak(), req](bool ok) {
+    ice_config.onInitDone = [w = weak(), req, eraseInfo](bool ok) {
         auto shared = w.lock();
         if (!shared)
             return;
@@ -695,6 +704,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
             JAMI_ERR("Cannot initialize ICE session.");
             if (shared->connReadyCb_)
                 shared->connReadyCb_(req.from, "", nullptr);
+            runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
             return;
         }
 
@@ -706,7 +716,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         });
     };
 
-    ice_config.onNegoDone = [w = weak(), req](bool ok) {
+    ice_config.onNegoDone = [w = weak(), req, eraseInfo](bool ok) {
         auto shared = w.lock();
         if (!shared)
             return;
@@ -714,6 +724,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
             JAMI_ERR("ICE negotiation failed");
             if (shared->connReadyCb_)
                 shared->connReadyCb_(req.from, "", nullptr);
+            runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
             return;
         }
 
@@ -737,6 +748,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         JAMI_ERR("Cannot initialize ICE session.");
         if (connReadyCb_)
             connReadyCb_(req.from, "", nullptr);
+        eraseInfo();
         return;
     }
 }
