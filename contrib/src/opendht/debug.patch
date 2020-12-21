@@ -1,0 +1,1493 @@
+From 5e7675e5cf8af9d5e0e8beeabff8b092a413b975 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?S=C3=A9bastien=20Blin?=
+ <sebastien.blin@savoirfairelinux.com>
+Date: Tue, 9 Mar 2021 13:15:21 -0500
+Subject: [PATCH] debug
+
+---
+ include/opendht/infohash.h       |   4 +
+ include/opendht/network_engine.h |   3 +
+ include/opendht/routing_table.h  |   2 +-
+ src/dht.cpp                      | 117 ++++++++++++++-
+ src/dht_proxy_server.cpp         |  41 +++++-
+ src/dhtrunner.cpp                |   4 +
+ src/infohash.cpp                 |  27 ++++
+ src/network_engine.cpp           |  95 +++++++++++-
+ src/node_cache.cpp               |   6 +-
+ src/op_cache.cpp                 |  40 ++++--
+ src/op_cache.h                   |  20 +--
+ src/routing_table.cpp            |  54 ++++++-
+ src/search.h                     |  16 ++-
+ tools/neighbors.html             | 160 +++++++++++++++++++++
+ tools/testgetput.sh              | 240 +++++++++++++++++++++++++++++++
+ tools/testneighbors.sh           |  53 +++++++
+ 16 files changed, 838 insertions(+), 44 deletions(-)
+ create mode 100644 tools/neighbors.html
+ create mode 100755 tools/testgetput.sh
+ create mode 100755 tools/testneighbors.sh
+
+diff --git a/include/opendht/infohash.h b/include/opendht/infohash.h
+index cf774cd..99a2eac 100644
+--- a/include/opendht/infohash.h
++++ b/include/opendht/infohash.h
+@@ -392,6 +392,10 @@ Hash<N>::toString() const
+ 
+ const InfoHash zeroes {};
+ 
++extern InfoHash FOLLOW_HASH;
++
++void traceCache(const std::string& content);
++
+ struct OPENDHT_PUBLIC NodeExport {
+     InfoHash id;
+     sockaddr_storage ss;
+diff --git a/include/opendht/network_engine.h b/include/opendht/network_engine.h
+index 3523125..84a78e0 100644
+--- a/include/opendht/network_engine.h
++++ b/include/opendht/network_engine.h
+@@ -437,6 +437,9 @@ public:
+ 
+     Sp<Node> insertNode(const InfoHash& id, const SockAddr& addr) {
+         auto n = cache.getNode(id, addr, scheduler.time(), 0);
++        std::stringstream st;
++        st << "[NE " << this << "] insertNode node (" << n->getId() << ")";
++        traceCache(st.str());
+         onNewNode(n, 0);
+         return n;
+     }
+diff --git a/include/opendht/routing_table.h b/include/opendht/routing_table.h
+index 234488d..9378675 100644
+--- a/include/opendht/routing_table.h
++++ b/include/opendht/routing_table.h
+@@ -58,7 +58,7 @@ public:
+ 
+     InfoHash middle(const RoutingTable::const_iterator&) const;
+ 
+-    std::vector<Sp<Node>> findClosestNodes(const InfoHash id, time_point now, size_t count = TARGET_NODES) const;
++    std::vector<Sp<Node>> findClosestNodes(const InfoHash id, time_point now, size_t count = TARGET_NODES, bool needsLog = false) const;
+ 
+     RoutingTable::iterator findBucket(const InfoHash& id);
+     RoutingTable::const_iterator findBucket(const InfoHash& id) const;
+diff --git a/src/dht.cpp b/src/dht.cpp
+index ef17480..470c81f 100644
+--- a/src/dht.cpp
++++ b/src/dht.cpp
+@@ -204,9 +204,17 @@ Dht::onNewNode(const Sp<Node>& node, int confirm)
+     auto& b = buckets(node->getFamily());
+     auto wasEmpty = confirm < 2 && b.grow_time < now - std::chrono::minutes(5);
+     if (b.onNewNode(node, confirm, now, myid, network_engine) or confirm) {
+-        trySearchInsert(node);
++        auto res = trySearchInsert(node);
++
++        std::stringstream st;
++        st << "[dht " << this << "] insert node (" << node->getId() << ") res(" << res << ", confirm: " << confirm << ", wasEmpty: " << wasEmpty;
++        traceCache(st.str());
++
+         if (wasEmpty) {
+             scheduler.edit(nextNodesConfirmation, now + std::chrono::seconds(1));
++        } else if (res) {
++            scheduler.edit(nextNodesConfirmation, now);
++
+         }
+     }
+ }
+@@ -610,6 +618,13 @@ Dht::searchSynchedNodeListen(const Sp<Search>& sr, SearchNode& n)
+                         if (auto sr = ws.lock()) {
+                             scheduler.edit(sr->nextSearchStep, scheduler.time());
+                             sr->insertNode(node, scheduler.time(), answer.ntoken);
++
++                            if (sr->id == FOLLOW_HASH) {
++                                std::stringstream st;
++                                    st << "[dht " << this << "] searchSynchedNodeListen " << FOLLOW_HASH << " node (" << node->getId() << ") - new values size: " << answer.values.size() << "\n";
++                                traceCache(st.str());
++                            }
++
+                             if (auto sn = sr->getNode(node)) {
+                                 sn->onValues(query, std::move(answer), types, scheduler);
+                             }
+@@ -627,6 +642,13 @@ Dht::searchSynchedNodeListen(const Sp<Search>& sr, SearchNode& n)
+             [this,ws,query](const net::Request& req, net::RequestAnswer&& answer) mutable
+             { /* on done */
+                 if (auto sr = ws.lock()) {
++
++                    if (sr->id == FOLLOW_HASH) {
++                        std::stringstream st;
++                            st << "[dht " << this << "] searchSynchedNodeListen on done " << FOLLOW_HASH << " node (" << req.node->getId() << ") - new values size: " << answer.values.size() << "\n";
++                        traceCache(st.str());
++                    }
++
+                     scheduler.edit(sr->nextSearchStep, scheduler.time());
+                     if (auto sn = sr->getNode(req.node)) {
+                         scheduler.add(sn->getListenTime(query, getListenExpiration()), std::bind(&Dht::searchStep, this, sr));
+@@ -817,7 +839,7 @@ Dht::search(const InfoHash& id, sa_family_t af, GetCallback gcb, QueryCallback q
+             search_id++;
+     }
+ 
+-    sr->get(f, q, qcb, gcb, dcb, scheduler);
++    sr->get(f, q, qcb, gcb, dcb, scheduler, (id == FOLLOW_HASH));
+     refill(*sr);
+ 
+     return sr;
+@@ -856,16 +878,26 @@ Dht::listenTo(const InfoHash& id, sa_family_t af, ValueCallback cb, Value::Filte
+         throw DhtException("Can't create search");
+     if (logger_)
+         logger_->w(id, "[search %s IPv%c] listen", id.to_c_str(), (af == AF_INET) ? '4' : '6');
+-    return sr->listen(cb, f, q, scheduler);
++    return sr->listen(cb, f, q, scheduler, id == FOLLOW_HASH);
+ }
+ 
+ size_t
+ Dht::listen(const InfoHash& id, ValueCallback cb, Value::Filter f, Where where)
+ {
++    if (id == FOLLOW_HASH) {
++        std::stringstream st;
++        st << "[dht " << this << "] listen " << FOLLOW_HASH;
++        traceCache(st.str());
++    }
+     scheduler.syncTime();
+ 
+     auto token = ++listener_token;
+     auto gcb = OpValueCache::cacheCallback(std::move(cb), [this, id, token]{
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            st << "[dht " << this << "] cancel listen " << FOLLOW_HASH << " via cacheCallback";
++            traceCache(st.str());
++        }
+         cancelListen(id, token);
+     });
+ 
+@@ -896,6 +928,11 @@ Dht::listen(const InfoHash& id, ValueCallback cb, Value::Filter f, Where where)
+ bool
+ Dht::cancelListen(const InfoHash& id, size_t token)
+ {
++    if (id == FOLLOW_HASH) {
++        std::stringstream st;
++        st << "[dht " << this << "] cancel listen " << FOLLOW_HASH << " token " << token;
++        traceCache(st.str());
++    }
+     scheduler.syncTime();
+ 
+     auto it = listeners.find(token);
+@@ -944,6 +981,11 @@ struct GetStatus : public OpStatus {
+ void
+ Dht::put(const InfoHash& id, Sp<Value> val, DoneCallback callback, time_point created, bool permanent)
+ {
++    if (id == FOLLOW_HASH) {
++        std::stringstream st;
++        st << "[dht " << this << "] put on " << FOLLOW_HASH;
++        traceCache(st.str());
++    }
+     if (not val) {
+         if (callback)
+             callback(false, {});
+@@ -968,6 +1010,20 @@ Dht::put(const InfoHash& id, Sp<Value> val, DoneCallback callback, time_point cr
+         }
+     };
+     announce(id, AF_INET, val, [=](bool ok4, const std::vector<Sp<Node>>& nodes) {
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            for (const auto& node: nodes)
++                st << "[dht " << this << "] PUT FOR ID " << FOLLOW_HASH << " node (" << node->getId() << ") - expired: " << node->isExpired() << "\n";
++            
++            for (const auto& b : buckets(AF_INET))
++                dumpBucket(b, st);
++
++            st << "###" << myid << ":";
++            auto closest_nodes = buckets(AF_INET).findClosestNodes(FOLLOW_HASH, scheduler.time(), 8, true);
++            for (const auto& node: closest_nodes)
++                st << node->getId() << ",";
++            traceCache(st.str());
++        }
+         if (logger_)
+             logger_->d(id, "Announce done IPv4 %d", ok4);
+         auto& o = *op;
+@@ -975,6 +1031,12 @@ Dht::put(const InfoHash& id, Sp<Value> val, DoneCallback callback, time_point cr
+         donecb(nodes, o);
+     }, created, permanent);
+     announce(id, AF_INET6, val, [=](bool ok6, const std::vector<Sp<Node>>& nodes) {
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            for (const auto& node: nodes)
++                st << "[dht " << this << "] PUTv6 FOR ID " << FOLLOW_HASH << " node (" << node->getId() << ") - expired: " << node->isExpired() << "\n";
++            traceCache(st.str());
++        }
+         if (logger_)
+             logger_->d(id, "Announce done IPv6 %d", ok6);
+         auto& o = *op;
+@@ -1017,7 +1079,19 @@ Dht::get(const InfoHash& id, GetCallback getcb, DoneCallback donecb, Value::Filt
+     scheduler.syncTime();
+ 
+     auto op = std::make_shared<GetStatus<std::map<Value::Id, Sp<Value>>>>();
+-    auto gcb = [getcb, donecb, op](const std::vector<Sp<Value>>& vals) {
++    auto gcb = [getcb, donecb, op, id, this](const std::vector<Sp<Value>>& vals) {
++        //std::stringstream st;
++        //if (id == FOLLOW_HASH) {
++        //    st << "###[dht " << this << "] call gcb " << FOLLOW_HASH << "Nb values: " << vals.size() << std::endl;
++        //}
++//
++        //st << "###" << myid << ":";
++        //auto closest_nodes = buckets(AF_INET).findClosestNodes(FOLLOW_HASH, scheduler.time(), 8);
++        //for (const auto& node: closest_nodes)
++        //    st << node->getId() << ",";
++//
++        //traceCache(st.str());
++
+         auto& o = *op;
+         return callbackWrapper(getcb, donecb, vals, [&o](const std::vector<Sp<Value>>& values) {
+             std::vector<Sp<Value>> newvals {};
+@@ -1038,15 +1112,44 @@ Dht::get(const InfoHash& id, GetCallback getcb, DoneCallback donecb, Value::Filt
+     auto f = filter.chain(q->where.getFilter());
+ 
+     /* Try to answer this search locally. */
++    if (id == FOLLOW_HASH) {
++        std::stringstream st;
++        st << "[dht " << this << "] start get local for " << FOLLOW_HASH;
++        traceCache(st.str());
++    }
+     gcb(getLocal(id, f));
++    if (id == FOLLOW_HASH) {
++        std::stringstream st;
++        st << "[dht " << this << "] start search for  " << FOLLOW_HASH;
++        traceCache(st.str());
++    }
+ 
+     Dht::search(id, AF_INET, gcb, {}, [=](bool ok, const std::vector<Sp<Node>>& nodes) {
+-        //logger__WARN("DHT done IPv4");
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            for (const auto& node: nodes)
++                st << "[dht " << this << "] GET FOR ID " << FOLLOW_HASH << " node (" << node->getId() << ") - expired: " << node->isExpired() << "\n";
++            
++            for (const auto& b : buckets(AF_INET))
++                dumpBucket(b, st);
++
++            st << "###" << myid << ":";
++            auto closest_nodes = buckets(AF_INET).findClosestNodes(FOLLOW_HASH, scheduler.time(), 8);
++            for (const auto& node: closest_nodes)
++                st << node->getId() << ",";
++            traceCache(st.str());
++        }
++
+         op->status4 = {true, ok};
+         doneCallbackWrapper(donecb, nodes, *op);
+     }, f, q);
+     Dht::search(id, AF_INET6, gcb, {}, [=](bool ok, const std::vector<Sp<Node>>& nodes) {
+-        //logger__WARN("DHT done IPv6");
++        if (id == FOLLOW_HASH) {
++            std::stringstream st;
++            for (const auto& node: nodes)
++                st << "[dht " << this << "] GETv6 FOR ID " << FOLLOW_HASH << " node (" << node->getId() << ") - expired: " << node->isExpired() << "\n";
++            traceCache(st.str());
++        }
+         op->status6 = {true, ok};
+         doneCallbackWrapper(donecb, nodes, *op);
+     }, f, q);
+@@ -1806,6 +1909,7 @@ bool
+ Dht::neighbourhoodMaintenance(RoutingTable& list)
+ {
+     //logger__DBG("neighbourhoodMaintenance");
++    printf("@@@neighbourhoodMaintenance0\n");
+     auto b = list.findBucket(myid);
+     if (b == list.end())
+         return false;
+@@ -1835,6 +1939,7 @@ Dht::neighbourhoodMaintenance(RoutingTable& list)
+                 n->toString().c_str(), id.toString().c_str());
+         /* Since our node-id is the same in both DHTs, it's probably
+            profitable to query both families. */
++        printf("@@@neighbourhoodMaintenance1\n");
+         network_engine.sendFindNode(n, id, network_engine.want());
+     }
+ 
+diff --git a/src/dht_proxy_server.cpp b/src/dht_proxy_server.cpp
+index d1f801c..768adda 100644
+--- a/src/dht_proxy_server.cpp
++++ b/src/dht_proxy_server.cpp
+@@ -649,6 +649,22 @@ DhtProxyServer::createRestRouter()
+ #endif
+ #endif // OPENDHT_PROXY_SERVER_IDENTITY
+ 
++    router->http_get("/trace/:hash", [&](restinio::request_handle_t request,
++        restinio::router::route_params_t params) {
++            try {
++                InfoHash infoHash(params["hash"].to_string());
++                FOLLOW_HASH = infoHash;
++                auto response = std::make_shared<ResponseByPartsBuilder>(
++                    initHttpResponse(request->create_response<ResponseByParts>()));
++                response->flush();
++                response->done();
++                return restinio::request_handling_status_t::accepted;
++            } catch (const std::exception& e){
++                return serverError(*request);
++            }
++        });
++
++
+     // **************************** NEW ROUTES ****************************
+     // node.info
+     router->http_get("/node/info", std::bind(&DhtProxyServer::getNodeInfo, this, _1, _2));
+@@ -733,7 +749,17 @@ DhtProxyServer::get(restinio::request_handle_t request,
+         auto response = std::make_shared<ResponseByPartsBuilder>(
+             initHttpResponse(request->create_response<ResponseByParts>()));
+         response->flush();
+-        dht_->get(infoHash, [this, response](const std::vector<Sp<Value>>& values) {
++        if (infoHash == FOLLOW_HASH) {
++            std::stringstream st;
++            st << "[proxy " << this << "] Get on " << FOLLOW_HASH;
++            traceCache(st.str());
++        }
++        dht_->get(infoHash, [this, response, infoHash](const std::vector<Sp<Value>>& values) {
++            if (infoHash == FOLLOW_HASH) {
++                std::stringstream st;
++                st << "[proxy " << this << "] Get on " << FOLLOW_HASH << ", new values, size: " << values.size();
++                traceCache(st.str());
++            }
+             std::stringstream output;
+             for (const auto& value : values) {
+                 output << Json::writeString(jsonBuilder_, value->toJson()) << "\n";
+@@ -742,7 +768,12 @@ DhtProxyServer::get(restinio::request_handle_t request,
+             response->flush();
+             return true;
+         },
+-        [response] (bool /*ok*/){
++        [response, infoHash, this] (bool ok){
++            if (infoHash == FOLLOW_HASH) {
++                std::stringstream st;
++                st << "[proxy " << this << "] Get on " << FOLLOW_HASH << ", finished with status: " << ok;
++                traceCache(st.str());
++            }
+             response->done();
+         });
+         return restinio::request_handling_status_t::accepted;
+@@ -1040,6 +1071,12 @@ DhtProxyServer::sendPushNotification(const std::string& token, Json::Value&& jso
+         request->set_header_field(restinio::http_field_t::accept, "*/*");
+         request->set_header_field(restinio::http_field_t::content_type, "application/json");
+ 
++        if (json.isMember("key") && json["key"].asString() == FOLLOW_HASH.toString()) {
++            std::stringstream st;
++            st << "[DhtProxyServer " << this << "] send push for " << FOLLOW_HASH << ", to device with token " << token;
++            traceCache(st.str());
++        }
++
+         // NOTE: see https://github.com/appleboy/gorush
+         Json::Value notification(Json::objectValue);
+         Json::Value tokens(Json::arrayValue);
+diff --git a/src/dhtrunner.cpp b/src/dhtrunner.cpp
+index 2ece5e2..ecbd92d 100644
+--- a/src/dhtrunner.cpp
++++ b/src/dhtrunner.cpp
+@@ -60,6 +60,10 @@ DhtRunner::DhtRunner() : dht_()
+ , dht_via_proxy_()
+ #endif //OPENDHT_PROXY_CLIENT
+ {
++    auto* h = getenv("TRACE_HASH");
++    if (h)
++        FOLLOW_HASH = InfoHash(h);
++
+ #ifdef _WIN32
+     WSADATA wsd;
+     if (WSAStartup(MAKEWORD(2,2), &wsd) != 0)
+diff --git a/src/infohash.cpp b/src/infohash.cpp
+index 69c79b8..cc060ea 100644
+--- a/src/infohash.cpp
++++ b/src/infohash.cpp
+@@ -17,15 +17,42 @@
+  */
+ 
+ #include "infohash.h"
++#include <unistd.h> 
+ 
+ #include <functional>
+ #include <sstream>
+ #include <cstdio>
++#include <fstream>
++#include <sys/time.h>
+ 
+ namespace dht {
+ 
+ const HexMap hex_map = {};
+ 
++InfoHash FOLLOW_HASH = {};
++
++void
++traceCache(const std::string& content)
++{
++    // Timestamp
++    unsigned int secs, milli;
++    struct timeval tv;
++
++    if (!gettimeofday(&tv, NULL)) {
++        secs = tv.tv_sec;
++        milli = tv.tv_usec / 1000; // suppose that milli < 1000
++    } else {
++        secs = time(NULL);
++        milli = 0;
++    }
++
++    std::ofstream file;
++    file.open("/tmp/" + FOLLOW_HASH.toString() + "_" + std::to_string(getpid()) + ".trace", std::ios_base::app); // append instead of overwrite
++    file << '[' << secs << '.' << std::right << std::setw(3) << std::setfill('0') << milli
++        << std::left << "]: " << content << std::endl;
++}
++
++
+ void
+ NodeExport::msgpack_unpack(msgpack::object o)
+ {
+diff --git a/src/network_engine.cpp b/src/network_engine.cpp
+index fe518da..15b33bd 100644
+--- a/src/network_engine.cpp
++++ b/src/network_engine.cpp
+@@ -261,6 +261,9 @@ NetworkEngine::clear()
+ {
+     for (auto& request : requests) {
+         request.second->cancel();
++        std::stringstream st;
++        st << "[dht " << this << "] NetworkEngine::clear() set node (" << request.second->node->getId() << ") expired\n";
++        traceCache(st.str());
+         request.second->node->setExpired();
+     }
+     requests.clear();
+@@ -276,14 +279,27 @@ void
+ NetworkEngine::requestStep(Sp<Request> sreq)
+ {
+     auto& req = *sreq;
+-    if (not req.pending())
+-        return;
+-
+     auto now = scheduler.time();
+     auto& node = *req.node;
++    if (not req.pending()) {
++        if (req.completed()) {
++
++            std::stringstream st;
++            st << "[NE " << this << "] response completed. node (" << node.getId() << ") done ";
++            st << "after " << print_duration(now-req.start);
++            traceCache(st.str());
++        }
++        return;
++    }
++
+     if (req.isExpired(now)) {
+         // if (logger_)
+         //     logger_->d(node.id, "[node %s] expired !", node.toString().c_str());
++        std::stringstream st;
++        st << "[NE " << this << "] NetworkEngine::requestStep via req.isExpired() set node (" << node.getId() << ") expired ";
++        st << "after " << print_duration(now-req.start);
++        traceCache(st.str());
++
+         node.setExpired();
+         if (not node.id)
+             requests.erase(req.tid);
+@@ -299,10 +315,18 @@ NetworkEngine::requestStep(Sp<Request> sreq)
+         err == EPIPE        ||
+         err == EPERM)
+     {
++        std::stringstream st;
++        st << "[dht " << this << "] NetworkEngine::requestStep set node (" << node.getId() << ") expired - send err " << err;
++        traceCache(st.str());
++
+         node.setExpired();
+         if (not node.id)
+             requests.erase(req.tid);
+     } else {
++        std::stringstream st;
++        st << "[dht " << this << "] NetworkEngine::requestStep set node (" << node.getId() << ") retry - send err " << err;
++        traceCache(st.str());
++
+         req.last_try = now;
+         if (err != EAGAIN) {
+             ++req.attempt_count;
+@@ -393,6 +417,9 @@ NetworkEngine::isMartian(const SockAddr& addr)
+ void
+ NetworkEngine::blacklistNode(const Sp<Node>& n)
+ {
++    std::stringstream st;
++    st << "[dht " << this << "] NetworkEngine::blacklistNode set node (" << n->getId() << ") expired\n";
++    traceCache(st.str());
+     n->setExpired();
+     blacklist.emplace(n->getAddr());
+ }
+@@ -522,6 +549,9 @@ NetworkEngine::process(std::unique_ptr<ParsedMessage>&& msg, const SockAddr& fro
+         if (not rsocket)
+             throw DhtProtocolException {DhtProtocolException::UNKNOWN_TID, "Can't find socket", msg->id};
+         node->received(now, {});
++        std::stringstream st;
++        st << "[NE " << this << "] onNewNode value update node (" << node->getId() << ")";
++        traceCache(st.str());
+         onNewNode(node, 2);
+         deserializeNodes(*msg, from);
+         rsocket->on_receive(node, std::move(*msg));
+@@ -539,8 +569,12 @@ NetworkEngine::process(std::unique_ptr<ParsedMessage>&& msg, const SockAddr& fro
+                 requests.erase(req_it);
+             } else {
+                 node->received(now, req);
+-                if (not node->isClient())
++                if (not node->isClient()) {
++                    std::stringstream st;
++                    st << "[NE " << this << "] onNewNode no resp node (" << node->getId() << ")";
++                    traceCache(st.str());
+                     onNewNode(node, 1);
++                }
+                 if (logger_)
+                     logger_->d(node->id, "[node %s] can't find transaction with id %u", node->toString().c_str(), msg->tid);
+                 return;
+@@ -549,11 +583,21 @@ NetworkEngine::process(std::unique_ptr<ParsedMessage>&& msg, const SockAddr& fro
+ 
+         node->received(now, req);
+ 
+-        if (not node->isClient())
++        if (not node->isClient()) {
++
++            std::stringstream st;
++            st << "[NE " << this << "] onNewNode isClient2 node (" << node->getId() << ")";
++            traceCache(st.str());
+             onNewNode(node, 2);
++        }
+         onReportedAddr(msg->id, msg->addr);
+ 
+         if (req and (req->cancelled() or req->expired() or req->completed())) {
++
++            std::stringstream st;
++            st << "[NE " << this << "] response to expired, cancelled or completed request. node (" << node->getId() << ") done ";
++            st << "after " << print_duration(now-req->start);
++            traceCache(st.str());
+             if (logger_)
+                 logger_->w(node->id, "[node %s] response to expired, cancelled or completed request", node->toString().c_str());
+             return;
+@@ -588,10 +632,16 @@ NetworkEngine::process(std::unique_ptr<ParsedMessage>&& msg, const SockAddr& fro
+                 }
+                 r.reply_time = scheduler.time();
+ 
++                std::stringstream st;
++                st << "[NE " << this << "] MessageType::Reply done (" << r.node->getId() << ")";
++                traceCache(st.str());
+                 deserializeNodes(*msg, from);
+                 r.setDone(std::move(*msg));
+                 break;
+             } else { /* request socket data */
++                std::stringstream st;
++                st << "[NE " << this << "] MessageType::Reply not done (" << req->node->getId() << ")";
++                traceCache(st.str());
+                 deserializeNodes(*msg, from);
+                 rsocket->on_receive(node, std::move(*msg));
+             }
+@@ -601,8 +651,13 @@ NetworkEngine::process(std::unique_ptr<ParsedMessage>&& msg, const SockAddr& fro
+         }
+     } else {
+         node->received(now, {});
+-        if (not node->isClient())
++        if (not node->isClient()) {
++
++            std::stringstream st;
++            st << "[NE " << this << "] onNewNode isClient node (" << node->getId() << ")";
++            traceCache(st.str());
+             onNewNode(node, 1);
++        }
+         try {
+             switch (msg->type) {
+             case MessageType::Ping:
+@@ -617,12 +672,20 @@ NetworkEngine::process(std::unique_ptr<ParsedMessage>&& msg, const SockAddr& fro
+                 // if (logger_)
+                 //     logger_->d(msg->target, node->id, "[node %s] got 'find' request for %s (%d)", node->toString().c_str(), msg->target.toString().c_str(), msg->want);
+                 ++in_stats.find;
++                
++                std::stringstream st;
++                st << "[NE " << this << "] GOT GET TO " << msg->info_hash << "  my: " << myid << ")";
++                traceCache(st.str());
+                 RequestAnswer answer = onFindNode(node, msg->target, msg->want);
+                 auto nnodes = bufferNodes(from.getFamily(), msg->target, msg->want, answer.nodes4, answer.nodes6);
+                 sendNodesValues(from, msg->tid, nnodes.first, nnodes.second, {}, {}, answer.ntoken);
+                 break;
+             }
+             case MessageType::GetValues: {
++                
++                std::stringstream st;
++                st << "[NE " << this << "] GOT GET TO " << msg->info_hash << "  my: " << myid << ")";
++                traceCache(st.str());
+                 // if (logger_)
+                 //     logger_->d(msg->info_hash, node->id, "[node %s] got 'get' request for %s", node->toString().c_str(), msg->info_hash.toString().c_str());
+                 ++in_stats.get;
+@@ -632,6 +695,12 @@ NetworkEngine::process(std::unique_ptr<ParsedMessage>&& msg, const SockAddr& fro
+                 break;
+             }
+             case MessageType::AnnounceValue: {
++                
++                std::stringstream st;
++                st << "[NE " << this << "] GOT ANNOUNCE TO " << msg->info_hash << "  my: " << myid << ")";
++                traceCache(st.str());
++
++
+                 if (logIncoming_ and logger_)
+                     logger_->d(msg->info_hash, node->id, "[node %s] got 'put' request for %s", node->toString().c_str(), msg->info_hash.toString().c_str());
+                 ++in_stats.put;
+@@ -877,6 +946,9 @@ SockAddr deserializeIPv6(const uint8_t* ni) {
+ void
+ NetworkEngine::deserializeNodes(ParsedMessage& msg, const SockAddr& from) {
+     if (msg.nodes4_raw.size() % NODE4_INFO_BUF_LEN != 0 || msg.nodes6_raw.size() % NODE6_INFO_BUF_LEN != 0) {
++        std::stringstream st;
++        st << "[NE " << this << "] WRRRROOOOONG my: " << myid << ")";
++        traceCache(st.str());
+         throw DhtProtocolException {DhtProtocolException::WRONG_NODE_INFO_BUF_LEN};
+     }
+     // deserialize nodes
+@@ -892,9 +964,17 @@ NetworkEngine::deserializeNodes(ParsedMessage& msg, const SockAddr& from) {
+             addr = from;
+             addr.setPort(port);
+         }
++        {
++            std::stringstream st;
++            st << "[NE " << this << "] onNewNode msg.nodes4.back() TEST (" << ni_id  << ") (my: " << myid << ")";
++            traceCache(st.str());
++        }
+         if (isMartian(addr) || isNodeBlacklisted(addr))
+             continue;
+         msg.nodes4.emplace_back(cache.getNode(ni_id, addr, now, false));
++        std::stringstream st;
++        st << "[NE " << this << "] onNewNode msg.nodes4.back() (" << msg.nodes4.back()->getId() << ")";
++        traceCache(st.str());
+         onNewNode(msg.nodes4.back(), 0);
+     }
+     for (unsigned i = 0, n = msg.nodes6_raw.size() / NODE6_INFO_BUF_LEN; i < n; i++) {
+@@ -911,6 +991,9 @@ NetworkEngine::deserializeNodes(ParsedMessage& msg, const SockAddr& from) {
+         if (isMartian(addr) || isNodeBlacklisted(addr))
+             continue;
+         msg.nodes6.emplace_back(cache.getNode(ni_id, addr, now, false));
++        std::stringstream st;
++        st << "[NE " << this << "] onNewNode msg.nodes6.back() (" << msg.nodes6.back()->getId() << ")";
++        traceCache(st.str());
+         onNewNode(msg.nodes6.back(), 0);
+     }
+ }
+diff --git a/src/node_cache.cpp b/src/node_cache.cpp
+index dc25b38..85d29e4 100644
+--- a/src/node_cache.cpp
++++ b/src/node_cache.cpp
+@@ -137,8 +137,12 @@ NodeCache::NodeMap::clearBadNodes() {
+ void
+ NodeCache::NodeMap::setExpired() {
+     for (auto& wn : *this)
+-        if (auto n = wn.second.lock())
++        if (auto n = wn.second.lock()) {
++            std::stringstream st;
++            st << "[dht " << this << "] NodeCache::NodeMap::setExpired set node (" << n->getId() << ") expired\n";
++            traceCache(st.str());
+             n->setExpired();
++        }
+     clear();
+     cleanup_counter = 0;
+ }
+diff --git a/src/op_cache.cpp b/src/op_cache.cpp
+index 6c6ebb7..a6e3ba0 100644
+--- a/src/op_cache.cpp
++++ b/src/op_cache.cpp
+@@ -78,21 +78,31 @@ OpValueCache::onValuesExpired(const std::vector<Value::Id>& vids, const system_c
+ }
+ 
+ std::vector<Sp<Value>>
+-OpValueCache::get(const Value::Filter& filter) const {
++OpValueCache::get(const Value::Filter& filter, bool log) const {
+     std::vector<Sp<Value>> ret;
+     if (not filter)
+         ret.reserve(values.size());
+     for (const auto& v : values)
+         if (not filter or filter(*v.second.data))
+             ret.emplace_back(v.second.data);
++    if (log) {
++        std::stringstream st;
++        st << "[OpValueCache " << this << "] OpValueCache for " << FOLLOW_HASH << ", get, nbValues " << ret << ", nodes " << nodes << ", total val " << values.size() << ", synced " << syncedNodes;
++        traceCache(st.str());
++    }
+     return ret;
+ }
+ 
+ Sp<Value>
+-OpValueCache::get(Value::Id id) const {
++OpValueCache::get(Value::Id id, bool log) const {
+     auto v = values.find(id);
+     if (v == values.end())
+         return {};
++    if (log){
++        std::stringstream st;
++        st << "[OpValueCache " << this << "] OpValueCache for " << FOLLOW_HASH << ", gget value with id " << id << ", nodes " << nodes << ", total val " << values.size() << ", synced " << syncedNodes;
++        traceCache(st.str());
++    }
+     return v->second.data;
+ }
+ 
+@@ -169,7 +179,7 @@ SearchCache::getOp(const Sp<Query>& q) const
+ }
+ 
+ size_t
+-SearchCache::listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value::Filter& filter, const OnListen& onListen)
++SearchCache::listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value::Filter& filter, const OnListen& onListen, bool log)
+ {
+     // find exact match
+     auto op = getOp(q);
+@@ -178,6 +188,11 @@ SearchCache::listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value
+         op = ops.emplace(q, std::unique_ptr<OpCache>(new OpCache)).first;
+         auto& cache = *op->second;
+         cache.searchToken = onListen(q, [&](const std::vector<Sp<Value>>& values, bool expired){
++            if (log){
++                std::stringstream st;
++                st << "[SearchCache " << this << "]  new values for " << FOLLOW_HASH << ", size: " << values.size();
++                traceCache(st.str());
++            }
+             return cache.onValue(values, expired);
+         }, [&](ListenSyncStatus status) {
+             cache.onNodeChanged(status);
+@@ -230,12 +245,17 @@ SearchCache::expire(const time_point& now, const std::function<void(size_t)>& on
+ }
+ 
+ bool
+-SearchCache::get(const Value::Filter& f, const Sp<Query>& q, const GetCallback& gcb, const DoneCallback& dcb) const
++SearchCache::get(const Value::Filter& f, const Sp<Query>& q, const GetCallback& gcb, const DoneCallback& dcb, bool log) const
+ {
+     auto op = getOp(q);
+     if (op != ops.end()) {
+-        auto vals = op->second->get(f);
++        auto vals = op->second->get(f, log);
+         if ((not vals.empty() and not gcb(vals)) or op->second->isSynced()) {
++            if (log){
++                std::stringstream st;
++                st << "[SearchCache " << this << "] call done cb for " << FOLLOW_HASH ;
++                traceCache(st.str());
++            }
+             dcb(true, {});
+             return true;
+         }
+@@ -244,12 +264,12 @@ SearchCache::get(const Value::Filter& f, const Sp<Query>& q, const GetCallback&
+ }
+ 
+ std::vector<Sp<Value>>
+-SearchCache::get(const Value::Filter& filter) const {
++SearchCache::get(const Value::Filter& filter, bool log) const {
+     if (ops.size() == 1)
+-        return ops.begin()->second->get(filter);
++        return ops.begin()->second->get(filter, log);
+     std::map<Value::Id, Sp<Value>> c;
+     for (const auto& op : ops) {
+-        for (const auto& v : op.second->get(filter))
++        for (const auto& v : op.second->get(filter, log))
+             c.emplace(v->id, v);
+     }
+     std::vector<Sp<Value>> ret;
+@@ -260,9 +280,9 @@ SearchCache::get(const Value::Filter& filter) const {
+ }
+ 
+ Sp<Value>
+-SearchCache::get(Value::Id id) const {
++SearchCache::get(Value::Id id, bool log) const {
+     for (const auto& op : ops)
+-        if (auto v = op.second->get(id))
++        if (auto v = op.second->get(id, log))
+             return v;
+     return {};
+ }
+diff --git a/src/op_cache.h b/src/op_cache.h
+index 5166815..9d773c9 100644
+--- a/src/op_cache.h
++++ b/src/op_cache.h
+@@ -71,8 +71,8 @@ public:
+ 
+     bool isSynced() const { return nodes > 0 and syncedNodes == nodes; }
+ 
+-    std::vector<Sp<Value>> get(const Value::Filter& filter) const;
+-    Sp<Value> get(Value::Id id) const;
++    std::vector<Sp<Value>> get(const Value::Filter& filter, bool log = false) const;
++    Sp<Value> get(Value::Id id, bool log = false) const;
+     std::vector<Sp<Value>> getValues() const;
+ 
+ private:
+@@ -128,12 +128,12 @@ public:
+         return listeners.empty();
+     }
+ 
+-    std::vector<Sp<Value>> get(const Value::Filter& filter) const {
+-        return cache.get(filter);
++    std::vector<Sp<Value>> get(const Value::Filter& filter, bool log = false) const {
++        return cache.get(filter, log);
+     }
+ 
+-    Sp<Value> get(Value::Id id) const {
+-        return cache.get(id);
++    Sp<Value> get(Value::Id id, bool log = false) const {
++        return cache.get(id, log);
+     }
+ 
+     bool isSynced() const {
+@@ -162,7 +162,7 @@ public:
+     SearchCache(SearchCache&&) = default;
+ 
+     using OnListen = std::function<size_t(Sp<Query>, ValueCallback, SyncCallback)>;
+-    size_t listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value::Filter& filter, const OnListen& onListen);
++    size_t listen(const ValueCallback& get_cb, const Sp<Query>& q, const Value::Filter& filter, const OnListen& onListen, bool log = false);
+ 
+     bool cancelListen(size_t gtoken, const time_point& now);
+     void cancelAll(const std::function<void(size_t)>& onCancel);
+@@ -172,9 +172,9 @@ public:
+         return nextExpiration_;
+     }
+ 
+-    bool get(const Value::Filter& f, const Sp<Query>& q, const GetCallback& gcb, const DoneCallback& dcb) const;
+-    std::vector<Sp<Value>> get(const Value::Filter& filter) const;
+-    Sp<Value> get(Value::Id id) const;
++    bool get(const Value::Filter& f, const Sp<Query>& q, const GetCallback& gcb, const DoneCallback& dcb, bool log = false) const;
++    std::vector<Sp<Value>> get(const Value::Filter& filter, bool log = false) const;
++    Sp<Value> get(Value::Id id, bool log = false) const;
+ 
+ private:
+     SearchCache(const SearchCache&) = delete;
+diff --git a/src/routing_table.cpp b/src/routing_table.cpp
+index e8b9ea6..c6a17e1 100644
+--- a/src/routing_table.cpp
++++ b/src/routing_table.cpp
+@@ -106,7 +106,7 @@ RoutingTable::depth(const RoutingTable::const_iterator& it) const
+ }
+ 
+ std::vector<Sp<Node>>
+-RoutingTable::findClosestNodes(const InfoHash id, time_point now, size_t count) const
++RoutingTable::findClosestNodes(const InfoHash id, time_point now, size_t count, bool needsLog) const
+ {
+     std::vector<Sp<Node>> nodes;
+     nodes.reserve(count);
+@@ -116,18 +116,40 @@ RoutingTable::findClosestNodes(const InfoHash id, time_point now, size_t count)
+ 
+     auto sortedBucketInsert = [&](const Bucket &b) {
+         for (auto n : b.nodes) {
++            /** /
+             if (not n->isGood(now))
+                 continue;
++            /**/
+ 
+             auto here = std::find_if(nodes.begin(), nodes.end(),
+                 [&id,&n](Sp<Node> &node) {
+                     return id.xorCmp(n->id, node->id) < 0;
+                 }
+             );
++            /**/
++            std::stringstream st;
++            st << "====>" << needsLog << std::endl; 
++            if (true) {
++                std::string hereid = here == nodes.end()? "end" : (*here)->id.toString();
++                st << "Insert " << n->id << " in: ";
++                for (const auto& node: nodes)
++                    st << node->getId() << ",";
++                st << " - At: " << hereid << std::endl;
++            }
++            traceCache(st.str());
++            /**/
+             nodes.insert(here, n);
+         }
+     };
+ 
++    /**/
++    auto b = begin();
++    while (b != end()) {
++        sortedBucketInsert(*b);
++        b = std::next(b);
++    }
++
++    /** /
+     auto itn = bucket;
+     auto itp = (bucket == begin()) ? end() : std::prev(bucket);
+     while (nodes.size() < count && (itn != end() || itp != end())) {
+@@ -140,6 +162,7 @@ RoutingTable::findClosestNodes(const InfoHash id, time_point now, size_t count)
+             itp = (itp == begin()) ? end() : std::prev(itp);
+         }
+     }
++    /**/
+ 
+     // shrink to the count closest nodes.
+     if (nodes.size() > count) {
+@@ -202,15 +225,29 @@ RoutingTable::split(const RoutingTable::iterator& b)
+ 
+ bool
+ RoutingTable::onNewNode(const Sp<Node>& node, int confirm, const time_point& now, const InfoHash& myid, net::NetworkEngine& ne) {
++    std::stringstream st;
++    st << "[rt " << this << "] onNewNode node (" << node->getId() << ")";
+     auto b = findBucket(node->id);
+-    if (b == end()) return false;
++    if (b == end()) {
++        /** /
++        return false;
++        /**/
++        insert(b, Bucket {b->af, node->id, now});
++        st << "[rt " << this << "] onNewNode node (" << node->getId() << ") => insert";
++        traceCache(st.str());
++        return true;
++        /**/
++    }
+ 
+     if (confirm == 2)
+         b->time = now;
+ 
+     for (auto& n : b->nodes) {
+-        if (n == node)
++        if (n == node) {
++            st << "[rt " << this << "] onNewNode node (" << node->getId() << ") => found";
++            traceCache(st.str());
+             return false;
++        }
+     }
+ 
+     bool mybucket = contains(b, myid);
+@@ -224,6 +261,8 @@ RoutingTable::onNewNode(const Sp<Node>& node, int confirm, const time_point& now
+         for (auto& n : b->nodes)
+             if (n->isExpired()) {
+                 n = node;
++                st << "[rt " << this << "] onNewNode node (" << node->getId() << ") => replace exp";
++                traceCache(st.str());
+                 return true;
+             }
+         /* Bucket full.  Ping a dubious node */
+@@ -247,7 +286,13 @@ RoutingTable::onNewNode(const Sp<Node>& node, int confirm, const time_point& now
+             //DHT_LOG.d("Splitting from depth %u", depth(b));
+             b->sendCachedPing(ne);
+             split(b);
++            st << "[rt " << this << "] onNewNode node (" << node->getId() << ") => split";
++            traceCache(st.str());
+             return onNewNode(node, confirm, now, myid, ne);
++        } else {
++
++            st << "[rt " << this << "] onNewNode node (" << node->getId() << ") => no space (" << (bool)mybucket << " or " << (bool)((is_client and depth(b) < 6)) << ") && (" << !dubious << " || " << (size() == 1) << ")";
++            traceCache(st.str());
+         }
+ 
+         /* No space for this node.  Cache it away for later. */
+@@ -256,7 +301,10 @@ RoutingTable::onNewNode(const Sp<Node>& node, int confirm, const time_point& now
+     } else {
+         /* Create a new node. */
+         b->nodes.emplace_front(node);
++        st << "[rt " << this << "] onNewNode node (" << node->getId() << ") => create";
++        traceCache(st.str());
+     }
++
+     return true;
+ }
+ 
+diff --git a/src/search.h b/src/search.h
+index b7a5ffc..bf507b6 100644
+--- a/src/search.h
++++ b/src/search.h
+@@ -162,8 +162,14 @@ struct Dht::SearchNode {
+             }
+         }
+ 
+-        return (not pending and now > last_get_reply + Node::NODE_EXPIRE_TIME) or
++        auto res = (not pending and now > last_get_reply + Node::NODE_EXPIRE_TIME) or
+                 not (completed_sq_status or pending_sq_status or hasStartedPagination(q));
++        if (!res) {
++            std::stringstream st;
++            st << "[NODE " << node->getId() << "] CANNOT GET NOW";
++            traceCache(st.str());
++        }
++        return res;
+     }
+ 
+     /**
+@@ -495,9 +501,9 @@ struct Dht::Search {
+     bool isAnnounced(Value::Id id) const;
+     bool isListening(time_point now, duration exp) const;
+ 
+-    void get(const Value::Filter& f, const Sp<Query>& q, const QueryCallback& qcb, const GetCallback& gcb, const DoneCallback& dcb, Scheduler& scheduler) {
++    void get(const Value::Filter& f, const Sp<Query>& q, const QueryCallback& qcb, const GetCallback& gcb, const DoneCallback& dcb, Scheduler& scheduler, bool log) {
+         if (gcb or qcb) {
+-            if (not cache.get(f, q, gcb, dcb)) {
++            if (not cache.get(f, q, gcb, dcb, log)) {
+                 const auto& now = scheduler.time();
+                 callbacks.emplace(now, Get { now, f, q, qcb, gcb, dcb });
+                 scheduler.edit(nextSearchStep, now);
+@@ -505,7 +511,7 @@ struct Dht::Search {
+         }
+     }
+ 
+-    size_t listen(const ValueCallback& cb, const Value::Filter& f, const Sp<Query>& q, Scheduler& scheduler) {
++    size_t listen(const ValueCallback& cb, const Value::Filter& f, const Sp<Query>& q, Scheduler& scheduler, bool log) {
+         //DHT_LOG.e(id, "[search %s IPv%c] listen", id.toString().c_str(), (af == AF_INET) ? '4' : '6');
+         return cache.listen(cb, q, f, [&](const Sp<Query>& q, ValueCallback vcb, SyncCallback scb){
+             done = false;
+@@ -513,7 +519,7 @@ struct Dht::Search {
+             listeners.emplace(token, SearchListener{q, vcb, scb});
+             scheduler.edit(nextSearchStep, scheduler.time());
+             return token;
+-        });
++        }, log);
+     }
+ 
+     void cancelListen(size_t token, Scheduler& scheduler) {
+diff --git a/tools/neighbors.html b/tools/neighbors.html
+new file mode 100644
+index 0000000..c079ee2
+--- /dev/null
++++ b/tools/neighbors.html
+@@ -0,0 +1,160 @@
++<html>
++<meta charset="UTF-8">
++
++
++<div id="fileContent"></div>
++
++<script>
++RESULT = `012d66c5a3ac09b1c5fe12ac1799bb0c7963de46:5719bea7ebee0d30df2f99ef65a8a27a25496bad,528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++065bfe084f7d0680c7ce1b912c714e1a16864e38:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++09788b611cba40a30dcee85a55dd208cc16b62b5:5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,62367e0a5c719098e3bbca55c6f240143de76195,6a1b22fe5b04b35f0741919452b4db30fb6d9f49,
++09ff7402a2f170fdc31ecee86c1b9540a8e69ccb:5719bea7ebee0d30df2f99ef65a8a27a25496bad,528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++0c0b78001a25136ec18a563ceb3d0f4a7f7e56e8:5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,62367e0a5c719098e3bbca55c6f240143de76195,
++0ce176f7003c7a07186df1a645154d9e4c164666:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++0e65ac0d77e60012f0c7e24d301235326eb09204:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,500fbc6febd539ed2c503b2c44527c7ae6766cf6,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++0e9def951b2459eac713918062803475244555de:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++0f8045efc0e724fd8a1379ecf7287e0ee4db162a:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++107ddbf932e2fdecf11e64bc9306e47771b17efb:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++136dce152cc22006f5e31591abb45fa4d25b613b:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++19f218ecb103d3ec143e8b0e5f1001ef42aa3787:5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,62367e0a5c719098e3bbca55c6f240143de76195,
++1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8:5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,62367e0a5c719098e3bbca55c6f240143de76195,
++1ee19c351b479940e4eeccae020122f06b9f308d:5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,62367e0a5c719098e3bbca55c6f240143de76195,
++226eac8fc75bdf3971db263dc2e6116ff5ffd905:5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,62367e0a5c719098e3bbca55c6f240143de76195,
++2824da05291b2eb81dc5ce183ff84c5b57ccbe5f:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++286b4e604d92cbbe8915939fc09f7f83073fa326:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,500fbc6febd539ed2c503b2c44527c7ae6766cf6,5dab313d12dbc35ff0fada0f4f2beef2648b2154,580622c43151bde518f5151e14cbaa7fb7a4dab6,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++2c29c1671cd2a690437488c71d0bf9376634a36d:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++32cfbd211b54cf29889ff8c19be5a27e8d305df9:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++37eb387fdfffca25b21f3cfa2b304b345f4a9e18:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++39b40d107e0376d7f94659f3f1fb5e59d1c9d066:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++3c270f3ff8424ec5bc25884f7350c56fa8d2da65:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++3fc408fc78aeec0365b568f411710fe2f3e3e15c:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++40ea8d77fdfbbe7e22803ef0eababe618341e35a:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,500fbc6febd539ed2c503b2c44527c7ae6766cf6,5c11c3116279b87613c03d7dcda33870a722f061,5dab313d12dbc35ff0fada0f4f2beef2648b2154,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,
++41b3813b8daaa044e21b1c9544774bf895ee8264:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,47061f239eb7de90b38549fa84365e3ce62de5b3,44af81071fe85f87ae0aff2b43fb1e855b08b143,
++42928b92c448b92c098464a77da8c51e72f52ef9:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,500fbc6febd539ed2c503b2c44527c7ae6766cf6,5c11c3116279b87613c03d7dcda33870a722f061,5dab313d12dbc35ff0fada0f4f2beef2648b2154,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,
++4474301ff7476287e6020b89371c77d35371f12b:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,500fbc6febd539ed2c503b2c44527c7ae6766cf6,5c11c3116279b87613c03d7dcda33870a722f061,5dab313d12dbc35ff0fada0f4f2beef2648b2154,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,
++44af81071fe85f87ae0aff2b43fb1e855b08b143:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,47061f239eb7de90b38549fa84365e3ce62de5b3,45933f8dc04da9601c9e7b3b0fe9799568e80406,
++45933f8dc04da9601c9e7b3b0fe9799568e80406:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,47061f239eb7de90b38549fa84365e3ce62de5b3,44af81071fe85f87ae0aff2b43fb1e855b08b143,
++4641a2a81a70292436a717744779283b25c2b428:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,46b94f7538a4a09e120874cc29b01e640071ba08,47061f239eb7de90b38549fa84365e3ce62de5b3,44af81071fe85f87ae0aff2b43fb1e855b08b143,45933f8dc04da9601c9e7b3b0fe9799568e80406,
++46b94f7538a4a09e120874cc29b01e640071ba08:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,47061f239eb7de90b38549fa84365e3ce62de5b3,44af81071fe85f87ae0aff2b43fb1e855b08b143,45933f8dc04da9601c9e7b3b0fe9799568e80406,
++47061f239eb7de90b38549fa84365e3ce62de5b3:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,44af81071fe85f87ae0aff2b43fb1e855b08b143,45933f8dc04da9601c9e7b3b0fe9799568e80406,
++482decd24055ac84578cbe622b23f307defb0e66:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,500fbc6febd539ed2c503b2c44527c7ae6766cf6,5c11c3116279b87613c03d7dcda33870a722f061,5dab313d12dbc35ff0fada0f4f2beef2648b2154,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,
++488401d4dfa65a21754ed37861f43afd9c0bf4bf:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,500fbc6febd539ed2c503b2c44527c7ae6766cf6,5c11c3116279b87613c03d7dcda33870a722f061,5dab313d12dbc35ff0fada0f4f2beef2648b2154,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,
++4e4a47468abe0a426b1a326aa38cf1575d3d44a2:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,47061f239eb7de90b38549fa84365e3ce62de5b3,44af81071fe85f87ae0aff2b43fb1e855b08b143,
++4e7b7ade2427f792d7c165c96ed00755a2faef37:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,500fbc6febd539ed2c503b2c44527c7ae6766cf6,5c11c3116279b87613c03d7dcda33870a722f061,5dab313d12dbc35ff0fada0f4f2beef2648b2154,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,
++4fd31c28ebab8f167b21a9d1b1a898e64793b4be:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,47061f239eb7de90b38549fa84365e3ce62de5b3,44af81071fe85f87ae0aff2b43fb1e855b08b143,
++500fbc6febd539ed2c503b2c44527c7ae6766cf6:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5dab313d12dbc35ff0fada0f4f2beef2648b2154,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,
++528314d81391cb29217d37d2d089aceac5cf4045:5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,47061f239eb7de90b38549fa84365e3ce62de5b3,44af81071fe85f87ae0aff2b43fb1e855b08b143,45933f8dc04da9601c9e7b3b0fe9799568e80406,
++554b694a56d6621d87478963e2c6711f5a8fe5af:5719bea7ebee0d30df2f99ef65a8a27a25496bad,528314d81391cb29217d37d2d089aceac5cf4045,500fbc6febd539ed2c503b2c44527c7ae6766cf6,5c11c3116279b87613c03d7dcda33870a722f061,5dab313d12dbc35ff0fada0f4f2beef2648b2154,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,46b94f7538a4a09e120874cc29b01e640071ba08,
++5719bea7ebee0d30df2f99ef65a8a27a25496bad:554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,500fbc6febd539ed2c503b2c44527c7ae6766cf6,5c11c3116279b87613c03d7dcda33870a722f061,5dab313d12dbc35ff0fada0f4f2beef2648b2154,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,
++580622c43151bde518f5151e14cbaa7fb7a4dab6:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,47061f239eb7de90b38549fa84365e3ce62de5b3,44af81071fe85f87ae0aff2b43fb1e855b08b143,45933f8dc04da9601c9e7b3b0fe9799568e80406,
++5b8f6def0ef93acb3839f758b7b3d5540a503f8e:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,47061f239eb7de90b38549fa84365e3ce62de5b3,44af81071fe85f87ae0aff2b43fb1e855b08b143,45933f8dc04da9601c9e7b3b0fe9799568e80406,
++5c11c3116279b87613c03d7dcda33870a722f061:528314d81391cb29217d37d2d089aceac5cf4045,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,47061f239eb7de90b38549fa84365e3ce62de5b3,44af81071fe85f87ae0aff2b43fb1e855b08b143,45933f8dc04da9601c9e7b3b0fe9799568e80406,
++5dab313d12dbc35ff0fada0f4f2beef2648b2154:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,500fbc6febd539ed2c503b2c44527c7ae6766cf6,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,
++61a446836f548549dd8645fc6c908adae0b0ee7a:5719bea7ebee0d30df2f99ef65a8a27a25496bad,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,
++62367e0a5c719098e3bbca55c6f240143de76195:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,
++6356231999ce1d21083840180f76d9669fc99a01:5719bea7ebee0d30df2f99ef65a8a27a25496bad,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,46b94f7538a4a09e120874cc29b01e640071ba08,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,
++63b76602d0e3339bcad10186a39e0be0b2f9b52b:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++655d177012f5e3ca7af79196866a2800c53bd41a:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++66ceb08277df78d6d4eb4f769e8e9603a51f7e0e:5719bea7ebee0d30df2f99ef65a8a27a25496bad,528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,46b94f7538a4a09e120874cc29b01e640071ba08,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++6a1b22fe5b04b35f0741919452b4db30fb6d9f49:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,
++713836e0fce4769fd3d336c3aa21adec83682e38:5719bea7ebee0d30df2f99ef65a8a27a25496bad,528314d81391cb29217d37d2d089aceac5cf4045,500fbc6febd539ed2c503b2c44527c7ae6766cf6,5dab313d12dbc35ff0fada0f4f2beef2648b2154,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,
++73ba32933105815b3bc6caa195364f48be804173:5719bea7ebee0d30df2f99ef65a8a27a25496bad,528314d81391cb29217d37d2d089aceac5cf4045,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,
++767ffbe8358d6a41fd3f5edf4d9db907eac74bc7:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,
++773c4884e53a7072225071430dbcc618588f383c:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++77fdc27df4e7df069ee4dd8a187d828af55f1e14:528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,
++7a37ada7b2809875f420d2f9231b2ce4262647be:5719bea7ebee0d30df2f99ef65a8a27a25496bad,528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++7c135b729a738d9f9530253af1437ae31c8622d2:5719bea7ebee0d30df2f99ef65a8a27a25496bad,5c11c3116279b87613c03d7dcda33870a722f061,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,
++7c80e52f41f7fe8f7fd9236ad2c8a10b0b6be1e9:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,528314d81391cb29217d37d2d089aceac5cf4045,5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,
++7ca53670a34d0307d07f4ceef59f28c769312f58:5719bea7ebee0d30df2f99ef65a8a27a25496bad,554b694a56d6621d87478963e2c6711f5a8fe5af,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,4e4a47468abe0a426b1a326aa38cf1575d3d44a2,
++827a9752cbe1e579a12e48f8b4fa5c3947c3eea2:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++83486a404669e6c2d3bf7df0a5ec3e88433d20b2:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++845bdf6ec9c681dfbd62bd52d1ec72de191f3073:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++9136247c0858db8dfa409bd3fac951b3c0f5190e:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++9530ce17758699beea0658a54c045c6555f22a2e:5719bea7ebee0d30df2f99ef65a8a27a25496bad,5c11c3116279b87613c03d7dcda33870a722f061,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++966d83aa29d091ff75b8320b5674488b0dda1a18:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++988173b35df80eec31f5a7329da122c134c9ba3b:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++99862ceb4453e93ddc56fe84ef71e6c84fc7d861:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++99f672b40ec139606d4525755796d3387bba9240:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++aa935663636dfa007d82df544f337ab4f95ecb0e:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++ab6db8de69e630bcd4ccb1d70e996de1d54bd691:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++ae1c1290103151cc98a0021b8758e612220a2619:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++af461644b12092b999e1c44610e9140957ac095d:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++af54e2c60970e7e66476b439cf564b4454b350fc:528314d81391cb29217d37d2d089aceac5cf4045,5b8f6def0ef93acb3839f758b7b3d5540a503f8e,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,62367e0a5c719098e3bbca55c6f240143de76195,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++b0093a0900276f2574d10ffcb90dc0d34c58902e:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++b05dde7d90bff0a986c617c06bcc46686d422399:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++b1664538cc9b0bc7a8c3ff148553dfb802a14e42:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++b5c956e17aeeda5898bb70179c015d2e78647b29:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++b6c9b88ca9c6dde23ef4ebe4c5c7aeee95759489:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++bd2eea3a6a91a97cf22a34bc1cd96ab685c15dd4:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++c21a9bbe05daf2c1cdae4b35ed736c4ff990cbd6:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++c56ba758f404cc541cd563a4cb96fae8a712ed65:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++c5a1a3db9b02d6bf46cc61705c2f039175c67b7d:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++c874afd50a93689949e829c6f1af307fe2eeea65:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++cd1b057649e8396fd964c3b9ec09cd7043875df1:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++d1a6147218df772c82932a06d66511d02ef4e7db:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++d377346234086736c4f88a7b00b2b199de56e984:5719bea7ebee0d30df2f99ef65a8a27a25496bad,5c11c3116279b87613c03d7dcda33870a722f061,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++d4adef4e8ac7843922e462f94ff8ddc79126aa74:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++d5401061074bc282c1e8e962dc91a22d2700018a:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++d963feb51a5e2c615a416768dcaec28c54cb61f9:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++e01758f641f8bdad08234468c9e090d70cf5eabe:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++e4ba97d88f370692d5455e5d09d4e430ed160045:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++e6268c5c5eb926675d1b43b76108f6e1c7ca7953:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++e6c78240edf1e67b337ba4812a2364ce263e6303:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++eb917b2f6dc90b7f80fd4cc1f8e856826e9e846d:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++ee53e641ab09d4268650b09a503203702a8c3f07:5719bea7ebee0d30df2f99ef65a8a27a25496bad,5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++fb2909e8924148e848fd7d1db9542a0648a8e5a2:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++fd0c4cb897cd8a88778dba266ed51ee21ef9ba78:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++fe93831146d3d2fea24f8a7a865159244ea7b032:5c11c3116279b87613c03d7dcda33870a722f061,580622c43151bde518f5151e14cbaa7fb7a4dab6,4641a2a81a70292436a717744779283b25c2b428,45933f8dc04da9601c9e7b3b0fe9799568e80406,41b3813b8daaa044e21b1c9544774bf895ee8264,1b280a8c206ac926db2f2ed6ed1c5bb8d7877ff8,09788b611cba40a30dcee85a55dd208cc16b62b5,226eac8fc75bdf3971db263dc2e6116ff5ffd905,
++`
++RESULT = RESULT.split("\n");
++var nodes = {};
++for (var i = 0; i < RESULT.length; ++i) {
++    const line = RESULT[i];
++    if (line === "")
++        continue;
++    var splitted = line.split(":");
++    if (splitted.length == 2) {
++        nodes[splitted[0]] = splitted[1].split(",")
++    }
++}
++
++function displayContents(nodes) {
++    var result = "";
++    var element = document.getElementById('fileContent');
++    for (const node in nodes) {
++        var nodeDiv = document.createElement("div");
++        nodeDiv.id = node;
++        nodeDiv.innerText = node;
++        nodeDiv.onmouseover = function(){
++            document.getElementById(node).style.color = "red";
++            var nb = nodes[node];
++            for (var i = 0; i < nb.length; ++i) {
++                if (nb[i] === "")
++                    continue;
++                try {
++                    document.getElementById(nb[i]).style.color = "yellow";
++                } catch {
++
++                }
++            }
++        };
++        nodeDiv.onmouseout = function(){
++            document.getElementById(node).style.color = "black";
++            var nb = nodes[node];
++            for (var i = 0; i < nb.length; ++i) {
++                if (nb[i] === "")
++                    continue;
++                try {
++                    document.getElementById(nb[i]).style.color = "black";
++                } catch {
++                    
++                }
++            }
++        };
++        element.appendChild(nodeDiv);
++    }
++}
++
++displayContents(nodes);
++</script>
++</html>
+\ No newline at end of file
+diff --git a/tools/testgetput.sh b/tools/testgetput.sh
+new file mode 100755
+index 0000000..36aac75
+--- /dev/null
++++ b/tools/testgetput.sh
+@@ -0,0 +1,240 @@
++#!/bin/bash
++
++NB_NODES=100
++rm -rf /tmp/*.trace
++HASH=$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 40 | head -n 1)
++
++pids=()
++rm -rf input_*
++
++(TRACE_HASH=${HASH} ./tools/dhtnode -p5000)&
++bid=$!
++
++for num in {1..100}
++do
++  mkfifo input_${num}
++  (TRACE_HASH=${HASH} ./tools/dhtnode -b 127.0.0.1:5000 < input_${num})&
++  pi=$!
++  echo "Launching dhtnode with $pi, trace $HASH"
++  pids+=($pi)
++done
++
++echo "Wait for put (2 min to get a similar routing table)"
++sleep 120
++
++for num in {1..50}
++do
++  echo "Put with $num"
++  echo "p ${HASH} ${num}" > input_${num}
++done
++
++echo "Wait for get (1 min)"
++sleep 60
++
++for num in {51..100}
++do
++  echo "Get with $num"
++  echo "g ${HASH}" > input_${num}
++done
++
++echo "Wait to finish all get"
++sleep 20
++
++for pi in "${pids[@]}"
++do
++  kill -9 ${pi}
++done
++kill -9 ${bid}
++
++# TODO clean ugly duplicated code
++
++max_diff="0"
++max_f1=""
++max_f2=""
++for f in /tmp/*.trace;
++do
++    cat $f | grep -E 'GET|PUT' /etc/passwd | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f1
++    for f2 in /tmp/*.trace;
++    do
++        if [ "$f" != "$f2" ]; then
++            # TODO not performant as checked two times
++            cat $f2 | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f2
++            d=$(comm -13 nodes_f1 nodes_f2 | wc -l)
++            if [[ "$d" -gt "$max_diff" ]]; then
++                max_diff=$d
++                max_f1=$f
++                max_f2=$f2
++            fi
++        fi
++    done
++done
++
++echo "Max diff total with $max_diff diff nodes is between $max_f1 and $max_f2"
++
++max_diff="0"
++max_f1=""
++max_f2=""
++for f in /tmp/*.trace;
++do
++    cat $f | grep "PUTv6 " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f1
++    o=$(cat nodes_f1 | wc -l)
++    if [[ "$o" -eq "0" ]]; then
++        continue
++    fi
++    for f2 in /tmp/*.trace;
++    do
++        if [ "$f" != "$f2" ]; then
++            # TODO not performant as checked two times
++            cat $f2 | grep "PUTv6 " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f2
++            o=$(cat nodes_f2 | wc -l)
++            if [[ "$o" -eq "0" ]]; then
++                continue
++            fi
++            d=$(comm -13 nodes_f1 nodes_f2 | wc -l)
++            if [[ "$d" -eq "0" ]]; then
++                continue
++            fi
++            if [[ "$d" -gt "$max_diff" ]]; then
++                max_diff=$d
++                max_f1=$f
++                max_f2=$f2
++            fi
++        fi
++    done
++done
++
++if [[ "$max_diff" -eq "0" ]]; then
++    echo "PUT v6 is fine"
++else
++    echo "Max diff for PUT v6 with $max_diff diff nodes is between $max_f1 and $max_f2"
++fi
++
++max_diff="0"
++max_f1=""
++max_f2=""
++for f in /tmp/*.trace;
++do
++    cat $f | grep "PUT " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f1
++    o=$(cat nodes_f1 | wc -l)
++    if [[ "$o" -eq "0" ]]; then
++        continue
++    fi
++    for f2 in /tmp/*.trace;
++    do
++        if [ "$f" != "$f2" ]; then
++            # TODO not performant as checked two times
++            cat $f2 | grep "PUT " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f2
++            o=$(cat nodes_f2 | wc -l)
++            if [[ "$o" -eq "0" ]]; then
++                continue
++            fi
++            d=$(comm -13 nodes_f1 nodes_f2 | wc -l)
++            if [[ "$d" -eq "0" ]]; then
++                continue
++            fi
++            if [[ "$d" -gt "$max_diff" ]]; then
++                max_diff=$d
++                max_f1=$f
++                max_f2=$f2
++            fi
++        fi
++    done
++done
++
++if [[ "$max_diff" -eq "0" ]]; then
++    echo "PUT v4 is fine"
++else
++    echo "Max diff for PUT v4 with $max_diff diff nodes is between $max_f1 and $max_f2"
++fi
++
++max_diff="0"
++max_f1=""
++max_f2=""
++for f in /tmp/*.trace;
++do
++    cat $f | grep "GETv6 " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f1
++    o=$(cat nodes_f1 | wc -l)
++    if [[ "$o" -eq "0" ]]; then
++        continue
++    fi
++    for f2 in /tmp/*.trace;
++    do
++        if [ "$f" != "$f2" ]; then
++            # TODO not performant as checked two times
++            cat $f2 | grep "GETv6 " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f2
++            o=$(cat nodes_f2 | wc -l)
++            if [[ "$o" -eq "0" ]]; then
++                continue
++            fi
++            d=$(comm -13 nodes_f1 nodes_f2 | wc -l)
++            if [[ "$d" -eq "0" ]]; then
++                continue
++            fi
++            if [[ "$d" -gt "$max_diff" ]]; then
++                max_diff=$d
++                max_f1=$f
++                max_f2=$f2
++            fi
++        fi
++    done
++done
++
++if [[ "$max_diff" -eq "0" ]]; then
++    echo "GET v6 is fine"
++else
++    echo "Max diff for GET v6 with $max_diff diff nodes is between $max_f1 and $max_f2"
++fi
++
++max_diff="0"
++max_f1=""
++max_f2=""
++for f in /tmp/*.trace;
++do
++    cat $f | grep "GET " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f1
++    o=$(cat nodes_f1 | wc -l)
++    if [[ "$o" -eq "0" ]]; then
++        continue
++    fi
++    for f2 in /tmp/*.trace;
++    do
++        if [ "$f" != "$f2" ]; then
++            # TODO not performant as checked two times
++            cat $f2 | grep "GET " | grep "node" | awk '{print substr($(NF-3), 2, 40)}' | sort > nodes_f2
++            o=$(cat nodes_f2 | wc -l)
++            if [[ "$o" -eq "0" ]]; then
++                continue
++            fi
++            d=$(comm -13 nodes_f1 nodes_f2 | wc -l)
++            if [[ "$d" -eq "0" ]]; then
++                continue
++            fi
++            if [[ "$d" -gt "$max_diff" ]]; then
++                max_diff=$d
++                max_f1=$f
++                max_f2=$f2
++            fi
++        fi
++    done
++done
++
++if [[ "$max_diff" -eq "0" ]]; then
++    echo "GET v4 is fine"
++else
++    echo "Max diff for GET v4 with $max_diff diff nodes is between $max_f1 and $max_f2"
++fi
++
++grep "expired: 1" /tmp/*.trace | awk '{print substr($(NF-3), 2, 40)}' | sort | uniq -c
++
++rm -rf output output_sorted
++
++for f in /tmp/*.trace;
++do
++    grep "###" $f | tail -n 1 | sed --expression 's/###//g' >> output
++done
++
++cat output | sort > output_sorted
++
++
++vscodium output_sorted
++vscodium $max_f1
++vscodium $max_f2
+diff --git a/tools/testneighbors.sh b/tools/testneighbors.sh
+new file mode 100755
+index 0000000..5aaf715
+--- /dev/null
++++ b/tools/testneighbors.sh
+@@ -0,0 +1,53 @@
++#!/bin/bash
++
++NB_NODES=100
++rm -rf /tmp/*.trace
++HASH=$(cat /dev/urandom | tr -dc 'a-f0-9' | fold -w 40 | head -n 1)
++
++pids=()
++rm -rf input_*
++
++(TRACE_HASH=${HASH} ./tools/dhtnode -p5000)&
++bid=$!
++
++for num in {1..100}
++do
++  mkfifo input_${num}
++  (TRACE_HASH=${HASH} ./tools/dhtnode -b 127.0.0.1:5000 < input_${num})&
++  pi=$!
++  echo "Launching dhtnode with $pi, trace $HASH"
++  pids+=($pi)
++done
++
++echo "Wait for put (2 min to get a similar routing table)"
++sleep 120
++
++echo "Put with 1"
++echo "p ${HASH} 1" > input_1
++
++echo "Wait for get (1 min)"
++sleep 60
++
++for num in {2..100}
++do
++  echo "Get with $num"
++  echo "g ${HASH}" > input_${num}
++done
++
++echo "Wait to finish all get"
++sleep 20
++
++for pi in "${pids[@]}"
++do
++  kill -9 ${pi}
++done
++kill -9 ${bid}
++
++rm -rf output output_sorted
++
++for f in /tmp/*.trace;
++do
++    grep "###" $f | tail -n 1 | sed --expression 's/###//g' >> output
++done
++
++cat output | sort > output_sorted
+\ No newline at end of file
+-- 
+2.29.2
+
