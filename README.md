@@ -13,13 +13,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program.  If not, see http://www.gnu.org/licenses/.
 
 
-Introduction
-------------
+# Introduction
 
 GNU Jami is a Voice-over-IP software phone. We want it to be:
+
 - user friendly (fast, sleek, easy to learn interface)
 - professional grade (transfers, holds, optimal audio quality)
 - compatible with Asterisk (using SIP account)
@@ -41,34 +41,33 @@ the business logic of GNU Jami. UIs are located in differents repositories. See
 the Contributing section for more information.
 
 
-Short description of content of source tree
--------------------------------------------
+# Short description of content of source tree
 
 - src/ is the core of DRing.
 - bin/ contains applications main code.
 - bin/dbus, the D-Bus XML interfaces, and C++ bindings
 
-About Savoir-faire Linux
-------------------------
+# About Savoir-faire Linux
 
 Savoir-faire Linux is a consulting company based in Montreal, Quebec.
 For more information, please check out our website:
 https://www.savoirfairelinux.com/
 
 
-How to compile on Linux
------------------------
+# How to compile on Linux
 
 1) Compile the dependencies first
 
+```bash
 cd contrib
 mkdir native
 cd native
 ../bootstrap
 make
-
+```
 2) Then the jamid application
 
+```bash
 cd ../../
 mkdir build
 export PATH=$PATH:`pwd`/contrib/`cc -dumpmachine`/bin
@@ -76,18 +75,19 @@ meson -Dpkg_config_path=`pwd`/contrib/`cc -dumpmachine`/lib/pkgconfig -Ddefault_
 cd build
 ninja
 ninja install
-
+```
 Done !
 
 More details available here:
 https://git.jami.net/savoirfairelinux/ring-project/wikis/technical/Build-instructions
 
-How to compile on Linux for Android
------------------------------------
+# How to compile on Linux for Android
 
 1) Download and install Android NDK
+
 2) Compile the dependencies
 
+```
 export ANDROID_NDK=<NDK>
 export ANDROID_ABI=arm64-v8a
 export ANDROID_API=29
@@ -105,59 +105,62 @@ mkdir native
 cd native
 ../bootstrap --build=x86_64-pc-linux-gnu --host=$TARGET$ANDROID_API
 make
+```
 
 3) Update directories in the file /cross-files/android_arm64_api29.txt
+
 4) Compile the library libjami.so
 
+```
 cd ../../
 mkdir build
 meson --cross-file `pwd`/cross-files/android_arm64_api29.txt build
 cd build
 ninja
 ninja install
+```
 
-How to compile on OSX
----------------------
+# How to compile on OSX
 
-# These first steps are only necessary if you don't use a package manager.
+## These first steps are only necessary if you don't use a package manager.
+```
 cd extras/tools
 ./bootstrap
 make
 export PATH=$PATH:/location/of/ring/daemon/extras/tools/build/bin
+```
 
-# Or, use your favorite package manager to install the necessary tools
+## Or, use your favorite package manager to install the necessary tools
 (macports or brew).
 automake, pkg-config, libtool, gettext, yasm
 
-# Compile the dependencies
+## Compile the dependencies
+```
 cd contrib
 mkdir native
 cd native
 ../bootstrap
 make -j
-
-# Then the daemon
+```
+## Then the daemon
+```
 cd ../../
 ./autogen.sh
 ./configure  --without-dbus --prefix=<install_path>
 make
-
+```
 If you want to link against libringclient and native client easiest way is to
 add to ./configure: --prefix=<prefix_path>
 
 Do a little dance!
 
-
-Common Issues
--------------
+# Common Issues
 
 autopoint not found: When using Homebrew, autopoint is not found even when
 gettext is installed, because symlinks are not created.
 Run: 'brew link --force gettext' to fix it.
 
-
-Clang compatibility (developers only)
--------------------------------------
+# Clang compatibility (developers only)
 
 It is possible to compile jamid with Clang by setting CC and CXX variables
 to 'clang' and 'clang++' respectively when calling ./configure.
@@ -167,17 +170,13 @@ interaction between daemon and client will not work; for each platform where
 D-Bus is not available the client should implement all the methods in the
 *_stub.cpp files.
 
-
-SIP accounts
----------------------
+# SIP accounts
 
 You may register an existing SIP account through the account wizard in both
 clients (KDE and GNOME).
 By doing this, you will be able to call other accounts known to this server.
 
-
-Contributing to GNU Jami
-------------------------
+# Contributing to GNU Jami
 
 Of course we love patches. And contributions. And spring rolls.
 
