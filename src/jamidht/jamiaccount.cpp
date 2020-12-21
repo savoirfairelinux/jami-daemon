@@ -1994,7 +1994,8 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
         return;
     }
     buddy.listenToken
-        = dht->listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&&, bool expired) {
+        = dht->listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&& da, bool expired) {
+              JAMI_ERR() << "@@@ For " << h << " device " << da.dev << " expired: " << expired;
               bool wasConnected, isConnected;
               {
                   std::lock_guard<std::mutex> lock(buddyInfoMtx);
@@ -2010,12 +2011,18 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
               }
               if (not expired) {
                   // Retry messages every time a new device announce its presence
+                  JAMI_ERR() << "@@@ On peer online start for " << h;
                   messageEngine_.onPeerOnline(h.toString());
+                  JAMI_ERR() << "@@@ On peer online ended for " << h;
               }
               if (isConnected and not wasConnected) {
+                  JAMI_ERR() << "@@@ onTrackedBuddyOnline start " << h;
                   onTrackedBuddyOnline(h);
+                  JAMI_ERR() << "@@@ onTrackedBuddyOnline end " << h;
               } else if (not isConnected and wasConnected) {
+                  JAMI_ERR() << "@@@ onTrackedBuddyOffline start " << h;
                   onTrackedBuddyOffline(h);
+                  JAMI_ERR() << "@@@ onTrackedBuddyOffline end " << h;
               }
 
               return true;
