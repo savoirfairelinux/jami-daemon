@@ -67,6 +67,121 @@
       "revId": "23f19a574f180091cbb892bbe55b4a4d1d266b50",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9db32590_12562486",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 420,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-21T17:41:11Z",
+      "side": 1,
+      "message": "The publicaddress field is the public address of the router. It is not supposed to match the local gateway address (this check would almost always fail unless NAT is disabled).",
+      "range": {
+        "startLine": 419,
+        "startChar": 24,
+        "endLine": 420,
+        "endChar": 84
+      },
+      "revId": "23f19a574f180091cbb892bbe55b4a4d1d266b50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "707c66df_152e8871",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 550,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-21T17:41:11Z",
+      "side": 1,
+      "message": "Neither the prefix nor the gateway address can be inferred that way. Both depend on the network configuration and could be different for every router.",
+      "range": {
+        "startLine": 539,
+        "startChar": 0,
+        "endLine": 550,
+        "endChar": 1
+      },
+      "revId": "23f19a574f180091cbb892bbe55b4a4d1d266b50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d113a0b4_08d39bda",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 557,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-21T17:41:11Z",
+      "side": 1,
+      "message": "not needed",
+      "range": {
+        "startLine": 552,
+        "startChar": 0,
+        "endLine": 557,
+        "endChar": 1
+      },
+      "revId": "23f19a574f180091cbb892bbe55b4a4d1d266b50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e24463c9_9b77685a",
+        "filename": "src/upnp/protocol/natpmp/pmp_igd.h",
+        "patchSetId": 32
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-21T17:41:11Z",
+      "side": 1,
+      "message": "not needed",
+      "range": {
+        "startLine": 43,
+        "startChar": 1,
+        "endLine": 43,
+        "endChar": 24
+      },
+      "revId": "23f19a574f180091cbb892bbe55b4a4d1d266b50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9232da61_9b1c71b3",
+        "filename": "src/upnp/protocol/natpmp/pmp_igd.h",
+        "patchSetId": 32
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-21T17:41:11Z",
+      "side": 1,
+      "message": "should be public",
+      "range": {
+        "startLine": 56,
+        "startChar": 3,
+        "endLine": 60,
+        "endChar": 74
+      },
+      "revId": "23f19a574f180091cbb892bbe55b4a4d1d266b50",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
