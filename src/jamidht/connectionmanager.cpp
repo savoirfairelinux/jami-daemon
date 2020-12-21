@@ -298,7 +298,8 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
     value->user_type = "peer_request";
 
     // Send connection request through DHT
-    JAMI_DBG() << account << "Request connection to " << deviceId;
+    JAMI_DBG() << account << "Request connection to " << deviceId << " - "
+               << dht::InfoHash::get(PeerConnectionRequest::key_prefix + deviceId.toString());
     account.dht()->putEncrypted(dht::InfoHash::get(PeerConnectionRequest::key_prefix
                                                    + deviceId.toString()),
                                 deviceId,
