@@ -254,7 +254,8 @@ private:
     ParticipantSet participants_;
 
     mutable std::mutex confInfoMutex_ {};
-    mutable ConfInfo confInfo_ {};
+    ConfInfo confInfo_ {};
+
     void sendConferenceInfos();
     // We need to convert call to frame
     std::mutex videoToCallMtx_;
