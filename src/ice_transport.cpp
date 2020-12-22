@@ -1272,13 +1272,13 @@ IceTransport::packIceMsg(uint8_t version) const
     if (not isInitialized())
         return {};
 
-    std::stringstream ss;
+    msgpack::sbuffer buffer;
     if (version == 1) {
-        msgpack::pack(ss, version);
-        msgpack::pack(ss, std::make_pair(pimpl_->local_ufrag_, pimpl_->local_pwd_));
-        msgpack::pack(ss, static_cast<uint8_t>(pimpl_->component_count_));
+        msgpack::pack(buffer, version);
+        msgpack::pack(buffer, std::make_pair(pimpl_->local_ufrag_, pimpl_->local_pwd_));
+        msgpack::pack(buffer, static_cast<uint8_t>(pimpl_->component_count_));
         for (unsigned i = 0; i < pimpl_->component_count_; i++)
-            msgpack::pack(ss, getLocalCandidates(i));
+            msgpack::pack(buffer, getLocalCandidates(i));
     } else {
         SDP sdp;
         sdp.ufrag = pimpl_->local_ufrag_;
@@ -1288,10 +1288,9 @@ IceTransport::packIceMsg(uint8_t version) const
             sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
             sdp.candidates.insert(sdp.candidates.end(), candidates.begin(), candidates.end());
         }
-        msgpack::pack(ss, sdp);
+        msgpack::pack(buffer, sdp);
     }
-    auto str(ss.str());
-    return std::vector<uint8_t>(str.begin(), str.end());
+    return std::vector<uint8_t>(buffer.data(), buffer.data() + buffer.size());
 }
 
 bool

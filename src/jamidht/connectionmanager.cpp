@@ -488,9 +488,9 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
     val.name = channelSock->name();
     val.state = ChannelRequestState::REQUEST;
     val.channel = channelSock->channel();
-    std::stringstream ss;
-    msgpack::pack(ss, val);
-    auto toSend = ss.str();
+    msgpack::sbuffer buffer(256);
+    msgpack::pack(buffer, val);
+
     sock->setOnChannelReady(channelSock->channel(), [channelSock, deviceId, vid, w = weak()]() {
         if (auto shared = w.lock()) {
             if (auto cb = shared->getPendingCallback({deviceId, vid}))
@@ -499,8 +499,8 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
     });
     std::error_code ec;
     int res = sock->write(CONTROL_CHANNEL,
-                          reinterpret_cast<const uint8_t*>(&toSend[0]),
-                          toSend.size(),
+                          reinterpret_cast<const uint8_t*>(buffer.data()),
+                          buffer.size(),
                           ec);
     if (res < 0) {
         // TODO check if we should handle errors here
