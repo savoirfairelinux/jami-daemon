@@ -130,14 +130,14 @@ namespace std {
         std::vector<std::string> k;
         k.reserve($self->size());
         for (const auto& i : *$self) {
-            k.push_back(i.first);
+            k.emplace_back(i.first);
         }
         return k;
     }
-    void setRaw(std::string key, const vector<uint8_t>& value) {
+    void setRaw(const std::string& key, const vector<uint8_t>& value) {
         (*$self)[key] = std::string(value.data(), value.data()+value.size());
     }
-    std::vector<uint8_t> getRaw(std::string key) {
+    std::vector<uint8_t> getRaw(const std::string& key) {
         auto& v = $self->at(key);
         return {v.begin(), v.end()};
     }
