@@ -161,7 +161,7 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                 if (response.status_code >= 400 && response.status_code < 500) {
                     cb("", Response::notFound);
                 } else if (response.status_code != 200) {
-                    JAMI_ERR("Adress lookup for %s failed with code=%i",
+                    JAMI_ERR("Address lookup for %s failed with code=%i",
                              addr.c_str(),
                              response.status_code);
                     cb("", Response::error);

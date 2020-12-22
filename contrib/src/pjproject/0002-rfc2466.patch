@@ -99,7 +99,7 @@ index 2a4125bc5..542acf7b4 100644
 +	nlmsg_len = rtn;
 +
 +	if (nlmsg_len < sizeof (struct nlmsghdr)) {
-+	    perror ("Received an uncomplete netlink packet");
++	    perror ("Received an incomplete netlink packet");
 +	    free(deprecatedAddrs);
 +	    return;
 +	}

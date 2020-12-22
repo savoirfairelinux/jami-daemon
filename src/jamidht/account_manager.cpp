@@ -192,7 +192,7 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
 void
 AccountManager::startSync()
 {
-    // Put device annoucement
+    // Put device announcement
     if (info_->announce) {
         auto h = dht::InfoHash(info_->accountId);
         JAMI_DBG("announcing device at %s", h.toString().c_str());
@@ -217,7 +217,7 @@ AccountManager::startSync()
         });
         syncDevices();
     } else {
-        JAMI_WARN("can't announce device: no annoucement...");
+        JAMI_WARN("can't announce device: no announcement...");
     }
 
     auto inboxKey = dht::InfoHash::get("inbox:" + info_->deviceId);

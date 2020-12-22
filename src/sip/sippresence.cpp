@@ -510,7 +510,7 @@ SIPPresence::publish(SIPPresence* pres)
 
     if (status != PJ_SUCCESS) {
         pres->publish_sess_ = NULL;
-        JAMI_ERR("Failed to create a publish seesion.");
+        JAMI_ERR("Failed to create a publish session.");
         return status;
     }
 
