@@ -1645,7 +1645,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
         JAMI_INFO("[call:%s] TCP negotiation is ready", call->getCallId().c_str());
     // If both transport are not running, the negotiation failed
     if (not udp_finished and not tcp_finished) {
-        JAMI_ERR("[call:%s] Both ICE negotations failed", call->getCallId().c_str());
+        JAMI_ERR("[call:%s] Both ICE negotiations failed", call->getCallId().c_str());
         call->onFailure();
         return true;
     }

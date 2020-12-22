@@ -781,7 +781,7 @@ IceTransport::Impl::addReflectiveCandidate(int comp_id,
     int idx = -1;
     auto af = addr.getFamily();
     if (af == AF_UNSPEC) {
-        JAMI_ERR("[ice:%p] Unable to add reflective IP %s: unknown addess familly",
+        JAMI_ERR("[ice:%p] Unable to add reflective IP %s: unknown address familly",
                  this,
                  addr.toString().c_str());
         return;
