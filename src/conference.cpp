@@ -92,11 +92,10 @@ Conference::Conference()
                 if (auto videoMixer = shared->getVideoMixer())
                     active = info.source == videoMixer->getActiveParticipant();
                 subCalls.erase(it->second);
-                std::string_view partURI = uri;
-                partURI = string_remove_suffix(partURI, '@');
+                std::string_view partURI = string_remove_suffix(uri, '@');
                 auto isModerator = shared->isModerator(partURI);
                 if (uri.empty())
-                    partURI = "host";
+                    partURI = "host"sv;
                 auto isMuted = shared->isMuted(partURI);
                 newInfo.emplace_back(ParticipantInfo {std::move(uri),
                                                       "",
@@ -120,12 +119,7 @@ Conference::Conference()
                     ParticipantInfo {std::move(uri), "", false, 0, 0, 0, 0, true, false, isModerator});
             }
 
-            {
-                std::lock_guard<std::mutex> lk2(shared->confInfoMutex_);
-                shared->confInfo_ = std::move(newInfo);
-            }
-
-            shared->sendConferenceInfos();
+            shared->updateConferenceInfo(std::move(newInfo));
         });
     });
 #endif
@@ -184,9 +178,7 @@ Conference::add(const std::string& participant_id)
         // Check if participant was muted before conference
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
             if (call->isPeerMuted()) {
-                auto uri = call->getPeerNumber();
-                uri = string_remove_suffix(uri, '@');
-                participantsMuted_.emplace(uri);
+                participantsMuted_.emplace(string_remove_suffix(call->getPeerNumber(), '@'));
             }
         }
 #ifdef ENABLE_VIDEO
@@ -256,11 +248,8 @@ ConfInfo::toVectorMapStringString() const
 {
     std::vector<std::map<std::string, std::string>> infos;
     infos.reserve(size());
-    auto it = cbegin();
-    while (it != cend()) {
-        infos.emplace_back(it->toMap());
-        ++it;
-    }
+    for (const auto& info : *this)
+        infos.emplace_back(info.toMap());
     return infos;
 }
 
@@ -277,25 +266,25 @@ Conference::sendConferenceInfos()
             if (!account)
                 continue;
 
-            ConfInfo confInfo = std::move(getConfInfoHostUri(account->getUsername()+ "@ring.dht"));
+            ConfInfo confInfo = getConfInfoHostUri(account->getUsername() + "@ring.dht");
             Json::Value jsonArray = {};
-            {
-                std::lock_guard<std::mutex> lk2(confInfoMutex_);
-                for (const auto& info : confInfo) {
-                    jsonArray.append(info.toJson());
-                }
+            for (const auto& info : confInfo) {
+                jsonArray.append(info.toJson());
             }
 
-            Json::StreamWriterBuilder builder = {};
-            const auto confInfoStr = Json::writeString(builder, jsonArray);
-            call->sendTextMessage(std::map<std::string, std::string> {{"application/confInfo+json",
-                                                                    confInfoStr}},
-                                account->getFromUri());
+            runOnMainThread(
+                [call,
+                 confInfoStr = Json::writeString(Json::StreamWriterBuilder {}, jsonArray),
+                 from = account->getFromUri()] {
+                    call->sendTextMessage({{"application/confInfo+json", confInfoStr}}, from);
+                });
         }
     }
 
     // Inform client that layout has changed
-    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, confInfo_.toVectorMapStringString());
+    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_,
+                                                                  confInfo_
+                                                                      .toVectorMapStringString());
 }
 
 void
@@ -417,8 +406,7 @@ Conference::bindHost()
 
     for (const auto& item : participants_) {
         if (auto call = Manager::instance().getCallFromCallID(item)) {
-            std::string_view uri = call->getPeerNumber();
-            uri = string_remove_suffix(uri, '@');
+            auto uri = string_remove_suffix(call->getPeerNumber(), '@');
             if (isMuted(uri))
                 continue;
             rbPool.bindCallID(item, RingBufferPool::DEFAULT_ID);
@@ -426,7 +414,6 @@ Conference::bindHost()
         }
     }
 }
-
 
 void
 Conference::unbindHost()
@@ -547,8 +534,7 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
 {
     // Check if the peer is a master
     if (auto call = Manager::instance().getCallFromCallID(callId)) {
-        std::string_view uri = call->getPeerNumber();
-        uri = string_remove_suffix(uri, '@');
+        auto uri = string_remove_suffix(call->getPeerNumber(), '@');
         if (!isModerator(uri)) {
             JAMI_WARN("Received conference order from a non master (%s)", uri.data());
             return;
@@ -568,8 +554,9 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         if (root.isMember("activeParticipant")) {
             setActiveParticipant(root["activeParticipant"].asString());
         }
-        if (root.isMember("muteParticipant")  and root.isMember("muteState")) {
-            muteParticipant(root["muteParticipant"].asString(), root["muteState"].asString() == "true");
+        if (root.isMember("muteParticipant") and root.isMember("muteState")) {
+            muteParticipant(root["muteParticipant"].asString(),
+                            root["muteState"].asString() == "true");
         }
         if (root.isMember("hangupParticipant")) {
             hangupParticipant(root["hangupParticipant"].asString());
@@ -585,7 +572,8 @@ Conference::isModerator(std::string_view uri) const
                         [&uri](std::string_view moderator) {
                             return moderator.find(uri) != std::string_view::npos;
                         })
-           != moderators_.end() or isHost(uri);
+               != moderators_.end()
+           or isHost(uri);
 }
 
 void
@@ -593,8 +581,7 @@ Conference::setModerator(const std::string& uri, const bool& state)
 {
     for (const auto& p : participants_) {
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
-            std::string_view partURI = call->getPeerNumber();
-            partURI = string_remove_suffix(partURI, '@');
+            auto partURI = string_remove_suffix(call->getPeerNumber(), '@');
             if (partURI == uri) {
                 if (state and not isModerator(uri)) {
                     JAMI_DBG("Add %s as moderator", partURI.data());
@@ -615,13 +602,9 @@ Conference::setModerator(const std::string& uri, const bool& state)
 void
 Conference::updateModerators()
 {
-    {
-        std::lock_guard<std::mutex> lk2(confInfoMutex_);
-        for (auto& info : confInfo_) {
-            auto uri = info.uri;
-            uri = string_remove_suffix(uri, '@');
-            info.isModerator = isModerator(uri);
-        }
+    std::lock_guard<std::mutex> lk(confInfoMutex_);
+    for (auto& info : confInfo_) {
+        info.isModerator = isModerator(string_remove_suffix(info.uri, '@'));
     }
     sendConferenceInfos();
 }
@@ -673,11 +656,10 @@ Conference::muteParticipant(const std::string& uri, const bool& state, const std
     }
 
     // Mute participant
+    auto peerURI = string_remove_suffix(uri, '@');
     for (const auto& p : participants_) {
-        std::string_view peerURI = string_remove_suffix(uri, '@');
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
-            std::string_view partURI = call->getPeerNumber();
-            partURI = string_remove_suffix(partURI, '@');
+            auto partURI = string_remove_suffix(call->getPeerNumber(), '@');
             if (partURI == peerURI) {
                 if (state and not isMuted(partURI)) {
                     JAMI_DBG("Mute participant %s", partURI.data());
@@ -699,18 +681,15 @@ Conference::muteParticipant(const std::string& uri, const bool& state, const std
 void
 Conference::updateMuted()
 {
-    {
-        std::lock_guard<std::mutex> lk2(confInfoMutex_);
-        for (auto& info : confInfo_) {
-            auto uri = string_remove_suffix(info.uri, '@');
-            if (uri.empty())
-                uri = "host";
-            info.audioMuted = isMuted(uri);
-        }
+    std::lock_guard<std::mutex> lk(confInfoMutex_);
+    for (auto& info : confInfo_) {
+        auto uri = string_remove_suffix(info.uri, '@');
+        if (uri.empty())
+            uri = "host"sv;
+        info.audioMuted = isMuted(uri);
     }
     sendConferenceInfos();
 }
-
 
 ConfInfo
 Conference::getConfInfoHostUri(std::string_view uri)
@@ -735,12 +714,9 @@ Conference::isHost(std::string_view uri) const
     // (a local URI can be in the call with another device)
     for (const auto& p : participants_) {
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
-            auto w = call->getAccount();
-            auto account = w.lock();
-            if (!account)
-                continue;
-            if (account->getUsername() == uri) {
-                return true;
+            if (auto account = call->getAccount().lock()) {
+                if (account->getUsername() == uri)
+                    return true;
             }
         }
     }
@@ -750,6 +726,7 @@ Conference::isHost(std::string_view uri) const
 void
 Conference::updateConferenceInfo(ConfInfo confInfo)
 {
+    std::lock_guard<std::mutex> lk(confInfoMutex_);
     confInfo_ = std::move(confInfo);
     sendConferenceInfos();
 }
@@ -764,8 +741,7 @@ Conference::hangupParticipant(const std::string& participant_id)
 
     for (const auto& p : participants_) {
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
-            std::string_view partURI = call->getPeerNumber();
-            partURI = string_remove_suffix(partURI, '@');
+            std::string_view partURI = string_remove_suffix(call->getPeerNumber(), '@');
             if (partURI == participant_id) {
                 Manager::instance().hangupCall(call->getCallId());
                 return;
