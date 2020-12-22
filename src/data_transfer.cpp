@@ -730,7 +730,7 @@ DataTransferFacade::Impl::createIncomingFileTransfer(const DRing::DataTransferIn
                                                      const DRing::DataTransferId& internal_id,
                                                      InternalCompletionCb cb)
 {
-    auto tid = generateUID();
+    auto tid = internal_id == 0 ? generateUID() : internal_id;
     auto transfer = std::make_shared<IncomingFileTransfer>(tid, info, internal_id, cb);
     {
         std::lock_guard<std::mutex> lk {mapMutex_};
