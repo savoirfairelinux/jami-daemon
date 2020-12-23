@@ -1267,29 +1267,21 @@ IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
 }
 
 std::vector<uint8_t>
-IceTransport::packIceMsg(uint8_t version) const
+IceTransport::packIceMsg() const
 {
     if (not isInitialized())
         return {};
 
     msgpack::sbuffer buffer;
-    if (version == 1) {
-        msgpack::pack(buffer, version);
-        msgpack::pack(buffer, std::make_pair(pimpl_->local_ufrag_, pimpl_->local_pwd_));
-        msgpack::pack(buffer, static_cast<uint8_t>(pimpl_->component_count_));
-        for (unsigned i = 0; i < pimpl_->component_count_; i++)
-            msgpack::pack(buffer, getLocalCandidates(i));
-    } else {
-        SDP sdp;
-        sdp.ufrag = pimpl_->local_ufrag_;
-        sdp.pwd = pimpl_->local_pwd_;
-        for (unsigned i = 0; i < pimpl_->component_count_; i++) {
-            auto candidates = getLocalCandidates(i);
-            sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
-            sdp.candidates.insert(sdp.candidates.end(), candidates.begin(), candidates.end());
-        }
-        msgpack::pack(buffer, sdp);
+    SDP sdp;
+    sdp.ufrag = pimpl_->local_ufrag_;
+    sdp.pwd = pimpl_->local_pwd_;
+    for (unsigned i = 0; i < pimpl_->component_count_; i++) {
+        auto candidates = getLocalCandidates(i);
+        sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
+        sdp.candidates.insert(sdp.candidates.end(), candidates.begin(), candidates.end());
     }
+    msgpack::pack(buffer, sdp);
     return std::vector<uint8_t>(buffer.data(), buffer.data() + buffer.size());
 }
 

@@ -108,8 +108,8 @@ struct IceTransportOptions
 
 struct SDP
 {
-    std::string ufrag;
-    std::string pwd;
+    std::string_view ufrag;
+    std::string_view pwd;
 
     std::vector<std::string> candidates;
     MSGPACK_DEFINE(ufrag, pwd, candidates)
@@ -210,7 +210,7 @@ public:
     /**
      * Returns serialized ICE attributes and candidates.
      */
-    std::vector<uint8_t> packIceMsg(uint8_t version = 1) const;
+    std::vector<uint8_t> packIceMsg() const;
 
     bool getCandidateFromSDP(const std::string& line, IceCandidate& cand) const;
 

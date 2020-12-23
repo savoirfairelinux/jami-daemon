@@ -2419,7 +2419,7 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
 
     auto blob = ice->packIceMsg();
     if (ice_tcp) {
-        auto ice_tcp_msg = ice_tcp->packIceMsg(2);
+        auto ice_tcp_msg = ice_tcp->packIceMsg();
         blob.insert(blob.end(), ice_tcp_msg.begin(), ice_tcp_msg.end());
     }
 
@@ -2438,7 +2438,6 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
 
     auto started_time = std::chrono::steady_clock::now();
 
-    auto sdp_list = IceTransport::parseSDPList(peer_ice_msg.ice_data);
     auto udp_failed = true, tcp_failed = true;
     initICE(peer_ice_msg.ice_data, ice, ice_tcp, udp_failed, tcp_failed);
 
