@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fe89064c_0fb50bd7",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 1778,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-24T18:13:57Z",
+      "side": 1,
+      "message": "localmoderator is a bad name imho",
+      "range": {
+        "startLine": 1778,
+        "startChar": 21,
+        "endLine": 1778,
+        "endChar": 42
+      },
+      "revId": "6a982800d0fd3d3f69e4820ebace6a1aa67afdc8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "484f8675_f6fcb9c3",
+        "filename": "bin/dbus/dbusconfigurationmanager.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-24T18:13:57Z",
+      "side": 1,
+      "message": "no const bool\u0026",
+      "range": {
+        "startLine": 182,
+        "startChar": 65,
+        "endLine": 182,
+        "endChar": 77
+      },
+      "revId": "6a982800d0fd3d3f69e4820ebace6a1aa67afdc8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "906588b8_e4a62960",
+        "filename": "src/conference.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-24T18:13:57Z",
+      "side": 1,
+      "message": "why it\u0027s done for all add(participant)?",
+      "range": {
+        "startLine": 184,
+        "startChar": 18,
+        "endLine": 193,
+        "endChar": 17
+      },
+      "revId": "6a982800d0fd3d3f69e4820ebace6a1aa67afdc8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
