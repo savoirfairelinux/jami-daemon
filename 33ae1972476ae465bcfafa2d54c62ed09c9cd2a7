@@ -1,0 +1,165 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "682e5104_8f911a67",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 41
+      },
+      "lineNbr": 744,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-24T18:53:23Z",
+      "side": 1,
+      "message": "technically it\u0027s not a weak after a lock",
+      "range": {
+        "startLine": 744,
+        "startChar": 17,
+        "endLine": 744,
+        "endChar": 25
+      },
+      "revId": "33ae1972476ae465bcfafa2d54c62ed09c9cd2a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9795d79b_4bd47d62",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
+        "patchSetId": 41
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-24T18:53:23Z",
+      "side": 1,
+      "message": "cf below",
+      "range": {
+        "startLine": 49,
+        "startChar": 3,
+        "endLine": 49,
+        "endChar": 16
+      },
+      "revId": "33ae1972476ae465bcfafa2d54c62ed09c9cd2a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "34d6bb6d_cc3d8195",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
+        "patchSetId": 41
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-24T18:53:23Z",
+      "side": 1,
+      "message": "can be init there",
+      "range": {
+        "startLine": 66,
+        "startChar": 4,
+        "endLine": 66,
+        "endChar": 7
+      },
+      "revId": "33ae1972476ae465bcfafa2d54c62ed09c9cd2a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "eadc2f24_7324d8df",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.h",
+        "patchSetId": 41
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-24T18:53:23Z",
+      "side": 1,
+      "message": "can be auto, with 60*60u",
+      "range": {
+        "startLine": 51,
+        "startChar": 17,
+        "endLine": 51,
+        "endChar": 29
+      },
+      "revId": "33ae1972476ae465bcfafa2d54c62ed09c9cd2a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "efabe9bb_34e4fe03",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.h",
+        "patchSetId": 41
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-24T18:53:23Z",
+      "side": 1,
+      "message": "unused",
+      "range": {
+        "startLine": 114,
+        "startChar": 52,
+        "endLine": 116,
+        "endChar": 75
+      },
+      "revId": "33ae1972476ae465bcfafa2d54c62ed09c9cd2a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4a1efc71_f250c4fd",
+        "filename": "src/upnp/protocol/natpmp/pmp_igd.h",
+        "patchSetId": 41
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-24T18:53:23Z",
+      "side": 1,
+      "message": "un-needed, everything there is public",
+      "range": {
+        "startLine": 41,
+        "startChar": 1,
+        "endLine": 42,
+        "endChar": 24
+      },
+      "revId": "33ae1972476ae465bcfafa2d54c62ed09c9cd2a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1447340c_64989357",
+        "filename": "src/upnp/upnp_context.h",
+        "patchSetId": 41
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-12-24T18:53:23Z",
+      "side": 1,
+      "message": "auto with 10000u16  should work too",
+      "range": {
+        "startLine": 79,
+        "startChar": 21,
+        "endLine": 79,
+        "endChar": 47
+      },
+      "revId": "33ae1972476ae465bcfafa2d54c62ed09c9cd2a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
