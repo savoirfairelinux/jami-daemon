@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1f4c57c2_c774cdcc",
+        "filename": "test/unitTest/conversation/conversation.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 735,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-24T18:14:21Z",
+      "side": 1,
+      "message": "FYI you can use\n\n    \"hi\"s\n\nto have a std::string literal",
+      "range": {
+        "startLine": 735,
+        "startChar": 38,
+        "endLine": 735,
+        "endChar": 55
+      },
+      "revId": "8b6c2d4c64cf1640aa7d7b5927a64565a69dc44d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
