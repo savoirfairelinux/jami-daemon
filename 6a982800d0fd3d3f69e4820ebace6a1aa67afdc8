@@ -68,6 +68,30 @@
       "revId": "6a982800d0fd3d3f69e4820ebace6a1aa67afdc8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ba630d4d_8ec8f4ff",
+        "filename": "src/conference.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-12-24T19:29:21Z",
+      "side": 1,
+      "message": "It\u0027s because the conference is not linked to a specific account. At the creation of the conf, there is no subcall and no account to check the preference. This way it handles case where conf is created from 2 calls on separate accounts.",
+      "parentUuid": "906588b8_e4a62960",
+      "range": {
+        "startLine": 184,
+        "startChar": 18,
+        "endLine": 193,
+        "endChar": 17
+      },
+      "revId": "6a982800d0fd3d3f69e4820ebace6a1aa67afdc8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
