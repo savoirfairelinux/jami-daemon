@@ -145,9 +145,14 @@ VideoRtpSession::startSender()
         try {
             sender_.reset();
             socketPair_->stopSendOp(false);
+#if defined(__APPLE__) && TARGET_OS_MAC
+            auto format = AV_PIX_FMT_NV12;
+#else
+            auto format = AV_PIX_FMT_YUV420P;
+#endif
             MediaStream ms = !conference_ ?
                         MediaStream("video sender",
-                            AV_PIX_FMT_YUV420P,
+                            format,
                             1 / static_cast<rational<int>>(localVideoParams_.framerate),
                             localVideoParams_.width,
                             localVideoParams_.height,
