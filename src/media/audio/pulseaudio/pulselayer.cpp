@@ -414,8 +414,10 @@ void PulseLayer::startStream(AudioDeviceType type)
 
     // Create Streams
     if (type == AudioDeviceType::PLAYBACK) {
-        if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredPlaybackDevice()))
-            createStream(playback_, type, *dev_infos, true, std::bind(&PulseLayer::writeToSpeaker, this));
+        if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredPlaybackDevice())) {
+            bool ec = preference_.getEchoCanceller() == "system";
+            createStream(playback_, type, *dev_infos, ec, std::bind(&PulseLayer::writeToSpeaker, this));
+        }
     } else if (type == AudioDeviceType::RINGTONE) {
         if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredRingtoneDevice()))
             createStream(ringtone_, type, *dev_infos, false, std::bind(&PulseLayer::ringtoneToSpeaker, this));
