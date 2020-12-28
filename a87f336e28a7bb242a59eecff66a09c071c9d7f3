@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f4ad3842_ae025377",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 535,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-12-28T04:10:55Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nusing the result of an assignment as a condition without parentheses\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-parentheses",
+      "revId": "a87f336e28a7bb242a59eecff66a09c071c9d7f3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8ff548d8_6b66b79b",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 44
+      },
+      "lineNbr": 566,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-12-28T04:10:55Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nusing the result of an assignment as a condition without parentheses\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-parentheses",
+      "revId": "a87f336e28a7bb242a59eecff66a09c071c9d7f3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
