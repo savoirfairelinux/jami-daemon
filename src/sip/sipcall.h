@@ -74,14 +74,11 @@ class Controller;
 class SIPCall : public Call
 {
 public:
-    static const char* const LINK_TYPE;
-
     /**
      * Destructor
      */
     ~SIPCall();
 
-protected:
     /**
      * Constructor (protected)
      * @param id    The call identifier
@@ -92,8 +89,7 @@ protected:
             Call::CallType type,
             const std::map<std::string, std::string>& details = {});
 
-public: // overridden
-    const char* getLinkType() const override { return LINK_TYPE; }
+    // Inherited from Call class
     void answer() override;
     void hangup(int reason) override;
     void refuse() override;
@@ -287,6 +283,8 @@ private:
 
     std::mutex avStreamsMtx_ {};
     std::map<std::string, std::shared_ptr<MediaStreamSubject>> callAVStreams;
+
+    static std::shared_ptr<SIPCall> getSipCall(const std::string& callId);
 
     void setCallMediaLocal();
 
