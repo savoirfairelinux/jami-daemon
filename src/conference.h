@@ -38,6 +38,8 @@
 
 namespace jami {
 
+class SIPCall;
+
 #ifdef ENABLE_VIDEO
 namespace video {
 class VideoMixer;
@@ -237,7 +239,9 @@ public:
     void updateConferenceInfo(ConfInfo confInfo);
 
     void setModerator(const std::string& uri, const bool& state);
-    void muteParticipant(const std::string& uri, const bool& state, const std::string& mediaType = "MEDIA_TYPE_AUDIO");
+    void muteParticipant(const std::string& uri,
+                         const bool& state,
+                         const std::string& mediaType = "MEDIA_TYPE_AUDIO");
     void hangupParticipant(const std::string& participant_id);
 
 private:
@@ -246,6 +250,7 @@ private:
         return std::static_pointer_cast<Conference>(shared_from_this());
     }
 
+    static std::shared_ptr<SIPCall> getSipCall(const std::string& to);
     bool isModerator(std::string_view uri) const;
     void updateModerators();
 
