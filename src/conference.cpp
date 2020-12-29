@@ -85,7 +85,7 @@ Conference::Conference()
                     // a master of a conference and there is only one remote
                     // In the future, we should retrieve confInfo from the call
                     // To merge layouts informations
-                    if (auto call = Manager::instance().callFactory.getCall<SIPCall>(it->second))
+                    if (auto call = getSipCall(it->second))
                         uri = call->getPeerNumber();
                 }
                 auto active = false;
@@ -112,7 +112,7 @@ Conference::Conference()
             // Handle participants not present in the video mixer
             for (const auto& subCall : subCalls) {
                 std::string uri = "";
-                if (auto call = Manager::instance().callFactory.getCall<SIPCall>(subCall))
+                if (auto call = getSipCall(subCall))
                     uri = call->getPeerNumber();
                 auto isModerator = shared->isModerator(uri);
                 newInfo.emplace_back(
@@ -131,8 +131,11 @@ Conference::~Conference()
 
 #ifdef ENABLE_VIDEO
     for (const auto& participant_id : participants_) {
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
-            call->getVideoRtp().exitConference();
+        if (auto call = getSipCall(participant_id)) {
+            auto videoRtp = call->getVideoRtp();
+            if (videoRtp != nullptr) {
+                videoRtp->exitConference();
+            }
             // Reset distant callInfo
             auto w = call->getAccount();
             auto account = w.lock();
@@ -176,14 +179,18 @@ Conference::add(const std::string& participant_id)
 {
     if (participants_.insert(participant_id).second) {
         // Check if participant was muted before conference
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+        if (auto call = getSipCall(participant_id)) {
             if (call->isPeerMuted()) {
                 participantsMuted_.emplace(string_remove_suffix(call->getPeerNumber(), '@'));
             }
         }
 #ifdef ENABLE_VIDEO
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
-            call->getVideoRtp().enterConference(this);
+        if (auto call = getSipCall(participant_id)) {
+            auto videoRtp = call->getVideoRtp();
+            if (videoRtp != nullptr) {
+                videoRtp->enterConference(this);
+            }
+
             // Continue the recording for the conference if one participant was recording
             if (call->isRecording()) {
                 JAMI_DBG("Stop recording for call %s", call->getCallId().c_str());
@@ -210,7 +217,7 @@ Conference::setActiveParticipant(const std::string& participant_id)
         return;
     }
     for (const auto& item : participants_) {
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(item)) {
+        if (auto call = getSipCall(item)) {
             if (participant_id == item
                 || call->getPeerNumber().find(participant_id) != std::string::npos) {
                 videoMixer_->setActiveParticipant(call->getVideoRtp().getVideoReceive().get());
@@ -260,25 +267,24 @@ Conference::sendConferenceInfos()
     for (const auto& participant_id : participants_) {
         // Produce specific JSON for each participant (2 separate accounts can host ...
         // a conference on a same device, the conference is not link to one account).
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+        if (auto call = getSipCall(participant_id)) {
             auto w = call->getAccount();
             auto account = w.lock();
             if (!account)
                 continue;
 
-            ConfInfo confInfo = getConfInfoHostUri(account->getUsername()+ "@ring.dht");
+            ConfInfo confInfo = getConfInfoHostUri(account->getUsername() + "@ring.dht");
             Json::Value jsonArray = {};
             for (const auto& info : confInfo) {
                 jsonArray.append(info.toJson());
             }
 
-            runOnMainThread([
-                call,
-                confInfoStr = Json::writeString(Json::StreamWriterBuilder{}, jsonArray),
-                from = account->getFromUri()
-            ] {
-                call->sendTextMessage({{"application/confInfo+json", confInfoStr}}, from);
-            });
+            runOnMainThread(
+                [call,
+                 confInfoStr = Json::writeString(Json::StreamWriterBuilder {}, jsonArray),
+                 from = account->getFromUri()] {
+                    call->sendTextMessage({{"application/confInfo+json", confInfoStr}}, from);
+                });
         }
     }
 
@@ -310,8 +316,12 @@ Conference::remove(const std::string& participant_id)
 {
     if (participants_.erase(participant_id)) {
 #ifdef ENABLE_VIDEO
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
-            call->getVideoRtp().exitConference();
+        if (auto call = getSipCall(participant_id)) {
+            auto videoRtp = call->getVideoRtp();
+            if (videoRtp != nullptr) {
+                videoRtp->exitConference();
+            }
+
             if (call->isPeerRecording())
                 call->setRemoteRecording(false);
         }
@@ -455,7 +465,7 @@ Conference::toggleRecording()
 
     // Notify each participant
     for (const auto& participant_id : participants_) {
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+        if (auto call = getSipCall(participant_id)) {
             call->updateRecState(newState);
         }
     }
@@ -574,6 +584,12 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
     }
 }
 
+std::shared_ptr<SIPCall>
+Conference::getSipCall(const std::string& to)
+{
+    return std::dynamic_pointer_cast<SIPCall>(Manager::instance().callFactory.getCall(to));
+}
+
 bool
 Conference::isModerator(std::string_view uri) const
 {
@@ -589,7 +605,7 @@ void
 Conference::setModerator(const std::string& uri, const bool& state)
 {
     for (const auto& p : participants_) {
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
+        if (auto call = getSipCall(p)) {
             auto partURI = string_remove_suffix(call->getPeerNumber(), '@');
             if (partURI == uri) {
                 if (state and not isModerator(uri)) {
@@ -667,16 +683,16 @@ Conference::muteParticipant(const std::string& uri, const bool& state, const std
     // Mute participant
     auto peerURI = string_remove_suffix(uri, '@');
     for (const auto& p : participants_) {
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
+        if (auto call = getSipCall(p)) {
             auto partURI = string_remove_suffix(call->getPeerNumber(), '@');
             if (partURI == peerURI) {
                 if (state and not isMuted(partURI)) {
-                    JAMI_DBG("Mute participant %.*s", (int)partURI.size(), partURI.data());
+                    JAMI_DBG("Mute participant %.*s", (int) partURI.size(), partURI.data());
                     participantsMuted_.emplace(std::string(partURI));
                     unbindParticipant(p);
                     updateMuted();
                 } else if (not state and isMuted(partURI)) {
-                    JAMI_DBG("Unmute participant %.*s", (int)partURI.size(), partURI.data());
+                    JAMI_DBG("Unmute participant %.*s", (int) partURI.size(), partURI.data());
                     participantsMuted_.erase(std::string(partURI));
                     bindParticipant(p);
                     updateMuted();
@@ -723,7 +739,7 @@ Conference::isHost(std::string_view uri) const
     // Check if the URI is a local URI (AccountID) for at least one of the subcall
     // (a local URI can be in the call with another device)
     for (const auto& p : participants_) {
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
+        if (auto call = getSipCall(p)) {
             if (auto account = call->getAccount().lock()) {
                 if (account->getUsername() == uri)
                     return true;
@@ -750,7 +766,7 @@ Conference::hangupParticipant(const std::string& participant_id)
     }
 
     for (const auto& p : participants_) {
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
+        if (auto call = getSipCall(p)) {
             std::string_view partURI = string_remove_suffix(call->getPeerNumber(), '@');
             if (partURI == participant_id) {
                 Manager::instance().hangupCall(call->getCallId());

@@ -843,7 +843,7 @@ IceTransport::Impl::setupHostAndUpnpCandidates()
 }
 
 void
-IceTransport::Impl::setDefaultRemoteAddress(unsigned comp_id, const IpAddr& addr)
+IceTransport::Impl::setDefaultRemoteAddress(unsigned int comp_id, const IpAddr& addr)
 {
     // Component ID must be valid.
     assert(comp_id < component_count_);
@@ -854,7 +854,7 @@ IceTransport::Impl::setDefaultRemoteAddress(unsigned comp_id, const IpAddr& addr
 }
 
 const IpAddr&
-IceTransport::Impl::getDefaultRemoteAddress(unsigned comp_id) const
+IceTransport::Impl::getDefaultRemoteAddress(unsigned int comp_id) const
 {
     // Component ID must be valid.
     assert(comp_id < component_count_);
@@ -1356,7 +1356,8 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         // bytes length).
         std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
         pimpl_->waitDataCv_.wait(lk, [&] {
-            return pimpl_->lastSentLen_ >= len or pimpl_->destroying_.load();
+            return pimpl_->lastSentLen_ >= static_cast<pj_ssize_t>(len)
+                   or pimpl_->destroying_.load();
         });
         pimpl_->lastSentLen_ = 0;
     } else if (status != PJ_SUCCESS && status != PJ_EPENDING) {

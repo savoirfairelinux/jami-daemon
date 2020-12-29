@@ -168,8 +168,15 @@ public:
          * When we deactivate a mediaHandler, we try to relink the encoder
          * and decoder by restarting the sender.
          */
-        if (applyRestart)
-            Manager::instance().callFactory.getCall<SIPCall>(callId)->getVideoRtp().restartSender();
+        if (applyRestart) {
+            auto call = std::dynamic_pointer_cast<SIPCall>(
+                Manager::instance().callFactory.getCall(callId));
+            assert(call);
+            auto videoRtp = call->getVideoRtp();
+            if (videoRtp != nullptr) {
+                videoRtp->restartSender();
+            }
+        }
     }
 
     /**
