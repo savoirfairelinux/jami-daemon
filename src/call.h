@@ -30,6 +30,7 @@
 #include "logger.h"
 
 #include "recordable.h"
+#include "peerrecorder.h"
 #include "ip_utils.h"
 #include "conference.h"
 
@@ -51,28 +52,18 @@ class Account;
 struct AccountVideoCodecInfo;
 class AudioDeviceGuard;
 
-template<class T>
-using CallMap = std::map<std::string, std::shared_ptr<T>>;
+class Call;
+
+using CallMap = std::map<std::string, std::shared_ptr<Call>>;
 
 /*
  * @file call.h
  * @brief A call is the base class for protocol-based calls
  */
 
-class Call : public Recordable, public std::enable_shared_from_this<Call>
+class Call : public Recordable, public PeerRecorder, public std::enable_shared_from_this<Call>
 {
 public:
-    using SubcallSet = std::set<std::shared_ptr<Call>, std::owner_less<std::shared_ptr<Call>>>;
-    using OnReadyCb = std::function<void(bool)>;
-
-    static const char* const DEFAULT_ID;
-
-    /**
-     * This determines if the call originated from the local user (OUTGOING)
-     * or from some remote peer (INCOMING, MISSED).
-     */
-    enum class CallType : unsigned { INCOMING, OUTGOING, MISSED };
-
     /**
      * Tell where we're at with the call. The call gets Connected when we know
      * from the other end what happened with out call. A call can be 'Connected'
@@ -108,9 +99,25 @@ public:
         COUNT__
     };
 
+    enum class LinkType { GENERIC, SIP };
+
+    using SubcallSet = std::set<std::shared_ptr<Call>, std::owner_less<std::shared_ptr<Call>>>;
+    using OnReadyCb = std::function<void(bool)>;
+    using StateListenerCb = std::function<void(CallState, ConnectionState, int)>;
+
+    /**
+     * This determines if the call originated from the local user (OUTGOING)
+     * or from some remote peer (INCOMING, MISSED).
+     */
+    enum class CallType : unsigned { INCOMING, OUTGOING, MISSED };
+
+    static const char* const DEFAULT_ID;
+
     virtual ~Call();
 
     std::weak_ptr<Call> weak() { return std::static_pointer_cast<Call>(shared_from_this()); }
+
+    LinkType getLinkType() const { return linkType_; }
 
     /**
      * Return a reference on the call id
@@ -130,8 +137,6 @@ public:
     std::string getAccountId() const;
 
     CallType getCallType() const { return type_; }
-
-    virtual const char* getLinkType() const = 0;
 
     /**
      * Set the peer number (destination on outgoing)
@@ -248,12 +253,9 @@ public:
 
     virtual void removeCall();
 
-    using StateListener = std::function<void(CallState, int)>;
-
-    template<class T>
-    void addStateListener(T&& list)
+    void addStateListener(StateListenerCb&& listener)
     {
-        stateChangedListeners_.emplace_back(std::forward<T>(list));
+        stateChangedListeners_.emplace_back(listener);
     }
 
     /**
@@ -324,6 +326,10 @@ public: // media management
      */
     void setConferenceInfo(const std::string& msg);
 
+    virtual void enterConference(const std::string& confId) = 0;
+    virtual void exitConference() = 0;
+    virtual void* getVideoReceive() = 0;
+
     std::vector<std::map<std::string, std::string>> getConferenceInfos() const
     {
         return confInfo_.toVectorMapStringString();
@@ -341,12 +347,14 @@ protected:
      * @param details volatile details to customize the call creation
      */
     Call(const std::shared_ptr<Account>& account,
+         LinkType linkType,
          const std::string& id,
          Call::CallType type,
          const std::map<std::string, std::string>& details = {});
 
     // TODO all these members are not protected against multi-thread access
 
+    std::string id_ {};
     bool isAudioMuted_ {false};
     bool isVideoMuted_ {false};
 
@@ -378,12 +386,12 @@ private:
 
     SubcallSet safePopSubcalls();
 
-    std::vector<std::function<void(CallState, ConnectionState, int)>> stateChangedListeners_ {};
+    std::vector<StateListenerCb> stateChangedListeners_ {};
 
-    /** Unique ID of the call */
-    std::string id_;
+    /** Link type */
+    LinkType linkType_ {LinkType::GENERIC};
 
-    /** Unique conference ID, used exclusively in case of a conferece */
+    /** Unique conference ID, used exclusively in case of a conference */
     std::string confID_ {};
 
     /** Type of the call */
@@ -411,7 +419,6 @@ private:
 
     ///< MultiDevice: message received by subcall to merged yet
     MsgList pendingInMessages_;
-
 };
 
 // Helpers

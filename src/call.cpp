@@ -82,10 +82,12 @@ hangupCalls(const Call::SubcallSet& callptr_list, int errcode)
 //==============================================================================
 
 Call::Call(const std::shared_ptr<Account>& account,
+           LinkType linkType,
            const std::string& id,
            Call::CallType type,
            const std::map<std::string, std::string>& details)
-    : id_(id)
+    : linkType_(linkType)
+    , id_(id)
     , type_(type)
     , account_(account)
 {
@@ -649,7 +651,8 @@ Call::setConferenceInfo(const std::string& msg)
             // confID_ empty -> participant set confInfo with the received one
             confInfo_ = std::move(newInfo);
             // Inform client that layout has changed
-            jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, confInfo_.toVectorMapStringString());
+            jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(
+                id_, confInfo_.toVectorMapStringString());
         } else {
             // confID_ not empty -> host merge confInfo with the received confInfo
             for (auto& newI : newInfo) {
@@ -672,7 +675,6 @@ Call::setConferenceInfo(const std::string& msg)
                 conf->updateConferenceInfo(confInfo_);
         }
     }
-
 }
 
 } // namespace jami

@@ -165,10 +165,12 @@ try_respond_stateless(pjsip_endpoint* endpt,
     return !PJ_SUCCESS;
 }
 
-template <typename T>
-bool is_uninitialized(std::weak_ptr<T> const& weak) {
+template<typename T>
+bool
+is_uninitialized(std::weak_ptr<T> const& weak)
+{
     using wt = std::weak_ptr<T>;
-    return !weak.owner_before(wt{}) && !wt{}.owner_before(weak);
+    return !weak.owner_before(wt {}) && !wt {}.owner_before(weak);
 }
 
 static pj_bool_t
@@ -215,7 +217,10 @@ transaction_request_cb(pjsip_rx_data* rdata)
         peerNumber = remote_user + "@" + remote_hostname;
     else {
         char tmp[PJSIP_MAX_URL_SIZE];
-        size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
+        size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR,
+                                        sip_from_uri,
+                                        tmp,
+                                        PJSIP_MAX_URL_SIZE);
         peerNumber = sip_utils::stripSipUriPrefix(std::string_view(tmp, length));
     }
 
@@ -224,13 +229,15 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     std::shared_ptr<SIPAccountBase> account;
     // If transport account is default-constructed, guessing account is allowed
-    const auto& waccount = transport ? transport->getAccount() : std::weak_ptr<SIPAccountBase>{};
+    const auto& waccount = transport ? transport->getAccount() : std::weak_ptr<SIPAccountBase> {};
     if (is_uninitialized(waccount)) {
-        account = Manager::instance().sipVoIPLink().guessAccount(toUsername, viaHostname, remote_hostname);
+        account = Manager::instance().sipVoIPLink().guessAccount(toUsername,
+                                                                 viaHostname,
+                                                                 remote_hostname);
         if (not account)
             return PJ_FALSE;
         if (not transport and not ::strcmp(account->getAccountType(), SIPAccount::ACCOUNT_TYPE)) {
-            if (not (transport = std::static_pointer_cast<SIPAccount>(account)->getTransport())) {
+            if (not(transport = std::static_pointer_cast<SIPAccount>(account)->getTransport())) {
                 JAMI_ERR("No suitable transport to answer this call.");
                 return PJ_FALSE;
             }
@@ -256,10 +263,10 @@ transaction_request_cb(pjsip_rx_data* rdata)
                     int urgentCount {0};
                     std::string sp(body_view.substr(pos));
                     int ret = sscanf(sp.c_str(),
-                                    "Voice-Message: %d/%d (%d/",
-                                    &newCount,
-                                    &oldCount,
-                                    &urgentCount);
+                                     "Voice-Message: %d/%d (%d/",
+                                     &newCount,
+                                     &oldCount,
+                                     &urgentCount);
 
                     // According to rfc3842
                     // urgent messages are optional
@@ -710,8 +717,8 @@ SIPVoIPLink::shutdown()
     // Remaining calls should not happen as possible upper callbacks
     // may be called and another instance of SIPVoIPLink can be re-created!
 
-    if (not Manager::instance().callFactory.empty<SIPCall>())
-        JAMI_ERR("%zu SIP calls remains!", Manager::instance().callFactory.callCount<SIPCall>());
+    if (not Manager::instance().callFactory.empty())
+        JAMI_ERR("%zu SIP calls remains!", Manager::instance().callFactory.callCount());
 
     sipTransportBroker->shutdown();
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
@@ -732,9 +739,12 @@ SIPVoIPLink::guessAccount(std::string_view userName,
                           std::string_view fromUri) const
 {
     JAMI_DBG("username = %.*s, server = %.*s, from = %.*s",
-             (int)userName.size(), userName.data(),
-             (int)server.size(), server.data(),
-             (int)fromUri.size(), fromUri.data());
+             (int) userName.size(),
+             userName.data(),
+             (int) server.size(),
+             server.data(),
+             (int) fromUri.size(),
+             fromUri.data());
     // Try to find the account id from username and server name by full match
 
     std::shared_ptr<SIPAccountBase> result;
@@ -1047,7 +1057,7 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
 
     if (body->len and pj_stricmp(&body->content_type.type, &STR_APPLICATION) == 0
         and pj_stricmp(&body->content_type.subtype, &STR_MEDIA_CONTROL_XML) == 0) {
-        auto body_msg = std::string_view((char*)body->data, (size_t)body->len);
+        auto body_msg = std::string_view((char*) body->data, (size_t) body->len);
 
         /* Apply and answer the INFO request */
         static constexpr auto PICT_FAST_UPDATE = "picture_fast_update"sv;
@@ -1088,7 +1098,7 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
                 try {
                     bool state = std::stoi(matched_pattern[1]);
-                    call.setRemoteRecording(state);
+                    call.peerRecording(state);
                 } catch (const std::exception& e) {
                     JAMI_WARN("Error parsing state remote recording: %s", e.what());
                 }
@@ -1102,7 +1112,7 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
                 try {
                     bool state = std::stoi(matched_pattern[1]);
-                    call.setPeerMute(state);
+                    call.peerMuted(state);
                 } catch (const std::exception& e) {
                     JAMI_WARN("Error parsing state remote mute: %s", e.what());
                 }
@@ -1219,7 +1229,11 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
 
     // Using method name to dispatch
     auto methodName = sip_utils::as_view(msg->line.req.method.name);
-    JAMI_DBG("[INVITE:%p] RX SIP method %d (%.*s)", inv, msg->line.req.method.id, (int)methodName.size(), methodName.data());
+    JAMI_DBG("[INVITE:%p] RX SIP method %d (%.*s)",
+             inv,
+             msg->line.req.method.id,
+             (int) methodName.size(),
+             methodName.data());
 
 #ifdef DEBUG_SIP_REQUEST_MSG
     char msgbuf[1000];
@@ -1267,7 +1281,8 @@ processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* event)
 
     JAMI_INFO("[INVITE:%p] SIP RX response: reason %.*s, status code %i",
               inv,
-              (int)msg->line.status.reason.slen, msg->line.status.reason.ptr,
+              (int) msg->line.status.reason.slen,
+              msg->line.status.reason.ptr,
               msg->line.status.code);
 
     sip_utils::logMessageHeaders(&msg->hdr);
