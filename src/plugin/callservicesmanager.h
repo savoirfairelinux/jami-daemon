@@ -74,7 +74,7 @@ public:
      * @param mediaHandler ID handler ID
      * @param callId call ID
      * @param toggle notify with new subjects if true, detach if false.
-     * 
+     *
      * In the case when the mediaHandler receives a hardware format
      * frame and converts it to main memory, we need to restart the
      * sender to unlink ours encoder and decoder.
