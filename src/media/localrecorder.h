@@ -44,6 +44,11 @@ public:
     ~LocalRecorder();
 
     /**
+     * Set recording path
+     */
+    void setPath(const std::string& path);
+
+    /**
      * Start local recording. Return true if recording was successfully
      * started, false otherwise.
      */
@@ -53,11 +58,6 @@ public:
      * Stops recording.
      */
     void stopRecording();
-
-    /**
-     * Set recording path
-     */
-    void setPath(const std::string& path);
 
 private:
     std::string path_;
