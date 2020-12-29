@@ -86,8 +86,6 @@ static constexpr int ICE_AUDIO_RTCP_COMPID {1};
 static constexpr int ICE_VIDEO_RTP_COMPID {2};
 static constexpr int ICE_VIDEO_RTCP_COMPID {3};
 
-const char* const SIPCall::LINK_TYPE = SIPAccount::ACCOUNT_TYPE;
-
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& id,
                  Call::CallType type,
@@ -722,7 +720,8 @@ SIPCall::transfer(const std::string& to)
 bool
 SIPCall::attendedTransfer(const std::string& to)
 {
-    const auto toCall = Manager::instance().callFactory.getCall<SIPCall>(to);
+    auto toCall = std::dynamic_pointer_cast<SIPCall>(Manager::instance().callFactory.getCall(to));
+
     if (!toCall)
         return false;
 
@@ -1553,6 +1552,23 @@ SIPCall::getDetails() const
     return details;
 }
 
+void
+SIPCall::enterConference(const std::string& confId)
+{
+#ifdef ENABLE_VIDEO
+    auto conf = Manager::instance().getConferenceFromID(confId);
+    getVideoRtp().enterConference(conf.get());
+#endif
+}
+
+void
+SIPCall::exitConference()
+{
+#ifdef ENABLE_VIDEO
+    getVideoRtp().exitConference();
+#endif
+}
+
 bool
 SIPCall::toggleRecording()
 {
@@ -1789,28 +1805,28 @@ SIPCall::rtpSetupSuccess(MediaType type, bool isRemote)
 }
 
 void
-SIPCall::setRemoteRecording(bool state)
+SIPCall::peerRecording(bool state)
 {
     const std::string& id = getConfId().empty() ? getCallId() : getConfId();
     if (state) {
-        JAMI_WARN("SIP remote recording enabled");
+        JAMI_WARN("Peer is recording");
         emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), true);
     } else {
-        JAMI_WARN("SIP remote recording disabled");
+        JAMI_WARN("Peer stopped recording");
         emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), false);
     }
     peerRecording_ = state;
 }
 
 void
-SIPCall::setPeerMute(bool state)
+SIPCall::peerMuted(bool muted)
 {
-    if (state) {
-        JAMI_WARN("SIP Peer muted");
+    if (muted) {
+        JAMI_WARN("Peer muted");
     } else {
-        JAMI_WARN("SIP Peer ummuted");
+        JAMI_WARN("Peer un-muted");
     }
-    peerMuted_ = state;
+    peerMuted_ = muted;
     if (auto conf = Manager::instance().getConferenceFromID(getConfId())) {
         conf->updateMuted();
     }
