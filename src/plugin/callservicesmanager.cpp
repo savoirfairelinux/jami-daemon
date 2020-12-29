@@ -223,7 +223,7 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
     }
 #ifndef __ANDROID__
     if (applyRestart)
-        Manager::instance().callFactory.getCall<SIPCall>(callId)->getVideoRtp().restartSender();
+        Manager::instance().callFactory.getCall(callId)->getVideoRtp().restartSender();
 #endif
 }
 } // namespace jami

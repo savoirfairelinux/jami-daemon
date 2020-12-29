@@ -84,6 +84,8 @@ public:
 class Account : public Serializable, public std::enable_shared_from_this<Account>
 {
 public:
+    using MediaMap = std::map<std::string, std::string>;
+
     Account(const std::string& accountID);
 
     /**
