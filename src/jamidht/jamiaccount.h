@@ -225,38 +225,22 @@ public:
     MatchRank matches(std::string_view username, std::string_view hostname) const override;
 
     /**
-     * Implementation of Account::newOutgoingCall()
-     * Note: keep declaration before newOutgoingCall template.
-     */
-    std::shared_ptr<Call> newOutgoingCall(
-        std::string_view toUrl,
-        const std::map<std::string, std::string>& volatileCallDetails = {}) override;
-
-    /**
      * Create outgoing SIPCall.
      * @param[in] toUrl The address to call
      * @return std::shared_ptr<T> A shared pointer on the created call.
      *      The type of this instance is given in template argument.
      *      This type can be any base class of SIPCall class (included).
      */
-#ifndef _MSC_VER
-    template<class T = SIPCall>
-    std::shared_ptr<enable_if_base_of<T, SIPCall>> newOutgoingCall(
-        std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
-#else
-    template<class T>
-    std::shared_ptr<T> newOutgoingCall(
-        std::string_view toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
-#endif
+    std::shared_ptr<Call> newOutgoingCall(
+        std::string_view toUrl,
+        const std::map<std::string, std::string>& volatileCallDetails = {}) override;
 
     /**
      * Create incoming SIPCall.
      * @param[in] from The origin of the call
-     * @param details use to set some specific details
-     * @param sipTr: current SIP Transport
-     * @return std::shared_ptr<T> A shared pointer on the created call.
-     *      The type of this instance is given in template argument.
-     *      This type can be any base class of SIPCall class (included).
+     * @param details Call details
+     * @param sipTr: SIP Transport
+     * @return A shared pointer on the created call.
      */
     std::shared_ptr<SIPCall> newIncomingCall(
         const std::string& from,
