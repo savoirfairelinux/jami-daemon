@@ -36,7 +36,7 @@ public:
     {
         registerComponentsLifeCycleManagers(pm);
 
-        auto sendTextMessage = [this](const DLPlugin* plugin, void* data) {
+        auto sendTextMessage = [this](const DLPlugin*, void* data) {
             auto cm = static_cast<ConversationMessage*>(data);
             jami::Manager::instance().sendTextMessage(cm->author_, cm->to_, cm->data_);
             return 0;

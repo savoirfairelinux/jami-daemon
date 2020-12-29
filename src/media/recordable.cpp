@@ -116,6 +116,12 @@ Recordable::stopRecording()
     recorder_ = std::make_shared<MediaRecorder>();
 }
 
+void
+Recordable::updateRecState(bool state)
+{
+    JAMI_ERR("Not implemented. Must be overriden");
+}
+
 bool
 Recordable::isAudioOnly() const
 {

@@ -67,6 +67,8 @@ public:
      */
     virtual std::string getPath() const;
 
+    virtual void updateRecState(bool state);
+
     bool isAudioOnly() const;
 
 protected:
