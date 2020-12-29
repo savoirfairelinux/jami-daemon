@@ -26,7 +26,6 @@
 #include "call_factory.h"
 #include "client/ring_signal.h"
 
-#include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
 #include "audio/audiolayer.h"
 
