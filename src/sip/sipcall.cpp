@@ -86,13 +86,11 @@ static constexpr int ICE_AUDIO_RTCP_COMPID {1};
 static constexpr int ICE_VIDEO_RTP_COMPID {2};
 static constexpr int ICE_VIDEO_RTCP_COMPID {3};
 
-const char* const SIPCall::LINK_TYPE = SIPAccount::ACCOUNT_TYPE;
-
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& id,
                  Call::CallType type,
                  const std::map<std::string, std::string>& details)
-    : Call(account, id, type, details)
+    : Call(account, LinkType::SIP, id, type, details)
     , avformatrtp_(new AudioRtpSession(id))
 #ifdef ENABLE_VIDEO
     // The ID is used to associate video streams to calls
@@ -195,6 +193,12 @@ SIPCall::createCallAVStream(const StreamData& StreamData,
         .createAVSubject(StreamData, it->second);
 }
 #endif // ENABLE_PLUGIN
+
+std::shared_ptr<SIPCall>
+SIPCall::getSipCall(const std::string& callId)
+{
+    return std::dynamic_pointer_cast<SIPCall>(Manager::instance().callFactory.getCall(callId));
+}
 
 void
 SIPCall::setCallMediaLocal()
@@ -400,9 +404,9 @@ SIPCall::requestKeyframe()
         return;
 
     constexpr auto BODY = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                                       "<media_control><vc_primitive><to_encoder>"
-                                       "<picture_fast_update/>"
-                                       "</to_encoder></vc_primitive></media_control>"sv;
+                          "<media_control><vc_primitive><to_encoder>"
+                          "<picture_fast_update/>"
+                          "</to_encoder></vc_primitive></media_control>"sv;
     JAMI_DBG("Sending video keyframe request via SIP INFO");
     try {
         sendSIPInfo(BODY, "media_control+xml");
@@ -721,7 +725,7 @@ SIPCall::transfer(const std::string& to)
 bool
 SIPCall::attendedTransfer(const std::string& to)
 {
-    const auto toCall = Manager::instance().callFactory.getCall<SIPCall>(to);
+    auto toCall = getSipCall(to);
     if (!toCall)
         return false;
 
@@ -897,11 +901,15 @@ SIPCall::carryingDTMFdigits(char code)
     if (code == '!') {
         ret = snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=16\r\nDuration=%d\r\n", duration);
     } else {
-        ret = snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
+        ret = snprintf(dtmf_body,
+                       sizeof dtmf_body - 1,
+                       "Signal=%c\r\nDuration=%d\r\n",
+                       code,
+                       duration);
     }
 
     try {
-        sendSIPInfo({dtmf_body, (size_t)ret}, "dtmf-relay");
+        sendSIPInfo({dtmf_body, (size_t) ret}, "dtmf-relay");
     } catch (const std::exception& e) {
         JAMI_ERR("Error sending DTMF: %s", e.what());
     }
@@ -1336,7 +1344,6 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
         if (not isSubcall())
             emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
         setMute(mute);
-
     }
 }
 
