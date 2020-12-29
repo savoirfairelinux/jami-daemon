@@ -1,0 +1,395 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "faa620c1_a3fc3aa1",
+        "filename": "src/upnp/protocol/igd.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "not needed: protocol_ is const",
+      "range": {
+        "startLine": 57,
+        "startChar": 8,
+        "endLine": 57,
+        "endChar": 49
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ea2cbc53_b81ab79d",
+        "filename": "src/upnp/protocol/igd.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 98,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "string_view",
+      "range": {
+        "startLine": 98,
+        "startChar": 4,
+        "endLine": 98,
+        "endChar": 15
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3ad529eb_6f68ce10",
+        "filename": "src/upnp/protocol/mapping.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "Mapping is a static object that should ideally not hold reference to the Igd.",
+      "range": {
+        "startLine": 118,
+        "startChar": 4,
+        "endLine": 118,
+        "endChar": 40
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7a54424f_03fd7df3",
+        "filename": "src/upnp/protocol/mapping.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "static",
+      "range": {
+        "startLine": 124,
+        "startChar": 4,
+        "endLine": 127,
+        "endChar": 5
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "13601acb_d4c5f850",
+        "filename": "src/upnp/protocol/natpmp/pmp_igd.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "unneeded, always true",
+      "range": {
+        "startLine": 33,
+        "startChar": 4,
+        "endLine": 33,
+        "endChar": 50
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "47efcc56_72c30cb2",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 319,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "unneeded: expose actionGetPortMappingsEntriesByDescr directly ?",
+      "range": {
+        "startLine": 319,
+        "startChar": 7,
+        "endLine": 319,
+        "endChar": 29
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5dca0244_86774e6b",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 604,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "use dynamic_pointer_cast",
+      "range": {
+        "startLine": 604,
+        "startChar": 23,
+        "endLine": 604,
+        "endChar": 35
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "acaac576_6ef7e881",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 1171,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "unique_ptr is not needed: std::map is a pointer-type object that can be moved around",
+      "range": {
+        "startLine": 1171,
+        "startChar": 0,
+        "endLine": 1171,
+        "endChar": 50
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "be7b777c_d09bb472",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 1201,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "could use UpnpSendActionAsync ?",
+      "range": {
+        "startLine": 1201,
+        "startChar": 23,
+        "endLine": 1201,
+        "endChar": 37
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d6178be8_b5c9a555",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 1303,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "could use UpnpSendActionAsync ?",
+      "range": {
+        "startLine": 1303,
+        "startChar": 23,
+        "endLine": 1303,
+        "endChar": 37
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9025a04f_95d0078e",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 1501,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "could use UpnpSendActionAsync ?",
+      "range": {
+        "startLine": 1501,
+        "startChar": 19,
+        "endLine": 1501,
+        "endChar": 33
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "89e14a9d_30e6d563",
+        "filename": "src/upnp/protocol/upnp_protocol.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "always unused: simply comment the argument name:\n\n    const std::shared_ptr\u003cIGD\u003e\u0026 /*igd*/",
+      "range": {
+        "startLine": 107,
+        "startChar": 8,
+        "endLine": 107,
+        "endChar": 24
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "49428791_3b70ee33",
+        "filename": "src/upnp/protocol/upnp_protocol.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "always unused: simply comment the argument name",
+      "range": {
+        "startLine": 108,
+        "startChar": 8,
+        "endLine": 108,
+        "endChar": 49
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b4a0ad51_43297296",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 509,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "blocking function on main thread",
+      "range": {
+        "startLine": 509,
+        "startChar": 28,
+        "endLine": 509,
+        "endChar": 50
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0ad05f69_e6dbe873",
+        "filename": "src/upnp/upnp_control.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "mappingList_ should be cleared after the loop ?",
+      "range": {
+        "startLine": 97,
+        "startChar": 32,
+        "endLine": 97,
+        "endChar": 44
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "23faa8f5_9fcfbcbf",
+        "filename": "src/upnp/upnp_control.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "unecessary check ?",
+      "range": {
+        "startLine": 117,
+        "startChar": 1,
+        "endLine": 118,
+        "endChar": 21
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bbb35039_3a6a6f68",
+        "filename": "src/upnp/upnp_thread_util.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-12-29T18:48:34Z",
+      "side": 1,
+      "message": "not needed",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 41,
+        "endChar": 0
+      },
+      "revId": "c615e5ae28a7fb5599533821d94815fdf5927b29",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
