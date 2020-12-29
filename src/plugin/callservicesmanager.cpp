@@ -222,8 +222,12 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
         }
     }
 #ifndef __ANDROID__
-    if (applyRestart)
-        Manager::instance().callFactory.getCall<SIPCall>(callId)->getVideoRtp().restartSender();
+    if (applyRestart) {
+        auto sipCall = std::dynamic_pointer_cast<SIPCall>(
+            Manager::instance().callFactory.getCall(callId));
+        assert(sipCall);
+        sipCall->getVideoRtp().restartSender();
+    }
 #endif
 }
 } // namespace jami
