@@ -18,11 +18,47 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "call_factory.h"
-
 #include <stdexcept>
 
+#include "call_factory.h"
+#include "sip/sipcall.h"
+#include "sip/sipaccountbase.h"
+
 namespace jami {
+
+std::shared_ptr<Call>
+CallFactory::createSipCall(const std::shared_ptr<Account>& account,
+                           const std::string& id,
+                           Call::CallType type,
+                           const std::map<std::string, std::string>& details)
+{
+    if (not allowNewCall_) {
+        JAMI_WARN("Creation of new calls is not allowed");
+        return nullptr;
+    }
+
+    if (hasCall(id, Call::LinkType::SIP)) {
+        JAMI_ERR("Call %s already exists", id.c_str());
+        return nullptr;
+    }
+
+    if (std::strcmp(account->getAccountType(), "SIP") != 0
+        and std::strcmp(account->getAccountType(), "RING") != 0) {
+        JAMI_ERR("Invalid account type %s!", account->getAccountType());
+        assert(false);
+    }
+
+    auto accountBase = std::dynamic_pointer_cast<SIPAccountBase>(account);
+    assert(accountBase);
+
+    auto call = std::make_shared<SIPCall>(accountBase, id, type, details);
+    assert(call);
+
+    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    callMaps_[call->getLinkType()].emplace(id, call);
+
+    return call;
+}
 
 void
 CallFactory::forbid()
@@ -37,10 +73,9 @@ CallFactory::removeCall(Call& call)
 
     const auto& id = call.getCallId();
     JAMI_DBG("Removing call %s", id.c_str());
-    const auto& linkType = call.getLinkType();
-    auto& map = callMaps_.at(linkType);
+    auto& map = callMaps_.at(call.getLinkType());
     map.erase(id);
-    JAMI_DBG("Remaining %zu %s call(s)", map.size(), linkType);
+    JAMI_DBG("Remaining %zu call", map.size());
 }
 
 void
@@ -54,12 +89,8 @@ CallFactory::removeCall(const std::string& id)
         JAMI_ERR("No call with ID %s", id.c_str());
 }
 
-//==============================================================================
-// Template specializations (when T = Call)
-
-template<>
 bool
-CallFactory::hasCall<Call>(const std::string& id) const
+CallFactory::hasCall(const std::string& id) const
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
 
@@ -72,32 +103,15 @@ CallFactory::hasCall<Call>(const std::string& id) const
     return false;
 }
 
-template<>
 void
-CallFactory::clear<Call>()
+CallFactory::clear()
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
     callMaps_.clear();
 }
 
-template<>
-bool
-CallFactory::empty<Call>() const
-{
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
-
-    for (const auto& item : callMaps_) {
-        const auto& map = item.second;
-        if (!map.empty())
-            return false;
-    }
-
-    return true;
-}
-
-template<>
 std::shared_ptr<Call>
-CallFactory::getCall<Call>(const std::string& id) const
+CallFactory::getCall(const std::string& id) const
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
 
@@ -111,9 +125,8 @@ CallFactory::getCall<Call>(const std::string& id) const
     return nullptr;
 }
 
-template<>
 std::vector<std::shared_ptr<Call>>
-CallFactory::getAllCalls<Call>() const
+CallFactory::getAllCalls() const
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
     std::vector<std::shared_ptr<Call>> v;
@@ -128,9 +141,8 @@ CallFactory::getAllCalls<Call>() const
     return v;
 }
 
-template<>
 std::vector<std::string>
-CallFactory::getCallIDs<Call>() const
+CallFactory::getCallIDs() const
 {
     std::vector<std::string> v;
 
@@ -144,9 +156,8 @@ CallFactory::getCallIDs<Call>() const
     return v;
 }
 
-template<>
 std::size_t
-CallFactory::callCount<Call>()
+CallFactory::callCount() const
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
     std::size_t count = 0;
@@ -155,6 +166,84 @@ CallFactory::callCount<Call>()
         count += itemmap.second.size();
 
     return count;
+}
+
+bool
+CallFactory::hasCall(const std::string& id, Call::LinkType link) const
+{
+    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+
+    auto const map = getMap_(link);
+    return map and map->find(id) != map->cend();
+}
+
+bool
+CallFactory::empty(Call::LinkType link) const
+{
+    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+
+    const auto map = getMap_(link);
+    return !map or map->empty();
+}
+
+std::shared_ptr<Call>
+CallFactory::getCall(const std::string& id, Call::LinkType link) const
+{
+    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+
+    const auto map = getMap_(link);
+    if (!map)
+        return nullptr;
+
+    const auto& it = map->find(id);
+    if (it == map->cend())
+        return nullptr;
+
+    return it->second;
+}
+
+std::vector<std::shared_ptr<Call>>
+CallFactory::getAllCalls(Call::LinkType link) const
+{
+    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::vector<std::shared_ptr<Call>> v;
+
+    const auto map = getMap_(link);
+    if (map) {
+        for (const auto& it : *map)
+            v.push_back(it.second);
+    }
+
+    v.shrink_to_fit();
+    return v;
+}
+
+std::vector<std::string>
+CallFactory::getCallIDs(Call::LinkType link) const
+{
+    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::vector<std::string> v;
+
+    const auto map = getMap_(link);
+    if (map) {
+        for (const auto& it : *map)
+            v.push_back(it.first);
+    }
+
+    v.shrink_to_fit();
+    return v;
+}
+
+std::size_t
+CallFactory::callCount(Call::LinkType link) const
+{
+    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+
+    const auto map = getMap_(link);
+    if (!map)
+        return 0;
+
+    return map->size();
 }
 
 } // namespace jami

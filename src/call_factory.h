@@ -18,11 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef CALL_FACTORY_H
-#define CALL_FACTORY_H
-
-#include "call.h"
-#include "account.h"
+#pragma once
 
 #include <map>
 #include <memory>
@@ -31,11 +27,32 @@
 #include <string>
 #include <utility>
 
+#include "call.h"
+#include "account.h"
+
 namespace jami {
 
 class CallFactory
 {
 public:
+    template<class A>
+    std::shared_ptr<Call> newCall(std::shared_ptr<A> account,
+                                  const std::string& id,
+                                  Call::CallType type,
+                                  const std::map<std::string, std::string>& details = {})
+    {
+        return createSipCall(account, id, type, details);
+    }
+
+    template<class A>
+    std::shared_ptr<Call> newCall(std::shared_ptr<A> account,
+                                  const std::string& id,
+                                  Call::CallType type,
+                                  const std::vector<Call::MediaMap>& mediaList)
+    {
+        return createSipCall(account, id, type, mediaList);
+    }
+
     /**
      * Forbid creation of new calls.
      */
@@ -51,206 +68,80 @@ public:
      */
     void removeCall(const std::string& id);
 
-    // Specializations of following template methods for T = Call
-    // are defined in call.cpp
+    /**
+     * Return call pointer associated to given ID.Type can optionally be specified.
+     */
+    std::shared_ptr<Call> getCall(const std::string& id) const;
+    std::shared_ptr<Call> getCall(const std::string& id, Call::LinkType link) const;
 
     /**
      * Return if given call exists. Type can optionally be specified.
      */
-    template<class T = Call>
-    bool hasCall(const std::string& id) const
-    {
-        std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
-
-        const auto map = getMap_<T>();
-        return map and map->find(id) != map->cend();
-    }
+    bool hasCall(const std::string& id) const;
+    bool hasCall(const std::string& id, Call::LinkType link) const;
 
     /**
-     * Create a new call instance of Call class T, using Account class A.
-     * @param id Unique identifier of the call
-     * @param type set definitely this call as incoming/outgoing
-     * @param account account useed to create this call
+     * Return if calls exist.
      */
-    template<class T, class A>
-    std::shared_ptr<T> newCall(std::shared_ptr<A> account,
-                               const std::string& id,
-                               Call::CallType type,
-                               const std::map<std::string, std::string>& details = {})
-    {
-        if (!allowNewCall_) {
-            JAMI_WARN("newCall aborted : CallFactory in forbid state");
-            return nullptr;
-        }
-
-        // Trick: std::make_shared<T> can't build as T constructor is protected
-        // and not accessible from std::make_shared.
-        // We use a concrete class to bypass this restriction.
-        struct ConcreteCall : T
-        {
-            ConcreteCall(std::shared_ptr<A> account,
-                         const std::string& id,
-                         Call::CallType type,
-                         const std::map<std::string, std::string>& details)
-                : T(account, id, type, details)
-            {}
-        };
-
-        if (hasCall(id)) {
-            JAMI_ERR("Call %s is already created", id.c_str());
-            return nullptr;
-        }
-
-        auto call = std::make_shared<ConcreteCall>(account, id, type, details);
-        if (call) {
-            std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
-            callMaps_[call->getLinkType()].insert(std::make_pair(id, call));
-        }
-
-        return call;
-    }
+    bool empty(Call::LinkType link) const;
 
     /**
-     * Return if calls exist. Type can optionally be specified.
+     * Erase all calls.
      */
-    template<class T = Call>
-    bool empty() const
-    {
-        std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
-
-        const auto map = getMap_<T>();
-        return !map or map->empty();
-    }
-
-    /**
-     * Erase all calls. Type can optionally be specified.
-     */
-    template<class T = Call>
-    void clear()
-    {
-        std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
-
-        auto map = getMap_<T>();
-        if (!map)
-            return;
-
-        map->clear();
-    }
-
-    /**
-     * Return call pointer associated to given ID. Type can optionally be specified.
-     */
-    template<class T = Call>
-    std::shared_ptr<T> getCall(const std::string& id) const
-    {
-        std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
-
-        const auto map = getMap_<T>();
-        if (!map)
-            return nullptr;
-
-        const auto& it = map->find(id);
-        if (it == map->cend())
-            return nullptr;
-
-        return std::static_pointer_cast<T>(it->second);
-    }
+    void clear();
 
     /**
      * Return all calls. Type can optionally be specified.
      */
-    template<class T = Call>
-    std::vector<std::shared_ptr<T>> getAllCalls() const
-    {
-        std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
-        std::vector<std::shared_ptr<T>> v;
-
-        const auto map = getMap_<T>();
-        if (map) {
-            for (const auto& it : *map)
-                v.push_back(std::static_pointer_cast<T>(it.second));
-        }
-
-        v.shrink_to_fit();
-        return v;
-    }
+    std::vector<std::shared_ptr<Call>> getAllCalls() const;
+    std::vector<std::shared_ptr<Call>> getAllCalls(Call::LinkType link) const;
 
     /**
      * Return all call's IDs. Type can optionally be specified.
      */
-    template<class T = Call>
-    std::vector<std::string> getCallIDs() const
-    {
-        std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
-        std::vector<std::string> v;
-
-        const auto map = getMap_<T>();
-        if (map) {
-            for (const auto& it : *map)
-                v.push_back(it.first);
-        }
-
-        v.shrink_to_fit();
-        return v;
-    }
+    std::vector<std::string> getCallIDs() const;
+    std::vector<std::string> getCallIDs(Call::LinkType link) const;
 
     /**
      * Return number of calls. Type can optionally be specified.
      */
-    template<class T = Call>
-    std::size_t callCount()
-    {
-        std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
-
-        const auto map = getMap_<T>();
-        if (!map)
-            return 0;
-
-        return map->size();
-    }
+    std::size_t callCount() const;
+    std::size_t callCount(Call::LinkType link) const;
 
 private:
-    mutable std::recursive_mutex callMapsMutex_ {};
-
-    std::atomic_bool allowNewCall_ {true};
-
-    std::map<std::string, CallMap<Call>> callMaps_ {};
-
-    template<class T>
-    const CallMap<Call>* getMap_() const
+    /**
+     * @brief Get the calls map
+     * @param link The call type
+     * @return A pointer to the calls map instance
+     * @warning Concurrency protection must done by the caller.
+     */
+    const CallMap* getMap_(Call::LinkType link) const
     {
-        const auto& itermap = callMaps_.find(T::LINK_TYPE);
+        auto const& itermap = callMaps_.find(link);
 
         if (itermap != callMaps_.cend())
             return &itermap->second;
 
         return nullptr;
     }
+
+    /**
+     * Create a new call instance.
+     * @param account Account used to create this call
+     * @param id Unique identifier of the call
+     * @param type Set the call type
+     * @param details Call details
+     */
+    std::shared_ptr<Call> createSipCall(const std::shared_ptr<Account>& account,
+                                        const std::string& id,
+                                        Call::CallType type,
+                                        const std::map<std::string, std::string>& details = {});
+
+    mutable std::recursive_mutex callMapsMutex_ {};
+
+    std::atomic_bool allowNewCall_ {true};
+
+    std::map<Call::LinkType, CallMap> callMaps_ {};
 };
 
-// Specializations defined in call_factory.cpp
-
-template<>
-bool CallFactory::hasCall<Call>(const std::string& id) const;
-
-template<>
-void CallFactory::clear<Call>();
-
-template<>
-bool CallFactory::empty<Call>() const;
-
-template<>
-std::shared_ptr<Call> CallFactory::getCall<Call>(const std::string& id) const;
-
-template<>
-std::vector<std::shared_ptr<Call>> CallFactory::getAllCalls<Call>() const;
-
-template<>
-std::vector<std::string> CallFactory::getCallIDs<Call>() const;
-
-template<>
-std::size_t CallFactory::callCount<Call>();
-
 } // namespace jami
-
-#endif // CALL_FACTORY_H
