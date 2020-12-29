@@ -86,13 +86,11 @@ static constexpr int ICE_AUDIO_RTCP_COMPID {1};
 static constexpr int ICE_VIDEO_RTP_COMPID {2};
 static constexpr int ICE_VIDEO_RTCP_COMPID {3};
 
-const char* const SIPCall::LINK_TYPE = SIPAccount::ACCOUNT_TYPE;
-
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& id,
                  Call::CallType type,
                  const std::map<std::string, std::string>& details)
-    : Call(account, id, type, details)
+    : Call(account, LinkType::SIP, id, type, details)
     , avformatrtp_(new AudioRtpSession(id))
 #ifdef ENABLE_VIDEO
     // The ID is used to associate video streams to calls
@@ -195,6 +193,12 @@ SIPCall::createCallAVStream(const StreamData& StreamData,
         .createAVSubject(StreamData, it->second);
 }
 #endif // ENABLE_PLUGIN
+
+std::shared_ptr<SIPCall>
+SIPCall::getSipCall(const std::string& callId)
+{
+    return std::dynamic_pointer_cast<SIPCall>(Manager::instance().callFactory.getCall(callId));
+}
 
 void
 SIPCall::setCallMediaLocal()
@@ -721,7 +725,7 @@ SIPCall::transfer(const std::string& to)
 bool
 SIPCall::attendedTransfer(const std::string& to)
 {
-    const auto toCall = Manager::instance().callFactory.getCall<SIPCall>(to);
+    auto toCall = getSipCall(to);
     if (!toCall)
         return false;
 
