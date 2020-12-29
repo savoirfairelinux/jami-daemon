@@ -38,6 +38,8 @@
 
 namespace jami {
 
+class Call;
+
 #ifdef ENABLE_VIDEO
 namespace video {
 class VideoMixer;
@@ -253,6 +255,7 @@ private:
         return std::static_pointer_cast<Conference>(shared_from_this());
     }
 
+    static std::shared_ptr<Call> getCall(const std::string& peerId);
     bool isModerator(std::string_view uri) const;
     void updateModerators();
 
