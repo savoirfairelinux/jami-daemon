@@ -179,10 +179,14 @@ SIPAccount::newIncomingCall(const std::string& from UNUSED,
                             const std::shared_ptr<SipTransport>&)
 {
     auto& manager = Manager::instance();
-    return manager.callFactory.newCall<SIPCall, SIPAccount>(shared(),
-                                                            manager.getNewCallID(),
-                                                            Call::CallType::INCOMING,
-                                                            details);
+    auto call = manager.callFactory.newCall<SIPAccount>(shared(),
+                                                        manager.getNewCallID(),
+                                                        Call::CallType::INCOMING,
+                                                        details);
+
+    auto sipCall = std::dynamic_pointer_cast<SIPCall>(call);
+    assert(sipCall);
+    return sipCall;
 }
 
 template<>
@@ -196,10 +200,13 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
     JAMI_DBG() << *this << "Calling SIP peer " << toUrl;
 
     auto& manager = Manager::instance();
-    auto call = manager.callFactory.newCall<SIPCall, SIPAccount>(shared(),
-                                                                 manager.getNewCallID(),
-                                                                 Call::CallType::OUTGOING,
-                                                                 volatileCallDetails);
+    auto newCall = manager.callFactory.newCall<SIPAccount>(shared(),
+                                                           manager.getNewCallID(),
+                                                           Call::CallType::OUTGOING,
+                                                           volatileCallDetails);
+    auto call = std::dynamic_pointer_cast<SIPCall>(newCall);
+    assert(call);
+
     call->setSecure(isTlsEnabled());
 
     if (isIP2IP()) {

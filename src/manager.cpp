@@ -1424,6 +1424,8 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
 
     auto conf = std::make_shared<Conference>();
 
+    pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
+
     // Bind calls according to their state
     pimpl_->bindCallToConference(*call1, *conf);
     pimpl_->bindCallToConference(*call2, *conf);
@@ -1436,7 +1438,6 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
         conf->detach();
     }
 
-    pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
     emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
     return true;
 }
@@ -1927,12 +1928,12 @@ Manager::incomingCall(Call& call, const std::string& accountId)
             }
             // First call
             auto conf = std::make_shared<Conference>();
+            pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
 
             // Bind calls according to their state
             pimpl_->bindCallToConference(*call, *conf);
             conf->detach();
 
-            pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
             emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
         });
     } else if (pimpl_->autoAnswer_) {

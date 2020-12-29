@@ -77,15 +77,19 @@ private:
     std::unique_ptr<AudioReceiveThread> receiveThread_;
     std::shared_ptr<AudioInput> audioInput_;
     std::shared_ptr<RingBuffer> ringbuffer_;
-    uint16_t initSeqVal_ = 0;
+    uint16_t initSeqVal_ {0};
     bool muteState_ = false;
+<<<<<<< HEAD
     unsigned packetLoss_ = 10;
+=======
+    unsigned packetLoss_ {10};
+>>>>>>> Call/SIPCall: remove template
     DeviceParams localAudioParams_;
 
     InterruptedThreadLoop rtcpCheckerThread_;
     void processRtcpChecker();
 
-    // interval in seconds between RTCP checkings
+    // Interval in seconds between RTCP checking
     std::chrono::seconds rtcp_checking_interval {4};
 };
 
