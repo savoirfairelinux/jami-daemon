@@ -74,14 +74,11 @@ class Controller;
 class SIPCall : public Call
 {
 public:
-    static const char* const LINK_TYPE;
-
     /**
      * Destructor
      */
     ~SIPCall();
 
-protected:
     /**
      * Constructor (protected)
      * @param id    The call identifier
@@ -92,8 +89,8 @@ protected:
             Call::CallType type,
             const std::map<std::string, std::string>& details = {});
 
-public: // overridden
-    const char* getLinkType() const override { return LINK_TYPE; }
+    // Inherited from Call class
+    LinkType getLinkType() const { return LinkType::SIP; }
     void answer() override;
     void hangup(int reason) override;
     void refuse() override;
@@ -122,10 +119,18 @@ public: // overridden
     void sendKeyframe() override;
     std::map<std::string, std::string> getDetails() const override;
 
-    virtual bool toggleRecording()
-        override; // SIPCall needs to spread recorder to rtp sessions, so override
+    void enterConference(const std::string& confId) override;
+    void exitConference() override;
+    VideoReceiverOpq getVideoReceiver() override
+    {
+        return reinterpret_cast<VideoReceiverOpq>(videortp_->getVideoReceive().get());
+    }
 
-public: // SIP related
+    // Overrides of Recordable base class.
+    bool toggleRecording() override;
+    void peerRecording(bool state) override;
+    void peerMuted(bool state) override;
+
     /**
      * Return the SDP's manager of this call
      */
@@ -238,15 +243,7 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     void rtpSetupSuccess(MediaType type, bool isRemote);
 
-    void setRemoteRecording(bool state);
-
-    bool isPeerRecording() const { return peerRecording_; }
-
     void setMute(bool state);
-
-    void setPeerMute(bool state);
-
-    bool isPeerMuted() const { return peerMuted_; }
 
 private:
     using clock = std::chrono::steady_clock;
@@ -386,14 +383,12 @@ private:
     OnReadyCb holdCb_ {};
     OnReadyCb offHoldCb_ {};
 
-    bool peerRecording_ {false};
-    bool peerMuted_ {false};
-
     std::atomic_bool waitForIceInit_ {false};
 
-    std::map<const std::string, bool> mediaReady_ {
-        {"a:local", false}, {"a:remote", false},
-        {"v:local", false}, {"v:remote", false}};
+    std::map<const std::string, bool> mediaReady_ {{"a:local", false},
+                                                   {"a:remote", false},
+                                                   {"v:local", false},
+                                                   {"v:remote", false}};
 
     void resetMediaReady();
 

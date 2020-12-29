@@ -658,7 +658,8 @@ Call::setConferenceInfo(const std::string& msg)
             // confID_ empty -> participant set confInfo with the received one
             confInfo_ = std::move(newInfo);
             // Inform client that layout has changed
-            jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, confInfo_.toVectorMapStringString());
+            jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(
+                id_, confInfo_.toVectorMapStringString());
         } else {
             // confID_ not empty -> host merge confInfo with the received confInfo
             for (auto& newI : newInfo) {
@@ -681,7 +682,6 @@ Call::setConferenceInfo(const std::string& msg)
                 conf->updateConferenceInfo(confInfo_);
         }
     }
-
 }
 
 } // namespace jami
