@@ -122,7 +122,7 @@ private:
     void testETooBigClone();
     void testETooBigFetch();
     // TODO2 testMemberAddedNoCertificate
-    // TODO2 void testMemberJoinsNoBadFile();
+    void testMemberJoinsNoBadFile();
     // TODO2 testMemberJoinsInviteRemoved
     void testAddContact();
     void testFailAddMemberInOneToOne();
@@ -166,6 +166,7 @@ private:
     CPPUNIT_TEST(testVoteNoBadFile);
     CPPUNIT_TEST(testETooBigClone);
     CPPUNIT_TEST(testETooBigFetch);
+    CPPUNIT_TEST(testMemberJoinsNoBadFile);
     CPPUNIT_TEST(testAddContact);
     CPPUNIT_TEST(testFailAddMemberInOneToOne);
     CPPUNIT_TEST(testUnknownModeDetected);
@@ -2640,6 +2641,78 @@ ConversationTest::testETooBigFetch()
 
     aliceAccount->sendMessage(convId, "hi"s);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return errorDetected; }));
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConversationTest::testMemberJoinsNoBadFile()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto carlaUri = carlaAccount->getUsername();
+    aliceAccount->trackBuddyPresence(carlaUri, true);
+    auto convId = aliceAccount->startConversation();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, errorDetected = false, carlaConnected = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == carlaId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = carlaAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    carlaConnected = true;
+                    cv.notify_one();
+                }
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::OnConversationError>(
+        [&](const std::string& /* accountId */,
+            const std::string& /* conversationId */,
+            int code,
+            const std::string& /* what */) {
+            if (code == 3)
+                errorDetected = true;
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, carlaUri, false));
+
+    // Cp conversations & convInfo
+    auto repoPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR
+                         + aliceAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
+    auto repoPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR
+                         + carlaAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
+    std::filesystem::copy(repoPathAlice, repoPathCarla, std::filesystem::copy_options::recursive);
+    auto ciPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                       + DIR_SEPARATOR_STR + "convInfo";
+    auto ciPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
+                       + DIR_SEPARATOR_STR + "convInfo";
+    std::filesystem::copy(ciPathAlice, ciPathCarla);
+
+    // Accept for alice and makes different heads
+    addFile(carlaAccount, convId, "BADFILE");
+    ConversationRepository repo(carlaAccount, convId);
+    repo.join();
+
+    // Start Carla, should merge and all messages should be there
+    Manager::instance().sendRegister(carlaId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return carlaConnected; }));
+
+    carlaAccount->sendMessage(convId, "hi"s);
+    errorDetected = false;
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] { return errorDetected; }));
     DRing::unregisterSignalHandlers();
 }
 

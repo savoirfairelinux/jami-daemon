@@ -85,8 +85,9 @@ public:
                                                                  size_t n = 0);
 
     std::mutex pullcbsMtx_ {};
-    std::mutex pullMtx_ {};
-    std::vector<std::tuple<std::string, std::string, OnPullCb>> pullcbs_ {};
+    std::set<std::string> fetchingRemotes_ {}; // store current remote in fetch
+    std::mutex mergeMtx_ {}; // this force to only have one merge at a time TODO rm?
+    std::deque<std::tuple<std::string, std::string, OnPullCb>> pullcbs_ {};
 };
 
 bool
@@ -479,7 +480,9 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
     std::lock_guard<std::mutex> lk(pimpl_->pullcbsMtx_);
     auto isInProgress = not pimpl_->pullcbs_.empty();
     pimpl_->pullcbs_.emplace_back(
-        std::make_tuple<std::string, std::string, OnPullCb>(std::string(uri), std::move(commitId), std::move(cb)));
+        std::make_tuple<std::string, std::string, OnPullCb>(std::string(uri),
+                                                            std::move(commitId),
+                                                            std::move(cb)));
     if (isInProgress)
         return;
     dht::ThreadPool::io().run([w = weak()] {
@@ -487,31 +490,61 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
         if (!sthis_)
             return;
 
-        std::string uri, commitId;
+        std::string deviceId, commitId;
         OnPullCb cb;
         while (true) {
             decltype(sthis_->pimpl_->pullcbs_)::value_type pullcb;
+            decltype(sthis_->pimpl_->fetchingRemotes_.begin()) it;
             {
                 std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
                 if (sthis_->pimpl_->pullcbs_.empty())
                     return;
-                auto elem = sthis_->pimpl_->pullcbs_.back();
-                uri = std::get<0>(elem);
+                auto elem = sthis_->pimpl_->pullcbs_.front();
+                deviceId = std::get<0>(elem);
                 commitId = std::get<1>(elem);
                 cb = std::move(std::get<2>(elem));
-                sthis_->pimpl_->pullcbs_.pop_back();
+                sthis_->pimpl_->pullcbs_.pop_front();
+
+                // Check if already using this remote, if so, no need to pull yet
+                // One pull at a time to avoid any early EOF or fetch errors.
+                if (sthis_->pimpl_->fetchingRemotes_.find(deviceId)
+                    != sthis_->pimpl_->fetchingRemotes_.end()) {
+                    sthis_->pimpl_->pullcbs_.emplace_back(
+                        std::make_tuple<std::string, std::string, OnPullCb>(std::string(deviceId),
+                                                                            std::move(commitId),
+                                                                            std::move(cb)));
+                    // Go to next pull
+                    continue;
+                }
+                auto itr = sthis_->pimpl_->fetchingRemotes_.emplace(deviceId);
+                if (!itr.second) {
+                    cb(false, {});
+                    continue;
+                }
+                it = itr.first;
             }
-            // One pull at a time to avoid any early EOF or fetch errors.
-            std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullMtx_);
+
+            // If recently fetched, the commit can already be there, so no need to do complex operations
             if (commitId != "" && sthis_->pimpl_->repository_->getCommit(commitId) != std::nullopt) {
                 cb(true, {});
-                return;
+                std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
+                sthis_->pimpl_->fetchingRemotes_.erase(it);
+                continue;
             }
-            if (!sthis_->fetchFrom(uri)) {
+
+            // Pull from remote
+            auto fetched = sthis_->fetchFrom(deviceId);
+            {
+                std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
+                sthis_->pimpl_->fetchingRemotes_.erase(it);
+            }
+
+            if (!fetched) {
                 cb(false, {});
-                return;
+                continue;
             }
-            auto newCommits = sthis_->mergeHistory(uri);
+            // std::lock_guard<std::mutex> lk(sthis_->pimpl_->mergeMtx_);
+            auto newCommits = sthis_->mergeHistory(deviceId);
             auto ok = !newCommits.empty();
             if (cb)
                 cb(ok, std::move(newCommits));
