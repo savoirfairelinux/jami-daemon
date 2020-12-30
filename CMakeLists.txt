@@ -89,6 +89,9 @@ if(MSVC)
    include("CMake/Default.cmake")
    include("CMake/DefaultCXX.cmake")
 
+   # Supress generation of ZERO_CHECK
+   set(CMAKE_SUPPRESS_REGENERATION true)
+
    set(ROOT_NAMESPACE ringdaemon)
 
    ################################################################################
