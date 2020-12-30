@@ -342,7 +342,6 @@ switchSecondaryInput(const std::string& confId, const std::string& resource)
     return false;
 }
 
-
 void
 sendTextMessage(const std::string& callID,
                 const std::map<std::string, std::string>& messages,
@@ -355,24 +354,19 @@ sendTextMessage(const std::string& callID,
 }
 
 void
-setModerator(const std::string& confId,
-             const std::string& peerId,
-             const bool& state)
+setModerator(const std::string& confId, const std::string& peerId, const bool& state)
 {
     jami::Manager::instance().setModerator(confId, peerId, state);
 }
 
 void
-muteParticipant(const std::string& confId,
-             const std::string& peerId,
-             const bool& state)
+muteParticipant(const std::string& confId, const std::string& peerId, const bool& state)
 {
     jami::Manager::instance().muteParticipant(confId, peerId, state);
 }
 
 void
-hangupParticipant(const std::string& confId,
-             const std::string& participant)
+hangupParticipant(const std::string& confId, const std::string& participant)
 {
     jami::Manager::instance().hangupParticipant(confId, participant);
 }

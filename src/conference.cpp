@@ -266,24 +266,25 @@ Conference::sendConferenceInfos()
             if (!account)
                 continue;
 
-            ConfInfo confInfo = getConfInfoHostUri(account->getUsername()+ "@ring.dht");
+            ConfInfo confInfo = getConfInfoHostUri(account->getUsername() + "@ring.dht");
             Json::Value jsonArray = {};
             for (const auto& info : confInfo) {
                 jsonArray.append(info.toJson());
             }
 
-            runOnMainThread([
-                call,
-                confInfoStr = Json::writeString(Json::StreamWriterBuilder{}, jsonArray),
-                from = account->getFromUri()
-            ] {
-                call->sendTextMessage({{"application/confInfo+json", confInfoStr}}, from);
-            });
+            runOnMainThread(
+                [call,
+                 confInfoStr = Json::writeString(Json::StreamWriterBuilder {}, jsonArray),
+                 from = account->getFromUri()] {
+                    call->sendTextMessage({{"application/confInfo+json", confInfoStr}}, from);
+                });
         }
     }
 
     // Inform client that layout has changed
-    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, confInfo_.toVectorMapStringString());
+    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_,
+                                                                  confInfo_
+                                                                      .toVectorMapStringString());
 }
 
 void
@@ -415,7 +416,6 @@ Conference::bindHost()
         }
     }
 }
-
 
 void
 Conference::unbindHost()
@@ -565,8 +565,9 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         if (root.isMember("activeParticipant")) {
             setActiveParticipant(root["activeParticipant"].asString());
         }
-        if (root.isMember("muteParticipant")  and root.isMember("muteState")) {
-            muteParticipant(root["muteParticipant"].asString(), root["muteState"].asString() == "true");
+        if (root.isMember("muteParticipant") and root.isMember("muteState")) {
+            muteParticipant(root["muteParticipant"].asString(),
+                            root["muteState"].asString() == "true");
         }
         if (root.isMember("hangupParticipant")) {
             hangupParticipant(root["hangupParticipant"].asString());
@@ -582,7 +583,8 @@ Conference::isModerator(std::string_view uri) const
                         [&uri](std::string_view moderator) {
                             return moderator.find(uri) != std::string_view::npos;
                         })
-           != moderators_.end() or isHost(uri);
+               != moderators_.end()
+           or isHost(uri);
 }
 
 void
@@ -671,12 +673,12 @@ Conference::muteParticipant(const std::string& uri, const bool& state, const std
             auto partURI = string_remove_suffix(call->getPeerNumber(), '@');
             if (partURI == peerURI) {
                 if (state and not isMuted(partURI)) {
-                    JAMI_DBG("Mute participant %.*s", (int)partURI.size(), partURI.data());
+                    JAMI_DBG("Mute participant %.*s", (int) partURI.size(), partURI.data());
                     participantsMuted_.emplace(std::string(partURI));
                     unbindParticipant(p);
                     updateMuted();
                 } else if (not state and isMuted(partURI)) {
-                    JAMI_DBG("Unmute participant %.*s", (int)partURI.size(), partURI.data());
+                    JAMI_DBG("Unmute participant %.*s", (int) partURI.size(), partURI.data());
                     participantsMuted_.erase(std::string(partURI));
                     bindParticipant(p);
                     updateMuted();
@@ -699,7 +701,6 @@ Conference::updateMuted()
     }
     sendConferenceInfos();
 }
-
 
 ConfInfo
 Conference::getConfInfoHostUri(std::string_view uri)

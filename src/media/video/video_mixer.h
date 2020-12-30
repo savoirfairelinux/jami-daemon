@@ -85,7 +85,7 @@ public:
 
     void setOnSourcesUpdated(OnSourcesUpdatedCb&& cb) { onSourcesUpdated_ = std::move(cb); }
 
-    MediaStream getStream(const std::string& name)  const;
+    MediaStream getStream(const std::string& name) const;
 
 private:
     NON_COPYABLE(VideoMixer);

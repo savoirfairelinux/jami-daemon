@@ -77,8 +77,12 @@ DRING_PUBLIC std::string getConferenceId(const std::string& callID);
 DRING_PUBLIC std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConferenceInfos(
     const std::string& confId);
-DRING_PUBLIC void setModerator(const std::string& confId, const std::string& peerId, const bool& state);
-DRING_PUBLIC void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
+DRING_PUBLIC void setModerator(const std::string& confId,
+                               const std::string& peerId,
+                               const bool& state);
+DRING_PUBLIC void muteParticipant(const std::string& confId,
+                                  const std::string& peerId,
+                                  const bool& state);
 DRING_PUBLIC void hangupParticipant(const std::string& confId, const std::string& participant);
 
 /* Statistic related methods */
@@ -225,10 +229,11 @@ struct DRING_PUBLIC CallSignal
         using cb_type = void(const std::string&,
                              const std::vector<std::map<std::string, std::string>>&);
     };
-    struct DRING_PUBLIC RemoteRecordingChanged {
-                constexpr static const char* name = "RemoteRecordingChanged";
-                using cb_type = void(const std::string&, const std::string&, bool);
-        };
+    struct DRING_PUBLIC RemoteRecordingChanged
+    {
+        constexpr static const char* name = "RemoteRecordingChanged";
+        using cb_type = void(const std::string&, const std::string&, bool);
+    };
 };
 
 } // namespace DRing

@@ -134,7 +134,8 @@ VideoMixer::switchInput(const std::string& input)
 }
 
 void
-VideoMixer::switchSecondaryInput(const std::string& input) {
+VideoMixer::switchSecondaryInput(const std::string& input)
+{
     if (auto local = videoLocalSecondary_) {
         // Detach videoInput from mixer
         local->detach(this);
@@ -203,7 +204,8 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
             // Handle the case where the current shown source leave the conference
             if (activeSource_ == ob) {
                 currentLayout_ = Layout::GRID;
-                activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get() : videoLocal_.get();
+                activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get()
+                                                     : videoLocal_.get();
             }
             sources_.remove(x);
             layoutUpdated_ += 1;
@@ -320,10 +322,10 @@ VideoMixer::process()
     }
 
     output.pointer()->pts = av_rescale_q_rnd(av_gettime() - startTime_,
-                                      {1, AV_TIME_BASE},
-                                      {1, MIXER_FRAMERATE},
-                                      static_cast<AVRounding>(AV_ROUND_NEAR_INF
-                                                              | AV_ROUND_PASS_MINMAX));
+                                             {1, AV_TIME_BASE},
+                                             {1, MIXER_FRAMERATE},
+                                             static_cast<AVRounding>(AV_ROUND_NEAR_INF
+                                                                     | AV_ROUND_PASS_MINMAX));
     lastTimestamp_ = output.pointer()->pts;
     publishFrame();
 }
