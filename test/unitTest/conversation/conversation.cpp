@@ -21,6 +21,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <condition_variable>
+#include <chrono>
 #include <string>
 #include <fstream>
 #include <streambuf>
@@ -133,6 +134,8 @@ private:
     void testAddOfflineContactThenConnect();
     void testDeclineTrustRequestDoNotGenerateAnother();
     void testConversationMemberEvent();
+    void benchmarkTime1000msg();
+    void benchmarkTime1000msgOld();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -176,6 +179,8 @@ private:
     CPPUNIT_TEST(testAddOfflineContactThenConnect);
     CPPUNIT_TEST(testDeclineTrustRequestDoNotGenerateAnother);
     CPPUNIT_TEST(testConversationMemberEvent);
+    // CPPUNIT_TEST(benchmarkTime1000msg);
+    // CPPUNIT_TEST(benchmarkTime1000msgOld);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -3280,6 +3285,130 @@ ConversationTest::testDeclineTrustRequestDoNotGenerateAnother()
     Manager::instance().sendRegister(bobId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return bobConnected; }));
     CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+}
+
+void
+ConversationTest::benchmarkTime1000msg()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto messageBobReceived = 0, messageAliceReceived = 0;
+    bool requestReceived = false;
+    bool conversationReady = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*message*/) {
+            if (accountId == bobId) {
+                messageBobReceived += 1;
+            } else {
+                messageAliceReceived += 1;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    auto convId = aliceAccount->startConversation();
+
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+
+    bobAccount->acceptConversationRequest(convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
+
+    // Assert that repository exists
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    // Wait that alice sees Bob
+    cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageAliceReceived == 1; });
+
+    auto t_start = std::chrono::high_resolution_clock::now();
+    // Send 100 blocks of 10 messsages
+    auto BATCH = 50;
+    auto MSG_PER_BATCH = 20;
+    for (int c = 0; c < BATCH; ++c) {
+        messageBobReceived = 0;
+        for (int i = 0; i < MSG_PER_BATCH; ++i) {
+            aliceAccount->sendMessage(convId, "hi"s);
+        }
+        cv.wait_for(lk, std::chrono::hours(1), [&]() {
+            return messageBobReceived == MSG_PER_BATCH;
+        });
+    }
+    auto t_end = std::chrono::high_resolution_clock::now();
+    double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+    printf("@@@ TIME: %f ms\n", elapsed_time_ms);
+    DRing::unregisterSignalHandlers();
+}
+void
+ConversationTest::benchmarkTime1000msgOld()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto messageBobReceived = 0;
+
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::IncomingAccountMessage>(
+            [&](const std::string& accountId,
+                const std::string& /* msgId */,
+                const std::string& /* from */,
+                std::map<std::string, std::string> /*payloads*/) {
+                if (accountId == bobId)
+                    messageBobReceived += 1;
+                cv.notify_one();
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    // Create first sip link
+    messageBobReceived = 0;
+    aliceAccount->sendTextMessage(bobUri, {{"text/plain"s, "hi"s}});
+    cv.wait_for(lk, std::chrono::hours(1), [&]() { return messageBobReceived == 1; });
+
+    auto t_start = std::chrono::high_resolution_clock::now();
+    auto BATCH = 10;
+    auto MSG_PER_BATCH = 100;
+    // Send 100 blocks of 10 messsages
+    for (int c = 0; c < BATCH; ++c) {
+        messageBobReceived = 0;
+        for (int i = 0; i < MSG_PER_BATCH; ++i) {
+            aliceAccount->sendTextMessage(bobUri, {{"text/plain"s, "hi"s}});
+        }
+        cv.wait_for(lk, std::chrono::hours(1), [&]() {
+            return messageBobReceived == MSG_PER_BATCH;
+        });
+    }
+    auto t_end = std::chrono::high_resolution_clock::now();
+    double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+    printf("@@@ TIME: %f ms\n", elapsed_time_ms);
+    DRing::unregisterSignalHandlers();
 }
 
 } // namespace test
