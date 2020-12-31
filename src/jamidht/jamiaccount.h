@@ -504,12 +504,20 @@ public:
 
     std::string_view currentDeviceId() const;
     // Conversation management
-    std::string startConversation(ConversationMode mode = ConversationMode::INVITES_ONLY, const std::string& otherMember = "");
+    std::string startConversation(ConversationMode mode = ConversationMode::INVITES_ONLY,
+                                  const std::string& otherMember = "");
     void acceptConversationRequest(const std::string& conversationId);
     void declineConversationRequest(const std::string& conversationId);
     std::vector<std::string> getConversations();
     bool removeConversation(const std::string& conversationId);
     std::vector<std::map<std::string, std::string>> getConversationRequests();
+
+    // Conversation's infos management
+    void updateConversationInfos(const std::string& conversationId,
+                                 const std::map<std::string, std::string>& infos,
+                                 bool sync = true);
+    std::map<std::string, std::string> conversationInfos(const std::string& conversationId) const;
+    std::vector<uint8_t> conversationVCard(const std::string& conversationId) const;
 
     // Member management
     bool addConversationMember(const std::string& conversationId,
