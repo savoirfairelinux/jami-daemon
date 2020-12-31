@@ -538,7 +538,9 @@ DBusConfigurationManager::setAccountsOrder(const std::string& order)
 }
 
 auto
-DBusConfigurationManager::validateCertificate(const std::string& accountId, const std::string& certificate) -> decltype(DRing::validateCertificate(accountId, certificate))
+DBusConfigurationManager::validateCertificate(const std::string& accountId,
+                                              const std::string& certificate)
+    -> decltype(DRing::validateCertificate(accountId, certificate))
 {
     return DRing::validateCertificate(accountId, certificate);
 }
@@ -870,6 +872,21 @@ std::vector<std::map<std::string, std::string>>
 DBusConfigurationManager::getConversationRequests(const std::string& accountId)
 {
     return DRing::getConversationRequests(accountId);
+}
+
+void
+DBusConfigurationManager::updateConversationInfos(const std::string& accountId,
+                                                  const std::string& conversationId,
+                                                  const std::map<std::string, std::string>& infos)
+{
+    DRing::updateConversationInfos(accountId, conversationId, infos);
+}
+
+std::map<std::string, std::string>
+DBusConfigurationManager::conversationInfos(const std::string& accountId,
+                                            const std::string& conversationId)
+{
+    return DRing::conversationInfos(accountId, conversationId);
 }
 
 bool
