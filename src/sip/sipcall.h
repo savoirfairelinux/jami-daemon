@@ -236,7 +236,7 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     void deinitRecorder();
 
-    void rtpSetupSuccess(MediaType type);
+    void rtpSetupSuccess(MediaType type, bool isRemote);
 
     void setRemoteRecording(bool state);
 
@@ -390,6 +390,12 @@ private:
     bool peerMuted_ {false};
 
     std::atomic_bool waitForIceInit_ {false};
+
+    std::map<const std::string, bool> mediaReady_ {
+        {"a:local", false}, {"a:remote", false},
+        {"v:local", false}, {"v:remote", false}};
+
+    void resetMediaReady();
 };
 
 // Helpers

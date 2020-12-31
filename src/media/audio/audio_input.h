@@ -31,6 +31,7 @@
 #include "media_buffer.h"
 #include "observer.h"
 #include "threadloop.h"
+#include "media_codec.h"
 
 namespace jami {
 class AudioDeviceGuard;
@@ -64,6 +65,9 @@ public:
                                int index);
     void flushBuffers();
     void setSeekTime(int64_t time);
+
+    void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb)
+        { onSuccessfulSetup_ = cb; }
 
 private:
     void readFromDevice();
@@ -106,6 +110,8 @@ private:
     void process();
 
     std::chrono::time_point<std::chrono::high_resolution_clock> wakeUp_;
+
+    std::function<void(MediaType, bool)> onSuccessfulSetup_;
 };
 
 } // namespace jami
