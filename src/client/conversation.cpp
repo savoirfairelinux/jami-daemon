@@ -80,6 +80,23 @@ getConversationRequests(const std::string& accountId)
     return {};
 }
 
+void
+updateConversationInfos(const std::string& accountId,
+                        const std::string& conversationId,
+                        const std::map<std::string, std::string>& infos)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        acc->updateConversationInfos(conversationId, infos);
+}
+
+std::map<std::string, std::string>
+conversationInfos(const std::string& accountId, const std::string& conversationId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->conversationInfos(conversationId);
+    return {};
+}
+
 // Member management
 bool
 addConversationMember(const std::string& accountId,
