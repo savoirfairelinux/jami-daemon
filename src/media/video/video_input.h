@@ -27,6 +27,7 @@
 #include "media_stream.h"
 #include "media/media_device.h" // DeviceParams
 #include "media/video/video_base.h"
+#include "media_codec.h"
 
 #include <map>
 #include <atomic>
@@ -91,6 +92,9 @@ public:
     void stopInput();
 #endif
 
+    void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb)
+        { onSuccessfulSetup_ = cb; }
+
 private:
     NON_COPYABLE(VideoInput);
 
@@ -144,6 +148,8 @@ private:
     }
     bool playingFile_ = false;
     std::atomic_bool paused_ {true};
+
+    std::function<void(MediaType, bool)> onSuccessfulSetup_;
 };
 
 } // namespace video
