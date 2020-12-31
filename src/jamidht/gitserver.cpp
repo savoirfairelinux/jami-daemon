@@ -384,7 +384,7 @@ GitServer::Impl::sendPackData()
         std::size_t pkt_size = std::min(static_cast<std::size_t>(65519), len - sent);
         std::stringstream toSend;
         toSend << std::setw(4) << std::setfill('0') << std::hex << ((pkt_size + 5) & 0x0FFFF);
-        toSend << "\x1" << std::string(data.ptr + sent, pkt_size) << FLUSH_PKT;
+        toSend << "\x1" << std::string(data.ptr + sent, pkt_size);
         std::string toSendStr = toSend.str();
 
         socket_->write(reinterpret_cast<const unsigned char*>(toSendStr.c_str()),
@@ -398,6 +398,15 @@ GitServer::Impl::sendPackData()
         }
         sent += pkt_size;
     } while (sent < len);
+
+    // And finish by a little FLUSH
+    std::stringstream packet;
+    packet << FLUSH_PKT;
+    auto toSend = packet.str();
+    socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
+    if (ec) {
+        JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
+    }
 
     git_packbuilder_free(pb);
     git_repository_free(repo);
