@@ -32,14 +32,17 @@ class JamiAccount;
 class ConversationRepository;
 enum class ConversationMode;
 
-using OnPullCb = std::function<void(bool fetchOk,std::vector<std::map<std::string, std::string>>&& newMessages)>;
-using OnLoadMessages = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
-
+using OnPullCb = std::function<void(bool fetchOk,
+                                    std::vector<std::map<std::string, std::string>>&& newMessages)>;
+using OnLoadMessages
+    = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
 
 class Conversation : public std::enable_shared_from_this<Conversation>
 {
 public:
-    Conversation(const std::weak_ptr<JamiAccount>& account, ConversationMode mode, const std::string& otherMember = "");
+    Conversation(const std::weak_ptr<JamiAccount>& account,
+                 ConversationMode mode,
+                 const std::string& otherMember = "");
     Conversation(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId = "");
     Conversation(const std::weak_ptr<JamiAccount>& account,
                  const std::string& remoteDevice,
@@ -100,7 +103,9 @@ public:
      * @param fromMessage      The most recent message ("" = last (default))
      * @param toMessage        The oldest message ("" = last (default)), no limit
      */
-    void loadMessages(const OnLoadMessages& cb, const std::string& fromMessage = "", const std::string& toMessage = "");
+    void loadMessages(const OnLoadMessages& cb,
+                      const std::string& fromMessage = "",
+                      const std::string& toMessage = "");
     /**
      * Get last commit id
      * @return last commit id
@@ -170,8 +175,22 @@ public:
      */
     std::vector<std::string> getInitialMembers() const;
     bool isInitialMember(const std::string& uri) const;
-private:
 
+    /**
+     * Change repository's infos
+     * @param map       New infos (supported keys: title, description, avatar)
+     * @return the commit id
+     */
+    std::string updateInfos(const std::map<std::string, std::string>& map);
+
+    /**
+     * Retrieve current infos (title, description, avatar, mode)
+     * @return infos
+     */
+    std::map<std::string, std::string> infos() const;
+    std::vector<uint8_t> vCard() const;
+
+private:
     std::shared_ptr<Conversation> shared()
     {
         return std::static_pointer_cast<Conversation>(shared_from_this());
