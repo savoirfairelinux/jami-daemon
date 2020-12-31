@@ -61,7 +61,7 @@ public:
 
     void setMtu(uint16_t mtu) { mtu_ = mtu; }
 
-    void setSuccessfulSetupCb(const std::function<void(MediaType)>& cb) { onSuccessfulSetup_ = cb; }
+    void setSuccessfulSetupCb(const std::function<void(const std::string&)>& cb) { onSuccessfulSetup_ = cb; }
 
     virtual void initRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
     virtual void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
@@ -79,7 +79,7 @@ protected:
 
     uint16_t mtu_;
 
-    std::function<void(MediaType)> onSuccessfulSetup_;
+    std::function<void(const std::string&)> onSuccessfulSetup_;
 
     std::string getRemoteRtpUri() const { return "rtp://" + send_.addr.toString(true); }
 };

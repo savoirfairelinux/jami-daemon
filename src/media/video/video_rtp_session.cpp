@@ -104,6 +104,8 @@ VideoRtpSession::startSender()
         if (not conference_) {
             videoLocal_ = getVideoCamera();
             if (auto input = Manager::instance().getVideoManager().videoInput.lock()) {
+                if (onSuccessfulSetup_)
+                    std::static_pointer_cast<VideoInput>(videoLocal_)->setSuccessfulSetupCb(onSuccessfulSetup_);
                 auto newParams = input->switchInput(input_);
                 try {
                     if (newParams.valid()
@@ -202,7 +204,9 @@ VideoRtpSession::startReceiver()
 
         // XXX keyframe requests can timeout if unanswered
         receiveThread_->addIOContext(*socketPair_);
-        receiveThread_->startLoop(onSuccessfulSetup_);
+        if (onSuccessfulSetup_)
+            receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
+        receiveThread_->startLoop();
         if (receiveThread_)
             receiveThread_->setRequestKeyFrameCallback([this]() { cbKeyFrameRequest_(); });
     } else {
