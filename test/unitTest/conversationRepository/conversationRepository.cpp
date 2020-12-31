@@ -37,6 +37,7 @@
 #include "account_const.h"
 
 #include <git2.h>
+#include <filesystem>
 
 using namespace std::string_literals;
 using namespace DRing::Account;
@@ -71,14 +72,20 @@ private:
     void testMerge();
     void testFFMerge();
     void testDiff();
+    // NOTE: Just for debug. the test is a bit complex to write
+    // due to the clone/fetch verifications (initial commits, size).
+    // void testCloneHugeRepo();
+
+    void testMergeProfileWithConflict();
 
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
                           const std::string& commit_msg);
+    void addAll(git_repository* repo);
     bool merge_in_main(const std::shared_ptr<JamiAccount> account,
-                         git_repository* repo,
-                         const std::string& commit_ref);
+                       git_repository* repo,
+                       const std::string& commit_ref);
 
     CPPUNIT_TEST_SUITE(ConversationRepositoryTest);
     CPPUNIT_TEST(testCreateRepository);
@@ -89,6 +96,9 @@ private:
     CPPUNIT_TEST(testMerge);
     CPPUNIT_TEST(testFFMerge);
     CPPUNIT_TEST(testDiff);
+    CPPUNIT_TEST(testMergeProfileWithConflict);
+    // CPPUNIT_TEST(testCloneHugeRepo);
+
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -257,7 +267,8 @@ ConversationRepositoryTest::testCloneViaChannelSocket()
 
     aliceAccount->connectionManager().connectDevice(DeviceId(bobDeviceId),
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket, const DeviceId&) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                        const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                             sendSocket = socket;
@@ -419,12 +430,11 @@ ConversationRepositoryTest::testFetch()
     std::shared_ptr<ChannelSocket> channelSocket = nullptr;
     std::shared_ptr<ChannelSocket> sendSocket = nullptr;
 
-    bobAccount->connectionManager().onChannelRequest(
-        [&](const DeviceId&, const std::string& name) {
-            successfullyReceive = name == "git://*";
-            ccv.notify_one();
-            return true;
-        });
+    bobAccount->connectionManager().onChannelRequest([&](const DeviceId&, const std::string& name) {
+        successfullyReceive = name == "git://*";
+        ccv.notify_one();
+        return true;
+    });
 
     aliceAccount->connectionManager().onChannelRequest(
         [&](const DeviceId&, const std::string&) { return true; });
@@ -438,7 +448,8 @@ ConversationRepositoryTest::testFetch()
 
     aliceAccount->connectionManager().connectDevice(DeviceId(bobDeviceId),
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket, const DeviceId&) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                        const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                             sendSocket = socket;
@@ -471,7 +482,8 @@ ConversationRepositoryTest::testFetch()
     // Open a new channel to simulate the fact that we are later
     aliceAccount->connectionManager().connectDevice(DeviceId(bobDeviceId),
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket, const DeviceId&) {
+                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                        const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                             sendSocket = socket;
@@ -553,12 +565,26 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
     }
     GitCommit head_commit {head_ptr, git_commit_free};
 
+    // Retrieve current index
+    git_index* index_ptr = nullptr;
+    if (git_repository_index(&index_ptr, repo) < 0) {
+        JAMI_ERR("Could not open repository index");
+        return {};
+    }
+    GitIndex index {index_ptr, git_index_free};
+
+    git_oid tree_id;
+    if (git_index_write_tree(&tree_id, index.get()) < 0) {
+        JAMI_ERR("Unable to write initial tree from index");
+        return {};
+    }
+
     git_tree* tree_ptr = nullptr;
-    if (git_commit_tree(&tree_ptr, head_commit.get()) < 0) {
+    if (git_tree_lookup(&tree_ptr, repo, &tree_id) < 0) {
         JAMI_ERR("Could not look up initial tree");
         return {};
     }
-    GitTree tree {tree_ptr, git_tree_free};
+    GitTree tree = {tree_ptr, git_tree_free};
 
     git_buf to_sign = {};
     const git_commit* head_ref[1] = {head_commit.get()};
@@ -603,6 +629,19 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
         git_reference_free(ref_ptr);
     }
     return commit_str ? commit_str : "";
+}
+
+void
+ConversationRepositoryTest::addAll(git_repository* repo)
+{
+    // git add -A
+    git_index* index_ptr = nullptr;
+    git_strarray array = {nullptr, 0};
+    if (git_repository_index(&index_ptr, repo) < 0)
+        return;
+    GitIndex index {index_ptr, git_index_free};
+    git_index_add_all(index.get(), &array, 0, nullptr, nullptr);
+    git_index_write(index.get());
 }
 
 void
@@ -695,6 +734,148 @@ ConversationRepositoryTest::testDiff()
     CPPUNIT_ASSERT(changedFiles[0] == "admins/" + uri + ".crt");
     CPPUNIT_ASSERT(changedFiles[1] == "devices/" + aliceDeviceId + ".crt");
 }
+
+void
+ConversationRepositoryTest::testMergeProfileWithConflict()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+
+    // Assert that repository exists
+    CPPUNIT_ASSERT(repository != nullptr);
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository->id();
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+
+    // Assert that first commit is signed by alice
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+
+    auto profile = std::ofstream(repoPath + DIR_SEPARATOR_STR + "profile.vcf");
+    if (profile.is_open()) {
+        profile << "TITLE: SWARM\n";
+        profile << "SUBTITLE: Some description\n";
+        profile << "AVATAR: BASE64\n";
+        profile.close();
+    }
+    addAll(repo);
+    auto id1 = addCommit(repo, aliceAccount, "main", "add profile");
+    profile = std::ofstream(repoPath + DIR_SEPARATOR_STR + "profile.vcf");
+    if (profile.is_open()) {
+        profile << "TITLE: SWARM\n";
+        profile << "SUBTITLE: New description\n";
+        profile << "AVATAR: BASE64\n";
+        profile.close();
+    }
+    addAll(repo);
+    auto id2 = addCommit(repo, aliceAccount, "main", "modify profile");
+
+    git_reference* ref = nullptr;
+    git_commit* commit = nullptr;
+    git_oid commit_id;
+    git_oid_fromstr(&commit_id, id1.c_str());
+    git_commit_lookup(&commit, repo, &commit_id);
+    git_branch_create(&ref, repo, "to_merge", commit, false);
+    git_reference_free(ref);
+    git_repository_set_head(repo, "refs/heads/to_merge");
+
+    profile = std::ofstream(repoPath + DIR_SEPARATOR_STR + "profile.vcf");
+    if (profile.is_open()) {
+        profile << "TITLE: SWARM\n";
+        profile << "SUBTITLE: Another description\n";
+        profile << "AVATAR: BASE64\n";
+        profile.close();
+    }
+    addAll(repo);
+    auto id3 = addCommit(repo, aliceAccount, "to_merge", "modify profile merge");
+
+    // This will create a merge commit
+    repository->merge(id3);
+    CPPUNIT_ASSERT(repository->log().size() == 5 /* Initial, add, modify 1, modify 2, merge */);
+}
+
+/*
+void
+ConversationRepositoryTest::testCloneHugeRepo()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceDeviceId = std::string(aliceAccount->currentDeviceId());
+    auto uri = aliceAccount->getUsername();
+    auto bobDeviceId = std::string(bobAccount->currentDeviceId());
+
+    bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
+
+    auto convPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations";
+    fileutils::recursive_mkdir(convPath);
+    const auto copyOptions = std::filesystem::copy_options::overwrite_existing |
+std::filesystem::copy_options::recursive; auto repoPath = convPath + DIR_SEPARATOR_STR +
+"8d3be095ebff73be1c43f193d02407b946d7895d"; std::filesystem::copy("/home/amarok/daemon/", repoPath,
+copyOptions);
+
+    auto repository = ConversationRepository(aliceAccount->weak(),
+"8d3be095ebff73be1c43f193d02407b946d7895d"); auto clonedPath = fileutils::get_data_dir() +
+DIR_SEPARATOR_STR + bobAccount->getAccountID()
+                      + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository.id();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable rcv, scv;
+    bool successfullyConnected = false;
+    bool successfullyReceive = false;
+    bool receiverConnected = false;
+    std::shared_ptr<ChannelSocket> channelSocket = nullptr;
+    std::shared_ptr<ChannelSocket> sendSocket = nullptr;
+
+    bobAccount->connectionManager().onChannelRequest(
+        [&successfullyReceive](const DeviceId&, const std::string& name) {
+            successfullyReceive = name == "git://*";
+            return true;
+        });
+
+    aliceAccount->connectionManager().onChannelRequest(
+        [&successfullyReceive](const DeviceId&, const std::string& name) { return true; });
+
+    bobAccount->connectionManager().onConnectionReady(
+        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+            receiverConnected = socket && (name == "git://*");
+            channelSocket = socket;
+            rcv.notify_one();
+        });
+
+    aliceAccount->connectionManager().connectDevice(DeviceId(bobDeviceId),
+                                                    "git://*",
+                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                        const DeviceId&) {
+                                                        if (socket) {
+                                                            successfullyConnected = true;
+                                                            sendSocket = socket;
+                                                        }
+                                                        scv.notify_one();
+                                                    });
+
+    ;
+    scv.wait_for(lk, std::chrono::seconds(10));
+    CPPUNIT_ASSERT(rcv.wait_for(lk, std::chrono::seconds(10), [&] { return receiverConnected; }));
+    CPPUNIT_ASSERT(scv.wait_for(lk, std::chrono::seconds(10), [&] { return successfullyConnected;
+})); CPPUNIT_ASSERT(successfullyReceive);
+
+    bobAccount->addGitSocket(aliceDeviceId, repository.id(), channelSocket);
+    GitServer gs(aliceId, repository.id(), sendSocket);
+
+    JAMI_ERR("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+    auto cloned = ConversationRepository::cloneConversation(bobAccount->weak(),
+                                                            aliceDeviceId,
+                                                            repository.id());
+    gs.stop();
+    JAMI_ERR("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ END CLONE");
+
+    CPPUNIT_ASSERT(cloned != nullptr);
+    CPPUNIT_ASSERT(fileutils::isDirectory(clonedPath));
+}
+*/
 
 } // namespace test
 } // namespace jami
