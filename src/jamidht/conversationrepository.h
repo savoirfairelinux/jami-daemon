@@ -45,6 +45,7 @@ namespace jami {
 constexpr auto EFETCH = 1;
 constexpr auto EINVALIDMODE = 2;
 constexpr auto EVALIDFETCH = 3;
+constexpr auto EUNAUTHORIZED = 4;
 
 class JamiAccount;
 class ChannelSocket;
@@ -68,14 +69,10 @@ struct ConversationCommit
     int64_t timestamp {0};
 };
 
-enum class MemberRole {
-    ADMIN = 0,
-    MEMBER,
-    INVITED,
-    BANNED
-};
+enum class MemberRole { ADMIN = 0, MEMBER, INVITED, BANNED };
 
-struct ConversationMember {
+struct ConversationMember
+{
     std::string uri;
     MemberRole role;
 };
@@ -250,6 +247,21 @@ public:
      * loads certificates in conversations into the cert store
      */
     void pinCertificates();
+
+    /**
+     * Change repository's infos
+     * @param map       New infos (supported keys: title, description, avatar)
+     * @return the commit id
+     */
+    std::string updateInfos(const std::map<std::string, std::string>& map);
+
+    /**
+     * Retrieve current infos (title, description, avatar, mode)
+     * @return infos
+     */
+    std::map<std::string, std::string> infos() const;
+    static std::map<std::string, std::string> infosFromVCard(
+        const std::map<std::string, std::string>& details);
 
 private:
     ConversationRepository() = delete;
