@@ -79,6 +79,8 @@ AudioRtpSession::startSender()
 
     // sender sets up input correctly, we just keep a reference in case startSender is called
     audioInput_ = jami::getAudioInput(callID_);
+    if (onSuccessfulSetup_)
+        audioInput_->setSuccessfulSetupCb(onSuccessfulSetup_);
     auto newParams = audioInput_->switchInput(input_);
     try {
         if (newParams.valid()
@@ -140,7 +142,9 @@ AudioRtpSession::startReceiver()
                                                 receive_.receiving_sdp,
                                                 mtu_));
     receiveThread_->addIOContext(*socketPair_);
-    receiveThread_->startLoop(onSuccessfulSetup_);
+    if (onSuccessfulSetup_)
+            receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
+    receiveThread_->startLoop();
 }
 
 void

@@ -335,6 +335,8 @@ VideoInput::createDecoder()
              decOpts_.height,
              decOpts_.framerate.real(),
              decOpts_.pixel_format.c_str());
+    if (onSuccessfulSetup_)
+        onSuccessfulSetup_("v:local");
 
     decoder_ = std::move(decoder);
     foundDecOpts(decOpts_);

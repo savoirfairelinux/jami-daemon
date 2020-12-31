@@ -88,8 +88,8 @@ AudioReceiveThread::setup()
 
     ringbuffer_ = Manager::instance().getRingBufferPool().getRingBuffer(id_);
 
-    if (onSetupSuccess_)
-        onSetupSuccess_(MEDIA_AUDIO);
+    if (onSuccessfulSetup_)
+        onSuccessfulSetup_("a:remote");
 
     return true;
 }
@@ -138,9 +138,8 @@ AudioReceiveThread::getInfo() const
 }
 
 void
-AudioReceiveThread::startLoop(const std::function<void(MediaType)>& cb)
+AudioReceiveThread::startLoop()
 {
-    onSetupSuccess_ = cb;
     loop_.start();
 }
 
