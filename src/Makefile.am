@@ -183,7 +183,8 @@ libring_la_SOURCES = \
 		generic_io.h \
 		scheduled_executor.h \
 		scheduled_executor.cpp \
-		transport/peer_channel.h
+		transport/peer_channel.h \
+		vcard.h
 
 if HAVE_WIN32
 libring_la_SOURCES += \

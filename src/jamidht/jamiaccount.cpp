@@ -80,6 +80,7 @@
 #include "security/certstore.h"
 #include "libdevcrypto/Common.h"
 #include "base64.h"
+#include "vcard.h"
 #include "im/instant_messaging.h"
 
 #include <opendht/thread_pool.h>
@@ -1232,6 +1233,9 @@ JamiAccount::loadAccount(const std::string& archive_password,
                             req.from = uri;
                             req.conversationId = conversationId;
                             req.received = std::time(nullptr);
+                            auto details = vCard::utils::toMap(
+                                std::string(payload.data(), payload.data() + payload.size()));
+                            req.metadatas = ConversationRepository::infosFromVCard(details);
                             acc->conversationsRequests_[conversationId] = std::move(req);
                         }
                         emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(
@@ -2208,11 +2212,7 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
         // offline maybe) To avoid the contact to never receive the conv request, retry there
         std::lock_guard<std::mutex> lock(configurationMutex_);
         if (accountManager_)
-            accountManager_
-                ->sendTrustRequest(id,
-                                   convId,
-                                   {}); /* TODO payload?, MessageEngine not generic and will be able
-                                           to move to conversation's requests */
+            accountManager_->sendTrustRequest(id, convId, conversationVCard(convId));
     }
 }
 
@@ -3587,7 +3587,7 @@ JamiAccount::sendTextMessage(const std::string& to,
                                    JAMI_DBG()
                                        << "[Account " << getAccountID() << "] [message " << token
                                        << "] Put encrypted " << (ok ? "ok" : "failed");
-                                   if (not ok) {
+                                   if (not ok && dhtPeerConnector_ /* Check if not joining */) {
                                        std::unique_lock<std::mutex> l(confirm->lock);
                                        auto lt = confirm->listenTokens.find(h);
                                        if (lt != confirm->listenTokens.end()) {
@@ -4100,6 +4100,73 @@ JamiAccount::getConversationRequests()
         }
     }
     return requests;
+}
+
+void
+JamiAccount::updateConversationInfos(const std::string& conversationId,
+                                     const std::map<std::string, std::string>& infos,
+                                     bool sync)
+{
+    std::lock_guard<std::mutex> lk(conversationsMtx_);
+    // Add a new member in the conversation
+    auto it = conversations_.find(conversationId);
+    if (it == conversations_.end()) {
+        JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
+        return;
+    }
+
+    auto commitId = it->second->updateInfos(infos);
+    if (commitId.empty()) {
+        JAMI_WARN("Couldn't update infos on %s", conversationId.c_str());
+        return;
+    }
+    if (!sync)
+        return;
+    // Announce new message
+    it->second->loadMessages(
+        [w = weak(), conversationId, commitId](auto&& messages) {
+            auto shared = w.lock();
+            if (not shared or messages.empty())
+                return; // should not happen
+            std::lock_guard<std::mutex> lk(shared->conversationsMtx_);
+            auto it = shared->conversations_.find(conversationId);
+            if (it == shared->conversations_.end())
+                return;
+            emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
+                                                                   conversationId,
+                                                                   messages.front());
+            shared->sendMessageNotification(*it->second, commitId, true);
+        },
+        commitId,
+        1);
+}
+
+std::map<std::string, std::string>
+JamiAccount::conversationInfos(const std::string& conversationId) const
+{
+    std::lock_guard<std::mutex> lk(conversationsMtx_);
+    // Add a new member in the conversation
+    auto it = conversations_.find(conversationId);
+    if (it == conversations_.end()) {
+        JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
+        return {};
+    }
+
+    return it->second->infos();
+}
+
+std::vector<uint8_t>
+JamiAccount::conversationVCard(const std::string& conversationId) const
+{
+    std::lock_guard<std::mutex> lk(conversationsMtx_);
+    // Add a new member in the conversation
+    auto it = conversations_.find(conversationId);
+    if (it == conversations_.end()) {
+        JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
+        return {};
+    }
+
+    return it->second->vCard();
 }
 
 // Member management
