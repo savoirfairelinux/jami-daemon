@@ -23,6 +23,7 @@
 #include "fileutils.h"
 #include "gittransport.h"
 #include "client/ring_signal.h"
+#include "vcard.h"
 
 #include <opendht/rng.h>
 using random_device = dht::crypto::random_device;
@@ -92,6 +93,9 @@ public:
                           const std::string& uriMember,
                           const std::string& commitid,
                           const std::string& parentId) const;
+    bool checkValidProfileUpdate(const std::string& userDevice,
+                                 const std::string& commitid,
+                                 const std::string& parentId) const;
 
     bool add(const std::string& path);
     std::string commit(const std::string& msg);
@@ -128,7 +132,12 @@ public:
         return members_;
     }
 
+    bool resolveConflicts(git_index* index, const std::string& other_id);
+
     void initMembers();
+
+    // Permissions
+    MemberRole updateProfilePermLvl_ {MemberRole::ADMIN};
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -442,7 +451,10 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     // Prepare our commit tree
     git_oid tree_oid;
     git_tree* tree = nullptr;
-    if (git_index_write_tree(&tree_oid, index) < 0) {
+    if (git_index_write_tree_to(&tree_oid, index, repository_.get()) < 0) {
+        const git_error* err = giterr_last();
+        if (err)
+            JAMI_ERR("XXX checkout index: %s", err->message);
         JAMI_ERR("Couldn't write index");
         return false;
     }
@@ -1018,6 +1030,50 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
 }
 
 bool
+ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDevice,
+                                                      const std::string& commitId,
+                                                      const std::string& parentId) const
+{
+    auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
+    if (!cert && cert->issuer)
+        return false;
+    auto userUri = cert->issuer->getId().toString();
+    auto valid = false;
+    {
+        std::lock_guard<std::mutex> lk(membersMtx_);
+        for (const auto& member : members_) {
+            if (member.uri == userUri) {
+                valid = member.role <= updateProfilePermLvl_;
+                break;
+            }
+        }
+    }
+    if (!valid) {
+        JAMI_ERR("Profile changed from unauthorized user: %s", userDevice.c_str());
+        return false;
+    }
+
+    // Retrieve tree for recent commit
+    auto treeNew = treeAtCommit(commitId);
+    auto treeOld = treeAtCommit(parentId);
+    if (not treeNew or not treeOld)
+        return false;
+
+    auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
+    // Check that no weird file is added nor removed
+    for (const auto& f : changedFiles) {
+        if (f == "profile.vcf") {
+            // Ignore
+        } else {
+            JAMI_ERR("Unwanted changed file detected: %s", f.c_str());
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool
 ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
                                                   const std::string& commitId) const
 {
@@ -1540,6 +1596,63 @@ ConversationRepository::Impl::getInitialMembers() const
     return {authorId};
 }
 
+bool
+ConversationRepository::Impl::resolveConflicts(git_index* index, const std::string& other_id)
+{
+    git_index_conflict_iterator* conflict_iterator = nullptr;
+    const git_index_entry* ancestor_out = nullptr;
+    const git_index_entry* our_out = nullptr;
+    const git_index_entry* their_out = nullptr;
+
+    git_index_conflict_iterator_new(&conflict_iterator, index);
+
+    git_oid head_commit_id;
+    if (git_reference_name_to_id(&head_commit_id, repository_.get(), "HEAD") < 0) {
+        JAMI_ERR("Cannot get reference for HEAD");
+        return false;
+    }
+    auto commit_str = git_oid_tostr_s(&head_commit_id);
+    if (!commit_str)
+        return false;
+    auto useRemote = (other_id > commit_str); // Choose by commit version
+
+    // NOTE: for now, only authorize conflicts on ancestor_out
+    while (git_index_conflict_next(&ancestor_out, &our_out, &their_out, conflict_iterator)
+           != GIT_ITEROVER) {
+        if (ancestor_out && ancestor_out->path && our_out && our_out->path && their_out
+            && their_out->path) {
+            if (std::string(ancestor_out->path) == "profile.vcf") {
+                // Checkout wanted version
+                git_index_add(index, useRemote ? their_out : our_out);
+                continue;
+            }
+            JAMI_ERR("Conflict detected on a file that is not authorized: %s", ancestor_out->path);
+            return false;
+        }
+        return false;
+    }
+
+    // Checkout and cleanup
+    git_checkout_options opt;
+    git_checkout_options_init(&opt, GIT_CHECKOUT_OPTIONS_VERSION);
+    opt.checkout_strategy |= GIT_CHECKOUT_FORCE;
+    opt.checkout_strategy |= GIT_CHECKOUT_ALLOW_CONFLICTS;
+    if (other_id > commit_str)
+        opt.checkout_strategy |= GIT_CHECKOUT_USE_THEIRS;
+    else
+        opt.checkout_strategy |= GIT_CHECKOUT_USE_OURS;
+
+    if (git_checkout_index(repository_.get(), index, &opt) < 0) {
+        const git_error* err = giterr_last();
+        if (err)
+            JAMI_ERR("Cannot checkout index: %s", err->message);
+        return false;
+    }
+    git_index_conflict_iterator_free(conflict_iterator);
+
+    return true;
+}
+
 void
 ConversationRepository::Impl::initMembers()
 {
@@ -1830,6 +1943,21 @@ ConversationRepository::Impl::validCommits(
                     if (auto shared = account_.lock()) {
                         emitSignal<DRing::ConversationSignal::OnConversationError>(
                             shared->getAccountID(), id_, EVALIDFETCH, "Malformed member commit");
+                    }
+                    return false;
+                }
+            } else if (type == "application/update-profile") {
+                if (!checkValidProfileUpdate(userDevice, commit.id, commit.parents[0])) {
+                    JAMI_WARN("Malformed profile updates commit %s. Please check you use the "
+                              "latest version "
+                              "of Jami, or that your contact is not doing unwanted stuff.",
+                              commit.id.c_str());
+                    if (auto shared = account_.lock()) {
+                        emitSignal<DRing::ConversationSignal::OnConversationError>(
+                            shared->getAccountID(),
+                            id_,
+                            EVALIDFETCH,
+                            "Malformed profile updates commit");
                     }
                     return false;
                 }
@@ -2172,6 +2300,7 @@ ConversationRepository::merge(const std::string& merge_id)
         return false;
     }
 
+    // Handle easy merges
     if (analysis & GIT_MERGE_ANALYSIS_UP_TO_DATE) {
         JAMI_INFO("Already up-to-date");
         return true;
@@ -2191,39 +2320,61 @@ ConversationRepository::merge(const std::string& merge_id)
             return false;
         }
         return true;
-    } else if (analysis & GIT_MERGE_ANALYSIS_NORMAL) {
-        git_merge_options merge_opts;
-        git_merge_options_init(&merge_opts, GIT_MERGE_OPTIONS_VERSION);
-        merge_opts.file_flags = GIT_MERGE_FILE_STYLE_DIFF3;
-        git_checkout_options checkout_opts;
-        git_checkout_options_init(&checkout_opts, GIT_CHECKOUT_OPTIONS_VERSION);
-        checkout_opts.checkout_strategy = GIT_CHECKOUT_FORCE | GIT_CHECKOUT_ALLOW_CONFLICTS;
-
-        if (preference & GIT_MERGE_PREFERENCE_FASTFORWARD_ONLY) {
-            JAMI_ERR("Fast-forward is preferred, but only a merge is possible");
-            return false;
-        }
-
-        if (git_merge(pimpl_->repository_.get(), &const_annotated, 1, &merge_opts, &checkout_opts)
-            < 0) {
-            const git_error* err = giterr_last();
-            if (err)
-                JAMI_ERR("Git merge failed: %s", err->message);
-            return false;
-        }
     }
 
+    // Else we want to check for conflicts
+    git_oid head_commit_id;
+    if (git_reference_name_to_id(&head_commit_id, pimpl_->repository_.get(), "HEAD") < 0) {
+        JAMI_ERR("Cannot get reference for HEAD");
+        return false;
+    }
+
+    git_commit* head_ptr = nullptr;
+    if (git_commit_lookup(&head_ptr, pimpl_->repository_.get(), &head_commit_id) < 0) {
+        JAMI_ERR("Could not look up HEAD commit");
+        return false;
+    }
+    GitCommit head_commit {head_ptr, git_commit_free};
+
+    git_commit* other__ptr = nullptr;
+    if (git_commit_lookup(&other__ptr, pimpl_->repository_.get(), &commit_id) < 0) {
+        JAMI_ERR("Could not look up HEAD commit");
+        return false;
+    }
+    GitCommit other_commit {other__ptr, git_commit_free};
+
+    git_merge_options merge_opts;
+    git_merge_options_init(&merge_opts, GIT_MERGE_OPTIONS_VERSION);
     git_index* index_ptr = nullptr;
-    if (git_repository_index(&index_ptr, pimpl_->repository_.get()) < 0) {
-        JAMI_ERR("Merge operation aborted: could not open repository index");
+    if (git_merge_commits(&index_ptr,
+                          pimpl_->repository_.get(),
+                          head_commit.get(),
+                          other_commit.get(),
+                          &merge_opts)
+        < 0) {
+        const git_error* err = giterr_last();
+        if (err)
+            JAMI_ERR("Git merge failed: %s", err->message);
         return false;
     }
     GitIndex index {index_ptr, git_index_free};
     if (git_index_has_conflicts(index.get())) {
-        JAMI_WARN("Merge operation aborted: the merge operation resulted in some conflicts");
-        return false;
+        JAMI_INFO("Some conflicts were detected during the merge operations. Resolution phase.");
+        if (!pimpl_->resolveConflicts(index.get(), merge_id)
+            or !git_add_all(pimpl_->repository_.get())) {
+            JAMI_ERR("Merge operation aborted; Can't automatically resolve conflicts");
+            return false;
+        }
     }
-    auto result = pimpl_->createMergeCommit(index.get(), merge_id);
+
+    // Previous index can be dropped, it's a in-memory index not related to repo
+    // Use the one from the workdir as resolveConflicts checkout the correct one if necessary
+    git_index* head_index_ptr = nullptr;
+    if (git_repository_index(&head_index_ptr, pimpl_->repository_.get()) < 0)
+        return false;
+    GitIndex hindex {head_index_ptr, git_index_free};
+
+    auto result = pimpl_->createMergeCommit(hindex.get(), merge_id);
     JAMI_INFO("Merge done between %s and main", merge_id.c_str());
     return result;
 }
@@ -2575,6 +2726,118 @@ void
 ConversationRepository::refreshMembers() const
 {
     return pimpl_->initMembers();
+}
+
+std::string
+ConversationRepository::updateInfos(const std::map<std::string, std::string>& profile)
+{
+    auto account = pimpl_->account_.lock();
+    if (!account)
+        return {};
+    auto uri = std::string(account->getUsername());
+    auto valid = false;
+    {
+        std::lock_guard<std::mutex> lk(pimpl_->membersMtx_);
+        for (const auto& member : pimpl_->members_) {
+            if (member.uri == uri) {
+                valid = member.role <= pimpl_->updateProfilePermLvl_;
+                break;
+            }
+        }
+    }
+    if (!valid) {
+        JAMI_ERR("Not enough authorization for updating infos");
+        emitSignal<DRing::ConversationSignal::OnConversationError>(
+            account->getAccountID(),
+            pimpl_->id_,
+            EUNAUTHORIZED,
+            "Not enough authorization for updating infos");
+        return {};
+    }
+
+    auto infosMap = infos();
+    for (const auto& [k, v] : profile) {
+        infosMap[k] = v;
+    }
+    std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
+    auto profilePath = repoPath + "profile.vcf";
+    auto file = fileutils::ofstream(profilePath, std::ios::trunc | std::ios::binary);
+    if (!file.is_open()) {
+        JAMI_ERR("Could not write data to %s", profilePath.c_str());
+        return {};
+    }
+    file << vCard::Delimiter::BEGIN_TOKEN;
+    file << vCard::Delimiter::END_LINE_TOKEN;
+    file << vCard::Property::VCARD_VERSION;
+    file << ":2.1";
+    file << vCard::Delimiter::END_LINE_TOKEN;
+    auto titleIt = infosMap.find("title");
+    if (titleIt != infosMap.end()) {
+        file << vCard::Property::FORMATTED_NAME;
+        file << ":";
+        file << titleIt->second;
+        file << vCard::Delimiter::END_LINE_TOKEN;
+    }
+    auto descriptionIt = infosMap.find("description");
+    if (descriptionIt != infosMap.end()) {
+        file << vCard::Property::DESCRIPTION;
+        file << ":";
+        file << descriptionIt->second;
+        file << vCard::Delimiter::END_LINE_TOKEN;
+    }
+    file << vCard::Property::PHOTO;
+    file << vCard::Delimiter::SEPARATOR_TOKEN;
+    file << vCard::Property::BASE64;
+    auto avatarIt = infosMap.find("avatar");
+    if (avatarIt != infosMap.end()) {
+        // TODO type=png? store another way?
+        file << ":";
+        file << avatarIt->second;
+    }
+    file << vCard::Delimiter::END_LINE_TOKEN;
+    file << vCard::Delimiter::END_TOKEN;
+    file.close();
+
+    if (!pimpl_->add("profile.vcf"))
+        return {};
+    Json::Value json;
+    json["type"] = "application/update-profile";
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+
+    return pimpl_->commit(Json::writeString(wbuilder, json));
+}
+
+std::map<std::string, std::string>
+ConversationRepository::infos() const
+{
+    try {
+        std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
+        auto profilePath = repoPath + "profile.vcf";
+        auto content = fileutils::loadTextFile(profilePath);
+        auto result = ConversationRepository::infosFromVCard(vCard::utils::toMap(content));
+        result["mode"] = std::to_string(static_cast<int>(mode()));
+        return result;
+    } catch (...) {
+    }
+    return {};
+}
+
+std::map<std::string, std::string>
+ConversationRepository::infosFromVCard(const std::map<std::string, std::string>& details)
+{
+    std::map<std::string, std::string> result;
+    for (const auto& [k, v] : details) {
+        if (k == vCard::Property::FORMATTED_NAME) {
+            result["title"] = v;
+        } else if (k == vCard::Property::DESCRIPTION) {
+            result["description"] = v;
+        } else if (k.find(vCard::Property::PHOTO) == 0) {
+            result["avatar"] = v;
+        }
+    }
+    return result;
 }
 
 } // namespace jami
