@@ -143,6 +143,12 @@ private:
     void testAddOfflineContactThenConnect();
     void testDeclineTrustRequestDoNotGenerateAnother();
     void testConversationMemberEvent();
+    void testUpdateProfile();
+    void testCheckProfileInConversationRequest();
+    void testCheckProfileInTrustRequest();
+    void testMemberCannotUpdateProfile();
+    void testUpdateProfileWithBadFile();
+    void testFetchProfileUnauthorized();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -189,6 +195,12 @@ private:
     CPPUNIT_TEST(testAddOfflineContactThenConnect);
     CPPUNIT_TEST(testDeclineTrustRequestDoNotGenerateAnother);
     CPPUNIT_TEST(testConversationMemberEvent);
+    CPPUNIT_TEST(testUpdateProfile);
+    CPPUNIT_TEST(testCheckProfileInConversationRequest);
+    CPPUNIT_TEST(testCheckProfileInTrustRequest);
+    CPPUNIT_TEST(testMemberCannotUpdateProfile);
+    CPPUNIT_TEST(testUpdateProfileWithBadFile);
+    CPPUNIT_TEST(testFetchProfileUnauthorized);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -3684,6 +3696,409 @@ ConversationTest::testDeclineTrustRequestDoNotGenerateAnother()
     Manager::instance().sendRegister(bobId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return bobConnected; }));
     CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+}
+
+void
+ConversationTest::testUpdateProfile()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto messageBobReceived = 0, messageAliceReceived = 0;
+    bool requestReceived = false;
+    bool conversationReady = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*message*/) {
+            if (accountId == bobId) {
+                messageBobReceived += 1;
+            } else {
+                messageAliceReceived += 1;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    auto convId = aliceAccount->startConversation();
+
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+
+    messageAliceReceived = 0;
+    bobAccount->acceptConversationRequest(convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return conversationReady && messageAliceReceived == 1;
+    }));
+
+    messageBobReceived = 0;
+    aliceAccount->updateConversationInfos(convId, {{"title", "My awesome swarm"}});
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageBobReceived == 1; }));
+
+    auto infos = bobAccount->conversationInfos(convId);
+    CPPUNIT_ASSERT(infos["title"] == "My awesome swarm");
+    CPPUNIT_ASSERT(infos["description"].empty());
+
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConversationTest::testCheckProfileInConversationRequest()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto messageBobReceived = 0, messageAliceReceived = 0;
+    bool requestReceived = false;
+    bool conversationReady = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*message*/) {
+            if (accountId == bobId) {
+                messageBobReceived += 1;
+            } else {
+                messageAliceReceived += 1;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    auto convId = aliceAccount->startConversation();
+    aliceAccount->updateConversationInfos(convId, {{"title", "My awesome swarm"}});
+
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    auto requests = bobAccount->getConversationRequests();
+    CPPUNIT_ASSERT(requests.size() == 1);
+    CPPUNIT_ASSERT(requests.front()["title"] == "My awesome swarm");
+
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConversationTest::testCheckProfileInTrustRequest()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false;
+    std::string convId = "";
+    std::string vcard = "BEGIN:VCARD\n\
+VERSION:2.1\n\
+FN:TITLE\n\
+DESCRIPTION:DESC\n\
+END:VCARD";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::vector<uint8_t>& payload,
+            time_t /*received*/) {
+            if (account_id == bobId
+                && std::string(payload.data(), payload.data() + payload.size()) == vcard)
+                requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            } else if (accountId == bobId) {
+                conversationReady = true;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
+                memberMessageGenerated = true;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->addContact(bobUri);
+    std::vector<uint8_t> payload(vcard.begin(), vcard.end());
+    aliceAccount->sendTrustRequest(bobUri, payload);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&]() {
+        return !convId.empty() && requestReceived;
+    }));
+}
+
+void
+ConversationTest::testMemberCannotUpdateProfile()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    auto convId = aliceAccount->startConversation();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto messageBobReceived = 0, messageAliceReceived = 0;
+    bool requestReceived = false;
+    bool conversationReady = false;
+    bool errorDetected = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*message*/) {
+            if (accountId == bobId) {
+                messageBobReceived += 1;
+            } else {
+                messageAliceReceived += 1;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::OnConversationError>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            int code,
+            const std::string& /* what */) {
+            if (accountId == bobId && conversationId == convId && code == 4)
+                errorDetected = true;
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+
+    messageAliceReceived = 0;
+    bobAccount->acceptConversationRequest(convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return conversationReady && messageAliceReceived == 1;
+    }));
+
+    messageBobReceived = 0;
+    bobAccount->updateConversationInfos(convId, {{"title", "My awesome swarm"}});
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&]() { return errorDetected; }));
+
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConversationTest::testUpdateProfileWithBadFile()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto convId = aliceAccount->startConversation();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto messageBobReceived = 0, messageAliceReceived = 0;
+    bool requestReceived = false;
+    bool conversationReady = false;
+    bool errorDetected = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*message*/) {
+            if (accountId == bobId) {
+                messageBobReceived += 1;
+            } else {
+                messageAliceReceived += 1;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::OnConversationError>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            int code,
+            const std::string& /* what */) {
+            if (accountId == bobId && conversationId == convId && code == 3)
+                errorDetected = true;
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+
+    messageAliceReceived = 0;
+    bobAccount->acceptConversationRequest(convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return conversationReady && messageAliceReceived == 1;
+    }));
+
+    // Update profile but with bad file
+    addFile(aliceAccount, convId, "BADFILE");
+    std::string vcard = "BEGIN:VCARD\n\
+VERSION:2.1\n\
+FN:TITLE\n\
+DESCRIPTION:DESC\n\
+END:VCARD";
+    addFile(aliceAccount, convId, "profile.vcf", vcard);
+    Json::Value root;
+    root["type"] = "application/update-profile";
+    commit(aliceAccount, convId, root);
+    errorDetected = false;
+    aliceAccount->sendMessage(convId, "hi"s);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return errorDetected; }));
+
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConversationTest::testFetchProfileUnauthorized()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto convId = aliceAccount->startConversation();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto messageBobReceived = 0, messageAliceReceived = 0;
+    bool requestReceived = false;
+    bool conversationReady = false;
+    bool errorDetected = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*message*/) {
+            if (accountId == bobId) {
+                messageBobReceived += 1;
+            } else {
+                messageAliceReceived += 1;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::OnConversationError>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            int code,
+            const std::string& /* what */) {
+            if (accountId == aliceId && conversationId == convId && code == 3)
+                errorDetected = true;
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+
+    messageAliceReceived = 0;
+    bobAccount->acceptConversationRequest(convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return conversationReady && messageAliceReceived == 1;
+    }));
+
+    // Fake realist profile update
+    std::string vcard = "BEGIN:VCARD\n\
+VERSION:2.1\n\
+FN:TITLE\n\
+DESCRIPTION:DESC\n\
+END:VCARD";
+    addFile(bobAccount, convId, "profile.vcf", vcard);
+    Json::Value root;
+    root["type"] = "application/update-profile";
+    commit(bobAccount, convId, root);
+    errorDetected = false;
+    bobAccount->sendMessage(convId, "hi"s);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return errorDetected; }));
+
+    DRing::unregisterSignalHandlers();
 }
 
 } // namespace test
