@@ -534,8 +534,10 @@ Conversation::generateInvitation() const
     // Invite the new member to the conversation
     std::map<std::string, std::string> invite;
     Json::Value root;
+    for (const auto& [k, v] : infos()) {
+        root["metadatas"][k] = v;
+    }
     root["conversationId"] = id();
-    // TODO metadatas
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
@@ -585,6 +587,28 @@ Conversation::isInitialMember(const std::string& uri) const
 {
     auto members = getInitialMembers();
     return std::find(members.begin(), members.end(), uri) != members.end();
+}
+
+std::string
+Conversation::updateInfos(const std::map<std::string, std::string>& map)
+{
+    return pimpl_->repository_->updateInfos(map);
+}
+
+std::map<std::string, std::string>
+Conversation::infos() const
+{
+    return pimpl_->repository_->infos();
+}
+
+std::vector<uint8_t>
+Conversation::vCard() const
+{
+    try {
+        return fileutils::loadFile(pimpl_->repoPath() + DIR_SEPARATOR_STR + "profile.vcf");
+    } catch (...) {
+    }
+    return {};
 }
 
 } // namespace jami
