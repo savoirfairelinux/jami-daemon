@@ -1755,6 +1755,28 @@
            <arg type="s" name="accountId" direction="in"/>
        </method>
 
+       <method name="updateConversationInfos" tp:name-for-bindings="updateConversationInfos">
+           <tp:added version="10.0.0"/>
+           <tp:docstring>
+               Update conversation's infos (supported keys: title, description, avatar)
+           </tp:docstring>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="conversationId" direction="in"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
+           <arg type="a{ss}" name="infos" direction="in"/>
+       </method>
+
+       <method name="conversationInfos" tp:name-for-bindings="conversationInfos">
+           <tp:added version="10.0.0"/>
+           <tp:docstring>
+               Get conversation's infos (mode, title, description, avatar)
+           </tp:docstring>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="infos" direction="out"/>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="conversationId" direction="in"/>
+       </method>
+
        <method name="addConversationMember" tp:name-for-bindings="addConversationMember">
            <tp:added version="10.0.0"/>
            <tp:docstring>
