@@ -436,7 +436,7 @@ MediaRecorder::setupVideoOutput()
     if (ret >= 0) {
         encoderStream = videoFilter_->getOutputParams();
         encoderStream.bitrate = Manager::instance().videoPreferences.getRecordQuality();
-        JAMI_DBG() << "Recorder output: " << encoderStream;
+        JAMI_ERR() << "@@@ Recorder output: " << encoderStream;
     } else {
         JAMI_ERR() << "Failed to initialize video filter";
     }
@@ -536,7 +536,7 @@ MediaRecorder::setupAudioOutput()
 
     if (ret >= 0) {
         encoderStream = audioFilter_->getOutputParams();
-        JAMI_DBG() << "Recorder output: " << encoderStream;
+        JAMI_ERR() << "@@@ Recorder output: " << encoderStream;
     } else {
         JAMI_ERR() << "Failed to initialize audio filter";
     }

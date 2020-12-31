@@ -862,6 +862,9 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 void
 SIPCall::switchInput(const std::string& resource)
 {
+    // Check if the call is being recorded in order to continue
+    // ... the recording after the switch
+    bool isRec = Call::isRecording();
     mediaInput_ = resource;
     if (isWaitingForIceAndMedia_) {
         remainingRequest_ = Request::SwitchInput;
@@ -869,6 +872,9 @@ SIPCall::switchInput(const std::string& resource)
         if (SIPSessionReinvite() == PJ_SUCCESS) {
             isWaitingForIceAndMedia_ = true;
         }
+    }
+    if(isRec) {
+        pendingRecord_  = true;
     }
 }
 
@@ -1737,6 +1743,11 @@ SIPCall::newIceSocket(unsigned compId)
 void
 SIPCall::rtpSetupSuccess(MediaType type)
 {
+    readyToRecord_ = false;
+    // [TODO plespagnol] Change this function to start recording after all streams are ready.
+    // For now, it is done only for audio and video remote streams so the local streams may
+    // ... not be ready (happen once out of two times).
+    // Can be more than 4 (audio, video, local, remote) after multi-stream patches.
     if ((not isAudioOnly() && type == MEDIA_VIDEO) || (isAudioOnly() && type == MEDIA_AUDIO))
         readyToRecord_ = true;
 
