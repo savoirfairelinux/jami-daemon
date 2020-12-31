@@ -65,6 +65,9 @@ public:
     void flushBuffers();
     void setSeekTime(int64_t time);
 
+    void setSuccessfulSetupCb(const std::function<void(const std::string&)>& cb) 
+        { onSuccessfulSetup_ = cb; }
+
 private:
     void readFromDevice();
     void readFromFile();
@@ -106,6 +109,8 @@ private:
     void process();
 
     std::chrono::time_point<std::chrono::high_resolution_clock> wakeUp_;
+
+    std::function<void(const std::string&)> onSuccessfulSetup_;
 };
 
 } // namespace jami

@@ -51,7 +51,10 @@ public:
     MediaStream getInfo() const;
 
     void addIOContext(SocketPair& socketPair);
-    void startLoop(const std::function<void(MediaType)>& cb);
+    void startLoop();
+
+    void setSuccessfulSetupCb(const std::function<void(const std::string&)>& cb)
+        { onSuccessfulSetup_ = cb; }
 
 private:
     NON_COPYABLE(AudioReceiveThread);
@@ -81,12 +84,12 @@ private:
 
     uint16_t mtu_;
 
-    std::function<void(MediaType)> onSetupSuccess_;
-
     ThreadLoop loop_;
     bool setup();
     void process();
     void cleanup();
+
+    std::function<void(const std::string&)> onSuccessfulSetup_;
 };
 
 } // namespace jami

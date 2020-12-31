@@ -54,7 +54,7 @@ class VideoReceiveThread : public VideoGenerator
 public:
     VideoReceiveThread(const std::string& id, const std::string& sdp, uint16_t mtu);
     ~VideoReceiveThread();
-    void startLoop(const std::function<void(MediaType)>& cb);
+    void startLoop();
 
     void addIOContext(SocketPair& socketPair);
     void setRequestKeyFrameCallback(std::function<void(void)> cb)
@@ -76,6 +76,9 @@ public:
      * @param angle Angle of rotation in degrees (counterclockwise)
      */
     void setRotation(int angle);
+
+    void setSuccessfulSetupCb(const std::function<void(const std::string&)>& cb) 
+        { onSuccessfulSetup_ = cb; }
 
 private:
     NON_COPYABLE(VideoReceiveThread);
@@ -105,8 +108,6 @@ private:
     static int readFunction(void* opaque, uint8_t* buf, int buf_size);
     bool configureVideoOutput();
 
-    std::function<void(MediaType)> onSetupSuccess_;
-
     ThreadLoop loop_;
 
     // used by ThreadLoop
@@ -115,6 +116,7 @@ private:
     void cleanup();
 
     std::function<void(void)> keyFrameRequestCallback_;
+    std::function<void(const std::string&)> onSuccessfulSetup_;
 };
 
 } // namespace video

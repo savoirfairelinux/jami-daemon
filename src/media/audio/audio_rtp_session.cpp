@@ -84,6 +84,8 @@ AudioRtpSession::startSender()
         if (newParams.valid()
             && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
             localAudioParams_ = newParams.get();
+            if (onSuccessfulSetup_)
+                    audioInput_->setSuccessfulSetupCb(onSuccessfulSetup_);
         } else {
             JAMI_ERR() << "No valid new audio parameters";
             return;
@@ -140,7 +142,9 @@ AudioRtpSession::startReceiver()
                                                 receive_.receiving_sdp,
                                                 mtu_));
     receiveThread_->addIOContext(*socketPair_);
-    receiveThread_->startLoop(onSuccessfulSetup_);
+    if (onSuccessfulSetup_)
+            receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
+    receiveThread_->startLoop();
 }
 
 void

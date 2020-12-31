@@ -91,6 +91,9 @@ public:
     void stopInput();
 #endif
 
+    void setSuccessfulSetupCb(const std::function<void(const std::string&)>& cb) 
+        { onSuccessfulSetup_ = cb; }
+
 private:
     NON_COPYABLE(VideoInput);
 
@@ -144,6 +147,8 @@ private:
     }
     bool playingFile_ = false;
     std::atomic_bool paused_ {true};
+
+    std::function<void(const std::string&)> onSuccessfulSetup_;
 };
 
 } // namespace video
