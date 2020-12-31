@@ -862,6 +862,9 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 void
 SIPCall::switchInput(const std::string& resource)
 {
+    // Check if the call is being recorded in order to continue
+    // ... the recording after the switch
+    bool isRec = Call::isRecording();
     mediaInput_ = resource;
     if (isWaitingForIceAndMedia_) {
         remainingRequest_ = Request::SwitchInput;
@@ -869,6 +872,11 @@ SIPCall::switchInput(const std::string& resource)
         if (SIPSessionReinvite() == PJ_SUCCESS) {
             isWaitingForIceAndMedia_ = true;
         }
+    }
+    if(isRec) {
+        readyToRecord_ = false;
+        resetMediaReady();
+        pendingRecord_  = true;
     }
 }
 
@@ -1211,7 +1219,7 @@ SIPCall::startAllMedia()
 #endif
         rtp->updateMedia(remote, local);
 
-        rtp->setSuccessfulSetupCb([this](MediaType type) { rtpSetupSuccess(type); });
+        rtp->setSuccessfulSetupCb([this](MediaType type, bool isRemote) { rtpSetupSuccess(type, isRemote); });
 
 #ifdef ENABLE_VIDEO
         videortp_->setRequestKeyFrameCallback([wthis = weak()] {
@@ -1567,6 +1575,8 @@ SIPCall::toggleRecording()
     } else {
         updateRecState(false);
         deinitRecorder();
+        readyToRecord_ = false;
+        resetMediaReady();
     }
     pendingRecord_ = false;
     return Call::toggleRecording();
@@ -1746,10 +1756,28 @@ SIPCall::newIceSocket(unsigned compId)
 }
 
 void
-SIPCall::rtpSetupSuccess(MediaType type)
+SIPCall::rtpSetupSuccess(MediaType type, bool isRemote)
 {
-    if ((not isAudioOnly() && type == MEDIA_VIDEO) || (isAudioOnly() && type == MEDIA_AUDIO))
-        readyToRecord_ = true;
+    std::lock_guard<std::mutex> lk{setupSuccessMutex_};
+    if (type == MEDIA_AUDIO) {
+        if (isRemote)
+            mediaReady_.at("a:remote") = true;
+        else
+            mediaReady_.at("a:local") = true;
+    } else {
+        if (isRemote)
+            mediaReady_.at("v:remote") = true;
+        else
+            mediaReady_.at("v:local") = true;
+    }
+
+    if (mediaReady_.at("a:local")
+            and mediaReady_.at("a:remote")
+            and mediaReady_.at("v:remote")) {
+        if (Manager::instance().videoPreferences.getRecordPreview()
+                or mediaReady_.at("v:local"))
+            readyToRecord_ = true;
+    }
 
     if (pendingRecord_ && readyToRecord_)
         toggleRecording();
@@ -1781,6 +1809,13 @@ SIPCall::setPeerMute(bool state)
     if (auto conf = Manager::instance().getConferenceFromID(getConfId())) {
         conf->updateMuted();
     }
+}
+
+void
+SIPCall::resetMediaReady()
+{
+    for (auto& m : mediaReady_)
+        m.second = false;
 }
 
 } // namespace jami

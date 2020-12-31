@@ -65,9 +65,8 @@ VideoReceiveThread::~VideoReceiveThread()
 }
 
 void
-VideoReceiveThread::startLoop(const std::function<void(MediaType)>& cb)
+VideoReceiveThread::startLoop()
 {
-    onSetupSuccess_ = cb;
     loop_.start();
 }
 
@@ -215,8 +214,8 @@ VideoReceiveThread::configureVideoOutput()
     // Send the resolution in smartInfo
     Smartools::getInstance().setResolution(id_, dstWidth_, dstHeight_);
 
-    if (onSetupSuccess_)
-        onSetupSuccess_(MEDIA_VIDEO);
+    if (onSuccessfulSetup_)
+        onSuccessfulSetup_(MEDIA_VIDEO, 1);
     isVideoConfigured_ = true;
     return true;
 }
