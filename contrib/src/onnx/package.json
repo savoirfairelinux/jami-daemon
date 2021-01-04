@@ -1,0 +1,17 @@
+{
+    "name": "onnx",
+    "version": "v1.6.0",
+    "url": "https://github.com/microsoft/onnxruntime/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": [],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [
+            "mkdir build"
+        ],
+        "build": [],
+        "post_build": []
+    }
+}
