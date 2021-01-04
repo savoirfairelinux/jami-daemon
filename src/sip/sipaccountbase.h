@@ -260,7 +260,7 @@ public:
 
     void setIsComposing(const std::string& to, bool isWriting) override;
 
-    bool setMessageDisplayed(const std::string& contactId,
+    bool setMessageDisplayed(const std::string& conversationUri,
                              const std::string& messageId,
                              int status) override;
 
