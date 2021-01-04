@@ -102,7 +102,11 @@ MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout)
     for (const auto& p : pending) {
         JAMI_DBG() << "[message " << p.token << "] Retry sending";
         emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
-            account_.getAccountID(), p.token, p.to, (int) DRing::Account::MessageStates::SENDING);
+            account_.getAccountID(),
+            "",
+            std::to_string(p.token),
+            p.to,
+            (int) DRing::Account::MessageStates::SENDING);
         account_.sendTextMessage(p.to, p.payloads, p.token, retryOnTimeout);
     }
 }
@@ -129,7 +133,8 @@ MessageEngine::cancel(MessageToken t)
             m->second.status = MessageStatus::CANCELLED;
             emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
                 account_.getAccountID(),
-                t,
+                "",
+                std::to_string(t),
                 m->second.to,
                 static_cast<int>(DRing::Account::MessageStates::CANCELLED));
             save_();
@@ -157,7 +162,8 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
                 JAMI_DBG() << "[message " << token << "] Status changed to SENT";
                 emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
                     account_.getAccountID(),
-                    token,
+                    "",
+                    std::to_string(token),
                     f->second.to,
                     static_cast<int>(DRing::Account::MessageStates::SENT));
                 save_();
@@ -166,7 +172,8 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
                 JAMI_DBG() << "[message " << token << "] Status changed to FAILURE";
                 emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
                     account_.getAccountID(),
-                    token,
+                    "",
+                    std::to_string(token),
                     f->second.to,
                     static_cast<int>(DRing::Account::MessageStates::FAILURE));
                 save_();
@@ -190,7 +197,8 @@ MessageEngine::onMessageDisplayed(const std::string& peer, MessageToken token, b
     JAMI_DBG() << "[message " << token << "] Displayed by peer";
     emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
         account_.getAccountID(),
-        token,
+        "", /* No related conversation */
+        std::to_string(token),
         peer,
         static_cast<int>(DRing::Account::MessageStates::DISPLAYED));
 }
