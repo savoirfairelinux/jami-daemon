@@ -97,7 +97,7 @@ public:
         int getMessageStatus(const std::string& accountID, const uint64_t& id);
         bool cancelMessage(const std::string& accountID, const uint64_t& messageId);
         void setIsComposing(const std::string& accountID, const std::string& to, const bool& isWriting);
-        bool setMessageDisplayed(const std::string& accountID, const std::string& contactId, const std::string& messageId, const int32_t& status);
+        bool setMessageDisplayed(const std::string& accountID, const std::string& conversationUri, const std::string& messageId, const int32_t& status);
         std::vector<std::string> getSupportedCiphers(const std::string& accountID);
         std::vector<unsigned> getCodecList();
         std::vector<std::string> getSupportedTlsMethod();

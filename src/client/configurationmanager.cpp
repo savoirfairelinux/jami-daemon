@@ -292,12 +292,12 @@ setIsComposing(const std::string& accountID, const std::string& to, bool isWriti
 
 bool
 setMessageDisplayed(const std::string& accountID,
-                    const std::string& contactId,
+                    const std::string& conversationUri,
                     const std::string& messageId,
                     int status)
 {
     if (const auto acc = jami::Manager::instance().getAccount(accountID))
-        return acc->setMessageDisplayed(contactId, messageId, status);
+        return acc->setMessageDisplayed(conversationUri, messageId, status);
     return false;
 }
 
