@@ -106,7 +106,7 @@ DRING_PUBLIC void setIsComposing(const std::string& accountID,
                                  const std::string& to,
                                  bool isWriting);
 DRING_PUBLIC bool setMessageDisplayed(const std::string& accountID,
-                                      const std::string& contactId,
+                                      const std::string& conversationUri,
                                       const std::string& messageId,
                                       int status);
 
@@ -391,8 +391,9 @@ struct DRING_PUBLIC ConfigurationSignal
     {
         constexpr static const char* name = "AccountMessageStatusChanged";
         using cb_type = void(const std::string& /*account_id*/,
-                             uint64_t /*message_id*/,
-                             const std::string& /*to*/,
+                             const std::string& /*message_id*/,
+                             const std::string& /*conversation_id*/,
+                             const std::string& /*peer*/,
                              int /*state*/);
     };
     struct DRING_PUBLIC ProfileReceived
