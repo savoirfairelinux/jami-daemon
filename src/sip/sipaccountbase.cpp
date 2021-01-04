@@ -37,6 +37,7 @@
 #include "fileutils.h"
 #include "sip_utils.h"
 #include "utf8_utils.h"
+#include "uri.h"
 
 #include "manager.h"
 #ifdef ENABLE_PLUGIN
@@ -136,15 +137,16 @@ getIsComposing(const std::string& conversationId, bool isWriting)
 }
 
 std::string
-getDisplayed(const std::string& messageId)
+getDisplayed(const std::string& conversationId, const std::string& messageId)
 {
     // implementing https://tools.ietf.org/rfc/rfc5438.txt
-    return fmt::format(
-        "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
-        "<imdn><message-id>{}</message-id>\n"
-        "<display-notification><status><displayed/></status></display-notification>\n"
-        "</imdn>",
-        messageId);
+    return fmt::format("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
+                       "<imdn><message-id>{}</message-id>\n"
+                       "{}"
+                       "<display-notification><status><displayed/></status></display-notification>\n"
+                       "</imdn>",
+                       messageId,
+                       conversationId.empty()? "" : "<conversation>" + conversationId + "</conversation>");
 }
 
 void
@@ -571,7 +573,28 @@ SIPAccountBase::onTextMessage(const std::string& id,
                     JAMI_WARN("Message displayed: can't parse status");
                     continue;
                 }
-                messageEngine_.onMessageDisplayed(from, from_hex_string(messageId), isDisplayed);
+
+                static const std::regex CONVID_REGEX(
+                    "<conversation>\\s*(\\w+)\\s*<\\/conversation>");
+                std::regex_search(m.second, matched_pattern, CONVID_REGEX);
+                std::string conversationId = "";
+                if (matched_pattern.ready() && !matched_pattern.empty()
+                    && matched_pattern[1].matched) {
+                    conversationId = matched_pattern[1];
+                }
+
+                if (conversationId.empty()) // Old method
+                    messageEngine_.onMessageDisplayed(from, from_hex_string(messageId), isDisplayed);
+                else if (isDisplayed) {
+                    JAMI_DBG() << "[message " << messageId << "] Displayed by peer";
+                    emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                        accountID_,
+                        messageId,
+                        conversationId,
+                        from,
+                        static_cast<int>(DRing::Account::MessageStates::DISPLAYED));
+                    return;
+                }
                 if (payloads.size() == 1)
                     return;
             } catch (const std::exception& e) {
@@ -637,12 +660,17 @@ SIPAccountBase::onTextMessage(const std::string& id,
 }
 
 bool
-SIPAccountBase::setMessageDisplayed(const std::string& contactId,
+SIPAccountBase::setMessageDisplayed(const std::string& conversationUri,
                                     const std::string& messageId,
                                     int status)
 {
+    Uri uri(conversationUri);
+    std::string conversationId = {};
+    if (uri.scheme() == Uri::Scheme::SWARM)
+        conversationId = uri.authority();
     if (status == (int) DRing::Account::MessageStates::DISPLAYED)
-        sendTextMessage(contactId, {{MIME_TYPE_IMDN, getDisplayed(messageId)}});
+        sendInstantMessage(uri.authority(),
+                           {{MIME_TYPE_IMDN, getDisplayed(conversationId, messageId)}});
     return true;
 }
 
