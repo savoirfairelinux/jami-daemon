@@ -185,7 +185,7 @@ public:
                                const std::string& /*peer*/,
                                bool /*isWriting*/);
 
-    virtual bool setMessageDisplayed(const std::string& /*contactId*/,
+    virtual bool setMessageDisplayed(const std::string& /*conversationUri*/,
                                      const std::string& /*messageId*/,
                                      int /*status*/)
     {
