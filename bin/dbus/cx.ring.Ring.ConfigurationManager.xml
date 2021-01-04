@@ -584,13 +584,14 @@
        </signal>
 
        <signal name="accountMessageStatusChanged" tp:name-for-bindings="accountMessageStatusChanged">
-           <tp:added version="2.3.0"/>
+           <tp:added version="10.0.0"/>
            <tp:docstring>
                Notify clients that a sent text message status have changed
            </tp:docstring>
            <arg type="s" name="accountID"/>
-           <arg type="t" name="id"/>
-           <arg type="s" name="to"/>
+           <arg type="s" name="id"/>
+           <arg type="s" name="conversationId"/>
+           <arg type="s" name="peer"/>
            <arg type="i" name="status">
               <tp:docstring>The new status of the message, see getMessageStatus for possible values.</tp:docstring>
            </arg>
@@ -640,9 +641,9 @@
                The account ID
              </tp:docstring>
            </arg>
-           <arg type="s" name="contactId" direction="in">
+           <arg type="s" name="conversationUri" direction="in">
              <tp:docstring>
-               The contact ID
+               A conversation uri (swarm:xxxx or jami:xxxx)
              </tp:docstring>
            </arg>
            <arg type="s" name="messageId" direction="in">
