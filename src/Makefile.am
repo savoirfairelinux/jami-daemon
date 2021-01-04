@@ -184,6 +184,8 @@ libring_la_SOURCES = \
 		scheduled_executor.h \
 		scheduled_executor.cpp \
 		transport/peer_channel.h \
+        uri.h \
+        uri.cpp \
 		vcard.h
 
 if HAVE_WIN32
