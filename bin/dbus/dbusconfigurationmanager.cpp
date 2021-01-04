@@ -234,11 +234,11 @@ DBusConfigurationManager::setIsComposing(const std::string& accountID,
 
 bool
 DBusConfigurationManager::setMessageDisplayed(const std::string& accountID,
-                                              const std::string& contactId,
+                                              const std::string& conversationUri,
                                               const std::string& messageId,
                                               const int32_t& status)
 {
-    return DRing::setMessageDisplayed(accountID, contactId, messageId, status);
+    return DRing::setMessageDisplayed(accountID, conversationUri, messageId, status);
 }
 
 auto
