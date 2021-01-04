@@ -1,0 +1,165 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "140a5940_e050fcb1",
+        "filename": "bin/dbus/dbusconfigurationmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 756,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-04T19:25:20Z",
+      "side": 1,
+      "message": "no const bool\u0026",
+      "range": {
+        "startLine": 756,
+        "startChar": 49,
+        "endLine": 756,
+        "endChar": 66
+      },
+      "revId": "765c0ecf7228628e50ce3ee06078c7a2814ba371",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "294a711e_7f94b7df",
+        "filename": "bin/dbus/dbusconfigurationmanager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 765,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-04T19:25:20Z",
+      "side": 1,
+      "message": "In fact the whole API is useless as we already have setAccountConfig for this",
+      "range": {
+        "startLine": 753,
+        "startChar": 4,
+        "endLine": 765,
+        "endChar": 1
+      },
+      "revId": "765c0ecf7228628e50ce3ee06078c7a2814ba371",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6543023f_643031e8",
+        "filename": "bin/dbus/dbusconfigurationmanager.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 180,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-04T19:25:20Z",
+      "side": 1,
+      "message": "uri is enough at this point it\u0027s not a peer",
+      "range": {
+        "startLine": 180,
+        "startChar": 82,
+        "endLine": 180,
+        "endChar": 89
+      },
+      "revId": "765c0ecf7228628e50ce3ee06078c7a2814ba371",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9e00bd1b_1927c47f",
+        "filename": "configure.ac",
+        "patchSetId": 4
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-04T19:25:20Z",
+      "side": 1,
+      "message": "if no api no need to bump",
+      "range": {
+        "startLine": 5,
+        "startChar": 0,
+        "endLine": 5,
+        "endChar": 3
+      },
+      "revId": "765c0ecf7228628e50ce3ee06078c7a2814ba371",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "637ccc21_84bbda68",
+        "filename": "src/account.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 688,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-04T19:25:20Z",
+      "side": 1,
+      "message": "uri",
+      "range": {
+        "startLine": 688,
+        "startChar": 48,
+        "endLine": 688,
+        "endChar": 55
+      },
+      "revId": "765c0ecf7228628e50ce3ee06078c7a2814ba371",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "62729dd0_2ac94f1a",
+        "filename": "src/account.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 320,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-04T19:25:20Z",
+      "side": 1,
+      "message": "depends if we want to manage it client side (as it\u0027s a string)",
+      "range": {
+        "startLine": 315,
+        "startChar": 42,
+        "endLine": 320,
+        "endChar": 60
+      },
+      "revId": "765c0ecf7228628e50ce3ee06078c7a2814ba371",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7f9d11c0_54b04190",
+        "filename": "src/manager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3301,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-04T19:25:20Z",
+      "side": 1,
+      "message": "can be just return split_string?",
+      "range": {
+        "startLine": 3299,
+        "startChar": 0,
+        "endLine": 3301,
+        "endChar": 60
+      },
+      "revId": "765c0ecf7228628e50ce3ee06078c7a2814ba371",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
