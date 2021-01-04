@@ -148,12 +148,12 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
             try {
                 auto unique_name = getDeviceString(dev);
                 JAMI_DBG("udev: adding device with id %s", unique_name.c_str());
-                monitor_->addDevice(unique_name, {{{"devPath", path}}});
-                currentPathToId_.emplace(path, unique_name);
+                if (monitor_->addDevice(unique_name, {{{"devPath", path}}}))
+                    currentPathToId_.emplace(path, unique_name);
             } catch (const std::exception& e) {
                 JAMI_WARN("udev: %s, fallback on path (your camera may be a fake camera)", e.what());
-                monitor_->addDevice(path, {{{"devPath", path}}});
-                currentPathToId_.emplace(path, path);
+                if (monitor_->addDevice(path, {{{"devPath", path}}}))
+                    currentPathToId_.emplace(path, path);
             }
         }
         udev_device_unref(dev);
@@ -175,10 +175,9 @@ udev_failed:
 
     /* fallback : go through /dev/video* */
     for (int idx = 0;; ++idx) {
-        std::stringstream ss;
-        ss << "/dev/video" << idx;
         try {
-            monitor_->addDevice(ss.str());
+            if (!monitor_->addDevice("/dev/video" + std::to_string(idx)))
+                break;
         } catch (const std::runtime_error& e) {
             JAMI_ERR("%s", e.what());
             return;
@@ -237,8 +236,8 @@ VideoDeviceMonitorImpl::run()
                     const char* action = udev_device_get_action(dev);
                     if (!strcmp(action, "add")) {
                         JAMI_DBG("udev: adding device with id %s", unique_name.c_str());
-                        monitor_->addDevice(unique_name, {{{"devPath", path}}});
-                        currentPathToId_.emplace(path, unique_name);
+                        if (monitor_->addDevice(unique_name, {{{"devPath", path}}}))
+                            currentPathToId_.emplace(path, unique_name);
                     } else if (!strcmp(action, "remove")) {
                         auto it = currentPathToId_.find(path);
                         if (it != currentPathToId_.end()) {

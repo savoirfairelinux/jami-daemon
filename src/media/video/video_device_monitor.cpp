@@ -187,20 +187,20 @@ notify()
     }
 }
 
-void
+bool
 VideoDeviceMonitor::addDevice(const string& id,
                               const std::vector<std::map<std::string, std::string>>& devInfo)
 {
     try {
         std::lock_guard<std::mutex> l(lock_);
         if (findDeviceById(id) != devices_.end())
-            return;
+            return false;
 
         // instantiate a new unique device
         VideoDevice dev {id, devInfo};
 
         if (dev.getChannelList().empty())
-            return;
+            return false;
 
         giveUniqueName(dev, devices_);
 
@@ -220,9 +220,10 @@ VideoDeviceMonitor::addDevice(const string& id,
         devices_.emplace_back(std::move(dev));
     } catch (const std::exception& e) {
         JAMI_ERR("Failed to add device %s: %s", id.c_str(), e.what());
-        return;
+        return false;
     }
     notify();
+    return true;
 }
 
 void
