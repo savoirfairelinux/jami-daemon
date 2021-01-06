@@ -90,4 +90,17 @@ private:
     std::unique_ptr<Impl> pimpl_;
 };
 
+class TransferManager
+{
+public:
+    TransferManager(const std::string& accountId, const std::string& to);
+    ~TransferManager();
+
+    DRing::DataTransferId sendFile(const std::string& path);
+
+private:
+    class Impl;
+    std::unique_ptr<Impl> pimpl_;
+};
+
 } // namespace jami

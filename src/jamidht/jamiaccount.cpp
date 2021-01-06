@@ -5298,4 +5298,25 @@ JamiAccount::monitor() const
         connectionManager_->monitor();
 }
 
+DRing::DataTransferId
+JamiAccount::sendFile(const std::string& to, const std::string& path)
+{
+    // TODO erase manager when remove conversation or contact
+    if (!fileutils::isFile(path)) {
+        JAMI_ERR() << "invalid filename '" << path << "'";
+        return {};
+    }
+
+    std::unique_lock<std::mutex> lk(transferMutex_);
+    auto it = transferManagers_.find(to);
+    if (it == transferManagers_.end()) {
+        std::string accId = getAccountID();
+        // TODO
+    }
+    lk.unlock();
+
+    // TODO check requestConnection
+    return {};
+}
+
 } // namespace jami

@@ -1655,11 +1655,11 @@
        </method>
 
        <method name="sendFile" tp:name-for-bindings="sendFile">
-           <tp:added version="4.2.0"/>
-           <arg type="u" name="dataTransferError" direction="out"/>
-           <arg type="(suuxxssss)" name="DataTransferInfo" direction="in"/>
+           <tp:added version="10.0.0"/>
            <arg type="t" name="dataTransferId" direction="out"/>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="DataTransferInfo"/>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="to" direction="in"/>
+           <arg type="s" name="path" direction="in"/>
        </method>
 
        <method name="dataTransferInfo" tp:name-for-bindings="dataTransferInfo">

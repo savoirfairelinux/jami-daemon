@@ -678,6 +678,96 @@ IncomingFileTransfer::write(std::string_view buffer)
 
 //==============================================================================
 
+class TransferManager::Impl
+{
+public:
+    Impl(const std::string& accountId, const std::string& to)
+    : accountId_(accountId), to_(to) {}
+
+    std::string accountId_ {};
+    std::string to_ {};
+
+    std::mutex mapMutex_ {};
+    std::map<DRing::DataTransferId, std::shared_ptr<OutgoingFileTransfer>> oMap_ {};
+    std::map<DRing::DataTransferId, std::shared_ptr<IncomingFileTransfer>> iMap_ {};
+};
+
+TransferManager::TransferManager(const std::string& accountId, const std::string& to)
+: pimpl_ {std::make_unique<Impl>(accountId, to)}
+{}
+
+TransferManager::~TransferManager()
+{}
+
+DRing::DataTransferId
+TransferManager::sendFile(const std::string& path)
+{
+    auto tid = generateUID();
+    return tid;
+    /*
+    // TODO infos
+    auto transfer = std::make_shared<OutgoingFileTransfer>(tid, info);
+    {
+        std::lock_guard<std::mutex> lk {mapMutex_};
+        oMap_.emplace(tid, transfer);
+    }
+    transfer->emit(DRing::DataTransferEventCode::created);
+
+
+
+
+
+    auto account = Manager::instance().getAccount<JamiAccount>(info.accountId);
+    if (!account) {
+        JAMI_ERR() << "[XFER] unknown id " << tid;
+        return DRing::DataTransferError::invalid_argument;
+    }
+
+    if (!fileutils::isFile(info.path)) {
+        JAMI_ERR() << "[XFER] invalid filename '" << info.path << "'";
+        return DRing::DataTransferError::invalid_argument;
+    }
+
+    try {
+        pimpl_->createOutgoingFileTransfer(info, tid, cb);
+    } catch (const std::exception& ex) {
+        JAMI_ERR() << "[XFER] exception during createFileTransfer(): " << ex.what();
+        return DRing::DataTransferError::io;
+    }
+
+    try {
+        // IMPLEMENTATION NOTE: requestPeerConnection() may call the given callback a multiple time.
+        // This happen when multiple agents handle communications of the given peer for the given
+        // account. Example: Jami account supports multi-devices, each can answer to the request.
+        account->requestConnection(
+            info,
+            tid,
+            static_cast<bool>(cb),
+            [this, tid](const std::shared_ptr<ChanneledOutgoingTransfer>& out) {
+                if (auto transfer = pimpl_->getTransfer(tid))
+                    if (out)
+                        out->linkTransfer(std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)
+                                              ->startNewOutgoing(out->peer()));
+            },
+            [this, tid](const std::string& peer) {
+                if (auto transfer = std::dynamic_pointer_cast<OutgoingFileTransfer>(
+                        pimpl_->getTransfer(tid))) {
+                    auto allFinished = transfer->cancelWithPeer(peer);
+                    if (allFinished and not transfer->hasBeenStarted()) {
+                        transfer->emit(DRing::DataTransferEventCode::unjoinable_peer);
+                        pimpl_->cancel(*transfer);
+                    }
+                }
+            });
+        return DRing::DataTransferError::success;
+    } catch (const std::exception& ex) {
+        JAMI_ERR() << "[XFER] exception during sendFile(): " << ex.what();
+        return DRing::DataTransferError::unknown;
+    }*/
+}
+
+//==============================================================================
+
 class DataTransferFacade::Impl
 {
 public:

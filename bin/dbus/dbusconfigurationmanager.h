@@ -178,7 +178,7 @@ public:
         int importAccounts(const std::string& archivePath, const std::string& password);
         void connectivityChanged();
         std::vector<uint64_t> dataTransferList();
-        void sendFile(const RingDBusDataTransferInfo& info, uint32_t& error, DRing::DataTransferId& id);
+        DRing::DataTransferId sendFile(const std::string& accountId, const std::string& to, const std::string& path);
         void dataTransferInfo(const DRing::DataTransferId& id, uint32_t& error, RingDBusDataTransferInfo& info);
         void dataTransferBytesProgress(const uint64_t& id, uint32_t& error, int64_t& total, int64_t& progress);
         uint32_t acceptFileTransfer(const uint64_t& id, const std::string& file_path, const int64_t& offset);
