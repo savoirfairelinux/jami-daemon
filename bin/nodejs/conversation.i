@@ -47,6 +47,7 @@ namespace DRing {
     int64_t totalSize;
     int64_t bytesProgress;
     std::string peer;
+    std::string conversationId;
     std::string displayName;
     std::string path;
     std::string mimetype;
