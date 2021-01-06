@@ -70,20 +70,20 @@ private:
     void testDestroyWhileSending();
 
     CPPUNIT_TEST_SUITE(ConnectionManagerTest);
-    CPPUNIT_TEST(testConnectDevice);
+    //CPPUNIT_TEST(testConnectDevice);
     CPPUNIT_TEST(testAcceptConnection);
-    CPPUNIT_TEST(testMultipleChannels);
-    CPPUNIT_TEST(testMultipleChannelsSameName);
-    CPPUNIT_TEST(testDeclineConnection);
-    CPPUNIT_TEST(testSendReceiveData);
-    CPPUNIT_TEST(testAcceptsICERequest);
-    CPPUNIT_TEST(testDeclineICERequest);
-    CPPUNIT_TEST(testChannelRcvShutdown);
-    CPPUNIT_TEST(testChannelSenderShutdown);
-    CPPUNIT_TEST(testCloseConnectionWithDevice);
-    CPPUNIT_TEST(testShutdownCallbacks);
-    CPPUNIT_TEST(testFloodSocket);
-    CPPUNIT_TEST(testDestroyWhileSending);
+    //CPPUNIT_TEST(testMultipleChannels);
+    //CPPUNIT_TEST(testMultipleChannelsSameName);
+    //CPPUNIT_TEST(testDeclineConnection);
+    //CPPUNIT_TEST(testSendReceiveData);
+    //CPPUNIT_TEST(testAcceptsICERequest);
+    //CPPUNIT_TEST(testDeclineICERequest);
+    //CPPUNIT_TEST(testChannelRcvShutdown);
+    //CPPUNIT_TEST(testChannelSenderShutdown);
+    //CPPUNIT_TEST(testCloseConnectionWithDevice);
+    //CPPUNIT_TEST(testShutdownCallbacks);
+    //CPPUNIT_TEST(testFloodSocket);
+    //CPPUNIT_TEST(testDestroyWhileSending);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -217,24 +217,29 @@ ConnectionManagerTest::testAcceptConnection()
     bool receiverConnected = false;
 
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string& name) {
+        [&successfullyReceive](const DeviceId& d, const std::string& name) {
+            JAMI_ERR("@@@ onChannelRequest! to %s, %s", d.toString().c_str(), name.c_str());
             successfullyReceive = name == "git://*";
             return true;
         });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&receiverConnected](const DeviceId&,
+        [&receiverConnected](const DeviceId& d,
                              const std::string& name,
                              std::shared_ptr<ChannelSocket> socket) {
+            JAMI_ERR("@@@ onConnectionReady! to %s, %s", d.toString().c_str(), name.c_str());
             receiverConnected = socket && (name == "git://*");
         });
 
+    JAMI_ERR("@@@ CONNECT DEVICE! to %s", bobDeviceId.toString().c_str());
     aliceAccount->connectionManager()
         .connectDevice(bobDeviceId,
                        "git://*",
                        [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
                                                      const DeviceId&) {
+                            JAMI_ERR("@@@ SUCCESSFULLY CONNECTED?");
                            if (socket) {
+                            JAMI_ERR("@@@ SUCCESSFULLY CONNECTED!");
                                successfullyConnected = true;
                            }
                            cv.notify_one();

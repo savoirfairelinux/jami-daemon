@@ -1,0 +1,31 @@
+ pjnath/src/pjnath/ice_strans.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index bf7f98096..616dda49b 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -2196,6 +2196,7 @@ static void ice_rx_data(pj_ice_sess *ice,
+     PJ_UNUSED_ARG(transport_id);
+ 
+     if (ice_st->cb.on_rx_data) {
++	printf("@@@ ice rx\n");
+ 	(*ice_st->cb.on_rx_data)(ice_st, comp_id, pkt, size,
+ 				 src_addr, src_addr_len);
+     }
+@@ -2501,6 +2502,7 @@ static pj_bool_t stun_on_rx_data(pj_stun_sock *stun_sock,
+ 	 * report this to application.
+ 	 */
+ 	if (ice_st->cb.on_rx_data) {
++	printf("@@@ stun rx\n");
+ 	    (*ice_st->cb.on_rx_data)(ice_st, comp->comp_id, pkt, pkt_len,
+ 				     src_addr, addr_len);
+ 	}
+@@ -2777,6 +2779,7 @@ static void turn_on_rx_data(pj_turn_sock *turn_sock,
+ 	 * So in this case just give the packet to application.
+ 	 */
+ 	if (comp->ice_st->cb.on_rx_data) {
++	printf("@@@ turn rx\n");
+ 	    (*comp->ice_st->cb.on_rx_data)(comp->ice_st, comp->comp_id, pkt,
+ 					   pkt_len, peer_addr, addr_len);
+ 	}

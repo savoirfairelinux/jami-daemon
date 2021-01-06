@@ -345,8 +345,9 @@ IceTransport::Impl::Impl(const char* name,
                           unsigned comp_id,
                           void* pkt,
                           pj_size_t size,
-                          const pj_sockaddr_t* /*src_addr*/,
+                          const pj_sockaddr_t* src_addr,
                           unsigned /*src_addr_len*/) {
+        JAMI_ERR("@@@@ src: %p", src_addr);
         if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st)))
             tr->onReceiveData(comp_id, pkt, size);
         else
@@ -1310,7 +1311,16 @@ IceTransport::recv(int comp_id, unsigned char* buf, size_t len, std::error_code&
 ssize_t
 IceTransport::recvfrom(int comp_id, char* buf, size_t len, std::error_code& ec)
 {
-    return pimpl_->peerChannels_.at(comp_id).read(buf, len, ec);
+    auto res = pimpl_->peerChannels_.at(comp_id).read(buf, len, ec);
+    JAMI_ERR("@@@ %u", res);
+
+    printf("@@@ recv:");
+    for (int i = 0; i < len; ++i) {
+        printf("%u,", reinterpret_cast<unsigned char*>(buf)[i]);
+    }
+    printf("\n");
+
+    return res;
 }
 
 void
@@ -1345,6 +1355,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         errno = EINVAL;
         return -1;
     }
+    JAMI_ERR("@@@ WRITE %u", len);
     auto status = pj_ice_strans_sendto2(pimpl_->icest_.get(),
                                         comp_id + 1,
                                         buf,
@@ -1370,6 +1381,11 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         return -1;
     }
 
+    printf("@@@ send:");
+    for (int i = 0; i < len; ++i) {
+        printf("%u,", buf[i]);
+    }
+    printf("\n");
     return len;
 }
 
