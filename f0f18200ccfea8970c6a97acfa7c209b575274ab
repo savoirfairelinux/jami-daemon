@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "42326d40_da37a9e0",
+        "filename": "bin/dbus/dbuscallmanager.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-06T18:28:21Z",
+      "side": 1,
+      "message": "why not use placeCallWithDetails, the path seems the same",
+      "range": {
+        "startLine": 62,
+        "startChar": 32,
+        "endLine": 64,
+        "endChar": 33
+      },
+      "revId": "f0f18200ccfea8970c6a97acfa7c209b575274ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
