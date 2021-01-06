@@ -90,4 +90,28 @@ private:
     std::unique_ptr<Impl> pimpl_;
 };
 
+class TransferManager
+{
+public:
+    TransferManager(const std::string& accountId, const std::string& to);
+    ~TransferManager();
+
+    DRing::DataTransferId sendFile(const std::string& path);
+
+    bool acceptFile(const DRing::DataTransferId& id, const std::string& path);
+
+    bool cancel(const DRing::DataTransferId& id);
+
+    void createIncomingTransfer(const DRing::DataTransferInfo& info,
+                                const DRing::DataTransferId& id,
+                                const InternalCompletionCb& cb = {});
+
+    void onIncomingFileRequest(const DRing::DataTransferId& id,
+                               const std::function<void(const IncomingFileInfo&)>& cb);
+
+private:
+    class Impl;
+    std::unique_ptr<Impl> pimpl_;
+};
+
 } // namespace jami

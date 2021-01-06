@@ -38,15 +38,10 @@ namespace jami {
 
 //==============================================================================
 
-FtpServer::FtpServer(const std::string& account_id,
-                     const std::string& peer_uri,
-                     const DRing::DataTransferId& outId,
-                     InternalCompletionCb&& cb)
+FtpServer::FtpServer(const DRing::DataTransferInfo& info, const DRing::DataTransferId& id)
     : Stream()
-    , accountId_ {account_id}
-    , peerUri_ {peer_uri}
-    , outId_ {outId}
-    , cb_ {std::move(cb)}
+    , info_ {info}
+    , transferId_(id)
 {}
 
 DRing::DataTransferId
@@ -70,17 +65,9 @@ void
 FtpServer::startNewFile()
 {
     // Request filename from client (WARNING: synchrone call!)
-    DRing::DataTransferInfo info {};
-    info.accountId = accountId_;
-    info.peer = peerUri_;
-    info.displayName = displayName_;
-    info.totalSize = fileSize_;
-    info.bytesProgress = 0;
+    info_.totalSize = fileSize_;
+    info_.bytesProgress = 0;
     rx_ = 0;
-    transferId_ = Manager::instance()
-                      .dataTransfers->createIncomingTransfer(info,
-                                                             outId_,
-                                                             cb_); // return immediately
     isTreatingRequest_ = true;
     Manager::instance().dataTransfers->onIncomingFileRequest(
         transferId_, [w = weak()](const IncomingFileInfo& fileInfo) {
@@ -218,7 +205,7 @@ FtpServer::handleHeader(std::string_view key, std::string_view value)
             throw std::runtime_error("[FTP] header parsing error");
         }
     } else if (key == "Display-Name") {
-        displayName_ = value;
+        info_.displayName = value;
     }
 }
 
