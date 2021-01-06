@@ -70,20 +70,20 @@ private:
     void testDestroyWhileSending();
 
     CPPUNIT_TEST_SUITE(ConnectionManagerTest);
-    CPPUNIT_TEST(testConnectDevice);
+    //CPPUNIT_TEST(testConnectDevice);
     CPPUNIT_TEST(testAcceptConnection);
-    CPPUNIT_TEST(testMultipleChannels);
-    CPPUNIT_TEST(testMultipleChannelsSameName);
-    CPPUNIT_TEST(testDeclineConnection);
-    CPPUNIT_TEST(testSendReceiveData);
-    CPPUNIT_TEST(testAcceptsICERequest);
-    CPPUNIT_TEST(testDeclineICERequest);
-    CPPUNIT_TEST(testChannelRcvShutdown);
-    CPPUNIT_TEST(testChannelSenderShutdown);
-    CPPUNIT_TEST(testCloseConnectionWithDevice);
-    CPPUNIT_TEST(testShutdownCallbacks);
-    CPPUNIT_TEST(testFloodSocket);
-    CPPUNIT_TEST(testDestroyWhileSending);
+    //CPPUNIT_TEST(testMultipleChannels);
+    //CPPUNIT_TEST(testMultipleChannelsSameName);
+    //CPPUNIT_TEST(testDeclineConnection);
+    //CPPUNIT_TEST(testSendReceiveData);
+    //CPPUNIT_TEST(testAcceptsICERequest);
+    //CPPUNIT_TEST(testDeclineICERequest);
+    //CPPUNIT_TEST(testChannelRcvShutdown);
+    //CPPUNIT_TEST(testChannelSenderShutdown);
+    //CPPUNIT_TEST(testCloseConnectionWithDevice);
+    //CPPUNIT_TEST(testShutdownCallbacks);
+    //CPPUNIT_TEST(testFloodSocket);
+    //CPPUNIT_TEST(testDestroyWhileSending);
     CPPUNIT_TEST_SUITE_END();
 };
 

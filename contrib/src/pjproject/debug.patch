@@ -1,0 +1,60 @@
+ pjnath/src/pjnath/ice_session.c | 3 +++
+ pjnath/src/pjnath/ice_strans.c  | 3 +++
+ 2 files changed, 6 insertions(+)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 85d3234c9..c7a1ec26a 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -2669,6 +2669,7 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+ 		new_role = PJ_ICE_SESS_ROLE_CONTROLLED;
+ 	    } else if (pj_stun_msg_find_attr(req, PJ_STUN_ATTR_ICE_CONTROLLED, 
+ 					     0)) {
++		printf("@@@ %p go controlling\n", ice);
+ 		new_role = PJ_ICE_SESS_ROLE_CONTROLLING;
+ 	    } else {
+ 		pj_assert(!"We should have put CONTROLLING/CONTROLLED attr!");
+@@ -3001,6 +3002,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+ 	    /* Switch role to controlled */
+ 	    LOG4((ice->obj_name, 
+ 		  "Changing role because of ICE-CONTROLLING attribute"));
++		printf("@@@ %p switch to controlled\n", ice);
+ 	    pj_ice_sess_change_role(ice, PJ_ICE_SESS_ROLE_CONTROLLED);
+ 	} else {
+ 	    /* Generate 487 response */
+@@ -3025,6 +3027,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+ 	    /* Switch role to controlled */
+ 	    LOG4((ice->obj_name, 
+ 		  "Changing role because of ICE-CONTROLLED attribute"));
++		printf("@@@ %p switch to controlling\n", ice);
+ 	    pj_ice_sess_change_role(ice, PJ_ICE_SESS_ROLE_CONTROLLING);
+ 	}
+     }
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index bf7f98096..616dda49b 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -2196,6 +2196,7 @@ static void ice_rx_data(pj_ice_sess *ice,
+     PJ_UNUSED_ARG(transport_id);
+ 
+     if (ice_st->cb.on_rx_data) {
++	printf("@@@ ice rx\n");
+ 	(*ice_st->cb.on_rx_data)(ice_st, comp_id, pkt, size,
+ 				 src_addr, src_addr_len);
+     }
+@@ -2501,6 +2502,7 @@ static pj_bool_t stun_on_rx_data(pj_stun_sock *stun_sock,
+ 	 * report this to application.
+ 	 */
+ 	if (ice_st->cb.on_rx_data) {
++	printf("@@@ stun rx\n");
+ 	    (*ice_st->cb.on_rx_data)(ice_st, comp->comp_id, pkt, pkt_len,
+ 				     src_addr, addr_len);
+ 	}
+@@ -2777,6 +2779,7 @@ static void turn_on_rx_data(pj_turn_sock *turn_sock,
+ 	 * So in this case just give the packet to application.
+ 	 */
+ 	if (comp->ice_st->cb.on_rx_data) {
++	printf("@@@ turn rx\n");
+ 	    (*comp->ice_st->cb.on_rx_data)(comp->ice_st, comp->comp_id, pkt,
+ 					   pkt_len, peer_addr, addr_len);
+ 	}
