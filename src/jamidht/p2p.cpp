@@ -213,6 +213,7 @@ DhtPeerConnector::requestConnection(
                            channeledConnectedCb,
                            onChanneledCancelled](const std::shared_ptr<ChannelSocket>& channel,
                                                  const DeviceId& deviceId) {
+        JAMI_ERR("@@@@ CHANNEL READY");
         auto shared = pimpl_->account.lock();
         if (!channel) {
             onChanneledCancelled(deviceId.toString());
@@ -271,6 +272,7 @@ DhtPeerConnector::requestConnection(
                                                channelReadyCb);
         return;
     }
+    JAMI_ERR("@@@@ CONNECT DEVICES");
 
     // Notes for reader:
     // 1) dht.getPublicAddress() suffers of a non-usability into forEachDevice() callbacks.
@@ -280,12 +282,16 @@ DhtPeerConnector::requestConnection(
     // 2) anyway its good to keep this processing here in case of multiple device
     //    as the result is the same for each device.
     auto addresses = acc->publicAddresses();
+    std::string channelName;
     std::vector<DeviceId> devices;
-    if (info.peer.empty()) {
+    if (!info.conversationId.empty()) {
         for (const auto& member : acc->getConversationMembers(info.conversationId)) {
             devices.emplace_back(DeviceId(member.at("uri")));
         }
+        channelName = "data-transfer://" + info.conversationId + "/" + acc->currentDeviceId() + "/"
+                      + std::to_string(tid);
     } else {
+        channelName = "file://" + std::to_string(tid);
         devices.emplace_back(DeviceId(info.peer));
     }
 
@@ -302,9 +308,8 @@ DhtPeerConnector::requestConnection(
                     return;
                 }
 
-                acc->connectionManager().connectDevice(dev_h,
-                                                       "file://" + std::to_string(tid),
-                                                       channelReadyCb);
+                JAMI_ERR("@@@@ CONNECT DEVICES");
+                acc->connectionManager().connectDevice(dev_h, channelName, channelReadyCb);
             },
 
             [peer_h, onChanneledCancelled, accId = acc->getAccountID()](bool found) {

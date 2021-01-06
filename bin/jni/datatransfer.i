@@ -53,7 +53,7 @@ namespace DRing {
     std::string mimetype;
   };
 
-  DRing::DataTransferError sendFile(const DRing::DataTransferInfo info, DRing::DataTransferId id);
+  DRing::DataTransferId sendFile(const std::string& accountId, const std::string& to, const std::string& path);
   DRing::DataTransferError acceptFileTransfer(const DRing::DataTransferId id, const std::string file_path, int64_t offset);
   DRing::DataTransferError cancelDataTransfer(const DRing::DataTransferId id);
   DRing::DataTransferError dataTransferInfo(const DRing::DataTransferId id, DRing::DataTransferInfo &info);
