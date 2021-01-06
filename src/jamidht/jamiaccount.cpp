@@ -2325,6 +2325,7 @@ JamiAccount::doRegister_()
                                                     const std::string& name) {
             auto isFile = name.substr(0, 7) == "file://";
             auto isVCard = name.substr(0, 8) == "vcard://";
+            auto isDataTransfer = name.substr(0, 8) == "data-transfer://";
             if (name.find("git://") == 0) {
                 // TODO
                 return true;
@@ -2358,6 +2359,8 @@ JamiAccount::doRegister_()
                     incomingFileTransfers_.emplace(tid_str);
                     return true;
                 }
+            } else if (name.find("data-transfer://") == 0) {
+                return true; // Nothing to do there, will pass the signal when the co will be ready
             }
             return false;
         });
@@ -2466,6 +2469,47 @@ JamiAccount::doRegister_()
                             shared->gitServers_.erase(serverId);
                         });
                     });
+                } else if (name.find("data-transfer://") == 0) {
+                    auto idstr = name.substr(16);
+                    auto sep = idstr.find("/");
+                    auto lastSep = idstr.find_last_of("/");
+                    auto conversationId = idstr.substr(0, sep);
+                    auto fileHost = idstr.substr(sep, lastSep - sep);
+                    auto fileId = idstr.substr(lastSep + 1);
+                    JAMI_ERR("@@@ %s %s %s vs %s",
+                             conversationId.c_str(),
+                             fileHost.c_str(),
+                             fileId.c_str(),
+                             name.c_str());
+                    if (fileHost == currentDeviceId()) // This means we are the host, so the file is
+                                                       // outgoing, ignore
+                        return;
+
+                    std::unique_lock<std::mutex> lk(transferMutex_);
+                    auto it = transferManagers_.find(conversationId);
+                    if (it == transferManagers_.end()) {
+                        std::string accId = getAccountID();
+                        auto res = transferManagers_.insert(
+                            std::make_pair(accId,
+                                           std::make_unique<TransferManager>(accId,
+                                                                             conversationId)));
+                        if (!res.second) {
+                            JAMI_ERR("Couldn't create manager for conversation %s",
+                                     conversationId.c_str());
+                            return;
+                        }
+                        it = res.first;
+                    }
+
+                    if (!it->second) {
+                        JAMI_ERR("Couldn't create manager for conversation %s",
+                                 conversationId.c_str());
+                        return;
+                    }
+                    uint64_t tid;
+                    std::istringstream iss(fileId);
+                    iss >> tid;
+                    dhtPeerConnector_->onIncomingConnection(peerId, tid, std::move(channel), {});
                 }
             }
         });
@@ -5357,6 +5401,36 @@ JamiAccount::cloneConversation(const std::string& deviceId, const std::string& c
                   getAccountID().c_str(),
                   convId.c_str());
     }
+}
+
+DRing::DataTransferId
+JamiAccount::sendFile(const std::string& to, const std::string& path)
+{
+    // TODO erase manager when remove conversation or contact
+    if (!fileutils::isFile(path)) {
+        JAMI_ERR() << "invalid filename '" << path << "'";
+        return {};
+    }
+
+    std::unique_lock<std::mutex> lk(transferMutex_);
+    auto it = transferManagers_.find(to);
+    if (it == transferManagers_.end()) {
+        std::string accId = getAccountID();
+        auto res = transferManagers_.insert(
+            std::make_pair(accId, std::make_unique<TransferManager>(accId, to)));
+        if (!res.second) {
+            JAMI_ERR("Couldn't send file %s to %s", path.c_str(), to.c_str());
+            return {};
+        }
+        it = res.first;
+    }
+
+    if (!it->second) {
+        JAMI_ERR("Couldn't send file %s to %s", path.c_str(), to.c_str());
+        return {};
+    }
+
+    return it->second->sendFile(path);
 }
 
 } // namespace jami
