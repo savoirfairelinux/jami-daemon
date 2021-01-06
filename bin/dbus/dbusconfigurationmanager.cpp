@@ -773,22 +773,10 @@ DBusConfigurationManager::dataTransferList() -> decltype(DRing::dataTransferList
     return DRing::dataTransferList();
 }
 
-void
-DBusConfigurationManager::sendFile(const RingDBusDataTransferInfo& in,
-                                   uint32_t& error,
-                                   DRing::DataTransferId& id)
+DRing::DataTransferId
+DBusConfigurationManager::sendFile(const std::string& accountId, const std::string& to, const std::string& path)
 {
-    DRing::DataTransferInfo info;
-    info.accountId = in._1;
-    info.lastEvent = DRing::DataTransferEventCode(in._2);
-    info.flags = in._3;
-    info.totalSize = in._4;
-    info.bytesProgress = in._5;
-    info.peer = in._6;
-    info.displayName = in._7;
-    info.path = in._8;
-    info.mimetype = in._9;
-    error = uint32_t(DRing::sendFile(info, id));
+    return DRing::sendFile(accountId, to, path);
 }
 
 void

@@ -111,6 +111,10 @@ DRING_PUBLIC std::vector<DataTransferId> dataTransferList() noexcept;
 ///
 DRING_PUBLIC DataTransferError sendFile(const DataTransferInfo& info, DataTransferId& id) noexcept;
 
+
+DRING_PUBLIC DataTransferId sendFile(const std::string& accountId, const std::string& to, const std::string& path) noexcept;
+
+
 /// Accept an incoming file transfer.
 ///
 /// Use this function when you receive an incoming transfer request throught DataTransferEvent signal.

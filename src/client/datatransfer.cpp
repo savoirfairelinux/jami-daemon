@@ -23,6 +23,7 @@
 #include "manager.h"
 #include "data_transfer.h"
 #include "client/ring_signal.h"
+#include "jamidht/jamiaccount.h"
 
 namespace DRing {
 
@@ -38,10 +39,12 @@ dataTransferList() noexcept
     return jami::Manager::instance().dataTransfers->list();
 }
 
-DataTransferError
-sendFile(const DataTransferInfo& info, DataTransferId& id) noexcept
+DataTransferId
+sendFile(const std::string& accountId, const std::string& to, const std::string& path) noexcept
 {
-    return jami::Manager::instance().dataTransfers->sendFile(info, id);
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->sendFile(to, path);
+    return {};
 }
 
 DataTransferError
