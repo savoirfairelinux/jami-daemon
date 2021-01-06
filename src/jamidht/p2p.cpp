@@ -213,6 +213,7 @@ DhtPeerConnector::requestConnection(
                            channeledConnectedCb,
                            onChanneledCancelled](const std::shared_ptr<ChannelSocket>& channel,
                                                  const DeviceId& deviceId) {
+        JAMI_ERR("@@@@ CHANNEL READY");
         auto shared = pimpl_->account.lock();
         if (!channel) {
             onChanneledCancelled(deviceId.toString());
@@ -271,6 +272,7 @@ DhtPeerConnector::requestConnection(
                                                channelReadyCb);
         return;
     }
+    JAMI_ERR("@@@@ CONNECT DEVICES");
 
     // Notes for reader:
     // 1) dht.getPublicAddress() suffers of a non-usability into forEachDevice() callbacks.
@@ -302,6 +304,7 @@ DhtPeerConnector::requestConnection(
                     return;
                 }
 
+                JAMI_ERR("@@@@ CONNECT DEVICES");
                 acc->connectionManager().connectDevice(dev_h,
                                                        "file://" + std::to_string(tid),
                                                        channelReadyCb);

@@ -4152,7 +4152,9 @@ JamiAccount::addConversationMember(const std::string& conversationId,
     }
 
     if (it->second->isMember(contactUri, true)) {
-        JAMI_DBG("%s is already a member of %s, resend invite", contactUri.c_str(), conversationId.c_str());
+        JAMI_DBG("%s is already a member of %s, resend invite",
+                 contactUri.c_str(),
+                 conversationId.c_str());
         // Note: This should not be necessary, but if for whatever reason the other side didn't join
         // we should not forbid new invites
         sendTextMessage(contactUri, it->second->generateInvitation());
@@ -5296,6 +5298,36 @@ JamiAccount::monitor() const
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (connectionManager_)
         connectionManager_->monitor();
+}
+
+DRing::DataTransferId
+JamiAccount::sendFile(const std::string& to, const std::string& path)
+{
+    // TODO erase manager when remove conversation or contact
+    if (!fileutils::isFile(path)) {
+        JAMI_ERR() << "invalid filename '" << path << "'";
+        return {};
+    }
+
+    std::unique_lock<std::mutex> lk(transferMutex_);
+    auto it = transferManagers_.find(to);
+    if (it == transferManagers_.end()) {
+        std::string accId = getAccountID();
+        auto res = transferManagers_.insert(
+            std::make_pair(accId, std::make_unique<TransferManager>(accId, to)));
+        if (!res.second) {
+            JAMI_ERR("Couldn't send file %s to %s", path.c_str(), to.c_str());
+            return {};
+        }
+        it = res.first;
+    }
+
+    if (!it->second) {
+        JAMI_ERR("Couldn't send file %s to %s", path.c_str(), to.c_str());
+        return {};
+    }
+
+    return it->second->sendFile(path);
 }
 
 } // namespace jami
