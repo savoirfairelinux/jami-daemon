@@ -61,11 +61,13 @@ private:
     void testFileTransfer();
     void testMultipleFileTransfer();
     void testConversationFileTransfer();
+    void testFileTransferInConversation();
 
     CPPUNIT_TEST_SUITE(FileTransferTest);
     CPPUNIT_TEST(testFileTransfer);
     CPPUNIT_TEST(testMultipleFileTransfer);
     CPPUNIT_TEST(testConversationFileTransfer);
+    CPPUNIT_TEST(testFileTransferInConversation);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -196,12 +198,14 @@ FileTransferTest::testFileTransfer()
     DRing::DataTransferId finalId;
     // Watch signals
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
-        [&](const long unsigned int& id, int code) {
-            if (code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
+        [&](const std::string& accountId, const std::string&, const long unsigned int& id, int code) {
+            if (accountId == bobId
+                && code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
                 transferWaiting = true;
                 finalId = id;
                 cv.notify_one();
-            } else if (code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
+            } else if (accountId == aliceId
+                       && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
                 transferFinished = true;
                 finalId = id;
                 cv.notify_one();
@@ -212,7 +216,9 @@ FileTransferTest::testFileTransfer()
     // Create file to send
     std::ofstream sendFile("SEND");
     CPPUNIT_ASSERT(sendFile.is_open());
-    sendFile << std::string("A", 64000);
+    // Avoid ASAN error on big alloc   sendFile << std::string("A", 64000);
+    for (int i = 0; i < 64000; ++i)
+        sendFile << "A";
     sendFile.close();
 
     // Send File
@@ -229,7 +235,7 @@ FileTransferTest::testFileTransfer()
     CPPUNIT_ASSERT(transferWaiting);
 
     auto rcv_path = "RECV";
-    CPPUNIT_ASSERT(DRing::acceptFileTransfer(finalId, rcv_path, 0)
+    CPPUNIT_ASSERT(DRing::acceptFileTransfer(bobId, aliceUri, finalId, rcv_path, 0)
                    == DRing::DataTransferError::success);
 
     // Wait 2 times, both sides will got a finished status
@@ -269,12 +275,14 @@ FileTransferTest::testMultipleFileTransfer()
     DRing::DataTransferId finalId;
     // Watch signals
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
-        [&](const long unsigned int& id, int code) {
-            if (code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
+        [&](const std::string& accountId, const std::string&, const long unsigned int& id, int code) {
+            if (accountId == bobId
+                && code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
                 transferWaiting = true;
                 finalId = id;
                 cv.notify_one();
-            } else if (code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
+            } else if (accountId == aliceId
+                       && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
                 transferFinished = true;
                 finalId = id;
                 cv.notify_one();
@@ -285,11 +293,14 @@ FileTransferTest::testMultipleFileTransfer()
     // Create file to send
     std::ofstream sendFile("SEND");
     CPPUNIT_ASSERT(sendFile.is_open());
-    sendFile << std::string("A", 64000);
+    // Avoid ASAN error on big alloc   sendFile << std::string("A", 64000);
+    for (int i = 0; i < 64000; ++i)
+        sendFile << "A";
     sendFile.close();
     std::ofstream sendFile2("SEND2");
     CPPUNIT_ASSERT(sendFile2.is_open());
-    sendFile2 << std::string("B", 64000);
+    for (int i = 0; i < 64000; ++i)
+        sendFile2 << "B";
     sendFile2.close();
 
     // Send first File
@@ -307,7 +318,7 @@ FileTransferTest::testMultipleFileTransfer()
     transferWaiting = false;
 
     auto rcv_path = "RECV";
-    CPPUNIT_ASSERT(DRing::acceptFileTransfer(finalId, rcv_path, 0)
+    CPPUNIT_ASSERT(DRing::acceptFileTransfer(bobId, aliceUri, finalId, rcv_path, 0)
                    == DRing::DataTransferError::success);
 
     // Wait 2 times, both sides will got a finished status
@@ -330,7 +341,7 @@ FileTransferTest::testMultipleFileTransfer()
     CPPUNIT_ASSERT(transferWaiting);
 
     rcv_path = "RECV2";
-    CPPUNIT_ASSERT(DRing::acceptFileTransfer(finalId, rcv_path, 0)
+    CPPUNIT_ASSERT(DRing::acceptFileTransfer(bobId, aliceUri, finalId, rcv_path, 0)
                    == DRing::DataTransferError::success);
 
     // Wait 2 times, both sides will got a finished status
@@ -386,7 +397,8 @@ FileTransferTest::testConversationFileTransfer()
     auto messageReceivedCarla = 0;
     auto requestReceived = 0;
     auto conversationReady = 0;
-    std::vector<long unsigned int> hostAcceptance = {}, peerAcceptance = {}, finished = {};
+    long unsigned int hostAcceptanceBob = {0}, hostAcceptanceCarla = {0};
+    std::vector<long unsigned int> peerAcceptance = {}, finished = {};
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
@@ -415,9 +427,15 @@ FileTransferTest::testConversationFileTransfer()
                 cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
-        [&](const long unsigned int& id, int code) {
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            const long unsigned int& id,
+            int code) {
             if (code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
-                hostAcceptance.emplace_back(id);
+                if (accountId == bobId)
+                    hostAcceptanceBob = id;
+                else if (accountId == carlaId)
+                    hostAcceptanceCarla = id;
                 cv.notify_one();
             } else if (code
                        == static_cast<int>(DRing::DataTransferEventCode::wait_peer_acceptance)) {
@@ -446,7 +464,9 @@ FileTransferTest::testConversationFileTransfer()
     // Send file
     std::ofstream sendFile("SEND");
     CPPUNIT_ASSERT(sendFile.is_open());
-    sendFile << std::string("A", 64000);
+    // Avoid ASAN error on big alloc   sendFile << std::string("A", 64000);
+    for (int i = 0; i < 64000; ++i)
+        sendFile << "A";
     sendFile.close();
 
     // Send File
@@ -461,24 +481,129 @@ FileTransferTest::testConversationFileTransfer()
     CPPUNIT_ASSERT(DRing::sendFile(info, id) == DRing::DataTransferError::success);
 
     cv.wait_for(lk, std::chrono::seconds(45), [&]() {
-        return peerAcceptance.size() == 1 && hostAcceptance.size() == 2;
+        return peerAcceptance.size() == 1 && hostAcceptanceBob != 0 && hostAcceptanceCarla != 0;
     });
 
-    CPPUNIT_ASSERT(DRing::acceptFileTransfer(hostAcceptance[0], "RCV", 0)
+    CPPUNIT_ASSERT(DRing::acceptFileTransfer(bobId, convId, hostAcceptanceBob, "RCV", 0)
                    == DRing::DataTransferError::success);
-    CPPUNIT_ASSERT(DRing::acceptFileTransfer(hostAcceptance[1], "RCV2", 0)
+    CPPUNIT_ASSERT(DRing::acceptFileTransfer(carlaId, convId, hostAcceptanceCarla, "RCV2", 0)
                    == DRing::DataTransferError::success);
 
     cv.wait_for(lk, std::chrono::seconds(45), [&]() { return finished.size() == 3; });
 
-    CPPUNIT_ASSERT(compare(info.path, "RCV"));
-    CPPUNIT_ASSERT(compare(info.path, "RCV2"));
-    // TODO check incoming conversationId
-
     std::remove("SEND");
     std::remove("RCV");
     std::remove("RCV2");
+
     DRing::unregisterSignalHandlers();
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+}
+
+void
+FileTransferTest::testFileTransferInConversation()
+{
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    // TODO remove. This sleeps is because it take some time for the DHT to be connected
+    // and account announced
+    JAMI_INFO("Waiting....");
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto bobDeviceId = bobAccount->currentDeviceId();
+    auto aliceUri = aliceAccount->getUsername();
+    auto convId = aliceAccount->startConversation();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto messageBobReceived = 0, messageAliceReceived = 0;
+    bool requestReceived = false;
+    bool conversationReady = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*message*/) {
+            if (accountId == bobId) {
+                messageBobReceived += 1;
+            } else {
+                messageAliceReceived += 1;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    bool transferWaiting = false, transferFinished = false;
+    DRing::DataTransferId finalId;
+    // Watch signals
+    confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            const long unsigned int& id,
+            int code) {
+            if (accountId == bobId && conversationId == convId
+                && code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
+                transferWaiting = true;
+                finalId = id;
+                cv.notify_one();
+            } else if (accountId == aliceId && conversationId == convId
+                       && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
+                transferFinished = true;
+                finalId = id;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+
+    bobAccount->acceptConversationRequest(convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return conversationReady && messageAliceReceived == 1;
+    }));
+
+    // Create file to send
+    std::ofstream sendFile("SEND");
+    CPPUNIT_ASSERT(sendFile.is_open());
+    // Avoid ASAN error on big alloc   sendFile << std::string("A", 64000);
+    for (int i = 0; i < 64000; ++i)
+        sendFile << "A";
+    sendFile.close();
+
+    // Send File
+    DRing::DataTransferInfo info;
+    uint64_t id;
+    info.accountId = aliceAccount->getAccountID();
+    info.conversationId = convId;
+    info.path = "SEND";
+    info.displayName = "SEND";
+    info.bytesProgress = 0;
+    CPPUNIT_ASSERT(DRing::sendFile(info, id) == DRing::DataTransferError::success);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferWaiting; }));
+    std::this_thread::sleep_for(std::chrono::seconds(30));
+
+    CPPUNIT_ASSERT(DRing::acceptFileTransfer(bobId, convId, id, "RECV", 0)
+                   == DRing::DataTransferError::success);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferFinished; }));
+
+    std::remove("SEND");
+    std::remove("RECV");
+    DRing::unregisterSignalHandlers();
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
 } // namespace test

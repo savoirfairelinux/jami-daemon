@@ -727,7 +727,6 @@ Manager::Manager()
 #endif
     , callFactory()
     , accountFactory()
-    , dataTransfers(std::make_unique<DataTransferFacade>())
     , pimpl_(new ManagerPimpl(*this))
 {}
 
@@ -1741,8 +1740,8 @@ Manager::scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::t
     return pimpl_->scheduler_.schedule(std::move(task), when);
 }
 
-std::shared_ptr<Task> Manager::scheduleTaskIn(std::function<void()>&& task,
-                                std::chrono::steady_clock::duration timeout)
+std::shared_ptr<Task>
+Manager::scheduleTaskIn(std::function<void()>&& task, std::chrono::steady_clock::duration timeout)
 {
     return pimpl_->scheduler_.scheduleIn(std::move(task), timeout);
 }
@@ -3300,11 +3299,15 @@ Manager::setModerator(const std::string& confId, const std::string& peerId, cons
     if (auto conf = getConferenceFromID(confId)) {
         conf->setModerator(peerId, state);
     } else
-        JAMI_WARN("Fail to change moderator %s, conference %s not found", peerId.c_str(), confId.c_str());
+        JAMI_WARN("Fail to change moderator %s, conference %s not found",
+                  peerId.c_str(),
+                  confId.c_str());
 }
 
 void
-Manager::muteParticipant(const std::string& confId, const std::string& participant, const bool& state)
+Manager::muteParticipant(const std::string& confId,
+                         const std::string& participant,
+                         const bool& state)
 {
     if (auto conf = getConferenceFromID(confId)) {
         conf->muteParticipant(participant, state);
