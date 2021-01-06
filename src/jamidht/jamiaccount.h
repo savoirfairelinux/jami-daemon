@@ -33,6 +33,7 @@
 #include "dring/datatransfer_interface.h"
 #include "jamidht/conversation.h"
 #include "multiplexed_socket.h"
+#include "data_transfer.h"
 
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -562,6 +563,9 @@ public:
      */
     void cloneConversation(const std::string& deviceId, const std::string& convId);
 
+    // File transfer
+    DRing::DataTransferId sendFile(const std::string& to, const std::string& path);
+
 private:
     NON_COPYABLE(JamiAccount);
 
@@ -973,6 +977,10 @@ private:
      * @return the conversation id if found else empty
      */
     std::string getOneToOneConversation(const std::string& uri) const;
+
+    //// File transfer
+    std::mutex transferMutex_ {};
+    std::map<std::string, std::unique_ptr<TransferManager>> transferManagers_ {};
 };
 
 static inline std::ostream&

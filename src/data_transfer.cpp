@@ -458,7 +458,7 @@ class OutgoingFileTransfer final : public DataTransfer
 public:
     OutgoingFileTransfer(DRing::DataTransferId tid,
                          const DRing::DataTransferInfo& info,
-                         const InternalCompletionCb& cb);
+                         const InternalCompletionCb& cb = {});
     ~OutgoingFileTransfer() {}
 
     std::shared_ptr<DataTransfer> startNewOutgoing(const std::string& peer_uri)
@@ -536,8 +536,7 @@ OutgoingFileTransfer::close() noexcept
 class IncomingFileTransfer final : public DataTransfer
 {
 public:
-    IncomingFileTransfer(DRing::DataTransferId,
-                         const DRing::DataTransferInfo&,
+    IncomingFileTransfer(const DRing::DataTransferInfo&,
                          DRing::DataTransferId,
                          const InternalCompletionCb& cb);
 
@@ -568,11 +567,10 @@ private:
     std::function<void(const std::string&)> onFilenameCb_ {};
 };
 
-IncomingFileTransfer::IncomingFileTransfer(DRing::DataTransferId tid,
-                                           const DRing::DataTransferInfo& info,
+IncomingFileTransfer::IncomingFileTransfer(const DRing::DataTransferInfo& info,
                                            DRing::DataTransferId internalId,
                                            const InternalCompletionCb& cb)
-    : DataTransfer(tid, cb)
+    : DataTransfer(internalId, cb)
     , internalId_(internalId)
 {
     JAMI_WARN() << "[FTP] incoming transfert of " << info.totalSize
@@ -678,6 +676,150 @@ IncomingFileTransfer::write(std::string_view buffer)
 
 //==============================================================================
 
+class TransferManager::Impl
+{
+public:
+    Impl(const std::string& accountId, const std::string& to)
+        : accountId_(accountId)
+        , to_(to)
+    {}
+
+    std::string accountId_ {};
+    std::string to_ {};
+
+    std::mutex mapMutex_ {};
+    std::map<DRing::DataTransferId, std::shared_ptr<OutgoingFileTransfer>> oMap_ {};
+    std::map<DRing::DataTransferId, std::shared_ptr<IncomingFileTransfer>> iMap_ {};
+};
+
+TransferManager::TransferManager(const std::string& accountId, const std::string& to)
+    : pimpl_ {std::make_unique<Impl>(accountId, to)}
+{}
+
+TransferManager::~TransferManager() {}
+
+DRing::DataTransferId
+TransferManager::sendFile(const std::string& path)
+{
+    auto tid = generateUID();
+    std::size_t found = path.find_last_of(DIR_SEPARATOR_CH);
+    auto filename = path.substr(found + 1);
+
+    DRing::DataTransferInfo info;
+    info.accountId = pimpl_->accountId_;
+    // info.peer = pimpl_->to_; // TODO if no conversation
+    info.conversationId = pimpl_->to_;
+    info.path = path;
+    info.displayName = filename;
+    info.bytesProgress = 0;
+
+    auto transfer = std::make_shared<OutgoingFileTransfer>(tid, info);
+    {
+        std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
+        pimpl_->oMap_.emplace(tid, transfer);
+    }
+    transfer->emit(DRing::DataTransferEventCode::created);
+
+    try {
+        // IMPLEMENTATION NOTE: requestPeerConnection() may call the given callback a multiple time.
+        // This happen when multiple agents handle communications of the given peer for the given
+        // account. Example: Jami account supports multi-devices, each can answer to the request.
+        auto account = Manager::instance().getAccount<JamiAccount>(pimpl_->accountId_);
+        if (!account) {
+            return {};
+        }
+        account->requestConnection(
+            info,
+            tid,
+            false,
+            [transfer](const std::shared_ptr<ChanneledOutgoingTransfer>& out) {
+                JAMI_ERR("@@@ FIRST CB");
+                if (out)
+                    out->linkTransfer(transfer->startNewOutgoing(out->peer()));
+            },
+            [transfer](const std::string& peer) {
+                JAMI_ERR("@@@ SECOND CB");
+                auto allFinished = transfer->cancelWithPeer(peer);
+                if (allFinished and not transfer->hasBeenStarted()) {
+                    transfer->emit(DRing::DataTransferEventCode::unjoinable_peer);
+                    transfer->cancel();
+                    transfer->close();
+                }
+            });
+    } catch (const std::exception& ex) {
+        JAMI_ERR() << "[XFER] exception during sendFile(): " << ex.what();
+        return {};
+    }
+
+    return tid;
+}
+
+bool
+TransferManager::acceptFile(const DRing::DataTransferId& id, const std::string& path)
+{
+    std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
+    auto it = pimpl_->iMap_.find(id);
+    if (it == pimpl_->iMap_.end()) {
+        JAMI_WARN("Cannot accept %lu, request not found", id);
+        return false;
+    }
+    it->second->accept(path, 0);
+    return true;
+}
+
+bool
+TransferManager::cancel(const DRing::DataTransferId& id)
+{
+    auto found = false;
+    std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
+    auto it = pimpl_->iMap_.find(id);
+    if (it != pimpl_->iMap_.end()) {
+        found = true;
+        if (it->second)
+            it->second->close();
+    }
+    auto itO = pimpl_->oMap_.find(id);
+    if (itO != pimpl_->oMap_.end()) {
+        found = true;
+        if (itO->second)
+            itO->second->close();
+    }
+    return found;
+}
+
+void
+TransferManager::createIncomingTransfer(const DRing::DataTransferInfo& info,
+                                        const DRing::DataTransferId& id,
+                                        const InternalCompletionCb& cb)
+{
+    auto transfer = std::make_shared<IncomingFileTransfer>(info, id, cb);
+    {
+        std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
+        pimpl_->iMap_.emplace(id, transfer);
+    }
+    transfer->emit(DRing::DataTransferEventCode::created);
+}
+
+void
+TransferManager::onIncomingFileRequest(const DRing::DataTransferId& id,
+                                       const std::function<void(const IncomingFileInfo&)>& cb)
+{
+    auto it = pimpl_->iMap_.find(id);
+    if (it != pimpl_->iMap_.end()) {
+        auto transfer = it->second;
+        if (!transfer)
+            return;
+        transfer->requestFilename([transfer, id, cb = std::move(cb)](const std::string& filename) {
+            if (!filename.empty() && transfer->start())
+                cb({id, std::static_pointer_cast<Stream>(transfer)});
+            else
+                cb({id, nullptr});
+        });
+    }
+}
+
+//==============================================================================
+
 class DataTransferFacade::Impl
 {
 public:
@@ -730,11 +872,10 @@ DataTransferFacade::Impl::createIncomingFileTransfer(const DRing::DataTransferIn
                                                      const DRing::DataTransferId& internal_id,
                                                      InternalCompletionCb cb)
 {
-    auto tid = generateUID();
-    auto transfer = std::make_shared<IncomingFileTransfer>(tid, info, internal_id, cb);
+    auto transfer = std::make_shared<IncomingFileTransfer>(info, internal_id, cb);
     {
         std::lock_guard<std::mutex> lk {mapMutex_};
-        map_.emplace(tid, transfer);
+        map_.emplace(internal_id, transfer);
     }
     transfer->emit(DRing::DataTransferEventCode::created);
     return transfer;
