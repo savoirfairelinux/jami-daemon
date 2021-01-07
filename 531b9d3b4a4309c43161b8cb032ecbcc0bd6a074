@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "27589ba0_5e140898",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1315,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-07T14:51:53Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027long\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "531b9d3b4a4309c43161b8cb032ecbcc0bd6a074",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ad4cf58b_587441a7",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1358,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-07T14:51:53Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027size_t\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "531b9d3b4a4309c43161b8cb032ecbcc0bd6a074",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
