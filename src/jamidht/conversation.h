@@ -25,8 +25,49 @@
 #include <map>
 #include <memory>
 #include <json/json.h>
+#include <msgpack.hpp>
 
 namespace jami {
+
+/**
+ * A ConversationRequest is a request which corresponds to a trust request, but for conversations
+ * It's signed by the sender and contains the members list, the conversationId, and the metadatas
+ * such as the conversation's vcard, etc. (TODO determine)
+ * Transmitted via the UDP DHT
+ */
+struct ConversationRequest
+{
+    std::string conversationId;
+    std::string from;
+    std::map<std::string, std::string> metadatas;
+
+    time_t received {0};
+    time_t declined {0};
+
+    ConversationRequest() = default;
+    ConversationRequest(const Json::Value& json);
+
+    Json::Value toJson() const;
+    std::map<std::string, std::string> toMap() const;
+
+    MSGPACK_DEFINE_MAP(from, conversationId, metadatas, received, declined)
+};
+
+struct ConvInfo
+{
+    std::string id {};
+    time_t created {0};
+    time_t removed {0};
+    time_t erased {0};
+    std::vector<std::string> members;
+
+    ConvInfo() = default;
+    ConvInfo(const Json::Value& json);
+
+    Json::Value toJson() const;
+
+    MSGPACK_DEFINE_MAP(id, created, removed, erased, members)
+};
 
 class JamiAccount;
 class ConversationRepository;
