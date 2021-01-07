@@ -348,6 +348,8 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a)
     info->contacts = std::make_unique<ContactList>(a.id.second, path_, onChange_);
     info->contacts->setContacts(a.contacts);
     info->contacts->foundAccountDevice(deviceCertificate, ctx.deviceName, clock::now());
+    info->conversations = a.conversations;
+    info->conversationsRequests = a.conversationsRequests;
     info->ethAccount = ethAccount;
     info->announce = std::move(receipt.second);
     info_ = std::move(info);
@@ -559,6 +561,8 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
             archive.config[it.first] = it.second;
     }
     archive.contacts = info_->contacts->getContacts();
+    archive.conversations = info_->conversations;
+    archive.conversationsRequests = info_->conversationsRequests;
 }
 
 void
