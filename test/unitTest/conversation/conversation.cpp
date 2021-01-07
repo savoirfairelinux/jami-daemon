@@ -2646,7 +2646,6 @@ ConversationTest::testNoBadFileInInitialCommit()
 
     Manager::instance().sendRegister(carlaId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return carlaConnected; }));
-    JAMI_ERR("@@@@@@@@@@@22");
     CPPUNIT_ASSERT(carlaAccount->addConversationMember(convId, aliceUri));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
