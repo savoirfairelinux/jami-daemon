@@ -73,6 +73,15 @@ AccountArchive::deserialize(const std::vector<uint8_t>& dat)
                         if (h != dht::InfoHash {})
                             contacts.emplace(h, Contact {*citr});
                     }
+                } else if (key.compare(Conf::CONVERSATIONS_KEY) == 0) {
+                    for (Json::ValueIterator citr = itr->begin(); citr != itr->end(); citr++) {
+                        conversations.emplace_back(ConvInfo(*citr));
+                    }
+                } else if (key.compare(Conf::CONVERSATIONS_REQUESTS_KEY) == 0) {
+                    for (Json::ValueIterator citr = itr->begin(); citr != itr->end(); citr++) {
+                        conversationsRequests.emplace(citr.key().asString(),
+                                                      ConversationRequest(*citr));
+                    }
                 } else if (key.compare(Conf::ETH_KEY) == 0) {
                     eth_key = base64::decode(itr->asString());
                 } else if (key.compare(Conf::RING_ACCOUNT_CRL) == 0) {
@@ -118,6 +127,20 @@ AccountArchive::serialize() const
         Json::Value& jsonContacts = root[Conf::RING_ACCOUNT_CONTACTS];
         for (const auto& c : contacts)
             jsonContacts[c.first.toString()] = c.second.toJson();
+    }
+
+    if (not conversations.empty()) {
+        Json::Value& jsonConversations = root[Conf::CONVERSATIONS_KEY];
+        for (const auto& c : conversations) {
+            jsonConversations.append(c.toJson());
+        }
+    }
+
+    if (not conversationsRequests.empty()) {
+        Json::Value& jsonConversationsReqs = root[Conf::CONVERSATIONS_REQUESTS_KEY];
+        for (const auto& [key, value] : conversationsRequests) {
+            jsonConversationsReqs[key] = value.toJson();
+        }
     }
 
     Json::StreamWriterBuilder wbuilder;
