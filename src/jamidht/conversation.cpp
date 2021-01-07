@@ -31,6 +31,75 @@
 
 namespace jami {
 
+ConvInfo::ConvInfo(const Json::Value& json)
+{
+    id = json["id"].asString();
+    created = json["created"].asLargestUInt();
+    removed = json["removed"].asLargestUInt();
+    erased = json["erased"].asLargestUInt();
+    for (const auto& v : json["members"]) {
+        members.emplace_back(v["uri"].asString());
+    }
+}
+
+Json::Value
+ConvInfo::toJson() const
+{
+    Json::Value json;
+    json["id"] = id;
+    json["created"] = Json::Int64(created);
+    if (removed) {
+        json["removed"] = Json::Int64(removed);
+    }
+    if (erased) {
+        json["erased"] = Json::Int64(erased);
+    }
+    for (const auto& m : members) {
+        Json::Value member;
+        member["uri"] = m;
+        json["members"].append(member);
+    }
+    return json;
+}
+
+// ConversationRequest
+ConversationRequest::ConversationRequest(const Json::Value& json)
+{
+    received = json["received"].asLargestUInt();
+    declined = json["declined"].asLargestUInt();
+    from = json["from"].asString();
+    conversationId = json["conversationId"].asString();
+    auto& md = json["metadatas"];
+    for (const auto& member : md.getMemberNames()) {
+        metadatas.emplace(member, md[member].asString());
+    }
+}
+
+Json::Value
+ConversationRequest::toJson() const
+{
+    Json::Value json;
+    json["conversationId"] = conversationId;
+    json["from"] = from;
+    json["received"] = static_cast<uint32_t>(received);
+    if (declined)
+        json["declined"] = static_cast<uint32_t>(declined);
+    for (const auto& [key, value] : metadatas) {
+        json["metadatas"][key] = value;
+    }
+    return json;
+}
+
+std::map<std::string, std::string>
+ConversationRequest::toMap() const
+{
+    auto result = metadatas;
+    result["id"] = conversationId;
+    result["from"] = from;
+    result["received"] = std::to_string(received);
+    return result;
+}
+
 class Conversation::Impl
 {
 public:
@@ -128,7 +197,9 @@ Conversation::Impl::convCommitToMap(const std::vector<ConversationCommit>& commi
                 repository_->pinCertificates();
             // Get certificate from repo
             try {
-                auto certPath = fileutils::getFullPath(repoPath(), std::string("devices") + DIR_SEPARATOR_STR + authorDevice + ".crt");
+                auto certPath = fileutils::getFullPath(repoPath(),
+                                                       std::string("devices") + DIR_SEPARATOR_STR
+                                                           + authorDevice + ".crt");
                 auto deviceCert = fileutils::loadTextFile(certPath);
                 cert = std::make_shared<crypto::Certificate>(deviceCert);
                 if (!cert) {
@@ -429,15 +500,18 @@ Conversation::mergeHistory(const std::string& uri)
 
     std::unique_lock<std::mutex> lk(pimpl_->writeMtx_);
     // Validate commit
-    auto newCommits = pimpl_->repository_->validFetch(uri);
+    auto [newCommits, err] = pimpl_->repository_->validFetch(uri);
     if (newCommits.empty()) {
-        JAMI_ERR("Could not validate history with %s", uri.c_str());
+        if (err)
+            JAMI_ERR("Could not validate history with %s", uri.c_str());
+        pimpl_->repository_->removeBranchWith(uri);
         return {};
     }
 
     // If validated, merge
     if (!pimpl_->repository_->merge(remoteHead)) {
         JAMI_ERR("Could not merge history with %s", uri.c_str());
+        pimpl_->repository_->removeBranchWith(uri);
         return {};
     }
     lk.unlock();
