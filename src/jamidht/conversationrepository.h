@@ -240,8 +240,20 @@ public:
     std::string voteKick(const std::string& uri, bool isDevice);
     std::string resolveVote(const std::string& uri, bool isDevice);
 
-    std::vector<ConversationCommit> validFetch(const std::string& remoteDevice) const;
+    /**
+     * Validate a fetch with remote device
+     * @param remotedevice
+     * @return the validated commits and if an error occurs
+     */
+    std::pair<std::vector<ConversationCommit>, bool> validFetch(
+        const std::string& remoteDevice) const;
     bool validClone() const;
+
+    /**
+     * Delete branch with remote
+     * @param remoteDevice
+     */
+    void removeBranchWith(const std::string& remoteDevice);
 
     /**
      * One to one util, get initial members
@@ -259,7 +271,6 @@ public:
      * To use after a merge with member's events, refresh members knowledge
      */
     void refreshMembers() const;
-
 
     /**
      * Because conversations can contains non contacts certificates, this methods
