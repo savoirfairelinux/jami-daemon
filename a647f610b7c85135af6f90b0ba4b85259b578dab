@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "202f441b_8d48f424",
+        "filename": "bin/jni/conversation.i",
+        "patchSetId": 24
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-01-07T19:27:03Z",
+      "side": 1,
+      "message": "use int or int32_t if possible, otherwise the type is mapped as long in JNI",
+      "range": {
+        "startLine": 33,
+        "startChar": 152,
+        "endLine": 33,
+        "endChar": 160
+      },
+      "revId": "a647f610b7c85135af6f90b0ba4b85259b578dab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
