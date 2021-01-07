@@ -18,6 +18,7 @@
 #pragma once
 
 #include "jami_contact.h"
+#include "jamidht/jamiaccount.h"
 #include "fileutils.h"
 
 #include <opendht/crypto.h>
@@ -48,6 +49,10 @@ struct AccountArchive
 
     /** Contacts */
     std::map<dht::InfoHash, Contact> contacts;
+
+    // Conversations
+    std::vector<ConvInfo> conversations;
+    std::map<std::string, ConversationRequest> conversationsRequests;
 
     /** Account configuration */
     std::map<std::string, std::string> config;
