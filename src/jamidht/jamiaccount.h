@@ -31,6 +31,7 @@
 #include "security/diffie-hellman.h"
 #include "sip/sipaccountbase.h"
 #include "dring/datatransfer_interface.h"
+#include "jamidht/conversation.h"
 #include "multiplexed_socket.h"
 
 #include "noncopyable.h"
@@ -84,32 +85,6 @@ class AccountManager;
 struct AccountInfo;
 class SipTransport;
 class ChanneledOutgoingTransfer;
-class Conversation;
-struct ConvInfo;
-
-/**
- * A ConversationRequest is a request which corresponds to a trust request, but for conversations
- * It's signed by the sender and contains the members list, the conversationId, and the metadatas
- * such as the conversation's vcard, etc. (TODO determine)
- * Transmitted via the UDP DHT
- */
-struct ConversationRequest
-{
-    std::string conversationId;
-    std::string from;
-    std::map<std::string, std::string> metadatas;
-
-    time_t received {0};
-    time_t declined {0};
-
-    ConversationRequest() = default;
-    ConversationRequest(const Json::Value& json);
-
-    Json::Value toJson() const;
-    std::map<std::string, std::string> toMap() const;
-
-    MSGPACK_DEFINE_MAP(conversationId, metadatas, received, declined)
-};
 
 using SipConnectionKey = std::pair<std::string /* accountId */, DeviceId>;
 using GitSocketList = std::map<std::string,                            /* device Id */
@@ -527,7 +502,7 @@ public:
                                   const std::string& contactUri,
                                   bool isDevice = false);
     std::vector<std::map<std::string, std::string>> getConversationMembers(
-        const std::string& conversationId);
+        const std::string& conversationId) const;
 
     // Message send/load
     void sendMessage(const std::string& conversationId,
@@ -568,8 +543,17 @@ public:
 
     // Invites
     void onConversationRequest(const std::string& from, const Json::Value&) override;
+    void onNeedConversationRequest(const std::string& from,
+                                   const std::string& conversationId) override;
 
     void monitor() const;
+
+    /**
+     * Clone a conversation (initial) from device
+     * @param deviceId
+     * @param convId
+     */
+    void cloneConversation(const std::string& deviceId, const std::string& convId);
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -773,7 +757,7 @@ private:
         std::lock_guard<std::mutex> lk(conversationsMtx_);
         return conversations_.find(convId) != conversations_.end();
     }
-    std::vector<ConvInfo> convInfos_;
+    mutable std::vector<ConvInfo> convInfos_;
 
     mutable std::mutex dhtValuesMtx_;
     bool dhtPublicInCalls_ {true};
