@@ -2714,24 +2714,38 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
     return {};
 }
 
-std::vector<ConversationCommit>
+std::pair<std::vector<ConversationCommit>, bool>
 ConversationRepository::validFetch(const std::string& remoteDevice) const
 {
     auto newCommit = remoteHead(remoteDevice);
     if (not pimpl_ or newCommit.empty())
-        return {};
+        return {{}, false};
     auto commitsToValidate = pimpl_->behind(newCommit);
     std::reverse(std::begin(commitsToValidate), std::end(commitsToValidate));
     auto isValid = pimpl_->validCommits(commitsToValidate);
     if (isValid)
-        return commitsToValidate;
-    return {};
+        return {commitsToValidate, false};
+    return {{}, true};
 }
 
 bool
 ConversationRepository::validClone() const
 {
     return pimpl_->validCommits(logN("", 0));
+}
+
+void
+ConversationRepository::removeBranchWith(const std::string& remoteDevice)
+{
+    git_remote* remote_ptr = nullptr;
+    auto repo = pimpl_->repository();
+    if (git_remote_lookup(&remote_ptr, repo.get(), remoteDevice.c_str()) < 0) {
+        JAMI_WARN("No remote found with id: %s", remoteDevice.c_str());
+        return;
+    }
+    GitRemote remote {remote_ptr, git_remote_free};
+
+    git_remote_prune(remote.get(), nullptr);
 }
 
 std::vector<std::string>
