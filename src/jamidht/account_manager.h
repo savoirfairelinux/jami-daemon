@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include "jamidht/conversation.h"
 #include "contact_list.h"
 #include "logger.h"
 #if HAVE_RINGNS
@@ -45,6 +46,8 @@ struct AccountInfo
 {
     dht::crypto::Identity identity;
     std::unique_ptr<ContactList> contacts;
+    std::vector<ConvInfo> conversations;
+    std::map<std::string, ConversationRequest> conversationsRequests;
     std::string accountId;
     std::string deviceId;
     std::shared_ptr<dht::Value> announce;
@@ -210,6 +213,20 @@ public:
     void addContact(const std::string& uri, bool confirmed = false);
     void removeContact(const std::string& uri, bool banned = true);
     std::vector<std::map<std::string, std::string>> getContacts() const;
+
+    // Conversations
+    void setConversations(const std::vector<ConvInfo>& newConv)
+    {
+        if (info_) {
+            info_->conversations = newConv;
+        }
+    }
+    void setConversationsRequests(const std::map<std::string, ConversationRequest>& newConvReq)
+    {
+        if (info_) {
+            info_->conversationsRequests = newConvReq;
+        }
+    }
 
     /** Obtain details about one account contact in serializable form. */
     std::map<std::string, std::string> getContactDetails(const std::string& uri) const;
