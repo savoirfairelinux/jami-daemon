@@ -275,17 +275,14 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
             // Add trust request
             req = trustRequests_
                       .emplace(peer_account,
-                               TrustRequest {peer_device,
-                                             conversationId,
-                                             received,
-                                             std::move(payload)})
+                               TrustRequest {peer_device, conversationId, received, payload})
                       .first;
         } else {
             // Update trust request
             if (received < req->second.received) {
                 req->second.device = peer_device;
                 req->second.received = received;
-                req->second.payload = std::move(payload);
+                req->second.payload = payload;
             } else {
                 JAMI_DBG("[Contacts] Ignoring outdated trust request from %s",
                          peer_account.toString().c_str());
@@ -294,7 +291,7 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
         saveTrustRequests();
     }
     // Note: call JamiAccount's callback to build ConversationRequest anyway
-    callbacks_.trustRequest(peer_account.toString(), conversationId, payload, received);
+    callbacks_.trustRequest(peer_account.toString(), conversationId, std::move(payload), received);
     return accept;
 }
 
