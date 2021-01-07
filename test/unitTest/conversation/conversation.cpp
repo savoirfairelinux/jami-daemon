@@ -681,8 +681,7 @@ ConversationTest::testAddOfflineMemberThenConnects()
 
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, carlaUri));
     Manager::instance().sendRegister(carlaId, true);
-    cv.wait_for(lk, std::chrono::seconds(60));
-    CPPUNIT_ASSERT(requestReceived);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] { return requestReceived; }));
 
     carlaAccount->acceptConversationRequest(convId);
     cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; });
@@ -1001,19 +1000,21 @@ ConversationTest::testSendMessageToMultipleParticipants()
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
+    bool carlaConnected = false;
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string&, const std::map<std::string, std::string>&) {
                 auto details = carlaAccount->getVolatileAccountDetails();
                 auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
                 if (daemonStatus == "REGISTERED") {
+                    carlaConnected = true;
                     cv.notify_one();
                 }
             }));
     DRing::registerSignalHandlers(confHandlers);
 
     Manager::instance().sendRegister(carlaId, true);
-    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] { return carlaConnected; }));
     confHandlers.clear();
     DRing::unregisterSignalHandlers();
 
@@ -1378,14 +1379,14 @@ ConversationTest::testMemberBanNoBadFile()
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     aliceAccount->trackBuddyPresence(carlaUri, true);
-    Manager::instance().sendRegister(carlaId, true);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
-         voteMessageGenerated = false, messageBobReceived = false, errorDetected = false;
+         voteMessageGenerated = false, messageBobReceived = false, errorDetected = false,
+         carlaConnected = false;
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
@@ -1393,6 +1394,16 @@ ConversationTest::testMemberBanNoBadFile()
                 std::map<std::string, std::string> /*metadatas*/) {
                 requestReceived = true;
                 cv.notify_one();
+            }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = carlaAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    carlaConnected = true;
+                    cv.notify_one();
+                }
             }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
@@ -1425,6 +1436,8 @@ ConversationTest::testMemberBanNoBadFile()
             cv.notify_one();
         }));
     DRing::registerSignalHandlers(confHandlers);
+    Manager::instance().sendRegister(carlaId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] { return carlaConnected; }));
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return requestReceived && memberMessageGenerated;
@@ -2204,21 +2217,31 @@ ConversationTest::testMemberCannotBanOther()
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     aliceAccount->trackBuddyPresence(carlaUri, true);
-    Manager::instance().sendRegister(carlaId, true);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
-         voteMessageGenerated = false, messageBobReceived = false, errorDetected = false;
+         voteMessageGenerated = false, messageBobReceived = false, errorDetected = false,
+         carlaConnected = false;
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
+            [&](const std::string& accountId,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
                 requestReceived = true;
                 cv.notify_one();
+            }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = carlaAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    carlaConnected = true;
+                    cv.notify_one();
+                }
             }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
@@ -2251,6 +2274,8 @@ ConversationTest::testMemberCannotBanOther()
             cv.notify_one();
         }));
     DRing::registerSignalHandlers(confHandlers);
+    Manager::instance().sendRegister(carlaId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] { return carlaConnected; }));
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return requestReceived && memberMessageGenerated;
@@ -2260,6 +2285,7 @@ ConversationTest::testMemberCannotBanOther()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberMessageGenerated; }));
     requestReceived = false;
+    memberMessageGenerated = false;
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, carlaUri));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return requestReceived && memberMessageGenerated;
@@ -2293,14 +2319,14 @@ ConversationTest::testCheckAdminFakeAVoteIsDetected()
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     aliceAccount->trackBuddyPresence(carlaUri, true);
-    Manager::instance().sendRegister(carlaId, true);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
-         voteMessageGenerated = false, messageBobReceived = false, errorDetected = false;
+         voteMessageGenerated = false, messageBobReceived = false, errorDetected = false,
+         carlaConnected = false;
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
@@ -2330,6 +2356,16 @@ ConversationTest::testCheckAdminFakeAVoteIsDetected()
             }
             cv.notify_one();
         }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = carlaAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    carlaConnected = true;
+                    cv.notify_one();
+                }
+            }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::OnConversationError>(
         [&](const std::string& /* accountId */,
             const std::string& /* conversationId */,
@@ -2340,6 +2376,8 @@ ConversationTest::testCheckAdminFakeAVoteIsDetected()
             cv.notify_one();
         }));
     DRing::registerSignalHandlers(confHandlers);
+    Manager::instance().sendRegister(carlaId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] { return carlaConnected; }));
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return requestReceived && memberMessageGenerated;
@@ -2377,14 +2415,14 @@ ConversationTest::testVoteNonEmpty()
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     aliceAccount->trackBuddyPresence(carlaUri, true);
-    Manager::instance().sendRegister(carlaId, true);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
-         voteMessageGenerated = false, messageBobReceived = false, errorDetected = false;
+         voteMessageGenerated = false, messageBobReceived = false, errorDetected = false,
+         carlaConnected = false;
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
@@ -2400,6 +2438,16 @@ ConversationTest::testVoteNonEmpty()
                 cv.notify_one();
             }
         }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = carlaAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    carlaConnected = true;
+                    cv.notify_one();
+                }
+            }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& conversationId,
@@ -2424,6 +2472,8 @@ ConversationTest::testVoteNonEmpty()
             cv.notify_one();
         }));
     DRing::registerSignalHandlers(confHandlers);
+    Manager::instance().sendRegister(carlaId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] { return carlaConnected; }));
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return requestReceived && memberMessageGenerated;
@@ -2646,7 +2696,6 @@ ConversationTest::testNoBadFileInInitialCommit()
 
     Manager::instance().sendRegister(carlaId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return carlaConnected; }));
-    JAMI_ERR("@@@@@@@@@@@22");
     CPPUNIT_ASSERT(carlaAccount->addConversationMember(convId, aliceUri));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
@@ -2743,14 +2792,15 @@ ConversationTest::testVoteNoBadFile()
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
     aliceAccount->trackBuddyPresence(carlaUri, true);
-    Manager::instance().sendRegister(carlaId, true);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
-         voteMessageGenerated = false, messageBobReceived = false, messageCarlaReceived = false;
+         voteMessageGenerated = false, messageBobReceived = false, messageCarlaReceived = false,
+         carlaConnected = true;
+    ;
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& /*accountId*/,
@@ -2766,6 +2816,16 @@ ConversationTest::testVoteNoBadFile()
                 cv.notify_one();
             }
         }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = carlaAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    carlaConnected = true;
+                    cv.notify_one();
+                }
+            }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& conversationId,
@@ -2788,6 +2848,9 @@ ConversationTest::testVoteNoBadFile()
             cv.notify_one();
         }));
     DRing::registerSignalHandlers(confHandlers);
+    Manager::instance().sendRegister(carlaId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return carlaConnected; }));
+
     CPPUNIT_ASSERT(aliceAccount->addConversationMember(convId, bobUri));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return requestReceived && memberMessageGenerated;
@@ -3033,6 +3096,7 @@ ConversationTest::testMemberJoinsNoBadFile()
                        + DIR_SEPARATOR_STR + "convInfo";
     auto ciPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
                        + DIR_SEPARATOR_STR + "convInfo";
+    std::remove(ciPathCarla.c_str());
     std::filesystem::copy(ciPathAlice, ciPathCarla);
 
     // Accept for alice and makes different heads
@@ -3105,6 +3169,7 @@ ConversationTest::testMemberAddedNoCertificate()
                        + DIR_SEPARATOR_STR + "convInfo";
     auto ciPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
                        + DIR_SEPARATOR_STR + "convInfo";
+    std::remove(ciPathCarla.c_str());
     std::filesystem::copy(ciPathAlice, ciPathCarla);
 
     // Remove invite but do not add member certificate
@@ -3186,6 +3251,7 @@ ConversationTest::testMemberJoinsInviteRemoved()
                        + DIR_SEPARATOR_STR + "convInfo";
     auto ciPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
                        + DIR_SEPARATOR_STR + "convInfo";
+    std::remove(ciPathCarla.c_str());
     std::filesystem::copy(ciPathAlice, ciPathCarla);
 
     // Let invited, but add /members + /devices
@@ -3993,6 +4059,7 @@ END:VCARD";
             const std::string& /*from*/,
             const std::vector<uint8_t>& payload,
             time_t /*received*/) {
+            auto pstr = std::string(payload.begin(), payload.begin() + payload.size());
             if (account_id == bobId
                 && std::string(payload.data(), payload.data() + payload.size()) == vcard)
                 requestReceived = true;
@@ -4020,7 +4087,7 @@ END:VCARD";
     aliceAccount->addContact(bobUri);
     std::vector<uint8_t> payload(vcard.begin(), vcard.end());
     aliceAccount->sendTrustRequest(bobUri, payload);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&]() {
         return !convId.empty() && requestReceived;
     }));
 }
