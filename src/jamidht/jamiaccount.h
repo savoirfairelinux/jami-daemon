@@ -575,6 +575,8 @@ public:
 
     // Invites
     void onConversationRequest(const std::string& from, const Json::Value&) override;
+    void onNeedConversationRequest(const std::string& from,
+                                   const std::string& conversationId) override;
 
     void monitor() const;
 

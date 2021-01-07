@@ -3858,7 +3858,9 @@ JamiAccount::acceptConversationRequest(const std::string& conversationId)
     std::unique_lock<std::mutex> lk(conversationsRequestsMtx_);
     auto request = conversationsRequests_.find(conversationId);
     if (request == conversationsRequests_.end()) {
-        JAMI_WARN("Request not found for conversation %s", conversationId.c_str());
+        JAMI_WARN("[Account %s] Request not found for conversation %s",
+                  getAccountID().c_str(),
+                  conversationId.c_str());
         return;
     }
     {
@@ -4152,7 +4154,9 @@ JamiAccount::addConversationMember(const std::string& conversationId,
     }
 
     if (it->second->isMember(contactUri, true)) {
-        JAMI_DBG("%s is already a member of %s, resend invite", contactUri.c_str(), conversationId.c_str());
+        JAMI_DBG("%s is already a member of %s, resend invite",
+                 contactUri.c_str(),
+                 conversationId.c_str());
         // Note: This should not be necessary, but if for whatever reason the other side didn't join
         // we should not forbid new invites
         sendTextMessage(contactUri, it->second->generateInvitation());
@@ -4508,9 +4512,10 @@ JamiAccount::fetchNewCommits(const std::string& peer,
             if (pendingConversationsFetch_.find(conversationId) != pendingConversationsFetch_.end())
                 return;
         }
-        JAMI_WARN("[Account %s] Could not find conversation %s",
+        JAMI_WARN("[Account %s] Could not find conversation %s, ask for an invite",
                   getAccountID().c_str(),
                   conversationId.c_str());
+        sendTextMessage(peer, {{"application/invite", conversationId}});
     }
 }
 
@@ -4543,6 +4548,29 @@ JamiAccount::onConversationRequest(const std::string& from, const Json::Value& v
     emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(accountID_,
                                                                        convId,
                                                                        req.toMap());
+}
+
+void
+JamiAccount::onNeedConversationRequest(const std::string& from, const std::string& conversationId)
+{
+    // Check if conversation exists
+    std::unique_lock<std::mutex> lk(conversationsMtx_);
+    auto itConv = conversations_.find(conversationId);
+    if (itConv != conversations_.end() && !itConv->second->isRemoving()) {
+        // Check if isMember
+        if (!itConv->second->isMember(from, true)) {
+            JAMI_WARN("%s is asking a new invite for %s, but not a member",
+                      from.c_str(),
+                      conversationId.c_str());
+            return;
+        }
+
+        // Send new invite
+        auto invite = itConv->second->generateInvitation();
+        lk.unlock();
+        JAMI_DBG("%s is asking a new invite for %s", from.c_str(), conversationId.c_str());
+        sendTextMessage(from, invite);
+    }
 }
 
 void
