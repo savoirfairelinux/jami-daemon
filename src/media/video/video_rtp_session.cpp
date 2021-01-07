@@ -145,15 +145,15 @@ VideoRtpSession::startSender()
         try {
             sender_.reset();
             socketPair_->stopSendOp(false);
-            MediaStream ms = !conference_ ?
+            MediaStream ms = //!conference_ ?
                         MediaStream("video sender",
                             AV_PIX_FMT_YUV420P,
                             1 / static_cast<rational<int>>(localVideoParams_.framerate),
                             localVideoParams_.width,
                             localVideoParams_.height,
                             send_.bitrate,
-                            static_cast<rational<int>>(localVideoParams_.framerate)) :
-                        conference_->getVideoMixer()->getStream("Video Sender");
+                                    static_cast<rational<int>>(localVideoParams_.framerate));// :
+                        //conference_->getVideoMixer()->getStream("Video Sender");
             sender_.reset(new VideoSender(getRemoteRtpUri(),
                                         ms,
                                         send_,
