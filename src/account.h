@@ -320,6 +320,8 @@ public:
 
     // Invites
     virtual void onConversationRequest(const std::string& from, const Json::Value&) {};
+    virtual void onNeedConversationRequest(const std::string& from,
+                                           const std::string& conversationId) {};
 
     /**
      * Helper function used to load the default codec order from the codec factory
