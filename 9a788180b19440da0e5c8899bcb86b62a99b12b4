@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2f0ed18b_8751241e",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 156,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-08T15:34:38Z",
+      "side": 1,
+      "message": "just in case, stoull can throw, should be catched",
+      "range": {
+        "startLine": 156,
+        "startChar": 30,
+        "endLine": 156,
+        "endChar": 47
+      },
+      "revId": "9a788180b19440da0e5c8899bcb86b62a99b12b4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ec010028_5f05cf49",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-08T15:34:38Z",
+      "side": 1,
+      "message": "old cast style",
+      "range": {
+        "startLine": 158,
+        "startChar": 16,
+        "endLine": 158,
+        "endChar": 27
+      },
+      "revId": "9a788180b19440da0e5c8899bcb86b62a99b12b4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d5d8378e_117bca1d",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 246,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-08T15:34:38Z",
+      "side": 1,
+      "message": "can be in a var, and used by handlers.erase(it)",
+      "range": {
+        "startLine": 246,
+        "startChar": 35,
+        "endLine": 246,
+        "endChar": 64
+      },
+      "revId": "9a788180b19440da0e5c8899bcb86b62a99b12b4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
