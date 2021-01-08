@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0c7d5af7_6c8902aa",
+        "filename": "src/conference.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 653,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-01-08T17:00:57Z",
+      "side": 1,
+      "message": "Compute isMuted(host) once:\n\n        auto mutedIt \u003d participantsMuted_.find(\"host\"sv);\n        if (state and mutedIt \u003d\u003d participantsMuted_.end()) {\n            participantsMuted_.emplace(\"host\"sv);\n            if (not audioMuted_) {\n                JAMI_DBG(\"Mute host\");\n                unbindHost();\n            }\n        } else if (not state and mutedIt !\u003d participantsMuted_.end()) {\n            participantsMuted_.erase(mutedIt);\n            if (not audioMuted_) {\n                JAMI_DBG(\"Unmute host\");\n                bindHost();\n            }\n        }",
+      "range": {
+        "startLine": 640,
+        "startChar": 22,
+        "endLine": 653,
+        "endChar": 9
+      },
+      "revId": "a482d425072bdd2589ad49d21528ab1a9121d5a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
