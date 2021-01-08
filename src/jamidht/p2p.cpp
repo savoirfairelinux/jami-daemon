@@ -76,14 +76,6 @@ public:
 
     std::weak_ptr<JamiAccount> account;
 
-    bool hasPublicIp(const ICESDP& sdp)
-    {
-        for (const auto& cand : sdp.rem_candidates)
-            if (cand.type == PJ_ICE_CAND_TYPE_SRFLX)
-                return true;
-        return false;
-    }
-
     std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<TlsSocketEndpoint>>
         waitForReadyEndpoints_;
     std::mutex waitForReadyMtx_ {};
