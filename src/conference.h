@@ -276,8 +276,8 @@ private:
 #endif
 
     std::shared_ptr<jami::AudioInput> audioMixer_;
-    std::set<std::string> moderators_ {};
-    std::set<std::string> participantsMuted_ {};
+    std::set<std::string, std::less<>> moderators_ {};
+    std::set<std::string, std::less<>> participantsMuted_ {};
 
     void initRecorder(std::shared_ptr<MediaRecorder>& rec);
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec);
