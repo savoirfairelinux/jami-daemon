@@ -411,8 +411,7 @@ Conference::bindHost()
 
     for (const auto& item : participants_) {
         if (auto call = Manager::instance().getCallFromCallID(item)) {
-            auto uri = string_remove_suffix(call->getPeerNumber(), '@');
-            if (isMuted(uri))
+            if (isMuted(string_remove_suffix(call->getPeerNumber(), '@')))
                 continue;
             rbPool.bindCallID(item, RingBufferPool::DEFAULT_ID);
             rbPool.flush(RingBufferPool::DEFAULT_ID);
@@ -581,12 +580,7 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
 bool
 Conference::isModerator(std::string_view uri) const
 {
-    return std::find_if(moderators_.begin(),
-                        moderators_.end(),
-                        [&uri](std::string_view moderator) {
-                            return moderator.find(uri) != std::string_view::npos;
-                        })
-           != moderators_.end() or isHost(uri);
+    return moderators_.find(uri) != moderators_.end() or isHost(uri);
 }
 
 void
@@ -595,12 +589,13 @@ Conference::setModerator(const std::string& uri, const bool& state)
     for (const auto& p : participants_) {
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
             auto partURI = string_remove_suffix(call->getPeerNumber(), '@');
+            auto isURIModerator = isModerator(uri);
             if (partURI == uri) {
-                if (state and not isModerator(uri)) {
+                if (state and not isURIModerator) {
                     JAMI_DBG("Add %s as moderator", partURI.data());
                     moderators_.emplace(uri);
                     updateModerators();
-                } else if (not state and isModerator(uri)) {
+                } else if (not state and isURIModerator) {
                     JAMI_DBG("Remove %s as moderator", partURI.data());
                     moderators_.erase(uri);
                     updateModerators();
@@ -625,12 +620,7 @@ Conference::updateModerators()
 bool
 Conference::isMuted(std::string_view uri) const
 {
-    return std::find_if(participantsMuted_.begin(),
-                        participantsMuted_.end(),
-                        [&uri](std::string_view pMuted) {
-                            return pMuted.find(uri) != std::string_view::npos;
-                        })
-           != participantsMuted_.end();
+    return participantsMuted_.find(uri) != participantsMuted_.end();
 }
 
 void
@@ -638,13 +628,14 @@ Conference::muteParticipant(const std::string& uri, const bool& state)
 {
     // Moderator mute host
     if (isHost(uri)) {
-        if (state and not isMuted("host")) {
-            participantsMuted_.emplace("host");
+        auto isHostMuted = isMuted("host"sv);
+        if (state and not isHostMuted) {
+            participantsMuted_.emplace("host"sv);
             if (not audioMuted_) {
                 JAMI_DBG("Mute host");
                 unbindHost();
             }
-        } else if (not state and isMuted("host")) {
+        } else if (not state and isHostMuted) {
             participantsMuted_.erase("host");
             if (not audioMuted_) {
                 JAMI_DBG("Unmute host");
@@ -660,13 +651,14 @@ Conference::muteParticipant(const std::string& uri, const bool& state)
     for (const auto& p : participants_) {
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
             auto partURI = string_remove_suffix(call->getPeerNumber(), '@');
+            auto isPartMuted = isMuted(partURI);
             if (partURI == peerURI) {
-                if (state and not isMuted(partURI)) {
+                if (state and not isPartMuted) {
                     JAMI_DBG("Mute participant %.*s", (int)partURI.size(), partURI.data());
                     participantsMuted_.emplace(std::string(partURI));
                     unbindParticipant(p);
                     updateMuted();
-                } else if (not state and isMuted(partURI)) {
+                } else if (not state and isPartMuted) {
                     JAMI_DBG("Unmute participant %.*s", (int)partURI.size(), partURI.data());
                     participantsMuted_.erase(std::string(partURI));
                     bindParticipant(p);
@@ -769,10 +761,11 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
     if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
         if (is_muted == audioMuted_)
             return;
-        if (is_muted and not audioMuted_ and not isMuted("host")) {
+        auto isHostMuted = isMuted("host"sv);
+        if (is_muted and not audioMuted_ and not isHostMuted) {
             JAMI_DBG("Local audio mute host");
             unbindHost();
-        } else if (not is_muted and audioMuted_ and not isMuted("host") ) {
+        } else if (not is_muted and audioMuted_ and not isHostMuted ) {
             JAMI_DBG("Local audio unmute host");
             bindHost();
         }
