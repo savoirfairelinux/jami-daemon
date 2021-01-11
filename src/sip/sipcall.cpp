@@ -1635,7 +1635,6 @@ SIPCall::initIceMediaTransport(bool master,
         JAMI_ERR("No account detected");
         return false;
     }
-    std::lock_guard<std::mutex> lk(transportMtx_);
     JAMI_DBG("[call:%s] create media ICE transport", getCallId().c_str());
     auto iceOptions = options == std::nullopt ? acc->getIceOptions() : *options;
 
@@ -1677,10 +1676,16 @@ SIPCall::initIceMediaTransport(bool master,
     };
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    tmpMediaTransport_ = iceTransportFactory.createUTransport(getCallId().c_str(),
+    auto transport = iceTransportFactory.createUTransport(getCallId().c_str(),
                                                               channel_num,
                                                               master,
                                                               iceOptions);
+    std::lock_guard<std::mutex> lk(transportMtx_);
+    // Destroy old ice on a separate io pool
+    if (tmpMediaTransport_)
+        dht::ThreadPool::io().run([ice = std::make_shared<decltype(tmpMediaTransport_)>(
+                                        std::move(tmpMediaTransport_))] {});
+    tmpMediaTransport_ = std::move(transport);
     return static_cast<bool>(tmpMediaTransport_);
 }
 
