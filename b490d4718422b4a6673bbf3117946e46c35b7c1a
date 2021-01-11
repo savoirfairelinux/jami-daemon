@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "38af5a67_34cd205d",
+        "filename": "bin/dbus/cx.ring.Ring.PluginManagerInterface.xml",
+        "patchSetId": 18
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-11T20:55:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "da247b52_72092aa1",
+      "range": {
+        "startLine": 111,
+        "startChar": 31,
+        "endLine": 111,
+        "endChar": 35
+      },
+      "revId": "b490d4718422b4a6673bbf3117946e46c35b7c1a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "397c07e4_58390784",
         "filename": "src/plugin/callservicesmanager.h",
         "patchSetId": 18
@@ -45,6 +69,30 @@
       "revId": "b490d4718422b4a6673bbf3117946e46c35b7c1a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "af668cf0_fd3d9993",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 18
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-11T20:55:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "397c07e4_58390784",
+      "range": {
+        "startLine": 69,
+        "startChar": 16,
+        "endLine": 69,
+        "endChar": 42
+      },
+      "revId": "b490d4718422b4a6673bbf3117946e46c35b7c1a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "f480294f_f724883d",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 18
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-11T20:55:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "58e63b98_581d4a0c",
+      "range": {
+        "startLine": 75,
+        "startChar": 1,
+        "endLine": 75,
+        "endChar": 18
+      },
+      "revId": "b490d4718422b4a6673bbf3117946e46c35b7c1a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4f28f884_2c8b9327",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 18
@@ -82,6 +154,30 @@
       "writtenOn": "2021-01-11T18:43:56Z",
       "side": 1,
       "message": "can use a _pointer_cast",
+      "range": {
+        "startLine": 47,
+        "startChar": 33,
+        "endLine": 47,
+        "endChar": 44
+      },
+      "revId": "b490d4718422b4a6673bbf3117946e46c35b7c1a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "59ea417f_0ce73ba3",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 18
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-11T20:55:51Z",
+      "side": 1,
+      "message": "got errors build with static_pointer_cast",
+      "parentUuid": "4f28f884_2c8b9327",
       "range": {
         "startLine": 47,
         "startChar": 33,
