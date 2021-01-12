@@ -134,6 +134,11 @@ private:
     void initH263(AVCodecContext* encoderCtx, uint64_t br);
     bool isDynBitrateSupported(AVCodecID codecid);
     void initAccel(AVCodecContext* encoderCtx, uint64_t br);
+    int getHWFrame(VideoFrame& input, std::shared_ptr<VideoFrame>* output);
+    std::shared_ptr<VideoFrame> getFullpipelineFrame(VideoFrame& input);
+    std::shared_ptr<VideoFrame> getUnlinkedHWFrame(VideoFrame& input);
+    std::shared_ptr<VideoFrame> getHWFrameFromSWFrame(VideoFrame& input);
+    std::shared_ptr<VideoFrame> getScaledSWFrame(VideoFrame& input);
 
     std::vector<AVCodecContext*> encoders_;
     AVFormatContext* outputCtx_ = nullptr;
@@ -150,7 +155,7 @@ private:
 
 #ifdef ENABLE_VIDEO
     video::VideoScaler scaler_;
-    VideoFrame scaledFrame_;
+    std::shared_ptr<VideoFrame> scaledFrame_;
 #endif // ENABLE_VIDEO
 
     std::vector<uint8_t> scaledFrameBuffer_;
