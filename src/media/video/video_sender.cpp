@@ -72,16 +72,16 @@ VideoSender::~VideoSender()
 }
 
 void
-VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
+VideoSender::encodeAndSendVideo(const std::shared_ptr<VideoFrame>& input_frame)
 {
-    int angle = input_frame.getOrientation();
+    int angle = input_frame->getOrientation();
     if (rotation_ != angle) {
         rotation_ = angle;
         if (changeOrientationCallback_)
             changeOrientationCallback_(rotation_);
     }
 
-    if (auto packet = input_frame.packet()) {
+    if (auto packet = input_frame->packet()) {
 #if __ANDROID__
         if (forceKeyFrame_) {
             emitSignal<DRing::VideoSignal::RequestKeyFrame>();
@@ -109,7 +109,7 @@ void
 VideoSender::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                     const std::shared_ptr<MediaFrame>& frame_p)
 {
-    encodeAndSendVideo(*std::static_pointer_cast<VideoFrame>(frame_p));
+    encodeAndSendVideo(std::dynamic_pointer_cast<VideoFrame>(frame_p));
 }
 
 void
