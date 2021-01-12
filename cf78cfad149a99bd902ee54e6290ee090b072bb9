@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "eacaddef_70fc1214",
+        "filename": "bin/jni/configurationmanager.i",
+        "patchSetId": 9
+      },
+      "lineNbr": 235,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-12T15:22:51Z",
+      "side": 1,
+      "message": "no const",
+      "range": {
+        "startLine": 235,
+        "startChar": 57,
+        "endLine": 235,
+        "endChar": 62
+      },
+      "revId": "cf78cfad149a99bd902ee54e6290ee090b072bb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6e183aae_aa8352d5",
+        "filename": "configure.ac",
+        "patchSetId": 9
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-12T15:22:51Z",
+      "side": 1,
+      "message": "9.10 as not major",
+      "range": {
+        "startLine": 5,
+        "startChar": 23,
+        "endLine": 5,
+        "endChar": 27
+      },
+      "revId": "cf78cfad149a99bd902ee54e6290ee090b072bb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7208b008_b1c8954c",
+        "filename": "src/conference.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-12T15:22:51Z",
+      "side": 1,
+      "message": "i think this can\u0027t be true, getAllAccounts() return non nullptr",
+      "range": {
+        "startLine": 192,
+        "startChar": 30,
+        "endLine": 193,
+        "endChar": 32
+      },
+      "revId": "cf78cfad149a99bd902ee54e6290ee090b072bb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4227f64f_cb3086c8",
+        "filename": "src/manager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 3310,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-12T15:22:51Z",
+      "side": 1,
+      "message": "return as acc-\u003e will segv",
+      "range": {
+        "startLine": 3310,
+        "startChar": 15,
+        "endLine": 3310,
+        "endChar": 24
+      },
+      "revId": "cf78cfad149a99bd902ee54e6290ee090b072bb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3e475ef1_f3552713",
+        "filename": "src/manager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 3322,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-12T15:22:51Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 3321,
+        "startChar": 62,
+        "endLine": 3322,
+        "endChar": 5
+      },
+      "revId": "cf78cfad149a99bd902ee54e6290ee090b072bb9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
