@@ -305,7 +305,8 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
             throw MediaEncoderException("buffer too small");
 
         scaledFrameBuffer_.reserve(scaledFrameBufferSize_);
-        scaledFrame_.setFromMemory(scaledFrameBuffer_.data(), format, width, height);
+        scaledFrame_ = std::make_shared<VideoFrame>();
+        scaledFrame_->setFromMemory(scaledFrameBuffer_.data(), format, width, height);
     }
 #endif // ENABLE_VIDEO
 
@@ -357,89 +358,44 @@ MediaEncoder::startIO()
 
 #ifdef ENABLE_VIDEO
 int
-MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
+MediaEncoder::encode(std::shared_ptr<VideoFrame> input, bool is_keyframe, int64_t frame_number)
 {
     if (!initialized_) {
-        initStream(videoCodec_, input.pointer()->hw_frames_ctx);
+        initStream(videoCodec_, input->pointer()->hw_frames_ctx);
         startIO();
     }
 
-    AVFrame* frame;
+    std::shared_ptr<VideoFrame> output;
 #ifdef RING_ACCEL
-    auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input.format()));
-    bool isHardware = desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL);
-    try {
-#if defined(TARGET_OS_IOS) && TARGET_OS_IOS
-        if (accel_) {
-            auto pix = accel_->getSoftwareFormat();
-            if (input.format() != pix) {
-                std::unique_ptr<VideoFrame> framePtr;
-                framePtr = scaler_.convertFormat(input, pix);
-                frame = framePtr->pointer();
-            } else {
-                frame = input.pointer();
-            }
-        } else {
-#elif !defined(__APPLE__)
-        std::unique_ptr<VideoFrame> framePtr;
-        if (accel_ && accel_->isLinked() && isHardware) {
-            // Fully accelerated pipeline, skip main memory
-            // We have to check if the frame is hardware even if
-            // we are using linked HW encoder and decoder because after
-            // conference mixing the frame become software (prevent crashes)
-            frame = input.pointer();
-        } else if (isHardware) {
-            // Hardware decoded frame, transfer back to main memory
-            // Transfer to GPU if we have a hardware encoder
-            // Hardware decoders decode to NV12, but Jami's supported software encoders want YUV420P
-            AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_NV12);
-            framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
-            if (!accel_)
-                framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
-            else
-                framePtr = accel_->transfer(*framePtr);
-            frame = framePtr->pointer();
-        } else if (accel_) {
-            // Software decoded frame with a hardware encoder, convert to accepted format first
-            auto pix = accel_->getSoftwareFormat();
-            if (input.format() != pix) {
-                framePtr = scaler_.convertFormat(input, pix);
-                framePtr = accel_->transfer(*framePtr);
-            } else {
-                framePtr = accel_->transfer(input);
-            }
-            frame = framePtr->pointer();
-        } else {
-#else
-        {
-#endif // defined(TARGET_OS_IOS) && TARGET_OS_IOS
-#endif
-            libav_utils::fillWithBlack(scaledFrame_.pointer());
-            scaler_.scale_with_aspect(input, scaledFrame_);
-            frame = scaledFrame_.pointer();
-#ifdef RING_ACCEL
-        }
-#endif
-    } catch (const std::runtime_error& e) {
-        JAMI_ERR("Accel failure: %s", e.what());
+    if (getHWFrame(input, &output) < 0) {
+        JAMI_ERR("Fail to get hardware frame");
         return -1;
     }
+#else
+    output = getScaledSWFrame(input);
+#endif // RING_ACCEL
+
+    if (!output) {
+        JAMI_ERR("Fail to get frame");
+        return -1;
+    }
+    auto avframe = output->pointer();
 
     AVCodecContext* enc = encoders_[currentStreamIdx_];
-    frame->pts = frame_number;
+    avframe->pts = frame_number;
     if (enc->framerate.num != enc->time_base.den || enc->framerate.den != enc->time_base.num)
-        frame->pts /= (rational<int64_t>(enc->framerate) * rational<int64_t>(enc->time_base))
+        avframe->pts /= (rational<int64_t>(enc->framerate) * rational<int64_t>(enc->time_base))
                           .real<int64_t>();
 
     if (is_keyframe) {
-        frame->pict_type = AV_PICTURE_TYPE_I;
-        frame->key_frame = 1;
+        avframe->pict_type = AV_PICTURE_TYPE_I;
+        avframe->key_frame = 1;
     } else {
-        frame->pict_type = AV_PICTURE_TYPE_NONE;
-        frame->key_frame = 0;
+        avframe->pict_type = AV_PICTURE_TYPE_NONE;
+        avframe->key_frame = 0;
     }
 
-    return encode(frame, currentStreamIdx_);
+    return encode(avframe, currentStreamIdx_);
 }
 #endif // ENABLE_VIDEO
 
@@ -1166,6 +1122,92 @@ MediaEncoder::testH265Accel()
     }
 #endif
     return "";
+}
+
+int
+MediaEncoder::getHWFrame(std::shared_ptr<VideoFrame> input, std::shared_ptr<VideoFrame>* output)
+{
+    try {
+#if defined(TARGET_OS_IOS) && TARGET_OS_IOS
+// iOS
+        if (accel_) {
+            *output = getHWFrameFromSWFrame(input);
+        } else {
+            *output = getScaledSWFrame(input);
+        }
+#elif !defined(__APPLE__)
+// Other Platforms
+        auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input->format()));
+        bool isHardware = desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL);
+        if (accel_ && accel_->isLinked() && isHardware) {
+            // Fully accelerated pipeline, skip main memory
+            // We have to check if the frame is hardware even if
+            // we are using linked HW encoder and decoder because after
+            // conference mixing the frame become software (prevent crashes)
+            *output = getFullpipelineFrame(input);
+        } else if (isHardware) {
+            // Hardware decoded frame, transfer back to main memory
+            // Transfer to GPU if we have a hardware encoder
+            // Hardware decoders decode to NV12, but Jami's supported software encoders want YUV420P
+            *output = getUnlinkedHWFrame(input);
+        } else if (accel_) {
+            // Software decoded frame with a hardware encoder, convert to accepted format first
+            *output = getHWFrameFromSWFrame(input);
+        } else {
+            *output = getScaledSWFrame(input);
+        }
+#else
+// macOS
+        *output = getScaledSWFrame(input);
+#endif
+    } catch (const std::runtime_error& e) {
+        JAMI_ERR("Accel failure: %s", e.what());
+        return -1;
+    }
+
+    return 0;
+}
+
+std::shared_ptr<VideoFrame>
+MediaEncoder::getFullpipelineFrame(std::shared_ptr<VideoFrame> input)
+{
+    return input;
+}
+
+std::shared_ptr<VideoFrame>
+MediaEncoder::getUnlinkedHWFrame(std::shared_ptr<VideoFrame> input)
+{
+    AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_NV12);
+    std::shared_ptr<VideoFrame> framePtr = video::HardwareAccel::transferToMainMemory(*input.get(), pix);
+    if (!accel_) {
+        framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
+    }
+    else {
+        framePtr = accel_->transfer(*framePtr);
+    }
+    return framePtr;
+}
+
+std::shared_ptr<VideoFrame>
+MediaEncoder::getHWFrameFromSWFrame(std::shared_ptr<VideoFrame> input)
+{
+    std::shared_ptr<VideoFrame> framePtr;
+    auto pix = accel_->getSoftwareFormat();
+    if (input->format() != pix) {
+        framePtr = scaler_.convertFormat(*input.get(), pix);
+        framePtr = accel_->transfer(*framePtr);
+    } else {
+        framePtr = accel_->transfer(*input.get());
+    }
+    return framePtr;
+}
+
+std::shared_ptr<VideoFrame>
+MediaEncoder::getScaledSWFrame(std::shared_ptr<VideoFrame> input)
+{
+    libav_utils::fillWithBlack(scaledFrame_->pointer());
+    scaler_.scale_with_aspect(*input.get(), *scaledFrame_);
+    return scaledFrame_;
 }
 
 } // namespace jami
