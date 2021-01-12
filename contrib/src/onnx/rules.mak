@@ -1,10 +1,23 @@
 # ONNX
 ONNX_VERSION := v1.6.0
+ONNX_URL := https://github.com/microsoft/onnxruntime.git
 
-onnx: toolchain.cmake
+$(TARBALLS)/onnxruntime-$(ONNX_VERSION).tar.xz:
+	git clone $(ONNX_URL) ../../contrib/tarballs/onnxruntime-$(ONNX_VERSION)
+	cd ../../contrib/tarballs/onnxruntime-$(ONNX_VERSION) && git checkout $(ONNX_VERSION)
+	cd ../../contrib/tarballs/ && tar cJf onnxruntime-$(ONNX_VERSION).tar.xz onnxruntime-$(ONNX_VERSION)
+	rm -Rf ../../contrib/tarballs/onnxruntime-v1.6.0
+
+.sum-onnx: onnxruntime-$(ONNX_VERSION).tar.xz
+	$(warning $@ not implemented)
+	touch $@
+
+onnx: onnxruntime-$(ONNX_VERSION).tar.xz .sum-onnx
+	rm -Rf $@
+	mkdir -p $@
+	(cd $@ && tar x --strip-components=1 -f ../$<)
 
 .onnx:  onnx
-	if test -d "./onnx"; then ( rm -rf ./onnx && tar -xf ./../tarballs/onnxruntime-$(ONNX_VERSION).tar.gz ) else ( git clone https://github.com/microsoft/onnxruntime.git onnx && cd ./onnx && git checkout $(ONNX_VERSION) && cd ./../ && tar cf onnxruntime-$(ONNX_VERSION).tar.gz onnx && mv onnxruntime-$(ONNX_VERSION).tar.gz ../tarballs/) fi
 ifdef HAVE_ANDROID
 	cd $< && sh build.sh --parallel --android --android_sdk_path $(ANDROID_SDK) --android_ndk_path $(ANDROID_NDK) --android_abi $(ANDROID_ABI) --android_api 29 --use_nnapi --config Release --build_shared_lib --skip_tests --android_cpp_shared --minimal_build extended
 	cd $< && cp ./build/Linux/Release/libonnxruntime.so $(PREFIX)/lib/
