@@ -69,7 +69,7 @@ private:
 
     NON_COPYABLE(VideoSender);
 
-    void encodeAndSendVideo(VideoFrame&);
+    void encodeAndSendVideo(const std::shared_ptr<VideoFrame>&);
 
     // encoder MUST be deleted before muxContext
     std::unique_ptr<MediaIOHandle> muxContext_ = nullptr;
