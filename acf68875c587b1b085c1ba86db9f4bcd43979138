@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "397e5806_6907ef73",
+        "filename": "bin/jni/configurationmanager.i",
+        "patchSetId": 8
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-12T15:35:30Z",
+      "side": 1,
+      "message": "why :D?",
+      "range": {
+        "startLine": 233,
+        "startChar": 83,
+        "endLine": 233,
+        "endChar": 94
+      },
+      "revId": "acf68875c587b1b085c1ba86db9f4bcd43979138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "34234913_d4cbc73d",
+        "filename": "src/account.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 690,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-12T15:35:30Z",
+      "side": 1,
+      "message": "mmh can add multiple times the same moderator, maybe join a set",
+      "range": {
+        "startLine": 690,
+        "startChar": 21,
+        "endLine": 690,
+        "endChar": 52
+      },
+      "revId": "acf68875c587b1b085c1ba86db9f4bcd43979138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "25294251_fd5a1a70",
+        "filename": "src/manager.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 944,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-12T15:35:30Z",
+      "side": 1,
+      "message": "set",
+      "range": {
+        "startLine": 944,
+        "startChar": 9,
+        "endLine": 944,
+        "endChar": 15
+      },
+      "revId": "acf68875c587b1b085c1ba86db9f4bcd43979138",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
