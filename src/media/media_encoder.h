@@ -81,7 +81,7 @@ public:
     bool send(AVPacket& packet, int streamIdx = -1);
 
 #ifdef ENABLE_VIDEO
-    int encode(VideoFrame& input, bool is_keyframe, int64_t frame_number);
+    int encode(std::shared_ptr<VideoFrame> input, bool is_keyframe, int64_t frame_number);
 #endif // ENABLE_VIDEO
 
     int encodeAudio(AudioFrame& frame);
@@ -134,6 +134,11 @@ private:
     void initH263(AVCodecContext* encoderCtx, uint64_t br);
     bool isDynBitrateSupported(AVCodecID codecid);
     void initAccel(AVCodecContext* encoderCtx, uint64_t br);
+    int getHWFrame(std::shared_ptr<VideoFrame> input, std::shared_ptr<VideoFrame>* output);
+    std::shared_ptr<VideoFrame> getFullpipelineFrame(std::shared_ptr<VideoFrame> input);
+    std::shared_ptr<VideoFrame> getUnlinkedHWFrame(std::shared_ptr<VideoFrame> input);
+    std::shared_ptr<VideoFrame> getHWFrameFromSWFrame(std::shared_ptr<VideoFrame> input);
+    std::shared_ptr<VideoFrame> getScaledSWFrame(std::shared_ptr<VideoFrame> input);
 
     std::vector<AVCodecContext*> encoders_;
     AVFormatContext* outputCtx_ = nullptr;
@@ -150,7 +155,7 @@ private:
 
 #ifdef ENABLE_VIDEO
     video::VideoScaler scaler_;
-    VideoFrame scaledFrame_;
+    std::shared_ptr<VideoFrame> scaledFrame_;
 #endif // ENABLE_VIDEO
 
     std::vector<uint8_t> scaledFrameBuffer_;
