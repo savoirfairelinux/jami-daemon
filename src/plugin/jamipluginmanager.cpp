@@ -175,6 +175,13 @@ JamiPluginManager::getInstalledPlugins()
     };
     auto returnIterator = std::remove_if(pluginsPaths.begin(), pluginsPaths.end(), predicate);
     pluginsPaths.erase(returnIterator, std::end(pluginsPaths));
+
+    std::vector<std::string> nonStandardInstalls = jami::Manager::instance().pluginPreferences.getInstalledPlugins();
+    for (auto& path : nonStandardInstalls) {
+        if (checkPluginValidity(path))
+            pluginsPaths.emplace_back(path);
+    }
+
     return pluginsPaths;
 }
 

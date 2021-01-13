@@ -23,6 +23,7 @@
 
 #include <json/json.h>
 #include <string>
+#include <set>
 
 namespace jami {
 
@@ -44,4 +45,8 @@ std::map<std::string, std::string> getPluginUserPreferencesValuesMapInternal(
 std::map<std::string, std::string> getPluginPreferencesValuesMapInternal(const std::string& rootPath);
 
 bool resetPluginPreferencesValuesMapInternal(const std::string& rootPath);
+
+void setAllowDenyListPreferences(const std::map<std::pair<std::string, std::string>, std::set<std::string>>& list, bool allow = true);
+void getAllowDenyListPreferences(std::map<std::pair<std::string, std::string>, std::set<std::string>>& list, bool allow = true);
+
 } // namespace jami
