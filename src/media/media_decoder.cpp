@@ -489,10 +489,10 @@ MediaDecoder::setupStream()
 #ifdef RING_ACCEL
     if (!accel_) {
         JAMI_WARN("Not using hardware decoding for %s", avcodec_get_name(decoderCtx_->codec_id));
-        ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
+        ret = avcodec_open2(decoderCtx_, inputDecoder_, &options_);
     }
 #else
-    ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
+    ret = avcodec_open2(decoderCtx_, inputDecoder_, &options_);
 #endif
     if (ret < 0) {
         JAMI_ERR() << "Could not open codec: " << libav_utils::getError(ret);
@@ -525,6 +525,11 @@ MediaDecoder::prepareDecoderContext()
             decoderCtx_->framerate = av_inv_q(decoderCtx_->time_base);
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
             decoderCtx_->framerate = {30, 1};
+    }
+    if (avStream_->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+        if (decoderCtx_->codec_id == AV_CODEC_ID_OPUS) {
+            av_opt_set_int(decoderCtx_, "decode_fec", 1, AV_OPT_SEARCH_CHILDREN);
+        }
     }
     return 0;
 }
