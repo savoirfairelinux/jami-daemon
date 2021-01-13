@@ -34,6 +34,7 @@
 #include <list>
 #include <string>
 #include <algorithm>
+#include <set>
 
 namespace jami {
 class JamiPluginManager
