@@ -60,11 +60,14 @@ public:
     {
         // This guarantees unicity of subjects by id
         callAVsubjects.emplace_back(data, subject);
+        auto& callDenySet = denyList[data.id];
 
         for (auto& callMediaHandler : callMediaHandlers) {
             std::size_t found = callMediaHandler->id().find_last_of(DIR_SEPARATOR_CH);
             auto preferences = getPluginPreferencesValuesMapInternal(
                 callMediaHandler->id().substr(0, found));
+            if (callDenySet.find((uintptr_t) callMediaHandler.get()) != callDenySet.end())
+                continue;
 #ifndef __ANDROID__
             if (preferences.at("always") == "1")
                 toggleCallMediaHandler((uintptr_t) callMediaHandler.get(), data.id, true);
@@ -237,6 +240,7 @@ private:
                                 const bool toggle)
     {
         auto& handlers = mediaHandlerToggled_[callId];
+        auto& callDenySet = denyList[callId];
 
         bool applyRestart = false;
         for (auto it = callAVsubjects.begin(); it != callAVsubjects.end(); ++it) {
@@ -245,12 +249,14 @@ private:
                     if ((uintptr_t) mediaHandler.get() == mediaHandlerId) {
                         if (toggle) {
                             notifyAVSubject(mediaHandler, it->first, it->second);
-                            if (isAttached(mediaHandler)
-                                && handlers.find(mediaHandlerId) == handlers.end())
+                            if (isAttached(mediaHandler)) {
                                 handlers.insert(mediaHandlerId);
+                                callDenySet.insert(mediaHandlerId);
+                            }
                         } else {
                             mediaHandler->detach();
                             handlers.erase(mediaHandlerId);
+                            callDenySet.erase(mediaHandlerId);
                         }
                         if (it->first.type == StreamType::video && isVideoType(mediaHandler))
                             applyRestart = true;
@@ -290,6 +296,8 @@ private:
     std::list<std::pair<const StreamData, AVSubjectSPtr>> callAVsubjects;
 
     std::map<std::string, std::set<uintptr_t>> mediaHandlerToggled_; // callId, list of mediaHandlers
+
+    std::map<std::string, std::set<uintptr_t>> denyList{};
 };
 
 } // namespace jami

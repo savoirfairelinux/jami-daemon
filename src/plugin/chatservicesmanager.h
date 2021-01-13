@@ -47,6 +47,7 @@ public:
             ChatHandlerPtr ptr {(static_cast<ChatHandler*>(data))};
 
             if (ptr) {
+                handlersNameMap[ptr->getChatHandlerDetails().at("name")] = (uintptr_t) ptr.get();
                 chatHandlers.emplace_back(std::move(ptr));
             }
 
@@ -66,6 +67,9 @@ public:
                                 (*it)->detach(chatSubjects[toggledIt->first]);
                             } else
                                 ++handlerIdIt;
+                    clearAllowDenyLists((*it)->id());
+                    loadChatHandlerToggled();
+                    handlersNameMap.erase((*it)->getChatHandlerDetails().at("name"));
                     chatHandlers.erase(it);
                     break;
                 }
@@ -105,18 +109,27 @@ public:
             return;
         std::pair<std::string, std::string> mPair(cm->accountId, cm->peerId);
         auto& handlers = chatHandlerToggled_[mPair];
+        auto& chatDenySet = denyList[mPair];
+        auto& chatAllowSet = allowList[mPair];
+
         for (auto& chatHandler : chatHandlers) {
+            std::string chatHandlerName = chatHandler->getChatHandlerDetails().at("name");
             std::size_t found = chatHandler->id().find_last_of(DIR_SEPARATOR_CH);
             auto preferences = getPluginPreferencesValuesMapInternal(
                 chatHandler->id().substr(0, found));
             bool toggled = false;
             if (handlers.find((uintptr_t) chatHandler.get()) != handlers.end())
                 toggled = true;
-            if (preferences.at("always") == "1" || toggled) {
+            bool denyListed = false;
+            if (chatDenySet.find(chatHandlerName) != chatDenySet.end())
+                denyListed = true;
+            if ((preferences.at("always") == "1" || toggled) && !denyListed) {
                 chatSubjects.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>());
                 if (!toggled) {
                     handlers.insert((uintptr_t) chatHandler.get());
                     chatHandler->notifyChatSubject(mPair, chatSubjects[mPair]);
+                    chatAllowSet.insert(chatHandlerName);
+                    setAllowDenyListPreferences(allowList);
                 }
                 chatSubjects[mPair]->publish(cm);
             }
@@ -148,12 +161,12 @@ public:
                                                   const std::string& peerId)
     {
         std::pair<std::string, std::string> mPair(accountId, peerId);
-        const auto& it = chatHandlerToggled_.find(mPair);
+        const auto& it = allowList.find(mPair);
         std::vector<std::string> ret;
-        if (it != chatHandlerToggled_.end()) {
+        if (it != allowList.end()) {
             ret.reserve(it->second.size());
-            for (const auto& chatHandlerId : it->second)
-                ret.emplace_back(std::to_string(chatHandlerId));
+            for (const auto& chatHandlerName : it->second)
+                ret.emplace_back(std::to_string(handlersNameMap.at(chatHandlerName)));
             return ret;
         }
 
@@ -185,6 +198,11 @@ public:
         }
     }
 
+    void setAllowDenyListsFromPreferences() {
+        getAllowDenyListPreferences(allowList);
+        getAllowDenyListPreferences(denyList, false);
+    }
+
 private:
     void toggleChatHandler(const uintptr_t chatHandlerId,
                            const std::string& accountId,
@@ -193,6 +211,8 @@ private:
     {
         std::pair<std::string, std::string> mPair(accountId, peerId);
         auto& handlers = chatHandlerToggled_[mPair];
+        auto& chatDenySet = denyList[mPair];
+        auto& chatAllowSet = allowList[mPair];
         chatSubjects.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>());
 
         for (auto& chatHandler : chatHandlers) {
@@ -201,19 +221,59 @@ private:
                     chatHandler->notifyChatSubject(mPair, chatSubjects[mPair]);
                     if (handlers.find(chatHandlerId) == handlers.end())
                         handlers.insert(chatHandlerId);
+                        chatAllowSet.insert(chatHandler->getChatHandlerDetails().at("name"));
+                        chatDenySet.erase(chatHandler->getChatHandlerDetails().at("name"));
                 } else {
                     chatHandler->detach(chatSubjects[mPair]);
                     handlers.erase(chatHandlerId);
+                    chatAllowSet.erase(chatHandler->getChatHandlerDetails().at("name"));
+                    chatDenySet.insert(chatHandler->getChatHandlerDetails().at("name"));
                 }
+                setAllowDenyListPreferences(allowList);
+                setAllowDenyListPreferences(denyList, false);
                 break;
             }
         }
     }
 
+    std::set<uintptr_t> getPtrHandlers(const std::set<std::string>& handlerNames) {
+        std::set<uintptr_t> ptrSet{};
+        for (auto& name : handlerNames) {
+            ptrSet.insert(handlersNameMap.at(name));
+        }
+        return ptrSet;
+    }
+
+    void clearAllowDenyLists(const std::string& pluginPath) {
+        for (auto& chatHandler : chatHandlers) {
+            if (chatHandler->id() == pluginPath) {
+                std::string handlerName = chatHandler->getChatHandlerDetails()["name"];
+                for (auto& mapItem : allowList) {
+                    mapItem.second.erase(handlerName);
+                }
+                for (auto& mapItem : denyList) {
+                    mapItem.second.erase(handlerName);
+                }
+            }
+        }
+        loadChatHandlerToggled();
+    }
+
+    void loadChatHandlerToggled() {
+        chatHandlerToggled_.clear();
+        for (auto& mapItem : allowList) {
+            chatHandlerToggled_[mapItem.first] = getPtrHandlers(mapItem.second);
+        }
+    }
+
+    std::map<std::string, uintptr_t> handlersNameMap{};
     std::list<ChatHandlerPtr> chatHandlers;
     std::map<std::pair<std::string, std::string>, std::set<uintptr_t>>
         chatHandlerToggled_; // {account,peer}, list of chatHandlers
 
     std::map<std::pair<std::string, std::string>, chatSubjectPtr> chatSubjects;
+
+    std::map<std::pair<std::string, std::string>, std::set<std::string>> allowList{};
+    std::map<std::pair<std::string, std::string>, std::set<std::string>> denyList{};
 };
 } // namespace jami
