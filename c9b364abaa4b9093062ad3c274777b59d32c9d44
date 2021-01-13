@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "02bdf5fd_27e0f503",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 308,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-01-13T15:11:17Z",
+      "side": 1,
+      "message": "not good for performance to re-allocate a new frame every time. To be avoided if possible.",
+      "range": {
+        "startLine": 308,
+        "startChar": 8,
+        "endLine": 308,
+        "endChar": 54
+      },
+      "revId": "c9b364abaa4b9093062ad3c274777b59d32c9d44",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
