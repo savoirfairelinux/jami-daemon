@@ -868,6 +868,8 @@ ConnectionManager::closeConnectionsWith(const DeviceId& deviceId)
             info->ice_->cancelOperations();
             info->ice_->stop();
         }
+        if (info->socket_)
+            info->socket_->shutdown();
         info->responseCv_.notify_all();
         if (info->ice_) {
             std::unique_lock<std::mutex> lk {info->mutex_};
