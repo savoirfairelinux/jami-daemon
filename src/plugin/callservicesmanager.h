@@ -68,7 +68,7 @@ public:
                 auto preferences = getPluginPreferencesValuesMapInternal(
                     callMediaHandler->id().substr(0, found));
 #ifndef __ANDROID__
-                if (preferences.at("always") == "1")
+                if (preferences.at(callMediaHandler->getCallMediaHandlerDetails().at("name")+"Always") == "1")
                     toggleCallMediaHandler((uintptr_t) callMediaHandler.get(), data.id, true);
                 else
 #endif
@@ -103,6 +103,8 @@ public:
             CallMediaHandlerPtr ptr {(static_cast<CallMediaHandler*>(data))};
 
             if (ptr) {
+                std::size_t found = ptr->id().find_last_of(DIR_SEPARATOR_CH);
+                addAlwaysHandlerPreference(ptr->getCallMediaHandlerDetails().at("name") + "Always", ptr->id().substr(0, found));
                 callMediaHandlers.emplace_back(std::move(ptr));
             }
             return 0;
@@ -121,7 +123,6 @@ public:
                                 (*it)->detach();
                             } else
                                 ++handlerIdIt;
-                    // clearDenyLists((*it)->id());
                     callMediaHandlers.erase(it);
                     break;
                 }

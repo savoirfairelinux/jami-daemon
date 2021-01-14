@@ -49,4 +49,6 @@ bool resetPluginPreferencesValuesMapInternal(const std::string& rootPath);
 void setAllowDenyListPreferences(const std::map<std::pair<std::string, std::string>, std::set<std::string>>& list, bool allow = true);
 void getAllowDenyListPreferences(std::map<std::pair<std::string, std::string>, std::set<std::string>>& list, bool allow = true);
 
+void addAlwaysHandlerPreference(const std::string& preferenceName, const std::string& rootPath);
+
 } // namespace jami
