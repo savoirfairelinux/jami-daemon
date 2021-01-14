@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "a9f24e26_0787acfd",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 10
+      },
+      "lineNbr": 1779,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-01-14T19:32:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6d8cfacb_ea76e58e",
+      "range": {
+        "startLine": 1779,
+        "startChar": 30,
+        "endLine": 1779,
+        "endChar": 35
+      },
+      "revId": "dffa596206036ecee52871d148bd8c07d6753032",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "87e1eb45_6da17190",
         "filename": "src/account.cpp",
         "patchSetId": 10
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "84f18140_8f979586",
+        "filename": "src/account.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-01-14T19:32:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "87e1eb45_6da17190",
+      "range": {
+        "startLine": 244,
+        "startChar": 0,
+        "endLine": 244,
+        "endChar": 1
+      },
+      "revId": "dffa596206036ecee52871d148bd8c07d6753032",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "600462bd_f6189895",
         "filename": "src/conference.cpp",
         "patchSetId": 10
@@ -68,6 +116,30 @@
       "revId": "dffa596206036ecee52871d148bd8c07d6753032",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f845a470_c98fb706",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-01-14T19:32:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "600462bd_f6189895",
+      "range": {
+        "startLine": 182,
+        "startChar": 12,
+        "endLine": 182,
+        "endChar": 13
+      },
+      "revId": "dffa596206036ecee52871d148bd8c07d6753032",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
