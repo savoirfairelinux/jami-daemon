@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "97c4402b_19e0e9e3",
+        "filename": "src/media/audio/alsa/alsalayer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 197,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-14T18:57:01Z",
+      "side": 1,
+      "message": "don\u0027t know, indeed seems weird and can be cleaned imho in another patch",
+      "parentUuid": "5aacce43_2924a451",
+      "revId": "6a1eeecd9f284d5e1b2e38dc3d986a91b9e3ae5f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "8da2c654_5cc92681",
         "filename": "src/media/audio/alsa/alsalayer.cpp",
         "patchSetId": 3
@@ -53,6 +71,24 @@
     },
     {
       "key": {
+        "uuid": "399d4cda_95284ba4",
+        "filename": "src/media/audio/alsa/alsalayer.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 240,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-14T18:57:01Z",
+      "side": 1,
+      "message": "Not related to audioThread protection but yeah alsalayer should be cleaned in a patch",
+      "parentUuid": "8fb04fa8_b4073111",
+      "revId": "6a1eeecd9f284d5e1b2e38dc3d986a91b9e3ae5f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "413430b8_692a7729",
         "filename": "src/media/audio/alsa/alsalayer.h",
         "patchSetId": 3
@@ -70,6 +106,24 @@
     },
     {
       "key": {
+        "uuid": "07450d62_7f6183c7",
+        "filename": "src/media/audio/alsa/alsalayer.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 241,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-14T18:57:01Z",
+      "side": 1,
+      "message": "Not related to audioThread protection but yeah alsalayer should be cleaned in a patch",
+      "parentUuid": "413430b8_692a7729",
+      "revId": "6a1eeecd9f284d5e1b2e38dc3d986a91b9e3ae5f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "cff7bea2_1ed2d70e",
         "filename": "src/media/audio/alsa/alsalayer.h",
         "patchSetId": 3
@@ -81,6 +135,24 @@
       "writtenOn": "2021-01-14T18:39:53Z",
       "side": 1,
       "message": "majority of the these variables are not protected against data race. Are we assuming that they are always accessed from the same thread ?",
+      "revId": "6a1eeecd9f284d5e1b2e38dc3d986a91b9e3ae5f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2ef1ae55_57dded4c",
+        "filename": "src/media/audio/alsa/alsalayer.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-14T18:57:01Z",
+      "side": 1,
+      "message": "yes it should be accessed from only one thread indeed",
+      "parentUuid": "cff7bea2_1ed2d70e",
       "revId": "6a1eeecd9f284d5e1b2e38dc3d986a91b9e3ae5f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
