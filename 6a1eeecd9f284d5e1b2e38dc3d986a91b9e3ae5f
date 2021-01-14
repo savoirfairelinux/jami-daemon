@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5aacce43_2924a451",
+        "filename": "src/media/audio/alsa/alsalayer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 197,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-14T18:39:53Z",
+      "side": 1,
+      "message": "why locking here ? status_ is atomic.",
+      "revId": "6a1eeecd9f284d5e1b2e38dc3d986a91b9e3ae5f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8da2c654_5cc92681",
+        "filename": "src/media/audio/alsa/alsalayer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 261,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-14T18:39:53Z",
+      "side": 1,
+      "message": "why locking here ? status_ is atomic.",
+      "revId": "6a1eeecd9f284d5e1b2e38dc3d986a91b9e3ae5f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8fb04fa8_b4073111",
+        "filename": "src/media/audio/alsa/alsalayer.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 240,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-14T18:39:53Z",
+      "side": 1,
+      "message": "hot used",
+      "revId": "6a1eeecd9f284d5e1b2e38dc3d986a91b9e3ae5f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "413430b8_692a7729",
+        "filename": "src/media/audio/alsa/alsalayer.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 241,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-14T18:39:53Z",
+      "side": 1,
+      "message": "not used",
+      "revId": "6a1eeecd9f284d5e1b2e38dc3d986a91b9e3ae5f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cff7bea2_1ed2d70e",
+        "filename": "src/media/audio/alsa/alsalayer.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-14T18:39:53Z",
+      "side": 1,
+      "message": "majority of the these variables are not protected against data race. Are we assuming that they are always accessed from the same thread ?",
+      "revId": "6a1eeecd9f284d5e1b2e38dc3d986a91b9e3ae5f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
