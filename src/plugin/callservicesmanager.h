@@ -67,17 +67,21 @@ public:
                 std::size_t found = callMediaHandler->id().find_last_of(DIR_SEPARATOR_CH);
                 auto preferences = getPluginPreferencesValuesMapInternal(
                     callMediaHandler->id().substr(0, found));
-#ifndef __ANDROID__
-                if (preferences.at("always") == "1")
-                    toggleCallMediaHandler((uintptr_t) callMediaHandler.get(), data.id, true);
-                else
-#endif
+
+                if (preferences.at(callMediaHandler->getCallMediaHandlerDetails().at("name")+"Always") == "0")
                     for (const auto& toggledMediaHandler : mediaHandlerToggled_[data.id]) {
                 	    if (toggledMediaHandler == (uintptr_t) callMediaHandler.get()) {
                     	    toggleCallMediaHandler(toggledMediaHandler, data.id, true);
                     	    break;
                         }
                     }
+                else {
+#ifndef __ANDROID__
+                    toggleCallMediaHandler((uintptr_t) callMediaHandler.get(), data.id, true);
+#else
+                    mediaHandlerToggled_[data.id].insert((uintptr_t) callMediaHandler.get());
+#endif
+                }
             }
         }
     }
@@ -103,6 +107,8 @@ public:
             CallMediaHandlerPtr ptr {(static_cast<CallMediaHandler*>(data))};
 
             if (ptr) {
+                std::size_t found = ptr->id().find_last_of(DIR_SEPARATOR_CH);
+                addAlwaysHandlerPreference(ptr->getCallMediaHandlerDetails().at("name") + "Always", ptr->id().substr(0, found));
                 callMediaHandlers.emplace_back(std::move(ptr));
             }
             return 0;
@@ -121,7 +127,6 @@ public:
                                 (*it)->detach();
                             } else
                                 ++handlerIdIt;
-                    // clearDenyLists((*it)->id());
                     callMediaHandlers.erase(it);
                     break;
                 }

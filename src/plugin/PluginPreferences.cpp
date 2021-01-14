@@ -186,8 +186,6 @@ getPluginPreferencesValuesMapInternal(const std::string& rootPath)
         rmap[pair.first] = pair.second;
     }
 
-    rmap.emplace("always", "0");
-
     return rmap;
 }
 
@@ -259,6 +257,29 @@ getAllowDenyListPreferences(std::map<std::pair<std::string, std::string>, std::s
                 JAMI_ERR() << e.what();
             }
         }
+    }
+}
+
+void
+addAlwaysHandlerPreference(const std::string& preferenceName, const std::string& rootPath) {
+    auto userMap = getPluginUserPreferencesValuesMapInternal(rootPath);
+    const std::string filePath = pluginPreferencesValuesFilePathInternal(rootPath);
+
+    if (userMap.find(preferenceName) != userMap.end())
+        return;
+    userMap[preferenceName] = "0";
+
+    std::ofstream fs(filePath, std::ios::binary);
+    if (!fs.good()) {
+        return ;
+    }
+    try {
+        std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
+        msgpack::pack(fs, userMap);
+        return ;
+    } catch (const std::exception& e) {
+        JAMI_ERR() << e.what();
+        return ;
     }
 }
 } // namespace jami
