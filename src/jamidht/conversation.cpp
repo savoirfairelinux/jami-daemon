@@ -540,6 +540,17 @@ Conversation::mergeHistory(const std::string& uri)
         JAMI_ERR("Could not merge history with %s", uri.c_str());
         return {};
     }
+    auto mergeCommit = pimpl_->repository_->log().front();
+    bool insertMergeCommit = true;
+    for (auto commit : newCommits) {
+        if (commit.id == mergeCommit.id) {
+            insertMergeCommit = false;
+            break;
+        }
+    }
+    if (insertMergeCommit) {
+        newCommits.push_back(mergeCommit);
+    }
     JAMI_DBG("Successfully merge history with %s", uri.c_str());
     auto result = pimpl_->convCommitToMap(newCommits);
     for (const auto& commit : result) {
