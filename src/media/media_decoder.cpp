@@ -119,11 +119,6 @@ MediaDemuxer::openInput(const DeviceParams& params)
         av_dict_set(&options_, "pixel_format", params.pixel_format.c_str(), 0);
     }
 
-    // if (params.decode_fec) {
-    //     JAMI_DBG("Using FEC on decoder");
-    //     av_dict_set(&options_, "decode_fec", std::to_string(params.decode_fec).c_str(), 0);
-    // }
-
 #if defined(__APPLE__) && TARGET_OS_MAC
     std::string input = params.name;
 #else
