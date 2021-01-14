@@ -56,6 +56,8 @@ public:
     static void setAllowDenyListPreferences(const ChatHandlerList& list, bool allow = true);
 
     static void getAllowDenyListPreferences(ChatHandlerList& list, bool allow = true);
+
+    static void addAlwaysHandlerPreference(const std::string& preferenceName, const std::string& rootPath);
 private:
     PluginPreferencesManager() {}
     ~PluginPreferencesManager() {}
