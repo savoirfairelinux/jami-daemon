@@ -800,6 +800,13 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
         }
     }
 
+    /* Enable libopus FEC encoding support */
+    if (mediaType == AVMEDIA_TYPE_AUDIO) {
+        if (avcodecId == AV_CODEC_ID_OPUS) {
+            initOpus(encoderCtx);
+        }
+    }
+
     /* let x264 preset override our encoder settings */
     if (avcodecId == AV_CODEC_ID_H264) {
         auto profileLevelId = libav_utils::getDictValue(options_, "parameters");
@@ -988,6 +995,15 @@ MediaEncoder::initH263(AVCodecContext* encoderCtx, uint64_t br)
     encoderCtx->rc_buffer_size = bufSize;
     encoderCtx->bit_rate = encoderCtx->rc_min_rate = encoderCtx->rc_max_rate = maxBitrate;
     JAMI_DBG("H263 encoder setup: maxrate=%lu, bufsize=%lu", maxBitrate, bufSize);
+}
+
+void
+MediaEncoder::initOpus(AVCodecContext* encoderCtx)
+{
+    int ret;
+    // Enable FEC support by default with 0% packet loss
+    av_opt_set_int(encoderCtx, "enable_fec", 1, AV_OPT_SEARCH_CHILDREN);
+    av_opt_set_int(encoderCtx, "packet_loss", 10, AV_OPT_SEARCH_CHILDREN);
 }
 
 void
