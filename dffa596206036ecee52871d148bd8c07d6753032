@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6d8cfacb_ea76e58e",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 10
+      },
+      "lineNbr": 1779,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-14T17:29:20Z",
+      "side": 1,
+      "message": "9.10",
+      "range": {
+        "startLine": 1779,
+        "startChar": 30,
+        "endLine": 1779,
+        "endChar": 35
+      },
+      "revId": "dffa596206036ecee52871d148bd8c07d6753032",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "87e1eb45_6da17190",
+        "filename": "src/account.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-14T17:29:20Z",
+      "side": 1,
+      "message": "indent",
+      "range": {
+        "startLine": 244,
+        "startChar": 0,
+        "endLine": 244,
+        "endChar": 1
+      },
+      "revId": "dffa596206036ecee52871d148bd8c07d6753032",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "600462bd_f6189895",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-14T17:29:20Z",
+      "side": 1,
+      "message": "indent,",
+      "range": {
+        "startLine": 182,
+        "startChar": 12,
+        "endLine": 182,
+        "endChar": 13
+      },
+      "revId": "dffa596206036ecee52871d148bd8c07d6753032",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
