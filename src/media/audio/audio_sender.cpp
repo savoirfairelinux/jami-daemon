@@ -122,4 +122,15 @@ AudioSender::getLastSeqValue()
     return audioEncoder_->getLastSeqValue();
 }
 
+int
+AudioSender::setPacketLoss(uint64_t pl)
+{
+    // The encoder may be destroy during a bitrate change
+    // when a codec parameter like auto quality change
+    if (!audioEncoder_)
+        return -1; // NOK
+
+    return audioEncoder_->setPacketLoss(pl);
+}
+
 } // namespace jami
