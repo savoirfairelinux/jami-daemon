@@ -24,7 +24,23 @@ index 2a97811d18..40ee7b8fec 100644
                                         OPUS_SET_PACKET_LOSS_PERC(opts->packet_loss));
      if (ret != OPUS_OK)
          av_log(avctx, AV_LOG_WARNING,
-@@ -543,6 +551,7 @@
+@@ -452,6 +460,15 @@
+     int ret;
+     int discard_padding;
+ 
++    // Reload packet loss setting
++    ret = opus_multistream_encoder_ctl(opus->enc,
++                                       OPUS_SET_PACKET_LOSS_PERC(opus->opts.packet_loss));
++    if (ret != OPUS_OK)
++        av_log(avctx, AV_LOG_WARNING,
++               "Unable to set expected packet loss percentage: %s\n",
++               opus_strerror(ret));
++
++
+     if (frame) {
+         ret = ff_af_queue_add(&opus->afq, frame);
+         if (ret < 0)
+@@ -543,6 +560,7 @@
          { "audio",          "Favor faithfulness to the input",         0, AV_OPT_TYPE_CONST, { .i64 = OPUS_APPLICATION_AUDIO },               0, 0, FLAGS, "application" },
          { "lowdelay",       "Restrict to only the lowest delay modes", 0, AV_OPT_TYPE_CONST, { .i64 = OPUS_APPLICATION_RESTRICTED_LOWDELAY }, 0, 0, FLAGS, "application" },
      { "frame_duration", "Duration of a frame in milliseconds", OFFSET(frame_duration), AV_OPT_TYPE_FLOAT, { .dbl = 20.0 }, 2.5, 120.0, FLAGS },
