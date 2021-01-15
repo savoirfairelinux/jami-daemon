@@ -50,6 +50,7 @@ namespace jami {
 
 AudioRtpSession::AudioRtpSession(const std::string& id)
     : RtpSession(id)
+    , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
 {
     // don't move this into the initializer list or Cthulus will emerge
     ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(callID_);
@@ -105,6 +106,9 @@ AudioRtpSession::startSender()
         JAMI_ERR("%s", e.what());
         send_.enabled = false;
     }
+
+    if (not rtcpCheckerThread_.isRunning())
+        rtcpCheckerThread_.start();
 }
 
 void
@@ -181,6 +185,8 @@ AudioRtpSession::stop()
     if (socketPair_)
         socketPair_->interrupt();
 
+    rtcpCheckerThread_.join();
+
     receiveThread_.reset();
     sender_.reset();
     socketPair_.reset();
@@ -195,6 +201,90 @@ AudioRtpSession::setMuted(bool isMuted)
         muteState_ = isMuted;
         sender_->setMuted(isMuted);
     }
+}
+
+bool
+AudioRtpSession::check_RCTP_Info_RR(RTCPInfo& rtcpi)
+{
+    auto rtcpInfoVect = socketPair_->getRtcpRR();
+    unsigned totalLost = 0;
+    unsigned totalJitter = 0;
+    unsigned nbDropNotNull = 0;
+    auto vectSize = rtcpInfoVect.size();
+
+    if (vectSize != 0) {
+        for (const auto& it : rtcpInfoVect) {
+            if (it.fraction_lost != 0) // Exclude null drop
+                nbDropNotNull++;
+            totalLost += it.fraction_lost;
+            totalJitter += ntohl(it.jitter);
+        }
+        rtcpi.packetLoss = nbDropNotNull ? (float) (100 * totalLost) / (256.0 * nbDropNotNull) : 0;
+        // Jitter is expressed in timestamp unit -> convert to milliseconds
+        // https://stackoverflow.com/questions/51956520/convert-jitter-from-rtp-timestamp-unit-to-millisseconds
+        rtcpi.jitter = (totalJitter / vectSize / 90000.0f) * 1000;
+        rtcpi.nb_sample = vectSize;
+        rtcpi.latency = socketPair_->getLastLatency();
+        return true;
+    }
+    return false;
+}
+
+void
+AudioRtpSession::adaptQualityAndBitrate()
+{
+    RTCPInfo rtcpi {};
+    if (check_RCTP_Info_RR(rtcpi)) {
+        dropProcessing(&rtcpi);
+    }
+}
+
+void
+AudioRtpSession::dropProcessing(RTCPInfo* rtcpi)
+{
+    auto pondLoss = getPonderateLoss(rtcpi->packetLoss);
+    setNewPacketLoss(pondLoss);
+}
+
+void
+AudioRtpSession::setNewPacketLoss(unsigned int newPL)
+{
+    static unsigned int PL = 10;
+
+    newPL = std::max(newPL, (unsigned int) 0);
+    newPL = std::min(newPL, (unsigned int) 100);
+    if (newPL != PL) {
+        if (sender_) {
+            auto ret = sender_->setPacketLoss(newPL);
+            PL = newPL;
+            if (ret == -1)
+                JAMI_ERR("Fail to access the encoder");
+            else if (ret == 0)
+                restartSender();
+        } else {
+            JAMI_ERR("Fail to access the sender");
+        }
+    }
+}
+
+float
+AudioRtpSession::getPonderateLoss(float lastLoss)
+{
+    static float pond = 10.0f;
+
+    pond = floor(0.5 * lastLoss + 0.5 * pond);
+    if (lastLoss > pond) {
+        return lastLoss;
+    } else {
+        return pond;
+    }
+}
+
+void
+AudioRtpSession::processRtcpChecker()
+{
+    adaptQualityAndBitrate();
+    socketPair_->waitForRTCP(std::chrono::seconds(rtcp_checking_interval));
 }
 
 void
