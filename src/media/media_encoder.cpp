@@ -867,6 +867,28 @@ MediaEncoder::setBitrate(uint64_t br)
     return 1; // OK
 }
 
+int
+MediaEncoder::setPacketLoss(uint64_t pl)
+{
+    std::lock_guard<std::mutex> lk(encMutex_);
+    AVCodecContext* encoderCtx = getCurrentAudioAVCtx();
+    if (not encoderCtx)
+        return -1; // NOK
+
+    AVCodecID codecId = encoderCtx->codec_id;
+
+    if (not isDynPacketLossSupported(codecId))
+        return 0; // Restart needed
+
+    // Cap between 0 and 100
+    pl = std::clamp((int) pl, 0, 100);
+
+    // Change parameters on the fly
+    if (codecId == AV_CODEC_ID_OPUS)
+        av_opt_set_int(encoderCtx, "packet_loss", (int64_t) pl, AV_OPT_SEARCH_CHILDREN);
+    return 1; // OK
+}
+
 void
 MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
 {
@@ -1041,6 +1063,16 @@ MediaEncoder::getCurrentVideoAVCtx()
     return nullptr;
 }
 
+AVCodecContext*
+MediaEncoder::getCurrentAudioAVCtx()
+{
+    for (auto it : encoders_) {
+        if (it->codec_type == AVMEDIA_TYPE_AUDIO)
+            return it;
+    }
+    return nullptr;
+}
+
 void
 MediaEncoder::stopEncoder()
 {
@@ -1066,6 +1098,15 @@ MediaEncoder::isDynBitrateSupported(AVCodecID codecid)
     }
 #endif
     if (codecid != AV_CODEC_ID_VP8)
+        return true;
+
+    return false;
+}
+
+bool
+MediaEncoder::isDynPacketLossSupported(AVCodecID codecid)
+{
+    if (codecid == AV_CODEC_ID_OPUS)
         return true;
 
     return false;
