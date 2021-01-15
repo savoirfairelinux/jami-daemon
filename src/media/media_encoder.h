@@ -105,6 +105,7 @@ public:
     const std::string& getVideoCodec() const { return videoCodec_; }
 
     int setBitrate(uint64_t br);
+    int setPacketLoss(uint64_t pl);
 
 #ifdef RING_ACCEL
     void enableAccel(bool enableAccel);
@@ -125,6 +126,7 @@ private:
     void openIOContext();
     void startIO();
     AVCodecContext* getCurrentVideoAVCtx();
+    AVCodecContext* getCurrentAudioAVCtx();
     void stopEncoder();
     AVCodecContext* initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br);
     void initH264(AVCodecContext* encoderCtx, uint64_t br);
@@ -134,6 +136,7 @@ private:
     void initH263(AVCodecContext* encoderCtx, uint64_t br);
     void initOpus(AVCodecContext* encoderCtx);
     bool isDynBitrateSupported(AVCodecID codecid);
+    bool isDynPacketLossSupported(AVCodecID codecid);
     void initAccel(AVCodecContext* encoderCtx, uint64_t br);
 
     std::vector<AVCodecContext*> encoders_;
