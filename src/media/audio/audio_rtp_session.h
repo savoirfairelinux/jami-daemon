@@ -25,6 +25,8 @@
 #include "media_device.h"
 #include "rtp_session.h"
 
+#include "threadloop.h"
+
 #include <string>
 #include <memory>
 
@@ -36,6 +38,14 @@ class AudioSender;
 class IceSocket;
 class MediaRecorder;
 class RingBuffer;
+
+struct RTCPInfo
+{
+    float packetLoss;
+    unsigned int jitter;
+    unsigned int nb_sample;
+    float latency;
+};
 
 class AudioRtpSession : public RtpSession
 {
@@ -57,6 +67,11 @@ public:
 private:
     void startSender();
     void startReceiver();
+    bool check_RCTP_Info_RR(RTCPInfo& rtcpi);
+    void adaptQualityAndBitrate();
+    void dropProcessing(RTCPInfo* rtcpi);
+    void setNewPacketLoss(unsigned int newPL);
+    float getPonderateLoss(float lastLoss);
 
     std::unique_ptr<AudioSender> sender_;
     std::unique_ptr<AudioReceiveThread> receiveThread_;
@@ -64,7 +79,14 @@ private:
     std::shared_ptr<RingBuffer> ringbuffer_;
     uint16_t initSeqVal_ = 0;
     bool muteState_ = false;
+    int packetLoss_ = 10;
     DeviceParams localAudioParams_;
+
+    InterruptedThreadLoop rtcpCheckerThread_;
+    void processRtcpChecker();
+
+    // interval in seconds between RTCP checkings
+    std::chrono::seconds rtcp_checking_interval {4};
 };
 
 } // namespace jami
