@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2e271092_ed1e6641",
+        "filename": "src/media/media_codec.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 301,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-16T18:29:48Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nbraces around scalar initializer\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-braced-scalar-init",
+      "revId": "ef8b02b0c8220b7da0f5c1f1577431ba2da00129",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "55afeff0_2e49df5a",
+        "filename": "src/media/media_codec.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-16T18:29:48Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nbraces around scalar initializer\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-braced-scalar-init",
+      "revId": "ef8b02b0c8220b7da0f5c1f1577431ba2da00129",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "35bf975a_f68af3f3",
+        "filename": "src/media/media_codec.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 304,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-16T18:29:48Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nbraces around scalar initializer\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-braced-scalar-init",
+      "revId": "ef8b02b0c8220b7da0f5c1f1577431ba2da00129",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d1bf8144_24a406e9",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-16T18:29:48Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027label\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ef8b02b0c8220b7da0f5c1f1577431ba2da00129",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "a29414b0_5d03cd06",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 206,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-16T18:29:48Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027label\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ef8b02b0c8220b7da0f5c1f1577431ba2da00129",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "aa45b45f_bc8c7747",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 257,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-16T18:29:48Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027rtpSession\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ef8b02b0c8220b7da0f5c1f1577431ba2da00129",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
