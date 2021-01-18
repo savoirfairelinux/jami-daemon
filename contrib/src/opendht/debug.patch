@@ -1,0 +1,155 @@
+ include/opendht/dht.h |  3 ++-
+ src/dht.cpp           | 42 +++++++++++++++++++++++++++++-------------
+ src/dhtrunner.cpp     |  1 +
+ 3 files changed, 32 insertions(+), 14 deletions(-)
+
+diff --git a/include/opendht/dht.h b/include/opendht/dht.h
+index 061e221..c0a6079 100644
+--- a/include/opendht/dht.h
++++ b/include/opendht/dht.h
+@@ -396,7 +396,8 @@ private:
+     Kad dht6 {};
+
+     std::vector<std::pair<std::string,std::string>> bootstrap_nodes {};
+-    std::chrono::steady_clock::duration bootstrap_period {std::chrono::seconds(10)};
++    std::chrono::steady_clock::duration bootstrap_period_v4 {std::chrono::seconds(10)};
++    std::chrono::steady_clock::duration bootstrap_period_v6 {std::chrono::seconds(10)};
+     Sp<Scheduler::Job> bootstrapJob {};
+
+     std::map<InfoHash, Storage> store;
+diff --git a/src/dht.cpp b/src/dht.cpp
+index ef17480..05ebca2 100644
+--- a/src/dht.cpp
++++ b/src/dht.cpp
+@@ -48,16 +48,20 @@ Dht::updateStatus(sa_family_t af)
+     auto old = d.status;
+     d.status = d.getStatus(scheduler.time());
+     if (d.status != old) {
++        printf("@@@ CHANGE BOOTSTRAP\n");
+         auto& other = dht(af == AF_INET ? AF_INET6 : AF_INET);
+-        if (other.status == NodeStatus::Disconnected && d.status == NodeStatus::Disconnected)
++        if (other.status == NodeStatus::Disconnected && d.status == NodeStatus::Disconnected) {
++            printf("@@@ CHANGE DISCO\n");
+             onDisconnected();
+-        else if (other.status == NodeStatus::Connected || d.status == NodeStatus::Connected) {
++        } else if (other.status == NodeStatus::Connected || d.status == NodeStatus::Connected) {
+             // On connected
++            printf("@@@ CHANGE CO\n");
+             if (bootstrapJob) {
++                printf("@@@ CANCEL BOOTSTRAP\n");
+                 bootstrapJob->cancel();
+                 bootstrapJob.reset();
+             }
+-            bootstrap_period = std::chrono::seconds(10);
++            af == AF_INET ? bootstrap_period_v6 = std::chrono::seconds(10) : bootstrap_period_v4 = std::chrono::seconds(10);
+         }
+     }
+     return d.status;
+@@ -76,8 +80,10 @@ Dht::Kad::getStatus(time_point now) const
+         }
+     }
+     auto& ping = pending_pings;
+-    if (dubious or ping)
++    if (dubious or ping) {
++        //printf("@@@ %u %u\n", dubious, ping);
+         return NodeStatus::Connecting;
++    }
+     return NodeStatus::Disconnected;
+ }
+
+@@ -491,9 +497,9 @@ void Dht::searchSendAnnounceValue(const Sp<Search>& sr) {
+                         sr->id.toString().c_str(), sn->node->toString().c_str(), a.value->id);
+                 sn->acked[a.value->id] = {
+                     network_engine.sendRefreshValue(sn->node, sr->id, a.value->id, sn->token, onDone,
+-                    [this, ws, node=sn->node, v=a.value,
+-                     onDone,
+-                     onExpired,
++                    [this, ws, node=sn->node, v=a.value,
++                     onDone,
++                     onExpired,
+                      created = a.permanent ? time_point::max() : a.created,
+                      next_refresh_time
+                     ](const net::Request& /*req*/, net::DhtProtocolException&& e){
+@@ -591,7 +597,7 @@ Dht::searchSynchedNodeListen(const Sp<Search>& sr, SearchNode& n)
+     std::weak_ptr<Search> ws = sr;
+     for (const auto& l : sr->listeners) {
+         const auto& query = l.second.query;
+-
++
+         auto r = n.listenStatus.find(query);
+         if (n.getListenTime(r, listenExp) > scheduler.time())
+             continue;
+@@ -725,14 +731,16 @@ Dht::searchStep(Sp<Search> sr)
+
+     while (sr->currentlySolicitedNodeCount() < MAX_REQUESTED_SEARCH_NODES and searchSendGetValues(sr));
+
+-
++
+     if (sr->getNumberOfConsecutiveBadNodes() >= std::min<size_t>(sr->nodes.size(), SEARCH_MAX_BAD_NODES))
+     {
+         if (logger_)
+             logger_->w(sr->id, "[search %s IPv%c] expired", sr->id.toString().c_str(), sr->af == AF_INET ? '4' : '6');
+         sr->expire();
+-        if (not public_stable)
++        if (not public_stable) {
++            printf("@@@@@@@@@|n\n");
+             connectivityChanged(sr->af);
++        }
+     }
+
+     /* dumpSearch(*sr, std::cout); */
+@@ -1398,6 +1406,7 @@ Dht::connectivityChanged(sa_family_t af)
+ {
+     const auto& now = scheduler.time();
+     scheduler.edit(nextNodesConfirmation, now);
++    printf("@@@|n\n");
+     buckets(af).connectivityChanged(now);
+     network_engine.connectivityChanged(af);
+     reported_addr.erase(std::remove_if(reported_addr.begin(), reported_addr.end(), [&](const ReportedAddr& addr){
+@@ -1986,7 +1995,9 @@ Dht::expire()
+ void
+ Dht::onDisconnected()
+ {
+-    if (dht4.status != NodeStatus::Disconnected || dht6.status != NodeStatus::Disconnected)
++    auto v4Connected = dht4.status != NodeStatus::Disconnected;
++    auto v6Connected = dht6.status != NodeStatus::Disconnected;
++    if (v4Connected || dht6.status != NodeStatus::Disconnected)
+         return;
+     if (logger_)
+         logger_->d(myid, "Bootstraping");
+@@ -2005,8 +2016,13 @@ Dht::onDisconnected()
+     }
+     if (bootstrapJob)
+         bootstrapJob->cancel();
++
++    auto bootstrap_period = v4Connected? bootstrap_period_v6 : bootstrap_period_v4;
+     bootstrapJob = scheduler.add(scheduler.time() + bootstrap_period, std::bind(&Dht::onDisconnected, this));
+-    bootstrap_period *= 2;
++    if (!v4Connected)
++        bootstrap_period_v4 *= 2;
++    if (!v6Connected)
++        bootstrap_period_v6 *= 2;
+ }
+
+ void
+@@ -2528,7 +2544,7 @@ Dht::saveState(const std::string& path) const
+     state.nodes = exportNodes();
+     state.values = exportValues();
+     std::ofstream file(path);
+-    msgpack::pack(file, state);
++    msgpack::pack(file, state);
+ }
+
+ void
+diff --git a/src/dhtrunner.cpp b/src/dhtrunner.cpp
+index 2ece5e2..1f2648a 100644
+--- a/src/dhtrunner.cpp
++++ b/src/dhtrunner.cpp
+@@ -678,6 +678,7 @@ DhtRunner::loop_()
+     NodeStatus nstatus4 = dht->updateStatus(AF_INET);
+     NodeStatus nstatus6 = dht->updateStatus(AF_INET6);
+     if (nstatus4 != status4 || nstatus6 != status6) {
++        printf("@@@!2\n");
+         status4 = nstatus4;
+         status6 = nstatus6;
+         if (statusCb)

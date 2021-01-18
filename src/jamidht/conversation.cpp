@@ -156,6 +156,8 @@ public:
     std::mutex pullcbsMtx_ {};
     std::set<std::string> fetchingRemotes_ {}; // store current remote in fetch
     std::deque<std::tuple<std::string, std::string, OnPullCb>> pullcbs_ {};
+
+    std::mutex writeMtx_ {};
 };
 
 bool
@@ -345,53 +347,18 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice)
 std::vector<std::map<std::string, std::string>>
 Conversation::getMembers(bool includeInvited) const
 {
-    // TODO cache and update for member events
     std::vector<std::map<std::string, std::string>> result;
-    std::vector<std::string> uris;
     auto shared = pimpl_->account_.lock();
     if (!shared)
         return result;
 
-    auto invitedPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "invited";
-    auto adminsPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "admins";
-    auto membersPath = pimpl_->repoPath() + DIR_SEPARATOR_STR + "members";
-    for (const auto& certificate : fileutils::readDirectory(adminsPath)) {
-        if (certificate.find(".crt") == std::string::npos) {
-            JAMI_WARN("Incorrect file found: %s/%s", adminsPath.c_str(), certificate.c_str());
+    auto members = pimpl_->repository_->members();
+    for (const auto& member : members) {
+        if (member.role == MemberRole::BANNED)
             continue;
-        }
-        auto uri = certificate.substr(0, certificate.size() - std::string(".crt").size());
-        uris.emplace_back(uri);
-        std::map<std::string, std::string> details {{"uri", uri}, {"role", "admin"}};
-        result.emplace_back(details);
-    }
-    for (const auto& certificate : fileutils::readDirectory(membersPath)) {
-        if (certificate.find(".crt") == std::string::npos) {
-            JAMI_WARN("Incorrect file found: %s/%s", membersPath.c_str(), certificate.c_str());
+        if (member.role == MemberRole::INVITED && !includeInvited)
             continue;
-        }
-        auto uri = certificate.substr(0, certificate.size() - std::string(".crt").size());
-        uris.emplace_back(uri);
-        std::map<std::string, std::string> details {{"uri", uri}, {"role", "member"}};
-        result.emplace_back(details);
-    }
-    if (includeInvited) {
-        for (const auto& uri : fileutils::readDirectory(invitedPath)) {
-            uris.emplace_back(uri);
-            std::map<std::string, std::string> details {{"uri", uri}, {"role", "invited"}};
-            result.emplace_back(details);
-        }
-
-        if (mode() == ConversationMode::ONE_TO_ONE) {
-            for (const auto& member : getInitialMembers()) {
-                auto it = std::find(uris.begin(), uris.end(), member);
-                if (it == uris.end()) {
-                    std::map<std::string, std::string> details {{"uri", member},
-                                                                {"role", "invited"}};
-                    result.emplace_back(details);
-                }
-            }
-        }
+        result.emplace_back(member.map());
     }
 
     return result;
@@ -473,6 +440,7 @@ Conversation::sendMessage(const Json::Value& value, const std::string& parent)
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
+    std::lock_guard<std::mutex> lk(pimpl_->writeMtx_);
     return pimpl_->repository_->commitMessage(Json::writeString(wbuilder, value));
 }
 
@@ -530,6 +498,8 @@ Conversation::mergeHistory(const std::string& uri)
         return {};
     }
 
+    std::unique_lock<std::mutex> lk(pimpl_->writeMtx_);
+
     // Validate commit
     auto [newCommits, err] = pimpl_->repository_->validFetch(uri);
     if (newCommits.empty()) {
@@ -546,12 +516,17 @@ Conversation::mergeHistory(const std::string& uri)
         return {};
     }
 
+    lk.unlock();
+
     JAMI_DBG("Successfully merge history with %s", uri.c_str());
     auto result = pimpl_->convCommitToMap(newCommits);
     for (const auto& commit : result) {
         auto it = commit.find("type");
+        JAMI_ERR("@@@ commit->second: %s", it->second.c_str());
         if (it != commit.end() && it->second == "member") {
+            JAMI_ERR("@@@ GET MEMBERS? %u", pimpl_->repository_->members().size());
             pimpl_->repository_->refreshMembers();
+            JAMI_ERR("@@@ GET MEMBERS? %u", pimpl_->repository_->members().size());
         }
     }
     return result;
@@ -568,7 +543,7 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
                                                             std::move(cb)));
     if (isInProgress)
         return;
-    dht::ThreadPool::io().run([w = weak()] {
+    dht::ThreadPool::io().run([w = weak(), uri] {
         auto sthis_ = w.lock();
         if (!sthis_)
             return;

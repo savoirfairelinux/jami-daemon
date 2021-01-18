@@ -699,6 +699,8 @@ ChannelSocket::write(const ValueType* buf, std::size_t len, std::error_code& ec)
         std::size_t sent = 0;
         do {
             std::size_t toSend = std::min(static_cast<std::size_t>(UINT16_MAX), len - sent);
+            if (name().find("sip") == 0)
+                JAMI_ERR("@@@ WRITE");
             auto res = ep->write(pimpl_->channel, buf + sent, toSend, ec);
             if (ec) {
                 JAMI_ERR("Error when writing on channel: %s", ec.message().c_str());
