@@ -568,7 +568,7 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
                                                             std::move(cb)));
     if (isInProgress)
         return;
-    dht::ThreadPool::io().run([w = weak()] {
+    dht::ThreadPool::io().run([w = weak(), uri] {
         auto sthis_ = w.lock();
         if (!sthis_)
             return;
