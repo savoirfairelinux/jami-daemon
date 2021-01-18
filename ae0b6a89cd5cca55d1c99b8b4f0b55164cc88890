@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "38a13923_347d7be1",
+        "filename": "src/media/media_codec.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 301,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-18T20:33:30Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nbraces around scalar initializer\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-braced-scalar-init",
+      "revId": "ae0b6a89cd5cca55d1c99b8b4f0b55164cc88890",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "53053c58_89bf3472",
+        "filename": "src/media/media_codec.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-18T20:33:30Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nbraces around scalar initializer\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-braced-scalar-init",
+      "revId": "ae0b6a89cd5cca55d1c99b8b4f0b55164cc88890",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c2dd29ca_e0064cab",
+        "filename": "src/media/media_codec.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 304,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-18T20:33:30Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nbraces around scalar initializer\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-braced-scalar-init",
+      "revId": "ae0b6a89cd5cca55d1c99b8b4f0b55164cc88890",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6bc17de9_19991596",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-18T20:33:30Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027label\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ae0b6a89cd5cca55d1c99b8b4f0b55164cc88890",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "65430814_52c620e1",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-18T20:33:30Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027rtpSession\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ae0b6a89cd5cca55d1c99b8b4f0b55164cc88890",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "a2b56464_45f2476b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1629,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-18T20:33:30Z",
+      "side": 1,
+      "message": "CRITICAL SonarQube violation:\n\n\ncontrol may reach end of non-void function\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-return-type",
+      "revId": "ae0b6a89cd5cca55d1c99b8b4f0b55164cc88890",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
