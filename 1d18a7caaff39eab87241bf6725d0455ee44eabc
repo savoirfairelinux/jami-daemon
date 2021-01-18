@@ -45,6 +45,40 @@
       "revId": "1d18a7caaff39eab87241bf6725d0455ee44eabc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4abe7042_c71c34d4",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 263,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-18T22:20:27Z",
+      "side": 1,
+      "message": "We restart the sender every time the reported PL changes ! Which might be quite often. Do we have some numbers (how often the PL is updated).\nMay be we need to update the PL (and restart the sender) only when the change is significant ?",
+      "revId": "1d18a7caaff39eab87241bf6725d0455ee44eabc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "27f492cf_93314042",
+        "filename": "src/media/audio/audio_rtp_session.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-18T22:20:27Z",
+      "side": 1,
+      "message": "Having a dedicated thread (even if it\u0027s an InterruptedThreadLoop) to handle RTCP RR seems a bit overkill. But may there is no other way. As I see, video_rtp_session also uses a dedicated thread for RTCP.",
+      "revId": "1d18a7caaff39eab87241bf6725d0455ee44eabc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
