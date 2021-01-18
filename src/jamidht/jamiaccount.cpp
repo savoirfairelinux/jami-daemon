@@ -4430,7 +4430,9 @@ JamiAccount::fetchNewCommits(const std::string& peer,
                              const std::string& conversationId,
                              const std::string& commitId)
 {
+    JAMI_ERR("@@@ %s", getAccountID().c_str());
     std::unique_lock<std::mutex> lk(conversationsMtx_);
+    JAMI_ERR("@@@2 %s", getAccountID().c_str());
     auto conversation = conversations_.find(conversationId);
     if (conversation != conversations_.end() && conversation->second) {
         if (!conversation->second->isMember(peer, true)) {
