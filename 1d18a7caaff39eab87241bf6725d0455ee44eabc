@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "92eb2f69_fdb951df",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 252,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-01-18T21:58:47Z",
+      "side": 1,
+      "message": "can be a class attribute",
+      "range": {
+        "startLine": 252,
+        "startChar": 4,
+        "endLine": 252,
+        "endChar": 32
+      },
+      "revId": "1d18a7caaff39eab87241bf6725d0455ee44eabc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "767e5c8b_e88bb170",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 255,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-01-18T21:58:47Z",
+      "side": 1,
+      "message": "std::clamp",
+      "range": {
+        "startLine": 254,
+        "startChar": 4,
+        "endLine": 255,
+        "endChar": 48
+      },
+      "revId": "1d18a7caaff39eab87241bf6725d0455ee44eabc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
