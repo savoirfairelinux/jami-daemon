@@ -36,6 +36,8 @@
 
 #include "errno.h"
 
+#include <opendht/thread_pool.h>
+
 #include <stdexcept>
 #include <system_error>
 #include <algorithm>
@@ -51,32 +53,26 @@ namespace jami {
 /// code \a errcode when the predicate return true.
 /// The predicate should have <code>bool(Call*) signature</code>.
 inline void
-hangupCallsIf(const Call::SubcallSet& callptr_list,
+hangupCallsIf(Call::SubcallSet&& calls,
               int errcode,
-              const std::function<bool(Call*)>& pred)
+              std::function<bool(Call*)> pred)
 {
-    std::for_each(std::begin(callptr_list),
-                  std::end(callptr_list),
-                  [&](const std::shared_ptr<Call>& call_ptr) {
-                      if (pred(call_ptr.get())) {
-                          try {
-                              call_ptr->hangup(errcode);
-                          } catch (const std::exception& e) {
-                              JAMI_ERR("[call:%s] hangup failed: %s",
-                                       call_ptr->getCallId().c_str(),
-                                       e.what());
-                          }
-                      }
-                  });
+    for (auto& call : calls) {
+        if (not pred(call.get()))
+            continue;
+        dht::ThreadPool::io().run([call = std::move(call), errcode] {
+            call->hangup(errcode);
+        });
+    }
 }
 
 /// Hangup many calls with same error code.
 ///
 /// Works as hangupCallsIf() with a predicate that always return true.
 inline void
-hangupCalls(const Call::SubcallSet& callptr_list, int errcode)
+hangupCalls(Call::SubcallSet&& callptr_list, int errcode)
 {
-    hangupCallsIf(callptr_list, errcode, [](Call*) { return true; });
+    hangupCallsIf(std::move(callptr_list), errcode, [](Call*) { return true; });
 }
 
 //==============================================================================
