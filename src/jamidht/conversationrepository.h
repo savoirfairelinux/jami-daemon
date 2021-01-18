@@ -75,6 +75,22 @@ struct ConversationMember
 {
     std::string uri;
     MemberRole role;
+
+    std::map<std::string, std::string> map() const
+    {
+        std::string rolestr;
+        if (role == MemberRole::ADMIN) {
+            rolestr = "admin";
+        } else if (role == MemberRole::MEMBER) {
+            rolestr = "member";
+        } else if (role == MemberRole::INVITED) {
+            rolestr = "invited";
+        } else if (role == MemberRole::BANNED) {
+            rolestr = "banned";
+        }
+
+        return {{"uri", uri}, {"role", rolestr}};
+    }
 };
 
 /**

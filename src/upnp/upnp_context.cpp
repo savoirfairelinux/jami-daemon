@@ -543,7 +543,7 @@ UPnPContext::updateMappingList(bool async)
     if (protocolList_.at(NatProtocolType::PUPNP)->hasValidIgd()) {
 #if HAVE_LIBNATPMP
         // Dont perform if NAT-PMP is valid.
-        if (not protocolList_.at(NatProtocolType::NAT_PMP)->hasValidIgd()
+        if (not protocolList_.at(NatProtocolType::NAT_PMP)->hasValidIgd())
 #endif
         {
             pruneMappingList();

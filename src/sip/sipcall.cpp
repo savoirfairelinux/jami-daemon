@@ -552,12 +552,11 @@ SIPCall::hangup(int reason)
             }
             route = route->next;
         }
-        const int status = reason
-                               ? reason
-                               : inv->state <= PJSIP_INV_STATE_EARLY and inv->role != PJSIP_ROLE_UAC
-                                     ? PJSIP_SC_CALL_TSX_DOES_NOT_EXIST
-                                     : inv->state >= PJSIP_INV_STATE_DISCONNECTED ? PJSIP_SC_DECLINE
-                                                                                  : 0;
+        const int status = reason ? reason
+                           : inv->state <= PJSIP_INV_STATE_EARLY and inv->role != PJSIP_ROLE_UAC
+                               ? PJSIP_SC_CALL_TSX_DOES_NOT_EXIST
+                           : inv->state >= PJSIP_INV_STATE_DISCONNECTED ? PJSIP_SC_DECLINE
+                                                                        : 0;
         // Notify the peer
         terminateSipSession(status);
     }
@@ -1543,10 +1542,10 @@ SIPCall::monitor() const
     JAMI_DBG("- Call %s with %s:", getCallId().c_str(), getPeerNumber().c_str());
     // TODO move in getCallDuration
     auto duration = duration_start_ == time_point::min()
-                                            ? 0
-                                            : std::chrono::duration_cast<std::chrono::milliseconds>(
-                                                  clock::now() - duration_start_)
-                                                  .count();
+                        ? 0
+                        : std::chrono::duration_cast<std::chrono::milliseconds>(clock::now()
+                                                                                - duration_start_)
+                              .count();
     JAMI_DBG("\t- Duration: %lu", duration);
 #ifdef ENABLE_VIDEO
     JAMI_DBG("\t- Video source: %s", acc->isVideoEnabled() ? mediaInput_.c_str() : "");
@@ -1559,7 +1558,6 @@ SIPCall::monitor() const
         JAMI_DBG("\t- Medias: %s", media_tr->link().c_str());
     }
 }
-
 
 bool
 SIPCall::toggleRecording()

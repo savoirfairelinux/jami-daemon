@@ -506,8 +506,17 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
         git_reference_free(ref_ptr);
     }
 
-    // We're done merging, cleanup the repository state
+    // We're done merging, cleanup the repository state & index
     git_repository_state_cleanup(repo.get());
+
+    git_object* target_ptr = nullptr;
+    if (git_object_lookup(&target_ptr, repo.get(), &commit_oid, GIT_OBJ_COMMIT) != 0) {
+        JAMI_ERR("failed to lookup OID %s", git_oid_tostr_s(&commit_oid));
+        return false;
+    }
+    GitObject target {target_ptr, git_object_free};
+
+    git_reset(repo.get(), target.get(), GIT_RESET_HARD, nullptr);
 
     return true;
 }
@@ -2350,15 +2359,9 @@ ConversationRepository::merge(const std::string& merge_id)
         }
     }
 
-    // Previous index can be dropped, it's a in-memory index not related to repo
-    // Use the one from the workdir as resolveConflicts checkout the correct one if necessary
-    git_index* head_index_ptr = nullptr;
-    if (git_repository_index(&head_index_ptr, repo.get()) < 0)
-        return false;
-    GitIndex hindex {head_index_ptr, git_index_free};
-
-    auto result = pimpl_->createMergeCommit(hindex.get(), merge_id);
+    auto result = pimpl_->createMergeCommit(index.get(), merge_id);
     JAMI_INFO("Merge done between %s and main", merge_id.c_str());
+
     return result;
 }
 
