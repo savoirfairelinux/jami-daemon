@@ -28,6 +28,7 @@ using namespace std::string_view_literals;
 int
 generateRequest(git_buf* request, const std::string& cmd, const std::string& url)
 {
+    JAMI_ERR("@@@ GENERATE");
     if (cmd.empty()) {
         giterr_set_str(GITERR_NET, "empty command");
         return -1;
@@ -63,6 +64,7 @@ generateRequest(git_buf* request, const std::string& cmd, const std::string& url
 int
 sendCmd(P2PStream* s)
 {
+    JAMI_ERR("@@@sendCmd %s - %s", s->cmd.c_str(), s->url.c_str());
     auto res = 0;
     git_buf request = {};
     if ((res = generateRequest(&request, s->cmd, s->url)) < 0) {
@@ -113,6 +115,7 @@ P2PStreamRead(git_smart_subtransport_stream* stream, char* buffer, size_t buflen
 int
 P2PStreamWrite(git_smart_subtransport_stream* stream, const char* buffer, size_t len)
 {
+    JAMI_ERR("@@@ write %s", buffer);
     auto* fs = reinterpret_cast<P2PStream*>(stream);
     if (!fs->socket) {
         giterr_set_str(GITERR_NET, "unavailable socket");
@@ -137,6 +140,7 @@ P2PSubTransportAction(git_smart_subtransport_stream** out,
                       const char* url,
                       git_smart_service_t action)
 {
+    JAMI_ERR("@@@ P2PSubTransportAction %u", (int) action);
     auto* sub = reinterpret_cast<P2PSubTransport*>(transport);
     if (!sub || !sub->remote) {
         JAMI_ERR("Invalid subtransport");
@@ -176,6 +180,7 @@ P2PSubTransportAction(git_smart_subtransport_stream** out,
     auto conversationId = gitUrl.substr(delim + 1, gitUrl.size());
 
     if (action == GIT_SERVICE_UPLOADPACK_LS) {
+        JAMI_ERR("@@@1");
         auto gitSocket = jami::Manager::instance().gitSocket(accountId, deviceId, conversationId);
         if (!gitSocket) {
             JAMI_ERR("Can't find related socket for %s, %s, %s",
@@ -193,13 +198,18 @@ P2PSubTransportAction(git_smart_subtransport_stream** out,
         stream->url = url + std::string("git://").size();
         sub->stream = stream;
         *out = &sub->stream->base;
+        JAMI_ERR("@@@ %p", gitSocket.get());
         return 0;
     } else if (action == GIT_SERVICE_UPLOADPACK) {
         if (sub->stream) {
+            JAMI_ERR("@@@2");
             *out = &sub->stream->base;
             return 0;
         }
+        JAMI_ERR("@@@3");
         return -1;
+    } else {
+        JAMI_ERR("@@@");
     }
     return 0;
 }

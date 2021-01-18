@@ -3990,6 +3990,8 @@ JamiAccount::handlePendingConversations()
                     }
                     if (conversation) {
                         auto commitId = conversation->join();
+                        JAMI_ERR("@@@ COMMIT FOR JOIN %s", commitId.c_str());
+
                         // TODO change convInfos to map<id, ConvInfo>
                         auto found = false;
                         for (const auto& ci : shared->convInfos_) {
@@ -4014,6 +4016,7 @@ JamiAccount::handlePendingConversations()
                                     std::lock_guard<std::mutex> lk(shared->conversationsMtx_);
                                     auto it = shared->conversations_.find(conversationId);
                                     // Do not sync as it's synched by convInfos
+                                    JAMI_ERR("@@@ SEND COMMIT FOR JOIN %s", commitId.c_str());
                                     if (it != shared->conversations_.end())
                                         shared->sendMessageNotification(*it->second,
                                                                         commitId,

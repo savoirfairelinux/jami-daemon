@@ -87,6 +87,7 @@ public:
 bool
 GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
 {
+    JAMI_ERR("@@@### PARSE ORDER");
     std::string pkt = cachedPkt_;
     if (buf)
         pkt += std::string({buf, buf + len});
@@ -112,6 +113,7 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
     pkt = pkt.substr(0, pkt_len);
 
     if (pkt.find(UPLOAD_PACK_CMD) == 4) {
+        JAMI_ERR("@@@### REF DISCO");
         // Cf: https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L166
         // References discovery
         JAMI_INFO("Upload pack command detected.");
@@ -133,6 +135,7 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
             JAMI_ERR("That protocol version is not yet supported (version: %u)", version);
         }
     } else if (pkt.find(WANT_CMD) == 4) {
+        // JAMI_ERR("@@@### WANT");
         // Reference:
         // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L229
         // TODO can have more want
@@ -141,6 +144,7 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
         wantedReference_ = commit;
         JAMI_INFO("Peer want ref: %s", wantedReference_.c_str());
     } else if (pkt.find(HAVE_CMD) == 4) {
+        // JAMI_ERR("@@@### HAVE");
         auto content = pkt.substr(5, pkt_len - 5);
         auto commit = content.substr(4, 40);
         haveRefs_.emplace_back(commit);
@@ -162,6 +166,7 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
             git_repository_free(repo);
         }
     } else if (pkt == DONE_PKT) {
+        // JAMI_ERR("@@@### DONE");
         // Reference:
         // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L390 Do
         // not do multi-ack, just send ACK + pack file
@@ -173,6 +178,7 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
             ACKFirst();
         sendPackData();
     } else if (pkt == FLUSH_PKT) {
+        // JAMI_ERR("@@@### FLUSH");
         if (!haveRefs_.empty()) {
             // Reference:
             // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L390
@@ -310,6 +316,7 @@ GitServer::Impl::NAK()
 void
 GitServer::Impl::sendPackData()
 {
+    // JAMI_ERR("@@@### SEND PACK");
     git_repository* repo;
 
     if (git_repository_open(&repo, repository_.c_str()) != 0) {
