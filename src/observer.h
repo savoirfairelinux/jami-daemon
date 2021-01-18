@@ -216,7 +216,6 @@ public:
     virtual void detached(Observable<T1>*) override
     {
         std::lock_guard<std::mutex> lk(this->mutex_);
-        JAMI_WARN() << "PublishMapSubject: detaching observers";
         for (auto& o : this->observers_)
             o->detached(this);
     }
@@ -228,7 +227,6 @@ public:
      **/
     ~PublishMapSubject()
     {
-        JAMI_WARN() << "~PublishMapSubject()";
         detached(nullptr);
     }
 
