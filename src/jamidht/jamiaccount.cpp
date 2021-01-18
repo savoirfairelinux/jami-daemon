@@ -3477,6 +3477,9 @@ JamiAccount::sendTextMessage(const std::string& to,
         confirm->replied = true;
     }
 
+    if (payloads.find("application/im-gitmessage-id") != payloads.end()) {
+        JAMI_ERR("@@@ SEND MESSAGE?");
+    }
     std::shared_ptr<std::set<DeviceId>> devices = std::make_shared<std::set<DeviceId>>();
     std::unique_lock<std::mutex> lk(sipConnsMtx_);
     sip_utils::register_thread();
@@ -3499,6 +3502,9 @@ JamiAccount::sendTextMessage(const std::string& to,
         ctx->confirmation = confirm;
 
         try {
+            if (payloads.find("application/im-gitmessage-id") != payloads.end()) {
+                JAMI_ERR("@@@ SEND SIP MESSAGE");
+            }
             auto res = sendSIPMessage(
                 conn, to, ctx.release(), token, payloads, [](void* token, pjsip_event* event) {
                     std::unique_ptr<TextMessageCtx> c {(TextMessageCtx*) token};
@@ -4039,6 +4045,7 @@ JamiAccount::handlePendingConversations()
                     }
                     if (conversation) {
                         auto commitId = conversation->join();
+
                         // TODO change convInfos to map<id, ConvInfo>
                         auto found = false;
                         for (const auto& ci : shared->convInfos_) {
