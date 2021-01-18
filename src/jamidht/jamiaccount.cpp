@@ -3990,6 +3990,7 @@ JamiAccount::handlePendingConversations()
                     }
                     if (conversation) {
                         auto commitId = conversation->join();
+
                         // TODO change convInfos to map<id, ConvInfo>
                         auto found = false;
                         for (const auto& ci : shared->convInfos_) {

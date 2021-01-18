@@ -76,7 +76,7 @@ public:
         {
             std::lock_guard<std::mutex> lkSockets(socketsMutex);
             socks = std::move(sockets);
-            for (auto& [key, channelData]: channelDatas_) {
+            for (auto& [key, channelData] : channelDatas_) {
                 if (channelData)
                     channelData->cv.notify_all();
             }
@@ -232,7 +232,7 @@ MultiplexedSocket::Impl::onRequest(const std::string& name, uint16_t channel)
             auto sockIt = sockets.find(channel);
             if (sockIt != sockets.end()) {
                 JAMI_WARN("A channel is already present on that socket, accepting "
-                            "the request will close the previous one");
+                          "the request will close the previous one");
                 sockets.erase(sockIt);
             }
             channelDatas_.emplace(channel, std::make_unique<ChannelInfo>());
@@ -249,9 +249,9 @@ MultiplexedSocket::Impl::onRequest(const std::string& name, uint16_t channel)
     msgpack::pack(buffer, val);
     std::error_code ec;
     int wr = parent_.write(CONTROL_CHANNEL,
-                            reinterpret_cast<const uint8_t*>(buffer.data()),
-                            buffer.size(),
-                            ec);
+                           reinterpret_cast<const uint8_t*>(buffer.data()),
+                           buffer.size(),
+                           ec);
     if (wr < 0) {
         if (ec)
             JAMI_ERR("The write operation failed with error: %s", ec.message().c_str());
@@ -503,15 +503,29 @@ MultiplexedSocket::waitForData(const uint16_t& channel,
         return -1;
     }
     std::unique_lock<std::mutex> lk {channelData->mutex};
-    channelData->cv.wait_for(lk, timeout, [&] { return !channelData->buf.empty() or pimpl_->isShutdown_; });
+    channelData->cv.wait_for(lk, timeout, [&] {
+        return !channelData->buf.empty() or pimpl_->isShutdown_;
+    });
     return channelData->buf.size();
 }
 
 void
 MultiplexedSocket::setOnRecv(const uint16_t& channel, GenericSocket<uint8_t>::RecvCb&& cb)
 {
-    std::lock_guard<std::mutex> lk(pimpl_->channelCbsMtx_);
-    pimpl_->channelCbs_[channel] = cb;
+    std::deque<uint8_t> recv;
+    {
+        std::lock_guard<std::mutex> lk(pimpl_->channelCbsMtx_);
+        pimpl_->channelCbs_[channel] = cb;
+
+        auto dataIt = pimpl_->channelDatas_.find(channel);
+        if (dataIt != pimpl_->channelDatas_.end() && dataIt->second) {
+            auto& channelData = dataIt->second;
+            recv = std::move(channelData->buf);
+        }
+    }
+    if (!recv.empty() && cb) {
+        cb(&recv[0], recv.size());
+    }
 }
 
 void
