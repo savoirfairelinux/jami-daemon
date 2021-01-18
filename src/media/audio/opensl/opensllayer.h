@@ -150,6 +150,8 @@ private:
     AudioFormat hardwareFormat_ {AudioFormat::MONO()};
     size_t hardwareBuffSize_ {BUFFER_SIZE};
 
+    std::vector<sample_buf> bufs_ {};
+
     AudioQueue freePlayBufQueue_ {BUF_COUNT};
     AudioQueue playBufQueue_ {BUF_COUNT};
 
@@ -158,8 +160,6 @@ private:
 
     AudioQueue freeRecBufQueue_ {BUF_COUNT}; // Owner of the queue
     AudioQueue recBufQueue_ {BUF_COUNT};     // Owner of the queue
-
-    std::vector<sample_buf> bufs_ {};
 
     std::unique_ptr<opensl::AudioPlayer> player_ {};
     std::unique_ptr<opensl::AudioPlayer> ringtone_ {};
