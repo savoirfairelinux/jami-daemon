@@ -113,6 +113,7 @@ P2PStreamRead(git_smart_subtransport_stream* stream, char* buffer, size_t buflen
 int
 P2PStreamWrite(git_smart_subtransport_stream* stream, const char* buffer, size_t len)
 {
+    JAMI_ERR("@@@ write %s", buffer);
     auto* fs = reinterpret_cast<P2PStream*>(stream);
     if (!fs->socket) {
         giterr_set_str(GITERR_NET, "unavailable socket");
