@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d9ebef98_30ec3d0a",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 870,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-01-18T21:55:39Z",
+      "side": 1,
+      "message": "why not use pl directly ?",
+      "range": {
+        "startLine": 870,
+        "startChar": 4,
+        "endLine": 870,
+        "endChar": 30
+      },
+      "revId": "95e3b90cd9588e639056d8b3a833840cb74e05c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d0ab76b2_3d298ee3",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 881,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-01-18T21:55:39Z",
+      "side": 1,
+      "message": "packet_loss \u003d std::clamp(packet_loss, 0, 100);",
+      "range": {
+        "startLine": 880,
+        "startChar": 4,
+        "endLine": 881,
+        "endChar": 54
+      },
+      "revId": "95e3b90cd9588e639056d8b3a833840cb74e05c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
