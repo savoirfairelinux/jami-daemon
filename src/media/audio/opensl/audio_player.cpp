@@ -197,6 +197,7 @@ bool
 AudioPlayer::start()
 {
     JAMI_DBG("OpenSL playback start");
+    std::unique_lock<std::mutex> lk(m_);
     SLuint32 state;
     SLresult result = (*playItf_)->GetPlayState(playItf_, &state);
     if (result != SL_RESULT_SUCCESS)
@@ -211,6 +212,7 @@ AudioPlayer::start()
         (*playBufferQueueItf_)->Enqueue(playBufferQueueItf_, silentBuf_.buf_, silentBuf_.size_));
     devShadowQueue_.push(&silentBuf_);
 
+    lk.unlock();
     result = (*playItf_)->SetPlayState(playItf_, SL_PLAYSTATE_PLAYING);
     SLASSERT(result);
 
@@ -233,13 +235,13 @@ AudioPlayer::stop()
     JAMI_DBG("OpenSL playback stop");
     SLuint32 state;
 
+    std::lock_guard<std::mutex> lk(m_);
     SLresult result = (*playItf_)->GetPlayState(playItf_, &state);
     SLASSERT(result);
 
     if (state == SL_PLAYSTATE_STOPPED)
         return;
 
-    std::lock_guard<std::mutex> lk(m_);
     callback_ = {};
     result = (*playItf_)->SetPlayState(playItf_, SL_PLAYSTATE_STOPPED);
     SLASSERT(result);
