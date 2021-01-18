@@ -560,7 +560,9 @@ Conversation::mergeHistory(const std::string& uri)
 void
 Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
 {
+    JAMI_ERR("@@@ pull %s", uri.c_str());
     std::lock_guard<std::mutex> lk(pimpl_->pullcbsMtx_);
+    JAMI_ERR("@@@ pull2 %s", uri.c_str());
     auto isInProgress = not pimpl_->pullcbs_.empty();
     pimpl_->pullcbs_.emplace_back(
         std::make_tuple<std::string, std::string, OnPullCb>(std::string(uri),
@@ -568,7 +570,7 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
                                                             std::move(cb)));
     if (isInProgress)
         return;
-    dht::ThreadPool::io().run([w = weak()] {
+    dht::ThreadPool::io().run([w = weak(), uri] {
         auto sthis_ = w.lock();
         if (!sthis_)
             return;
@@ -614,16 +616,20 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
                 continue;
             }
             // Pull from remote
+            JAMI_ERR("@@@ pull3 %s", uri.c_str());
             auto fetched = sthis_->fetchFrom(deviceId);
+            JAMI_ERR("@@@ pull4 %s", uri.c_str());
             {
                 std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
                 sthis_->pimpl_->fetchingRemotes_.erase(it);
             }
 
+            JAMI_ERR("@@@ pull4 %s", uri.c_str());
             if (!fetched) {
                 cb(false, {});
                 continue;
             }
+            JAMI_ERR("@@@ pull5 %s", uri.c_str());
             auto newCommits = sthis_->mergeHistory(deviceId);
             auto ok = !newCommits.empty();
             if (cb)

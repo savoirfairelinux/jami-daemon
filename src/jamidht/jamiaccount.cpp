@@ -2440,6 +2440,7 @@ JamiAccount::doRegister_()
                         // Check if wanted remote it's our side (git://removeDevice/conversationId)
                         return;
                     }
+                    JAMI_WARN("@@@[Account %s] CHECK PULL", getAccountID().c_str());
 
                     {
                         // Check if pull from banned device
@@ -2461,6 +2462,7 @@ JamiAccount::doRegister_()
                         }
                     }
 
+                    JAMI_WARN("@@@[Account %s] CHECK GIT SOCK", getAccountID().c_str());
                     if (gitSocket(deviceId.toString(), conversationId) == channel) {
                         // The onConnectionReady is already used as client (for retrieving messages)
                         // So it's not the server socket
@@ -3405,6 +3407,7 @@ JamiAccount::sendTextMessage(const std::string& to,
         JAMI_ERR("Multi-part im is not supported yet by JamiAccount");
         return 0;
     }
+    JAMI_ERR("@@@...2");
     return SIPAccountBase::sendTextMessage(toUri, payloads);
 }
 
@@ -3415,6 +3418,7 @@ JamiAccount::sendTextMessage(const std::string& to,
                              bool retryOnTimeout,
                              bool onlyConnected)
 {
+    JAMI_ERR("@@@...1");
     std::string toUri;
     try {
         toUri = parseJamiUri(to);
@@ -3444,8 +3448,10 @@ JamiAccount::sendTextMessage(const std::string& to,
     std::unique_lock<std::mutex> lk(sipConnsMtx_);
     sip_utils::register_thread();
 
+    JAMI_ERR("@@@ TEST SIP");
     for (auto it = sipConns_.begin(); it != sipConns_.end();) {
         auto& [key, value] = *it;
+        JAMI_ERR("@@@ TEST SIP? %s %s %u", key.first.c_str(), to.c_str(), value.size());
         if (key.first != to or value.empty()) {
             ++it;
             continue;
@@ -3462,6 +3468,7 @@ JamiAccount::sendTextMessage(const std::string& to,
         ctx->confirmation = confirm;
 
         try {
+            JAMI_ERR("@@@ TEST SIP");
             auto res = sendSIPMessage(
                 conn, to, ctx.release(), token, payloads, [](void* token, pjsip_event* event) {
                     std::unique_ptr<TextMessageCtx> c {(TextMessageCtx*) token};
@@ -3519,6 +3526,7 @@ JamiAccount::sendTextMessage(const std::string& to,
         return;
 
     // Find listening devices for this account
+    JAMI_ERR("@@@@ START FOREACH DEVICES");
     accountManager_->forEachDevice(
         toH,
         [this, confirm, to, token, payloads, now, devices](const dht::InfoHash& dev) {
@@ -3617,6 +3625,7 @@ JamiAccount::sendTextMessage(const std::string& to,
                     confirm->listenTokens.clear();
                     confirm->replied = true;
                 }
+                JAMI_ERR("@@@@ START FOREACH DEVICES");
                 messageEngine_.onMessageSent(to, token, true);
             } else if (not ok) {
                 messageEngine_.onMessageSent(to, token, false);
@@ -4430,7 +4439,9 @@ JamiAccount::fetchNewCommits(const std::string& peer,
                              const std::string& conversationId,
                              const std::string& commitId)
 {
+    JAMI_ERR("@@@ %s", getAccountID().c_str());
     std::unique_lock<std::mutex> lk(conversationsMtx_);
+    JAMI_ERR("@@@2 %s", getAccountID().c_str());
     auto conversation = conversations_.find(conversationId);
     if (conversation != conversations_.end() && conversation->second) {
         if (!conversation->second->isMember(peer, true)) {
@@ -4831,6 +4842,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
                             const std::map<std::string, std::string>& data,
                             pjsip_endpt_send_callback cb)
 {
+    JAMI_ERR("@@@ JamiAccount::sendSIPMessage");
     auto transport = conn.transport;
     auto channel = conn.channel;
     if (!channel || !channel->underlyingICE())
@@ -5309,7 +5321,9 @@ JamiAccount::sendMessageNotification(const Conversation& conversation,
         if (!sync && username_.find(uri) != std::string::npos)
             continue;
         // Announce to all members that a new message is sent
+        JAMI_ERR("@@@ %s: %s", uri.c_str(), commitId.c_str());
         sendTextMessage(uri, {{"application/im-gitmessage-id", text}});
+        JAMI_ERR("@@@ %s: %s - END", uri.c_str(), commitId.c_str());
     }
 }
 

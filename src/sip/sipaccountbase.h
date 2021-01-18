@@ -254,6 +254,7 @@ public:
     virtual uint64_t sendTextMessage(const std::string& to,
                                      const std::map<std::string, std::string>& payloads) override
     {
+        JAMI_ERR("@@@...MS2");
         return messageEngine_.sendMessage(to, payloads);
     }
 

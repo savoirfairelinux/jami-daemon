@@ -401,9 +401,9 @@ SIPCall::requestKeyframe()
         return;
 
     constexpr auto BODY = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                                       "<media_control><vc_primitive><to_encoder>"
-                                       "<picture_fast_update/>"
-                                       "</to_encoder></vc_primitive></media_control>"sv;
+                          "<media_control><vc_primitive><to_encoder>"
+                          "<picture_fast_update/>"
+                          "</to_encoder></vc_primitive></media_control>"sv;
     JAMI_DBG("Sending video keyframe request via SIP INFO");
     try {
         sendSIPInfo(BODY, "media_control+xml");
@@ -898,11 +898,15 @@ SIPCall::carryingDTMFdigits(char code)
     if (code == '!') {
         ret = snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=16\r\nDuration=%d\r\n", duration);
     } else {
-        ret = snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
+        ret = snprintf(dtmf_body,
+                       sizeof dtmf_body - 1,
+                       "Signal=%c\r\nDuration=%d\r\n",
+                       code,
+                       duration);
     }
 
     try {
-        sendSIPInfo({dtmf_body, (size_t)ret}, "dtmf-relay");
+        sendSIPInfo({dtmf_body, (size_t) ret}, "dtmf-relay");
     } catch (const std::exception& e) {
         JAMI_ERR("Error sending DTMF: %s", e.what());
     }
@@ -926,6 +930,7 @@ SIPCall::setVideoOrientation(int rotation)
 void
 SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages, const std::string& from)
 {
+    JAMI_ERR("@@@...CALL");
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     // TODO: for now we ignore the "from" (the previous implementation for sending this info was
     //      buggy and verbose), another way to send the original message sender will be implemented
@@ -1337,7 +1342,6 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
         if (not isSubcall())
             emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
         setMute(mute);
-
     }
 }
 
@@ -1571,10 +1575,10 @@ SIPCall::monitor() const
     JAMI_DBG("- Call %s with %s:", getCallId().c_str(), getPeerNumber().c_str());
     // TODO move in getCallDuration
     auto duration = duration_start_ == time_point::min()
-                                            ? 0
-                                            : std::chrono::duration_cast<std::chrono::milliseconds>(
-                                                  clock::now() - duration_start_)
-                                                  .count();
+                        ? 0
+                        : std::chrono::duration_cast<std::chrono::milliseconds>(clock::now()
+                                                                                - duration_start_)
+                              .count();
     JAMI_DBG("\t- Duration: %lu", duration);
 #ifdef ENABLE_VIDEO
     JAMI_DBG("\t- Video source: %s", acc->isVideoEnabled() ? mediaInput_.c_str() : "");
@@ -1587,7 +1591,6 @@ SIPCall::monitor() const
         JAMI_DBG("\t- Medias: %s", media_tr->link().c_str());
     }
 }
-
 
 bool
 SIPCall::toggleRecording()
@@ -1709,14 +1712,14 @@ SIPCall::initIceMediaTransport(bool master,
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
     auto transport = iceTransportFactory.createUTransport(getCallId().c_str(),
-                                                              channel_num,
-                                                              master,
-                                                              iceOptions);
+                                                          channel_num,
+                                                          master,
+                                                          iceOptions);
     std::lock_guard<std::mutex> lk(transportMtx_);
     // Destroy old ice on a separate io pool
     if (tmpMediaTransport_)
         dht::ThreadPool::io().run([ice = std::make_shared<decltype(tmpMediaTransport_)>(
-                                        std::move(tmpMediaTransport_))] {});
+                                       std::move(tmpMediaTransport_))] {});
     tmpMediaTransport_ = std::move(transport);
     return static_cast<bool>(tmpMediaTransport_);
 }

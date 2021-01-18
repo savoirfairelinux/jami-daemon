@@ -3105,6 +3105,7 @@ Manager::sendTextMessage(const std::string& accountID,
                          const std::string& to,
                          const std::map<std::string, std::string>& payloads)
 {
+    JAMI_ERR("@@@...X");
     if (const auto acc = getAccount(accountID)) {
         try {
 #ifdef ENABLE_PLUGIN
@@ -3329,7 +3330,7 @@ void
 Manager::setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to change default moderator, account %s not found", accountID.c_str());
         return;
     }
@@ -3345,7 +3346,7 @@ std::vector<std::string>
 Manager::getDefaultModerators(const std::string& accountID)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to get default moderators, account %s not found", accountID.c_str());
         return {};
     }
@@ -3358,7 +3359,7 @@ void
 Manager::enableLocalModerators(const std::string& accountID, bool isModEnabled)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to set local moderators, account %s not found", accountID.c_str());
         return;
     }
@@ -3370,9 +3371,9 @@ bool
 Manager::isLocalModeratorsEnabled(const std::string& accountID)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to get local moderators, account %s not found", accountID.c_str());
-        return true;    // Default value
+        return true; // Default value
     }
     return acc->isLocalModeratorsEnabled();
 }

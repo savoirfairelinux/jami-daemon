@@ -145,6 +145,8 @@ ut_conversationRepository_SOURCES = conversationRepository/conversationRepositor
 #
 check_PROGRAMS += ut_conversation
 ut_conversation_SOURCES = conversation/conversation.cpp
+check_PROGRAMS += ut_conversationReplay
+ut_conversationReplay_SOURCES = conversation/replay_conversation.cpp
 
 #
 # syncHistory

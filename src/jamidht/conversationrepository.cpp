@@ -2149,6 +2149,7 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
         }
         return 0;
     };
+    JAMI_WARN("@@@ start fetch...");
     if (git_remote_fetch(remote.get(), nullptr, &fetch_opts, "fetch") < 0) {
         const git_error* err = giterr_last();
         if (err) {

@@ -50,6 +50,11 @@ MessageEngine::sendMessage(const std::string& to, const std::map<std::string, st
         do {
             token = std::uniform_int_distribution<MessageToken> {1, DRING_ID_MAX_VAL}(account_.rand);
         } while (peerMessages.find(token) != peerMessages.end());
+        JAMI_ERR("@@@... %lu %s: %s - EMPLACE FOR %s",
+                 token,
+                 payloads.begin()->first.c_str(),
+                 payloads.begin()->second.c_str(),
+                 to.c_str());
         auto m = peerMessages.emplace(token, Message {});
         m.first->second.to = to;
         m.first->second.payloads = payloads;
@@ -62,6 +67,7 @@ MessageEngine::sendMessage(const std::string& to, const std::map<std::string, st
 void
 MessageEngine::onPeerOnline(const std::string& peer, bool retryOnTimeout)
 {
+    JAMI_ERR("@@@... RETRY FOR %s", peer.c_str());
     retrySend(peer, retryOnTimeout);
 }
 

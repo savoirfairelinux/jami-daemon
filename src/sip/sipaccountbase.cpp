@@ -512,7 +512,10 @@ SIPAccountBase::onTextMessage(const std::string& id,
                               const std::string& from,
                               const std::map<std::string, std::string>& payloads)
 {
-    JAMI_DBG("Text message received from %s, %zu part(s)", from.c_str(), payloads.size());
+    JAMI_DBG("Text message received from %s (id %s), %zu part(s)",
+             from.c_str(),
+             id.c_str(),
+             payloads.size());
     for (const auto& m : payloads) {
         if (!utf8_validate(m.first))
             return;
@@ -607,8 +610,9 @@ SIPAccountBase::onTextMessage(const std::string& id,
                 return;
             }
 
-            JAMI_WARN("Received indication for new commit available in conversation %s",
-                      json["id"].asString().c_str());
+            JAMI_WARN("Received indication for new commit available in conversation %s (%s)",
+                      json["id"].asString().c_str(),
+                      json["commit"].asString().c_str());
 
             onNewGitCommit(from,
                            json["deviceId"].asString(),

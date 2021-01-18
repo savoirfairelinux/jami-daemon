@@ -2153,6 +2153,7 @@ SIPAccount::sendTextMessage(const std::string& to,
                             bool,
                             bool)
 {
+    JAMI_ERR("@@@...3");
     if (to.empty() or payloads.empty()) {
         JAMI_WARN("No sender or payload");
         messageEngine_.onMessageSent(to, id, false);
