@@ -99,10 +99,10 @@ MediaEncoder::setOptions(const MediaStream& opts)
         // resolutions
         videoOpts_.width -= videoOpts_.width % 2;
         videoOpts_.height -= videoOpts_.height % 2;
-        if (not videoOpts_.frameRate)
+        if (!videoOpts_.frameRate)
             videoOpts_.frameRate = 30;
-        if (opts.bitrate)
-            libav_utils::setDictValue(&options_, "max_rate", std::to_string(opts.bitrate));
+        if (!videoOpts_.bitrate)
+            videoOpts_.bitrate = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;;
     } else {
         audioOpts_ = opts;
     }
