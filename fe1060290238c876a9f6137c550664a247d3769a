@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1d3ea5e9_ef5526b5",
+        "filename": "src/account.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-01-19T20:55:22Z",
+      "side": 1,
+      "message": "Why put the MediaMap in Account ? Maybe better in Call",
+      "range": {
+        "startLine": 87,
+        "startChar": 4,
+        "endLine": 87,
+        "endChar": 56
+      },
+      "revId": "fe1060290238c876a9f6137c550664a247d3769a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "32976399_9b958a27",
+        "filename": "src/conference.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-01-19T20:55:22Z",
+      "side": 1,
+      "message": "SIPCall::getSipCall",
+      "range": {
+        "startLine": 79,
+        "startChar": 36,
+        "endLine": 79,
+        "endChar": 46
+      },
+      "revId": "fe1060290238c876a9f6137c550664a247d3769a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e4f3c031_4984bb53",
+        "filename": "src/conference.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-01-19T20:55:22Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 109,
+        "startChar": 32,
+        "endLine": 109,
+        "endChar": 42
+      },
+      "revId": "fe1060290238c876a9f6137c550664a247d3769a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "28d1d4c8_b4642372",
+        "filename": "src/conference.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-01-19T20:55:22Z",
+      "side": 1,
+      "message": "SIPCall::getSipCall",
+      "range": {
+        "startLine": 178,
+        "startChar": 24,
+        "endLine": 178,
+        "endChar": 72
+      },
+      "revId": "fe1060290238c876a9f6137c550664a247d3769a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3dfbc7ec_db1e9494",
+        "filename": "src/conference.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 258,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-01-19T20:55:22Z",
+      "side": 1,
+      "message": "Duplicate of the SIPCall method",
+      "range": {
+        "startLine": 258,
+        "startChar": 4,
+        "endLine": 258,
+        "endChar": 70
+      },
+      "revId": "fe1060290238c876a9f6137c550664a247d3769a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
