@@ -38,7 +38,7 @@ struct MediaStream
     int64_t firstTimestamp {0};
     int width {0};
     int height {0};
-    int bitrate;
+    int bitrate {0};
     rational<int> frameRate;
     int sampleRate {0};
     int nbChannels {0};
