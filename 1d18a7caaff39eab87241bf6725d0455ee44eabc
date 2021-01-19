@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "55b91461_57c6957f",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 252,
+      "author": {
+        "id": 906
+      },
+      "writtenOn": "2021-01-19T11:18:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "92eb2f69_fdb951df",
+      "range": {
+        "startLine": 252,
+        "startChar": 4,
+        "endLine": 252,
+        "endChar": 32
+      },
+      "revId": "1d18a7caaff39eab87241bf6725d0455ee44eabc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "767e5c8b_e88bb170",
         "filename": "src/media/audio/audio_rtp_session.cpp",
         "patchSetId": 3
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "c7a1fa3a_786dc933",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 255,
+      "author": {
+        "id": 906
+      },
+      "writtenOn": "2021-01-19T11:18:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "767e5c8b_e88bb170",
+      "range": {
+        "startLine": 254,
+        "startChar": 4,
+        "endLine": 255,
+        "endChar": 48
+      },
+      "revId": "1d18a7caaff39eab87241bf6725d0455ee44eabc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4abe7042_c71c34d4",
         "filename": "src/media/audio/audio_rtp_session.cpp",
         "patchSetId": 3
@@ -65,6 +113,24 @@
     },
     {
       "key": {
+        "uuid": "b541cbb5_ce3ccdb3",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 263,
+      "author": {
+        "id": 906
+      },
+      "writtenOn": "2021-01-19T11:18:27Z",
+      "side": 1,
+      "message": "This restart happens every ~5s at most (RR packet received).\nHowever, it was indeed not needed, as the packet loss is stored as an option of an AVCodecCtx, and is reloaded at each encoding by the codec. I\u0027ve removed it.",
+      "parentUuid": "4abe7042_c71c34d4",
+      "revId": "1d18a7caaff39eab87241bf6725d0455ee44eabc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "27f492cf_93314042",
         "filename": "src/media/audio/audio_rtp_session.h",
         "patchSetId": 3
@@ -76,6 +142,24 @@
       "writtenOn": "2021-01-18T22:20:27Z",
       "side": 1,
       "message": "Having a dedicated thread (even if it\u0027s an InterruptedThreadLoop) to handle RTCP RR seems a bit overkill. But may there is no other way. As I see, video_rtp_session also uses a dedicated thread for RTCP.",
+      "revId": "1d18a7caaff39eab87241bf6725d0455ee44eabc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6d315d9d_6936ecec",
+        "filename": "src/media/audio/audio_rtp_session.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 906
+      },
+      "writtenOn": "2021-01-19T11:18:27Z",
+      "side": 1,
+      "message": "I\u0027ve implemented it this way to keep consistency with the video_rtp_session model. \nI suppose the other solution would be to integrate the RTCP control in audio_receive_thread, but it would be a bit longer to develop, as the dedicated thread solution is mostly the same as video_rtp_session.",
+      "parentUuid": "27f492cf_93314042",
       "revId": "1d18a7caaff39eab87241bf6725d0455ee44eabc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
