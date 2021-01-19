@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "f3c65746_7f82659f",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 870,
+      "author": {
+        "id": 906
+      },
+      "writtenOn": "2021-01-19T11:18:15Z",
+      "side": 1,
+      "message": "It was mostly to decorrelate the internal processing from the input. I\u0027ve replaced it to use pl directly, and cast to make sure we\u0027re using the correct type.",
+      "parentUuid": "d9ebef98_30ec3d0a",
+      "range": {
+        "startLine": 870,
+        "startChar": 4,
+        "endLine": 870,
+        "endChar": 30
+      },
+      "revId": "95e3b90cd9588e639056d8b3a833840cb74e05c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d0ab76b2_3d298ee3",
         "filename": "src/media/media_encoder.cpp",
         "patchSetId": 3
@@ -45,6 +69,30 @@
       "revId": "95e3b90cd9588e639056d8b3a833840cb74e05c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7c978b7d_66f9a1fb",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 881,
+      "author": {
+        "id": 906
+      },
+      "writtenOn": "2021-01-19T11:18:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d0ab76b2_3d298ee3",
+      "range": {
+        "startLine": 880,
+        "startChar": 4,
+        "endLine": 881,
+        "endChar": 54
+      },
+      "revId": "95e3b90cd9588e639056d8b3a833840cb74e05c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
