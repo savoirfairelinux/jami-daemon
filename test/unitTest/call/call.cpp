@@ -121,6 +121,7 @@ CallTest::setUp()
 void
 CallTest::tearDown()
 {
+    DRing::unregisterSignalHandlers();
     JAMI_INFO("Remove created accounts...");
 
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
