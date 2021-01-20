@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8222ea68_9ff2d53a",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 361,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-20T22:28:38Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027input\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "c176143a360c4b4ca7150672fe9a76bc52072889",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "04351c38_f9f52994",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1128,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-20T22:28:38Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027input\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "c176143a360c4b4ca7150672fe9a76bc52072889",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "94617d7f_f89a306d",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1183,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-20T22:28:38Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027input\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "c176143a360c4b4ca7150672fe9a76bc52072889",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "45e25fa1_1b8b10a6",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1197,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-20T22:28:38Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027input\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "c176143a360c4b4ca7150672fe9a76bc52072889",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c983fc5b_d0b465db",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1211,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-20T22:28:38Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027input\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "c176143a360c4b4ca7150672fe9a76bc52072889",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "90168c58_7a2f0654",
+        "filename": "src/media/video/video_sender.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-20T22:28:38Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027input_frame\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "c176143a360c4b4ca7150672fe9a76bc52072889",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
