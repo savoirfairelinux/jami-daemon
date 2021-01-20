@@ -46,6 +46,76 @@
       "revId": "c9b364abaa4b9093062ad3c274777b59d32c9d44",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cae50229_c0f23364",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 308,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-20T14:15:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "741725e8_5e88125d",
+      "range": {
+        "startLine": 308,
+        "startChar": 8,
+        "endLine": 308,
+        "endChar": 54
+      },
+      "revId": "c9b364abaa4b9093062ad3c274777b59d32c9d44",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "24b6c15e_756f7fd6",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1176,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-20T14:15:54Z",
+      "side": 1,
+      "message": "Imho this will cause huge performance drop. Was it tested? Because it will alloc a new VideoFrame every time. Before that it was just returning the pointer :/",
+      "range": {
+        "startLine": 1173,
+        "startChar": 1,
+        "endLine": 1176,
+        "endChar": 18
+      },
+      "revId": "c9b364abaa4b9093062ad3c274777b59d32c9d44",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f3c4c974_3b48a842",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1210,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-20T14:15:54Z",
+      "side": 1,
+      "message": "More a question. This is the thing used for jami-standup when black frames appears?",
+      "range": {
+        "startLine": 1209,
+        "startChar": 1,
+        "endLine": 1210,
+        "endChar": 56
+      },
+      "revId": "c9b364abaa4b9093062ad3c274777b59d32c9d44",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
