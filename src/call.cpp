@@ -23,6 +23,10 @@
 #include "call.h"
 #include "account.h"
 #include "manager.h"
+#ifdef ENABLE_PLUGIN
+#include "plugin/jamipluginmanager.h"
+#include "plugin/streamdata.h"
+#endif
 #include "audio/ringbufferpool.h"
 #include "dring/call_const.h"
 #include "client/ring_signal.h"
@@ -413,6 +417,14 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
             return;
         }
     }
+#ifdef ENABLE_PLUGIN
+    auto& pluginChatManager
+        = jami::Manager::instance().getJamiPluginManager().getChatServicesManager();
+    std::shared_ptr<JamiMessage> cm = std::make_shared<JamiMessage>(
+        getAccountId(), getPeerNumber(), true, const_cast<std::map<std::string, std::string>&>(messages), false);
+    pluginChatManager.publishMessage(cm);
+
+#endif
     Manager::instance().incomingMessage(getCallId(), getPeerNumber(), messages);
 }
 
