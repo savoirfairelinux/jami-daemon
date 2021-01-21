@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "42ac34f8_16c23626",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 270,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-01-21T18:40:22Z",
+      "side": 1,
+      "message": "This means getPonderateLoss will always be \"attracted\" toward the value 10, with a minimum possible of 5. Also why floor ?\nIf the loss is higher than 10, do we want it to be reduced toward 10?\nThis should be made explicit. (maybe with consts like OPUS_LOSS_MIN etc.)\n\nIf we want Opus to use a minimum of 5% of loss for FEC, maybe it should be in sender_-\u003esetPacketLoss in the Opus-specific part ?",
+      "range": {
+        "startLine": 270,
+        "startChar": 4,
+        "endLine": 270,
+        "endChar": 46
+      },
+      "revId": "88b785703acb0a961223729880c5931b8fd4b295",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
