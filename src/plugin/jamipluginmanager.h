@@ -23,10 +23,11 @@
 #include "fileutils.h"
 #include "archiver.h"
 #include "pluginmanager.h"
+#include "PluginPreferences.h"
 
 // Services
 #include "callservicesmanager.h"
-#include "conversationservicesmanager.h"
+#include "chatservicesmanager.h"
 
 #include <vector>
 #include <map>
@@ -39,8 +40,8 @@ class JamiPluginManager
 {
 public:
     JamiPluginManager()
-        : csm_ {pm_}
-        , convsm_ {pm_}
+        : callsm_ {pm_}
+        , chatsm_ {pm_}
     {
         registerServices();
     }
@@ -59,11 +60,11 @@ public:
     std::map<std::string, std::string> getPluginDetails(const std::string& rootPath);
 
     /**
-     * @brief listAvailablePlugins
+     * @brief getInstalledPlugins
      * Lists available plugins with valid manifest files
      * @return list of plugin directory names
      */
-    std::vector<std::string> listAvailablePlugins();
+    std::vector<std::string> getInstalledPlugins();
 
     /**
      * @brief installPlugin
@@ -111,10 +112,10 @@ public:
     void togglePlugin(const std::string& rootPath, bool toggle);
 
     /**
-     * @brief listLoadedPlugins
+     * @brief getLoadedPlugins
      * @return vector of rootpaths of the loaded plugins
      */
-    std::vector<std::string> listLoadedPlugins() const;
+    std::vector<std::string> getLoadedPlugins() const;
 
     std::vector<std::map<std::string, std::string>> getPluginPreferences(const std::string& rootPath);
 
@@ -127,9 +128,9 @@ public:
     bool resetPluginPreferencesValuesMap(const std::string& rootPath);
 
 public:
-    CallServicesManager& getCallServicesManager() { return csm_; }
+    CallServicesManager& getCallServicesManager() { return callsm_; }
 
-    ConversationServicesManager& getConversationServicesManager() { return convsm_; }
+    ChatServicesManager& getChatServicesManager() { return chatsm_; }
 
 private:
     NON_COPYABLE(JamiPluginManager);
@@ -191,7 +192,7 @@ private:
      */
     std::string getPreferencesConfigFilePath(const std::string& rootPath) const
     {
-        return rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "preferences.json";
+        return PluginPreferencesManager::getPreferencesConfigFilePath(rootPath);
     }
 
     /**
@@ -203,7 +204,7 @@ private:
      */
     std::string pluginPreferencesValuesFilePath(const std::string& rootPath) const
     {
-        return rootPath + DIR_SEPARATOR_CH + "preferences.msgpack";
+        return PluginPreferencesManager::valuesFilePath(rootPath);
     }
 
     void registerServices();
@@ -214,7 +215,7 @@ private:
 
     // Services
 private:
-    CallServicesManager csm_;
-    ConversationServicesManager convsm_;
+    CallServicesManager callsm_;
+    ChatServicesManager chatsm_;
 };
 } // namespace jami

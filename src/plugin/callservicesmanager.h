@@ -19,16 +19,14 @@
  */
 
 #pragma once
-// Utils
+
 #include "noncopyable.h"
 #include "logger.h"
 #include "manager.h"
 #include "sip/sipcall.h"
-// Plugin Manager
 #include "pluginmanager.h"
 #include "streamdata.h"
 #include "mediahandler.h"
-// STL
 #include <list>
 #include <set>
 #include <tuple>
@@ -60,8 +58,22 @@ public:
     {
         // This guarantees unicity of subjects by id
         callAVsubjects.push_back(std::make_pair(data, subject));
-        for (const auto& toggledMediaHandler : mediaHandlerToggled_[data.id]) {
-            toggleCallMediaHandler(toggledMediaHandler, data.id, true);
+
+        for (auto& callMediaHandler : callMediaHandlers) {
+            std::size_t found = callMediaHandler->id().find_last_of(DIR_SEPARATOR_CH);
+            auto toDir = callMediaHandler->id().substr(0, found);
+            auto preferences = PluginPreferencesManager::getPreferencesValuesMap(toDir);
+#ifndef __ANDROID__
+            if (preferences.at("always") == "1")
+                toggleCallMediaHandler(getCallHandlerId(callMediaHandler), data.id, true);
+            else
+#endif
+                for (const auto& toggledMediaHandler : mediaHandlerToggled_[data.id]) {
+                    if (toggledMediaHandler == getCallHandlerId(callMediaHandler)) {
+                        toggleCallMediaHandler(toggledMediaHandler, data.id, true);
+                        break;
+                    }
+                }
         }
     }
 
@@ -85,9 +97,9 @@ public:
         auto registerCallMediaHandler = [this](void* data) {
             CallMediaHandlerPtr ptr {(static_cast<CallMediaHandler*>(data))};
 
-            if (ptr) {
-                callMediaHandlers.emplace_back(std::move(ptr));
-            }
+            if (!ptr)
+                return -1;
+            callMediaHandlers.emplace_back(std::move(ptr));
             return 0;
         };
 
@@ -107,11 +119,11 @@ public:
     }
 
     /**
-     * @brief listCallMediaHandlers
+     * @brief getCallMediaHandlers
      * List all call media handlers
      * @return
      */
-    std::vector<std::string> listCallMediaHandlers()
+    std::vector<std::string> getCallMediaHandlers()
     {
         std::vector<std::string> res;
         for (const auto& mediaHandler : callMediaHandlers) {
@@ -160,7 +172,7 @@ public:
                 }
             }
         }
-
+#ifndef __ANDROID__
         /* In the case when the mediaHandler receives a hardware format
          * frame and converts it to main memory, we need to restart the
          * sender to unlink ours encoder and decoder.
@@ -170,6 +182,7 @@ public:
          */
         if (applyRestart)
             Manager::instance().callFactory.getCall<SIPCall>(callId)->getVideoRtp().restartSender();
+#endif
     }
 
     /**
@@ -217,18 +230,17 @@ public:
         return true;
     }
 
-    std::map<std::string, std::vector<std::string>> getCallMediaHandlerStatus(
-        const std::string& callId)
+    std::vector<std::string> getCallMediaHandlerStatus(const std::string& callId)
     {
         const auto& it = mediaHandlerToggled_.find(callId);
         if (it != mediaHandlerToggled_.end()) {
             std::vector<std::string> ret;
             for (const auto& mediaHandlerId : it->second)
                 ret.push_back(mediaHandlerId);
-            return {{callId, ret}};
+            return ret;
         }
 
-        return {{callId, {}}};
+        return {};
     }
 
     void setPreference(const std::string& key, const std::string& value, const std::string& scopeStr)
@@ -254,19 +266,6 @@ private:
     {
         if (auto soSubject = subject.lock())
             callMediaHandlerPtr->notifyAVFrameSubject(data, soSubject);
-    }
-
-    /**
-     * @brief listAvailableSubjects
-     * @param callMediaHandlerPtr
-     * This functions lets the call media handler component know which subjects are available
-     */
-    void listAvailableSubjects(const std::string& callID, CallMediaHandlerPtr& callMediaHandlerPtr)
-    {
-        for (auto it = callAVsubjects.begin(); it != callAVsubjects.end(); ++it) {
-            if (it->first.id == callID)
-                notifyAVSubject(callMediaHandlerPtr, it->first, it->second);
-        }
     }
 
     /**
@@ -302,9 +301,9 @@ private:
      * It is pushed to this list list
      */
     std::list<std::pair<const StreamData, AVSubjectSPtr>> callAVsubjects;
-    // std::map<std::string, std::tuple<const StreamData, AVSubjectSPtr>> callAVsubjects;
 
-    std::map<std::string, std::set<std::string>> mediaHandlerToggled_;
+    std::map<std::string, std::set<std::string>>
+        mediaHandlerToggled_; // callId, list of mediaHandlers
 };
 
 } // namespace jami
