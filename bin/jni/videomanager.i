@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2020 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Authors: Damien Riegel <damien.riegel@savoirfairelinux.com>
  *           Adrien Béraud <adrien.beraud@savoirfairelinux.com>
@@ -190,7 +190,7 @@ JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoFrame(JNIE
     static jmethodID imageGetPlanes = jenv->GetMethodID(imageClass, "getPlanes", "()[Landroid/media/Image$Plane;");
     static jmethodID imageClose = jenv->GetMethodID(imageClass, "close", "()V");
 
-    try { 
+    try {
         auto frame = DRing::getNewFrame();
         if (not frame) {
             jenv->CallVoidMethod(image, imageClose);

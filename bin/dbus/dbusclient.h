@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2020 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
