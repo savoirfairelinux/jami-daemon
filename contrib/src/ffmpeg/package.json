@@ -11,7 +11,9 @@
     ],
     "patches": [
         "change-RTCP-ratio.patch",
-        "rtp_ext_abs_send_time.patch"
+        "rtp_ext_abs_send_time.patch",
+        "libopusenc-enable-FEC.patch",
+        "libopusdec-enable-FEC.patch"
     ],
     "win_patches": [
         "windows-configure.patch",
