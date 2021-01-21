@@ -1,0 +1,123 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "dc145f3c_6f7d04ea",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T17:21:30Z",
+      "side": 1,
+      "message": "Use spaces instead of tabs.",
+      "revId": "8f43d7b02575ec8810eb0ea6ccf3ab7eede4b9ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dee601f3_7ee32dfc",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T17:21:30Z",
+      "side": 1,
+      "message": "spaces",
+      "revId": "8f43d7b02575ec8810eb0ea6ccf3ab7eede4b9ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ce4a279c_dc90f7ac",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T17:21:30Z",
+      "side": 1,
+      "message": "spaces",
+      "revId": "8f43d7b02575ec8810eb0ea6ccf3ab7eede4b9ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "67511203_8e11828e",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 231,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T17:21:30Z",
+      "side": 1,
+      "message": "the description of the behavior should move to toggle description:\n* @brief toggle media handler\n* @param mediaHandler ID handler ID\n* @param callId call ID\n* @param toggle notify with new subjects if true, detach if false.",
+      "revId": "8f43d7b02575ec8810eb0ea6ccf3ab7eede4b9ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d18b5c6d_1e37dd78",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T17:21:30Z",
+      "side": 1,
+      "message": "may be we can use std:find ?",
+      "revId": "8f43d7b02575ec8810eb0ea6ccf3ab7eede4b9ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6b7e9c64_2ec08e66",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 244,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T17:21:30Z",
+      "side": 1,
+      "message": "may be we can use std:find ?",
+      "revId": "8f43d7b02575ec8810eb0ea6ccf3ab7eede4b9ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fa652368_39bd4f9c",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 292,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T17:21:30Z",
+      "side": 1,
+      "message": "Would be better to put the comment over the declaration line not beside:\n\n// A map of callId and list of mediaHandlers pointer\nstd::map\u003cstd::string, std::set\u003cuintptr_t\u003e\u003e mediaHandlerToggled_;",
+      "revId": "8f43d7b02575ec8810eb0ea6ccf3ab7eede4b9ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
