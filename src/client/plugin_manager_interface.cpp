@@ -81,15 +81,15 @@ resetPluginPreferencesValues(const std::string& path)
 }
 
 std::vector<std::string>
-listAvailablePlugins()
+getInstalledPlugins()
 {
-    return jami::Manager::instance().getJamiPluginManager().listAvailablePlugins();
+    return jami::Manager::instance().getJamiPluginManager().getInstalledPlugins();
 }
 
 std::vector<std::string>
-listLoadedPlugins()
+getLoadedPlugins()
 {
-    return jami::Manager::instance().getJamiPluginManager().listLoadedPlugins();
+    return jami::Manager::instance().getJamiPluginManager().getLoadedPlugins();
 }
 
 int
@@ -105,12 +105,21 @@ uninstallPlugin(const std::string& pluginRootPath)
 }
 
 std::vector<std::string>
-listCallMediaHandlers()
+getCallMediaHandlers()
 {
     return jami::Manager::instance()
         .getJamiPluginManager()
         .getCallServicesManager()
-        .listCallMediaHandlers();
+        .getCallMediaHandlers();
+}
+
+std::vector<std::string>
+getChatHandlers()
+{
+    return jami::Manager::instance()
+        .getJamiPluginManager()
+        .getChatServicesManager()
+        .getChatHandlers();
 }
 
 void
@@ -122,6 +131,18 @@ toggleCallMediaHandler(const std::string& mediaHandlerId, const std::string& cal
         .toggleCallMediaHandler(mediaHandlerId, callId, toggle);
 }
 
+void
+toggleChatHandler(const std::string& chatHandlerId,
+                  const std::string& accountId,
+                  const std::string& peerId,
+                  bool toggle)
+{
+    return jami::Manager::instance()
+        .getJamiPluginManager()
+        .getChatServicesManager()
+        .toggleChatHandler(chatHandlerId, accountId, peerId, toggle);
+}
+
 std::map<std::string, std::string>
 getCallMediaHandlerDetails(const std::string& mediaHandlerId)
 {
@@ -129,6 +150,33 @@ getCallMediaHandlerDetails(const std::string& mediaHandlerId)
         .getJamiPluginManager()
         .getCallServicesManager()
         .getCallMediaHandlerDetails(mediaHandlerId);
+}
+
+std::vector<std::string>
+getCallMediaHandlerStatus(const std::string& callId)
+{
+    return jami::Manager::instance()
+        .getJamiPluginManager()
+        .getCallServicesManager()
+        .getCallMediaHandlerStatus(callId);
+}
+
+std::map<std::string, std::string>
+getChatHandlerDetails(const std::string& chatHandlerId)
+{
+    return jami::Manager::instance()
+        .getJamiPluginManager()
+        .getChatServicesManager()
+        .getChatHandlerDetails(chatHandlerId);
+}
+
+std::vector<std::string>
+getChatHandlerStatus(const std::string& accountId, const std::string& peerId)
+{
+    return jami::Manager::instance()
+        .getJamiPluginManager()
+        .getChatServicesManager()
+        .getChatHandlerStatus(accountId, peerId);
 }
 
 bool
@@ -142,14 +190,5 @@ setPluginsEnabled(bool state)
 {
     jami::Manager::instance().pluginPreferences.setPluginsEnabled(state);
     jami::Manager::instance().saveConfig();
-}
-
-std::map<std::string, std::vector<std::string>>
-getCallMediaHandlerStatus(const std::string& callId)
-{
-    return jami::Manager::instance()
-        .getJamiPluginManager()
-        .getCallServicesManager()
-        .getCallMediaHandlerStatus(callId);
 }
 } // namespace DRing
