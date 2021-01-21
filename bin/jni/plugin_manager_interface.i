@@ -26,20 +26,23 @@
 namespace DRing {
 bool loadPlugin(const std::string& path);
 bool unloadPlugin(const std::string& path);
-void togglePlugin(const std::string& path, bool toggle);
 std::map<std::string,std::string> getPluginDetails(const std::string& path);
 std::vector<std::map<std::string,std::string>> getPluginPreferences(const std::string& path);
 bool setPluginPreference(const std::string& path, const std::string& key, const std::string& value);
 std::map<std::string,std::string> getPluginPreferencesValues(const std::string& path);
 bool resetPluginPreferencesValues(const std::string& path);
-std::vector<std::string> listAvailablePlugins();
-std::vector<std::string> listLoadedPlugins();
+std::vector<std::string> getInstalledPlugins();
+std::vector<std::string> getLoadedPlugins();
 int installPlugin(const std::string& jplPath, bool force);
 int uninstallPlugin(const std::string& pluginRootPath);
-std::vector<std::string> listCallMediaHandlers();
+std::vector<std::string> getCallMediaHandlers();
+std::vector<std::string> getChatHandlers();
 void toggleCallMediaHandler(const std::string& mediaHandlerId, const std::string& callId, bool toggle);
+void toggleChatHandler(const std::string& chatHandlerId, const std::string& accountId, const std::string& peerId, bool toggle);
 std::map<std::string,std::string> getCallMediaHandlerDetails(const std::string& mediaHandlerId);
+std::vector<std::string> getCallMediaHandlerStatus(const std::string& callId);
+std::map<std::string,std::string> getChatHandlerDetails(const std::string& chatHandlerId);
+std::vector<std::string> getChatHandlerStatus(const std::string& accountId, const std::string& peerId);
 bool getPluginsEnabled();
 void setPluginsEnabled(bool state);
-std::map<std::string, std::vector<std::string>> getCallMediaHandlerStatus(const std::string& callId);
 }

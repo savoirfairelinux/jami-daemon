@@ -79,7 +79,7 @@ PluginManager::load(const std::string& path)
 bool
 PluginManager::unload(const std::string& path)
 {
-    bool returnValue {false};
+    bool returnValue{false};
     destroyPluginComponents(path);
     PluginMap::iterator it = dynPluginMap_.find(path);
     if (it != dynPluginMap_.end()) {
@@ -97,7 +97,7 @@ PluginManager::checkLoadedPlugin(const std::string& rootPath) const
 }
 
 std::vector<std::string>
-PluginManager::listLoadedPlugins() const
+PluginManager::getLoadedPlugins() const
 {
     std::vector<std::string> res {};
     for (const auto& pair : dynPluginMap_) {
@@ -375,5 +375,4 @@ PluginManager::registerObjectFactory_(const JAMI_PluginAPI* api, const char* typ
     const auto factory = reinterpret_cast<JAMI_PluginObjectFactory*>(data);
     return manager->registerObjectFactory(type, *factory) ? 0 : -1;
 }
-
 } // namespace jami
