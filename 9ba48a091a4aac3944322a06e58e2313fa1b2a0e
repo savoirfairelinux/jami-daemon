@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2741ae33_22acc87f",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-21T19:26:49Z",
+      "side": 1,
+      "message": "same question as client-qt, why \"Always\" is in the name() seems not really a good design",
+      "range": {
+        "startLine": 71,
+        "startChar": 21,
+        "endLine": 71,
+        "endChar": 110
+      },
+      "revId": "9ba48a091a4aac3944322a06e58e2313fa1b2a0e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
