@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4567156a_40f8549d",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 871,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-01-21T18:31:30Z",
+      "side": 1,
+      "message": "setPacketLoss is currently only supported for Opus, which supports integer values for packet loss.\n\nHowever, real loss is usually very low (e.g 0 to 2%), so to measure and account for it with precision, a floating point value would be more appropriate.\nAlso, generally, the appropriate type to represent a proportion is a floating point value between 0 and 1.",
+      "range": {
+        "startLine": 871,
+        "startChar": 28,
+        "endLine": 871,
+        "endChar": 36
+      },
+      "revId": "59547d18eb442833e20d96e4c5201795cf4e198d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
