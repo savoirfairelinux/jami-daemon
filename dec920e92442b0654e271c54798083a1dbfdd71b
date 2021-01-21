@@ -25,6 +25,29 @@
     },
     {
       "key": {
+        "uuid": "2f06a1b5_5b8b3bdd",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1128,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-01-21T18:20:27Z",
+      "side": 1,
+      "message": "if you keep shared_ptr, it should be std::shared_ptr\u003cVideoFrame\u003e\u0026 because it\u0027s assumed non-null",
+      "range": {
+        "startLine": 1128,
+        "startChar": 67,
+        "endLine": 1128,
+        "endChar": 95
+      },
+      "revId": "dec920e92442b0654e271c54798083a1dbfdd71b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "d502ebc4_a209367a",
         "filename": "src/media/media_encoder.cpp",
         "patchSetId": 5
