@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2020 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Authors: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *           Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
