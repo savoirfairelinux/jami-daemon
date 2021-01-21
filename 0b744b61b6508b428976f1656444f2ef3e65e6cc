@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "aac4dee0_e0ccce9a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 527,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-21T16:18:50Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "0b744b61b6508b428976f1656444f2ef3e65e6cc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "46f2cb73_d1d7b26d",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 529,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-21T16:18:50Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "0b744b61b6508b428976f1656444f2ef3e65e6cc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1b0358bc_1ec617a3",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 5363,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-21T16:18:50Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "0b744b61b6508b428976f1656444f2ef3e65e6cc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
