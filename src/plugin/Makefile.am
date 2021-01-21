@@ -4,19 +4,23 @@ noinst_LTLIBRARIES = libplugin.la
 
 noinst_HEADERS = \
 	callservicesmanager.h \
-	conversationhandler.h \
-	conversationservicesmanager.h \
+	chathandler.h \
+	chatservicesmanager.h \
 	jamiplugin.h \
 	jamipluginmanager.h \
 	mediahandler.h \
 	pluginloader.h \
 	pluginmanager.h \
+	pluginpreferencesutils.h \
 	streamdata.h
 
 libplugin_la_SOURCES = \
 	jamipluginmanager.cpp \
 	pluginloaderdl.cpp \
-	pluginmanager.cpp 
+	pluginmanager.cpp \
+	pluginpreferencesutils.cpp \
+	chatservicesmanager.cpp \
+	callservicesmanager.cpp
 
 
 libplugin_la_LIBADD = @ARCHIVE_LIBS@
