@@ -85,10 +85,10 @@ public:
     bool unload(const std::string& path);
 
     /**
-     * @brief listLoadedPlugins
+     * @brief getLoadedPlugins
      * @return vector of strings of so files of the loaded plugins
      */
-    std::vector<std::string> listLoadedPlugins() const;
+    std::vector<std::string> getLoadedPlugins() const;
 
     /**
      * @brief checkLoadedPlugin
@@ -195,5 +195,4 @@ private:
     // references to plugins components, used for cleanup
     PluginComponentsMap pluginComponentsMap_ {};
 };
-
 } // namespace jami
