@@ -1,0 +1,259 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "acc9b377_f1ac0591",
+        "filename": "src/plugin/PluginPreferences.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T16:36:59Z",
+      "side": 1,
+      "message": "use a class with static methods",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f27ea14f_83e39766",
+        "filename": "src/plugin/PluginPreferences.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T16:36:59Z",
+      "side": 1,
+      "message": "I suspect that this method may have performance issues for large json arrays. convertArrayToString is called recursively, and each time new strings are create and copied.",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bf6619db_1a103f4c",
+        "filename": "src/plugin/PluginPreferences.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T16:36:59Z",
+      "side": 1,
+      "message": "Should use a class (ex PluginPreference) and declare all these methods as static members of that class with disable constructors to prevent instantiation. We could then drop the plugin prefix from the method\u0027s names.",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3bbcb129_8d52ea85",
+        "filename": "src/plugin/chathandler.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T16:36:59Z",
+      "side": 1,
+      "message": "should be const:\nvirtual bool preferenceMapHasKey(const std::string\u0026 key) const \u003d 0;",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "59e1e05b_7296582d",
+        "filename": "src/plugin/chathandler.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T16:36:59Z",
+      "side": 1,
+      "message": "is there a reason why setId() is final while id() is not ?",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7abdeb67_c5239158",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T16:36:59Z",
+      "side": 1,
+      "message": "2021",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "764567a5_c380045d",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T16:36:59Z",
+      "side": 1,
+      "message": "I think these kind of comments are not really needed, the file name says it all 😊",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fec0d8be_49f058ef",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T16:36:59Z",
+      "side": 1,
+      "message": "same here",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "54a0a471_673cef16",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T16:36:59Z",
+      "side": 1,
+      "message": "I believe the implementation should in a .cpp file. This is not critical for now, but we should look at it some day.",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "28be89c1_456cf020",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T16:36:59Z",
+      "side": 1,
+      "message": "should not we return -1 if ptr \u003d\u003d null ?",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "625b766e_f09dd4dd",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T16:36:59Z",
+      "side": 1,
+      "message": "Cant we use std::find instead of iterating over the list ?",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "764cb681_02dea6a8",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T16:36:59Z",
+      "side": 1,
+      "message": "Cant we use std::find instead of iterating over the list ?",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0ec7d4ae_b5e22a7d",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T16:36:59Z",
+      "side": 1,
+      "message": "use std::find ?",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b1bbe9b2_84873076",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T16:36:59Z",
+      "side": 1,
+      "message": "Class member variables should take the underscore (_) character at the end.",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2665fa45_078bac43",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 240,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-21T16:36:59Z",
+      "side": 1,
+      "message": "underscore",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
