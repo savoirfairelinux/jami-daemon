@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2020 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Emmanuel Lepage <elv1313@gmail.com>
@@ -183,7 +183,7 @@ im::sendSipMessage(pjsip_inv_session* session, const std::map<std::string, std::
 static std::pair<std::string, std::string>
 parseMessageBody(const pjsip_msg_body* body)
 {
-    std::string header = sip_utils::as_view(body->content_type.type) 
+    std::string header = sip_utils::as_view(body->content_type.type)
                  + "/" + sip_utils::as_view(body->content_type.subtype);
 
     // iterate over parameters

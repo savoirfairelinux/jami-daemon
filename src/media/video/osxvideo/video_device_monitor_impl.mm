@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2020 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Alexandre Lision <alexandre.lision@savoirfairelinux.com>
  *
@@ -92,7 +92,7 @@ void VideoDeviceMonitorImpl::start()
             JAMI_ERR("%s", e.what());
         }
     }
-    
+
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
     id deviceWasConnectedObserver = [notificationCenter addObserverForName:AVCaptureDeviceWasConnectedNotification
                                     object:nil
