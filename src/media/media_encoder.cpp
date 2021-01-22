@@ -47,6 +47,7 @@ extern "C" {
 #include <sstream>
 #include <thread> // hardware_concurrency
 #include <string_view>
+#include <cmath>
 
 // Define following line if you need to debug libav SDP
 //#define DEBUG_SDP 1
@@ -55,8 +56,11 @@ using namespace std::literals;
 
 namespace jami {
 
-constexpr double LOGREG_PARAM_A {79};
-constexpr double LOGREG_PARAM_B {-4.};
+constexpr double LOGREG_PARAM_A {101};
+constexpr double LOGREG_PARAM_B {-5.};
+
+constexpr double LOGREG_PARAM_A_HEVC {96};
+constexpr double LOGREG_PARAM_B_HEVC {-5.};
 
 MediaEncoder::MediaEncoder()
     : outputCtx_(avformat_alloc_context())
@@ -820,8 +824,10 @@ void
 MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
 {
     uint64_t maxBitrate = 1000 * br;
+    // 200 Kbit/s    -> CRF40
+    // 6 Mbit/s      -> CRF23
     uint8_t crf = (uint8_t) std::round(
-        LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B))); // CRF = A + B*ln(maxBitrate)
+        LOGREG_PARAM_A + LOGREG_PARAM_B*log(maxBitrate));
     // bufsize parameter impact the variation of the bitrate, reduce to half the maxrate to limit
     // peak and congestion
     // https://trac.ffmpeg.org/wiki/Limiting%20the%20output%20bitrate
@@ -855,8 +861,10 @@ MediaEncoder::initH265(AVCodecContext* encoderCtx, uint64_t br)
         uint64_t maxBitrate = 1000 * br;
         // H265 use 50% less bitrate compared to H264 (half bitrate is equivalent to a change 6 for
         // CRF) https://slhck.info/video/2017/02/24/crf-guide.html
-        uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B))
-                                           - 6); // CRF = A + B*ln(maxBitrate)
+        // 200 Kbit/s    -> CRF35
+        // 6 Mbit/s      -> CRF18
+        uint8_t crf = (uint8_t) std::round(
+            LOGREG_PARAM_A_HEVC + LOGREG_PARAM_B_HEVC*log(maxBitrate));
         uint64_t bufSize = maxBitrate / 2;
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
@@ -896,8 +904,10 @@ MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
         // Using information given on this page:
         // http://www.webmproject.org/docs/encoder-parameters/
         uint64_t maxBitrate = 1000 * br;
+        // 200 Kbit/s    -> CRF40
+        // 6 Mbit/s      -> CRF23
         uint8_t crf = (uint8_t) std::round(
-            LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B))); // CRF = A + B*ln(maxBitrate)
+            LOGREG_PARAM_A + LOGREG_PARAM_B*log(maxBitrate));
         uint64_t bufSize = maxBitrate / 2;
 
         av_opt_set(encoderCtx, "quality", "realtime", AV_OPT_SEARCH_CHILDREN);
