@@ -2886,6 +2886,10 @@ Manager::loadAccountMap(const YAML::Node& node)
         for (const std::string& plugin : loadedPlugins) {
             jami::Manager::instance().getJamiPluginManager().loadPlugin(plugin);
         }
+        jami::Manager::instance()
+            .getJamiPluginManager()
+            .getChatServicesManager()
+            .setAllowDenyListsFromPreferences();
 #endif
     } catch (const YAML::Exception& e) {
         JAMI_ERR("%s: Preferences node unserialize error: ", e.what());
@@ -3270,7 +3274,9 @@ Manager::setModerator(const std::string& confId, const std::string& peerId, cons
 }
 
 void
-Manager::muteParticipant(const std::string& confId, const std::string& participant, const bool& state)
+Manager::muteParticipant(const std::string& confId,
+                         const std::string& participant,
+                         const bool& state)
 {
     if (auto conf = getConferenceFromID(confId)) {
         conf->muteParticipant(participant, state);
@@ -3292,7 +3298,7 @@ void
 Manager::setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to change default moderator, account %s not found", accountID.c_str());
         return;
     }
@@ -3308,7 +3314,7 @@ std::vector<std::string>
 Manager::getDefaultModerators(const std::string& accountID)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to get default moderators, account %s not found", accountID.c_str());
         return {};
     }
@@ -3321,7 +3327,7 @@ void
 Manager::enableLocalModerators(const std::string& accountID, bool isModEnabled)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to set local moderators, account %s not found", accountID.c_str());
         return;
     }
@@ -3333,9 +3339,9 @@ bool
 Manager::isLocalModeratorsEnabled(const std::string& accountID)
 {
     auto acc = getAccount(accountID);
-    if(!acc) {
+    if (!acc) {
         JAMI_ERR("Fail to get local moderators, account %s not found", accountID.c_str());
-        return true;    // Default value
+        return true; // Default value
     }
     return acc->isLocalModeratorsEnabled();
 }

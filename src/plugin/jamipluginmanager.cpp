@@ -84,7 +84,10 @@ checkManifestJsonContentValidity(const Json::Value& root)
     std::string version = root.get("version", "").asString();
     std::string iconPath = root.get("iconPath", "icon.png").asString();
     if (!name.empty() || !version.empty()) {
-        return {{"name", name}, {"description", description}, {"version", version}, {"iconPath", iconPath}};
+        return {{"name", name},
+                {"description", description},
+                {"version", version},
+                {"iconPath", iconPath}};
     } else {
         throw std::runtime_error("plugin manifest file: bad format");
     }
@@ -176,6 +179,14 @@ JamiPluginManager::getInstalledPlugins()
     };
     auto returnIterator = std::remove_if(pluginsPaths.begin(), pluginsPaths.end(), predicate);
     pluginsPaths.erase(returnIterator, std::end(pluginsPaths));
+
+    std::vector<std::string> nonStandardInstalls = jami::Manager::instance()
+                                                       .pluginPreferences.getInstalledPlugins();
+    for (auto& path : nonStandardInstalls) {
+        if (checkPluginValidity(path))
+            pluginsPaths.emplace_back(path);
+    }
+
     return pluginsPaths;
 }
 
@@ -221,6 +232,7 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
             } else {
                 archiver::uncompressArchive(jplPath, destinationDir, uncompressJplFunction);
             }
+            loadPlugin(destinationDir);
         } catch (const std::exception& e) {
             JAMI_ERR() << e.what();
         }
@@ -234,7 +246,7 @@ JamiPluginManager::uninstallPlugin(const std::string& rootPath)
     if (checkPluginValidity(rootPath)) {
         auto detailsIt = pluginDetailsMap_.find(rootPath);
         if (detailsIt != pluginDetailsMap_.end()) {
-            bool loaded = pm_.checkLoadedPlugin(detailsIt->second.at("soPath"));
+            bool loaded = pm_.checkLoadedPlugin(rootPath);
             if (loaded) {
                 JAMI_INFO() << "PLUGIN: unloading before uninstall.";
                 bool status = unloadPlugin(rootPath);
@@ -319,13 +331,13 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
 {
     std::map<std::string, std::string> pluginUserPreferencesMap
         = PluginPreferencesUtils::getUserPreferencesValuesMap(rootPath);
-    std::map<std::string, std::string> pluginPreferencesMap = PluginPreferencesUtils::getPreferencesValuesMap(
-        rootPath);
+    std::map<std::string, std::string> pluginPreferencesMap
+        = PluginPreferencesUtils::getPreferencesValuesMap(rootPath);
 
     auto find = pluginPreferencesMap.find(key);
     if (find != pluginPreferencesMap.end()) {
-        std::vector<std::map<std::string, std::string>> preferences = PluginPreferencesUtils::getPreferences(
-            rootPath);
+        std::vector<std::map<std::string, std::string>> preferences
+            = PluginPreferencesUtils::getPreferences(rootPath);
         for (auto& preference : preferences) {
             if (!preference["key"].compare(key)) {
                 callsm_.setPreference(key, value, preference["scope"]);
@@ -337,12 +349,12 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
         pluginUserPreferencesMap[key] = value;
         const std::string preferencesValuesFilePath = PluginPreferencesUtils::valuesFilePath(
             rootPath);
+        std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
         if (!fs.good()) {
             return false;
         }
         try {
-            std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
             msgpack::pack(fs, pluginUserPreferencesMap);
             return true;
         } catch (const std::exception& e) {
@@ -379,6 +391,7 @@ JamiPluginManager::readPluginManifestFromArchive(const std::string& jplPath)
 std::map<std::string, std::string>
 JamiPluginManager::parseManifestFile(const std::string& manifestFilePath)
 {
+    std::lock_guard<std::mutex> guard(fileutils::getFileLock(manifestFilePath));
     std::ifstream file(manifestFilePath);
     if (file) {
         try {

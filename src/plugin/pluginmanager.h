@@ -59,7 +59,7 @@ private:
         ComponentFunction destroyComponent;
     };
 
-    using PluginMap = std::map<std::string, std::shared_ptr<Plugin>>;
+    using PluginMap = std::map<std::string, std::pair<std::shared_ptr<Plugin>, bool>>;
     using PluginComponentsMap = std::map<std::string, ComponentTypePtrVector>;
     using ExitFuncVec = std::vector<JAMI_PluginExitFunc>;
     using ObjectFactoryVec = std::vector<ObjectFactory>;
@@ -100,7 +100,7 @@ public:
      * @brief destroyPluginComponents
      * @param path
      */
-    void destroyPluginComponents(const std::string& path);
+    bool destroyPluginComponents(const std::string& path);
 
     /**
      * @brief callPluginInitFunction
