@@ -2883,6 +2883,7 @@ Manager::loadAccountMap(const YAML::Node& node)
         for (const std::string& plugin : loadedPlugins) {
             jami::Manager::instance().getJamiPluginManager().loadPlugin(plugin);
         }
+        jami::Manager::instance().getJamiPluginManager().getChatServicesManager().setAllowDenyListsFromPreferences();
 #endif
     } catch (const YAML::Exception& e) {
         JAMI_ERR("%s: Preferences node unserialize error: ", e.what());
