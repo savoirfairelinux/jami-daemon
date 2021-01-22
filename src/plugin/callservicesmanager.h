@@ -58,21 +58,24 @@ public:
     {
         // This guarantees unicity of subjects by id
         callAVsubjects_.emplace_back(data, subject);
+        auto& callDenySet = denyList_[data.id];
 
         for (auto& callMediaHandler : callMediaHandlers_) {
-            std::size_t found = callMediaHandler->id().find_last_of(DIR_SEPARATOR_CH);
-            auto preferences = PluginPreferencesUtils::getPreferencesValuesMap(callMediaHandler->id().substr(0, found));
+            if (callDenySet.find((uintptr_t) callMediaHandler.get()) == callDenySet.end()) {
+                std::size_t found = callMediaHandler->id().find_last_of(DIR_SEPARATOR_CH);
+                auto preferences = PluginPreferencesUtils::getPreferencesValuesMap(callMediaHandler->id().substr(0, found));
 #ifndef __ANDROID__
-            if (preferences.at("always") == "1")
-                toggleCallMediaHandler((uintptr_t) callMediaHandler.get(), data.id, true);
-            else
+                if (preferences.at("always") == "1")
+                    toggleCallMediaHandler((uintptr_t) callMediaHandler.get(), data.id, true);
+                else
 #endif
-                for (const auto& toggledMediaHandler : mediaHandlerToggled_[data.id]) {
-                    if (toggledMediaHandler == (uintptr_t) callMediaHandler.get()) {
-                        toggleCallMediaHandler(toggledMediaHandler, data.id, true);
-                        break;
+                    for (const auto& toggledMediaHandler : mediaHandlerToggled_[data.id]) {
+                        if (toggledMediaHandler == (uintptr_t) callMediaHandler.get()) {
+                            toggleCallMediaHandler(toggledMediaHandler, data.id, true);
+                            break;
+                        }
                     }
-                }
+            }
         }
     }
 
@@ -103,11 +106,24 @@ public:
         };
 
         auto unregisterMediaHandler = [this](void* data) {
-            for (auto it = callMediaHandlers_.begin(); it != callMediaHandlers_.end(); ++it) {
-                if (it->get() == data) {
-                    callMediaHandlers_.erase(it);
-                    break;
+            auto handlerIt = std::find_if(callMediaHandlers_.begin(), callMediaHandlers_.end(),
+                                [data](CallMediaHandlerPtr& handler) {
+                                    return (handler.get() == data);
+                                    });
+
+            if (handlerIt != callMediaHandlers_.end()) {
+                for (auto& toggledList: mediaHandlerToggled_) {
+                    auto handlerId = std::find_if(toggledList.second.begin(), toggledList.second.end(),
+                                [this, handlerIt](uintptr_t handlerId) {
+                                    return (handlerId == (uintptr_t) handlerIt->get());
+                                    });
+                    if (handlerId != toggledList.second.end()) {
+                        (*handlerIt)->detach();
+                        toggledList.second.erase(handlerId);
+                    }
                 }
+                callMediaHandlers_.erase(handlerIt);
+                delete (*handlerIt).get();
             }
             return 0;
         };
@@ -217,6 +233,11 @@ public:
         }
     }
 
+    void clearCallHandlerMaps(const std::string& callId) {
+        mediaHandlerToggled_.erase(callId);
+        denyList_.erase(callId);
+    }
+
 private:
     /**
      * @brief notifyAVSubject
@@ -237,6 +258,7 @@ private:
                                 const bool toggle)
     {
         auto& handlers = mediaHandlerToggled_[callId];
+        auto& callDenySet = denyList_[callId];
 
         bool applyRestart = false;
 
@@ -254,9 +276,11 @@ private:
                         if (isAttached((*handlerIt))
                             && handlers.find(mediaHandlerId) == handlers.end())
                             handlers.insert(mediaHandlerId);
+                        callDenySet.erase(mediaHandlerId);
                     } else {
                         (*handlerIt)->detach();
                         handlers.erase(mediaHandlerId);
+                        callDenySet.insert(mediaHandlerId);
                     }
                     if (subject.first.type == StreamType::video && isVideoType((*handlerIt)))
                         applyRestart = true;
@@ -291,6 +315,8 @@ private:
      * A map of callId and list of mediaHandlers pointers str
      */
     std::map<std::string, std::set<uintptr_t>> mediaHandlerToggled_; // callId, list of mediaHandlers
+
+    std::map<std::string, std::set<uintptr_t>> denyList_{};
 };
 
 } // namespace jami
