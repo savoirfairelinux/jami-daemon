@@ -372,6 +372,11 @@ public:
         return v;
     }
 
+    std::vector<std::string> getInstalledPlugins() const
+    {
+        return std::vector<std::string>(installedPlugins_.begin(), installedPlugins_.end());
+    }
+
     void saveStateLoadedPlugins(std::string plugin, bool loaded)
     {
         if (loaded) {
@@ -387,6 +392,7 @@ public:
 
 private:
     bool pluginsEnabled_;
+    std::set<std::string> installedPlugins_;
     std::set<std::string> loadedPlugins_;
     constexpr static const char* const CONFIG_LABEL = "plugins";
 };

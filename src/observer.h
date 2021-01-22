@@ -192,7 +192,13 @@ public:
         : map_ {f}
     {}
 
-    void update(Observable<T1>*, const T1& t) override { this->notify(map_(t)); }
+    void update(Observable<T1>*, const T1& t) override
+    {
+        std::lock_guard<std::mutex> lk(this->mutex_);
+        for (const auto& observer : this->observers_) {
+            observer->update(this, map_(t));
+        }
+    }
 
     /**
      * @brief attached

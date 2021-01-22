@@ -50,10 +50,9 @@ PluginManager::~PluginManager()
 bool
 PluginManager::load(const std::string& path)
 {
-    // Don't load the same dynamic library twice
-    if (dynPluginMap_.find(path) != dynPluginMap_.end()) {
-        JAMI_WARN() << "Plugin: already loaded";
-        return true;
+    auto it = dynPluginMap_.find(path);
+    if (it != dynPluginMap_.end() && !it->second.second) {
+        dynPluginMap_.erase(it);
     }
 
     std::string error;
@@ -72,28 +71,30 @@ PluginManager::load(const std::string& path)
     if (!registerPlugin(plugin))
         return false;
 
-    dynPluginMap_[path] = std::move(plugin);
+    dynPluginMap_[path] = {std::move(plugin), true};
     return true;
 }
 
 bool
 PluginManager::unload(const std::string& path)
 {
-    bool returnValue{false};
     destroyPluginComponents(path);
     PluginMap::iterator it = dynPluginMap_.find(path);
     if (it != dynPluginMap_.end()) {
-        dynPluginMap_.erase(it);
-        returnValue = true;
+        it->second.second = false;
     }
 
-    return returnValue;
+    return true;
 }
 
 bool
 PluginManager::checkLoadedPlugin(const std::string& rootPath) const
 {
-    return dynPluginMap_.find(rootPath) != dynPluginMap_.end();
+    for (const auto& item : dynPluginMap_) {
+        if (item.first.find(rootPath) != std::string::npos && item.second.second)
+            return true;
+    }
+    return false;
 }
 
 std::vector<std::string>
@@ -101,7 +102,8 @@ PluginManager::getLoadedPlugins() const
 {
     std::vector<std::string> res {};
     for (const auto& pair : dynPluginMap_) {
-        res.push_back(pair.first);
+        if (pair.second.second)
+            res.push_back(pair.first);
     }
     return res;
 }
@@ -111,10 +113,11 @@ PluginManager::destroyPluginComponents(const std::string& path)
 {
     auto itComponents = pluginComponentsMap_.find(path);
     if (itComponents != pluginComponentsMap_.end()) {
-        for (const auto& pair : itComponents->second) {
-            auto clcm = componentsLifeCycleManagers_.find(pair.first);
+        for (auto pairIt = itComponents->second.begin(); pairIt != itComponents->second.end();) {
+            auto clcm = componentsLifeCycleManagers_.find(pairIt->first);
             if (clcm != componentsLifeCycleManagers_.end()) {
-                clcm->second.destroyComponent(pair.second);
+                clcm->second.destroyComponent(pairIt->second);
+                pairIt = itComponents->second.erase(pairIt);
             }
         }
     }
@@ -128,7 +131,7 @@ PluginManager::callPluginInitFunction(const std::string& path)
     if (it != dynPluginMap_.end()) {
         // Plugin found
         // Since the Plugin was found it is of type DLPlugin with a valid init symbol
-        std::shared_ptr<DLPlugin> plugin = std::static_pointer_cast<DLPlugin>(it->second);
+        std::shared_ptr<DLPlugin> plugin = std::static_pointer_cast<DLPlugin>(it->second.first);
         const auto& initFunc = plugin->getInitFunction();
         JAMI_PluginExitFunc exitFunc = nullptr;
 

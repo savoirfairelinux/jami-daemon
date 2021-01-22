@@ -23,10 +23,14 @@
 
 #include <json/json.h>
 #include <string>
+#include <set>
 
 namespace jami {
 
-class PluginPreferencesUtils {
+using ChatHandlerList = std::map<std::pair<std::string, std::string>, std::map<std::string, bool>>;
+
+class PluginPreferencesUtils
+{
 public:
     static std::string getPreferencesConfigFilePath(const std::string& rootPath);
 
@@ -34,8 +38,8 @@ public:
 
     static std::string convertArrayToString(const Json::Value& jsonArray);
 
-    static std::map<std::string, std::string> parsePreferenceConfig(const Json::Value& jsonPreference,
-                                                            const std::string& type);
+    static std::map<std::string, std::string> parsePreferenceConfig(
+        const Json::Value& jsonPreference);
 
     static std::vector<std::map<std::string, std::string>> getPreferences(
         const std::string& rootPath);
@@ -46,6 +50,13 @@ public:
     static std::map<std::string, std::string> getPreferencesValuesMap(const std::string& rootPath);
 
     static bool resetPreferencesValuesMap(const std::string& rootPath);
+
+    static std::string getAllowDenyListsPath();
+
+    static void setAllowDenyListPreferences(const ChatHandlerList& list);
+
+    static void getAllowDenyListPreferences(ChatHandlerList& list);
+
 private:
     PluginPreferencesUtils() {}
     ~PluginPreferencesUtils() {}

@@ -560,6 +560,7 @@ SIPCall::hangup(int reason)
         // Notify the peer
         terminateSipSession(status);
     }
+
     // Stop all RTP streams
     stopAllMedia();
     setState(Call::ConnectionState::DISCONNECTED, reason);
@@ -954,6 +955,10 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages, con
 void
 SIPCall::removeCall()
 {
+#ifdef ENABLE_PLUGIN
+    jami::Manager::instance().getJamiPluginManager().getCallServicesManager().clearCallHandlerMaps(
+        getCallId());
+#endif
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     JAMI_WARN("[call:%s] removeCall()", getCallId().c_str());
     if (sdp_) {
