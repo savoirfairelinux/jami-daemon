@@ -102,6 +102,8 @@ public:
 
     void setPreference(const std::string& key, const std::string& value, const std::string& scopeStr);
 
+    void clearCallHandlerMaps(const std::string& callId);
+
 private:
     /**
      * @brief notifyAVSubject
@@ -138,7 +140,9 @@ private:
      * @brief mediaHandlerToggled_
      * A map of callId and list of mediaHandlers pointers str
      */
-    std::map<std::string, std::set<uintptr_t>> mediaHandlerToggled_; // callId, list of mediaHandlers
+    std::map<std::string, std::set<uintptr_t>> mediaHandlerToggled_;
+
+    std::map<std::string, std::set<uintptr_t>> denyList_{};
 };
 
 } // namespace jami
