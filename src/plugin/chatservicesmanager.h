@@ -20,6 +20,7 @@
 #include "noncopyable.h"
 #include "pluginmanager.h"
 #include "chathandler.h"
+#include "pluginpreferencesutils.h"
 
 namespace jami {
 
@@ -57,7 +58,9 @@ public:
      */
     std::map<std::string, std::string> getChatHandlerDetails(const std::string& chatHandlerIdStr);
 
-    void setPreference(const std::string& key, const std::string& value, const std::string& scopeStr);
+    void setPreference(const std::string& key,
+                       const std::string& value,
+                       const std::string& scopeStr);
 
 private:
     void toggleChatHandler(const uintptr_t chatHandlerId,
@@ -70,5 +73,11 @@ private:
         chatHandlerToggled_; // {account,peer}, list of chatHandlers
 
     std::map<std::pair<std::string, std::string>, chatSubjectPtr> chatSubjects_;
+    std::map<std::string, uintptr_t> handlersNameMap_ {};
+
+    /// Component that stores persistent ChatHandlers' status for each existing
+    /// accountId, peerId pair.
+    /// A map of accountId, peerId pairs and ChatHandler-status pairs.
+    ChatHandlerList allowDenyList_ {};
 };
 } // namespace jami
