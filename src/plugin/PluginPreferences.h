@@ -23,8 +23,12 @@
 
 #include <json/json.h>
 #include <string>
+#include <set>
 
 namespace jami {
+
+using ChatHandlerList = std::map<std::pair<std::string, std::string>, std::set<std::string>>;
+
 
 class PluginPreferencesManager {
 public:
@@ -46,6 +50,12 @@ public:
     static std::map<std::string, std::string> getPreferencesValuesMap(const std::string& rootPath);
 
     static bool resetPreferencesValuesMap(const std::string& rootPath);
+
+    static std::string getAllowDenyListsPath(bool allow);
+
+    static void setAllowDenyListPreferences(const ChatHandlerList& list, bool allow = true);
+
+    static void getAllowDenyListPreferences(ChatHandlerList& list, bool allow = true);
 private:
     PluginPreferencesManager() {}
     ~PluginPreferencesManager() {}
