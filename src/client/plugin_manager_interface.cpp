@@ -95,7 +95,10 @@ installPlugin(const std::string& jplPath, bool force)
 int
 uninstallPlugin(const std::string& pluginRootPath)
 {
-    return jami::Manager::instance().getJamiPluginManager().uninstallPlugin(pluginRootPath);
+    int status = jami::Manager::instance().getJamiPluginManager().uninstallPlugin(pluginRootPath);
+    jami::Manager::instance().pluginPreferences.saveStateLoadedPlugins(pluginRootPath, false);
+    jami::Manager::instance().saveConfig();
+    return status;
 }
 
 std::vector<std::string>
