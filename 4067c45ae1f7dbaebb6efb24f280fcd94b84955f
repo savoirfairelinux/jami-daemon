@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fe18ce29_fe7fb7a6",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 36
+      },
+      "lineNbr": 1268,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-22T23:44:33Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nstring concatenation results in allocation of unnecessary temporary strings; consider using \u0027operator+\u003d\u0027 or \u0027string::append()\u0027 instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-inefficient-string-concatenation",
+      "revId": "4067c45ae1f7dbaebb6efb24f280fcd94b84955f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
