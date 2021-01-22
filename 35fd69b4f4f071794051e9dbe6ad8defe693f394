@@ -19,6 +19,23 @@
     },
     {
       "key": {
+        "uuid": "b5ddf29d_fda09a48",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 72
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-22T23:07:34Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027path\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "35fd69b4f4f071794051e9dbe6ad8defe693f394",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "2e3ab029_89191c6e",
         "filename": "src/jamidht/jamiaccount.h",
         "patchSetId": 72
@@ -53,6 +70,40 @@
     },
     {
       "key": {
+        "uuid": "08b2052e_92f232b7",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 72
+      },
+      "lineNbr": 467,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-22T23:07:34Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027socket\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "35fd69b4f4f071794051e9dbe6ad8defe693f394",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f7f6a101_2a5b836f",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 72
+      },
+      "lineNbr": 467,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-22T23:07:34Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027socket\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "35fd69b4f4f071794051e9dbe6ad8defe693f394",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "65493886_6a26d244",
         "filename": "src/jamidht/multiplexed_socket.cpp",
         "patchSetId": 72
@@ -62,6 +113,23 @@
         "id": 5
       },
       "writtenOn": "2021-01-22T23:07:31Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "35fd69b4f4f071794051e9dbe6ad8defe693f394",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "32d4703f_5249a573",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 72
+      },
+      "lineNbr": 333,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-22T23:07:34Z",
       "side": 1,
       "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
       "revId": "35fd69b4f4f071794051e9dbe6ad8defe693f394",
