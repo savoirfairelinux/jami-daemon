@@ -42,9 +42,16 @@ PluginPreferencesUtils::valuesFilePath(const std::string& rootPath)
 }
 
 std::string
+PluginPreferencesUtils::getAllowDenyListsPath()
+{
+    return fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins" + DIR_SEPARATOR_CH
+           + "allowdeny.msgpack";
+}
+
+std::string
 PluginPreferencesUtils::convertArrayToString(const Json::Value& jsonArray)
 {
-    std::string stringArray{};
+    std::string stringArray {};
 
     if (jsonArray.size()) {
         for (unsigned i = 0; i < jsonArray.size() - 1; i++) {
@@ -65,7 +72,7 @@ PluginPreferencesUtils::convertArrayToString(const Json::Value& jsonArray)
 }
 
 std::map<std::string, std::string>
-PluginPreferencesUtils::parsePreferenceConfig(const Json::Value& jsonPreference, const std::string& /*type*/)
+PluginPreferencesUtils::parsePreferenceConfig(const Json::Value& jsonPreference)
 {
     std::map<std::string, std::string> preferenceMap;
     const auto& members = jsonPreference.getMemberNames();
@@ -84,7 +91,8 @@ PluginPreferencesUtils::parsePreferenceConfig(const Json::Value& jsonPreference,
 std::vector<std::map<std::string, std::string>>
 PluginPreferencesUtils::getPreferences(const std::string& rootPath)
 {
-    const std::string preferenceFilePath = getPreferencesConfigFilePath(rootPath);
+    std::string preferenceFilePath = getPreferencesConfigFilePath(rootPath);
+    std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferenceFilePath));
     std::ifstream file(preferenceFilePath);
     Json::Value root;
     Json::CharReaderBuilder rbuilder;
@@ -102,7 +110,7 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath)
                 std::string key = jsonPreference.get("key", "None").asString();
                 if (type != "None" && key != "None") {
                     if (keys.find(key) == keys.end()) {
-                        auto preferenceAttributes = parsePreferenceConfig(jsonPreference, type);
+                        auto preferenceAttributes = parsePreferenceConfig(jsonPreference);
                         // If the parsing of the attributes was successful, commit the map and the keys
                         auto defaultValue = preferenceAttributes.find("defaultValue");
                         if (type == "Path" && defaultValue != preferenceAttributes.end()) {
@@ -130,12 +138,12 @@ std::map<std::string, std::string>
 PluginPreferencesUtils::getUserPreferencesValuesMap(const std::string& rootPath)
 {
     const std::string preferencesValuesFilePath = valuesFilePath(rootPath);
+    std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
     std::ifstream file(preferencesValuesFilePath, std::ios::binary);
     std::map<std::string, std::string> rmap;
 
     // If file is accessible
     if (file.good()) {
-        std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
         // Get file size
         std::string str;
         file.seekg(0, std::ios::end);
@@ -166,8 +174,7 @@ PluginPreferencesUtils::getPreferencesValuesMap(const std::string& rootPath)
 {
     std::map<std::string, std::string> rmap;
 
-    std::vector<std::map<std::string, std::string>> preferences = getPreferences(
-        rootPath);
+    std::vector<std::map<std::string, std::string>> preferences = getPreferences(rootPath);
     for (auto& preference : preferences) {
         rmap[preference["key"]] = preference["defaultValue"];
     }
@@ -188,12 +195,12 @@ PluginPreferencesUtils::resetPreferencesValuesMap(const std::string& rootPath)
     std::map<std::string, std::string> pluginPreferencesMap {};
 
     const std::string preferencesValuesFilePath = valuesFilePath(rootPath);
+    std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
     std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
     if (!fs.good()) {
         return false;
     }
     try {
-        std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
         msgpack::pack(fs, pluginPreferencesMap);
     } catch (const std::exception& e) {
         returnValue = false;
@@ -201,5 +208,54 @@ PluginPreferencesUtils::resetPreferencesValuesMap(const std::string& rootPath)
     }
 
     return returnValue;
+}
+
+void
+PluginPreferencesUtils::setAllowDenyListPreferences(const ChatHandlerList& list)
+{
+    std::string filePath = getAllowDenyListsPath();
+    std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
+    std::ofstream fs(filePath, std::ios::binary);
+    if (!fs.good()) {
+        return;
+    }
+    try {
+        msgpack::pack(fs, list);
+    } catch (const std::exception& e) {
+        JAMI_ERR() << e.what();
+    }
+}
+
+void
+PluginPreferencesUtils::getAllowDenyListPreferences(ChatHandlerList& list)
+{
+    const std::string filePath = getAllowDenyListsPath();
+    std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
+    std::ifstream file(filePath, std::ios::binary);
+
+    // If file is accessible
+    if (file.good()) {
+        // Get file size
+        std::string str;
+        file.seekg(0, std::ios::end);
+        size_t fileSize = static_cast<size_t>(file.tellg());
+        // If not empty
+        if (fileSize > 0) {
+            // Read whole file content and put it in the string str
+            str.reserve(static_cast<size_t>(file.tellg()));
+            file.seekg(0, std::ios::beg);
+            str.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            file.close();
+            try {
+                // Unpack the string
+                msgpack::object_handle oh = msgpack::unpack(str.data(), str.size());
+                // Deserialized object is valid during the msgpack::object_handle instance is alive.
+                msgpack::object deserialized = oh.get();
+                deserialized.convert(list);
+            } catch (const std::exception& e) {
+                JAMI_ERR() << e.what();
+            }
+        }
+    }
 }
 } // namespace jami
