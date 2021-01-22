@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "929ae613_3f1277b4",
+        "filename": "src/plugin/PluginPreferences.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:49:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "acc9b377_f1ac0591",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "f27ea14f_83e39766",
         "filename": "src/plugin/PluginPreferences.cpp",
         "patchSetId": 23
@@ -30,6 +48,24 @@
       "writtenOn": "2021-01-21T16:36:59Z",
       "side": 1,
       "message": "I suspect that this method may have performance issues for large json arrays. convertArrayToString is called recursively, and each time new strings are create and copied.",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fec32d1e_287cfcfe",
+        "filename": "src/plugin/PluginPreferences.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:49:48Z",
+      "side": 1,
+      "message": "Preferences parsing must be better handled, but i don\u0027t think it should be done for this patch",
+      "parentUuid": "f27ea14f_83e39766",
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "98e9d21c_5b84e837",
+        "filename": "src/plugin/PluginPreferences.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:49:48Z",
+      "side": 1,
+      "message": "PluginPreference already exists. Using PluginPreferencesManager instead.",
+      "parentUuid": "bf6619db_1a103f4c",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "3bbcb129_8d52ea85",
         "filename": "src/plugin/chathandler.h",
         "patchSetId": 23
@@ -64,6 +118,24 @@
       "writtenOn": "2021-01-21T16:36:59Z",
       "side": 1,
       "message": "should be const:\nvirtual bool preferenceMapHasKey(const std::string\u0026 key) const \u003d 0;",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b7e390d5_65406277",
+        "filename": "src/plugin/chathandler.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:49:48Z",
+      "side": 1,
+      "message": "modifications here muste be followed by plugins.",
+      "parentUuid": "3bbcb129_8d52ea85",
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
@@ -87,6 +159,24 @@
     },
     {
       "key": {
+        "uuid": "962f6277_1ab81fb5",
+        "filename": "src/plugin/chathandler.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:49:48Z",
+      "side": 1,
+      "message": "modifications here muste be followed by plugins.",
+      "parentUuid": "59e1e05b_7296582d",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "7abdeb67_c5239158",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 23
@@ -101,6 +191,24 @@
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "09efc9f1_78899de5",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:49:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7abdeb67_c5239158",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -121,6 +229,24 @@
     },
     {
       "key": {
+        "uuid": "f0f29e44_f2466c9f",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:49:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "764567a5_c380045d",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "fec0d8be_49f058ef",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 23
@@ -135,6 +261,24 @@
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "48bc8738_f49048c4",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:49:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fec0d8be_49f058ef",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -155,6 +299,24 @@
     },
     {
       "key": {
+        "uuid": "256aee37_ed269822",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:49:48Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "54a0a471_673cef16",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "28be89c1_456cf020",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 23
@@ -169,6 +331,24 @@
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cfd3bc54_f89aca98",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:49:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "28be89c1_456cf020",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -189,6 +369,24 @@
     },
     {
       "key": {
+        "uuid": "519da885_bc4bf8d6",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:49:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "625b766e_f09dd4dd",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "764cb681_02dea6a8",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 23
@@ -203,6 +401,24 @@
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "05295677_b447172e",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:49:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "764cb681_02dea6a8",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -223,6 +439,24 @@
     },
     {
       "key": {
+        "uuid": "c0644662_100c6a22",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:49:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0ec7d4ae_b5e22a7d",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b1bbe9b2_84873076",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 23
@@ -240,6 +474,24 @@
     },
     {
       "key": {
+        "uuid": "8c8c17d7_4587d693",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:49:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b1bbe9b2_84873076",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "2665fa45_078bac43",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 23
@@ -254,6 +506,24 @@
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "353a95cc_6f345140",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 240,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:49:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2665fa45_078bac43",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
