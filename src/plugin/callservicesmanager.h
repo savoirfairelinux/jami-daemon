@@ -74,7 +74,7 @@ public:
      * @param mediaHandler ID handler ID
      * @param callId call ID
      * @param toggle notify with new subjects if true, detach if false.
-     * 
+     *
      * In the case when the mediaHandler receives a hardware format
      * frame and converts it to main memory, we need to restart the
      * sender to unlink ours encoder and decoder.
@@ -100,7 +100,11 @@ public:
 
     std::vector<std::string> getCallMediaHandlerStatus(const std::string& callId);
 
-    void setPreference(const std::string& key, const std::string& value, const std::string& scopeStr);
+    void setPreference(const std::string& key,
+                       const std::string& value,
+                       const std::string& scopeStr);
+
+    void clearCallHandlerMaps(const std::string& callId);
 
 private:
     /**
@@ -132,13 +136,13 @@ private:
      * CallMediaHandlers_
      * It is pushed to this list list
      */
-    std::list<std::pair<const StreamData, AVSubjectSPtr>> callAVsubjects_;
+    std::map<std::string, std::list<std::pair<const StreamData, AVSubjectSPtr>>> callAVsubjects_;
 
     /**
      * @brief mediaHandlerToggled_
      * A map of callId and list of mediaHandlers pointers str
      */
-    std::map<std::string, std::set<uintptr_t>> mediaHandlerToggled_; // callId, list of mediaHandlers
+    std::map<std::string, std::map<uintptr_t, bool>> mediaHandlerToggled_;
 };
 
 } // namespace jami
