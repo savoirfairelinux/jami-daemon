@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "034a6110_85634166",
+        "filename": "src/plugin/PluginPreferences.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:50:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c0465d67_a838a5b0",
+      "range": {
+        "startLine": 217,
+        "startChar": 35,
+        "endLine": 217,
+        "endChar": 91
+      },
+      "revId": "40726b96ad5aff1145c08cf1eb17ee3d87e7b9ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5cbcca62_5e4dffd5",
         "filename": "src/plugin/PluginPreferences.cpp",
         "patchSetId": 3
@@ -45,6 +69,30 @@
       "revId": "40726b96ad5aff1145c08cf1eb17ee3d87e7b9ef",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e31921ea_e156f5fd",
+        "filename": "src/plugin/PluginPreferences.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 226,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:50:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5cbcca62_5e4dffd5",
+      "range": {
+        "startLine": 226,
+        "startChar": 9,
+        "endLine": 226,
+        "endChar": 14
+      },
+      "revId": "40726b96ad5aff1145c08cf1eb17ee3d87e7b9ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "2a8a8f6c_2dbbc947",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:50:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dab993fa_2d1cfd8a",
+      "range": {
+        "startLine": 124,
+        "startChar": 30,
+        "endLine": 124,
+        "endChar": 45
+      },
+      "revId": "40726b96ad5aff1145c08cf1eb17ee3d87e7b9ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "1e282df4_42b4f6cf",
         "filename": "src/preferences.h",
         "patchSetId": 3
@@ -91,6 +163,30 @@
       "revId": "40726b96ad5aff1145c08cf1eb17ee3d87e7b9ef",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5d02c9fb_98dc1cde",
+        "filename": "src/preferences.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 378,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-22T15:50:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1e282df4_42b4f6cf",
+      "range": {
+        "startLine": 377,
+        "startChar": 30,
+        "endLine": 378,
+        "endChar": 17
+      },
+      "revId": "40726b96ad5aff1145c08cf1eb17ee3d87e7b9ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
