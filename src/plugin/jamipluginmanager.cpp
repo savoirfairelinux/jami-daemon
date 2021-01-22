@@ -176,6 +176,13 @@ JamiPluginManager::getInstalledPlugins()
     };
     auto returnIterator = std::remove_if(pluginsPaths.begin(), pluginsPaths.end(), predicate);
     pluginsPaths.erase(returnIterator, std::end(pluginsPaths));
+
+    std::vector<std::string> nonStandardInstalls = jami::Manager::instance().pluginPreferences.getInstalledPlugins();
+    for (auto& path : nonStandardInstalls) {
+        if (checkPluginValidity(path))
+            pluginsPaths.emplace_back(path);
+    }
+
     return pluginsPaths;
 }
 
@@ -221,6 +228,7 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
             } else {
                 archiver::uncompressArchive(jplPath, destinationDir, uncompressJplFunction);
             }
+            loadPlugin(destinationDir);
         } catch (const std::exception& e) {
             JAMI_ERR() << e.what();
         }
@@ -337,12 +345,12 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
         pluginUserPreferencesMap[key] = value;
         const std::string preferencesValuesFilePath = PluginPreferencesUtils::valuesFilePath(
             rootPath);
+        std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
         if (!fs.good()) {
             return false;
         }
         try {
-            std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
             msgpack::pack(fs, pluginUserPreferencesMap);
             return true;
         } catch (const std::exception& e) {
@@ -379,6 +387,7 @@ JamiPluginManager::readPluginManifestFromArchive(const std::string& jplPath)
 std::map<std::string, std::string>
 JamiPluginManager::parseManifestFile(const std::string& manifestFilePath)
 {
+    std::lock_guard<std::mutex> guard(fileutils::getFileLock(manifestFilePath));
     std::ifstream file(manifestFilePath);
     if (file) {
         try {

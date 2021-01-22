@@ -42,6 +42,12 @@ PluginPreferencesUtils::valuesFilePath(const std::string& rootPath)
 }
 
 std::string
+PluginPreferencesUtils::getAllowDenyListsPath()
+{
+    return fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins" + DIR_SEPARATOR_CH + "allowdeny.msgpack";
+}
+
+std::string
 PluginPreferencesUtils::convertArrayToString(const Json::Value& jsonArray)
 {
     std::string stringArray{};
@@ -84,7 +90,8 @@ PluginPreferencesUtils::parsePreferenceConfig(const Json::Value& jsonPreference,
 std::vector<std::map<std::string, std::string>>
 PluginPreferencesUtils::getPreferences(const std::string& rootPath)
 {
-    const std::string preferenceFilePath = getPreferencesConfigFilePath(rootPath);
+    std::string preferenceFilePath = getPreferencesConfigFilePath(rootPath);
+    std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferenceFilePath));
     std::ifstream file(preferenceFilePath);
     Json::Value root;
     Json::CharReaderBuilder rbuilder;
@@ -130,12 +137,12 @@ std::map<std::string, std::string>
 PluginPreferencesUtils::getUserPreferencesValuesMap(const std::string& rootPath)
 {
     const std::string preferencesValuesFilePath = valuesFilePath(rootPath);
+    std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
     std::ifstream file(preferencesValuesFilePath, std::ios::binary);
     std::map<std::string, std::string> rmap;
 
     // If file is accessible
     if (file.good()) {
-        std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
         // Get file size
         std::string str;
         file.seekg(0, std::ios::end);
@@ -188,12 +195,12 @@ PluginPreferencesUtils::resetPreferencesValuesMap(const std::string& rootPath)
     std::map<std::string, std::string> pluginPreferencesMap {};
 
     const std::string preferencesValuesFilePath = valuesFilePath(rootPath);
+    std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
     std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
     if (!fs.good()) {
         return false;
     }
     try {
-        std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
         msgpack::pack(fs, pluginPreferencesMap);
     } catch (const std::exception& e) {
         returnValue = false;
@@ -201,5 +208,52 @@ PluginPreferencesUtils::resetPreferencesValuesMap(const std::string& rootPath)
     }
 
     return returnValue;
+}
+
+void
+PluginPreferencesUtils::setAllowDenyListPreferences(const ChatHandlerList& list) {
+    std::string filePath = getAllowDenyListsPath();
+    std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
+    std::ofstream fs(filePath, std::ios::binary);
+    if (!fs.good()) {
+        return;
+    }
+    try {
+        msgpack::pack(fs, list);
+    } catch (const std::exception& e) {
+        JAMI_ERR() << e.what();
+    }
+}
+
+void
+PluginPreferencesUtils::getAllowDenyListPreferences(ChatHandlerList& list) {
+    const std::string filePath = getAllowDenyListsPath();
+    std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
+    std::ifstream file(filePath, std::ios::binary);
+
+    // If file is accessible
+    if (file.good()) {
+        // Get file size
+        std::string str;
+        file.seekg(0, std::ios::end);
+        size_t fileSize = static_cast<size_t>(file.tellg());
+        // If not empty
+        if (fileSize > 0) {
+            // Read whole file content and put it in the string str
+            str.reserve(static_cast<size_t>(file.tellg()));
+            file.seekg(0, std::ios::beg);
+            str.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            file.close();
+            try {
+                // Unpack the string
+                msgpack::object_handle oh = msgpack::unpack(str.data(), str.size());
+                // Deserialized object is valid during the msgpack::object_handle instance is alive.
+                msgpack::object deserialized = oh.get();
+                deserialized.convert(list);
+            } catch (const std::exception& e) {
+                JAMI_ERR() << e.what();
+            }
+        }
+    }
 }
 } // namespace jami

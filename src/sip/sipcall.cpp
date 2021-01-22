@@ -560,6 +560,13 @@ SIPCall::hangup(int reason)
         // Notify the peer
         terminateSipSession(status);
     }
+
+#ifdef ENABLE_PLUGIN
+    jami::Manager::instance()
+        .getJamiPluginManager()
+        .getCallServicesManager().clearCallHandlerMaps(getCallId());
+#endif
+
     // Stop all RTP streams
     stopAllMedia();
     setState(Call::ConnectionState::DISCONNECTED, reason);
