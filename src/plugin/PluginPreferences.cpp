@@ -42,6 +42,16 @@ PluginPreferencesManager::valuesFilePath(const std::string& rootPath)
 }
 
 std::string
+PluginPreferencesManager::getAllowDenyListsPath(bool allow)
+{
+    if (allow)
+        return fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins" + DIR_SEPARATOR_CH + "allow.msgpack";
+    else
+        return fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins" + DIR_SEPARATOR_CH + "deny.msgpack";
+
+}
+
+std::string
 PluginPreferencesManager::convertArrayToString(const Json::Value& jsonArray)
 {
     std::string stringArray = "";
@@ -201,5 +211,52 @@ PluginPreferencesManager::resetPreferencesValuesMap(const std::string& rootPath)
     }
 
     return returnValue;
+}
+
+void
+PluginPreferencesManager::setAllowDenyListPreferences(const ChatHandlerList& list, bool allow) {
+    std::string filePath = getAllowDenyListsPath(allow);
+    std::ofstream fs(filePath, std::ios::binary);
+    if (!fs.good()) {
+        return;
+    }
+    try {
+        std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
+        msgpack::pack(fs, list);
+    } catch (const std::exception& e) {
+        JAMI_ERR() << e.what();
+    }
+}
+
+void
+PluginPreferencesManager::getAllowDenyListPreferences(ChatHandlerList& list, bool allow) {
+    const std::string filePath = getAllowDenyListsPath(allow);
+    std::ifstream file(filePath, std::ios::binary);
+
+    // If file is accessible
+    if (file.good()) {
+        std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
+        // Get file size
+        std::string str;
+        file.seekg(0, std::ios::end);
+        size_t fileSize = static_cast<size_t>(file.tellg());
+        // If not empty
+        if (fileSize > 0) {
+            // Read whole file content and put it in the string str
+            str.reserve(static_cast<size_t>(file.tellg()));
+            file.seekg(0, std::ios::beg);
+            str.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            file.close();
+            try {
+                // Unpack the string
+                msgpack::object_handle oh = msgpack::unpack(str.data(), str.size());
+                // Deserialized object is valid during the msgpack::object_handle instance is alive.
+                msgpack::object deserialized = oh.get();
+                deserialized.convert(list);
+            } catch (const std::exception& e) {
+                JAMI_ERR() << e.what();
+            }
+        }
+    }
 }
 } // namespace jami

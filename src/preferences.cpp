@@ -144,6 +144,7 @@ static constexpr const char* CONFERENCE_RESOLUTION_KEY {"conferenceResolution"};
 // plugin preferences
 constexpr const char* const PluginPreferences::CONFIG_LABEL;
 static constexpr const char* JAMI_PLUGIN_KEY {"pluginsEnabled"};
+static constexpr const char* JAMI_PLUGINS_INSTALLED_KEY {"installedPlugins"};
 static constexpr const char* JAMI_PLUGINS_LOADED_KEY {"loadedPlugins"};
 #endif
 
@@ -621,6 +622,7 @@ PluginPreferences::serialize(YAML::Emitter& out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
     out << YAML::Key << JAMI_PLUGIN_KEY << YAML::Value << pluginsEnabled_;
+    out << YAML::Key << JAMI_PLUGINS_INSTALLED_KEY << YAML::Value << installedPlugins_;
     out << YAML::Key << JAMI_PLUGINS_LOADED_KEY << YAML::Value << loadedPlugins_;
     out << YAML::EndMap;
 }
@@ -635,6 +637,11 @@ PluginPreferences::unserialize(const YAML::Node& in)
     } catch (...) {
         pluginsEnabled_ = false;
     }
+
+    const auto& installedPluginsNode = node[JAMI_PLUGINS_INSTALLED_KEY];
+    try {
+        installedPlugins_ = yaml_utils::parseVector(installedPluginsNode);
+    } catch (...) { }
 
     const auto& loadedPluginsNode = node[JAMI_PLUGINS_LOADED_KEY];
     try {
