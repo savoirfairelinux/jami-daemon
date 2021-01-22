@@ -409,8 +409,6 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
     }
 
-    setUpTransmissionData(tdata, tp_sel.u.transport->key.type);
-
     // Add user-agent header
     sip_utils::addUserAgenttHeader(getUserAgentName(), tdata);
 
@@ -2247,8 +2245,6 @@ SIPAccount::sendTextMessage(const std::string& to,
         messageEngine_.onMessageSent(to, id, false);
         return;
     }
-
-    setUpTransmissionData(tdata, tp_sel.u.transport->key.type);
 
     im::fillPJSIPMessageBody(*tdata, payloads);
 
