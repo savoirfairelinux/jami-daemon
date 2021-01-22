@@ -18,7 +18,6 @@
 #pragma once
 
 #include "chatservicesmanager.h"
-#include "pluginpreferencesutils.h"
 #include "logger.h"
 #include "manager.h"
 #include "fileutils.h"
@@ -39,11 +38,13 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
 
         if (!ptr)
             return -1;
+        handlersNameMap_[ptr->getChatHandlerDetails().at("name")] = (uintptr_t) ptr.get();
         chatHandlers_.emplace_back(std::move(ptr));
         return 0;
     };
 
     auto unregisterChatHandler = [this](void* data) {
+        int status = 0;
         auto handlerIt = std::find_if(chatHandlers_.begin(), chatHandlers_.end(),
                             [data](ChatHandlerPtr& handler) {
                                 return (handler.get() == data);
@@ -56,13 +57,19 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
                                 return (handlerId == (uintptr_t) handlerIt->get());
                                 });
                 if (handlerId != toggledList.second.end()) {
-                    handlerId = toggledList.second.erase(handlerId);
                     (*handlerIt)->detach(chatSubjects_[toggledList.first]);
+                    toggledList.second.erase(handlerId);
+                    status = -1;
                 }
             }
-            chatHandlers_.erase(handlerIt);
+            clearAllowDenyLists((*handlerIt)->id());
+            if (!status) {
+                handlersNameMap_.erase((*handlerIt)->getChatHandlerDetails().at("name"));
+                chatHandlers_.erase(handlerIt);
+                delete (*handlerIt).get();
+            }
         }
-        return 0;
+        return status;
     };
 
     pm.registerComponentManager("ChatHandlerManager",
@@ -100,18 +107,26 @@ ChatServicesManager::publishMessage(pluginMessagePtr& cm)
         return;
     std::pair<std::string, std::string> mPair(cm->accountId, cm->peerId);
     auto& handlers = chatHandlerToggled_[mPair];
+    auto& chatDenySet = denyList_[mPair];
+    auto& chatAllowSet = allowList_[mPair];
+
     for (auto& chatHandler : chatHandlers_) {
+        std::string chatHandlerName = chatHandler->getChatHandlerDetails().at("name");
         std::size_t found = chatHandler->id().find_last_of(DIR_SEPARATOR_CH);
-        auto preferences = PluginPreferencesUtils::getPreferencesValuesMap(
-            chatHandler->id().substr(0, found));
+        auto preferences = PluginPreferencesUtils::getPreferencesValuesMap(chatHandler->id().substr(0, found));
         bool toggled = false;
         if (handlers.find((uintptr_t) chatHandler.get()) != handlers.end())
             toggled = true;
-        if (preferences.at("always") == "1" || toggled) {
+        bool denyListed = false;
+        if (chatDenySet.find(chatHandlerName) != chatDenySet.end())
+            denyListed = true;
+        if ((preferences.at("always") == "1" || toggled) && !denyListed) {
             chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>());
             if (!toggled) {
                 handlers.insert((uintptr_t) chatHandler.get());
                 chatHandler->notifyChatSubject(mPair, chatSubjects_[mPair]);
+                chatAllowSet.insert(chatHandlerName);
+                PluginPreferencesUtils::setAllowDenyListPreferences(allowList_);
             }
             chatSubjects_[mPair]->publish(cm);
         }
@@ -146,12 +161,12 @@ ChatServicesManager::getChatHandlerStatus(const std::string& accountId,
                                                 const std::string& peerId)
 {
     std::pair<std::string, std::string> mPair(accountId, peerId);
-    const auto& it = chatHandlerToggled_.find(mPair);
+    const auto& it = allowList_.find(mPair);
     std::vector<std::string> ret;
-    if (it != chatHandlerToggled_.end()) {
+    if (it != allowList_.end()) {
         ret.reserve(it->second.size());
-        for (const auto& chatHandlerId : it->second)
-            ret.emplace_back(std::to_string(chatHandlerId));
+        for (const auto& chatHandlerName : it->second)
+            ret.emplace_back(std::to_string(handlersNameMap_.at(chatHandlerName)));
         return ret;
     }
 
@@ -181,6 +196,13 @@ ChatServicesManager::setPreference(const std::string& key, const std::string& va
 }
 
 void
+ChatServicesManager::setAllowDenyListsFromPreferences()
+{
+    PluginPreferencesUtils::getAllowDenyListPreferences(allowList_);
+    PluginPreferencesUtils::getAllowDenyListPreferences(denyList_, false);
+}
+
+void
 ChatServicesManager::toggleChatHandler(const uintptr_t chatHandlerId,
                         const std::string& accountId,
                         const std::string& peerId,
@@ -188,6 +210,8 @@ ChatServicesManager::toggleChatHandler(const uintptr_t chatHandlerId,
 {
     std::pair<std::string, std::string> mPair(accountId, peerId);
     auto& handlers = chatHandlerToggled_[mPair];
+    auto& chatDenySet = denyList_[mPair];
+    auto& chatAllowSet = allowList_[mPair];
     chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>());
 
     auto chatHandlerIt = std::find_if(chatHandlers_.begin(), chatHandlers_.end(),
@@ -200,9 +224,31 @@ ChatServicesManager::toggleChatHandler(const uintptr_t chatHandlerId,
             (*chatHandlerIt)->notifyChatSubject(mPair, chatSubjects_[mPair]);
             if (handlers.find(chatHandlerId) == handlers.end())
                 handlers.insert(chatHandlerId);
+            chatAllowSet.insert((*chatHandlerIt)->getChatHandlerDetails().at("name"));
+            chatDenySet.erase((*chatHandlerIt)->getChatHandlerDetails().at("name"));
         } else {
             (*chatHandlerIt)->detach(chatSubjects_[mPair]);
             handlers.erase(chatHandlerId);
+            chatAllowSet.erase((*chatHandlerIt)->getChatHandlerDetails().at("name"));
+            chatDenySet.insert((*chatHandlerIt)->getChatHandlerDetails().at("name"));
+        }
+        PluginPreferencesUtils::setAllowDenyListPreferences(allowList_);
+        PluginPreferencesUtils::setAllowDenyListPreferences(denyList_, false);
+    }
+}
+
+void
+ChatServicesManager::clearAllowDenyLists(const std::string& pluginPath)
+{
+    for (auto& chatHandler : chatHandlers_) {
+        if (chatHandler->id() == pluginPath) {
+            std::string handlerName = chatHandler->getChatHandlerDetails()["name"];
+            for (auto& mapItem : allowList_) {
+                mapItem.second.erase(handlerName);
+            }
+            for (auto& mapItem : denyList_) {
+                mapItem.second.erase(handlerName);
+            }
         }
     }
 }

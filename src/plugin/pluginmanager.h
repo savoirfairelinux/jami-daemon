@@ -100,7 +100,7 @@ public:
      * @brief destroyPluginComponents
      * @param path
      */
-    void destroyPluginComponents(const std::string& path);
+    int32_t destroyPluginComponents(const std::string& path);
 
     /**
      * @brief callPluginInitFunction
