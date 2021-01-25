@@ -63,18 +63,23 @@ public:
         for (auto& callMediaHandler : callMediaHandlers_) {
             if (callDenySet.find((uintptr_t) callMediaHandler.get()) == callDenySet.end()) {
                 std::size_t found = callMediaHandler->id().find_last_of(DIR_SEPARATOR_CH);
-                auto preferences = PluginPreferencesUtils::getPreferencesValuesMap(callMediaHandler->id().substr(0, found));
-#ifndef __ANDROID__
-                if (preferences.at("always") == "1")
-                    toggleCallMediaHandler((uintptr_t) callMediaHandler.get(), data.id, true);
-                else
-#endif
+                bool toggle = PluginPreferencesUtils::getAlwaysPreference(
+                    callMediaHandler->id().substr(0, found), callMediaHandler->getCallMediaHandlerDetails().at("name"));
+
+                if (!toggle)
                     for (const auto& toggledMediaHandler : mediaHandlerToggled_[data.id]) {
                         if (toggledMediaHandler == (uintptr_t) callMediaHandler.get()) {
                             toggleCallMediaHandler(toggledMediaHandler, data.id, true);
                             break;
                         }
                     }
+                else {
+#ifndef __ANDROID__
+                    toggleCallMediaHandler((uintptr_t) callMediaHandler.get(), data.id, true);
+#else
+                    mediaHandlerToggled_[data.id].insert((uintptr_t) callMediaHandler.get());
+#endif
+                }
             }
         }
     }
@@ -101,6 +106,8 @@ public:
 
             if (!ptr)
                 return -1;
+            std::size_t found = ptr->id().find_last_of(DIR_SEPARATOR_CH);
+            PluginPreferencesUtils::addAlwaysHandlerPreference(ptr->getCallMediaHandlerDetails().at("name"), ptr->id().substr(0, found));
             callMediaHandlers_.emplace_back(std::move(ptr));
             return 0;
         };
