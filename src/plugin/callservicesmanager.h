@@ -63,10 +63,10 @@ public:
         for (auto& callMediaHandler : callMediaHandlers_) {
             if (callDenySet.find((uintptr_t) callMediaHandler.get()) == callDenySet.end()) {
                 std::size_t found = callMediaHandler->id().find_last_of(DIR_SEPARATOR_CH);
-                auto preferences = PluginPreferencesManager::getPreferencesValuesMap(
-                    callMediaHandler->id().substr(0, found));
+                bool toggle = PluginPreferencesManager::getAlwaysPreference(
+                    callMediaHandler->id().substr(0, found), callMediaHandler->getCallMediaHandlerDetails().at("name"));
 
-                if (preferences.at(callMediaHandler->getCallMediaHandlerDetails().at("name")+"Always") == "0")
+                if (!toggle)
                     for (const auto& toggledMediaHandler : mediaHandlerToggled_[data.id]) {
                         if (toggledMediaHandler == (uintptr_t) callMediaHandler.get()) {
                             toggleCallMediaHandler(toggledMediaHandler, data.id, true);
@@ -107,7 +107,7 @@ public:
             if (!ptr)
                 return -1;
             std::size_t found = ptr->id().find_last_of(DIR_SEPARATOR_CH);
-            PluginPreferencesManager::addAlwaysHandlerPreference(ptr->getCallMediaHandlerDetails().at("name") + "Always", ptr->id().substr(0, found));
+            PluginPreferencesManager::addAlwaysHandlerPreference(ptr->getCallMediaHandlerDetails().at("name"), ptr->id().substr(0, found));
             callMediaHandlers_.emplace_back(std::move(ptr));
             return 0;
         };
