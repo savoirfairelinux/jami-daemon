@@ -184,8 +184,6 @@ PluginPreferencesUtils::getPreferencesValuesMap(const std::string& rootPath)
         rmap[pair.first] = pair.second;
     }
 
-    rmap.emplace("always", "0");
-
     return rmap;
 }
 
@@ -258,5 +256,58 @@ PluginPreferencesUtils::getAllowDenyListPreferences(ChatHandlerList& list)
             }
         }
     }
+}
+
+void
+PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerName,
+                                                   const std::string& rootPath)
+{
+    std::string filePath = getPreferencesConfigFilePath(rootPath);
+    std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
+    std::fstream file(filePath);
+    Json::Value root;
+    Json::CharReaderBuilder rbuilder;
+    rbuilder["collectComments"] = false;
+    std::string errs;
+    std::set<std::string> keys;
+    std::vector<std::map<std::string, std::string>> preferences;
+    if (file) {
+        bool ok = Json::parseFromStream(rbuilder, file, &root, &errs);
+        if (ok && root.isArray()) {
+            for (const auto& child : root)
+                if (child.get("key", "None").asString() == handlerName + "Always")
+                    return;
+        }
+
+        Json::Value preference;
+        preference["key"] = handlerName + "Always";
+        preference["type"] = "Switch";
+        preference["defaultValue"] = "0";
+        preference["title"] = "Automatically turn " + handlerName + " on";
+        preference["summary"] = handlerName + " will take effect immediatly";
+        root.append(preference);
+        try {
+            file << root.toStyledString();
+            file.close();
+        } catch (const std::exception& e) {
+            JAMI_ERR() << e.what();
+        }
+    }
+}
+
+bool
+PluginPreferencesUtils::getAlwaysPreference(const std::string& rootPath, std::string& handlerName)
+{
+    std::vector<std::map<std::string, std::string>> preferences = getPreferences(rootPath);
+    std::map<std::string, std::string> preferencesValues = getPreferencesValuesMap(rootPath);
+
+    for (auto preference : preferences) {
+        auto key = preference.at("key");
+        if (preference.at("type") == "Switch" && key == handlerName + "Always"
+            && preferencesValues.find(key)->second == "1")
+            return true;
+    }
+
+    return false;
 }
 } // namespace jami
