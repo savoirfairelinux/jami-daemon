@@ -506,6 +506,10 @@ UPnPContext::updateMappingList(bool async)
         return;
     }
 
+    // Make new requests for mappings that failed and have
+    // the auto-update option enabled.
+    processMappingWithAutoUpdate();
+
     PortType typeArray[2] = {PortType::TCP, PortType::UDP};
 
     for (auto idx : {0, 1}) {
@@ -726,6 +730,45 @@ UPnPContext::processPendingRequests(const std::shared_ptr<IGD>& igd)
     // Process the pending requests.
     for (auto const& map : requestsList) {
         requestMapping(igd, map);
+    }
+}
+
+void
+UPnPContext::processMappingWithAutoUpdate()
+{
+    // This list holds the mappings to be requested. This is
+    // needed to avoid performing the requests while holding
+    // the lock.
+    std::list<Mapping::sharedPtr_t> requestsList;
+
+    // Populate the list of requests for mappings with auto-update enabled.
+    {
+        std::lock_guard<std::mutex> lock(mappingMutex_);
+        PortType typeArray[2] {PortType::TCP, PortType::UDP};
+
+        for (auto type : typeArray) {
+            auto& mappingList = getMappingList(type);
+            for (auto const& [_, map] : mappingList) {
+                if (map->getState() == MappingState::FAILED and map->getAutoUpdate()) {
+                    requestsList.emplace_back(map);
+                }
+            }
+        }
+    }
+
+    for (auto const& map : requestsList) {
+        // Request a new mapping if auto-update is enabled.
+        JAMI_DBG("Mapping %s has auto-update enabled, a new mapping will be requested",
+                 map->toString().c_str());
+
+        // Reserve a new mapping.
+        Mapping newMapping(*map);
+        newMapping.setExternalPort(0);
+        newMapping.setInternalPort(0);
+        registerMapping(newMapping);
+        // Release the old one.
+        map->setAvailable(true);
+        unregisterMapping(map);
     }
 }
 
@@ -1178,26 +1221,6 @@ UPnPContext::updateMappingState(const Mapping::sharedPtr_t& map, MappingState ne
     // Notify the listener if set.
     if (notify and map->getNotifyCallback())
         map->getNotifyCallback()(map);
-
-    // Nothing more to do if there is no valid IGD.
-    if (not hasValidIGD())
-        return;
-
-    // On fail, request a new mapping if auto-update is enabled.
-    if (newState == MappingState::FAILED and map->getAutoUpdate()) {
-        JAMI_DBG("Mapping %s has auto-update enabled, a new mapping will be requested",
-                 map->toString().c_str());
-        // Run async to avoid double locks.
-        runOnUpnpContextThread([this, map] {
-            // Reserve a new mapping.
-            Mapping newMapping(*map);
-            newMapping.setExternalPort(0);
-            newMapping.setInternalPort(0);
-            reserveMapping(newMapping);
-            // Release the old one.
-            releaseMapping(*map);
-        });
-    }
 }
 
 #if HAVE_LIBNATPMP

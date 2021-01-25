@@ -221,7 +221,11 @@ private:
     void renewAllocations();
 #endif
 
+    // Process requests with pending status.
     void processPendingRequests(const std::shared_ptr<IGD>& igd);
+
+    // Process mapping with auto-update flag enabled.
+    void processMappingWithAutoUpdate();
 
     // Implementation of UpnpMappingObserver interface.
 
