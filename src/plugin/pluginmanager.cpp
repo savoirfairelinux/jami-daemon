@@ -79,16 +79,14 @@ PluginManager::load(const std::string& path)
 bool
 PluginManager::unload(const std::string& path)
 {
-    bool status {false};
     if (!destroyPluginComponents(path))
-        return status;
+        return false;
     PluginMap::iterator it = dynPluginMap_.find(path);
     if (it != dynPluginMap_.end()) {
         dynPluginMap_.erase(it);
-        status = true;
     }
 
-    return status;
+    return true;
 }
 
 bool
@@ -116,11 +114,11 @@ PluginManager::destroyPluginComponents(const std::string& path)
         for (const auto& pair : itComponents->second) {
             auto clcm = componentsLifeCycleManagers_.find(pair.first);
             if (clcm != componentsLifeCycleManagers_.end()) {
-                status = clcm->second.destroyComponent(pair.second);
+                status |= clcm->second.destroyComponent(pair.second);
             }
         }
     }
-    return status;
+    return !status;
 }
 
 bool
