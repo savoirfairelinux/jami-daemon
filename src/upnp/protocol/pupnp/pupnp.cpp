@@ -419,6 +419,9 @@ PUPnP::validateIgd(const IGDInfo& info)
         validIgdList_.emplace_back(igd_candidate);
     }
 
+    // Clear existing mappings
+    removeAllLocalMappings(igd_candidate);
+
     // Report to the listener.
     observer_->onIgdUpdated(igd_candidate, UpnpIgdEvent::ADDED);
 
