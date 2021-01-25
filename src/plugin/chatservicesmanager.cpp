@@ -38,6 +38,9 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
         if (!ptr)
             return -1;
         handlersNameMap_[ptr->getChatHandlerDetails().at("name")] = (uintptr_t) ptr.get();
+        std::size_t found = ptr->id().find_last_of(DIR_SEPARATOR_CH);
+        PluginPreferencesUtils::addAlwaysHandlerPreference(ptr->getChatHandlerDetails().at("name"),
+                                                           ptr->id().substr(0, found));
         chatHandlers_.emplace_back(std::move(ptr));
         return 0;
     };
@@ -106,9 +109,8 @@ ChatServicesManager::publishMessage(pluginMessagePtr& cm)
     for (auto& chatHandler : chatHandlers_) {
         std::string chatHandlerName = chatHandler->getChatHandlerDetails().at("name");
         std::size_t found = chatHandler->id().find_last_of(DIR_SEPARATOR_CH);
-        auto preferences = PluginPreferencesUtils::getPreferencesValuesMap(
-            chatHandler->id().substr(0, found));
-        bool toggle = preferences.at("always") == "1";
+        bool toggle = PluginPreferencesUtils::getAlwaysPreference(chatHandler->id().substr(0, found),
+                                                                  chatHandlerName);
         auto allowedIt = chatAllowDenySet.find(chatHandlerName);
         if (allowedIt != chatAllowDenySet.end())
             toggle = (*allowedIt).second;

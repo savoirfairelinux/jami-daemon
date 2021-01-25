@@ -21,6 +21,9 @@
 #pragma once
 
 #include "noncopyable.h"
+#include "logger.h"
+#include "manager.h"
+#include "sip/sipcall.h"
 #include "pluginmanager.h"
 #include "streamdata.h"
 #include "mediahandler.h"
@@ -144,5 +147,4 @@ private:
      */
     std::map<std::string, std::map<uintptr_t, bool>> mediaHandlerToggled_;
 };
-
 } // namespace jami
