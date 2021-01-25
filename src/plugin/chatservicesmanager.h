@@ -47,6 +47,8 @@ public:
             if (!ptr)
                 return -1;
             handlersNameMap_[ptr->getChatHandlerDetails().at("name")] = (uintptr_t) ptr.get();
+            std::size_t found = ptr->id().find_last_of(DIR_SEPARATOR_CH);
+            PluginPreferencesUtils::addAlwaysHandlerPreference(ptr->getChatHandlerDetails().at("name"), ptr->id().substr(0, found));
             chatHandlers_.emplace_back(std::move(ptr));
             return 0;
         };
@@ -114,15 +116,15 @@ public:
         for (auto& chatHandler : chatHandlers_) {
             std::string chatHandlerName = chatHandler->getChatHandlerDetails().at("name");
             std::size_t found = chatHandler->id().find_last_of(DIR_SEPARATOR_CH);
-            auto preferences = PluginPreferencesUtils::getPreferencesValuesMap(
-                chatHandler->id().substr(0, found));
+            bool toggle = PluginPreferencesUtils::getAlwaysPreference(
+                chatHandler->id().substr(0, found), chatHandlerName);
             bool toggled = false;
             if (handlers.find((uintptr_t) chatHandler.get()) != handlers.end())
                 toggled = true;
             bool denyListed = false;
             if (chatDenySet.find(chatHandlerName) != chatDenySet.end())
                 denyListed = true;
-            if ((preferences.at("always") == "1" || toggled) && !denyListed) {
+            if ((toggle || toggled) && !denyListed) {
                 chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>());
                 if (!toggled) {
                     handlers.insert((uintptr_t) chatHandler.get());
