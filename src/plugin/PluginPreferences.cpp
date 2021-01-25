@@ -42,6 +42,12 @@ PluginPreferencesManager::valuesFilePath(const std::string& rootPath)
 }
 
 std::string
+PluginPreferencesManager::internalPrefFilePath(const std::string& rootPath)
+{
+    return rootPath + DIR_SEPARATOR_CH + "internalPreferences.msgpack";
+}
+
+std::string
 PluginPreferencesManager::getAllowDenyListsPath(bool allow)
 {
     if (allow)
@@ -94,7 +100,7 @@ PluginPreferencesManager::parsePreferenceConfig(const Json::Value& jsonPreferenc
 std::vector<std::map<std::string, std::string>>
 PluginPreferencesManager::getPreferences(const std::string& rootPath)
 {
-    const std::string preferenceFilePath = getPreferencesConfigFilePath(rootPath);
+    std::string preferenceFilePath = getPreferencesConfigFilePath(rootPath);
     std::ifstream file(preferenceFilePath);
     Json::Value root;
     Json::CharReaderBuilder rbuilder;
@@ -132,8 +138,47 @@ PluginPreferencesManager::getPreferences(const std::string& rootPath)
                        << preferenceFilePath;
         }
     }
+    getInternalPreferences(rootPath, preferences);
 
     return preferences;
+}
+
+void
+PluginPreferencesManager::getInternalPreferences(const std::string& rootPath, std::vector<std::map<std::string, std::string>>& preferences)
+{
+    const std::string filePath = internalPrefFilePath(rootPath);
+    std::ifstream file(filePath, std::ios::binary);
+
+    // If file is accessible
+    if (file.good()) {
+        std::vector<std::map<std::string, std::string>> prefs;
+        std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
+        // Get file size
+        std::string str;
+        file.seekg(0, std::ios::end);
+        size_t fileSize = static_cast<size_t>(file.tellg());
+        // If not empty
+        if (fileSize > 0) {
+            // Read whole file content and put it in the string str
+            str.reserve(static_cast<size_t>(file.tellg()));
+            file.seekg(0, std::ios::beg);
+            str.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            file.close();
+            try {
+                // Unpack the string
+                msgpack::object_handle oh = msgpack::unpack(str.data(), str.size());
+                // Deserialized object is valid during the msgpack::object_handle instance is alive.
+                msgpack::object deserialized = oh.get();
+                deserialized.convert(prefs);
+            } catch (const std::exception& e) {
+                JAMI_ERR() << e.what();
+                return;
+            }
+        }
+        for (auto pref : prefs) {
+            preferences.emplace_back(pref);
+        }
+    }
 }
 
 std::map<std::string, std::string>
@@ -259,13 +304,26 @@ PluginPreferencesManager::getAllowDenyListPreferences(ChatHandlerList& list, boo
 }
 
 void
-PluginPreferencesManager::addAlwaysHandlerPreference(const std::string& preferenceName, const std::string& rootPath) {
-    auto userMap = getUserPreferencesValuesMap(rootPath);
-    const std::string filePath = valuesFilePath(rootPath);
+PluginPreferencesManager::addAlwaysHandlerPreference(const std::string& handlerName, const std::string& rootPath) {
+    std::vector<std::map<std::string, std::string>> preferences;
+    getInternalPreferences(rootPath, preferences);
+    const std::string filePath = internalPrefFilePath(rootPath);
 
-    if (userMap.find(preferenceName) != userMap.end())
-        return;
-    userMap[preferenceName] = "0";
+    for (auto preference : preferences){
+        if (preference.at("type") == "Switch" && preference.at("key").find(handlerName) != std::string::npos)
+            return;
+    }
+    std::srand(std::time(0));
+    std::string randStr = std::to_string(std::rand());
+
+    std::map<std::string, std::string> preference = {{"key", handlerName+randStr},
+                                                     {"type", "Switch"},
+                                                     {"category", "internal"},
+                                                     {"defaultValue", "0"},
+                                                     {"title", "Automatically turn " + handlerName + " on"},
+                                                     {"summary", handlerName + " will take effect immediatly"}};
+
+    preferences.emplace_back(preference);
 
     std::ofstream fs(filePath, std::ios::binary);
     if (!fs.good()) {
@@ -273,11 +331,26 @@ PluginPreferencesManager::addAlwaysHandlerPreference(const std::string& preferen
     }
     try {
         std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
-        msgpack::pack(fs, userMap);
-        return ;
+        msgpack::pack(fs, preferences);
     } catch (const std::exception& e) {
         JAMI_ERR() << e.what();
-        return ;
     }
+}
+
+bool
+PluginPreferencesManager::getAlwaysPreference(const std::string rootPath, std::string& handlerName)
+{
+    std::vector<std::map<std::string, std::string>> preferences;
+    getInternalPreferences(rootPath, preferences);
+
+    std::map<std::string, std::string> preferencesValues = getPreferencesValuesMap(rootPath);
+
+    for (auto preference : preferences) {
+        auto key = preference.at("key");
+        if (preference.at("type") == "Switch" && key.find(handlerName) != std::string::npos && preferencesValues.find(key)->second == "1")
+            return true;
+    }
+
+    return false;
 }
 } // namespace jami

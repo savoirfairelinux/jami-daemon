@@ -36,6 +36,8 @@ public:
 
     static std::string valuesFilePath(const std::string& rootPath);
 
+    static std::string internalPrefFilePath(const std::string& rootPath);
+
     static std::string convertArrayToString(const Json::Value& jsonArray);
 
     static std::map<std::string, std::string> parsePreferenceConfig(const Json::Value& jsonPreference,
@@ -43,6 +45,8 @@ public:
 
     static std::vector<std::map<std::string, std::string>> getPreferences(
         const std::string& rootPath);
+
+    static void getInternalPreferences(const std::string& rootPath, std::vector<std::map<std::string, std::string>>& preferences);
 
     static std::map<std::string, std::string> getUserPreferencesValuesMap(
         const std::string& rootPath);
@@ -57,7 +61,9 @@ public:
 
     static void getAllowDenyListPreferences(ChatHandlerList& list, bool allow = true);
 
-    static void addAlwaysHandlerPreference(const std::string& preferenceName, const std::string& rootPath);
+    static void addAlwaysHandlerPreference(const std::string& handlerName, const std::string& rootPath);
+
+    static bool getAlwaysPreference(const std::string rootPath, std::string& handlerName);
 private:
     PluginPreferencesManager() {}
     ~PluginPreferencesManager() {}
