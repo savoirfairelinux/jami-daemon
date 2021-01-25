@@ -46,18 +46,20 @@ CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subje
 
     for (auto& callMediaHandler : callMediaHandlers_) {
         std::size_t found = callMediaHandler->id().find_last_of(DIR_SEPARATOR_CH);
-        auto preferences = PluginPreferencesUtils::getPreferencesValuesMap(
-            callMediaHandler->id().substr(0, found));
-        bool toggle = preferences.at("always") == "1";
+        bool toggle = PluginPreferencesUtils::getAlwaysPreference(
+            callMediaHandler->id().substr(0, found),
+            callMediaHandler->getCallMediaHandlerDetails().at("name"));
         for (const auto& toggledMediaHandlerPair : mediaHandlerToggled_[data.id]) {
             if (toggledMediaHandlerPair.first == (uintptr_t) callMediaHandler.get()) {
                 toggle = toggledMediaHandlerPair.second;
                 break;
             }
         }
-#ifndef __ANDROID__
         if (toggle)
+#ifndef __ANDROID__
             toggleCallMediaHandler((uintptr_t) callMediaHandler.get(), data.id, true);
+#else
+            mediaHandlerToggled_[data.id].insert({(uintptr_t) callMediaHandler.get(), true});
 #endif
     }
 }
@@ -76,6 +78,10 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
 
         if (!ptr)
             return -1;
+        std::size_t found = ptr->id().find_last_of(DIR_SEPARATOR_CH);
+        PluginPreferencesUtils::addAlwaysHandlerPreference(ptr->getCallMediaHandlerDetails().at(
+                                                               "name"),
+                                                           ptr->id().substr(0, found));
         callMediaHandlers_.emplace_back(std::move(ptr));
         return 0;
     };
