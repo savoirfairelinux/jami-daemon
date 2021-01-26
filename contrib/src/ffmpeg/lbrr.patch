@@ -1,0 +1,103 @@
+From 33b4b788aac91dfd522415baaedcbda160482816 Mon Sep 17 00:00:00 2001
+From: Anton Khirnov <anton@khirnov.net>
+Date: Fri, 11 Sep 2020 19:32:43 +0200
+Subject: [PATCH] opusdec: do not fail when LBRR frames are present
+
+Decode and discard them.
+
+Fixes ticket 4641.
+---
+ libavcodec/opus_silk.c | 28 +++++++++++++++++++++-------
+ libavcodec/opustab.c   |  3 +++
+ libavcodec/opustab.h   |  3 +++
+ 3 files changed, 27 insertions(+), 7 deletions(-)
+
+diff --git a/libavcodec/opus_silk.c b/libavcodec/opus_silk.c
+index 2fcbf3b9d3..913053c5e2 100644
+--- a/libavcodec/opus_silk.c
++++ b/libavcodec/opus_silk.c
+@@ -506,7 +506,8 @@ static inline void silk_decode_excitation(SilkContext *s, OpusRangeCoder *rc,
+ #define LTP_ORDER 5
+ 
+ static void silk_decode_frame(SilkContext *s, OpusRangeCoder *rc,
+-                              int frame_num, int channel, int coded_channels, int active, int active1)
++                              int frame_num, int channel, int coded_channels,
++                              int active, int active1, int redundant)
+ {
+     /* per frame */
+     int voiced;       // combines with active to indicate inactive, active, or active+voiced
+@@ -665,8 +666,9 @@ static void silk_decode_frame(SilkContext *s, OpusRangeCoder *rc,
+     silk_decode_excitation(s, rc, residual + SILK_MAX_LAG, qoffset_high,
+                            active, voiced);
+ 
+-    /* skip synthesising the side channel if we want mono-only */
+-    if (s->output_channels == channel)
++    /* skip synthesising the output if we do not need it */
++    // TODO: implement error recovery
++    if (s->output_channels == channel || redundant)
+         return;
+ 
+     /* generate the output signal */
+@@ -814,15 +816,27 @@ int ff_silk_decode_superframe(SilkContext *s, OpusRangeCoder *rc,
+             active[i][j] = ff_opus_rc_dec_log(rc, 1);
+ 
+         redundancy[i] = ff_opus_rc_dec_log(rc, 1);
+-        if (redundancy[i]) {
+-            avpriv_report_missing_feature(s->avctx, "LBRR frames");
+-            return AVERROR_PATCHWELCOME;
++    }
++
++    /* read the per-frame LBRR flags */
++    for (i = 0; i < coded_channels; i++)
++        if (redundancy[i] && duration_ms > 20) {
++            redundancy[i] = ff_opus_rc_dec_cdf(rc, duration_ms == 40 ?
++                                                   ff_silk_model_lbrr_flags_40 : ff_silk_model_lbrr_flags_60);
+         }
++
++    /* decode the LBRR frames */
++    for (i = 0; i < nb_frames; i++) {
++        for (j = 0; j < coded_channels; j++)
++            if (redundancy[j] & (1 << i)) {
++                int active1 = (j == 0 && !(redundancy[1] & (1 << i))) ? 0 : 1;
++                silk_decode_frame(s, rc, i, j, coded_channels, 1, active1, 1);
++            }
+     }
+ 
+     for (i = 0; i < nb_frames; i++) {
+         for (j = 0; j < coded_channels && !s->midonly; j++)
+-            silk_decode_frame(s, rc, i, j, coded_channels, active[j][i], active[1][i]);
++            silk_decode_frame(s, rc, i, j, coded_channels, active[j][i], active[1][i], 0);
+ 
+         /* reset the side channel if it is not coded */
+         if (s->midonly && s->frame[1].coded)
+diff --git a/libavcodec/opustab.c b/libavcodec/opustab.c
+index fb340e07e8..64070f8299 100644
+--- a/libavcodec/opustab.c
++++ b/libavcodec/opustab.c
+@@ -26,6 +26,9 @@ const uint8_t ff_opus_default_coupled_streams[] = { 0, 1, 1, 2, 2, 2, 2, 3 };
+ 
+ const uint8_t ff_celt_band_end[] = { 13, 17, 17, 19, 21 };
+ 
++const uint16_t ff_silk_model_lbrr_flags_40[] = { 256, 0, 53, 106, 256 };
++const uint16_t ff_silk_model_lbrr_flags_60[] = { 256, 0, 41, 61, 90, 131, 146, 174, 256 };
++
+ const uint16_t ff_silk_model_stereo_s1[] = {
+     256,   7,   9,  10,  11,  12,  22,  46,  54,  55,  56,  59,  82, 174, 197, 200,
+     201, 202, 210, 234, 244, 245, 246, 247, 249, 256
+diff --git a/libavcodec/opustab.h b/libavcodec/opustab.h
+index bce5a42830..892126bb23 100644
+--- a/libavcodec/opustab.h
++++ b/libavcodec/opustab.h
+@@ -31,6 +31,9 @@ extern const uint8_t  ff_celt_band_end[];
+ 
+ extern const uint8_t  ff_opus_default_coupled_streams[];
+ 
++extern const uint16_t ff_silk_model_lbrr_flags_40[];
++extern const uint16_t ff_silk_model_lbrr_flags_60[];
++
+ extern const uint16_t ff_silk_model_stereo_s1[];
+ extern const uint16_t ff_silk_model_stereo_s2[];
+ extern const uint16_t ff_silk_model_stereo_s3[];
+-- 
+2.20.1
+

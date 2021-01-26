@@ -353,6 +353,7 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	$(APPLY) $(SRC)/ffmpeg/rtp_ext_abs_send_time.patch
 	$(APPLY) $(SRC)/ffmpeg/libopusdec-enable-FEC.patch
 	$(APPLY) $(SRC)/ffmpeg/libopusenc-enable-FEC.patch
+	$(APPLY) $(SRC)/ffmpeg/lbrr.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
