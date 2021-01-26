@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7c56d2fd_0133680d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 42
+      },
+      "lineNbr": 2549,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-26T17:41:08Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nthe value returned by this function should be used\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-unused-return-value",
+      "revId": "61c4d55622cc1a42af8a77457c03555cf93dd73f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "73fe918a_cea83594",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 42
+      },
+      "lineNbr": 2552,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-26T17:41:08Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\n\u0027find\u0027 called with a string literal consisting of a single character; consider using the more effective overload accepting a character\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-faster-string-find",
+      "revId": "61c4d55622cc1a42af8a77457c03555cf93dd73f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3b31f37e_bd0c73b7",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 42
+      },
+      "lineNbr": 2553,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-26T17:41:08Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\n\u0027find_last_of\u0027 called with a string literal consisting of a single character; consider using the more effective overload accepting a character\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-faster-string-find",
+      "revId": "61c4d55622cc1a42af8a77457c03555cf93dd73f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
