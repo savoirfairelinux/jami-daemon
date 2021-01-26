@@ -36,7 +36,11 @@ namespace im {
 MessageEngine::MessageEngine(SIPAccountBase& acc, const std::string& path)
     : account_(acc)
     , savePath_(path)
-{}
+{
+    auto found = savePath_.find_last_of(DIR_SEPARATOR_CH);
+    auto dir = savePath_.substr(0, found);
+    fileutils::check_dir(dir.c_str());
+}
 
 MessageToken
 MessageEngine::sendMessage(const std::string& to, const std::map<std::string, std::string>& payloads)
@@ -201,7 +205,8 @@ MessageEngine::load()
             std::ifstream file;
             file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
             fileutils::openStream(file, savePath_);
-            file >> root;
+            if (file.is_open())
+                file >> root;
         }
         std::lock_guard<std::mutex> lock(messagesMutex_);
         long unsigned loaded {0};
@@ -291,7 +296,8 @@ MessageEngine::save_() const
                 std::ofstream file;
                 file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
                 fileutils::openStream(file, path, std::ios::trunc);
-                writer->write(root, &file);
+                if (file.is_open())
+                    writer->write(root, &file);
             } catch (const std::exception& e) {
                 JAMI_ERR("[Account %s] Couldn't save messages to %s: %s",
                          accountID.c_str(),
