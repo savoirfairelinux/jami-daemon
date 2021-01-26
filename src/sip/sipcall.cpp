@@ -173,6 +173,11 @@ SIPCall::createCallAVStreams()
             createCallAVStream(receiveStreamData, *videoReceive, receiveSubject);
         }
     }
+    if (getSIPAccount()->isRendezVous() && getConfId() != "")
+        jami::Manager::instance()
+            .getJamiPluginManager()
+            .getCallServicesManager()
+            .createAVSubjectForConference(getCallId(), getConfId());
 #endif
 }
 

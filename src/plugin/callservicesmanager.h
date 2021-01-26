@@ -84,6 +84,16 @@ public:
         }
     }
 
+    void createAVSubjectForConference(const std::string& callId, const std::string& confId)
+    {
+        for (auto subject : callAVsubjects_) {
+            if (subject.first.id == callId) {
+                StreamData streamData = StreamData(confId, false, subject.first.type, subject.first.source);
+                createAVSubject(streamData, subject.second);
+            }
+        }
+    }
+
     void clearAVSubject(const std::string& callId)
     {
         for (auto it = callAVsubjects_.begin(); it != callAVsubjects_.end();) {
@@ -295,8 +305,8 @@ private:
             }
         }
 #ifndef __ANDROID__
-        if (applyRestart)
-            Manager::instance().callFactory.getCall<SIPCall>(callId)->getVideoRtp().restartSender();
+        // if (applyRestart && !isRendezVous)
+        //     Manager::instance().callFactory.getCall<SIPCall>(callId)->getVideoRtp().restartSender();
 #endif
     }
 
