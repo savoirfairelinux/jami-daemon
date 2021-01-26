@@ -154,7 +154,8 @@ JamiPluginManager::getPluginDetails(const std::string& rootPath)
 
     std::map<std::string, std::string> details = parseManifestFile(manifestPath(rootPath));
     if (!details.empty()) {
-        details["iconPath"] = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "icon.png";
+        if (details.find("iconPath") == details.end())
+            details["iconPath"] = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "icon.png";
         details["soPath"] = rootPath + DIR_SEPARATOR_CH + LIB_PREFIX + details["name"] + LIB_TYPE;
         detailsIt = pluginDetailsMap_.emplace(rootPath, std::move(details)).first;
         return detailsIt->second;
