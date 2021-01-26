@@ -135,6 +135,12 @@ Conference::~Conference()
             call->sendTextMessage(std::map<std::string, std::string> {{"application/confInfo+json",
                                                                        "[]"}},
                                   account->getFromUri());
+
+            // Trigger the SIP negociation to update the resolution for the remaining call
+            // idealy this sould be done without renegociation
+            call->switchInput(
+                Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice());
+
             // Continue the recording for the call if the conference was recorded
             if (this->isRecording()) {
                 JAMI_DBG("Stop recording for conf %s", getConfID().c_str());
