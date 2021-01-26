@@ -72,6 +72,57 @@
     },
     {
       "key": {
+        "uuid": "c78fe38b_0d6f9c68",
+        "filename": "src/plugin/PluginPreferences.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-26T21:20:15Z",
+      "side": 1,
+      "message": "Wiht modern C++, I think declaration with {} is preferred:\nstd::string stringArray {};",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2c090c5b_eed49921",
+        "filename": "src/plugin/PluginPreferences.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-26T21:20:15Z",
+      "side": 1,
+      "message": "i \u003c jsonArray.size() - 1 ?\nThe last element (jsonArray.size()-1) is not processed.Did you really mean to skip it?\n\n\nIf not, in c++ range loops are very handy:\n\nfor (auto const\u0026 item : jsonArray) {\n  .....\n}",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c25f167a_80cde4bd",
+        "filename": "src/plugin/PluginPreferences.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-26T21:20:15Z",
+      "side": 1,
+      "message": "sometimes it\u0027s better to return on false condition:\n\nif (not file.good()) {\n   JAMI_ERR() ....;\n   return rmap;\n}",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "bf6619db_1a103f4c",
         "filename": "src/plugin/PluginPreferences.h",
         "patchSetId": 23
@@ -104,6 +155,24 @@
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ce683ecb_691c6d92",
+        "filename": "src/plugin/PluginPreferences.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-26T21:20:15Z",
+      "side": 1,
+      "message": "It\u0027s not critical, but \"manager\" suffix is not very appropriate since this is rather a \"passive\" class. Terms like PluginHelper or PluginUtil would be more appropriate.\nThe file name should also be updated to reflect the class name:\nplugin_util.h/cpp\nBTW, I believe that the file names should not take upper case.",
+      "parentUuid": "98e9d21c_5b84e837",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     },
     {
       "key": {
@@ -142,6 +211,24 @@
     },
     {
       "key": {
+        "uuid": "6e66df3f_1f8274e5",
+        "filename": "src/plugin/chathandler.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-26T21:20:15Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "b7e390d5_65406277",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "59e1e05b_7296582d",
         "filename": "src/plugin/chathandler.h",
         "patchSetId": 23
@@ -174,6 +261,24 @@
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "626b4566_25f2832a",
+        "filename": "src/plugin/chathandler.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-26T21:20:15Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "962f6277_1ab81fb5",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -422,6 +527,23 @@
     },
     {
       "key": {
+        "uuid": "0650e655_c77a6f1b",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-26T21:20:15Z",
+      "side": 1,
+      "message": "You could use bool instead of std::string:\n\nbool always \u003d false;\nauto it \u003d preferences.find(\"always\");\nif (it !\u003d preferences.end())\n   always \u003d it-\u003esecond \u003d\u003d \"1\";\n....\n\nin addition, the search is done twice (.find(\"always\") and [\"always\"]",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "0ec7d4ae_b5e22a7d",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 23
@@ -454,6 +576,23 @@
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6375aa9d_efd0c3eb",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-26T21:20:15Z",
+      "side": 1,
+      "message": "I believe {} is better (more generic) than \"\", but it\u0027s some how subjective.",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     },
     {
       "key": {
