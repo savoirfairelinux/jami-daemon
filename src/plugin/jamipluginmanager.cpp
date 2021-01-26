@@ -82,8 +82,9 @@ checkManifestJsonContentValidity(const Json::Value& root)
     std::string name = root.get("name", "").asString();
     std::string description = root.get("description", "").asString();
     std::string version = root.get("version", "").asString();
+    std::string iconPath = root.get("iconPath", "icon.png").asString();
     if (!name.empty() || !version.empty()) {
-        return {{"name", name}, {"description", description}, {"version", version}};
+        return {{"name", name}, {"description", description}, {"version", version}, {"iconPath", iconPath}};
     } else {
         throw std::runtime_error("plugin manifest file: bad format");
     }
@@ -153,7 +154,8 @@ JamiPluginManager::getPluginDetails(const std::string& rootPath)
 
     std::map<std::string, std::string> details = parseManifestFile(manifestPath(rootPath));
     if (!details.empty()) {
-        details["iconPath"] = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "icon.png";
+        auto it = details.find("iconPath");
+        it->second.insert(0, rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH);
         details["soPath"] = rootPath + DIR_SEPARATOR_CH + LIB_PREFIX + details["name"] + LIB_TYPE;
         detailsIt = pluginDetailsMap_.emplace(rootPath, std::move(details)).first;
         return detailsIt->second;
