@@ -1,6 +1,6 @@
-From 737a77c1399d5f8fdab5b913b5e6b43f6ec73751 Mon Sep 17 00:00:00 2001
-From: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
-Date: Tue, 27 Aug 2019 12:00:41 -0400
+From 1d10f0603d85336efef694036c884b1743572e1e Mon Sep 17 00:00:00 2001
+From: Pierre Lespagnol <pierre.lespagnol@savoirfairelinux.com>
+Date: Fri, 29 Jan 2021 16:08:55 -0500
 Subject: [PATCH] windows configure patch
 
 ---
@@ -9,7 +9,7 @@ Subject: [PATCH] windows configure patch
 
 --- a/configure
 +++ b/configure
-@@ -1569,7 +1569,7 @@ require_cpp_condition(){
+@@ -1578,7 +1578,7 @@ require_cpp_condition(){
  require_pkg_config(){
      log require_pkg_config "$@"
      pkg_version="$2"
@@ -18,7 +18,7 @@ Subject: [PATCH] windows configure patch
  }
  
  test_host_cc(){
-@@ -6286,28 +6286,6 @@ enabled libvo_amrwbenc    && require libvo_amrwbenc vo-amrwbenc/enc_if.h E_IF_in
+@@ -6436,28 +6436,6 @@ enabled libvo_amrwbenc    && require libvo_amrwbenc vo-amrwbenc/enc_if.h E_IF_in
  enabled libvorbis         && require_pkg_config libvorbis vorbis vorbis/codec.h vorbis_info_init &&
                               require_pkg_config libvorbisenc vorbisenc vorbis/vorbisenc.h vorbis_encode_init
  
@@ -44,10 +44,10 @@ Subject: [PATCH] windows configure patch
 -    fi
 -}
 -
- enabled libwavpack        && require libwavpack wavpack/wavpack.h WavpackOpenFileOutput  -lwavpack
  enabled libwebp           && {
      enabled libwebp_encoder      && require_pkg_config libwebp "libwebp >= 0.2.0" webp/encode.h WebPGetEncoderVersion
-@@ -6973,17 +6951,6 @@ flatten_extralibs_wrapper(){
+     enabled libwebp_anim_encoder && check_pkg_config libwebp_anim_encoder "libwebpmux >= 0.4.0" webp/mux.h WebPAnimEncoderOptionsInit; }
+@@ -7140,17 +7118,6 @@ flatten_extralibs_wrapper(){
      eval printf \''%s'\' \""\$$list_name"\"
  }
  
@@ -66,5 +66,4 @@ Subject: [PATCH] windows configure patch
      eval ${linkunit}_extralibs=\$\(flatten_extralibs_wrapper ${linkunit}_extralibs\)
  done
 -- 
-2.22.0.windows.1
-
+2.27.0
