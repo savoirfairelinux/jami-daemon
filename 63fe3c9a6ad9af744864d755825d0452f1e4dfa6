@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b506766f_cad716ca",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-27T19:02:09Z",
+      "side": 1,
+      "message": "should be separated with a .cpp",
+      "range": {
+        "startLine": 17,
+        "startChar": 3,
+        "endLine": 22,
+        "endChar": 32
+      },
+      "revId": "63fe3c9a6ad9af744864d755825d0452f1e4dfa6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "84fcc4f7_41d8917e",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-27T19:02:09Z",
+      "side": 1,
+      "message": "can this callback be called by PluginManager while unavailable?\n\ngenerally, passing this in a callback can be dangerous unless TTL is safe",
+      "range": {
+        "startLine": 53,
+        "startChar": 38,
+        "endLine": 53,
+        "endChar": 42
+      },
+      "revId": "63fe3c9a6ad9af744864d755825d0452f1e4dfa6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0decd707_a5ecf41b",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-27T19:02:09Z",
+      "side": 1,
+      "message": "we got pointer_cast",
+      "range": {
+        "startLine": 83,
+        "startChar": 22,
+        "endLine": 83,
+        "endChar": 33
+      },
+      "revId": "63fe3c9a6ad9af744864d755825d0452f1e4dfa6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0b869440_00fdbddd",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-27T19:02:09Z",
+      "side": 1,
+      "message": "reserve",
+      "range": {
+        "startLine": 92,
+        "startChar": 5,
+        "endLine": 93,
+        "endChar": 37
+      },
+      "revId": "63fe3c9a6ad9af744864d755825d0452f1e4dfa6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "807909e7_a444df75",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-27T19:02:09Z",
+      "side": 1,
+      "message": "lot of access, iterators are preferred",
+      "range": {
+        "startLine": 169,
+        "startChar": 33,
+        "endLine": 169,
+        "endChar": 46
+      },
+      "revId": "63fe3c9a6ad9af744864d755825d0452f1e4dfa6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
