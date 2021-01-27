@@ -79,7 +79,7 @@ public:
     std::map<std::string, std::string> testAccountICEInitialization(const std::string& accountID);
     void setAccountActive(const std::string& accountID, const bool& active);
     std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
-    void monitor();
+    void monitor(const bool& continuous);
     std::string addAccount(const std::map<std::string, std::string>& details);
     bool exportOnRing(const std::string& accountID, const std::string& password);
     bool exportToFile(const std::string& accountID,
@@ -240,7 +240,9 @@ public:
                                 const uint64_t& id);
     bool isAudioMeterActive(const std::string& id);
     void setAudioMeterState(const std::string& id, const bool& state);
-    void setDefaultModerator(const std::string& accountID, const std::string& uri, const bool& state);
+    void setDefaultModerator(const std::string& accountID,
+                             const std::string& uri,
+                             const bool& state);
     std::vector<std::string> getDefaultModerators(const std::string& accountID);
     void enableLocalModerators(const std::string& accountID, const bool& isModEnabled);
     bool isLocalModeratorsEnabled(const std::string& accountID);

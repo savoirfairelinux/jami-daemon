@@ -459,9 +459,9 @@ addAccount(const std::map<std::string, std::string>& details)
 }
 
 void
-monitor()
+monitor(bool continuous)
 {
-    return jami::Manager::instance().monitor();
+    return jami::Manager::instance().monitor(continuous);
 }
 
 void

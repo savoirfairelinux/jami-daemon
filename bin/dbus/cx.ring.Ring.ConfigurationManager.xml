@@ -1699,8 +1699,10 @@
        <method name="monitor" tp:name-for-bindings="monitor">
            <tp:added version="10.0.0"/>
            <tp:docstring>
-               Montior
+               Monitor
            </tp:docstring>
+           <arg type="b" name="continuous" direction="in">
+           </arg>
        </method>
 
        <method name="startConversation" tp:name-for-bindings="startConversation">

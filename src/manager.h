@@ -125,7 +125,7 @@ public:
      */
     void finish() noexcept;
 
-    void monitor();
+    void monitor(bool continuous);
 
     /**
      * Accessor to audiodriver.
@@ -948,13 +948,10 @@ public:
     void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
     void hangupParticipant(const std::string& confId, const std::string& participant);
 
-    void setDefaultModerator(const std::string& accountID,
-                                const std::string& peerURI,
-                                bool state);
+    void setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state);
     std::vector<std::string> getDefaultModerators(const std::string& accountID);
     void enableLocalModerators(const std::string& accountID, bool state);
     bool isLocalModeratorsEnabled(const std::string& accountID);
-
 
 private:
     Manager();

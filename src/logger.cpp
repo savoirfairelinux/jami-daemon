@@ -91,6 +91,7 @@ static constexpr auto ENDL = "\n";
 #endif
 
 static int consoleLog;
+static bool monitorLog;
 static int debugMode;
 static std::mutex logMutex;
 
@@ -168,10 +169,22 @@ setDebugMode(int d)
     debugMode = d;
 }
 
+void
+setMonitorLog(bool m)
+{
+    monitorLog = m;
+}
+
 int
 getDebugMode(void)
 {
     return debugMode;
+}
+
+bool
+getMonitorLog(void)
+{
+    return monitorLog;
 }
 
 static const char*
@@ -236,14 +249,14 @@ Logger::vlog(
     if (!debugMode)
         return;
 #endif
-    if (!debugMode && level == LOG_DEBUG)
+    if (!debugMode && !monitorLog && level == LOG_DEBUG)
         return;
 
     // syslog is supposed to thread-safe, but not all implementations (Android?)
     // follow strictly POSIX rules... so we lock our mutex in any cases.
     std::lock_guard<std::mutex> lk {logMutex};
 
-    if (consoleLog) {
+    if (consoleLog or monitorLog) {
 #ifndef _WIN32
         const char* color_header = CYAN;
         const char* color_prefix = "";
@@ -278,6 +291,7 @@ Logger::vlog(
 #ifdef _MSC_VER
         std::array<char, 4096> tmp;
         vsnprintf(tmp.data(), tmp.size(), format, ap);
+        JAMI_ERR("@@@");
         jami::emitSignal<DRing::DebugSignal::MessageSend>(contextHeader(file, line) + tmp.data());
 #endif
 #ifndef _WIN32
@@ -299,6 +313,13 @@ Logger::vlog(
 #endif
     } else {
         ::vsyslog(level, format, ap);
+    }
+
+    if (monitorLog) {
+        std::array<char, 4096> tmp;
+        vsnprintf(tmp.data(), tmp.size(), format, ap);
+        JAMI_ERR("@@@");
+        jami::emitSignal<DRing::DebugSignal::MessageSend>(contextHeader(file, line) + tmp.data());
     }
 }
 
