@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "dd25ff59_caebfe96",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-27T19:03:51Z",
+      "side": 1,
+      "message": "can be an iterator to avoid double access",
+      "range": {
+        "startLine": 156,
+        "startChar": 27,
+        "endLine": 158,
+        "endChar": 33
+      },
+      "revId": "005f08738ae41878b960a8ec8c93ee5b7ad805c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
