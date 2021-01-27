@@ -74,12 +74,7 @@ VideoSender::~VideoSender()
 void
 VideoSender::encodeAndSendVideo(const std::shared_ptr<VideoFrame>& input_frame)
 {
-    int angle = input_frame->getOrientation();
-    if (rotation_ != angle) {
-        rotation_ = angle;
-        if (changeOrientationCallback_)
-            changeOrientationCallback_(rotation_);
-    }
+    bool isKeyFrame = false;
 
     if (auto packet = input_frame->packet()) {
 #if __ANDROID__
@@ -90,15 +85,25 @@ VideoSender::encodeAndSendVideo(const std::shared_ptr<VideoFrame>& input_frame)
 #endif
         videoEncoder_->send(*packet);
     } else {
-        bool is_keyframe = forceKeyFrame_ > 0
-                           or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
+        isKeyFrame = forceKeyFrame_ > 0
+                     or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
 
-        if (is_keyframe)
+        if (isKeyFrame)
             --forceKeyFrame_;
 
-        if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
+        if (videoEncoder_->encode(input_frame, isKeyFrame, frameNumber_++) < 0)
             JAMI_ERR("encoding failed");
     }
+
+    if (changeOrientationCallback_) {
+        int angle = input_frame->getOrientation();
+        // Send rotation if changed or with new key-frame.
+        if (rotation_ != angle or isKeyFrame) {
+            rotation_ = angle;
+            changeOrientationCallback_(rotation_);
+        }
+    }
+
 #ifdef DEBUG_SDP
     if (frameNumber_ == 1) // video stream is lazy initialized, wait for first frame
         videoEncoder_->print_sdp();

@@ -145,21 +145,18 @@ VideoRtpSession::startSender()
         try {
             sender_.reset();
             socketPair_->stopSendOp(false);
-            MediaStream ms = !conference_ ?
-                        MediaStream("video sender",
-                            AV_PIX_FMT_YUV420P,
-                            1 / static_cast<rational<int>>(localVideoParams_.framerate),
-                            localVideoParams_.width,
-                            localVideoParams_.height,
-                            send_.bitrate,
-                            static_cast<rational<int>>(localVideoParams_.framerate)) :
-                        conference_->getVideoMixer()->getStream("Video Sender");
-            sender_.reset(new VideoSender(getRemoteRtpUri(),
-                                        ms,
-                                        send_,
-                                        *socketPair_,
-                                        initSeqVal_ + 1,
-                                        mtu_));
+            MediaStream ms
+                = !conference_
+                      ? MediaStream("video sender",
+                                    AV_PIX_FMT_YUV420P,
+                                    1 / static_cast<rational<int>>(localVideoParams_.framerate),
+                                    localVideoParams_.width,
+                                    localVideoParams_.height,
+                                    send_.bitrate,
+                                    static_cast<rational<int>>(localVideoParams_.framerate))
+                      : conference_->getVideoMixer()->getStream("Video Sender");
+            sender_.reset(
+                new VideoSender(getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_));
             if (changeOrientationCallback_)
                 sender_->setChangeOrientationCallback(changeOrientationCallback_);
             if (socketPair_)
@@ -204,7 +201,10 @@ VideoRtpSession::startReceiver()
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->startLoop(onSuccessfulSetup_);
         if (receiveThread_)
-            receiveThread_->setRequestKeyFrameCallback([this]() { cbKeyFrameRequest_(); });
+            receiveThread_->setRequestKeyFrameCallback([this]() { requestKeyFrame(); });
+
+        // Request a key-frame right away to start decoding video faster.
+        requestKeyFrame();
     } else {
         JAMI_DBG("Video receiving disabled");
         if (receiveThread_)
@@ -349,15 +349,15 @@ VideoRtpSession::enterConference(Conference* conference)
     // TODO is this correct? The video Mixer should be enabled for a detached conference even if we
     // are not sending values
     videoMixer_ = conference->getVideoMixer();
-    auto conf_res = split_string_to_unsigned(jami::Manager::instance().videoPreferences.getConferenceResolution(), 'x');
+    auto conf_res = split_string_to_unsigned(jami::Manager::instance()
+                                                 .videoPreferences.getConferenceResolution(),
+                                             'x');
     if (conf_res.size() != 2 or conf_res[0] <= 0 or conf_res[1] <= 0) {
         JAMI_ERR("Conference resolution is invalid");
         return;
     }
 #if defined(__APPLE__) && TARGET_OS_MAC
-    videoMixer_->setParameters(conf_res[0],
-                               conf_res[1],
-                               AV_PIX_FMT_NV12);
+    videoMixer_->setParameters(conf_res[0], conf_res[1], AV_PIX_FMT_NV12);
 #else
     videoMixer_->setParameters(conf_res[0], conf_res[1]);
 #endif
@@ -757,6 +757,13 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
             last_REMB_inc_ = clock::now();
         }
     }
+}
+
+void
+VideoRtpSession::requestKeyFrame() const
+{
+    JAMI_DBG("Requesting a new key-frame");
+    cbKeyFrameRequest_();
 }
 
 } // namespace video
