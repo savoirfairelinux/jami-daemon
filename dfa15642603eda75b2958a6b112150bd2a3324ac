@@ -89,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "3f37fd08_64d258b1",
+        "filename": "src/plugin/PluginPreferences.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-27T15:10:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c78fe38b_0d6f9c68",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "2c090c5b_eed49921",
         "filename": "src/plugin/PluginPreferences.cpp",
         "patchSetId": 23
@@ -100,6 +118,24 @@
       "writtenOn": "2021-01-26T21:20:15Z",
       "side": 1,
       "message": "i \u003c jsonArray.size() - 1 ?\nThe last element (jsonArray.size()-1) is not processed.Did you really mean to skip it?\n\n\nIf not, in c++ range loops are very handy:\n\nfor (auto const\u0026 item : jsonArray) {\n  .....\n}",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "45f5c4b2_71e22c62",
+        "filename": "src/plugin/PluginPreferences.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-27T15:10:10Z",
+      "side": 1,
+      "message": "it avoids an extra \",\".\nplugins preferences code enhancements should not be done in this patch",
+      "parentUuid": "2c090c5b_eed49921",
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
@@ -120,6 +156,24 @@
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a8df5dce_1b412ac4",
+        "filename": "src/plugin/PluginPreferences.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-27T15:10:10Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "c25f167a_80cde4bd",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -173,6 +227,24 @@
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "55c4e265_bd101609",
+        "filename": "src/plugin/PluginPreferences.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-27T15:10:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ce683ecb_691c6d92",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -544,6 +616,24 @@
     },
     {
       "key": {
+        "uuid": "ea773aed_dbd9203f",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-27T15:10:10Z",
+      "side": 1,
+      "message": "it is cleaned in the next patch",
+      "parentUuid": "0650e655_c77a6f1b",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "0ec7d4ae_b5e22a7d",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 23
@@ -590,6 +680,24 @@
       "writtenOn": "2021-01-26T21:20:15Z",
       "side": 1,
       "message": "I believe {} is better (more generic) than \"\", but it\u0027s some how subjective.",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ca6c1f1e_ff705d0e",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-27T15:10:10Z",
+      "side": 1,
+      "message": "idem",
+      "parentUuid": "6375aa9d_efd0c3eb",
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
