@@ -1,6 +1,6 @@
-From f84107def60c4cd3dcbbcd66eaec9e934a0f6467 Mon Sep 17 00:00:00 2001
-From: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
-Date: Tue, 27 Aug 2019 12:05:38 -0400
+From 4bb07a5a8306e27a430d6d62c7b7e23300d594a3 Mon Sep 17 00:00:00 2001
+From: Pierre Lespagnol <pierre.lespagnol@savoirfairelinux.com>
+Date: Fri, 29 Jan 2021 16:52:01 -0500
 Subject: [PATCH] windows ffnvcodec patch
 
 ---
@@ -9,21 +9,21 @@ Subject: [PATCH] windows ffnvcodec patch
 
 --- a/configure
 +++ b/configure
-@@ -6107,14 +6107,6 @@ else
+@@ -6246,14 +6246,6 @@ else
      check_nvcc cuda_llvm
  fi
  
 -if ! disabled ffnvcodec; then
 -    ffnv_hdr_list="ffnvcodec/nvEncodeAPI.h ffnvcodec/dynlink_cuda.h ffnvcodec/dynlink_cuviddec.h ffnvcodec/dynlink_nvcuvid.h"
--    check_pkg_config ffnvcodec "ffnvcodec >= 9.0.18.0" "$ffnv_hdr_list" "" || \
--      check_pkg_config ffnvcodec "ffnvcodec >= 8.2.15.8 ffnvcodec < 8.3" "$ffnv_hdr_list" "" || \
--      check_pkg_config ffnvcodec "ffnvcodec >= 8.1.24.9 ffnvcodec < 8.2" "$ffnv_hdr_list" "" || \
--      check_pkg_config ffnvcodec "ffnvcodec >= 8.0.14.9 ffnvcodec < 8.1" "$ffnv_hdr_list" ""
+-    check_pkg_config ffnvcodec "ffnvcodec >= 9.1.23.1" "$ffnv_hdr_list" "" || \
+-      check_pkg_config ffnvcodec "ffnvcodec >= 9.0.18.3 ffnvcodec < 9.1" "$ffnv_hdr_list" "" || \
+-      check_pkg_config ffnvcodec "ffnvcodec >= 8.2.15.10 ffnvcodec < 8.3" "$ffnv_hdr_list" "" || \
+-      check_pkg_config ffnvcodec "ffnvcodec >= 8.1.24.11 ffnvcodec < 8.2" "$ffnv_hdr_list" ""
 -fi
 -
  check_cpp_condition winrt windows.h "!WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)"
  
  if ! disabled w32threads && ! enabled pthreads; then
 -- 
-2.22.0.windows.1
+2.27.0
 
