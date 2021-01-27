@@ -57,11 +57,15 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id, const std::string&
     , loop_(std::bind(&VideoReceiveThread::setup, this),
             std::bind(&VideoReceiveThread::decodeFrame, this),
             std::bind(&VideoReceiveThread::cleanup, this))
-{}
+{
+    JAMI_DBG("Created new video receiver thread [%p]", this);
+}
 
 VideoReceiveThread::~VideoReceiveThread()
 {
     loop_.join();
+
+    JAMI_DBG("Destroyed video receiver thread [%p]", this);
 }
 
 void
