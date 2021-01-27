@@ -20,7 +20,7 @@
 set -e
 
 JNIDIR=`pwd`
-PACKAGE=cx.ring.daemon
+PACKAGE=net.jami.daemon
 
 if [ -z "$PACKAGEDIR" ]; then
    echo "Define PACKAGEDIR: output dir of generated java files"
