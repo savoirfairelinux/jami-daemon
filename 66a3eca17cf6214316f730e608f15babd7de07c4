@@ -2,6 +2,121 @@
   "comments": [
     {
       "key": {
+        "uuid": "b8895489_140166c6",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-27T19:15:34Z",
+      "side": 1,
+      "message": "accountId (yeah I know that accountID is a lot used)",
+      "range": {
+        "startLine": 59,
+        "startChar": 32,
+        "endLine": 59,
+        "endChar": 41
+      },
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1f5902d2_c75e7fe4",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-27T19:15:34Z",
+      "side": 1,
+      "message": "imho (and same for actual api) to is unclear about the format attended. Is it the hash, the SIP uri, etc?",
+      "range": {
+        "startLine": 64,
+        "startChar": 32,
+        "endLine": 64,
+        "endChar": 35
+      },
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7f41081b_5bbdf0f3",
+        "filename": "src/call.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-27T19:15:34Z",
+      "side": 1,
+      "message": "quick question. isVideoMuted_ stores both sides? If it\u0027s only local, it\u0027s a behavior change for the method and needs tests",
+      "range": {
+        "startLine": 336,
+        "startChar": 39,
+        "endLine": 336,
+        "endChar": 52
+      },
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b78a0238_b9a564a5",
+        "filename": "src/call_factory.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-27T19:15:34Z",
+      "side": 1,
+      "message": "avoid caps for Method (don\u0027t know why CreateCall was like this before)",
+      "range": {
+        "startLine": 52,
+        "startChar": 26,
+        "endLine": 52,
+        "endChar": 36
+      },
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8ef8e0a5_be74c754",
+        "filename": "src/media/media_codec.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 261,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-27T19:15:34Z",
+      "side": 1,
+      "message": "Note: auto index \u003d 0u",
+      "range": {
+        "startLine": 261,
+        "startChar": 8,
+        "endLine": 261,
+        "endChar": 27
+      },
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "ba5c45e8_dbecf1ae",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 11
