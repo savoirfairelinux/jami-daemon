@@ -19,6 +19,23 @@
     },
     {
       "key": {
+        "uuid": "d5a8dc72_45068b0e",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 47
+      },
+      "lineNbr": 2549,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-27T21:34:51Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nthe value returned by this function should be used\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-unused-return-value",
+      "revId": "279742e8445375c5d4d3843b70479463f8501543",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d6121591_91f42e05",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 47
@@ -36,6 +53,23 @@
     },
     {
       "key": {
+        "uuid": "2f1f69bd_ef89a221",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 47
+      },
+      "lineNbr": 2552,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-27T21:34:51Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\n\u0027find\u0027 called with a string literal consisting of a single character; consider using the more effective overload accepting a character\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-faster-string-find",
+      "revId": "279742e8445375c5d4d3843b70479463f8501543",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "a18f96e8_2c48ee8a",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 47
@@ -45,6 +79,23 @@
         "id": 5
       },
       "writtenOn": "2021-01-27T21:34:49Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\n\u0027find_last_of\u0027 called with a string literal consisting of a single character; consider using the more effective overload accepting a character\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-faster-string-find",
+      "revId": "279742e8445375c5d4d3843b70479463f8501543",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "71dad548_fe41b374",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 47
+      },
+      "lineNbr": 2553,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-01-27T21:34:51Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\n\u0027find_last_of\u0027 called with a string literal consisting of a single character; consider using the more effective overload accepting a character\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-faster-string-find",
       "revId": "279742e8445375c5d4d3843b70479463f8501543",
