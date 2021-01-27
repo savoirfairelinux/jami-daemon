@@ -22,6 +22,30 @@
       "revId": "88b785703acb0a961223729880c5931b8fd4b295",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0f997007_a8c68b82",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 270,
+      "author": {
+        "id": 906
+      },
+      "writtenOn": "2021-01-27T09:01:39Z",
+      "side": 1,
+      "message": "No, the variable is static and will change at each iteration. The value is 10% by default, because this is the default I set in media_encoder. The computation is basically a simple low-pass filter, which filters out sharp changes.\n\nThe goal of this function is to quickly adapt to decreasing network quality, so I chose to directly use lastLoss if it is superior to the calculated ponderated loss. This means that if I go from 10% packet loss to 30%, the function will return 30% estimated packet loss, instead of the calculated 20%.\n\nWhen the network quality increase, the goal is to decrease progressively the amount of FEC data embedded, in case this improvement is only transient. The low pass filter avoids the packet loss estimation dropping too fast.\n\nThe floor function is used to avoid having a lot of intermediate values. For exemple, when going from 5% packet loss to 0%, the ponderated loss estimation will be 5%-\u003e2%-\u003e1%-\u003e0% instead of 5%-\u003e2.5%-\u003e1.25%-\u003e0.625%-\u003e0.3125%-\u003e0.15625%...\nThese intermediate values increase the convergence time of the function to reach a correct packet loss estimation, and don\u0027t bring added precision, as opus reads this estimation as an integer.\n\nOpus does not integrate FEC data for packet reconstruction when the packet loss estimation is \u003c\u003d 5%. This is acceptable as this means few packets are dropped, and packet loss concealment provides good correction if only a few packets are dropped. However, if we want to force FEC data to be encoded, a minimum packet loss estimation value could be implemented in this function.",
+      "parentUuid": "42ac34f8_16c23626",
+      "range": {
+        "startLine": 270,
+        "startChar": 4,
+        "endLine": 270,
+        "endChar": 46
+      },
+      "revId": "88b785703acb0a961223729880c5931b8fd4b295",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
