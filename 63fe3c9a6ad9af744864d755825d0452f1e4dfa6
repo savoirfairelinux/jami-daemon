@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "8592336a_f575c355",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-27T22:32:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b506766f_cad716ca",
+      "range": {
+        "startLine": 17,
+        "startChar": 3,
+        "endLine": 22,
+        "endChar": 32
+      },
+      "revId": "63fe3c9a6ad9af744864d755825d0452f1e4dfa6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "84fcc4f7_41d8917e",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 27
@@ -36,6 +60,30 @@
       "writtenOn": "2021-01-27T19:02:09Z",
       "side": 1,
       "message": "can this callback be called by PluginManager while unavailable?\n\ngenerally, passing this in a callback can be dangerous unless TTL is safe",
+      "range": {
+        "startLine": 53,
+        "startChar": 38,
+        "endLine": 53,
+        "endChar": 42
+      },
+      "revId": "63fe3c9a6ad9af744864d755825d0452f1e4dfa6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8abb9c7c_edbdcde7",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-27T22:32:59Z",
+      "side": 1,
+      "message": "it follows the same structure as callservicesmanager\nHowever there is a slight change in patch https://review.jami.net/c/ring-daemon/+/16824 that avoids unloading plugins while handler is being used. instead, a first attempt will only untoggle handlers and a second attempt will untoggle plugin",
+      "parentUuid": "84fcc4f7_41d8917e",
       "range": {
         "startLine": 53,
         "startChar": 38,
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "28f0080d_e30a4b82",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-27T22:32:59Z",
+      "side": 1,
+      "message": "not directly possible since data is not shared ptr",
+      "parentUuid": "0decd707_a5ecf41b",
+      "range": {
+        "startLine": 83,
+        "startChar": 22,
+        "endLine": 83,
+        "endChar": 33
+      },
+      "revId": "63fe3c9a6ad9af744864d755825d0452f1e4dfa6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "0b869440_00fdbddd",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 27
@@ -94,6 +166,30 @@
     },
     {
       "key": {
+        "uuid": "d21b6356_a9d3dcc9",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-27T22:32:59Z",
+      "side": 1,
+      "message": "cleanup patch does it. squashed",
+      "parentUuid": "0b869440_00fdbddd",
+      "range": {
+        "startLine": 92,
+        "startChar": 5,
+        "endLine": 93,
+        "endChar": 37
+      },
+      "revId": "63fe3c9a6ad9af744864d755825d0452f1e4dfa6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "807909e7_a444df75",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 27
@@ -114,6 +210,30 @@
       "revId": "63fe3c9a6ad9af744864d755825d0452f1e4dfa6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0c6d24fb_7426a4c1",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-01-27T22:32:59Z",
+      "side": 1,
+      "message": "idem",
+      "parentUuid": "807909e7_a444df75",
+      "range": {
+        "startLine": 169,
+        "startChar": 33,
+        "endLine": 169,
+        "endChar": 46
+      },
+      "revId": "63fe3c9a6ad9af744864d755825d0452f1e4dfa6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
