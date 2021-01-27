@@ -72,6 +72,24 @@
     },
     {
       "key": {
+        "uuid": "ec855044_dd1f4cfa",
+        "filename": "src/plugin/PluginPreferences.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-27T15:49:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "fec32d1e_287cfcfe",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "c78fe38b_0d6f9c68",
         "filename": "src/plugin/PluginPreferences.cpp",
         "patchSetId": 23
@@ -139,6 +157,24 @@
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6b76d809_ec2ca35a",
+        "filename": "src/plugin/PluginPreferences.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-27T15:49:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "45f5c4b2_71e22c62",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -634,6 +670,24 @@
     },
     {
       "key": {
+        "uuid": "2b7dcaac_e3917595",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-27T15:49:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "ea773aed_dbd9203f",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0ec7d4ae_b5e22a7d",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 23
@@ -701,6 +755,24 @@
       "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b17297fc_6d38c9f9",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 23
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-01-27T15:49:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "ca6c1f1e_ff705d0e",
+      "revId": "dfa15642603eda75b2958a6b112150bd2a3324ac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
