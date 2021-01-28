@@ -35,6 +35,7 @@ CallServicesManager::CallServicesManager(PluginManager& pm)
 CallServicesManager::~CallServicesManager()
 {
     callMediaHandlers_.clear();
+    callAVsubjects_.clear();
 }
 
 void
@@ -60,6 +61,22 @@ CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subje
 #else
             mediaHandlerToggled_[data.id].insert({(uintptr_t) callMediaHandler.get(), true});
 #endif
+    }
+}
+
+void
+CallServicesManager::mapConferenceAVSubject(const std::string& callId, const std::string& confId)
+{
+    auto copy = std::list(callAVsubjects_[callId]);
+    for (auto it = copy.begin(); it != copy.end(); it++) {
+        if (it->first.id == callId) {
+            const StreamData newStream(confId,
+                                       it->first.direction,
+                                       it->first.type,
+                                       it->first.source);
+            std::pair<const StreamData, AVSubjectSPtr> newPair(newStream, it->second);
+            callAVsubjects_[confId].emplace_back(newPair);
+        }
     }
 }
 
