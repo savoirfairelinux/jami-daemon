@@ -90,6 +90,8 @@ using random_device = dht::crypto::random_device;
 #include "data_transfer.h"
 #include "dring/media_const.h"
 
+#include <libavutil/ffversion.h>
+
 #include <opendht/thread_pool.h>
 
 #include <asio/io_context.hpp>
@@ -772,6 +774,7 @@ Manager::init(const std::string& config_file)
     JAMI_DBG("Using PJSIP version %s for %s", pj_get_version(), PJ_OS_NAME);
     JAMI_DBG("Using GnuTLS version %s", gnutls_check_version(nullptr));
     JAMI_DBG("Using OpenDHT version %s", dht::version());
+    JAMI_DBG("Using FFmpeg version %s", av_version_info());
 
     setDhtLogLevel();
 
