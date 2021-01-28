@@ -1,0 +1,188 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "646979df_f03815ac",
+        "filename": "src/account.h",
+        "patchSetId": 18
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-01-28T18:10:55Z",
+      "side": 1,
+      "message": "?",
+      "range": {
+        "startLine": 87,
+        "startChar": 10,
+        "endLine": 87,
+        "endChar": 18
+      },
+      "revId": "a3b51467690a7de8fc25b6d9053f68c7bb74f62f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4d5bf5f5_78d165d6",
+        "filename": "src/call_factory.h",
+        "patchSetId": 18
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-01-28T18:10:55Z",
+      "side": 1,
+      "message": "function and method names should not be capitalized",
+      "range": {
+        "startLine": 47,
+        "startChar": 26,
+        "endLine": 47,
+        "endChar": 36
+      },
+      "revId": "a3b51467690a7de8fc25b6d9053f68c7bb74f62f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9665a86c_89bfc530",
+        "filename": "src/call_factory.h",
+        "patchSetId": 18
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-01-28T18:10:55Z",
+      "side": 1,
+      "message": "Account template seems to never be used. Would it be possible to still get back a SIPCall from newCall while getting rid of most of the template stuff ?",
+      "range": {
+        "startLine": 61,
+        "startChar": 4,
+        "endLine": 62,
+        "endChar": 61
+      },
+      "revId": "a3b51467690a7de8fc25b6d9053f68c7bb74f62f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "18652242_58b0bb61",
+        "filename": "src/media/recordable.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-01-28T18:10:55Z",
+      "side": 1,
+      "message": "to remove",
+      "range": {
+        "startLine": 119,
+        "startChar": 0,
+        "endLine": 123,
+        "endChar": 1
+      },
+      "revId": "a3b51467690a7de8fc25b6d9053f68c7bb74f62f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8385a47a_b367d399",
+        "filename": "src/media/recordable.h",
+        "patchSetId": 18
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-01-28T18:10:55Z",
+      "side": 1,
+      "message": "To force implementation by subclasses:\n\n    virtual void updateRecState(bool state) \u003d 0;",
+      "range": {
+        "startLine": 70,
+        "startChar": 4,
+        "endLine": 70,
+        "endChar": 44
+      },
+      "revId": "a3b51467690a7de8fc25b6d9053f68c7bb74f62f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c71c54db_4455e839",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 18
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-01-28T18:10:55Z",
+      "side": 1,
+      "message": "not needed",
+      "range": {
+        "startLine": 130,
+        "startChar": 0,
+        "endLine": 130,
+        "endChar": 22
+      },
+      "revId": "a3b51467690a7de8fc25b6d9053f68c7bb74f62f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "986bed89_e21640a8",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 18
+      },
+      "lineNbr": 285,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-01-28T18:10:55Z",
+      "side": 1,
+      "message": "not relevant here (as shown by implementation)",
+      "range": {
+        "startLine": 285,
+        "startChar": 0,
+        "endLine": 285,
+        "endChar": 74
+      },
+      "revId": "a3b51467690a7de8fc25b6d9053f68c7bb74f62f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1622b572_25670df9",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 720,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-01-28T18:10:55Z",
+      "side": 1,
+      "message": "there might be non-SIP calls in the future (WebRTC calls ?)",
+      "range": {
+        "startLine": 720,
+        "startChar": 4,
+        "endLine": 720,
+        "endChar": 52
+      },
+      "revId": "a3b51467690a7de8fc25b6d9053f68c7bb74f62f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
