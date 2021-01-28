@@ -45,6 +45,7 @@ PluginManager::~PluginManager()
     exactMatchMap_.clear();
     wildCardVec_.clear();
     exitFuncVec_.clear();
+    JAMI_INFO() << "~PluginManager";
 }
 
 bool

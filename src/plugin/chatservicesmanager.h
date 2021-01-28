@@ -30,6 +30,7 @@ class ChatServicesManager
 {
 public:
     ChatServicesManager(PluginManager& pm);
+    ~ChatServicesManager();
 
     NON_COPYABLE(ChatServicesManager);
 

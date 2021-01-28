@@ -324,12 +324,14 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
             videoLocal_->detach(sender_.get());
         if (videoMixer_)
             videoMixer_->attach(sender_.get());
+        // conference.createPluginsAVSubject(callID_, false);
     } else
         JAMI_WARN("[call:%s] no sender", callID_.c_str());
 
     if (receiveThread_) {
         receiveThread_->enterConference();
         conference.attachVideo(receiveThread_.get(), callID_);
+        // conference.createPluginsAVSubject(callID_, false);
     } else
         JAMI_WARN("[call:%s] no receiver", callID_.c_str());
 }

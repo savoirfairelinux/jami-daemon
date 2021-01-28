@@ -55,6 +55,8 @@ public:
      */
     void createAVSubject(const StreamData& data, AVSubjectSPtr subject);
 
+    void mapConferenceAVSubject(const std::string& callId, const std::string& confId);
+
     void clearAVSubject(const std::string& callId);
 
     /**
