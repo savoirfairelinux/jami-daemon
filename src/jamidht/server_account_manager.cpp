@@ -402,6 +402,7 @@ ServerAccountManager::syncDevices()
                                 this_.info_->contacts
                                     ->updateContact(dht::InfoHash {e["uri"].asString()}, contact);
                             }
+                            this_.info_->contacts->saveContacts();
                         }
                     } catch (const std::exception& e) {
                         JAMI_ERR("Error when iterating contact list: %s", e.what());
