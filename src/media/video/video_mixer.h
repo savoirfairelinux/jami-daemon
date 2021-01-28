@@ -92,7 +92,7 @@ private:
     struct VideoMixerSource;
 
     bool render_frame(VideoFrame& output,
-                      const VideoFrame& input,
+                      const std::shared_ptr<VideoFrame>& input,
                       std::unique_ptr<VideoMixerSource>& source);
 
     void calc_position(std::unique_ptr<VideoMixerSource>& source, int index);

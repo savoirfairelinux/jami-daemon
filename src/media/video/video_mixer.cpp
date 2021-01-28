@@ -49,12 +49,18 @@ struct VideoMixer::VideoMixerSource
     Observable<std::shared_ptr<MediaFrame>>* source {nullptr};
     int rotation {0};
     std::unique_ptr<MediaFilter> rotationFilter {nullptr};
-    std::unique_ptr<VideoFrame> update_frame;
-    std::unique_ptr<VideoFrame> render_frame;
-    void atomic_swap_render(std::unique_ptr<VideoFrame>& other)
+    std::shared_ptr<VideoFrame> render_frame;
+    void atomic_copy(const VideoFrame& other)
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        render_frame.swap(other);
+        auto newFrame = std::make_shared<VideoFrame>();
+        newFrame->copyFrom(other);
+        render_frame = newFrame;
+    }
+
+    std::shared_ptr<VideoFrame> getRenderFrame() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return render_frame;
     }
 
     // Current render informations
@@ -188,6 +194,7 @@ VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
     auto lock(rwMutex_.write());
 
     auto src = std::unique_ptr<VideoMixerSource>(new VideoMixerSource);
+    src->render_frame = std::make_shared<VideoFrame>();
     src->source = ob;
     sources_.emplace_back(std::move(src));
     layoutUpdated_ += 1;
@@ -220,13 +227,18 @@ VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob,
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
-            if (!x->update_frame)
-                x->update_frame.reset(new VideoFrame);
-            else
-                x->update_frame->reset();
-            x->update_frame->copyFrom(*std::static_pointer_cast<VideoFrame>(
-                frame_p)); // copy frame content, it will be destroyed after return
-            x->atomic_swap_render(x->update_frame);
+#ifdef RING_ACCEL
+            std::shared_ptr<VideoFrame> frame;
+            try {
+                frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame_p), AV_PIX_FMT_NV12);
+            } catch (const std::runtime_error& e) {
+                JAMI_ERR("Accel failure: %s", e.what());
+                return;
+            }
+            x->atomic_copy(*std::static_pointer_cast<VideoFrame>(frame));
+#else
+            x->atomic_copy(*std::static_pointer_cast<VideoFrame>(frame_p));
+#endif
             return;
         }
     }
@@ -265,8 +277,7 @@ VideoMixer::process()
             if (currentLayout_ != Layout::ONE_BIG or activeSource_ == x->source) {
                 // make rendered frame temporarily unavailable for update()
                 // to avoid concurrent access.
-                std::unique_ptr<VideoFrame> input;
-                x->atomic_swap_render(input);
+                std::shared_ptr<VideoFrame> input = x->getRenderFrame();
 
                 auto wantedIndex = i;
                 if (currentLayout_ == Layout::ONE_BIG) {
@@ -285,7 +296,9 @@ VideoMixer::process()
                     calc_position(x, wantedIndex);
 
                 if (input)
-                    successfullyRendered |= render_frame(output, *input, x);
+                    successfullyRendered |= render_frame(output, input, x);
+                else
+                    JAMI_WARN("Nothing to render for %p", x->source);
 
                 auto hasVideo = x->hasVideo;
                 x->hasVideo = input && successfullyRendered;
@@ -293,7 +306,6 @@ VideoMixer::process()
                     layoutUpdated_ += 1;
                     needsUpdate = true;
                 }
-                x->atomic_swap_render(input);
             } else if (needsUpdate) {
                 x->x = 0;
                 x->y = 0;
@@ -314,7 +326,7 @@ VideoMixer::process()
                         SourceInfo {x->source, x->x, x->y, x->w, x->h, x->hasVideo});
                 }
                 if (onSourcesUpdated_)
-                    (onSourcesUpdated_)(std::move(sourcesInfo));
+                    onSourcesUpdated_(std::move(sourcesInfo));
             }
         }
     }
@@ -330,44 +342,35 @@ VideoMixer::process()
 
 bool
 VideoMixer::render_frame(VideoFrame& output,
-                         const VideoFrame& input,
+                         const std::shared_ptr<VideoFrame>& input,
                          std::unique_ptr<VideoMixerSource>& source)
 {
-    if (!width_ or !height_ or !input.pointer() or input.pointer()->format == -1)
+    if (!width_ or !height_ or !input->pointer() or input->pointer()->format == -1)
         return false;
-
-#ifdef RING_ACCEL
-    std::shared_ptr<VideoFrame> frame;
-    try {
-        frame = HardwareAccel::transferToMainMemory(input, AV_PIX_FMT_NV12);
-    } catch (const std::runtime_error& e) {
-        JAMI_ERR("Accel failure: %s", e.what());
-        return false;
-    }
-#else
-    std::shared_ptr<VideoFrame> frame = input;
-#endif
 
     int cell_width = source->w;
     int cell_height = source->h;
     int xoff = source->x;
     int yoff = source->y;
 
-    int angle = frame->getOrientation();
+    int angle = input->getOrientation();
     const constexpr char filterIn[] = "mixin";
     if (angle != source->rotation) {
         source->rotationFilter = video::getTransposeFilter(angle,
                                                            filterIn,
-                                                           frame->width(),
-                                                           frame->height(),
-                                                           frame->format(),
+                                                           input->width(),
+                                                           input->height(),
+                                                           input->format(),
                                                            false);
         source->rotation = angle;
     }
+    std::shared_ptr<VideoFrame> frame;
     if (source->rotationFilter) {
-        source->rotationFilter->feedInput(frame->pointer(), filterIn);
+        source->rotationFilter->feedInput(input->pointer(), filterIn);
         frame = std::static_pointer_cast<VideoFrame>(
             std::shared_ptr<MediaFrame>(source->rotationFilter->readOutput()));
+    } else {
+        frame = input;
     }
 
     scaler_.scale_and_pad(*frame, output, xoff, yoff, cell_width, cell_height, true);
