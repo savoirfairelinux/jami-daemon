@@ -29,6 +29,11 @@ ChatServicesManager::ChatServicesManager(PluginManager& pm)
     registerChatService(pm);
 }
 
+ChatServicesManager::~ChatServicesManager()
+{
+    chatHandlers_.clear();
+}
+
 void
 ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
 {

@@ -46,6 +46,7 @@ public:
     {
         registerServices();
     }
+
     // TODO : improve getPluginDetails
     /**
      * @brief getPluginDetails

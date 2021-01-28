@@ -35,6 +35,10 @@
 #include "video/video_mixer.h"
 #endif
 
+#ifdef ENABLE_PLUGIN
+#include "plugin/jamipluginmanager.h"
+#endif
+
 #include "call_factory.h"
 
 #include "logger.h"
@@ -210,6 +214,12 @@ Conference::add(const std::string& participant_id)
         } else
             JAMI_ERR("no call associate to participant %s", participant_id.c_str());
 #endif // ENABLE_VIDEO
+#ifdef ENABLE_PLUGIN
+        jami::Manager::instance()
+            .getJamiPluginManager()
+            .getCallServicesManager()
+            .mapConferenceAVSubject(participant_id, id_);
+#endif
     }
 }
 
