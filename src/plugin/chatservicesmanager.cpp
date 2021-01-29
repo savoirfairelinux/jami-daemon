@@ -46,7 +46,6 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
     };
 
     auto unregisterChatHandler = [this](void* data) {
-        int status = 0;
         auto handlerIt = std::find_if(chatHandlers_.begin(),
                                       chatHandlers_.end(),
                                       [data](ChatHandlerPtr& handler) {
@@ -63,16 +62,13 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
                 if (handlerId != toggledList.second.end()) {
                     (*handlerIt)->detach(chatSubjects_[toggledList.first]);
                     toggledList.second.erase(handlerId);
-                    status = -1;
                 }
             }
-            if (!status) {
-                handlersNameMap_.erase((*handlerIt)->getChatHandlerDetails().at("name"));
-                chatHandlers_.erase(handlerIt);
-                delete (*handlerIt).get();
-            }
+            handlersNameMap_.erase((*handlerIt)->getChatHandlerDetails().at("name"));
+            chatHandlers_.erase(handlerIt);
+            delete (*handlerIt).get();
         }
-        return status;
+        return true;
     };
 
     pm.registerComponentManager("ChatHandlerManager", registerChatHandler, unregisterChatHandler);
@@ -182,16 +178,21 @@ ChatServicesManager::getChatHandlerDetails(const std::string& chatHandlerIdStr)
     return {};
 }
 
-void
+bool
 ChatServicesManager::setPreference(const std::string& key,
                                    const std::string& value,
-                                   const std::string& scopeStr)
+                                   const std::string& rootPath)
 {
+    bool status {true};
     for (auto& chatHandler : chatHandlers_) {
-        if (scopeStr.find(chatHandler->getChatHandlerDetails()["name"]) != std::string::npos) {
-            chatHandler->setPreferenceAttribute(key, value);
+        if (chatHandler->id().find(rootPath) != std::string::npos) {
+            if (chatHandler->preferenceMapHasKey(key)) {
+                chatHandler->setPreferenceAttribute(key, value);
+                status &= false;
+            }
         }
     }
+    return status;
 }
 
 void
