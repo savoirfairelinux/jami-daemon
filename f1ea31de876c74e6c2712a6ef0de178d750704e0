@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0c93021f_3de20b06",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 287,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-29T21:11:24Z",
+      "side": 1,
+      "message": "filePath should be checked",
+      "range": {
+        "startLine": 287,
+        "startChar": 25,
+        "endLine": 287,
+        "endChar": 33
+      },
+      "revId": "f1ea31de876c74e6c2712a6ef0de178d750704e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7a73360f_489f5dbe",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 308,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-29T21:11:24Z",
+      "side": 1,
+      "message": "can be a return ...",
+      "range": {
+        "startLine": 307,
+        "startChar": 8,
+        "endLine": 308,
+        "endChar": 24
+      },
+      "revId": "f1ea31de876c74e6c2712a6ef0de178d750704e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
