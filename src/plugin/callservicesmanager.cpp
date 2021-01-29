@@ -86,7 +86,7 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
     };
 
     auto unregisterMediaHandler = [this](void* data) {
-        int status = 0;
+        bool status {true};
         auto handlerIt = std::find_if(callMediaHandlers_.begin(),
                                       callMediaHandlers_.end(),
                                       [data](CallMediaHandlerPtr& handler) {
@@ -105,10 +105,10 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
                                               });
                 if (handlerId != toggledList.second.end()) {
                     toggleCallMediaHandler((*handlerId).first, toggledList.first, false);
-                    status = -1;
+                    status = false;
                 }
             }
-            if (!status) {
+            if (status) {
                 callMediaHandlers_.erase(handlerIt);
                 delete (*handlerIt).get();
             }
@@ -190,16 +190,21 @@ CallServicesManager::getCallMediaHandlerStatus(const std::string& callId)
     return ret;
 }
 
-void
+bool
 CallServicesManager::setPreference(const std::string& key,
                                    const std::string& value,
-                                   const std::string& scopeStr)
+                                   const std::string& rootPath)
 {
+    bool status {true};
     for (auto& mediaHandler : callMediaHandlers_) {
-        if (scopeStr.find(mediaHandler->getCallMediaHandlerDetails()["name"]) != std::string::npos) {
-            mediaHandler->setPreferenceAttribute(key, value);
+        if (mediaHandler->id().find(rootPath) != std::string::npos) {
+            if (mediaHandler->preferenceMapHasKey(key)) {
+                mediaHandler->setPreferenceAttribute(key, value);
+                status &= false;
+            }
         }
     }
+    return status;
 }
 
 void

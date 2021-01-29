@@ -103,9 +103,9 @@ public:
 
     std::vector<std::string> getCallMediaHandlerStatus(const std::string& callId);
 
-    void setPreference(const std::string& key,
+    bool setPreference(const std::string& key,
                        const std::string& value,
-                       const std::string& scopeStr);
+                       const std::string& rootPath);
 
     void clearCallHandlerMaps(const std::string& callId);
 
