@@ -30,6 +30,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <list>
 
 #include <inttypes.h>
 
@@ -44,7 +45,7 @@ public:
     using ServiceFunction = std::function<int32_t(const DLPlugin*, void*)>;
     using ComponentFunction = std::function<int32_t(void*)>;
     // A vector to a pair<componentType, componentPtr>
-    using ComponentTypePtrVector = std::vector<std::pair<std::string, void*>>;
+    using ComponentTypePtrVector = std::list<std::pair<std::string, void*>>;
 
 private:
     struct ObjectFactory
