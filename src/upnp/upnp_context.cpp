@@ -115,9 +115,7 @@ UPnPContext::StopUpnp()
     for (auto const& map : toRemoveList) {
         map->cancelTimeoutTimer();
         updateMappingState(map, MappingState::FAILED);
-        if (map->isAvailable()) {
-            unregisterMapping(map);
-        }
+        unregisterMapping(map);
     }
 
     for (auto const& [_, protocol] : protocolList_) {
@@ -529,6 +527,18 @@ UPnPContext::updateMappingList(bool async)
                  status.inProgressCount_,
                  status.failedCount_);
 
+        if (status.failedCount_ > 0) {
+            std::lock_guard<std::mutex> lock(mappingMutex_);
+            auto const& mappingList = getMappingList(type);
+            for (auto const& [_, map] : mappingList) {
+                if (map->getState() == MappingState::FAILED) {
+                    JAMI_DBG("Mapping status [%s] - Available [%s]",
+                             map->toString(true).c_str(),
+                             map->isAvailable() ? "YES" : "NO");
+                }
+            }
+        }
+
         int toRequestCount = (int) minOpenPortLimit_[idx]
                              - (int) (status.readyCount_ + status.inProgressCount_
                                       + status.pendingCount_);
@@ -626,10 +636,7 @@ UPnPContext::pruneUnMatchedMappings(const std::shared_ptr<IGD>& igd,
 
         for (auto const& map : toRemoveList) {
             updateMappingState(map, MappingState::FAILED);
-            // Remove if not used.
-            if (map->isAvailable()) {
-                unregisterMapping(map);
-            }
+            unregisterMapping(map);
         }
     }
 }
@@ -695,9 +702,7 @@ UPnPContext::pruneMappingsWithInvalidIgds(const std::shared_ptr<IGD>& igd)
                  igd->getProtocolName());
         map->cancelTimeoutTimer();
         updateMappingState(map, MappingState::FAILED);
-        if (map->isAvailable()) {
-            unregisterMapping(map);
-        }
+        unregisterMapping(map);
     }
 }
 
@@ -922,10 +927,7 @@ UPnPContext::onMappingAdded(const std::shared_ptr<IGD>& igd, const Mapping& mapR
                  map->toString().c_str(),
                  igd->getLocalIp().toString().c_str());
         updateMappingState(map, MappingState::FAILED);
-        // Remove if not used.
-        if (map->isAvailable()) {
-            unregisterMapping(map);
-        }
+        unregisterMapping(map);
     }
 
     // We have a response, so cancel the time-out.
@@ -1195,11 +1197,7 @@ UPnPContext::onRequestTimeOut(const std::shared_ptr<IGD>& igd, const Mapping::sh
 
     // Considere time-out as failure.
     updateMappingState(map, MappingState::FAILED);
-
-    // Remove it if not used.
-    if (map->isAvailable()) {
-        unregisterMapping(map);
-    }
+    unregisterMapping(map);
 }
 
 void

@@ -800,6 +800,7 @@ IceTransport::Impl::requestUpnpMappings()
             }
         } else {
             JAMI_ERR("[ice:%p]: UPNP mapping request failed!", this);
+            upnp_->releaseMapping(requestedMap);
         }
     }
 }
