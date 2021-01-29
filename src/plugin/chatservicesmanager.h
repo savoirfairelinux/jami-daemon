@@ -58,7 +58,7 @@ public:
      */
     std::map<std::string, std::string> getChatHandlerDetails(const std::string& chatHandlerIdStr);
 
-    void setPreference(const std::string& key, const std::string& value, const std::string& scopeStr);
+    bool setPreference(const std::string& key, const std::string& value, const std::string& rootPath);
 
     void clearAllowDenyLists(const std::string& pluginPath);
 
