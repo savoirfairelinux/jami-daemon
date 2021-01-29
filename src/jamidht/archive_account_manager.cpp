@@ -497,11 +497,12 @@ ArchiveAccountManager::onSyncData(DeviceSync&& sync)
     // Sync contacts
     for (const auto& peer : sync.peers)
         info_->contacts->updateContact(peer.first, peer.second);
-    // saveContacts();
+    info_->contacts->saveContacts();
 
     // Sync trust requests
     for (const auto& tr : sync.trust_requests)
         info_->contacts->onTrustRequest(tr.first, tr.second.device, tr.second.received, false, {});
+    info_->contacts->saveTrustRequests();
 }
 
 AccountArchive

@@ -81,7 +81,6 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed)
     trust_.setCertificateStatus(hStr, tls::TrustStore::PermissionStatus::ALLOWED);
     saveContacts();
     callbacks_.contactAdded(hStr, c->second.confirmed);
-    // syncDevices();
     return true;
 }
 
@@ -104,7 +103,6 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
         saveTrustRequests();
     saveContacts();
     callbacks_.contactRemoved(uri, ban);
-    // syncDevices();
     return true;
 }
 
@@ -251,8 +249,6 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
             if (not contact->second.confirmed) {
                 contact->second.confirmed = true;
                 callbacks_.contactAdded(peer_account.toString(), true);
-                saveContacts();
-                // syncDevices();
             }
         }
     }
@@ -275,7 +271,6 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
                          peer_account.toString().c_str());
             }
         }
-        saveTrustRequests();
         callbacks_.trustRequest(req->first.toString(), req->second.payload, received);
     }
     return accept;
