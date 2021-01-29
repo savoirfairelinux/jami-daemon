@@ -251,7 +251,7 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
             if (not contact->second.confirmed) {
                 contact->second.confirmed = true;
                 callbacks_.contactAdded(peer_account.toString(), true);
-                saveContacts();
+                // saveContacts();
                 // syncDevices();
             }
         }
@@ -275,7 +275,7 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
                          peer_account.toString().c_str());
             }
         }
-        saveTrustRequests();
+        // saveTrustRequests();
         callbacks_.trustRequest(req->first.toString(), req->second.payload, received);
     }
     return accept;
