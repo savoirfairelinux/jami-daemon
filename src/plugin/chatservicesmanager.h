@@ -58,9 +58,9 @@ public:
      */
     std::map<std::string, std::string> getChatHandlerDetails(const std::string& chatHandlerIdStr);
 
-    void setPreference(const std::string& key,
+    bool setPreference(const std::string& key,
                        const std::string& value,
-                       const std::string& scopeStr);
+                       const std::string& rootPath);
 
 private:
     void toggleChatHandler(const uintptr_t chatHandlerId,
