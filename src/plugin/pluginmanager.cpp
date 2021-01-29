@@ -94,7 +94,11 @@ PluginManager::unload(const std::string& path)
 bool
 PluginManager::checkLoadedPlugin(const std::string& rootPath) const
 {
-    return dynPluginMap_.find(rootPath) != dynPluginMap_.end();
+    for (auto item : dynPluginMap_) {
+        if (item.first.find(rootPath) != std::string::npos)
+            return true; 
+    }
+    return false;
 }
 
 std::vector<std::string>
@@ -107,16 +111,21 @@ PluginManager::getLoadedPlugins() const
     return res;
 }
 
-int32_t
+bool
 PluginManager::destroyPluginComponents(const std::string& path)
 {
     auto itComponents = pluginComponentsMap_.find(path);
-    int32_t status{0};
+    bool status{true};
     if (itComponents != pluginComponentsMap_.end()) {
-        for (const auto& pair : itComponents->second) {
-            auto clcm = componentsLifeCycleManagers_.find(pair.first);
+        for (auto pairIt = itComponents->second.begin(); pairIt != itComponents->second.end();) {
+            auto clcm = componentsLifeCycleManagers_.find(pairIt->first);
             if (clcm != componentsLifeCycleManagers_.end()) {
-                status = clcm->second.destroyComponent(pair.second);
+                if (clcm->second.destroyComponent(pairIt->second)) {
+                    pairIt = itComponents->second.erase(pairIt);
+                } else {
+                    pairIt++;
+                    status = false;
+                }
             }
         }
     }
