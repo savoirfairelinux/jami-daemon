@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2152cbf5_ed79f795",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-29T20:46:36Z",
+      "side": 1,
+      "message": "should be checked to avoid crash if not found",
+      "range": {
+        "startLine": 45,
+        "startChar": 33,
+        "endLine": 45,
+        "endChar": 43
+      },
+      "revId": "873df3a489161bec09e078308a8e35bfd31ca01a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b3117b16_c548512d",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 225,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-29T20:46:36Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 225,
+        "startChar": 10,
+        "endLine": 225,
+        "endChar": 42
+      },
+      "revId": "873df3a489161bec09e078308a8e35bfd31ca01a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fe018772_666db379",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-01-29T20:46:36Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 109,
+        "startChar": 20,
+        "endLine": 110,
+        "endChar": 20
+      },
+      "revId": "873df3a489161bec09e078308a8e35bfd31ca01a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
