@@ -59,7 +59,7 @@ public:
         if (!handle_) {
             return false;
         }
-        return ::dlclose(handle_.release());
+        return !(::dlclose(handle_.release()));
     }
 
     void* getSymbol(const char* name) const

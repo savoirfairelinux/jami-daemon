@@ -334,35 +334,47 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
     std::map<std::string, std::string> pluginPreferencesMap
         = PluginPreferencesUtils::getPreferencesValuesMap(rootPath);
 
+    std::vector<std::map<std::string, std::string>> preferences
+        = PluginPreferencesUtils::getPreferences(rootPath);
+    bool force {pm_.checkLoadedPlugin(rootPath)};
+
+    for (auto& preference : preferences) {
+        if (!preference["key"].compare(key)) {
+            force &= callsm_.setPreference(key, value, rootPath);
+            force &= chatsm_.setPreference(key, value, rootPath);
+            break;
+        }
+    }
+    if (force)
+        unloadPlugin(rootPath);
+
     auto find = pluginPreferencesMap.find(key);
     if (find != pluginPreferencesMap.end()) {
-        std::vector<std::map<std::string, std::string>> preferences
-            = PluginPreferencesUtils::getPreferences(rootPath);
-        for (auto& preference : preferences) {
-            if (!preference["key"].compare(key)) {
-                callsm_.setPreference(key, value, preference["scope"]);
-                chatsm_.setPreference(key, value, preference["scope"]);
-                break;
-            }
-        }
-
         pluginUserPreferencesMap[key] = value;
         const std::string preferencesValuesFilePath = PluginPreferencesUtils::valuesFilePath(
             rootPath);
         std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
         if (!fs.good()) {
+            if (force) {
+                loadPlugin(rootPath);
+            }
             return false;
         }
         try {
             msgpack::pack(fs, pluginUserPreferencesMap);
-            return true;
         } catch (const std::exception& e) {
             JAMI_ERR() << e.what();
+            if (force) {
+                loadPlugin(rootPath);
+            }
             return false;
         }
     }
-    return false;
+    if (force) {
+        loadPlugin(rootPath);
+    }
+    return true;
 }
 
 std::map<std::string, std::string>
@@ -374,7 +386,14 @@ JamiPluginManager::getPluginPreferencesValuesMap(const std::string& rootPath)
 bool
 JamiPluginManager::resetPluginPreferencesValuesMap(const std::string& rootPath)
 {
-    return PluginPreferencesUtils::resetPreferencesValuesMap(rootPath);
+    bool loaded {pm_.checkLoadedPlugin(rootPath)};
+    if (loaded)
+        unloadPlugin(rootPath);
+    auto status = PluginPreferencesUtils::resetPreferencesValuesMap(rootPath);
+    if (loaded) {
+        loadPlugin(rootPath);
+    }
+    return status;
 }
 
 std::map<std::string, std::string>
