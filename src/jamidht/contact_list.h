@@ -95,6 +95,9 @@ public:
     void setContacts(const std::map<dht::InfoHash, Contact>&);
     void updateContact(const dht::InfoHash&, const Contact&);
 
+    /** Should be called only after updateContact */
+    void saveContacts() const;
+
     /* Contact requests */
 
     /** Inform of a new contact request. Returns true if the request should be immediatly accepted
@@ -107,6 +110,9 @@ public:
     std::vector<std::map<std::string, std::string>> getTrustRequests() const;
     bool acceptTrustRequest(const dht::InfoHash& from);
     bool discardTrustRequest(const dht::InfoHash& from);
+
+    /** Should be called only after onTrustRequest */
+    void saveTrustRequests() const;
 
     /* Devices */
     const std::map<dht::InfoHash, KnownDevice>& getKnownDevices() const { return knownDevices_; }
@@ -139,10 +145,7 @@ private:
     OnChangeCallback callbacks_;
 
     void loadContacts();
-    void saveContacts() const;
-
     void loadTrustRequests();
-    void saveTrustRequests() const;
 
     void loadKnownDevices();
     void saveKnownDevices() const;

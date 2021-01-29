@@ -240,6 +240,7 @@ AccountManager::startSync()
                                                                   v.confirm,
                                                                   std::move(v.payload))) {
                                   sendTrustRequestConfirm(peer_account);
+                                  info_->contacts->saveTrustRequests();
                               }
                       });
         return true;
