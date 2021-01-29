@@ -178,16 +178,21 @@ ChatServicesManager::getChatHandlerDetails(const std::string& chatHandlerIdStr)
     return {};
 }
 
-void
+bool
 ChatServicesManager::setPreference(const std::string& key,
                                    const std::string& value,
-                                   const std::string& scopeStr)
+                                   const std::string& rootPath)
 {
+    bool status {true};
     for (auto& chatHandler : chatHandlers_) {
-        if (scopeStr.find(chatHandler->getChatHandlerDetails()["name"]) != std::string::npos) {
-            chatHandler->setPreferenceAttribute(key, value);
+        if (chatHandler->id().find(rootPath) != std::string::npos) {
+            if (chatHandler->preferenceMapHasKey(key)) {
+                chatHandler->setPreferenceAttribute(key, value);
+                status &= false;
+            }
         }
     }
+    return status;
 }
 
 void
