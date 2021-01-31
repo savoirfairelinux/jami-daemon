@@ -200,8 +200,6 @@ public:
         void operator()(pjsip_inv_session*) const noexcept;
     };
 
-    std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inv;
-
 public: // NOT SIP RELATED (good candidates to be moved elsewhere)
     /**
      * Returns a pointer to the AudioRtpSession object
@@ -240,6 +238,10 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
     void rtpSetupSuccess(MediaType type);
 
     void setMute(bool state);
+
+    void setInviteSession(pjsip_inv_session* inviteSession = nullptr);
+
+    std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
 
 private:
     using clock = std::chrono::steady_clock;
