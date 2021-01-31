@@ -778,7 +778,7 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
         return false;
 
     inv->mod_data[link_.getModId()] = &call;
-    call.inv.reset(inv);
+    call.setInviteSession(inv);
 
     /*
         updateDialogViaSentBy(dialog);
@@ -789,7 +789,7 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
 
     pjsip_tx_data* tdata;
 
-    if (pjsip_inv_invite(call.inv.get(), &tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_invite(call.inviteSession_.get(), &tdata) != PJ_SUCCESS) {
         JAMI_ERR("Could not initialize invite messager for this call");
         return false;
     }
@@ -811,7 +811,7 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
     // Add user-agent header
     sip_utils::addUserAgenttHeader(getUserAgentName(), tdata);
 
-    if (pjsip_inv_send_msg(call.inv.get(), tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_send_msg(call.inviteSession_.get(), tdata) != PJ_SUCCESS) {
         JAMI_ERR("Unable to send invite message for this call");
         return false;
     }
