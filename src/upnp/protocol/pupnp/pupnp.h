@@ -214,6 +214,10 @@ private:
     static const char* eventTypeToString(Upnp_EventType eventType);
 
 private:
+    // Indicates of the client is registered. Since at most only one instance
+    // of this class is created, using a static is unambiguous.
+    std::atomic_bool clientRegistered_ {};
+
     std::weak_ptr<PUPnP> weak() { return std::static_pointer_cast<PUPnP>(shared_from_this()); }
 
     NON_COPYABLE(PUPnP);
@@ -235,7 +239,6 @@ private:
     std::mutex ctrlptMutex_;              // Mutex for client handle protection.
     UpnpClient_Handle ctrlptHandle_ {-1}; // Control point handle.
 
-    std::atomic_bool clientRegistered_ {false}; // Indicates of the client is registered.
     std::atomic_bool searchForIgd_ {false};     // Variable to signal thread for a search.
 };
 
