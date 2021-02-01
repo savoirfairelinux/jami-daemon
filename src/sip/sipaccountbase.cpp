@@ -600,9 +600,17 @@ SIPAccountBase::setMessageDisplayed(const std::string& contactId,
 }
 
 IpAddr
-SIPAccountBase::getPublishedIpAddress() const
+SIPAccountBase::getPublishedIpAddress(uint16_t family) const
 {
-    // Prefere IPv4 if available. More likely to succeed behind NAT.
+    if (family == AF_INET)
+        return publishedIp_[0];
+    if (family == AF_INET6)
+        return publishedIp_[1];
+
+    assert(family == AF_UNSPEC);
+
+    // If family is not set, prefere IPv4 if available. It's more
+    // likely to succeed behind NAT.
     if (publishedIp_[0])
         return publishedIp_[0];
     if (publishedIp_[1])
