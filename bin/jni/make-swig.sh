@@ -39,22 +39,22 @@ fi
 
 mkdir -p $PACKAGEDIR
 
-echo "Generating ring_wrapper.cpp..."
+echo "Generating jami_wrapper.cpp..."
 swig -v -c++ -java \
 -package $PACKAGE \
 -outdir $PACKAGEDIR \
--o $JNIDIR/ring_wrapper.cpp $JNIDIR/jni_interface.i
+-o $JNIDIR/jami_wrapper.cpp $JNIDIR/jni_interface.i
 
-echo "Generating ringservice_loader.c..."
+echo "Generating jamiservice_loader.c..."
 python $JNIDIR/JavaJNI2CJNI_Load.py \
--i $PACKAGEDIR/RingserviceJNI.java \
--o $JNIDIR/ringservice_loader.c \
--t $JNIDIR/ringservice.c.template \
--m Ringservice \
+-i $PACKAGEDIR/JamiServiceJNI.java \
+-o $JNIDIR/jamiservice_loader.c \
+-t $JNIDIR/jamiservice.c.template \
+-m JamiService \
 -p $PACKAGE
 
-echo "Appending ring_wrapper.cpp..."
-cat $JNIDIR/ringservice_loader.c >> $JNIDIR/ring_wrapper.cpp
+echo "Appending jami_wrapper.cpp..."
+cat $JNIDIR/jamiservice_loader.c >> $JNIDIR/jami_wrapper.cpp
 
 echo "SWIG bindings successfully generated !"
 exit 0
