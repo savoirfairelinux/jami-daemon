@@ -47,6 +47,7 @@ class Controller
 {
 public:
     Controller();
+    Controller(const IpAddr& addr);
     ~Controller();
 
     // Checks if a valid IGD is available.
