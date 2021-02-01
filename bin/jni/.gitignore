@@ -1,3 +1,3 @@
-ringservice_loader.c
-ring_wrapper.cpp
-ring_wrapper.h
+jamiservice_loader.c
+jami_wrapper.cpp
+jami_wrapper.h
