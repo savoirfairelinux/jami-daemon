@@ -94,6 +94,11 @@ errorOnResponse(IXML_Document* doc)
     return false;
 }
 
+
+// UPNP class implementation
+
+std::atomic_bool PUPnP::clientRegistered_ = false;
+
 PUPnP::PUPnP()
 {
     if (not initUpnpLib())
@@ -168,6 +173,7 @@ PUPnP::~PUPnP()
             removeAllLocalMappings(it);
         }
         validIgdList_.clear();
+        clientRegistered_ = false;
         UpnpUnRegisterClient(ctrlptHandle_);
     }
 
@@ -643,6 +649,10 @@ PUPnP::eventTypeToString(Upnp_EventType eventType)
 int
 PUPnP::ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data)
 {
+    // Ignore if not registered
+    if (not PUPnP::clientRegistered_)
+        return 0;
+
     if (auto pupnp = static_cast<PUPnP*>(user_data))
         return pupnp->handleCtrlPtUPnPEvents(event_type, event);
 
