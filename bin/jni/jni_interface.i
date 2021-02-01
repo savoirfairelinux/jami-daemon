@@ -19,7 +19,7 @@
  */
 
 /* File : jni_interface.i */
-%module (directors="1") Ringservice
+%module (directors="1") JamiService
 
 #define SWIG_JAVA_ATTACH_CURRENT_THREAD_AS_DAEMON
 %include "typemaps.i"
