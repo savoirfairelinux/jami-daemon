@@ -94,6 +94,9 @@ errorOnResponse(IXML_Document* doc)
     return false;
 }
 
+
+// UPNP class implementation
+
 PUPnP::PUPnP()
 {
     if (not initUpnpLib())
@@ -168,6 +171,7 @@ PUPnP::~PUPnP()
             removeAllLocalMappings(it);
         }
         validIgdList_.clear();
+        clientRegistered_ = false;
         UpnpUnRegisterClient(ctrlptHandle_);
     }
 
@@ -646,8 +650,10 @@ PUPnP::eventTypeToString(Upnp_EventType eventType)
 int
 PUPnP::ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data)
 {
-    if (auto pupnp = static_cast<PUPnP*>(user_data))
+    if (auto pupnp = static_cast<PUPnP*>(user_data)) {
+        std::lock_guard<std::mutex> lk(pupnp->ctrlptMutex_);
         return pupnp->handleCtrlPtUPnPEvents(event_type, event);
+    }
 
     JAMI_WARN("PUPnP: Control point callback without PUPnP");
     return 0;
@@ -786,6 +792,10 @@ PUPnP::processDiscoverySubscriptionExpired(const std::string& eventSubUrl)
 int
 PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
 {
+    // Ignore if not registered
+    if (not PUPnP::clientRegistered_)
+        return UPNP_E_SUCCESS;
+
     switch (event_type) {
     // "ALIVE" events are processed as "SEARCH RESULT". It might be usefull
     // if "SEARCH RESULT" was missed.
