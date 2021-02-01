@@ -186,6 +186,7 @@ public:
      */
     void doUnregister(std::function<void(bool)> cb = {}) override;
 
+    void enableUpnp(bool enable) override;
     /**
      * @return pj_str_t "From" uri based on account information.
      * From RFC3261: "The To header field first and foremost specifies the desired
@@ -632,8 +633,8 @@ private:
      */
     in_port_t dhtPortUsed()
     {
-        return (upnp_ and dhtUpnpMapping_.isValid()) ? dhtUpnpMapping_.getExternalPort()
-                                                     : dhtDefaultPort_;
+        return (upnpCtrl_ and dhtUpnpMapping_.isValid()) ? dhtUpnpMapping_.getExternalPort()
+                                                         : dhtDefaultPort_;
     }
 
     /* Current UPNP mapping */
