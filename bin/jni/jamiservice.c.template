@@ -24,7 +24,7 @@ extern "C" {
 }
 
 JavaVM *gJavaVM;
-const char *kringservicePath = "net/jami/daemon/RingserviceJNI";
+const char *kjamiservicePath = "net/jami/daemon/JamiServiceJNI";
 
 void deinitClassHelper(JNIEnv *env, jobject obj) {
 	JAMI_INFO("deinitClassHelper");
@@ -53,9 +53,9 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     }
 	JAMI_INFO("JNI_Onload: GetEnv %p", env);
 
-	clazz = env->FindClass (kringservicePath);
+	clazz = env->FindClass (kjamiservicePath);
 	if (!clazz) {
-        JAMI_ERR("JNI_Onload: whoops, %s class not found!", kringservicePath);
+        JAMI_ERR("JNI_Onload: whoops, %s class not found!", kjamiservicePath);
 	}
 	gJavaVM = vm;
 	JAMI_INFO("JNI_Onload: JavaVM %p", gJavaVM);
@@ -87,9 +87,9 @@ void JNI_OnUnLoad(JavaVM* vm, void* reserved) {
 	JAMI_INFO("JNI_OnUnLoad: GetEnv %p", env);
 
     /* Get jclass with env->FindClass */
-	clazz = env->FindClass(kringservicePath);
+	clazz = env->FindClass(kjamiservicePath);
 	if (!clazz) {
-        JAMI_ERR("JNI_OnUnLoad: whoops, %s class not found!", kringservicePath);
+        JAMI_ERR("JNI_OnUnLoad: whoops, %s class not found!", kjamiservicePath);
 	}
 
 	/* remove instances of class object we need into cache */
