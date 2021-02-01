@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "65fc4cba_064557f0",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-01T16:38:09Z",
+      "side": 1,
+      "message": "setInviteSession",
+      "range": {
+        "startLine": 243,
+        "startChar": 9,
+        "endLine": 243,
+        "endChar": 27
+      },
+      "revId": "bd451e0608f7e0fbbffe189bead82943fd4fe001",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
