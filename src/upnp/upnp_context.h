@@ -105,6 +105,9 @@ public:
     // Retrieve the UPnPContext singleton
     static std::shared_ptr<UPnPContext> getUPnPContext();
 
+    // Set the known public address
+    void setPublicAddress(const IpAddr& addr);
+
     // Check if there is a valid IGD in the IGD list.
     bool hasValidIGD() const;
 
@@ -244,6 +247,10 @@ private:
     NON_COPYABLE(UPnPContext);
 
     bool started_ {false};
+
+    // The known public address. The external addresses returned by
+    // the IGDs will be checked against this address.
+    IpAddr knownPublicAddress_ {};
 
     // Set of registered controllers
     std::set<void*> controllerList_;

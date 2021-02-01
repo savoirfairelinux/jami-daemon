@@ -120,10 +120,16 @@ public:
     static const char* getCandidateType(const pj_ice_sess_cand* cand);
     bool isTcpEnabled() const { return config_.protocol == PJ_ICE_TP_TCP; }
     bool addStunConfig(int af);
-    void setupDefaultCandidates();
+    void addDefaultCandidates();
     void requestUpnpMappings();
     bool hasUpnp() const;
-    void setupServerReflexiveCandidates();
+    // Take a list of address pairs (local/public) and add them as
+    // reflexive candidates using STUN config.
+    void addServerReflexiveCandidates(const std::vector<std::pair<IpAddr, IpAddr>>& addrList);
+    // Generate server reflexive candidates using the published (DHT/Account) address
+    const std::vector<std::pair<IpAddr, IpAddr>> setupGenericReflexiveCandidates();
+    // Generate server reflexive candidates using UPNP mappings.
+    const std::vector<std::pair<IpAddr, IpAddr>> setupUpnpReflexiveCandidates();
     void setDefaultRemoteAddress(unsigned comp_id, const IpAddr& addr);
     const IpAddr& getDefaultRemoteAddress(unsigned comp_id) const;
     bool handleEvents(unsigned max_msec);
@@ -337,12 +343,14 @@ IceTransport::Impl::Impl(const char* name,
 
     peerChannels_.resize(component_count_ + 1);
 
-    setupDefaultCandidates();
+    addDefaultCandidates();
 
-    if (upnp_)
+    addServerReflexiveCandidates(setupGenericReflexiveCandidates());
+
+    if (upnp_) {
         requestUpnpMappings();
-
-    setupServerReflexiveCandidates();
+        addServerReflexiveCandidates(setupUpnpReflexiveCandidates());
+    }
 
     pool_.reset(
         pj_pool_create(iceTransportFactory.getPoolFactory(), "IceTransport.pool", 512, 512, NULL));
@@ -742,7 +750,7 @@ IceTransport::Impl::addStunConfig(int af)
     stun.af = af;
     stun.conn_type = config_.stun.conn_type;
 
-    JAMI_DBG("[ice:%p)] added host stun config for %s transport",
+    JAMI_DBG("[ice:%p] added host stun config for %s transport",
              this,
              config_.protocol == PJ_ICE_TP_TCP ? "TCP" : "UDP");
 
@@ -750,7 +758,7 @@ IceTransport::Impl::addStunConfig(int af)
 }
 
 void
-IceTransport::Impl::setupDefaultCandidates()
+IceTransport::Impl::addDefaultCandidates()
 {
     JAMI_DBG("[ice:%p]: Setup default candidates", this);
 
@@ -790,11 +798,11 @@ IceTransport::Impl::requestUpnpMappings()
             std::lock_guard<std::mutex> lock(upnpMappingsMutex_);
             auto ret = upnpMappings_.emplace(mapPtr->getMapKey(), *mapPtr);
             if (ret.second) {
-                JAMI_DBG("[ice:%p]: UPNP mapping %s successfully allocated",
+                JAMI_DBG("[ice:%p] UPNP mapping %s successfully allocated",
                          this,
                          mapPtr->toString(true).c_str());
             } else {
-                JAMI_WARN("[ice:%p]: UPNP mapping %s already in the list!",
+                JAMI_WARN("[ice:%p] UPNP mapping %s already in the list!",
                           this,
                           mapPtr->toString().c_str());
             }
@@ -812,70 +820,14 @@ IceTransport::Impl::hasUpnp() const
 }
 
 void
-IceTransport::Impl::setupServerReflexiveCandidates()
+IceTransport::Impl::addServerReflexiveCandidates(
+    const std::vector<std::pair<IpAddr, IpAddr>>& addrList)
 {
-    JAMI_DBG("[ice:%p]: Setup server reflexive candidates", this);
-
-    std::vector<std::pair<IpAddr, IpAddr>> addrList;
-    auto hasUpnpCand = hasUpnp();
-    auto isTcp = isTcpEnabled();
-
-    // Server reflexive candidates are built using UPNP mappings if enabled and
-    // available. Otherwise, the published address will be used instead. This
-    // address is given with the other ICE options.
-    // For TCP transport, the connection type is set to passive for UPNP
-    // candidates and set to active otherwise.
-    if (hasUpnpCand) {
-        std::lock_guard<std::mutex> lock(upnpMappingsMutex_);
-        unsigned compId = 1;
-        for (auto const& [_, map] : upnpMappings_) {
-            assert(map.getMapKey());
-            IpAddr localAddr {map.getInternalAddress()};
-            localAddr.setPort(map.getInternalPort());
-            IpAddr publicAddr {map.getExternalAddress()};
-            publicAddr.setPort(map.getExternalPort());
-            addrList.emplace_back(localAddr, publicAddr);
-
-            JAMI_DBG("[ice:%p]: Using upnp mapping %s (%s) -> %s (%s) for comp %u",
-                     this,
-                     localAddr.toString(true).c_str(),
-                     localAddr.getFamily() == pj_AF_INET()
-                         ? "IPv4"
-                         : localAddr.getFamily() == pj_AF_INET6() ? "IPv6" : "unknown",
-                     publicAddr.toString(true).c_str(),
-                     publicAddr.getFamily() == pj_AF_INET()
-                         ? "IPv4"
-                         : localAddr.getFamily() == pj_AF_INET6() ? "IPv6" : "unknown",
-                     compId);
-            compId++;
-        }
-    } else {
-        auto localAddr = accountLocalAddr_;
-        auto publicAddr = accountPublicAddr_;
-        if (localAddr and publicAddr) {
-            for (unsigned compIdx = 0; compIdx < component_count_; compIdx++) {
-                uint16_t port = 0;
-                if (isTcp and not hasUpnpCand)
-                    port = 9;
-                else
-                    port = upnp::Controller::generateRandomPort(isTcp ? PortType::TCP
-                                                                      : PortType::UDP);
-
-                localAddr.setPort(port);
-                publicAddr.setPort(port);
-                addrList.emplace_back(localAddr, publicAddr);
-
-                JAMI_DBG("[ice:%p]: Using Account address [%s : %s] for comp %u",
-                         this,
-                         localAddr.toString(true).c_str(),
-                         publicAddr.toString(true).c_str(),
-                         compIdx + 1);
-            }
-        }
-    }
-
     if (addrList.size() != component_count_) {
-        JAMI_WARN("[ice:%p]: No DHT or UPNP server reflexive candidates added", this);
+        JAMI_WARN("[ice:%p]: Provided addr list size %lu does not match component count %u",
+                  this,
+                  addrList.size(),
+                  component_count_);
         return;
     }
 
@@ -889,14 +841,15 @@ IceTransport::Impl::setupServerReflexiveCandidates()
     for (unsigned compIdx = 0; compIdx < component_count_; compIdx++) {
         auto localAddr = addrList[compIdx].first;
         auto publicAddr = addrList[compIdx].second;
+
         pj_sockaddr_cp(&stun.cfg.user_mapping[compIdx].local_addr, localAddr.pjPtr());
         pj_sockaddr_cp(&stun.cfg.user_mapping[compIdx].mapped_addr, publicAddr.pjPtr());
 
-        if (isTcp) {
-            if (hasUpnpCand) {
-                stun.cfg.user_mapping[compIdx].tp_type = PJ_CAND_TCP_PASSIVE;
-            } else {
+        if (isTcpEnabled()) {
+            if (publicAddr.getPort() == 9) {
                 stun.cfg.user_mapping[compIdx].tp_type = PJ_CAND_TCP_ACTIVE;
+            } else {
+                stun.cfg.user_mapping[compIdx].tp_type = PJ_CAND_TCP_PASSIVE;
             }
         } else {
             stun.cfg.user_mapping[compIdx].tp_type = PJ_CAND_UDP;
@@ -905,6 +858,81 @@ IceTransport::Impl::setupServerReflexiveCandidates()
 
     stun.cfg.user_mapping_cnt = component_count_;
     assert(stun.cfg.user_mapping_cnt < PJ_ICE_MAX_COMP);
+}
+
+const std::vector<std::pair<IpAddr, IpAddr>>
+IceTransport::Impl::setupGenericReflexiveCandidates()
+{
+    std::vector<std::pair<IpAddr, IpAddr>> addrList;
+    auto isTcp = isTcpEnabled();
+
+    // First, set default server reflexive candidates using current
+    // account public address.
+    // Then, check for UPNP mappings and and them if available.
+    // For TCP transport, the connection type is set to passive for UPNP
+    // candidates and set to active otherwise.
+
+    if (accountLocalAddr_ and accountPublicAddr_) {
+        for (unsigned compIdx = 0; compIdx < component_count_; compIdx++) {
+            // For TCP, the type is set to active, because most likely the incoming
+            // connection will be blocked by the NAT.
+            // For UDP use random port number.
+            uint16_t port = isTcp ? 9
+                                  : upnp::Controller::generateRandomPort(isTcp ? PortType::TCP
+                                                                               : PortType::UDP);
+
+            accountLocalAddr_.setPort(port);
+            accountPublicAddr_.setPort(port);
+            addrList.emplace_back(accountLocalAddr_, accountPublicAddr_);
+
+            JAMI_DBG("[ice:%p]: Add generic local reflexive candidates [%s : %s] for comp %u",
+                     this,
+                     accountLocalAddr_.toString(true).c_str(),
+                     accountPublicAddr_.toString(true).c_str(),
+                     compIdx + 1);
+        }
+    }
+
+    return addrList;
+}
+
+const std::vector<std::pair<IpAddr, IpAddr>>
+IceTransport::Impl::setupUpnpReflexiveCandidates()
+{
+    // Add UPNP server reflexive candidates if available.
+    if (not hasUpnp())
+        return {};
+
+    std::lock_guard<std::mutex> lock(upnpMappingsMutex_);
+
+    if (static_cast<unsigned>(upnpMappings_.size()) < component_count_) {
+        JAMI_WARN("[ice:%p]: Not enough mappings %lu. Expected %u",
+                  this,
+                  upnpMappings_.size(),
+                  component_count_);
+        return {};
+    }
+
+    std::vector<std::pair<IpAddr, IpAddr>> addrList;
+
+    unsigned compId = 1;
+    for (auto const& [_, map] : upnpMappings_) {
+        assert(map.getMapKey());
+        IpAddr localAddr {map.getInternalAddress()};
+        localAddr.setPort(map.getInternalPort());
+        IpAddr publicAddr {map.getExternalAddress()};
+        publicAddr.setPort(map.getExternalPort());
+        addrList.emplace_back(localAddr, publicAddr);
+
+        JAMI_DBG("[ice:%p]: Add UPNP local reflexive candidates [%s : %s] for comp %u",
+                 this,
+                 localAddr.toString(true).c_str(),
+                 publicAddr.toString(true).c_str(),
+                 compId);
+        compId++;
+    }
+
+    return addrList;
 }
 
 void

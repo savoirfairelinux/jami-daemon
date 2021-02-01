@@ -693,16 +693,9 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
         const auto localAddress = ip_utils::getInterfaceAddr(shared->getLocalInterface(),
                                                              target.getFamily());
 
-        IpAddr addrSdp;
-        if (shared->getUPnPActive()) {
-            // use UPnP addr, or published addr if its set
-            addrSdp = shared->getPublishedSameasLocal() ? shared->getUPnPIpAddress()
-                                                        : shared->getPublishedIpAddress();
-        } else {
-            addrSdp = shared->isStunEnabled() or (not shared->getPublishedSameasLocal())
-                          ? shared->getPublishedIpAddress()
-                          : localAddress;
-        }
+        IpAddr addrSdp = shared->getPublishedSameasLocal()
+                             ? localAddress
+                             : shared->getPublishedIpAddress(target.getFamily());
 
         // fallback on local address
         if (not addrSdp)
@@ -1810,12 +1803,12 @@ JamiAccount::registerAsyncOps()
 
     loadCachedProxyServer([onLoad](const std::string&) { onLoad(); });
 
-    if (upnp_) {
+    if (upnpCtrl_) {
         JAMI_DBG("UPnP: Attempting to map ports for Jami account");
 
         // Release current mapping if any.
         if (dhtUpnpMapping_.isValid()) {
-            upnp_->releaseMapping(dhtUpnpMapping_);
+            upnpCtrl_->releaseMapping(dhtUpnpMapping_);
         }
 
         dhtUpnpMapping_ = upnp::Mapping {0, 0, upnp::PortType::UDP};
@@ -1881,7 +1874,7 @@ JamiAccount::registerAsyncOps()
         });
 
         // Request the mapping.
-        auto map = upnp_->reserveMapping(dhtUpnpMapping_);
+        auto map = upnpCtrl_->reserveMapping(dhtUpnpMapping_);
         // The returned mapping is invalid. Load the account now since
         // we may never receive the callback.
         if (not map or not map->isValid()) {
@@ -1919,13 +1912,42 @@ JamiAccount::doRegister()
 
     setRegistrationState(RegistrationState::TRYING);
     /* if UPnP is enabled, then wait for IGD to complete registration */
-    if (upnp_ or proxyServerCached_.empty()) {
+    if (upnpCtrl_ or proxyServerCached_.empty()) {
         registerAsyncOps();
     } else {
         doRegister_();
     }
 
     cacheTurnServers(); // reset cache for TURN servers
+}
+
+void
+JamiAccount::enableUpnp(bool enable)
+{
+    std::lock_guard<std::mutex> lk {upnp_mtx};
+
+    if (enable) {
+        auto const& addr = getPublishedIpAddress();
+
+        if (upnpCtrl_ and upnpCtrl_->getExternalIP() == addr) {
+            JAMI_DBG(
+                "[Account %s] Already have a valid controller instance with external address [%s]",
+                getAccountID().c_str(),
+                upnpCtrl_->getExternalIP().toString().c_str());
+            return;
+        }
+
+        JAMI_DBG("[Account %s] Creating a new upnp controller instance", getAccountID().c_str());
+        // Need a known IPv4 address to validate the external address
+        // returned by the IGD.
+        if (addr and addr.getFamily() == AF_INET) {
+            upnpCtrl_.reset(new upnp::Controller(addr));
+        } else {
+            upnpCtrl_.reset(new upnp::Controller());
+        }
+    } else {
+        upnpCtrl_.reset();
+    }
 }
 
 std::vector<std::string>
@@ -2573,8 +2595,8 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     dht_->join();
 
     // Release current upnp mapping if any.
-    if (upnp_ and dhtUpnpMapping_.isValid()) {
-        upnp_->releaseMapping(dhtUpnpMapping_);
+    if (upnpCtrl_ and dhtUpnpMapping_.isValid()) {
+        upnpCtrl_->releaseMapping(dhtUpnpMapping_);
         dhtUpnpMapping_ = upnp::Mapping {};
     }
 
@@ -2599,7 +2621,7 @@ JamiAccount::connectivityChanged()
         return;
     }
     // Let UPNP handle connectivity change if enabled.
-    if (not upnp_)
+    if (not upnpCtrl_)
         dht_->connectivityChanged();
     // reset cache
     setPublishedAddress({});
@@ -3361,6 +3383,11 @@ JamiAccount::storeActiveIpAddress()
         JAMI_DBG("[Account %s] Store DHT public IPv4 address : %s",
                  getAccountID().c_str(),
                  publicAddr.toString().c_str());
+
+        // Check if we need to create a new UPNP controller instance.
+        if (upnpEnabled_ and (not upnpCtrl_ or not upnpCtrl_->hasValidIGD())) {
+            enableUpnp(true);
+        }
     }
 
     // IPv6

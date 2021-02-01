@@ -94,7 +94,6 @@ errorOnResponse(IXML_Document* doc)
     return false;
 }
 
-
 // UPNP class implementation
 
 std::atomic_bool PUPnP::clientRegistered_ = false;
