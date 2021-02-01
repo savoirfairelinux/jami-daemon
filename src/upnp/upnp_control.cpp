@@ -38,6 +38,16 @@ Controller::Controller()
     JAMI_DBG("Controller@%p: Created UPnP Controller session", this);
 }
 
+Controller::Controller(const IpAddr& addr)
+    : Controller()
+{
+    assert(upnpContext_);
+    assert(addr);
+    assert(addr.getFamily() == AF_INET);
+
+    upnpContext_->setPublicAddress(addr);
+}
+
 Controller::~Controller()
 {
     JAMI_DBG("Controller@%p: Destroying UPnP Controller session", this);

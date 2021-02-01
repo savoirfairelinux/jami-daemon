@@ -772,7 +772,7 @@ SIPAccount::mapPortUPnP()
         }
     });
 
-    auto mapRes = upnp_->reserveMapping(map);
+    auto mapRes = upnpCtrl_->reserveMapping(map);
     if (mapRes and mapRes->getState() == upnp::MappingState::OPEN) {
         return true;
     }
@@ -791,7 +791,7 @@ SIPAccount::doRegister()
     JAMI_DBG("doRegister %s", hostname_.c_str());
 
     /* if UPnP is enabled, then wait for IGD to complete registration */
-    if (upnp_) {
+    if (upnpCtrl_) {
         JAMI_DBG("UPnP: waiting for IGD to register SIP account");
         setRegistrationState(RegistrationState::TRYING);
         if (not mapPortUPnP()) {

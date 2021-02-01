@@ -184,7 +184,7 @@ public:
      */
     std::string getPublishedAddress() const { return publishedIpAddress_; }
 
-    IpAddr getPublishedIpAddress() const;
+    IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const;
 
     void setPublishedAddress(const IpAddr& ip_addr);
 
