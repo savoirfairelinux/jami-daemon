@@ -326,7 +326,7 @@ public:
     void addDefaultModerator(const std::string& peerURI);
     void removeDefaultModerator(const std::string& peerURI);
 
-    bool isLocalModeratorsEnabled() const { return localModeratorsEnabled_;  }
+    bool isLocalModeratorsEnabled() const { return localModeratorsEnabled_; }
     void enableLocalModerators(bool isModEnabled) { localModeratorsEnabled_ = isModEnabled; }
 
 public: // virtual methods that has to be implemented by concrete classes
@@ -345,9 +345,9 @@ private:
     std::mutex callIDSetMtx_;
     std::set<std::string> callIDSet_;
 
-    void enableUpnp(bool state);
-
 protected:
+    virtual void enableUpnp(bool state);
+
     static void parseString(const std::map<std::string, std::string>& details,
                             const char* key,
                             std::string& s);
@@ -517,7 +517,7 @@ protected:
      */
     bool upnpEnabled_;
     mutable std::mutex upnp_mtx {};
-    std::shared_ptr<jami::upnp::Controller> upnp_;
+    std::shared_ptr<jami::upnp::Controller> upnpCtrl_;
 
     std::set<std::string> defaultModerators_ {};
     bool localModeratorsEnabled_;
