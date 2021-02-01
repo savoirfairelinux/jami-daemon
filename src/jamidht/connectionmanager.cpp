@@ -133,14 +133,6 @@ public:
     void onPeerResponse(const PeerConnectionRequest& req);
     void onDhtConnected(const DeviceId& deviceId);
 
-    bool hasPublicIp(const ICESDP& sdp)
-    {
-        for (const auto& cand : sdp.rem_candidates)
-            if (cand.type == PJ_ICE_CAND_TYPE_SRFLX)
-                return true;
-        return false;
-    }
-
     JamiAccount& account;
 
     std::mutex infosMtx_ {};
@@ -609,7 +601,7 @@ ConnectionManager::Impl::onRequestStartIce(const PeerConnectionRequest& req)
     }
 
     auto sdp = IceTransport::parse_SDP(req.ice_msg, *ice);
-    auto hasPubIp = hasPublicIp(sdp);
+    answerTo(*ice, req.id, req.from);
     if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
         JAMI_ERR("[Account:%s] start ICE failed", account.getAccountID().c_str());
         ice = nullptr;
@@ -617,9 +609,6 @@ ConnectionManager::Impl::onRequestStartIce(const PeerConnectionRequest& req)
             connReadyCb_(req.from, "", nullptr);
         return;
     }
-
-    if (hasPubIp)
-        answerTo(*ice, req.id, req.from);
 }
 
 void
@@ -637,11 +626,6 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
             connReadyCb_(req.from, "", nullptr);
         return;
     }
-
-    auto sdp = IceTransport::parse_SDP(req.ice_msg, *ice);
-    auto hasPubIp = hasPublicIp(sdp);
-    if (!hasPubIp)
-        answerTo(*ice, req.id, req.from);
 
     // Build socket
     auto endpoint = std::make_unique<IceSocketEndpoint>(std::shared_ptr<IceTransport>(
