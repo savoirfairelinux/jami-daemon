@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a637af71_49dbfec7",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1935,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-02T21:12:05Z",
+      "side": 1,
+      "message": "Note to myself - TO check: jami_labs\u003c-\u003esfl",
+      "range": {
+        "startLine": 1924,
+        "startChar": 51,
+        "endLine": 1935,
+        "endChar": 59
+      },
+      "revId": "f07e9711fcc1f4f43e018bbed43351389bc0e290",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e63aa967_df68174a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1945,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-02T21:12:05Z",
+      "side": 1,
+      "message": "needs to be loggued only if upnpCtrl_ exists",
+      "range": {
+        "startLine": 1942,
+        "startChar": 6,
+        "endLine": 1945,
+        "endChar": 5
+      },
+      "revId": "f07e9711fcc1f4f43e018bbed43351389bc0e290",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
