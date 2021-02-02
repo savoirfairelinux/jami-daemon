@@ -1538,6 +1538,10 @@ SIPCall::enterConference(const std::string& confId)
 {
 #ifdef ENABLE_VIDEO
     auto conf = Manager::instance().getConferenceFromID(confId);
+    if (!conf) {
+        JAMI_ERR("@@@ Entering in non existing conference %s", confId);
+        return;
+    }
     getVideoRtp().enterConference(conf.get());
 #endif
 }
