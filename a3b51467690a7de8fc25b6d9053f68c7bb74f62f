@@ -284,6 +284,30 @@
     },
     {
       "key": {
+        "uuid": "f5d16f28_79ab60bf",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 18
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-02T23:07:02Z",
+      "side": 1,
+      "message": "This is already a public section",
+      "parentUuid": "a02ab039_2e8e5d5f",
+      "range": {
+        "startLine": 130,
+        "startChar": 0,
+        "endLine": 130,
+        "endChar": 22
+      },
+      "revId": "a3b51467690a7de8fc25b6d9053f68c7bb74f62f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "986bed89_e21640a8",
         "filename": "src/sip/sipcall.h",
         "patchSetId": 18
@@ -366,6 +390,30 @@
       "side": 1,
       "message": "Sure. But this is clearly a SIP utility class!\nIf we need to support non-SIP signaling, we need to think it over and we would certainly not start from this class.\nBTW, this class is helper class for SIPCall and it should not be exposed as it is now. But I dont think it\u0027s critical for now.",
       "parentUuid": "1622b572_25670df9",
+      "range": {
+        "startLine": 720,
+        "startChar": 4,
+        "endLine": 720,
+        "endChar": 52
+      },
+      "revId": "a3b51467690a7de8fc25b6d9053f68c7bb74f62f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "15c173c0_7b79846f",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 720,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-02T23:07:02Z",
+      "side": 1,
+      "message": "The point of my comment was that the destruction of SIPVoIPLink should not care about noon-SIP calls. It used to warn about the number of remaining SIP calls, now it warns about any remaining call even if non-SIP.",
+      "parentUuid": "668e685d_6cb214bd",
       "range": {
         "startLine": 720,
         "startChar": 4,
