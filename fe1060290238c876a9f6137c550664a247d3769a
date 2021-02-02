@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "33096729_5b6da1ed",
+        "filename": "src/account.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-02T22:58:47Z",
+      "side": 1,
+      "message": "could be,\nDone.",
+      "parentUuid": "1d3ea5e9_ef5526b5",
+      "range": {
+        "startLine": 87,
+        "startChar": 4,
+        "endLine": 87,
+        "endChar": 56
+      },
+      "revId": "fe1060290238c876a9f6137c550664a247d3769a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "32976399_9b958a27",
         "filename": "src/conference.cpp",
         "patchSetId": 12
@@ -45,6 +69,30 @@
       "revId": "fe1060290238c876a9f6137c550664a247d3769a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "329e23fa_334c3ec6",
+        "filename": "src/conference.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-02T22:58:47Z",
+      "side": 1,
+      "message": "As replied in conference.h, replaced by getCall which a shared_ptr\u003cCall\u003e instead of shared_ptr\u003cSIPCall\u003e\nAck",
+      "parentUuid": "32976399_9b958a27",
+      "range": {
+        "startLine": 79,
+        "startChar": 36,
+        "endLine": 79,
+        "endChar": 46
+      },
+      "revId": "fe1060290238c876a9f6137c550664a247d3769a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "a22069ac_02cb1863",
+        "filename": "src/conference.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-02T22:58:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "e4f3c031_4984bb53",
+      "range": {
+        "startLine": 109,
+        "startChar": 32,
+        "endLine": 109,
+        "endChar": 42
+      },
+      "revId": "fe1060290238c876a9f6137c550664a247d3769a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "28d1d4c8_b4642372",
         "filename": "src/conference.cpp",
         "patchSetId": 12
@@ -94,6 +166,30 @@
     },
     {
       "key": {
+        "uuid": "f3c3774a_00098927",
+        "filename": "src/conference.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-02T22:58:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "28d1d4c8_b4642372",
+      "range": {
+        "startLine": 178,
+        "startChar": 24,
+        "endLine": 178,
+        "endChar": 72
+      },
+      "revId": "fe1060290238c876a9f6137c550664a247d3769a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "3dfbc7ec_db1e9494",
         "filename": "src/conference.h",
         "patchSetId": 12
@@ -114,6 +210,30 @@
       "revId": "fe1060290238c876a9f6137c550664a247d3769a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "830e79dd_54526c5e",
+        "filename": "src/conference.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 258,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-02T22:58:47Z",
+      "side": 1,
+      "message": "Removed\nIn fact, reference to SIPCall was completely removed to remove unnecessary dependency to implementation.",
+      "parentUuid": "3dfbc7ec_db1e9494",
+      "range": {
+        "startLine": 258,
+        "startChar": 4,
+        "endLine": 258,
+        "endChar": 70
+      },
+      "revId": "fe1060290238c876a9f6137c550664a247d3769a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
