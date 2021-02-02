@@ -1,0 +1,109 @@
+ pjnath/src/pjnath/ice_session.c | 19 +++++++++++++++----
+ pjnath/src/pjnath/stun_sock.c   | 30 ++++++++++++++++--------------
+ 2 files changed, 31 insertions(+), 18 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index c111c8870..b4fb06c88 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -2640,8 +2640,12 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+     }
+ 
+     const pj_ice_sess_cand *rcand = check->rcand;
+-    if ((status == 120104 || status == 130054)/* CONNECTION RESET BY PEER */
+-	&& rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++    if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED && (
++			status == PJ_ERRNO_START_STATUS + 104 || status == 130054 || /* CONNECTION RESET BY PEER */
++			status == PJ_ERRNO_START_STATUS + 113 /* EHOSTUNREACH */ ||
++			status == PJ_ERRNO_START_STATUS + 101 /* ENETUNREACH */ ||
++			status == PJ_ERRNO_START_STATUS + 32 /* EPIPE */
++		)) {
+ 	/**
+ 	 * This part of the code is triggered when using ICE over TCP via TURN
+ 	 * In fact, the other peer has to authorize this peer to connect to
+@@ -2656,6 +2660,9 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 			status);
+ 		return;
+     } else if (status != PJ_SUCCESS) {
++	// Note sblin: printf is mostly there for debugging purpose
++	if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED)
++		printf("ice_sess_on_peer_connection failed with status %u\n", status);
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+ 	on_check_complete(ice, check);
+ 	return;
+@@ -2687,8 +2694,12 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 					       pj_sockaddr_get_len(&rcand->addr),
+ 					       check->tdata);
+ 
+-    if ((status_send_msg == 120104 || status_send_msg == 130054 /* CONNECTION RESET BY PEER */ || status_send_msg == 120032 /* BROKEN PIPE */)
+-		&& rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++    if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED && (
++			status == PJ_ERRNO_START_STATUS + 104 || status == 130054 || /* CONNECTION RESET BY PEER */
++			status == PJ_ERRNO_START_STATUS + 113 /* EHOSTUNREACH */ ||
++			status == PJ_ERRNO_START_STATUS + 101 /* ENETUNREACH */ ||
++			status == PJ_ERRNO_START_STATUS + 32 /* EPIPE */
++		)) {
+ 		/**
+ 		 * This part of the code is triggered when using ICE over TCP via TURN
+ 		 * In fact, the other peer has to authorize this peer to connect to
+diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
+index 7b5e7c86b..3d142dcc0 100644
+--- a/pjnath/src/pjnath/stun_sock.c
++++ b/pjnath/src/pjnath/stun_sock.c
+@@ -1394,12 +1394,15 @@ PJ_DECL(pj_status_t) pj_stun_sock_connect(pj_stun_sock *stun_sock,
+         status = pj_activesock_start_connect(
+                                              *asock, stun_sock->pool, *addr,
+                                              pj_sockaddr_get_len(*addr));
+-        if (status == PJ_SUCCESS) {
++        if (status == PJ_SUCCESS || status == PJ_ERRNO_START_STATUS + 101 /* ENETUNREACH */) {
+             on_connect_complete(*asock, status);
+         } else if (status != PJ_EPENDING) {
+             char addrinfo[PJ_INET6_ADDRSTRLEN+8];
+             pj_perror(3, stun_sock->pool->obj_name, status, "Failed to connect to %s",
+                       pj_sockaddr_print(*addr, addrinfo, sizeof(addrinfo), 3));
++            // Note sblin: printf is mostly there for debugging purpose
++            printf("Failed to connect to %s. Status: %u\n",
++                      pj_sockaddr_print(*addr, addrinfo, sizeof(addrinfo), 3), status);
+             pj_grp_lock_release(stun_sock->grp_lock);
+             return status;
+         }
+@@ -1473,27 +1476,26 @@ static pj_bool_t on_connect_complete(pj_activesock_t *asock, pj_status_t status)
+     pj_stun_sock *stun_sock;
+     stun_sock = (pj_stun_sock *)pj_activesock_get_user_data(asock);
+ 
+-    pj_status_t result = pj_activesock_start_read(asock, stun_sock->pool,
+-                                                  stun_sock->cfg.max_pkt_size, 0);
+-    if (result != PJ_SUCCESS) {
+-        return PJ_FALSE;
+-    };
+-
+-    pj_stun_session_cb *cb = pj_stun_session_callback(stun_sock->stun_sess);
+-    if (!cb->on_peer_connection) {
+-        return PJ_FALSE;
+-    }
+-
+-    // Get remote connected address
+     pj_sockaddr_t* remote_addr = NULL;
++    // Get remote connected address
+     for (int i = 0 ; i <= stun_sock->outgoing_nb ; ++i) {
+         if (stun_sock->outgoing_socks[i].sock == asock) {
+             remote_addr = stun_sock->outgoing_socks[i].addr;
+         }
+     }
+     if (!remote_addr) return PJ_FALSE;
++
++    pj_stun_session_cb *cb = pj_stun_session_callback(stun_sock->stun_sess);
++    if (!cb->on_peer_connection) {
++        return PJ_FALSE;
++    }
++
+     (cb->on_peer_connection)(stun_sock->stun_sess, status, remote_addr);
+-    return PJ_TRUE;
++    if (status == PJ_SUCCESS) {
++        status = pj_activesock_start_read(asock, stun_sock->pool,
++                                        stun_sock->cfg.max_pkt_size, 0);
++    }
++    return status != PJ_SUCCESS;
+ }
+ 
+ #endif
