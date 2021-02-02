@@ -1,0 +1,93 @@
+ pjnath/src/pjnath/ice_session.c | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index c111c8870..5d4111239 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1857,6 +1857,7 @@ static void on_tcp_connect_timeout(pj_ice_sess* ice)
+ 		if (*ice->cb.close_tcp_connection)
+ 		    (*ice->cb.close_tcp_connection)(ice, &ice->clist, i);
+ 
++		printf("@@@ ON TIMEOUT\n");
+ 		check_set_state(ice, check,
+ 		    PJ_ICE_SESS_CHECK_STATE_FAILED, PJ_ECANCELLED);
+ 		on_check_complete(ice, check);
+@@ -1868,7 +1869,7 @@ static void on_tcp_connect_timeout(pj_ice_sess* ice)
+ 	/* Reschedule */
+ 	pj_time_val delay = {
+ 	    .sec  = 0,
+-	    .msec = 1500
++	    .msec = 3000
+ 	};
+ 	pj_time_val_normalize(&delay);
+ 	pj_timer_heap_schedule_w_grp_lock(ice->stun_cfg.timer_heap,
+@@ -2171,9 +2172,10 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+             } else {
+                 pj_time_val delay = {
+                     .sec  = 0,
+-                    .msec = 1500,
++                    .msec = 3000,
+                 };
+                 pj_time_val_normalize(&delay);
++				printf("@@@@@@2 SET TIMER %u\n", check->state);
+                 pj_timer_heap_schedule_w_grp_lock(ice->stun_cfg.timer_heap,
+                                                   &ice->timer_connect, &delay,
+                                                   TIMER_CONNECTION_TIMEOUT,
+@@ -2193,6 +2195,8 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+     status = send_connectivity_check(ice, clist, check_id, nominate, msg_data);
+ #endif
+ 
++	printf("@@@ check: %u - status: %u\n", check_id, status);
++
+     if (status == PJ_SUCCESS) {
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS,
+ 			status);
+@@ -2254,6 +2258,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 	    if (check->state == PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY) {
+ 		status = perform_check(ice, clist, i, ice->is_nominating);
+ 		if (status != PJ_SUCCESS && status != PJ_EPENDING) {
++			printf("@@@ perf check, status %u\n", status);
+ 		    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
+ 				    status);
+ 		    on_check_complete(ice, check);
+@@ -2277,6 +2282,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 		if (td->first_packet_counter % 50 == 0) {
+ 		    status = perform_check(ice, clist, i, ice->is_nominating);
+ 		    if (status != PJ_SUCCESS && status != PJ_EPENDING) {
++			printf("@@@ perf check2, status %u\n", status);
+ 			check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
+ 					status);
+ 			on_check_complete(ice, check);
+@@ -2299,6 +2305,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 	    if (check->state == PJ_ICE_SESS_CHECK_STATE_WAITING) {
+ 		status = perform_check(ice, clist, i, ice->is_nominating);
+ 		if (status != PJ_SUCCESS && status != PJ_EPENDING) {
++			printf("@@@ perf check3, status %u\n", status);
+ 		    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
+ 				    status);
+ 		    on_check_complete(ice, check);
+@@ -2319,6 +2326,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 	    if (check->state == PJ_ICE_SESS_CHECK_STATE_FROZEN) {
+ 		status = perform_check(ice, clist, i, ice->is_nominating);
+ 		if (status != PJ_SUCCESS && status != PJ_EPENDING) {
++			printf("@@@ perf check4, status %u\n", status);
+ 		    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+ 		    on_check_complete(ice, check);
+ 		}
+@@ -2656,6 +2664,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 			status);
+ 		return;
+     } else if (status != PJ_SUCCESS) {
++	printf("@@@ ice_sess_on_peer_connection, status %u\n", status);
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+ 	on_check_complete(ice, check);
+ 	return;
+@@ -2686,6 +2695,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 					       PJ_FALSE, PJ_FALSE, &rcand->addr,
+ 					       pj_sockaddr_get_len(&rcand->addr),
+ 					       check->tdata);
++	printf("@@@pj_stun_session_send_msg check: %u - status: %u\n", current_check, status_send_msg);
+ 
+     if ((status_send_msg == 120104 || status_send_msg == 130054 /* CONNECTION RESET BY PEER */ || status_send_msg == 120032 /* BROKEN PIPE */)
+ 		&& rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
