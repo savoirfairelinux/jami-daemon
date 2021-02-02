@@ -251,7 +251,12 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
     account.dht()->putEncrypted(dht::InfoHash::get(PeerConnectionRequest::key_prefix
                                                    + deviceId.toString()),
                                 deviceId,
-                                value);
+                                value,
+                                [this, deviceId](bool ok) {
+                                    if (!ok)
+                                        JAMI_ERR("Tried to send request to %s, but put failed",
+                                                 deviceId.to_c_str());
+                                });
     // Wait for call to onResponse() operated by DHT
     if (isDestroying_)
         return; // This avoid to wait new negotiation when destroying
@@ -578,10 +583,15 @@ ConnectionManager::Impl::answerTo(IceTransport& ice, const dht::Value::Id& id, c
     value->user_type = "peer_request";
 
     JAMI_DBG() << account << "[CNX] connection accepted, DHT reply to " << from;
-    account.dht()->putEncrypted(dht::InfoHash::get(PeerConnectionRequest::key_prefix
-                                                   + from.toString()),
-                                from,
-                                value);
+    account.dht()->putEncrypted(
+        dht::InfoHash::get(PeerConnectionRequest::key_prefix + from.toString()),
+        from,
+        value,
+        [this, from](bool ok) {
+            if (!ok)
+                JAMI_ERR("Tried to answer to connection request to %s, but put failed",
+                         from.to_c_str());
+        });
 }
 
 void
