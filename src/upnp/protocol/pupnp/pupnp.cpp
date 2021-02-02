@@ -1395,15 +1395,16 @@ PUPnP::actionDeletePortMapping(const UPnPIGD& igd,
                     protocol.c_str());
 
     action.reset(action_container_ptr);
+    int upnp_err = UpnpSendActionAsync(ctrlptHandle_,
+                                       igd.getControlURL().c_str(),
+                                       igd.getServiceType().c_str(),
+                                       nullptr,
+                                       action.get(),
+                                       ctrlPtCallback,
+                                       this);
 
-    int upnp_err = UpnpSendAction(ctrlptHandle_,
-                                  igd.getControlURL().c_str(),
-                                  igd.getServiceType().c_str(),
-                                  nullptr,
-                                  action.get(),
-                                  &response_container_ptr);
     if (upnp_err != UPNP_E_SUCCESS) {
-        JAMI_WARN("PUPnP: Failed to send %s from: %s, %d: %s",
+        JAMI_WARN("PUPnP: Failed to send %s request from: %s, %d: %s",
                   action_name.c_str(),
                   igd.getServiceType().c_str(),
                   upnp_err,
@@ -1411,24 +1412,9 @@ PUPnP::actionDeletePortMapping(const UPnPIGD& igd,
         return false;
     }
 
-    if (not response_container_ptr) {
-        JAMI_WARN("PUPnP: Failed to get response from %s", action_name.c_str());
-        return false;
-    }
-    response.reset(response_container_ptr);
-
-    // Check if there is an error code.
-    std::string errorCode = getFirstDocItem(response.get(), "errorCode");
-    if (not errorCode.empty()) {
-        std::string errorDescription = getFirstDocItem(response.get(), "errorDescription");
-        JAMI_WARN("PUPnP: %s returned with error: %s: %s",
-                  action_name.c_str(),
-                  errorCode.c_str(),
-                  errorDescription.c_str());
-        return false;
-    }
-
-    JAMI_WARN("PUPnP: Closed port %s %s", port_external.c_str(), protocol.c_str());
+    JAMI_DBG("PUPnP: Successfully sent %s request from %s",
+             action_name.c_str(),
+             igd.getServiceType().c_str());
 
     return true;
 }
