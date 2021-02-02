@@ -1,0 +1,157 @@
+ pjnath/src/pjnath/ice_session.c | 17 ++++++++++++++---
+ pjnath/src/pjnath/ice_strans.c  |  1 +
+ pjnath/src/pjnath/stun_sock.c   |  5 ++++-
+ 3 files changed, 19 insertions(+), 4 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index c111c8870..c2b59758f 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1857,6 +1857,7 @@ static void on_tcp_connect_timeout(pj_ice_sess* ice)
+ 		if (*ice->cb.close_tcp_connection)
+ 		    (*ice->cb.close_tcp_connection)(ice, &ice->clist, i);
+ 
++		printf("@@@ ON TIMEOUT\n");
+ 		check_set_state(ice, check,
+ 		    PJ_ICE_SESS_CHECK_STATE_FAILED, PJ_ECANCELLED);
+ 		on_check_complete(ice, check);
+@@ -1868,7 +1869,7 @@ static void on_tcp_connect_timeout(pj_ice_sess* ice)
+ 	/* Reschedule */
+ 	pj_time_val delay = {
+ 	    .sec  = 0,
+-	    .msec = 1500
++	    .msec = 3000
+ 	};
+ 	pj_time_val_normalize(&delay);
+ 	pj_timer_heap_schedule_w_grp_lock(ice->stun_cfg.timer_heap,
+@@ -2166,14 +2167,16 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+             pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap,
+                                            &ice->timer_connect, TIMER_NONE);
+             status = (*ice->cb.wait_tcp_connection)(ice, clist, check_id);
++			printf("@@@@@@@ %u for wait_tcp\n", status);
+             if (ice->timer_connect.id != TIMER_NONE) {
+                 pj_assert(!"Not expected any timer active");
+             } else {
+                 pj_time_val delay = {
+                     .sec  = 0,
+-                    .msec = 1500,
++                    .msec = 3000,
+                 };
+                 pj_time_val_normalize(&delay);
++				printf("@@@@@@2 SET TIMER %u\n", check->state);
+                 pj_timer_heap_schedule_w_grp_lock(ice->stun_cfg.timer_heap,
+                                                   &ice->timer_connect, &delay,
+                                                   TIMER_CONNECTION_TIMEOUT,
+@@ -2193,6 +2196,8 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+     status = send_connectivity_check(ice, clist, check_id, nominate, msg_data);
+ #endif
+ 
++	printf("@@@ check: %u - status: %u\n", check_id, status);
++
+     if (status == PJ_SUCCESS) {
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS,
+ 			status);
+@@ -2254,6 +2259,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 	    if (check->state == PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY) {
+ 		status = perform_check(ice, clist, i, ice->is_nominating);
+ 		if (status != PJ_SUCCESS && status != PJ_EPENDING) {
++			printf("@@@ perf check, status %u\n", status);
+ 		    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
+ 				    status);
+ 		    on_check_complete(ice, check);
+@@ -2277,6 +2283,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 		if (td->first_packet_counter % 50 == 0) {
+ 		    status = perform_check(ice, clist, i, ice->is_nominating);
+ 		    if (status != PJ_SUCCESS && status != PJ_EPENDING) {
++			printf("@@@ perf check2, status %u\n", status);
+ 			check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
+ 					status);
+ 			on_check_complete(ice, check);
+@@ -2299,6 +2306,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 	    if (check->state == PJ_ICE_SESS_CHECK_STATE_WAITING) {
+ 		status = perform_check(ice, clist, i, ice->is_nominating);
+ 		if (status != PJ_SUCCESS && status != PJ_EPENDING) {
++			printf("@@@ perf check3, status %u\n", status);
+ 		    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
+ 				    status);
+ 		    on_check_complete(ice, check);
+@@ -2319,6 +2327,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 	    if (check->state == PJ_ICE_SESS_CHECK_STATE_FROZEN) {
+ 		status = perform_check(ice, clist, i, ice->is_nominating);
+ 		if (status != PJ_SUCCESS && status != PJ_EPENDING) {
++			printf("@@@ perf check4, status %u\n", status);
+ 		    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+ 		    on_check_complete(ice, check);
+ 		}
+@@ -2640,7 +2649,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+     }
+ 
+     const pj_ice_sess_cand *rcand = check->rcand;
+-    if ((status == 120104 || status == 130054)/* CONNECTION RESET BY PEER */
++    if ((status == 120104 || status == 130054 || status == 120113)/* CONNECTION RESET BY PEER */
+ 	&& rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
+ 	/**
+ 	 * This part of the code is triggered when using ICE over TCP via TURN
+@@ -2656,6 +2665,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 			status);
+ 		return;
+     } else if (status != PJ_SUCCESS) {
++	printf("@@@ ice_sess_on_peer_connection, status %u\n", status);
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+ 	on_check_complete(ice, check);
+ 	return;
+@@ -2686,6 +2696,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 					       PJ_FALSE, PJ_FALSE, &rcand->addr,
+ 					       pj_sockaddr_get_len(&rcand->addr),
+ 					       check->tdata);
++	printf("@@@pj_stun_session_send_msg check: %u - status: %u\n", current_check, status_send_msg);
+ 
+     if ((status_send_msg == 120104 || status_send_msg == 130054 /* CONNECTION RESET BY PEER */ || status_send_msg == 120032 /* BROKEN PIPE */)
+ 		&& rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index d63be0e3f..2ce429415 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -2475,6 +2475,7 @@ static pj_status_t ice_wait_tcp_connection(pj_ice_sess *ice,
+             &on_peer_reset_connection;
+         pj_stun_session_callback(sess)->on_peer_packet = &on_peer_packet;
+ 
++		printf("@@@@@@ %u connect active\n", idx);
+         return pj_stun_sock_connect_active(st_comp->stun[idx].sock,
+                                            &rcand->addr,
+                                            rcand->addr.addr.sa_family);
+diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
+index 7b5e7c86b..8db2501af 100644
+--- a/pjnath/src/pjnath/stun_sock.c
++++ b/pjnath/src/pjnath/stun_sock.c
+@@ -1391,6 +1391,7 @@ PJ_DECL(pj_status_t) pj_stun_sock_connect(pj_stun_sock *stun_sock,
+ 
+         *addr = (pj_sockaddr_t*)remote_addr;
+ 
++        printf("@@@ START CONNECT\n");
+         status = pj_activesock_start_connect(
+                                              *asock, stun_sock->pool, *addr,
+                                              pj_sockaddr_get_len(*addr));
+@@ -1413,12 +1414,13 @@ PJ_DECL(pj_status_t) pj_stun_sock_connect_active(pj_stun_sock *stun_sock,
+ 						 const pj_sockaddr_t *remote_addr,
+ 						 int af)
+ {
+-
++    printf("@@@ pj_stun_sock_connect_active\n");
+     if (stun_sock->incoming_nb != -1) {
+ 	// Check if not incoming, if so, already connected (mainly for PRFLX candidates)
+ 	for (int i = 0 ; i <= stun_sock->incoming_nb; ++i) {
+ 	    if (stun_sock->incoming_socks[i].sock != NULL
+ 	    && pj_sockaddr_cmp(&stun_sock->incoming_socks[i].addr, remote_addr)==0) {
++        printf("@@@ INCOMING\n");
+ 		pj_stun_session_cb *cb =
+ 		    pj_stun_session_callback(stun_sock->stun_sess);
+ 		(cb->on_peer_connection)(stun_sock->stun_sess, PJ_SUCCESS,
+@@ -1431,6 +1433,7 @@ PJ_DECL(pj_status_t) pj_stun_sock_connect_active(pj_stun_sock *stun_sock,
+     /* Create socket and bind socket */
+     stun_sock->outgoing_nb += 1;
+     int nb_check = stun_sock->outgoing_nb;
++    printf("@@@ CO ACTIVE %u\n", stun_sock->outgoing_nb);
+     return pj_stun_sock_connect(stun_sock, remote_addr, af, nb_check);
+ 
+ }
