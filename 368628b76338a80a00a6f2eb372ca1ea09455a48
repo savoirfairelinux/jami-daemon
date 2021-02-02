@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "45d3099c_72f3e173",
+        "filename": "src/conference.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 199,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-02T21:39:07Z",
+      "side": 1,
+      "message": "race condition here\n\nConference may be not stored in Manager, so call-\u003eenterConference() will crash\n\nhttps://review.jami.net/c/ring-daemon/+/16945/4 fix the race cond. Need to squash this",
+      "range": {
+        "startLine": 197,
+        "startChar": 19,
+        "endLine": 199,
+        "endChar": 47
+      },
+      "revId": "368628b76338a80a00a6f2eb372ca1ea09455a48",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
