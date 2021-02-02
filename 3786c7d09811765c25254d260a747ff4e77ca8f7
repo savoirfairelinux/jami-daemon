@@ -1,0 +1,211 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fa4a77d3_7d3b5b96",
+        "filename": "src/call.h",
+        "patchSetId": 21
+      },
+      "lineNbr": 265,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-02T23:27:54Z",
+      "side": 1,
+      "message": "std::move to avoid copy of the listener",
+      "range": {
+        "startLine": 265,
+        "startChar": 44,
+        "endLine": 265,
+        "endChar": 52
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dce0f013_0fb6e7e3",
+        "filename": "src/call.h",
+        "patchSetId": 21
+      },
+      "lineNbr": 364,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-02T23:27:54Z",
+      "side": 1,
+      "message": "should be const for semantic purposes",
+      "range": {
+        "startLine": 364,
+        "startChar": 4,
+        "endLine": 364,
+        "endChar": 15
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "11b81a84_152afba3",
+        "filename": "src/call.h",
+        "patchSetId": 21
+      },
+      "lineNbr": 399,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-02T23:27:54Z",
+      "side": 1,
+      "message": "Information redundant with the type. Previous static implementation made more sense (although using enum is better).",
+      "range": {
+        "startLine": 397,
+        "startChar": 0,
+        "endLine": 399,
+        "endChar": 43
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "129a56d1_6fced7f5",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-02T23:27:54Z",
+      "side": 1,
+      "message": "Unneeded",
+      "range": {
+        "startLine": 44,
+        "startChar": 0,
+        "endLine": 50,
+        "endChar": 0
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "680e60ed_0c7cf29e",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-02T23:27:54Z",
+      "side": 1,
+      "message": "log + return null instead ?",
+      "range": {
+        "startLine": 52,
+        "startChar": 4,
+        "endLine": 52,
+        "endChar": 24
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "502a6de1_cb4b7f9f",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-02T23:27:54Z",
+      "side": 1,
+      "message": "Unneeded: after make_shared, call is guaranteed non-null or an exception would be thrown.",
+      "range": {
+        "startLine": 55,
+        "startChar": 4,
+        "endLine": 55,
+        "endChar": 15
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "efea2ec6_59498f75",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-02T23:27:54Z",
+      "side": 1,
+      "message": "emplace(id, call)",
+      "range": {
+        "startLine": 57,
+        "startChar": 39,
+        "endLine": 57,
+        "endChar": 45
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fba1112c_a64fe7ad",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-02T23:27:54Z",
+      "side": 1,
+      "message": "callMaps_.at(call.getLinkType());",
+      "range": {
+        "startLine": 76,
+        "startChar": 0,
+        "endLine": 77,
+        "endChar": 39
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e7d81455_e430b3e8",
+        "filename": "src/conference.h",
+        "patchSetId": 21
+      },
+      "lineNbr": 258,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-02T23:27:54Z",
+      "side": 1,
+      "message": "Irrelevant to this class. This function is only used as a small shortcut, so it might simply be kept in the .cpp .",
+      "range": {
+        "startLine": 258,
+        "startChar": 4,
+        "endLine": 258,
+        "endChar": 68
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
