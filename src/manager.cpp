@@ -1929,10 +1929,12 @@ Manager::incomingCall(Call& call, const std::string& accountId)
             auto conf = std::make_shared<Conference>();
 
             // Bind calls according to their state
+            // Note: store in conference map before bindCallToConference
+            // else can do SIPCall::enterConference without conference
+            pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
             pimpl_->bindCallToConference(*call, *conf);
             conf->detach();
 
-            pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
             emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
         });
     } else if (pimpl_->autoAnswer_) {
