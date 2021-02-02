@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3729a055_5c89229e",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 273,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-02-02T21:17:12Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nloop variable is copied but only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "9e30406ed31e57a09cdff28e9f5718b2800f362f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1973a482_d0a3f814",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 295,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-02-02T21:17:12Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027rootPath\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "9e30406ed31e57a09cdff28e9f5718b2800f362f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
