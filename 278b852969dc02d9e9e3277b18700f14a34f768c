@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "13814941_5197424a",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 352,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-03T21:49:39Z",
+      "side": 1,
+      "message": "The logic is a bit hard to catch there, should be commented, what is address list, why cleard in the middle, why two addServerReflexiveCandidates",
+      "range": {
+        "startLine": 347,
+        "startChar": 26,
+        "endLine": 352,
+        "endChar": 26
+      },
+      "revId": "278b852969dc02d9e9e3277b18700f14a34f768c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b287b982_79d91176",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 867,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-03T21:49:39Z",
+      "side": 1,
+      "message": "typos",
+      "range": {
+        "startLine": 867,
+        "startChar": 60,
+        "endLine": 867,
+        "endChar": 66
+      },
+      "revId": "278b852969dc02d9e9e3277b18700f14a34f768c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "12bf2503_37dc1f75",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 875,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-03T21:49:39Z",
+      "side": 1,
+      "message": "port \u003d isTcp? 9 : ...",
+      "range": {
+        "startLine": 875,
+        "startChar": 27,
+        "endLine": 875,
+        "endChar": 30
+      },
+      "revId": "278b852969dc02d9e9e3277b18700f14a34f768c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
