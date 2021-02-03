@@ -22,6 +22,30 @@
       "revId": "368628b76338a80a00a6f2eb372ca1ea09455a48",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ba36fbe4_09afaec4",
+        "filename": "src/conference.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 199,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-03T21:45:39Z",
+      "side": 1,
+      "message": "Ack\nNo big deal, just merge #16945 and I will rebase when done.",
+      "parentUuid": "45d3099c_72f3e173",
+      "range": {
+        "startLine": 197,
+        "startChar": 19,
+        "endLine": 199,
+        "endChar": 47
+      },
+      "revId": "368628b76338a80a00a6f2eb372ca1ea09455a48",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
