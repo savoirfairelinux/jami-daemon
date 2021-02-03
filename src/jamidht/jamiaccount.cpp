@@ -1124,6 +1124,10 @@ JamiAccount::loadAccount(const std::string& archive_password,
                time_t received) {
             auto saveReq = false;
             if (!conversationId.empty()) {
+                if (isConversation(conversationId)) {
+                    JAMI_ERR("@@@ TRUST REQUEST FOR EXISTING CONV %s", conversationId.c_str());
+                    return;
+                }
                 saveReq = true;
                 if (accountManager_->getRequest(conversationId) != std::nullopt) {
                     JAMI_INFO("[Account %s] Received a request for a conversation "
@@ -1132,6 +1136,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     return;
                 }
             }
+            JAMI_ERR("@@@@ ON TRUST REQUEST");
             emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(getAccountID(),
                                                                          conversationId,
                                                                          uri,
@@ -1150,6 +1155,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                             std::string(payload.data(), payload.data() + payload.size()));
                         req.metadatas = ConversationRepository::infosFromVCard(details);
                         acc->accountManager_->addConversationRequest(conversationId, std::move(req));
+                        JAMI_ERR("@@@@ ConversationRequestReceived");
                         emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(
                             acc->getAccountID(), conversationId, req.toMap());
                         acc->saveConvRequests();
@@ -2585,7 +2591,8 @@ JamiAccount::doRegister_()
                         std::string accId = getAccountID();
                         auto res = transferManagers_.emplace(std::piecewise_construct,
                                                              std::forward_as_tuple(conversationId),
-                                                             std::forward_as_tuple(accId, conversationId));
+                                                             std::forward_as_tuple(accId,
+                                                                                   conversationId));
                         if (!res.second) {
                             JAMI_ERR("Couldn't create manager for conversation %s",
                                      conversationId.c_str());
@@ -4717,6 +4724,7 @@ JamiAccount::onConversationRequest(const std::string& from, const Json::Value& v
     // Note: no need to sync here because over connected devices should receives
     // the same conversation request. Will sync when the conversation will be added
 
+    JAMI_ERR("@@@@ ConversationRequestReceived");
     emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(accountID_,
                                                                        convId,
                                                                        req.toMap());
@@ -5210,6 +5218,8 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
                           getAccountID().c_str(),
                           convId.c_str(),
                           deviceId.c_str());
+
+                JAMI_ERR("@@@@ ConversationRequestReceived");
                 emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(getAccountID(),
                                                                                    convId,
                                                                                    req.toMap());
