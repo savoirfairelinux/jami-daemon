@@ -1,0 +1,234 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "59e9a291_1b8fbaf8",
+        "filename": "src/call.h",
+        "patchSetId": 16
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-03T14:20:51Z",
+      "side": 1,
+      "message": "missing todo",
+      "range": {
+        "startLine": 288,
+        "startChar": 13,
+        "endLine": 289,
+        "endChar": 14
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0ed55cb1_8937df28",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-03T14:20:51Z",
+      "side": 1,
+      "message": "To verify: Does it follow RFC 4317?\nhttps://tools.ietf.org/html/rfc4317#section-4.2",
+      "range": {
+        "startLine": 88,
+        "startChar": 37,
+        "endLine": 88,
+        "endChar": 55
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f1c6353e_2b5549d4",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 430,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-03T14:20:51Z",
+      "side": 1,
+      "message": "why you don\u0027t use the classic placeCallWithDetails? I mean, AUDIO_ONLY is managed by this way, medias can be added as details.",
+      "range": {
+        "startLine": 429,
+        "startChar": 19,
+        "endLine": 430,
+        "endChar": 21
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4816962e_2820a042",
+        "filename": "src/logger.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-03T14:20:51Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 2,
+        "startChar": 25,
+        "endLine": 2,
+        "endChar": 29
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c6b0468c_c2cdb6df",
+        "filename": "src/logger.h",
+        "patchSetId": 16
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-03T14:20:51Z",
+      "side": 1,
+      "message": "to rm",
+      "range": {
+        "startLine": 2,
+        "startChar": 20,
+        "endLine": 2,
+        "endChar": 27
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cfd86184_9e44170b",
+        "filename": "src/manager.h",
+        "patchSetId": 16
+      },
+      "lineNbr": 620,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-03T14:20:51Z",
+      "side": 1,
+      "message": "missing todo",
+      "range": {
+        "startLine": 619,
+        "startChar": 0,
+        "endLine": 620,
+        "endChar": 23
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7a713b1b_df39c3fa",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 415,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-03T14:20:51Z",
+      "side": 1,
+      "message": "in the future, how the client will give its list for answering?",
+      "range": {
+        "startLine": 415,
+        "startChar": 30,
+        "endLine": 415,
+        "endChar": 52
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d370a525_ca6ce9a6",
+        "filename": "test/unitTest/call/call.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-03T14:20:51Z",
+      "side": 1,
+      "message": "why changing the name?\n\ntest also sip connections",
+      "range": {
+        "startLine": 38,
+        "startChar": 5,
+        "endLine": 38,
+        "endChar": 18
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d7c68664_2063509e",
+        "filename": "test/unitTest/media_control/media_control.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 400,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-03T14:20:51Z",
+      "side": 1,
+      "message": "If I\u0027m not too tired, this only check for one scenario (video-\u003eno video), other TestScenario possibilities are not handled right?",
+      "range": {
+        "startLine": 400,
+        "startChar": 43,
+        "endLine": 400,
+        "endChar": 77
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5f1d977e_8e6df081",
+        "filename": "test/unitTest/media_control/media_control.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 413,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-03T14:20:51Z",
+      "side": 1,
+      "message": "to remove",
+      "range": {
+        "startLine": 412,
+        "startChar": 0,
+        "endLine": 413,
+        "endChar": 52
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
