@@ -1066,6 +1066,10 @@ SIPCall::setupLocalSDPFromIce()
         JAMI_ERR("No account detected");
         return;
     }
+    if (!sdp_) {
+        JAMI_ERR("No sdp detected");
+        return;
+    }
 
     JAMI_WARN("[call:%s] fill SDP with ICE transport %p", getCallId().c_str(), media_tr);
     sdp_->addIceAttributes(media_tr->getLocalAttributes());
@@ -1091,6 +1095,8 @@ SIPCall::getAllRemoteCandidates()
 
     auto addSDPCandidates = [&, this](unsigned sdpMediaId, std::vector<IceCandidate>& out) {
         IceCandidate cand;
+        if (!sdp_)
+            return;
         for (auto& line : sdp_->getIceCandidates(sdpMediaId)) {
             if (media_tr->getCandidateFromSDP(line, cand)) {
                 JAMI_DBG("[call:%s] add remote ICE candidate: %s",
@@ -1355,7 +1361,7 @@ SIPCall::onMediaUpdate()
         if (auto this_ = w.lock()) {
             std::lock_guard<std::recursive_mutex> lk {this_->callMutex_};
             // The call is already ended, so we don't need to restart medias
-            if (!this_->inv or this_->inv->state == PJSIP_INV_STATE_DISCONNECTED)
+            if (!this_->inv or this_->inv->state == PJSIP_INV_STATE_DISCONNECTED or not this_->sdp_)
                 return;
             // If ICE is not used, start medias now
             auto rem_ice_attrs = this_->sdp_->getIceAttributes();
@@ -1396,6 +1402,8 @@ SIPCall::startIceMedia()
     }
 
     // Start transport on SDP data and wait for negotiation
+    if (!sdp_)
+        return;
     auto rem_ice_attrs = sdp_->getIceAttributes();
     if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
         JAMI_ERR("[call:%s] Media ICE attributes empty", getCallId().c_str());
@@ -1429,6 +1437,8 @@ SIPCall::onIceNegoSucceed()
 void
 SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer)
 {
+    if (!sdp_)
+        return;
     sdp_->clearIce();
     auto acc = getSIPAccount();
     if (!acc) {
@@ -1450,7 +1460,7 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer)
 void
 SIPCall::openPortsUPnP()
 {
-    if (upnp_) {
+    if (upnp_ and sdp_) {
         /**
          * Try to open the desired ports with UPnP,
          * if they are used, use the alternative port and update the SDP session with the newly
