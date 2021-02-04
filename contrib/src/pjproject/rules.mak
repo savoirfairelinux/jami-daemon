@@ -62,6 +62,7 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0015-update-local-preference-for-peer-reflexive-candidate.patch
 	$(APPLY) $(SRC)/pjproject/0016-use-addrinfo-instead-CFHOST.patch
 	$(APPLY) $(SRC)/pjproject/debug.patch
+	$(APPLY) $(SRC)/pjproject/debug2.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch
 endif
