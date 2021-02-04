@@ -1905,7 +1905,7 @@ Manager::incomingCall(Call& call, const std::string& accountId)
 
     auto currentCall = getCurrentCall();
     if (account->isRendezVous()) {
-        runOnMainThread([this, callID] {
+        dht::ThreadPool::io().run([this, callID] {
             answerCall(callID);
             auto call = getCallFromCallID(callID);
             auto accountId = call->getAccountId();
@@ -1936,7 +1936,7 @@ Manager::incomingCall(Call& call, const std::string& accountId)
             emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
         });
     } else if (pimpl_->autoAnswer_) {
-        runOnMainThread([this, callID] { answerCall(callID); });
+        dht::ThreadPool::io().run([this, callID] { answerCall(callID); });
     } else if (currentCall) {
         // Test if already calling this person
         if (currentCall->getAccountId() == accountId
