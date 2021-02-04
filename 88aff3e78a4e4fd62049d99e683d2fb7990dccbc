@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "eeb019dc_dd6294ca",
+        "filename": "src/conference.h",
+        "patchSetId": 22
+      },
+      "lineNbr": 258,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-04T22:17:55Z",
+      "side": 1,
+      "message": "callId",
+      "range": {
+        "startLine": 258,
+        "startChar": 60,
+        "endLine": 258,
+        "endChar": 66
+      },
+      "revId": "88aff3e78a4e4fd62049d99e683d2fb7990dccbc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
