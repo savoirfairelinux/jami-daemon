@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "acab550e_98deade0",
+        "filename": "src/call.h",
+        "patchSetId": 21
+      },
+      "lineNbr": 265,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T14:42:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fa4a77d3_7d3b5b96",
+      "range": {
+        "startLine": 265,
+        "startChar": 44,
+        "endLine": 265,
+        "endChar": 52
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "dce0f013_0fb6e7e3",
         "filename": "src/call.h",
         "patchSetId": 21
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "724941d1_84cd64f6",
+        "filename": "src/call.h",
+        "patchSetId": 21
+      },
+      "lineNbr": 364,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T14:42:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dce0f013_0fb6e7e3",
+      "range": {
+        "startLine": 364,
+        "startChar": 4,
+        "endLine": 364,
+        "endChar": 15
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "11b81a84_152afba3",
         "filename": "src/call.h",
         "patchSetId": 21
@@ -59,6 +107,30 @@
       "writtenOn": "2021-02-02T23:27:54Z",
       "side": 1,
       "message": "Information redundant with the type. Previous static implementation made more sense (although using enum is better).",
+      "range": {
+        "startLine": 397,
+        "startChar": 0,
+        "endLine": 399,
+        "endChar": 43
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "09213557_037a89c5",
+        "filename": "src/call.h",
+        "patchSetId": 21
+      },
+      "lineNbr": 399,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T14:42:09Z",
+      "side": 1,
+      "message": "I agree, I too find the use of linkType_ somehow awkward, and might be inferred or make irrelevant.\nBut I dont think LinkType and CallType carry the same info, but linkType might be redundant with the callId: the callId should be unique regardless if linkType.\nThe list of calls in CallFactory class, should be simply indexed using the callId",
+      "parentUuid": "11b81a84_152afba3",
       "range": {
         "startLine": 397,
         "startChar": 0,

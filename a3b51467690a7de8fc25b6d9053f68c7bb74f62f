@@ -471,6 +471,30 @@
       "revId": "a3b51467690a7de8fc25b6d9053f68c7bb74f62f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c0f8c43a_a9ebd26c",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 720,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T14:42:09Z",
+      "side": 1,
+      "message": "I agree. The solution is as simple as adding an argument of type \"LinkType\" to some of CallFactory methods: callCount(), clear(), getAllCalls(), ...\nSince we only have one type of Call and we dont have any idea how the next \"call type\" would handled if any, I suggest we keep it as simple as possible for now.",
+      "parentUuid": "15c173c0_7b79846f",
+      "range": {
+        "startLine": 720,
+        "startChar": 4,
+        "endLine": 720,
+        "endChar": 52
+      },
+      "revId": "a3b51467690a7de8fc25b6d9053f68c7bb74f62f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
