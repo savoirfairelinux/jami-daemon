@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "0458972b_d3bd5ce6",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 352,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T17:16:11Z",
+      "side": 1,
+      "message": "Agree needs some comments.\nBriefly, addServerReflexiveCandidates take a list of addr pairs (local/ext) and create a stun config to add the candidates, then add it to ice session. The local is the host and ext is the srflx. \nSo we have to call it twice, one for published (DHT) addr and one for UPNP (if any).\nOnce we modify the patch that adds the srflx candidates, we will squash this code and we would need only one stun config (instead of two)",
+      "parentUuid": "13814941_5197424a",
+      "range": {
+        "startLine": 347,
+        "startChar": 26,
+        "endLine": 352,
+        "endChar": 26
+      },
+      "revId": "278b852969dc02d9e9e3277b18700f14a34f768c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "b287b982_79d91176",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 12
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "f9c9df6e_e482abba",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 867,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T17:16:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b287b982_79d91176",
+      "range": {
+        "startLine": 867,
+        "startChar": 60,
+        "endLine": 867,
+        "endChar": 66
+      },
+      "revId": "278b852969dc02d9e9e3277b18700f14a34f768c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "12bf2503_37dc1f75",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 12
@@ -68,6 +116,30 @@
       "revId": "278b852969dc02d9e9e3277b18700f14a34f768c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f69c7bc5_36ab5e87",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 875,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T17:16:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "12bf2503_37dc1f75",
+      "range": {
+        "startLine": 875,
+        "startChar": 27,
+        "endLine": 875,
+        "endChar": 30
+      },
+      "revId": "278b852969dc02d9e9e3277b18700f14a34f768c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
