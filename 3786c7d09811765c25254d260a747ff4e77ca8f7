@@ -166,6 +166,30 @@
     },
     {
       "key": {
+        "uuid": "cf1b70c4_2b5bc772",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T15:14:27Z",
+      "side": 1,
+      "message": "Why?",
+      "parentUuid": "129a56d1_6fced7f5",
+      "range": {
+        "startLine": 44,
+        "startChar": 0,
+        "endLine": 50,
+        "endChar": 0
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "680e60ed_0c7cf29e",
         "filename": "src/call_factory.cpp",
         "patchSetId": 21
@@ -186,6 +210,30 @@
       "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "66bf2f2c_96f75997",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T15:14:27Z",
+      "side": 1,
+      "message": "Ack\nThis condition must not happen, this is why we assert.",
+      "parentUuid": "680e60ed_0c7cf29e",
+      "range": {
+        "startLine": 52,
+        "startChar": 4,
+        "endLine": 52,
+        "endChar": 24
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -212,6 +260,30 @@
     },
     {
       "key": {
+        "uuid": "13ac4775_2f1e7e94",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T15:14:27Z",
+      "side": 1,
+      "message": "Ack\nassert is better.",
+      "parentUuid": "502a6de1_cb4b7f9f",
+      "range": {
+        "startLine": 55,
+        "startChar": 4,
+        "endLine": 55,
+        "endChar": 15
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "efea2ec6_59498f75",
         "filename": "src/call_factory.cpp",
         "patchSetId": 21
@@ -232,6 +304,30 @@
       "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f7fa79e9_39aa6ee1",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T15:14:27Z",
+      "side": 1,
+      "message": "Good one. +1\nDone",
+      "parentUuid": "efea2ec6_59498f75",
+      "range": {
+        "startLine": 57,
+        "startChar": 39,
+        "endLine": 57,
+        "endChar": 45
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -258,6 +354,30 @@
     },
     {
       "key": {
+        "uuid": "e483456b_d1da12a6",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 21
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T15:14:27Z",
+      "side": 1,
+      "message": "... ok\nDone",
+      "parentUuid": "fba1112c_a64fe7ad",
+      "range": {
+        "startLine": 76,
+        "startChar": 0,
+        "endLine": 77,
+        "endChar": 39
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "e7d81455_e430b3e8",
         "filename": "src/conference.h",
         "patchSetId": 21
@@ -269,6 +389,30 @@
       "writtenOn": "2021-02-02T23:27:54Z",
       "side": 1,
       "message": "Irrelevant to this class. This function is only used as a small shortcut, so it might simply be kept in the .cpp .",
+      "range": {
+        "startLine": 258,
+        "startChar": 4,
+        "endLine": 258,
+        "endChar": 68
+      },
+      "revId": "3786c7d09811765c25254d260a747ff4e77ca8f7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7e75a53f_ad322854",
+        "filename": "src/conference.h",
+        "patchSetId": 21
+      },
+      "lineNbr": 258,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T15:14:27Z",
+      "side": 1,
+      "message": "Not sure to understand why it\u0027s \"irrelevant\". This is a helper method in the private section, same as the other ones.",
+      "parentUuid": "e7d81455_e430b3e8",
       "range": {
         "startLine": 258,
         "startChar": 4,

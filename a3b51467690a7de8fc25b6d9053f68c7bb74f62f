@@ -167,6 +167,30 @@
     },
     {
       "key": {
+        "uuid": "746120ce_42dc86f1",
+        "filename": "src/call_factory.h",
+        "patchSetId": 18
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T15:14:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "33986a38_f407e75c",
+      "range": {
+        "startLine": 61,
+        "startChar": 4,
+        "endLine": 62,
+        "endChar": 61
+      },
+      "revId": "a3b51467690a7de8fc25b6d9053f68c7bb74f62f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "18652242_58b0bb61",
         "filename": "src/media/recordable.cpp",
         "patchSetId": 18
@@ -249,6 +273,30 @@
       "side": 1,
       "message": "After all, it does not need to be here, only Call/SIPCall actually need it.\nMoved to Call class",
       "parentUuid": "8385a47a_b367d399",
+      "range": {
+        "startLine": 70,
+        "startChar": 4,
+        "endLine": 70,
+        "endChar": 44
+      },
+      "revId": "a3b51467690a7de8fc25b6d9053f68c7bb74f62f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "dc924203_a71fea98",
+        "filename": "src/media/recordable.h",
+        "patchSetId": 18
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T15:14:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a9f35355_9e028d15",
       "range": {
         "startLine": 70,
         "startChar": 4,
