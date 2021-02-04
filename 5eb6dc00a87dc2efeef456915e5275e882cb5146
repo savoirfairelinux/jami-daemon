@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "d10200ba_d47a9c0e",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 13
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T20:55:22Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7aadca73_acb00ffa",
+      "range": {
+        "startLine": 7,
+        "startChar": 17,
+        "endLine": 7,
+        "endChar": 26
+      },
+      "revId": "5eb6dc00a87dc2efeef456915e5275e882cb5146",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b8781736_0323902a",
         "filename": "/COMMIT_MSG",
         "patchSetId": 13
@@ -36,6 +60,30 @@
       "writtenOn": "2021-02-03T21:36:08Z",
       "side": 1,
       "message": "Not sure to understand what it really fixes. How do I test? the solutions seems a bit hacky with the static bool",
+      "range": {
+        "startLine": 9,
+        "startChar": 13,
+        "endLine": 11,
+        "endChar": 11
+      },
+      "revId": "5eb6dc00a87dc2efeef456915e5275e882cb5146",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "108cb215_d239a47f",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 13
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-04T20:55:22Z",
+      "side": 1,
+      "message": "libupn may call the the callback ctrlPtCallback (static method) while/after destroying PUPnP instance, which will cause a crash.\nIt\u0027s unlikely to have the crash with Jami, because the lib will stop before PUPnP is released. \nBut I frequently reproduce the crash with unit tests.\nI will see if I can use other statc variable to handle the race.",
+      "parentUuid": "b8781736_0323902a",
       "range": {
         "startLine": 9,
         "startChar": 13,
