@@ -1,4 +1,4 @@
-/*
+/*!
  *  Copyright (C) 2021 Savoir-faire Linux Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -17,21 +17,23 @@
  */
 
 #include "chatservicesmanager.h"
+#include "pluginmanager.h"
 #include "logger.h"
 #include "manager.h"
 #include "fileutils.h"
 
 namespace jami {
 
-ChatServicesManager::ChatServicesManager(PluginManager& pm)
+ChatServicesManager::ChatServicesManager(PluginManager& pluginManager)
 {
-    registerComponentsLifeCycleManagers(pm);
-    registerChatService(pm);
+    registerComponentsLifeCycleManagers(pluginManager);
+    registerChatService(pluginManager);
 }
 
 void
-ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
+ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginManager)
 {
+    /// registerChatHandler may be called by the PluginManager upon loading a plugin.
     auto registerChatHandler = [this](void* data) {
         ChatHandlerPtr ptr {(static_cast<ChatHandler*>(data))};
 
@@ -39,12 +41,14 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
             return -1;
         handlersNameMap_[ptr->getChatHandlerDetails().at("name")] = (uintptr_t) ptr.get();
         std::size_t found = ptr->id().find_last_of(DIR_SEPARATOR_CH);
+        /// adding preference that tells us to automatically activate a ChatHandler.
         PluginPreferencesUtils::addAlwaysHandlerPreference(ptr->getChatHandlerDetails().at("name"),
                                                            ptr->id().substr(0, found));
         chatHandlers_.emplace_back(std::move(ptr));
         return 0;
     };
 
+    /// unregisterChatHandler may be called by the PluginManager while unloading.
     auto unregisterChatHandler = [this](void* data) {
         auto handlerIt = std::find_if(chatHandlers_.begin(),
                                       chatHandlers_.end(),
@@ -59,6 +63,7 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
                                               [this, handlerIt](uintptr_t handlerId) {
                                                   return (handlerId == (uintptr_t) handlerIt->get());
                                               });
+                /// if ChatHandler we're trying to destroy is currently is use, we deactivate it.
                 if (handlerId != toggledList.second.end()) {
                     (*handlerIt)->detach(chatSubjects_[toggledList.first]);
                     toggledList.second.erase(handlerId);
@@ -71,19 +76,24 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
         return true;
     };
 
-    pm.registerComponentManager("ChatHandlerManager", registerChatHandler, unregisterChatHandler);
+    /// services are registered to the PluginManager.
+    pluginManager.registerComponentManager("ChatHandlerManager",
+                                           registerChatHandler,
+                                           unregisterChatHandler);
 }
 
 void
-ChatServicesManager::registerChatService(PluginManager& pm)
+ChatServicesManager::registerChatService(PluginManager& pluginManager)
 {
+    /// sendTextMessage is a service that allows plugins to send a message in a conversation.
     auto sendTextMessage = [this](const DLPlugin*, void* data) {
         auto cm = static_cast<JamiMessage*>(data);
         jami::Manager::instance().sendTextMessage(cm->accountId, cm->peerId, cm->data, true);
         return 0;
     };
 
-    pm.registerService("sendTextMessage", sendTextMessage);
+    /// services are registered to the PluginManager.
+    pluginManager.registerService("sendTextMessage", sendTextMessage);
 }
 
 std::vector<std::string>
@@ -98,32 +108,40 @@ ChatServicesManager::getChatHandlers()
 }
 
 void
-ChatServicesManager::publishMessage(pluginMessagePtr& cm)
+ChatServicesManager::publishMessage(pluginMessagePtr& message)
 {
-    if (cm->fromPlugin)
+    if (message->fromPlugin)
         return;
-    std::pair<std::string, std::string> mPair(cm->accountId, cm->peerId);
+    std::pair<std::string, std::string> mPair(message->accountId, message->peerId);
     auto& handlers = chatHandlerToggled_[mPair];
     auto& chatAllowDenySet = allowDenyList_[mPair];
 
+    /// search for activation flag.
     for (auto& chatHandler : chatHandlers_) {
         std::string chatHandlerName = chatHandler->getChatHandlerDetails().at("name");
         std::size_t found = chatHandler->id().find_last_of(DIR_SEPARATOR_CH);
+        /// flag one is if we have a preference that tells us to automatically activate
+        /// the ChatHandler.
         bool toggle = PluginPreferencesUtils::getAlwaysPreference(chatHandler->id().substr(0, found),
                                                                   chatHandlerName);
+        /// flag two can overwrite flag one. It says if we have previously activated/deactivated
+        /// the ChatHandler for the given conversation.
         auto allowedIt = chatAllowDenySet.find(chatHandlerName);
         if (allowedIt != chatAllowDenySet.end())
             toggle = (*allowedIt).second;
         bool toggled = handlers.find((uintptr_t) chatHandler.get()) != handlers.end();
         if (toggle || toggled) {
+            /// creates chat subjects if it doesn't exist yet.
             chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>());
             if (!toggled) {
+                /// if activation is expected, and not yet performed, we perform activation
                 handlers.insert((uintptr_t) chatHandler.get());
                 chatHandler->notifyChatSubject(mPair, chatSubjects_[mPair]);
                 chatAllowDenySet[chatHandlerName] = true;
                 PluginPreferencesUtils::setAllowDenyListPreferences(allowDenyList_);
             }
-            chatSubjects_[mPair]->publish(cm);
+            /// finally we feed Chat subject with the message.
+            chatSubjects_[mPair]->publish(message);
         }
     }
 }
@@ -159,7 +177,7 @@ ChatServicesManager::getChatHandlerStatus(const std::string& accountId, const st
     std::vector<std::string> ret;
     if (it != allowDenyList_.end()) {
         for (const auto& chatHandlerName : it->second)
-            if (chatHandlerName.second)
+            if (chatHandlerName.second) /// we only return active ChatHandler ids
                 ret.emplace_back(std::to_string(handlersNameMap_.at(chatHandlerName.first)));
     }
 

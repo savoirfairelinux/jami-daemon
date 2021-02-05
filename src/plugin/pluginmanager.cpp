@@ -1,4 +1,4 @@
-/*
+/*!
  *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
@@ -56,21 +56,25 @@ PluginManager::load(const std::string& path)
     }
 
     std::string error;
+    /// Load plugin library
     std::unique_ptr<Plugin> plugin(Plugin::load(path, error));
     if (!plugin) {
         JAMI_ERR() << "Plugin: " << error;
         return false;
     }
 
+    /// Get init function from loaded library
     const auto& init_func = plugin->getInitFunction();
     if (!init_func) {
         JAMI_ERR() << "Plugin: no init symbol" << error;
         return false;
     }
 
+    /// Registrer plugin by running init function
     if (!registerPlugin(plugin))
         return false;
 
+    /// Put Plugin loader into loaded plugins Map.
     dynPluginMap_[path] = {std::move(plugin), true};
     return true;
 }
@@ -80,7 +84,7 @@ PluginManager::unload(const std::string& path)
 {
     if (!destroyPluginComponents(path))
         return false;
-    PluginMap::iterator it = dynPluginMap_.find(path);
+    auto it = dynPluginMap_.find(path);
     if (it != dynPluginMap_.end()) {
         it->second.second = false;
     }
@@ -134,16 +138,16 @@ bool
 PluginManager::callPluginInitFunction(const std::string& path)
 {
     bool returnValue {false};
-    PluginMap::iterator it = dynPluginMap_.find(path);
+    auto it = dynPluginMap_.find(path);
     if (it != dynPluginMap_.end()) {
-        // Plugin found
-        // Since the Plugin was found it is of type DLPlugin with a valid init symbol
+        /// Plugin found
+        /// Since the Plugin was found it is of type DLPlugin with a valid init symbol
         std::shared_ptr<DLPlugin> plugin = std::static_pointer_cast<DLPlugin>(it->second.first);
         const auto& initFunc = plugin->getInitFunction();
         JAMI_PluginExitFunc exitFunc = nullptr;
 
         try {
-            // Call Plugin Init function
+            /// Call Plugin Init function
             exitFunc = initFunc(&plugin->api_);
         } catch (const std::runtime_error& e) {
             JAMI_ERR() << e.what();
@@ -164,19 +168,17 @@ PluginManager::callPluginInitFunction(const std::string& path)
 bool
 PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin)
 {
-    // Here we know that Plugin is of type DLPlugin with a valid init symbol
+    /// Here we already know that Plugin is of type DLPlugin with a valid init symbol
     const auto& initFunc = plugin->getInitFunction();
-    JAMI_PluginExitFunc exitFunc = nullptr;
-
     DLPlugin* pluginPtr = static_cast<DLPlugin*>(plugin.get());
+    JAMI_PluginExitFunc exitFunc = nullptr;
 
     pluginPtr->apiContext_ = this;
     pluginPtr->api_.version = {JAMI_PLUGIN_ABI_VERSION, JAMI_PLUGIN_API_VERSION};
     pluginPtr->api_.registerObjectFactory = registerObjectFactory_;
-    /**
-     * Implements JAMI_PluginAPI.invokeService().
-     * Must be C accessible.
-     */
+
+    /// Implements JAMI_PluginAPI.invokeService().
+    /// Must be C accessible.
     pluginPtr->api_.invokeService = [](const JAMI_PluginAPI* api, const char* name, void* data) {
         auto plugin = static_cast<DLPlugin*>(api->context);
         auto manager = reinterpret_cast<PluginManager*>(plugin->apiContext_);
@@ -188,10 +190,8 @@ PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin)
         return manager->invokeService(plugin, name, data);
     };
 
-    /**
-     * Implements JAMI_PluginAPI.invokeService().
-     * Must be C accessible.
-     */
+    /// Implements JAMI_PluginAPI.manageComponents().
+    /// Must be C accessible.
     pluginPtr->api_.manageComponent = [](const JAMI_PluginAPI* api, const char* name, void* data) {
         auto plugin = static_cast<DLPlugin*>(api->context);
         if (!plugin) {
@@ -213,15 +213,11 @@ PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin)
     }
 
     if (!exitFunc) {
-        tempExactMatchMap_.clear();
-        tempWildCardVec_.clear();
         JAMI_ERR() << "Plugin: init failed";
         return false;
     }
 
     exitFuncVec_.push_back(exitFunc);
-    exactMatchMap_.insert(tempExactMatchMap_.begin(), tempExactMatchMap_.end());
-    wildCardVec_.insert(wildCardVec_.end(), tempWildCardVec_.begin(), tempWildCardVec_.end());
     return true;
 }
 
@@ -241,6 +237,7 @@ PluginManager::unRegisterService(const std::string& name)
 int32_t
 PluginManager::invokeService(const DLPlugin* plugin, const std::string& name, void* data)
 {
+    /// searches if desired service exists
     const auto& iterFunc = services_.find(name);
     if (iterFunc == services_.cend()) {
         JAMI_ERR() << "Services not found: " << name;
@@ -250,6 +247,7 @@ PluginManager::invokeService(const DLPlugin* plugin, const std::string& name, vo
     const auto& func = iterFunc->second;
 
     try {
+        /// call service with data
         return func(plugin, data);
     } catch (const std::runtime_error& e) {
         JAMI_ERR() << e.what();
@@ -280,7 +278,6 @@ PluginManager::manageComponent(const DLPlugin* plugin, const std::string& name, 
     }
 }
 
-/* WARNING: exposed to plugins through JAMI_PluginAPI */
 bool
 PluginManager::registerObjectFactory(const char* type, const JAMI_PluginObjectFactory& factoryData)
 {
@@ -290,11 +287,11 @@ PluginManager::registerObjectFactory(const char* type, const JAMI_PluginObjectFa
     if (!factoryData.create || !factoryData.destroy)
         return false;
 
-    // Strict compatibility on ABI
+    /// Strict compatibility on ABI
     if (factoryData.version.abi != pluginApi_.version.abi)
         return false;
 
-    // Backward compatibility on API
+    /// Backward compatibility on API
     if (factoryData.version.api < pluginApi_.version.api)
         return false;
 
@@ -304,13 +301,13 @@ PluginManager::registerObjectFactory(const char* type, const JAMI_PluginObjectFa
     };
     ObjectFactory factory = {factoryData, deleter};
 
-    // wildcard registration?
+    /// wildcard registration?
     if (key == "*") {
         wildCardVec_.push_back(factory);
         return true;
     }
 
-    // fails on duplicate for exactMatch map
+    /// fails on duplicate for exactMatch map
     if (exactMatchMap_.find(key) != exactMatchMap_.end())
         return false;
 
@@ -339,7 +336,7 @@ PluginManager::createObject(const std::string& type)
         /*.type = */ type.c_str(),
     };
 
-    // Try to find an exact match
+    /// Try to find an exact match
     const auto& factoryIter = exactMatchMap_.find(type);
     if (factoryIter != exactMatchMap_.end()) {
         const auto& factory = factoryIter->second;
@@ -348,12 +345,12 @@ PluginManager::createObject(const std::string& type)
             return {object, factory.deleter};
     }
 
-    // Try to find a wildcard match
+    /// Try to find a wildcard match
     for (const auto& factory : wildCardVec_) {
         auto object = factory.data.create(&op, factory.data.closure);
         if (object) {
-            // promote registration to exactMatch_
-            // (but keep also wildcard registration for other object types)
+            /// promote registration to exactMatch_
+            /// (but keep also wildcard registration for other object types)
             int32_t res = registerObjectFactory(op.type, factory.data);
             if (res < 0) {
                 JAMI_ERR() << "failed to register object " << op.type;
@@ -367,7 +364,6 @@ PluginManager::createObject(const std::string& type)
     return {nullptr, nullptr};
 }
 
-/* WARNING: exposed to plugins through JAMI_PluginAPI */
 int32_t
 PluginManager::registerObjectFactory_(const JAMI_PluginAPI* api, const char* type, void* data)
 {
