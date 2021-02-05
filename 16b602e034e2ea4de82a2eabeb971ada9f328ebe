@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "301ff720_ab465ca9",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1069,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-05T15:34:24Z",
+      "side": 1,
+      "message": "Why do we need this check now ? \ndid something change in the call flow ?\naren\u0027t just hiding a more serious problem ?",
+      "revId": "16b602e034e2ea4de82a2eabeb971ada9f328ebe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
