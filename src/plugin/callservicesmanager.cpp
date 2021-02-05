@@ -1,5 +1,5 @@
-﻿/**
- *  Copyright (C)2020-2021 Savoir-faire Linux Inc.
+﻿/*
+ *  Copyright (C) 2020-2021 Savoir-faire Linux Inc.
  *
  *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
@@ -19,36 +19,45 @@
  */
 
 #include "callservicesmanager.h"
-#include "logger.h"
+
+#include "pluginmanager.h"
+#include "pluginpreferencesutils.h"
+
+#include "manager.h"
 #include "sip/sipcall.h"
 #include "fileutils.h"
-#include "pluginpreferencesutils.h"
-#include "manager.h"
+#include "logger.h"
 
 namespace jami {
 
-CallServicesManager::CallServicesManager(PluginManager& pm)
+CallServicesManager::CallServicesManager(PluginManager& pluginManager)
 {
-    registerComponentsLifeCycleManagers(pm);
+    registerComponentsLifeCycleManagers(pluginManager);
 }
 
 CallServicesManager::~CallServicesManager()
 {
     callMediaHandlers_.clear();
+    callAVsubjects_.clear();
+    mediaHandlerToggled_.clear();
 }
 
 void
 CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subject)
 {
-    /// callAVsubjects_ emplaces data and subject with callId key to easy of access
-    /// When call is ended, subjects from this call are erased.
+    // callAVsubjects_ emplaces data and subject with callId key to easy of access
+    // When call is ended, subjects from this call are erased.
     callAVsubjects_[data.id].emplace_back(data, subject);
 
+    // Search for activation flag.
     for (auto& callMediaHandler : callMediaHandlers_) {
         std::size_t found = callMediaHandler->id().find_last_of(DIR_SEPARATOR_CH);
+        // Flag is True if we should automatically activate the MediaHandler.
         bool toggle = PluginPreferencesUtils::getAlwaysPreference(
             callMediaHandler->id().substr(0, found),
             callMediaHandler->getCallMediaHandlerDetails().at("name"));
+        // Flag may be overwritten if the MediaHandler was previously activated/deactivated
+        // for the given call.
         for (const auto& toggledMediaHandlerPair : mediaHandlerToggled_[data.id]) {
             if (toggledMediaHandlerPair.first == (uintptr_t) callMediaHandler.get()) {
                 toggle = toggledMediaHandlerPair.second;
@@ -57,8 +66,12 @@ CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subje
         }
         if (toggle)
 #ifndef __ANDROID__
+            // If activation is expected, we call activation function
             toggleCallMediaHandler((uintptr_t) callMediaHandler.get(), data.id, true);
 #else
+            // Due to Android's camera activation process, we don't automaticaly
+            // activate the MediaHandler here. But we set it as active
+            // and the client-android will handle its activation.
             mediaHandlerToggled_[data.id].insert({(uintptr_t) callMediaHandler.get(), true});
 #endif
     }
@@ -71,14 +84,16 @@ CallServicesManager::clearAVSubject(const std::string& callId)
 }
 
 void
-CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
+CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginManager)
 {
-    auto registerCallMediaHandler = [this](void* data) {
+    // registerMediaHandler may be called by the PluginManager upon loading a plugin.
+    auto registerMediaHandler = [this](void* data) {
         CallMediaHandlerPtr ptr {(static_cast<CallMediaHandler*>(data))};
 
         if (!ptr)
             return -1;
         std::size_t found = ptr->id().find_last_of(DIR_SEPARATOR_CH);
+        // Adding preference that tells us to automatically activate a MediaHandler.
         PluginPreferencesUtils::addAlwaysHandlerPreference(ptr->getCallMediaHandlerDetails().at(
                                                                "name"),
                                                            ptr->id().substr(0, found));
@@ -86,6 +101,7 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
         return 0;
     };
 
+    // unregisterMediaHandler may be called by the PluginManager while unloading.
     auto unregisterMediaHandler = [this](void* data) {
         auto handlerIt = std::find_if(callMediaHandlers_.begin(),
                                       callMediaHandlers_.end(),
@@ -103,6 +119,7 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
                                                              == (uintptr_t) handlerIt->get()
                                                          && handlerIdPair.second;
                                               });
+                // If MediaHandler we're trying to destroy is currently in use, we deactivate it.
                 if (handlerId != toggledList.second.end())
                     toggleCallMediaHandler((*handlerId).first, toggledList.first, false);
             }
@@ -111,9 +128,10 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pm)
         return true;
     };
 
-    pm.registerComponentManager("CallMediaHandlerManager",
-                                registerCallMediaHandler,
-                                unregisterMediaHandler);
+    // Services are registered to the PluginManager.
+    pluginManager.registerComponentManager("CallMediaHandlerManager",
+                                           registerMediaHandler,
+                                           unregisterMediaHandler);
 }
 
 std::vector<std::string>
@@ -150,6 +168,7 @@ CallServicesManager::getCallMediaHandlerDetails(const std::string& mediaHandlerI
 bool
 CallServicesManager::isVideoType(const CallMediaHandlerPtr& mediaHandler)
 {
+    // "dataType" is known from the MediaHandler implementation.
     const auto& details = mediaHandler->getCallMediaHandlerDetails();
     const auto& it = details.find("dataType");
     if (it != details.end()) {
@@ -157,12 +176,15 @@ CallServicesManager::isVideoType(const CallMediaHandlerPtr& mediaHandler)
         std::istringstream(it->second) >> status;
         return status;
     }
+    // If there is no "dataType" returned, it's safer to return True and allow
+    // sender to restart.
     return true;
 }
 
 bool
 CallServicesManager::isAttached(const CallMediaHandlerPtr& mediaHandler)
 {
+    // "attached" is known from the MediaHandler implementation.
     const auto& details = mediaHandler->getCallMediaHandlerDetails();
     const auto& it = details.find("attached");
     if (it != details.end()) {
@@ -180,7 +202,7 @@ CallServicesManager::getCallMediaHandlerStatus(const std::string& callId)
     const auto& it = mediaHandlerToggled_.find(callId);
     if (it != mediaHandlerToggled_.end())
         for (const auto& mediaHandlerId : it->second)
-            if (mediaHandlerId.second)
+            if (mediaHandlerId.second) // Only return active MediaHandler ids
                 ret.emplace_back(std::to_string(mediaHandlerId.first));
     return ret;
 }
@@ -226,25 +248,23 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
     bool applyRestart = false;
 
     for (auto subject : callAVsubjects_[callId]) {
-        if (subject.first.id == callId) {
-            auto handlerIt = std::find_if(callMediaHandlers_.begin(),
-                                          callMediaHandlers_.end(),
-                                          [mediaHandlerId](CallMediaHandlerPtr& handler) {
-                                              return ((uintptr_t) handler.get() == mediaHandlerId);
-                                          });
+        auto handlerIt = std::find_if(callMediaHandlers_.begin(),
+                                      callMediaHandlers_.end(),
+                                      [mediaHandlerId](CallMediaHandlerPtr& handler) {
+                                          return ((uintptr_t) handler.get() == mediaHandlerId);
+                                      });
 
-            if (handlerIt != callMediaHandlers_.end()) {
-                if (toggle) {
-                    notifyAVSubject((*handlerIt), subject.first, subject.second);
-                    if (isAttached((*handlerIt)))
-                        handlers[mediaHandlerId] = true;
-                } else {
-                    (*handlerIt)->detach();
-                    handlers[mediaHandlerId] = false;
-                }
-                if (subject.first.type == StreamType::video && isVideoType((*handlerIt)))
-                    applyRestart = true;
+        if (handlerIt != callMediaHandlers_.end()) {
+            if (toggle) {
+                notifyAVSubject((*handlerIt), subject.first, subject.second);
+                if (isAttached((*handlerIt)))
+                    handlers[mediaHandlerId] = true;
+            } else {
+                (*handlerIt)->detach();
+                handlers[mediaHandlerId] = false;
             }
+            if (subject.first.type == StreamType::video && isVideoType((*handlerIt)))
+                applyRestart = true;
         }
     }
 #ifndef __ANDROID__

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
@@ -35,68 +35,85 @@
 #define C_INTERFACE_END
 #endif
 
-#define JAMI_PLUGIN_ABI_VERSION 1 /* 0 doesn't exist, considered as error */
-#define JAMI_PLUGIN_API_VERSION 1 /* 0 doesn't exist, considered as error */
+#define JAMI_PLUGIN_ABI_VERSION 1 // 0 doesn't exist, considered as error
+
+// JAMI_PLUGIN_API_VERSION reflects changes in Services Managers
+// (CallServicesManager and ChatServicesMangers) and in JAMI_PluginAPI.
+#define JAMI_PLUGIN_API_VERSION 1 // 0 doesn't exist, considered as error
 
 C_INTERFACE_START;
 
+/**
+ * @struct JAMI_PluginVersion
+ * @brief Contains ABI and API versions
+ */
 typedef struct JAMI_PluginVersion
 {
-    /* plugin is not loadable if this number differs from one
-     * stored in the plugin loader */
+    // Plugin is not loadable if this number differs from one
+    // stored in the plugin loader
     uint32_t abi;
 
-    /* a difference on api number may be acceptable, see the loader code */
+    // A difference on API number may be acceptable, see the loader code
     uint32_t api;
 } JAMI_PluginVersion;
 
 struct JAMI_PluginAPI;
 
-/* JAMI_PluginCreateFunc parameters */
+/**
+ * @struct JAMI_PluginObjectParams
+ * @brief JAMI_PluginCreateFunc parameter
+ */
 typedef struct JAMI_PluginObjectParams
 {
-    const JAMI_PluginAPI* pluginApi; /* this API */
+    const JAMI_PluginAPI* pluginApi; // this API
     const char* type;
 } JAMI_PluginObjectParams;
 
+// Function that may be implemented by plugin and called by daemon
 typedef void* (*JAMI_PluginCreateFunc)(JAMI_PluginObjectParams* params, void* closure);
-
+// Function that destroys a JAMI_PluginCreateFunc instance
 typedef void (*JAMI_PluginDestroyFunc)(void* object, void* closure);
 
-/* JAMI_PluginAPI.registerObjectFactory data */
+/**
+ * @struct JAMI_PluginObjectFactory
+ * @brief This structure is filled by plugin.
+ * JAMI_PluginAPI.registerObjectFactory data
+ */
 typedef struct JAMI_PluginObjectFactory
 {
     JAMI_PluginVersion version;
-    void* closure; /* closure for create */
+    void* closure; // closure for create
     JAMI_PluginCreateFunc create;
     JAMI_PluginDestroyFunc destroy;
 } JAMI_PluginObjectFactory;
 
-/* Plugins exposed API prototype */
+// Plugins exposed API prototype
 typedef int32_t (*JAMI_PluginFunc)(const JAMI_PluginAPI* api, const char* name, void* data);
 
-/* JAMI_PluginInitFunc parameters.
- * This structure is filled by the Plugin manager.
- * For backware compatibility, never c
+/**
+ * @struct JAMI_PluginAPI
+ * @brief This structure is filled by the PluginManager.
  */
 typedef struct JAMI_PluginAPI
 {
-    JAMI_PluginVersion version; /* structure version, always the first data */
-    void* context;              /* opaque structure used by next functions */
+    JAMI_PluginVersion version; // Structure version, always the first data
+    void* context;              // Opaque structure used by next functions
 
-    /* API usable by plugin implementors */
+    // API usable by plugin implementors
     JAMI_PluginFunc registerObjectFactory;
     JAMI_PluginFunc invokeService;
     JAMI_PluginFunc manageComponent;
 } JAMI_PluginAPI;
 
+// Plugins destruction function prototype
 typedef void (*JAMI_PluginExitFunc)(void);
 
+// Plugins main function prototype
 typedef JAMI_PluginExitFunc (*JAMI_PluginInitFunc)(const JAMI_PluginAPI* api);
 
 C_INTERFACE_END;
 
-#define JAMI_DYN_INIT_FUNC_NAME               "JAMI_dynPluginInit"
+#define JAMI_DYN_INIT_FUNC_NAME               "JAMI_dynPluginInit" // Main function expected name
 #define JAMI_PLUGIN_INIT_STATIC(fname, pname) JAMI_PLUGIN_INIT(fname, pname)
 #define JAMI_PLUGIN_INIT_DYNAMIC(pname)       JAMI_PLUGIN_INIT(JAMI_dynPluginInit, pname)
 

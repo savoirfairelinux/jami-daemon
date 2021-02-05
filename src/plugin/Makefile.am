@@ -12,13 +12,15 @@ noinst_HEADERS = \
 	pluginloader.h \
 	pluginmanager.h \
 	pluginpreferencesutils.h \
-	streamdata.h
+	streamdata.h \
+	pluginsutils.h
 
 libplugin_la_SOURCES = \
 	jamipluginmanager.cpp \
-	pluginloaderdl.cpp \
+	pluginloader.cpp \
 	pluginmanager.cpp \
 	pluginpreferencesutils.cpp \
+	pluginsutils.cpp \
 	chatservicesmanager.cpp \
 	callservicesmanager.cpp
 

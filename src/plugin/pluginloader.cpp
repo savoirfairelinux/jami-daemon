@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2018 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
@@ -46,5 +46,4 @@ Plugin::load(const std::string& path, std::string& error)
 
     return new DLPlugin(handle, path);
 }
-
 } // namespace jami
