@@ -16,6 +16,24 @@
       "revId": "16b602e034e2ea4de82a2eabeb971ada9f328ebe",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "40e99788_92b2756a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1069,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-05T15:50:34Z",
+      "side": 1,
+      "message": "Because it\u0027s checked pretty everywhere (cf the rest of the file there was already a lot of check on sdp_) and was missing in some part. and must be checked if a media-negotiation occurs while the peer stop the call. cf https://git.jami.net/savoirfairelinux/ring-daemon/-/issues/426",
+      "parentUuid": "301ff720_ab465ca9",
+      "revId": "16b602e034e2ea4de82a2eabeb971ada9f328ebe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
