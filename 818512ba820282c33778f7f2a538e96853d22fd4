@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "15e7fd6e_ef1cf7a8",
+        "filename": "src/plugin/pluginmanager.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 892
+      },
+      "writtenOn": "2021-02-05T12:41:58Z",
+      "side": 1,
+      "message": "list",
+      "range": {
+        "startLine": 47,
+        "startChar": 9,
+        "endLine": 47,
+        "endChar": 15
+      },
+      "revId": "818512ba820282c33778f7f2a538e96853d22fd4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "52fd8196_9b46d1bb",
+        "filename": "src/plugin/pluginmanager.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 892
+      },
+      "writtenOn": "2021-02-05T12:41:58Z",
+      "side": 1,
+      "message": "rename to ComponentTypePtrList for accuracy/consistency ?",
+      "range": {
+        "startLine": 48,
+        "startChar": 10,
+        "endLine": 48,
+        "endChar": 32
+      },
+      "revId": "818512ba820282c33778f7f2a538e96853d22fd4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
