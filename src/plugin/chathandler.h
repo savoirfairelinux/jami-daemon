@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2020 Savoir-faire Linux Inc.
+ *  Copyright (C) 2020-2021 Savoir-faire Linux Inc.
  *
  *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
@@ -30,28 +30,64 @@ namespace jami {
 using pluginMessagePtr = std::shared_ptr<JamiMessage>;
 using chatSubjectPtr = std::shared_ptr<PublishObservable<pluginMessagePtr>>;
 
+/**
+ * @brief This abstract class is an API we need to implement from plugin side.
+ * In other words, a plugin functionality that plays with messages, must start
+ * from the implementation of this class.
+ */
 class ChatHandler
 {
 public:
     virtual ~ChatHandler() {}
 
+    /**
+     * @brief Should attach a chat subject (Observable) and the plugin data process (Observer).
+     * @param subjectConnection accountId, peerId pair
+     * @param subject chat Subject pointer
+     */
     virtual void notifyChatSubject(std::pair<std::string, std::string>& subjectConnection,
                                    chatSubjectPtr subject)
         = 0;
+
+    /**
+     * @brief Returns a map with handler's name, iconPath, and pluginId.
+     */
     virtual std::map<std::string, std::string> getChatHandlerDetails() = 0;
+
+    /**
+     * @brief Should detach a chat subject (Observable) and the plugin data process (Observer).
+     * @param subject chat subject pointer
+     */
     virtual void detach(chatSubjectPtr subject) = 0;
+
+    /**
+     * @brief If a preference can be changed without the need to reload the plugin, it
+     * should be done through this function.
+     * @param key
+     * @param value
+     */
     virtual void setPreferenceAttribute(const std::string& key, const std::string& value) = 0;
+
+    /**
+     * @brief If a preference can be changed without the need to reload the plugin, this function
+     * should return True.
+     * @param key
+     * @return True if preference can be changed through setPreferenceAttribute method.
+     */
     virtual bool preferenceMapHasKey(const std::string& key) = 0;
 
     /**
-     * @brief id
-     * The id is the path of the plugin that created this MediaHandler
-     * @return
+     * @brief Returns the dataPath of the plugin that created this ChatHandler.
      */
     std::string id() const { return id_; }
+
+    /**
+     * @brief Should be called by the ChatHandler creator to set the plugins id_ variable.
+     */
     virtual void setId(const std::string& id) final { id_ = id; }
 
 private:
+    // Is the dataPath of the plugin that created this ChatHandler.
     std::string id_;
 };
 } // namespace jami

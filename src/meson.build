@@ -274,9 +274,10 @@ if conf.get('ENABLE_PLUGIN')
         'plugin/callservicesmanager.cpp',
         'plugin/chatservicesmanager.cpp',
         'plugin/jamipluginmanager.cpp',
-        'plugin/pluginloaderdl.cpp',
+        'plugin/pluginloader.cpp',
         'plugin/pluginmanager.cpp',
-        'plugin/pluginpreferencesutils.cpp'
+        'plugin/pluginpreferencesutils.cpp',
+        'plugin/pluginsutils.cpp'
     )
     libjami_dependencies += [deplibarchive, depdl]
 endif

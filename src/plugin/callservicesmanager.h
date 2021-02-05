@@ -1,5 +1,5 @@
-﻿/**
- *  Copyright (C)2020-2021 Savoir-faire Linux Inc.
+﻿/*
+ *  Copyright (C) 2020-2021 Savoir-faire Linux Inc.
  *
  *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
@@ -20,98 +20,123 @@
 
 #pragma once
 
-#include "noncopyable.h"
-#include "logger.h"
-#include "manager.h"
-#include "sip/sipcall.h"
-#include "pluginmanager.h"
-#include "streamdata.h"
 #include "mediahandler.h"
+#include "streamdata.h"
+
+#include "noncopyable.h"
+
 #include <list>
-#include <set>
+#include <map>
 #include <tuple>
 
 namespace jami {
-using MediaHandlerPtr = std::unique_ptr<MediaHandler>;
+
+class PluginManager;
+
 using CallMediaHandlerPtr = std::unique_ptr<CallMediaHandler>;
 using AVSubjectSPtr = std::weak_ptr<Observable<AVFrame*>>;
 
+/**
+ * @brief This class provides the interface between loaded MediaHandlers
+ * and call's audio/video streams. Besides it:
+ * (1) stores pointers to all loaded MediaHandlers;
+ * (2) stores pointers to available streams subjects, and;
+ * (3) lists MediaHandler state with respect to each call. In other words,
+ * for a given call, we store if a MediaHandler is active or not.
+ */
 class CallServicesManager
 {
 public:
-    CallServicesManager(PluginManager& pm);
-
     /**
-     *   unload all media handlers
-     **/
+     * @brief Constructor registers MediaHandler API services to the PluginManager
+     * instance. These services will store MediaHandler pointers or clean them
+     * from the Plugin System once a plugin is loaded or unloaded.
+     * @param pluginManager
+     */
+    CallServicesManager(PluginManager& pluginManager);
+
     ~CallServicesManager();
 
     NON_COPYABLE(CallServicesManager);
 
     /**
-     * @brief createAVSubject
+     * @brief Stores a AV stream subject with StreamData properties. During the storage process,
+     * if a MediaHandler is supposed to be activated for the call to which the subject is
+     * related, the activation function is called.
      * @param data
-     * Creates an av frame subject with properties StreamData
+     * @param subject
      */
     void createAVSubject(const StreamData& data, AVSubjectSPtr subject);
 
+    /**
+     * @brief Clears all stream subjects related to the callId.
+     * @param callId
+     */
     void clearAVSubject(const std::string& callId);
 
     /**
-     * @brief registerComponentsLifeCycleManagers
-     * Exposes components life cycle managers to the main API
-     */
-    void registerComponentsLifeCycleManagers(PluginManager& pm);
-
-    /**
-     * @brief getCallMediaHandlers
-     * List all call media handlers
-     * @return
+     * @brief List all MediaHandlers available.
+     * @return Vector with stored MediaHandlers pointers.
      */
     std::vector<std::string> getCallMediaHandlers();
 
     /**
-     * @brief toggleCallMediaHandler
-     * Toggle CallMediaHandler, if on, notify with new subjects
-     * if off, detach it
-     * @param mediaHandler ID handler ID
-     * @param callId call ID
-     * @param toggle notify with new subjects if true, detach if false.
-     *
-     * In the case when the mediaHandler receives a hardware format
-     * frame and converts it to main memory, we need to restart the
-     * sender to unlink ours encoder and decoder.
-     *
-     * When we deactivate a mediaHandler, we try to relink the encoder
+     * @brief (De)Activates a given MediaHandler to a given call.
+     * If the MediaHandler receives video frames from a hardware decoder,
+     * we need to restart the sender to unlink our encoder and decoder.
+     * When we deactivate a MediaHandler, we try to relink the encoder
      * and decoder by restarting the sender.
+     *
+     * @param mediaHandlerId
+     * @param callId
+     * @param toggle notify with new subjects if true, detach if false.
      */
     void toggleCallMediaHandler(const std::string& mediaHandlerId,
                                 const std::string& callId,
                                 const bool toggle);
 
     /**
-     * @brief getCallMediaHandlerDetails
-     * @param id of the call media handler
-     * @return map of Call Media Handler Details
+     * @brief Returns details Map from MediaHandler implementation.
+     * @param mediaHandlerIdStr
+     * @return Details map from the MediaHandler implementation
      */
     std::map<std::string, std::string> getCallMediaHandlerDetails(
         const std::string& mediaHandlerIdStr);
 
-    bool isVideoType(const CallMediaHandlerPtr& mediaHandler);
-
-    bool isAttached(const CallMediaHandlerPtr& mediaHandler);
-
+    /**
+     * @brief Returns a list of active MediaHandlers for a given call.
+     * @param callId
+     * @return Vector with active MediaHandler ids for a given call.
+     */
     std::vector<std::string> getCallMediaHandlerStatus(const std::string& callId);
 
+    /**
+     * @brief Sets a preference that may be changed while MediaHandler is active.
+     * @param key
+     * @param value
+     * @param rootPath
+     * @return False if preference was changed.
+     */
     bool setPreference(const std::string& key,
                        const std::string& value,
                        const std::string& rootPath);
 
+    /**
+     * @brief Removes call from mediaHandlerToggled_ mapping.
+     * @param callId
+     */
     void clearCallHandlerMaps(const std::string& callId);
 
 private:
     /**
-     * @brief notifyAVSubject
+     * @brief Exposes MediaHandlers' life cycle managers services to the main API.
+     * @param pluginManager
+     */
+    void registerComponentsLifeCycleManagers(PluginManager& pluginManager);
+
+    /**
+     * @brief Calls MediaHandler API function that attaches a data process to the given
+     * AV stream.
      * @param callMediaHandlerPtr
      * @param data
      * @param subject
@@ -125,20 +150,32 @@ private:
                                 const bool toggle);
 
     /**
-     * @brief callMediaHandlers_
-     * Components that a plugin can register through registerCallMediaHandler service
-     * These objects can then be notified with notifySubject
-     * whenever there is a new CallAVSubject like a video receive
+     * @brief Checks if the MediaHandler being (de)activated expects a video stream.
+     * It's used to reduce restartSender call.
+     * @param mediaHandler
+     * @return True if a MediaHandler expects a video stream.
      */
+    bool isVideoType(const CallMediaHandlerPtr& mediaHandler);
+
+    /**
+     * @brief Checks if the MediaHandler was properly attached to a AV stream.
+     * It's used to avoid saving wrong MediaHandler status.
+     * @param mediaHandler
+     * @return True if a MediaHandler is attached to a AV stream.
+     */
+    bool isAttached(const CallMediaHandlerPtr& mediaHandler);
+
+    // Components that a plugin can register through registerMediaHandler service.
+    // These objects can then be activated with toggleCallMediaHandler.
     std::list<CallMediaHandlerPtr> callMediaHandlers_;
 
-    /// When there is a SIPCall, AVSubjects are created there.
-    /// Here we store their references in order to make them interact with MediaHandlers.
-    /// For easy access they are mapped with the callId they belong to.
+    // When there is a SIPCall, AVSubjects are created there.
+    // Here we store their references in order to make them interact with MediaHandlers.
+    // For easy access they are mapped with the call they belong to.
     std::map<std::string, std::list<std::pair<const StreamData, AVSubjectSPtr>>> callAVsubjects_;
 
-    /// Component that stores MediaHandlers' status for each existing call.
-    /// A map of callIds and MediaHandler-status pairs.
+    // Component that stores MediaHandlers' status for each existing call.
+    // A map of callIds and MediaHandler-status pairs.
     std::map<std::string, std::map<uintptr_t, bool>> mediaHandlerToggled_;
 };
 } // namespace jami

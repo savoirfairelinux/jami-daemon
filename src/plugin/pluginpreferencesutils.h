@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2020 Savoir-faire Linux Inc.
+ *  Copyright (C) 2020-2021 Savoir-faire Linux Inc.
  *
  *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
@@ -29,37 +29,115 @@ namespace jami {
 
 using ChatHandlerList = std::map<std::pair<std::string, std::string>, std::map<std::string, bool>>;
 
+/**
+ * @class  PluginPreferencesUtils
+ * @brief Static class that gathers functions to manage
+ * plugins' preferences.
+ */
 class PluginPreferencesUtils
 {
 public:
+    /**
+     * @brief Given a plugin installation path, returns the path to the
+     * preference.json of this plugin.
+     * @param rootPath
+     * @return preference.json file path.
+     */
     static std::string getPreferencesConfigFilePath(const std::string& rootPath);
 
+    /**
+     * @brief Given a plugin installation path, returns the path to the
+     * preference.msgpack file.
+     * The preference.msgpack file saves the actuall preferences values
+     * if they were modified.
+     * @param rootPath
+     * @return preference.msgpack file path.
+     */
     static std::string valuesFilePath(const std::string& rootPath);
 
+    /**
+     * @brief Returns the path to allowdeny.msgpack file.
+     * The allowdeny.msgpack file persists ChatHandlers status for each
+     * conversation this handler was previously (de)activated.
+     * @return allowdeny.msgpack file path.
+     */
+    static std::string getAllowDenyListsPath();
+
+    /**
+     * @brief Returns a colon separated string with values from a json::Value containing an array.
+     * @param jsonArray
+     * @return Colon separated string with jsonArray contents.
+     */
     static std::string convertArrayToString(const Json::Value& jsonArray);
 
+    /**
+     * @brief Parses a single preference from json::Value to a Map<string, string>.
+     * @param jsonPreference
+     * @return std::map<std::string, std::string> preference
+     */
     static std::map<std::string, std::string> parsePreferenceConfig(
         const Json::Value& jsonPreference);
 
+    /**
+     * @brief Reads a preference.json file from the plugin installed in rootPath.
+     * @param rootPath
+     * @return std::vector<std::map<std::string, std::string>> with preferences.json content
+     */
     static std::vector<std::map<std::string, std::string>> getPreferences(
         const std::string& rootPath);
 
+    /**
+     * @brief Reads preferences values which were modified from defaultValue
+     * @param rootPath
+     * @return Map with preference keys and actuall values.
+     */
     static std::map<std::string, std::string> getUserPreferencesValuesMap(
         const std::string& rootPath);
 
+    /**
+     * @brief Reads preferences values
+     * @param rootPath
+     * @return Map with preference keys and actuall values.
+     */
     static std::map<std::string, std::string> getPreferencesValuesMap(const std::string& rootPath);
 
+    /**
+     * @brief Resets all preferences values to their defaultValues
+     * by erasing all data saved in preferences.msgpack.
+     * @param rootPath
+     * @return True if preferences were reset.
+     */
     static bool resetPreferencesValuesMap(const std::string& rootPath);
 
-    static std::string getAllowDenyListsPath();
-
+    /**
+     * @brief Saves ChantHandlers status provided by list.
+     * @param [in] list
+     */
     static void setAllowDenyListPreferences(const ChatHandlerList& list);
 
+    /**
+     * @brief Reads ChantHandlers status from allowdeny.msgpack file.
+     * @param [out] list
+     */
     static void getAllowDenyListPreferences(ChatHandlerList& list);
 
+    /**
+     * @brief Creates a "always" preference for a handler if this preference doesn't exist yet.
+     * A "always" preference tells the Plugin System if in the event of a new call or chat message,
+     * the handler is suposed to be automatically activated.
+     * @param handlerName
+     * @param rootPath
+     */
     static void addAlwaysHandlerPreference(const std::string& handlerName,
                                            const std::string& rootPath);
 
+    /**
+     * @brief Read plugin's preferences and returns wheter a specific handler
+     * "always" preference is True or False.
+     * @param rootPath
+     * @param handlerName
+     * @return True if the handler should be automatically toggled
+     */
     static bool getAlwaysPreference(const std::string& rootPath, std::string& handlerName);
 
 private:

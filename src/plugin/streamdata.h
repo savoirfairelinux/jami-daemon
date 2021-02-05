@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2020 Savoir-faire Linux Inc.
+ *  Copyright (C) 2020-2021 Savoir-faire Linux Inc.
  *
  *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
@@ -23,37 +23,69 @@
 
 enum class StreamType { audio, video };
 
-struct StreamData // for calls
+/**
+ * @struct StreamData
+ * @brief Contains information about an AV subject.
+ * It's used by CallServicesManager.
+ */
+struct StreamData
 {
-    StreamData(const std::string& i, bool d, StreamType&& t, const std::string& s)
-        : id {std::move(i)}
-        , direction {d}
-        , type {t}
-        , source {std::move(s)}
+    /**
+     * @param callId
+     * @param isReceived False if local audio/video streams
+     * @param mediaType
+     * @param peerId
+     */
+    StreamData(const std::string& callId,
+               bool isReceived,
+               const StreamType& mediaType,
+               const std::string& peerId)
+        : id {std::move(callId)}
+        , direction {isReceived}
+        , type {mediaType}
+        , source {std::move(peerId)}
     {}
+    // callId
     const std::string id;
-    const bool direction; // 0 when local; 1 when received
+    // False if local audio/video.
+    const bool direction;
+    // StreamType -> audio or video.
     const StreamType type;
+    // peerId
     const std::string source;
 };
 
-struct JamiMessage // for chat
+/**
+ * @struct JamiMessage
+ * @brief Contains information about an exchanged message.
+ * It's used by ChatServicesManager.
+ */
+struct JamiMessage
 {
+    /**
+     * @param accId AccountId
+     * @param pId peerId
+     * @param isReceived False if local audio/video streams
+     * @param dataMap Message contents
+     * @param pPlugin True if message is created/modified by plugin code
+     */
     JamiMessage(const std::string& accId,
                 const std::string& pId,
-                bool direction,
+                bool isReceived,
                 std::map<std::string, std::string>& dataMap,
                 bool pPlugin)
         : accountId {accId}
         , peerId {pId}
-        , direction {direction}
+        , direction {isReceived}
         , data {dataMap}
         , fromPlugin {pPlugin}
     {}
 
-    std::string accountId; // accountID
-    std::string peerId;    // peer
-    const bool direction;  // 0 -> send; 1 -> received
+    std::string accountId;
+    std::string peerId;
+    // True if it's a received message.
+    const bool direction;
     std::map<std::string, std::string> data;
+    // True if message is originated from Plugin code.
     bool fromPlugin;
 };
