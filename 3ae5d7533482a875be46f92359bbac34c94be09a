@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c506b1d9_85a7e0a9",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 16
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-05T15:29:15Z",
+      "side": 1,
+      "message": "The use of \"passive\" and the comment is not very accurate.\nIf I understand well, we want to give time to peer to connect our TCP candidates that is either a \"passive\" or \"s-o\" (simultaneously open), and we should emphasize this is only for TCP. I suggest something like this:\n\nFor TCP transport, this timer is time that a controlling agent must wait for incoming checks if the local candidate is of type \"passive\" or \"s-o\".\n\nIn general, I prefer the term incoming_checks than passive to be more specific.",
+      "revId": "3ae5d7533482a875be46f92359bbac34c94be09a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6b23af8d_fe445712",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 16
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-05T15:29:15Z",
+      "side": 1,
+      "message": "All TCP specific should be protected by PJ_HAS_TCP",
+      "revId": "3ae5d7533482a875be46f92359bbac34c94be09a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f6e1dcde_6501ff35",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 16
+      },
+      "lineNbr": 820,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-05T15:29:15Z",
+      "side": 1,
+      "message": "the log is not clear:\n\"Controlling agent timed-out while waiting for incoming TCP checks. Set state to failed!\"",
+      "revId": "3ae5d7533482a875be46f92359bbac34c94be09a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9e33100c_b449da97",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 16
+      },
+      "lineNbr": 825,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-05T15:29:15Z",
+      "side": 1,
+      "message": "Same here:\n\"Controlled agent timed-out while waiting for nomination controlling agent\"",
+      "revId": "3ae5d7533482a875be46f92359bbac34c94be09a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c4796614_4d4a8fb6",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 16
+      },
+      "lineNbr": 839,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-05T15:29:15Z",
+      "side": 1,
+      "message": "remove extra line",
+      "revId": "3ae5d7533482a875be46f92359bbac34c94be09a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e683b71e_c5686f0f",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 16
+      },
+      "lineNbr": 881,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-05T15:29:15Z",
+      "side": 1,
+      "message": "Do we allow waiting for incoming checks only if the candidate is nominated ?\nMy question, if we use regular nomination, do we still give extra time or incoming checks ? seems not.",
+      "revId": "3ae5d7533482a875be46f92359bbac34c94be09a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
