@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2020 Savoir-faire Linux Inc.
+ *  Copyright (C) 2020-2021 Savoir-faire Linux Inc.
  *
  *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
@@ -76,7 +76,7 @@ PluginPreferencesUtils::parsePreferenceConfig(const Json::Value& jsonPreference)
 {
     std::map<std::string, std::string> preferenceMap;
     const auto& members = jsonPreference.getMemberNames();
-    // Insert other fields
+    /// Insert other fields
     for (const auto& member : members) {
         const Json::Value& value = jsonPreference[member];
         if (value.isString()) {
@@ -101,19 +101,26 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath)
     std::set<std::string> keys;
     std::vector<std::map<std::string, std::string>> preferences;
     if (file) {
+        /// reads the file to a json format
         bool ok = Json::parseFromStream(rbuilder, file, &root, &errs);
         if (ok && root.isArray()) {
+            /// read each preference described in preference.json individually
             for (unsigned i = 0; i < root.size(); i++) {
                 const Json::Value& jsonPreference = root[i];
                 std::string category = jsonPreference.get("category", "NoCategory").asString();
                 std::string type = jsonPreference.get("type", "None").asString();
                 std::string key = jsonPreference.get("key", "None").asString();
+                /// the preference must have at leat type and key
                 if (type != "None" && key != "None") {
                     if (keys.find(key) == keys.end()) {
+                        /// read the rest of the preference
                         auto preferenceAttributes = parsePreferenceConfig(jsonPreference);
-                        // If the parsing of the attributes was successful, commit the map and the keys
+                        /// If the parsing of the attributes was successful, commit the map and the keys
                         auto defaultValue = preferenceAttributes.find("defaultValue");
                         if (type == "Path" && defaultValue != preferenceAttributes.end()) {
+                            /// defaultValue in a Path preference is an incomplete path
+                            /// starting from the installation path of the plugin.
+                            /// Here we complete the path value.
                             defaultValue->second = rootPath + DIR_SEPARATOR_STR
                                                    + defaultValue->second;
                         }
@@ -142,23 +149,23 @@ PluginPreferencesUtils::getUserPreferencesValuesMap(const std::string& rootPath)
     std::ifstream file(preferencesValuesFilePath, std::ios::binary);
     std::map<std::string, std::string> rmap;
 
-    // If file is accessible
+    /// If file is accessible
     if (file.good()) {
-        // Get file size
+        /// Get file size
         std::string str;
         file.seekg(0, std::ios::end);
         size_t fileSize = static_cast<size_t>(file.tellg());
-        // If not empty
+        /// If not empty
         if (fileSize > 0) {
-            // Read whole file content and put it in the string str
+            /// Read whole file content and put it in the string str
             str.reserve(static_cast<size_t>(file.tellg()));
             file.seekg(0, std::ios::beg);
             str.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
             file.close();
             try {
-                // Unpack the string
+                /// Unpack the string
                 msgpack::object_handle oh = msgpack::unpack(str.data(), str.size());
-                // Deserialized object is valid during the msgpack::object_handle instance is alive.
+                /// Deserialized object is valid during the msgpack::object_handle instance is alive.
                 msgpack::object deserialized = oh.get();
                 deserialized.convert(rmap);
             } catch (const std::exception& e) {
@@ -174,11 +181,13 @@ PluginPreferencesUtils::getPreferencesValuesMap(const std::string& rootPath)
 {
     std::map<std::string, std::string> rmap;
 
+    /// reads all preferences values
     std::vector<std::map<std::string, std::string>> preferences = getPreferences(rootPath);
     for (auto& preference : preferences) {
         rmap[preference["key"]] = preference["defaultValue"];
     }
 
+    /// if any of these preferences were modified, it's value is changed before return
     for (const auto& pair : getUserPreferencesValuesMap(rootPath)) {
         rmap[pair.first] = pair.second;
     }
@@ -231,23 +240,23 @@ PluginPreferencesUtils::getAllowDenyListPreferences(ChatHandlerList& list)
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
     std::ifstream file(filePath, std::ios::binary);
 
-    // If file is accessible
+    /// If file is accessible
     if (file.good()) {
-        // Get file size
+        /// Get file size
         std::string str;
         file.seekg(0, std::ios::end);
         size_t fileSize = static_cast<size_t>(file.tellg());
-        // If not empty
+        /// If not empty
         if (fileSize > 0) {
-            // Read whole file content and put it in the string str
+            /// Read whole file content and put it in the string str
             str.reserve(static_cast<size_t>(file.tellg()));
             file.seekg(0, std::ios::beg);
             str.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
             file.close();
             try {
-                // Unpack the string
+                /// Unpack the string
                 msgpack::object_handle oh = msgpack::unpack(str.data(), str.size());
-                // Deserialized object is valid during the msgpack::object_handle instance is alive.
+                /// Deserialized object is valid during the msgpack::object_handle instance is alive.
                 msgpack::object deserialized = oh.get();
                 deserialized.convert(list);
             } catch (const std::exception& e) {
@@ -275,10 +284,12 @@ PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerNam
         if (file) {
             bool ok = Json::parseFromStream(rbuilder, file, &root, &errs);
             if (ok && root.isArray()) {
+                /// return if preference already exists
                 for (const auto& child : root)
                     if (child.get("key", "None").asString() == handlerName + "Always")
                         return;
             }
+            /// create preference structure otherwise
             preference["key"] = handlerName + "Always";
             preference["type"] = "Switch";
             preference["defaultValue"] = "0";
@@ -291,6 +302,7 @@ PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerNam
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
     std::ofstream outFile(filePath);
     if (outFile) {
+        /// save preference.json file with new "always preference"
         outFile << root.toStyledString();
         outFile.close();
     }
