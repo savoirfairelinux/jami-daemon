@@ -93,6 +93,30 @@
       "revId": "5eb6dc00a87dc2efeef456915e5275e882cb5146",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ae265c32_5485cd4c",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 13
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-05T21:48:45Z",
+      "side": 1,
+      "message": "No need for static after all. Just lock the mutex to prevent destruction while processing the callback. seems to work, at least with the scenario that triggered the issue.",
+      "parentUuid": "108cb215_d239a47f",
+      "range": {
+        "startLine": 9,
+        "startChar": 13,
+        "endLine": 11,
+        "endChar": 11
+      },
+      "revId": "5eb6dc00a87dc2efeef456915e5275e882cb5146",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
