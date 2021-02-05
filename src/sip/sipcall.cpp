@@ -961,7 +961,8 @@ SIPCall::removeCall()
         sdp_->setActiveRemoteSdpSession(nullptr);
     }
     Call::removeCall();
-    mediaTransport_.reset();
+    if (mediaTransport_)
+        dht::ThreadPool::io().run([ice = std::move(mediaTransport_)] {});
     tmpMediaTransport_.reset();
     inv.reset();
     setTransport({});
