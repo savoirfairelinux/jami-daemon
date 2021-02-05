@@ -1,5 +1,5 @@
-/*
- *  Copyright (C) 2004-2018 Savoir-faire Linux Inc.
+/*!
+ *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
@@ -23,6 +23,10 @@
 
 namespace jami {
 
+/*!
+ * \brief Load plugin's library.
+ * \return DLPlugin if success.
+ */
 Plugin*
 Plugin::load(const std::string& path, std::string& error)
 {
@@ -31,7 +35,7 @@ Plugin::load(const std::string& path, std::string& error)
         return nullptr;
     }
 
-    // Clear any existing error
+    /// Clear any existing error
     ::dlerror();
 
     void* handle = ::dlopen(path.c_str(), RTLD_NOW);
@@ -46,5 +50,4 @@ Plugin::load(const std::string& path, std::string& error)
 
     return new DLPlugin(handle, path);
 }
-
 } // namespace jami

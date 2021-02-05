@@ -1,5 +1,5 @@
-/*
- *  Copyright (C) 2020 Savoir-faire Linux Inc.
+/*!
+ *  Copyright (C) 2020-2021 Savoir-faire Linux Inc.
  *
  *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
@@ -29,6 +29,10 @@ namespace jami {
 
 using ChatHandlerList = std::map<std::pair<std::string, std::string>, std::map<std::string, bool>>;
 
+/*! \class  PluginPreferencesUtils
+ * \brief Static class that gathers functions to manage
+ * plugins' preferences.
+ */
 class PluginPreferencesUtils
 {
 public:
