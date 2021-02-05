@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2020 Savoir-faire Linux Inc.
+ *  Copyright (C) 2020-2021 Savoir-faire Linux Inc.
  *
  *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
@@ -101,19 +101,26 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath)
     std::set<std::string> keys;
     std::vector<std::map<std::string, std::string>> preferences;
     if (file) {
+        // Read the file to a json format
         bool ok = Json::parseFromStream(rbuilder, file, &root, &errs);
         if (ok && root.isArray()) {
+            // Read each preference described in preference.json individually
             for (unsigned i = 0; i < root.size(); i++) {
                 const Json::Value& jsonPreference = root[i];
                 std::string category = jsonPreference.get("category", "NoCategory").asString();
                 std::string type = jsonPreference.get("type", "None").asString();
                 std::string key = jsonPreference.get("key", "None").asString();
+                // The preference must have at least type and key
                 if (type != "None" && key != "None") {
                     if (keys.find(key) == keys.end()) {
+                        // Read the rest of the preference
                         auto preferenceAttributes = parsePreferenceConfig(jsonPreference);
                         // If the parsing of the attributes was successful, commit the map and the keys
                         auto defaultValue = preferenceAttributes.find("defaultValue");
                         if (type == "Path" && defaultValue != preferenceAttributes.end()) {
+                            // defaultValue in a Path preference is an incomplete path
+                            // starting from the installation path of the plugin.
+                            // Here we complete the path value.
                             defaultValue->second = rootPath + DIR_SEPARATOR_STR
                                                    + defaultValue->second;
                         }
@@ -174,11 +181,13 @@ PluginPreferencesUtils::getPreferencesValuesMap(const std::string& rootPath)
 {
     std::map<std::string, std::string> rmap;
 
+    // Read all preferences values
     std::vector<std::map<std::string, std::string>> preferences = getPreferences(rootPath);
     for (auto& preference : preferences) {
         rmap[preference["key"]] = preference["defaultValue"];
     }
 
+    // If any of these preferences were modified, its value is changed before return
     for (const auto& pair : getUserPreferencesValuesMap(rootPath)) {
         rmap[pair.first] = pair.second;
     }
@@ -275,15 +284,17 @@ PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerNam
         if (file) {
             bool ok = Json::parseFromStream(rbuilder, file, &root, &errs);
             if (ok && root.isArray()) {
+                // Return if preference already exists
                 for (const auto& child : root)
                     if (child.get("key", "None").asString() == handlerName + "Always")
                         return;
             }
+            // Create preference structure otherwise
             preference["key"] = handlerName + "Always";
             preference["type"] = "Switch";
             preference["defaultValue"] = "0";
             preference["title"] = "Automatically turn " + handlerName + " on";
-            preference["summary"] = handlerName + " will take effect immediatly";
+            preference["summary"] = handlerName + " will take effect immediately";
             root.append(preference);
             file.close();
         }
@@ -291,6 +302,7 @@ PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerNam
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
     std::ofstream outFile(filePath);
     if (outFile) {
+        // Save preference.json file with new "always preference"
         outFile << root.toStyledString();
         outFile.close();
     }

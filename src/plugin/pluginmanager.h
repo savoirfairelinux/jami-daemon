@@ -26,9 +26,7 @@
 
 #include <functional>
 #include <map>
-#include <memory>
 #include <mutex>
-#include <string>
 #include <vector>
 #include <list>
 
@@ -36,140 +34,174 @@
 
 namespace jami {
 
-class Plugin;
-
+/**
+ * @class  PluginManager
+ * @brief This class manages plugin (un)loading. Those process include:
+ * (1) plugin libraries (un)loading;
+ * (2) call plugin initial function;
+ * (3) handlers registration and destruction, and;
+ * (4) services registration.
+ */
 class PluginManager
 {
 public:
-    using ObjectDeleter = std::function<void(void*)>;
-    using ServiceFunction = std::function<int32_t(const DLPlugin*, void*)>;
-    using ComponentFunction = std::function<int32_t(void*)>;
-    // A vector to a pair<componentType, componentPtr>
-    using ComponentTypePtrVector = std::list<std::pair<std::string, void*>>;
+    PluginManager();
+    ~PluginManager();
 
 private:
+    using ObjectDeleter = std::function<void(void*)>;
+
+    // Function that may be called from plugin implementation
+    using ServiceFunction = std::function<int32_t(const DLPlugin*, void*)>;
+
+    // A Component is either a MediaHandler or a ChatHandler.
+    // A ComponentFunction is a function that may start or end a component life.
+    using ComponentFunction = std::function<int32_t(void*)>;
+
+    // A list of component type (MediaHandler or ChatHandler), and component pointer pairs
+    using ComponentPtrList = std::list<std::pair<std::string, void*>>;
+
     struct ObjectFactory
     {
         JAMI_PluginObjectFactory data;
         ObjectDeleter deleter;
     };
 
+    /**
+     * @struct ComponentLifeCycleManager
+     * @brief Component functions for registration and destruction.
+     */
     struct ComponentLifeCycleManager
     {
+        // Register component to servicesmanager
         ComponentFunction takeComponentOwnership;
+
+        // Destroys component in servicesmanager
         ComponentFunction destroyComponent;
     };
 
+    // Map between plugin's library path and loader pointer
     using PluginMap = std::map<std::string, std::pair<std::shared_ptr<Plugin>, bool>>;
-    using PluginComponentsMap = std::map<std::string, ComponentTypePtrVector>;
+
+    // Map between plugins' library path and their components list
+    using PluginComponentsMap = std::map<std::string, ComponentPtrList>;
+
+    // Vector with plugins' destruction functions
     using ExitFuncVec = std::vector<JAMI_PluginExitFunc>;
     using ObjectFactoryVec = std::vector<ObjectFactory>;
     using ObjectFactoryMap = std::map<std::string, ObjectFactory>;
 
 public:
-    PluginManager();
-    ~PluginManager();
-
     /**
-     * Load a dynamic plugin by filename.
-     *
+     * @brief Load a dynamic plugin by filename.
      * @param path fully qualified pathname on a loadable plugin binary
-     * @return true if success
+     * @return True if success
      */
     bool load(const std::string& path);
 
     /**
-     * @brief unloads the plugin with pathname path
+     * @brief Unloads the plugin
      * @param path
-     * @return true if success
+     * @return True if success
      */
     bool unload(const std::string& path);
 
     /**
-     * @brief getLoadedPlugins
-     * @return vector of strings of so files of the loaded plugins
+     * @brief Returns vector with loaded plugins' libraries paths
      */
     std::vector<std::string> getLoadedPlugins() const;
 
     /**
-     * @brief checkLoadedPlugin
-     * @return bool True if plugin is loaded, false otherwise
+     * @brief Returns True if plugin is loaded
      */
     bool checkLoadedPlugin(const std::string& rootPath) const;
 
     /**
-     * @brief destroyPluginComponents
-     * @param path
-     */
-    void destroyPluginComponents(const std::string& path);
-
-    /**
-     * @brief callPluginInitFunction
-     * @param path: plugin path used as an id in the plugin map
-     * @return true if succes
-     */
-    bool callPluginInitFunction(const std::string& path);
-    /**
-     * Register a plugin.
-     *
-     * @param initFunc plugin init function
-     * @return true if success
-     */
-    bool registerPlugin(std::unique_ptr<Plugin>& plugin);
-
-    /**
-     * Register a new service for plugin.
-     *
+     * @brief Register a new service in the Plugin System.
      * @param name The service name
-     * @param func The function called by Ring_PluginAPI.invokeService
-     * @return true if success
+     * @param func The function that may be called by Ring_PluginAPI.invokeService
+     * @return True if success
      */
     bool registerService(const std::string& name, ServiceFunction&& func);
 
+    /**
+     * @brief Unregister a service from the Plugin System.
+     * @param name The service name
+     */
     void unRegisterService(const std::string& name);
 
     /**
-     * Register a new public objects factory.
-     *
-     * @param type unique identifier of the object
-     * @param params object factory details
-     * @return true if success
+     * @brief Function called from plugin implementation register a new object factory.
      *
      * Note: type can be the string "*" meaning that the factory
      * will be called if no exact match factories are found for a given type.
+     * @param type unique identifier of the object
+     * @param params object factory details
+     * @return True if success
      */
     bool registerObjectFactory(const char* type, const JAMI_PluginObjectFactory& factory);
+
     /**
-     * @brief registerComponentManager
-     * Registers a component manager that will have two functions, one to take
+     * @brief Registers a component manager that will have two functions, one to take
      * ownership of the component and the other one to destroy it
-     * @param name : name of the component manager
+     * @param name name of the component manager
      * @param takeOwnership function that takes ownership on created objet in memory
-     * @param destroyComponent desotry the component
-     * @return true if success
+     * @param destroyComponent destroy the component
+     * @return True if success
      */
     bool registerComponentManager(const std::string& name,
                                   ComponentFunction&& takeOwnership,
                                   ComponentFunction&& destroyComponent);
 
-    /**
-     * Create a new plugin's exported object.
-     *
-     * @param type unique identifier of the object to create.
-     * @return unique pointer on created object.
-     */
-    std::unique_ptr<void, ObjectDeleter> createObject(const std::string& type);
-
 private:
     NON_COPYABLE(PluginManager);
 
     /**
-     * Implements JAMI_PluginAPI.registerObjectFactory().
+     * @brief Untoggle and destroys all plugin's handlers from handlerservices
+     * @param path
+     */
+    void destroyPluginComponents(const std::string& path);
+
+    /**
+     * @brief Returns True if success
+     * @param path plugin path used as an id in the plugin map
+     */
+    bool callPluginInitFunction(const std::string& path);
+
+    /**
+     * @brief Returns True if success
+     * @param initFunc plugin init function
+     */
+    bool registerPlugin(std::unique_ptr<Plugin>& plugin);
+
+    /**
+     * @brief Creates a new plugin's exported object.
+     * @param type unique identifier of the object to create.
+     * @return Unique pointer on created object.
+     */
+    std::unique_ptr<void, ObjectDeleter> createObject(const std::string& type);
+
+    /**
+     * WARNING: exposed to plugins through JAMI_PluginAPI
+     * @brief Implements JAMI_PluginAPI.registerObjectFactory().
      * Must be C accessible.
+     * @param api
+     * @param type
+     * @param data
      */
     static int32_t registerObjectFactory_(const JAMI_PluginAPI* api, const char* type, void* data);
+
+    /** WARNING: exposed to plugins through JAMI_PluginAPI
+     * @brief Function called from plugin implementation to perform a service.
+     * @param name The service name
+     */
     int32_t invokeService(const DLPlugin* plugin, const std::string& name, void* data);
 
+    /**
+     * WARNING: exposed to plugins through JAMI_PluginAPI
+     * @brief Function called from plugin implementation to manage a component.
+     * @param name The component type
+     */
     int32_t manageComponent(const DLPlugin* plugin, const std::string& name, void* data);
 
     std::mutex mutex_ {};
@@ -178,22 +210,23 @@ private:
                                  registerObjectFactory_,
                                  nullptr,
                                  nullptr};
-    PluginMap dynPluginMap_ {}; // Only dynamic loaded plugins
+    // Keeps a map between plugin library path and a Plugin instance
+    // for dynamically loaded plugins.
+    PluginMap dynPluginMap_ {};
+
+    // Should keep reference to plugins' destruction functions read during library loading.
     ExitFuncVec exitFuncVec_ {};
+
     ObjectFactoryMap exactMatchMap_ {};
     ObjectFactoryVec wildCardVec_ {};
 
-    // Storage used during plugin initialisation.
-    // Will be copied into previous ones only if the initialisation success.
-    ObjectFactoryMap tempExactMatchMap_ {};
-    ObjectFactoryVec tempWildCardVec_ {};
-
-    // registered services
+    // Keeps a map between services names and service functions.
     std::map<std::string, ServiceFunction> services_ {};
-    // registered component lifecycle managers
+
+    // Keeps a ComponentsLifeCycleManager for each available Handler API.
     std::map<std::string, ComponentLifeCycleManager> componentsLifeCycleManagers_ {};
 
-    // references to plugins components, used for cleanup
+    // Keeps a map between plugins' library path and their components list.
     PluginComponentsMap pluginComponentsMap_ {};
 };
 } // namespace jami

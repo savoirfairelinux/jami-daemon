@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2020 Savoir-faire Linux Inc.
+ *  Copyright (C) 2020-2021 Savoir-faire Linux Inc.
  *
  *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
@@ -32,36 +32,75 @@ namespace jami {
 using avSubjectPtr = std::shared_ptr<Observable<AVFrame*>>;
 
 /**
- * @brief The MediaHandler class
- * Is the main object of the plugin
+ * @class MediaHandler
+ * @brief It's the base object of the CallMediaHandler
  */
 class MediaHandler
 {
 public:
     virtual ~MediaHandler() = default;
+
     /**
-     * @brief id
-     * The id is the path of the plugin that created this MediaHandler
-     * @return
+     * @brief Returns the dataPath of the plugin that created this MediaHandler.
      */
     std::string id() const { return id_; }
+
+    /**
+     * @brief Should be called by the MediaHandler creator to set the plugins id_ variable
+     * with dataPath.
+     */
     virtual void setId(const std::string& id) final { id_ = id; }
 
 private:
+    // Must be set with plugin's dataPath.
     std::string id_;
 };
 
 /**
- * @brief The CallMediaHandler class
- * It can hold multiple streams of data, and do processing on them
+ * @class  CallMediaHandler
+ * @brief This abstract class is an API we need to implement from plugin side.
+ * In other words, a plugin functionality that plays with audio or video, must start
+ * from the implementation of this class.
  */
 class CallMediaHandler : public MediaHandler
 {
 public:
+    /**
+     * @brief Should attach a AVSubject (Observable) to the plugin data process (Observer).
+     * @param data
+     * @param subject
+     */
     virtual void notifyAVFrameSubject(const StreamData& data, avSubjectPtr subject) = 0;
+
+    /**
+     * @brief Should return a map with handler's name, iconPath, pluginId, attached, and dataType.
+     * Daemon expects:
+     *      "attached" -> 1 if handler is attached;
+     *      "dataType" -> 1 if data processed is video;
+     *      "dataType" -> 0 if data processed is audio;
+     * @return Map with CallMediaHandler details.
+     */
     virtual std::map<std::string, std::string> getCallMediaHandlerDetails() = 0;
+
+    /**
+     * @brief Should detach the plugin data process (Observer).
+     */
     virtual void detach() = 0;
+
+    /**
+     * @brief If a preference can be changed without the need to reload the plugin, it
+     * should be done through this function.
+     * @param key
+     * @param value
+     */
     virtual void setPreferenceAttribute(const std::string& key, const std::string& value) = 0;
+
+    /**
+     * @brief If a preference can be changed without the need to reload the plugin, this function
+     * should return True.
+     * @param key
+     * @return True if preference can be changed through setPreferenceAttribute method.
+     */
     virtual bool preferenceMapHasKey(const std::string& key) = 0;
 };
 } // namespace jami
