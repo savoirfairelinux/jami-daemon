@@ -22,6 +22,30 @@
       "revId": "88aff3e78a4e4fd62049d99e683d2fb7990dccbc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9821d5b9_7edf5b44",
+        "filename": "src/conference.h",
+        "patchSetId": 22
+      },
+      "lineNbr": 258,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-05T14:24:55Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "eeb019dc_dd6294ca",
+      "range": {
+        "startLine": 258,
+        "startChar": 60,
+        "endLine": 258,
+        "endChar": 66
+      },
+      "revId": "88aff3e78a4e4fd62049d99e683d2fb7990dccbc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
