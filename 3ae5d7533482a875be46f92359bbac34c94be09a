@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "7edebf02_ccf94c3e",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 16
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-05T15:45:39Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "c506b1d9_85a7e0a9",
+      "revId": "3ae5d7533482a875be46f92359bbac34c94be09a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "6b23af8d_fe445712",
         "filename": "contrib/src/pjproject/0001-rfc6544.patch",
         "patchSetId": 16
@@ -30,6 +48,24 @@
       "writtenOn": "2021-02-05T15:29:15Z",
       "side": 1,
       "message": "All TCP specific should be protected by PJ_HAS_TCP",
+      "revId": "3ae5d7533482a875be46f92359bbac34c94be09a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ac9121a1_ee663200",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 16
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-05T15:45:39Z",
+      "side": 1,
+      "message": "Not thos define, HAS_TCP is also a define.\nBut added in other places",
+      "parentUuid": "6b23af8d_fe445712",
       "revId": "3ae5d7533482a875be46f92359bbac34c94be09a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "175b58aa_6060f86f",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 16
+      },
+      "lineNbr": 820,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-05T15:45:39Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "f6e1dcde_6501ff35",
+      "revId": "3ae5d7533482a875be46f92359bbac34c94be09a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9e33100c_b449da97",
         "filename": "contrib/src/pjproject/0001-rfc6544.patch",
         "patchSetId": 16
@@ -67,6 +121,24 @@
       "revId": "3ae5d7533482a875be46f92359bbac34c94be09a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d3819de4_23525c7f",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 16
+      },
+      "lineNbr": 825,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-05T15:45:39Z",
+      "side": 1,
+      "message": "Ack - but this is code from pjproject",
+      "parentUuid": "9e33100c_b449da97",
+      "revId": "3ae5d7533482a875be46f92359bbac34c94be09a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -98,6 +170,24 @@
       "writtenOn": "2021-02-05T15:29:15Z",
       "side": 1,
       "message": "Do we allow waiting for incoming checks only if the candidate is nominated ?\nMy question, if we use regular nomination, do we still give extra time or incoming checks ? seems not.",
+      "revId": "3ae5d7533482a875be46f92359bbac34c94be09a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5e14f1d9_d2eafce7",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 16
+      },
+      "lineNbr": 881,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-05T15:45:39Z",
+      "side": 1,
+      "message": "controlling/controlled doesn\u0027t have any influence on this point. If candidate is nominated in regular or aggressive, this means that at least one check succeeded. You can disabled agrressive in Jami the result is exactly the same, the problem was related to the condition we have for the ICE conclusion. Which was too soon in both cases",
+      "parentUuid": "e683b71e_c5686f0f",
       "revId": "3ae5d7533482a875be46f92359bbac34c94be09a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
