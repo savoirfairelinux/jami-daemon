@@ -1,5 +1,5 @@
-﻿/**
- *  Copyright (C)2020-2021 Savoir-faire Linux Inc.
+﻿/*!
+ *  Copyright (C) 2020-2021 Savoir-faire Linux Inc.
  *
  *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
@@ -19,24 +19,25 @@
  */
 
 #pragma once
+
 #include "noncopyable.h"
-#include "fileutils.h"
-#include "archiver.h"
 #include "pluginmanager.h"
 #include "pluginpreferencesutils.h"
 
-// Services
 #include "callservicesmanager.h"
 #include "chatservicesmanager.h"
 
 #include <vector>
 #include <map>
 #include <list>
-#include <string>
 #include <algorithm>
-#include <set>
 
 namespace jami {
+
+/*! \class  JamiPluginManager
+ * \brief This class provides an interface to functions exposed to the
+ * Plugin System interface for lrc and clients.
+ */
 class JamiPluginManager
 {
 public:
@@ -46,76 +47,28 @@ public:
     {
         registerServices();
     }
-    // TODO : improve getPluginDetails
-    /**
-     * @brief getPluginDetails
-     * Parses a manifest file and returns :
-     * The tuple (name, description, version, icon path, so path)
-     * The icon should ideally be 192x192 pixels or better 512x512 pixels
-     * In order to match with android specifications
-     * https://developer.android.com/google-play/resources/icon-design-specifications
-     * Saves the result in a map
-     * @param plugin rootPath (folder of the plugin)
-     * @return map where the keyset is {"name", "description", "iconPath"}
-     */
+
     std::map<std::string, std::string> getPluginDetails(const std::string& rootPath);
 
-    /**
-     * @brief getInstalledPlugins
-     * Lists available plugins with valid manifest files
-     * @return list of plugin directory names
-     */
     std::vector<std::string> getInstalledPlugins();
 
-    /**
-     * @brief installPlugin
-     * Checks if the plugin has a valid manifest, installs the plugin if not previously installed
-     * or if installing a newer version of it
-     * If force is true, we force install the plugin
-     * @param jplPath
-     * @param force
-     * @return + 0 if success
-     * 100 if already installed with similar version
-     * 200 if already installed with newer version
-     * libarchive error codes otherwise
-     */
     int installPlugin(const std::string& jplPath, bool force);
 
-    /**
-     * @brief uninstallPlugin
-     * Checks if the plugin has a valid manifest then removes plugin folder
-     * @param rootPath
-     * @return 0 if success
-     */
     int uninstallPlugin(const std::string& rootPath);
 
-    /**
-     * @brief loadPlugin
-     * @param rootPath of the plugin folder
-     * @return true is success
-     */
     bool loadPlugin(const std::string& rootPath);
 
-    /**
-     * @brief unloadPlugin
-     * @param rootPath of the plugin folder
-     * @return true is success
-     */
     bool unloadPlugin(const std::string& rootPath);
 
-    /**
-     * @brief getLoadedPlugins
-     * @return vector of rootpaths of the loaded plugins
-     */
     std::vector<std::string> getLoadedPlugins() const;
 
     std::vector<std::map<std::string, std::string>> getPluginPreferences(const std::string& rootPath);
 
+    std::map<std::string, std::string> getPluginPreferencesValuesMap(const std::string& rootPath);
+
     bool setPluginPreference(const std::string& rootPath,
                              const std::string& key,
                              const std::string& value);
-
-    std::map<std::string, std::string> getPluginPreferencesValuesMap(const std::string& rootPath);
 
     bool resetPluginPreferencesValuesMap(const std::string& rootPath);
 
@@ -126,84 +79,15 @@ public:
 private:
     NON_COPYABLE(JamiPluginManager);
 
-    /**
-     * @brief checkPluginValidity
-     * Checks if the plugin has a manifest file with a name and a version
-     * @return true if valid
-     */
-    bool checkPluginValidity(const std::string& rootPath)
-    {
-        return !parseManifestFile(manifestPath(rootPath)).empty();
-    }
-
-    /**
-     * @brief readPluginManifestFromArchive
-     * Reads the manifest file content without uncompressing the whole archive
-     * Maps the manifest data to a map(string, string)
-     * @param jplPath
-     * @return manifest map
-     */
-    std::map<std::string, std::string> readPluginManifestFromArchive(const std::string& jplPath);
-
-    /**
-     * @brief parseManifestFile, parses the manifest file of an installed plugin
-     * @param manifestFilePath
-     * @return manifest map
-     */
-    std::map<std::string, std::string> parseManifestFile(const std::string& manifestFilePath);
-
-    std::string manifestPath(const std::string& rootPath)
-    {
-        return rootPath + DIR_SEPARATOR_CH + "manifest.json";
-    }
-
-    std::string getRootPathFromSoPath(const std::string& soPath) const
-    {
-        return soPath.substr(0, soPath.find_last_of(DIR_SEPARATOR_CH));
-    }
-
-    std::string manifestPath(const std::string& rootPath) const
-    {
-        return rootPath + DIR_SEPARATOR_CH + "manifest.json";
-    }
-
-    std::string dataPath(const std::string& pluginSoPath) const
-    {
-        return getRootPathFromSoPath(pluginSoPath) + DIR_SEPARATOR_CH + "data";
-    }
-
-    std::map<std::string, std::string> getPluginUserPreferencesValuesMap(const std::string& rootPath);
-
-    /**
-     * @brief getPreferencesConfigFilePath
-     * Returns the plugin preferences config file path from the plugin root path
-     * This is entirely defined by how the plugin files are structured
-     * @param plugin rootPath
-     * @return path of the preferences config
-     */
-    std::string getPreferencesConfigFilePath(const std::string& rootPath) const
-    {
-        return PluginPreferencesUtils::getPreferencesConfigFilePath(rootPath);
-    }
-
-    /**
-     * @brief pluginPreferencesValuesFilePath
-     * Returns the plugin preferences values file path from the plugin root path
-     * This is entirely defined by how the plugin files are structured
-     * @param plugin rootPath
-     * @return path of the preferences values
-     */
-    std::string pluginPreferencesValuesFilePath(const std::string& rootPath) const
-    {
-        return PluginPreferencesUtils::valuesFilePath(rootPath);
-    }
-
     void registerServices();
 
+    /// PluginManager instance
     PluginManager pm_;
+
+    /// Map between plugins installation path and manifest infos.
     std::map<std::string, std::map<std::string, std::string>> pluginDetailsMap_;
 
-    // Services
+    /// Services instances
     CallServicesManager callsm_;
     ChatServicesManager chatsm_;
 };

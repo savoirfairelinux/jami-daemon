@@ -1,4 +1,4 @@
-/*
+/*!
  *  Copyright (C) 2021 Savoir-faire Linux Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -18,28 +18,33 @@
 #pragma once
 
 #include "noncopyable.h"
-#include "pluginmanager.h"
 #include "chathandler.h"
 #include "pluginpreferencesutils.h"
 
 namespace jami {
 
+class PluginManager;
+
 using ChatHandlerPtr = std::unique_ptr<ChatHandler>;
 
+/*! \class  ChatServicesManager
+ * \brief This class provides the interface between loaded ChatHandlers
+ * and conversation messages. Besides it:
+ * (1) stores pointers to all loaded ChatHandlers;
+ * (2) stores pointers to availables chat subjects, and;
+ * (3) lists ChatHandler state with respect to each accountId, peerId pair. In other words,
+ * for a given an accountId, peerId pair, we store if a ChatHandler is active or not.
+ */
 class ChatServicesManager
 {
 public:
-    ChatServicesManager(PluginManager& pm);
+    ChatServicesManager(PluginManager& pluginManager);
 
     NON_COPYABLE(ChatServicesManager);
 
-    void registerComponentsLifeCycleManagers(PluginManager& pm);
-
-    void registerChatService(PluginManager& pm);
-
     std::vector<std::string> getChatHandlers();
 
-    void publishMessage(pluginMessagePtr& cm);
+    void publishMessage(pluginMessagePtr& message);
 
     void cleanChatSubjects(const std::string& accountId, const std::string& peerId = "");
 
@@ -51,11 +56,6 @@ public:
     std::vector<std::string> getChatHandlerStatus(const std::string& accountId,
                                                   const std::string& peerId);
 
-    /**
-     * @brief getChatHandlerDetails
-     * @param chatHandlerIdStr of the chat handler
-     * @return map of Chat Handler Details
-     */
     std::map<std::string, std::string> getChatHandlerDetails(const std::string& chatHandlerIdStr);
 
     bool setPreference(const std::string& key,
@@ -65,18 +65,35 @@ public:
     void setAllowDenyListsFromPreferences();
 
 private:
+    void registerComponentsLifeCycleManagers(PluginManager& pluginManager);
+
+    void registerChatService(PluginManager& pluginManager);
+
     void toggleChatHandler(const uintptr_t chatHandlerId,
                            const std::string& accountId,
                            const std::string& peerId,
                            const bool toggle);
 
+    /// Components that a plugin can register through registerChatHandler service.
+    /// These objects can then be activated with toggleChatHandler.
     std::list<ChatHandlerPtr> chatHandlers_;
-    std::map<std::pair<std::string, std::string>, std::set<uintptr_t>>
-        chatHandlerToggled_; // {account,peer}, list of chatHandlers
 
+    /// Component that stores active ChatHandlers for each existing accountId, peerId pair.
+    std::map<std::pair<std::string, std::string>, std::set<uintptr_t>> chatHandlerToggled_;
+
+    /// When there is a new message, chat subjects are created.
+    /// Here we store a reference to them in order to make them interact with
+    /// ChatHandlers.
+    /// For easy access they are mapped accordingly to the accountId, peerId pair to
+    /// which they belong.
     std::map<std::pair<std::string, std::string>, chatSubjectPtr> chatSubjects_;
+
+    /// Maps a ChatHandler name and the addres of this ChatHandler.
     std::map<std::string, uintptr_t> handlersNameMap_ {};
 
+    /// Component that stores persistent ChatHandlers' status for each existing
+    /// accountId, peerId pair.
+    /// A map of accountId, peerId pairs and ChatHandler-status pairs.
     ChatHandlerList allowDenyList_ {};
 };
 } // namespace jami
