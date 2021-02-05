@@ -24,6 +24,7 @@
 %apply uint32_t { DRing::DataTransferError };
 %apply uint64_t { DRing::DataTransferId };
 %apply uint64_t { const DRing::DataTransferId };
+%apply int64_t& INOUT { DRing::DataTransferId& id };
 
 %header %{
 #include "dring/dring.h"
@@ -53,7 +54,7 @@ namespace DRing {
     std::string mimetype;
   };
 
-  DRing::DataTransferError sendFile(const DRing::DataTransferInfo info, DRing::DataTransferId id);
+  DRing::DataTransferError sendFile(const DRing::DataTransferInfo info, DRing::DataTransferId& id);
   DRing::DataTransferError acceptFileTransfer(const DRing::DataTransferId id, const std::string file_path, int64_t offset);
   DRing::DataTransferError cancelDataTransfer(const DRing::DataTransferId id);
   DRing::DataTransferError dataTransferInfo(const DRing::DataTransferId id, DRing::DataTransferInfo &info);
