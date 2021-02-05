@@ -16,6 +16,24 @@
       "revId": "78eedf6611cf23b1fa5c459a77a943f3d71012db",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "99d00a83_8d41d68b",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 592,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-05T14:18:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "45c15e90_6377b7ec",
+      "revId": "78eedf6611cf23b1fa5c459a77a943f3d71012db",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
