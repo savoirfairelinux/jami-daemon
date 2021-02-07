@@ -317,11 +317,55 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
     : id_ {id}
     , mixer_(mixer)
     , scaler_(new VideoScaler())
+    , hFlip_(nullptr)
+    , needsFlip_(true)
 #ifdef DEBUG_FPS
     , frameCount_(0u)
     , lastFrameDebug_(std::chrono::system_clock::now())
 #endif
-{}
+{
+#if (defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS))
+    // Mobile already flips preview
+    needsFlip_ = false;
+#endif
+}
+
+void
+SinkClient::flipFrame(const std::shared_ptr<VideoFrame>& frame)
+{
+    constexpr const char input[] = "preview";
+    int ret;
+    if (needsFlip_ && !hFlip_) {
+        constexpr auto one = rational<int>(1);
+        std::ostringstream os;
+        std::vector<MediaStream> msv;
+
+        os << "[" << input << "] hflip";
+        msv.emplace_back(input, frame->format(), one, frame->width(), frame->height(), 0, one);
+        hFlip_.reset(new MediaFilter);
+
+        ret = hFlip_->initialize(os.str(), msv);
+        if (ret < 0) {
+            needsFlip_ = false; // if init failed once, don't waste time trying on each frame
+            JAMI_ERR() << "Sent video will not be mirrored";
+            hFlip_.reset();
+            return;
+        }
+    }
+
+    if (needsFlip_ && hFlip_) {
+        ret = hFlip_->feedInput(frame->pointer(), input);
+        if (ret < 0) {
+            needsFlip_ = false;
+            JAMI_ERR() << "Failed to mirror frame";
+            return;
+        }
+
+        std::shared_ptr<MediaFrame> flipped(hFlip_->readOutput());
+        auto videoFrame = std::static_pointer_cast<VideoFrame>(flipped);
+        frame->copyFrom(*videoFrame);
+    }
+}
 
 void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
@@ -389,7 +433,10 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             setFrameSize(frame->width(), frame->height());
         }
 #if HAVE_SHM
-        shm_->renderFrame(*frame);
+        auto flippedFrame = std::make_shared<VideoFrame>();
+        flippedFrame->copyFrom(*frame);
+        flipFrame(flippedFrame);
+        shm_->renderFrame(*flippedFrame);
 #endif
         if (target_.pull) {
             VideoFrame dst;
