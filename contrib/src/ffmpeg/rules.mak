@@ -171,6 +171,7 @@ FFMPEGCONF += \
 
 #filters
 FFMPEGCONF += \
+	--enable-filter=hflip \
 	--enable-filter=scale \
 	--enable-filter=overlay \
 	--enable-filter=amix \
