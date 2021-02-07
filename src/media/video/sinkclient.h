@@ -92,6 +92,10 @@ private:
 
     void setRotation(int rotation);
 
+    void flipFrame(const std::shared_ptr<VideoFrame>& frame);
+    std::unique_ptr<MediaFilter> hFlip_;
+    bool needsFlip_;
+
 #ifdef DEBUG_FPS
     unsigned frameCount_;
     std::chrono::time_point<std::chrono::system_clock> lastFrameDebug_;
