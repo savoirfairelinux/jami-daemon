@@ -222,6 +222,7 @@ else
 DEPS_ffmpeg += ffnvcodec
 FFMPEGCONF += \
 	--target-os=linux \
+	--enable-filter=hflip \
 	--enable-indev=v4l2 \
 	--enable-indev=xcbgrab \
 	--enable-vdpau \
@@ -258,6 +259,7 @@ endif
 
 ifdef HAVE_MACOSX
 FFMPEGCONF += \
+	--enable-filter=hflip \
 	--enable-avfoundation \
 	--enable-indev=avfoundation \
 	--enable-videotoolbox \
@@ -324,6 +326,7 @@ endif
 ifdef HAVE_WIN32
 DEPS_ffmpeg += ffnvcodec
 FFMPEGCONF += --target-os=mingw32 \
+	--enable-filter=hflip \
     --enable-w32threads \
     --disable-decoder=dca \
 	--enable-cuvid \
