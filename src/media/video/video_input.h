@@ -43,6 +43,7 @@
 namespace jami {
 class MediaDecoder;
 class MediaDemuxer;
+class MediaFilter;
 } // namespace jami
 
 namespace jami {
@@ -126,6 +127,10 @@ private:
     std::unique_ptr<MediaDecoder> decoder_;
     std::shared_ptr<SinkClient> sink_;
     ThreadLoop loop_;
+
+    void flipFrame(const std::shared_ptr<VideoFrame>& frame);
+    std::unique_ptr<MediaFilter> hFlip_;
+    bool needsFlip_;
 
     // for ThreadLoop
     bool setup();
