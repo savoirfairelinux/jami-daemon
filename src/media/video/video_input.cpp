@@ -27,6 +27,7 @@
 #include "video_input.h"
 
 #include "media_decoder.h"
+#include "media_filter.h"
 #include "media_const.h"
 #include "manager.h"
 #include "client/videomanager.h"
@@ -60,11 +61,16 @@ VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
             std::bind(&VideoInput::cleanup, this))
+    , hFlip_(nullptr)
+    , needsFlip_(true)
 {
     inputMode_ = inputMode;
     if (inputMode_ == VideoInputMode::Undefined) {
 #if (defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS))
         inputMode_ = VideoInputMode::ManagedByClient;
+#ifndef RING_UWP
+        needsFlip_ = false;
+#endif
 #else
         inputMode_ = VideoInputMode::ManagedByDaemon;
 #endif
@@ -276,6 +282,7 @@ VideoInput::createDecoder()
 
     auto decoder = std::make_unique<MediaDecoder>(
         [this](const std::shared_ptr<MediaFrame>& frame) mutable {
+            flipFrame(std::static_pointer_cast<VideoFrame>(frame));
             publishFrame(std::static_pointer_cast<VideoFrame>(frame));
         });
 
@@ -350,6 +357,43 @@ VideoInput::deleteDecoder()
         return;
     flushFrames();
     decoder_.reset();
+}
+
+void
+VideoInput::flipFrame(const std::shared_ptr<VideoFrame>& frame)
+{
+    constexpr const char input[] = "preview";
+    int ret;
+    if (needsFlip_ && !hFlip_) {
+        constexpr auto one = rational<int>(1);
+        std::ostringstream os;
+        std::vector<MediaStream> msv;
+
+        os << "[" << input << "] hflip";
+        msv.emplace_back(input, frame->format(), one, frame->width(), frame->height(), 0, one);
+        hFlip_.reset(new MediaFilter);
+
+        ret = hFlip_->initialize(os.str(), msv);
+        if (ret < 0) {
+            needsFlip_ = false; // if init failed once, don't waste time trying on each frame
+            JAMI_ERR() << "Video preview will not be mirrored";
+            hFlip_.reset();
+            return;
+        }
+    }
+
+    if (needsFlip_ && hFlip_) {
+        ret = hFlip_->feedInput(frame->pointer(), input);
+        if (ret < 0) {
+            needsFlip_ = false;
+            JAMI_ERR() << "Failed to mirror frame";
+            return;
+        }
+
+        std::shared_ptr<MediaFrame> flipped(hFlip_->readOutput());
+        auto videoFrame = std::static_pointer_cast<VideoFrame>(flipped);
+        frame->copyFrom(*videoFrame);
+    }
 }
 
 void
