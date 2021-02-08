@@ -288,4 +288,10 @@ struct MediaDescription
     CryptoAttribute crypto {};
 };
 
+namespace MediaStateChangedEvent {
+constexpr static auto MEDIA_NEGOTIATED = "MEDIA_NEGOTIATED";
+constexpr static auto MEDIA_STARTED = "MEDIA_STARTED";
+constexpr static auto MEDIA_STOPPED = "MEDIA_STOPPED";
+} // namespace MediaStateChangedEvent
+
 } // namespace jami
