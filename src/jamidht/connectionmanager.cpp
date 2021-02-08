@@ -38,6 +38,7 @@ static constexpr std::chrono::seconds ICE_NEGOTIATION_TIMEOUT {10};
 static constexpr std::chrono::seconds ICE_INIT_TIMEOUT {10};
 static constexpr std::chrono::seconds DHT_MSG_TIMEOUT {30};
 static constexpr std::chrono::seconds SOCK_TIMEOUT {10};
+static constexpr int MAX_TENTATIVES {100};
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
 using CallbackId = std::pair<jami::DeviceId, dht::Value::Id>;
 
@@ -103,6 +104,13 @@ public:
         removeUnusedConnections();
     }
 
+    struct PendingCb
+    {
+        std::string name;
+        ConnectCallback cb;
+        dht::Value::Id vid;
+    };
+
     void connectDeviceStartIce(const DeviceId& deviceId, const dht::Value::Id& vid);
     void connectDeviceOnNegoDone(const DeviceId& deviceId,
                                  const std::string& name,
@@ -133,13 +141,17 @@ public:
     void onPeerResponse(const PeerConnectionRequest& req);
     void onDhtConnected(const DeviceId& deviceId);
 
-    bool hasPublicIp(const ICESDP& sdp)
-    {
-        for (const auto& cand : sdp.rem_candidates)
-            if (cand.type == PJ_ICE_CAND_TYPE_SRFLX)
-                return true;
-        return false;
-    }
+    /**
+     * Triggered when a new TLS socket is ready to use
+     * @param ok        If succeed
+     * @param deviceId  Related device
+     * @param vid       vid of the connection request
+     * @param name      non empty if TLS was created by connectDevice()
+     */
+    void onTlsNegotiationDone(bool ok,
+                              const DeviceId& deviceId,
+                              const dht::Value::Id& vid,
+                              const std::string& name = "");
 
     JamiAccount& account;
 
@@ -171,17 +183,55 @@ public:
     ConnectionReadyCallback connReadyCb_ {};
     onICERequestCallback iceReqCb_ {};
 
+    /**
+     * Stores callback from connectDevice
+     * @note: each device needs a vector because several connectDevice can
+     * be done in parallel and we only want one socket
+     */
     std::mutex connectCbsMtx_ {};
-    std::map<CallbackId, ConnectCallback> pendingCbs_ {};
+    std::map<DeviceId, std::vector<PendingCb>> pendingCbs_ {};
 
-    ConnectCallback getPendingCallback(const CallbackId& cbId)
+    std::vector<PendingCb> extractPendingCallbacks(const DeviceId& deviceId,
+                                                   const dht::Value::Id vid = 0)
     {
-        ConnectCallback ret;
+        std::vector<PendingCb> ret;
         std::lock_guard<std::mutex> lk(connectCbsMtx_);
-        auto cbIt = pendingCbs_.find(cbId);
-        if (cbIt != pendingCbs_.end()) {
-            ret = std::move(cbIt->second);
-            pendingCbs_.erase(cbIt);
+        auto pendingIt = pendingCbs_.find(deviceId);
+        if (pendingIt == pendingCbs_.end())
+            return ret;
+        auto& pendings = pendingIt->second;
+        if (vid == 0) {
+            ret = std::move(pendings);
+        } else {
+            for (auto it = pendings.begin(); it != pendings.end(); ++it) {
+                if (it->vid == vid) {
+                    ret.emplace_back(std::move(*it));
+                    pendings.erase(it);
+                    break;
+                }
+            }
+        }
+        if (pendings.empty())
+            pendingCbs_.erase(pendingIt);
+        return ret;
+    }
+
+    std::vector<PendingCb> getPendingCallbacks(const DeviceId& deviceId,
+                                               const dht::Value::Id vid = 0)
+    {
+        std::vector<PendingCb> ret;
+        std::lock_guard<std::mutex> lk(connectCbsMtx_);
+        auto pendingIt = pendingCbs_.find(deviceId);
+        if (pendingIt == pendingCbs_.end())
+            return ret;
+        auto& pendings = pendingIt->second;
+        if (vid == 0) {
+            ret = pendings;
+        } else {
+            std::copy_if(pendings.begin(),
+                         pendings.end(),
+                         std::back_inserter(ret),
+                         [&](auto pending) { return pending.vid == vid; });
         }
         return ret;
     }
@@ -219,8 +269,9 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
 
     auto onError = [&]() {
         ice.reset();
-        if (auto cb = getPendingCallback({deviceId, vid}))
-            cb(nullptr, deviceId);
+        // Erase all pending connect
+        for (const auto& pending : extractPendingCallbacks(deviceId))
+            pending.cb(nullptr, deviceId);
     };
 
     if (!ice) {
@@ -296,8 +347,8 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
     auto& ice = info->ice_;
     if (!ice || !ice->isRunning()) {
         JAMI_ERR("No ICE detected or not running");
-        if (auto cb = getPendingCallback({deviceId, vid}))
-            cb(nullptr, deviceId);
+        for (const auto& pending : extractPendingCallbacks(deviceId))
+            pending.cb(nullptr, deviceId);
         return;
     }
 
@@ -316,23 +367,8 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
     info->tls_->setOnReady(
         [w = weak(), deviceId = std::move(deviceId), vid = std::move(vid), name = std::move(name)](
             bool ok) {
-            auto sthis = w.lock();
-            if (!sthis)
-                return;
-            auto info = sthis->getInfo(deviceId, vid);
-            if (!info)
-                return;
-            if (!ok) {
-                JAMI_ERR() << "TLS connection failure for peer " << deviceId;
-                if (auto cb = sthis->getPendingCallback({deviceId, vid}))
-                    cb(nullptr, deviceId);
-            } else {
-                // The socket is ready, store it
-                sthis->addNewMultiplexedSocket(deviceId, vid);
-                // Finally, open the channel
-                if (info->socket_)
-                    sthis->sendChannelRequest(info->socket_, name, deviceId, vid);
-            }
+            if (auto shared = w.lock())
+                shared->onTlsNegotiationDone(ok, deviceId, vid, name);
         });
 }
 
@@ -366,27 +402,51 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                     cb(nullptr, deviceId);
                     return;
                 }
-                auto vid = ValueIdDist()(sthis->account.rand);
-                CallbackId cbId(deviceId, vid);
+                dht::Value::Id vid;
+                auto tentatives = 0;
+                do {
+                    vid = ValueIdDist(1, DRING_ID_MAX_VAL)(sthis->account.rand);
+                    --tentatives;
+                } while (sthis->getPendingCallbacks(deviceId, vid).size() != 0
+                         && tentatives != MAX_TENTATIVES);
+                if (tentatives == MAX_TENTATIVES) {
+                    JAMI_ERR("Couldn't get a current random channel number");
+                    cb(nullptr, deviceId);
+                    return;
+                }
+                auto isConnectingToDevice = false;
                 {
                     std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
-                    auto cbIt = sthis->pendingCbs_.find(cbId);
-                    if (cbIt != sthis->pendingCbs_.end()) {
-                        JAMI_WARN("Already have a current callback for same channel");
-                        cbIt->second = std::move(cb);
-                    } else {
-                        sthis->pendingCbs_[cbId] = std::move(cb);
-                    }
+                    // Check if already connecting
+                    auto pendingsIt = sthis->pendingCbs_.find(deviceId);
+                    isConnectingToDevice = pendingsIt != sthis->pendingCbs_.end();
+                    // Save current request for sendChannelRequest.
+                    // Note: do not return here, cause we can be in a state where first
+                    // socket is negotiated and first channel is pending
+                    // so return only after we checked the info
+                    if (isConnectingToDevice)
+                        pendingsIt->second.emplace_back(PendingCb {name, std::move(cb), vid});
+                    else
+                        sthis->pendingCbs_[deviceId] = {{name, std::move(cb), vid}};
                 }
 
+                // Check if already negotiated
+                CallbackId cbId(deviceId, vid);
                 if (auto info = sthis->getInfo(deviceId)) {
                     std::lock_guard<std::mutex> lk(info->mutex_);
                     if (info->socket_) {
-                        JAMI_DBG("Peer already connected. Add a new channel");
+                        JAMI_DBG("Peer already connected to %s. Add a new channel",
+                                 deviceId.to_c_str());
                         info->cbIds_.emplace(cbId);
                         sthis->sendChannelRequest(info->socket_, name, deviceId, vid);
                         return;
                     }
+                }
+
+                if (isConnectingToDevice) {
+                    JAMI_DBG("Already connecting to %s, wait for the ICE negotiation",
+                             deviceId.to_c_str());
+                    return;
                 }
 
                 // Note: used when the ice negotiation fails to erase
@@ -413,8 +473,8 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                         return;
                     if (!ok) {
                         JAMI_ERR("Cannot initialize ICE session.");
-                        if (auto cb = sthis->getPendingCallback(cbId))
-                            cb(nullptr, deviceId);
+                        for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
+                            pending.cb(nullptr, deviceId);
                         runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
                         return;
                     }
@@ -437,8 +497,8 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                         return;
                     if (!ok) {
                         JAMI_ERR("ICE negotiation failed.");
-                        if (auto cb = sthis->getPendingCallback(cbId))
-                            cb(nullptr, deviceId);
+                        for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
+                            pending.cb(nullptr, deviceId);
                         runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
                         return;
                     }
@@ -466,8 +526,8 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
 
                 if (!info->ice_) {
                     JAMI_ERR("Cannot initialize ICE session.");
-                    if (auto cb = sthis->getPendingCallback(cbId))
-                        cb(nullptr, deviceId);
+                    for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
+                        pending.cb(nullptr, deviceId);
                     eraseInfo();
                     return;
                 }
@@ -489,11 +549,10 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
     msgpack::sbuffer buffer(256);
     msgpack::pack(buffer, val);
 
-    sock->setOnChannelReady(channelSock->channel(), [channelSock, deviceId, vid, w = weak()]() {
-        if (auto shared = w.lock()) {
-            if (auto cb = shared->getPendingCallback({deviceId, vid}))
-                cb(channelSock, deviceId);
-        }
+    sock->setOnChannelReady(channelSock->channel(), [channelSock, name, deviceId, vid, w = weak()]() {
+        if (auto shared = w.lock())
+            for (const auto& pending : shared->extractPendingCallbacks(deviceId, vid))
+                pending.cb(channelSock, deviceId);
     });
     std::error_code ec;
     int res = sock->write(CONTROL_CHANNEL,
@@ -560,6 +619,56 @@ ConnectionManager::Impl::onDhtConnected(const DeviceId& deviceId)
             return true;
         },
         dht::Value::UserTypeFilter("peer_request"));
+}
+
+void
+ConnectionManager::Impl::onTlsNegotiationDone(bool ok,
+                                              const DeviceId& deviceId,
+                                              const dht::Value::Id& vid,
+                                              const std::string& name)
+{
+    auto info = getInfo(deviceId, vid);
+    if (!info)
+        return;
+    // Note: only handle pendingCallbacks here for TLS initied by connectDevice()
+    // Note: if not initied by connectDevice() the channel name will be empty (because no channel
+    // asked yet)
+    auto isDhtRequest = name.empty();
+    if (!ok) {
+        if (isDhtRequest) {
+            JAMI_ERR() << "TLS connection failure for peer " << deviceId
+                       << " - Initied by DHT request. Vid: " << vid;
+            if (connReadyCb_)
+                connReadyCb_(deviceId, "", nullptr);
+        } else {
+            JAMI_ERR() << "TLS connection failure for peer " << deviceId
+                       << " - Initied by connectDevice(). Initied by channel: " << name
+                       << " - vid: " << vid;
+            for (const auto& pending : extractPendingCallbacks(deviceId))
+                pending.cb(nullptr, deviceId);
+        }
+    } else {
+        // The socket is ready, store it
+        if (isDhtRequest) {
+            JAMI_DBG() << "Connection to " << deviceId << " is ready"
+                       << " - Initied by DHT request. Vid: " << vid;
+        } else {
+            JAMI_DBG() << "Connection to " << deviceId << " is ready"
+                       << " - Initied by connectDevice(). Initied by channel: " << name
+                       << " - vid: " << vid;
+        }
+        addNewMultiplexedSocket(deviceId, vid);
+        // Finally, open the channel and launch pending callbacks
+        if (info->socket_ && !isDhtRequest) {
+            // Note: do not remove pending there it's done in sendChannelRequest
+            for (const auto& pending : getPendingCallbacks(deviceId)) {
+                JAMI_DBG("Send request on TLS socket for channel %s to %s",
+                         pending.name.c_str(),
+                         deviceId.to_c_str());
+                sendChannelRequest(info->socket_, pending.name, deviceId, pending.vid);
+            }
+        }
+    }
 }
 
 void
@@ -660,21 +769,8 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
 
     info->tls_->setOnReady(
         [w = weak(), deviceId = std::move(req.from), vid = std::move(req.id)](bool ok) {
-            auto shared = w.lock();
-            if (!shared)
-                return;
-            auto info = shared->getInfo(deviceId, vid);
-            if (!info)
-                return;
-            if (!ok) {
-                JAMI_ERR() << "TLS connection failure for peer " << deviceId;
-                if (shared->connReadyCb_)
-                    shared->connReadyCb_(deviceId, "", nullptr);
-            } else {
-                // The socket is ready, store it
-                JAMI_DBG("Connection to %s is ready", deviceId.to_c_str());
-                shared->addNewMultiplexedSocket(deviceId, vid);
-            }
+            if (auto shared = w.lock())
+                shared->onTlsNegotiationDone(ok, deviceId, vid);
         });
 }
 
@@ -797,11 +893,9 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const
                 if (info->ice_)
                     info->ice_->cancelOperations();
             }
-            for (const auto& cbId : ids) {
-                if (auto cb = sthis->getPendingCallback(cbId)) {
-                    cb(nullptr, deviceId);
-                }
-            }
+            for (const auto& cbId : ids)
+                for (const auto& pending : sthis->extractPendingCallbacks(cbId.first, cbId.second))
+                    pending.cb(nullptr, deviceId);
 
             std::lock_guard<std::mutex> lk(sthis->infosMtx_);
             sthis->infos_.erase({deviceId, vid});
@@ -830,19 +924,9 @@ ConnectionManager::connectDevice(const DeviceId& deviceId,
 void
 ConnectionManager::closeConnectionsWith(const DeviceId& deviceId)
 {
-    {
-        std::lock_guard<std::mutex> lk(pimpl_->connectCbsMtx_);
-        auto it = pimpl_->pendingCbs_.begin();
-        while (it != pimpl_->pendingCbs_.end()) {
-            if (it->first.first == deviceId) {
-                if (it->second)
-                    it->second(nullptr, deviceId);
-                it = pimpl_->pendingCbs_.erase(it);
-            } else {
-                ++it;
-            }
-        }
-    }
+    for (const auto& pending : pimpl_->extractPendingCallbacks(deviceId))
+        pending.cb(nullptr, deviceId);
+
     std::vector<std::shared_ptr<ConnectionInfo>> connInfos;
     {
         std::lock_guard<std::mutex> lk(pimpl_->infosMtx_);
@@ -896,6 +980,13 @@ void
 ConnectionManager::onConnectionReady(ConnectionReadyCallback&& cb)
 {
     pimpl_->connReadyCb_ = std::move(cb);
+}
+
+std::size_t
+ConnectionManager::activeSockets() const
+{
+    std::lock_guard<std::mutex> lk(pimpl_->infosMtx_);
+    return pimpl_->infos_.size();
 }
 
 } // namespace jami

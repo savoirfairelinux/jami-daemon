@@ -455,11 +455,6 @@ MultiplexedSocket::write(const uint16_t& channel,
         ec = std::make_error_code(std::errc::message_size);
         return -1;
     }
-    if (!pimpl_->endpoint) {
-        JAMI_WARN("No endpoint found for socket");
-        ec = std::make_error_code(std::errc::broken_pipe);
-        return -1;
-    }
     msgpack::sbuffer buffer;
     msgpack::packer<msgpack::sbuffer> pk(&buffer);
     pk.pack_array(2);
@@ -468,6 +463,11 @@ MultiplexedSocket::write(const uint16_t& channel,
     pk.pack_bin_body((const char*) buf, len);
 
     std::unique_lock<std::mutex> lk(pimpl_->writeMtx);
+    if (!pimpl_->endpoint) {
+        JAMI_WARN("No endpoint found for socket");
+        ec = std::make_error_code(std::errc::broken_pipe);
+        return -1;
+    }
     int res = pimpl_->endpoint->write((const unsigned char*) buffer.data(), buffer.size(), ec);
     lk.unlock();
     if (res < 0) {
