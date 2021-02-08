@@ -225,10 +225,18 @@ struct DRING_PUBLIC CallSignal
         using cb_type = void(const std::string&,
                              const std::vector<std::map<std::string, std::string>>&);
     };
-    struct DRING_PUBLIC RemoteRecordingChanged {
-                constexpr static const char* name = "RemoteRecordingChanged";
-                using cb_type = void(const std::string&, const std::string&, bool);
-        };
+    struct DRING_PUBLIC RemoteRecordingChanged
+    {
+        constexpr static const char* name = "RemoteRecordingChanged";
+        using cb_type = void(const std::string&, const std::string&, bool);
+    };
+
+    // Signal to notify that the media negotiation (through SDP) is complete.
+    struct DRING_PUBLIC MediaNegotiationComplete
+    {
+        constexpr static const char* name = "MediaNegotiationComplete";
+        using cb_type = void(const std::string&);
+    };
 };
 
 } // namespace DRing
