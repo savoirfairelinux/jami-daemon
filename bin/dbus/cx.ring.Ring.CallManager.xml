@@ -815,7 +815,7 @@
         <signal name="secureSdesOff" tp:name-for-bindings="secureSdesOff">
             <tp:added version="0.9.7"/>
             <tp:docstring>
-              <p>Sinal sent to notify that SDES session failed.</p>
+              <p>Signal sent to notify that SDES session failed.</p>
               <p>Media transmission is not encrypted.</p>
             </tp:docstring>
             <arg type="s" name="callID" />
@@ -878,5 +878,24 @@
             <arg type="s" name="peerNumber" />
             <arg type="b" name="remoteRecordingState" />
         </signal>
+<!--#if 1 -->
+        <signal name="mediaNegotiationComplete" tp:name-for-bindings="mediaNegotiationComplete">
+            <!-- TODO_MC. Set the correct version -->
+            <tp:added version="0.0.0"/>
+            <tp:docstring>
+              <p>Notify that media negotiation has completed.</p>
+            </tp:docstring>
+            <arg type="s" name="callID" />
+        </signal>
+        <signal name="mediaStreaming" tp:name-for-bindings="mediaStreaming">
+            <!-- TODO_MC. Set the correct version -->
+            <tp:added version="0.0.0"/>
+            <tp:docstring>
+              <p>Notify that media streaming has started/stopped.</p>
+            </tp:docstring>
+            <arg type="s" name="callID" />
+            <arg type="b" name="started" />
+        </signal>
+<!--#endif -->
     </interface>
 </node>

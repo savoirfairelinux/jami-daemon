@@ -1371,6 +1371,7 @@ void
 SIPCall::onMediaUpdate()
 {
     JAMI_WARN("[call:%s] medias changed", getCallId().c_str());
+
     // Main call (no subcalls) must wait for ICE now, the rest of code needs to access
     // to a negotiated transport.
     runOnMainThread([w = weak()] {
