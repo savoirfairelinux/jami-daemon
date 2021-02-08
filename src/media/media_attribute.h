@@ -112,10 +112,9 @@ constexpr static auto AUDIO = "MEDIA_TYPE_AUDIO";
 constexpr static auto VIDEO = "MEDIA_TYPE_VIDEO";
 } // namespace MediaAttributeValue
 
-namespace MediaStateChangedEvent {
-constexpr static auto MEDIA_NEGOTIATED = "MEDIA_NEGOTIATED";
-constexpr static auto MEDIA_STARTED = "MEDIA_STARTED";
-constexpr static auto MEDIA_STOPPED = "MEDIA_STOPPED";
-} // namespace MediaStateChangedEvent
+namespace MediaNegotiationStatusEvents {
+constexpr static auto NEGOTIATION_SUCCESS = "NEGOTIATION_SUCCESS";
+constexpr static auto NEGOTIATION_FAIL = "NEGOTIATION_FAIL";
+} // namespace MediaNegotiationStatusEvents
 
 } // namespace jami

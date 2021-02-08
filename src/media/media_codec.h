@@ -300,4 +300,9 @@ struct MediaDescription
     CryptoAttribute crypto {};
 };
 
+namespace MediaNegotiationStatusEvent {
+constexpr static auto NEGOTIATION_SUCCESS = "NEGOTIATION_SUCCESS";
+constexpr static auto NEGOTIATION_FAIL = "NEGOTIATION_FAIL";
+} // namespace MediaNegotiationStatusEvent
+
 } // namespace jami
