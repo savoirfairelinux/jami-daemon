@@ -164,8 +164,9 @@ PUPnP::~PUPnP()
     {
         std::lock_guard<std::mutex> lock(validIgdListMutex_);
         std::lock_guard<std::mutex> lk(ctrlptMutex_);
-        for (auto const& it : validIgdList_) {
-            removeAllLocalMappings(it);
+        for (auto const& igd : validIgdList_) {
+            if (igd->isValid())
+                deleteMappingsByDescription(igd, Mapping::UPNP_MAPPING_DESCRIPTION_PREFIX);
         }
         validIgdList_.clear();
         UpnpUnRegisterClient(ctrlptHandle_);
@@ -419,8 +420,8 @@ PUPnP::validateIgd(const IGDInfo& info)
         validIgdList_.emplace_back(igd_candidate);
     }
 
-    // Clear existing mappings
-    removeAllLocalMappings(igd_candidate);
+    // Clear mappings from previous instances.
+    deleteMappingsByDescription(igd_candidate, Mapping::UPNP_MAPPING_DESCRIPTION_PREFIX);
 
     // Report to the listener.
     observer_->onIgdUpdated(igd_candidate, UpnpIgdEvent::ADDED);
@@ -595,13 +596,6 @@ PUPnP::requestMappingRemove(const Mapping& igdMapping)
             return;
         }
     }
-}
-
-void
-PUPnP::removeAllLocalMappings(const std::shared_ptr<IGD>& igd)
-{
-    if (auto upnpIgd = std::dynamic_pointer_cast<UPnPIGD>(igd))
-        actionDeletePortMappingsByDesc(*upnpIgd, Mapping::UPNP_MAPPING_DESCRIPTION_PREFIX);
 }
 
 const char*
@@ -1270,92 +1264,21 @@ PUPnP::getMappingsListByDescr(const std::shared_ptr<IGD>& igd, const std::string
     return mapList;
 }
 
-// TODO. Rewrite using getMappingsListByDescr.
 void
-PUPnP::actionDeletePortMappingsByDesc(const UPnPIGD& igd, const std::string& description)
+PUPnP::deleteMappingsByDescription(const std::shared_ptr<IGD>& igd, const std::string& description)
 {
-    if (not(clientRegistered_ and igd.getLocalIp()))
+    if (not(clientRegistered_ and igd->getLocalIp()))
         return;
 
-    // Set action name.
-    static constexpr const char* action_name {"GetGenericPortMappingEntry"};
-    int entry_idx = 0;
-    bool done = false;
+    JAMI_DBG("PUPnP: Remove all mappings (if any) on IGD %s matching descr prefix %s",
+             igd->getLocalIp().toString().c_str(),
+             Mapping::UPNP_MAPPING_DESCRIPTION_PREFIX);
 
-    do {
-        // Action and response pointers.
-        std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&>
-            action(nullptr, ixmlDocument_free); // Action pointer.
-        std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&>
-            response(nullptr, ixmlDocument_free); // Response pointer.
-        IXML_Document* action_container_ptr = nullptr;
-        IXML_Document* response_container_ptr = nullptr;
+    auto mapList = getMappingsListByDescr(igd, Mapping::UPNP_MAPPING_DESCRIPTION_PREFIX);
 
-        UpnpAddToAction(&action_container_ptr,
-                        action_name,
-                        igd.getServiceType().c_str(),
-                        "NewPortMappingIndex",
-                        std::to_string(entry_idx).c_str());
-        action.reset(action_container_ptr);
-
-        int upnp_err = UpnpSendAction(ctrlptHandle_,
-                                      igd.getControlURL().c_str(),
-                                      igd.getServiceType().c_str(),
-                                      nullptr,
-                                      action.get(),
-                                      &response_container_ptr);
-        response.reset(response_container_ptr);
-        if (not response and upnp_err != UPNP_E_SUCCESS) {
-            JAMI_ERR("PUPnP: GetGenericPortMappingEntry did not return a response");
-            return;
-        }
-
-        // Check error code.
-        std::string errorCode = getFirstDocItem(response.get(), "errorCode");
-        if (not errorCode.empty()) {
-            if (std::stoi(errorCode) == ARRAY_IDX_INVALID
-                or std::stoi(errorCode) == CONFLICT_IN_MAPPING) {
-                // No more port mapping entries to delete.
-                JAMI_DBG("PUPnP: Closed all local port mappings");
-            } else {
-                std::string errorDescription = getFirstDocItem(response.get(), "errorDescription");
-                JAMI_DBG("PUPnP: GetGenericPortMappingEntry returned with error: %s: %s",
-                         errorCode.c_str(),
-                         errorDescription.c_str());
-            }
-            done = true;
-        } else {
-            // Parse the rest of the response.
-            std::string desc_actual = getFirstDocItem(response.get(), "NewPortMappingDescription");
-            std::string client_ip = getFirstDocItem(response.get(), "NewInternalClient");
-
-            // Check IP and description.
-            if (client_ip == getUserLocalIp().toString()
-                and desc_actual.find(description) != std::string::npos) {
-                // Get parameters needed for port removal.
-                std::string port_internal = getFirstDocItem(response.get(), "NewInternalPort");
-                std::string port_external = getFirstDocItem(response.get(), "NewExternalPort");
-                std::string protocol = getFirstDocItem(response.get(), "NewProtocol");
-
-                JAMI_DBG("PUPnP: Try remove mapping from previous JAMI instances: [%s] on %s",
-                         desc_actual.c_str(),
-                         igd.getLocalIp().toString().c_str());
-
-                // Attempt to delete entry.
-                if (not actionDeletePortMapping(igd, port_external, protocol)) {
-                    // Failed to delete entry, skip it and try the next one.
-                    JAMI_WARN("PUPnP: Failed to remove mapping [%s] on %s",
-                              desc_actual.c_str(),
-                              igd.getLocalIp().toString().c_str());
-                    ++entry_idx;
-                }
-                // No need to increment index if successful since the number of entries will have
-                // decreased by one.
-            } else {
-                ++entry_idx;
-            }
-        }
-    } while (not done);
+    for (auto const& [_, map] : mapList) {
+        requestMappingRemove(map);
+    }
 }
 
 bool
