@@ -298,6 +298,7 @@ ConnectionManagerTest::testMultipleChannels()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] {
         return successfullyConnected && successfullyConnected2 && receiverConnected == 2;
     }));
+    CPPUNIT_ASSERT(aliceAccount->connectionManager().activeSockets() == 1);
 }
 
 void
