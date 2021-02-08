@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "eb6ab3b5_6ab763ff",
+        "filename": "src/plugin/conversationservicesmanager.h",
+        "patchSetId": 31
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-08T18:26:31Z",
+      "side": 1,
+      "message": "rebase issue ?",
+      "range": {
+        "startLine": 2,
+        "startChar": 8,
+        "endLine": 8,
+        "endChar": 2
+      },
+      "revId": "3f8cf1aacc7edcc49b148ee3682b5d285b137cab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
