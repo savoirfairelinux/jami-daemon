@@ -250,7 +250,9 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<CallSignal::OnConferenceInfosUpdated>(bind(&Callback::onConferenceInfosUpdated, callM, _1, _2)),
         exportable_callback<CallSignal::PeerHold>(bind(&Callback::peerHold, callM, _1, _2)),
         exportable_callback<CallSignal::ConnectionUpdate>(bind(&Callback::connectionUpdate, callM, _1, _2)),
-        exportable_callback<CallSignal::RemoteRecordingChanged>(bind(&Callback::remoteRecordingChanged, callM, _1, _2, _3))
+        exportable_callback<CallSignal::RemoteRecordingChanged>(bind(&Callback::remoteRecordingChanged, callM, _1, _2, _3)),
+        exportable_callback<CallSignal::MediaNegotiationComplete>(bind(&Callback::mediaNegotiationComplete, callM, _1)),
+        exportable_callback<CallSignal::MediaStreaming>(bind(&Callback::mediaStreaming, callM, _1, _2))
     };
 
     // Configuration event handlers
