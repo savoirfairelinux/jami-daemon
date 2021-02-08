@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "54529ce7_e1371a08",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-08T18:57:30Z",
+      "side": 1,
+      "message": "DeviceId, ValueId",
+      "range": {
+        "startLine": 193,
+        "startChar": 47,
+        "endLine": 193,
+        "endChar": 69
+      },
+      "revId": "0058f5479c29569ae020a8a4be10fb6e53a13662",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cab87879_f56622bd",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 203,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-08T18:57:30Z",
+      "side": 1,
+      "message": "if (vid \u003d\u003d 0) {\n    ret \u003d std::move(pendings);\n}",
+      "range": {
+        "startLine": 203,
+        "startChar": 0,
+        "endLine": 203,
+        "endChar": 49
+      },
+      "revId": "0058f5479c29569ae020a8a4be10fb6e53a13662",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
