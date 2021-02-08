@@ -73,6 +73,30 @@
     },
     {
       "key": {
+        "uuid": "8a9a176d_0860f372",
+        "filename": "src/call.h",
+        "patchSetId": 31
+      },
+      "lineNbr": 400,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-08T23:27:22Z",
+      "side": 1,
+      "message": "Indeed, my comment was wrong: it should not be static but accessible through an overridden method (so no linkType_ field at all, just a method).\nPrevious implementation actually leveraged the inheritance system by accessing this variable through an overridden virtual method, which is cleaner.",
+      "parentUuid": "730993ae_9d2cc9ce",
+      "range": {
+        "startLine": 400,
+        "startChar": 4,
+        "endLine": 400,
+        "endChar": 43
+      },
+      "revId": "3f8cf1aacc7edcc49b148ee3682b5d285b137cab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "eb6ab3b5_6ab763ff",
         "filename": "src/plugin/conversationservicesmanager.h",
         "patchSetId": 31
