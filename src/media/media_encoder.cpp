@@ -991,7 +991,7 @@ MediaEncoder::initH263(AVCodecContext* encoderCtx, uint64_t br)
 }
 
 void
-MediaEncoder::initOpus(AVCodecContext* encoderCtx)
+MediaEncoder::initOpus(AVCodecContext* /*encoderCtx*/)
 {
     // Enable FEC support by default with 10% packet loss
     // Disable opus FEC for now

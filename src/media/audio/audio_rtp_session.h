@@ -79,7 +79,7 @@ private:
     std::shared_ptr<RingBuffer> ringbuffer_;
     uint16_t initSeqVal_ = 0;
     bool muteState_ = false;
-    int packetLoss_ = 10;
+    unsigned packetLoss_ = 10;
     DeviceParams localAudioParams_;
 
     InterruptedThreadLoop rtcpCheckerThread_;

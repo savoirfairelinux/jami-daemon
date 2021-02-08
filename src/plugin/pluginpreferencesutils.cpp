@@ -65,7 +65,7 @@ PluginPreferencesUtils::convertArrayToString(const Json::Value& jsonArray)
 }
 
 std::map<std::string, std::string>
-PluginPreferencesUtils::parsePreferenceConfig(const Json::Value& jsonPreference, const std::string& type)
+PluginPreferencesUtils::parsePreferenceConfig(const Json::Value& jsonPreference, const std::string& /*type*/)
 {
     std::map<std::string, std::string> preferenceMap;
     const auto& members = jsonPreference.getMemberNames();

@@ -33,6 +33,8 @@ using chatSubjectPtr = std::shared_ptr<PublishObservable<pluginMessagePtr>>;
 class ChatHandler
 {
 public:
+    virtual ~ChatHandler() {}
+
     virtual void notifyChatSubject(std::pair<std::string, std::string>& subjectConnection,
                                    chatSubjectPtr subject)
         = 0;

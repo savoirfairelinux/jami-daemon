@@ -718,11 +718,11 @@ Manager::Manager()
     , voipPreferences()
     , audioPreference()
     , shortcutPreferences()
-#ifdef ENABLE_VIDEO
-    , videoPreferences()
-#endif
 #ifdef ENABLE_PLUGIN
     , pluginPreferences()
+#endif
+#ifdef ENABLE_VIDEO
+    , videoPreferences()
 #endif
     , callFactory()
     , accountFactory()

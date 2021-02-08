@@ -291,7 +291,7 @@ MediaDemuxer::demuxe()
     }
 
     AVStream* stream = inputCtx_->streams[streamIndex];
-    if (stream->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+    if (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
         std::lock_guard<std::mutex> lk {videoBufferMutex_};
         videoBuffer_.push(std::move(packet));
         if (videoBuffer_.size() >= 90) {

@@ -254,7 +254,7 @@ void AlsaLayer::startStream(AudioDeviceType)
 }
 
 void
-AlsaLayer::stopStream(AudioDeviceType stream)
+AlsaLayer::stopStream(AudioDeviceType /*stream*/)
 {
     audioThread_.reset();
 

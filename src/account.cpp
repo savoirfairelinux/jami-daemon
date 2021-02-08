@@ -111,11 +111,11 @@ Account::Account(const std::string& accountID)
     , accountCodecInfoList_()
     , ringtonePath_(DEFAULT_RINGTONE_PATH)
     , ringtoneEnabled_(true)
-    , upnpEnabled_(true)
     , displayName_("")
     , customUserAgent_("")
     , hasCustomUserAgent_(false)
     , mailBox_()
+    , upnpEnabled_(true)
     , localModeratorsEnabled_(true)
 {
     // Initialize the codec order, used when creating a new account
