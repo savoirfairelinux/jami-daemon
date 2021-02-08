@@ -33,6 +33,12 @@ endif
 endif
 endif
 
+# Disable building with nasm support on platforms where nasm is lesser
+# than 2.13.
+ifneq ($(call need_pkg,'nasm >= 2.13'),1)
+X264CONF += --disable-asm
+endif
+
 # android x86_64 has reloc errors related to assembly optimizations
 ifdef HAVE_ANDROID
 ifeq ($(ARCH),x86_64)
