@@ -45,6 +45,52 @@
       "revId": "0058f5479c29569ae020a8a4be10fb6e53a13662",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a0da9785_f0c872ad",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-08T18:59:53Z",
+      "side": 1,
+      "message": "if (vid \u003d\u003d 0) {\n    ret \u003d pendings;\n}",
+      "range": {
+        "startLine": 208,
+        "startChar": 0,
+        "endLine": 208,
+        "endChar": 42
+      },
+      "revId": "0058f5479c29569ae020a8a4be10fb6e53a13662",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3e79807d_5be54308",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-08T18:59:53Z",
+      "side": 1,
+      "message": "const auto\u0026",
+      "range": {
+        "startLine": 366,
+        "startChar": 21,
+        "endLine": 366,
+        "endChar": 26
+      },
+      "revId": "0058f5479c29569ae020a8a4be10fb6e53a13662",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
