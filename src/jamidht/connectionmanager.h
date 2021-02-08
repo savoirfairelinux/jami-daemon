@@ -119,6 +119,11 @@ public:
      */
     void onConnectionReady(ConnectionReadyCallback&& cb);
 
+    /**
+     * @return the number of active sockets
+     */
+    std::size_t activeSockets() const;
+
 private:
     ConnectionManager() = delete;
     class Impl;
