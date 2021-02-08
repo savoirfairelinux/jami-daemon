@@ -139,6 +139,11 @@ public:
     void requestMappingRemove(const Mapping& igdMapping) override;
 
 private:
+
+    // Delete mappings matching the description
+    void deleteMappingsByDescription(const std::shared_ptr<IGD>& igd,
+                                     const std::string& description);
+
     // Process the reception of an add mapping action answer.
     void processAddMapAction(const std::string& ctrlURL,
                              uint16_t ePort,
@@ -153,9 +158,6 @@ private:
 
     // Returns control point action callback based on xml node.
     CtrlAction getAction(const char* xmlNode);
-
-    // Removes all local mappings of IGD that we're added by the application.
-    void removeAllLocalMappings(const std::shared_ptr<IGD>& igd);
 
     // Validate IGD from the xml document received from the router.
     bool validateIgd(const IGDInfo&);
@@ -197,8 +199,6 @@ private:
     // Assumes mutex is already locked.
     bool actionIsIgdConnected(const UPnPIGD& igd);
     IpAddr actionGetExternalIP(const UPnPIGD& igd);
-
-    void actionDeletePortMappingsByDesc(const UPnPIGD& igd, const std::string& description);
 
     bool actionDeletePortMapping(const UPnPIGD& igd,
                                  const std::string& port_external,
