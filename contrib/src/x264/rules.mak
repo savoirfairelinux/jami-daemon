@@ -33,6 +33,18 @@ endif
 endif
 endif
 
+# Disable building with nasm support on platforms where nasm is lesser
+# than 2.13, such as Debian 9.
+X264_NASM_VERSION_COMPONENTS = $(subst ., ,$(lastword $(shell nasm -v)))
+X264_NASM_VERSION_MAJOR = $(firstword $(X264_NASM_VERSION_COMPONENTS))
+X264_NASM_VERSION_MINOR = $(word 2,$(X264_NASM_VERSION_COMPONENTS))
+X264_NASM_VERSION_OK = $(shell [[ $(X264_NASM_VERSION_MAJOR) -ge 2 \
+    && $(X264_NASM_VERSION_MINOR) -ge 13 ]] && echo 1)
+
+ifneq ($(X264_NASM_VERSION_OK),1)
+X264CONF += --disable-asm
+endif
+
 # android x86_64 has reloc errors related to assembly optimizations
 ifdef HAVE_ANDROID
 ifeq ($(ARCH),x86_64)
