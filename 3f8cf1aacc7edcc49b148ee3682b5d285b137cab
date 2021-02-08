@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "54946656_ede2df0b",
+        "filename": "src/call.h",
+        "patchSetId": 31
+      },
+      "lineNbr": 400,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-08T22:29:26Z",
+      "side": 1,
+      "message": "There were many issues with this variable:\nThe member was \u0027public\u0027, meaning it can be modified anywhere (this not critical though)\nThe variable only declared in SIPCall but is accessed through a template in call_factory.h:222\nconst auto\u0026 itermap \u003d callMaps_.find(T::LINK_TYPE);\nIf we need the linkType_ member to be accessible through Call base class (which is the case to keep to the abstraction), we have to move it to the Call base class. And making static in that case, does not make sense, because all the base and derived class will have the same value, which we do not want.",
+      "parentUuid": "af196800_3cf53b90",
+      "range": {
+        "startLine": 400,
+        "startChar": 4,
+        "endLine": 400,
+        "endChar": 43
+      },
+      "revId": "3f8cf1aacc7edcc49b148ee3682b5d285b137cab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "eb6ab3b5_6ab763ff",
         "filename": "src/plugin/conversationservicesmanager.h",
         "patchSetId": 31
