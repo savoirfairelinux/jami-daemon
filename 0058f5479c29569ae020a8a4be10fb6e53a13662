@@ -91,6 +91,23 @@
       "revId": "0058f5479c29569ae020a8a4be10fb6e53a13662",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7153909b_9080fc04",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 864,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-02-08T19:09:57Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nloop variable is copied but only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "0058f5479c29569ae020a8a4be10fb6e53a13662",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
