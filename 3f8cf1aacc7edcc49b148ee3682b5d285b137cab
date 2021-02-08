@@ -69,6 +69,30 @@
       "revId": "3f8cf1aacc7edcc49b148ee3682b5d285b137cab",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1d7926c2_6a8080a2",
+        "filename": "src/plugin/conversationservicesmanager.h",
+        "patchSetId": 31
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-08T22:40:38Z",
+      "side": 1,
+      "message": "Seems so.\nDone",
+      "parentUuid": "eb6ab3b5_6ab763ff",
+      "range": {
+        "startLine": 2,
+        "startChar": 8,
+        "endLine": 8,
+        "endChar": 2
+      },
+      "revId": "3f8cf1aacc7edcc49b148ee3682b5d285b137cab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
