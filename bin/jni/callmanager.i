@@ -49,6 +49,7 @@ public:
     virtual void peerHold(const std::string& call_id, bool holding){}
     virtual void connectionUpdate(const std::string& id, int state){}
     virtual void remoteRecordingChanged(const std::string& call_id, const std::string& peer_number, bool state){}
+    virtual void mediaStateChanged(const std::string& call_id, const std::string& event){}
 };
 
 
@@ -141,5 +142,5 @@ public:
     virtual void peerHold(const std::string& call_id, bool holding){}
     virtual void connectionUpdate(const std::string& id, int state){}
     virtual void remoteRecordingChanged(const std::string& call_id, const std::string& peer_number, bool state){}
-
+    virtual void mediaStateChanged(const std::string& call_id, const std::string& event){}
 };
