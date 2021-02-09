@@ -53,6 +53,29 @@
     },
     {
       "key": {
+        "uuid": "658f8c03_0bfafcbc",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-09T23:16:02Z",
+      "side": 1,
+      "message": "actually... remove_copy_if doesn\u0027t even remove ! copied elements are still in the container..\n\nfor (auto it \u003d pendings.begin(); it !\u003d pendings.end(); ++it) {\n    if (it-\u003evid \u003d\u003d vid) {\n        ret.emplace_back(std::move(*it));\n        pendings.erase(it);\n        break;\n    }\n}",
+      "range": {
+        "startLine": 207,
+        "startChar": 0,
+        "endLine": 213,
+        "endChar": 39
+      },
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "11df4d7d_c63f4473",
         "filename": "src/jamidht/connectionmanager.cpp",
         "patchSetId": 6
