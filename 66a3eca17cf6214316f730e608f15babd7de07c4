@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "1a1a60ba_fd452855",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "b8895489_140166c6",
+      "range": {
+        "startLine": 59,
+        "startChar": 32,
+        "endLine": 59,
+        "endChar": 41
+      },
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "1f5902d2_c75e7fe4",
         "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
         "patchSetId": 11
@@ -36,6 +60,30 @@
       "writtenOn": "2021-01-27T19:15:34Z",
       "side": 1,
       "message": "imho (and same for actual api) to is unclear about the format attended. Is it the hash, the SIP uri, etc?",
+      "range": {
+        "startLine": 64,
+        "startChar": 32,
+        "endLine": 64,
+        "endChar": 35
+      },
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8bf569dc_e5fde75a",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "To be honest, I just re-used the pattern from above (copy/paste). I just needed something to get going with the development of the feature in the core daemon",
+      "parentUuid": "1f5902d2_c75e7fe4",
       "range": {
         "startLine": 64,
         "startChar": 32,
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "d40b73b4_f53be26d",
+        "filename": "src/call.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "Yes, it\u0027s meant for local. \nAgree, needs testing. I added a simple unit test to validate, there more to come.",
+      "parentUuid": "7f41081b_5bbdf0f3",
+      "range": {
+        "startLine": 336,
+        "startChar": 39,
+        "endLine": 336,
+        "endChar": 52
+      },
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "b78a0238_b9a564a5",
         "filename": "src/call_factory.h",
         "patchSetId": 11
@@ -91,6 +163,30 @@
       "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "322d0593_949909e6",
+        "filename": "src/call_factory.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "Ack\nalready fixed",
+      "parentUuid": "b78a0238_b9a564a5",
+      "range": {
+        "startLine": 52,
+        "startChar": 26,
+        "endLine": 52,
+        "endChar": 36
+      },
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +213,64 @@
     },
     {
       "key": {
+        "uuid": "7f2f1428_4c22353f",
+        "filename": "src/media/media_codec.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 261,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "8ef8e0a5_be74c754",
+      "range": {
+        "startLine": 261,
+        "startChar": 8,
+        "endLine": 261,
+        "endChar": 27
+      },
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9e8db42b_5c9a864e",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "38981b6e_734affc2",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "ba5c45e8_dbecf1ae",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 11
@@ -128,6 +282,24 @@
       "writtenOn": "2021-01-26T18:59:35Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027label\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f87ac169_3d5f7601",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ba5c45e8_dbecf1ae",
       "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
@@ -151,6 +323,24 @@
     },
     {
       "key": {
+        "uuid": "b21b6663_5ac54131",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 226,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "122ee54c_4562d4fe",
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "ee1a9bad_5071e408",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 11
@@ -162,6 +352,24 @@
       "writtenOn": "2021-01-26T18:59:35Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nexpression is redundant\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Amisc-redundant-expression",
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "72e3fd55_ccbd77dd",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1556,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ee1a9bad_5071e408",
       "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
@@ -185,6 +393,24 @@
     },
     {
       "key": {
+        "uuid": "b9fca0d3_9484d5ec",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1668,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1e2b8ad9_6825b344",
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "db7c536e_11b947e7",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 11
@@ -196,6 +422,24 @@
       "writtenOn": "2021-01-26T18:59:35Z",
       "side": 1,
       "message": "CRITICAL SonarQube violation:\n\n\ncontrol may reach end of non-void function\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-return-type",
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "94e01a2b_f61c3df5",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1963,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "db7c536e_11b947e7",
       "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false

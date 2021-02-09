@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "d8901205_8e876ce6",
+        "filename": "src/call.h",
+        "patchSetId": 16
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "remove the TODO for now. switchInput() will be removed a bit later.",
+      "parentUuid": "59e9a291_1b8fbaf8",
+      "range": {
+        "startLine": 288,
+        "startChar": 13,
+        "endLine": 289,
+        "endChar": 14
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0ed55cb1_8937df28",
         "filename": "src/client/callmanager.cpp",
         "patchSetId": 16
@@ -45,6 +69,30 @@
       "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "682d31f3_20933cec",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "Ack\nFrom rfc4317: \n\"This memo provides information for the Internet community.  It does\n   not specify an Internet standard of any kind\"\n\nBut yes, I try to follow. There some behavior that we need to clarify/improve.",
+      "parentUuid": "0ed55cb1_8937df28",
+      "range": {
+        "startLine": 88,
+        "startChar": 37,
+        "endLine": 88,
+        "endChar": 55
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "eae54ffe_d2f42e8f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 430,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "not clean. We want a flexible design.\nWe dont want to have any limitation regarding the media content (number of stream audio or video or any other media type if we need in the future)",
+      "parentUuid": "f1c6353e_2b5549d4",
+      "range": {
+        "startLine": 429,
+        "startChar": 19,
+        "endLine": 430,
+        "endChar": 21
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4816962e_2820a042",
         "filename": "src/logger.cpp",
         "patchSetId": 16
@@ -91,6 +163,30 @@
       "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "776d169f_3784baea",
+        "filename": "src/logger.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4816962e_2820a042",
+      "range": {
+        "startLine": 2,
+        "startChar": 25,
+        "endLine": 2,
+        "endChar": 29
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "db224cf9_af124e4d",
+        "filename": "src/logger.h",
+        "patchSetId": 16
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "heu? .... dont know how it got there.",
+      "parentUuid": "c6b0468c_c2cdb6df",
+      "range": {
+        "startLine": 2,
+        "startChar": 20,
+        "endLine": 2,
+        "endChar": 27
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "cfd86184_9e44170b",
         "filename": "src/manager.h",
         "patchSetId": 16
@@ -137,6 +257,30 @@
       "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fba75034_008080df",
+        "filename": "src/manager.h",
+        "patchSetId": 16
+      },
+      "lineNbr": 620,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cfd86184_9e44170b",
+      "range": {
+        "startLine": 619,
+        "startChar": 0,
+        "endLine": 620,
+        "endChar": 23
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -163,6 +307,30 @@
     },
     {
       "key": {
+        "uuid": "8b5ab9a9_61130378",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 415,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "next item on the list: https://git.jami.net/savoirfairelinux/ring-project/-/issues/685",
+      "parentUuid": "7a713b1b_df39c3fa",
+      "range": {
+        "startLine": 415,
+        "startChar": 30,
+        "endLine": 415,
+        "endChar": 52
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d370a525_ca6ce9a6",
         "filename": "test/unitTest/call/call.cpp",
         "patchSetId": 16
@@ -186,6 +354,30 @@
     },
     {
       "key": {
+        "uuid": "295343d9_56f6e926",
+        "filename": "test/unitTest/call/call.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "This file was not meant to change. Will revert.\n\nDone",
+      "parentUuid": "d370a525_ca6ce9a6",
+      "range": {
+        "startLine": 38,
+        "startChar": 5,
+        "endLine": 38,
+        "endChar": 18
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d7c68664_2063509e",
         "filename": "test/unitTest/media_control/media_control.cpp",
         "patchSetId": 16
@@ -197,6 +389,30 @@
       "writtenOn": "2021-02-03T14:20:51Z",
       "side": 1,
       "message": "If I\u0027m not too tired, this only check for one scenario (video-\u003eno video), other TestScenario possibilities are not handled right?",
+      "range": {
+        "startLine": 400,
+        "startChar": 43,
+        "endLine": 400,
+        "endChar": 77
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f3ddf272_1178e54d",
+        "filename": "test/unitTest/media_control/media_control.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 400,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "yes, you are not tired. More scenarios to come",
+      "parentUuid": "d7c68664_2063509e",
       "range": {
         "startLine": 400,
         "startChar": 43,
@@ -226,6 +442,47 @@
         "endLine": 413,
         "endChar": 52
       },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "695c747a_ac2aeb28",
+        "filename": "test/unitTest/media_control/media_control.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 413,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "5f1d977e_8e6df081",
+      "range": {
+        "startLine": 412,
+        "startChar": 0,
+        "endLine": 413,
+        "endChar": 52
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8fc6d758_120415ee",
+        "filename": "test/unitTest/media_control/media_control.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 427,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "@sblin : how can we get rid of this sleep ?",
       "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true

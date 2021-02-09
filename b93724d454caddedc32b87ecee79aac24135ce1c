@@ -53,6 +53,24 @@
     },
     {
       "key": {
+        "uuid": "2e133bf5_33f4c8ea",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 1571,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2aba963b_768fdbc1",
+      "revId": "b93724d454caddedc32b87ecee79aac24135ce1c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5efb9726_6b50b7be",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 12
@@ -64,6 +82,24 @@
       "writtenOn": "2021-02-01T16:53:24Z",
       "side": 1,
       "message": "CRITICAL SonarQube violation:\n\n\ncontrol may reach end of non-void function\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-return-type",
+      "revId": "b93724d454caddedc32b87ecee79aac24135ce1c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f19dee70_f2c651a2",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 1650,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T15:14:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5efb9726_6b50b7be",
       "revId": "b93724d454caddedc32b87ecee79aac24135ce1c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
