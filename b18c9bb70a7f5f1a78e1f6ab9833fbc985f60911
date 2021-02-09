@@ -1,0 +1,140 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fef3921a_7dc7edd6",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T22:34:19Z",
+      "side": 1,
+      "message": "IMHO the PendingCb for this structure is not appropriate. It\u0027s more like a connection or  a \u0027connection point\u0027.\nSame for the vectors and methods around this structure\nAlso, this struct can have another variable (enum?) to hold the various states of the connection:\n\"pending, connecting, connected, failed, ....\"",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6acb2a01_540f5c4d",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T22:34:19Z",
+      "side": 1,
+      "message": "parallel ...",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f09f4294_7a717794",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T22:34:19Z",
+      "side": 1,
+      "message": "I think I understand what you want to achieve, but to be honest, I find it very hard to read.\nThe logic around vid and erase is even harder to follow. \nCan we decouple the get and erase operations ?\nCan we split this method to at least two separate methods ?",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "11df4d7d_c63f4473",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 395,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T22:34:19Z",
+      "side": 1,
+      "message": "it\u0027s unlikely that we need that much retries. I would say if we fail after a few iteration, it must be something wrong. anyway ....",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cb490514_8b76484d",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 402,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T22:34:19Z",
+      "side": 1,
+      "message": "corrent ?",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4f4bc844_ab043a54",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 614,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T22:34:19Z",
+      "side": 1,
+      "message": "The event onTlsReady does mean ready in fact (if ok is false means the nego failed). \nAnother name would be more appropriate such as:\nonTlsNegotiationComplete\nonTlsNegotiationDone,\n...\n\nThe variable \u0027ok\u0027 also could have a more explicit name (success ?)",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "03d2020b_17fb7a47",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 620,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T22:34:19Z",
+      "side": 1,
+      "message": "I really find it bit stretchy to infer if it\u0027s a dht request from the name string being empty or not.",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "15be8b22_4c27a225",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 629,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T22:34:19Z",
+      "side": 1,
+      "message": "initiated or inited (archaic)",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}

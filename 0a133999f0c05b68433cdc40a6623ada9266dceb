@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8266d26c_f90ecd57",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T22:34:19Z",
+      "side": 0,
+      "message": "\"connectionmanager.cpp:708:21: error: ‘hasPublicIp’ was not declared in this scope\"\n\nYou remove the method but not all the references 😉. Or may be removed in another patch.",
+      "revId": "0a133999f0c05b68433cdc40a6623ada9266dceb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
