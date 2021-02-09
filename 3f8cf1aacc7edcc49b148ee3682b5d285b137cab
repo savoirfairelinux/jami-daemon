@@ -121,6 +121,29 @@
     },
     {
       "key": {
+        "uuid": "a180ed2b_c226792a",
+        "filename": "src/call_factory.h",
+        "patchSetId": 31
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-09T00:32:08Z",
+      "side": 1,
+      "message": "necessary ?",
+      "range": {
+        "startLine": 41,
+        "startChar": 4,
+        "endLine": 41,
+        "endChar": 21
+      },
+      "revId": "3f8cf1aacc7edcc49b148ee3682b5d285b137cab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "eb6ab3b5_6ab763ff",
         "filename": "src/plugin/conversationservicesmanager.h",
         "patchSetId": 31
@@ -165,6 +188,52 @@
       "revId": "3f8cf1aacc7edcc49b148ee3682b5d285b137cab",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "239b7c43_a624f762",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 722,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-09T00:32:08Z",
+      "side": 1,
+      "message": "use getCall(type, callId) or fully preserve getCall\u003cType\u003e(callId)",
+      "range": {
+        "startLine": 722,
+        "startChar": 85,
+        "endLine": 722,
+        "endChar": 92
+      },
+      "revId": "3f8cf1aacc7edcc49b148ee3682b5d285b137cab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b8f52e1d_de43551d",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 720,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-09T00:32:08Z",
+      "side": 1,
+      "message": "implement non-template version of empty\u003c\u003e() for this case",
+      "range": {
+        "startLine": 720,
+        "startChar": 43,
+        "endLine": 720,
+        "endChar": 51
+      },
+      "revId": "3f8cf1aacc7edcc49b148ee3682b5d285b137cab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
