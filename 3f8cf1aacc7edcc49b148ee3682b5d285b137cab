@@ -97,6 +97,30 @@
     },
     {
       "key": {
+        "uuid": "b27d34c1_324a0173",
+        "filename": "src/call.h",
+        "patchSetId": 31
+      },
+      "lineNbr": 400,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-09T00:02:47Z",
+      "side": 1,
+      "message": "Agree, only virtual would do, no need for data member.",
+      "parentUuid": "8a9a176d_0860f372",
+      "range": {
+        "startLine": 400,
+        "startChar": 4,
+        "endLine": 400,
+        "endChar": 43
+      },
+      "revId": "3f8cf1aacc7edcc49b148ee3682b5d285b137cab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "eb6ab3b5_6ab763ff",
         "filename": "src/plugin/conversationservicesmanager.h",
         "patchSetId": 31
