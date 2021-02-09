@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a3278871_87ca5182",
+        "filename": "contrib/src/x264/rules.mak",
+        "patchSetId": 4
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-02-09T12:47:02Z",
+      "side": 1,
+      "message": "Note: using the pkg-config based need_pkg macro doesn\u0027t work, as nasm doesn\u0027t ship with a .pc file.",
+      "revId": "f9c481678da04b0f162dd8a62263c8365fcfc9e9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
