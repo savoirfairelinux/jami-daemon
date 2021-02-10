@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "498610c0_650590ac",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 232,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-10T16:01:25Z",
+      "side": 1,
+      "message": "actually split the body to extractPendingCallbacks",
+      "range": {
+        "startLine": 204,
+        "startChar": 8,
+        "endLine": 232,
+        "endChar": 19
+      },
+      "revId": "24a6f731229d834516d392cea91cc680a2a57223",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
