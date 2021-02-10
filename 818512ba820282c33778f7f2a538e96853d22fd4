@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "7d6380bd_2f30f24a",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 7
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T20:08:18Z",
+      "side": 1,
+      "message": "unclear",
+      "range": {
+        "startLine": 5,
+        "startChar": 37,
+        "endLine": 7,
+        "endChar": 33
+      },
+      "revId": "818512ba820282c33778f7f2a538e96853d22fd4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "15e7fd6e_ef1cf7a8",
         "filename": "src/plugin/pluginmanager.h",
         "patchSetId": 7

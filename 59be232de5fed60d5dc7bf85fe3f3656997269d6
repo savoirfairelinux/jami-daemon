@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "037bd241_ad975752",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 203,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T20:08:18Z",
+      "side": 1,
+      "message": "status \u003d false.\nAlso \"(mediaHandler-\u003eid().find(rootPath)\" can be true multiple times? if not just return there?",
+      "range": {
+        "startLine": 203,
+        "startChar": 16,
+        "endLine": 203,
+        "endChar": 32
+      },
+      "revId": "59be232de5fed60d5dc7bf85fe3f3656997269d6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a5cc4aa3_0fd145c6",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T20:08:18Z",
+      "side": 1,
+      "message": "why the logic is similar in CallServicesManager but different about the status?",
+      "range": {
+        "startLine": 67,
+        "startChar": 40,
+        "endLine": 69,
+        "endChar": 38
+      },
+      "revId": "59be232de5fed60d5dc7bf85fe3f3656997269d6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c6de9aeb_5fd47468",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 191,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T20:08:18Z",
+      "side": 1,
+      "message": "same\n\nThere  seems to be a lot of common logic between ChatServersManager \u0026 Call. Maybe a lot of code can be de-duplicate and use inheritance",
+      "range": {
+        "startLine": 190,
+        "startChar": 35,
+        "endLine": 191,
+        "endChar": 31
+      },
+      "revId": "59be232de5fed60d5dc7bf85fe3f3656997269d6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
