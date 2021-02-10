@@ -353,17 +353,8 @@ transaction_request_cb(pjsip_rx_data* rdata)
         return PJ_FALSE;
     }
 
-    bool hasVideo = false;
-    if (r_sdp) {
-        auto pj_str_video = sip_utils::CONST_PJ_STR("video");
-        for (decltype(r_sdp->media_count) i = 0; i < r_sdp->media_count; i++) {
-            if (pj_strcmp(&r_sdp->media[i]->desc.media, &pj_str_video) == 0)
-                hasVideo = true;
-        }
-    }
-    auto call = account->newIncomingCall(std::string(remote_user),
-                                         {{"AUDIO_ONLY", (hasVideo ? "false" : "true")}},
-                                         transport);
+    auto const& remoteMediaList = Sdp::getMediaAttributeListFromSdp(r_sdp);
+    auto call = account->newIncomingCall(std::string(remote_user), remoteMediaList, transport);
 
     if (!call) {
         return PJ_FALSE;
@@ -411,10 +402,12 @@ transaction_request_cb(pjsip_rx_data* rdata)
     if (account->isStunEnabled())
         call->updateSDPFromSTUN();
 
-    // This list should be provided by the client. Kept for backward compatibility.
-    auto mediaList = account->createDefaultMediaList(account->isVideoEnabled() and hasVideo);
-
-    call->getSDP().receiveOffer(r_sdp, mediaList);
+    {
+        auto hasVideo = MediaAttribute::hasMediaType(remoteMediaList, MediaType::MEDIA_VIDEO);
+        // This list should be provided by the client. Kept for backward compatibility.
+        auto mediaList = account->createDefaultMediaList(account->isVideoEnabled() and hasVideo);
+        call->getSDP().receiveOffer(r_sdp, mediaList);
+    }
 
     call->setRemoteSdp(r_sdp);
 

@@ -268,8 +268,7 @@ MediaAttribute::parseMediaList(const std::vector<MediaMap>& mediaList)
 
         pairBool = getBoolValue(mediaList, index, MediaAttributeKey::SECURE);
         if (pairBool.first)
-            mediaAttr.security_ = pairBool.second ? KeyExchangeProtocol::SDES
-                                                  : KeyExchangeProtocol::NONE;
+            mediaAttr.secure_ = pairBool.second;
 
         pairBool = getBoolValue(mediaList, index, MediaAttributeKey::MUTED);
         if (pairBool.first)
@@ -288,7 +287,7 @@ MediaAttribute::parseMediaList(const std::vector<MediaMap>& mediaList)
         if (pairBool.first)
             mediaAttr.label_ = pairString.second;
 
-        mediaAttrList.emplace_back(std::move(mediaAttr));
+        mediaAttrList.emplace_back(mediaAttr);
     }
 
     return mediaAttrList;
@@ -365,6 +364,17 @@ MediaAttribute::getStringValue(const std::vector<MediaMap>& mediaList,
     }
 
     return {true, iter->second};
+}
+
+bool
+MediaAttribute::hasMediaType(const std::vector<MediaAttribute>& mediaList, MediaType type)
+{
+    for (auto const& media : mediaList) {
+        if (media.type_ == type) {
+            return true;
+        }
+    }
+    return false;
 }
 
 } // namespace jami
