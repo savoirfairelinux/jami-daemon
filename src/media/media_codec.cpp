@@ -254,7 +254,7 @@ AccountVideoCodecInfo::setCodecSpecifications(const std::map<std::string, std::s
 }
 
 std::vector<MediaAttribute>
-MediaAttribute::parseMediaList(const std::vector<MediaMap>& mediaList)
+MediaAttribute::parseMediaList(const std::vector<DRing::MediaMap>& mediaList)
 {
     std::vector<MediaAttribute> mediaAttrList;
 
@@ -268,8 +268,7 @@ MediaAttribute::parseMediaList(const std::vector<MediaMap>& mediaList)
 
         pairBool = getBoolValue(mediaList, index, MediaAttributeKey::SECURE);
         if (pairBool.first)
-            mediaAttr.security_ = pairBool.second ? KeyExchangeProtocol::SDES
-                                                  : KeyExchangeProtocol::NONE;
+            mediaAttr.secure_ = pairBool.second;
 
         pairBool = getBoolValue(mediaList, index, MediaAttributeKey::MUTED);
         if (pairBool.first)
@@ -288,7 +287,7 @@ MediaAttribute::parseMediaList(const std::vector<MediaMap>& mediaList)
         if (pairBool.first)
             mediaAttr.label_ = pairString.second;
 
-        mediaAttrList.emplace_back(std::move(mediaAttr));
+        mediaAttrList.emplace_back(mediaAttr);
     }
 
     return mediaAttrList;
@@ -305,7 +304,7 @@ MediaAttribute::stringToMediaType(const std::string& mediaType)
 }
 
 std::pair<bool, MediaType>
-MediaAttribute::getMediaType(const std::vector<MediaMap>& mediaList, unsigned index)
+MediaAttribute::getMediaType(const std::vector<DRing::MediaMap>& mediaList, unsigned index)
 {
     assert(index < mediaList.size());
     auto map = mediaList[index];
@@ -328,7 +327,7 @@ MediaAttribute::getMediaType(const std::vector<MediaMap>& mediaList, unsigned in
 }
 
 std::pair<bool, bool>
-MediaAttribute::getBoolValue(const std::vector<MediaMap>& mediaList,
+MediaAttribute::getBoolValue(const std::vector<DRing::MediaMap>& mediaList,
                              unsigned index,
                              const std::string& key)
 {
@@ -351,7 +350,7 @@ MediaAttribute::getBoolValue(const std::vector<MediaMap>& mediaList,
 }
 
 std::pair<bool, std::string>
-MediaAttribute::getStringValue(const std::vector<MediaMap>& mediaList,
+MediaAttribute::getStringValue(const std::vector<DRing::MediaMap>& mediaList,
                                unsigned index,
                                const std::string& key)
 {
@@ -365,6 +364,63 @@ MediaAttribute::getStringValue(const std::vector<MediaMap>& mediaList,
     }
 
     return {true, iter->second};
+}
+
+char const*
+MediaAttribute::boolToString(bool val)
+{
+    return val ? MediaAttributeValue::TRUE_VAL : MediaAttributeValue::FALSE_VAL;
+}
+
+char const*
+MediaAttribute::mediaTypeToString(MediaType type)
+{
+    if (type == MediaType::MEDIA_AUDIO)
+        return MediaAttributeValue::AUDIO;
+    if (type == MediaType::MEDIA_VIDEO)
+        return MediaAttributeValue::VIDEO;
+    return nullptr;
+}
+
+bool
+MediaAttribute::hasMediaType(const std::vector<MediaAttribute>& mediaList, MediaType type)
+{
+    for (auto const& media : mediaList) {
+        if (media.type_ == type) {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::vector<DRing::MediaMap>
+MediaAttribute::mediaAttributeToMediaMap(std::vector<MediaAttribute> mediaAttrList)
+{
+    std::vector<DRing::MediaMap> mediaList;
+    for (auto const& media : mediaAttrList) {
+        mediaList.emplace_back(DRing::MediaMap {});
+        DRing::MediaMap& mediaMap = mediaList.back();
+
+        mediaMap.emplace(MediaAttributeKey::MEDIA_TYPE, mediaTypeToString(media.type_));
+        mediaMap.emplace(MediaAttributeKey::LABEL, media.label_);
+        mediaMap.emplace(MediaAttributeKey::ENABLED, boolToString(media.enabled_));
+        mediaMap.emplace(MediaAttributeKey::MUTED, boolToString(media.muted_));
+        mediaMap.emplace(MediaAttributeKey::SECURE, boolToString(media.secure_));
+        mediaMap.emplace(MediaAttributeKey::SOURCE, media.sourceUri_);
+    }
+
+    return mediaList;
+}
+
+void
+MediaAttribute::updateFrom(const MediaAttribute& src)
+{
+    type_ = src.type_;
+    muted_ = src.muted_;
+    secure_ = src.secure_;
+    enabled_ = src.enabled_;
+    sourceUri_ = src.sourceUri_;
+    label_ = src.sourceUri_;
 }
 
 } // namespace jami

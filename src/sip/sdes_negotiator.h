@@ -84,33 +84,14 @@ static std::vector<CryptoSuiteDefinition> CryptoSuites = {
 class SdesNegotiator
 {
 public:
-    SdesNegotiator() {}
+    SdesNegotiator();
 
-    /**
-     * Constructor for an SDES crypto attributes
-     * negotiator.
-     *
-     * @param capabilites
-     *       A vector of crypto attributes as defined in
-     *       RFC4568. This string will be parsed
-     *       and a crypto context will be created
-     *       from it.
-     */
-    SdesNegotiator(const std::vector<CryptoSuiteDefinition>& capabilites);
+    static CryptoAttribute negotiate(const std::vector<std::string>& attributes);
 
-    CryptoAttribute negotiate(const std::vector<std::string>& attributes) const;
-
-    inline explicit operator bool() const { return not localCapabilities_.empty(); }
+    inline explicit operator bool() const { return not CryptoSuites.empty(); }
 
 private:
     static std::vector<CryptoAttribute> parse(const std::vector<std::string>& attributes);
-
-    /**
-     * A vector list containing the remote attributes.
-     * Multiple crypto lines can be sent, and the
-     * preferred method is then chosen from that list.
-     */
-    std::vector<CryptoSuiteDefinition> localCapabilities_;
 };
 
 } // namespace jami

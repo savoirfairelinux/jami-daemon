@@ -160,7 +160,7 @@ public:
      */
     std::string outgoingCall(const std::string& accountId,
                              const std::string& callee,
-                             const std::vector<MediaMap>& mediaList,
+                             const std::vector<DRing::MediaMap>& mediaList,
                              const std::string& confId = "");
 
     /**
@@ -178,6 +178,16 @@ public:
      * @param id  The call identifier
      */
     bool answerCall(const std::string& id);
+
+    /**
+     * Answer the call with the list media
+     * @param callID the call ID.
+     * @param mediaList the list of media attributes. The client can
+     * control the media through the attributes. The list should be of
+     * the same size as the list reported in the incoming call signal.
+     */
+    bool answerCallWithMedia(const std::string& callID,
+                             const std::vector<DRing::MediaMap>& mediaList);
 
     /**
      * Functions which occur with a user's action
@@ -916,7 +926,7 @@ public:
      */
     std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
                                           const std::string& accountId,
-                                          const std::vector<MediaMap>& mediaList);
+                                          const std::vector<DRing::MediaMap>& mediaList);
 
     CallFactory callFactory;
 
@@ -984,6 +994,7 @@ private:
     ~Manager();
     friend class AudioDeviceGuard;
 
+    // Data members
     struct ManagerPimpl;
     std::unique_ptr<ManagerPimpl> pimpl_;
 };

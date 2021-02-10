@@ -158,8 +158,10 @@ public:
      * @return The created call
      */
     virtual std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
-                                                  const std::vector<MediaMap>& mediaList)
+                                                  const std::vector<DRing::MediaMap>& mediaList)
         = 0;
+
+    // TODO. Reassess this comment.
 
     /* Note: we forbid incoming call creation from an instance of Account.
      * This is why no newIncomingCall() method exist here.

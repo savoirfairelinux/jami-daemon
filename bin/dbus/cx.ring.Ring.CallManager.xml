@@ -107,7 +107,28 @@
             </arg>
             <arg type="b" name="acceptSucceeded" direction="out"/>
         </method>
-
+<!--#if 1 -->
+        <method name="acceptWithMedia" tp:name-for-bindings="acceptWithMedia">
+            <!-- TODO_MC. Set the correct version -->
+            <tp:added version="0.0.0"/>
+            <tp:docstring>
+              Answer an incoming call with the list of media. This version to control
+              attributes for each media (accepted, muted, ...)
+            </tp:docstring>
+            <arg type="s" name="callID" direction="in">
+              <tp:docstring>
+                The callID.
+              </tp:docstring>
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="mediaList" direction="in">
+              <tp:docstring>
+                The list of media.
+              </tp:docstring>
+            </arg>
+            <arg type="b" name="acceptSucceeded" direction="out"/>
+        </method>
+<!--#endif -->
         <method name="hangUp" tp:name-for-bindings="hangUp">
             <tp:docstring>
               Hangup a call in state "CURRENT" or "HOLD".
@@ -613,6 +634,41 @@
               </tp:docstring>
             </arg>
         </signal>
+
+<!--#if 1 -->
+        <signal name="incomingCallWithMedia" tp:name-for-bindings="incomingCallWithMedia">
+            <!-- TODO_MC. Set the correct version -->
+            <tp:added version="0.0.0"/>
+            <tp:docstring>
+              <p>Notify an incoming call.</p>
+              <p>This signal is emitted when when a call is received. The list of media
+              included in the invite is reported. The client can change the media attributes
+              and return them to the daemon when accepting the call.</p>
+              <tp:rationale>The client must subscribe to this signal to handle incoming calls.</tp:rationale>
+            </tp:docstring>
+            <arg type="s" name="accountID">
+              <tp:docstring>
+                The account ID of the callee.
+              </tp:docstring>
+            </arg>
+            <arg type="s" name="callID">
+              <tp:docstring>
+                Call ID of the incoming call.
+              </tp:docstring>
+            </arg>
+            <arg type="s" name="from">
+              <tp:docstring>
+                The caller phone number.
+              </tp:docstring>
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="mediaList" direction="in">
+              <tp:docstring>
+                The list of media offered in the incoming call.
+              </tp:docstring>
+            </arg>
+        </signal>
+<!--#endif -->
 
         <signal name="incomingMessage" tp:name-for-bindings="incomingMessage">
             <tp:docstring>

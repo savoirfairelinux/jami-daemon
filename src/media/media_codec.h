@@ -258,6 +258,11 @@ private:
 // direction was not set yet. Useful to detect errors when parsing the SDP.
 enum class MediaDirection { SENDRECV, SENDONLY, RECVONLY, INACTIVE, UNKNOWN };
 
+// Possible values for media transport attribute. 'UNKNOWN' means that the
+// was not set, or not found when parsing. Useful to detect errors when
+// parsing the SDP.
+enum class MediaTransport { RTP_AVP, RTP_SAVP, UNKNOWN };
+
 /**
  * MediaDescription
  * Negotiated RTP media slot
@@ -295,19 +300,19 @@ struct MediaDescription
     CryptoAttribute crypto {};
 };
 
-using MediaMap = std::map<std::string, std::string>;
+// TODO. Move to a separarate file
 class MediaAttribute
 {
 public:
     MediaAttribute(MediaType type = MediaType::MEDIA_NONE,
                    bool muted = false,
-                   KeyExchangeProtocol security = KeyExchangeProtocol::SDES,
+                   bool secure = true,
                    bool enabled = true,
                    std::string_view source = {},
                    std::string_view label = {})
         : type_(type)
         , muted_(muted)
-        , security_(security)
+        , secure_(secure)
         , enabled_(enabled)
         , sourceUri_(source)
         , label_(label)
@@ -316,7 +321,7 @@ public:
     MediaAttribute(const MediaAttribute& other)
         : type_(other.type_)
         , muted_(other.muted_)
-        , security_(other.security_)
+        , secure_(other.secure_)
         , enabled_(other.enabled_)
         , sourceUri_(other.sourceUri_)
         , label_(other.label_) {};
@@ -324,21 +329,36 @@ public:
     virtual ~MediaAttribute() {};
 
     // Media list parser
-    static std::vector<MediaAttribute> parseMediaList(const std::vector<MediaMap>& mediaList);
+    static std::vector<MediaAttribute> parseMediaList(const std::vector<DRing::MediaMap>& mediaList);
     static MediaType stringToMediaType(const std::string& mediaType);
 
-    static std::pair<bool, MediaType> getMediaType(const std::vector<MediaMap>& mediaList,
+    static std::pair<bool, MediaType> getMediaType(const std::vector<DRing::MediaMap>& mediaList,
                                                    unsigned index);
-    static std::pair<bool, bool> getBoolValue(const std::vector<MediaMap>& mediaList,
+    static std::pair<bool, bool> getBoolValue(const std::vector<DRing::MediaMap>& mediaList,
                                               unsigned index,
                                               const std::string& key);
-    static std::pair<bool, std::string> getStringValue(const std::vector<MediaMap>& mediaList,
+    static std::pair<bool, std::string> getStringValue(const std::vector<DRing::MediaMap>& mediaList,
                                                        unsigned index,
                                                        const std::string& key);
 
+    // Return true if at least one media has a matching type.
+    static bool hasMediaType(const std::vector<MediaAttribute>& mediaList, MediaType type);
+
+    // Return a string of a boolean
+    static char const* boolToString(bool val);
+
+    // Return a string of the media type
+    static char const* mediaTypeToString(MediaType type);
+
+    // Serialize a vector of MediaAttribute to a vector of MediaMap
+    static std::vector<DRing::MediaMap> mediaAttributeToMediaMap(
+        std::vector<MediaAttribute> mediaAttrList);
+
+    void updateFrom(const MediaAttribute& src);
+
     MediaType type_;
     bool muted_;
-    KeyExchangeProtocol security_;
+    bool secure_;
     bool enabled_;
     std::string sourceUri_;
     std::string label_;
@@ -356,8 +376,8 @@ constexpr static char LABEL[] = "LABEL";           // string
 namespace MediaAttributeValue {
 constexpr static auto TRUE_VAL = TRUE_STR;
 constexpr static auto FALSE_VAL = FALSE_STR;
-constexpr static char AUDIO[] = "MEDIA_TYPE_AUDIO";
-constexpr static char VIDEO[] = "MEDIA_TYPE_VIDEO";
+constexpr static auto AUDIO = "MEDIA_TYPE_AUDIO";
+constexpr static auto VIDEO = "MEDIA_TYPE_VIDEO";
 } // namespace MediaAttributeValue
 
 namespace MediaStateChangedEvent {

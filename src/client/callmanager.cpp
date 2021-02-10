@@ -71,7 +71,7 @@ placeCall(const std::string& accountID,
 std::string
 placeCall(const std::string& accountID,
           const std::string& to,
-          const std::vector<MediaMap>& mediaList)
+          const std::vector<DRing::MediaMap>& mediaList)
 {
     // Check if a destination number is available
     if (to.empty()) {
@@ -98,6 +98,12 @@ bool
 accept(const std::string& callID)
 {
     return jami::Manager::instance().answerCall(callID);
+}
+
+bool
+acceptWithMedia(const std::string& callID, const std::vector<DRing::MediaMap>& mediaList)
+{
+    return jami::Manager::instance().answerCallWithMedia(callID, mediaList);
 }
 
 bool
