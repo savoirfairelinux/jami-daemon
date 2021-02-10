@@ -64,7 +64,6 @@ Sdp::Sdp(const std::string& id)
                })
     , publishedIpAddr_()
     , publishedIpAddrType_()
-    , sdesNego_ {CryptoSuites}
     , telephoneEventPayload_(101) // same as asterisk
     , callId_(id)
 {
@@ -185,7 +184,7 @@ Sdp::mediaDirection(bool enabled, bool onHold, bool muted)
 }
 
 MediaDirection
-Sdp::getMediaDirection(pjmedia_sdp_media* media) const
+Sdp::getMediaDirection(pjmedia_sdp_media* media)
 {
     if (pjmedia_sdp_attr_find2(media->attr_count, media->attr, "sendrecv", nullptr) != nullptr) {
         return MediaDirection::SENDRECV;
@@ -206,18 +205,43 @@ Sdp::getMediaDirection(pjmedia_sdp_media* media) const
     return MediaDirection::UNKNOWN;
 }
 
+MediaTransport
+Sdp::getMediaTransport(pjmedia_sdp_media* media)
+{
+    if (pj_stricmp2(&media->desc.transport, "RTP/SAVP") == 0)
+        return MediaTransport::RTP_SAVP;
+    else if (pj_stricmp2(&media->desc.transport, "RTP/AVP") == 0)
+        return MediaTransport::RTP_AVP;
+
+    return MediaTransport::UNKNOWN;
+}
+
+std::vector<std::string>
+Sdp::getCrypto(pjmedia_sdp_media* media)
+{
+    std::vector<std::string> crypto;
+    for (unsigned j = 0; j < media->attr_count; j++) {
+        const auto attribute = media->attr[j];
+        if (pj_stricmp2(&attribute->name, "crypto") == 0)
+            crypto.emplace_back(attribute->value.ptr, attribute->value.slen);
+    }
+
+    return crypto;
+}
+
 pjmedia_sdp_media*
 Sdp::addMediaDescription(const MediaAttribute& mediaAttr, bool onHold)
 {
     auto type = mediaAttr.type_;
     auto muted = mediaAttr.muted_;
-    auto kx = mediaAttr.security_;
+    KeyExchangeProtocol kx = mediaAttr.secure_ ? KeyExchangeProtocol::SDES
+                                               : KeyExchangeProtocol::NONE;
     auto enabled = mediaAttr.enabled_;
 
     JAMI_DBG("Add media description of type [%s] - muted [%s] - secure [%s]",
              type == MediaType::MEDIA_AUDIO ? "AUDIO" : "VIDEO",
              muted ? "Yes" : "No",
-             kx == KeyExchangeProtocol::SDES ? "Yes" : "No");
+             mediaAttr.secure_ ? "Yes" : "No");
 
     pjmedia_sdp_media* med = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_media);
 
@@ -803,7 +827,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             if (pj_stricmp2(&attribute->name, "crypto") == 0)
                 crypto.emplace_back(attribute->value.ptr, attribute->value.slen);
         }
-        descr.crypto = sdesNego_.negotiate(crypto);
+        descr.crypto = SdesNegotiator::negotiate(crypto);
     }
     return ret;
 }
@@ -938,6 +962,50 @@ Sdp::clearIce(pjmedia_sdp_session* session)
         auto media = session->media[i];
         pjmedia_sdp_attr_remove_all(&media->attr_count, media->attr, "candidate");
     }
+}
+
+std::vector<MediaAttribute>
+Sdp::getMediaAttributeListFromSdp(pjmedia_sdp_session* sdpSession)
+{
+    std::vector<MediaAttribute> mediaList;
+    assert(sdpSession != nullptr);
+    for (unsigned idx = 0; idx < sdpSession->media_count; idx++) {
+        mediaList.emplace_back(MediaAttribute {});
+        auto& mediaAttr = mediaList.back();
+
+        auto media = sdpSession->media[idx];
+
+        // Get media type.
+        if (!pj_stricmp2(&media->desc.media, "audio"))
+            mediaAttr.type_ = MediaType::MEDIA_AUDIO;
+        else if (!pj_stricmp2(&media->desc.media, "video"))
+            mediaAttr.type_ = MediaType::MEDIA_VIDEO;
+        else {
+            JAMI_WARN("Media#%u only 'audio' and 'video' types are supported!", idx);
+            // Keep the media in the list but dont bother parsing the attributes
+            continue;
+        }
+
+        // Get mute state.
+        auto direction = getMediaDirection(media);
+        mediaAttr.muted_ = direction == MediaDirection::SENDRECV
+                           or direction == MediaDirection::SENDONLY;
+
+        // Get transport.
+        auto transp = getMediaTransport(media);
+        if (transp == MediaTransport::UNKNOWN) {
+            JAMI_WARN("Media#%u could not determine transport type!", idx);
+        }
+
+        // A media is secure if the transport is of type RTP/SAVP
+        // and the crypto materials are present.
+        mediaAttr.secure_ = transp == MediaTransport::RTP_SAVP and not getCrypto(media).empty();
+
+        mediaAttr.label_ = mediaAttr.type_ == MediaType::MEDIA_AUDIO ? "audio_" : "video_";
+        mediaAttr.label_ += std::to_string(idx);
+    }
+
+    return mediaList;
 }
 
 } // namespace jami

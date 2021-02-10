@@ -122,6 +122,8 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                                     account->getActiveAccountCodecInfoList(MEDIA_VIDEO));
 #endif
 
+    JAMI_DBG("Create a new SIP call with %lu medias", mediaAttrList.size());
+
     initMediaStreams(mediaAttrList);
 }
 
@@ -1480,6 +1482,9 @@ SIPCall::startAllMedia()
     // Create AVStreams associated with the call
     createCallAVStreams();
 #endif
+
+    emitSignal<DRing::CallSignal::MediaStateChanged>(getCallId(),
+                                                     MediaStateChangedEvent::MEDIA_STARTED);
 }
 
 void
@@ -1527,6 +1532,9 @@ SIPCall::stopAllMedia()
     jami::Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(
         getCallId());
 #endif
+
+    emitSignal<DRing::CallSignal::MediaStateChanged>(getCallId(),
+                                                     MediaStateChangedEvent::MEDIA_STOPPED);
 }
 
 void
@@ -1690,11 +1698,15 @@ SIPCall::getMediaAttributeList() const
 void
 SIPCall::onMediaUpdate()
 {
-    JAMI_WARN("[call:%s] medias changed", getCallId().c_str());
+    JAMI_WARN("[call:%s] medias negotiation complete", getCallId().c_str());
+
     // Main call (no subcalls) must wait for ICE now, the rest of code needs to access
     // to a negotiated transport.
     runOnMainThread([w = weak()] {
         if (auto this_ = w.lock()) {
+            emitSignal<DRing::CallSignal::MediaStateChanged>(
+                this_->getCallId(), MediaStateChangedEvent::MEDIA_NEGOTIATED);
+
             std::lock_guard<std::recursive_mutex> lk {this_->callMutex_};
             // The call is already ended, so we don't need to restart medias
             if (not this_->inviteSession_
@@ -2240,7 +2252,7 @@ SIPCall::dumpMediaAttribute(const MediaAttribute& mediaAttr, size_t idx) const
              mediaAttr.label_.c_str(),
              mediaAttr.enabled_ ? "yes" : "no",
              mediaAttr.muted_ ? "yes" : "no",
-             mediaAttr.security_ == KeyExchangeProtocol::SDES ? "yes" : "no",
+             mediaAttr.secure_ ? "yes" : "no",
              mediaAttr.sourceUri_.c_str());
 }
 
