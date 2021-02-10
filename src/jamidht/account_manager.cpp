@@ -544,13 +544,16 @@ AccountManager::getTrustRequests() const
 }
 
 bool
-AccountManager::acceptTrustRequest(const std::string& from)
+AccountManager::acceptTrustRequest(const std::string& from, bool includeConversation)
 {
     dht::InfoHash f(from);
     if (info_) {
         auto req = info_->contacts->getTrustRequest(dht::InfoHash(from));
         if (info_->contacts->acceptTrustRequest(f)) {
-            sendTrustRequestConfirm(f, req[DRing::Account::TrustRequest::CONVERSATIONID]);
+            sendTrustRequestConfirm(f,
+                                    includeConversation
+                                        ? req[DRing::Account::TrustRequest::CONVERSATIONID]
+                                        : "");
             syncDevices();
         }
         return true;
