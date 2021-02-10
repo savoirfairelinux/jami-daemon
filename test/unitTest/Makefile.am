@@ -152,6 +152,12 @@ check_PROGRAMS += ut_media_control
 ut_media_control_SOURCES = media_control/media_control.cpp
 
 #
+# compability
+#
+check_PROGRAMS += ut_compability
+ut_compability_SOURCES = conversation/compability.cpp
+
+#
 # syncHistory
 #
 check_PROGRAMS += ut_syncHistory
