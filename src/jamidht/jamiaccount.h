@@ -302,7 +302,8 @@ public:
 
     /* contact requests */
     std::vector<std::map<std::string, std::string>> getTrustRequests() const;
-    bool acceptTrustRequest(const std::string& from);
+    // Note: includeConversation used for compatibility test. Do not change
+    bool acceptTrustRequest(const std::string& from, bool includeConversation = true);
     bool discardTrustRequest(const std::string& from);
 
     /**
