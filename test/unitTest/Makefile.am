@@ -147,6 +147,12 @@ check_PROGRAMS += ut_conversation
 ut_conversation_SOURCES = conversation/conversation.cpp
 
 #
+# compability
+#
+check_PROGRAMS += ut_compability
+ut_compability_SOURCES = conversation/compability.cpp
+
+#
 # syncHistory
 #
 check_PROGRAMS += ut_syncHistory
