@@ -161,6 +161,8 @@ public:
                                                   const std::vector<MediaMap>& mediaList)
         = 0;
 
+    // TODO. Reassess this comment.
+
     /* Note: we forbid incoming call creation from an instance of Account.
      * This is why no newIncomingCall() method exist here.
      */

@@ -180,6 +180,8 @@ public:
     std::vector<MediaDescription> getMediaDescriptions(const pjmedia_sdp_session* session,
                                                        bool remote) const;
 
+    static std::vector<MediaAttribute> getMediaAttributeListFromSdp(pjmedia_sdp_session* sdpSession);
+
     using MediaSlot = std::pair<MediaDescription, MediaDescription>;
     std::vector<MediaSlot> getMediaSlots() const;
 
@@ -264,8 +266,6 @@ private:
     uint16_t localVideoDataPort_ {0};
     uint16_t localVideoControlPort_ {0};
 
-    SdesNegotiator sdesNego_;
-
     unsigned int telephoneEventPayload_;
 
     // The call Id of the SDP owner
@@ -287,7 +287,13 @@ private:
     char const* mediaDirection(bool enabled, bool onHold, bool muted);
 
     // Get media direction
-    MediaDirection getMediaDirection(pjmedia_sdp_media* media) const;
+    static MediaDirection getMediaDirection(pjmedia_sdp_media* media);
+
+    // Get the transport type
+    static MediaTransport getMediaTransport(pjmedia_sdp_media* media);
+
+    // Get the crypto materials
+    static std::vector<std::string> getCrypto(pjmedia_sdp_media* media);
 
     pjmedia_sdp_attr* generateSdesAttribute();
 

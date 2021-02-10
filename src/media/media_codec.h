@@ -258,6 +258,11 @@ private:
 // direction was not set yet. Useful to detect errors when parsing the SDP.
 enum class MediaDirection { SENDRECV, SENDONLY, RECVONLY, INACTIVE, UNKNOWN };
 
+// Possible values for media transport attribute. 'UNKNOWN' means that the
+// was not set, or not found when parsing. Useful to detect errors when
+// parsing the SDP.
+enum class MediaTransport { RTP_AVP, RTP_SAVP, UNKNOWN };
+
 /**
  * MediaDescription
  * Negotiated RTP media slot
@@ -301,13 +306,13 @@ class MediaAttribute
 public:
     MediaAttribute(MediaType type = MediaType::MEDIA_NONE,
                    bool muted = false,
-                   KeyExchangeProtocol security = KeyExchangeProtocol::SDES,
+                   bool secure = true,
                    bool enabled = true,
                    std::string_view source = {},
                    std::string_view label = {})
         : type_(type)
         , muted_(muted)
-        , security_(security)
+        , secure_(secure)
         , enabled_(enabled)
         , sourceUri_(source)
         , label_(label)
@@ -316,7 +321,7 @@ public:
     MediaAttribute(const MediaAttribute& other)
         : type_(other.type_)
         , muted_(other.muted_)
-        , security_(other.security_)
+        , secure_(other.secure_)
         , enabled_(other.enabled_)
         , sourceUri_(other.sourceUri_)
         , label_(other.label_) {};
@@ -336,9 +341,11 @@ public:
                                                        unsigned index,
                                                        const std::string& key);
 
+    static bool hasMediaType(const std::vector<MediaAttribute>& mediaList, MediaType type);
+
     MediaType type_;
     bool muted_;
-    KeyExchangeProtocol security_;
+    bool secure_;
     bool enabled_;
     std::string sourceUri_;
     std::string label_;
