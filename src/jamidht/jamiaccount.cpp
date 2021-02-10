@@ -1152,6 +1152,31 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     acc->acceptConversationRequest(conversationId);
                 }
             });
+        },
+        [this](const std::string& uri, const std::string& convFromReq) {
+            // If we receives a confirmation of a trust request
+            // but without the conversation, this means that the peer is
+            // using an old version of Jami, without swarm support.
+            // In this case, delete current conversation linked with that
+            // contact because he will not get messages anyway.
+            if (convFromReq.empty()) {
+                auto convId = getOneToOneConversation(uri);
+                if (convId.empty())
+                    return;
+                std::unique_lock<std::mutex> lk(conversationsMtx_);
+                auto it = conversations_.find(convId);
+                if (it == conversations_.end()) {
+                    JAMI_ERR("Conversation %s doesn't exist", convId.c_str());
+                    return;
+                }
+                // We will only removes the conversation if the member is invited
+                // the contact can have mutiple devices with only some with swarm
+                // support, in this case, just go with recent versions.
+                if (it->second->isMember(uri))
+                    return;
+                lk.unlock();
+                removeConversation(convId);
+            }
         }};
 
     try {
@@ -3375,11 +3400,11 @@ JamiAccount::getTrustRequests() const
 }
 
 bool
-JamiAccount::acceptTrustRequest(const std::string& from)
+JamiAccount::acceptTrustRequest(const std::string& from, bool includeConversation)
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
     if (accountManager_)
-        return accountManager_->acceptTrustRequest(from);
+        return accountManager_->acceptTrustRequest(from, includeConversation);
     JAMI_WARN("[Account %s] acceptTrustRequest: account not loaded", getAccountID().c_str());
     return false;
 }
