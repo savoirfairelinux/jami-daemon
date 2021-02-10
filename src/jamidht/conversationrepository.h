@@ -196,9 +196,10 @@ public:
     /**
      * Merge another branch into the main branch
      * @param merge_id      The reference to merge
-     * @return if the merge was successful
+     * @return a pair containing if the merge was successful and the merge commit id
+     * generated if one (can be a fast forward merge without commit)
      */
-    bool merge(const std::string& merge_id);
+    std::pair<bool, std::string> merge(const std::string& merge_id);
 
     /**
      * Get current diff stats between two commits
