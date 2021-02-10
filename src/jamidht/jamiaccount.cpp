@@ -322,7 +322,9 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
                                                            std::chrono::hours(24 * 7)));
         std::getline(is, proxyServerCached_);
     } catch (const std::exception& e) {
-        JAMI_DBG("[Account %s] Can't load proxy URL from cache: %s", getAccountID().c_str(), e.what());
+        JAMI_DBG("[Account %s] Can't load proxy URL from cache: %s",
+                 getAccountID().c_str(),
+                 e.what());
     }
 
     setActiveCodecs({});
@@ -542,47 +544,48 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     dummyCall->setIPToIP(true);
     dummyCall->setSecure(isTlsEnabled());
     call->addSubCall(*dummyCall);
-    auto sendRequest =
-        [this, wCall, toUri, dummyCall = std::move(dummyCall)](const DeviceId& deviceId,
-                                                               bool eraseDummy) {
-            if (eraseDummy) {
-                // Mark the temp call as failed to stop the main call if necessary
-                if (dummyCall)
-                    dummyCall->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
-                return;
-            }
-            auto call = wCall.lock();
-            if (not call)
-                return;
-            auto state = call->getConnectionState();
-            if (state != Call::ConnectionState::PROGRESSING
-                and state != Call::ConnectionState::TRYING)
-                return;
+    auto sendRequest = [this,
+                        wCall,
+                        toUri,
+                        dummyCall = std::move(dummyCall)](const DeviceId& deviceId,
+                                                          bool eraseDummy) {
+        if (eraseDummy) {
+            // Mark the temp call as failed to stop the main call if necessary
+            if (dummyCall)
+                dummyCall->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
+            return;
+        }
+        auto call = wCall.lock();
+        if (not call)
+            return;
+        auto state = call->getConnectionState();
+        if (state != Call::ConnectionState::PROGRESSING and state != Call::ConnectionState::TRYING)
+            return;
 
             auto dev_call = Manager::instance()
                                .callFactory.newSipCall(shared(), Call::CallType::OUTGOING, call->getDetails());
-            dev_call->setIPToIP(true);
-            dev_call->setSecure(isTlsEnabled());
-            dev_call->setState(Call::ConnectionState::TRYING);
-            call->addStateListener(
-                [w = weak(), deviceId](Call::CallState, Call::ConnectionState state, int) {
-                    if (state != Call::ConnectionState::PROGRESSING
-                        and state != Call::ConnectionState::TRYING) {
-                        if (auto shared = w.lock())
-                            shared->callConnectionClosed(deviceId, true);
-                    }
-                });
-            call->addSubCall(*dev_call);
-            {
-                std::lock_guard<std::mutex> lk(pendingCallsMutex_);
-                pendingCalls_[deviceId].emplace_back(dev_call);
-            }
+        dev_call->setIPToIP(true);
+        dev_call->setSecure(isTlsEnabled());
+        dev_call->setState(Call::ConnectionState::TRYING);
+        call->addStateListener(
+            [w = weak(), deviceId](Call::CallState, Call::ConnectionState state, int) {
+                if (state != Call::ConnectionState::PROGRESSING
+                    and state != Call::ConnectionState::TRYING) {
+                    if (auto shared = w.lock())
+                        shared->callConnectionClosed(deviceId, true);
+                }
+            });
+        call->addSubCall(*dev_call);
+        {
+            std::lock_guard<std::mutex> lk(pendingCallsMutex_);
+            pendingCalls_[deviceId].emplace_back(dev_call);
+        }
 
-            JAMI_WARN("[call %s] No channeled socket with this peer. Send request",
-                      call->getCallId().c_str());
-            // Else, ask for a channel (for future calls/text messages)
-            requestSIPConnection(toUri, deviceId);
-        };
+        JAMI_WARN("[call %s] No channeled socket with this peer. Send request",
+                  call->getCallId().c_str());
+        // Else, ask for a channel (for future calls/text messages)
+        requestSIPConnection(toUri, deviceId);
+    };
 
     for (auto& [key, value] : sipConns_) {
         if (key.first != toUri)
@@ -1105,9 +1108,13 @@ JamiAccount::loadAccount(const std::string& archive_password,
                time_t received) {
             auto saveReq = false;
             if (!conversationId.empty()) {
-                if (isConversation(conversationId)) {
-                    JAMI_ERR("@@@ TRUST REQUEST FOR EXISTING CONV %s", conversationId.c_str());
-                    return;
+                for (auto& info : convInfos_) {
+                    if (info.id == conversationId) {
+                        JAMI_INFO("[Account %s] Received a request for a conversation "
+                                  "already handled. Ignore",
+                                  getAccountID().c_str());
+                        return;
+                    }
                 }
                 saveReq = true;
                 if (accountManager_->getRequest(conversationId) != std::nullopt) {
@@ -1160,6 +1167,31 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     acc->acceptConversationRequest(conversationId);
                 }
             });
+        },
+        [this](const std::string& uri, const std::string& convFromReq) {
+            // If we receives a confirmation of a trust request
+            // but without the conversation, this means that the peer is
+            // using an old version of Jami, without swarm support.
+            // In this case, delete current conversation linked with that
+            // contact because he will not get messages anyway.
+            if (convFromReq.empty()) {
+                auto convId = getOneToOneConversation(uri);
+                if (convId.empty())
+                    return;
+                std::unique_lock<std::mutex> lk(conversationsMtx_);
+                auto it = conversations_.find(convId);
+                if (it == conversations_.end()) {
+                    JAMI_ERR("Conversation %s doesn't exist", convId.c_str());
+                    return;
+                }
+                // We will only removes the conversation if the member is invited
+                // the contact can have mutiple devices with only some with swarm
+                // support, in this case, just go with recent versions.
+                if (it->second->isMember(uri))
+                    return;
+                lk.unlock();
+                removeConversation(convId);
+            }
         }};
 
     try {
@@ -2472,7 +2504,9 @@ JamiAccount::doRegister_()
                         std::string accId = getAccountID();
                         auto res = transferManagers_.emplace(std::piecewise_construct,
                                                              std::forward_as_tuple(peerId),
-                                                             std::forward_as_tuple(accId, peerId));
+                                                             std::forward_as_tuple(accId,
+                                                                                   peerId,
+                                                                                   false));
                         if (!res.second) {
                             JAMI_ERR("Couldn't create manager for peer %s", peerId.c_str());
                             return;
@@ -3382,11 +3416,11 @@ JamiAccount::getTrustRequests() const
 }
 
 bool
-JamiAccount::acceptTrustRequest(const std::string& from)
+JamiAccount::acceptTrustRequest(const std::string& from, bool includeConversation)
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
     if (accountManager_)
-        return accountManager_->acceptTrustRequest(from);
+        return accountManager_->acceptTrustRequest(from, includeConversation);
     JAMI_WARN("[Account %s] acceptTrustRequest: account not loaded", getAccountID().c_str());
     return false;
 }
@@ -3783,7 +3817,10 @@ JamiAccount::requestConnection(
                         JAMI_ERR("Conversation %s doesn't exist", info.conversationId.c_str());
                         return;
                     }
-                    auto members = it->second->getMembers();
+                    auto isOneToOne = it->second->mode() == ConversationMode::ONE_TO_ONE;
+
+                    auto members = it->second->getMembers(
+                        isOneToOne /* In this case, also send to the invited */);
                     lk.unlock();
                     for (const auto& member : members)
                         onChanneledCancelled(member.at("uri"));
@@ -4702,7 +4739,6 @@ JamiAccount::onConversationRequest(const std::string& from, const Json::Value& v
     // Note: no need to sync here because over connected devices should receives
     // the same conversation request. Will sync when the conversation will be added
 
-    JAMI_ERR("@@@@ ConversationRequestReceived");
     emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(accountID_,
                                                                        convId,
                                                                        req.toMap());
@@ -4751,7 +4787,8 @@ JamiAccount::cacheTurnServers()
             this_->isRefreshing_ = false;
             return;
         }
-        JAMI_INFO("[Account %s] Refresh cache for TURN server resolution", this_->getAccountID().c_str());
+        JAMI_INFO("[Account %s] Refresh cache for TURN server resolution",
+                  this_->getAccountID().c_str());
         // Retrieve old cached value if available.
         // This means that we directly get the correct value when launching the application on the
         // same network
@@ -5028,7 +5065,8 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         return v.channel == socket;
     });
     if (conn != connections.end()) {
-        JAMI_WARN("[Account %s] Channel socket already cached with this peer", getAccountID().c_str());
+        JAMI_WARN("[Account %s] Channel socket already cached with this peer",
+                  getAccountID().c_str());
         return;
     }
 
@@ -5063,7 +5101,9 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     sip_tr->setAccount(shared());
     // Store the connection
     connections.emplace_back(SipConnection {sip_tr, socket});
-    JAMI_WARN("[Account %s] New SIP channel opened with %s", getAccountID().c_str(), deviceId.to_c_str());
+    JAMI_WARN("[Account %s] New SIP channel opened with %s",
+              getAccountID().c_str(),
+              deviceId.to_c_str());
     lk.unlock();
 
     sendProfile(deviceId.toString());
@@ -5197,7 +5237,6 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
                           convId.c_str(),
                           deviceId.c_str());
 
-                JAMI_ERR("@@@@ ConversationRequestReceived");
                 emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(getAccountID(),
                                                                                    convId,
                                                                                    req.toMap());
