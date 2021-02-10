@@ -3613,6 +3613,7 @@ JamiAccount::sendTextMessage(const std::string& to,
     if (onlyConnected)
         return;
 
+    JAMI_ERR("@@@ send to %s", to.c_str());
     // Find listening devices for this account
     accountManager_->forEachDevice(
         toH,
@@ -3627,6 +3628,7 @@ JamiAccount::sendTextMessage(const std::string& to,
             }
 
             // Else, ask for a channel and send a DHT message
+            JAMI_ERR("@@@@@@ PUTX!!!!! %s", to.c_str());
             requestSIPConnection(to, dev);
             {
                 std::lock_guard<std::mutex> lock(messageMutex_);
@@ -3634,6 +3636,7 @@ JamiAccount::sendTextMessage(const std::string& to,
             }
 
             auto h = dht::InfoHash::get("inbox:" + dev.toString());
+            JAMI_ERR("@@@@@@ PUT0!!!!! %s", to.c_str());
             std::lock_guard<std::mutex> l(confirm->lock);
             auto list_token
                 = dht_->listen<dht::ImMessage>(h, [this, to, token, confirm](dht::ImMessage&& msg) {
@@ -3673,6 +3676,7 @@ JamiAccount::sendTextMessage(const std::string& to,
                       return false;
                   });
             confirm->listenTokens.emplace(h, std::move(list_token));
+            JAMI_ERR("@@@@@@ PUT1!!!!! %s", to.c_str());
             dht_->putEncrypted(h,
                                dev,
                                dht::ImMessage(token,
@@ -3680,6 +3684,7 @@ JamiAccount::sendTextMessage(const std::string& to,
                                               std::string(payloads.begin()->second),
                                               now),
                                [this, to, token, confirm, h](bool ok) {
+                                   JAMI_ERR("@@@@@@ PUT2!!!!! %s %u", to.c_str(), ok);
                                    JAMI_DBG()
                                        << "[Account " << getAccountID() << "] [message " << token
                                        << "] Put encrypted " << (ok ? "ok" : "failed");
@@ -4385,6 +4390,7 @@ JamiAccount::addConversationMember(const std::string& conversationId,
             if (sendRequest) {
                 auto invite = it->second->generateInvitation();
                 lk.unlock();
+                JAMI_ERR("@@@ SEND INVITE TO %s", contactUri.c_str());
                 shared->sendTextMessage(contactUri, invite);
             }
         },
