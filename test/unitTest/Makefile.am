@@ -152,6 +152,12 @@ check_PROGRAMS += ut_media_negotiation
 ut_media_negotiation_SOURCES = media_negotiation/media_negotiation.cpp
 
 #
+# compability
+#
+check_PROGRAMS += ut_compability
+ut_compability_SOURCES = conversation/compability.cpp
+
+#
 # syncHistory
 #
 check_PROGRAMS += ut_syncHistory
