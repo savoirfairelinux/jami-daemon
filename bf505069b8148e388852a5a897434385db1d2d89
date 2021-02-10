@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f3200556_e34d35df",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-10T17:45:59Z",
+      "side": 1,
+      "message": "documentation always in headers",
+      "range": {
+        "startLine": 33,
+        "startChar": 0,
+        "endLine": 38,
+        "endChar": 3
+      },
+      "revId": "bf505069b8148e388852a5a897434385db1d2d89",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a7460653_c6656651",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-10T17:45:59Z",
+      "side": 1,
+      "message": "documentation always in headers",
+      "range": {
+        "startLine": 105,
+        "startChar": 0,
+        "endLine": 116,
+        "endChar": 3
+      },
+      "revId": "bf505069b8148e388852a5a897434385db1d2d89",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "86704e0f_121aa1d4",
+        "filename": "src/plugin/pluginsutils.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-10T17:45:59Z",
+      "side": 1,
+      "message": "\u0027namespace plugin\u0027, no class needed.",
+      "range": {
+        "startLine": 35,
+        "startChar": 0,
+        "endLine": 35,
+        "endChar": 17
+      },
+      "revId": "bf505069b8148e388852a5a897434385db1d2d89",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
