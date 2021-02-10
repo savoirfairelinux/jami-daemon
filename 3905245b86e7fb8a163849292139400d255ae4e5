@@ -96,6 +96,30 @@
     },
     {
       "key": {
+        "uuid": "93257fbb_71f32bd5",
+        "filename": "src/client/callmanager.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T19:36:54Z",
+      "side": 1,
+      "message": "yup it\u0027s a purely informational RFC (yellow header), but easy to link if we follow it",
+      "parentUuid": "682d31f3_20933cec",
+      "range": {
+        "startLine": 88,
+        "startChar": 37,
+        "endLine": 88,
+        "endChar": 55
+      },
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "f1c6353e_2b5549d4",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 16
@@ -483,6 +507,24 @@
       "writtenOn": "2021-02-09T15:14:43Z",
       "side": 1,
       "message": "@sblin : how can we get rid of this sleep ?",
+      "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9dbff54d_d9dc3b9e",
+        "filename": "test/unitTest/media_control/media_control.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 427,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T19:36:54Z",
+      "side": 1,
+      "message": "imho init accounts \u0026 signals to know when the account is usable need some re-work. there is a ticket about it (I\u0027m not sure but I think there is one). But for now it\u0027s not planned",
+      "parentUuid": "8fc6d758_120415ee",
       "revId": "3905245b86e7fb8a163849292139400d255ae4e5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
