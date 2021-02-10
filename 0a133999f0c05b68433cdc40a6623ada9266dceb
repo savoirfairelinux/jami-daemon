@@ -16,6 +16,24 @@
       "revId": "0a133999f0c05b68433cdc40a6623ada9266dceb",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "99d107b7_595aaf3e",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T13:14:03Z",
+      "side": 0,
+      "message": "yeah I changed the order of the patch. fixed",
+      "parentUuid": "8266d26c_f90ecd57",
+      "revId": "0a133999f0c05b68433cdc40a6623ada9266dceb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }

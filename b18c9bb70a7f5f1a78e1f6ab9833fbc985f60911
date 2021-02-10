@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "f3dd9d30_2fb027d1",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T13:14:03Z",
+      "side": 1,
+      "message": "This structure is used to store a callback during a pending channel request and only there then, as soon as the socket is connected and this callback is called, it\u0027s destroyed. Connection states are stored in ConnectionsInfos.",
+      "parentUuid": "fef3921a_7dc7edd6",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "6acb2a01_540f5c4d",
         "filename": "src/jamidht/connectionmanager.cpp",
         "patchSetId": 6
@@ -33,6 +51,24 @@
       "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fbcbba26_e9d49fae",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T13:14:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6acb2a01_540f5c4d",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "64f7124f_51803f12",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T13:14:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f09f4294_7a717794",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "658f8c03_0bfafcbc",
         "filename": "src/jamidht/connectionmanager.cpp",
         "patchSetId": 6
@@ -64,6 +118,30 @@
       "writtenOn": "2021-02-09T23:16:02Z",
       "side": 1,
       "message": "actually... remove_copy_if doesn\u0027t even remove ! copied elements are still in the container..\n\nfor (auto it \u003d pendings.begin(); it !\u003d pendings.end(); ++it) {\n    if (it-\u003evid \u003d\u003d vid) {\n        ret.emplace_back(std::move(*it));\n        pendings.erase(it);\n        break;\n    }\n}",
+      "range": {
+        "startLine": 207,
+        "startChar": 0,
+        "endLine": 213,
+        "endChar": 39
+      },
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "06746384_1346cc66",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T13:14:03Z",
+      "side": 1,
+      "message": "fuck that method. Definitely the worst",
+      "parentUuid": "658f8c03_0bfafcbc",
       "range": {
         "startLine": 207,
         "startChar": 0,
@@ -93,6 +171,24 @@
     },
     {
       "key": {
+        "uuid": "1174a751_e5f7b07d",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 395,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T13:14:03Z",
+      "side": 1,
+      "message": "I changed to 100. But yeah if it take that much, it shouldn\u0027t be a problem as it will be quick to compute",
+      "parentUuid": "11df4d7d_c63f4473",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "cb490514_8b76484d",
         "filename": "src/jamidht/connectionmanager.cpp",
         "patchSetId": 6
@@ -104,6 +200,24 @@
       "writtenOn": "2021-02-09T22:34:19Z",
       "side": 1,
       "message": "corrent ?",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "458dd65c_7dff7c69",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 402,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T13:14:03Z",
+      "side": 1,
+      "message": "correct. Done",
+      "parentUuid": "cb490514_8b76484d",
       "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
@@ -127,6 +241,24 @@
     },
     {
       "key": {
+        "uuid": "af14a5e8_2b7a45bc",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 614,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T13:14:03Z",
+      "side": 1,
+      "message": "onTlsNegotiationDone",
+      "parentUuid": "4f4bc844_ab043a54",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "03d2020b_17fb7a47",
         "filename": "src/jamidht/connectionmanager.cpp",
         "patchSetId": 6
@@ -138,6 +270,24 @@
       "writtenOn": "2021-02-09T22:34:19Z",
       "side": 1,
       "message": "I really find it bit stretchy to infer if it\u0027s a dht request from the name string being empty or not.",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b4cea669_a48206fe",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 620,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T13:14:03Z",
+      "side": 1,
+      "message": "I added a note, but there is two possibilities. You can ask a channel (with a name) or you have a socket request (so you don\u0027t know the first channel name yet)",
+      "parentUuid": "03d2020b_17fb7a47",
       "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
@@ -158,6 +308,24 @@
       "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "218dc34e_79c59d3f",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 629,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-10T13:14:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "15be8b22_4c27a225",
+      "revId": "b18c9bb70a7f5f1a78e1f6ab9833fbc985f60911",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
