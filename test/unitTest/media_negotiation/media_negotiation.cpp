@@ -40,17 +40,26 @@ namespace test {
 
 struct CallData
 {
+    struct Signal
+    {
+        Signal(const std::string& name, const std::string& event = {})
+            : name_(std::move(name))
+            , event_(std::move(event)) {};
+
+        std::string name_ {};
+        std::string event_ {};
+    };
+
     std::string userName_ {};
     std::string alias_ {};
     std::shared_ptr<JamiAccount> account_;
     std::shared_ptr<SIPCall> sipCall_;
     std::vector<MediaAttribute> mediaAttrList_ {};
-    std::string signal_ {};
-    std::string event_ {};
+    std::vector<Signal> signals_;
     std::condition_variable cv_ {};
+    std::mutex mtx_;
 };
 
-#if 1
 struct TestScenario
 {
     TestScenario(const std::vector<MediaAttribute>& offer,
@@ -70,55 +79,23 @@ struct TestScenario
     std::vector<MediaAttribute> offerUpdate_;
     std::vector<MediaAttribute> answerUpdate_;
 };
-#else
-struct TestScenario
-{
-    struct MediaState
-    {
-        MediaState(bool audio, bool video)
-            : audioMuted_(audio)
-            , videoMuted_(video) {};
-        MediaState() = delete;
-
-        // "false" if muted, "true" otherwise
-        bool audioMuted_ {false};
-        bool videoMuted_ {false};
-    };
-    TestScenario(const MediaState& offer,
-                 const MediaState& answer,
-                 const MediaState& offerUpdate,
-                 const MediaState& answerUpdate)
-        : offer_(std::move(offer))
-        , answer_(std::move(answer))
-        , offerUpdate_(std::move(offerUpdate))
-        , answerUpdate_(std::move(answerUpdate))
-    {}
-
-    TestScenario() = delete;
-
-    MediaState offer_;
-    MediaState answer_;
-    MediaState offerUpdate_;
-    MediaState answerUpdate_;
-};
-#endif
 
 /**
  * Basic tests for media negotiation.
  */
-class MediaControlTest : public CppUnit::TestFixture
+class MediaNegotiationTest : public CppUnit::TestFixture
 {
 public:
-    MediaControlTest()
+    MediaNegotiationTest()
     {
         // Init daemon
         DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
             CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
     }
-    ~MediaControlTest() { DRing::fini(); }
+    ~MediaNegotiationTest() { DRing::fini(); }
 
-    static std::string name() { return "MediaControlTest"; }
+    static std::string name() { return "MediaNegotiationTest"; }
     void setUp();
     void tearDown();
 
@@ -126,34 +103,43 @@ private:
     // Test cases.
     void testCallWithMediaList();
 
-    CPPUNIT_TEST_SUITE(MediaControlTest);
+    CPPUNIT_TEST_SUITE(MediaNegotiationTest);
     CPPUNIT_TEST(testCallWithMediaList);
     CPPUNIT_TEST_SUITE_END();
 
+    // Event/Signal handlers
+    void onCallStateChange(const std::string& callId, const std::string& state, CallData& callData);
+    void onIncomingCall(const std::string& accountId, const std::string& callId, CallData& callData);
+    void onVideoMuted(const std::string& callId, bool muted, CallData& callData);
+    void onMediaStateChanged(const std::string& callId,
+                             const std::string& event,
+                             CallData& callData);
+
     // Helpers
-    Call::MediaMap createMediaMap(const MediaAttribute& mediaAttr);
     void testWithScenario(CallData& aliceData, CallData& bobData, const TestScenario& scenario);
+    Call::MediaMap createMediaMap(const MediaAttribute& mediaAttr);
+    // Infer media direction from the mute state.
+    // Note that when processing caller side, local is the caller and
+    // remote is the callee, and when processing the callee, the local is
+    // callee and remote is the caller.
+    MediaDirection inferDirection(bool localMute, bool remoteMute);
+    std::string getUserAlias(const std::string& callId);
+
     // Wait for a signal from the callbacks. Some signals also report the event that
     // triggered the signal a like the StateChange signal.
     bool waitForSignal(CallData& callData,
                        const std::string& signal,
                        const std::string& expectedEvent = {});
 
-    // Event/Signal handlers
-    void onCallStateChange(const std::string& callId, const std::string& state, CallData& callData);
-    void onIncomingCall(const std::string& accountId, const std::string& callId, CallData& callData);
-    void onVideoMuted(const std::string& callId, bool muted, CallData& callData);
-
 private:
     std::string aliceAccountId_;
     std::string bobAccountId_;
-    std::mutex mtx_;
 };
 
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaControlTest, MediaControlTest::name());
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaNegotiationTest, MediaNegotiationTest::name());
 
 void
-MediaControlTest::setUp()
+MediaNegotiationTest::setUp()
 {
     std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
@@ -208,7 +194,7 @@ MediaControlTest::setUp()
 }
 
 void
-MediaControlTest::tearDown()
+MediaNegotiationTest::tearDown()
 {
     JAMI_INFO("Remove created accounts...");
 
@@ -237,7 +223,7 @@ MediaControlTest::tearDown()
 }
 
 MediaMap
-MediaControlTest::createMediaMap(const MediaAttribute& mediaAttr)
+MediaNegotiationTest::createMediaMap(const MediaAttribute& mediaAttr)
 {
     std::map<std::string, std::string> mediaMap;
 
@@ -251,57 +237,108 @@ MediaControlTest::createMediaMap(const MediaAttribute& mediaAttr)
                      mediaAttr.muted_ ? MediaAttributeValue::TRUE_VAL
                                       : MediaAttributeValue::FALSE_VAL);
     mediaMap.emplace("SECURE",
-                     mediaAttr.security_ == KeyExchangeProtocol::SDES
-                         ? MediaAttributeValue::TRUE_VAL
-                         : MediaAttributeValue::FALSE_VAL);
+                     mediaAttr.secure_ ? MediaAttributeValue::TRUE_VAL
+                                       : MediaAttributeValue::FALSE_VAL);
     mediaMap.emplace("LABEL", mediaAttr.label_);
 
     return mediaMap;
 }
 
-void
-MediaControlTest::onIncomingCall(const std::string& accountId,
-                                 const std::string& callId,
-                                 CallData& callData)
+MediaDirection
+MediaNegotiationTest::inferDirection(bool localMute, bool remoteMute)
 {
-    CPPUNIT_ASSERT_EQUAL(callData.account_->getAccountID(), accountId);
+    if (not localMute and not remoteMute)
+        return MediaDirection::SENDRECV;
 
-    JAMI_DBG("%s [%s] received an incoming call [%s]",
-             callData.alias_.c_str(),
-             accountId.c_str(),
-             callId.c_str());
+    if (localMute and not remoteMute)
+        return MediaDirection::RECVONLY;
+
+    if (not localMute and remoteMute)
+        return MediaDirection::SENDONLY;
+
+    return MediaDirection::INACTIVE;
+}
+
+std::string
+MediaNegotiationTest::getUserAlias(const std::string& callId)
+{
     auto call = Manager::instance().getCallFromCallID(callId);
 
-    call->answer();
+    if (not call) {
+        JAMI_WARN("Call with ID [%s] does not exist anymore!", callId.c_str());
+        return {};
+    }
 
-    callData.sipCall_ = std::dynamic_pointer_cast<SIPCall>(call);
-    callData.event_ = StateEvent::INCOMING;
+    auto const& account = call->getAccount().lock();
+    if (not account) {
+        return {};
+    }
+
+    return account->getAccountDetails()[ConfProperties::ALIAS];
 }
 
 void
-MediaControlTest::onCallStateChange(const std::string& callId,
-                                    const std::string& state,
-                                    CallData& callData)
+MediaNegotiationTest::onIncomingCall(const std::string& accountId,
+                                     const std::string& callId,
+                                     CallData& callData)
 {
+    CPPUNIT_ASSERT_EQUAL(callData.account_->getAccountID(), accountId);
+
+    JAMI_INFO("Signal [%s] - user [%s] - call [%s]",
+              DRing::CallSignal::IncomingCall::name,
+              callData.alias_.c_str(),
+              callId.c_str());
+
     auto call = Manager::instance().getCallFromCallID(callId);
 
-    // Interested only in main (parent) call.
-    if (not call or call->isSubcall())
+    if (not call) {
+        JAMI_ERR("Call with ID [%s] does not exist!", callId.c_str());
         return;
+    }
+
+    call->answer();
+
+    std::unique_lock<std::mutex> lock {callData.mtx_};
+    callData.sipCall_ = std::dynamic_pointer_cast<SIPCall>(call);
+    callData.signals_.emplace_back(
+        CallData::Signal(DRing::CallSignal::IncomingCall::name, StateEvent::INCOMING));
+}
+
+void
+MediaNegotiationTest::onCallStateChange(const std::string& callId,
+                                        const std::string& state,
+                                        CallData& callData)
+{
+    auto call = Manager::instance().getCallFromCallID(callId);
+    if (not call) {
+        JAMI_ERR("Call with ID [%s] does not exist!", callId.c_str());
+        return;
+    }
+
+    // if (call->isSubcall()) {
+    //     return;
+    // }
 
     auto account = call->getAccount().lock();
-    assert(account);
+    if (not account) {
+        JAMI_ERR("Account owning the call with ID [%s] does not exist!", callId.c_str());
+        return;
+    }
 
-    JAMI_DBG("Signal [Call State Change] - user [%s] - call [%s] - state [%s]",
-             account->getAccountDetails()[ConfProperties::ALIAS].c_str(),
-             callId.c_str(),
-             state.c_str());
+    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
+              DRing::CallSignal::StateChange::name,
+              callData.alias_.c_str(),
+              callId.c_str(),
+              state.c_str());
 
     if (account->getAccountID() != callData.account_->getAccountID())
         return;
 
-    callData.event_ = state;
-    callData.signal_ = DRing::CallSignal::StateChange::name;
+    {
+        std::unique_lock<std::mutex> lock {callData.mtx_};
+        callData.signals_.emplace_back(
+            CallData::Signal(DRing::CallSignal::StateChange::name, state));
+    }
 
     if (state == "CURRENT" or state == "OVER" or state == "HUNGUP") {
         callData.cv_.notify_one();
@@ -309,15 +346,23 @@ MediaControlTest::onCallStateChange(const std::string& callId,
 }
 
 void
-MediaControlTest::onVideoMuted(const std::string& callId, bool muted, CallData& callData)
+MediaNegotiationTest::onVideoMuted(const std::string& callId, bool muted, CallData& callData)
 {
     auto call = Manager::instance().getCallFromCallID(callId);
-    if (not call or call->isSubcall())
-        return;
-    auto account = call->getAccount().lock();
-    assert(account);
 
-    JAMI_INFO("Signal [Video Muted] - user [%s] - call [%s] - state [%s]",
+    if (not call) {
+        JAMI_ERR("Call with ID [%s] does not exist!", callId.c_str());
+        return;
+    }
+
+    auto account = call->getAccount().lock();
+    if (not account) {
+        JAMI_ERR("Account owning the call with ID [%s] does not exist!", callId.c_str());
+        return;
+    }
+
+    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
+              DRing::CallSignal::VideoMuted::name,
               account->getAccountDetails()[ConfProperties::ALIAS].c_str(),
               call->getCallId().c_str(),
               muted ? "Mute" : "Un-mute");
@@ -325,53 +370,113 @@ MediaControlTest::onVideoMuted(const std::string& callId, bool muted, CallData& 
     if (account->getAccountID() != callData.account_->getAccountID())
         return;
 
-    callData.mediaAttrList_ = call->getMediaAttributeList();
+    {
+        std::unique_lock<std::mutex> lock {callData.mtx_};
+        callData.mediaAttrList_ = call->getMediaAttributeList();
+        callData.signals_.emplace_back(
+            CallData::Signal(DRing::CallSignal::VideoMuted::name, muted ? "muted" : "un-muted"));
+    }
 
-    callData.signal_ = DRing::CallSignal::VideoMuted::name;
+    callData.cv_.notify_one();
+}
+
+void
+MediaNegotiationTest::onMediaStateChanged(const std::string& callId,
+                                          const std::string& event,
+                                          CallData& callData)
+{
+    auto call = Manager::instance().getCallFromCallID(callId);
+    if (not call) {
+        JAMI_ERR("Call with ID [%s] does not exist!", callId.c_str());
+        return;
+    }
+
+    auto account = call->getAccount().lock();
+    if (not account) {
+        JAMI_ERR("Call with ID [%s] does not exist!", callId.c_str());
+        return;
+    }
+
+    JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
+              DRing::CallSignal::MediaStateChanged::name,
+              account->getAccountDetails()[ConfProperties::ALIAS].c_str(),
+              call->getCallId().c_str(),
+              event.c_str());
+
+    if (account->getAccountID() != callData.account_->getAccountID())
+        return;
+
+    {
+        std::unique_lock<std::mutex> lock {callData.mtx_};
+        callData.mediaAttrList_ = call->getMediaAttributeList();
+        callData.signals_.emplace_back(
+            CallData::Signal(DRing::CallSignal::MediaStateChanged::name, event));
+    }
+
     callData.cv_.notify_one();
 }
 
 bool
-MediaControlTest::waitForSignal(CallData& callData,
-                                const std::string& expectedSignal,
-                                const std::string& expectedEvent)
+MediaNegotiationTest::waitForSignal(CallData& callData,
+                                    const std::string& expectedSignal,
+                                    const std::string& expectedEvent)
 {
     const std::chrono::seconds TIME_OUT {20};
-    std::unique_lock<std::mutex> lock {mtx_};
+    std::unique_lock<std::mutex> lock {callData.mtx_};
+
+    JAMI_INFO("[%s] is waiting for [%s::%s] signal",
+              callData.alias_.c_str(),
+              expectedSignal.c_str(),
+              expectedEvent.c_str());
 
     auto res = callData.cv_.wait_for(lock, TIME_OUT, [&] {
-        bool pred = callData.signal_ == expectedSignal;
-        if (not expectedEvent.empty()) {
-            pred = pred and callData.event_ == expectedEvent;
+        // Search for the expected signal in list of received signals.
+        bool pred = false;
+        for (auto it = callData.signals_.begin(); it != callData.signals_.end(); it++) {
+            // The predicate is true if the signal names match, and if the
+            // expectedEvent is not empty, the events must also match.
+            if (it->name_ == expectedSignal
+                and (expectedEvent.empty() or it->event_ == expectedEvent)) {
+                pred = true;
+                // Done with this signal.
+                callData.signals_.erase(it);
+                break;
+            }
         }
+
         return pred;
     });
 
     if (not res) {
-        std::string msg(expectedSignal);
-        if (not expectedEvent.empty()) {
-            msg.append("::");
-            msg.append(expectedEvent);
-        }
+        JAMI_ERR("[%s] waiting for signal [%s::%s] timed-out!",
+                 callData.alias_.c_str(),
+                 expectedSignal.c_str(),
+                 expectedEvent.c_str());
 
-        JAMI_ERR("Waiting for Signal [%s] timed-out!", expectedSignal.c_str());
+        JAMI_INFO("[%s] currently has the following signals:", callData.alias_.c_str());
+
+        for (auto const& sig : callData.signals_) {
+            JAMI_INFO("Signal [%s::%s]", sig.name_.c_str(), sig.event_.c_str());
+        }
     }
 
     return res;
 }
+
 void
-MediaControlTest::testWithScenario(CallData& aliceData,
-                                   CallData& bobData,
-                                   const TestScenario& scenario)
+MediaNegotiationTest::testWithScenario(CallData& aliceData,
+                                       CallData& bobData,
+                                       const TestScenario& scenario)
 {
+    JAMI_INFO("=== Start a call and validate ===");
+
     // Create the list of medias
     std::vector<Call::MediaMap> mediaList;
     for (auto const& mediaAttr : scenario.offer_) {
         auto const& map = createMediaMap(mediaAttr);
         mediaList.emplace_back(map);
     }
-
-    JAMI_INFO("ALICE [%s] calls Bob [%s] and wait for BOB to answer",
+    JAMI_INFO("ALICE [%s] calls BOB [%s] and wait for BOB to answer",
               aliceData.account_->getAccountID().c_str(),
               bobData.account_->getAccountID().c_str());
 
@@ -379,31 +484,48 @@ MediaControlTest::testWithScenario(CallData& aliceData,
         aliceData.account_->newOutgoingCall(bobData.userName_, mediaList));
     assert(aliceData.sipCall_);
 
+    // Wait for media negotiation complete signal.
+    CPPUNIT_ASSERT_EQUAL(true,
+                         waitForSignal(bobData,
+                                       DRing::CallSignal::MediaStateChanged::name,
+                                       MediaStateChangedEvent::MEDIA_NEGOTIATED));
     // Wait for the StateChange signal.
     CPPUNIT_ASSERT_EQUAL(true,
-                         waitForSignal(aliceData,
+                         waitForSignal(bobData,
                                        DRing::CallSignal::StateChange::name,
                                        StateEvent::CURRENT));
 
     JAMI_INFO("BOB answered the call [%s]", bobData.sipCall_->getCallId().c_str());
 
-    {
-        // TODO. Must check against scenario data.
+    // Wait for media negotiation complete signal.
+    CPPUNIT_ASSERT_EQUAL(true,
+                         waitForSignal(aliceData,
+                                       DRing::CallSignal::MediaStateChanged::name,
+                                       MediaStateChangedEvent::MEDIA_NEGOTIATED));
 
+    // Wait for media streaming signal.
+    CPPUNIT_ASSERT_EQUAL(true,
+                         waitForSignal(aliceData,
+                                       DRing::CallSignal::MediaStateChanged::name,
+                                       MediaStateChangedEvent::MEDIA_STARTED));
+
+    {
         // Validate Alice's SDP
         auto aliceLocalMedia = aliceData.sipCall_->getSDP().getActiveMediaDescription(false);
         CPPUNIT_ASSERT_EQUAL(mediaList.size(), aliceLocalMedia.size());
-        CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDRECV, aliceLocalMedia[1].direction_);
+
+        CPPUNIT_ASSERT_EQUAL(inferDirection(scenario.offer_[0].muted_, scenario.answer_[0].muted_),
+                             aliceLocalMedia[0].direction_);
+        CPPUNIT_ASSERT_EQUAL(inferDirection(scenario.offer_[1].muted_, scenario.answer_[1].muted_),
+                             aliceLocalMedia[1].direction_);
 
         // Validate Bob's SDP
         auto bobLocalMedia = bobData.sipCall_->getSDP().getActiveMediaDescription(false);
         CPPUNIT_ASSERT_EQUAL(mediaList.size(), bobLocalMedia.size());
-
-        CPPUNIT_ASSERT(bobLocalMedia[0].enabled);
-        CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_AUDIO, bobLocalMedia[0].type);
-        CPPUNIT_ASSERT(not bobLocalMedia[0].onHold);
-        CPPUNIT_ASSERT(bobLocalMedia[0].addr);
-        CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDRECV, bobLocalMedia[1].direction_);
+        CPPUNIT_ASSERT_EQUAL(inferDirection(scenario.answer_[0].muted_, scenario.offer_[0].muted_),
+                             bobLocalMedia[0].direction_);
+        CPPUNIT_ASSERT_EQUAL(inferDirection(scenario.answer_[1].muted_, scenario.offer_[1].muted_),
+                             bobLocalMedia[1].direction_);
     }
 
     std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -415,40 +537,41 @@ MediaControlTest::testWithScenario(CallData& aliceData,
         mediaList.emplace_back(map);
     }
 
+    JAMI_INFO("=== Update Media and validate ===");
     Manager::instance().updateMediaStreams(aliceData.sipCall_->getCallId(), mediaList);
 
     // Wait for the VideoMute signal.
-    JAMI_INFO("Waiting for the video muted signal");
-
     CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData, DRing::CallSignal::VideoMuted::name));
 
-    {
-        // TODO. Must check against scenario data.
+    // Wait for media negotiation complete signal.
+    CPPUNIT_ASSERT_EQUAL(true,
+                         waitForSignal(aliceData,
+                                       DRing::CallSignal::MediaStateChanged::name,
+                                       MediaStateChangedEvent::MEDIA_NEGOTIATED));
 
+    {
         CPPUNIT_ASSERT_EQUAL(scenario.offerUpdate_.size(), aliceData.mediaAttrList_.size());
         CPPUNIT_ASSERT_EQUAL(true, scenario.offerUpdate_[1].muted_);
 
         // Validate Alice's SDP
         auto aliceLocalMedia = aliceData.sipCall_->getSDP().getActiveMediaDescription(false);
         CPPUNIT_ASSERT_EQUAL(mediaList.size(), aliceLocalMedia.size());
-        CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDRECV, aliceLocalMedia[0].direction_);
-#if 0
-        // At this point, the media direction should have changed. However,
-        // the video-mute signal arrives before the SDP was updated. We need
-        // to fix this race before enabling this check.
-        CPPUNIT_ASSERT_EQUAL(MediaDirection::RECVONLY, aliceLocalMedia[1].direction_);
-#endif
+        CPPUNIT_ASSERT_EQUAL(inferDirection(scenario.offerUpdate_[0].muted_,
+                                            scenario.answerUpdate_[0].muted_),
+                             aliceLocalMedia[0].direction_);
+        CPPUNIT_ASSERT_EQUAL(inferDirection(scenario.offerUpdate_[1].muted_,
+                                            scenario.answerUpdate_[1].muted_),
+                             aliceLocalMedia[1].direction_);
 
         // Validate Bob's SDP
         auto bobLocalMedia = bobData.sipCall_->getSDP().getActiveMediaDescription(false);
         CPPUNIT_ASSERT_EQUAL(mediaList.size(), bobLocalMedia.size());
-        CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDRECV, bobLocalMedia[0].direction_);
-#if 0
-        // At this point, the media direction should have changed. However,
-        // the video-mute signal arrives before the SDP was updated. We need
-        // to fix this race before enabling this check.
-        CPPUNIT_ASSERT_EQUAL(MediaDirection::SENDONLY, bobLocalMedia[1].direction_);
-#endif
+        CPPUNIT_ASSERT_EQUAL(inferDirection(scenario.answerUpdate_[0].muted_,
+                                            scenario.offerUpdate_[0].muted_),
+                             bobLocalMedia[0].direction_);
+        CPPUNIT_ASSERT_EQUAL(inferDirection(scenario.answerUpdate_[1].muted_,
+                                            scenario.offerUpdate_[1].muted_),
+                             bobLocalMedia[1].direction_);
     }
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -466,10 +589,10 @@ MediaControlTest::testWithScenario(CallData& aliceData,
 }
 
 void
-MediaControlTest::testCallWithMediaList()
+MediaNegotiationTest::testCallWithMediaList()
 {
 #if 1
-    JAMI_INFO("Waiting....");
+    JAMI_INFO("Waiting for accounts setup ...");
     // TODO remove. This sleeps is because it take some time for the DHT to be connected
     // and account announced
     std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -490,16 +613,27 @@ MediaControlTest::testCallWithMediaList()
     // Insert needed signal handlers.
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCall>(
         [&](const std::string& accountId, const std::string& callId, const std::string&) {
-            onIncomingCall(accountId, callId, bobData);
+            auto user = getUserAlias(callId);
+            onIncomingCall(accountId, callId, user == aliceData.alias_ ? aliceData : bobData);
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
         [&](const std::string& callId, const std::string& state, signed) {
-            onCallStateChange(callId, state, aliceData);
+            auto user = getUserAlias(callId);
+            onCallStateChange(callId, state, user == aliceData.alias_ ? aliceData : bobData);
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::VideoMuted>(
-        [&](const std::string& callId, bool muted) { onVideoMuted(callId, muted, aliceData); }));
+        [&](const std::string& callId, bool muted) {
+            auto user = getUserAlias(callId);
+            onVideoMuted(callId, muted, user == aliceData.alias_ ? aliceData : bobData);
+        }));
+
+    signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaStateChanged>(
+        [&](const std::string& callId, const std::string& event) {
+            auto user = getUserAlias(callId);
+            onMediaStateChanged(callId, event, user == aliceData.alias_ ? aliceData : bobData);
+        }));
 
     DRing::registerSignalHandlers(signalHandlers);
 
@@ -524,6 +658,7 @@ MediaControlTest::testCallWithMediaList()
         video.muted_ = true;
         scenario.offerUpdate_.emplace_back(audio);
         scenario.offerUpdate_.emplace_back(video);
+        video.muted_ = false;
         scenario.answerUpdate_.emplace_back(audio);
         scenario.answerUpdate_.emplace_back(video);
 
@@ -534,4 +669,4 @@ MediaControlTest::testCallWithMediaList()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::MediaControlTest::name())
+RING_TEST_RUNNER(jami::test::MediaNegotiationTest::name())

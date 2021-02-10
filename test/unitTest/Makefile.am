@@ -136,9 +136,9 @@ check_PROGRAMS += ut_fileTransfer
 ut_fileTransfer_SOURCES = fileTransfer/fileTransfer.cpp
 
 #
-# media_control
+# media_negotiation
 #
-check_PROGRAMS += ut_media_control
-ut_media_control_SOURCES = media_control/media_control.cpp
+check_PROGRAMS += ut_media_negotiation
+ut_media_negotiation_SOURCES = media_negotiation/media_negotiation.cpp
 
 TESTS = $(check_PROGRAMS)

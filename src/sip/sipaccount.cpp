@@ -189,6 +189,22 @@ SIPAccount::newIncomingCall(const std::string& from UNUSED,
     return sipCall;
 }
 
+std::shared_ptr<SIPCall>
+SIPAccount::newIncomingCall(const std::string& from UNUSED,
+                            const std::vector<MediaAttribute>& mediaAttrList,
+                            const std::shared_ptr<SipTransport>&)
+{
+    auto& manager = Manager::instance();
+    auto call = manager.callFactory.newCall<SIPAccount>(shared(),
+                                                        manager.getNewCallID(),
+                                                        Call::CallType::INCOMING,
+                                                        mediaAttrList);
+
+    auto sipCall = std::dynamic_pointer_cast<SIPCall>(call);
+    assert(sipCall);
+    return sipCall;
+}
+
 template<>
 std::shared_ptr<SIPCall>
 SIPAccount::newOutgoingCall(std::string_view toUrl,
