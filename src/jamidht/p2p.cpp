@@ -228,16 +228,26 @@ DhtPeerConnector::requestConnection(
         return;
     }
 
-    std::string channelName;
+    std::string channelName = "file://" + std::to_string(tid);
     std::vector<DeviceId> devices;
     if (!info.conversationId.empty()) {
-        for (const auto& member : acc->getConversationMembers(info.conversationId)) {
+        // TODO remove preSwarmCompat
+        // In a one_to_one conv with an old version, the contact here can be in an invited
+        // state and will not support data-transfer. So if one_to_oe with non accepted, just
+        // force to file:// for now.
+        auto members = acc->getConversationMembers(info.conversationId);
+        auto preSwarmCompat = members.size() == 2 && members[1]["role"] == "invited";
+        if (preSwarmCompat) {
+            auto infos = acc->conversationInfos(info.conversationId);
+            preSwarmCompat = infos["mode"] == "0";
+        }
+        for (const auto& member : members) {
             devices.emplace_back(DeviceId(member.at("uri")));
         }
-        channelName = "data-transfer://" + info.conversationId + "/" + acc->currentDeviceId() + "/"
-                      + std::to_string(tid);
+        if (!preSwarmCompat)
+            channelName = "data-transfer://" + info.conversationId + "/" + acc->currentDeviceId()
+                          + "/" + std::to_string(tid);
     } else {
-        channelName = "file://" + std::to_string(tid);
         devices.emplace_back(DeviceId(info.peer));
     }
 
