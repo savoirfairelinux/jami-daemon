@@ -189,6 +189,22 @@ SIPAccount::newIncomingCall(const std::string& from UNUSED,
     return sipCall;
 }
 
+std::shared_ptr<SIPCall>
+SIPAccount::newIncomingCall(const std::string& from UNUSED,
+                            const std::vector<MediaAttribute>& mediaAttrList,
+                            const std::shared_ptr<SipTransport>&)
+{
+    auto& manager = Manager::instance();
+    auto call = manager.callFactory.newCall<SIPAccount>(shared(),
+                                                        manager.getNewCallID(),
+                                                        Call::CallType::INCOMING,
+                                                        mediaAttrList);
+
+    auto sipCall = std::dynamic_pointer_cast<SIPCall>(call);
+    assert(sipCall);
+    return sipCall;
+}
+
 template<>
 std::shared_ptr<SIPCall>
 SIPAccount::newOutgoingCall(std::string_view toUrl,
@@ -235,7 +251,6 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
 
     auto toUri = getToUri(to);
     call->initIceMediaTransport(true);
-    call->setIPToIP(isIP2IP());
     call->setPeerNumber(toUri);
     call->setPeerUri(toUri);
 
@@ -284,7 +299,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
 }
 
 std::shared_ptr<Call>
-SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<MediaMap>& mediaList)
+SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::MediaMap>& mediaList)
 {
     std::string to;
     int family;
@@ -329,7 +344,6 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<MediaMap>&
 
     auto toUri = getToUri(to);
     call->initIceMediaTransport(true);
-    call->setIPToIP(isIP2IP());
     call->setPeerNumber(toUri);
     call->setPeerUri(toUri);
 

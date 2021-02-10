@@ -69,8 +69,6 @@ class VideoGenerator;
 class Call : public Recordable, public PeerRecorder, public std::enable_shared_from_this<Call>
 {
 public:
-    // A map to pass media attributes between the daemon and the clients.
-    using MediaMap = std::map<std::string, std::string>;
     /**
      * Tell where we're at with the call. The call gets Connected when we know
      * from the other end what happened with out call. A call can be 'Connected'
@@ -200,8 +198,6 @@ public:
 
     std::string getStateStr() const;
 
-    void setIPToIP(bool IPToIP) { isIPToIP_ = IPToIP; }
-
     virtual std::map<std::string, std::string> getDetails() const;
     static std::map<std::string, std::string> getNullDetails();
 
@@ -209,6 +205,14 @@ public:
      * Answer the call
      */
     virtual void answer() = 0;
+
+    /**
+     * Answer the call. The media attributes set by the caller of this
+     * method will determine the response sent to the peer and the
+     * configuration of the local media.
+     * @param mediaList The list of the media attributes.
+     */
+    virtual void answer(const std::vector<MediaAttribute>& mediaList) = 0;
 
     /**
      * Hang up the call
@@ -428,9 +432,6 @@ private:
 
     /** Inactive/Active/Hold/Busy/Error */
     CallState callState_ {CallState::INACTIVE};
-
-    /** Direct IP-to-IP or classic call */
-    bool isIPToIP_ {false};
 
     /** Number of the peer */
     std::string peerNumber_ {};

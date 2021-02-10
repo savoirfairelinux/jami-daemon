@@ -110,6 +110,7 @@ public:
     // Inherited from Call class
     LinkType getLinkType() const { return LinkType::SIP; }
     void answer() override;
+    void answer(const std::vector<MediaAttribute>& mediaList) override;
     void hangup(int reason) override;
     void refuse() override;
     void transfer(const std::string& to) override;

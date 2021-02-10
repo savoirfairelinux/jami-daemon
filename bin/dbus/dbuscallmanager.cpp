@@ -41,7 +41,6 @@ DBusCallManager::placeCallWithDetails(const std::string& accountID,
     return DRing::placeCall(accountID, to, VolatileCallDetails);
 }
 
-#if 1
 auto
 DBusCallManager::placeCallWithMedias(const std::string& accountID,
                                      const std::string& to,
@@ -50,7 +49,6 @@ DBusCallManager::placeCallWithMedias(const std::string& accountID,
 {
     return DRing::placeCall(accountID, to, mediaList);
 }
-#endif
 
 auto
 DBusCallManager::refuse(const std::string& callID) -> decltype(DRing::refuse(callID))
@@ -62,6 +60,14 @@ auto
 DBusCallManager::accept(const std::string& callID) -> decltype(DRing::accept(callID))
 {
     return DRing::accept(callID);
+}
+
+auto
+DBusCallManager::acceptWithMedia(const std::string& callID,
+                                 const std::vector<std::map<std::string, std::string>>& mediaList)
+    -> decltype(DRing::acceptWithMedia(callID, mediaList))
+{
+    return DRing::acceptWithMedia(callID, mediaList);
 }
 
 auto

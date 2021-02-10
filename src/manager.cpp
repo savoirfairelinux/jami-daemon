@@ -351,6 +351,9 @@ struct Manager::ManagerPimpl
 
     void initAudioDriver();
 
+    void processIncomingCall(Call& incomCall, const std::string& accountId);
+    void stripSipPrefix(Call& incomCall);
+
     Manager& base_; // pimpl back-pointer
 
     std::shared_ptr<asio::io_context> ioContext_;
@@ -982,7 +985,7 @@ Manager::outgoingCall(const std::string& account_id,
 std::string
 Manager::outgoingCall(const std::string& account_id,
                       const std::string& to,
-                      const std::vector<MediaMap>& mediaList,
+                      const std::vector<DRing::MediaMap>& mediaList,
                       const std::string& conf_id)
 {
     if (not conf_id.empty() and not isConference(conf_id)) {
@@ -1077,6 +1080,60 @@ Manager::answerCall(const std::string& call_id)
     // Start recording if set in preference
     if (audioPreference.getIsAlwaysRecording())
         toggleRecordingCall(call_id);
+
+    return result;
+}
+
+bool
+Manager::answerCallWithMedia(const std::string& callId,
+                             const std::vector<DRing::MediaMap>& mediaList)
+{
+    JAMI_INFO("Answer call %s with %lu media", callId.c_str(), mediaList.size());
+
+    bool result = true;
+
+    auto call = getCallFromCallID(callId);
+
+    if (not call) {
+        JAMI_ERR("Call with ID %s does not exist", callId.c_str());
+        return false;
+    }
+
+    if (call->getConnectionState() != Call::ConnectionState::RINGING) {
+        // The call was already answered
+        return true;
+    }
+
+    // If ringing
+    stopTone();
+
+    try {
+        auto mediaAttrList = MediaAttribute::parseMediaList(mediaList);
+        call->answer(mediaAttrList);
+    } catch (const std::runtime_error& e) {
+        JAMI_ERR("%s", e.what());
+        result = false;
+    }
+
+    pimpl_->removeWaitingCall(callId);
+
+    if (not result) {
+        // Abort on error.
+        return false;
+    }
+
+    // Check if the call is part of a conference and
+    // update accordingly.
+    if (isConferenceParticipant(callId))
+        pimpl_->switchCall(call->getConfId());
+    else
+        pimpl_->switchCall(call);
+
+    addAudio(*call);
+
+    // Start recording if set in preference
+    if (audioPreference.getIsAlwaysRecording())
+        toggleRecordingCall(callId);
 
     return result;
 }
@@ -1903,124 +1960,53 @@ Manager::incomingCallsWaiting()
     return not pimpl_->waitingCalls_.empty();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Management of event peer IP-phone
-////////////////////////////////////////////////////////////////////////////////
-// SipEvent Thread
 void
 Manager::incomingCall(Call& call, const std::string& accountId)
 {
-    JAMI_INFO("Incoming call %s on account %s)", call.getCallId().c_str(), accountId.c_str());
-
-    stopTone();
-    const std::string callID(call.getCallId());
-
-    if (accountId.empty())
-        call.setIPToIP(true);
-    else {
-        // strip sip: which is not required and bring confusion with ip to ip calls
-        // when placing new call from history.
-        std::string peerNumber(call.getPeerNumber());
-
-        const char SIP_PREFIX[] = "sip:";
-        size_t startIndex = peerNumber.find(SIP_PREFIX);
-
-        if (startIndex != std::string::npos)
-            call.setPeerNumber(peerNumber.substr(startIndex + sizeof(SIP_PREFIX) - 1));
+    if (not accountId.empty()) {
+        pimpl_->stripSipPrefix(call);
     }
 
-    auto w = call.getAccount();
-    auto account = w.lock();
-    if (!account) {
-        JAMI_ERR("No account detected");
-        return;
-    }
+    std::string from("<" + call.getPeerNumber() + ">");
 
-    if (not hasCurrentCall()) {
-        call.setState(Call::ConnectionState::RINGING);
-#if !defined(RING_UWP) && !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-        if (not account->isRendezVous())
-            playRingtone(accountId);
+#if 1
+    // Report incoming call using "CallSignal::IncomingCallWithMedia" signal
+    // if registered.
+    // TODO_MC. We emit signals for both IncomingCall versions for testing.
+    const auto& handlers = getSignalHandlers();
+    auto handler = DRing::CallbackWrapper<DRing::CallSignal::IncomingCallWithMedia::cb_type>(
+        handlers.at(DRing::CallSignal::IncomingCallWithMedia::name));
+
+    if (*handler != nullptr) {
+        auto const& mediaList = MediaAttribute::mediaAttributeToMediaMap(
+            call.getMediaAttributeList());
+
+        if (mediaList.empty()) {
+            JAMI_WARN("Incoming call %s has an empty media list", call.getCallId().c_str());
+        }
+
+        JAMI_INFO("Incoming call %s on account %s with %lu media",
+                  call.getCallId().c_str(),
+                  accountId.c_str(),
+                  mediaList.size());
+
+        // Report the call using new API.
+        emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
+                                                             call.getCallId(),
+                                                             call.getPeerDisplayName() + " " + from,
+                                                             mediaList);
+    }
 #endif
-    }
 
-    pimpl_->addWaitingCall(callID);
+    JAMI_INFO("Incoming call %s on account %s", call.getCallId().c_str(), accountId.c_str());
 
-    std::string number(call.getPeerNumber());
-
-    std::string from("<" + number + ">");
-
+    // Report the call using old API.
     emitSignal<DRing::CallSignal::IncomingCall>(accountId,
-                                                callID,
+                                                call.getCallId(),
                                                 call.getPeerDisplayName() + " " + from);
 
-    auto currentCall = getCurrentCall();
-    if (account->isRendezVous()) {
-        dht::ThreadPool::io().run([this, callID] {
-            answerCall(callID);
-            auto call = getCallFromCallID(callID);
-            auto accountId = call->getAccountId();
-            for (const auto& cid : getCallList()) {
-                if (auto call = getCallFromCallID(cid)) {
-                    if (call->getState() != Call::CallState::ACTIVE)
-                        continue;
-                    if (call->getAccountId() == accountId) {
-                        if (cid != callID) {
-                            if (call->getConfId().empty()) {
-                                joinParticipant(callID, cid, false);
-                            } else {
-                                addParticipant(callID, call->getConfId());
-                            }
-                            return;
-                        }
-                    }
-                }
-            }
-            // First call
-            auto conf = std::make_shared<Conference>();
-            pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
-
-            // Bind calls according to their state
-            pimpl_->bindCallToConference(*call, *conf);
-            conf->detach();
-
-            emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
-        });
-    } else if (pimpl_->autoAnswer_) {
-        dht::ThreadPool::io().run([this, callID] { answerCall(callID); });
-    } else if (currentCall) {
-        // Test if already calling this person
-        if (currentCall->getAccountId() == accountId
-            && currentCall->getPeerNumber() == call.getPeerNumber()) {
-            auto w = currentCall->getAccount();
-            auto account = w.lock();
-            if (!account) {
-                JAMI_ERR("No account detected");
-                return;
-            }
-            auto device_uid = account->getUsername();
-            if (device_uid.find("ring:") == 0) {
-                // NOTE: in case of a SIP call it's already ready to compare
-                device_uid = device_uid.substr(5); // after ring:
-            }
-            auto answerToCall = false;
-            auto downgradeToAudioOnly = currentCall->isAudioOnly() != call.isAudioOnly();
-            if (downgradeToAudioOnly)
-                // Accept the incoming audio only
-                answerToCall = call.isAudioOnly();
-            else
-                // Accept the incoming call from the higher id number
-                answerToCall = (device_uid.compare(call.getPeerNumber()) < 0);
-
-            if (answerToCall) {
-                auto currentCallID = currentCall->getCallId();
-                runOnMainThread([this, currentCallID, callID] {
-                    answerCall(callID);
-                    hangupCall(currentCallID);
-                });
-            }
-        }
-    }
+    // Process the call.
+    pimpl_->processIncomingCall(call, accountId);
 }
 
 void
@@ -2667,6 +2653,119 @@ Manager::ManagerPimpl::initAudioDriver()
             audiodriver_->startStream(type);
 }
 
+// Internal helper method
+void
+Manager::ManagerPimpl::stripSipPrefix(Call& incomCall)
+{
+    // strip sip: which is not required and bring confusion with ip to ip calls
+    // when placing new call from history.
+    std::string peerNumber(incomCall.getPeerNumber());
+
+    const char SIP_PREFIX[] = "sip:";
+    size_t startIndex = peerNumber.find(SIP_PREFIX);
+
+    if (startIndex != std::string::npos)
+        incomCall.setPeerNumber(peerNumber.substr(startIndex + sizeof(SIP_PREFIX) - 1));
+}
+
+// Internal helper method
+void
+Manager::ManagerPimpl::processIncomingCall(Call& incomCall, const std::string& accountId)
+{
+    auto& mgr = Manager::instance();
+    mgr.stopTone();
+
+    auto incomCallId = incomCall.getCallId();
+    auto currentCall = mgr.getCurrentCall();
+
+    auto w = incomCall.getAccount();
+    auto account = w.lock();
+    if (!account) {
+        JAMI_ERR("No account detected");
+        return;
+    }
+    assert(account);
+
+    if (not mgr.hasCurrentCall()) {
+        incomCall.setState(Call::ConnectionState::RINGING);
+#if !defined(RING_UWP) && !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+        if (not account->isRendezVous())
+            mgr.playRingtone(accountId);
+#endif
+    }
+
+    addWaitingCall(incomCallId);
+
+    if (account->isRendezVous()) {
+        dht::ThreadPool::io().run([this, incomCallId] {
+            auto& mgr = Manager::instance();
+            mgr.answerCall(incomCallId);
+            auto call = mgr.getCallFromCallID(incomCallId);
+            auto accountId = call->getAccountId();
+            for (const auto& cid : mgr.getCallList()) {
+                if (auto call = mgr.getCallFromCallID(cid)) {
+                    if (call->getState() != Call::CallState::ACTIVE)
+                        continue;
+                    if (call->getAccountId() == accountId) {
+                        if (cid != incomCallId) {
+                            if (call->getConfId().empty()) {
+                                mgr.joinParticipant(incomCallId, cid, false);
+                            } else {
+                                mgr.addParticipant(incomCallId, call->getConfId());
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+            // First call
+            auto conf = std::make_shared<Conference>();
+            conferenceMap_.emplace(conf->getConfID(), conf);
+
+            // Bind calls according to their state
+            bindCallToConference(*call, *conf);
+            conf->detach();
+
+            emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
+        });
+    } else if (autoAnswer_) {
+        dht::ThreadPool::io().run([incomCallId] { Manager::instance().answerCall(incomCallId); });
+    } else if (currentCall) {
+        // Test if already calling this person
+        if (currentCall->getAccountId() == account->getAccountID()
+            && currentCall->getPeerNumber() == incomCall.getPeerNumber()) {
+            auto w = currentCall->getAccount();
+            auto account = w.lock();
+            if (!account) {
+                JAMI_ERR("No account detected");
+                return;
+            }
+            auto device_uid = account->getUsername();
+            if (device_uid.find("ring:") == 0) {
+                // NOTE: in case of a SIP call it's already ready to compare
+                device_uid = device_uid.substr(5); // after ring:
+            }
+            auto answerToCall = false;
+            auto downgradeToAudioOnly = currentCall->isAudioOnly() != incomCall.isAudioOnly();
+            if (downgradeToAudioOnly)
+                // Accept the incoming audio only
+                answerToCall = incomCall.isAudioOnly();
+            else
+                // Accept the incoming call from the higher id number
+                answerToCall = (device_uid.compare(incomCall.getPeerNumber()) < 0);
+
+            if (answerToCall) {
+                auto currentCallID = currentCall->getCallId();
+                runOnMainThread([currentCallID, incomCallId] {
+                    auto& mgr = Manager::instance();
+                    mgr.answerCall(incomCallId);
+                    mgr.hangupCall(currentCallID);
+                });
+            }
+        }
+    }
+}
+
 AudioFormat
 Manager::hardwareAudioFormatChanged(AudioFormat format)
 {
@@ -3229,7 +3328,7 @@ Manager::newOutgoingCall(std::string_view toUrl,
 std::shared_ptr<Call>
 Manager::newOutgoingCall(std::string_view toUrl,
                          const std::string& accountId,
-                         const std::vector<MediaMap>& mediaList)
+                         const std::vector<DRing::MediaMap>& mediaList)
 {
     auto account = getAccount(accountId);
     if (not account) {
