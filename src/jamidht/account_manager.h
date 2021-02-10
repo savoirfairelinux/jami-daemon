@@ -195,7 +195,8 @@ public:
     // Contact requests
 
     std::vector<std::map<std::string, std::string>> getTrustRequests() const;
-    bool acceptTrustRequest(const std::string& from);
+    // Note: includeConversation used for compatibility test, do not use if not in test env.
+    bool acceptTrustRequest(const std::string& from, bool includeConversation = true);
     bool discardTrustRequest(const std::string& from);
 
     void sendTrustRequest(const std::string& to,
