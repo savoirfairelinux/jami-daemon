@@ -301,6 +301,8 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
                                 conversationId,
                                 std::move(payload),
                                 received);
+    else
+        callbacks_.onConfirmation(peer_account.toString(), conversationId);
     return accept;
 }
 
