@@ -3133,6 +3133,7 @@ JamiAccount::sendTextMessage(const std::string& to,
                              uint64_t token,
                              bool retryOnTimeout)
 {
+    JAMI_ERR("@@@ JamiAccount::sendTextMessage %s", to.c_str());
     std::string toUri;
     try {
         toUri = parseJamiUri(to);
