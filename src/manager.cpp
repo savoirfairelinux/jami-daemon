@@ -229,17 +229,17 @@ setSipLogLevel()
 #ifndef RING_UWP
     char* envvar = getenv(SIPLOGLEVEL);
 
-    int level = 0;
+    int level = 1;
 
     if (envvar != nullptr) {
         if (not(std::istringstream(envvar) >> level))
-            level = 0;
+            level = 1;
 
         // From 0 (min) to 6 (max)
-        level = std::max(0, std::min(level, 6));
+        level = std::max(1, std::min(level, 6));
     }
 #else
-    int level = 0;
+    int level = 1;
 #endif
 
     pj_log_set_level(level);
