@@ -104,6 +104,22 @@ struct ParticipantInfo
                 {"audioModeratorMuted", audioModeratorMuted ? "true" : "false"},
                 {"isModerator", isModerator ? "true" : "false"}};
     }
+
+    bool compare(const ParticipantInfo& pInfo)
+    {
+        return
+            uri == pInfo.uri
+            and device == pInfo.device
+            and active == pInfo.active
+            and x == pInfo.x
+            and y == pInfo.y
+            and w == pInfo.w
+            and h == pInfo.h
+            and videoMuted == pInfo.videoMuted
+            and audioLocalMuted == pInfo.audioLocalMuted
+            and audioModeratorMuted == pInfo.audioModeratorMuted
+            and isModerator == pInfo.isModerator;
+    }
 };
 
 struct ConfInfo : public std::vector<ParticipantInfo>
@@ -246,6 +262,7 @@ public:
     void hangupParticipant(const std::string& participant_id);
     void updateMuted();
     void muteLocalHost(bool is_muted, const std::string& mediaType);
+    void mergeConfInfo(ConfInfo& newInfo);
 
 private:
     std::weak_ptr<Conference> weak()

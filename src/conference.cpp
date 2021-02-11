@@ -802,4 +802,35 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
     }
 }
 
+void
+Conference::mergeConfInfo(ConfInfo& newInfo)
+{
+    bool needUpdate = false;
+    JAMI_ERR("@@@ Start to merge info");
+    // confID_ not empty -> host merge confInfo with the received confInfo
+    for (auto& newI : newInfo) {
+        JAMI_ERR("@@@ participant: %s", newI.uri.substr(0,2).c_str());
+        bool isNewParticipant = true;
+        for (auto& oldI : confInfo_) {
+            if (newI.uri == oldI.uri and !newI.compare(oldI)) {
+                JAMI_ERR("@@@ participant already in confInfo, update");
+                oldI = newI;
+                isNewParticipant = false;
+                needUpdate = true;
+                break;
+            }
+        }
+        if (isNewParticipant) {
+            // ParticipantInfo not present in confInfo -> the sender of newInfo ...
+            // is currently hosting another conference. Add the unknown participant ...
+            // to the confInfo
+            JAMI_ERR("@@@ new participant -> emplace back");
+            confInfo_.emplace_back(newI);
+            needUpdate = true;
+        }
+    }
+    if (needUpdate)
+        updateConferenceInfo(confInfo_);
+}
+
 } // namespace jami
