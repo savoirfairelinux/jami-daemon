@@ -249,8 +249,11 @@ add_stun_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const StunServerInfo& i
 static void
 add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& info)
 {
-    if (cfg.turn_tp_cnt >= PJ_ICE_MAX_TURN)
+    JAMI_DBG("ICE: add_turn_server");
+    if (cfg.turn_tp_cnt >= PJ_ICE_MAX_TURN) {
+        JAMI_DBG("ICE: too many TURN servers");
         throw std::runtime_error("Too many TURN servers");
+    }
 
     IpAddr ip {info.uri};
 
