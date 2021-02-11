@@ -1,0 +1,237 @@
+ pjnath/src/pjnath/ice_session.c | 73 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----
+ pjnath/src/pjnath/ice_strans.c  | 14 +++++++++++---
+ 2 files changed, 79 insertions(+), 8 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index ba10d42ed..63e89c714 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1718,9 +1718,17 @@ static void on_tcp_connect_timeout(pj_ice_sess* ice)
+ 		first_found = PJ_TRUE;
+ 		if (*ice->cb.close_tcp_connection)
+ 		    (*ice->cb.close_tcp_connection)(ice, &ice->clist, i);
+-
+-		check_set_state(ice, check,
+-		    PJ_ICE_SESS_CHECK_STATE_FAILED, PJ_ECANCELLED);
++		if (check->rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++			char raddr[PJ_INET6_ADDRSTRLEN + 10];
++			PJ_LOG(1, (ice->obj_name,
++				  "=> Connection to TURN (%s) timeout",
++				  pj_sockaddr_print(&check->rcand->addr, raddr, sizeof(raddr), 3)));
++			check_set_state(ice, check,
++				PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY, PJ_ECANCELLED);
++		} else {
++			check_set_state(ice, check,
++				PJ_ICE_SESS_CHECK_STATE_FAILED, PJ_ECANCELLED);
++		}
+ 		on_check_complete(ice, check);
+ 	    }
+ 	}
+@@ -1730,7 +1738,7 @@ static void on_tcp_connect_timeout(pj_ice_sess* ice)
+ 	/* Reschedule */
+ 	pj_time_val delay = {
+ 	    .sec  = 0,
+-	    .msec = 1500
++	    .msec = 3000
+ 	};
+ 	pj_time_val_normalize(&delay);
+ 	pj_timer_heap_schedule_w_grp_lock(ice->stun_cfg.timer_heap,
+@@ -2027,7 +2035,18 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+             pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap,
+                                            &ice->timer_connect, TIMER_NONE);
+             status = (*ice->cb.wait_tcp_connection)(ice, clist, check_id);
++			if (status == PJ_EINVAL) {
++				char laddr[PJ_INET6_ADDRSTRLEN + 10];
++				PJ_LOG(1, (ice->obj_name,
++						"=> !!!Connection with active, LCAND (%s) expected any timer active (status %u)",
++						pj_sockaddr_print(&lcand->addr, laddr, sizeof(laddr), 3), status));
++			}
+             if (ice->timer_connect.id != TIMER_NONE) {
++
++				char laddr[PJ_INET6_ADDRSTRLEN + 10];
++				PJ_LOG(1, (ice->obj_name,
++						"=> Connection with active, LCAND (%s) expected any timer active (status %u)",
++						pj_sockaddr_print(&lcand->addr, laddr, sizeof(laddr), 3), status));
+                 pj_assert(!"Not expected any timer active");
+             } else {
+                 pj_time_val delay = {
+@@ -2514,11 +2533,22 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 	 * In this case, we can try to reconnect a bit after and this until the check
+ 	 * reached its timeout.
+ 	 */
++
++	char raddr[PJ_INET6_ADDRSTRLEN + 10];
++	PJ_LOG(1, (ice->obj_name,
++			"=> Connection to TURN (%s) needs retry (status %u)",
++			pj_sockaddr_print(&rcand->addr, raddr, sizeof(raddr), 3), status));
+ 	check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY;
+ 	check_set_state(ice, check,PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
+ 			status);
+ 		return;
+     } else if (status != PJ_SUCCESS) {
++	if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++		char raddr[PJ_INET6_ADDRSTRLEN + 10];
++		PJ_LOG(1, (ice->obj_name,
++				"=> Connection to TURN (%s) needs retry (status %u)",
++				pj_sockaddr_print(&rcand->addr, raddr, sizeof(raddr), 3), status));
++	}
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+ 	on_check_complete(ice, check);
+ 	return;
+@@ -2564,12 +2594,23 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 		 * In this case, we can try to reconnect a bit after and this until the check
+ 		 * reached its timeout.
+ 		 */
++		char raddr[PJ_INET6_ADDRSTRLEN + 10];
++		PJ_LOG(1, (ice->obj_name,
++				"=> STUN send message to TURN (%s) needs retry (status %u)",
++				pj_sockaddr_print(&rcand->addr, raddr, sizeof(raddr), 3), status));
+ 		check_set_state(ice, check,PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
+ 				status_send_msg);
+     } else if (status_send_msg == PJ_EBUSY /* EBUSY */) {
+ 		check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
+ 				status_send_msg);
+     } else if (status_send_msg != PJ_SUCCESS) {
++
++		if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++			char raddr[PJ_INET6_ADDRSTRLEN + 10];
++			PJ_LOG(1, (ice->obj_name,
++					"=> STUN send message to TURN (%s) failed with status %u",
++					pj_sockaddr_print(&rcand->addr, raddr, sizeof(raddr), 3), status));
++		}
+ 		check->tdata = NULL;
+ 		pjnath_perror(ice->obj_name, "Error sending STUN request", status_send_msg);
+ 		pj_log_pop_indent();
+@@ -2602,6 +2643,11 @@ void ice_sess_on_peer_reset_connection(pj_ice_sess *ice,
+ 
+     const pj_ice_sess_cand *rcand = check->rcand;
+     if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++	char raddr[PJ_INET6_ADDRSTRLEN + 10];
++	PJ_LOG(1, (ice->obj_name,
++			"=> Connection to TURN (%s) is reseted",
++			pj_sockaddr_print(&rcand->addr, raddr, sizeof(raddr), 3)));
++
+ 	check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY;
+ 	check_set_state(ice, check,
+ 			PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY, 120104);
+@@ -2658,6 +2704,8 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+     clist = msg_data->data.req.clist;
+     check = &clist->checks[msg_data->data.req.ckid];
+     
++	PJ_LOG(1, (ice->obj_name,
++			"=> on_stun_request_complete check %u with status %u", msg_data->data.req.ckid, status));
+ 
+     /* Mark STUN transaction as complete */
+     pj_assert(tdata == check->tdata);
+@@ -2668,6 +2716,8 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+     if (ice->is_destroying) {
+ 	/* Not sure if this is possible but just in case */
+ 	pj_grp_lock_release(ice->grp_lock);
++	PJ_LOG(1, (ice->obj_name,
++			"=> on_stun_request_complete is destroying"));
+ 	return;
+     }
+ 
+@@ -2954,6 +3004,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+     const pj_sockaddr_t *source_addr = src_addr;
+     unsigned source_addr_len = src_addr_len;
+     pj_status_t status;
++	
++	PJ_LOG(1, (ice->obj_name,
++			"=> on_stun_rx_request, start"));
+ 
+     PJ_UNUSED_ARG(pkt);
+     PJ_UNUSED_ARG(pkt_len);
+@@ -3156,6 +3209,10 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+ 	pj_list_push_back(&ice->early_check, rcheck);
+     } else {
+ 	/* Handle this check */
++	
++	PJ_LOG(1, (ice->obj_name,
++			"=> on_stun_rx_request, before handle incoming check"));
++
+ 	handle_incoming_check(ice, rcheck);
+     }
+ 
+@@ -3294,6 +3351,12 @@ static void handle_incoming_check(pj_ice_sess *ice,
+     if (i != ice->clist.count) {
+ 	pj_ice_sess_check *c = &ice->clist.checks[i];
+ 
++
++	char raddr[PJ_INET6_ADDRSTRLEN + 10];
++	PJ_LOG(1, (ice->obj_name,
++			"=> Check incoming cand %d (%s) timeout. state: %u", i,
++			pj_sockaddr_print(&c->rcand->addr, raddr, sizeof(raddr), 3), c->state));
++
+ 	/* If USE-CANDIDATE is present, set nominated flag 
+ 	 * Note: DO NOT overwrite nominated flag if one is already set.
+ 	 */
+@@ -3342,7 +3405,7 @@ static void handle_incoming_check(pj_ice_sess *ice,
+ 			/* Update valid check and nominated check for the component */
+ 			update_comp_check(ice, vc->lcand->comp_id, vc);
+ 
+-			LOG5((ice->obj_name, "Valid check %s is nominated", 
++			LOG5((ice->obj_name, "Valid check %s is nominated",
+ 			      dump_check(ice->tmp.txt, sizeof(ice->tmp.txt), 
+ 					 &ice->valid_list, vc)));
+ 		    }
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 82175e9e8..4de1b93a8 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -407,6 +407,9 @@ static pj_status_t add_update_turn(pj_ice_strans *ice_st,
+ 	}
+     }
+ 
++
++    PJ_LOG(1,(ice_st->obj_name, "add_update_turn"));
++
+     /* If candidate is found, invalidate it first */
+     if (cand) {
+ 	cand->status = PJ_EPENDING;
+@@ -506,7 +509,7 @@ static pj_status_t add_update_turn(pj_ice_strans *ice_st,
+ 	comp->cand_cnt++;
+     }
+ 
+-    PJ_LOG(4,(ice_st->obj_name,
++    PJ_LOG(1,(ice_st->obj_name,
+ 		  "Comp %d/%d: TURN relay candidate (tpid=%d) "
+ 		  "waiting for allocation",
+ 		  comp->comp_id, comp->cand_cnt-1, cand->transport_id));
+@@ -2314,6 +2317,7 @@ static pj_status_t ice_wait_tcp_connection(pj_ice_sess *ice,
+                                            pj_ice_sess_checklist *clist,
+                                            unsigned check_id)
+ {
++	PJ_LOG(1, (ice->obj_name,"=> wait tcp conn"));
+     pj_ice_sess_check      *check   = &clist->checks[check_id];
+     const pj_ice_sess_cand *lcand   = check->lcand;
+     const pj_ice_sess_cand *rcand   = check->rcand;
+@@ -2345,6 +2349,10 @@ static pj_status_t ice_wait_tcp_connection(pj_ice_sess *ice,
+             &on_peer_reset_connection;
+         pj_stun_session_callback(sess)->on_peer_packet = &on_peer_packet;
+ 
++		char raddr[PJ_INET6_ADDRSTRLEN + 10];
++		PJ_LOG(1, (ice->obj_name,
++				"=> pj_stun_sock_connect_active %s",
++				pj_sockaddr_print(&rcand->addr, raddr, sizeof(raddr), 3)));
+         return pj_stun_sock_connect_active(st_comp->stun[idx].sock,
+                                            &rcand->addr,
+                                            rcand->addr.addr.sa_family);
+@@ -2890,7 +2898,7 @@ static void turn_on_state(pj_turn_sock *turn_sock, pj_turn_state_t old_state,
+     comp = data->comp;
+     tp_idx = GET_TP_IDX(data->transport_id);
+ 
+-    PJ_LOG(5,(comp->ice_st->obj_name, "TURN client state changed %s --> %s",
++    PJ_LOG(1,(comp->ice_st->obj_name, "TURN client state changed %s --> %s",
+ 	      pj_turn_state_name(old_state), pj_turn_state_name(new_state)));
+     pj_log_push_indent();
+ 
+@@ -2959,7 +2967,7 @@ static void turn_on_state(pj_turn_sock *turn_sock, pj_turn_state_t old_state,
+ 	}
+ 	*/
+ 
+-	PJ_LOG(4,(comp->ice_st->obj_name,
++	PJ_LOG(1,(comp->ice_st->obj_name,
+ 		  "Comp %d/%d: TURN allocation (tpid=%d) complete, "
+ 		  "relay address is %s",
+ 		  comp->comp_id, cand_idx, cand->transport_id,
