@@ -468,11 +468,13 @@ SIPAccountBase::getIceOptions() const noexcept
 
     if (stunEnabled_)
         opts.stunServers.emplace_back(StunServerInfo().setUri(stunServer_));
+    JAMI_DBG("SIPAccountBase::getIceOptions, add TURN? %u", turnEnabled_);
     if (turnEnabled_) {
         auto cached = false;
         std::lock_guard<std::mutex> lk(cachedTurnMutex_);
-        cached = cacheTurnV4_ || cacheTurnV6_;
         if (cacheTurnV4_ && *cacheTurnV4_) {
+            JAMI_DBG("SIPAccountBase::getIceOptions, use cached TURN: %s",
+                     cacheTurnV4_->toString(true).c_str());
             opts.turnServers.emplace_back(TurnServerInfo()
                                               .setUri(cacheTurnV4_->toString(true))
                                               .setUsername(turnServerUserName_)
@@ -489,7 +491,9 @@ SIPAccountBase::getIceOptions() const noexcept
         //                                      .setRealm(turnServerRealm_));
         //}
         // Nothing cached, so do the resolution
-        if (!cached) {
+        else {
+            JAMI_DBG("SIPAccountBase::getIceOptions, needs resolution for TURN: %s",
+                     turnServer_.c_str());
             opts.turnServers.emplace_back(TurnServerInfo()
                                               .setUri(turnServer_)
                                               .setUsername(turnServerUserName_)
