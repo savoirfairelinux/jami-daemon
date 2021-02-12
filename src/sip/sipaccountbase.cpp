@@ -150,9 +150,15 @@ getDisplayed(const std::string& conversationId, const std::string& messageId)
 }
 
 void
-SIPAccountBase::setIsComposing(const std::string& to, bool isWriting)
+SIPAccountBase::setIsComposing(const std::string& conversationUri, bool isWriting)
 {
-    if (not isWriting and to != composingUri_)
+    Uri uri(conversationUri);
+    std::string conversationId = {};
+    if (uri.scheme() == Uri::Scheme::SWARM)
+        conversationId = uri.authority();
+    auto uid = uri.authority();
+
+    if (not isWriting and conversationUri != composingUri_)
         return;
 
     if (composingTimeout_) {
@@ -160,31 +166,34 @@ SIPAccountBase::setIsComposing(const std::string& to, bool isWriting)
         composingTimeout_.reset();
     }
     if (isWriting) {
-        if (not composingUri_.empty() and composingUri_ != to) {
-            sendInstantMessage(composingUri_, {{MIME_TYPE_IM_COMPOSING, getIsComposing(to, false)}});
+        if (not composingUri_.empty() and composingUri_ != conversationUri) {
+            sendInstantMessage(uid,
+                               {{MIME_TYPE_IM_COMPOSING, getIsComposing(conversationId, false)}});
             composingTime_ = std::chrono::steady_clock::time_point::min();
         }
         composingUri_.clear();
-        composingUri_.insert(composingUri_.end(), to.begin(), to.end());
+        composingUri_.insert(composingUri_.end(), conversationUri.begin(), conversationUri.end());
         auto now = std::chrono::steady_clock::now();
         if (now >= composingTime_ + COMPOSING_TIMEOUT) {
-            sendInstantMessage(composingUri_, {{MIME_TYPE_IM_COMPOSING, getIsComposing(to, true)}});
+            sendInstantMessage(uid,
+                               {{MIME_TYPE_IM_COMPOSING, getIsComposing(conversationId, true)}});
             composingTime_ = now;
         }
         std::weak_ptr<SIPAccountBase> weak = std::static_pointer_cast<SIPAccountBase>(
             shared_from_this());
         composingTimeout_ = Manager::instance().scheduleTask(
-            [weak, to]() {
+            [weak, uid, conversationId]() {
                 if (auto sthis = weak.lock()) {
-                    sthis->sendInstantMessage(to,
-                                              {{MIME_TYPE_IM_COMPOSING, getIsComposing(to, false)}});
+                    sthis->sendInstantMessage(uid,
+                                              {{MIME_TYPE_IM_COMPOSING,
+                                                getIsComposing(conversationId, false)}});
                     sthis->composingUri_.clear();
                     sthis->composingTime_ = std::chrono::steady_clock::time_point::min();
                 }
             },
             now + COMPOSING_TIMEOUT);
     } else {
-        sendInstantMessage(to, {{MIME_TYPE_IM_COMPOSING, getIsComposing(to, false)}});
+        sendInstantMessage(uid, {{MIME_TYPE_IM_COMPOSING, getIsComposing(conversationId, false)}});
         composingUri_.clear();
         composingTime_ = std::chrono::steady_clock::time_point::min();
     }
