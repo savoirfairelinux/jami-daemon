@@ -30,6 +30,7 @@ using random_device = dht::crypto::random_device;
 
 #include <ctime>
 #include <fstream>
+#include <future>
 #include <json/json.h>
 #include <regex>
 #include <exception>
@@ -1414,27 +1415,32 @@ ConversationRepository::Impl::diff(git_repository* repo,
 std::vector<ConversationCommit>
 ConversationRepository::Impl::behind(const std::string& from) const
 {
-    git_oid oid_local, oid_remote;
+    git_oid oid_local, oid_head, oid_remote;
     auto repo = repository();
     if (git_reference_name_to_id(&oid_local, repo.get(), "HEAD") < 0) {
         JAMI_ERR("Cannot get reference for HEAD");
         return {};
     }
+    oid_head = oid_local;
+    std::string head = git_oid_tostr_s(&oid_head);
     if (git_oid_fromstr(&oid_remote, from.c_str()) < 0) {
         JAMI_ERR("Cannot get reference for commit %s", from.c_str());
         return {};
     }
-    size_t ahead = 0, behind = 0;
-    if (git_graph_ahead_behind(&ahead, &behind, repo.get(), &oid_local, &oid_remote) != 0) {
-        JAMI_ERR("Cannot get commits ahead for commit %s", from.c_str());
+
+    git_oidarray bases;
+    if (git_merge_bases(&bases, repo.get(), &oid_local, &oid_remote) != 0) {
+        JAMI_ERR("Cannot get any merge base for commit %s and %s", from.c_str(), head.c_str());
         return {};
     }
-
-    if (behind == 0) {
-        return {}; // Nothing to validate
+    for (std::size_t i = 0; i < bases.count; ++i) {
+        std::string oid = git_oid_tostr_s(&bases.ids[i]);
+        if (oid != from && oid != head) {
+            oid_local = bases.ids[i];
+            break;
+        }
     }
-
-    return log(from, "", behind);
+    return log(from, git_oid_tostr_s(&oid_local), 0);
 }
 
 std::vector<ConversationCommit>
@@ -1873,8 +1879,9 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
     }
     git_repository_free(rep);
     auto repo = std::make_unique<ConversationRepository>(account, conversationId);
-    repo->pinCertificates(); // need to load certificates to validate non known members
+    repo->pinCertificates(true); // need to load certificates to validate non known members
     if (!repo->validClone()) {
+        repo->erase();
         JAMI_ERR("Error when validating remote conversation");
         return nullptr;
     }
@@ -2842,7 +2849,7 @@ ConversationRepository::refreshMembers() const
 }
 
 void
-ConversationRepository::pinCertificates()
+ConversationRepository::pinCertificates(bool blocking)
 {
     auto repo = pimpl_->repository();
     if (!repo)
@@ -2854,7 +2861,16 @@ ConversationRepository::pinCertificates()
                                       repoPath + "devices"};
 
     for (const auto& path : paths) {
-        tls::CertificateStore::instance().pinCertificatePath(path, {});
+        if (blocking) {
+            std::promise<bool> p;
+            std::future<bool> f = p.get_future();
+            tls::CertificateStore::instance().pinCertificatePath(path, [&](auto /* certs */) {
+                p.set_value(true);
+            });
+            f.wait();
+        } else {
+            tls::CertificateStore::instance().pinCertificatePath(path, {});
+        }
     }
 }
 
