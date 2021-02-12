@@ -636,12 +636,13 @@ ConversationRepositoryTest::addAll(git_repository* repo)
 {
     // git add -A
     git_index* index_ptr = nullptr;
-    git_strarray array = {nullptr, 0};
     if (git_repository_index(&index_ptr, repo) < 0)
         return;
     GitIndex index {index_ptr, git_index_free};
+    git_strarray array = {nullptr, 0};
     git_index_add_all(index.get(), &array, 0, nullptr, nullptr);
     git_index_write(index.get());
+    git_strarray_free(&array);
 }
 
 void

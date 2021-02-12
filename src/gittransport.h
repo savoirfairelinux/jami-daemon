@@ -36,7 +36,7 @@ class ChannelSocket;
 struct P2PStream
 {
     git_smart_subtransport_stream base;
-    std::shared_ptr<jami::ChannelSocket> socket;
+    std::weak_ptr<jami::ChannelSocket> socket;
 
     std::string cmd {};
     std::string url {};
@@ -46,7 +46,7 @@ struct P2PStream
 struct P2PSubTransport
 {
     git_smart_subtransport base;
-    P2PStream* stream;
+    std::unique_ptr<P2PStream> stream;
     git_remote* remote;
 };
 

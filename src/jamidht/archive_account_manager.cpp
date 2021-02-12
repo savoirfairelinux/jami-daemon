@@ -353,6 +353,8 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a)
     info->ethAccount = ethAccount;
     info->announce = std::move(receipt.second);
     info_ = std::move(info);
+    saveConvInfos();
+    saveConvRequests();
 
     JAMI_WARN("[Auth] created new device: %s", info_->deviceId.c_str());
     ctx.onSuccess(*info_,
