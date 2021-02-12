@@ -244,8 +244,10 @@ Conversation::Impl::convCommitToMap(const std::vector<ConversationCommit>& commi
                 JAMI_WARN("%s", err.c_str());
             }
         }
+        auto linearizedParent = repository_->linearizedParent(commit.id);
         message["id"] = commit.id;
         message["parents"] = parents;
+        message["linearizedParent"] = linearizedParent ? *linearizedParent : "";
         message["author"] = authorId;
         message["type"] = type;
         message["timestamp"] = std::to_string(commit.timestamp);
