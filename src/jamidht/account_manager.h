@@ -216,6 +216,8 @@ public:
     std::vector<std::map<std::string, std::string>> getContacts() const;
 
     // Conversations
+    void saveConvInfos() const;
+    void saveConvRequests() const;
     void setConversations(const std::vector<ConvInfo>& newConv);
     void addConversation(const ConvInfo& info);
     void setConversationsRequests(const std::map<std::string, ConversationRequest>& newConvReq);
