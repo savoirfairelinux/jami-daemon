@@ -22,6 +22,7 @@
 #include <string>
 
 #include "def.h"
+#include "jamidht/conversationrepository.h"
 
 namespace jami {
 
