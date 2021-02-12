@@ -181,7 +181,7 @@ UPnPContext::setPublicAddress(const IpAddr& addr)
 }
 
 bool
-UPnPContext::hasValidIGD() const
+UPnPContext::isReady() const
 {
     std::lock_guard<std::mutex> lock(mappingMutex_);
     return not validIgdList_.empty();
@@ -365,9 +365,11 @@ UPnPContext::requestMapping(const std::shared_ptr<IGD>& igd, const Mapping::shar
 
     CHECK_VALID_THREAD();
 
-    JAMI_DBG("Request mapping %s using protocol [%s]",
+    JAMI_DBG("Request mapping %s using protocol [%s] IGD [%s %s]",
              map->toString().c_str(),
-             igd->getProtocolName());
+             igd->getProtocolName(),
+             igd->getUID().c_str(),
+             igd->getLocalIp().toString().c_str());
 
     // Register mapping timeout callback and update the state if needed.
     registerAddMappingTimeout(igd, map);
@@ -389,7 +391,7 @@ UPnPContext::requestMappingOnValidIgds(const Mapping::sharedPtr_t& map)
 
     CHECK_VALID_THREAD();
 
-    if (not hasValidIGD()) {
+    if (not isReady()) {
         JAMI_WARN("Can not request mapping, no valid IGD available!");
         return;
     }
@@ -399,12 +401,12 @@ UPnPContext::requestMappingOnValidIgds(const Mapping::sharedPtr_t& map)
 
 #if HAVE_LIBNATPMP
     // Prefere NAT-PMP if available.
-    if (protocolList_.at(NatProtocolType::NAT_PMP)->hasValidIgd())
+    if (protocolList_.at(NatProtocolType::NAT_PMP)->isReady())
         proto = protocolList_.at(NatProtocolType::NAT_PMP);
 #endif
 
     // Request the mappings
-    if (proto->hasValidIgd()) {
+    if (proto->isReady()) {
         std::list<std::shared_ptr<IGD>> igdList;
         proto->getIgdList(igdList);
         for (auto const& igd : igdList)
@@ -496,19 +498,21 @@ UPnPContext::updateMappingList(bool async)
         mappingListUpdateTimer_->cancel();
     mappingListUpdateTimer_ = getScheduler()->scheduleIn([this] { updateMappingList(false); },
                                                          MAP_UPDATE_INTERVAL);
-
-    bool hasValidIgd = false;
+    std::shared_ptr<IGD> prefIgd;
     for (auto const& [_, protocol] : protocolList_) {
-        auto valid = protocol->hasValidIgd();
-        if (valid) {
-            JAMI_DBG("Protocol status [%s] has valid IGD(s) %s",
-                     protocol->getProtocolName(),
-                     valid ? "YES" : "NO");
-            hasValidIgd = true;
+        if (protocol->isReady()) {
+            std::list<std::shared_ptr<IGD>> igdList;
+            protocol->getIgdList(igdList);
+            assert(not igdList.empty());
+            auto const& igd = igdList.front();
+
+            // Perefer NAT-PMP if available.
+            if (not prefIgd or protocol->getProtocol() == NatProtocolType::NAT_PMP)
+                prefIgd = igd;
         }
     }
 
-    if (not hasValidIgd) {
+    if (not prefIgd) {
         JAMI_DBG("UPNP/NAT-PMP enabled, but no valid IGDs available");
         std::lock_guard<std::mutex> lock(mappingMutex_);
         // Invalidate the current IGDs.
@@ -516,6 +520,14 @@ UPnPContext::updateMappingList(bool async)
         // No valid IGD. Nothing to do.
         return;
     }
+
+    JAMI_DBG("Current preferred protocol [%s] IGD [%s %s] ",
+             prefIgd->getProtocolName(),
+             prefIgd->getUID().c_str(),
+             prefIgd->getLocalIp().toString().c_str());
+
+    // Process pending requests if any.
+    processPendingRequests(prefIgd);
 
     // Make new requests for mappings that failed and have
     // the auto-update option enabled.
@@ -567,10 +579,10 @@ UPnPContext::updateMappingList(bool async)
     }
 
     // Prune the mapping list if needed
-    if (protocolList_.at(NatProtocolType::PUPNP)->hasValidIgd()) {
+    if (protocolList_.at(NatProtocolType::PUPNP)->isReady()) {
 #if HAVE_LIBNATPMP
         // Dont perform if NAT-PMP is valid.
-        if (not protocolList_.at(NatProtocolType::NAT_PMP)->hasValidIgd())
+        if (not protocolList_.at(NatProtocolType::NAT_PMP)->isReady())
 #endif
         {
             pruneMappingList();
@@ -579,7 +591,7 @@ UPnPContext::updateMappingList(bool async)
 
 #if HAVE_LIBNATPMP
     // Renew nat-pmp allocations
-    if (protocolList_.at(NatProtocolType::NAT_PMP)->hasValidIgd())
+    if (protocolList_.at(NatProtocolType::NAT_PMP)->isReady())
         renewAllocations();
 #endif
 }
@@ -809,12 +821,12 @@ UPnPContext::onIgdUpdated(const std::shared_ptr<IGD>& igd, UpnpIgdEvent event)
 
     // Check if IGD has a valid addresses.
     if (not igdLocalAddr) {
-        JAMI_ERR("[%s] IGD has an invalid local address", protocolName);
+        JAMI_WARN("[%s] IGD has an invalid local address", protocolName);
         return;
     }
 
     if (not igd->getPublicIp()) {
-        JAMI_ERR("[%s] IGD has an invalid public address", protocolName);
+        JAMI_WARN("[%s] IGD has an invalid public address", protocolName);
         return;
     }
 
@@ -826,11 +838,12 @@ UPnPContext::onIgdUpdated(const std::shared_ptr<IGD>& igd, UpnpIgdEvent event)
                   knownPublicAddress_.toString().c_str());
     }
 
-    char const* IgdState = event == UpnpIgdEvent::ADDED     ? "ADDED"
-                           : event == UpnpIgdEvent::REMOVED ? "REMOVED"
-                                                            : "INVALID";
+    char const* IgdState = event == UpnpIgdEvent::ADDED
+                               ? "ADDED"
+                               : event == UpnpIgdEvent::REMOVED ? "REMOVED" : "INVALID";
 
-    JAMI_WARN("State of IGD %s [%s] changed to [%s]",
+    JAMI_WARN("State of IGD %s %s [%s] changed to [%s]",
+              igd->getUID().c_str(),
               igdLocalAddr.toString(true, true).c_str(),
               protocolName,
               IgdState);
@@ -861,19 +874,6 @@ UPnPContext::onIgdUpdated(const std::shared_ptr<IGD>& igd, UpnpIgdEvent event)
         }
     }
 
-    // Prune the IGD before making new requests.
-    if (igd->getProtocol() == NatProtocolType::PUPNP) {
-        auto protocol = protocolList_.at(igd->getProtocol());
-        auto remoteMapList
-            = protocol->getMappingsListByDescr(igd, Mapping::UPNP_MAPPING_DESCRIPTION_PREFIX);
-        if (not remoteMapList.empty()) {
-            pruneUnMatchedMappings(igd, remoteMapList);
-        }
-    }
-
-    // Process pending requests if any.
-    processPendingRequests(igd);
-
     // Update.
     updateMappingList(false);
 }
@@ -883,79 +883,56 @@ UPnPContext::onMappingAdded(const std::shared_ptr<IGD>& igd, const Mapping& mapR
 {
     CHECK_VALID_THREAD();
 
-    if (not mapRes.isValid() or mapRes.getState() == MappingState::FAILED) {
-        JAMI_WARN("Mapping request %s failed on IGD %s [%s]",
-                  mapRes.toString().c_str(),
-                  igd->getLocalIp().toString().c_str(),
-                  mapRes.getProtocolName());
+    // Check if we have a pending request for this response.
+    auto map = getMappingWithKey(mapRes.getMapKey());
+    if (not map) {
+        // We may receive a response for a canceled request. Just ignore it.
+        JAMI_DBG("Response for mapping %s [IGD %s] [%s] does not have a local match",
+                 mapRes.toString().c_str(),
+                 igd->getLocalIp().toString().c_str(),
+                 mapRes.getProtocolName());
         return;
     }
 
-    Mapping::key_t key = 0;
-
-    {
-        std::lock_guard<std::mutex> lock(mappingMutex_);
-        auto& mappingList = getMappingList(mapRes.getType());
-        auto it = mappingList.find(mapRes.getMapKey());
-        if (it == mappingList.end()) {
-            // We may receive a response for a canceled request. Just
-            // ignore it.
-            JAMI_DBG("Mapping request %s from IGD  %s [%s] does not match local request",
-                     mapRes.toString().c_str(),
-                     igd->getLocalIp().toString().c_str(),
-                     mapRes.getProtocolName());
-            return;
-        }
-        key = it->second->getMapKey();
-        assert(key);
-    }
-
-    auto map = getMappingWithKey(key);
     // The mapping pointer must be valid at his point.
     assert(map);
 
-    // Update the state.
-    if (map->isValid()) {
-        // If both protocols grant the mapping, we prefere using NAT-PMP.
-        if (map->getState() == MappingState::OPEN
-            and map->getProtocol() == NatProtocolType::NAT_PMP) {
-            JAMI_DBG("Mapping %s is already open on IGD %s [NAT-PMP]",
-                     map->toString().c_str(),
-                     igd->getLocalIp().toString().c_str());
-        } else {
-            // Set the attributes
-            map->setExternalAddress(mapRes.getExternalAddress());
-            map->setInternalAddress(mapRes.getInternalAddress());
-            map->setIgd(igd);
-#if HAVE_LIBNATPMP
-            if (mapRes.getProtocol() == NatProtocolType::NAT_PMP) {
-                map->setRenewalTime(mapRes.getRenewalTime());
-            }
-#endif
-            updateMappingState(map, MappingState::OPEN);
+    // We have a response, so cancel the timer.
+    map->cancelTimeoutTimer();
 
-            JAMI_DBG("Mapping %s (on IGD %s [%s]) successfully performed",
-                     map->toString().c_str(),
-                     igd->getLocalIp().toString().c_str(),
-                     map->getProtocolName());
+    // Update the mapping.
+    map->updateFrom(mapRes);
 
-            if (not igd->isValid()) {
-                std::lock_guard<std::mutex> lock(mappingMutex_);
-                validIgdList_.emplace(igd);
-            }
-            // Call setValid() to reset the errors counter.
-            igd->setValid(true);
-        }
-    } else {
-        JAMI_ERR("Failed to perform mapping %s (on IGD %s)",
-                 map->toString().c_str(),
-                 igd->getLocalIp().toString().c_str());
+    // Clean-up if not valid.
+    if (not map->isValid()) {
+        JAMI_WARN("Mapping request %s on IGD %s failed or returned an invalid mapping!",
+                  map->toString(true).c_str(),
+                  igd->getLocalIp().toString().c_str());
         updateMappingState(map, MappingState::FAILED);
         unregisterMapping(map);
+        return;
     }
 
-    // We have a response, so cancel the time-out.
-    map->cancelTimeoutTimer();
+    // Ignore if already open.
+    if (map->getState() == MappingState::OPEN) {
+        JAMI_DBG("Mapping %s is already open on IGD %s [%s]",
+                 map->toString().c_str(),
+                 map->getIgd()->getLocalIp().toString().c_str(),
+                 map->getIgd()->getProtocolName());
+        return;
+    }
+
+    // The mapping request is new and successful. Update.
+    updateMappingState(map, MappingState::OPEN);
+
+    JAMI_DBG("Mapping %s (on IGD %s [%s]) successfully performed",
+             map->toString().c_str(),
+             igd->getLocalIp().toString().c_str(),
+             map->getProtocolName());
+
+    // Call setValid() to reset the errors counter. We need
+    // to reset the counter on each successful response.
+    igd->setValid(true);
 }
 
 #if HAVE_LIBNATPMP
@@ -1072,7 +1049,7 @@ UPnPContext::registerMapping(Mapping& map)
 
     // No available IGD. The pending mapping requests will be processed
     // when a IGD becomes available (in onIgdAdded() method).
-    if (not hasValidIGD()) {
+    if (not isReady()) {
         JAMI_WARN("No IGD available. Mapping will be requested when an IGD becomes available");
     } else {
         requestMappingOnValidIgds(mapPtr);
@@ -1191,9 +1168,12 @@ UPnPContext::registerAddMappingTimeout(const std::shared_ptr<IGD>& igd,
     auto timeout = igd->getProtocol() == NatProtocolType::NAT_PMP ? NAT_MAP_REQUEST_TIMEOUT_UNIT
                                                                   : PUPNP_MAP_REQUEST_TIMEOUT_UNIT;
     map->setTimeoutTimer(
-        // The time-out is set proportional to the number of "in-progress" requests.
+        // The time-out is set proportional to the number of "in-progress"
+        // requests plus a bias.
+        // This rule is empirical and based on experimenting with few
+        // implementations.
         Manager::instance().scheduler().scheduleIn([this, igd, map] { onRequestTimeOut(igd, map); },
-                                                   timeout * (status.inProgressCount_ + 1)));
+                                                   timeout * (status.inProgressCount_ + 3)));
 }
 
 void
@@ -1237,7 +1217,7 @@ UPnPContext::updateMappingState(const Mapping::sharedPtr_t& map, MappingState ne
 
     // Ignore if the state did not change.
     if (newState == map->getState()) {
-        JAMI_WARN("Mapping %s already in state %s", map->toString().c_str(), map->getStateStr());
+        JAMI_DBG("Mapping %s already in state %s", map->toString().c_str(), map->getStateStr());
         return;
     }
 

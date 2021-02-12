@@ -20,6 +20,8 @@
 
 #include "nat_pmp.h"
 
+#if HAVE_LIBNATPMP
+
 namespace jami {
 namespace upnp {
 
@@ -46,10 +48,16 @@ NatPmp::initNatPmp()
 
     CHECK_VALID_THREAD();
 
-    userLocalIp_ = ip_utils::getLocalAddr(pj_AF_INET());
     initialized_ = false;
-    assert(igd_);
+    hostAddress_ = ip_utils::getLocalAddr(pj_AF_INET());
 
+    // Local address must be valid.
+    if (not getHostAddress() or getHostAddress().isLoopback()) {
+        JAMI_WARN("NAT-PMP: Does not have a valid local address!");
+        return;
+    }
+
+    assert(igd_);
     if (igd_->isValid()) {
         igd_->setValid(false);
         processIgdUpdate(UpnpIgdEvent::REMOVED);
@@ -91,6 +99,9 @@ NatPmp::initNatPmp()
 
     // Set the local (gateway) address.
     igd_->setLocalIp(igdAddr);
+    // NAT-PMP protocol does not have UID, but we will set generic
+    // one debugging purposes.
+    igd_->setUID("NAT-PMP Gateway");
 
     // Search and set the public address.
     getIgdPublicAddress();
@@ -143,14 +154,6 @@ NatPmp::searchForIgd()
         initNatPmp();
     }
 
-    if (initialized_ and not hasValidIgd()) {
-        // Log current IGD.
-        JAMI_DBG("NAT-PMP: Current top IGD [%s:%s] valid %s",
-                 igd_->getLocalIp().toString().c_str(),
-                 igd_->getLocalIp().toString().c_str(),
-                 igd_->isValid() ? "YES" : "NO");
-    }
-
     // Schedule a retry in case init failed.
     if (not initialized_) {
         if (igdSearchCounter_++ < MAX_RESTART_SEARCH_RETRIES) {
@@ -175,8 +178,11 @@ NatPmp::getIgdList(std::list<std::shared_ptr<IGD>>& igdList) const
 }
 
 bool
-NatPmp::hasValidIgd() const
+NatPmp::isReady() const
 {
+    // Must at least have a valid local address.
+    if (not getHostAddress() or getHostAddress().isLoopback())
+        return false;
     return igd_ and igd_->isValid();
 }
 
@@ -332,8 +338,7 @@ NatPmp::addPortMapping(const std::shared_ptr<IGD>& igdIn, Mapping& mapping, bool
     Mapping mapToAdd(mapping.getExternalPort(),
                      mapping.getInternalPort(),
                      mapping.getType() == PortType::UDP ? upnp::PortType::UDP : upnp::PortType::TCP);
-    mapToAdd.setExternalAddress(igd_->getPublicIp().toString());
-    mapToAdd.setInternalAddress(getUserLocalIp().toString());
+    mapToAdd.setInternalAddress(getHostAddress().toString());
     mapToAdd.setIgd(igd_);
 
     uint32_t lifetime = MAPPING_ALLOCATION_LIFETIME;
@@ -639,3 +644,5 @@ NatPmp::processMappingRemoved(const Mapping& map)
 
 } // namespace upnp
 } // namespace jami
+
+#endif //-- #if HAVE_LIBNATPMP

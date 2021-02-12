@@ -83,7 +83,7 @@ public:
     void getIgdList(std::list<std::shared_ptr<IGD>>& igdList) const override;
 
     // Return true if it has at least one valid IGD.
-    bool hasValidIgd() const override;
+    bool isReady() const override;
 
     // Increment errors counter.
     void incrementErrorsCounter(const std::shared_ptr<IGD>& igd) override;

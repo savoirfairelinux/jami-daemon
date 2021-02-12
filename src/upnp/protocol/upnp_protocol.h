@@ -97,7 +97,7 @@ public:
     virtual void getIgdList(std::list<std::shared_ptr<IGD>>& igdList) const = 0;
 
     // Return true if it has at least one valid IGD.
-    virtual bool hasValidIgd() const = 0;
+    virtual bool isReady() const = 0;
 
     // Increment IGD errors counter.
     virtual void incrementErrorsCounter(const std::shared_ptr<IGD>& igd) = 0;
@@ -121,10 +121,12 @@ public:
     // Set the user callbacks.
     virtual void setObserver(UpnpMappingObserver* obs) = 0;
 
-    const IpAddr& getUserLocalIp() const { return userLocalIp_; }
+    // Get the host (local) address.
+    const IpAddr& getHostAddress() const { return hostAddress_; }
 
 protected:
-    IpAddr userLocalIp_ {};
+    // The host (local) address. Must be fully set before making any request.
+    IpAddr hostAddress_ {};
     UpnpMappingObserver* observer_;
 };
 

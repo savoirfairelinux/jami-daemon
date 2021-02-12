@@ -51,7 +51,7 @@ public:
     ~Controller();
 
     // Checks if a valid IGD is available.
-    bool hasValidIGD() const;
+    bool isReady() const;
 
     // Gets the external ip of the first valid IGD in the list.
     IpAddr getExternalIP() const;
