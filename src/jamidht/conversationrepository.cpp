@@ -108,6 +108,7 @@ public:
     std::vector<ConversationCommit> log(const std::string& from,
                                         const std::string& to,
                                         unsigned n) const;
+    std::optional<std::string> linearizedParent(const std::string& commitId) const;
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
     // NOTE! GitDiff needs to be deteleted before repo
@@ -715,7 +716,8 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
         return false;
     }
     auto* blob = reinterpret_cast<git_blob*>(vote.get());
-    auto voteContent = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)), git_blob_rawsize(blob));
+    auto voteContent = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)),
+                                        git_blob_rawsize(blob));
     if (!voteContent.empty()) {
         JAMI_ERR("Vote file not empty: %s", votedFile.c_str());
         return false;
@@ -823,7 +825,8 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
     }
 
     auto* blob = reinterpret_cast<git_blob*>(blob_invite.get());
-    auto invitation = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)), git_blob_rawsize(blob));
+    auto invitation = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)),
+                                       git_blob_rawsize(blob));
     if (!invitation.empty()) {
         JAMI_ERR("Invitation not empty for commit %s", commitId.c_str());
         return false;
@@ -1100,9 +1103,11 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
 
     // Check that certificate matches
     auto* blob = reinterpret_cast<git_blob*>(blob_device.get());
-    auto deviceCert = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)), git_blob_rawsize(blob));
+    auto deviceCert = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)),
+                                       git_blob_rawsize(blob));
     blob = reinterpret_cast<git_blob*>(blob_parent.get());
-    auto parentCert = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)), git_blob_rawsize(blob));
+    auto parentCert = std::string_view(static_cast<const char*>(git_blob_rawcontent(blob)),
+                                       git_blob_rawsize(blob));
     auto deviceCertStr = cert->toString(false);
     auto parentCertStr = cert->issuer->toString(true);
 
@@ -1454,7 +1459,7 @@ ConversationRepository::Impl::log(const std::string& from, const std::string& to
         return commits;
     }
     GitRevWalker walker {walker_ptr, git_revwalk_free};
-    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL);
+    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
 
     for (auto idx = 0u; !git_revwalk_next(&oid, walker.get()); ++idx) {
         if (n != 0 && idx == n) {
@@ -1505,6 +1510,45 @@ ConversationRepository::Impl::log(const std::string& from, const std::string& to
     }
 
     return commits;
+}
+
+std::optional<std::string>
+ConversationRepository::Impl::linearizedParent(const std::string& commitId) const
+{
+    git_oid oid;
+    auto repo = repository();
+    if (!repo or git_reference_name_to_id(&oid, repo.get(), "HEAD") < 0) {
+        JAMI_ERR("Cannot get reference for HEAD");
+        return std::nullopt;
+    }
+
+    git_revwalk* walker_ptr = nullptr;
+    if (git_revwalk_new(&walker_ptr, repo.get()) < 0 || git_revwalk_push(walker_ptr, &oid) < 0) {
+        if (walker_ptr)
+            git_revwalk_free(walker_ptr);
+        // This fail can be ok in the case we check if a commit exists before pulling (so can fail
+        // there). only log if the fail is unwanted.
+        return std::nullopt;
+    }
+    GitRevWalker walker {walker_ptr, git_revwalk_free};
+    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
+
+    auto ret = false;
+    for (auto idx = 0u; !git_revwalk_next(&oid, walker.get()); ++idx) {
+        git_commit* commit_ptr = nullptr;
+        std::string id = git_oid_tostr_s(&oid);
+        if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
+            JAMI_WARN("Failed to look up commit %s", id.c_str());
+            break;
+        }
+
+        if (ret)
+            return id;
+        if (id == commitId)
+            ret = true;
+    }
+
+    return std::nullopt;
 }
 
 GitObject
@@ -2732,6 +2776,12 @@ bool
 ConversationRepository::validClone() const
 {
     return pimpl_->validCommits(logN("", 0));
+}
+
+std::optional<std::string>
+ConversationRepository::linearizedParent(const std::string& commitId) const
+{
+    return pimpl_->linearizedParent(commitId);
 }
 
 void
