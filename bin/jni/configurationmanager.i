@@ -98,7 +98,7 @@ std::vector<DRing::Message> getLastMessages(const std::string& accountID, uint64
 int getMessageStatus(uint64_t id);
 int getMessageStatus(const std::string& accountID, uint64_t id);
 bool cancelMessage(const std::string& accountID, uint64_t id);
-void setIsComposing(const std::string& accountID, const std::string& to, bool isWriting);
+void setIsComposing(const std::string& accountID, const std::string& conversationUri, bool isWriting);
 bool setMessageDisplayed(const std::string& accountID, const std::string& conversationUri, const std::string& messageId, int status);
 bool changeAccountPassword(const std::string& accountID, const std::string& password_old, const std::string& password_new);
 
