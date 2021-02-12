@@ -313,7 +313,7 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
                                                            std::chrono::hours(24 * 7)));
         std::getline(is, proxyServerCached_);
     } catch (const std::exception& e) {
-        JAMI_DBG("Can't load proxy URL from cache: %s", e.what());
+        JAMI_DBG("[Account %s] Can't load proxy URL from cache: %s", getAccountID().c_str(), e.what());
     }
 
     setActiveCodecs({});
@@ -1960,7 +1960,7 @@ JamiAccount::loadBootstrap() const
         while (std::getline(ss, node_addr, ';'))
             bootstrap.emplace_back(std::move(node_addr));
         for (const auto& b : bootstrap)
-            JAMI_DBG("Bootstrap node: %s", b.c_str());
+            JAMI_DBG("[Account %s] Bootstrap node: %s", getAccountID().c_str(), b.c_str());
     }
     return bootstrap;
 }
@@ -3578,7 +3578,7 @@ JamiAccount::cacheTurnServers()
             this_->isRefreshing_ = false;
             return;
         }
-        JAMI_INFO("Refresh cache for TURN server resolution");
+        JAMI_INFO("[Account %s] Refresh cache for TURN server resolution", this_->getAccountID().c_str());
         // Retrieve old cached value if available.
         // This means that we directly get the correct value when launching the application on the
         // same network
@@ -3628,7 +3628,7 @@ JamiAccount::cacheTurnServers()
             this_->cacheTurnV6_ = std::make_unique<IpAddr>(std::move(turnV6));
         }
         this_->isRefreshing_ = false;
-        JAMI_INFO("Cache refreshed for TURN resolution");
+        JAMI_INFO("[Account %s] Cache refreshed for TURN resolution", this_->getAccountID().c_str());
     });
 }
 
@@ -3662,12 +3662,12 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
     auto id = std::make_pair(peerId, deviceId);
 
     if (sipConns_.find(id) != sipConns_.end()) {
-        JAMI_DBG("A SIP connection with %s already exists", deviceId.to_c_str());
+        JAMI_DBG("[Account %s] A SIP connection with %s already exists", getAccountID().c_str(), deviceId.to_c_str());
         return;
     }
     sipConns_[id] = {};
     // If not present, create it
-    JAMI_INFO("Ask %s for a new SIP channel", deviceId.to_c_str());
+    JAMI_INFO("[Account %s] Ask %s for a new SIP channel", getAccountID().c_str(), deviceId.to_c_str());
     if (!connectionManager_)
         return;
     connectionManager_->connectDevice(deviceId,
@@ -3855,7 +3855,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         return v.channel == socket;
     });
     if (conn != connections.end()) {
-        JAMI_WARN("Channel socket already cached with this peer");
+        JAMI_WARN("[Account %s] Channel socket already cached with this peer", getAccountID().c_str());
         return;
     }
 
@@ -3890,7 +3890,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     sip_tr->setAccount(shared());
     // Store the connection
     connections.emplace_back(SipConnection {sip_tr, socket});
-    JAMI_WARN("New SIP channel opened with %s", deviceId.to_c_str());
+    JAMI_WARN("[Account %s] New SIP channel opened with %s", getAccountID().c_str(), deviceId.to_c_str());
     lk.unlock();
 
     sendProfile(deviceId.toString());

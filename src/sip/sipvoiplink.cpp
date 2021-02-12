@@ -647,7 +647,7 @@ SIPVoIPLink::SIPVoIPLink()
     TRY(pjsip_100rel_init_module(endpt_));
 
     // Initialize and register ring module
-    mod_ua_.name = pj_str((char*) PACKAGE);
+    mod_ua_.name = sip_utils::CONST_PJ_STR(PACKAGE);
     mod_ua_.id = -1;
     mod_ua_.priority = PJSIP_MOD_PRIORITY_APPLICATION;
     mod_ua_.on_rx_request = &transaction_request_cb;
