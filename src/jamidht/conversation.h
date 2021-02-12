@@ -73,10 +73,10 @@ class JamiAccount;
 class ConversationRepository;
 enum class ConversationMode;
 
-using OnPullCb = std::function<void(bool fetchOk,
-                                    std::vector<std::map<std::string, std::string>>&& newMessages)>;
+using OnPullCb = std::function<void(bool fetchOk)>;
 using OnLoadMessages
     = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
+using OnDoneCb = std::function<void(bool, const std::string&)>;
 
 class Conversation : public std::enable_shared_from_this<Conversation>
 {
@@ -96,10 +96,10 @@ public:
     /**
      * Add conversation member
      * @param uri   Member to add
-     * @return Commit id or empty if fails
+     * @param cb    On done cb
      */
-    std::string addMember(const std::string& contactUri);
-    bool removeMember(const std::string& contactUri, bool isDevice);
+    void addMember(const std::string& contactUri, const OnDoneCb& cb = {});
+    void removeMember(const std::string& contactUri, bool isDevice, const OnDoneCb& cb = {});
     /**
      * @param includeInvited        If we want invited members
      * @return a vector of member details:
@@ -127,10 +127,13 @@ public:
     bool isBanned(const std::string& uri, bool isDevice = false) const;
 
     // Message send
-    std::string sendMessage(const std::string& message,
-                            const std::string& type = "text/plain",
-                            const std::string& parent = "");
-    std::string sendMessage(const Json::Value& message, const std::string& parent = "");
+    void sendMessage(const std::string& message,
+                     const std::string& type = "text/plain",
+                     const std::string& parent = "",
+                     const OnDoneCb& cb = {});
+    void sendMessage(const Json::Value& message,
+                     const std::string& parent = "",
+                     const OnDoneCb& cb = {});
     /**
      * Get a range of messages
      * @param cb        The callback when loaded
@@ -220,9 +223,9 @@ public:
     /**
      * Change repository's infos
      * @param map       New infos (supported keys: title, description, avatar)
-     * @return the commit id
+     * @param cb        On commited
      */
-    std::string updateInfos(const std::map<std::string, std::string>& map);
+    void updateInfos(const std::map<std::string, std::string>& map, const OnDoneCb& cb = {});
 
     /**
      * Retrieve current infos (title, description, avatar, mode)
