@@ -350,21 +350,50 @@ GitServer::Impl::sendPackData()
         return;
     }
 
+    std::vector<std::string> branches = {};
     while (!git_revwalk_next(&oid, walker_ptr)) {
         // log until have refs
         std::string id = git_oid_tostr_s(&oid);
-        if (std::find(haveRefs_.begin(), haveRefs_.end(), id) != haveRefs_.end()) {
-            // The peer already have the reference
+        auto hasCommit = std::find(haveRefs_.begin(), haveRefs_.end(), id) != haveRefs_.end();
+        if (hasCommit) {
+            // The peer already have the reference. Check that all branches are handled
+            if (branches.empty())
+                break;
+        }
+        branches.erase(std::remove(branches.begin(), branches.end(), id), branches.end());
+
+        if (!hasCommit) {
+            if (git_packbuilder_insert_commit(pb, &oid) != 0) {
+                JAMI_WARN("Couldn't open insert commit %s for %s",
+                          git_oid_tostr_s(&oid),
+                          repository_.c_str());
+                git_packbuilder_free(pb);
+                git_repository_free(repo);
+                return;
+            }
+        }
+
+        // traverse branches
+        git_commit* commit = nullptr;
+        if (git_commit_lookup(&commit, repo, &oid) < 0) {
+            JAMI_WARN("Failed to look up commit %s", id.c_str());
             break;
         }
-        if (git_packbuilder_insert_commit(pb, &oid) != 0) {
-            JAMI_WARN("Couldn't open insert commit %s for %s",
-                      git_oid_tostr_s(&oid),
-                      repository_.c_str());
-            git_packbuilder_free(pb);
-            git_repository_free(repo);
-            return;
+
+        auto parentsCount = git_commit_parentcount(commit);
+        if (parentsCount > 1) {
+            // For merge commit check if we need to traverse all branches
+            for (unsigned int p = 0; p < parentsCount; ++p) {
+                std::string parent {};
+                const git_oid* pid = git_commit_parent_id(commit, p);
+                if (pid) {
+                    parent = git_oid_tostr_s(pid);
+                    if (std::find(haveRefs_.begin(), haveRefs_.end(), id) == haveRefs_.end())
+                        branches.emplace_back(parent);
+                }
+            }
         }
+        git_commit_free(commit);
     }
 
     git_buf data = {};

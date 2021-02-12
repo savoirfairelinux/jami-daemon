@@ -30,6 +30,7 @@ using random_device = dht::crypto::random_device;
 
 #include <ctime>
 #include <fstream>
+#include <future>
 #include <json/json.h>
 #include <regex>
 #include <exception>
@@ -1873,8 +1874,9 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
     }
     git_repository_free(rep);
     auto repo = std::make_unique<ConversationRepository>(account, conversationId);
-    repo->pinCertificates(); // need to load certificates to validate non known members
+    repo->pinCertificates(true); // need to load certificates to validate non known members
     if (!repo->validClone()) {
+        repo->erase();
         JAMI_ERR("Error when validating remote conversation");
         return nullptr;
     }
@@ -2226,7 +2228,14 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
         }
         return 0;
     };
-    if (git_remote_fetch(remote.get(), nullptr, &fetch_opts, "fetch") < 0) {
+    char* refspec_strings[] = {
+        "main",
+    };
+    git_strarray array = {
+        refspec_strings,
+        1,
+    };
+    if (git_remote_fetch(remote.get(), &array, &fetch_opts, "fetch") < 0) {
         const git_error* err = giterr_last();
         if (err) {
             JAMI_ERR("Could not fetch remote repository for conversation %s: %s",
@@ -2842,7 +2851,7 @@ ConversationRepository::refreshMembers() const
 }
 
 void
-ConversationRepository::pinCertificates()
+ConversationRepository::pinCertificates(bool blocking)
 {
     auto repo = pimpl_->repository();
     if (!repo)
@@ -2854,7 +2863,16 @@ ConversationRepository::pinCertificates()
                                       repoPath + "devices"};
 
     for (const auto& path : paths) {
-        tls::CertificateStore::instance().pinCertificatePath(path, {});
+        if (blocking) {
+            std::promise<bool> p;
+            std::future<bool> f = p.get_future();
+            tls::CertificateStore::instance().pinCertificatePath(path, [&](auto /* certs */) {
+                p.set_value(true);
+            });
+            f.wait();
+        } else {
+            tls::CertificateStore::instance().pinCertificatePath(path, {});
+        }
     }
 }
 
