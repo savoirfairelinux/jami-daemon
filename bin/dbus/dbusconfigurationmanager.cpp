@@ -896,20 +896,20 @@ DBusConfigurationManager::conversationInfos(const std::string& accountId,
     return DRing::conversationInfos(accountId, conversationId);
 }
 
-bool
+void
 DBusConfigurationManager::addConversationMember(const std::string& accountId,
                                                 const std::string& conversationId,
                                                 const std::string& contactUri)
 {
-    return DRing::addConversationMember(accountId, conversationId, contactUri);
+    DRing::addConversationMember(accountId, conversationId, contactUri);
 }
 
-bool
+void
 DBusConfigurationManager::removeConversationMember(const std::string& accountId,
                                                    const std::string& conversationId,
                                                    const std::string& contactUri)
 {
-    return DRing::removeConversationMember(accountId, conversationId, contactUri);
+    DRing::removeConversationMember(accountId, conversationId, contactUri);
 }
 
 std::vector<std::map<std::string, std::string>>
