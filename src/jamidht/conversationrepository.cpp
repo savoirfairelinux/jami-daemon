@@ -30,6 +30,7 @@ using random_device = dht::crypto::random_device;
 
 #include <ctime>
 #include <fstream>
+#include <future>
 #include <json/json.h>
 #include <regex>
 #include <exception>
@@ -169,14 +170,15 @@ git_add_all(git_repository* repo)
 {
     // git add -A
     git_index* index_ptr = nullptr;
-    git_strarray array {nullptr, 0};
     if (git_repository_index(&index_ptr, repo) < 0) {
         JAMI_ERR("Could not open repository index");
         return false;
     }
     GitIndex index {index_ptr, git_index_free};
+    git_strarray array {nullptr, 0};
     git_index_add_all(index.get(), &array, 0, nullptr, nullptr);
     git_index_write(index.get());
+    git_strarray_dispose(&array);
     return true;
 }
 
@@ -351,9 +353,11 @@ initial_commit(GitRepository& repo,
                                          signed_str.c_str(),
                                          "signature")
         < 0) {
+        git_buf_dispose(&to_sign);
         JAMI_ERR("Could not sign initial commit");
         return {};
     }
+    git_buf_dispose(&to_sign);
 
     // Move commit to main branch
     git_commit* commit = nullptr;
@@ -492,9 +496,11 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
                                          signed_str.c_str(),
                                          "signature")
         < 0) {
+        git_buf_dispose(&to_sign);
         JAMI_ERR("Could not sign commit");
         return {};
     }
+    git_buf_dispose(&to_sign);
 
     auto commit_str = git_oid_tostr_s(&commit_oid);
     if (commit_str) {
@@ -1079,9 +1085,10 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
                                                   const std::string& commitId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert || !cert->issuer)
-        return false;
     auto userUri = cert->getIssuerUID();
+    auto parentCrt = tls::CertificateStore::instance().getCertificate(userUri);
+    if (!cert || !parentCrt)
+        return false;
 
     // Retrieve tree for commit
     auto repo = repository();
@@ -1111,12 +1118,12 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
     // Check that certificate matches
     std::string deviceCert = static_cast<const char*>(
         git_blob_rawcontent(reinterpret_cast<git_blob*>(blob_device.get())));
-    std::string parentCert = static_cast<const char*>(
-        git_blob_rawcontent(reinterpret_cast<git_blob*>(blob_parent.get())));
+    std::string parentCert = static_cast<const char*>(git_blob_rawcontent(
+        reinterpret_cast<git_blob*>(blob_parent.get()))); // Contains a chain, we check issuer
     auto deviceCertStr = cert->toString(false);
-    auto parentCertStr = cert->issuer->toString(true);
+    auto parentCertStr = parentCrt->toString(true);
 
-    return deviceCert == deviceCertStr && parentCert == parentCertStr;
+    return deviceCert == deviceCertStr && parentCert.find(parentCertStr) == 0;
 }
 
 bool
@@ -1414,27 +1421,32 @@ ConversationRepository::Impl::diff(git_repository* repo,
 std::vector<ConversationCommit>
 ConversationRepository::Impl::behind(const std::string& from) const
 {
-    git_oid oid_local, oid_remote;
+    git_oid oid_local, oid_head, oid_remote;
     auto repo = repository();
     if (git_reference_name_to_id(&oid_local, repo.get(), "HEAD") < 0) {
         JAMI_ERR("Cannot get reference for HEAD");
         return {};
     }
+    oid_head = oid_local;
+    std::string head = git_oid_tostr_s(&oid_head);
     if (git_oid_fromstr(&oid_remote, from.c_str()) < 0) {
         JAMI_ERR("Cannot get reference for commit %s", from.c_str());
         return {};
     }
-    size_t ahead = 0, behind = 0;
-    if (git_graph_ahead_behind(&ahead, &behind, repo.get(), &oid_local, &oid_remote) != 0) {
-        JAMI_ERR("Cannot get commits ahead for commit %s", from.c_str());
+
+    git_oidarray bases;
+    if (git_merge_bases(&bases, repo.get(), &oid_local, &oid_remote) != 0) {
+        JAMI_ERR("Cannot get any merge base for commit %s and %s", from.c_str(), head.c_str());
         return {};
     }
-
-    if (behind == 0) {
-        return {}; // Nothing to validate
+    for (std::size_t i = 0; i < bases.count; ++i) {
+        std::string oid = git_oid_tostr_s(&bases.ids[i]);
+        if (oid != from && oid != head) {
+            oid_local = bases.ids[i];
+            break;
+        }
     }
-
-    return log(from, "", behind);
+    return log(from, git_oid_tostr_s(&oid_local), 0);
 }
 
 std::vector<ConversationCommit>
@@ -1519,6 +1531,8 @@ ConversationRepository::Impl::log(const std::string& from,
             cc->signed_content = std::vector<uint8_t>(signed_data.ptr,
                                                       signed_data.ptr + signed_data.size);
         }
+        git_buf_dispose(&signature);
+        git_buf_dispose(&signed_data);
         cc->timestamp = git_commit_time(commit.get());
     }
 
@@ -1774,7 +1788,9 @@ ConversationRepository::Impl::diffStats(const GitDiff& diff) const
         return {};
     }
 
-    return std::string(statsBuf.ptr, statsBuf.ptr + statsBuf.size);
+    auto res = std::string(statsBuf.ptr, statsBuf.ptr + statsBuf.size);
+    git_buf_dispose(&statsBuf);
+    return res;
 }
 
 //////////////////////////////////
@@ -1873,8 +1889,9 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
     }
     git_repository_free(rep);
     auto repo = std::make_unique<ConversationRepository>(account, conversationId);
-    repo->pinCertificates(); // need to load certificates to validate non known members
+    repo->pinCertificates(true); // need to load certificates to validate non known members
     if (!repo->validClone()) {
+        repo->erase();
         JAMI_ERR("Error when validating remote conversation");
         return nullptr;
     }
@@ -2842,7 +2859,7 @@ ConversationRepository::refreshMembers() const
 }
 
 void
-ConversationRepository::pinCertificates()
+ConversationRepository::pinCertificates(bool blocking)
 {
     auto repo = pimpl_->repository();
     if (!repo)
@@ -2854,7 +2871,16 @@ ConversationRepository::pinCertificates()
                                       repoPath + "devices"};
 
     for (const auto& path : paths) {
-        tls::CertificateStore::instance().pinCertificatePath(path, {});
+        if (blocking) {
+            std::promise<bool> p;
+            std::future<bool> f = p.get_future();
+            tls::CertificateStore::instance().pinCertificatePath(path, [&](auto /* certs */) {
+                p.set_value(true);
+            });
+            f.wait();
+        } else {
+            tls::CertificateStore::instance().pinCertificatePath(path, {});
+        }
     }
 }
 
