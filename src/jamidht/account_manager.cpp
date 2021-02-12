@@ -202,9 +202,9 @@ AccountManager::startSync(const OnNewDeviceCb& cb)
         dht_->listen<DeviceAnnouncement>(h, [this, cb = std::move(cb)](DeviceAnnouncement&& dev) {
             findCertificate(dev.dev,
                             [this, cb](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                                foundAccountDevice(crt);
                                 if (cb)
                                     cb(crt);
-                                foundAccountDevice(crt);
                             });
             return true;
         });
