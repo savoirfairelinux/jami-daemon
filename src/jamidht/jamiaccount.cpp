@@ -3376,7 +3376,7 @@ JamiAccount::storeActiveIpAddress()
                  publicAddr.toString().c_str());
 
         // Check if we need to create a new UPNP controller instance.
-        if (upnpEnabled_ and (not upnpCtrl_ or not upnpCtrl_->hasValidIGD())) {
+        if (upnpEnabled_ and (not upnpCtrl_ or not upnpCtrl_->isReady())) {
             enableUpnp(true);
         }
     }

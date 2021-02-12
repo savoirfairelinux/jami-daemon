@@ -70,6 +70,10 @@ constexpr static int CONFLICT_IN_MAPPING = 718;
 // Timeout values (in seconds).
 constexpr static unsigned int SEARCH_TIMEOUT {60};
 constexpr static unsigned int SUBSCRIBE_TIMEOUT {300};
+// Max number of IGD search attempts before failure.
+constexpr static unsigned int PUPNP_MAX_RESTART_SEARCH_RETRIES {5};
+// Time-out between two successive IGD search.
+constexpr static auto PUPNP_TIMEOUT_BEFORE_IGD_SEARCH_RETRY {std::chrono::seconds(60)};
 
 class PUPnP : public UPnPProtocol
 {
@@ -118,8 +122,8 @@ public:
     // Get the IGD list.
     void getIgdList(std::list<std::shared_ptr<IGD>>& igdList) const override;
 
-    // Return true if it has at least one valid IGD.
-    bool hasValidIgd() const override;
+    // Return true if the it's fully setup.
+    bool isReady() const override;
 
     // Increment IGD errors counter.
     void incrementErrorsCounter(const std::shared_ptr<IGD>& igd) override;
@@ -139,6 +143,14 @@ public:
     void requestMappingRemove(const Mapping& igdMapping) override;
 
 private:
+    ScheduledExecutor* getUpnContextScheduler() { return UpnpThreadUtil::getScheduler(); }
+
+    // Return true if it has at least one valid IGD.
+    bool hasValidIgd() const;
+
+    // Update and check the host (local) address. Returns true
+    // if the address is valid.
+    bool updateAndCheckHostAddress();
 
     // Delete mappings matching the description
     void deleteMappingsByDescription(const std::shared_ptr<IGD>& igd,
@@ -190,7 +202,7 @@ private:
 #endif
 
     // Callback subscription event function for handling subscription request.
-    int handleSubscriptionUPnPEvent(Upnp_EventType event_type, const void* event);
+    int handleSubscriptionUPnPEvent(Upnp_EventType /*unused*/, const void* event);
 
     // Parses the IGD candidate.
     std::unique_ptr<UPnPIGD> parseIgd(IXML_Document* doc, std::string locationUrl);
@@ -225,6 +237,8 @@ private:
     std::condition_variable pupnpCv_ {}; // Condition variable for thread-safe signaling.
     std::atomic_bool pupnpRun_ {true};   // Variable to allow the thread to run.
     std::thread pupnpThread_ {};         // PUPnP thread for non-blocking client registration.
+    std::shared_ptr<Task> searchForIgdTimer_ {};
+    unsigned int igdSearchCounter_ {0};
 
     mutable std::mutex validIgdListMutex_;
     std::list<std::shared_ptr<IGD>> validIgdList_; // List of valid IGDs.

@@ -58,31 +58,6 @@ public:
     using sharedPtr_t = std::shared_ptr<Mapping>;
     using NotifyCallback = std::function<void(sharedPtr_t)>;
 
-    struct MappingAddr
-    {
-        std::string addr_ {};
-        uint16_t port_ {0};
-        MappingAddr()
-            : addr_()
-            , port_(0)
-        {}
-
-        MappingAddr(const MappingAddr& other)
-        {
-            addr_ = other.addr_;
-            port_ = other.port_;
-        }
-
-        MappingAddr& operator=(const MappingAddr& other)
-        {
-            if (this != &other) {
-                addr_ = other.addr_;
-                port_ = other.port_;
-            }
-            return *this;
-        }
-    };
-
     static constexpr char const* MAPPING_STATE_STR[4] {"PENDING", "IN_PROGRESS", "FAILED", "OPEN"};
     static constexpr char const* UPNP_MAPPING_DESCRIPTION_PREFIX {"JAMI"};
 
@@ -90,8 +65,8 @@ public:
             uint16_t portInternal = 0,
             PortType type = PortType::UDP,
             bool available = true);
-    Mapping(Mapping&& other) noexcept;
     Mapping(const Mapping& other);
+    Mapping(Mapping&& other) = delete;
     ~Mapping() = default;
 
     Mapping& operator=(Mapping&& other) noexcept;
@@ -106,6 +81,7 @@ public:
 
     inline explicit operator bool() const { return isValid(); }
 
+    void updateFrom(const Mapping& other);
     std::string getExternalAddress() const;
     uint16_t getExternalPort() const;
     std::string getExternalPortStr() const;
@@ -127,6 +103,8 @@ public:
     }
     std::string toString(bool addState = false) const;
     bool isValid() const;
+    bool hasValidHostAddress() const;
+    bool hasPublicAddress() const;
     void setNotifyCallback(NotifyCallback cb);
     void enableAutoUpdate(bool enable);
     bool getAutoUpdate() const;
@@ -138,10 +116,8 @@ public:
 
 private:
     NotifyCallback getNotifyCallback() const;
-    // TODO_MC. Remove SetXXadress. already have IGD. Set ports instead.
-    void setExternalAddress(const std::string& addr);
-    void setExternalPort(uint16_t port);
     void setInternalAddress(const std::string& addr);
+    void setExternalPort(uint16_t port);
     void setInternalPort(uint16_t port);
 
     void setIgd(const std::shared_ptr<IGD>& igd);
@@ -155,8 +131,9 @@ private:
 #endif
 
     mutable std::mutex mutex_;
-    MappingAddr externalAddr_;
-    MappingAddr internalAddr_;
+    std::string internalAddr_;
+    uint16_t internalPort_ {0};
+    uint16_t externalPort_ {0};
     PortType type_;
     // Protocol and
     std::shared_ptr<IGD> igd_;

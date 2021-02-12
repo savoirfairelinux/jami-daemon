@@ -552,9 +552,9 @@ IceTransport::Impl::handleEvents(unsigned max_msec)
 void
 IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_status_t status)
 {
-    const char* opname = op == PJ_ICE_STRANS_OP_INIT          ? "initialization"
-                         : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation"
-                                                              : "unknown_op";
+    const char* opname = op == PJ_ICE_STRANS_OP_INIT
+                             ? "initialization"
+                             : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
@@ -793,8 +793,9 @@ IceTransport::Impl::requestUpnpMappings()
         // Request the mapping
         Mapping::sharedPtr_t mapPtr = upnp_->reserveMapping(requestedMap);
 
-        // To use a mapping, it must be valid and open.
-        if (mapPtr and mapPtr->getMapKey() and (mapPtr->getState() == MappingState::OPEN)) {
+        // To use a mapping, it must be valid, open and has valid host address.
+        if (mapPtr and mapPtr->getMapKey() and (mapPtr->getState() == MappingState::OPEN)
+            and mapPtr->hasValidHostAddress()) {
             std::lock_guard<std::mutex> lock(upnpMappingsMutex_);
             auto ret = upnpMappings_.emplace(mapPtr->getMapKey(), *mapPtr);
             if (ret.second) {

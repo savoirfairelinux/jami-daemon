@@ -26,8 +26,9 @@ namespace jami {
 namespace upnp {
 
 Mapping::Mapping(uint16_t portExternal, uint16_t portInternal, PortType type, bool available)
-    : externalAddr_()
-    , internalAddr_()
+    : internalAddr_()
+    , internalPort_(portInternal)
+    , externalPort_(portExternal)
     , type_(type)
     , igd_()
     , available_(available)
@@ -38,32 +39,15 @@ Mapping::Mapping(uint16_t portExternal, uint16_t portInternal, PortType type, bo
 #if HAVE_LIBNATPMP
     , renewalTime_(sys_clock::now())
 #endif
-{
-    externalAddr_.port_ = portExternal;
-    internalAddr_.port_ = portInternal;
-}
-
-Mapping::Mapping(Mapping&& other) noexcept
-    : externalAddr_(std::move(other.externalAddr_))
-    , internalAddr_(std::move(other.internalAddr_))
-    , type_(other.type_)
-    , igd_(other.igd_)
-    , available_(other.available_)
-    , state_(other.state_)
-    , notifyCb_(std::move(other.notifyCb_))
-    , timeoutTimer_(std::move(other.timeoutTimer_))
-    , autoUpdate_(other.autoUpdate_)
-#if HAVE_LIBNATPMP
-    , renewalTime_(other.renewalTime_)
-#endif
 {}
 
 Mapping::Mapping(const Mapping& other)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    externalAddr_ = other.externalAddr_;
     internalAddr_ = other.internalAddr_;
+    internalPort_ = other.internalPort_;
+    externalPort_ = other.externalPort_;
     type_ = other.type_;
     igd_ = other.igd_;
     available_ = other.available_;
@@ -82,8 +66,9 @@ Mapping::operator=(Mapping&& other) noexcept
     std::lock_guard<std::mutex> lock(mutex_);
 
     if (this != &other) {
-        externalAddr_ = other.externalAddr_;
         internalAddr_ = other.internalAddr_;
+        internalPort_ = other.internalPort_;
+        externalPort_ = other.externalPort_;
         type_ = other.type_;
         igd_ = other.igd_;
         other.igd_.reset();
@@ -109,15 +94,15 @@ Mapping::operator==(const Mapping& other) const noexcept
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (externalAddr_.addr_ != other.externalAddr_.addr_)
+    if (internalAddr_ != other.internalAddr_)
         return false;
-    if (externalAddr_.port_ != other.externalAddr_.port_)
+    if (internalPort_ != other.internalPort_)
         return false;
-    if (internalAddr_.addr_ != other.internalAddr_.addr_)
-        return false;
-    if (internalAddr_.port_ != other.internalAddr_.port_)
+    if (externalPort_ != other.externalPort_)
         return false;
     if (type_ != other.type_)
+        return false;
+    if (igd_ != other.igd_)
         return false;
     return true;
 }
@@ -126,6 +111,20 @@ bool
 Mapping::operator!=(const Mapping& other) const noexcept
 {
     return not(*this == other);
+}
+
+void
+Mapping::updateFrom(const Mapping& other)
+{
+    if (internalPort_ != other.internalPort_ or type_ != other.type_) {
+        JAMI_ERR("The source and destination mappings must match (same type and port)");
+        assert(false);
+    }
+
+    internalAddr_ = std::move(other.internalAddr_);
+    externalPort_ = other.externalPort_;
+    igd_ = other.igd_;
+    state_ = other.state_;
 }
 
 void
@@ -171,7 +170,7 @@ Mapping::toString(bool addState) const
     std::lock_guard<std::mutex> lock(mutex_);
     std::ostringstream descr;
     descr << UPNP_MAPPING_DESCRIPTION_PREFIX << "-" << getTypeStr(type_);
-    descr << ":" << std::to_string(externalAddr_.port_);
+    descr << ":" << std::to_string(internalPort_);
 
     if (addState)
         descr << " (state=" << getStateStr(state_) << ")";
@@ -182,14 +181,39 @@ Mapping::toString(bool addState) const
 bool
 Mapping::isValid() const
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (externalAddr_.port_ == 0)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (state_ == MappingState::FAILED)
+            return false;
+        if (internalPort_ == 0)
+            return false;
+        if (externalPort_ == 0)
+            return false;
+        if (not igd_ or not igd_->isValid())
+            return false;
+    }
+
+    if (not hasValidHostAddress())
         return false;
-    if (internalAddr_.port_ == 0)
-        return false;
-    if (state_ == MappingState::FAILED)
-        return false;
+
     return true;
+}
+
+bool
+Mapping::hasValidHostAddress() const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    IpAddr intAddr(internalAddr_);
+    return intAddr and not intAddr.isLoopback();
+}
+
+bool
+Mapping::hasPublicAddress() const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    return igd_ and igd_->getPublicIp() and not igd_->getPublicIp().isPrivate();
 }
 
 void
@@ -218,7 +242,7 @@ Mapping::getMapKey() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    key_t mapKey = externalAddr_.port_;
+    key_t mapKey = internalPort_;
     if (type_ == PortType::UDP)
         mapKey |= 1 << (sizeof(uint16_t) * 8);
     return mapKey;
@@ -230,74 +254,69 @@ Mapping::getTypeFromMapKey(key_t key)
     return (key >> (sizeof(uint16_t) * 8)) ? PortType::UDP : PortType::TCP;
 }
 
-void
-Mapping::setExternalAddress(const std::string& addr)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    externalAddr_.addr_ = addr;
-}
-
 std::string
 Mapping::getExternalAddress() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    return externalAddr_.addr_;
+    if (igd_)
+        return igd_->getPublicIp().toString();
+    return {};
 }
 
 void
 Mapping::setExternalPort(uint16_t port)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    externalAddr_.port_ = port;
+    externalPort_ = port;
 }
 
 uint16_t
 Mapping::getExternalPort() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    return externalAddr_.port_;
+    return externalPort_;
 }
 
 std::string
 Mapping::getExternalPortStr() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    return std::to_string(externalAddr_.port_);
+    return std::to_string(externalPort_);
 }
 
 void
 Mapping::setInternalAddress(const std::string& addr)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    internalAddr_.addr_ = addr;
+    internalAddr_ = addr;
 }
 
 std::string
 Mapping::getInternalAddress() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    return internalAddr_.addr_;
+    return internalAddr_;
 }
 
 void
 Mapping::setInternalPort(uint16_t port)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    internalAddr_.port_ = port;
+    internalPort_ = port;
 }
 
 uint16_t
 Mapping::getInternalPort() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    return internalAddr_.port_;
+    return internalPort_;
 }
 
 std::string
 Mapping::getInternalPortStr() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    return std::to_string(internalAddr_.port_);
+    return std::to_string(internalPort_);
 }
 
 PortType

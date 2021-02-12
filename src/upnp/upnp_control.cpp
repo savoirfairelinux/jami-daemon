@@ -57,17 +57,17 @@ Controller::~Controller()
 }
 
 bool
-Controller::hasValidIGD() const
+Controller::isReady() const
 {
     assert(upnpContext_);
-    return upnpContext_->hasValidIGD();
+    return upnpContext_->isReady();
 }
 
 IpAddr
 Controller::getExternalIP() const
 {
     assert(upnpContext_);
-    if (upnpContext_->hasValidIGD()) {
+    if (upnpContext_->isReady()) {
         return upnpContext_->getExternalIP();
     }
     return {};

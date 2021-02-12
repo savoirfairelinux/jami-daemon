@@ -94,11 +94,12 @@ errorOnResponse(IXML_Document* doc)
     return false;
 }
 
-
 // UPNP class implementation
 
 PUPnP::PUPnP()
 {
+    threadId_ = getCurrentThread();
+
     if (not initUpnpLib())
         return;
     if (not registerClient())
@@ -249,10 +250,12 @@ PUPnP::setObserver(UpnpMappingObserver* obs)
 void
 PUPnP::searchForDevices()
 {
-    userLocalIp_ = ip_utils::getLocalAddr(pj_AF_INET());
+    std::unique_lock<std::mutex> lk(ctrlptMutex_);
+
+    JAMI_DBG("PUPnP: Send IGD search request");
+
     // Send out search for multiple types of devices, as some routers may possibly
     // only reply to one.
-    std::unique_lock<std::mutex> lk(ctrlptMutex_);
     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_ROOT_DEVICE, this);
     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_IGD_DEVICE, this);
     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANIP_SERVICE, this);
@@ -263,6 +266,15 @@ void
 PUPnP::clearIgds()
 {
     JAMI_DBG("PUPnP: clearing IGDs and devices lists");
+
+    CHECK_VALID_THREAD();
+
+    hostAddress_ = {};
+
+    if (searchForIgdTimer_)
+        searchForIgdTimer_->cancel();
+
+    igdSearchCounter_ = 0;
 
     {
         std::lock_guard<std::mutex> lock(validIgdListMutex_);
@@ -281,9 +293,30 @@ PUPnP::clearIgds()
 void
 PUPnP::searchForIgd()
 {
-    // Notify thread to execute in non-blocking fashion.
-    searchForIgd_ = true;
-    pupnpCv_.notify_one();
+    CHECK_VALID_THREAD();
+
+    // Update local address before searching.
+    hostAddress_ = ip_utils::getLocalAddr(pj_AF_INET());
+
+    if (not isReady()) {
+        if (igdSearchCounter_++ < PUPNP_MAX_RESTART_SEARCH_RETRIES) {
+            JAMI_DBG("PUPnP: Start search for IGD: attempt %u", igdSearchCounter_);
+
+            searchForIgd_ = true;
+            pupnpCv_.notify_one();
+
+            // Cancel the current timer (if any) and re-schedule.
+            if (searchForIgdTimer_)
+                searchForIgdTimer_->cancel();
+
+            searchForIgdTimer_ = getUpnContextScheduler()
+                                     ->scheduleIn([this] { searchForIgd(); },
+                                                  PUPNP_TIMEOUT_BEFORE_IGD_SEARCH_RETRY);
+        } else {
+            JAMI_WARN("PUPnP: Setup failed after %u trials. PUPnP will be disabled!",
+                      PUPNP_MAX_RESTART_SEARCH_RETRIES);
+        }
+    }
 }
 
 void
@@ -299,6 +332,16 @@ PUPnP::getIgdList(std::list<std::shared_ptr<IGD>>& igdList) const
 }
 
 bool
+PUPnP::isReady() const
+{
+    // Must at least have a valid local address.
+    if (not getHostAddress() or getHostAddress().isLoopback())
+        return false;
+
+    return hasValidIgd();
+}
+
+bool
 PUPnP::hasValidIgd() const
 {
     for (auto& it : validIgdList_) {
@@ -307,6 +350,17 @@ PUPnP::hasValidIgd() const
         }
     }
     return false;
+}
+
+bool
+PUPnP::updateAndCheckHostAddress()
+{
+    if (hostAddress_ and not hostAddress_.isLoopback())
+        return true;
+
+    hostAddress_ = ip_utils::getLocalAddr(pj_AF_INET());
+
+    return hostAddress_ and not hostAddress_.isLoopback();
 }
 
 void
@@ -344,8 +398,7 @@ PUPnP::validateIgd(const IGDInfo& info)
         return false;
     }
 
-    JAMI_DBG("PUPnP: Validating IGD candidate\n"
-             "    UDN          : %s\n"
+    JAMI_DBG("PUPnP: Validating the IGD candidate [UDN: %s]\n"
              "    Name         : %s\n"
              "    Service Type : %s\n"
              "    Service ID   : %s\n"
@@ -404,7 +457,8 @@ PUPnP::validateIgd(const IGDInfo& info)
             // Must not be a null pointer
             assert(igd.get() != nullptr);
             if (*igd == *igd_candidate) {
-                JAMI_DBG("PUPnP: Device [%s] with int/ext addresses [%s:%s] is already in the list",
+                JAMI_DBG("PUPnP: Device [%s] with int/ext addresses [%s:%s] is already in the list "
+                         "of valid IGDs",
                          igd_candidate->getUID().c_str(),
                          igd_candidate->getLocalIp().toString().c_str(),
                          igd_candidate->getPublicIp().toString().c_str());
@@ -413,8 +467,10 @@ PUPnP::validateIgd(const IGDInfo& info)
         }
     }
 
-    JAMI_DBG("PUPnP: Found new valid IGD [%s] with int/ext addresses [%s:%s]",
-             igd_candidate->getUID().c_str(),
+    JAMI_DBG("PUPnP: Added a new IGD [%s] to the list of valid IGDs",
+             igd_candidate->getUID().c_str());
+
+    JAMI_DBG("PUPnP: New IGD addresses [int: %s - ext: %s]",
              igd_candidate->getLocalIp().toString().c_str(),
              igd_candidate->getPublicIp().toString().c_str());
 
@@ -448,7 +504,6 @@ void
 PUPnP::requestMappingAdd(const std::shared_ptr<IGD>& igd, const Mapping& mapping)
 {
     if (auto pupnp_igd = std::dynamic_pointer_cast<const UPnPIGD>(igd)) {
-        JAMI_DBG("PUPnP: Attempting to open port %s", mapping.toString().c_str());
         actionAddPortMappingAsync(*pupnp_igd, mapping);
     }
 }
@@ -486,7 +541,7 @@ PUPnP::actionAddPortMappingAsync(const UPnPIGD& igd, const Mapping& mapping)
                     ACTION_ADD_PORT_MAPPING,
                     igd.getServiceType().c_str(),
                     "NewInternalClient",
-                    getUserLocalIp().toString().c_str());
+                    getHostAddress().toString().c_str());
     UpnpAddToAction(&action_container_ptr,
                     ACTION_ADD_PORT_MAPPING,
                     igd.getServiceType().c_str(),
@@ -537,8 +592,7 @@ PUPnP::processAddMapAction(const std::string& ctrlURL,
         for (auto const& it : validIgdList_) {
             if (auto igd = std::dynamic_pointer_cast<UPnPIGD>(it)) {
                 if (igd->getControlURL() == ctrlURL) {
-                    mapToAdd.setExternalAddress(igd->getPublicIp().toString());
-                    mapToAdd.setInternalAddress(getUserLocalIp().toString());
+                    mapToAdd.setInternalAddress(getHostAddress().toString());
                     mapToAdd.setIgd(igd);
                     break;
                 }
@@ -590,9 +644,6 @@ PUPnP::requestMappingRemove(const Mapping& igdMapping)
     // Iterate over all IGDs in internal list and try to remove selected mapping.
     for (auto const& it : validIgdList_) {
         if (auto igd = std::dynamic_pointer_cast<UPnPIGD>(it)) {
-            JAMI_DBG("PUPnP: Attempting to close port %s %s",
-                     igdMapping.getExternalPortStr().c_str(),
-                     igdMapping.getTypeStr());
             std::lock_guard<std::mutex> lk2(ctrlptMutex_);
             actionDeletePortMappingAsync(*igd,
                                          igdMapping.getExternalPortStr(),
@@ -676,16 +727,25 @@ PUPnP::processDiscoverySearchResult(const std::string& cpDeviceId,
                                     const std::string& igdLocationUrl,
                                     const IpAddr& dstAddr)
 {
+    // Must first have a valid local address.
+    if (not updateAndCheckHostAddress()) {
+        JAMI_WARN("PUPnP: Local address is invalid. Ignore search result for now!");
+        return;
+    }
+
     dht::http::Url url(igdLocationUrl);
 
     std::lock_guard<std::mutex> lk(igdListMutex_);
 
-    if (not discoveredIgdList_.emplace(cpDeviceId).second)
+    // Use the device ID and the URL as ID. This is necessary as some
+    // IGDs may have the same device ID but different URLs.
+
+    auto igdId = cpDeviceId + " url: " + igdLocationUrl;
+
+    if (not discoveredIgdList_.emplace(igdId).second)
         return;
 
-    JAMI_DBG("PUPnP: Added IGD %s [%s] to known IGD list",
-             cpDeviceId.c_str(),
-             IpAddr(url.host).toString(true, true).c_str());
+    JAMI_DBG("PUPnP: Discovered a new IGD [%s]", igdId.c_str());
 
     // NOTE: here, we check if the location given is related to the source address.
     // If it's not the case, it's certainly a router plugged in the network, but not
@@ -698,8 +758,6 @@ PUPnP::processDiscoverySearchResult(const std::string& cpDeviceId,
                  IpAddr(url.host).toString(true, true).c_str(),
                  dstAddr.toString(true, true).c_str());
         return;
-    } else {
-        JAMI_DBG("PUPnP: Returned IGD location %s", IpAddr(url.host).toString(true, true).c_str());
     }
 
     dwnldlXmlList_.emplace_back(
@@ -834,11 +892,14 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
         break;
     }
     case UPNP_DISCOVERY_SEARCH_TIMEOUT: {
-        // Nothing to do here.
+        // Even if the discovery search is successful, it's normal to receive
+        // time-out events. This because we send search requests using various
+        // device types, which some of them may not return a response.
+        JAMI_DBG("PUPnP: Received discovery search time-out");
         break;
     }
     case UPNP_EVENT_RECEIVED: {
-        // TODO: Handle event by updating any changed state variables */
+        // Nothing to do.
         break;
     }
     case UPNP_EVENT_AUTORENEWAL_FAILED:   // Fall through. Treat failed autorenewal like an expired
@@ -933,17 +994,23 @@ PUPnP::subEventCallback(Upnp_EventType event_type, const void* event, void* user
 }
 
 int
-PUPnP::handleSubscriptionUPnPEvent(Upnp_EventType /*event_type */, const void* event)
+PUPnP::handleSubscriptionUPnPEvent(Upnp_EventType /*unused*/, const void* event)
 {
-    const UpnpEventSubscribe* es_event = (const UpnpEventSubscribe*) event;
-    int upnp_err = UpnpEventSubscribe_get_ErrCode(es_event);
-    if (upnp_err != UPNP_E_SUCCESS) {
-        JAMI_WARN("PUPnP: Error when trying to handle subscription callback -> %s",
-                  UpnpGetErrorMessage(upnp_err));
-        return upnp_err;
+    if (event == nullptr) {
+        JAMI_ERR("PUPnP: Unexpected null pointer!");
+        return UPNP_E_INVALID_ARGUMENT;
     }
 
-    // TODO: Handle subscription event.
+    const UpnpEventSubscribe* es_event = (const UpnpEventSubscribe*) event;
+    std::string publisherUrl(UpnpEventSubscribe_get_PublisherUrl_cstr(es_event));
+
+    int upnp_err = UpnpEventSubscribe_get_ErrCode(es_event);
+    if (upnp_err != UPNP_E_SUCCESS) {
+        JAMI_WARN("PUPnP: Subscription error %s from %s",
+                  UpnpGetErrorMessage(upnp_err),
+                  publisherUrl.c_str());
+        return upnp_err;
+    }
 
     return UPNP_E_SUCCESS;
 }
@@ -1238,7 +1305,7 @@ PUPnP::getMappingsListByDescr(const std::shared_ptr<IGD>& igd, const std::string
         std::string desc_actual = getFirstDocItem(response.get(), "NewPortMappingDescription");
         std::string client_ip = getFirstDocItem(response.get(), "NewInternalClient");
 
-        if (client_ip != getUserLocalIp().toString()) {
+        if (client_ip != getHostAddress().toString()) {
             // Silently ignore un-matching addresses.
             continue;
         }
@@ -1284,7 +1351,7 @@ PUPnP::deleteMappingsByDescription(const std::shared_ptr<IGD>& igd, const std::s
              igd->getLocalIp().toString().c_str(),
              Mapping::UPNP_MAPPING_DESCRIPTION_PREFIX);
 
-    auto mapList = getMappingsListByDescr(igd, Mapping::UPNP_MAPPING_DESCRIPTION_PREFIX);
+    auto mapList = getMappingsListByDescr(igd, description);
 
     for (auto const& [_, map] : mapList) {
         requestMappingRemove(map);
@@ -1305,7 +1372,6 @@ PUPnP::actionDeletePortMapping(const UPnPIGD& igd,
     std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&>
         response(nullptr, ixmlDocument_free); // Response pointer.
     IXML_Document* action_container_ptr = nullptr;
-    IXML_Document* response_container_ptr = nullptr;
 
     // Set action name.
     std::string action_name {"DeletePortMapping"};
@@ -1345,7 +1411,7 @@ PUPnP::actionDeletePortMapping(const UPnPIGD& igd,
         return false;
     }
 
-    JAMI_DBG("PUPnP: Successfully sent %s request from %s",
+    JAMI_DBG("PUPnP: Successfully sent %s request to %s",
              action_name.c_str(),
              igd.getServiceType().c_str());
 
@@ -1396,7 +1462,7 @@ PUPnP::actionAddPortMapping(const UPnPIGD& igd,
                     action_name.c_str(),
                     igd.getServiceType().c_str(),
                     "NewInternalClient",
-                    getUserLocalIp().toString().c_str());
+                    getHostAddress().toString().c_str());
     UpnpAddToAction(&action_container_ptr,
                     action_name.c_str(),
                     igd.getServiceType().c_str(),

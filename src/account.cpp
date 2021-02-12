@@ -543,7 +543,7 @@ Account::getUPnPActive() const
 {
     std::lock_guard<std::mutex> lk(upnp_mtx);
     if (upnpCtrl_)
-        return upnpCtrl_->hasValidIGD();
+        return upnpCtrl_->isReady();
     return false;
 }
 

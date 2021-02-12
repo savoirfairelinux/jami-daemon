@@ -109,7 +109,7 @@ public:
     void setPublicAddress(const IpAddr& addr);
 
     // Check if there is a valid IGD in the IGD list.
-    bool hasValidIGD() const;
+    bool isReady() const;
 
     // Get external Ip of a chosen IGD.
     IpAddr getExternalIP() const;
