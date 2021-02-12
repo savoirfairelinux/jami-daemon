@@ -284,10 +284,10 @@ cancelMessage(const std::string& accountID, uint64_t messageId)
 }
 
 void
-setIsComposing(const std::string& accountID, const std::string& to, bool isWriting)
+setIsComposing(const std::string& accountID, const std::string& conversationUri, bool isWriting)
 {
     if (const auto acc = jami::Manager::instance().getAccount(accountID))
-        acc->setIsComposing(to, isWriting);
+        acc->setIsComposing(conversationUri, isWriting);
 }
 
 bool
