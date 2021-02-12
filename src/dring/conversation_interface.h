@@ -51,10 +51,10 @@ DRING_PUBLIC std::map<std::string, std::string> conversationInfos(const std::str
                                                                   const std::string& conversationId);
 
 // Member management
-DRING_PUBLIC bool addConversationMember(const std::string& accountId,
+DRING_PUBLIC void addConversationMember(const std::string& accountId,
                                         const std::string& conversationId,
                                         const std::string& contactUri);
-DRING_PUBLIC bool removeConversationMember(const std::string& accountId,
+DRING_PUBLIC void removeConversationMember(const std::string& accountId,
                                            const std::string& conversationId,
                                            const std::string& contactUri);
 DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMembers(
