@@ -26,6 +26,7 @@
 
 #include "def.h"
 
+using GitPackBuilder = std::unique_ptr<git_packbuilder, decltype(&git_packbuilder_free)>;
 using GitRepository = std::unique_ptr<git_repository, decltype(&git_repository_free)>;
 using GitRevWalker = std::unique_ptr<git_revwalk, decltype(&git_revwalk_free)>;
 using GitCommit = std::unique_ptr<git_commit, decltype(&git_commit_free)>;
@@ -284,8 +285,9 @@ public:
     /**
      * Because conversations can contains non contacts certificates, this methods
      * loads certificates in conversations into the cert store
+     * @param blocking      if we need to wait that certificates are pinned
      */
-    void pinCertificates();
+    void pinCertificates(bool blocking = false);
 
     /**
      * Change repository's infos

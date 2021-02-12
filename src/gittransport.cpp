@@ -71,9 +71,10 @@ sendCmd(P2PStream* s)
     }
 
     std::error_code ec;
-    if ((res = s->socket->write(reinterpret_cast<const unsigned char*>(request.ptr),
-                                request.size,
-                                ec))) {
+    auto sock = s->socket.lock();
+    if (!sock)
+        return -1;
+    if ((res = sock->write(reinterpret_cast<const unsigned char*>(request.ptr), request.size, ec))) {
         s->sent_command = 1;
         git_buf_free(&request);
         return res;
@@ -88,7 +89,8 @@ P2PStreamRead(git_smart_subtransport_stream* stream, char* buffer, size_t buflen
 {
     *read = 0;
     auto* fs = reinterpret_cast<P2PStream*>(stream);
-    if (!fs->socket) {
+    auto sock = fs->socket.lock();
+    if (!sock) {
         giterr_set_str(GITERR_NET, "unavailable socket");
         return -1;
     }
@@ -101,11 +103,9 @@ P2PStreamRead(git_smart_subtransport_stream* stream, char* buffer, size_t buflen
 
     std::error_code ec;
     // TODO ChannelSocket needs a blocking read operation
-    size_t datalen = fs->socket->waitForData(std::chrono::milliseconds(3600 * 1000 * 24), ec);
+    size_t datalen = sock->waitForData(std::chrono::milliseconds(3600 * 1000 * 24), ec);
     if (datalen > 0)
-        *read = fs->socket->read(reinterpret_cast<unsigned char*>(buffer),
-                                 std::min(datalen, buflen),
-                                 ec);
+        *read = sock->read(reinterpret_cast<unsigned char*>(buffer), std::min(datalen, buflen), ec);
 
     return res;
 }
@@ -114,12 +114,13 @@ int
 P2PStreamWrite(git_smart_subtransport_stream* stream, const char* buffer, size_t len)
 {
     auto* fs = reinterpret_cast<P2PStream*>(stream);
-    if (!fs->socket) {
+    auto sock = fs->socket.lock();
+    if (!sock) {
         giterr_set_str(GITERR_NET, "unavailable socket");
         return -1;
     }
     std::error_code ec;
-    auto written = fs->socket->write(reinterpret_cast<const unsigned char*>(buffer), len, ec);
+    sock->write(reinterpret_cast<const unsigned char*>(buffer), len, ec);
     if (ec) {
         giterr_set_str(GITERR_NET, ec.message().c_str());
         return -1;
@@ -177,21 +178,21 @@ P2PSubTransportAction(git_smart_subtransport_stream** out,
 
     if (action == GIT_SERVICE_UPLOADPACK_LS) {
         auto gitSocket = jami::Manager::instance().gitSocket(accountId, deviceId, conversationId);
-        if (!gitSocket) {
+        if (gitSocket == std::nullopt) {
             JAMI_ERR("Can't find related socket for %s, %s, %s",
                      accountId.c_str(),
                      deviceId.c_str(),
                      conversationId.c_str());
             return -1;
         }
-        auto* stream = new P2PStream();
-        stream->socket = gitSocket;
+        auto stream = std::make_unique<P2PStream>();
+        stream->socket = *gitSocket;
         stream->base.read = P2PStreamRead;
         stream->base.write = P2PStreamWrite;
         stream->base.free = P2PStreamFree;
         stream->cmd = UPLOAD_PACK_CMD;
         stream->url = url + std::string("git://").size();
-        sub->stream = stream;
+        sub->stream = std::move(stream);
         *out = &sub->stream->base;
         return 0;
     } else if (action == GIT_SERVICE_UPLOADPACK) {
@@ -211,19 +212,22 @@ P2PSubTransportClose(git_smart_subtransport*)
 }
 
 void
-P2PSubTransportFree(git_smart_subtransport*)
-{}
+P2PSubTransportFree(git_smart_subtransport* transport)
+{
+    jami::Manager::instance().gitTransports.erase(transport);
+}
 
 int
 P2PSubTransportNew(P2PSubTransport** out, git_transport*, void* payload)
 {
-    P2PSubTransport* sub = new P2PSubTransport();
+    auto sub = std::make_unique<P2PSubTransport>();
     sub->remote = reinterpret_cast<git_remote*>(payload);
-    sub->base.action = P2PSubTransportAction;
-    sub->base.close = P2PSubTransportClose;
-    sub->base.free = P2PSubTransportFree;
-
-    *out = sub;
+    auto* base = &sub->base;
+    base->action = P2PSubTransportAction;
+    base->close = P2PSubTransportClose;
+    base->free = P2PSubTransportFree;
+    *out = sub.get();
+    jami::Manager::instance().gitTransports[base] = std::move(sub);
     return 0;
 }
 
