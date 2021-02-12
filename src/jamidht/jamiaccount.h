@@ -51,12 +51,13 @@
 
 #include <pjsip/sip_types.h>
 
-#include <vector>
-#include <map>
 #include <chrono>
-#include <list>
 #include <future>
 #include <json/json.h>
+#include <list>
+#include <map>
+#include <optional>
+#include <vector>
 
 #if HAVE_RINGNS
 #include "namedirectory.h"
@@ -458,18 +459,22 @@ public:
      * ConnectionManager needs the account to exists
      */
     void shutdownConnections();
-    std::shared_ptr<ChannelSocket> gitSocket(const std::string& deviceId,
-                                             const std::string& conversationId) const
+    std::optional<std::weak_ptr<ChannelSocket>> gitSocket(const std::string& deviceId,
+                                                          const std::string& conversationId) const
     {
         auto deviceSockets = gitSocketList_.find(deviceId);
         if (deviceSockets == gitSocketList_.end()) {
-            return nullptr;
+            return std::nullopt;
         }
         auto socketIt = deviceSockets->second.find(conversationId);
         if (socketIt == deviceSockets->second.end()) {
-            return nullptr;
+            return std::nullopt;
         }
         return socketIt->second;
+    }
+    bool hasGitSocket(const std::string& deviceId, const std::string& conversationId) const
+    {
+        return gitSocket(deviceId, conversationId) != std::nullopt;
     }
 
     void addGitSocket(const std::string& deviceId,
@@ -510,10 +515,10 @@ public:
     std::vector<uint8_t> conversationVCard(const std::string& conversationId) const;
 
     // Member management
-    bool addConversationMember(const std::string& conversationId,
+    void addConversationMember(const std::string& conversationId,
                                const std::string& contactUri,
                                bool sendRequest = true);
-    bool removeConversationMember(const std::string& conversationId,
+    void removeConversationMember(const std::string& conversationId,
                                   const std::string& contactUri,
                                   bool isDevice = false);
     std::vector<std::map<std::string, std::string>> getConversationMembers(
@@ -591,6 +596,7 @@ public:
                        DRing::DataTransferId id,
                        int64_t& total,
                        int64_t& progress);
+    void loadConversations();
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -736,7 +742,6 @@ private:
     void saveConvInfos() const;
 
     void loadConvRequests();
-    void saveConvRequests();
 
     template<class... Args>
     std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
@@ -1010,9 +1015,6 @@ private:
     void sendMessageNotification(const Conversation& conversation,
                                  const std::string& commitId,
                                  bool sync);
-
-    void announceMemberMessage(const std::string& convId,
-                               const std::map<std::string, std::string>& message) const;
 
     /**
      * Get related conversation with member

@@ -619,9 +619,9 @@
                The account ID
              </tp:docstring>
            </arg>
-           <arg type="s" name="contactId" direction="in">
+           <arg type="s" name="conversationUri" direction="in">
              <tp:docstring>
-               The contact ID
+               A conversation uri (swarm:xxxx or jami:xxxx)
              </tp:docstring>
            </arg>
            <arg type="b" name="isComposing" direction="in">
@@ -1721,7 +1721,6 @@
            <tp:docstring>
                Add a member to a conversation
            </tp:docstring>
-           <arg type="b" name="success" direction="out"/>
            <arg type="s" name="accountId" direction="in"/>
            <arg type="s" name="conversationId" direction="in"/>
            <arg type="s" name="contactUri" direction="in"/>
@@ -1732,7 +1731,6 @@
            <tp:docstring>
                Remove a member from a conversation
            </tp:docstring>
-           <arg type="b" name="success" direction="out"/>
            <arg type="s" name="accountId" direction="in"/>
            <arg type="s" name="conversationId" direction="in"/>
            <arg type="s" name="contactUri" direction="in"/>

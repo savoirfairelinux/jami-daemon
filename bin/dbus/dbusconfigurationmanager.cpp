@@ -226,10 +226,10 @@ DBusConfigurationManager::cancelMessage(const std::string& accountID, const uint
 
 void
 DBusConfigurationManager::setIsComposing(const std::string& accountID,
-                                         const std::string& to,
+                                         const std::string& conversationUri,
                                          const bool& isWriting)
 {
-    DRing::setIsComposing(accountID, to, isWriting);
+    DRing::setIsComposing(accountID, conversationUri, isWriting);
 }
 
 bool
@@ -873,20 +873,20 @@ DBusConfigurationManager::conversationInfos(const std::string& accountId,
     return DRing::conversationInfos(accountId, conversationId);
 }
 
-bool
+void
 DBusConfigurationManager::addConversationMember(const std::string& accountId,
                                                 const std::string& conversationId,
                                                 const std::string& contactUri)
 {
-    return DRing::addConversationMember(accountId, conversationId, contactUri);
+    DRing::addConversationMember(accountId, conversationId, contactUri);
 }
 
-bool
+void
 DBusConfigurationManager::removeConversationMember(const std::string& accountId,
                                                    const std::string& conversationId,
                                                    const std::string& contactUri)
 {
-    return DRing::removeConversationMember(accountId, conversationId, contactUri);
+    DRing::removeConversationMember(accountId, conversationId, contactUri);
 }
 
 std::vector<std::map<std::string, std::string>>
