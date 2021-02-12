@@ -144,6 +144,66 @@ public:
     bool isAdmin() const;
     std::string repoPath() const;
 
+    std::mutex writeMtx_ {};
+    void announce(const std::string& commitId) const
+    {
+        std::vector<std::string> vec;
+        if (!commitId.empty())
+            vec.emplace_back(commitId);
+        announce(vec);
+    }
+
+    void announce(const std::vector<std::string>& commits) const
+    {
+        std::vector<ConversationCommit> convcommits;
+        convcommits.reserve(commits.size());
+        for (const auto& cid : commits) {
+            auto commit = repository_->getCommit(cid);
+            if (commit != std::nullopt) {
+                convcommits.emplace_back(*commit);
+            }
+        }
+        announce(convCommitToMap(convcommits));
+    }
+
+    void announce(const std::vector<std::map<std::string, std::string>>& commits) const
+    {
+        auto shared = account_.lock();
+        if (!shared or !repository_) {
+            return;
+        }
+        auto convId = repository_->id();
+        auto ok = !commits.empty();
+        auto lastId = ok ? commits.rbegin()->at("id") : "";
+        if (ok) {
+            for (const auto& c : commits) {
+                // Announce member events
+                if (c.at("type") == "member") {
+                    if (c.find("uri") != c.end() && c.find("action") != c.end()) {
+                        auto uri = c.at("uri");
+                        auto actionStr = c.at("action");
+                        auto action = -1;
+                        if (actionStr == "add")
+                            action = 0;
+                        else if (actionStr == "join")
+                            action = 1;
+                        else if (actionStr == "remove")
+                            action = 2;
+                        else if (actionStr == "ban")
+                            action = 3;
+                        if (action != -1)
+                            emitSignal<DRing::ConversationSignal::ConversationMemberEvent>(
+                                shared->getAccountID(), convId, uri, action);
+                    }
+                }
+                // announce message
+                emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
+                                                                       convId,
+                                                                       c);
+            }
+        }
+    }
+
     std::unique_ptr<ConversationRepository> repository_;
     std::weak_ptr<JamiAccount> account_;
     std::atomic_bool isRemoving_ {false};
@@ -156,9 +216,6 @@ public:
     std::mutex pullcbsMtx_ {};
     std::set<std::string> fetchingRemotes_ {}; // store current remote in fetch
     std::deque<std::tuple<std::string, std::string, OnPullCb>> pullcbs_ {};
-
-    // Mutex used to protect write index (one commit at a time)
-    std::mutex writeMtx_ {};
 };
 
 bool
@@ -296,8 +353,8 @@ Conversation::id() const
     return pimpl_->repository_ ? pimpl_->repository_->id() : "";
 }
 
-std::string
-Conversation::addMember(const std::string& contactUri)
+void
+Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
 {
     try {
         if (mode() == ConversationMode::ONE_TO_ONE) {
@@ -306,45 +363,81 @@ Conversation::addMember(const std::string& contactUri)
             auto it = std::find(initialMembers.begin(), initialMembers.end(), contactUri);
             if (it == initialMembers.end()) {
                 JAMI_WARN("Cannot add new member in one to one conversation");
-                return {};
+                cb(false, "");
+                return;
             }
         }
     } catch (const std::exception& e) {
         JAMI_WARN("Cannot get mode: %s", e.what());
-        return {};
+        cb(false, "");
+        return;
     }
     if (isMember(contactUri, true)) {
         JAMI_WARN("Could not add member %s because it's already a member", contactUri.c_str());
-        return {};
+        cb(false, "");
+        return;
     }
     if (isBanned(contactUri)) {
         JAMI_WARN("Could not add member %s because this member is banned", contactUri.c_str());
-        return {};
+        cb(false, "");
+        return;
     }
-    // Add member files and commit
-    return pimpl_->repository_->addMember(contactUri);
+
+    dht::ThreadPool::io().run([w = weak(), contactUri = std::move(contactUri), cb = std::move(cb)] {
+        if (auto sthis = w.lock()) {
+            // Add member files and commit
+            std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
+            auto commit = sthis->pimpl_->repository_->addMember(contactUri);
+            sthis->pimpl_->announce(commit);
+            lk.unlock();
+            if (cb)
+                cb(!commit.empty(), commit);
+        }
+    });
 }
 
-bool
-Conversation::removeMember(const std::string& contactUri, bool isDevice)
+void
+Conversation::removeMember(const std::string& contactUri, bool isDevice, const OnDoneCb& cb)
 {
-    // Check if admin
-    if (!pimpl_->isAdmin()) {
-        JAMI_WARN("You're not an admin of this repo. Cannot ban %s", contactUri.c_str());
-        return false;
-    }
-    // Vote for removal
-    if (pimpl_->repository_->voteKick(contactUri, isDevice).empty()) {
-        JAMI_WARN("Kicking %s failed", contactUri.c_str());
-        return false;
-    }
-    // If admin, check vote
-    if (!pimpl_->repository_->resolveVote(contactUri, isDevice).empty()) {
-        JAMI_WARN("Vote solved for %s. %s banned",
-                  contactUri.c_str(),
-                  isDevice ? "Device" : "Member");
-    }
-    return true;
+    dht::ThreadPool::io().run([w = weak(),
+                               contactUri = std::move(contactUri),
+                               isDevice = std::move(isDevice),
+                               cb = std::move(cb)] {
+        if (auto sthis = w.lock()) {
+            // Check if admin
+            if (!sthis->pimpl_->isAdmin()) {
+                JAMI_WARN("You're not an admin of this repo. Cannot ban %s", contactUri.c_str());
+                cb(false, {});
+                return;
+            }
+            // Vote for removal
+            std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
+            auto voteCommit = sthis->pimpl_->repository_->voteKick(contactUri, isDevice);
+            if (voteCommit.empty()) {
+                JAMI_WARN("Kicking %s failed", contactUri.c_str());
+                cb(false, "");
+                return;
+            }
+
+            auto lastId = voteCommit;
+            std::vector<std::string> commits;
+            commits.emplace_back(voteCommit);
+
+            // If admin, check vote
+            auto resolveCommit = sthis->pimpl_->repository_->resolveVote(contactUri, isDevice);
+            if (!resolveCommit.empty()) {
+                commits.emplace_back(resolveCommit);
+                lastId = resolveCommit;
+                JAMI_WARN("Vote solved for %s. %s banned",
+                          contactUri.c_str(),
+                          isDevice ? "Device" : "Member");
+            }
+            sthis->pimpl_->announce(commits);
+            lk.unlock();
+            if (cb)
+                cb(!lastId.empty(), lastId);
+        }
+    });
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -425,25 +518,40 @@ Conversation::isBanned(const std::string& uri, bool isDevice) const
     return fileutils::isFile(bannedPath);
 }
 
-std::string
+void
 Conversation::sendMessage(const std::string& message,
                           const std::string& type,
-                          const std::string& parent)
+                          const std::string& parent,
+                          const OnDoneCb& cb)
 {
     Json::Value json;
     json["body"] = message;
     json["type"] = type;
-    return sendMessage(json, parent);
+    sendMessage(json, parent, cb);
 }
 
-std::string
-Conversation::sendMessage(const Json::Value& value, const std::string& /*parent*/)
+void
+Conversation::sendMessage(const Json::Value& value,
+                          const std::string& /*parent*/,
+                          const OnDoneCb& cb)
 {
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    std::lock_guard<std::mutex> lk(pimpl_->writeMtx_);
-    return pimpl_->repository_->commitMessage(Json::writeString(wbuilder, value));
+    dht::ThreadPool::io().run([w = weak(), value = std::move(value), cb = std::move(cb)] {
+        if (auto sthis = w.lock()) {
+            auto shared = sthis->pimpl_->account_.lock();
+            if (!shared)
+                return;
+            Json::StreamWriterBuilder wbuilder;
+            wbuilder["commentStyle"] = "None";
+            wbuilder["indentation"] = "";
+            std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
+            auto commit = sthis->pimpl_->repository_->commitMessage(
+                Json::writeString(wbuilder, value));
+            sthis->pimpl_->announce(commit);
+            lk.unlock();
+            if (cb)
+                cb(!commit.empty(), commit);
+        }
+    });
 }
 
 void
@@ -500,7 +608,6 @@ Conversation::mergeHistory(const std::string& uri)
         return {};
     }
 
-    std::unique_lock<std::mutex> lk(pimpl_->writeMtx_);
     // Validate commit
     auto [newCommits, err] = pimpl_->repository_->validFetch(uri);
     if (newCommits.empty()) {
@@ -523,7 +630,6 @@ Conversation::mergeHistory(const std::string& uri)
         if (commit != std::nullopt)
             newCommits.emplace_back(*commit);
     }
-    lk.unlock();
 
     JAMI_DBG("Successfully merge history with %s", uri.c_str());
     auto result = pimpl_->convCommitToMap(newCommits);
@@ -580,7 +686,7 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
                 }
                 auto itr = sthis_->pimpl_->fetchingRemotes_.emplace(deviceId);
                 if (!itr.second) {
-                    cb(false, {});
+                    cb(false);
                     continue;
                 }
                 it = itr.first;
@@ -588,7 +694,7 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
             // If recently fetched, the commit can already be there, so no need to do complex operations
             if (commitId != ""
                 && sthis_->pimpl_->repository_->getCommit(commitId, false) != std::nullopt) {
-                cb(true, {});
+                cb(true);
                 std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
                 sthis_->pimpl_->fetchingRemotes_.erase(it);
                 continue;
@@ -601,13 +707,15 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
             }
 
             if (!fetched) {
-                cb(false, {});
+                cb(false);
                 continue;
             }
+            std::unique_lock<std::mutex> lk(sthis_->pimpl_->writeMtx_);
             auto newCommits = sthis_->mergeHistory(deviceId);
-            auto ok = !newCommits.empty();
+            sthis_->pimpl_->announce(newCommits);
+            lk.unlock();
             if (cb)
-                cb(ok, std::move(newCommits));
+                cb(true);
         }
     });
 }
@@ -633,6 +741,7 @@ std::string
 Conversation::leave()
 {
     setRemovingFlag();
+    std::lock_guard<std::mutex> lk(pimpl_->writeMtx_);
     return pimpl_->repository_->leave();
 }
 
@@ -651,6 +760,9 @@ Conversation::isRemoving()
 void
 Conversation::erase()
 {
+    if (!pimpl_->repository_)
+        return;
+    std::lock_guard<std::mutex> lk(pimpl_->writeMtx_);
     pimpl_->repository_->erase();
 }
 
@@ -673,10 +785,19 @@ Conversation::isInitialMember(const std::string& uri) const
     return std::find(members.begin(), members.end(), uri) != members.end();
 }
 
-std::string
-Conversation::updateInfos(const std::map<std::string, std::string>& map)
+void
+Conversation::updateInfos(const std::map<std::string, std::string>& map, const OnDoneCb& cb)
 {
-    return pimpl_->repository_->updateInfos(map);
+    dht::ThreadPool::io().run([w = weak(), map = std::move(map), cb = std::move(cb)] {
+        if (auto sthis = w.lock()) {
+            std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
+            auto commit = sthis->pimpl_->repository_->updateInfos(map);
+            sthis->pimpl_->announce(commit);
+            lk.unlock();
+            if (cb)
+                cb(!commit.empty(), commit);
+        }
+    });
 }
 
 std::map<std::string, std::string>
