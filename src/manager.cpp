@@ -909,6 +909,7 @@ Manager::finish() noexcept
         }
 
         pj_shutdown();
+        gitTransports.clear();
         git_libgit2_shutdown();
 
         if (!pimpl_->ioContext_->stopped()) {
@@ -3301,14 +3302,14 @@ Manager::getJamiPluginManager() const
 }
 #endif
 
-std::shared_ptr<ChannelSocket>
+std::optional<std::weak_ptr<ChannelSocket>>
 Manager::gitSocket(const std::string& accountId,
                    const std::string& deviceId,
                    const std::string& conversationId)
 {
     if (const auto acc = getAccount<JamiAccount>(accountId))
         return acc->gitSocket(deviceId, conversationId);
-    return {};
+    return std::nullopt;
 }
 
 std::map<std::string, std::string>
