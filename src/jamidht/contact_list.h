@@ -102,6 +102,8 @@ public:
     /** Should be called only after updateContact */
     void saveContacts() const;
 
+    std::string path() const { return path_; }
+
     /* Contact requests */
 
     /** Inform of a new contact request. Returns true if the request should be immediatly accepted

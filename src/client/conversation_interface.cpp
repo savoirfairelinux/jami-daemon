@@ -98,24 +98,22 @@ conversationInfos(const std::string& accountId, const std::string& conversationI
 }
 
 // Member management
-bool
+void
 addConversationMember(const std::string& accountId,
                       const std::string& conversationId,
                       const std::string& contactUri)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        return acc->addConversationMember(conversationId, contactUri);
-    return false;
+        acc->addConversationMember(conversationId, contactUri);
 }
 
-bool
+void
 removeConversationMember(const std::string& accountId,
                          const std::string& conversationId,
                          const std::string& contactUri)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        return acc->removeConversationMember(conversationId, contactUri);
-    return false;
+        acc->removeConversationMember(conversationId, contactUri);
 }
 
 std::vector<std::map<std::string, std::string>>

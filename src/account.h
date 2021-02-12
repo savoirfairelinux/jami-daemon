@@ -179,7 +179,7 @@ public:
                                     const std::map<std::string, std::string>& /*msg*/)
     {}
 
-    virtual void setIsComposing(const std::string& /*to*/, bool /*isWriting*/) {};
+    virtual void setIsComposing(const std::string& /*conversationUri*/, bool /*isWriting*/) {};
 
     virtual void onIsComposing(const std::string& /*conversationId*/,
                                const std::string& /*peer*/,
