@@ -26,6 +26,7 @@
 
 #include "def.h"
 
+using GitPackBuilder = std::unique_ptr<git_packbuilder, decltype(&git_packbuilder_free)>;
 using GitRepository = std::unique_ptr<git_repository, decltype(&git_repository_free)>;
 using GitRevWalker = std::unique_ptr<git_revwalk, decltype(&git_revwalk_free)>;
 using GitCommit = std::unique_ptr<git_commit, decltype(&git_commit_free)>;
@@ -39,6 +40,8 @@ using GitSignature = std::unique_ptr<git_signature, decltype(&git_signature_free
 using GitObject = std::unique_ptr<git_object, decltype(&git_object_free)>;
 using GitDiff = std::unique_ptr<git_diff, decltype(&git_diff_free)>;
 using GitDiffStats = std::unique_ptr<git_diff_stats, decltype(&git_diff_stats_free)>;
+using GitIndexConflictIterator
+    = std::unique_ptr<git_index_conflict_iterator, decltype(&git_index_conflict_iterator_free)>;
 
 namespace jami {
 
@@ -284,8 +287,9 @@ public:
     /**
      * Because conversations can contains non contacts certificates, this methods
      * loads certificates in conversations into the cert store
+     * @param blocking      if we need to wait that certificates are pinned
      */
-    void pinCertificates();
+    void pinCertificates(bool blocking = false);
 
     /**
      * Change repository's infos
