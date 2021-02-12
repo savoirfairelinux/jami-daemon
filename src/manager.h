@@ -37,6 +37,7 @@
 #include "audio/audiolayer.h"
 #include "scheduled_executor.h"
 #include "jamidht/multiplexed_socket.h"
+#include "gittransport.h"
 
 #include <algorithm>
 #include <atomic>
@@ -935,11 +936,11 @@ public:
      * @param accountId         Related account
      * @param deviceId          Related device
      * @param conversationId    Related conversation
-     * @return shared_ptr<ChannelSocket> the related socket
+     * @return std::optional<std::weak_ptr<ChannelSocket>> the related socket
      */
-    std::shared_ptr<ChannelSocket> gitSocket(const std::string& accountId,
-                                             const std::string& deviceId,
-                                             const std::string& conversationId);
+    std::optional<std::weak_ptr<ChannelSocket>> gitSocket(const std::string& accountId,
+                                                          const std::string& deviceId,
+                                                          const std::string& conversationId);
 
     void setModerator(const std::string& confId, const std::string& peerId, const bool& state);
     void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
@@ -951,6 +952,8 @@ public:
     bool isLocalModeratorsEnabled(const std::string& accountID);
     void setAllModerators(const std::string& accountID, bool allModerators);
     bool isAllModerators(const std::string& accountID);
+
+    std::map<git_smart_subtransport*, std::unique_ptr<P2PSubTransport>> gitTransports {};
 
 private:
     Manager();
