@@ -2875,7 +2875,6 @@ Manager::removeAccounts()
         removeAccount(acc);
 }
 
-
 std::vector<std::string_view>
 Manager::loadAccountOrder() const
 {
@@ -3266,14 +3265,14 @@ Manager::getJamiPluginManager() const
 }
 #endif
 
-std::shared_ptr<ChannelSocket>
+std::optional<std::weak_ptr<ChannelSocket>>
 Manager::gitSocket(const std::string& accountId,
                    const std::string& deviceId,
                    const std::string& conversationId)
 {
     if (const auto acc = getAccount<JamiAccount>(accountId))
         return acc->gitSocket(deviceId, conversationId);
-    return {};
+    return std::nullopt;
 }
 
 std::map<std::string, std::string>
