@@ -144,6 +144,30 @@
     },
     {
       "key": {
+        "uuid": "01a35fc2_1d1748df",
+        "filename": "src/call_factory.h",
+        "patchSetId": 31
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-12T15:03:33Z",
+      "side": 1,
+      "message": "Yes, because of the template on Account classes.\nCan be removed in another as already mentioned, to keep the scope of this patch to Call template.",
+      "parentUuid": "a180ed2b_c226792a",
+      "range": {
+        "startLine": 41,
+        "startChar": 4,
+        "endLine": 41,
+        "endChar": 21
+      },
+      "revId": "3f8cf1aacc7edcc49b148ee3682b5d285b137cab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "eb6ab3b5_6ab763ff",
         "filename": "src/plugin/conversationservicesmanager.h",
         "patchSetId": 31
@@ -214,6 +238,30 @@
     },
     {
       "key": {
+        "uuid": "745dda43_94d41f1e",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 722,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-12T15:03:33Z",
+      "side": 1,
+      "message": "As discussed in call_factory.h review\nAck",
+      "parentUuid": "239b7c43_a624f762",
+      "range": {
+        "startLine": 722,
+        "startChar": 85,
+        "endLine": 722,
+        "endChar": 92
+      },
+      "revId": "3f8cf1aacc7edcc49b148ee3682b5d285b137cab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b8f52e1d_de43551d",
         "filename": "src/sip/sipvoiplink.cpp",
         "patchSetId": 31
@@ -234,6 +282,30 @@
       "revId": "3f8cf1aacc7edcc49b148ee3682b5d285b137cab",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2480f412_7128889b",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 31
+      },
+      "lineNbr": 720,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-12T15:03:33Z",
+      "side": 1,
+      "message": "already there, otherwise, it wouldn\u0027t compile and pass Jenkins check.",
+      "parentUuid": "b8f52e1d_de43551d",
+      "range": {
+        "startLine": 720,
+        "startChar": 43,
+        "endLine": 720,
+        "endChar": 51
+      },
+      "revId": "3f8cf1aacc7edcc49b148ee3682b5d285b137cab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }

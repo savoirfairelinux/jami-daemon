@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "d17b267c_b4520ba8",
+        "filename": "src/call_factory.h",
+        "patchSetId": 31
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-12T15:03:33Z",
+      "side": 0,
+      "message": "all the implementations where moved to .cpp file.\nRegarding the call type, I already explained since we only support one call type (SIPCall) for the time being, we are ok. Nothing is broken.\nWhen a new type of call needs to be supported, there are different ways to do it, so we must first assess it will be done.\nFor example, for this particular class, we can decide to make a specialized derived call_factory class for each type, in that case, we dont need the type. If want to keep a single class for all types, no big deal, it wont be hard to adapt. But we should not make such decision right now.",
+      "parentUuid": "b11aff89_f8ba8bc9",
+      "range": {
+        "startLine": 113,
+        "startChar": 0,
+        "endLine": 123,
+        "endChar": 5
+      },
+      "revId": "180d2ba842a42c17b7dc3bf7d1ca0d7ff4e0b4a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "ac14350e_2d5cba95",
         "filename": "src/call_factory.h",
         "patchSetId": 31
@@ -36,6 +60,30 @@
       "writtenOn": "2021-02-09T00:32:08Z",
       "side": 0,
       "message": "preserve or adapt ( getCall(type, id) )",
+      "range": {
+        "startLine": 140,
+        "startChar": 0,
+        "endLine": 157,
+        "endChar": 5
+      },
+      "revId": "180d2ba842a42c17b7dc3bf7d1ca0d7ff4e0b4a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ab7ca7e6_144873e7",
+        "filename": "src/call_factory.h",
+        "patchSetId": 31
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-12T15:03:33Z",
+      "side": 0,
+      "message": "Same here.",
+      "parentUuid": "ac14350e_2d5cba95",
       "range": {
         "startLine": 140,
         "startChar": 0,
@@ -68,6 +116,30 @@
       "revId": "180d2ba842a42c17b7dc3bf7d1ca0d7ff4e0b4a3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "61c4c0d0_2c8da2f0",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 31
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-12T15:03:33Z",
+      "side": 0,
+      "message": "Ack",
+      "parentUuid": "d37d97d1_5b78ae4b",
+      "range": {
+        "startLine": 77,
+        "startChar": 11,
+        "endLine": 77,
+        "endChar": 28
+      },
+      "revId": "180d2ba842a42c17b7dc3bf7d1ca0d7ff4e0b4a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
