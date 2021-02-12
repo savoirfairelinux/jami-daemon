@@ -287,8 +287,9 @@ public:
     /**
      * Because conversations can contains non contacts certificates, this methods
      * loads certificates in conversations into the cert store
+     * @param blocking      if we need to wait that certificates are pinned
      */
-    void pinCertificates();
+    void pinCertificates(bool blocking = false);
 
     /**
      * Change repository's infos
