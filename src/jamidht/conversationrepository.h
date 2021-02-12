@@ -192,6 +192,12 @@ public:
     std::optional<ConversationCommit> getCommit(const std::string& commitId) const;
 
     /**
+     * Get parent via topological + date sort in branch main of a commit
+     * @param commitId      id to choice
+     */
+    std::optional<std::string> linearizedParent(const std::string& commitId) const;
+
+    /**
      * Merge another branch into the main branch
      * @param merge_id      The reference to merge
      * @return if the merge was successful
