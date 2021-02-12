@@ -496,10 +496,10 @@ public:
     std::vector<uint8_t> conversationVCard(const std::string& conversationId) const;
 
     // Member management
-    bool addConversationMember(const std::string& conversationId,
+    void addConversationMember(const std::string& conversationId,
                                const std::string& contactUri,
                                bool sendRequest = true);
-    bool removeConversationMember(const std::string& conversationId,
+    void removeConversationMember(const std::string& conversationId,
                                   const std::string& contactUri,
                                   bool isDevice = false);
     std::vector<std::map<std::string, std::string>> getConversationMembers(
@@ -983,9 +983,6 @@ private:
     void sendMessageNotification(const Conversation& conversation,
                                  const std::string& commitId,
                                  bool sync);
-
-    void announceMemberMessage(const std::string& convId,
-                               const std::map<std::string, std::string>& message) const;
 
     /**
      * Get related conversation with member
