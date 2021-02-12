@@ -115,7 +115,9 @@ public:
     int getMessageStatus(const uint64_t& id);
     int getMessageStatus(const std::string& accountID, const uint64_t& id);
     bool cancelMessage(const std::string& accountID, const uint64_t& messageId);
-    void setIsComposing(const std::string& accountID, const std::string& to, const bool& isWriting);
+    void setIsComposing(const std::string& accountID,
+                        const std::string& conversationUri,
+                        const bool& isWriting);
     bool setMessageDisplayed(const std::string& accountID,
                              const std::string& conversationUri,
                              const std::string& messageId,
@@ -240,7 +242,9 @@ public:
                                 const uint64_t& id);
     bool isAudioMeterActive(const std::string& id);
     void setAudioMeterState(const std::string& id, const bool& state);
-    void setDefaultModerator(const std::string& accountID, const std::string& uri, const bool& state);
+    void setDefaultModerator(const std::string& accountID,
+                             const std::string& uri,
+                             const bool& state);
     std::vector<std::string> getDefaultModerators(const std::string& accountID);
     void enableLocalModerators(const std::string& accountID, const bool& isModEnabled);
     bool isLocalModeratorsEnabled(const std::string& accountID);
@@ -258,10 +262,10 @@ public:
                                  const std::map<std::string, std::string>& infos);
     std::map<std::string, std::string> conversationInfos(const std::string& accountId,
                                                          const std::string& conversationId);
-    bool addConversationMember(const std::string& accountId,
+    void addConversationMember(const std::string& accountId,
                                const std::string& conversationId,
                                const std::string& contactUri);
-    bool removeConversationMember(const std::string& accountId,
+    void removeConversationMember(const std::string& accountId,
                                   const std::string& conversationId,
                                   const std::string& contactUri);
     std::vector<std::map<std::string, std::string>> getConversationMembers(
