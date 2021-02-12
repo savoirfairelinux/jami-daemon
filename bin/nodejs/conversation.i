@@ -65,8 +65,8 @@ namespace DRing {
   std::map<std::string, std::string> conversationInfos(const std::string& accountId, const std::string& conversationId);
 
   // Member management
-  bool addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
-  bool removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
+  void addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
+  void removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
   std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId, const std::string& conversationId);
 
   // Message send/load
