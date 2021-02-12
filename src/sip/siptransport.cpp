@@ -187,14 +187,10 @@ SipTransport::getTlsMtu()
 
 SipTransportBroker::SipTransportBroker(pjsip_endpoint* endpt)
     : endpt_(endpt)
-{
-    JAMI_DBG("SipTransportBroker@%p", this);
-}
+{}
 
 SipTransportBroker::~SipTransportBroker()
 {
-    JAMI_DBG("~SipTransportBroker@%p", this);
-
     shutdown();
 
     udpTransports_.clear();

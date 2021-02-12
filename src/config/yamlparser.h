@@ -44,7 +44,7 @@ parseValueOptional(const YAML::Node& node, const char* key, T& value)
         parseValue(node, key, value);
         return true;
     } catch (const std::exception& e) {
-        JAMI_DBG("Can't read yaml field: %s", key);
+        // JAMI_DBG("Can't read yaml field: %s", key);
     }
     return false;
 }

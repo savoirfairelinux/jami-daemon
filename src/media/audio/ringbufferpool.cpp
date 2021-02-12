@@ -115,8 +115,7 @@ RingBufferPool::createRingBuffer(const std::string& id)
     }
 
     rbuf.reset(new RingBuffer(id, SIZEBUF, internalAudioFormat_));
-    JAMI_DBG("Ringbuffer created with id '%s'", id.c_str());
-    ringBufferMap_.insert(std::make_pair(id, std::weak_ptr<RingBuffer>(rbuf)));
+    ringBufferMap_.emplace(id, std::weak_ptr<RingBuffer>(rbuf));
     return rbuf;
 }
 
