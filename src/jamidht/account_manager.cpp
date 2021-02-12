@@ -214,9 +214,9 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
         dht_->listen<DeviceAnnouncement>(h, [this, cb = std::move(cb)](DeviceAnnouncement&& dev) {
             findCertificate(dev.dev,
                             [this, cb](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                                foundAccountDevice(crt);
                                 if (cb)
                                     cb(crt);
-                                foundAccountDevice(crt);
                             });
             return true;
         });
@@ -438,7 +438,18 @@ AccountManager::setConversations(const std::vector<ConvInfo>& newConv)
 {
     if (info_) {
         info_->conversations = newConv;
+        saveConvInfos();
     }
+}
+
+void
+AccountManager::saveConvInfos() const
+{
+    if (!info_)
+        return;
+    std::ofstream file(info_->contacts->path() + DIR_SEPARATOR_STR "convInfo",
+                       std::ios::trunc | std::ios::binary);
+    msgpack::pack(file, info_->conversations);
 }
 
 void
@@ -446,6 +457,7 @@ AccountManager::addConversation(const ConvInfo& info)
 {
     if (info_) {
         info_->conversations.emplace_back(info);
+        saveConvInfos();
     }
 }
 
@@ -455,7 +467,18 @@ AccountManager::setConversationsRequests(const std::map<std::string, Conversatio
     if (info_) {
         std::lock_guard<std::mutex> lk(conversationsRequestsMtx);
         info_->conversationsRequests = newConvReq;
+        saveConvRequests();
     }
+}
+
+void
+AccountManager::saveConvRequests() const
+{
+    if (!info_)
+        return;
+    std::ofstream file(info_->contacts->path() + DIR_SEPARATOR_STR "convRequests",
+                       std::ios::trunc | std::ios::binary);
+    msgpack::pack(file, info_->conversationsRequests);
 }
 
 std::optional<ConversationRequest>
@@ -476,6 +499,7 @@ AccountManager::addConversationRequest(const std::string& id, const Conversation
     if (info_) {
         std::lock_guard<std::mutex> lk(conversationsRequestsMtx);
         info_->conversationsRequests[id] = req;
+        saveConvRequests();
     }
 }
 
@@ -485,6 +509,7 @@ AccountManager::rmConversationRequest(const std::string& id)
     if (info_) {
         std::lock_guard<std::mutex> lk(conversationsRequestsMtx);
         info_->conversationsRequests.erase(id);
+        saveConvRequests();
     }
 }
 
