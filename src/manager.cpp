@@ -444,6 +444,9 @@ struct Manager::ManagerPimpl
     /* Jami Plugin Manager */
     JamiPluginManager jami_plugin_manager;
 #endif
+
+    std::mutex gitTransportsMtx_ {};
+    std::map<git_smart_subtransport*, std::unique_ptr<P2PSubTransport>> gitTransports_ {};
 };
 
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
@@ -912,6 +915,7 @@ Manager::finish() noexcept
         }
 
         pj_shutdown();
+        pimpl_->gitTransports_.clear();
         git_libgit2_shutdown();
 
         if (!pimpl_->ioContext_->stopped()) {
@@ -3445,14 +3449,14 @@ Manager::getJamiPluginManager() const
 }
 #endif
 
-std::shared_ptr<ChannelSocket>
+std::optional<std::weak_ptr<ChannelSocket>>
 Manager::gitSocket(const std::string& accountId,
                    const std::string& deviceId,
                    const std::string& conversationId)
 {
     if (const auto acc = getAccount<JamiAccount>(accountId))
         return acc->gitSocket(deviceId, conversationId);
-    return {};
+    return std::nullopt;
 }
 
 std::map<std::string, std::string>
@@ -3563,6 +3567,20 @@ Manager::isAllModerators(const std::string& accountID)
         return true; // Default value
     }
     return acc->isAllModerators();
+}
+
+void
+Manager::insertGitTransport(git_smart_subtransport* tr, std::unique_ptr<P2PSubTransport>&& sub)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->gitTransportsMtx_);
+    pimpl_->gitTransports_[tr] = std::move(sub);
+}
+
+void
+Manager::eraseGitTransport(git_smart_subtransport* tr)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->gitTransportsMtx_);
+    pimpl_->gitTransports_.erase(tr);
 }
 
 } // namespace jami
