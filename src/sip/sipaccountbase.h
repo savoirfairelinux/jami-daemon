@@ -258,7 +258,7 @@ public:
         return messageEngine_.sendMessage(to, payloads);
     }
 
-    void setIsComposing(const std::string& to, bool isWriting) override;
+    void setIsComposing(const std::string& conversationUri, bool isWriting) override;
 
     bool setMessageDisplayed(const std::string& conversationUri,
                              const std::string& messageId,
