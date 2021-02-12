@@ -63,6 +63,8 @@ list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/threadloop.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/utf8_utils.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/utf8_utils.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/uri.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/uri.h"
 )
 
 if(MSVC)
