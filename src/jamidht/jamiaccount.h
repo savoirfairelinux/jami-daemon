@@ -1000,9 +1000,6 @@ private:
                                  const std::string& commitId,
                                  bool sync);
 
-    void announceMemberMessage(const std::string& convId,
-                               const std::map<std::string, std::string>& message) const;
-
     /**
      * Get related conversation with member
      * @param uri       The member to search for
