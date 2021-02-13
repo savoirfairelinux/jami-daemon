@@ -3,10 +3,7 @@ ONNX_VERSION := v1.6.0
 ONNX_URL := https://github.com/microsoft/onnxruntime.git
 
 $(TARBALLS)/onnxruntime-$(ONNX_VERSION).tar.xz:
-	git clone $(ONNX_URL) ../../contrib/tarballs/onnxruntime-$(ONNX_VERSION)
-	cd ../../contrib/tarballs/onnxruntime-$(ONNX_VERSION) && git checkout $(ONNX_VERSION)
-	cd ../../contrib/tarballs/ && tar cJf onnxruntime-$(ONNX_VERSION).tar.xz onnxruntime-$(ONNX_VERSION)
-	rm -Rf ../../contrib/tarballs/onnxruntime-v1.6.0
+        $(call download_git,$(ONNX_URL),master,$(ONNX_VERSION))
 
 .sum-onnx: onnxruntime-$(ONNX_VERSION).tar.xz
 	$(warning $@ not implemented)
