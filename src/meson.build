@@ -271,6 +271,8 @@ endif
 if conf.get('ENABLE_PLUGIN')
     libjami_sources += files(
         'client/plugin_manager_interface.cpp',
+        'plugin/callservicesmanager.cpp',
+        'plugin/chatservicesmanager.cpp',
         'plugin/jamipluginmanager.cpp',
         'plugin/pluginloaderdl.cpp',
         'plugin/pluginmanager.cpp',
