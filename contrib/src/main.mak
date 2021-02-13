@@ -326,6 +326,10 @@ HOSTVARS := $(HOSTTOOLS) \
 	CXXFLAGS="$(CXXFLAGS) $(PIC)" \
 	LDFLAGS="$(LDFLAGS)"
 
+# git_download procedure
+# $1: The URL of the Git repository.
+# $2: The remote branch to clone.
+# $3: The git refspec to checkout.
 ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
 download_git = $(error Trying to clone $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
 else
