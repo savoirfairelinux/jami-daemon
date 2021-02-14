@@ -25,7 +25,7 @@ LIBRESSL_URL := https://github.com/libressl-portable/portable/archive/$(LIBRESSL
 OPENBSD_URL := https://github.com/libressl-portable/openbsd/archive/$(OPENBSD_VERSION).tar.gz
 
 # Check if openssl or libressl is already present on the system
-ifeq ($(call need_pkg,"openssl >= 1.0.0" || call need_pkg,"libressl >= 1.0.0"),)
+ifeq ($(or $(call need_pkg,"openssl >= 1.0.0"),$(call need_pkg,"libressl >= 1.0.0")),)
 PKGS_FOUND += libressl
 endif
 
