@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fa10ee39_557afa27",
+        "filename": "src/upnp/protocol/pupnp/pupnp.h",
+        "patchSetId": 26
+      },
+      "lineNbr": 218,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-15T15:10:55Z",
+      "side": 1,
+      "message": "the comment is not correct anymore as we don,t use a static",
+      "range": {
+        "startLine": 216,
+        "startChar": 8,
+        "endLine": 218,
+        "endChar": 63
+      },
+      "revId": "58a3ab0b6f0197f7f5cde19e0d692f277badeb69",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9941e83a_d9eecd70",
+        "filename": "src/upnp/protocol/pupnp/pupnp.h",
+        "patchSetId": 26
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-15T15:10:55Z",
+      "side": 1,
+      "message": "{false} for default value (else depends of the compiler)",
+      "range": {
+        "startLine": 219,
+        "startChar": 39,
+        "endLine": 219,
+        "endChar": 42
+      },
+      "revId": "58a3ab0b6f0197f7f5cde19e0d692f277badeb69",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
