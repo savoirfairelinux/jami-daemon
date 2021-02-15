@@ -23,10 +23,15 @@ all: install
 # bootstrap configuration
 include config.mak
 
-TOPSRC ?= ../../contrib
-TOPDST ?= ..
+TOPSRC ?= $(abspath ../../contrib)
+TOPDST ?= $(abspath ..)
 SRC := $(TOPSRC)/src
-TARBALLS := $(TOPSRC)/tarballs
+
+# Resolves TARBALLS using the following precedence rules:
+# 1. Environment variable
+# 2. Configured value at bootstrap time
+# 3. Default value
+TARBALLS := $(or $(TARBALLS),$(CONF_TARBALLS),$(TOPSRC)/tarballs)
 
 PATH :=$(abspath ../../extras/tools/build/bin):$(PATH)
 export PATH
