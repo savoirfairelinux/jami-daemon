@@ -39,6 +39,30 @@
       "revId": "429e5dc1fc411078bee9370ebd88ea199be70169",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c5a729dd_93c332e1",
+        "filename": "src/conference.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-15T21:19:37Z",
+      "side": 1,
+      "message": "@sblin\nIn fact we shouldn\u0027t be doing this at all (please check my previous comment). But for now it\u0027s ok to move forward. But IMHO there is no need to spend more time optimizing this, as it needs to be completely reconsidered.",
+      "parentUuid": "531e639f_6e5ac4c7",
+      "range": {
+        "startLine": 140,
+        "startChar": 17,
+        "endLine": 141,
+        "endChar": 42
+      },
+      "revId": "429e5dc1fc411078bee9370ebd88ea199be70169",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
