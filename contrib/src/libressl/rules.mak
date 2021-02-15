@@ -63,4 +63,4 @@ endif
 	rm -rf $(PREFIX)/lib/*.so $(PREFIX)/lib/*.so.*
 	touch $@
 
-.sum-libressl: portable-$(LIBRESSL_VERSION).tar.gz
+.sum-libressl: portable-$(LIBRESSL_VERSION).tar.gz openbsd-$(OPENBSD_VERSION).tar.gz
