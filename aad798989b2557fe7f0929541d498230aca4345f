@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "cb89bc49_7327220c",
+        "filename": "src/upnp/protocol/mapping.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 194,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-15T22:35:43Z",
+      "side": 1,
+      "message": "I find more readable that way, I prefer to have on condition per line instead of a long expression with plenty of ORs. \nIt\u0027s very subjective, I admit.\nAck",
+      "parentUuid": "ffb1e460_062ead6a",
+      "range": {
+        "startLine": 185,
+        "startChar": 7,
+        "endLine": 194,
+        "endChar": 5
+      },
+      "revId": "aad798989b2557fe7f0929541d498230aca4345f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "fce720de_b9f50771",
         "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
         "patchSetId": 1
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "b87ca37b_826990cd",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 268,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-15T22:35:43Z",
+      "side": 1,
+      "message": "However, the CHECK_VALID_THREAD seems redundant because we already switched the work to upnp thread. \nCurrently, all calls made to this method are done on the upnp thread, So I guess we can remove the scheduling but keep the check to make sure future changes does not violate the assumption that we must run on the upnp thread.",
+      "parentUuid": "fce720de_b9f50771",
+      "range": {
+        "startLine": 267,
+        "startChar": 30,
+        "endLine": 268,
+        "endChar": 63
+      },
+      "revId": "aad798989b2557fe7f0929541d498230aca4345f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "267ad3e9_a5fe7138",
         "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
         "patchSetId": 1
@@ -59,6 +107,30 @@
       "writtenOn": "2021-02-15T19:55:18Z",
       "side": 1,
       "message": "should not happen.\nI\u0027d prefer a warning instead of rescheduling.",
+      "range": {
+        "startLine": 298,
+        "startChar": 30,
+        "endLine": 299,
+        "endChar": 66
+      },
+      "revId": "aad798989b2557fe7f0929541d498230aca4345f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "886186ad_640aae31",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 299,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-15T22:35:43Z",
+      "side": 1,
+      "message": "It wont be rescheduled if already on the expected thread:\nif (isValidThread()) ...\nbut removed it anyway as mentioned above",
+      "parentUuid": "267ad3e9_a5fe7138",
       "range": {
         "startLine": 298,
         "startChar": 30,
