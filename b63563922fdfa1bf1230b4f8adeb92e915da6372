@@ -1,0 +1,165 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "92339c36_64dbc4cc",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 6
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-15T20:33:17Z",
+      "side": 1,
+      "message": "incorrect commit message (missing space for #236, invert the first line)",
+      "range": {
+        "startLine": 7,
+        "startChar": 21,
+        "endLine": 10,
+        "endChar": 11
+      },
+      "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "24cee7fe_2c8a3b99",
+        "filename": "src/media/audio/audio_input.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-15T20:33:17Z",
+      "side": 1,
+      "message": "trailing",
+      "range": {
+        "startLine": 68,
+        "startChar": 78,
+        "endLine": 68,
+        "endChar": 81
+      },
+      "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "10cb96ef_1cabb20a",
+        "filename": "src/media/audio/audio_input.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-15T20:33:17Z",
+      "side": 1,
+      "message": "question. Is this wanted to create multiple files?\nMaybe files can be concatenated?",
+      "range": {
+        "startLine": 109,
+        "startChar": 19,
+        "endLine": 111,
+        "endChar": 30
+      },
+      "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f1f32b66_4fb0c699",
+        "filename": "src/media/audio/audio_receive_thread.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-15T20:33:17Z",
+      "side": 1,
+      "message": "I really prefer previous design  with an enum, may be add (MEDIA_AUDIO, isRemote)?\nThis avoid string parsing",
+      "range": {
+        "startLine": 91,
+        "startChar": 27,
+        "endLine": 92,
+        "endChar": 39
+      },
+      "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "75374780_9b8e1c3b",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 146,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-15T20:33:17Z",
+      "side": 1,
+      "message": "clang",
+      "range": {
+        "startLine": 145,
+        "startChar": 12,
+        "endLine": 146,
+        "endChar": 13
+      },
+      "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c7073aec_26675fd8",
+        "filename": "src/media/video/video_input.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-15T20:33:17Z",
+      "side": 1,
+      "message": "use clang",
+      "range": {
+        "startLine": 93,
+        "startChar": 0,
+        "endLine": 94,
+        "endChar": 81
+      },
+      "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "804a03fd_f0f75e36",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-15T20:33:17Z",
+      "side": 1,
+      "message": "technically we don\u0027t need to check for set. We can want to setSuccessfulSetupCb({}). The only important place to check is when we call the cb.\n\nAlso question about media design. Is it multi-thread safe? else we may need to protect callback modifications",
+      "range": {
+        "startLine": 208,
+        "startChar": 28,
+        "endLine": 208,
+        "endChar": 48
+      },
+      "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
