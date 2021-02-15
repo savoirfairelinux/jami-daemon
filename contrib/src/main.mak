@@ -26,7 +26,7 @@ include config.mak
 TOPSRC ?= ../../contrib
 TOPDST ?= ..
 SRC := $(TOPSRC)/src
-TARBALLS := $(TOPSRC)/tarballs
+TARBALLS ?= $(TOPSRC)/tarballs
 
 PATH :=$(abspath ../../extras/tools/build/bin):$(PATH)
 export PATH
