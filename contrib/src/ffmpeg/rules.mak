@@ -342,7 +342,7 @@ $(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.gz:
 ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	rm -Rf $@ $@-$(FFMPEG_HASH)
 	mkdir -p $@-$(FFMPEG_HASH)
-	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
+	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f $<)
 	$(APPLY) $(SRC)/ffmpeg/remove-mjpeg-log.patch
 	$(APPLY) $(SRC)/ffmpeg/change-RTCP-ratio.patch
 	$(APPLY) $(SRC)/ffmpeg/rtp_ext_abs_send_time.patch

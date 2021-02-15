@@ -12,7 +12,7 @@ $(TARBALLS)/onnxruntime-$(ONNX_VERSION).tar.xz:
 onnx: onnxruntime-$(ONNX_VERSION).tar.xz .sum-onnx
 	rm -Rf $@
 	mkdir -p $@
-	(cd $@ && tar x --strip-components=1 -f ../$<)
+	(cd $@ && tar x --strip-components=1 -f $<)
 
 .onnx:  onnx
 ifdef HAVE_ANDROID
