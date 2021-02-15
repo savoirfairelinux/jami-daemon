@@ -1,0 +1,44 @@
+From dba13d03bc8e827fededc20b0ab1f574a1500f2a Mon Sep 17 00:00:00 2001
+From: Philip-Dylan Gleonec <philip-dylan.gleonec@savoirfairelinux.com>
+Date: Thu, 11 Feb 2021 12:25:14 +0100
+Subject: [PATCH 2/2] avcodec/libopusenc: reload packet loss at encode
+
+An estimation of packet loss is required by libopus to compute its FEC
+data. Currently, this estimation is constant, and can not be changed
+after configuration. This means an application using libopus through
+ffmpeg can not adapt the packet loss estimation when the network
+quality degrades.
+
+This patch makes the encoder reload the packet_loss AVOption before
+encoding samples, if fec is enabled. This way an application can modify
+the packet loss estimation by changing the AVOption. Typical use-case
+is a RTP stream, where packet loss can be estimated from RTCP packets.
+
+Signed-off-by: Philip-Dylan Gleonec <philip-dylan.gleonec@savoirfairelinux.com>
+---
+ libavcodec/libopusenc.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/libavcodec/libopusenc.c b/libavcodec/libopusenc.c
+index 70d17f802b..c18e8ae7fa 100644
+--- a/libavcodec/libopusenc.c
++++ b/libavcodec/libopusenc.c
+@@ -460,6 +460,15 @@ static int libopus_encode(AVCodecContext *avctx, AVPacket *avpkt,
+     int ret;
+     int discard_padding;
+ 
++    if (opus->opts.fec) {
++        ret = opus_multistream_encoder_ctl(opus->enc,
++                                           OPUS_SET_PACKET_LOSS_PERC(opus->opts.packet_loss));
++        if (ret != OPUS_OK)
++            av_log(avctx, AV_LOG_WARNING,
++                   "Unable to set expected packet loss percentage: %s\n",
++                   opus_strerror(ret));
++    }
++
+     if (frame) {
+         ret = ff_af_queue_add(&opus->afq, frame);
+         if (ret < 0)
+-- 
+2.25.1
+
