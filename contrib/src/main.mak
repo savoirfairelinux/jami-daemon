@@ -472,7 +472,14 @@ list:
 	@echo To-be-built packages:
 	$(call pprint,$(PKGS))
 
-.PHONY: all fetch fetch-all install mostlyclean clean distclean package list prebuilt
+list-tarballs:
+	@$(foreach pkg,$(PKGS), \
+		$(eval tmp_var = $(shell sed -n 's|^\($$(TARBALLS).*tar.*\):.*|\1|p' \
+				'$(SRC)/$(pkg)/rules.mak' \
+				| sed 's|$$(TARBALLS)|$(TARBALLS)|')) \
+		echo $(tmp_var);)
+
+.PHONY: all fetch fetch-all install mostlyclean clean distclean package list list-tarballs prebuilt
 
 # CMake toolchain
 toolchain.cmake:
