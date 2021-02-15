@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "959df937_0905e252",
+        "filename": "src/conference.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-15T18:53:50Z",
+      "side": 1,
+      "message": "I think the comment should make it clear that technically we are interested in restarting the media to restart the local decoder in order to restore original (user) configuration. The SIP renegotiation is only a (undesired) side effect that we have to bare. Hopefully, this workaround is temporary until media handling is improved.",
+      "revId": "2b4322889e7cd6072a8bdebcf2be7073fbd9d5cb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
