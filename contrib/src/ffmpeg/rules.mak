@@ -350,11 +350,12 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	$(APPLY) $(SRC)/ffmpeg/change-RTCP-ratio.patch
 	$(APPLY) $(SRC)/ffmpeg/rtp_ext_abs_send_time.patch
 	$(APPLY) $(SRC)/ffmpeg/libopusdec-enable-FEC.patch
-	$(APPLY) $(SRC)/ffmpeg/libopusenc-enable-FEC.patch
-	$(APPLY) $(SRC)/ffmpeg/screen-sharing-x11-fix.patch
-ifdef HAVE_IOS
-	$(APPLY) $(SRC)/ffmpeg/ios-disable-b-frames.patch
+ifdef HAVE_DARWIN_OS
+	$(APPLY) $(SRC)/ffmpeg/libopusenc-add-option-to-set-inband-FEC.patch
 endif
+	$(APPLY) $(SRC)/ffmpeg/libopusenc-reload-packet-loss-at-encode.patch
+	$(APPLY) $(SRC)/ffmpeg/ios-disable-b-frames.patch
+	$(APPLY) $(SRC)/ffmpeg/screen-sharing-x11-fix.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 

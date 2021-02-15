@@ -1014,7 +1014,7 @@ void
 MediaEncoder::initOpus(AVCodecContext* encoderCtx)
 {
     // Enable FEC support by default with 10% packet loss
-    av_opt_set_int(encoderCtx, "enable_fec", fecEnabled_ ? 1 : 0, AV_OPT_SEARCH_CHILDREN);
+    av_opt_set_int(encoderCtx, "fec", fecEnabled_ ? 1 : 0, AV_OPT_SEARCH_CHILDREN);
     av_opt_set_int(encoderCtx, "packet_loss", 10, AV_OPT_SEARCH_CHILDREN);
 }
 

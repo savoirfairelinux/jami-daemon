@@ -1,0 +1,63 @@
+From 1e5b3f77d9f6f6827b5755763ef041d360969d0c Mon Sep 17 00:00:00 2001
+From: Gyan Doshi <ffmpeg@gyani.pro>
+Date: Sun, 6 Sep 2020 12:24:46 +0530
+Subject: [PATCH] avcodec/libopusenc: add option to set inband FEC
+
+---
+ doc/encoders.texi       | 5 +++++
+ libavcodec/libopusenc.c | 9 +++++++++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/doc/encoders.texi b/doc/encoders.texi
+index 69bf742c2d..a48b15eb1b 100644
+--- a/doc/encoders.texi
++++ b/doc/encoders.texi
+@@ -953,6 +953,11 @@ The default is 20ms.
+ @item packet_loss (@emph{expect-loss})
+ Set expected packet loss percentage. The default is 0.
+ 
++@item fec (@emph{n/a})
++Enable inband forward error correction. @option{packet_loss} must be non-zero
++to take advantage - frequency of FEC 'side-data' is proportional to expected packet loss.
++Default is disabled.
++
+ @item application (N.A.)
+ Set intended application type. Valid options are listed below:
+ 
+diff --git a/libavcodec/libopusenc.c b/libavcodec/libopusenc.c
+index 13017ac323..bf2d04b4fb 100644
+--- a/libavcodec/libopusenc.c
++++ b/libavcodec/libopusenc.c
+@@ -34,6 +34,7 @@ typedef struct LibopusEncOpts {
+     int vbr;
+     int application;
+     int packet_loss;
++    int fec;
+     int complexity;
+     float frame_duration;
+     int packet_size;
+@@ -149,6 +150,13 @@ static int libopus_configure_encoder(AVCodecContext *avctx, OpusMSEncoder *enc,
+                "Unable to set expected packet loss percentage: %s\n",
+                opus_strerror(ret));
+ 
++    ret = opus_multistream_encoder_ctl(enc,
++                                       OPUS_SET_INBAND_FEC(opts->fec));
++    if (ret != OPUS_OK)
++        av_log(avctx, AV_LOG_WARNING,
++               "Unable to set inband FEC: %s\n",
++               opus_strerror(ret));
++
+     if (avctx->cutoff) {
+         ret = opus_multistream_encoder_ctl(enc,
+                                            OPUS_SET_MAX_BANDWIDTH(opts->max_bandwidth));
+@@ -544,6 +552,7 @@ static const AVOption libopus_options[] = {
+         { "lowdelay",       "Restrict to only the lowest delay modes", 0, AV_OPT_TYPE_CONST, { .i64 = OPUS_APPLICATION_RESTRICTED_LOWDELAY }, 0, 0, FLAGS, "application" },
+     { "frame_duration", "Duration of a frame in milliseconds", OFFSET(frame_duration), AV_OPT_TYPE_FLOAT, { .dbl = 20.0 }, 2.5, 120.0, FLAGS },
+     { "packet_loss",    "Expected packet loss percentage",     OFFSET(packet_loss),    AV_OPT_TYPE_INT,   { .i64 = 0 },    0,   100,  FLAGS },
++    { "fec",             "Enable inband FEC. Expected packet loss must be non-zero",     OFFSET(fec),    AV_OPT_TYPE_BOOL,   { .i64 = 0 }, 0, 1, FLAGS },
+     { "vbr",            "Variable bit rate mode",              OFFSET(vbr),            AV_OPT_TYPE_INT,   { .i64 = 1 },    0,   2,    FLAGS, "vbr" },
+         { "off",            "Use constant bit rate", 0, AV_OPT_TYPE_CONST, { .i64 = 0 }, 0, 0, FLAGS, "vbr" },
+         { "on",             "Use variable bit rate", 0, AV_OPT_TYPE_CONST, { .i64 = 1 }, 0, 0, FLAGS, "vbr" },
+-- 
+2.25.1
+
