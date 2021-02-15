@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3912fbb9_b0f795c1",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 12
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-15T20:55:47Z",
+      "side": 1,
+      "message": "missing ticket",
+      "revId": "429e5dc1fc411078bee9370ebd88ea199be70169",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "531e639f_6e5ac4c7",
+        "filename": "src/conference.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-15T20:55:47Z",
+      "side": 1,
+      "message": "we should only do this if the resolution really changed imho",
+      "range": {
+        "startLine": 140,
+        "startChar": 17,
+        "endLine": 141,
+        "endChar": 42
+      },
+      "revId": "429e5dc1fc411078bee9370ebd88ea199be70169",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
