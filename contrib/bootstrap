@@ -26,6 +26,7 @@ usage()
 	echo "  --prefix=PREFIX     install files in PREFIX"
 	echo "  --no-checksums      don't verify checksums (allows to replace tarballs)"
 	echo "  --disable-downloads don't download packages from the internet"
+        echo '  --cache-dir=DIR     the directory where contrib tarballs are cached'
 	echo "  --enable-debug      build with debug symbol and extra checks (disabled by default)"
 	echo "  --disable-FOO       configure to not build package FOO"
 	echo "  --enable-FOO        configure to build package FOO"
@@ -36,6 +37,7 @@ HOST=
 PREFIX=
 PKGS_ENABLE=
 PKGS_DISABLE=
+CONF_TARBALLS=
 
 if test ! -f "../../contrib/src/main.mak"
 then
@@ -58,6 +60,9 @@ do
 			;;
 		--disable-downloads)
 			DISABLE_CONTRIB_DOWNLOADS="TRUE"
+			;;
+                --cache-dir=*)
+			CONF_TARBALLS="${1#--cache-dir=}"
 			;;
 		--enable-debug)
 			ENABLE_DEBUG=1
@@ -122,6 +127,7 @@ PKGS_DISABLE := $PKGS_DISABLE
 PKGS_ENABLE := $PKGS_ENABLE
 DISABLE_CONTRIB_DOWNLOADS := $DISABLE_CONTRIB_DOWNLOADS
 DISABLE_CONTRIB_CHECKSUMS := $DISABLE_CONTRIB_CHECKSUMS
+CONF_TARBALLS := $CONF_TARBALLS
 ENABLE_DEBUG := $ENABLE_DEBUG
 EOF
 
