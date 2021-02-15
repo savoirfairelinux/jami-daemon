@@ -50,7 +50,7 @@ $(TARBALLS)/x264-$(X264_HASH).tar.xz:
 x264: x264-$(X264_HASH).tar.xz .sum-x264
 	rm -Rf $@-$(X264_HASH)
 	mkdir -p $@-$(X264_HASH)
-	(cd $@-$(X264_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
+	(cd $@-$(X264_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f $<)
 ifdef HAVE_IOS
 	$(APPLY) $(SRC)/x264/remove-align.patch
 endif
