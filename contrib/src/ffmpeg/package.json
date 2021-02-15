@@ -12,7 +12,7 @@
     "patches": [
         "change-RTCP-ratio.patch",
         "rtp_ext_abs_send_time.patch",
-        "libopusenc-enable-FEC.patch",
+        "libopusenc-reload-packet-loss-at-encode.patch",
         "libopusdec-enable-FEC.patch"
     ],
     "win_patches": [
