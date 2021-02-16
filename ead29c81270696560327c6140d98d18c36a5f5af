@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4f5b6f0a_17334b6f",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 298,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-16T17:06:52Z",
+      "side": 1,
+      "message": "{} not needid",
+      "range": {
+        "startLine": 291,
+        "startChar": 4,
+        "endLine": 298,
+        "endChar": 5
+      },
+      "revId": "ead29c81270696560327c6140d98d18c36a5f5af",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cb1859b2_189708aa",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 305,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-16T17:06:52Z",
+      "side": 1,
+      "message": "can be auto",
+      "range": {
+        "startLine": 304,
+        "startChar": 20,
+        "endLine": 305,
+        "endChar": 21
+      },
+      "revId": "ead29c81270696560327c6140d98d18c36a5f5af",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "908ffa71_92041a9c",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 307,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-16T17:06:52Z",
+      "side": 1,
+      "message": "const auto\u0026",
+      "range": {
+        "startLine": 307,
+        "startChar": 14,
+        "endLine": 307,
+        "endChar": 24
+      },
+      "revId": "ead29c81270696560327c6140d98d18c36a5f5af",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
