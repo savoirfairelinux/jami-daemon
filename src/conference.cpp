@@ -279,24 +279,21 @@ Conference::sendConferenceInfos()
             if (!account)
                 continue;
 
-            ConfInfo confInfo = getConfInfoHostUri(account->getUsername()+ "@ring.dht");
-            Json::Value jsonArray = {};
-            for (const auto& info : confInfo) {
-                jsonArray.append(info.toJson());
-            }
+            ConfInfo confInfo = getConfInfoHostUri(account->getUsername()+ "@ring.dht", participant_id);
 
             runOnMainThread([
                 call,
-                confInfoStr = Json::writeString(Json::StreamWriterBuilder{}, jsonArray),
+                confInfoStr = confInfo2str(confInfo),
                 from = account->getFromUri()
             ] {
+                JAMI_ERR("@@@ send to %s: \n %s", call->getPeerNumber().substr(0,2).c_str(), confInfoStr.c_str());
                 call->sendTextMessage({{"application/confInfo+json", confInfoStr}}, from);
             });
         }
     }
 
     // Inform client that layout has changed
-    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, confInfo_.toVectorMapStringString());
+    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, getConfInfoHostUri("host"sv, "host").toVectorMapStringString());
 }
 
 void
@@ -706,14 +703,26 @@ Conference::updateMuted()
 }
 
 ConfInfo
-Conference::getConfInfoHostUri(std::string_view uri)
+Conference::getConfInfoHostUri(std::string_view srcURI, const std::string& destURI)
 {
     ConfInfo newInfo = confInfo_;
-    for (auto& info : newInfo) {
-        if (info.uri.empty()) {
-            info.uri = uri;
-            break;
+
+    auto remoteIt = remoteHosts_.find(destURI);
+    bool isRemoteHost = remoteIt != remoteHosts_.end();
+    for (auto it = newInfo.begin(); it != newInfo.end();) {
+        if (it->uri.empty() and srcURI != "host"sv) {
+            // fill the empty uri with the host URI
+            it->uri = srcURI;
+            ++it;
+        } else if (isRemoteHost and it->uri == destURI) {
+            // Send only missing confoInfo for remote host
+            it = newInfo.erase(it);
         }
+    }
+    // Add remote Host info
+    for (auto& host : remoteHosts_) {
+        if (destURI != host.first)
+            newInfo.insert(newInfo.end(), host.second.begin(), host.second.end());
     }
     return newInfo;
 }
@@ -800,6 +809,85 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
         return;
 #endif
     }
+}
+
+void
+Conference::reziseRemoteParticipant(const std::string& peerURI, ParticipantInfo& remoteCell)
+{
+    int remoteFrameHeight, remoteFrameWidth;
+    ParticipantInfo localCell;
+
+    // get the size of the remote frame
+    for (const auto& item : participants_) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(item)) {
+            if (call->getPeerNumber().find(remoteCell.uri) != std::string::npos) {
+                remoteFrameHeight = call->getVideoRtp().getVideoReceive()->getHeight();
+                remoteFrameWidth = call->getVideoRtp().getVideoReceive()->getWidth();
+                break;
+            }
+        }
+    }
+
+    // get the size of the local frame
+    for (const auto& p : confInfo_) {
+        if (p.uri == peerURI) {
+            localCell = p;
+            break;
+        }
+    }
+
+    int zoomX = remoteFrameWidth / localCell.w;
+    int zoomY = remoteFrameHeight / localCell.h;
+
+    JAMI_ERR("@@@ resize: %s", remoteCell.uri.substr(0,2).c_str());
+    JAMI_ERR("@@@ remoteFrameHeight: %d, remoteFrameWidth: %d, localFrameHeight: %d, localFrameWidth: %d",
+        remoteFrameHeight,
+        remoteFrameWidth,
+        localCell.h,
+        localCell.w);
+    JAMI_ERR("@@@ zoomX:%d, zoomY:%d", zoomX, zoomY);
+
+    remoteCell.x = remoteCell.x / zoomX + localCell.x;
+    remoteCell.y = remoteCell.y / zoomY + localCell.y;
+    remoteCell.w = remoteCell.w / zoomX;
+    remoteCell.h = remoteCell.h / zoomY;
+
+}
+
+std::string
+Conference::confInfo2str(const ConfInfo& confInfo)
+{
+    Json::Value jsonArray = {};
+    for (const auto& info : confInfo) {
+        jsonArray.append(info.toJson());
+    }
+    return Json::writeString(Json::StreamWriterBuilder{}, jsonArray);
+}
+
+void
+Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
+{
+    if (newInfo.empty()) {
+        JAMI_ERR("@@@ mergeConfInfo, confInfo empty -> remove remoteHost and do nothing");
+        remoteHosts_.erase(peerURI);
+        return;
+    }
+
+    JAMI_ERR("@@@ Start to merge info");
+    for (auto& partInfo : newInfo) {
+        reziseRemoteParticipant(peerURI, partInfo);
+    }
+
+    auto it = remoteHosts_.find(peerURI);
+    if (it != remoteHosts_.end()) {
+        JAMI_ERR("@@@ update remote host: %s", peerURI.substr(0,2).c_str());
+        it->second = newInfo;
+    } else {
+        JAMI_ERR("@@@ new remote host: %s", peerURI.substr(0,2).c_str());
+        remoteHosts_.emplace(peerURI, newInfo);
+    }
+
+    sendConferenceInfos();
 }
 
 } // namespace jami

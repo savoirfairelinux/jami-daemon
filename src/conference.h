@@ -29,6 +29,7 @@
 #include <memory>
 #include <vector>
 #include <string_view>
+#include <map>
 
 #include "audio/audio_input.h"
 
@@ -246,6 +247,9 @@ public:
     void hangupParticipant(const std::string& participant_id);
     void updateMuted();
     void muteLocalHost(bool is_muted, const std::string& mediaType);
+    bool isRemoteParticipant(const std::string& uri);
+    void reziseRemoteParticipant(const std::string& peerURI, ParticipantInfo& remoteCell);
+    void mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI);
 
 private:
     std::weak_ptr<Conference> weak()
@@ -284,12 +288,15 @@ private:
 
     bool isMuted(std::string_view uri) const;
 
-    ConfInfo getConfInfoHostUri(std::string_view uri);
+    ConfInfo getConfInfoHostUri(std::string_view srcURI, const std::string& destURI);
     bool isHost(std::string_view uri) const;
     bool audioMuted_ {false};
     bool videoMuted_ {false};
 
     bool localModAdded_ {false};
+
+    std::map<std::string, ConfInfo> remoteHosts_;
+    std::string confInfo2str(const ConfInfo& confInfo);
 };
 
 } // namespace jami
