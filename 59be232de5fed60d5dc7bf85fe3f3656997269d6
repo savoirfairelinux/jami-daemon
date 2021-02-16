@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "35bf7b37_bfaa796e",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 203,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-16T04:53:58Z",
+      "side": 1,
+      "message": "yes, this can be true multiple times",
+      "parentUuid": "037bd241_ad975752",
+      "range": {
+        "startLine": 203,
+        "startChar": 16,
+        "endLine": 203,
+        "endChar": 32
+      },
+      "revId": "59be232de5fed60d5dc7bf85fe3f3656997269d6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "a5cc4aa3_0fd145c6",
         "filename": "src/plugin/chatservicesmanager.cpp",
         "patchSetId": 8
@@ -36,6 +60,30 @@
       "writtenOn": "2021-02-10T20:08:18Z",
       "side": 1,
       "message": "why the logic is similar in CallServicesManager but different about the status?",
+      "range": {
+        "startLine": 67,
+        "startChar": 40,
+        "endLine": 69,
+        "endChar": 38
+      },
+      "revId": "59be232de5fed60d5dc7bf85fe3f3656997269d6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b83966c8_c6fc8d43",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-16T04:53:58Z",
+      "side": 1,
+      "message": "behavior unified.",
+      "parentUuid": "a5cc4aa3_0fd145c6",
       "range": {
         "startLine": 67,
         "startChar": 40,
@@ -68,6 +116,30 @@
       "revId": "59be232de5fed60d5dc7bf85fe3f3656997269d6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8196714c_fdc2513b",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 191,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-16T04:53:58Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "c6de9aeb_5fd47468",
+      "range": {
+        "startLine": 190,
+        "startChar": 35,
+        "endLine": 191,
+        "endChar": 31
+      },
+      "revId": "59be232de5fed60d5dc7bf85fe3f3656997269d6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
