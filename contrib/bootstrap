@@ -39,7 +39,7 @@ PKGS_ENABLE=
 PKGS_DISABLE=
 CONF_TARBALLS=
 
-if test ! -f "../../contrib/src/main.mak"
+if test ! -f "../src/main.mak"
 then
 	echo "$0 must be run from a subdirectory"
 	exit 1
@@ -270,7 +270,7 @@ esac
 # Results output
 #
 test -e Makefile && unlink Makefile
-ln -sf ../../contrib/src/main.mak Makefile || exit $?
+ln -sf ../src/main.mak Makefile || exit $?
 cat << EOF
 Bootstrap completed.
 
@@ -289,4 +289,4 @@ Other targets:
  * make package       prepare prebuilt packages
 EOF
 
-mkdir -p ../../contrib/tarballs || exit $?
+mkdir -p ../tarballs || exit $?
