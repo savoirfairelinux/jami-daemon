@@ -272,15 +272,11 @@ UPnPContext::releaseMapping(const Mapping& map)
     if (mapPtr and mapPtr->isAvailable()) {
         JAMI_WARN("Trying to release an unused mapping %s", mapPtr->toString().c_str());
         return false;
-    } else if (mapPtr->getState() == MappingState::FAILED) {
-        // Remove it if in "FAILED" state.
-        unregisterMapping(mapPtr);
-    } else {
-        // Make the mapping available for future use.
-        mapPtr->setAvailable(true);
-        mapPtr->setNotifyCallback(nullptr);
-        mapPtr->enableAutoUpdate(false);
     }
+
+    // Remove it.
+    deleteMapping(mapPtr);
+    unregisterMapping(mapPtr);
 
     return true;
 }
