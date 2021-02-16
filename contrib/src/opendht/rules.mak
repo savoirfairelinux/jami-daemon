@@ -14,7 +14,7 @@ endif
 ifneq ($(call need_pkg,"libargon2"),)
 DEPS_opendht += argon2
 endif
-ifneq ($(call need_pkg,"libressl >= 1-12-2"),)
+ifneq ($(and $(call need_pkg,"openssl >= 1.1.0"),$(call need_pkg,"libressl >= 1.12.2")),)
 DEPS_opendht += libressl
 endif
 ifneq ($(call need_pkg,"restinio >= v.0.5.1"),)
