@@ -49,6 +49,30 @@
     },
     {
       "key": {
+        "uuid": "00204298_e14239fb",
+        "filename": "src/upnp/protocol/mapping.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 194,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-16T14:21:44Z",
+      "side": 1,
+      "message": "I said that not for readability, but for error detection. checking 4 false can easily change\ncf\n\nif (state_ \u003d\u003d MappingState::FAILED)\n    return false;\nif (internalPort_ \u003d\u003d 0)\n    return true;\nif (externalPort_ \u003d\u003d 0)\n    return false;\nif (not igd_ or not igd_-\u003eisValid())\n    return false;\n\nif (state_ \u003d\u003d MappingState::FAILED\n    or internalPort_ \u003d\u003d 0\n    or externalPort_ \u003d\u003d 0\n    or not igd_ or not igd_-\u003eisValid())\n    return false;\n\nIn first part, the \"return true\" can be easily missed and you still have one condition per line.",
+      "parentUuid": "cb89bc49_7327220c",
+      "range": {
+        "startLine": 185,
+        "startChar": 7,
+        "endLine": 194,
+        "endChar": 5
+      },
+      "revId": "aad798989b2557fe7f0929541d498230aca4345f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "fce720de_b9f50771",
         "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
         "patchSetId": 1
