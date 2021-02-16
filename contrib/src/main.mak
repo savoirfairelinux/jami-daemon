@@ -23,8 +23,8 @@ all: install
 # bootstrap configuration
 include config.mak
 
-TOPSRC ?= $(abspath ../../contrib)
-TOPDST ?= $(abspath ..)
+TOPSRC ?= $(abspath $(CURDIR)/..)
+TOPDST ?= $(abspath $(CURDIR))
 SRC := $(TOPSRC)/src
 
 # Resolves TARBALLS using the following precedence rules:
