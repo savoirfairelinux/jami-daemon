@@ -23,8 +23,10 @@ all: install
 # bootstrap configuration
 include config.mak
 
-TOPSRC ?= $(abspath ../../contrib)
-TOPDST ?= $(abspath ..)
+# The bootstrap script is enforced to run from a child directory of
+# daemon/contrib; TOPSRC corresponds to this contrib/ directory.
+TOPSRC ?= $(abspath $(CURDIR)/..)
+TOPDST ?= $(abspath $(CURDIR)/..)
 SRC := $(TOPSRC)/src
 
 # Resolves TARBALLS using the following precedence rules:
@@ -33,7 +35,7 @@ SRC := $(TOPSRC)/src
 # 3. Default value
 TARBALLS := $(or $(TARBALLS),$(CONF_TARBALLS),$(TOPSRC)/tarballs)
 
-PATH :=$(abspath ../../extras/tools/build/bin):$(PATH)
+PATH :=$(abspath $(TOPSRC)/../extras/tools/build/bin):$(PATH)
 export PATH
 
 PKGS_ALL := $(patsubst $(SRC)/%/rules.mak,%,$(wildcard $(SRC)/*/rules.mak))
@@ -367,7 +369,7 @@ UNPACK = $(RM) -R $@ \
 UNPACK_DIR = $(basename $(basename $(notdir $<)))
 APPLY = (cd $(UNPACK_DIR) && patch -flp1) <
 APPLY_BIN = (cd $(UNPACK_DIR) && patch --binary -flp1) <
-pkg_static = (cd $(UNPACK_DIR) && ../../../contrib/src/pkg-static.sh $(1))
+pkg_static = (cd $(UNPACK_DIR) && $(SRC)/pkg-static.sh $(1))
 MOVE = mv $(UNPACK_DIR) $@ && touch $@
 
 AUTOMAKE_DATA_DIRS=$(foreach n,$(foreach n,$(subst :, ,$(shell echo $$PATH)),$(abspath $(n)/../share)),$(wildcard $(n)/automake*))
