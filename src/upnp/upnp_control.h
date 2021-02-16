@@ -63,7 +63,7 @@ public:
     Mapping::sharedPtr_t reserveMapping(uint16_t port, PortType type);
 
     // Remove port mapping.
-    bool releaseMapping(const Mapping& map);
+    void releaseMapping(const Mapping& map);
     static uint16_t generateRandomPort(PortType);
 
 private:

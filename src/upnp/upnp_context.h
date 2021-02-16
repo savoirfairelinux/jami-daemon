@@ -121,7 +121,7 @@ public:
     Mapping::sharedPtr_t reserveMapping(Mapping& requestedMap);
 
     // Release an used mapping (make it available for future use).
-    bool releaseMapping(const Mapping& map);
+    void releaseMapping(const Mapping& map);
 
     // Register a controller
     void registerController(void* controller);

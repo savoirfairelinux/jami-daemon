@@ -258,31 +258,32 @@ UPnPContext::reserveMapping(Mapping& requestedMap)
     return mapRes;
 }
 
-bool
+void
 UPnPContext::releaseMapping(const Mapping& map)
 {
+    if (not isValidThread()) {
+        runOnUpnpContextThread([this, map] { releaseMapping(map); });
+        return;
+    }
+
+    CHECK_VALID_THREAD();
+
     auto mapPtr = getMappingWithKey(map.getMapKey());
 
     if (not mapPtr) {
         // Might happen if the mapping failed
         JAMI_DBG("Mapping %s does not exist or was already removed", map.toString().c_str());
-        return false;
+        return;
     }
 
-    if (mapPtr and mapPtr->isAvailable()) {
+    if (mapPtr->isAvailable()) {
         JAMI_WARN("Trying to release an unused mapping %s", mapPtr->toString().c_str());
-        return false;
-    } else if (mapPtr->getState() == MappingState::FAILED) {
-        // Remove it if in "FAILED" state.
-        unregisterMapping(mapPtr);
-    } else {
-        // Make the mapping available for future use.
-        mapPtr->setAvailable(true);
-        mapPtr->setNotifyCallback(nullptr);
-        mapPtr->enableAutoUpdate(false);
+        return;
     }
 
-    return true;
+    // Remove it.
+    deleteMapping(mapPtr);
+    unregisterMapping(mapPtr);
 }
 
 void
@@ -960,18 +961,22 @@ UPnPContext::onMappingRenewed(const std::shared_ptr<IGD>& igd, const Mapping& ma
 
     mapPtr->setRenewalTime(map.getRenewalTime());
 }
-
 #endif
 
 void
 UPnPContext::deleteMapping(const Mapping::sharedPtr_t& map)
 {
+    CHECK_VALID_THREAD();
+
     if (not map) {
         JAMI_ERR("Invalid mapping shared pointer");
         return;
     }
 
-    CHECK_VALID_THREAD();
+    if (not map->getIgd() or not map->getIgd()->isValid()) {
+        JAMI_WARN("Invalid mapping shared pointer");
+        return;
+    }
 
     auto protocol = protocolList_.at(map->getIgd()->getProtocol());
     protocol->requestMappingRemove(*map);

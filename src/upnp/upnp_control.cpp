@@ -92,7 +92,7 @@ Controller::reserveMapping(Mapping& requestedMap)
     return mapRes;
 }
 
-bool
+void
 Controller::releaseMapping(const Mapping& map)
 {
     assert(upnpContext_);
