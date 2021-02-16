@@ -1,0 +1,188 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "118fdcb5_ed184539",
+        "filename": "src/manager.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 2892,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-16T17:03:26Z",
+      "side": 1,
+      "message": "not sure what this method do. weird name",
+      "range": {
+        "startLine": 2892,
+        "startChar": 13,
+        "endLine": 2892,
+        "endChar": 45
+      },
+      "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "64cf92cb_3051ac01",
+        "filename": "src/observer.h",
+        "patchSetId": 20
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-16T17:03:26Z",
+      "side": 1,
+      "message": "ref",
+      "range": {
+        "startLine": 198,
+        "startChar": 16,
+        "endLine": 198,
+        "endChar": 18
+      },
+      "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f80e02fc_a377622f",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-16T17:03:26Z",
+      "side": 1,
+      "message": "can be uninit",
+      "range": {
+        "startLine": 44,
+        "startChar": 10,
+        "endLine": 44,
+        "endChar": 28
+      },
+      "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4459a973_01dc3ffe",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-16T17:03:26Z",
+      "side": 1,
+      "message": "question. wh ychange the process on android?",
+      "range": {
+        "startLine": 56,
+        "startChar": 9,
+        "endLine": 57,
+        "endChar": 19
+      },
+      "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fed7fc6a_060f2089",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-16T17:03:26Z",
+      "side": 1,
+      "message": "is this still necessary if we always return true?",
+      "range": {
+        "startLine": 104,
+        "startChar": 8,
+        "endLine": 104,
+        "endChar": 20
+      },
+      "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "47d8a3c6_ae07cfae",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 20
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-16T17:03:26Z",
+      "side": 1,
+      "message": "doc to update to explain the map\u003cstring,list\u003e\nAlso why not a map instead a list of pair?\nmay be a using typename for clarification too",
+      "range": {
+        "startLine": 139,
+        "startChar": 18,
+        "endLine": 139,
+        "endChar": 26
+      },
+      "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4dd8e6ff_216875fc",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 20
+      },
+      "lineNbr": 143,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-16T17:03:26Z",
+      "side": 1,
+      "message": "to update",
+      "range": {
+        "startLine": 142,
+        "startChar": 34,
+        "endLine": 143,
+        "endChar": 61
+      },
+      "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "01592eeb_81ffca20",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 20
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-16T17:03:26Z",
+      "side": 1,
+      "message": "what is this list for (allowDeny is a weird name for me)",
+      "range": {
+        "startLine": 80,
+        "startChar": 20,
+        "endLine": 80,
+        "endChar": 34
+      },
+      "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
