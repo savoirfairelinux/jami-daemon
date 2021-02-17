@@ -249,20 +249,17 @@ SVN ?= $(error subversion client (svn) not found!)
 
 ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
 download = $(error Trying to download $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
+else ifeq ($(shell wget --version >/dev/null 2>&1 || echo FAIL),)
+download = wget $(if ${BATCH_MODE},-nv) -t 4 --waitretry 10 -O "$@" "$(1)"
 else ifeq ($(shell curl --version >/dev/null 2>&1 || echo FAIL),)
 download = curl $(if ${BATCH_MODE},-sS) -f -L --retry-delay 10 --retry 4 -- "$(1)" > "$@"
-else ifeq ($(shell wget --version >/dev/null 2>&1 || echo FAIL),)
-download = rm -f $@.tmp && \
-	wget $(if ${BATCH_MODE},-nv) --passive -t 4 -w 10 -c -p -O $@.tmp "$(1)" && \
-	touch $@.tmp && \
-	mv $@.tmp $@
 else ifeq ($(which fetch >/dev/null 2>&1 || echo FAIL),)
 download = rm -f $@.tmp && \
 	fetch -p -o $@.tmp "$(1)" && \
 	touch $@.tmp && \
 	mv $@.tmp $@
 else
-download = $(error Neither curl nor wget found!)
+download = $(error Neither wget nor curl found!)
 endif
 
 ifeq ($(shell which bzcat >/dev/null 2>&1 || echo FAIL),)
