@@ -330,6 +330,7 @@ HOSTVARS := $(HOSTTOOLS) \
 # $1: The URL of the Git repository.
 # $2: The remote branch to clone.
 # $3: The git refspec to checkout.
+# $4: Set to anything to preserve the .git directory
 ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
 download_git = $(error Trying to clone $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
 else
@@ -337,7 +338,7 @@ download_git = \
 	rm -Rf $(@:.tar.xz=) && \
 	$(GIT) clone $(2:%=--branch %) $(1) $(@:.tar.xz=) && \
 	(cd $(@:.tar.xz=) && $(GIT) checkout $(3:%= %)) && \
-	rm -Rf $(@:%.tar.xz=%)/.git && \
+	(test -z "$(4)" && rm -Rf $(@:%.tar.xz=%)/.git) || true && \
 	(cd $(dir $@) && \
 	tar cJ $(notdir $(@:.tar.xz=))) > $@ && \
 	rm -Rf $(@:.tar.xz=)

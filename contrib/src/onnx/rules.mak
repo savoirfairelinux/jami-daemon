@@ -3,7 +3,7 @@ ONNX_VERSION := v1.6.0
 ONNX_URL := https://github.com/microsoft/onnxruntime.git
 
 $(TARBALLS)/onnxruntime-$(ONNX_VERSION).tar.xz:
-	$(call download_git,$(ONNX_URL),master,$(ONNX_VERSION))
+	$(call download_git,$(ONNX_URL),master,$(ONNX_VERSION),preserve .git)
 
 .sum-onnx: onnxruntime-$(ONNX_VERSION).tar.xz
 	$(warning $@ not implemented)
@@ -34,5 +34,3 @@ endif
 	if [ ! -d "$(PREFIX)/include/onnxruntime" ] ; then ( mkdir $(PREFIX)/include/onnxruntime ) fi
 	cd $< && cp -r ./include/onnxruntime/core/* $(PREFIX)/include/onnxruntime/
 	touch $@
-
-
