@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "d71f45d2_ad761ab9",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 6
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-17T15:00:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "92339c36_64dbc4cc",
+      "range": {
+        "startLine": 7,
+        "startChar": 21,
+        "endLine": 10,
+        "endChar": 11
+      },
+      "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "24cee7fe_2c8a3b99",
         "filename": "src/media/audio/audio_input.h",
         "patchSetId": 6
@@ -45,6 +69,30 @@
       "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3df42984_474aadd8",
+        "filename": "src/media/audio/audio_input.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-17T15:00:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "24cee7fe_2c8a3b99",
+      "range": {
+        "startLine": 68,
+        "startChar": 78,
+        "endLine": 68,
+        "endChar": 81
+      },
+      "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "64b32f84_2afca40b",
+        "filename": "src/media/audio/audio_input.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-17T15:00:06Z",
+      "side": 1,
+      "message": "For now, we are not able to concat 2 differents stream.\nBut even if we could, we have to wait all streams init (the reason of using cb) before to start the recording, otherwise we can end up with audio local or video remote missing for example.",
+      "parentUuid": "10cb96ef_1cabb20a",
+      "range": {
+        "startLine": 109,
+        "startChar": 19,
+        "endLine": 111,
+        "endChar": 30
+      },
+      "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "f1f32b66_4fb0c699",
         "filename": "src/media/audio/audio_receive_thread.cpp",
         "patchSetId": 6
@@ -91,6 +163,30 @@
       "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "46544e92_eaf315ce",
+        "filename": "src/media/audio/audio_receive_thread.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-17T15:00:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f1f32b66_4fb0c699",
+      "range": {
+        "startLine": 91,
+        "startChar": 27,
+        "endLine": 92,
+        "endChar": 39
+      },
+      "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "8e0c8fa1_b7b8d10d",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 146,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-17T15:00:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "75374780_9b8e1c3b",
+      "range": {
+        "startLine": 145,
+        "startChar": 12,
+        "endLine": 146,
+        "endChar": 13
+      },
+      "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "c7073aec_26675fd8",
         "filename": "src/media/video/video_input.h",
         "patchSetId": 6
@@ -140,6 +260,30 @@
     },
     {
       "key": {
+        "uuid": "e029101c_e40753dc",
+        "filename": "src/media/video/video_input.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-17T15:00:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c7073aec_26675fd8",
+      "range": {
+        "startLine": 93,
+        "startChar": 0,
+        "endLine": 94,
+        "endChar": 81
+      },
+      "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "804a03fd_f0f75e36",
         "filename": "src/media/video/video_rtp_session.cpp",
         "patchSetId": 6
@@ -151,6 +295,30 @@
       "writtenOn": "2021-02-15T20:33:17Z",
       "side": 1,
       "message": "technically we don\u0027t need to check for set. We can want to setSuccessfulSetupCb({}). The only important place to check is when we call the cb.\n\nAlso question about media design. Is it multi-thread safe? else we may need to protect callback modifications",
+      "range": {
+        "startLine": 208,
+        "startChar": 28,
+        "endLine": 208,
+        "endChar": 48
+      },
+      "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "100998be_3521f9a2",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-17T15:00:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "804a03fd_f0f75e36",
       "range": {
         "startLine": 208,
         "startChar": 28,
