@@ -67,6 +67,7 @@ public:
     using RegistrationCallback = std::function<void(RegistrationResponse response)>;
 
     NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::Logger> l = {});
+    ~NameDirectory();
     void load();
 
     static NameDirectory& instance(const std::string& serverUrl,
@@ -108,6 +109,7 @@ private:
      */
     std::shared_ptr<asio::io_context> httpContext_;
     std::shared_ptr<dht::http::Resolver> resolver_;
+    std::mutex requestsMtx_ {};
     std::map<unsigned, std::shared_ptr<dht::http::Request>> requests_;
 
     std::map<std::string, std::string> nameCache_ {};

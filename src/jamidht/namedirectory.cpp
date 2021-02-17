@@ -77,9 +77,7 @@ NameDirectory::instance()
 }
 
 void
-NameDirectory::lookupUri(std::string_view uri,
-                         const std::string& default_server,
-                         LookupCallback cb)
+NameDirectory::lookupUri(std::string_view uri, const std::string& default_server, LookupCallback cb)
 {
     const std::string& default_ns = default_server.empty() ? DEFAULT_SERVER_HOST : default_server;
     std::svmatch pieces_match;
@@ -92,7 +90,7 @@ NameDirectory::lookupUri(std::string_view uri,
             return;
         }
     }
-    JAMI_ERR("Can't parse URI: %.*s", (int)uri.size(), uri.data());
+    JAMI_ERR("Can't parse URI: %.*s", (int) uri.size(), uri.data());
     cb("", Response::invalidResponse);
 }
 
@@ -106,6 +104,12 @@ NameDirectory::NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::
     resolver_ = std::make_shared<dht::http::Resolver>(*httpContext_, serverUrl, logger_);
     cachePath_ = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + CACHE_DIRECTORY
                  + DIR_SEPARATOR_STR + resolver_->get_url().host;
+}
+
+NameDirectory::~NameDirectory()
+{
+    std::lock_guard<std::mutex> lk(requestsMtx_);
+    requests_.clear();
 }
 
 void
@@ -172,12 +176,12 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                         Json::CharReaderBuilder rbuilder;
                         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
                         if (!reader->parse(response.body.data(),
-                                        response.body.data() + response.body.size(),
-                                        &json,
-                                        &err)) {
+                                           response.body.data() + response.body.size(),
+                                           &json,
+                                           &err)) {
                             JAMI_DBG("Address lookup for %s: can't parse server response: %s",
-                                    addr.c_str(),
-                                    response.body.c_str());
+                                     addr.c_str(),
+                                     response.body.c_str());
                             cb("", Response::error);
                             return;
                         }
@@ -199,12 +203,15 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                         cb("", Response::error);
                     }
                 }
+                std::lock_guard<std::mutex> lk(requestsMtx_);
                 requests_.erase(reqid);
             });
         request->send();
+        std::lock_guard<std::mutex> lk(requestsMtx_);
         requests_[reqid] = request;
     } catch (const std::exception& e) {
         JAMI_ERR("Error when performing address lookup: %s", e.what());
+        std::lock_guard<std::mutex> lk(requestsMtx_);
         requests_.erase(reqid);
     }
 }
@@ -296,12 +303,15 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                     cb("", Response::error);
                 }
             }
+            std::lock_guard<std::mutex> lk(requestsMtx_);
             requests_.erase(reqid);
         });
         request->send();
+        std::lock_guard<std::mutex> lk(requestsMtx_);
         requests_[reqid] = request;
     } catch (const std::exception& e) {
         JAMI_ERR("Name lookup for %s failed: %s", name.c_str(), e.what());
+        std::lock_guard<std::mutex> lk(requestsMtx_);
         requests_.erase(reqid);
     }
 }
@@ -399,13 +409,16 @@ NameDirectory::registerName(const std::string& addr,
                     }
                     cb(success ? RegistrationResponse::success : RegistrationResponse::error);
                 }
+                std::lock_guard<std::mutex> lk(requestsMtx_);
                 requests_.erase(reqid);
             });
         request->send();
+        std::lock_guard<std::mutex> lk(requestsMtx_);
         requests_[reqid] = request;
     } catch (const std::exception& e) {
         JAMI_ERR("Error when performing name registration: %s", e.what());
         cb(RegistrationResponse::error);
+        std::lock_guard<std::mutex> lk(requestsMtx_);
         requests_.erase(reqid);
     }
 }
