@@ -22,6 +22,30 @@
       "revId": "48bacdbca41ca96534448cf2c956450e5b88eba4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f1814234_6fa15946",
+        "filename": "src/call.cpp",
+        "patchSetId": 41
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-17T20:31:23Z",
+      "side": 1,
+      "message": "yes, we already agreed to completely get rid of linkType_. I thought I have done the changes, my bad.\n\nDone",
+      "parentUuid": "14dc1faf_9468c545",
+      "range": {
+        "startLine": 86,
+        "startChar": 18,
+        "endLine": 86,
+        "endChar": 29
+      },
+      "revId": "48bacdbca41ca96534448cf2c956450e5b88eba4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
