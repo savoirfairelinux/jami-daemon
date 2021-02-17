@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "324bacd3_5b72f386",
+        "filename": "src/manager.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 2892,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-17T02:01:10Z",
+      "side": 1,
+      "message": "It reads chathandler status from file and inserts it into chathandlerservices. moved to ChatHandlerServices constructor",
+      "parentUuid": "118fdcb5_ed184539",
+      "range": {
+        "startLine": 2892,
+        "startChar": 13,
+        "endLine": 2892,
+        "endChar": 45
+      },
+      "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "64cf92cb_3051ac01",
         "filename": "src/observer.h",
         "patchSetId": 20
@@ -45,6 +69,30 @@
       "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "aa1dcb7b_49690dd6",
+        "filename": "src/observer.h",
+        "patchSetId": 20
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-17T02:01:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "64cf92cb_3051ac01",
+      "range": {
+        "startLine": 198,
+        "startChar": 16,
+        "endLine": 198,
+        "endChar": 18
+      },
+      "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -94,6 +142,30 @@
     },
     {
       "key": {
+        "uuid": "9721849a_75ae6cf3",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-17T02:01:10Z",
+      "side": 1,
+      "message": "Due to how HWAccel is managed in android, if we toggle plugin here and accel is set, we will see a crash.",
+      "parentUuid": "4459a973_01dc3ffe",
+      "range": {
+        "startLine": 56,
+        "startChar": 9,
+        "endLine": 57,
+        "endChar": 19
+      },
+      "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "fed7fc6a_060f2089",
         "filename": "src/plugin/callservicesmanager.cpp",
         "patchSetId": 20
@@ -105,6 +177,30 @@
       "writtenOn": "2021-02-16T17:03:26Z",
       "side": 1,
       "message": "is this still necessary if we always return true?",
+      "range": {
+        "startLine": 104,
+        "startChar": 8,
+        "endLine": 104,
+        "endChar": 20
+      },
+      "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "473c41e1_585b3f7c",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-17T02:01:10Z",
+      "side": 1,
+      "message": "Return is needed since this is received as ComponentFunction in PluginManager.\nusing ComponentFunction \u003d std::function\u003cint32_t(void*)\u003e;",
+      "parentUuid": "fed7fc6a_060f2089",
       "range": {
         "startLine": 104,
         "startChar": 8,
@@ -140,6 +236,30 @@
     },
     {
       "key": {
+        "uuid": "c390bb9c_6c0f76a9",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 20
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-17T02:01:10Z",
+      "side": 1,
+      "message": "lots of documentation are done in the stack top patch",
+      "parentUuid": "47d8a3c6_ae07cfae",
+      "range": {
+        "startLine": 139,
+        "startChar": 18,
+        "endLine": 139,
+        "endChar": 26
+      },
+      "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4dd8e6ff_216875fc",
         "filename": "src/plugin/callservicesmanager.h",
         "patchSetId": 20
@@ -163,6 +283,30 @@
     },
     {
       "key": {
+        "uuid": "70efbe71_377ec367",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 20
+      },
+      "lineNbr": 143,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-17T02:01:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4dd8e6ff_216875fc",
+      "range": {
+        "startLine": 142,
+        "startChar": 34,
+        "endLine": 143,
+        "endChar": 61
+      },
+      "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "01592eeb_81ffca20",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 20
@@ -174,6 +318,30 @@
       "writtenOn": "2021-02-16T17:03:26Z",
       "side": 1,
       "message": "what is this list for (allowDeny is a weird name for me)",
+      "range": {
+        "startLine": 80,
+        "startChar": 20,
+        "endLine": 80,
+        "endChar": 34
+      },
+      "revId": "253b4d7f3f219a2da235ce44518160b1c7880e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2bec0021_fbfc1449",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 20
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-17T02:01:10Z",
+      "side": 1,
+      "message": "Added doc",
+      "parentUuid": "01592eeb_81ffca20",
       "range": {
         "startLine": 80,
         "startChar": 20,
