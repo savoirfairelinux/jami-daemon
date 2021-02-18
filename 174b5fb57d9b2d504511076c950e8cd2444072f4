@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "2c0ff789_9e394792",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-18T15:03:31Z",
+      "side": 1,
+      "message": "This function is only called by JamiPluginManager::setPluginPreference. There, this return is read as an indication to whether force plugin reload or not.\nIf we can set a preference here, there is no need to reload plugin.",
+      "parentUuid": "3b06a6cb_35a4b49d",
+      "range": {
+        "startLine": 182,
+        "startChar": 21,
+        "endLine": 182,
+        "endChar": 34
+      },
+      "revId": "174b5fb57d9b2d504511076c950e8cd2444072f4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "ee16a8bd_f88e4cd5",
         "filename": "src/plugin/pluginmanager.h",
         "patchSetId": 11
@@ -36,6 +60,30 @@
       "writtenOn": "2021-02-18T14:26:02Z",
       "side": 1,
       "message": "why not a map?",
+      "range": {
+        "startLine": 48,
+        "startChar": 35,
+        "endLine": 48,
+        "endChar": 62
+      },
+      "revId": "174b5fb57d9b2d504511076c950e8cd2444072f4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ae492de9_6a5fe592",
+        "filename": "src/plugin/pluginmanager.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-18T15:03:31Z",
+      "side": 1,
+      "message": "That\u0027s a list containing of handlers in a plugin which can have multiple mediahandlers or chathandlers\nwe can have {{\"mediahandler\",ptr1},{\"mediahandler\",ptr2},{\"chathandler\",ptr3}, etc}.",
+      "parentUuid": "ee16a8bd_f88e4cd5",
       "range": {
         "startLine": 48,
         "startChar": 35,
