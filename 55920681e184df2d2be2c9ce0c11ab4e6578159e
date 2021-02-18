@@ -1,0 +1,142 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ed102998_8b5366f8",
+        "filename": "src/call.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-18T16:14:52Z",
+      "side": 1,
+      "message": "to remove (unused)",
+      "range": {
+        "startLine": 116,
+        "startChar": 0,
+        "endLine": 116,
+        "endChar": 40
+      },
+      "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "340fe158_4c5effee",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-18T16:14:52Z",
+      "side": 1,
+      "message": "Actually implement method",
+      "range": {
+        "startLine": 123,
+        "startChar": 42,
+        "endLine": 123,
+        "endChar": 58
+      },
+      "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e0123383_474b1f50",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-18T16:14:52Z",
+      "side": 1,
+      "message": "returned object is not locked: mutex should be locked by the user",
+      "range": {
+        "startLine": 182,
+        "startChar": 4,
+        "endLine": 182,
+        "endChar": 61
+      },
+      "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6514cf2f_e8075eb0",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-18T16:14:52Z",
+      "side": 1,
+      "message": "Use if and new getCall(type, id) method instead:\n\n    auto call \u003d Manager::instance().callFactory.getCall(Call::LinkType::SIP, callId)\n    if (auto sipCall \u003d std::dynamic_pointer_cast\u003cSIPCall\u003e(call)) {\n         sipCall-\u003egetVideoRtp().restartSender();\n    }",
+      "range": {
+        "startLine": 243,
+        "startChar": 8,
+        "endLine": 243,
+        "endChar": 24
+      },
+      "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "66a92051_312f1835",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 723,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-18T16:14:52Z",
+      "side": 1,
+      "message": "use type",
+      "range": {
+        "startLine": 723,
+        "startChar": 85,
+        "endLine": 723,
+        "endChar": 92
+      },
+      "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9bdb731a_a7ef7947",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-18T16:14:52Z",
+      "side": 1,
+      "message": "Avoid void*.\nEither getVideoReceive is part of Call and the type is fully included (maybe with opaque types), or it should stay part of SipCall.",
+      "range": {
+        "startLine": 124,
+        "startChar": 4,
+        "endLine": 124,
+        "endChar": 9
+      },
+      "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
