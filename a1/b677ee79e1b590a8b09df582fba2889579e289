@@ -1,0 +1,7 @@
+Code-Review+2: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Pierre Lespagnol <pierre.lespagnol@savoirfairelinux.com>
+Submitted-at: Thu, 18 Feb 2021 11:15:42 -0500
+Reviewed-on: https://review.jami.net/c/ring-daemon/+/16757
+Project: ring-daemon
+Branch: refs/heads/master
