@@ -143,6 +143,30 @@
     },
     {
       "key": {
+        "uuid": "60f7df51_64e81ecf",
+        "filename": "src/media/audio/audio_input.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-18T15:08:07Z",
+      "side": 1,
+      "message": "when saving at the end, ffmpeg can\u0027t do this. Anyway, can be discussed in another ticket.",
+      "parentUuid": "64b32f84_2afca40b",
+      "range": {
+        "startLine": 109,
+        "startChar": 19,
+        "endLine": 111,
+        "endChar": 30
+      },
+      "revId": "b63563922fdfa1bf1230b4f8adeb92e915da6372",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "f1f32b66_4fb0c699",
         "filename": "src/media/audio/audio_receive_thread.cpp",
         "patchSetId": 6
