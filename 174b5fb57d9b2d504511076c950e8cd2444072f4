@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3b06a6cb_35a4b49d",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-18T14:26:02Z",
+      "side": 1,
+      "message": "that\u0027s weird a method that return false on success",
+      "range": {
+        "startLine": 182,
+        "startChar": 21,
+        "endLine": 182,
+        "endChar": 34
+      },
+      "revId": "174b5fb57d9b2d504511076c950e8cd2444072f4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ee16a8bd_f88e4cd5",
+        "filename": "src/plugin/pluginmanager.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-18T14:26:02Z",
+      "side": 1,
+      "message": "why not a map?",
+      "range": {
+        "startLine": 48,
+        "startChar": 35,
+        "endLine": 48,
+        "endChar": 62
+      },
+      "revId": "174b5fb57d9b2d504511076c950e8cd2444072f4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
