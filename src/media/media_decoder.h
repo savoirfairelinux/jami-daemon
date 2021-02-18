@@ -144,6 +144,7 @@ private:
     void pushFrameFrom(std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>>& buffer,
                        bool isAudio,
                        std::mutex& mutex);
+    int64_t lastPacketTime_ = -1;
 };
 
 class MediaDecoder

@@ -365,7 +365,6 @@ void
 VideoInput::clearOptions()
 {
     decOpts_ = {};
-    emulateRate_ = false;
 }
 
 bool
@@ -496,7 +495,6 @@ VideoInput::initFile(std::string path)
     }
 
     clearOptions();
-    emulateRate_ = true;
     decOpts_.input = path;
     decOpts_.name = path;
     decOpts_.loop = "1";

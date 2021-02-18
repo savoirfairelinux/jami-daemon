@@ -324,7 +324,26 @@ MediaDemuxer::decode()
                                                                             });
 
     int ret = av_read_frame(inputCtx_, packet.get());
+    auto streamIndex = packet->stream_index;
+    AVStream* stream = inputCtx_->streams[streamIndex];
     if (ret == AVERROR(EAGAIN)) {
+        if (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            //count when next frame will be available
+            auto fps = av_q2d(inputParams_.framerate);
+            // calculate time between frames
+            double timeBetweenFramesMicrosec = (1 / fps) * 1000000;
+            auto currentTime = av_gettime();
+            // calculate time passed from receiving last frame
+            auto passedTime = currentTime - lastPacketTime_;
+            double timeToSleep = timeBetweenFramesMicrosec - passedTime; // time in microseconds
+            if (timeToSleep <= 0) {
+                return Status::Success;
+            }
+            // calculate time to sleep in milliseconds
+            double timeToSleepMilliseconds = timeToSleep * 0.001;
+            std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double, std::milli>(timeToSleepMilliseconds));
+            std::this_thread::sleep_for(std::chrono::milliseconds(duration));
+        }
         return Status::Success;
     } else if (ret == AVERROR_EOF) {
         return Status::EndOfFile;
@@ -332,18 +351,18 @@ MediaDemuxer::decode()
         JAMI_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
         return Status::ReadError;
     }
+    lastPacketTime_ = av_gettime();
 
-    auto streamIndex = packet->stream_index;
     if (static_cast<unsigned>(streamIndex) >= streams_.size() || streamIndex < 0) {
         return Status::Success;
     }
-
     auto& cb = streams_[streamIndex];
     if (cb) {
         DecodeStatus ret = cb(*packet.get());
         if (ret == DecodeStatus::FallBack)
             return Status::FallBack;
     }
+
     return Status::Success;
 }
 

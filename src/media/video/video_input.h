@@ -106,7 +106,7 @@ private:
     DeviceParams decOpts_;
     std::promise<DeviceParams> foundDecOpts_;
     std::shared_future<DeviceParams> futureDecOpts_;
-    bool emulateRate_ = false;
+    bool emulateRate_ = true;
 
     std::atomic_bool decOptsFound_ {false};
     void foundDecOpts(const DeviceParams& params);
