@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e1538f4b_c926b5a3",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-18T21:12:34Z",
+      "side": 1,
+      "message": "no need for \"!\"",
+      "revId": "931671985a5357287b97caf57d0cf1704e4aa8dc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "21547037_6cba44b0",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-18T21:12:34Z",
+      "side": 1,
+      "message": "no need for \"!\"",
+      "revId": "931671985a5357287b97caf57d0cf1704e4aa8dc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5fee9e90_e62109a3",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-18T21:12:34Z",
+      "side": 1,
+      "message": "keep the current format for method documentation:\n\n    /**\n     * @brief toggleCallMediaHandler\n     * Toggle CallMediaHandler, if on, notify with new subjects\n     * if off, detach it\n     * @param mediaHandler ID handler ID\n\t\t\n     * @param callId call ID\n....",
+      "revId": "931671985a5357287b97caf57d0cf1704e4aa8dc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
