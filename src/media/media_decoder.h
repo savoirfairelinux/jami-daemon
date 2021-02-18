@@ -191,6 +191,8 @@ public:
 
     MediaStream getStream(std::string name = "") const;
 
+    void setResolutionChangedCallback(std::function<void(int, int)> cb) { resolutionChangedCallback_ = std::move(cb); }
+
 private:
     NON_COPYABLE(MediaDecoder);
 
@@ -223,6 +225,10 @@ private:
     int prepareDecoderContext();
     int64_t seekTime_ = -1;
     void resetSeekTime() { seekTime_ = -1; }
+    std::function<void(int, int)> resolutionChangedCallback_;
+
+    int width_;
+    int height_;
 
 protected:
     AVDictionary* options_ = nullptr;

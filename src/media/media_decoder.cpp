@@ -532,6 +532,8 @@ MediaDecoder::prepareDecoderContext()
         return -1;
     }
     avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
+    width_ = decoderCtx_->width;
+    height_ = decoderCtx_->height;
     decoderCtx_->framerate = avStream_->avg_frame_rate;
     if (avStream_->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
@@ -579,6 +581,18 @@ MediaDecoder::decode(AVPacket& packet)
                  : std::static_pointer_cast<MediaFrame>(std::make_shared<AudioFrame>());
     auto frame = f->pointer();
     ret = avcodec_receive_frame(decoderCtx_, frame);
+    if (resolutionChangedCallback_) {
+        if (decoderCtx_->width != width_ or decoderCtx_->height != height_) {
+            JAMI_DBG("Resolution changed from %dx%d to %dx%d",
+                width_,
+                height_,
+                decoderCtx_->width,
+                decoderCtx_->height);
+            width_ = decoderCtx_->width;
+            height_ = decoderCtx_->height;
+            resolutionChangedCallback_(width_, height_);
+        }
+    }
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
         return DecodeStatus::DecodeError;
     }

@@ -82,6 +82,10 @@ VideoReceiveThread::setup()
                                             av_buffer_ref(displayMatrix.get()));
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     }));
+    videoDecoder_->setResolutionChangedCallback([this] (int width, int height){
+        dstWidth_ = width;
+        dstHeight_ = height;
+    });
 
     dstWidth_ = args_.width;
     dstHeight_ = args_.height;
