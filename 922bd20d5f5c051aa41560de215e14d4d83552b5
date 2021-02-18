@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "edac55e9_20c050f2",
+        "filename": "src/jamidht/contact_list.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-18T15:10:54Z",
+      "side": 1,
+      "message": "to rm",
+      "range": {
+        "startLine": 166,
+        "startChar": 47,
+        "endLine": 166,
+        "endChar": 52
+      },
+      "revId": "922bd20d5f5c051aa41560de215e14d4d83552b5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ed1e42b4_55ae755c",
+        "filename": "src/jamidht/contact_list.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 360,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-18T15:10:54Z",
+      "side": 1,
+      "message": "can be removed",
+      "range": {
+        "startLine": 358,
+        "startChar": 41,
+        "endLine": 360,
+        "endChar": 47
+      },
+      "revId": "922bd20d5f5c051aa41560de215e14d4d83552b5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
