@@ -279,24 +279,21 @@ Conference::sendConferenceInfos()
             if (!account)
                 continue;
 
-            ConfInfo confInfo = getConfInfoHostUri(account->getUsername()+ "@ring.dht");
-            Json::Value jsonArray = {};
-            for (const auto& info : confInfo) {
-                jsonArray.append(info.toJson());
-            }
+            ConfInfo confInfo = getConfInfoHostUri(account->getUsername()+ "@ring.dht", call->getPeerNumber());
 
             runOnMainThread([
                 call,
-                confInfoStr = Json::writeString(Json::StreamWriterBuilder{}, jsonArray),
+                confInfoStr = confInfo2str(confInfo),
                 from = account->getFromUri()
             ] {
+                JAMI_ERR("@@@ send to %s: \n %s", call->getPeerNumber().substr(0,2).c_str(), confInfoStr.c_str());
                 call->sendTextMessage({{"application/confInfo+json", confInfoStr}}, from);
             });
         }
     }
 
     // Inform client that layout has changed
-    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, confInfo_.toVectorMapStringString());
+    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, getConfInfoHostUri("", "").toVectorMapStringString());
 }
 
 void
@@ -706,14 +703,35 @@ Conference::updateMuted()
 }
 
 ConfInfo
-Conference::getConfInfoHostUri(std::string_view uri)
+Conference::getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI)
 {
     ConfInfo newInfo = confInfo_;
-    for (auto& info : newInfo) {
-        if (info.uri.empty()) {
-            info.uri = uri;
-            break;
+
+    JAMI_ERR("@@@ construct confInfo for %.*s", 2, destURI.substr(0,2).data());
+    for (auto it = newInfo.begin(); it != newInfo.end();) {
+        bool isRemoteHost = remoteHosts_.find(it->uri) != remoteHosts_.end();
+        JAMI_ERR("@@@ isHost: %d", isRemoteHost);
+        if (it->uri.empty() and not destURI.empty()) {
+            // fill the empty uri with the local host URI, let void for local client
+            it->uri = localHostURI;
         }
+        if (isRemoteHost) {
+            // Don't send back the ParticipantInfo for remote Host
+            // For other than remote Host, the new info is in remoteHosts_
+            it = newInfo.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    // Add remote Host info
+    for (auto& host : remoteHosts_) {
+        // Add remote info for remote host destination
+        // Example: ConfA, ConfB & ConfC
+        // ConfA send ConfA and ConfB for ConfC
+        // ConfA send ConfA and ConfC for ConfB
+        // ...
+        if (destURI != host.first)
+            newInfo.insert(newInfo.end(), host.second.begin(), host.second.end());
     }
     return newInfo;
 }
@@ -799,6 +817,103 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
         emitSignal<DRing::CallSignal::VideoMuted>(id_, is_muted);
         return;
 #endif
+    }
+}
+
+void
+Conference::reziseRemoteParticipant(const std::string& peerURI, ParticipantInfo& remoteCell)
+{
+    int remoteFrameHeight {0};
+    int remoteFrameWidth {0};
+    ParticipantInfo localCell;
+
+    // get the size of the remote frame
+    // bug the resolution is not update from call to conf remoteFrameHeight...
+    //  stay the same as the call should be the conf resolution
+    for (const auto& item : participants_) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(item)) {
+            if (call->getPeerNumber().find(peerURI) != std::string::npos) {
+                remoteFrameHeight = call->getVideoRtp().getVideoReceive()->getHeight();
+                remoteFrameWidth = call->getVideoRtp().getVideoReceive()->getWidth();
+                break;
+            }
+        }
+    }
+
+    JAMI_ERR("@@@ resize: %s", remoteCell.uri.substr(0,2).c_str());
+    if (remoteFrameHeight == 0 or remoteFrameWidth == 0) {
+        JAMI_ERR("@@@ frame size not ready -> return");
+        return;
+    }
+
+    // get the size of the local frame
+    for (const auto& p : confInfo_) {
+        if (p.uri == peerURI) {
+            localCell = p;
+            break;
+        }
+    }
+
+    const float zoomX = (float) remoteFrameWidth / localCell.w;
+    const float zoomY = (float) remoteFrameHeight / localCell.h;
+
+    JAMI_ERR("@@@ remoteFrameHeight: %d, remoteFrameWidth: %d, localFrameHeight: %d, localFrameWidth: %d",
+        remoteFrameHeight,
+        remoteFrameWidth,
+        localCell.h,
+        localCell.w);
+    JAMI_ERR("@@@ zoomX:%f, zoomY:%f", zoomX, zoomY);
+
+    remoteCell.x = remoteCell.x / zoomX + localCell.x;
+    remoteCell.y = remoteCell.y / zoomY + localCell.y;
+    remoteCell.w = remoteCell.w / zoomX;
+    remoteCell.h = remoteCell.h / zoomY;
+
+}
+
+std::string
+Conference::confInfo2str(const ConfInfo& confInfo)
+{
+    Json::Value jsonArray = {};
+    for (const auto& info : confInfo) {
+        jsonArray.append(info.toJson());
+    }
+    return Json::writeString(Json::StreamWriterBuilder{}, jsonArray);
+}
+
+void
+Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
+{
+    if (newInfo.empty()) {
+        JAMI_ERR("@@@ mergeConfInfo, confInfo empty -> remove remoteHost and do nothing");
+        remoteHosts_.erase(peerURI);
+        return;
+    }
+
+    JAMI_ERR("@@@ Start to merge info");
+    for (auto& partInfo : newInfo) {
+        reziseRemoteParticipant(peerURI, partInfo);
+    }
+
+    bool updateNeeded = false;
+    auto it = remoteHosts_.find(peerURI);
+    if (it != remoteHosts_.end()) {
+        // Compare confInfo before update
+        if (it->second != newInfo) {
+            JAMI_ERR("@@@ update remote host: %s", peerURI.substr(0,2).c_str());
+            it->second = newInfo;
+            updateNeeded = true;
+        } else
+            JAMI_ERR("@@@ same remote info -> dont send update");
+    } else {
+        JAMI_ERR("@@@ new remote host: %s", peerURI.substr(0,2).c_str());
+        remoteHosts_.emplace(peerURI, newInfo);
+        updateNeeded = true;
+    }
+    // Send confInfo only if needed to avoid loops
+    if (updateNeeded) {
+        std::lock_guard<std::mutex> lk(confInfoMutex_);
+        sendConferenceInfos();
     }
 }
 

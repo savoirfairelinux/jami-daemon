@@ -29,6 +29,7 @@
 #include <memory>
 #include <vector>
 #include <string_view>
+#include <map>
 
 #include "audio/audio_input.h"
 
@@ -104,11 +105,58 @@ struct ParticipantInfo
                 {"audioModeratorMuted", audioModeratorMuted ? "true" : "false"},
                 {"isModerator", isModerator ? "true" : "false"}};
     }
+
+    friend bool operator==(const ParticipantInfo& p1, const ParticipantInfo& p2)
+    {
+        return
+            p1.uri == p2.uri
+            and p1.device == p2.device
+            and p1.active == p2.active
+            and p1.x == p2.x
+            and p1.y == p2.y
+            and p1.w == p2.w
+            and p1.h == p2.h
+            and p1.videoMuted == p2.videoMuted
+            and p1.audioLocalMuted == p2.audioLocalMuted
+            and p1.audioModeratorMuted == p2.audioModeratorMuted
+            and p1.isModerator == p2.isModerator;
+    }
+
+    friend bool operator!=(const ParticipantInfo& p1, const ParticipantInfo& p2)
+    {
+        return !(p1 == p2);
+    }
 };
 
 struct ConfInfo : public std::vector<ParticipantInfo>
 {
     std::vector<std::map<std::string, std::string>> toVectorMapStringString() const;
+
+    friend bool operator==(const ConfInfo& c1, const ConfInfo& c2)
+    {
+        for (auto& p1 : c1) {
+            bool uriFound = false;
+            for (auto& p2 : c2) {
+                if (p1.uri == p2.uri) {
+                    uriFound = true;
+                    if (p1 == p2)
+                        break;
+                    else
+                        return false;
+                }
+            }
+            if (not uriFound) {
+                JAMI_ERR("@@@ uri not found");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    friend bool operator!=(const ConfInfo& c1, const ConfInfo& c2)
+    {
+        return !(c1 == c2);
+    }
 };
 
 using ParticipantSet = std::set<std::string>;
@@ -246,6 +294,9 @@ public:
     void hangupParticipant(const std::string& participant_id);
     void updateMuted();
     void muteLocalHost(bool is_muted, const std::string& mediaType);
+    bool isRemoteParticipant(const std::string& uri);
+    void reziseRemoteParticipant(const std::string& peerURI, ParticipantInfo& remoteCell);
+    void mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI);
 
 private:
     std::weak_ptr<Conference> weak()
@@ -284,12 +335,15 @@ private:
 
     bool isMuted(std::string_view uri) const;
 
-    ConfInfo getConfInfoHostUri(std::string_view uri);
+    ConfInfo getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI);
     bool isHost(std::string_view uri) const;
     bool audioMuted_ {false};
     bool videoMuted_ {false};
 
     bool localModAdded_ {false};
+
+    std::map<std::string, ConfInfo> remoteHosts_;
+    std::string confInfo2str(const ConfInfo& confInfo);
 };
 
 } // namespace jami
