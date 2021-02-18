@@ -1345,8 +1345,8 @@ index 2a4125bc5..ba10d42ed 100644
 +
 +    const pj_ice_sess_cand *rcand = check->rcand;
 +    if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED && (
-+		status == PJ_ERRNO_START_STATUS + 104 || status == 130054 /* CONNECTION RESET BY PEER */ ||
-+		status == PJ_ERRNO_START_STATUS + 111 /* Connection refused */
++		status == PJ_ERRNO_START_SYS + 104 || status == 130054 /* CONNECTION RESET BY PEER */ ||
++		status == PJ_ERRNO_START_SYS + 111 /* Connection refused */
 +		)) {
 +	/**
 +	 * This part of the code is triggered when using ICE over TCP via TURN
@@ -1394,9 +1394,9 @@ index 2a4125bc5..ba10d42ed 100644
 +					       check->tdata);
 +
 +    if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED && (
-+		status == PJ_ERRNO_START_STATUS + 104 || status == 130054 || /* CONNECTION RESET BY PEER */
-+		status == PJ_ERRNO_START_STATUS + 32 /* EPIPE */ ||
-+		status == PJ_ERRNO_START_STATUS + 111 /* Connection refused */
++		status == PJ_ERRNO_START_SYS + 104 || status == 130054 || /* CONNECTION RESET BY PEER */
++		status == PJ_ERRNO_START_SYS + 32 /* EPIPE */ ||
++		status == PJ_ERRNO_START_SYS + 111 /* Connection refused */
 +		)) {
 +		/**
 +		 * This part of the code is triggered when using ICE over TCP via TURN
