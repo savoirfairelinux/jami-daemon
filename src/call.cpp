@@ -676,28 +676,9 @@ Call::setConferenceInfo(const std::string& msg)
             // confID_ empty -> participant set confInfo with the received one
             confInfo_ = std::move(newInfo);
             // Inform client that layout has changed
-            jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(
-                id_, confInfo_.toVectorMapStringString());
-        } else {
-            // confID_ not empty -> host merge confInfo with the received confInfo
-            for (auto& newI : newInfo) {
-                bool isNewParticipant = true;
-                for (auto& oldI : confInfo_) {
-                    if (newI.uri == oldI.uri) {
-                        oldI = newI;
-                        isNewParticipant = false;
-                        break;
-                    }
-                }
-                if (isNewParticipant) {
-                    // ParticipantInfo not present in confInfo -> the sender of newInfo ...
-                    // is currently hosting another conference. Add the unknown participant ...
-                    // to the confInfo
-                    confInfo_.emplace_back(newI);
-                }
-            }
-            if (auto conf = Manager::instance().getConferenceFromID(confID_))
-                conf->updateConferenceInfo(confInfo_);
+            jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, confInfo_.toVectorMapStringString());
+        } else if (auto conf = Manager::instance().getConferenceFromID(confID_)) {
+            conf->mergeConfInfo(newInfo, getPeerNumber());
         }
     }
 }
