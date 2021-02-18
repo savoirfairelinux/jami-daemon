@@ -40,6 +40,7 @@
 #include "logger.h"
 #include "dring/media_const.h"
 #include "audio/ringbufferpool.h"
+#include "sip/sipcall.h"
 
 using namespace std::literals;
 
@@ -288,25 +289,20 @@ Conference::sendConferenceInfos()
             if (!account)
                 continue;
 
-            ConfInfo confInfo = getConfInfoHostUri(account->getUsername() + "@ring.dht");
-            Json::Value jsonArray = {};
-            for (const auto& info : confInfo) {
-                jsonArray.append(info.toJson());
-            }
+            ConfInfo confInfo = getConfInfoHostUri(account->getUsername()+ "@ring.dht", call->getPeerNumber());
 
-            runOnMainThread(
-                [call,
-                 confInfoStr = Json::writeString(Json::StreamWriterBuilder {}, jsonArray),
-                 from = account->getFromUri()] {
-                    call->sendTextMessage({{"application/confInfo+json", confInfoStr}}, from);
-                });
+            runOnMainThread([
+                call,
+                confInfoStr = confInfo2str(confInfo),
+                from = account->getFromUri()
+            ] {
+                call->sendTextMessage({{"application/confInfo+json", confInfoStr}}, from);
+            });
         }
     }
 
     // Inform client that layout has changed
-    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_,
-                                                                  confInfo_
-                                                                      .toVectorMapStringString());
+    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, getConfInfoHostUri("", "").toVectorMapStringString());
 }
 
 void
@@ -721,14 +717,33 @@ Conference::updateMuted()
 }
 
 ConfInfo
-Conference::getConfInfoHostUri(std::string_view uri)
+Conference::getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI)
 {
     ConfInfo newInfo = confInfo_;
-    for (auto& info : newInfo) {
-        if (info.uri.empty()) {
-            info.uri = uri;
-            break;
+
+    for (auto it = newInfo.begin(); it != newInfo.end();) {
+        bool isRemoteHost = remoteHosts_.find(it->uri) != remoteHosts_.end();
+        if (it->uri.empty() and not destURI.empty()) {
+            // fill the empty uri with the local host URI, let void for local client
+            it->uri = localHostURI;
         }
+        if (isRemoteHost) {
+            // Don't send back the ParticipantInfo for remote Host
+            // For other than remote Host, the new info is in remoteHosts_
+            it = newInfo.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    // Add remote Host info
+    for (const auto& host : remoteHosts_) {
+        // Add remote info for remote host destination
+        // Example: ConfA, ConfB & ConfC
+        // ConfA send ConfA and ConfB for ConfC
+        // ConfA send ConfA and ConfC for ConfB
+        // ...
+        if (destURI != host.first)
+            newInfo.insert(newInfo.end(), host.second.begin(), host.second.end());
     }
     return newInfo;
 }
@@ -815,6 +830,102 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
         return;
 #endif
     }
+}
+
+void
+Conference::resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo& remoteCell)
+{
+    int remoteFrameHeight {0};
+    int remoteFrameWidth {0};
+    ParticipantInfo localCell;
+
+    // get the size of the remote frame
+    for (const auto& item : participants_) {
+        auto sipCall = std::dynamic_pointer_cast<SIPCall>(
+            Manager::instance().callFactory.getCall(item, Call::LinkType::SIP));
+        if (sipCall && sipCall->getPeerNumber().find(peerURI) != std::string::npos) {
+            remoteFrameHeight = sipCall->getVideoRtp().getVideoReceive()->getHeight();
+            remoteFrameWidth = sipCall->getVideoRtp().getVideoReceive()->getWidth();
+            break;
+        }
+    }
+
+    if (remoteFrameHeight == 0 or remoteFrameWidth == 0) {
+        JAMI_WARN("Remote frame size not found.");
+        return;
+    }
+
+    // get the size of the local frame
+    for (const auto& p : confInfo_) {
+        if (p.uri == peerURI) {
+            localCell = p;
+            break;
+        }
+    }
+
+    const float zoomX = (float) remoteFrameWidth / localCell.w;
+    const float zoomY = (float) remoteFrameHeight / localCell.h;
+
+    remoteCell.x = remoteCell.x / zoomX + localCell.x;
+    remoteCell.y = remoteCell.y / zoomY + localCell.y;
+    remoteCell.w = remoteCell.w / zoomX;
+    remoteCell.h = remoteCell.h / zoomY;
+
+}
+
+std::string
+Conference::confInfo2str(const ConfInfo& confInfo)
+{
+    Json::Value jsonArray = {};
+    for (const auto& info : confInfo) {
+        jsonArray.append(info.toJson());
+    }
+    return Json::writeString(Json::StreamWriterBuilder{}, jsonArray);
+}
+
+void
+Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
+{
+    if (newInfo.empty()) {
+        JAMI_DBG("confInfo empty, remove remoteHost");
+        remoteHosts_.erase(peerURI);
+        return;
+    }
+
+    for (auto& partInfo : newInfo) {
+        resizeRemoteParticipant(peerURI, partInfo);
+    }
+
+    bool updateNeeded = false;
+    auto it = remoteHosts_.find(peerURI);
+    if (it != remoteHosts_.end()) {
+        // Compare confInfo before update
+        if (it->second != newInfo) {
+            it->second = newInfo;
+            updateNeeded = true;
+        } else
+            JAMI_WARN("No change in confInfo, don't update");
+    } else {
+        remoteHosts_.emplace(peerURI, newInfo);
+        updateNeeded = true;
+    }
+    // Send confInfo only if needed to avoid loops
+    if (updateNeeded) {
+        std::lock_guard<std::mutex> lk(confInfoMutex_);
+        sendConferenceInfos();
+    }
+}
+
+std::string_view
+Conference::findHostforRemoteParticipant(std::string_view uri)
+{
+    for (const auto& host : remoteHosts_) {
+        for (const auto& p : host.second) {
+            if (uri == string_remove_suffix(p.uri, '@'))
+                return host.first;
+        }
+    }
+    return "";
 }
 
 } // namespace jami
