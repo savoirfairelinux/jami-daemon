@@ -37,6 +37,10 @@
 
 #include "recordable.h"
 
+#ifdef ENABLE_PLUGIN
+#include "plugin/streamdata.h"
+#endif
+
 namespace jami {
 
 class Call;
@@ -345,6 +349,34 @@ private:
     std::map<std::string, ConfInfo> remoteHosts_;
     std::string confInfo2str(const ConfInfo& confInfo);
     std::string_view findHostforRemoteParticipant(std::string_view uri);
+
+#ifdef ENABLE_PLUGIN
+    /**
+     * Call Streams and some typedefs
+     */
+    using AVMediaStream = Observable<std::shared_ptr<MediaFrame>>;
+    using MediaStreamSubject = PublishMapSubject<std::shared_ptr<MediaFrame>, AVFrame*>;
+
+    /**
+     * @brief createConfAVStream
+     * Creates a conf AV stream like video input, video receive, audio input or audio receive
+     * @param StreamData
+     * @param streamSource
+     * @param mediaStreamSubject
+     */
+    void createConfAVStream(const StreamData& StreamData,
+                            AVMediaStream& streamSource,
+                            const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject,
+                            bool force = false);
+    /**
+     * @brief createConfAVStreams
+     * Creates all Conf AV Streams (2 if audio, 4 if audio video)
+     */
+    void createConfAVStreams();
+
+    std::mutex avStreamsMtx_ {};
+    std::map<std::string, std::shared_ptr<MediaStreamSubject>> confAVStreams;
+#endif // ENABLE_PLUGIN
 };
 
 } // namespace jami
