@@ -89,7 +89,12 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
                                  SL_IID_ANDROIDACOUSTICECHOCANCELLATION,
                                  SL_IID_ANDROIDAUTOMATICGAINCONTROL,
                                  SL_IID_ANDROIDNOISESUPPRESSION};
-    const SLboolean req[1] = {SL_BOOLEAN_TRUE};
+    const SLboolean req[] = {SL_BOOLEAN_TRUE,
+                              SL_BOOLEAN_TRUE,
+                              SL_BOOLEAN_FALSE,
+                              SL_BOOLEAN_FALSE,
+                              SL_BOOLEAN_FALSE};
+
     SLresult result;
     result = (*slEngine)->CreateAudioRecorder(slEngine,
                                               &recObjectItf_,
@@ -104,6 +109,7 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
     SLint32 streamType = SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION;
     result = (*recObjectItf_)
                  ->GetInterface(recObjectItf_, SL_IID_ANDROIDCONFIGURATION, &recordConfig);
+    SLASSERT(result);
     result = (*recordConfig)
                  ->SetConfiguration(recordConfig,
                                     SL_ANDROID_KEY_RECORDING_PRESET,
