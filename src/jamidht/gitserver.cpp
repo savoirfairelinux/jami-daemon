@@ -350,6 +350,7 @@ GitServer::Impl::sendPackData()
         }
 
         // Get next commit to pack
+        JAMI_ERR("@@@ ADD %s", wantedReference_.c_str());
         git_commit* current_commit;
         if (git_commit_lookup(&current_commit, repo, &commit_id) < 0) {
             JAMI_ERR("Could not look up current commit");
@@ -385,6 +386,7 @@ GitServer::Impl::sendPackData()
 
     std::size_t sent = 0;
     std::size_t len = data.size;
+    JAMI_ERR("@@@ TOTAL %u", len);
     std::error_code ec;
     do {
         // cf https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L166
@@ -396,9 +398,9 @@ GitServer::Impl::sendPackData()
         toSend << "\x1" << std::string(data.ptr + sent, pkt_size);
         std::string toSendStr = toSend.str();
 
-        socket_->write(reinterpret_cast<const unsigned char*>(toSendStr.c_str()),
-                       toSendStr.size(),
-                       ec);
+        auto res = socket_->write(reinterpret_cast<const unsigned char*>(toSendStr.c_str()),
+                                  toSendStr.size(),
+                                  ec);
         if (ec) {
             JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
             git_packbuilder_free(pb);
@@ -406,6 +408,7 @@ GitServer::Impl::sendPackData()
             return;
         }
         sent += pkt_size;
+        JAMI_ERR("@@@ SEND %u len %u total %u", res, pkt_size, sent);
     } while (sent < len);
 
     // And finish by a little FLUSH
