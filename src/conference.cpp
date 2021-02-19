@@ -679,6 +679,34 @@ Conference::muteParticipant(const std::string& uri, const bool& state)
             }
         }
     }
+
+    // Transfert remote participant mute
+    auto remoteRemoteHost = findHostforRemoteParticipant(uri);
+    if (remoteRemoteHost.empty()) {
+        JAMI_WARN("Can't mute %s, peer not found", uri.c_str());
+        return;
+    }
+    for (const auto& p : participants_) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
+            if (call->getPeerNumber() == remoteRemoteHost) {
+                auto w = call->getAccount();
+                auto account = w.lock();
+                if (!account)
+                    return;
+                std::map<std::string, std::string> messages;
+                Json::Value root;
+                root["muteParticipant"] = uri;
+                root["muteState"] = state ? TRUE_STR : FALSE_STR;
+                Json::StreamWriterBuilder wbuilder;
+                wbuilder["commentStyle"] = "None";
+                wbuilder["indentation"] = "";
+                auto output = Json::writeString(wbuilder, root);
+                messages["application/confOrder+json"] = output;
+                call->sendTextMessage(messages, account->getFromUri());
+                return;
+            }
+        }
+    }
 }
 
 void
@@ -779,6 +807,33 @@ Conference::hangupParticipant(const std::string& participant_id)
             std::string_view partURI = string_remove_suffix(call->getPeerNumber(), '@');
             if (partURI == participant_id) {
                 Manager::instance().hangupCall(call->getCallId());
+                return;
+            }
+        }
+    }
+
+    // Transfert remote participant hangup
+    auto remoteRemoteHost = findHostforRemoteParticipant(participant_id);
+    if (remoteRemoteHost.empty()) {
+        JAMI_WARN("Can't hangup %s, peer not found", participant_id.c_str());
+        return;
+    }
+    for (const auto& p : participants_) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(p)) {
+            if (call->getPeerNumber() == remoteRemoteHost) {
+                auto w = call->getAccount();
+                auto account = w.lock();
+                if (!account)
+                    return;
+                std::map<std::string, std::string> messages;
+                Json::Value root;
+                root["hangupParticipant"] = participant_id;
+                Json::StreamWriterBuilder wbuilder;
+                wbuilder["commentStyle"] = "None";
+                wbuilder["indentation"] = "";
+                auto output = Json::writeString(wbuilder, root);
+                messages["application/confOrder+json"] = output;
+                call->sendTextMessage(messages, account->getFromUri());
                 return;
             }
         }
@@ -905,6 +960,18 @@ Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
         std::lock_guard<std::mutex> lk(confInfoMutex_);
         sendConferenceInfos();
     }
+}
+
+std::string_view
+Conference::findHostforRemoteParticipant(std::string_view uri)
+{
+    for (const auto& host : remoteHosts_) {
+        for (const auto& p : host.second) {
+            if (uri == string_remove_suffix(p.uri, '@'))
+                return host.first;
+        }
+    }
+    return "";
 }
 
 } // namespace jami
