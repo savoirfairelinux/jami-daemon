@@ -261,13 +261,13 @@ private:
         return tmpMediaTransport_ ? tmpMediaTransport_.get() : mediaTransport_.get();
     }
 
+#ifdef ENABLE_PLUGIN
     /**
      * Call Streams and some typedefs
      */
     using AVMediaStream = Observable<std::shared_ptr<MediaFrame>>;
     using MediaStreamSubject = PublishMapSubject<std::shared_ptr<MediaFrame>, AVFrame*>;
 
-#ifdef ENABLE_PLUGIN
     /**
      * @brief createCallAVStream
      * Creates a call AV stream like video input, video receive, audio input or audio receive
@@ -283,10 +283,15 @@ private:
      * Creates all Call AV Streams (2 if audio, 4 if audio video)
      */
     void createCallAVStreams();
-#endif // ENABLE_PLUGIN
+
+    /**
+     * @brief Detach all plugins from call streams;
+     */
+    void clearCallAVStreams();
 
     std::mutex avStreamsMtx_ {};
     std::map<std::string, std::shared_ptr<MediaStreamSubject>> callAVStreams;
+#endif // ENABLE_PLUGIN
 
     void setCallMediaLocal();
 

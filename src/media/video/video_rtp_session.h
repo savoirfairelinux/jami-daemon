@@ -98,7 +98,11 @@ public:
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
+    bool hasConference() { return conference_; }
+
     std::shared_ptr<VideoFrameActiveWriter>& getVideoLocal() { return videoLocal_; }
+
+    std::shared_ptr<VideoMixer>& getVideoMixer() { return videoMixer_; }
 
     std::unique_ptr<VideoReceiveThread>& getVideoReceive() { return receiveThread_; }
 

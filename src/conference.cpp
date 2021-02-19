@@ -35,6 +35,10 @@
 #include "video/video_mixer.h"
 #endif
 
+#ifdef ENABLE_PLUGIN
+#include "plugin/jamipluginmanager.h"
+#endif
+
 #include "call_factory.h"
 
 #include "logger.h"
@@ -117,8 +121,8 @@ Conference::Conference()
             }
             // Add host in confInfo with audio and video muted if detached
             if (shared->getState() == State::ACTIVE_DETACHED)
-                newInfo.emplace_back(ParticipantInfo {
-                    "", "", false, 0, 0, 0, 0, true, true, false, true});
+                newInfo.emplace_back(
+                    ParticipantInfo {"", "", false, 0, 0, 0, 0, true, true, false, true});
 
             shared->updateConferenceInfo(std::move(newInfo));
         });
@@ -164,6 +168,18 @@ Conference::~Conference()
         }
     }
 #endif // ENABLE_VIDEO
+#ifdef ENABLE_PLUGIN
+    {
+        std::lock_guard<std::mutex> lk(avStreamsMtx_);
+        jami::Manager::instance()
+            .getJamiPluginManager()
+            .getCallServicesManager()
+            .clearCallHandlerMaps(getConfID());
+        Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(
+            getConfID());
+        confAVStreams.clear();
+    }
+#endif // ENABLE_PLUGIN
 }
 
 Conference::State
@@ -177,6 +193,64 @@ Conference::setState(State state)
 {
     confState_ = state;
 }
+
+#ifdef ENABLE_PLUGIN
+void
+Conference::createConfAVStreams()
+{
+    auto audioMap = [](const std::shared_ptr<jami::MediaFrame>& m) -> AVFrame* {
+        return std::static_pointer_cast<AudioFrame>(m)->pointer();
+    };
+
+    // Preview and Received
+    if ((audioMixer_ = jami::getAudioInput(getConfID()))) {
+        auto audioSubject = std::make_shared<MediaStreamSubject>(audioMap);
+        StreamData previewStreamData {getConfID(), false, StreamType::audio, getConfID()};
+        createConfAVStream(previewStreamData, *audioMixer_, audioSubject);
+        StreamData receivedStreamData {getConfID(), true, StreamType::audio, getConfID()};
+        createConfAVStream(receivedStreamData, *audioMixer_, audioSubject);
+    }
+
+#ifdef ENABLE_VIDEO
+
+    if (videoMixer_) {
+        // Review
+        auto receiveSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
+        StreamData receiveStreamData {getConfID(), true, StreamType::video, getConfID()};
+        createConfAVStream(receiveStreamData, *videoMixer_, receiveSubject);
+
+        // Preview
+        if (auto& videoPreview = videoMixer_->getVideoLocal()) {
+            auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
+            StreamData previewStreamData {getConfID(), false, StreamType::video, getConfID()};
+            createConfAVStream(previewStreamData, *videoPreview, previewSubject);
+        }
+    }
+#endif // ENABLE_VIDEO
+}
+
+void
+Conference::createConfAVStream(const StreamData& StreamData,
+                               AVMediaStream& streamSource,
+                               const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject,
+                               bool force)
+{
+    std::lock_guard<std::mutex> lk(avStreamsMtx_);
+    const std::string AVStreamId = StreamData.id + std::to_string(static_cast<int>(StreamData.type))
+                                   + std::to_string(StreamData.direction);
+    auto it = confAVStreams.find(AVStreamId);
+    if (!force && it != confAVStreams.end())
+        return;
+
+    confAVStreams.erase(AVStreamId);
+    confAVStreams[AVStreamId] = mediaStreamSubject;
+    streamSource.attachPriorityObserver(mediaStreamSubject);
+    jami::Manager::instance()
+        .getJamiPluginManager()
+        .getCallServicesManager()
+        .createAVSubject(StreamData, mediaStreamSubject);
+}
+#endif // ENABLE_PLUGIN
 
 void
 Conference::add(const std::string& participant_id)
@@ -228,6 +302,9 @@ Conference::add(const std::string& participant_id)
         } else
             JAMI_ERR("no call associate to participant %s", participant_id.c_str());
 #endif // ENABLE_VIDEO
+#ifdef ENABLE_PLUGIN
+        createConfAVStreams();
+#endif
     }
 }
 
@@ -294,7 +371,7 @@ ConfInfo::toString() const
     for (const auto& info : *this) {
         jsonArray.append(info.toJson());
     }
-    return Json::writeString(Json::StreamWriterBuilder{}, jsonArray);
+    return Json::writeString(Json::StreamWriterBuilder {}, jsonArray);
 }
 
 void
@@ -310,19 +387,20 @@ Conference::sendConferenceInfos()
             if (!account)
                 continue;
 
-            dht::ThreadPool::io().run([
-                call,
-                confInfo = getConfInfoHostUri(account->getUsername()+ "@ring.dht",
-                                                call->getPeerNumber()),
-                from = account->getFromUri()
-            ] {
+            dht::ThreadPool::io().run([call,
+                                       confInfo = getConfInfoHostUri(account->getUsername()
+                                                                         + "@ring.dht",
+                                                                     call->getPeerNumber()),
+                                       from = account->getFromUri()] {
                 call->sendTextMessage({{"application/confInfo+json", confInfo.toString()}}, from);
             });
         }
     }
 
     // Inform client that layout has changed
-    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, getConfInfoHostUri("", "").toVectorMapStringString());
+    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_,
+                                                                  getConfInfoHostUri("", "")
+                                                                      .toVectorMapStringString());
 }
 
 void
@@ -395,7 +473,8 @@ Conference::detach()
 
     if (getState() == State::ACTIVE_ATTACHED) {
         for (const auto& p : participants_) {
-            Manager::instance().getRingBufferPool().unBindCallID(getCall(p)->getCallId(), RingBufferPool::DEFAULT_ID);
+            Manager::instance().getRingBufferPool().unBindCallID(getCall(p)->getCallId(),
+                                                                 RingBufferPool::DEFAULT_ID);
         }
 #ifdef ENABLE_VIDEO
         if (auto mixer = getVideoMixer()) {
@@ -513,7 +592,17 @@ Conference::switchInput(const std::string& input)
 {
 #ifdef ENABLE_VIDEO
     mediaInput_ = input;
-    getVideoMixer()->switchInput(input);
+    if (auto mixer = getVideoMixer()) {
+        mixer->switchInput(input);
+#ifdef ENABLE_PLUGIN
+        // Preview
+        if (auto& videoPreview = mixer->getVideoLocal()) {
+            auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
+            StreamData previewStreamData {getConfID(), false, StreamType::video, getConfID()};
+            createConfAVStream(previewStreamData, *videoPreview, previewSubject, true);
+        }
+#endif
+    }
 #endif
 }
 
@@ -845,6 +934,17 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
         } else {
             if (auto mixer = getVideoMixer()) {
                 mixer->switchInput(mediaInput_);
+#ifdef ENABLE_PLUGIN
+                // Preview
+                if (auto& videoPreview = mixer->getVideoLocal()) {
+                    auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
+                    StreamData previewStreamData {getConfID(),
+                                                  false,
+                                                  StreamType::video,
+                                                  getConfID()};
+                    createConfAVStream(previewStreamData, *videoPreview, previewSubject, true);
+                }
+#endif
             }
         }
         videoMuted_ = is_muted;
@@ -892,7 +992,6 @@ Conference::resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo&
     remoteCell.y = remoteCell.y / zoomY + localCell.y;
     remoteCell.w = remoteCell.w / zoomX;
     remoteCell.h = remoteCell.h / zoomY;
-
 }
 
 std::string
@@ -902,7 +1001,7 @@ Conference::confInfo2str(const ConfInfo& confInfo)
     for (const auto& info : confInfo) {
         jsonArray.append(info.toJson());
     }
-    return Json::writeString(Json::StreamWriterBuilder{}, jsonArray);
+    return Json::writeString(Json::StreamWriterBuilder {}, jsonArray);
 }
 
 void

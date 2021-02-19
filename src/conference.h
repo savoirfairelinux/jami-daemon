@@ -30,12 +30,17 @@
 #include <vector>
 #include <string_view>
 #include <map>
+#include <functional>
 
 #include "audio/audio_input.h"
 
 #include <json/json.h>
 
 #include "recordable.h"
+
+#ifdef ENABLE_PLUGIN
+#include "plugin/streamdata.h"
+#endif
 
 namespace jami {
 
@@ -110,18 +115,11 @@ struct ParticipantInfo
 
     friend bool operator==(const ParticipantInfo& p1, const ParticipantInfo& p2)
     {
-        return
-            p1.uri == p2.uri
-            and p1.device == p2.device
-            and p1.active == p2.active
-            and p1.x == p2.x
-            and p1.y == p2.y
-            and p1.w == p2.w
-            and p1.h == p2.h
-            and p1.videoMuted == p2.videoMuted
-            and p1.audioLocalMuted == p2.audioLocalMuted
-            and p1.audioModeratorMuted == p2.audioModeratorMuted
-            and p1.isModerator == p2.isModerator;
+        return p1.uri == p2.uri and p1.device == p2.device and p1.active == p2.active
+               and p1.x == p2.x and p1.y == p2.y and p1.w == p2.w and p1.h == p2.h
+               and p1.videoMuted == p2.videoMuted and p1.audioLocalMuted == p2.audioLocalMuted
+               and p1.audioModeratorMuted == p2.audioModeratorMuted
+               and p1.isModerator == p2.isModerator;
     }
 
     friend bool operator!=(const ParticipantInfo& p1, const ParticipantInfo& p2)
@@ -138,8 +136,9 @@ struct ConfInfo : public std::vector<ParticipantInfo>
     friend bool operator==(const ConfInfo& c1, const ConfInfo& c2)
     {
         for (auto& p1 : c1) {
-            auto it = std::find_if(c2.begin(), c2.end(),
-                [p1] (const ParticipantInfo& p2) { return p1 == p2; });
+            auto it = std::find_if(c2.begin(), c2.end(), [p1](const ParticipantInfo& p2) {
+                return p1 == p2;
+            });
             if (it != c2.end())
                 continue;
             else
@@ -148,14 +147,10 @@ struct ConfInfo : public std::vector<ParticipantInfo>
         return true;
     }
 
-    friend bool operator!=(const ConfInfo& c1, const ConfInfo& c2)
-    {
-        return !(c1 == c2);
-    }
+    friend bool operator!=(const ConfInfo& c1, const ConfInfo& c2) { return !(c1 == c2); }
 
     std::vector<std::map<std::string, std::string>> toVectorMapStringString() const;
     std::string toString() const;
-
 };
 
 using ParticipantSet = std::set<std::string>;
@@ -345,6 +340,44 @@ private:
     std::map<std::string, ConfInfo> remoteHosts_;
     std::string confInfo2str(const ConfInfo& confInfo);
     std::string_view findHostforRemoteParticipant(std::string_view uri);
+
+#ifdef ENABLE_PLUGIN
+    /**
+     * Call Streams and some typedefs
+     */
+    using AVMediaStream = Observable<std::shared_ptr<MediaFrame>>;
+    using MediaStreamSubject = PublishMapSubject<std::shared_ptr<MediaFrame>, AVFrame*>;
+
+#ifdef ENABLE_VIDEO
+    /**
+     *   Map: maps the VideoFrame to an AVFrame
+     **/
+    std::function<AVFrame*(const std::shared_ptr<jami::MediaFrame>&)> pluginVideoMap_ =
+        [](const std::shared_ptr<jami::MediaFrame>& m) -> AVFrame* {
+        return std::static_pointer_cast<VideoFrame>(m)->pointer();
+    };
+#endif // ENABLE_VIDEO
+
+    /**
+     * @brief createConfAVStream
+     * Creates a conf AV stream like video input, video receive, audio input or audio receive
+     * @param StreamData
+     * @param streamSource
+     * @param mediaStreamSubject
+     */
+    void createConfAVStream(const StreamData& StreamData,
+                            AVMediaStream& streamSource,
+                            const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject,
+                            bool force = false);
+    /**
+     * @brief createConfAVStreams
+     * Creates all Conf AV Streams (2 if audio, 4 if audio video)
+     */
+    void createConfAVStreams();
+
+    std::mutex avStreamsMtx_ {};
+    std::map<std::string, std::shared_ptr<MediaStreamSubject>> confAVStreams;
+#endif // ENABLE_PLUGIN
 };
 
 } // namespace jami
