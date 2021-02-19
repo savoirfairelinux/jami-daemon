@@ -113,6 +113,7 @@ private:
     DeviceParams localVideoParams_;
 
     std::unique_ptr<VideoSender> sender_;
+    std::mutex receiveThreadMtx_;
     std::unique_ptr<VideoReceiveThread> receiveThread_;
     Conference* conference_ {nullptr};
     std::shared_ptr<VideoMixer> videoMixer_;

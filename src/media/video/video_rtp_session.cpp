@@ -196,6 +196,7 @@ VideoRtpSession::restartSender()
 void
 VideoRtpSession::startReceiver()
 {
+    std::lock_guard<std::mutex> lk(receiveThreadMtx_);
     if (receive_.enabled and not receive_.holding) {
         if (receiveThread_)
             JAMI_WARN("Restarting video receiver");
@@ -263,6 +264,7 @@ VideoRtpSession::stop()
 
     if (videoMixer_) {
         videoMixer_->detach(sender_.get());
+        std::lock_guard<std::mutex> lk(receiveThreadMtx_);
         if (receiveThread_)
             receiveThread_->detach(videoMixer_.get());
     }
@@ -279,7 +281,10 @@ VideoRtpSession::stop()
     videoBitrateInfo_.videoBitrateCurrent = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
     storeVideoBitrateInfo();
 
-    receiveThread_.reset();
+    {
+        std::lock_guard<std::mutex> lk(receiveThreadMtx_);
+        receiveThread_.reset();
+    }
     sender_.reset();
     socketPair_.reset();
     videoLocal_.reset();
@@ -296,6 +301,7 @@ VideoRtpSession::forceKeyFrame()
 void
 VideoRtpSession::setRotation(int rotation)
 {
+    std::lock_guard<std::mutex> lk(receiveThreadMtx_);
     if (receiveThread_)
         receiveThread_->setRotation(rotation);
 }
@@ -329,6 +335,7 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
     } else
         JAMI_WARN("[call:%s] no sender", callID_.c_str());
 
+    std::lock_guard<std::mutex> lk(receiveThreadMtx_);
     if (receiveThread_) {
         receiveThread_->enterConference();
         conference.attachVideo(receiveThread_.get(), callID_);
@@ -388,9 +395,12 @@ VideoRtpSession::exitConference()
         if (sender_)
             videoMixer_->detach(sender_.get());
 
-        if (receiveThread_) {
-            conference_->detachVideo(receiveThread_.get());
-            receiveThread_->exitConference();
+        {
+            std::lock_guard<std::mutex> lk(receiveThreadMtx_);
+            if (receiveThread_) {
+                conference_->detachVideo(receiveThread_.get());
+                receiveThread_->exitConference();
+            }
         }
 
         videoMixer_.reset();
@@ -645,9 +655,12 @@ VideoRtpSession::processRtcpChecker()
 void
 VideoRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
-    if (receiveThread_) {
-        if (auto ob = rec->addStream(receiveThread_->getInfo())) {
-            receiveThread_->attach(ob);
+    {
+        std::lock_guard<std::mutex> lk(receiveThreadMtx_);
+        if (receiveThread_) {
+            if (auto ob = rec->addStream(receiveThread_->getInfo())) {
+                receiveThread_->attach(ob);
+            }
         }
     }
     if (Manager::instance().videoPreferences.getRecordPreview()) {
@@ -662,9 +675,12 @@ VideoRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 void
 VideoRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
-    if (receiveThread_) {
-        if (auto ob = rec->getStream(receiveThread_->getInfo().name)) {
-            receiveThread_->detach(ob);
+    {
+        std::lock_guard<std::mutex> lk(receiveThreadMtx_);
+        if (receiveThread_) {
+            if (auto ob = rec->getStream(receiveThread_->getInfo().name)) {
+                receiveThread_->detach(ob);
+            }
         }
     }
     if (auto input = std::static_pointer_cast<VideoInput>(videoLocal_)) {
