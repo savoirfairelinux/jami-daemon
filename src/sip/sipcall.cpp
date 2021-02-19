@@ -41,8 +41,8 @@
 #include "dring/media_const.h"
 #include "client/ring_signal.h"
 #include "ice_transport.h"
+
 #ifdef ENABLE_PLUGIN
-// Plugin manager
 #include "plugin/jamipluginmanager.h"
 #endif
 
@@ -128,6 +128,11 @@ SIPCall::getSIPAccount() const
 void
 SIPCall::createCallAVStreams()
 {
+    if (videortp_->hasConference()) {
+        clearCallAVStreams();
+        return;
+    }
+    auto baseId = getCallId();
     /**
      *   Map: maps the AudioFrame to an AVFrame
      **/
@@ -138,14 +143,14 @@ SIPCall::createCallAVStreams()
     // Preview
     if (auto& localAudio = avformatrtp_->getAudioLocal()) {
         auto previewSubject = std::make_shared<MediaStreamSubject>(audioMap);
-        StreamData microStreamData {getCallId(), false, StreamType::audio, getPeerNumber()};
+        StreamData microStreamData {baseId, false, StreamType::audio, getPeerNumber()};
         createCallAVStream(microStreamData, *localAudio, previewSubject);
     }
 
     // Receive
     if (auto& audioReceive = avformatrtp_->getAudioReceive()) {
         auto receiveSubject = std::make_shared<MediaStreamSubject>(audioMap);
-        StreamData phoneStreamData {getCallId(), true, StreamType::audio, getPeerNumber()};
+        StreamData phoneStreamData {baseId, true, StreamType::audio, getPeerNumber()};
         createCallAVStream(phoneStreamData, (AVMediaStream&) *audioReceive, receiveSubject);
     }
 #ifdef ENABLE_VIDEO
@@ -160,14 +165,14 @@ SIPCall::createCallAVStreams()
         // Preview
         if (auto& videoPreview = videortp_->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(videoMap);
-            StreamData previewStreamData {getCallId(), false, StreamType::video, getPeerNumber()};
+            StreamData previewStreamData {baseId, false, StreamType::video, getPeerNumber()};
             createCallAVStream(previewStreamData, *videoPreview, previewSubject);
         }
 
         // Receive
         if (auto& videoReceive = videortp_->getVideoReceive()) {
             auto receiveSubject = std::make_shared<MediaStreamSubject>(videoMap);
-            StreamData receiveStreamData {getCallId(), true, StreamType::video, getPeerNumber()};
+            StreamData receiveStreamData {baseId, true, StreamType::video, getPeerNumber()};
             createCallAVStream(receiveStreamData, *videoReceive, receiveSubject);
         }
     }
@@ -191,6 +196,13 @@ SIPCall::createCallAVStream(const StreamData& StreamData,
         .getJamiPluginManager()
         .getCallServicesManager()
         .createAVSubject(StreamData, it->second);
+}
+
+void
+SIPCall::clearCallAVStreams()
+{
+    std::lock_guard<std::mutex> lk(avStreamsMtx_);
+    callAVStreams.clear();
 }
 #endif // ENABLE_PLUGIN
 
@@ -1240,11 +1252,10 @@ SIPCall::startAllMedia()
 #endif
         rtp->updateMedia(remote, local);
 
-        rtp->setSuccessfulSetupCb(
-            [wthis = weak()](MediaType type, bool isRemote) {
-                if (auto this_ = wthis.lock())
-                    this_->rtpSetupSuccess(type, isRemote);
-            });
+        rtp->setSuccessfulSetupCb([wthis = weak()](MediaType type, bool isRemote) {
+            if (auto this_ = wthis.lock())
+                this_->rtpSetupSuccess(type, isRemote);
+        });
 
 #ifdef ENABLE_VIDEO
         videortp_->setRequestKeyFrameCallback([wthis = weak()] {
@@ -1339,14 +1350,11 @@ SIPCall::stopAllMedia()
 #endif
 #ifdef ENABLE_PLUGIN
     {
+        clearCallAVStreams();
         std::lock_guard<std::mutex> lk(avStreamsMtx_);
-        callAVStreams.erase(getCallId() + "00"); // audio out
-        callAVStreams.erase(getCallId() + "01"); // audio in
-        callAVStreams.erase(getCallId() + "10"); // video out
-        callAVStreams.erase(getCallId() + "11"); // video in
+        Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(
+            getCallId());
     }
-    jami::Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(
-        getCallId());
 #endif
 }
 
@@ -1396,8 +1404,7 @@ SIPCall::onMediaUpdate()
             std::lock_guard<std::recursive_mutex> lk {this_->callMutex_};
             // The call is already ended, so we don't need to restart medias
             if (not this_->inviteSession_
-                or this_->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
-                or not this_->sdp_)
+                or this_->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not this_->sdp_)
                 return;
             // If ICE is not used, start medias now
             auto rem_ice_attrs = this_->sdp_->getIceAttributes();
@@ -1582,6 +1589,9 @@ SIPCall::enterConference(const std::string& confId)
     auto conf = Manager::instance().getConferenceFromID(confId);
     getVideoRtp().enterConference(conf.get());
 #endif
+#ifdef ENABLE_PLUGIN
+    clearCallAVStreams();
+#endif
 }
 
 void
@@ -1589,6 +1599,9 @@ SIPCall::exitConference()
 {
 #ifdef ENABLE_VIDEO
     getVideoRtp().exitConference();
+#endif
+#ifdef ENABLE_PLUGIN
+    createCallAVStreams();
 #endif
 }
 

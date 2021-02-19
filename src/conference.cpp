@@ -35,6 +35,10 @@
 #include "video/video_mixer.h"
 #endif
 
+#ifdef ENABLE_PLUGIN
+#include "plugin/jamipluginmanager.h"
+#endif
+
 #include "call_factory.h"
 
 #include "logger.h"
@@ -156,6 +160,18 @@ Conference::~Conference()
                 call->peerRecording(true);
         }
     }
+#ifdef ENABLE_PLUGIN
+    {
+        std::lock_guard<std::mutex> lk(avStreamsMtx_);
+        jami::Manager::instance()
+            .getJamiPluginManager()
+            .getCallServicesManager()
+            .clearCallHandlerMaps(getConfID());
+        Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(
+            getConfID());
+        confAVStreams.clear();
+    }
+#endif
 #endif // ENABLE_VIDEO
 }
 
@@ -170,6 +186,67 @@ Conference::setState(State state)
 {
     confState_ = state;
 }
+
+#ifdef ENABLE_PLUGIN
+void
+Conference::createConfAVStreams()
+{
+    auto audioMap = [](const std::shared_ptr<jami::MediaFrame> m) -> AVFrame* {
+        return std::static_pointer_cast<AudioFrame>(m)->pointer();
+    };
+
+    // Preview and Received
+    if (audioMixer_) {
+        auto audioSubject = std::make_shared<MediaStreamSubject>(audioMap);
+        StreamData previewStreamData {getConfID(), false, StreamType::audio, getConfID()};
+        createConfAVStream(previewStreamData, *audioMixer_, audioSubject);
+        StreamData receivedStreamData {getConfID(), true, StreamType::audio, getConfID()};
+        createConfAVStream(receivedStreamData, *audioMixer_, audioSubject);
+    }
+
+#ifdef ENABLE_VIDEO
+    auto videoMap = [](const std::shared_ptr<jami::MediaFrame> m) -> AVFrame* {
+        return std::static_pointer_cast<VideoFrame>(m)->pointer();
+    };
+
+    // Preview
+    if (auto& videoPreview = videoMixer_->getVideoLocal()) {
+        auto previewSubject = std::make_shared<MediaStreamSubject>(videoMap);
+        StreamData previewStreamData {getConfID(), false, StreamType::video, getConfID()};
+        createConfAVStream(previewStreamData, *videoPreview, previewSubject);
+    }
+
+    // Receive
+    if (videoMixer_) {
+        auto receiveSubject = std::make_shared<MediaStreamSubject>(videoMap);
+        StreamData receiveStreamData {getConfID(), true, StreamType::video, getConfID()};
+        createConfAVStream(receiveStreamData, *videoMixer_, receiveSubject);
+    }
+#endif // ENABLE_VIDEO
+}
+
+void
+Conference::createConfAVStream(const StreamData& StreamData,
+                               AVMediaStream& streamSource,
+                               const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject,
+                               bool force)
+{
+    std::lock_guard<std::mutex> lk(avStreamsMtx_);
+    const std::string AVStreamId = StreamData.id + std::to_string(static_cast<int>(StreamData.type))
+                                   + std::to_string(StreamData.direction);
+    auto it = confAVStreams.find(AVStreamId);
+    if (!force && it != confAVStreams.end())
+        return;
+
+    confAVStreams.erase(AVStreamId);
+    confAVStreams[AVStreamId] = mediaStreamSubject;
+    streamSource.attachPriorityObserver(mediaStreamSubject);
+    jami::Manager::instance()
+        .getJamiPluginManager()
+        .getCallServicesManager()
+        .createAVSubject(StreamData, mediaStreamSubject);
+}
+#endif // ENABLE_PLUGIN
 
 void
 Conference::add(const std::string& participant_id)
@@ -216,6 +293,9 @@ Conference::add(const std::string& participant_id)
         } else
             JAMI_ERR("no call associate to participant %s", participant_id.c_str());
 #endif // ENABLE_VIDEO
+#ifdef ENABLE_PLUGIN
+        createConfAVStreams();
+#endif
     }
 }
 
@@ -495,7 +575,21 @@ Conference::switchInput(const std::string& input)
 {
 #ifdef ENABLE_VIDEO
     mediaInput_ = input;
-    getVideoMixer()->switchInput(input);
+    if (auto mixer = getVideoMixer()) {
+        mixer->switchInput(input);
+#ifdef ENABLE_PLUGIN
+        auto videoMap = [](const std::shared_ptr<jami::MediaFrame> m) -> AVFrame* {
+            return std::static_pointer_cast<VideoFrame>(m)->pointer();
+        };
+
+        // Preview
+        if (auto& videoPreview = mixer->getVideoLocal()) {
+            auto previewSubject = std::make_shared<MediaStreamSubject>(videoMap);
+            StreamData previewStreamData {getConfID(), false, StreamType::video, getConfID()};
+            createConfAVStream(previewStreamData, *videoPreview, previewSubject, true);
+        }
+#endif
+    }
 #endif
 }
 
@@ -808,6 +902,21 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
         } else {
             if (auto mixer = getVideoMixer()) {
                 mixer->switchInput(mediaInput_);
+#ifdef ENABLE_PLUGIN
+                auto videoMap = [](const std::shared_ptr<jami::MediaFrame> m) -> AVFrame* {
+                    return std::static_pointer_cast<VideoFrame>(m)->pointer();
+                };
+
+                // Preview
+                if (auto& videoPreview = mixer->getVideoLocal()) {
+                    auto previewSubject = std::make_shared<MediaStreamSubject>(videoMap);
+                    StreamData previewStreamData {getConfID(),
+                                                  false,
+                                                  StreamType::video,
+                                                  getConfID()};
+                    createConfAVStream(previewStreamData, *videoPreview, previewSubject, true);
+                }
+#endif
             }
         }
         videoMuted_ = is_muted;

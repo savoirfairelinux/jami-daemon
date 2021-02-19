@@ -90,10 +90,12 @@ public:
     void detachPriorityObserver(Observer<T>* o)
     {
         std::lock_guard<std::mutex> lk(mutex_);
-        for (auto it = priority_observers_.begin(); it != priority_observers_.end(); ++it) {
-            if (auto so = it->lock()) {
+        for (auto& it = priority_observers_.begin(); it != priority_observers_.end(); it++) {
+            if (auto so = it.lock()) {
                 if (so.get() == o) {
+                    so->detached(this);
                     priority_observers_.erase(it);
+                    return;
                 }
             }
         }
@@ -121,9 +123,9 @@ protected:
         std::lock_guard<std::mutex> lk(mutex_);
         for (auto it = priority_observers_.begin(); it != priority_observers_.end();) {
             if (auto so = it->lock()) {
+                it++;
                 try {
                     so->update(this, data);
-                    ++it;
                 } catch (std::exception& e) {
                     JAMI_ERR() << e.what();
                 }
@@ -192,13 +194,7 @@ public:
         : map_ {f}
     {}
 
-    void update(Observable<T1>*, const T1& t) override
-    {
-        std::lock_guard<std::mutex> lk(this->mutex_);
-        for (const auto& observer : this->observers_) {
-            observer->update(this, map_(t));
-        }
-    }
+    void update(Observable<T1>*, const T1& t) override { this->notify(map_(t)); }
 
     /**
      * @brief attached
@@ -222,7 +218,11 @@ public:
     virtual void detached(Observable<T1>*) override
     {
         std::lock_guard<std::mutex> lk(this->mutex_);
-        JAMI_WARN() << "PublishMapSubject: detaching observers";
+        for (auto& pobs : this->priority_observers_) {
+            if (auto so = pobs.lock()) {
+                so->detached(this);
+            }
+        }
         for (auto& o : this->observers_)
             o->detached(this);
     }
@@ -232,11 +232,7 @@ public:
      * Detach all observers to avoid making them call this observable when
      * destroyed
      **/
-    ~PublishMapSubject()
-    {
-        JAMI_WARN() << "~PublishMapSubject()";
-        detached(nullptr);
-    }
+    ~PublishMapSubject() { detached(nullptr); }
 
 private:
     F map_;

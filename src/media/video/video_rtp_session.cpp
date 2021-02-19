@@ -29,6 +29,10 @@
 #include "socket_pair.h"
 #include "sip/sipvoiplink.h" // for enqueueKeyframeRequest
 #include "manager.h"
+#ifdef ENABLE_PLUGIN
+#include "plugin/streamdata.h"
+#include "plugin/jamipluginmanager.h"
+#endif
 #include "logger.h"
 #include "string_utils.h"
 #include "call.h"
@@ -104,7 +108,8 @@ VideoRtpSession::startSender()
         if (not conference_) {
             videoLocal_ = getVideoCamera();
             if (auto input = Manager::instance().getVideoManager().videoInput.lock()) {
-                std::static_pointer_cast<VideoInput>(videoLocal_)->setSuccessfulSetupCb(onSuccessfulSetup_);
+                std::static_pointer_cast<VideoInput>(videoLocal_)
+                    ->setSuccessfulSetupCb(onSuccessfulSetup_);
                 auto newParams = input->switchInput(input_);
                 try {
                     if (newParams.valid()
@@ -146,21 +151,18 @@ VideoRtpSession::startSender()
         try {
             sender_.reset();
             socketPair_->stopSendOp(false);
-            MediaStream ms = !conference_ ?
-                        MediaStream("video sender",
-                            AV_PIX_FMT_YUV420P,
-                            1 / static_cast<rational<int>>(localVideoParams_.framerate),
-                            localVideoParams_.width,
-                            localVideoParams_.height,
-                            send_.bitrate,
-                            static_cast<rational<int>>(localVideoParams_.framerate)) :
-                        conference_->getVideoMixer()->getStream("Video Sender");
-            sender_.reset(new VideoSender(getRemoteRtpUri(),
-                                        ms,
-                                        send_,
-                                        *socketPair_,
-                                        initSeqVal_ + 1,
-                                        mtu_));
+            MediaStream ms
+                = !conference_
+                      ? MediaStream("video sender",
+                                    AV_PIX_FMT_YUV420P,
+                                    1 / static_cast<rational<int>>(localVideoParams_.framerate),
+                                    localVideoParams_.width,
+                                    localVideoParams_.height,
+                                    send_.bitrate,
+                                    static_cast<rational<int>>(localVideoParams_.framerate))
+                      : conference_->getVideoMixer()->getStream("Video Sender");
+            sender_.reset(
+                new VideoSender(getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_));
             if (changeOrientationCallback_)
                 sender_->setChangeOrientationCallback(changeOrientationCallback_);
             if (socketPair_)
@@ -351,15 +353,15 @@ VideoRtpSession::enterConference(Conference* conference)
     // TODO is this correct? The video Mixer should be enabled for a detached conference even if we
     // are not sending values
     videoMixer_ = conference->getVideoMixer();
-    auto conf_res = split_string_to_unsigned(jami::Manager::instance().videoPreferences.getConferenceResolution(), 'x');
+    auto conf_res = split_string_to_unsigned(jami::Manager::instance()
+                                                 .videoPreferences.getConferenceResolution(),
+                                             'x');
     if (conf_res.size() != 2 or conf_res[0] <= 0 or conf_res[1] <= 0) {
         JAMI_ERR("Conference resolution is invalid");
         return;
     }
 #if defined(__APPLE__) && TARGET_OS_MAC
-    videoMixer_->setParameters(conf_res[0],
-                               conf_res[1],
-                               AV_PIX_FMT_NV12);
+    videoMixer_->setParameters(conf_res[0], conf_res[1], AV_PIX_FMT_NV12);
 #else
     videoMixer_->setParameters(conf_res[0], conf_res[1]);
 #endif
@@ -760,6 +762,5 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
         }
     }
 }
-
 } // namespace video
 } // namespace jami
