@@ -35,6 +35,11 @@
 #include "video/video_mixer.h"
 #endif
 
+#ifdef ENABLE_PLUGIN
+#include "plugin/jamipluginmanager.h"
+#include "plugin/streamdata.h"
+#endif
+
 #include "call_factory.h"
 
 #include "logger.h"
@@ -109,8 +114,8 @@ Conference::Conference()
                 if (auto call = Manager::instance().callFactory.getCall<SIPCall>(subCall))
                     uri = call->getPeerNumber();
                 auto isModerator = shared->isModerator(uri);
-                newInfo.emplace_back(
-                    ParticipantInfo {std::move(uri), "", false, 0, 0, 0, 0, true, false, false, isModerator});
+                newInfo.emplace_back(ParticipantInfo {
+                    std::move(uri), "", false, 0, 0, 0, 0, true, false, false, isModerator});
             }
 
             shared->updateConferenceInfo(std::move(newInfo));
@@ -156,6 +161,18 @@ Conference::~Conference()
                 call->setRemoteRecording(true);
         }
     }
+#ifdef ENABLE_PLUGIN
+    {
+        std::lock_guard<std::mutex> lk(avStreamsMtx_);
+        jami::Manager::instance()
+            .getJamiPluginManager()
+            .getCallServicesManager()
+            .clearCallHandlerMaps(getConfID());
+        Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(
+            getConfID());
+        confAVStreams.clear();
+    }
+#endif
 #endif // ENABLE_VIDEO
 }
 
@@ -215,6 +232,73 @@ Conference::add(const std::string& participant_id)
             }
         } else
             JAMI_ERR("no call associate to participant %s", participant_id.c_str());
+
+#ifdef ENABLE_PLUGIN
+        {
+            std::lock_guard<std::mutex> lk(avStreamsMtx_);
+
+            auto audioMap = [](const std::shared_ptr<jami::MediaFrame> m) -> AVFrame* {
+                return std::static_pointer_cast<AudioFrame>(m)->pointer();
+            };
+
+            if (audioMixer_) {
+                auto receiveSubject = std::make_shared<MediaStreamSubject>(audioMap);
+                StreamData receiveStreamData {getConfID(), true, StreamType::audio, participant_id};
+                const auto it = confAVStreams.find(getConfID() + "01");
+                if (it == confAVStreams.end()) {
+                    confAVStreams.emplace(getConfID() + "01", receiveSubject);
+                    audioMixer_->attachPriorityObserver(receiveSubject);
+                    jami::Manager::instance()
+                        .getJamiPluginManager()
+                        .getCallServicesManager()
+                        .createAVSubject(receiveStreamData, receiveSubject);
+                    jami::Manager::instance()
+                        .getJamiPluginManager()
+                        .getCallServicesManager()
+                        .createAVSubject(StreamData(getConfID(),
+                                                    false,
+                                                    StreamType::audio,
+                                                    participant_id),
+                                         receiveSubject);
+                }
+            }
+
+            auto videoMap = [](const std::shared_ptr<jami::MediaFrame> m) -> AVFrame* {
+                return std::static_pointer_cast<VideoFrame>(m)->pointer();
+            };
+
+            // Preview
+            if (auto& videoPreview = videoMixer_->getVideoLocal()) {
+                auto previewSubject = std::make_shared<MediaStreamSubject>(videoMap);
+                StreamData previewStreamData {getConfID(), false, StreamType::video, participant_id};
+                const auto it = confAVStreams.find(getConfID() + "10");
+                if (it == confAVStreams.end()) {
+                    confAVStreams.emplace(getConfID() + "10", previewSubject);
+                    videoPreview->attachPriorityObserver(previewSubject);
+                    jami::Manager::instance()
+                        .getJamiPluginManager()
+                        .getCallServicesManager()
+                        .createAVSubject(previewStreamData, previewSubject);
+                }
+            }
+
+            // Receive
+            if (videoMixer_) {
+                auto receiveSubject = std::make_shared<MediaStreamSubject>(videoMap);
+                StreamData receiveStreamData {getConfID(), true, StreamType::video, participant_id};
+                const auto it = confAVStreams.find(getConfID() + "1");
+                if (it == confAVStreams.end()) {
+                    confAVStreams.emplace(getConfID() + "1", receiveSubject);
+                    videoMixer_->attachPriorityObserver(receiveSubject);
+                    jami::Manager::instance()
+                        .getJamiPluginManager()
+                        .getCallServicesManager()
+                        .createAVSubject(receiveStreamData, receiveSubject);
+                }
+            }
+        }
+#endif // ENABLE_PLUGIN
+
 #endif // ENABLE_VIDEO
     }
 }
@@ -285,24 +369,25 @@ Conference::sendConferenceInfos()
             if (!account)
                 continue;
 
-            ConfInfo confInfo = getConfInfoHostUri(account->getUsername()+ "@ring.dht");
+            ConfInfo confInfo = getConfInfoHostUri(account->getUsername() + "@ring.dht");
             Json::Value jsonArray = {};
             for (const auto& info : confInfo) {
                 jsonArray.append(info.toJson());
             }
 
-            runOnMainThread([
-                call,
-                confInfoStr = Json::writeString(Json::StreamWriterBuilder{}, jsonArray),
-                from = account->getFromUri()
-            ] {
-                call->sendTextMessage({{"application/confInfo+json", confInfoStr}}, from);
-            });
+            runOnMainThread(
+                [call,
+                 confInfoStr = Json::writeString(Json::StreamWriterBuilder {}, jsonArray),
+                 from = account->getFromUri()] {
+                    call->sendTextMessage({{"application/confInfo+json", confInfoStr}}, from);
+                });
         }
     }
 
     // Inform client that layout has changed
-    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, confInfo_.toVectorMapStringString());
+    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_,
+                                                                  confInfo_
+                                                                      .toVectorMapStringString());
 }
 
 void
@@ -433,7 +518,6 @@ Conference::bindHost()
         }
     }
 }
-
 
 void
 Conference::unbindHost()
@@ -583,8 +667,9 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         if (root.isMember("activeParticipant")) {
             setActiveParticipant(root["activeParticipant"].asString());
         }
-        if (root.isMember("muteParticipant")  and root.isMember("muteState")) {
-            muteParticipant(root["muteParticipant"].asString(), root["muteState"].asString() == "true");
+        if (root.isMember("muteParticipant") and root.isMember("muteState")) {
+            muteParticipant(root["muteParticipant"].asString(),
+                            root["muteState"].asString() == "true");
         }
         if (root.isMember("hangupParticipant")) {
             hangupParticipant(root["hangupParticipant"].asString());
@@ -669,12 +754,12 @@ Conference::muteParticipant(const std::string& uri, const bool& state)
             auto isPartMuted = isMuted(partURI);
             if (partURI == peerURI) {
                 if (state and not isPartMuted) {
-                    JAMI_DBG("Mute participant %.*s", (int)partURI.size(), partURI.data());
+                    JAMI_DBG("Mute participant %.*s", (int) partURI.size(), partURI.data());
                     participantsMuted_.emplace(std::string(partURI));
                     unbindParticipant(p);
                     updateMuted();
                 } else if (not state and isPartMuted) {
-                    JAMI_DBG("Unmute participant %.*s", (int)partURI.size(), partURI.data());
+                    JAMI_DBG("Unmute participant %.*s", (int) partURI.size(), partURI.data());
                     participantsMuted_.erase(std::string(partURI));
                     bindParticipant(p);
                     updateMuted();
@@ -705,7 +790,6 @@ Conference::updateMuted()
                     }
                 }
             }
-
         }
     }
     sendConferenceInfos();
@@ -780,7 +864,7 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
         if (is_muted and not audioMuted_ and not isHostMuted) {
             JAMI_DBG("Local audio mute host");
             unbindHost();
-        } else if (not is_muted and audioMuted_ and not isHostMuted ) {
+        } else if (not is_muted and audioMuted_ and not isHostMuted) {
             JAMI_DBG("Local audio unmute host");
             bindHost();
         }

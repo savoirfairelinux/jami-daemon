@@ -130,6 +130,9 @@ SIPCall::getSIPAccount() const
 void
 SIPCall::createCallAVStreams()
 {
+    if (videortp_->hasConference())
+        return;
+    auto baseId = getCallId();
     /**
      *   Map: maps the AudioFrame to an AVFrame
      **/
@@ -140,14 +143,14 @@ SIPCall::createCallAVStreams()
     // Preview
     if (auto& localAudio = avformatrtp_->getAudioLocal()) {
         auto previewSubject = std::make_shared<MediaStreamSubject>(audioMap);
-        StreamData microStreamData {getCallId(), false, StreamType::audio, getPeerNumber()};
+        StreamData microStreamData {baseId, false, StreamType::audio, getPeerNumber()};
         createCallAVStream(microStreamData, *localAudio, previewSubject);
     }
 
     // Receive
     if (auto& audioReceive = avformatrtp_->getAudioReceive()) {
         auto receiveSubject = std::make_shared<MediaStreamSubject>(audioMap);
-        StreamData phoneStreamData {getCallId(), true, StreamType::audio, getPeerNumber()};
+        StreamData phoneStreamData {baseId, true, StreamType::audio, getPeerNumber()};
         createCallAVStream(phoneStreamData, (AVMediaStream&) *audioReceive, receiveSubject);
     }
 #ifdef ENABLE_VIDEO
@@ -162,14 +165,14 @@ SIPCall::createCallAVStreams()
         // Preview
         if (auto& videoPreview = videortp_->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(videoMap);
-            StreamData previewStreamData {getCallId(), false, StreamType::video, getPeerNumber()};
+            StreamData previewStreamData {baseId, false, StreamType::video, getPeerNumber()};
             createCallAVStream(previewStreamData, *videoPreview, previewSubject);
         }
 
         // Receive
         if (auto& videoReceive = videortp_->getVideoReceive()) {
             auto receiveSubject = std::make_shared<MediaStreamSubject>(videoMap);
-            StreamData receiveStreamData {getCallId(), true, StreamType::video, getPeerNumber()};
+            StreamData receiveStreamData {baseId, true, StreamType::video, getPeerNumber()};
             createCallAVStream(receiveStreamData, *videoReceive, receiveSubject);
         }
     }
@@ -874,10 +877,10 @@ SIPCall::switchInput(const std::string& resource)
             isWaitingForIceAndMedia_ = true;
         }
     }
-    if(isRec) {
+    if (isRec) {
         readyToRecord_ = false;
         resetMediaReady();
-        pendingRecord_  = true;
+        pendingRecord_ = true;
     }
 }
 
@@ -1224,7 +1227,8 @@ SIPCall::startAllMedia()
 #endif
         rtp->updateMedia(remote, local);
 
-        rtp->setSuccessfulSetupCb([this](MediaType type, bool isRemote) { rtpSetupSuccess(type, isRemote); });
+        rtp->setSuccessfulSetupCb(
+            [this](MediaType type, bool isRemote) { rtpSetupSuccess(type, isRemote); });
 
 #ifdef ENABLE_VIDEO
         videortp_->setRequestKeyFrameCallback([wthis = weak()] {
@@ -1320,13 +1324,13 @@ SIPCall::stopAllMedia()
 #ifdef ENABLE_PLUGIN
     {
         std::lock_guard<std::mutex> lk(avStreamsMtx_);
+        Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(
+            getCallId());
         callAVStreams.erase(getCallId() + "00"); // audio out
         callAVStreams.erase(getCallId() + "01"); // audio in
         callAVStreams.erase(getCallId() + "10"); // video out
         callAVStreams.erase(getCallId() + "11"); // video in
     }
-    jami::Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(
-        getCallId());
 #endif
 }
 
@@ -1763,7 +1767,7 @@ SIPCall::newIceSocket(unsigned compId)
 void
 SIPCall::rtpSetupSuccess(MediaType type, bool isRemote)
 {
-    std::lock_guard<std::mutex> lk{setupSuccessMutex_};
+    std::lock_guard<std::mutex> lk {setupSuccessMutex_};
     if (type == MEDIA_AUDIO) {
         if (isRemote)
             mediaReady_.at("a:remote") = true;
@@ -1776,11 +1780,8 @@ SIPCall::rtpSetupSuccess(MediaType type, bool isRemote)
             mediaReady_.at("v:local") = true;
     }
 
-    if (mediaReady_.at("a:local")
-            and mediaReady_.at("a:remote")
-            and mediaReady_.at("v:remote")) {
-        if (Manager::instance().videoPreferences.getRecordPreview()
-                or mediaReady_.at("v:local"))
+    if (mediaReady_.at("a:local") and mediaReady_.at("a:remote") and mediaReady_.at("v:remote")) {
+        if (Manager::instance().videoPreferences.getRecordPreview() or mediaReady_.at("v:local"))
             readyToRecord_ = true;
     }
 

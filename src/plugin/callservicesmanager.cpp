@@ -45,6 +45,12 @@ CallServicesManager::~CallServicesManager()
 void
 CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subject)
 {
+    for (auto item : callAVsubjects_[data.id]) {
+        if (data.id == item.first.id && data.direction == item.first.direction
+            && data.type == item.first.type)
+            return;
+    }
+
     /// callAVsubjects_ emplaces data and subject with callId key to easy of access
     /// When call is ended, subjects from this call are erased.
     callAVsubjects_[data.id].emplace_back(data, subject);
@@ -88,7 +94,8 @@ void
 CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginManager)
 {
     /// registerMediaHandler may be called by the PluginManager upon loading a plugin.
-    auto registerMediaHandler = [this](void* data) {
+    auto registerMediaHandler = [this](void* data, std::mutex& pmMtx_) {
+        std::lock_guard<std::mutex> lk(pmMtx_);
         CallMediaHandlerPtr ptr {(static_cast<CallMediaHandler*>(data))};
 
         if (!ptr)
@@ -103,7 +110,8 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
     };
 
     /// unregisterMediaHandler may be called by the PluginManager while unloading.
-    auto unregisterMediaHandler = [this](void* data) {
+    auto unregisterMediaHandler = [this](void* data, std::mutex& pmMtx_) {
+        std::lock_guard<std::mutex> lk(pmMtx_);
         auto handlerIt = std::find_if(callMediaHandlers_.begin(),
                                       callMediaHandlers_.end(),
                                       [data](CallMediaHandlerPtr& handler) {
@@ -269,8 +277,9 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
         }
     }
 #ifndef __ANDROID__
-    if (applyRestart)
-        Manager::instance().callFactory.getCall<SIPCall>(callId)->getVideoRtp().restartSender();
+    auto call = Manager::instance().callFactory.getCall<SIPCall>(callId);
+    if (applyRestart && call && call->getConfId().empty())
+        call->getVideoRtp().restartSender();
 #endif
 }
 } // namespace jami

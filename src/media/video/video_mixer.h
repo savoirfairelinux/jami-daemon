@@ -85,7 +85,9 @@ public:
 
     void setOnSourcesUpdated(OnSourcesUpdatedCb&& cb) { onSourcesUpdated_ = std::move(cb); }
 
-    MediaStream getStream(const std::string& name)  const;
+    MediaStream getStream(const std::string& name) const;
+
+    std::shared_ptr<VideoFrameActiveWriter>& getVideoLocal() { return videoLocal_; }
 
 private:
     NON_COPYABLE(VideoMixer);
