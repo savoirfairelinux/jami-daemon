@@ -326,7 +326,22 @@ GitServer::Impl::sendPackData()
 
     std::string fetched = wantedReference_;
 
-    while (true) {
+    git_oid oid;
+    if (git_oid_fromstr(&oid, wantedReference_.c_str()) < 0) {
+        JAMI_ERR("Cannot get reference for commit %s", wantedReference_.c_str());
+        git_repository_free(repo);
+        return;
+    }
+
+    git_revwalk* walker_ptr = nullptr;
+    if (git_revwalk_new(&walker_ptr, repo) < 0 || git_revwalk_push(walker_ptr, &oid) < 0) {
+        if (walker_ptr)
+            git_revwalk_free(walker_ptr);
+        return;
+    }
+    git_revwalk_sorting(walker_ptr, GIT_SORT_TIME);
+
+    while (!git_revwalk_next(&oid, walker_ptr)) {
         if (std::find(haveRefs_.begin(), haveRefs_.end(), wantedReference_) != haveRefs_.end()) {
             // The peer already have the reference
             break;
@@ -350,6 +365,7 @@ GitServer::Impl::sendPackData()
         }
 
         // Get next commit to pack
+        JAMI_ERR("@@@ ADD %s", wantedReference_.c_str());
         git_commit* current_commit;
         if (git_commit_lookup(&current_commit, repo, &commit_id) < 0) {
             JAMI_ERR("Could not look up current commit");
@@ -376,6 +392,57 @@ GitServer::Impl::sendPackData()
         git_commit_free(parent_commit);
     }
 
+    /* while (true) {
+         if (std::find(haveRefs_.begin(), haveRefs_.end(), wantedReference_) != haveRefs_.end()) {
+             // The peer already have the reference
+             break;
+         }
+         git_oid commit_id;
+         if (git_oid_fromstr(&commit_id, wantedReference_.c_str()) < 0) {
+             JAMI_WARN("Couldn't open reference %s for %s",
+                       wantedReference_.c_str(),
+                       repository_.c_str());
+             git_packbuilder_free(pb);
+             git_repository_free(repo);
+             return;
+         }
+         if (git_packbuilder_insert_commit(pb, &commit_id) != 0) {
+             JAMI_WARN("Couldn't open insert commit %s for %s",
+                       git_oid_tostr_s(&commit_id),
+                       repository_.c_str());
+             git_packbuilder_free(pb);
+             git_repository_free(repo);
+             return;
+         }
+
+         // Get next commit to pack
+         JAMI_ERR("@@@ ADD %s", wantedReference_.c_str());
+         git_commit* current_commit;
+         if (git_commit_lookup(&current_commit, repo, &commit_id) < 0) {
+             JAMI_ERR("Could not look up current commit");
+             git_packbuilder_free(pb);
+             git_repository_free(repo);
+             return;
+         }
+         git_commit* parent_commit;
+         if (git_commit_parent(&parent_commit, current_commit, 0) < 0) {
+             git_commit_free(current_commit);
+             break;
+         }
+         auto* oid_str = git_oid_tostr_s(git_commit_id(parent_commit));
+         if (!oid_str) {
+             git_packbuilder_free(pb);
+             git_commit_free(parent_commit);
+             git_commit_free(current_commit);
+             JAMI_ERR("Could not look up current commit");
+             git_repository_free(repo);
+             return;
+         }
+         wantedReference_ = oid_str;
+         git_commit_free(current_commit);
+         git_commit_free(parent_commit);
+     }*/
+
     git_buf data = {};
     if (git_packbuilder_write_buf(&data, pb) != 0) {
         JAMI_WARN("Couldn't write pack data for %s", repository_.c_str());
@@ -385,6 +452,7 @@ GitServer::Impl::sendPackData()
 
     std::size_t sent = 0;
     std::size_t len = data.size;
+    JAMI_ERR("@@@ TOTAL %u", len);
     std::error_code ec;
     do {
         // cf https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L166
@@ -396,9 +464,9 @@ GitServer::Impl::sendPackData()
         toSend << "\x1" << std::string(data.ptr + sent, pkt_size);
         std::string toSendStr = toSend.str();
 
-        socket_->write(reinterpret_cast<const unsigned char*>(toSendStr.c_str()),
-                       toSendStr.size(),
-                       ec);
+        auto res = socket_->write(reinterpret_cast<const unsigned char*>(toSendStr.c_str()),
+                                  toSendStr.size(),
+                                  ec);
         if (ec) {
             JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
             git_packbuilder_free(pb);
@@ -406,6 +474,7 @@ GitServer::Impl::sendPackData()
             return;
         }
         sent += pkt_size;
+        JAMI_ERR("@@@ SEND %u len %u total %u", res, pkt_size, sent);
     } while (sent < len);
 
     // And finish by a little FLUSH

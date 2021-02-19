@@ -454,6 +454,7 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                              deviceId.to_c_str());
                     return;
                 }
+                JAMI_ERR("Connect to %s", deviceId.to_c_str());
 
                 // Note: used when the ice negotiation fails to erase
                 // all stored structures.
