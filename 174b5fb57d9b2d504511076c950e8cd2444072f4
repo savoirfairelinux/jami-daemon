@@ -49,6 +49,30 @@
     },
     {
       "key": {
+        "uuid": "563b44c5_1ca519ab",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-19T14:57:48Z",
+      "side": 1,
+      "message": "yup I understood by reading the code, just a funny point :)",
+      "parentUuid": "2c0ff789_9e394792",
+      "range": {
+        "startLine": 182,
+        "startChar": 21,
+        "endLine": 182,
+        "endChar": 34
+      },
+      "revId": "174b5fb57d9b2d504511076c950e8cd2444072f4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "ee16a8bd_f88e4cd5",
         "filename": "src/plugin/pluginmanager.h",
         "patchSetId": 11

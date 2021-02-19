@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "523ed962_287b897a",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 196,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-19T14:57:48Z",
+      "side": 1,
+      "message": "just a note. lot of things (like this function) are similar in callservicesmanager and chat. can be moved in a superclass servicesmanager",
+      "range": {
+        "startLine": 184,
+        "startChar": 16,
+        "endLine": 196,
+        "endChar": 1
+      },
+      "revId": "20eb6a721508aa62e37babacb3259160ce06af0e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
