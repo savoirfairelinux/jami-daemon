@@ -1265,6 +1265,7 @@ ConversationRepository::Impl::commit(const std::string& msg)
 ConversationMode
 ConversationRepository::Impl::mode() const
 {
+    JAMI_ERR("@@@ log mode()");
     // If already retrieven, return it, else get it from first commit
     if (mode_ != std::nullopt)
         return *mode_;
@@ -1281,6 +1282,7 @@ ConversationRepository::Impl::mode() const
     }
     auto commitMsg = lastMsg[0].commit_msg;
 
+    JAMI_ERR("@@@ %s", commitMsg.c_str());
     std::string err;
     Json::Value root;
     Json::CharReaderBuilder rbuilder;
@@ -1443,12 +1445,14 @@ ConversationRepository::Impl::log(const std::string& from,
                                   unsigned n,
                                   bool logIfNotFound) const
 {
+    JAMI_ERR("LOG A");
     std::vector<ConversationCommit> commits {};
 
     git_oid oid;
     auto repo = repository();
     if (!repo)
         return commits;
+    JAMI_ERR("LOG B");
     if (from.empty()) {
         if (git_reference_name_to_id(&oid, repo.get(), "HEAD") < 0) {
             JAMI_ERR("Cannot get reference for HEAD");
@@ -1461,6 +1465,7 @@ ConversationRepository::Impl::log(const std::string& from,
         }
     }
 
+    JAMI_ERR("LOG C");
     git_revwalk* walker_ptr = nullptr;
     if (git_revwalk_new(&walker_ptr, repo.get()) < 0 || git_revwalk_push(walker_ptr, &oid) < 0) {
         if (walker_ptr)
@@ -1476,16 +1481,19 @@ ConversationRepository::Impl::log(const std::string& from,
 
     for (auto idx = 0u; !git_revwalk_next(&oid, walker.get()); ++idx) {
         if (n != 0 && idx == n) {
+            JAMI_ERR("LOG C1");
             break;
         }
         git_commit* commit_ptr = nullptr;
         std::string id = git_oid_tostr_s(&oid);
+        JAMI_ERR("LOG C0 %s", id.c_str());
         if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
             JAMI_WARN("Failed to look up commit %s", id.c_str());
             break;
         }
         GitCommit commit {commit_ptr, git_commit_free};
         if (id == to) {
+            JAMI_ERR("LOG C2");
             break;
         }
 
@@ -1522,6 +1530,7 @@ ConversationRepository::Impl::log(const std::string& from,
         cc->timestamp = git_commit_time(commit.get());
     }
 
+    JAMI_ERR("LOG D");
     return commits;
 }
 
@@ -1865,12 +1874,37 @@ ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& acco
         return 0;
     };
 
-    if (git_clone(&rep, url.str().c_str(), path.c_str(), nullptr) < 0) {
+    if (git_clone(&rep, url.str().c_str(), path.c_str(), nullptr) != 0) {
         const git_error* err = giterr_last();
         if (err)
             JAMI_ERR("Error when retrieving remote conversation: %s %s", err->message, path.c_str());
         return nullptr;
     }
+
+    git_oid oid;
+    if (git_reference_name_to_id(&oid, rep, "HEAD") < 0) {
+    }
+    std::string id = git_oid_tostr_s(&oid);
+    JAMI_ERR("DETECTED %s", id.c_str());
+    git_revwalk* walker_ptr = nullptr;
+    auto res = git_revwalk_new(&walker_ptr, rep);
+    JAMI_ERR("res %u", res);
+    res = git_revwalk_sorting(walker_ptr, GIT_SORT_TIME);
+    JAMI_ERR("res %u", res);
+    res = git_revwalk_push_head(walker_ptr);
+    JAMI_ERR("res %u", res);
+    GitRevWalker walker {walker_ptr, git_revwalk_free};
+
+    for (auto idx = 0u; !git_revwalk_next(&oid, walker.get()); ++idx) {
+        git_commit* commit_ptr = nullptr;
+        std::string id = git_oid_tostr_s(&oid);
+        JAMI_ERR("DETECTED %s", id.c_str());
+        if (git_commit_lookup(&commit_ptr, rep, &oid) < 0) {
+            JAMI_WARN("Failed to look up commit %s", id.c_str());
+            break;
+        }
+    }
+
     git_repository_free(rep);
     auto repo = std::make_unique<ConversationRepository>(account, conversationId);
     repo->pinCertificates(); // need to load certificates to validate non known members
@@ -1886,9 +1920,11 @@ bool
 ConversationRepository::Impl::validCommits(
     const std::vector<ConversationCommit>& commitsToValidate) const
 {
+    JAMI_ERR("VALID?");
     for (const auto& commit : commitsToValidate) {
         auto userDevice = commit.author.email;
         auto validUserAtCommit = commit.id;
+        JAMI_ERR("VALID %s", commit.id.c_str());
         if (commit.parents.size() == 0) {
             if (!checkInitialCommit(userDevice, commit.id)) {
                 JAMI_WARN("Malformed initial commit %s. Please check you use the latest "
@@ -2800,7 +2836,16 @@ ConversationRepository::validFetch(const std::string& remoteDevice) const
 bool
 ConversationRepository::validClone() const
 {
-    return pimpl_->validCommits(logN("", 0));
+    try {
+        // Check that mode is correct (to know if all commits are there)
+        auto m = mode();
+        JAMI_ERR("@@@ mode: %u", m);
+    } catch (...) {
+        return false;
+    }
+    auto commits = logN("", 0);
+    JAMI_ERR("@@@ commits.size(): %u", commits.size());
+    return pimpl_->validCommits(commits);
 }
 
 std::optional<std::string>
