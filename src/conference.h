@@ -344,6 +344,7 @@ private:
 
     std::map<std::string, ConfInfo> remoteHosts_;
     std::string confInfo2str(const ConfInfo& confInfo);
+    std::string_view findHostforRemoteParticipant(std::string_view uri);
 };
 
 } // namespace jami
