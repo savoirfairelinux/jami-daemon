@@ -85,7 +85,8 @@ PluginManager::unload(const std::string& path)
     destroyPluginComponents(path);
     auto it = dynPluginMap_.find(path);
     if (it != dynPluginMap_.end()) {
-        it->second.second = false;
+        std::lock_guard<std::mutex> lk(mtx_);
+        dynPluginMap_.erase(it);
     }
 
     return true;
@@ -120,7 +121,7 @@ PluginManager::destroyPluginComponents(const std::string& path)
         for (auto pairIt = itComponents->second.begin(); pairIt != itComponents->second.end();) {
             auto clcm = componentsLifeCycleManagers_.find(pairIt->first);
             if (clcm != componentsLifeCycleManagers_.end()) {
-                clcm->second.destroyComponent(pairIt->second);
+                clcm->second.destroyComponent(pairIt->second, mtx_);
                 pairIt = itComponents->second.erase(pairIt);
             }
         }
@@ -259,7 +260,7 @@ PluginManager::manageComponent(const DLPlugin* plugin, const std::string& name, 
     const auto& componentLifecycleManager = iter->second;
 
     try {
-        int32_t r = componentLifecycleManager.takeComponentOwnership(data);
+        int32_t r = componentLifecycleManager.takeComponentOwnership(data, mtx_);
         if (r == 0) {
             pluginComponentsMap_[plugin->getPath()].emplace_back(name, data);
         }

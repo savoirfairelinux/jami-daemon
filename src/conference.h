@@ -293,6 +293,12 @@ private:
     bool videoMuted_ {false};
 
     bool localModAdded_ {false};
+
+    using AVMediaStream = Observable<std::shared_ptr<MediaFrame>>;
+    using MediaStreamSubject = PublishMapSubject<std::shared_ptr<MediaFrame>, AVFrame*>;
+
+    std::mutex avStreamsMtx_ {};
+    std::map<std::string, std::shared_ptr<MediaStreamSubject>> confAVStreams;
 };
 
 } // namespace jami

@@ -56,7 +56,7 @@ private:
 
     // A Component is either a MediaHandler or a ChatHandler.
     // A ComponentFunction is a function that may start or end a component life.
-    using ComponentFunction = std::function<int32_t(void*)>;
+    using ComponentFunction = std::function<int32_t(void*, std::mutex&)>;
 
     // A list of component type (MediaHandler or ChatHandler), and component pointer pairs
     using ComponentPtrList = std::list<std::pair<std::string, void*>>;
@@ -228,5 +228,7 @@ private:
 
     // Keeps a map between plugins' library path and their components list.
     PluginComponentsMap pluginComponentsMap_ {};
+
+    std::mutex mtx_;
 };
 } // namespace jami
