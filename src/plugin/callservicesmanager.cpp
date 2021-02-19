@@ -45,6 +45,12 @@ CallServicesManager::~CallServicesManager()
 void
 CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subject)
 {
+    auto predicate = [data](std::pair<const StreamData, AVSubjectSPtr> item) {
+        return data.id == item.first.id && data.direction == item.first.direction
+               && data.type == item.first.type;
+    };
+    callAVsubjects_[data.id].remove_if(predicate);
+
     // callAVsubjects_ emplaces data and subject with callId key to easy of access
     // When call is ended, subjects from this call are erased.
     callAVsubjects_[data.id].emplace_back(data, subject);
@@ -87,7 +93,8 @@ void
 CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginManager)
 {
     // registerMediaHandler may be called by the PluginManager upon loading a plugin.
-    auto registerMediaHandler = [this](void* data) {
+    auto registerMediaHandler = [this](void* data, std::mutex& pmMtx_) {
+        std::lock_guard<std::mutex> lk(pmMtx_);
         CallMediaHandlerPtr ptr {(static_cast<CallMediaHandler*>(data))};
 
         if (!ptr)
@@ -102,7 +109,8 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
     };
 
     // unregisterMediaHandler may be called by the PluginManager while unloading.
-    auto unregisterMediaHandler = [this](void* data) {
+    auto unregisterMediaHandler = [this](void* data, std::mutex& pmMtx_) {
+        std::lock_guard<std::mutex> lk(pmMtx_);
         auto handlerIt = std::find_if(callMediaHandlers_.begin(),
                                       callMediaHandlers_.end(),
                                       [data](CallMediaHandlerPtr& handler) {
@@ -271,8 +279,8 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
     if (applyRestart) {
         auto sipCall = std::dynamic_pointer_cast<SIPCall>(
             Manager::instance().callFactory.getCall(callId, Call::LinkType::SIP));
-        assert(sipCall);
-        sipCall->getVideoRtp().restartSender();
+        if (sipCall && sipCall->getConfId().empty())
+            sipCall->getVideoRtp().restartSender();
     }
 #endif
 }

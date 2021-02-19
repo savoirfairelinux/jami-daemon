@@ -94,6 +94,7 @@ public:
             if (auto so = it->lock()) {
                 if (so.get() == o) {
                     priority_observers_.erase(it);
+                    break;
                 }
             }
         }
@@ -195,6 +196,19 @@ public:
     void update(Observable<T1>*, const T1& t) override
     {
         std::lock_guard<std::mutex> lk(this->mutex_);
+        for (auto it = this->priority_observers_.begin(); it != this->priority_observers_.end();) {
+            if (auto so = it->lock()) {
+                try {
+                    so->update(this, map_(t));
+                    ++it;
+                } catch (std::exception& e) {
+                    JAMI_ERR() << e.what();
+                }
+            } else {
+                it = this->priority_observers_.erase(it);
+            }
+        }
+
         for (const auto& observer : this->observers_) {
             observer->update(this, map_(t));
         }
@@ -223,6 +237,12 @@ public:
     {
         std::lock_guard<std::mutex> lk(this->mutex_);
         JAMI_WARN() << "PublishMapSubject: detaching observers";
+        for (auto it = this->priority_observers_.begin(); it != this->priority_observers_.end();) {
+            if (auto so = it->lock())
+                it = this->priority_observers_.erase(it);
+            else
+                it++;
+        }
         for (auto& o : this->observers_)
             o->detached(this);
     }
