@@ -35,7 +35,8 @@ void
 ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginManager)
 {
     // registerChatHandler may be called by the PluginManager upon loading a plugin.
-    auto registerChatHandler = [this](void* data) {
+    auto registerChatHandler = [this](void* data, std::mutex& pmMtx_) {
+        std::lock_guard<std::mutex> lk(pmMtx_);
         ChatHandlerPtr ptr {(static_cast<ChatHandler*>(data))};
 
         if (!ptr)
@@ -50,7 +51,8 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
     };
 
     // unregisterChatHandler may be called by the PluginManager while unloading.
-    auto unregisterChatHandler = [this](void* data) {
+    auto unregisterChatHandler = [this](void* data, std::mutex& pmMtx_) {
+        std::lock_guard<std::mutex> lk(pmMtx_);
         auto handlerIt = std::find_if(chatHandlers_.begin(),
                                       chatHandlers_.end(),
                                       [data](ChatHandlerPtr& handler) {

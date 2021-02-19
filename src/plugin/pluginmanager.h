@@ -56,7 +56,7 @@ private:
 
     // A Component is either a MediaHandler or a ChatHandler.
     // A ComponentFunction is a function that may start or end a component life.
-    using ComponentFunction = std::function<int32_t(void*)>;
+    using ComponentFunction = std::function<int32_t(void*, std::mutex&)>;
 
     // A list of component type (MediaHandler or ChatHandler), and component pointer pairs
     using ComponentPtrList = std::list<std::pair<std::string, void*>>;
@@ -86,8 +86,8 @@ private:
     // Map between plugins' library path and their components list
     using PluginComponentsMap = std::map<std::string, ComponentPtrList>;
 
-    // Vector with plugins' destruction functions
-    using ExitFuncVec = std::vector<JAMI_PluginExitFunc>;
+    // Map with plugins' destruction functions
+    using ExitFuncMap = std::map<std::string, JAMI_PluginExitFunc>;
     using ObjectFactoryVec = std::vector<ObjectFactory>;
     using ObjectFactoryMap = std::map<std::string, ObjectFactory>;
 
@@ -215,7 +215,7 @@ private:
     PluginMap dynPluginMap_ {};
 
     // Should keep reference to plugins' destruction functions read during library loading.
-    ExitFuncVec exitFuncVec_ {};
+    ExitFuncMap exitFunc_ {};
 
     ObjectFactoryMap exactMatchMap_ {};
     ObjectFactoryVec wildCardVec_ {};
@@ -228,5 +228,7 @@ private:
 
     // Keeps a map between plugins' library path and their components list.
     PluginComponentsMap pluginComponentsMap_ {};
+
+    std::mutex mtx_;
 };
 } // namespace jami
