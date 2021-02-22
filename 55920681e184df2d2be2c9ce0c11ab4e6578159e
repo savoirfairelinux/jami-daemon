@@ -72,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "e09e9f37_fd7691c9",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-22T22:24:54Z",
+      "side": 1,
+      "message": "Done\nAs discussed.",
+      "parentUuid": "340fe158_4c5effee",
+      "range": {
+        "startLine": 123,
+        "startChar": 42,
+        "endLine": 123,
+        "endChar": 58
+      },
+      "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "e0123383_474b1f50",
         "filename": "src/call_factory.cpp",
         "patchSetId": 45
@@ -107,6 +131,30 @@
       "side": 1,
       "message": "removed",
       "parentUuid": "e0123383_474b1f50",
+      "range": {
+        "startLine": 182,
+        "startChar": 4,
+        "endLine": 182,
+        "endChar": 61
+      },
+      "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0594495c_e098801d",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-22T22:24:54Z",
+      "side": 1,
+      "message": "put back.\nI made it clear in the documentation that the caller is responsible for concurrency protection.",
+      "parentUuid": "89c62a92_acc5f58a",
       "range": {
         "startLine": 182,
         "startChar": 4,
@@ -257,6 +305,30 @@
       "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "29908ab3_0787e8d0",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-22T22:24:54Z",
+      "side": 1,
+      "message": "Done\nUsing an opaque now",
+      "parentUuid": "2964a97b_3573de3f",
+      "range": {
+        "startLine": 124,
+        "startChar": 4,
+        "endLine": 124,
+        "endChar": 9
+      },
+      "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
