@@ -1,4 +1,4 @@
-/*
+﻿/*
  *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -812,7 +812,7 @@ SIPAccount::doRegister1_()
         }
     }
 
-    link_.resolveSrvName(hostname_,
+    link_.resolveSrvName(hasServiceRoute() ? getServiceRoute() : hostname_,
                          tlsEnable_ ? PJSIP_TRANSPORT_TLS : PJSIP_TRANSPORT_UDP,
                          [w = weak()](std::vector<IpAddr> host_ips) {
                              if (auto acc = w.lock()) {
@@ -1107,18 +1107,7 @@ SIPAccount::sendRegister()
 void
 SIPAccount::setUpTransmissionData(pjsip_tx_data* tdata, long transportKeyType)
 {
-    if (hasServiceRoute()) {
-        IpAddr proxyServer {getServiceRoute()};
-        if (proxyServer.getPort() == 0)
-            proxyServer.setPort(sip_utils::DEFAULT_SIP_PORT);
-        auto ai = &tdata->dest_info;
-        ai->name = pj_strdup3(tdata->pool, hostname_.c_str());
-        ai->addr.count = 1;
-        ai->addr.entry[0].type = (pjsip_transport_type_e) transportKeyType;
-        pj_memcpy(&ai->addr.entry[0].addr, proxyServer.pjPtr(), sizeof(pj_sockaddr));
-        ai->addr.entry[0].addr_len = proxyServer.getLength();
-        ai->cur_addr = 0;
-    } else if (hostIp_) {
+    if (hostIp_) {
         auto ai = &tdata->dest_info;
         ai->name = pj_strdup3(tdata->pool, hostname_.c_str());
         ai->addr.count = 1;
