@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "1debc7ca_7b8de1ee",
+        "filename": "src/call.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-22T15:54:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ed102998_8b5366f8",
+      "range": {
+        "startLine": 116,
+        "startChar": 0,
+        "endLine": 116,
+        "endChar": 40
+      },
+      "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "340fe158_4c5effee",
         "filename": "src/call_factory.cpp",
         "patchSetId": 45
@@ -71,6 +95,30 @@
     },
     {
       "key": {
+        "uuid": "89c62a92_acc5f58a",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-22T15:54:10Z",
+      "side": 1,
+      "message": "removed",
+      "parentUuid": "e0123383_474b1f50",
+      "range": {
+        "startLine": 182,
+        "startChar": 4,
+        "endLine": 182,
+        "endChar": 61
+      },
+      "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "6514cf2f_e8075eb0",
         "filename": "src/plugin/callservicesmanager.cpp",
         "patchSetId": 45
@@ -91,6 +139,30 @@
       "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b4a95be2_f7e5ca2b",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-22T15:54:10Z",
+      "side": 1,
+      "message": "Ack\nAlready using it. The default value for linktype is LinkType::SIP.",
+      "parentUuid": "6514cf2f_e8075eb0",
+      "range": {
+        "startLine": 243,
+        "startChar": 8,
+        "endLine": 243,
+        "endChar": 24
+      },
+      "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +189,30 @@
     },
     {
       "key": {
+        "uuid": "5a366772_97dc97b3",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 723,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-22T15:54:10Z",
+      "side": 1,
+      "message": "Ack\nalready there (second arg defaults to LinkType::SIP)",
+      "parentUuid": "66a92051_312f1835",
+      "range": {
+        "startLine": 723,
+        "startChar": 85,
+        "endLine": 723,
+        "endChar": 92
+      },
+      "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9bdb731a_a7ef7947",
         "filename": "src/sip/sipcall.h",
         "patchSetId": 45
@@ -128,6 +224,30 @@
       "writtenOn": "2021-02-18T16:14:52Z",
       "side": 1,
       "message": "Avoid void*.\nEither getVideoReceive is part of Call and the type is fully included (maybe with opaque types), or it should stay part of SipCall.",
+      "range": {
+        "startLine": 124,
+        "startChar": 4,
+        "endLine": 124,
+        "endChar": 9
+      },
+      "revId": "55920681e184df2d2be2c9ce0c11ab4e6578159e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2964a97b_3573de3f",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 124,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-22T15:54:10Z",
+      "side": 1,
+      "message": "The void* is meant to be an opaque. We could make it more explicit though.\n\ngetVideoReceive is already in Call.h, just forget the override keywork.\n\nBTW, this is a temporary fix to remove dependency of Conference class on SIPCall class, which should have never been introduced in the first place. AFAIK, Conference class should stay agnostic to what call type is used, and does not about the implementation.\nThe right fix would to remove the need for Conference to access the RTP session of the call. More decoupling is needed here.",
+      "parentUuid": "9bdb731a_a7ef7947",
       "range": {
         "startLine": 124,
         "startChar": 4,
