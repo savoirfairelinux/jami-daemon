@@ -1,0 +1,142 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab4b13a3_ff140355",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 13
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-22T20:55:24Z",
+      "side": 1,
+      "message": "check configure.ac",
+      "range": {
+        "startLine": 55,
+        "startChar": 31,
+        "endLine": 55,
+        "endChar": 37
+      },
+      "revId": "9808e43ddffd66708fe64bfb19c0b3de7de15185",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9c1e6f0e_2c9a073a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1228,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-22T20:55:24Z",
+      "side": 1,
+      "message": "I think it should be specific to the media and not to the call from now on.",
+      "range": {
+        "startLine": 1228,
+        "startChar": 0,
+        "endLine": 1228,
+        "endChar": 23
+      },
+      "revId": "9808e43ddffd66708fe64bfb19c0b3de7de15185",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7fcf7e30_b85147b4",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1942,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-22T20:55:24Z",
+      "side": 1,
+      "message": "What if we receive 2 or more streams ?",
+      "range": {
+        "startLine": 1942,
+        "startChar": 0,
+        "endLine": 1942,
+        "endChar": 26
+      },
+      "revId": "9808e43ddffd66708fe64bfb19c0b3de7de15185",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fcd1d4f4_4d30f8fe",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1951,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-22T20:55:24Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 1951,
+        "startChar": 0,
+        "endLine": 1951,
+        "endChar": 28
+      },
+      "revId": "9808e43ddffd66708fe64bfb19c0b3de7de15185",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "46e2505d_84c5a6c8",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1967,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-22T20:55:24Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 1967,
+        "startChar": 0,
+        "endLine": 1967,
+        "endChar": 28
+      },
+      "revId": "9808e43ddffd66708fe64bfb19c0b3de7de15185",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "28b1a651_3197119e",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1980,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-22T20:55:24Z",
+      "side": 1,
+      "message": "We shoud record all steams composing the call",
+      "range": {
+        "startLine": 1980,
+        "startChar": 0,
+        "endLine": 1980,
+        "endChar": 26
+      },
+      "revId": "9808e43ddffd66708fe64bfb19c0b3de7de15185",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
