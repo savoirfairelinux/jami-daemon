@@ -131,8 +131,9 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
                                     SL_ANDROID_KEY_PERFORMANCE_MODE,
                                     &modeSize,
                                     (void*) &modeRetrieved);
-    SLASSERT(result);
-    JAMI_WARN("Actual performance mode is %u\n", modeRetrieved);
+    if (result == SL_RESULT_SUCCESS) {
+        JAMI_WARN("Actual performance mode is %u\n", modeRetrieved);
+    }
 
     /* Enable AEC if requested */
     if (aec) {
@@ -144,18 +145,14 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
         JAMI_WARN("AEC is %savailable\n", SL_RESULT_SUCCESS == result ? "" : "not ");
         if (SL_RESULT_SUCCESS == result) {
             SLboolean enabled;
-            result = (*aecItf)->IsEnabled(aecItf, &enabled);
-            SLASSERT(result);
-            JAMI_WARN("AEC was %s\n", enabled ? "enabled" : "not enabled");
-
-            result = (*aecItf)->SetEnabled(aecItf, true);
-            SLASSERT(result);
-
-            result = (*aecItf)->IsEnabled(aecItf, &enabled);
-            SLASSERT(result);
-            JAMI_WARN("AEC is now %s\n", enabled ? "enabled" : "not enabled");
-
-            hasNativeAEC_ = enabled;
+            if ((*aecItf)->IsEnabled(aecItf, &enabled) == SL_RESULT_SUCCESS) {
+                JAMI_WARN("AEC was %s\n", enabled ? "enabled" : "not enabled");
+                (*aecItf)->SetEnabled(aecItf, true);
+                if ((*aecItf)->IsEnabled(aecItf, &enabled) == SL_RESULT_SUCCESS) {
+                    JAMI_WARN("AEC is now %s\n", enabled ? "enabled" : "not enabled");
+                    hasNativeAEC_ = enabled;
+                }
+            }
         }
     }
     /* Enable AGC if requested */
@@ -168,16 +165,13 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
         JAMI_WARN("AGC is %savailable\n", SL_RESULT_SUCCESS == result ? "" : "not ");
         if (SL_RESULT_SUCCESS == result) {
             SLboolean enabled;
-            result = (*agcItf)->IsEnabled(agcItf, &enabled);
-            SLASSERT(result);
-            JAMI_WARN("AGC was %s\n", enabled ? "enabled" : "not enabled");
-
-            result = (*agcItf)->SetEnabled(agcItf, true);
-            SLASSERT(result);
-
-            result = (*agcItf)->IsEnabled(agcItf, &enabled);
-            SLASSERT(result);
-            JAMI_WARN("AGC is now %s\n", enabled ? "enabled" : "not enabled");
+            if ((*agcItf)->IsEnabled(agcItf, &enabled) == SL_RESULT_SUCCESS) {
+                JAMI_WARN("AGC was %s\n", enabled ? "enabled" : "not enabled");
+                (*agcItf)->SetEnabled(agcItf, true);
+                if ((*agcItf)->IsEnabled(agcItf, &enabled) == SL_RESULT_SUCCESS) {
+                    JAMI_WARN("AGC is now %s\n", enabled ? "enabled" : "not enabled");
+                }
+            }
         }
     }
     /* Enable NS if requested */
@@ -188,16 +182,13 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
         JAMI_WARN("NS is %savailable\n", SL_RESULT_SUCCESS == result ? "" : "not ");
         if (SL_RESULT_SUCCESS == result) {
             SLboolean enabled;
-            result = (*nsItf)->IsEnabled(nsItf, &enabled);
-            SLASSERT(result);
-            JAMI_WARN("NS was %s\n", enabled ? "enabled" : "not enabled");
-
-            result = (*nsItf)->SetEnabled(nsItf, true);
-            SLASSERT(result);
-
-            result = (*nsItf)->IsEnabled(nsItf, &enabled);
-            SLASSERT(result);
-            JAMI_WARN("NS is now %s\n", enabled ? "enabled" : "not enabled");
+            if ((*nsItf)->IsEnabled(nsItf, &enabled) == SL_RESULT_SUCCESS) {
+                JAMI_WARN("NS was %s\n", enabled ? "enabled" : "not enabled");
+                (*nsItf)->SetEnabled(nsItf, true);
+                if ((*nsItf)->IsEnabled(nsItf, &enabled)  == SL_RESULT_SUCCESS) {
+                    JAMI_WARN("NS is now %s\n", enabled ? "enabled" : "not enabled");
+                }
+            }
         }
     }
 
