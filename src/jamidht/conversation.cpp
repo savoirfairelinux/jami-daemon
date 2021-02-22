@@ -732,6 +732,7 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
                 continue;
             }
             // Pull from remote
+            std::unique_lock<std::mutex> lk(sthis_->pimpl_->writeMtx_);
             auto fetched = sthis_->fetchFrom(deviceId);
             {
                 std::lock_guard<std::mutex> lk(sthis_->pimpl_->pullcbsMtx_);
@@ -739,10 +740,10 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
             }
 
             if (!fetched) {
+                lk.unlock();
                 cb(false);
                 continue;
             }
-            std::unique_lock<std::mutex> lk(sthis_->pimpl_->writeMtx_);
             auto newCommits = sthis_->mergeHistory(deviceId);
             sthis_->pimpl_->announce(newCommits);
             lk.unlock();
