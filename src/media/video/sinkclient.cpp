@@ -340,13 +340,14 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     }
 #endif
 
-    if (avTarget_.push) {
+    if (avTarget_.push && frame_p->pointer()->linesize[0]) {
         auto outFrame = std::make_unique<VideoFrame>();
         outFrame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
         avTarget_.push(std::move(outFrame));
     }
 
-    bool doTransfer = (target_.pull != nullptr);
+    bool doTransfer = (target_.pull != nullptr)
+                      || (avTarget_.push && !frame_p->pointer()->linesize[0]);
 #if HAVE_SHM
     doTransfer |= (shm_ != nullptr);
 #endif
@@ -365,8 +366,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                 JAMI_ERR("Accel failure: %s", e.what());
                 return;
             }
-        }
-        else
+        } else
 #endif
         frame = std::static_pointer_cast<VideoFrame>(frame_p);
         int angle = frame->getOrientation();
@@ -391,7 +391,11 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #if HAVE_SHM
         shm_->renderFrame(*frame);
 #endif
-        if (target_.pull) {
+        if (avTarget_.push) {
+            auto outFrame = std::make_unique<VideoFrame>();
+            outFrame->copyFrom(*frame);
+            avTarget_.push(std::move(outFrame));
+        } else if (target_.pull) {
             VideoFrame dst;
             const int width = frame->width();
             const int height = frame->height();
