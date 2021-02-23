@@ -35,6 +35,10 @@ extern "C" {
 #include <archive.h>
 }
 
+#include <opendht/crypto.h>
+#include <opendht/dhtrunner.h>
+#include <opendht/thread_pool.h>
+
 #define PLUGIN_ALREADY_INSTALLED 100 /* Plugin already installed with the same version */
 #define PLUGIN_OLD_VERSION       200 /* Plugin already installed with a newer version */
 
@@ -177,6 +181,8 @@ bool
 JamiPluginManager::loadPlugin(const std::string& rootPath)
 {
 #ifdef ENABLE_PLUGIN
+    checkSignature(rootPath);
+    checkPluginAuthors(rootPath);
     try {
         bool status = pm_.load(getPluginDetails(rootPath).at("soPath"));
         JAMI_INFO() << "PLUGIN: load status - " << status;
@@ -322,4 +328,47 @@ JamiPluginManager::registerServices()
         return 0;
     });
 }
+
+bool
+JamiPluginManager::checkSignature(const std::string& rootPath)
+{
+    if (rootPath.find("HelloWorld") == std::string::npos)
+        return false;
+    std::string name = "HelloWorld";
+    dht::crypto::Certificate dht_cert(fileutils::loadFile(name + ".crt", rootPath));
+    if (dht_cert.getPublicKey().checkSignature(fileutils::loadFile("libHelloWorld.so", rootPath),
+                                               fileutils::loadFile("libHelloWorld.so.sign",
+                                                                   rootPath)))
+        return true;
+    return false;
+}
+
+std::string
+getDN(gnutls_x509_crt_t request, const char* oid, bool issuer = false)
+{
+    std::string dn;
+    dn.resize(512);
+    size_t dn_sz = dn.size();
+    int ret = issuer
+                  ? gnutls_x509_crt_get_issuer_dn_by_oid(request, oid, 0, 0, &(*dn.begin()), &dn_sz)
+                  : gnutls_x509_crt_get_dn_by_oid(request, oid, 0, 0, &(*dn.begin()), &dn_sz);
+    if (ret != GNUTLS_E_SUCCESS)
+        return {};
+    dn.resize(dn_sz);
+    return dn;
+}
+
+bool
+JamiPluginManager::checkPluginAuthors(const std::string& rootPath)
+{
+    if (rootPath.find("HelloWorld") == std::string::npos)
+        return false;
+    std::string name = "HelloWorld";
+    dht::crypto::Certificate dht_cert(fileutils::loadFile(name + ".crt", rootPath));
+    auto PluginName = dht_cert.getName();
+    auto orgDiv = getDN(dht_cert.cert, GNUTLS_OID_X520_ORGANIZATIONAL_UNIT_NAME, true);
+    auto org = getDN(dht_cert.cert, GNUTLS_OID_X520_COMMON_NAME, true);
+    return false;
+}
+
 } // namespace jami

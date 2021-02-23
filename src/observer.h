@@ -236,7 +236,6 @@ public:
     virtual void detached(Observable<T1>*) override
     {
         std::lock_guard<std::mutex> lk(this->mutex_);
-        JAMI_WARN() << "PublishMapSubject: detaching observers";
         for (auto it = this->priority_observers_.begin(); it != this->priority_observers_.end();) {
             if (auto so = it->lock())
                 it = this->priority_observers_.erase(it);
@@ -252,11 +251,7 @@ public:
      * Detach all observers to avoid making them call this observable when
      * destroyed
      **/
-    ~PublishMapSubject()
-    {
-        JAMI_WARN() << "~PublishMapSubject()";
-        detached(nullptr);
-    }
+    ~PublishMapSubject() { detached(nullptr); }
 
 private:
     F map_;

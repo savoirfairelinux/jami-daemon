@@ -132,6 +132,24 @@ public:
      */
     bool resetPluginPreferencesValuesMap(const std::string& rootPath);
 
+    /** To be used during installation
+     * @brief Checks plugin binary and info files signatures with public key provided inside jpl
+     * if any of the checks fail, plugin cannot be installed
+     * @param rootPath
+     * @return True if plugin binary signature check succeed
+     */
+    bool checkSignature(const std::string& rootPath);
+
+    /** To be used during installation
+     * If both files are checked, we provide plugin authorship infos to the user
+     * waiting it's approval. If aproved, proceed installation. Exit installation
+     * process otherwise.
+     * @brief Verify if user accepts author infos before loading plugin
+     * @param rootPath
+     * @return true if authors are accepted
+     */
+    bool checkPluginAuthors(const std::string& rootPath);
+
     CallServicesManager& getCallServicesManager() { return callsm_; }
 
     ChatServicesManager& getChatServicesManager() { return chatsm_; }

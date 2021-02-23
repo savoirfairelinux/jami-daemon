@@ -60,9 +60,9 @@ namespace PluginUtils {
 
 /// DATA_REGEX is used to during the plugin jpl uncompressing
 const std::regex DATA_REGEX("^data" DIR_SEPARATOR_STR_ESC ".+");
-/// SO_REGEX is used to find libraries during the plugin jpl uncompressing
-const std::regex SO_REGEX("([a-zA-Z0-9]+(?:[_-]?[a-zA-Z0-9]+)*)" DIR_SEPARATOR_STR_ESC
-                          "([a-zA-Z0-9_-]+\\.(so|dll|lib).*)");
+/// LIB_REGEX is used to find libraries during the plugin jpl uncompressing
+const std::regex LIB_REGEX("([a-zA-Z0-9]+(?:[_-]?[a-zA-Z0-9]+)*)" DIR_SEPARATOR_STR_ESC
+                           "([a-zA-Z0-9_-]+\\.(so|dll|lib|json|crt).*)");
 
 std::string
 manifestPath(const std::string& rootPath)
@@ -174,7 +174,7 @@ uncompressJplFunction(const std::string& relativeFileName)
     /// the main installation path.
     if (relativeFileName == "manifest.json" || std::regex_match(relativeFileName, DATA_REGEX)) {
         return std::make_pair(true, relativeFileName);
-    } else if (regex_search(relativeFileName, match, SO_REGEX)) {
+    } else if (regex_search(relativeFileName, match, LIB_REGEX)) {
         if (match.str(1) == ABI) {
             return std::make_pair(true, match.str(2));
         }
