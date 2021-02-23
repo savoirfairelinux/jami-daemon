@@ -56,6 +56,10 @@ class Call;
 
 using CallMap = std::map<std::string, std::shared_ptr<Call>>;
 
+namespace video {
+class VideoGenerator;
+}
+
 /*
  * @file call.h
  * @brief A call is the base class for protocol-based calls
@@ -64,9 +68,6 @@ using CallMap = std::map<std::string, std::shared_ptr<Call>>;
 class Call : public Recordable, public PeerRecorder, public std::enable_shared_from_this<Call>
 {
 public:
-    // Opaque type to pass video receiver instances.
-    typedef void* VideoReceiverOpq;
-
     // A map to pass media attributes between the daemon and the clients.
     using MediaMap = std::map<std::string, std::string>;
     /**
@@ -337,7 +338,7 @@ public: // media management
 
     virtual void enterConference(const std::string& confId) = 0;
     virtual void exitConference() = 0;
-    virtual VideoReceiverOpq getVideoReceiver() = 0;
+    virtual video::VideoGenerator* getVideoReceiver() = 0;
 
     std::vector<std::map<std::string, std::string>> getConferenceInfos() const
     {
