@@ -121,9 +121,9 @@ public:
 
     void enterConference(const std::string& confId) override;
     void exitConference() override;
-    VideoReceiverOpq getVideoReceiver() override
+    video::VideoGenerator* getVideoReceiver() override
     {
-        return reinterpret_cast<VideoReceiverOpq>(videortp_->getVideoReceive().get());
+        return videortp_->getVideoReceive().get();
     }
 
     // Overrides of Recordable base class.
