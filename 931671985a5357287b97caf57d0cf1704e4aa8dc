@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "1ac9bf4b_9cf1cfa7",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-23T00:06:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e1538f4b_c926b5a3",
+      "revId": "931671985a5357287b97caf57d0cf1704e4aa8dc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "21547037_6cba44b0",
         "filename": "src/plugin/callservicesmanager.h",
         "patchSetId": 5
@@ -36,6 +54,24 @@
     },
     {
       "key": {
+        "uuid": "bc5ab49b_24656274",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-23T00:06:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "21547037_6cba44b0",
+      "revId": "931671985a5357287b97caf57d0cf1704e4aa8dc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5fee9e90_e62109a3",
         "filename": "src/plugin/callservicesmanager.h",
         "patchSetId": 5
@@ -50,6 +86,24 @@
       "revId": "931671985a5357287b97caf57d0cf1704e4aa8dc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6d8deef3_6806a79f",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-23T00:06:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5fee9e90_e62109a3",
+      "revId": "931671985a5357287b97caf57d0cf1704e4aa8dc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
