@@ -32,26 +32,26 @@
 
 namespace jami {
 
+class SIPAccountBase;
+class SIPCall;
+
 class CallFactory
 {
 public:
-    template<class A>
-    std::shared_ptr<Call> newCall(std::shared_ptr<A> account,
-                                  const std::string& id,
+    CallFactory(std::mt19937_64& rand) : rand_(rand) {}
+
+    template<class C>
+    std::shared_ptr<C> newCall(std::shared_ptr<Account> account,
                                   Call::CallType type,
                                   const std::map<std::string, std::string>& details = {})
     {
-        return createSipCall(account, id, type, details);
+        if (auto base = std::dynamic_pointer_cast<SIPAccountBase>(account)) {
+            return std::dynamic_pointer_cast<C>(createSipCall(base, type, details));
+        }
+        return nullptr;
     }
 
-    template<class A>
-    std::shared_ptr<Call> newCall(std::shared_ptr<A> account,
-                                  const std::string& id,
-                                  Call::CallType type,
-                                  const std::vector<Call::MediaMap>& mediaList)
-    {
-        return createSipCall(account, id, type, mediaList);
-    }
+    std::string getNewCallID();
 
     /**
      * Forbid creation of new calls.
@@ -73,6 +73,11 @@ public:
      */
     std::shared_ptr<Call> getCall(const std::string& id) const;
     std::shared_ptr<Call> getCall(const std::string& id, Call::LinkType link) const;
+
+    template<class C>
+    std::shared_ptr<C> getCall(const std::string& id) {
+        return std::dynamic_pointer_cast<C>(getCall(id, C::LINK_TYPE));
+    }
 
     /**
      * Return if given call exists. Type can optionally be specified.
@@ -110,6 +115,7 @@ public:
     std::size_t callCount(Call::LinkType link) const;
 
 private:
+
     /**
      * @brief Get the calls map
      * @param link The call type
@@ -133,10 +139,11 @@ private:
      * @param type Set the call type
      * @param details Call details
      */
-    std::shared_ptr<Call> createSipCall(const std::shared_ptr<Account>& account,
-                                        const std::string& id,
+    std::shared_ptr<SIPCall> createSipCall(const std::shared_ptr<SIPAccountBase>& account,
                                         Call::CallType type,
                                         const std::map<std::string, std::string>& details = {});
+
+    std::mt19937_64& rand_;
 
     mutable std::recursive_mutex callMapsMutex_ {};
 
