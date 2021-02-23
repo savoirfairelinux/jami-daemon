@@ -1,0 +1,361 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0e87a834_37cdac34",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "Capitalize the first character of the sentence (except if the word is a method and variable name)\nApplies to many comments.",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4261ca74_1fd3ef2b",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "MediaHandler",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4fdbe44e_1f048d83",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "it\u0027s -\u003e its",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "aea97705_833bb9b0",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "is use -\u003e in use",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a3933c93_a9afbb7d",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 172,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "Do you mean media type.",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a7fab8e9_2f30af0c",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "\"to to\" ?\n\n\"available\" does not take \u0027s\u0027",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "70bc7a4f_79989a0a",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "\"These functions\": why plural ?",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3b87cf11_fb5e6506",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "Generally we don\u0027t document destructors.",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a1a0ccba_6389a516",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "supposed",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "87e92843_0ab82db0",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "address",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8b03ce37_800d28cc",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "\"Activates or deactivate\": either use \u0027s\u0027 for both, or remove it for both",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "57ca5b10_7d1d0314",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "mediaHandler -\u003e MediaHandler ?\n\nmay be: \"receives video frames from a hardware decoder ...\"",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "59c763e5_84da2a1d",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "transports -\u003e moves",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "afd71810_7dc933fb",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "ours -\u003e our",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "09026120_46982c61",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "MediaHandler ?",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ecf788c4_0075e837",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "is use -\u003e in use",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cbf9b1db_dbb559ad",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "\"flag one is if we have a preference\": did not get it. Can you reformulate.",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4cbe6da1_c257e1de",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "for a given account ...",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6da8fa28_e1e57a50",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "\"These functions ..\" why plural ?",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "99c0acf4_03931fcc",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "ChatHandlers pointers. (no need for address)",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0a507c09_1529a50e",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 145,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-23T21:17:53Z",
+      "side": 1,
+      "message": "address",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
