@@ -26,9 +26,22 @@
 
 namespace jami {
 
-std::shared_ptr<Call>
-CallFactory::createSipCall(const std::shared_ptr<Account>& account,
-                           const std::string& id,
+std::string
+CallFactory::getNewCallID()
+{
+    std::ostringstream random_id;
+
+    // generate something like s7ea037947eb9fb2f
+    do {
+        random_id.clear();
+        random_id << std::uniform_int_distribution<uint64_t>(1, DRING_ID_MAX_VAL)(rand_);
+    } while (hasCall(random_id.str()));
+
+    return random_id.str();
+}
+
+std::shared_ptr<SIPCall>
+CallFactory::createSipCall(const std::shared_ptr<SIPAccountBase>& account,
                            Call::CallType type,
                            const std::map<std::string, std::string>& details)
 {
@@ -37,22 +50,8 @@ CallFactory::createSipCall(const std::shared_ptr<Account>& account,
         return nullptr;
     }
 
-    if (hasCall(id, Call::LinkType::SIP)) {
-        JAMI_ERR("Call %s already exists", id.c_str());
-        return nullptr;
-    }
-
-    if (std::strcmp(account->getAccountType(), "SIP") != 0
-        and std::strcmp(account->getAccountType(), "RING") != 0) {
-        JAMI_ERR("Invalid account type %s!", account->getAccountType());
-        assert(false);
-    }
-
-    auto accountBase = std::dynamic_pointer_cast<SIPAccountBase>(account);
-    assert(accountBase);
-
-    auto call = std::make_shared<SIPCall>(accountBase, id, type, details);
-    assert(call);
+    auto id = getNewCallID();
+    auto call = std::make_shared<SIPCall>(account, id, type, details);
 
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
     callMaps_[call->getLinkType()].emplace(id, call);
