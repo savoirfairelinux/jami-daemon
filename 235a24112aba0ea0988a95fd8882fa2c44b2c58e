@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "efaa08b0_13acd77a",
+        "filename": "src/call_factory.h",
+        "patchSetId": 52
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-23T19:59:08Z",
+      "side": 1,
+      "message": "doesn\u0027t exists yet",
+      "range": {
+        "startLine": 53,
+        "startChar": 15,
+        "endLine": 53,
+        "endChar": 59
+      },
+      "revId": "235a24112aba0ea0988a95fd8882fa2c44b2c58e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
