@@ -22,6 +22,7 @@ source_group("Source Files\\jamidht\\eth\\libdevcore" FILES ${Source_Files__jami
 source_group("Source Files\\jamidht\\eth\\libdevcrypto" FILES ${Source_Files__jamidht__eth__libdevcrypto})
 source_group("Source Files\\media" FILES ${Source_Files__media})
 source_group("Source Files\\media\\audio" FILES ${Source_Files__media__audio})
+source_group("Source Files\\media\\audio\\echo-cancel" FILES ${Source_Files__media__audio__echo_cancel})
 source_group("Source Files\\media\\audio\\sound" FILES ${Source_Files__media__audio__sound})
 source_group("Source Files\\media\\video" FILES ${Source_Files__media__video})
 source_group("Source Files\\plugin" FILES ${Source_Files__plugin})
@@ -54,6 +55,7 @@ list (APPEND ALL_FILES
       ${Source_Files__media}
       ${Source_Files__media__audio}
       ${Source_Files__media__audio__sound}
+      ${Source_Files__media__audio__echo_cancel}
       ${Source_Files__media__video}
       ${Source_Files__security}
       ${Source_Files__sip}
