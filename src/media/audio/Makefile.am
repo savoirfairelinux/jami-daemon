@@ -2,7 +2,7 @@ include $(top_srcdir)/globals.mk
 
 noinst_LTLIBRARIES = libaudio.la
 
-SUBDIRS = sound
+SUBDIRS = sound echo-cancel
 
 if BUILD_OPENSL
 SUBDIRS += opensl
@@ -78,7 +78,8 @@ noinst_HEADERS = \
 		tonecontrol.h
 
 libaudio_la_LIBADD = \
-	./sound/libsound.la
+	./sound/libsound.la \
+	./echo-cancel/libecho-cancel.la
 
 if BUILD_PULSE
 libaudio_la_LIBADD += ./pulseaudio/libpulselayer.la

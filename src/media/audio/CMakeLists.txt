@@ -49,3 +49,6 @@ endif()
 
 add_subdirectory(sound)
 set (Source_Files__media__audio__sound ${Source_Files__media__audio__sound} PARENT_SCOPE)
+
+add_subdirectory(echo-cancel)
+set (Source_Files__media__audio__echo_cancel ${Source_Files__media__audio__echo_cancel} PARENT_SCOPE)
