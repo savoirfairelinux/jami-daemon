@@ -25,16 +25,16 @@
 namespace jami {
 namespace upnp {
 
-Mapping::Mapping(uint16_t portExternal, uint16_t portInternal, PortType type, bool available)
-    : internalAddr_()
-    , internalPort_(portInternal)
+Mapping::Mapping(PortType type, uint16_t portExternal, uint16_t portInternal, bool available)
+    : type_(type)
     , externalPort_(portExternal)
-    , type_(type)
+    , internalPort_(portInternal)
+    , internalAddr_()
     , igd_()
     , available_(available)
     , state_(MappingState::PENDING)
     , notifyCb_(nullptr)
-    , timeoutTimer_(nullptr)
+    , timeoutTimer_()
     , autoUpdate_(false)
 #if HAVE_LIBNATPMP
     , renewalTime_(sys_clock::now())
@@ -53,75 +53,28 @@ Mapping::Mapping(const Mapping& other)
     available_ = other.available_;
     state_ = other.state_;
     notifyCb_ = other.notifyCb_;
-    timeoutTimer_ = other.timeoutTimer_;
     autoUpdate_ = other.autoUpdate_;
 #if HAVE_LIBNATPMP
     renewalTime_ = other.renewalTime_;
 #endif
 }
 
-Mapping&
-Mapping::operator=(Mapping&& other) noexcept
+void
+Mapping::updateFrom(const Mapping::sharedPtr_t& other)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    if (this != &other) {
-        internalAddr_ = other.internalAddr_;
-        internalPort_ = other.internalPort_;
-        externalPort_ = other.externalPort_;
-        type_ = other.type_;
-        igd_ = other.igd_;
-        other.igd_.reset();
-        available_ = other.available_;
-        other.available_ = false;
-        state_ = other.state_;
-        other.state_ = MappingState::PENDING;
-        notifyCb_ = std::move(other.notifyCb_);
-        other.notifyCb_ = nullptr;
-        timeoutTimer_ = std::move(other.timeoutTimer_);
-        other.timeoutTimer_ = nullptr;
-        autoUpdate_ = other.autoUpdate_;
-        other.autoUpdate_ = false;
-#if HAVE_LIBNATPMP
-        renewalTime_ = other.renewalTime_;
-#endif
-    }
-    return *this;
-}
-
-bool
-Mapping::operator==(const Mapping& other) const noexcept
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    if (internalAddr_ != other.internalAddr_)
-        return false;
-    if (internalPort_ != other.internalPort_)
-        return false;
-    if (externalPort_ != other.externalPort_)
-        return false;
-    if (type_ != other.type_)
-        return false;
-    if (igd_ != other.igd_)
-        return false;
-    return true;
-}
-
-bool
-Mapping::operator!=(const Mapping& other) const noexcept
-{
-    return not(*this == other);
+    updateFrom(*other);
 }
 
 void
 Mapping::updateFrom(const Mapping& other)
 {
-    if (internalPort_ != other.internalPort_ or type_ != other.type_) {
-        JAMI_ERR("The source and destination mappings must match (same type and port)");
-        assert(false);
+    if (type_ != other.type_) {
+        JAMI_ERR("The source and destination types must match");
+        return;
     }
 
     internalAddr_ = std::move(other.internalAddr_);
+    internalPort_ = other.internalPort_;
     externalPort_ = other.externalPort_;
     igd_ = other.igd_;
     state_ = other.state_;
@@ -165,15 +118,17 @@ Mapping::getStateStr() const
 }
 
 std::string
-Mapping::toString(bool addState) const
+Mapping::toString(bool extraInfo) const
 {
     std::lock_guard<std::mutex> lock(mutex_);
     std::ostringstream descr;
     descr << UPNP_MAPPING_DESCRIPTION_PREFIX << "-" << getTypeStr(type_);
     descr << ":" << std::to_string(internalPort_);
 
-    if (addState)
-        descr << " (state=" << getStateStr(state_) << ")";
+    if (extraInfo) {
+        descr << " (state=" << getStateStr(state_) << ", ";
+        descr << " (auto-update=" << (autoUpdate_ ? "YES" : "NO") << ")";
+    }
 
     return descr.str();
 }
@@ -231,9 +186,9 @@ Mapping::cancelTimeoutTimer()
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (timeoutTimer_ != nullptr) {
+    if (timeoutTimer_) {
         timeoutTimer_->cancel();
-        timeoutTimer_ = nullptr;
+        timeoutTimer_.reset();
     }
 }
 

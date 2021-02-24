@@ -745,7 +745,7 @@ SIPAccount::getVolatileAccountDetails() const
 bool
 SIPAccount::mapPortUPnP()
 {
-    upnp::Mapping map {publishedPort_, localPort_, upnp::PortType::UDP};
+    upnp::Mapping map(upnp::PortType::UDP, publishedPort_, localPort_);
     map.setNotifyCallback([w = weak()](upnp::Mapping::sharedPtr_t mapRes) {
         if (auto accPtr = w.lock()) {
             auto oldPort = static_cast<in_port_t>(accPtr->publishedPortUsed_);
