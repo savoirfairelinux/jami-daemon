@@ -25,16 +25,16 @@
 namespace jami {
 namespace upnp {
 
-Mapping::Mapping(uint16_t portExternal, uint16_t portInternal, PortType type, bool available)
-    : internalAddr_()
-    , internalPort_(portInternal)
+Mapping::Mapping(PortType type, uint16_t portExternal, uint16_t portInternal, bool available)
+    : type_(type)
     , externalPort_(portExternal)
-    , type_(type)
+    , internalPort_(portInternal)
+    , internalAddr_()
     , igd_()
     , available_(available)
     , state_(MappingState::PENDING)
     , notifyCb_(nullptr)
-    , timeoutTimer_(nullptr)
+    , timeoutTimer_()
     , autoUpdate_(false)
 #if HAVE_LIBNATPMP
     , renewalTime_(sys_clock::now())
@@ -53,7 +53,6 @@ Mapping::Mapping(const Mapping& other)
     available_ = other.available_;
     state_ = other.state_;
     notifyCb_ = other.notifyCb_;
-    timeoutTimer_ = other.timeoutTimer_;
     autoUpdate_ = other.autoUpdate_;
 #if HAVE_LIBNATPMP
     renewalTime_ = other.renewalTime_;
@@ -79,7 +78,7 @@ Mapping::operator=(Mapping&& other) noexcept
         notifyCb_ = std::move(other.notifyCb_);
         other.notifyCb_ = nullptr;
         timeoutTimer_ = std::move(other.timeoutTimer_);
-        other.timeoutTimer_ = nullptr;
+        other.timeoutTimer_.reset();
         autoUpdate_ = other.autoUpdate_;
         other.autoUpdate_ = false;
 #if HAVE_LIBNATPMP
@@ -231,9 +230,9 @@ Mapping::cancelTimeoutTimer()
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (timeoutTimer_ != nullptr) {
+    if (timeoutTimer_) {
         timeoutTimer_->cancel();
-        timeoutTimer_ = nullptr;
+        timeoutTimer_.reset();
     }
 }
 
