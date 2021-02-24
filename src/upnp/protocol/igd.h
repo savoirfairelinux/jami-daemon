@@ -44,7 +44,7 @@ class IGD
 {
 public:
     // Max error before moving the IGD to invalid state.
-    constexpr static int MAX_ERRORS_COUNT = 20;
+    constexpr static int MAX_ERRORS_COUNT = 10;
 
     IGD(NatProtocolType prot);
     virtual ~IGD() = default;
@@ -93,10 +93,11 @@ public:
     void setValid(bool valid);
     bool isValid() const { return valid_; }
     bool incrementErrorsCounter();
+    int getErrorsCount() const;
 
 protected:
     const NatProtocolType protocol_ {NatProtocolType::UNKNOWN};
-    std::atomic_bool valid_ {true};
+    std::atomic_bool valid_ {false};
     std::atomic<int> errorsCounter_ {0};
 
     mutable std::mutex mutex_;

@@ -1786,8 +1786,6 @@ JamiAccount::registerAsyncOps()
             upnpCtrl_->releaseMapping(dhtUpnpMapping_);
         }
 
-        dhtUpnpMapping_ = upnp::Mapping {0, 0, upnp::PortType::UDP};
-
         dhtUpnpMapping_.enableAutoUpdate(true);
 
         // Set the notify callback.
@@ -1805,7 +1803,8 @@ JamiAccount::registerAsyncOps()
 
                 if (*update) {
                     // Check if we need to update the mapping and the registration.
-                    if (dhtMap != *mapRes or dhtMap.getState() != mapRes->getState()) {
+                    if (dhtMap.getMapKey() != mapRes->getMapKey()
+                        or dhtMap.getState() != mapRes->getState()) {
                         // The connectivity must be restarted, if either:
                         // - the state changed to "OPEN",
                         // - the state changed to "FAILED" and the mapping was in use.
@@ -1813,7 +1812,7 @@ JamiAccount::registerAsyncOps()
                             or (mapRes->getState() == upnp::MappingState::FAILED
                                 and dhtMap.getState() == upnp::MappingState::OPEN)) {
                             // Update the mapping and restart the registration.
-                            dhtMap = upnp::Mapping {*mapRes};
+                            dhtMap.updateFrom(mapRes);
 
                             JAMI_WARN("[Account %s] Allocated port changed to %u. Restarting the "
                                       "registration",
@@ -1824,14 +1823,14 @@ JamiAccount::registerAsyncOps()
 
                         } else {
                             // Only update the mapping.
-                            dhtMap = upnp::Mapping {*mapRes};
+                            dhtMap.updateFrom(mapRes);
                         }
                     }
                 } else {
                     *update = true;
                     // Set connection info and load the account.
                     if (mapRes->getState() == upnp::MappingState::OPEN) {
-                        dhtMap = upnp::Mapping {*mapRes};
+                        dhtMap.updateFrom(mapRes);
                         JAMI_DBG("[Account %s] Mapping %s successfully allocated: starting the DHT",
                                  accId.c_str(),
                                  dhtMap.toString().c_str());
@@ -2566,7 +2565,6 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     // Release current upnp mapping if any.
     if (upnpCtrl_ and dhtUpnpMapping_.isValid()) {
         upnpCtrl_->releaseMapping(dhtUpnpMapping_);
-        dhtUpnpMapping_ = upnp::Mapping {};
     }
 
     lock.unlock();

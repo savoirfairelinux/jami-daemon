@@ -27,7 +27,6 @@ namespace upnp {
 
 IGD::IGD(NatProtocolType proto)
     : protocol_(proto)
-    , valid_(true)
 {}
 
 bool
@@ -64,6 +63,12 @@ IGD::incrementErrorsCounter()
     }
 
     return true;
+}
+
+int
+IGD::getErrorsCount() const
+{
+    return errorsCounter_.load();
 }
 
 } // namespace upnp
