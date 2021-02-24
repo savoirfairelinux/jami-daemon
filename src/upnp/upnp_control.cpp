@@ -76,7 +76,7 @@ Controller::getExternalIP() const
 Mapping::sharedPtr_t
 Controller::reserveMapping(uint16_t port, PortType type)
 {
-    Mapping map {port, port, type};
+    Mapping map(type, port, port);
     return reserveMapping(map);
 }
 
@@ -142,12 +142,7 @@ Controller::removeLocalMap(const Mapping& map)
 uint16_t
 Controller::generateRandomPort(PortType type)
 {
-    if (type == PortType::TCP)
-        return UPnPContext::generateRandomPort(UPnPContext::UPNP_TCP_PORT_MIN,
-                                               UPnPContext::UPNP_TCP_PORT_MAX);
-    else
-        return UPnPContext::generateRandomPort(UPnPContext::UPNP_UDP_PORT_MIN,
-                                               UPnPContext::UPNP_UDP_PORT_MAX);
+    return UPnPContext::generateRandomPort(type);
 }
 
 } // namespace upnp
