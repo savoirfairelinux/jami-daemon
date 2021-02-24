@@ -1,0 +1,18 @@
+include $(top_srcdir)/globals.mk
+
+noinst_LTLIBRARIES = libecho-cancel.la
+
+EC_SRC =
+EC_HDR =
+
+if BUILD_SPEEXDSP
+EC_SRC += speex_echo_canceller.cpp
+EC_HDR += speex_echo_canceller.h
+endif
+
+libecho_cancel_la_SOURCES = \
+		$(EC_SRC)
+
+noinst_HEADERS = \
+	echo_canceller.h \
+	$(EC_HDR)
