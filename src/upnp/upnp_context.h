@@ -73,7 +73,7 @@ public:
     constexpr static uint16_t UPNP_UDP_PORT_MAX = UPNP_UDP_PORT_MIN + 5000;
 
 private:
-    constexpr static auto NAT_MAP_REQUEST_TIMEOUT_UNIT = std::chrono::seconds(1);
+    constexpr static auto NAT_MAP_REQUEST_TIMEOUT_UNIT = std::chrono::seconds(2);
     constexpr static auto PUPNP_MAP_REQUEST_TIMEOUT_UNIT = std::chrono::seconds(5);
     constexpr static auto MAP_UPDATE_INTERVAL = std::chrono::seconds(30);
     constexpr static int MAX_REQUEST_RETRIES = 20;
@@ -136,8 +136,8 @@ private:
     void init();
 
     // Start/Stop
-    void StartUpnp();
-    void StopUpnp();
+    void startUpnp();
+    void stopUpnp();
 
     // Create and register a new mapping.
     Mapping::sharedPtr_t registerMapping(Mapping& map);
@@ -153,8 +153,8 @@ private:
     // Perform the request on all available IGDs
     void requestMappingOnValidIgds(const Mapping::sharedPtr_t& map);
 
-    // Delete mapping from the list and and send remove request.
-    void deleteMapping(const Mapping::sharedPtr_t& map);
+    // Request a mapping remove from the IGD.
+    void requestRemoveMapping(const Mapping::sharedPtr_t& map);
 
     // Remove all mappings of the given type.
     void deleteAllMappings(PortType type);
@@ -211,8 +211,15 @@ private:
 
     void pruneMappingsWithInvalidIgds(const std::shared_ptr<IGD>& igd);
 
-    // Get the mapping list
+    /**
+     * @brief Get the mapping list
+     *
+     * @param type transport type (TCP/UDP)
+     * @return a reference on the map
+     * @warning concurrency protection done by the caller
+     */
     std::map<Mapping::key_t, Mapping::sharedPtr_t>& getMappingList(PortType type);
+
     // Get the mapping from the key.
     Mapping::sharedPtr_t getMappingWithKey(Mapping::key_t key);
 

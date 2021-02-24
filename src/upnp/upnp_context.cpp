@@ -34,6 +34,8 @@ UPnPContext::getUPnPContext()
 
 UPnPContext::UPnPContext()
 {
+    JAMI_DBG("Creating UPnPContext instance [%p]", this);
+
     // Set port ranges
     portRange_.emplace(PortType::TCP, std::make_pair(UPNP_TCP_PORT_MIN, UPNP_TCP_PORT_MAX));
     portRange_.emplace(PortType::UDP, std::make_pair(UPNP_UDP_PORT_MIN, UPNP_UDP_PORT_MAX));
@@ -46,10 +48,14 @@ UPnPContext::UPnPContext()
 
 UPnPContext::~UPnPContext()
 {
-    mappingListUpdateTimer_->cancel();
+    stopUpnp();
 
-    deleteAllMappings(PortType::UDP);
-    deleteAllMappings(PortType::TCP);
+    std::lock_guard<std::mutex> lock(mappingMutex_);
+    mappingList_->clear();
+    mappingListUpdateTimer_->cancel();
+    controllerList_.clear();
+
+    JAMI_DBG("UPnPContext instance [%p] destroyed", this);
 }
 
 void
@@ -72,7 +78,7 @@ UPnPContext::init()
 }
 
 void
-UPnPContext::StartUpnp()
+UPnPContext::startUpnp()
 {
     assert(not controllerList_.empty());
 
@@ -89,14 +95,21 @@ UPnPContext::StartUpnp()
 }
 
 void
-UPnPContext::StopUpnp()
+UPnPContext::stopUpnp()
 {
+    if (not isValidThread()) {
+        runOnUpnpContextThread([this] { stopUpnp(); });
+        return;
+    }
+
     CHECK_VALID_THREAD();
 
     JAMI_DBG("Stoping UPNP context");
 
-    // Use temporary list to avoid holding the lock while
-    // processing the mapping list.
+    // Clear all current mappings if any.
+
+    // Use a temporary list to avoid processing the mapping
+    // list while holding the lock.
     std::list<Mapping::sharedPtr_t> toRemoveList;
     {
         std::lock_guard<std::mutex> lock(mappingMutex_);
@@ -113,11 +126,13 @@ UPnPContext::StopUpnp()
     }
 
     for (auto const& map : toRemoveList) {
-        map->cancelTimeoutTimer();
+        requestRemoveMapping(map);
         updateMappingState(map, MappingState::FAILED);
+        map->enableAutoUpdate(false);
         unregisterMapping(map);
     }
 
+    // Clear all current IGDs.
     for (auto const& [_, protocol] : protocolList_) {
         protocol->clearIgds();
     }
@@ -162,8 +177,8 @@ UPnPContext::connectivityChanged()
 
     JAMI_DBG("Connectivity changed. Reset IGDs and restart.");
 
-    StopUpnp();
-    StartUpnp();
+    stopUpnp();
+    startUpnp();
 
     processMappingWithAutoUpdate();
 }
@@ -282,7 +297,7 @@ UPnPContext::releaseMapping(const Mapping& map)
     }
 
     // Remove it.
-    deleteMapping(mapPtr);
+    requestRemoveMapping(mapPtr);
     unregisterMapping(mapPtr);
 }
 
@@ -302,7 +317,7 @@ UPnPContext::registerController(void* controller)
 
     JAMI_DBG("Successfully registered controller %p", this);
     if (not started_)
-        StartUpnp();
+        startUpnp();
 }
 
 void
@@ -320,7 +335,7 @@ UPnPContext::unregisterController(void* controller)
     }
 
     if (controllerList_.empty())
-        StopUpnp();
+        stopUpnp();
 }
 
 uint16_t
@@ -462,7 +477,7 @@ UPnPContext::deleteUnneededMappings(PortType type, int portCount)
 
         if (map->getState() == MappingState::OPEN and portCount > 0) {
             // Close portCount mappings in "OPEN" state.
-            deleteMapping(map);
+            requestRemoveMapping(map);
             it = unregisterMapping(it);
             portCount--;
         } else if (map->getState() != MappingState::OPEN) {
@@ -817,8 +832,14 @@ UPnPContext::onIgdUpdated(const std::shared_ptr<IGD>& igd, UpnpIgdEvent event)
 
     CHECK_VALID_THREAD();
 
+    char const* IgdState = event == UpnpIgdEvent::ADDED
+                               ? "ADDED"
+                               : event == UpnpIgdEvent::REMOVED ? "REMOVED" : "INVALID";
+
     auto const& igdLocalAddr = igd->getLocalIp();
     auto protocolName = igd->getProtocolName();
+
+    JAMI_DBG("New event for IGD [%s] [%s]: [%s]", igd->getUID().c_str(), protocolName, IgdState);
 
     // Check if IGD has a valid addresses.
     if (not igdLocalAddr) {
@@ -839,18 +860,14 @@ UPnPContext::onIgdUpdated(const std::shared_ptr<IGD>& igd, UpnpIgdEvent event)
                   knownPublicAddress_.toString().c_str());
     }
 
-    char const* IgdState = event == UpnpIgdEvent::ADDED
-                               ? "ADDED"
-                               : event == UpnpIgdEvent::REMOVED ? "REMOVED" : "INVALID";
-
-    JAMI_WARN("State of IGD %s %s [%s] changed to [%s]",
-              igd->getUID().c_str(),
-              igdLocalAddr.toString(true, true).c_str(),
-              protocolName,
-              IgdState);
-
     // The IGD was removed or is invalid.
     if (event == UpnpIgdEvent::REMOVED or event == UpnpIgdEvent::INVALID_STATE) {
+        JAMI_WARN("State of IGD [%s %s] [%s] changed to [%s]. Pruning the mapping list",
+                  igd->getUID().c_str(),
+                  igdLocalAddr.toString(true, true).c_str(),
+                  protocolName,
+                  IgdState);
+
         pruneMappingsWithInvalidIgds(igd);
 
         std::lock_guard<std::mutex> lock(mappingMutex_);
@@ -906,9 +923,10 @@ UPnPContext::onMappingAdded(const std::shared_ptr<IGD>& igd, const Mapping& mapR
 
     // Clean-up if not valid.
     if (not map->isValid()) {
-        JAMI_WARN("Mapping request %s on IGD %s failed or returned an invalid mapping!",
+        JAMI_WARN("Mapping request %s on IGD %s [%s] failed!",
                   map->toString(true).c_str(),
-                  igd->getLocalIp().toString().c_str());
+                  igd->getLocalIp().toString().c_str(),
+                  igd->getProtocolName());
         updateMappingState(map, MappingState::FAILED);
         unregisterMapping(map);
         return;
@@ -916,6 +934,7 @@ UPnPContext::onMappingAdded(const std::shared_ptr<IGD>& igd, const Mapping& mapR
 
     // Ignore if already open.
     if (map->getState() == MappingState::OPEN) {
+        assert(map->getIgd());
         JAMI_DBG("Mapping %s is already open on IGD %s [%s]",
                  map->toString().c_str(),
                  map->getIgd()->getLocalIp().toString().c_str(),
@@ -964,17 +983,22 @@ UPnPContext::onMappingRenewed(const std::shared_ptr<IGD>& igd, const Mapping& ma
 #endif
 
 void
-UPnPContext::deleteMapping(const Mapping::sharedPtr_t& map)
+UPnPContext::requestRemoveMapping(const Mapping::sharedPtr_t& map)
 {
     CHECK_VALID_THREAD();
 
     if (not map) {
-        JAMI_ERR("Invalid mapping shared pointer");
+        JAMI_ERR("Mapping shared pointer is null!");
         return;
     }
 
-    if (not map->getIgd() or not map->getIgd()->isValid()) {
-        JAMI_WARN("Invalid mapping shared pointer");
+    if (not map->isValid()) {
+        JAMI_WARN("Mapping [%s] is invalid! Ignore.", map->toString().c_str());
+        return;
+    }
+
+    if (not map->getIgd()->isValid()) {
+        JAMI_WARN("Mapping [%s] has an invalid IGD! Ignore.", map->toString().c_str());
         return;
     }
 
@@ -995,15 +1019,9 @@ UPnPContext::deleteAllMappings(PortType type)
     std::lock_guard<std::mutex> lock(mappingMutex_);
     auto& mappingList = getMappingList(type);
 
-    for (auto it = mappingList.begin(); it != mappingList.end();) {
-        auto map = it->second;
-        it = unregisterMapping(it);
-        auto protocol = protocolList_.at(map->getIgd()->getProtocol());
-        protocol->requestMappingRemove(*map);
+    for (auto const& [_, map] : mappingList) {
+        requestRemoveMapping(map);
     }
-
-    getMappingList(PortType::TCP).clear();
-    getMappingList(PortType::UDP).clear();
 }
 
 void
@@ -1072,11 +1090,6 @@ UPnPContext::unregisterMapping(std::map<Mapping::key_t, Mapping::sharedPtr_t>::i
     auto descr = it->second->toString();
     auto& mappingList = getMappingList(it->second->getType());
     auto ret = mappingList.erase(it);
-    if (ret != mappingList.end()) {
-        JAMI_DBG("Unregister mapping %s succeeded", descr.c_str());
-    } else {
-        JAMI_ERR("Failed to unregister mapping %s", descr.c_str());
-    }
 
     return ret;
 }
@@ -1084,6 +1097,10 @@ UPnPContext::unregisterMapping(std::map<Mapping::key_t, Mapping::sharedPtr_t>::i
 void
 UPnPContext::unregisterMapping(const Mapping::sharedPtr_t& map)
 {
+    CHECK_VALID_THREAD();
+
+    map->cancelTimeoutTimer();
+
     if (map->getAutoUpdate()) {
         // Dont unregister mappings with auto-update enabled.
         return;
@@ -1178,7 +1195,7 @@ UPnPContext::registerAddMappingTimeout(const std::shared_ptr<IGD>& igd,
         // This rule is empirical and based on experimenting with few
         // implementations.
         Manager::instance().scheduler().scheduleIn([this, igd, map] { onRequestTimeOut(igd, map); },
-                                                   timeout * (status.inProgressCount_ + 3)));
+                                                   timeout * (status.inProgressCount_ + 5)));
 }
 
 void
@@ -1186,8 +1203,18 @@ UPnPContext::onRequestTimeOut(const std::shared_ptr<IGD>& igd, const Mapping::sh
 {
     CHECK_VALID_THREAD();
 
+    if (not igd) {
+        JAMI_ERR("IGD pointer is null");
+        return;
+    }
+
     if (not map) {
-        JAMI_ERR("Invalid mapping pointer");
+        JAMI_ERR("Mapping pointer is null");
+        return;
+    }
+
+    if (not getMappingWithKey(map->getMapKey())) {
+        JAMI_ERR("Mapping [%s] does not exist", map->toString().c_str());
         return;
     }
 
