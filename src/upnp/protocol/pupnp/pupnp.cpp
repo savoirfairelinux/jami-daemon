@@ -163,15 +163,10 @@ PUPnP::PUPnP()
 
 PUPnP::~PUPnP()
 {
-    JAMI_DBG("PUPnP: Destroying instance %p", this);
     // Clear all the lists.
     {
         std::lock_guard<std::mutex> lock(validIgdListMutex_);
         std::lock_guard<std::mutex> lk(ctrlptMutex_);
-        for (auto const& igd : validIgdList_) {
-            if (igd->isValid())
-                deleteMappingsByDescription(igd, Mapping::UPNP_MAPPING_DESCRIPTION_PREFIX);
-        }
         validIgdList_.clear();
         clientRegistered_ = false;
         UpnpUnRegisterClient(ctrlptHandle_);
@@ -191,6 +186,8 @@ PUPnP::~PUPnP()
     pupnpCv_.notify_all();
     if (pupnpThread_.joinable())
         pupnpThread_.join();
+
+    JAMI_DBG("PUPnP: Instance [%p] destroyed", this);
 }
 
 bool
@@ -466,6 +463,9 @@ PUPnP::validateIgd(const IGDInfo& info)
             }
         }
     }
+
+    // We have a valid IGD
+    igd_candidate->setValid(true);
 
     JAMI_DBG("PUPnP: Added a new IGD [%s] to the list of valid IGDs",
              igd_candidate->getUID().c_str());

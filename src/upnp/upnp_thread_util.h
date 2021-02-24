@@ -10,7 +10,7 @@
 #define CHECK_VALID_THREAD() \
     if (not isValidThread()) \
         JAMI_ERR() << "The calling thread " << getCurrentThread() \
-                   << "is not the expected thread: " << threadId_;
+                   << " is not the expected thread: " << threadId_;
 
 namespace jami {
 namespace upnp {

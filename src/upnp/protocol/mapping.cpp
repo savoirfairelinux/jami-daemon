@@ -34,7 +34,7 @@ Mapping::Mapping(uint16_t portExternal, uint16_t portInternal, PortType type, bo
     , available_(available)
     , state_(MappingState::PENDING)
     , notifyCb_(nullptr)
-    , timeoutTimer_(nullptr)
+    , timeoutTimer_()
     , autoUpdate_(false)
 #if HAVE_LIBNATPMP
     , renewalTime_(sys_clock::now())
@@ -79,7 +79,7 @@ Mapping::operator=(Mapping&& other) noexcept
         notifyCb_ = std::move(other.notifyCb_);
         other.notifyCb_ = nullptr;
         timeoutTimer_ = std::move(other.timeoutTimer_);
-        other.timeoutTimer_ = nullptr;
+        other.timeoutTimer_.reset();
         autoUpdate_ = other.autoUpdate_;
         other.autoUpdate_ = false;
 #if HAVE_LIBNATPMP
@@ -231,9 +231,9 @@ Mapping::cancelTimeoutTimer()
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    if (timeoutTimer_ != nullptr) {
+    if (timeoutTimer_) {
         timeoutTimer_->cancel();
-        timeoutTimer_ = nullptr;
+        timeoutTimer_.reset();
     }
 }
 

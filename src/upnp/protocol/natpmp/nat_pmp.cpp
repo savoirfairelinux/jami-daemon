@@ -225,10 +225,14 @@ NatPmp::requestMappingAdd(const std::shared_ptr<IGD>& igd, const Mapping& mappin
 void
 NatPmp::requestMappingRenew(const Mapping& mapping)
 {
-    assert(mapping.getIgd());
-
     // Process on nat-pmp thread.
     getNatpmpScheduler()->run([this, mapping] {
+        if (not mapping.getIgd() or not mapping.getIgd()->isValid()) {
+            JAMI_WARN("NAT-PMP: Mapping %s has an invalid IGD. Ignoring.",
+                      mapping.toString().c_str());
+            return;
+        }
+
         JAMI_DBG("NAT-PMP: Renew mapping %s on %s",
                  mapping.toString().c_str(),
                  mapping.getIgd()->getLocalIp().toString().c_str());
@@ -345,9 +349,9 @@ NatPmp::addPortMapping(const std::shared_ptr<IGD>& igdIn, Mapping& mapping, bool
     int err = sendMappingRequest(mapping, lifetime);
 
     if (err < 0) {
-        JAMI_ERR("NAT-PMP: Add mapping request failed with error %s %i",
-                 getNatPmpErrorStr(err),
-                 errno);
+        JAMI_WARN("NAT-PMP: Add mapping request failed with error %s %i",
+                  getNatPmpErrorStr(err),
+                  errno);
 
         if (isErrorFatal(err)) {
             // Fatal error, increment the counter.
