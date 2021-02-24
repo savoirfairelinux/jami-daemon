@@ -1415,27 +1415,48 @@ ConversationRepository::Impl::diff(git_repository* repo,
 std::vector<ConversationCommit>
 ConversationRepository::Impl::behind(const std::string& from) const
 {
-    git_oid oid_local, oid_remote;
+    git_oid oid_local, oid_head, oid_remote;
     auto repo = repository();
     if (git_reference_name_to_id(&oid_local, repo.get(), "HEAD") < 0) {
         JAMI_ERR("Cannot get reference for HEAD");
         return {};
     }
+    oid_head = oid_local;
+    std::string head = git_oid_tostr_s(&oid_head);
     if (git_oid_fromstr(&oid_remote, from.c_str()) < 0) {
         JAMI_ERR("Cannot get reference for commit %s", from.c_str());
         return {};
     }
+
+    git_oidarray bases;
     size_t ahead = 0, behind = 0;
-    if (git_graph_ahead_behind(&ahead, &behind, repo.get(), &oid_local, &oid_remote) != 0) {
+    if (git_merge_bases(&bases, repo.get(), &oid_local, &oid_remote) != 0) {
+        JAMI_ERR("Cannot get any merge base for commit %s and %s", from.c_str(), head.c_str());
+        return {};
+    }
+    for (int i = 0; i < bases.count; ++i) {
+        std::string oid = git_oid_tostr_s(&bases.ids[i]);
+        if (oid != from && oid != head) {
+            oid_local = bases.ids[i];
+            break;
+        }
+    }
+    std::string to = git_oid_tostr_s(&oid_local);
+    JAMI_ERR("@@@ local %s remote %s current head %s", to.c_str(), from.c_str(), head.c_str());
+    auto res = log(from, to, 0);
+    JAMI_ERR("@@@ BEHIND %i", res.size());
+    return res;
+    /*if (git_graph_ahead_behind(&ahead, &behind, repo.get(), &oid_local, &oid_remote) != 0) {
         JAMI_ERR("Cannot get commits ahead for commit %s", from.c_str());
         return {};
     }
+    JAMI_ERR("@@@ %u vs %u", ahead, behind);
 
     if (behind == 0) {
         return {}; // Nothing to validate
     }
 
-    return log(from, "", behind);
+    return log(from, "", behind);*/
 }
 
 std::vector<ConversationCommit>

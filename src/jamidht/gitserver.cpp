@@ -339,24 +339,23 @@ GitServer::Impl::sendPackData()
             git_revwalk_free(walker_ptr);
         return;
     }
+    git_revwalk_sorting(walker_ptr, GIT_SORT_TOPOLOGICAL);
     // Add first commit
-    git_revwalk_sorting(walker_ptr, GIT_SORT_TIME);
-    if (git_packbuilder_insert_commit(pb, &oid) != 0) {
-        JAMI_WARN("Couldn't open insert commit %s for %s",
-                  git_oid_tostr_s(&oid),
-                  repository_.c_str());
-        git_packbuilder_free(pb);
-        git_repository_free(repo);
-        return;
-    }
+    std::vector<std::string> parents;
 
     while (!git_revwalk_next(&oid, walker_ptr)) {
         // log until have refs
         std::string id = git_oid_tostr_s(&oid);
+        auto itParents = std::find(parents.begin(), parents.end(), id);
+        if (itParents != parents.end())
+            parents.erase(itParents);
+        JAMI_ERR("@@@ parents.size() %u", parents.size());
         if (std::find(haveRefs_.begin(), haveRefs_.end(), id) != haveRefs_.end()) {
             // The peer already have the reference
-            break;
+            if (parents.size() == 0)
+                break;
         }
+        JAMI_ERR("@@@ ADD %s", id.c_str());
         if (git_packbuilder_insert_commit(pb, &oid) != 0) {
             JAMI_WARN("Couldn't open insert commit %s for %s",
                       git_oid_tostr_s(&oid),
@@ -365,6 +364,24 @@ GitServer::Impl::sendPackData()
             git_repository_free(repo);
             return;
         }
+
+        // Get next commit to pack
+        git_commit* current_commit;
+        if (git_commit_lookup(&current_commit, repo, &oid) < 0) {
+            JAMI_ERR("Could not look up current commit");
+            git_packbuilder_free(pb);
+            return;
+        }
+        auto parentsCount = git_commit_parentcount(current_commit);
+        for (unsigned int p = 0; p < parentsCount; ++p) {
+            const git_oid* pid = git_commit_parent_id(current_commit, p);
+            if (pid)
+                parents.emplace_back(git_oid_tostr_s(pid));
+        }
+    }
+
+    if (!parents.empty()) {
+        JAMI_ERR("@@@@@@ NOT ALL PARENTS!");
     }
 
     git_buf data = {};
