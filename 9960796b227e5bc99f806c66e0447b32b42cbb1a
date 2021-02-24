@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "04f0aeb9_60112b1a",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 346,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-24T16:44:17Z",
+      "side": 1,
+      "message": "rational\u003cint64_t\u003e fps(inputParams_.framerate);\nif (fps.numerator() \u003d\u003d 0)\n    return Status::Success;\n\nrational\u003cint64_t\u003e frameTime \u003d 1e6/fps;\nint64_t timeToSleep \u003d lastReadPacketTime_ - av_gettime_relative() + frameTime.real\u003cint64_t\u003e();\nif (timeToSleep \u003c\u003d 0) {\n    return Status::Success;\n}\nstd::this_thread::sleep_for(std::chrono::microseconds(timeToSleep));",
+      "revId": "9960796b227e5bc99f806c66e0447b32b42cbb1a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
