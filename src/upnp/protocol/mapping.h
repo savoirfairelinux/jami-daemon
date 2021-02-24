@@ -61,19 +61,18 @@ public:
     static constexpr char const* MAPPING_STATE_STR[4] {"PENDING", "IN_PROGRESS", "FAILED", "OPEN"};
     static constexpr char const* UPNP_MAPPING_DESCRIPTION_PREFIX {"JAMI"};
 
-    Mapping(uint16_t portExternal = 0,
+    Mapping(PortType type,
+            uint16_t portExternal = 0,
             uint16_t portInternal = 0,
-            PortType type = PortType::UDP,
             bool available = true);
     Mapping(const Mapping& other);
     Mapping(Mapping&& other) = delete;
     ~Mapping() = default;
 
-    Mapping& operator=(Mapping&& other) noexcept;
-    bool operator==(const Mapping& other) const noexcept;
-    bool operator!=(const Mapping& other) const noexcept;
-
     // Delete operators with confusing semantic.
+    Mapping& operator=(Mapping&& other) = delete;
+    bool operator==(const Mapping& other) = delete;
+    bool operator!=(const Mapping& other) = delete;
     bool operator<(const Mapping& other) = delete;
     bool operator>(const Mapping& other) = delete;
     bool operator<=(const Mapping& other) = delete;
@@ -82,6 +81,7 @@ public:
     inline explicit operator bool() const { return isValid(); }
 
     void updateFrom(const Mapping& other);
+    void updateFrom(const Mapping::sharedPtr_t& other);
     std::string getExternalAddress() const;
     uint16_t getExternalPort() const;
     std::string getExternalPortStr() const;
@@ -101,7 +101,7 @@ public:
     {
         return MAPPING_STATE_STR[static_cast<int>(state)];
     }
-    std::string toString(bool addState = false) const;
+    std::string toString(bool extraInfo = false) const;
     bool isValid() const;
     bool hasValidHostAddress() const;
     bool hasPublicAddress() const;
@@ -131,10 +131,10 @@ private:
 #endif
 
     mutable std::mutex mutex_;
-    std::string internalAddr_;
-    uint16_t internalPort_ {0};
+    PortType type_ {PortType::UDP};
     uint16_t externalPort_ {0};
-    PortType type_;
+    uint16_t internalPort_ {0};
+    std::string internalAddr_;
     // Protocol and
     std::shared_ptr<IGD> igd_;
     // Track if the mapping is available to use.
@@ -142,7 +142,7 @@ private:
     // Track the state of the mapping
     MappingState state_;
     NotifyCallback notifyCb_;
-    std::shared_ptr<Task> timeoutTimer_;
+    std::shared_ptr<Task> timeoutTimer_ {};
     // If true, a new mapping will be requested on behave of the mapping
     // owner when the mapping state changes from "OPEN" to "FAILED".
     bool autoUpdate_;
