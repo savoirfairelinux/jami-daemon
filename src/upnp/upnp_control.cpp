@@ -76,7 +76,7 @@ Controller::getExternalIP() const
 Mapping::sharedPtr_t
 Controller::reserveMapping(uint16_t port, PortType type)
 {
-    Mapping map {port, port, type};
+    Mapping map(type, port, port);
     return reserveMapping(map);
 }
 

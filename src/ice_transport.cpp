@@ -788,7 +788,7 @@ IceTransport::Impl::requestUpnpMappings()
     // Request upnp mapping for each component.
     for (unsigned compId = 1; compId <= component_count_; compId++) {
         // Set port number to 0 to get any available port.
-        Mapping requestedMap {0, 0, portType};
+        Mapping requestedMap(portType);
 
         // Request the mapping
         Mapping::sharedPtr_t mapPtr = upnp_->reserveMapping(requestedMap);
