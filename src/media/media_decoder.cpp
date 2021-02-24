@@ -324,7 +324,25 @@ MediaDemuxer::decode()
                                                                             });
 
     int ret = av_read_frame(inputCtx_, packet.get());
+    auto streamIndex = packet->stream_index;
+    AVStream* stream = inputCtx_->streams[streamIndex];
     if (ret == AVERROR(EAGAIN)) {
+        /*no data available. Calculate time until next frame.
+         We do not use the emulated frame mechanism from the decoder because it will affect all platforms.
+         With the current implementation, the demuxer will be waiting just in case when av_read_frame
+         returns EAGAIN. For some platforms, av_read_frame is blocking and it will never happen.
+        */
+        if (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            rational<double> fps (inputParams_.framerate);
+            if (fps.numerator() == 0)
+                return Status::Success;
+            rational<double> frameTime = 1e6/fps;
+            int64_t timeToSleep = lastReadPacketTime_ - av_gettime_relative() + frameTime.real<int64_t>();
+            if (timeToSleep <= 0) {
+                return Status::Success;
+            }
+            std::this_thread::sleep_for(std::chrono::microseconds(timeToSleep));
+        }
         return Status::Success;
     } else if (ret == AVERROR_EOF) {
         return Status::EndOfFile;
@@ -333,10 +351,11 @@ MediaDemuxer::decode()
         return Status::ReadError;
     }
 
-    auto streamIndex = packet->stream_index;
     if (static_cast<unsigned>(streamIndex) >= streams_.size() || streamIndex < 0) {
         return Status::Success;
     }
+
+    lastReadPacketTime_ = av_gettime_relative();
 
     auto& cb = streams_[streamIndex];
     if (cb) {
