@@ -163,15 +163,10 @@ PUPnP::PUPnP()
 
 PUPnP::~PUPnP()
 {
-    JAMI_DBG("PUPnP: Destroying instance %p", this);
     // Clear all the lists.
     {
         std::lock_guard<std::mutex> lock(validIgdListMutex_);
         std::lock_guard<std::mutex> lk(ctrlptMutex_);
-        for (auto const& igd : validIgdList_) {
-            if (igd->isValid())
-                deleteMappingsByDescription(igd, Mapping::UPNP_MAPPING_DESCRIPTION_PREFIX);
-        }
         validIgdList_.clear();
         clientRegistered_ = false;
         UpnpUnRegisterClient(ctrlptHandle_);
@@ -191,6 +186,8 @@ PUPnP::~PUPnP()
     pupnpCv_.notify_all();
     if (pupnpThread_.joinable())
         pupnpThread_.join();
+
+    JAMI_DBG("PUPnP: Instance [%p] destroyed", this);
 }
 
 bool
@@ -467,6 +464,9 @@ PUPnP::validateIgd(const IGDInfo& info)
         }
     }
 
+    // We have a valid IGD
+    igd_candidate->setValid(true);
+
     JAMI_DBG("PUPnP: Added a new IGD [%s] to the list of valid IGDs",
              igd_candidate->getUID().c_str());
 
@@ -583,7 +583,7 @@ PUPnP::processAddMapAction(const std::string& ctrlURL,
                            uint16_t iPort,
                            PortType portType)
 {
-    Mapping mapToAdd(ePort, iPort, portType);
+    Mapping mapToAdd(portType, ePort, iPort);
 
     JAMI_DBG("PUPnP: Opened port %s", mapToAdd.toString().c_str());
 
@@ -615,7 +615,7 @@ PUPnP::processRemoveMapAction(const std::string& ctrlURL,
                               uint16_t iPort,
                               PortType portType)
 {
-    Mapping mapToRemove {ePort, iPort, portType};
+    Mapping mapToRemove(portType, ePort, iPort);
     {
         std::lock_guard<std::mutex> lock(validIgdListMutex_);
         for (auto const& it : validIgdList_) {
@@ -1324,11 +1324,11 @@ PUPnP::getMappingsListByDescr(const std::shared_ptr<IGD>& igd, const std::string
         }
 
         std::transform(transport.begin(), transport.end(), transport.begin(), ::toupper);
+        PortType type = transport.find("TCP") != std::string::npos ? PortType::TCP : PortType::UDP;
         uint16_t ePort = static_cast<uint16_t>(std::stoi(port_external));
         uint16_t iPort = static_cast<uint16_t>(std::stoi(port_internal));
-        PortType type = transport.find("TCP") != std::string::npos ? PortType::TCP : PortType::UDP;
 
-        auto map = Mapping(ePort, iPort, type);
+        Mapping map(type, ePort, iPort);
         map.setIgd(igd);
 
         mapList.emplace(map.getMapKey(), std::move(map));
