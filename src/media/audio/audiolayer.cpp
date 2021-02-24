@@ -27,86 +27,12 @@
 #include "audio/resampler.h"
 #include "tonecontrol.h"
 #include "client/ring_signal.h"
-
-extern "C" {
-#include <speex/speex_echo.h>
-}
+#include "echo-cancel/null_echo_canceller.h"
 
 #include <ctime>
 #include <algorithm>
 
 namespace jami {
-
-struct AudioLayer::EchoState
-{
-    EchoState(AudioFormat format, unsigned frameSize, unsigned)
-        : state(speex_echo_state_init_mc(frameSize,
-                                         frameSize * 16,
-                                         format.nb_channels,
-                                         format.nb_channels),
-                &speex_echo_state_destroy)
-        , playbackQueue(format, frameSize)
-        , recordQueue(format, frameSize)
-    {
-        int sr = format.sample_rate;
-        speex_echo_ctl(state.get(), SPEEX_ECHO_SET_SAMPLING_RATE, &sr);
-    }
-
-    void putRecorded(std::shared_ptr<AudioFrame>&& in)
-    {
-        // JAMI_DBG("putRecorded %s %d", in->getFormat().toString().c_str(), in->getFrameSize());
-        recordQueue.enqueue(std::move(in));
-    }
-
-    void putPlayback(const std::shared_ptr<AudioFrame>& in)
-    {
-        // JAMI_DBG("putPlayback %s %d", in->getFormat().toString().c_str(), in->getFrameSize());
-        auto c = in;
-        playbackQueue.enqueue(std::move(c));
-    }
-
-    std::shared_ptr<AudioFrame> getRecorded()
-    {
-        if (playbackQueue.samples() < playbackQueue.frameSize()
-            or recordQueue.samples() < recordQueue.frameSize()) {
-            JAMI_DBG("getRecorded underflow %d / %d, %d / %d",
-                     playbackQueue.samples(),
-                     playbackQueue.frameSize(),
-                     recordQueue.samples(),
-                     recordQueue.frameSize());
-            return {};
-        }
-        if (recordQueue.samples() > 2 * recordQueue.frameSize() && playbackQueue.samples() == 0) {
-            JAMI_DBG("getRecorded PLAYBACK underflow");
-            return recordQueue.dequeue();
-        }
-        while (playbackQueue.samples() > 10 * playbackQueue.frameSize()) {
-            JAMI_DBG("getRecorded record underflow");
-            playbackQueue.dequeue();
-        }
-        while (recordQueue.samples() > 4 * recordQueue.frameSize()) {
-            JAMI_DBG("getRecorded playback underflow");
-            recordQueue.dequeue();
-        }
-        auto playback = playbackQueue.dequeue();
-        auto record = recordQueue.dequeue();
-        if (playback and record) {
-            auto ret = std::make_shared<AudioFrame>(record->getFormat(), record->getFrameSize());
-            speex_echo_cancellation(state.get(),
-                                    (const int16_t*) record->pointer()->data[0],
-                                    (const int16_t*) playback->pointer()->data[0],
-                                    (int16_t*) ret->pointer()->data[0]);
-            return ret;
-        }
-        return {};
-    }
-
-private:
-    using SpeexEchoStatePtr = std::unique_ptr<SpeexEchoState, void (*)(SpeexEchoState*)>;
-    SpeexEchoStatePtr state;
-    AudioFrameResizer playbackQueue;
-    AudioFrameResizer recordQueue;
-};
 
 AudioLayer::AudioLayer(const AudioPreference& pref)
     : isCaptureMuted_(pref.getCaptureMuted())
@@ -194,13 +120,12 @@ AudioLayer::checkAEC()
 {
     bool shouldSoftAEC = not hasNativeAEC_ and playbackStarted_ and recordStarted_;
 
-    if (not echoState_ and shouldSoftAEC) {
+    if (not echoCanceller_ and shouldSoftAEC) {
         JAMI_WARN("Starting AEC");
-        echoState_.reset(
-            new EchoState(audioFormat_, nativeFrameSize_, audioFormat_.sample_rate / 4));
-    } else if (echoState_ and not shouldSoftAEC) {
+        echoCanceller_.reset(new NullEchoCanceller(audioFormat_, audioFormat_.sample_rate / 4));
+    } else if (echoCanceller_ and not shouldSoftAEC) {
         JAMI_WARN("Stopping AEC");
-        echoState_.reset();
+        echoCanceller_.reset();
     }
 }
 
@@ -288,8 +213,8 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
         }
 
         if (resampled) {
-            if (echoState_) {
-                echoState_->putPlayback(resampled);
+            if (echoCanceller_) {
+                echoCanceller_->putPlayback(resampled);
             }
             playbackQueue_->enqueue(std::move(resampled));
         } else
@@ -302,12 +227,9 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
 void
 AudioLayer::putRecorded(std::shared_ptr<AudioFrame>&& frame)
 {
-    // if (isCaptureMuted_)
-    //    libav_utils::fillWithSilence(frame->pointer());
-
-    if (echoState_) {
-        echoState_->putRecorded(std::move(frame));
-        while (auto rec = echoState_->getRecorded())
+    if (echoCanceller_) {
+        echoCanceller_->putRecorded(std::move(frame));
+        while (auto rec = echoCanceller_->getProcessed())
             mainRingBuffer_->put(std::move(rec));
     } else {
         mainRingBuffer_->put(std::move(frame));
