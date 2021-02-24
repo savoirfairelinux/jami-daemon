@@ -1,0 +1,115 @@
+ src/fetch.c                     |  3 +++
+ src/remote.c                    |  4 ++++
+ src/transports/smart_protocol.c | 11 +++++++++--
+ 3 files changed, 16 insertions(+), 2 deletions(-)
+
+diff --git a/src/fetch.c b/src/fetch.c
+index f4a4c9f81..f627a650c 100644
+--- a/src/fetch.c
++++ b/src/fetch.c
+@@ -112,12 +112,14 @@ int git_fetch_negotiate(git_remote *remote, const git_fetch_options *opts)
+ 
+ 	remote->need_pack = 0;
+ 
++	printf("@@@ before filter_wants\n");
+ 	if (filter_wants(remote, opts) < 0) {
+ 		git_error_set(GIT_ERROR_NET, "failed to filter the reference list for wants");
+ 		return -1;
+ 	}
+ 
+ 	/* Don't try to negotiate when we don't want anything */
++	printf("@@@ before need_pack\n");
+ 	if (!remote->need_pack)
+ 		return 0;
+ 
+@@ -125,6 +127,7 @@ int git_fetch_negotiate(git_remote *remote, const git_fetch_options *opts)
+ 	 * Now we have everything set up so we can start tell the
+ 	 * server what we want and what we have.
+ 	 */
++	printf("@@@ before negotiate_fetch\n");
+ 	return t->negotiate_fetch(t,
+ 		remote->repo,
+ 		(const git_remote_head * const *)remote->refs.contents,
+diff --git a/src/remote.c b/src/remote.c
+index 51e99dc94..99f702efc 100644
+--- a/src/remote.c
++++ b/src/remote.c
+@@ -928,6 +928,8 @@ int git_remote_download(git_remote *remote, const git_strarray *refspecs, const
+ 
+ 	assert(remote);
+ 
++	printf("@@@ git_remote_download0\n");
++
+ 	if (!remote->repo) {
+ 		git_error_set(GIT_ERROR_INVALID, "cannot download detached remote");
+ 		return -1;
+@@ -983,9 +985,11 @@ int git_remote_download(git_remote *remote, const git_strarray *refspecs, const
+ 		remote->push = NULL;
+ 	}
+ 
++	printf("@@@ git_remote_download0\n");
+ 	if ((error = git_fetch_negotiate(remote, opts)) < 0)
+ 		return error;
+ 
++	printf("@@@ git_remote_download1\n");
+ 	return git_fetch_download_pack(remote, cbs);
+ 
+ on_error:
+diff --git a/src/transports/smart_protocol.c b/src/transports/smart_protocol.c
+index c01656dc4..520019c74 100644
+--- a/src/transports/smart_protocol.c
++++ b/src/transports/smart_protocol.c
+@@ -320,6 +320,7 @@ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, c
+ 		goto on_error;
+ 
+ 	opts.insert_by_date = 1;
++	printf("@@@ before git_revwalk__push_glob\n");
+ 	if ((error = git_revwalk__push_glob(walk, "refs/*", &opts)) < 0)
+ 		goto on_error;
+ 
+@@ -330,16 +331,19 @@ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, c
+ 	 * first 256 we send.
+ 	 */
+ 	i = 0;
++	printf("@@@ before while\n");
+ 	while (i < 256) {
+ 		error = git_revwalk_next(&oid, walk);
+ 
+ 		if (error < 0) {
+-			if (GIT_ITEROVER == error)
++			printf("@@@ %i\n", error);
++			//if (GIT_ITEROVER == error)
+ 				break;
+ 
+-			goto on_error;
++			//goto on_error;
+ 		}
+ 
++		printf("@@@ before git_pkt_buffer_have\n");
+ 		git_pkt_buffer_have(&oid, &data);
+ 		i++;
+ 		if (i % 20 == 0) {
+@@ -400,6 +404,7 @@ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, c
+ 		}
+ 	}
+ 
++	printf("@@@ before Tell the other end that we're done negotiating\n");
+ 	/* Tell the other end that we're done negotiating */
+ 	if (t->rpc && t->common.length > 0) {
+ 		git_pkt_ack *pkt;
+@@ -419,6 +424,7 @@ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, c
+ 		}
+ 	}
+ 
++	printf("@@@ before git_pkt_buffer_done\n");
+ 	if ((error = git_pkt_buffer_done(&data)) < 0)
+ 		goto on_error;
+ 
+@@ -433,6 +439,7 @@ int git_smart__negotiate_fetch(git_transport *transport, git_repository *repo, c
+ 	git_buf_dispose(&data);
+ 	git_revwalk_free(walk);
+ 
++	printf("@@@ before Now let's eat up whatever the server gives us\n");
+ 	/* Now let's eat up whatever the server gives us */
+ 	if (!t->caps.multi_ack && !t->caps.multi_ack_detailed) {
+ 		if ((error = recv_pkt(NULL, &pkt_type, buf)) < 0)
