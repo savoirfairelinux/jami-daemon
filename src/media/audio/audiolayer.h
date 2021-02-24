@@ -26,6 +26,7 @@
 #include "dcblocker.h"
 #include "noncopyable.h"
 #include "audio_frame_resizer.h"
+#include "echo-cancel/echo_canceller.h"
 
 #include <chrono>
 #include <mutex>
@@ -52,7 +53,7 @@ typedef struct SpeexEchoState_ SpeexEchoState;
 #define COREAUDIO_API_STR  "coreaudio"
 #define PORTAUDIO_API_STR  "portaudio"
 
-#define PCM_DEFAULT     "default"     // Default ALSA plugin
+#define PCM_DEFAULT     "default" // Default ALSA plugin
 #define PCM_DSNOOP      "plug:dsnoop" // Alsa plugin for microphone sharing
 #define PCM_DMIX_DSNOOP "dmix/dsnoop" // Audio profile using Alsa dmix/dsnoop
 
@@ -288,8 +289,7 @@ protected:
      */
     std::unique_ptr<Resampler> resampler_;
 
-    struct EchoState;
-    std::unique_ptr<EchoState> echoState_;
+    std::unique_ptr<EchoCanceller> echoCanceller_;
 
 private:
     void checkAEC();
