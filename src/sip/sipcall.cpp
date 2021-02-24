@@ -720,9 +720,7 @@ SIPCall::transfer(const std::string& to)
 bool
 SIPCall::attendedTransfer(const std::string& to)
 {
-    auto toCall = std::dynamic_pointer_cast<SIPCall>(
-        Manager::instance().callFactory.getCall(to, getLinkType()));
-
+    auto toCall = Manager::instance().callFactory.getCall<SIPCall>(to);
     if (!toCall)
         return false;
 
