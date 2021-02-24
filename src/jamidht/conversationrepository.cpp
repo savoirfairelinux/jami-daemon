@@ -1425,11 +1425,18 @@ ConversationRepository::Impl::behind(const std::string& from) const
         JAMI_ERR("Cannot get reference for commit %s", from.c_str());
         return {};
     }
+
+    git_oidarray bases;
     size_t ahead = 0, behind = 0;
+    auto res = git_merge_bases(&bases, repo.get(), &oid_local, &oid_remote);
+    if (bases.count > 0) {
+        oid_local = bases.ids[0];
+    }
     if (git_graph_ahead_behind(&ahead, &behind, repo.get(), &oid_local, &oid_remote) != 0) {
         JAMI_ERR("Cannot get commits ahead for commit %s", from.c_str());
         return {};
     }
+    JAMI_ERR("@@@ %u vs %u", ahead, behind);
 
     if (behind == 0) {
         return {}; // Nothing to validate
