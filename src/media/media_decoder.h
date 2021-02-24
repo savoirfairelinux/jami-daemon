@@ -131,6 +131,7 @@ private:
     AVFormatContext* inputCtx_ = nullptr;
     std::vector<StreamCallback> streams_;
     int64_t startTime_;
+    int64_t lastReadPacketTime_ {};
     DeviceParams inputParams_;
     AVDictionary* options_ = nullptr;
     MediaDemuxer::CurrentState currentState_;
