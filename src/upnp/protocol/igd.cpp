@@ -27,7 +27,6 @@ namespace upnp {
 
 IGD::IGD(NatProtocolType proto)
     : protocol_(proto)
-    , valid_(true)
 {}
 
 bool

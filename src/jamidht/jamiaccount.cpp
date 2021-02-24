@@ -1811,7 +1811,7 @@ JamiAccount::registerAsyncOps()
             upnpCtrl_->releaseMapping(dhtUpnpMapping_);
         }
 
-        dhtUpnpMapping_ = upnp::Mapping {0, 0, upnp::PortType::UDP};
+        dhtUpnpMapping_ = std::move(upnp::Mapping(upnp::PortType::UDP));
 
         dhtUpnpMapping_.enableAutoUpdate(true);
 
@@ -2597,7 +2597,7 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     // Release current upnp mapping if any.
     if (upnpCtrl_ and dhtUpnpMapping_.isValid()) {
         upnpCtrl_->releaseMapping(dhtUpnpMapping_);
-        dhtUpnpMapping_ = upnp::Mapping {};
+        dhtUpnpMapping_ = upnp::Mapping(upnp::PortType::UDP);
     }
 
     lock.unlock();
