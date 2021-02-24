@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "dd19f599_431d16ac",
+        "filename": "src/conference.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-24T19:26:03Z",
+      "side": 1,
+      "message": "no need for friend, this \u0026 other",
+      "range": {
+        "startLine": 108,
+        "startChar": 0,
+        "endLine": 109,
+        "endChar": 80
+      },
+      "revId": "a96804cbb31d168aba216e8a13194577ef5f1143",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7b1a05c2_859d2691",
+        "filename": "src/conference.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-24T19:26:03Z",
+      "side": 1,
+      "message": "find_if in algo",
+      "range": {
+        "startLine": 137,
+        "startChar": 29,
+        "endLine": 148,
+        "endChar": 31
+      },
+      "revId": "a96804cbb31d168aba216e8a13194577ef5f1143",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e9afbaf2_6d879cfd",
+        "filename": "src/conference.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-24T19:26:03Z",
+      "side": 1,
+      "message": "to clean again",
+      "range": {
+        "startLine": 148,
+        "startChar": 31,
+        "endLine": 149,
+        "endChar": 46
+      },
+      "revId": "a96804cbb31d168aba216e8a13194577ef5f1143",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d9258d50_3b0d7bb9",
+        "filename": "src/conference.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 298,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-24T19:26:03Z",
+      "side": 1,
+      "message": "typo",
+      "range": {
+        "startLine": 298,
+        "startChar": 9,
+        "endLine": 298,
+        "endChar": 32
+      },
+      "revId": "a96804cbb31d168aba216e8a13194577ef5f1143",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
