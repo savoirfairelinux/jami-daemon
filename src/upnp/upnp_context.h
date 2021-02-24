@@ -73,12 +73,6 @@ public:
     constexpr static uint16_t UPNP_UDP_PORT_MAX = UPNP_UDP_PORT_MIN + 5000;
 
 private:
-    constexpr static auto NAT_MAP_REQUEST_TIMEOUT_UNIT = std::chrono::seconds(1);
-    constexpr static auto PUPNP_MAP_REQUEST_TIMEOUT_UNIT = std::chrono::seconds(5);
-    constexpr static auto MAP_UPDATE_INTERVAL = std::chrono::seconds(30);
-    constexpr static int MAX_REQUEST_RETRIES = 20;
-    constexpr static int MAX_REQUEST_REMOVE_COUNT = 5;
-
     struct MappingStatus
     {
         int openCount_ {0};
@@ -135,9 +129,21 @@ private:
     // Initialization
     void init();
 
-    // Start/Stop
-    void StartUpnp();
-    void StopUpnp();
+    /**
+     * @brief start the search for IGDs activate the mapping
+     * list update.
+     *
+     */
+    void startUpnp();
+
+    /**
+     * @brief Clear all IGDs and release/delete current mappings
+     *
+     * @param forceRelease If true, also delete mappings with enabled
+     * auto-update feature.
+     *
+     */
+    void stopUpnp(bool forceRelease = false);
 
     // Create and register a new mapping.
     Mapping::sharedPtr_t registerMapping(Mapping& map);
@@ -148,22 +154,19 @@ private:
     void unregisterMapping(const Mapping::sharedPtr_t& map);
 
     // Perform the request on the provided IGD.
-    void requestMapping(const std::shared_ptr<IGD>& igd, const Mapping::sharedPtr_t& map);
+    void requestMapping(const Mapping::sharedPtr_t& map);
 
-    // Perform the request on all available IGDs
-    void requestMappingOnValidIgds(const Mapping::sharedPtr_t& map);
-
-    // Delete mapping from the list and and send remove request.
-    void deleteMapping(const Mapping::sharedPtr_t& map);
+    // Request a mapping remove from the IGD.
+    void requestRemoveMapping(const Mapping::sharedPtr_t& map);
 
     // Remove all mappings of the given type.
     void deleteAllMappings(PortType type);
 
     // Schedule a time-out timer for a in-progress request.
-    void registerAddMappingTimeout(const std::shared_ptr<IGD>& igd, const Mapping::sharedPtr_t& map);
+    void registerAddMappingTimeout(const Mapping::sharedPtr_t& map);
 
     // Callback invoked when a request times-out
-    void onRequestTimeOut(const std::shared_ptr<IGD>& igd, const Mapping::sharedPtr_t& map);
+    void onRequestTimeOut(Mapping::key_t key);
 
     // Update the state and notify the listener
     void updateMappingState(const Mapping::sharedPtr_t& map,
@@ -172,6 +175,9 @@ private:
 
     // Provision ports.
     uint16_t getAvailablePortNumber(PortType type, uint16_t minPort = 0, uint16_t maxPort = 0);
+
+    // Get preferred IGD
+    std::shared_ptr<IGD> getPreferredIgd() const;
 
     // Check and prune the mapping list. Called periodically.
     void updateMappingList(bool async);
@@ -211,8 +217,15 @@ private:
 
     void pruneMappingsWithInvalidIgds(const std::shared_ptr<IGD>& igd);
 
-    // Get the mapping list
+    /**
+     * @brief Get the mapping list
+     *
+     * @param type transport type (TCP/UDP)
+     * @return a reference on the map
+     * @warning concurrency protection done by the caller
+     */
     std::map<Mapping::key_t, Mapping::sharedPtr_t>& getMappingList(PortType type);
+
     // Get the mapping from the key.
     Mapping::sharedPtr_t getMappingWithKey(Mapping::key_t key);
 
