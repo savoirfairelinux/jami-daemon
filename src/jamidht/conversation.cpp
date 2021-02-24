@@ -775,6 +775,7 @@ Conversation::leave()
     if (!pimpl_)
         return {};
     setRemovingFlag();
+    std::lock_guard<std::mutex> lk(pimpl_->writeMtx_);
     return pimpl_->repository_->leave();
 }
 
@@ -799,6 +800,7 @@ Conversation::erase()
 {
     if (!pimpl_->repository_)
         return;
+    std::lock_guard<std::mutex> lk(pimpl_->writeMtx_);
     pimpl_->repository_->erase();
 }
 
