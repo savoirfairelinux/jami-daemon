@@ -421,8 +421,6 @@ struct Manager::ManagerPimpl
 
     std::atomic_bool finished_ {false};
 
-    std::mt19937_64 rand_;
-
     /* ICE support */
     std::unique_ptr<IceTransportFactory> ice_tf_;
 
@@ -446,7 +444,6 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     , toneCtrl_(base.preferences)
     , dtmfBuf_(0, AudioFormat::MONO())
     , ringbufferpool_(new RingBufferPool)
-    , rand_(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
 #ifdef ENABLE_VIDEO
     , videoManager_(new VideoManager)
 #endif
@@ -714,7 +711,8 @@ Manager::instance()
 }
 
 Manager::Manager()
-    : preferences()
+    : rand_(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
+    , preferences()
     , voipPreferences()
     , audioPreference()
     , shortcutPreferences()
@@ -724,7 +722,7 @@ Manager::Manager()
 #ifdef ENABLE_VIDEO
     , videoPreferences()
 #endif
-    , callFactory()
+    , callFactory(rand_)
     , accountFactory()
     , dataTransfers(std::make_unique<DataTransferFacade>())
     , pimpl_(new ManagerPimpl(*this))
@@ -2769,18 +2767,11 @@ Manager::testAccountICEInitialization(const std::string& accountID)
 std::string
 Manager::getNewAccountId()
 {
-    std::string newAccountID;
-    static std::uniform_int_distribution<uint64_t> rand_acc_id;
-
-    const std::vector<std::string> accountList(getAccountList());
-
+    std::string random_id;
     do {
-        std::ostringstream accId;
-        accId << std::hex << rand_acc_id(pimpl_->rand_);
-        newAccountID = accId.str();
-    } while (std::find(accountList.begin(), accountList.end(), newAccountID) != accountList.end());
-
-    return newAccountID;
+        random_id = to_hex_string(std::uniform_int_distribution<uint64_t>()(rand_));
+    } while (getAccount(random_id));
+    return random_id;
 }
 
 std::string
@@ -2847,19 +2838,6 @@ Manager::removeAccounts()
         removeAccount(acc);
 }
 
-std::string
-Manager::getNewCallID()
-{
-    std::ostringstream random_id;
-
-    // generate something like s7ea037947eb9fb2f
-    do {
-        random_id.clear();
-        random_id << std::uniform_int_distribution<uint64_t>(1, DRING_ID_MAX_VAL)(pimpl_->rand_);
-    } while (callFactory.hasCall(random_id.str()));
-
-    return random_id.str();
-}
 
 std::vector<std::string_view>
 Manager::loadAccountOrder() const

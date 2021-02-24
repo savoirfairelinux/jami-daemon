@@ -49,18 +49,17 @@
 #include <mutex>
 #include <chrono>
 
-namespace jami {
-namespace upnp {
-class Controller;
-}
-} // namespace jami
-
 namespace YAML {
 class Emitter;
 class Node;
 } // namespace YAML
 
 namespace jami {
+static constexpr uint64_t DRING_ID_MAX_VAL = 9007199254740992;
+
+namespace upnp {
+class Controller;
+} // namespace upnp
 
 class Call;
 class SystemCodecContainer;
