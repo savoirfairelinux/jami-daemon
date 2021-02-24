@@ -98,7 +98,7 @@ systems. This function is required for `alloca.c' support on those systems.
 #define HAVE_SPEEX 0
 
 /* Define if you have libspeexdsp */
-#define HAVE_SPEEXDSP 0
+#define HAVE_SPEEXDSP 1
 
 /* Define to 1 if stdbool.h conforms to C99. */
 #define HAVE_STDBOOL_H 1

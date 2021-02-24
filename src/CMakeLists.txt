@@ -95,6 +95,7 @@ set (Source_Files__jamidht__eth__libdevcrypto ${Source_Files__jamidht__eth__libd
 set (Source_Files__media ${Source_Files__media} PARENT_SCOPE)
 set (Source_Files__media__audio ${Source_Files__media__audio} PARENT_SCOPE)
 set (Source_Files__media__audio__sound ${Source_Files__media__audio__sound} PARENT_SCOPE)
+set (Source_Files__media__audio__echo_cancel ${Source_Files__media__audio__echo_cancel} PARENT_SCOPE)
 set (Source_Files__media__video ${Source_Files__media__video} PARENT_SCOPE)
 if(MSVC)
    if(WINDOWS_STORE)
