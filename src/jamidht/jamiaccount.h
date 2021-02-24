@@ -638,7 +638,7 @@ private:
     }
 
     /* Current UPNP mapping */
-    upnp::Mapping dhtUpnpMapping_ {};
+    upnp::Mapping dhtUpnpMapping_ {upnp::PortType::UDP};
 
     bool dhtPeerDiscovery_ {false};
 
