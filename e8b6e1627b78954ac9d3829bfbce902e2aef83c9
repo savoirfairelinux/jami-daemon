@@ -356,6 +356,584 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b9555cf2_07a23a3f",
+        "filename": "src/plugin/jamiplugin.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "Why triple slashes? should use only 2: //",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ae447501_f8d0a2cb",
+        "filename": "src/plugin/jamiplugin.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "why did break this line here ? still have space for few words",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "50d6160b_dda5b91e",
+        "filename": "src/plugin/jamiplugin.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "First letter of sentence should be capitalized",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "872b6b7b_b277845f",
+        "filename": "src/plugin/jamiplugin.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "api vs API: try to be consistent with capital letters",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "99ae5993_af1eb329",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "stardand -\u003e standard",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "56fdddb9_162a63de",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "You dont need to specify the code number (100). We already use the enum/macro.",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5336c6e4_cf70139e",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "dont refere to the error number",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "59c8b3d7_36e7aa14",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "it\u0027s -\u003e its",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "616c868d_6e5c3079",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "can you document \u0027force\u0027 argument ?",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "08104233_a4070208",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "immediately",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "56c6f747_1f43161e",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 143,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "than -\u003e that (or which)",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "84f974a7_a91a631b",
+        "filename": "src/plugin/pluginloader.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "its",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b5af97eb_e12cfcf3",
+        "filename": "src/plugin/pluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "Register",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4d43c6f3_627ba3b3",
+        "filename": "src/plugin/pluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "Capital",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ea9e075c_a3358911",
+        "filename": "src/plugin/pluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "same",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "df600898_d33a716e",
+        "filename": "src/plugin/pluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 297,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "capital\n\nwhy the question mark \"?\"",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f7063091_11f10ab9",
+        "filename": "src/plugin/pluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "capital",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "687925be_c035bd94",
+        "filename": "src/plugin/pluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "Capital letter",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "be9412cd_5944b6f0",
+        "filename": "src/plugin/pluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "o ? do you mean A ?",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "459873b3_2466b4e3",
+        "filename": "src/plugin/pluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "!\u003c  ?\nAlso, it\u0027s better to put the comment over the code not beside\n\nAnd we have a convention to add underscore to data members: \ntakeComponentOwnership -\u003e takeComponentOwnership_\n\nBut the code was already there. I dont expect the changes now, but it\u0027s good to know.",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b969ff07_6ba1bcbd",
+        "filename": "src/plugin/pluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "I am very familiar with the term \"untoggle\". May be the term unbind is more meaningful",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d62ca86d_fb8dc96b",
+        "filename": "src/plugin/pluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "reference\ndestruction",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c13962c4_7e83bd7a",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "leat -\u003e least",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a011f8d1_e5d11a8b",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "capital",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f2ebffa1_6a3a7b9f",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "capital\nit\u0027s -\u003e its",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c079a646_eadad542",
+        "filename": "src/plugin/pluginpreferencesutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "automaticaly -\u003e automatically",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4a9c9883_5bf08241",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 173,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "But -\u003e but",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "29c5b5d2_3abaa028",
+        "filename": "src/plugin/pluginsutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "auxiliar -\u003e auxiliary",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "153b7ba7_de5e8629",
+        "filename": "src/plugin/pluginsutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "originaly -\u003e originally",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bbd06465_803839f9",
+        "filename": "src/plugin/pluginsutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "clearity -\u003e clarity",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c9595eb1_adb967c4",
+        "filename": "src/plugin/pluginsutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "its",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bcde6c4d_b1abd3c0",
+        "filename": "src/plugin/pluginsutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "its",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9d327f2d_86e049e8",
+        "filename": "src/plugin/pluginsutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "its",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b837b3db_98e076c3",
+        "filename": "src/plugin/pluginsutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-02-24T22:02:10Z",
+      "side": 1,
+      "message": "a maps -\u003e a map\n\nsucess -\u003e success",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
