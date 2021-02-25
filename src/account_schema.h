@@ -72,6 +72,7 @@ static const char* const CONFIG_PUBLISHED_ADDRESS = "Account.publishedAddress";
 static const char* const CONFIG_UPNP_ENABLED = "Account.upnpEnabled";
 static const char* const CONFIG_DEFAULT_MODERATORS = "Account.defaultModerator";
 static const char* const CONFIG_LOCAL_MODERATORS_ENABLED = "Account.localModeratorEnabled";
+static const char* const CONFIG_ALL_MODERATORS_ENABLED = "Account.allModeratorEnabled";
 
 // SIP specific parameters
 static const char* const CONFIG_STUN_SERVER = "STUN.server";
