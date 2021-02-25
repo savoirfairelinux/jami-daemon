@@ -201,6 +201,11 @@ Conference::add(const std::string& participant_id)
                     }
                     localModAdded_ = true;
                 }
+
+                // Check for allModeratorEnabled preference
+                if (account->isAllModerators()) {
+                    moderators_.emplace(string_remove_suffix(call->getPeerNumber(), '@'));
+                }
             }
         }
 #ifdef ENABLE_VIDEO

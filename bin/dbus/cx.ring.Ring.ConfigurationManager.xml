@@ -1785,5 +1785,16 @@
            <arg type="s" name="accountID" direction="in"/>
            <arg type="b" name="isModEnabled" direction="out"/>
        </method>
+
+       <method name="setAllModerators" tp:name-for-bindings="setAllModerators">
+           <tp:added version="9.10.0"/>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="b" name="allModerators" direction="in"/>
+       </method>
+       <method name="isAllModerators" tp:name-for-bindings="isAllModerators">
+           <tp:added version="9.10.0"/>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="b" name="allModerators" direction="out"/>
+       </method>
    </interface>
 </node>
