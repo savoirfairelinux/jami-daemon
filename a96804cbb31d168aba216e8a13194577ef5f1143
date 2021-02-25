@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "9d67b211_2c0303cf",
+        "filename": "src/conference.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-25T16:53:31Z",
+      "side": 1,
+      "message": "It allows to use \"return !(p1 \u003d\u003d p2);\" for operator!\u003d\nWhat is the problem with friend ?",
+      "parentUuid": "dd19f599_431d16ac",
+      "range": {
+        "startLine": 108,
+        "startChar": 0,
+        "endLine": 109,
+        "endChar": 80
+      },
+      "revId": "a96804cbb31d168aba216e8a13194577ef5f1143",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "7b1a05c2_859d2691",
         "filename": "src/conference.h",
         "patchSetId": 8
@@ -45,6 +69,30 @@
       "revId": "a96804cbb31d168aba216e8a13194577ef5f1143",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "43a0ab9e_be25c3b9",
+        "filename": "src/conference.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-25T16:53:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7b1a05c2_859d2691",
+      "range": {
+        "startLine": 137,
+        "startChar": 29,
+        "endLine": 148,
+        "endChar": 31
+      },
+      "revId": "a96804cbb31d168aba216e8a13194577ef5f1143",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "9ffdb886_b31e2268",
+        "filename": "src/conference.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-25T16:53:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e9afbaf2_6d879cfd",
+      "range": {
+        "startLine": 148,
+        "startChar": 31,
+        "endLine": 149,
+        "endChar": 46
+      },
+      "revId": "a96804cbb31d168aba216e8a13194577ef5f1143",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d9258d50_3b0d7bb9",
         "filename": "src/conference.h",
         "patchSetId": 8
@@ -91,6 +163,30 @@
       "revId": "a96804cbb31d168aba216e8a13194577ef5f1143",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f8201587_1739469e",
+        "filename": "src/conference.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 298,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-25T16:53:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d9258d50_3b0d7bb9",
+      "range": {
+        "startLine": 298,
+        "startChar": 9,
+        "endLine": 298,
+        "endChar": 32
+      },
+      "revId": "a96804cbb31d168aba216e8a13194577ef5f1143",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
