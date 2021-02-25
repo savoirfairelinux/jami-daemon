@@ -1,5 +1,5 @@
 /*
- *  Copyright (C)2020-2021 Savoir-faire Linux Inc.
+ *  Copyright (C) 2021 Savoir-faire Linux Inc.
  *
  *  Authors: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
@@ -32,6 +32,7 @@ public:
 %feature("director") PluginCallback;
 
 namespace DRing {
+
 bool loadPlugin(const std::string& path);
 bool unloadPlugin(const std::string& path);
 std::map<std::string,std::string> getPluginDetails(const std::string& path);

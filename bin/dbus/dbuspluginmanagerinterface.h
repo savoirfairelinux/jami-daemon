@@ -82,4 +82,6 @@ public:
 
     bool getPluginsEnabled();
     void setPluginsEnabled(const bool& state);
+
+    void answerTrustPlugin(const bool& trust, const std::string& rootPath);
 };

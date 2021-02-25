@@ -125,6 +125,9 @@ getSignalHandlers()
         exported_callback<DRing::VideoSignal::DeviceAdded>(),
         exported_callback<DRing::VideoSignal::ParametersChanged>(),
 #endif
+#ifdef ENABLE_PLUGIN
+        exported_callback<DRing::PluginSignal::askTrustPluginIssuer>(),
+#endif
     };
 
     return handlers;
