@@ -3343,4 +3343,27 @@ Manager::isLocalModeratorsEnabled(const std::string& accountID)
     return acc->isLocalModeratorsEnabled();
 }
 
+void
+Manager::setAllModerators(const std::string& accountID, bool allModerators)
+{
+    auto acc = getAccount(accountID);
+    if (!acc) {
+        JAMI_ERR("Fail to set all moderators, account %s not found", accountID.c_str());
+        return;
+    }
+    acc->setAllModerators(allModerators);
+    saveConfig(acc);
+}
+
+bool
+Manager::isAllModerators(const std::string& accountID)
+{
+    auto acc = getAccount(accountID);
+    if (!acc) {
+        JAMI_ERR("Fail to get all moderators, account %s not found", accountID.c_str());
+        return true; // Default value
+    }
+    return acc->isAllModerators();
+}
+
 } // namespace jami
