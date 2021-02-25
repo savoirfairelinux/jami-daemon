@@ -777,3 +777,16 @@ DBusConfigurationManager::isLocalModeratorsEnabled(const std::string& accountID)
     return DRing::isLocalModeratorsEnabled(accountID);
 }
 
+void
+DBusConfigurationManager::enableAllModerators(const std::string& accountID,
+                                                const bool& isAllModEnabled)
+{
+    return DRing::enableAllModerators(accountID, isAllModEnabled);
+}
+
+bool
+DBusConfigurationManager::isAllModeratorsEnabled(const std::string& accountID)
+{
+    return DRing::isAllModeratorsEnabled(accountID);
+}
+

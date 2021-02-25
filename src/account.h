@@ -326,6 +326,8 @@ public:
 
     bool isLocalModeratorsEnabled() const { return localModeratorsEnabled_; }
     void enableLocalModerators(bool isModEnabled) { localModeratorsEnabled_ = isModEnabled; }
+    bool isAllModeratorsEnabled() const { return allModeratorsEnabled_; }
+    void enableAllModerators(bool isAllModeratorEnabled) { allModeratorsEnabled_ = isAllModeratorEnabled; }
 
 public: // virtual methods that has to be implemented by concrete classes
     /**
@@ -400,6 +402,7 @@ protected:
     static const char* const ACTIVE_CODEC_KEY;
     static const char* const DEFAULT_MODERATORS_KEY;
     static const char* const LOCAL_MODERATORS_ENABLED_KEY;
+    static const char* const ALL_MODERATORS_ENABLED_KEY;
 
     static const std::string DEFAULT_USER_AGENT;
 
@@ -519,6 +522,7 @@ protected:
 
     std::set<std::string> defaultModerators_ {};
     bool localModeratorsEnabled_;
+    bool allModeratorsEnabled_;
 
     /**
      * private account codec searching functions
