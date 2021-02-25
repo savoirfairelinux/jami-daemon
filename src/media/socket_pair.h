@@ -121,12 +121,14 @@ typedef struct
     uint32_t f_ssrc;         /* SSRC feedback */
 } rtcpREMBHeader;
 
+using clock = std::chrono::steady_clock;
+using time_point = clock::time_point;
 typedef struct
 {
     uint64_t last_send_ts;
-    std::chrono::steady_clock::time_point last_receive_ts;
+    time_point last_receive_ts;
     uint64_t send_ts;
-    std::chrono::steady_clock::time_point receive_ts;
+    time_point receive_ts;
 } TS_Frame;
 
 class SocketPair
@@ -175,7 +177,7 @@ public:
     {
         packetLossCallback_ = std::move(cb);
     }
-    void setRtpDelayCallback(std::function<void(int, int)> cb);
+    void setRtpDelayCallback(std::function<void(int, int, time_point)> cb);
 
     int writeData(uint8_t* buf, int buf_size);
 
@@ -183,8 +185,6 @@ public:
 
 private:
     NON_COPYABLE(SocketPair);
-    using clock = std::chrono::steady_clock;
-    using time_point = clock::time_point;
 
     int readCallback(uint8_t* buf, int buf_size);
     int writeCallback(uint8_t* buf, int buf_size);
@@ -211,8 +211,10 @@ private:
     std::atomic_bool noWrite_ {false};
     std::unique_ptr<SRTPProtoContext> srtpContext_;
     std::function<void(void)> packetLossCallback_;
-    std::function<void(int, int)> rtpDelayCallback_;
-    bool getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient, int32_t* deltaR);
+    std::function<void(int, int, time_point)> rtpDelayCallback_;
+    bool getOneWayDelayGradient(float sendTS, bool marker,
+                                    int32_t* deltaReceive,
+                                    int32_t* deltaSend);
     bool parse_RTP_ext(uint8_t* buf, float* abs);
 
     std::list<rtcpRRHeader> listRtcpRRHeader_;

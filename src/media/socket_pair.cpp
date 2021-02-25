@@ -493,7 +493,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
             if (header->pt == 201) {
                 lastDLSR_ = Swap4Bytes(header->dlsr);
                 // JAMI_WARN("Read RR, lastDLSR : %d", lastDLSR_);
-                lastRR_time = std::chrono::steady_clock::now();
+                lastRR_time = clock::now();
                 saveRtcpRRPacket(buf, len);
             }
             // 206 = REMB PT
@@ -523,8 +523,8 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
 
     // SRTP decrypt
     if (not fromRTCP and srtpContext_ and srtpContext_->srtp_in.aes) {
-        int32_t gradient = 0;
-        int32_t deltaT = 0;
+        int32_t deltaR = 0;
+        int32_t deltaS = 0;
         float abs = 0.0f;
         bool res_parse = false;
         bool res_delay = false;
@@ -533,11 +533,11 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
         bool marker = (buf[1] & 0x80) >> 7;
 
         if (res_parse)
-            res_delay = getOneWayDelayGradient(abs, marker, &gradient, &deltaT);
+            res_delay = getOneWayDelayGradient(abs, marker, &deltaR, &deltaS);
 
         // rtpDelayCallback_ is not set for audio
         if (rtpDelayCallback_ and res_delay)
-            rtpDelayCallback_(gradient, deltaT);
+            rtpDelayCallback_(deltaR, deltaS, lastReceiveTS_);
 
         auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
         if (packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNumIn_ + 1)
@@ -675,13 +675,13 @@ SocketPair::getLastLatency()
 }
 
 void
-SocketPair::setRtpDelayCallback(std::function<void(int, int)> cb)
+SocketPair::setRtpDelayCallback(std::function<void(int, int, time_point)> cb)
 {
     rtpDelayCallback_ = std::move(cb);
 }
 
 bool
-SocketPair::getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient, int32_t* deltaT)
+SocketPair::getOneWayDelayGradient(float sendTS, bool marker, int32_t* deltaReceive, int32_t* deltaSend)
 {
     // Keep only last packet of each frame
     if (not marker) {
@@ -691,7 +691,7 @@ SocketPair::getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient,
     // 1st frame
     if (not lastSendTS_) {
         lastSendTS_ = sendTS;
-        lastReceiveTS_ = std::chrono::steady_clock::now();
+        lastReceiveTS_ = clock::now();
         return 0;
     }
 
@@ -700,13 +700,13 @@ SocketPair::getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient,
         deltaS += 64000;
     lastSendTS_ = sendTS;
 
-    std::chrono::steady_clock::time_point arrival_TS = std::chrono::steady_clock::now();
+    time_point arrival_TS = clock::now();
     auto deltaR = std::chrono::duration_cast<std::chrono::milliseconds>(arrival_TS - lastReceiveTS_)
                       .count();
     lastReceiveTS_ = arrival_TS;
 
-    *gradient = deltaR - deltaS;
-    *deltaT = deltaR;
+    *deltaReceive = deltaR;
+    *deltaSend = deltaS;
 
     return true;
 }

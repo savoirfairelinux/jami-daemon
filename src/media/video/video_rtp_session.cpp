@@ -67,6 +67,7 @@ VideoRtpSession::VideoRtpSession(const string& callID, const DeviceParams& local
 {
     setupVideoBitrateInfo(); // reset bitrate
     cc = std::make_unique<CongestionControl>();
+    cc_trendline = std::make_unique<CongestionControl>(true);
 }
 
 VideoRtpSession::~VideoRtpSession()
@@ -235,7 +236,7 @@ VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceS
             socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort()));
 
         socketPair_->setRtpDelayCallback(
-            [&](int gradient, int deltaT) { delayMonitor(gradient, deltaT); });
+            [&](int deltaReceive, int deltaSend, time_point now) { delayMonitor(deltaReceive, deltaSend, now); });
 
         if (send_.crypto and receive_.crypto) {
             socketPair_->createSRTP(receive_.crypto.getCryptoSuite().c_str(),
@@ -718,19 +719,21 @@ VideoRtpSession::getPonderateLoss(float lastLoss)
 }
 
 void
-VideoRtpSession::delayMonitor(int gradient, int deltaT)
+VideoRtpSession::delayMonitor(int deltaReceive, int deltaSend, time_point now)
 {
-    float estimation = cc->kalmanFilter(gradient);
-    float thresh = cc->get_thresh();
 
-    // JAMI_WARN("gradient:%d, estimation:%f, thresh:%f", gradient, estimation, thresh);
+    cc->update(deltaReceive, deltaSend, now);
+    cc_trendline->update(deltaReceive, deltaSend, now);
 
-    cc->update_thresh(estimation, deltaT);
+    BandwidthUsage bwState = cc->getStateBW();
+    BandwidthUsage bwState_trendline = cc_trendline->getStateBW();
 
-    BandwidthUsage bwState = cc->get_bw_state(estimation, thresh);
-    auto now = clock::now();
+    if (bwState_trendline == BandwidthUsage::bwOverusing) {
+        JAMI_ERR("@@@ bwOverusing trendline");
+    }
 
     if (bwState == BandwidthUsage::bwOverusing) {
+        JAMI_ERR("@@@ bwOverusing kalman");
         auto remb_timer_dec = now - last_REMB_dec_;
         if ((not remb_dec_cnt_) or (remb_timer_dec > DELAY_AFTER_REMB_DEC)) {
             last_REMB_dec_ = now;

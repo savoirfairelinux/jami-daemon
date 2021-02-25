@@ -130,7 +130,7 @@ private:
     void setupVideoBitrateInfo();
     void checkReceiver();
     float getPonderateLoss(float lastLoss);
-    void delayMonitor(int gradient, int deltaT);
+    void delayMonitor(int gradient, int deltaT, time_point now);
     void dropProcessing(RTCPInfo* rtcpi);
     void delayProcessing(int br);
     void setNewBitrate(unsigned int newBR);
@@ -170,7 +170,7 @@ private:
     unsigned remb_dec_cnt_ {0};
 
     std::unique_ptr<CongestionControl> cc;
-
+    std::unique_ptr<CongestionControl> cc_trendline;
     std::function<void(void)> cbKeyFrameRequest_;
 };
 
