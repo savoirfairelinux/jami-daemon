@@ -1,8 +1,4 @@
-ifdef HAVE_DARWIN_OS
-FFMPEG_HASH := n4.2.2
-else
 FFMPEG_HASH := 9f38fac053010205806ece11e6aea9b7d3bde041
-endif
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 PKGS+=ffmpeg
