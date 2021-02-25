@@ -23,6 +23,7 @@
 #include <map>
 #include <vector>
 #include <json/json.h>
+#include <opendht/crypto.h>
 
 namespace jami {
 
@@ -103,5 +104,13 @@ std::map<std::string, std::string> readPluginManifestFromArchive(const std::stri
  * @return Pair <bool, string> meaning if file should be extracted and where to.
  */
 std::pair<bool, const std::string> uncompressJplFunction(const std::string& relativeFileName);
+
+/**
+ * @param request
+ * @param oid
+ * @param issuer
+ * @return String with asked information
+ */
+std::string getDN(gnutls_x509_crt_t request, const char* oid, bool issuer = false);
 } // namespace PluginUtils
 } // namespace jami

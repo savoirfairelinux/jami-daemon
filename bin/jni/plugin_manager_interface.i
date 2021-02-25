@@ -21,6 +21,12 @@
 
 #include "dring/dring.h"
 #include "dring/plugin_manager_interface.h"
+
+class PluginCallback {
+public:
+    virtual ~PluginCallback(){}
+    virtual void askTrustPluginIssuer(const std::string& /*issuerName*/, const std::string& /*companyDiv*/, const std::string& /*pluginName*/, const std::string& /*rootPath*/){}
+};
 %}
 
 namespace DRing {
@@ -45,4 +51,11 @@ std::map<std::string,std::string> getChatHandlerDetails(const std::string& chatH
 std::vector<std::string> getChatHandlerStatus(const std::string& accountId, const std::string& peerId);
 bool getPluginsEnabled();
 void setPluginsEnabled(bool state);
+void answerTrustPlugin(bool trust, const std::string& rootPath);
 }
+
+class PluginCallback {
+public:
+    virtual ~PluginCallback(){}
+    virtual void askTrustPluginIssuer(const std::string& /*issuerName*/, const std::string& /*companyDiv*/, const std::string& /*pluginName*/, const std::string& /*rootPath*/){}
+};

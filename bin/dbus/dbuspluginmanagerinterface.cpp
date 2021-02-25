@@ -158,3 +158,9 @@ DBusPluginManagerInterface::setPluginsEnabled(const bool& state)
 {
     DRing::setPluginsEnabled(state);
 }
+
+void
+DBusPluginManagerInterface::answerTrustPlugin(const bool& trust, const std::string& rootPath)
+{
+    DRing::answerTrustPlugin(trust, rootPath);
+}
