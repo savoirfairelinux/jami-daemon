@@ -181,6 +181,8 @@ class DRING_PUBLIC DBusConfigurationManager :
         std::vector<std::string> getDefaultModerators(const std::string& accountID);
         void enableLocalModerators(const std::string& accountID, const bool& isModEnabled);
         bool isLocalModeratorsEnabled(const std::string& accountID);
+        void enableAllModerators(const std::string& accountID, const bool& isAllModEnabled);
+        bool isAllModeratorsEnabled(const std::string& accountID);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__
