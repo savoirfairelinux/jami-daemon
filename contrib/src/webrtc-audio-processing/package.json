@@ -1,0 +1,9 @@
+{
+    "name": "webrtc-audio-processing",
+    "version": "v0.3.1",
+    "url": "https://gitlab.freedesktop.org/pulseaudio/webrtc-audio-processing/-/archive/__VERSION__/webrtc-audio-processing-__VERSION__.tar.gz",
+    "use_cmake": true,
+    "win_patches": [
+        "0001-provide-cmake-for-windows.patch"
+    ]
+}
