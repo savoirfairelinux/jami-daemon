@@ -940,6 +940,8 @@ public:
     std::vector<std::string> getDefaultModerators(const std::string& accountID);
     void enableLocalModerators(const std::string& accountID, bool state);
     bool isLocalModeratorsEnabled(const std::string& accountID);
+    void setAllModerators(const std::string& accountID, bool allModerators);
+    bool isAllModerators(const std::string& accountID);
 
 
 private:
