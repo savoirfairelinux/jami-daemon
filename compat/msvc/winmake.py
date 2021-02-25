@@ -213,7 +213,7 @@ def make_daemon(pkg_info, force, sdk_version, toolset):
         )) + ' -T $(DefaultPlatformToolset) -S ../../ -B ../../build'
     root_logger.warning("Cmake generating vcxproj files")
     result = getSHrunner().exec_batch(cmake_script)
-    if result[0] is not 0:
+    if result[0] != 0:
         sys.exit("Cmake Errors")
 
     for dep in pkg_info.get('deps', []):
@@ -260,7 +260,7 @@ def make(pkg_info, force, sdk_version, toolset, isPlugin):
             pkg_build_uptodate = False
     pkg_up_to_date = pkg_build_uptodate & pkg_ver_uptodate
     if not pkg_up_to_date or current_version is None or force:
-        if not current_version is '':
+        if current_version != '':
             log.debug(pkg_name + ' currently @: ' + current_version)
         if force:
             log.debug('Forcing fetch/patch/build for ' + pkg_name)
@@ -286,10 +286,10 @@ def make(pkg_info, force, sdk_version, toolset, isPlugin):
                 cmake_defines += " -D" + define + " "
             if not pkg_up_to_date or current_version is None or force:
                 cmake_conf_script = "cmake -G " + getCMakeGenerator(getLatestVSVersion(
-                )) + cmake_defines + "-S '" + pkg_build_path + "' -B '" + pkg_build_path + "\\build'"
-                log.debug("Configuring with Cmake")
+                )) + cmake_defines + " -S '" + pkg_build_path + "' -B '" + pkg_build_path + "\\build'"
+                log.debug("Configuring with Cmake", cmake_conf_script)
                 result = getSHrunner().exec_batch(cmake_conf_script)
-                if result[0] is not 0:
+                if result[0] != 0:
                     log.error("Error configuring with CMake")
                     exit(1)
 
@@ -325,7 +325,7 @@ def fetch_pkg(pkg_name, version, url, force):
         args = [full_url, '-O', archive_path]
         args.extend(wget_args)
         dl_result = getSHrunner().exec_batch('wget', args)
-        if dl_result[0] is not 0:
+        if dl_result[0] != 0:
             log.warning(
                 'wget failure. Using powershell Invoke-WebRequest instead')
             args = ['-Uri', full_url, '-OutFile', archive_path]
@@ -511,7 +511,7 @@ def build(pkg_name, pkg_dir, project_paths, custom_scripts, with_env, sdk,
             cmake_build_script = "cmake --build '" + pkg_dir + \
                 "\\build' " + "--config " + conf
             result = getSHrunner().exec_batch(cmake_build_script)
-            if result[0] is not 0:
+            if result[0] != 0:
                 log.error("Error building with CMake")
                 exit(1)
 
