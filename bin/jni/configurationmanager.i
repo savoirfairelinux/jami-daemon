@@ -234,6 +234,8 @@ void setDefaultModerator(const std::string& accountID, const std::string& peerUR
 std::vector<std::string> getDefaultModerators(const std::string& accountID);
 void enableLocalModerators(const std::string& accountID, bool isModEnabled);
 bool isLocalModeratorsEnabled(const std::string& accountID);
+void setAllModerators(const std::string& accountID, bool allModerators);
+bool isAllModerators(const std::string& accountID);
 
 }
 

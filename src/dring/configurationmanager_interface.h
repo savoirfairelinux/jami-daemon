@@ -309,6 +309,17 @@ DRING_PUBLIC void enableLocalModerators(const std::string& accountID,
  */
 DRING_PUBLIC bool isLocalModeratorsEnabled(const std::string& accountID);
 
+/**
+ * Enable/disable all moderators for conferences
+ */
+DRING_PUBLIC void setAllModerators(const std::string& accountID,
+                                        bool allModerators);
+
+/**
+ * Get all moderators state
+ */
+DRING_PUBLIC bool isAllModerators(const std::string& accountID);
+
 struct DRING_PUBLIC AudioSignal
 {
     struct DRING_PUBLIC DeviceEvent
