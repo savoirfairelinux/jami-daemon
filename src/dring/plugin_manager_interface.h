@@ -66,4 +66,18 @@ DRING_PUBLIC std::vector<std::string> getChatHandlerStatus(const std::string& ac
                                                            const std::string& peerId);
 DRING_PUBLIC bool getPluginsEnabled();
 DRING_PUBLIC void setPluginsEnabled(bool state);
+DRING_PUBLIC void answerTrustPlugin(bool trust, const std::string& rootPath);
+
+// Plugin signal type definitions
+struct DRING_PUBLIC PluginSignal
+{
+    struct DRING_PUBLIC askTrustPluginIssuer
+    {
+        constexpr static const char* name = "askTrustPluginIssuer";
+        using cb_type = void(const std::string&,
+                             const std::string&,
+                             const std::string&,
+                             const std::string&);
+    };
+};
 } // namespace DRing

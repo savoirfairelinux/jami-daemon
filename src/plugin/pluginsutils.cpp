@@ -60,9 +60,9 @@ namespace PluginUtils {
 
 // DATA_REGEX is used to during the plugin jpl uncompressing
 const std::regex DATA_REGEX("^data" DIR_SEPARATOR_STR_ESC ".+");
-// SO_REGEX is used to find libraries during the plugin jpl uncompressing
-const std::regex SO_REGEX("([a-zA-Z0-9]+(?:[_-]?[a-zA-Z0-9]+)*)" DIR_SEPARATOR_STR_ESC
-                          "([a-zA-Z0-9_-]+\\.(so|dll|lib).*)");
+// LIB_REGEX is used to find libraries during the plugin jpl uncompressing
+const std::regex LIB_REGEX("([a-zA-Z0-9]+(?:[_-]?[a-zA-Z0-9]+)*)" DIR_SEPARATOR_STR_ESC
+                           "([a-zA-Z0-9_-]+\\.(so|dll|lib|json|crt).*)");
 
 std::string
 manifestPath(const std::string& rootPath)
@@ -174,12 +174,27 @@ uncompressJplFunction(const std::string& relativeFileName)
     // the main installation path.
     if (relativeFileName == "manifest.json" || std::regex_match(relativeFileName, DATA_REGEX)) {
         return std::make_pair(true, relativeFileName);
-    } else if (regex_search(relativeFileName, match, SO_REGEX)) {
+    } else if (regex_search(relativeFileName, match, LIB_REGEX)) {
         if (match.str(1) == ABI) {
             return std::make_pair(true, match.str(2));
         }
     }
     return std::make_pair(false, std::string {""});
+}
+
+std::string
+getDN(gnutls_x509_crt_t request, const char* oid, bool issuer)
+{
+    std::string dn;
+    dn.resize(512);
+    size_t dn_sz = dn.size();
+    int ret = issuer
+                  ? gnutls_x509_crt_get_issuer_dn_by_oid(request, oid, 0, 0, &(*dn.begin()), &dn_sz)
+                  : gnutls_x509_crt_get_dn_by_oid(request, oid, 0, 0, &(*dn.begin()), &dn_sz);
+    if (ret != GNUTLS_E_SUCCESS)
+        return {};
+    dn.resize(dn_sz);
+    return dn;
 }
 } // namespace PluginUtils
 } // namespace jami
