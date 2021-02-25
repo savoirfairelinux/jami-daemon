@@ -70,6 +70,7 @@ public:
      * @return 0 if success
      * 100 if already installed with similar version
      * 200 if already installed with newer version
+     * 300 if signature is not verified
      * libarchive error codes otherwise
      */
     int installPlugin(const std::string& jplPath, bool force);
@@ -130,6 +131,26 @@ public:
      * @return True if success.
      */
     bool resetPluginPreferencesValuesMap(const std::string& rootPath);
+
+    /** To be used during installation
+     * @brief Checks plugin binary and info files signatures with public key provided inside jpl
+     * if any of the checks fail, plugin cannot be installed
+     * @param rootPath
+     * @param name
+     * @return True if plugin binary signature check succeed
+     */
+    bool checkSignature(const std::string& rootPath, const std::string& name);
+
+    /** To be used during installation
+     * If both files are checked, we provide plugin authorship infos to the user
+     * waiting it's approval. If aproved, proceed installation. Exit installation
+     * process otherwise.
+     * @brief Verify if user accepts author infos before loading plugin
+     * @param rootPath
+     * @param name
+     * @return true if authors are accepted
+     */
+    bool checkPluginAuthors(const std::string& rootPath, const std::string& name);
 
     CallServicesManager& getCallServicesManager() { return callsm_; }
 

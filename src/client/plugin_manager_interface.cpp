@@ -188,4 +188,13 @@ setPluginsEnabled(bool state)
     jami::Manager::instance().pluginPreferences.setPluginsEnabled(state);
     jami::Manager::instance().saveConfig();
 }
+
+void
+answerTrustPlugin(bool trust, const std::string& rootPath)
+{
+    if (trust)
+        loadPlugin(rootPath);
+    else
+        uninstallPlugin(rootPath);
+}
 } // namespace DRing

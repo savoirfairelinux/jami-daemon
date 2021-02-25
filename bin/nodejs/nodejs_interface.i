@@ -99,6 +99,7 @@ namespace std {
 %include "presencemanager.i"
 %include "callmanager.i"
 %include "videomanager.i"
+%include "plugin_manager_interface.i"
 //#include "dring/callmanager_interface.h"
 
 %header %{
@@ -130,6 +131,7 @@ void init(const v8::Handle<v8::Value> &funcMap){
     using DRing::exportable_callback;
     using DRing::ConfigurationSignal;
     using DRing::CallSignal;
+    using DRing::PluginSignal;
     using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
     const std::map<std::string, SharedCallback> callEvHandlers = {
         exportable_callback<CallSignal::StateChange>(bind(&callStateChanged, _1, _2, _3)),
@@ -155,11 +157,16 @@ void init(const v8::Handle<v8::Value> &funcMap){
         exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4 )),
     };
 
+    const std::map<std::string, SharedCallback> pluginEvHandlers = {
+        exportable_callback<PluginSignal::askTrustPluginIssuer>(bind(&askTrustPluginIssuer, _1, _2, _3, _4)),
+    };
+
     if (!DRing::init(static_cast<DRing::InitFlag>(DRing::DRING_FLAG_DEBUG)))
         return;
 
     registerSignalHandlers(configEvHandlers);
     registerSignalHandlers(callEvHandlers);
+    registerSignalHandlers(pluginEvHandlers);
 
     DRing::start();
 }

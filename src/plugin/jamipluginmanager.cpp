@@ -35,8 +35,11 @@ extern "C" {
 #include <archive.h>
 }
 
+#include <opendht/crypto.h>
+
 #define PLUGIN_ALREADY_INSTALLED 100 /* Plugin already installed with the same version */
 #define PLUGIN_OLD_VERSION       200 /* Plugin already installed with a newer version */
+#define PLUGIN_SIGNATURE_FAIL    300 /* Plugin signature verification fail */
 
 #ifdef WIN32
 #define LIB_TYPE   ".dll"
@@ -129,9 +132,9 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
                                                         PluginUtils::uncompressJplFunction);
                         }
                     } else if (version == installedVersion) {
-                        r = PLUGIN_ALREADY_INSTALLED;
+                        return PLUGIN_ALREADY_INSTALLED;
                     } else {
-                        r = PLUGIN_OLD_VERSION;
+                        return PLUGIN_OLD_VERSION;
                     }
                 }
             } else {
@@ -139,7 +142,11 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
                                             destinationDir,
                                             PluginUtils::uncompressJplFunction);
             }
-            loadPlugin(destinationDir);
+            if (!checkSignature(destinationDir, name)) {
+                uninstallPlugin(destinationDir);
+                return PLUGIN_SIGNATURE_FAIL;
+            }
+            checkPluginAuthors(destinationDir, name);
         } catch (const std::exception& e) {
             JAMI_ERR() << e.what();
         }
@@ -320,4 +327,63 @@ JamiPluginManager::registerServices()
         return 0;
     });
 }
+
+bool
+JamiPluginManager::checkSignature(const std::string& rootPath, const std::string& name)
+{
+    std::vector<dht::Blob> filesBlobs;
+    std::vector<std::string> paths = {rootPath + DIR_SEPARATOR_STR + LIB_PREFIX + name + LIB_TYPE,
+                                      rootPath + DIR_SEPARATOR_STR + LIB_PREFIX + name + LIB_TYPE
+                                          + ".sign",
+                                      rootPath + DIR_SEPARATOR_STR + "manifest.json",
+                                      rootPath + DIR_SEPARATOR_STR + "manifest.json.sign",
+                                      rootPath + DIR_SEPARATOR_STR + name + ".crt"};
+    std::vector<std::lock_guard<std::mutex>*> mtxs;
+
+    for (auto& path : paths) {
+        std::lock_guard<std::mutex> lk(fileutils::getFileLock(path));
+        mtxs.emplace_back(&lk);
+    }
+    try {
+        for (auto& path : paths)
+            filesBlobs.emplace_back(fileutils::loadFile(path));
+    } catch (...) {
+        JAMI_ERR() << "Plugin signature files not valid.";
+        return false;
+    }
+    dht::crypto::Certificate dht_cert;
+    try {
+        dht_cert = dht::crypto::Certificate(filesBlobs.back());
+    } catch (...) {
+        JAMI_ERR() << "Certificate not found.";
+        return false;
+    }
+    if (dht_cert.getPublicKey().checkSignature(filesBlobs[0], filesBlobs[1])
+        && dht_cert.getPublicKey().checkSignature(filesBlobs[2], filesBlobs[3]))
+        return true;
+    return false;
+}
+
+bool
+JamiPluginManager::checkPluginAuthors(const std::string& rootPath, const std::string& name)
+{
+    dht::Blob fileBlob;
+    std::string path = rootPath + DIR_SEPARATOR_STR + name + ".crt";
+    std::lock_guard<std::mutex> lk(fileutils::getFileLock(path));
+    dht::crypto::Certificate dht_cert;
+    try {
+        dht_cert = dht::crypto::Certificate(fileutils::loadFile(path));
+    } catch (...) {
+        JAMI_ERR() << "Plugin certificate file not valid.";
+        return false;
+    }
+
+    auto PluginName = dht_cert.getName();
+    auto orgDiv = PluginUtils::getDN(dht_cert.cert, GNUTLS_OID_X520_ORGANIZATIONAL_UNIT_NAME, true);
+    auto org = PluginUtils::getDN(dht_cert.cert, GNUTLS_OID_X520_COMMON_NAME, true);
+
+    emitSignal<DRing::PluginSignal::askTrustPluginIssuer>(org, orgDiv, name, rootPath);
+    return true;
+}
+
 } // namespace jami
