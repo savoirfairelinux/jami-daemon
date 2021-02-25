@@ -190,5 +190,30 @@
             </arg>
         </method>
 
+        <method name="answerTrustPlugin" tp:name-for-bindings="answerTrustPlugin">
+            <tp:added version="9.10.0"/>
+            <arg type="b" name="trust" direction="in">
+            </arg>
+            <arg type="s" name="rootPath" direction="in">
+            </arg>
+        </method>
+
+        <!-- SIGNALS !-->
+
+        <signal name="askTrustPluginIssuer" tp:name-for-bindings="askTrustPluginIssuer">
+            <tp:added version="9.10.0"/>
+            <tp:docstring>
+                send to interface a signal to ask user if he trusts plugin issuer
+            </tp:docstring>
+            <arg type="s" name="issuerName">
+            </arg>
+            <arg type="s" name="companyDiv">
+            </arg>
+            <arg type="s" name="pluginName">
+            </arg>
+            <arg type="s" name="rootPath">
+            </arg>
+        </signal>
+
     </interface>
 </node>
