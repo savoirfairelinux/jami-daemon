@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "673c551b_e6d9a4c3",
+        "filename": "contrib/bootstrap",
+        "patchSetId": 8
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-26T15:36:48Z",
+      "side": 1,
+      "message": "mix tab/space",
+      "range": {
+        "startLine": 66,
+        "startChar": 0,
+        "endLine": 66,
+        "endChar": 18
+      },
+      "revId": "6503539eb110299f74289b06adbcc3413c1666d6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
