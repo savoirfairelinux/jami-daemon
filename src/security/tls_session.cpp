@@ -1161,7 +1161,8 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
         JAMI_DBG("[TLS] handshake");
         ret = gnutls_handshake(session_);
     } while ((ret == GNUTLS_E_INTERRUPTED or ret == GNUTLS_E_AGAIN)
-             and ++retry_count < HANDSHAKE_MAX_RETRY);
+             and ++retry_count < HANDSHAKE_MAX_RETRY
+             and state_.load() != TlsSessionState::SHUTDOWN);
 
     // Stop on fatal error
     if (gnutls_error_is_fatal(ret)) {
