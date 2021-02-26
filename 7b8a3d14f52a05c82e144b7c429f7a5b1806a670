@@ -1,0 +1,142 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "56446ad1_e32f1e4c",
+        "filename": "src/uri.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-26T18:47:22Z",
+      "side": 1,
+      "message": "string_view",
+      "range": {
+        "startLine": 24,
+        "startChar": 9,
+        "endLine": 24,
+        "endChar": 27
+      },
+      "revId": "7b8a3d14f52a05c82e144b7c429f7a5b1806a670",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d06560ea_c8e87b11",
+        "filename": "src/uri.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-26T18:47:22Z",
+      "side": 1,
+      "message": "Uri",
+      "range": {
+        "startLine": 26,
+        "startChar": 6,
+        "endLine": 26,
+        "endChar": 9
+      },
+      "revId": "7b8a3d14f52a05c82e144b7c429f7a5b1806a670",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1756254d_9d50030b",
+        "filename": "src/uri.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-26T18:47:22Z",
+      "side": 1,
+      "message": "Scheme",
+      "range": {
+        "startLine": 29,
+        "startChar": 15,
+        "endLine": 29,
+        "endChar": 25
+      },
+      "revId": "7b8a3d14f52a05c82e144b7c429f7a5b1806a670",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "abf3c0e5_cfd9eac2",
+        "filename": "src/uri.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-26T18:47:22Z",
+      "side": 1,
+      "message": "scheme is scheme, should be a single SIP scheme by construction",
+      "range": {
+        "startLine": 31,
+        "startChar": 8,
+        "endLine": 32,
+        "endChar": 107
+      },
+      "revId": "7b8a3d14f52a05c82e144b7c429f7a5b1806a670",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "41517b15_cec6eac0",
+        "filename": "src/uri.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-26T18:47:22Z",
+      "side": 1,
+      "message": "hostname() or address() ?",
+      "range": {
+        "startLine": 39,
+        "startChar": 16,
+        "endLine": 39,
+        "endChar": 24
+      },
+      "revId": "7b8a3d14f52a05c82e144b7c429f7a5b1806a670",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f9417999_63f765d1",
+        "filename": "src/uri.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-26T18:47:22Z",
+      "side": 1,
+      "message": "toString()",
+      "range": {
+        "startLine": 41,
+        "startChar": 16,
+        "endLine": 41,
+        "endChar": 20
+      },
+      "revId": "7b8a3d14f52a05c82e144b7c429f7a5b1806a670",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
