@@ -108,6 +108,7 @@ NameDirectory::NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::
 
 NameDirectory::~NameDirectory()
 {
+    isDestroying_ = true;
     std::lock_guard<std::mutex> lk(requestsMtx_);
     requests_.clear();
 }
@@ -162,6 +163,8 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
         setHeaderFields(*request);
         request->add_on_done_callback(
             [this, cb = std::move(cb), reqid, addr](const dht::http::Response& response) {
+                if (isDestroying_)
+                    return;
                 if (response.status_code >= 400 && response.status_code < 500) {
                     cb("", Response::notFound);
                 } else if (response.status_code != 200) {
@@ -248,6 +251,9 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
         setHeaderFields(*request);
         request->add_on_done_callback([this, reqid, name, cb = std::move(cb)](
                                           const dht::http::Response& response) {
+            if (isDestroying_) {
+                return;
+            }
             if (response.status_code >= 400 && response.status_code < 500)
                 cb("", Response::notFound);
             else if (response.status_code < 200 || response.status_code > 299)

@@ -110,6 +110,7 @@ private:
     std::shared_ptr<asio::io_context> httpContext_;
     std::shared_ptr<dht::http::Resolver> resolver_;
     std::mutex requestsMtx_ {};
+    bool isDestroying_ {false};
     std::map<unsigned, std::shared_ptr<dht::http::Request>> requests_;
 
     std::map<std::string, std::string> nameCache_ {};
