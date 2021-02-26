@@ -231,11 +231,11 @@ VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob,
             std::shared_ptr<VideoFrame> frame;
             try {
                 frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame_p), AV_PIX_FMT_NV12);
+                x->atomic_copy(*std::static_pointer_cast<VideoFrame>(frame));
             } catch (const std::runtime_error& e) {
                 JAMI_ERR("Accel failure: %s", e.what());
                 return;
             }
-            x->atomic_copy(*std::static_pointer_cast<VideoFrame>(frame));
 #else
             x->atomic_copy(*std::static_pointer_cast<VideoFrame>(frame_p));
 #endif
