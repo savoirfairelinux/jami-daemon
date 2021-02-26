@@ -65,6 +65,29 @@
     },
     {
       "key": {
+        "uuid": "35af80fb_58c26eef",
+        "filename": "src/observer.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-26T16:23:26Z",
+      "side": 1,
+      "message": "use notify(map_(t))",
+      "range": {
+        "startLine": 198,
+        "startChar": 7,
+        "endLine": 214,
+        "endChar": 9
+      },
+      "revId": "6425415366ca4b54dc7dc330d87cabdb4697f746",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "515f3f29_486b2cb3",
         "filename": "src/observer.h",
         "patchSetId": 6
@@ -81,6 +104,29 @@
         "startChar": 23,
         "endLine": 240,
         "endChar": 29
+      },
+      "revId": "6425415366ca4b54dc7dc330d87cabdb4697f746",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d7ed43be_04609e0f",
+        "filename": "src/observer.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 245,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-02-26T16:23:26Z",
+      "side": 1,
+      "message": "this logic seems weird here.\n* detached() not called on priority_observers_ but called on normal observers ?\n* why only removing valid shared_ptr and leave expired ones there ?\n* why removing priority_observers_ but not normal observers ?",
+      "range": {
+        "startLine": 240,
+        "startChar": 0,
+        "endLine": 245,
+        "endChar": 9
       },
       "revId": "6425415366ca4b54dc7dc330d87cabdb4697f746",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
