@@ -22,6 +22,7 @@
 
 #include "noncopyable.h"
 #include "audio/audio_frame_resizer.h"
+#include "audio/resampler.h"
 #include "audio/audiobuffer.h"
 #include "libav_deps.h"
 
@@ -36,19 +37,26 @@ public:
     EchoCanceller(AudioFormat format, unsigned frameSize)
         : playbackQueue_(format, frameSize)
         , recordQueue_(format, frameSize)
-        , sampleRate_(format.sample_rate)
+        , resampler_(new Resampler)
+        , format_(format)
         , frameSize_(frameSize)
     {}
     virtual ~EchoCanceller() = default;
 
     virtual void putRecorded(std::shared_ptr<AudioFrame>&& buf)
     {
-        recordQueue_.enqueue(std::move(buf));
+        recordStarted_ = true;
+        if (!playbackStarted_)
+            return;
+        enqueue(recordQueue_, std::move(buf));
     };
     virtual void putPlayback(const std::shared_ptr<AudioFrame>& buf)
     {
-        auto c = buf;
-        playbackQueue_.enqueue(std::move(c));
+        playbackStarted_ = true;
+        if (!recordStarted_)
+            return;
+        auto copy = buf;
+        enqueue(playbackQueue_, std::move(copy));
     };
     virtual std::shared_ptr<AudioFrame> getProcessed() = 0;
     virtual void done() = 0;
@@ -56,8 +64,21 @@ public:
 protected:
     AudioFrameResizer playbackQueue_;
     AudioFrameResizer recordQueue_;
-    unsigned sampleRate_;
+    std::unique_ptr<Resampler> resampler_;
+    std::atomic_bool playbackStarted_;
+    std::atomic_bool recordStarted_;
+    AudioFormat format_;
     unsigned frameSize_;
+
+private:
+    void enqueue(AudioFrameResizer& frameResizer, std::shared_ptr<AudioFrame>&& buf)
+    {
+        if (buf->getFormat() != format_) {
+            auto resampled = resampler_->resample(std::move(buf), format_);
+            frameResizer.enqueue(std::move(resampled));
+        } else
+            frameResizer.enqueue(std::move(buf));
+    };
 };
 
 } // namespace jami
