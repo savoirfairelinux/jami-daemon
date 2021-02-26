@@ -132,7 +132,11 @@ CallServicesManager::toggleCallMediaHandler(const std::string& mediaHandlerId,
                                             const std::string& callId,
                                             const bool toggle)
 {
-    toggleCallMediaHandler(std::stoull(mediaHandlerId), callId, toggle);
+    try {
+        toggleCallMediaHandler(std::stoull(mediaHandlerId), callId, toggle);
+    } catch (const std::exception& e) {
+        JAMI_ERR("Error toggling media handler: %s", e.what());
+    }
 }
 
 std::map<std::string, std::string>
