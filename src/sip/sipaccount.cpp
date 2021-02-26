@@ -84,6 +84,7 @@
 namespace jami {
 
 using yaml_utils::parseValue;
+using yaml_utils::parseValueOptional;
 using yaml_utils::parseVectorMap;
 using sip_utils::CONST_PJ_STR;
 
@@ -152,7 +153,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , contactBuffer_()
     , contact_ {contactBuffer_, 0}
     , contactRewriteMethod_(2)
-    , allowViaRewrite_(true)
+    , allowViaRewrite_(false)
     , allowContactRewrite_(1)
     , contactOverwritten_(false)
     , via_tp_(nullptr)
@@ -456,6 +457,7 @@ SIPAccount::serialize(YAML::Emitter& out) const
 
     out << YAML::Key << Preferences::REGISTRATION_EXPIRE_KEY << YAML::Value << registrationExpire_;
     out << YAML::Key << Conf::SERVICE_ROUTE_KEY << YAML::Value << serviceRoute_;
+    out << YAML::Key << Conf::ALLOW_VIA_REWRITE << YAML::Value << allowViaRewrite_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -532,6 +534,8 @@ SIPAccount::unserialize(const YAML::Node& node)
         parseValue(node, Preferences::REGISTRATION_EXPIRE_KEY, registrationExpire_);
         parseValue(node, Conf::KEEP_ALIVE_ENABLED, keepAliveEnabled_);
         parseValue(node, Conf::SERVICE_ROUTE_KEY, serviceRoute_);
+        parseValueOptional(node, Conf::ALLOW_VIA_REWRITE, allowViaRewrite_);
+
         const auto& credsNode = node[Conf::CRED_KEY];
         setCredentials(parseVectorMap(credsNode,
                                       {Conf::CONFIG_ACCOUNT_REALM,
@@ -608,6 +612,7 @@ SIPAccount::setAccountDetails(const std::map<std::string, std::string>& details)
     // SIP specific account settings
     parseString(details, Conf::CONFIG_BIND_ADDRESS, bindAddress_);
     parseString(details, Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
+    parseBool(details, Conf::CONFIG_ACCOUNT_IP_REWRITE, allowViaRewrite_);
 
     if (not publishedSameasLocal_)
         usePublishedAddressPortInVIA();
@@ -685,6 +690,7 @@ SIPAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_BIND_ADDRESS, bindAddress_);
     a.emplace(Conf::CONFIG_LOCAL_PORT, std::to_string(localPort_));
     a.emplace(Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
+    a.emplace(Conf::CONFIG_ACCOUNT_IP_REWRITE, allowViaRewrite_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, std::to_string(registrationExpire_));
     a.emplace(Conf::CONFIG_KEEP_ALIVE_ENABLED, keepAliveEnabled_ ? TRUE_STR : FALSE_STR);
 
