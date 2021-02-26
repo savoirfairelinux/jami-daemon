@@ -1241,7 +1241,10 @@ SIPCall::startAllMedia()
         rtp->updateMedia(remote, local);
 
         rtp->setSuccessfulSetupCb(
-            [this](MediaType type, bool isRemote) { rtpSetupSuccess(type, isRemote); });
+            [wthis = weak()](MediaType type, bool isRemote) {
+                if (auto this_ = wthis.lock())
+                    this_->rtpSetupSuccess(type, isRemote);
+            });
 
 #ifdef ENABLE_VIDEO
         videortp_->setRequestKeyFrameCallback([wthis = weak()] {
