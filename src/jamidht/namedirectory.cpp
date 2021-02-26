@@ -108,8 +108,13 @@ NameDirectory::NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::
 
 NameDirectory::~NameDirectory()
 {
-    std::lock_guard<std::mutex> lk(requestsMtx_);
-    requests_.clear();
+    decltype(requests_) requests;
+    {
+        std::lock_guard<std::mutex> lk(requestsMtx_);
+        requests = std::move(requests_);
+    }
+    for (auto& req : requests)
+        req->cancel();
 }
 
 void
@@ -156,12 +161,11 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
     auto request = std::make_shared<Request>(*httpContext_,
                                              resolver_,
                                              serverUrl_ + QUERY_ADDR + addr);
-    auto reqid = request->id();
     try {
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
         request->add_on_done_callback(
-            [this, cb = std::move(cb), reqid, addr](const dht::http::Response& response) {
+            [this, cb = std::move(cb), addr](const dht::http::Response& response) {
                 if (response.status_code >= 400 && response.status_code < 500) {
                     cb("", Response::notFound);
                 } else if (response.status_code != 200) {
@@ -204,15 +208,19 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                     }
                 }
                 std::lock_guard<std::mutex> lk(requestsMtx_);
-                requests_.erase(reqid);
+                if (auto req = response.request.lock())
+                    requests_.erase(req);
             });
+        {
+            std::lock_guard<std::mutex> lk(requestsMtx_);
+            requests_.emplace(request);
+        }
         request->send();
-        std::lock_guard<std::mutex> lk(requestsMtx_);
-        requests_[reqid] = request;
     } catch (const std::exception& e) {
         JAMI_ERR("Error when performing address lookup: %s", e.what());
         std::lock_guard<std::mutex> lk(requestsMtx_);
-        requests_.erase(reqid);
+        if (request)
+            requests_.erase(request);
     }
 }
 
@@ -242,11 +250,10 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
     auto request = std::make_shared<Request>(*httpContext_,
                                              resolver_,
                                              serverUrl_ + QUERY_NAME + name);
-    auto reqid = request->id();
     try {
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
-        request->add_on_done_callback([this, reqid, name, cb = std::move(cb)](
+        request->add_on_done_callback([this, name, cb = std::move(cb)](
                                           const dht::http::Response& response) {
             if (response.status_code >= 400 && response.status_code < 500)
                 cb("", Response::notFound);
@@ -303,16 +310,19 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                     cb("", Response::error);
                 }
             }
-            std::lock_guard<std::mutex> lk(requestsMtx_);
-            requests_.erase(reqid);
+            if (auto req = response.request.lock())
+                requests_.erase(req);
         });
+        {
+            std::lock_guard<std::mutex> lk(requestsMtx_);
+            requests_.emplace(request);
+        }
         request->send();
-        std::lock_guard<std::mutex> lk(requestsMtx_);
-        requests_[reqid] = request;
     } catch (const std::exception& e) {
         JAMI_ERR("Name lookup for %s failed: %s", name.c_str(), e.what());
         std::lock_guard<std::mutex> lk(requestsMtx_);
-        requests_.erase(reqid);
+        if (request)
+            requests_.erase(request);
     }
 }
 
@@ -356,7 +366,6 @@ NameDirectory::registerName(const std::string& addr,
     auto request = std::make_shared<Request>(*httpContext_,
                                              resolver_,
                                              serverUrl_ + QUERY_NAME + name);
-    auto reqid = request->id();
     try {
         request->set_method(restinio::http_method_post());
         setHeaderFields(*request);
@@ -365,7 +374,7 @@ NameDirectory::registerName(const std::string& addr,
         JAMI_WARN("RegisterName: sending request %s %s", addr.c_str(), name.c_str());
 
         request->add_on_done_callback(
-            [this, reqid, name, addr, cb = std::move(cb)](const dht::http::Response& response) {
+            [this, name, addr, cb = std::move(cb)](const dht::http::Response& response) {
                 if (response.status_code == 400) {
                     cb(RegistrationResponse::incompleteRequest);
                     JAMI_ERR("RegistrationResponse::incompleteRequest");
@@ -410,16 +419,20 @@ NameDirectory::registerName(const std::string& addr,
                     cb(success ? RegistrationResponse::success : RegistrationResponse::error);
                 }
                 std::lock_guard<std::mutex> lk(requestsMtx_);
-                requests_.erase(reqid);
+                if (auto req = response.request.lock())
+                    requests_.erase(req);
             });
+        {
+            std::lock_guard<std::mutex> lk(requestsMtx_);
+            requests_.emplace(request);
+        }
         request->send();
-        std::lock_guard<std::mutex> lk(requestsMtx_);
-        requests_[reqid] = request;
     } catch (const std::exception& e) {
         JAMI_ERR("Error when performing name registration: %s", e.what());
         cb(RegistrationResponse::error);
         std::lock_guard<std::mutex> lk(requestsMtx_);
-        requests_.erase(reqid);
+        if (request)
+            requests_.erase(request);
     }
 }
 

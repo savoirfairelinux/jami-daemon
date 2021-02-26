@@ -24,6 +24,7 @@
 
 #include <functional>
 #include <map>
+#include <set>
 #include <string>
 #include <mutex>
 #include <memory>
@@ -110,7 +111,7 @@ private:
     std::shared_ptr<asio::io_context> httpContext_;
     std::shared_ptr<dht::http::Resolver> resolver_;
     std::mutex requestsMtx_ {};
-    std::map<unsigned, std::shared_ptr<dht::http::Request>> requests_;
+    std::set<std::shared_ptr<dht::http::Request>> requests_;
 
     std::map<std::string, std::string> nameCache_ {};
     std::map<std::string, std::string> addrCache_ {};
