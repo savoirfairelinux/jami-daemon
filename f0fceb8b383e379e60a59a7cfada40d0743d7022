@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d33ece12_991da17f",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 809,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-02-26T21:34:56Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nloop variable is copied but only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "f0fceb8b383e379e60a59a7cfada40d0743d7022",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
