@@ -91,6 +91,8 @@ PortAudioLayer::PortAudioLayer(const AudioPreference& pref)
     : AudioLayer {pref}
     , pimpl_ {new PortAudioLayerImpl(*this, pref)}
 {
+    setHasNativeAEC(false);
+
     auto numDevices = Pa_GetDeviceCount();
     if (numDevices < 0) {
         JAMI_ERR("Pa_CountDevices returned 0x%x", numDevices);
