@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "f40e0e64_1f7e7d83",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0e87a834_37cdac34",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4261ca74_1fd3ef2b",
         "filename": "src/plugin/callservicesmanager.cpp",
         "patchSetId": 6
@@ -33,6 +51,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "45b7c3e7_d0e3ec2b",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4261ca74_1fd3ef2b",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "68ab267a_e01cb0f6",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4fdbe44e_1f048d83",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "aea97705_833bb9b0",
         "filename": "src/plugin/callservicesmanager.cpp",
         "patchSetId": 6
@@ -70,6 +124,24 @@
     },
     {
       "key": {
+        "uuid": "b81fd69f_20f88425",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aea97705_833bb9b0",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "a3933c93_a9afbb7d",
         "filename": "src/plugin/callservicesmanager.cpp",
         "patchSetId": 6
@@ -81,6 +153,24 @@
       "writtenOn": "2021-02-23T21:17:53Z",
       "side": 1,
       "message": "Do you mean media type.",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ec1ffdbc_b8ec4a8c",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 172,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "i actually wanted to use the map key",
+      "parentUuid": "a3933c93_a9afbb7d",
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
@@ -104,6 +194,24 @@
     },
     {
       "key": {
+        "uuid": "7043c8aa_3df8f2d0",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a7fab8e9_2f30af0c",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "70bc7a4f_79989a0a",
         "filename": "src/plugin/callservicesmanager.h",
         "patchSetId": 6
@@ -118,6 +226,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a36f0bbf_412a0141",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "70bc7a4f_79989a0a",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -138,6 +264,24 @@
     },
     {
       "key": {
+        "uuid": "c819354b_d95d6268",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3b87cf11_fb5e6506",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "a1a0ccba_6389a516",
         "filename": "src/plugin/callservicesmanager.h",
         "patchSetId": 6
@@ -152,6 +296,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9bcfe34a_fc849aa5",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a1a0ccba_6389a516",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -172,6 +334,24 @@
     },
     {
       "key": {
+        "uuid": "0f4e8614_50d334e2",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "87e92843_0ab82db0",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "8b03ce37_800d28cc",
         "filename": "src/plugin/callservicesmanager.h",
         "patchSetId": 6
@@ -186,6 +366,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3b655232_67b7eed5",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8b03ce37_800d28cc",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -206,6 +404,24 @@
     },
     {
       "key": {
+        "uuid": "36ef8c02_83bf41ae",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "57ca5b10_7d1d0314",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "59c763e5_84da2a1d",
         "filename": "src/plugin/callservicesmanager.h",
         "patchSetId": 6
@@ -220,6 +436,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8a3b8d01_779c8e2a",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "59c763e5_84da2a1d",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -240,6 +474,24 @@
     },
     {
       "key": {
+        "uuid": "4ff9ed7b_ea96d54a",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "afd71810_7dc933fb",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "09026120_46982c61",
         "filename": "src/plugin/callservicesmanager.h",
         "patchSetId": 6
@@ -254,6 +506,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "83bb8e00_c5d3bc41",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "09026120_46982c61",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -274,6 +544,24 @@
     },
     {
       "key": {
+        "uuid": "6ce1ec09_df3ea072",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ecf788c4_0075e837",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "cbf9b1db_dbb559ad",
         "filename": "src/plugin/chatservicesmanager.cpp",
         "patchSetId": 6
@@ -288,6 +576,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a11dc4fe_c2e17d08",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cbf9b1db_dbb559ad",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -308,6 +614,24 @@
     },
     {
       "key": {
+        "uuid": "73f74efa_51dbdecb",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4cbe6da1_c257e1de",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "6da8fa28_e1e57a50",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 6
@@ -322,6 +646,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e363951d_6f683f7e",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6da8fa28_e1e57a50",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -342,6 +684,24 @@
     },
     {
       "key": {
+        "uuid": "06014841_e081ab71",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "99c0acf4_03931fcc",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0a507c09_1529a50e",
         "filename": "src/plugin/chatservicesmanager.h",
         "patchSetId": 6
@@ -356,6 +716,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "846a02bc_c17e9c4a",
+        "filename": "src/plugin/chatservicesmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 145,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0a507c09_1529a50e",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -376,6 +754,24 @@
     },
     {
       "key": {
+        "uuid": "decf627a_3fbb7fba",
+        "filename": "src/plugin/jamiplugin.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b9555cf2_07a23a3f",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "ae447501_f8d0a2cb",
         "filename": "src/plugin/jamiplugin.h",
         "patchSetId": 6
@@ -390,6 +786,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "20903795_65f744e1",
+        "filename": "src/plugin/jamiplugin.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ae447501_f8d0a2cb",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -410,6 +824,24 @@
     },
     {
       "key": {
+        "uuid": "1dc6c8c9_22abaa1b",
+        "filename": "src/plugin/jamiplugin.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "50d6160b_dda5b91e",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "872b6b7b_b277845f",
         "filename": "src/plugin/jamiplugin.h",
         "patchSetId": 6
@@ -424,6 +856,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d3a6656a_7f152e17",
+        "filename": "src/plugin/jamiplugin.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "872b6b7b_b277845f",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -444,6 +894,24 @@
     },
     {
       "key": {
+        "uuid": "d4e919ae_89f2bbc7",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "99ae5993_af1eb329",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "56fdddb9_162a63de",
         "filename": "src/plugin/jamipluginmanager.cpp",
         "patchSetId": 6
@@ -458,6 +926,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1dbbf2f4_30aa1f09",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "56fdddb9_162a63de",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -478,6 +964,24 @@
     },
     {
       "key": {
+        "uuid": "37bfa084_7b608ea9",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5336c6e4_cf70139e",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "59c8b3d7_36e7aa14",
         "filename": "src/plugin/jamipluginmanager.h",
         "patchSetId": 6
@@ -492,6 +996,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7c7eb77a_777350fb",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "59c8b3d7_36e7aa14",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -512,6 +1034,24 @@
     },
     {
       "key": {
+        "uuid": "86566b2d_df4b455a",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "616c868d_6e5c3079",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "08104233_a4070208",
         "filename": "src/plugin/jamipluginmanager.h",
         "patchSetId": 6
@@ -526,6 +1066,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7f351c39_15212244",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "08104233_a4070208",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -546,6 +1104,24 @@
     },
     {
       "key": {
+        "uuid": "ca7fa558_adf8950b",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 143,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "56c6f747_1f43161e",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "84f974a7_a91a631b",
         "filename": "src/plugin/pluginloader.h",
         "patchSetId": 6
@@ -560,6 +1136,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "810e8b21_c8d83960",
+        "filename": "src/plugin/pluginloader.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "84f974a7_a91a631b",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -580,6 +1174,24 @@
     },
     {
       "key": {
+        "uuid": "94b870af_767517b0",
+        "filename": "src/plugin/pluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b5af97eb_e12cfcf3",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4d43c6f3_627ba3b3",
         "filename": "src/plugin/pluginmanager.cpp",
         "patchSetId": 6
@@ -594,6 +1206,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b86d0ce8_15e124cc",
+        "filename": "src/plugin/pluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4d43c6f3_627ba3b3",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -614,6 +1244,24 @@
     },
     {
       "key": {
+        "uuid": "1d16e3d3_c9bc9838",
+        "filename": "src/plugin/pluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ea9e075c_a3358911",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "df600898_d33a716e",
         "filename": "src/plugin/pluginmanager.cpp",
         "patchSetId": 6
@@ -628,6 +1276,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "696c3679_9d8686b4",
+        "filename": "src/plugin/pluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 297,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "df600898_d33a716e",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -648,6 +1314,24 @@
     },
     {
       "key": {
+        "uuid": "3f228710_0f127912",
+        "filename": "src/plugin/pluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f7063091_11f10ab9",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "687925be_c035bd94",
         "filename": "src/plugin/pluginmanager.h",
         "patchSetId": 6
@@ -662,6 +1346,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7446fe21_44b2c05d",
+        "filename": "src/plugin/pluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "687925be_c035bd94",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -682,6 +1384,24 @@
     },
     {
       "key": {
+        "uuid": "3657825e_5b09beab",
+        "filename": "src/plugin/pluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "be9412cd_5944b6f0",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "459873b3_2466b4e3",
         "filename": "src/plugin/pluginmanager.h",
         "patchSetId": 6
@@ -699,6 +1419,24 @@
     },
     {
       "key": {
+        "uuid": "1abc08fa_1e61cf1f",
+        "filename": "src/plugin/pluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "459873b3_2466b4e3",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b969ff07_6ba1bcbd",
         "filename": "src/plugin/pluginmanager.h",
         "patchSetId": 6
@@ -710,6 +1448,24 @@
       "writtenOn": "2021-02-24T22:02:10Z",
       "side": 1,
       "message": "I am very familiar with the term \"untoggle\". May be the term unbind is more meaningful",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0b5def9a_67bfa233",
+        "filename": "src/plugin/pluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Toggle is used in other code parts, I think it\u0027s better to keep it in the comment",
+      "parentUuid": "b969ff07_6ba1bcbd",
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
@@ -733,6 +1489,24 @@
     },
     {
       "key": {
+        "uuid": "2fd4c0a2_4b13c972",
+        "filename": "src/plugin/pluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d62ca86d_fb8dc96b",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "c13962c4_7e83bd7a",
         "filename": "src/plugin/pluginpreferencesutils.cpp",
         "patchSetId": 6
@@ -747,6 +1521,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b48a7992_116d09d3",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c13962c4_7e83bd7a",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -767,6 +1559,24 @@
     },
     {
       "key": {
+        "uuid": "4bd2c823_44046684",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a011f8d1_e5d11a8b",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "f2ebffa1_6a3a7b9f",
         "filename": "src/plugin/pluginpreferencesutils.cpp",
         "patchSetId": 6
@@ -781,6 +1591,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e096f46d_3ad70f77",
+        "filename": "src/plugin/pluginpreferencesutils.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f2ebffa1_6a3a7b9f",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -801,6 +1629,24 @@
     },
     {
       "key": {
+        "uuid": "d2f97bdb_0d694b30",
+        "filename": "src/plugin/pluginpreferencesutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c079a646_eadad542",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4a9c9883_5bf08241",
         "filename": "src/plugin/pluginsutils.cpp",
         "patchSetId": 6
@@ -815,6 +1661,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "898fb604_c9b8df11",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 173,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4a9c9883_5bf08241",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -835,6 +1699,24 @@
     },
     {
       "key": {
+        "uuid": "0a00fc16_7a321c21",
+        "filename": "src/plugin/pluginsutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "29c5b5d2_3abaa028",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "153b7ba7_de5e8629",
         "filename": "src/plugin/pluginsutils.h",
         "patchSetId": 6
@@ -849,6 +1731,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1e516f05_0cff7c8e",
+        "filename": "src/plugin/pluginsutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "153b7ba7_de5e8629",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -869,6 +1769,24 @@
     },
     {
       "key": {
+        "uuid": "30fcdaa8_9816c8e4",
+        "filename": "src/plugin/pluginsutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bbd06465_803839f9",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "c9595eb1_adb967c4",
         "filename": "src/plugin/pluginsutils.h",
         "patchSetId": 6
@@ -883,6 +1801,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c17ac5bc_292c55e0",
+        "filename": "src/plugin/pluginsutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c9595eb1_adb967c4",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -903,6 +1839,24 @@
     },
     {
       "key": {
+        "uuid": "02a6faf9_62f72016",
+        "filename": "src/plugin/pluginsutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bcde6c4d_b1abd3c0",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9d327f2d_86e049e8",
         "filename": "src/plugin/pluginsutils.h",
         "patchSetId": 6
@@ -920,6 +1874,24 @@
     },
     {
       "key": {
+        "uuid": "a0f9dd1b_fc587b37",
+        "filename": "src/plugin/pluginsutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9d327f2d_86e049e8",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b837b3db_98e076c3",
         "filename": "src/plugin/pluginsutils.h",
         "patchSetId": 6
@@ -934,6 +1906,24 @@
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a2debc63_ec380a9f",
+        "filename": "src/plugin/pluginsutils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-02-26T01:56:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b837b3db_98e076c3",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
