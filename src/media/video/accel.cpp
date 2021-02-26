@@ -374,6 +374,8 @@ std::unique_ptr<VideoFrame>
 HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desiredFormat)
 {
     auto input = frame.pointer();
+    if (not input)
+        throw std::runtime_error("Cannot transfer null frame");
     auto out = std::make_unique<VideoFrame>();
 
     auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input->format));
