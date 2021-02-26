@@ -28,6 +28,7 @@
 #include "tonecontrol.h"
 #include "client/ring_signal.h"
 #include "echo-cancel/null_echo_canceller.h"
+#include "echo-cancel/webrtc_echo_canceller.h"
 
 #include <ctime>
 #include <algorithm>
@@ -122,7 +123,12 @@ AudioLayer::checkAEC()
 
     if (not echoCanceller_ and shouldSoftAEC) {
         JAMI_WARN("Starting AEC");
-        echoCanceller_.reset(new NullEchoCanceller(audioFormat_, audioFormat_.sample_rate / 100));
+        auto apNbChannels = std::min(audioFormat_.nb_channels, audioInputFormat_.nb_channels);
+        auto apSamplerate = std::min(audioFormat_.sample_rate, audioInputFormat_.sample_rate);
+        apSamplerate = std::clamp(16000u * (apSamplerate / 16000u), 16000u, 96000u);
+        AudioFormat apFormat {apSamplerate, apNbChannels};
+        auto apFrameSize = apSamplerate / 100u;
+        echoCanceller_.reset(new WebRTCEchoCanceller(apFormat, apFrameSize));
     } else if (echoCanceller_ and not shouldSoftAEC) {
         JAMI_WARN("Stopping AEC");
         echoCanceller_.reset();
