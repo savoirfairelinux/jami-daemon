@@ -289,6 +289,7 @@ protected:
      */
     std::unique_ptr<Resampler> resampler_;
 
+    std::mutex ecMutex_ {};
     std::unique_ptr<EchoCanceller> echoCanceller_;
 
 private:
