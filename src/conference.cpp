@@ -46,7 +46,7 @@ using namespace std::literals;
 namespace jami {
 
 Conference::Conference()
-    : id_(Manager::instance().getNewCallID())
+    : id_(Manager::instance().callFactory.getNewCallID())
 #ifdef ENABLE_VIDEO
     , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
 #endif
