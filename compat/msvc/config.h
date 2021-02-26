@@ -13,7 +13,7 @@ systems. This function is required for `alloca.c' support on those systems.
 #define HAVE_ALLOCA 1
 
 /* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
-*/
+ */
 #define HAVE_ALLOCA_H 1
 
 /* Define if you have alsa */
@@ -99,6 +99,9 @@ systems. This function is required for `alloca.c' support on those systems.
 
 /* Define if you have libspeexdsp */
 #define HAVE_SPEEXDSP 1
+
+/* Define if you have webrtc-audio-processing */
+#define HAVE_WEBRTC_AP 1
 
 /* Define to 1 if stdbool.h conforms to C99. */
 #define HAVE_STDBOOL_H 1
