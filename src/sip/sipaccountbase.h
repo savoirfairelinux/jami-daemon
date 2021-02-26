@@ -66,6 +66,7 @@ const char* const PUBLISH_PORT_KEY = "publishPort";
 const char* const SAME_AS_LOCAL_KEY = "sameasLocal";
 const char* const DTMF_TYPE_KEY = "dtmfType";
 const char* const SERVICE_ROUTE_KEY = "serviceRoute";
+const char* const ALLOW_VIA_REWRITE = "allowViaRewrite";
 const char* const PRESENCE_ENABLED_KEY = "presenceEnabled";
 const char* const PRESENCE_PUBLISH_SUPPORTED_KEY = "presencePublishSupported";
 const char* const PRESENCE_SUBSCRIBE_SUPPORTED_KEY = "presenceSubscribeSupported";
