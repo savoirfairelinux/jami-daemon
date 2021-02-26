@@ -1,0 +1,113 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ad2f1652_2f692d68",
+        "filename": "src/conference.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 237,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-26T16:19:32Z",
+      "side": 1,
+      "message": "if no video disabled, this part will not work",
+      "revId": "6425415366ca4b54dc7dc330d87cabdb4697f746",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "47085006_f9200a75",
+        "filename": "src/conference.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 274,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-26T16:19:32Z",
+      "side": 1,
+      "message": "what is this for?",
+      "range": {
+        "startLine": 274,
+        "startChar": 63,
+        "endLine": 274,
+        "endChar": 69
+      },
+      "revId": "6425415366ca4b54dc7dc330d87cabdb4697f746",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ab8611ba_96bc5877",
+        "filename": "src/observer.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 206,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-26T16:19:32Z",
+      "side": 1,
+      "message": "i catched this will be printed in loop cause i++ will always be the same.é",
+      "range": {
+        "startLine": 202,
+        "startChar": 21,
+        "endLine": 206,
+        "endChar": 17
+      },
+      "revId": "6425415366ca4b54dc7dc330d87cabdb4697f746",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "515f3f29_486b2cb3",
+        "filename": "src/observer.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 240,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-26T16:19:32Z",
+      "side": 1,
+      "message": "this-\u003e can be removed",
+      "range": {
+        "startLine": 240,
+        "startChar": 23,
+        "endLine": 240,
+        "endChar": 29
+      },
+      "revId": "6425415366ca4b54dc7dc330d87cabdb4697f746",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4df27237_58a04575",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-26T16:19:32Z",
+      "side": 1,
+      "message": "\u0026 avoid copy",
+      "range": {
+        "startLine": 48,
+        "startChar": 22,
+        "endLine": 48,
+        "endChar": 26
+      },
+      "revId": "6425415366ca4b54dc7dc330d87cabdb4697f746",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
