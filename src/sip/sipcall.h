@@ -74,6 +74,7 @@ class Controller;
 class SIPCall : public Call
 {
 public:
+    static constexpr LinkType LINK_TYPE = LinkType::SIP;
     /**
      * Destructor
      */
@@ -90,7 +91,7 @@ public:
             const std::map<std::string, std::string>& details = {});
 
     // Inherited from Call class
-    LinkType getLinkType() const { return LinkType::SIP; }
+    LinkType getLinkType() const override { return LINK_TYPE; }
     void answer() override;
     void hangup(int reason) override;
     void refuse() override;
@@ -180,7 +181,7 @@ public:
 
     void requestKeyframe();
 
-    void updateRecState(bool state);
+    void updateRecState(bool state) override;
 
     std::shared_ptr<SIPAccountBase> getSIPAccount() const;
 

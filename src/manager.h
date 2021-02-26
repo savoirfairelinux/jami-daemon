@@ -64,12 +64,13 @@ class JamiAccount;
 class SIPVoIPLink;
 class JamiPluginManager;
 
-static constexpr uint64_t DRING_ID_MAX_VAL = 9007199254740992;
 
 /** Manager (controller) of daemon */
 // TODO DRING_PUBLIC only if tests
 class DRING_TESTABLE Manager
 {
+private:
+    std::mt19937_64 rand_;
 public:
     // TODO DRING_PUBLIC only if tests
     static DRING_TESTABLE Manager& instance();
@@ -751,12 +752,6 @@ public:
      * new call, not answered or refused
      */
     bool incomingCallsWaiting();
-
-    /**
-     * Return a new random callid that is not present in the list
-     * @return std::string A brand new callid
-     */
-    std::string getNewCallID();
 
     /**
      * Get the current call
