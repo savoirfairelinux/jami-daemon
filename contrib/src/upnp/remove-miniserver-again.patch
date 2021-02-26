@@ -1,0 +1,25 @@
+diff --git a/upnp/src/inc/config.h b/upnp/src/inc/config.h
+index 8dc8cdb..6c64ba0 100644
+--- a/upnp/src/inc/config.h
++++ b/upnp/src/inc/config.h
+@@ -500,13 +500,13 @@
+ #endif
+ 
+ 
+-#if EXCLUDE_SSDP == 0 || EXCLUDE_GENA == 0 || EXCLUDE_SOAP == 0 || EXCLUDE_WEB_SERVER == 0
+-#	undef  EXCLUDE_MINISERVER
+-#	define EXCLUDE_MINISERVER 0
+-#	if EXCLUDE_WEB_SERVER == 0 && !defined INTERNAL_WEB_SERVER
+-#		error "conflicting settings : use configure --enable-webserver"
+-#	endif
+-#endif
++//#if EXCLUDE_SSDP == 0 || EXCLUDE_GENA == 0 || EXCLUDE_SOAP == 0 || EXCLUDE_WEB_SERVER == 0
++//#	undef  EXCLUDE_MINISERVER
++//#	define EXCLUDE_MINISERVER 0
++//#	if EXCLUDE_WEB_SERVER == 0 && !defined INTERNAL_WEB_SERVER
++//#		error "conflicting settings : use configure --enable-webserver"
++//#	endif
++//#endif
+ 
+ 
+ /*
