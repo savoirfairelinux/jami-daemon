@@ -23,20 +23,15 @@
 #include "audio/echo-cancel/echo_canceller.h"
 #include "audio/audio_frame_resizer.h"
 
-extern "C" {
-struct SpeexEchoState_;
-typedef struct SpeexEchoState_ SpeexEchoState;
-}
-
 #include <memory>
 
 namespace jami {
 
-class SpeexEchoCanceller final : public EchoCanceller
+class WebRTCEchoCanceller final : public EchoCanceller
 {
 public:
-    SpeexEchoCanceller(AudioFormat format, unsigned frameSize);
-    ~SpeexEchoCanceller() = default;
+    WebRTCEchoCanceller(AudioFormat format, unsigned frameSize);
+    ~WebRTCEchoCanceller() = default;
 
     // Inherited via EchoCanceller
     void putRecorded(std::shared_ptr<AudioFrame>&& buf) override;
@@ -45,7 +40,7 @@ public:
     void done() override;
 
 private:
-    struct SpeexEchoStateImpl;
-    std::unique_ptr<SpeexEchoStateImpl> pimpl_;
+    struct WebRTCAPMImpl;
+    std::unique_ptr<WebRTCAPMImpl> pimpl_;
 };
 } // namespace jami

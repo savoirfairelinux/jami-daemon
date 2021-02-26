@@ -39,7 +39,7 @@ public:
         , sampleRate_(format.sample_rate)
         , frameSize_(frameSize)
     {}
-    virtual ~EchoCanceller() = 0;
+    virtual ~EchoCanceller() = default;
 
     virtual void putRecorded(std::shared_ptr<AudioFrame>&& buf) = 0;
     virtual void putPlayback(const std::shared_ptr<AudioFrame>& buf) = 0;
