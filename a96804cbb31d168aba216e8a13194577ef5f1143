@@ -73,6 +73,30 @@
     },
     {
       "key": {
+        "uuid": "7bfb7703_60a34162",
+        "filename": "src/conference.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-02-26T23:20:26Z",
+      "side": 1,
+      "message": "I understand that is not needed but not what is wrong with this.\nLike I said it allows to use \"return !(p1 \u003d\u003d p2);\" for operator!\u003d",
+      "parentUuid": "ca4b4512_88c5af37",
+      "range": {
+        "startLine": 108,
+        "startChar": 0,
+        "endLine": 109,
+        "endChar": 80
+      },
+      "revId": "a96804cbb31d168aba216e8a13194577ef5f1143",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "7b1a05c2_859d2691",
         "filename": "src/conference.h",
         "patchSetId": 8
