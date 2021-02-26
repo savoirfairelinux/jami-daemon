@@ -27,7 +27,13 @@
 #include "audio/resampler.h"
 #include "tonecontrol.h"
 #include "client/ring_signal.h"
+
+// aec
+#if HAVE_WEBRTC_AP
+#include "echo-cancel/webrtc_echo_canceller.h"
+#else
 #include "echo-cancel/null_echo_canceller.h"
+#endif
 
 #include <ctime>
 #include <algorithm>
@@ -118,12 +124,30 @@ AudioLayer::setHasNativeAEC(bool hasEAC)
 void
 AudioLayer::checkAEC()
 {
+    std::lock_guard<std::mutex> lk(ecMutex_);
     bool shouldSoftAEC = not hasNativeAEC_ and playbackStarted_ and recordStarted_;
-
     if (not echoCanceller_ and shouldSoftAEC) {
-        JAMI_WARN("Starting AEC");
-        echoCanceller_.reset(new NullEchoCanceller(audioFormat_, audioFormat_.sample_rate / 100));
-    } else if (echoCanceller_ and not shouldSoftAEC) {
+        auto nb_channels = std::min(audioFormat_.nb_channels, audioInputFormat_.nb_channels);
+        auto sample_rate = std::min(audioFormat_.sample_rate, audioInputFormat_.sample_rate);
+        sample_rate = std::clamp(16000u * (sample_rate / 16000u), 16000u, 96000u);
+        AudioFormat format {sample_rate, nb_channels};
+        auto frame_size = sample_rate / 100u;
+        JAMI_WARN("Input {%d Hz, %d channels}",
+                  audioInputFormat_.sample_rate,
+                  audioInputFormat_.nb_channels);
+        JAMI_WARN("Output {%d Hz, %d channels}", audioFormat_.sample_rate, audioFormat_.nb_channels);
+        JAMI_WARN("Starting AEC {%d Hz, %d channels, %d samples/frame}",
+                  sample_rate,
+                  nb_channels,
+                  frame_size);
+
+#if HAVE_WEBRTC_AP
+        echoCanceller_.reset(new WebRTCEchoCanceller(format, frame_size));
+#else
+        echoCanceller_.reset(new NullEchoCanceller(format, frame_size));
+#endif
+    } else if (echoCanceller_ and not shouldSoftAEC and not playbackStarted_
+               and not recordStarted_) {
         JAMI_WARN("Stopping AEC");
         echoCanceller_.reset();
     }
@@ -214,6 +238,7 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
 
         if (resampled) {
             if (echoCanceller_) {
+                std::lock_guard<std::mutex> lk(ecMutex_);
                 echoCanceller_->putPlayback(resampled);
             }
             playbackQueue_->enqueue(std::move(resampled));
@@ -228,9 +253,11 @@ void
 AudioLayer::putRecorded(std::shared_ptr<AudioFrame>&& frame)
 {
     if (echoCanceller_) {
+        std::lock_guard<std::mutex> lk(ecMutex_);
         echoCanceller_->putRecorded(std::move(frame));
-        while (auto rec = echoCanceller_->getProcessed())
+        while (auto rec = echoCanceller_->getProcessed()) {
             mainRingBuffer_->put(std::move(rec));
+        }
     } else {
         mainRingBuffer_->put(std::move(frame));
     }
