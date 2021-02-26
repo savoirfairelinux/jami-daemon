@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c205e2ed_0315394a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 371,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-02-26T19:26:57Z",
+      "side": 1,
+      "message": "can be nullptr, should be just checked (same for some other places)",
+      "range": {
+        "startLine": 371,
+        "startChar": 22,
+        "endLine": 371,
+        "endChar": 117
+      },
+      "revId": "ea4343cdb407519399104f4b5ac9c28b7bcc8006",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
