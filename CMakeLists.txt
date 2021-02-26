@@ -122,17 +122,6 @@ if(MSVC)
    ################################################################################
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
        target_include_directories(${PROJECT_NAME} PUBLIC
-           "$<$<CONFIG:ReleaseLib_win32>:"
-               "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/include/upnp;"
-               "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/include;"
-               "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/sndfile/src;"
-               "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/include;"
-               "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/asio/asio/include;"
-               "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/restinio/dev;"
-               "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/fmt/include;"
-               "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/http_parser;"
-               "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp"
-           ">"
            "${CMAKE_CURRENT_SOURCE_DIR}/.;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/client;"
@@ -152,6 +141,15 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/compat/msvc;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/include/upnp;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/sndfile/src;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/asio/asio/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/restinio/dev;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/fmt/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/http_parser;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/msgpack-c/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/opendht/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libarchive/libarchive;"
@@ -164,6 +162,7 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/third_party;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/include"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing"
        )
    endif()
 
@@ -190,6 +189,9 @@ if(MSVC)
            "NOMINMAX;"
            "HAVE_CONFIG_H;"
            "WIN32_LEAN_AND_MEAN;"
+           "WEBRTC_WIN;"
+           "WEBRTC_AUDIO_PROCESSING_ONLY_BUILD;"
+           "WEBRTC_NS_FLOAT;"
        )
    endif()
 
@@ -274,6 +276,7 @@ if(MSVC)
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/libcrypto.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/libssl.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/lib/libspeexdsp.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing/build/Release/webrtc-audio-processing.lib
    /ignore:4006 
    "
    )
