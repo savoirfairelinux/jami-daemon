@@ -50,7 +50,7 @@ SpeexEchoCanceller::SpeexEchoCanceller(AudioFormat format, unsigned frameSize)
     : EchoCanceller(format, frameSize)
     , pimpl_(std::make_unique<SpeexEchoStateImpl>(format, frameSize))
 {
-    speex_echo_ctl(pimpl_->state.get(), SPEEX_ECHO_SET_SAMPLING_RATE, &sampleRate_);
+    speex_echo_ctl(pimpl_->state.get(), SPEEX_ECHO_SET_SAMPLING_RATE, &format_.sample_rate);
 }
 
 void
