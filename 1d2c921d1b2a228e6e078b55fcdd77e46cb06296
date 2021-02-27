@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9915ba57_def13d4f",
+        "filename": "src/call_factory.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-02-27T00:28:08Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027account\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "1d2c921d1b2a228e6e078b55fcdd77e46cb06296",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
