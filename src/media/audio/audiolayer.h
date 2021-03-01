@@ -98,7 +98,7 @@ public:
     virtual int getIndexRingtone() const = 0;
 
     /**
-     * Determine wether or not the audio layer is active (i.e. stream opened)
+     * Determine whether or not the audio layer is active (i.e. playback opened)
      */
     inline bool isStarted() const { return status_ == Status::Started; }
 
@@ -106,7 +106,7 @@ public:
     bool waitForStart(const std::chrono::duration<Rep, Period>& rel_time) const
     {
         std::unique_lock<std::mutex> lk(mutex_);
-        startedCv_.wait_for(lk, rel_time, [&] { return isStarted(); });
+        startedCv_.wait_for(lk, rel_time, [this] { return isStarted(); });
         return isStarted();
     }
 
@@ -252,7 +252,7 @@ protected:
     std::unique_ptr<AudioFrameResizer> playbackQueue_;
 
     /**
-     * Whether or not the audio layer stream is started
+     * Whether or not the audio layer's playback stream is started
      */
     std::atomic<Status> status_ {Status::Idle};
     mutable std::condition_variable startedCv_;
