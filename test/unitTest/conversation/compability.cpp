@@ -60,10 +60,12 @@ public:
 private:
     void testIsComposing();
     void testRemoveConvOnOldTrustRequestConfirm();
+    void testSendFileCompatibility();
 
     CPPUNIT_TEST_SUITE(CompabilityTest);
     CPPUNIT_TEST(testIsComposing);
     CPPUNIT_TEST(testRemoveConvOnOldTrustRequestConfirm);
+    CPPUNIT_TEST(testSendFileCompatibility);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -170,7 +172,7 @@ CompabilityTest::testIsComposing()
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
-        [&](const std::string& accountId, const std::string& conversationId) {
+        [&](const std::string& accountId, const std::string&) {
             if (accountId == aliceId) {
                 conversationRemoved = true;
             }
@@ -236,7 +238,7 @@ CompabilityTest::testRemoveConvOnOldTrustRequestConfirm()
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
-        [&](const std::string& accountId, const std::string& conversationId) {
+        [&](const std::string& accountId, const std::string&) {
             if (accountId == aliceId) {
                 conversationRemoved = true;
             }
@@ -255,6 +257,78 @@ CompabilityTest::testRemoveConvOnOldTrustRequestConfirm()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri, false));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationRemoved; }));
+}
+
+void
+CompabilityTest::testSendFileCompatibility()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool successfullyReceive = false, requestReceived = false;
+    std::string convId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::string& /*conversationId*/,
+            const std::vector<uint8_t>& /*payload*/,
+            time_t /*received*/) {
+            if (account_id == bobId)
+                requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            }
+            cv.notify_one();
+        }));
+    bobAccount->connectionManager().onChannelRequest([&](const DeviceId&, const std::string& name) {
+        successfullyReceive = name.find("file://") == 0;
+        cv.notify_one();
+        return true;
+    });
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&]() { return !convId.empty(); }));
+    ConversationRepository repo(aliceAccount, convId);
+    // Mode must be one to one
+    CPPUNIT_ASSERT(repo.mode() == ConversationMode::ONE_TO_ONE);
+    // Assert that repository exists
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+
+    // Now, sending a file will trigger file://id instead of data-transfer://conv for compat
+
+    // Send file
+    std::ofstream sendFile("SEND");
+    CPPUNIT_ASSERT(sendFile.is_open());
+    // Avoid ASAN error on big alloc   sendFile << std::string("A", 64000);
+    for (int i = 0; i < 64000; ++i)
+        sendFile << "A";
+    sendFile.close();
+
+    // Send File
+    DRing::DataTransferInfo info;
+    uint64_t id;
+    info.accountId = aliceAccount->getAccountID();
+    info.conversationId = convId;
+    info.path = "SEND";
+    info.displayName = "SEND";
+    info.bytesProgress = 0;
+
+    CPPUNIT_ASSERT(DRing::sendFile(info, id) == DRing::DataTransferError::success);
+
+    cv.wait_for(lk, std::chrono::seconds(30), [&]() { return successfullyReceive; });
+    std::remove("SEND");
 }
 
 } // namespace test
