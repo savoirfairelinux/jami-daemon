@@ -3813,8 +3813,10 @@ JamiAccount::requestConnection(
                         JAMI_ERR("Conversation %s doesn't exist", info.conversationId.c_str());
                         return;
                     }
+                    auto isOneToOne = it->second->mode() == ConversationMode::ONE_TO_ONE;
 
-                    auto members = it->second->getMembers();
+                    auto members = it->second->getMembers(
+                        isOneToOne /* In this case, also send to the invited */);
                     lk.unlock();
                     for (const auto& member : members)
                         onChanneledCancelled(member.at("uri"));
