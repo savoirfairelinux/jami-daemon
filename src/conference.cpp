@@ -115,6 +115,10 @@ Conference::Conference()
                 newInfo.emplace_back(ParticipantInfo {
                     std::move(uri), "", false, 0, 0, 0, 0, true, false, false, isModerator});
             }
+            // Add host in confInfo with audio and video muted if detached
+            if (shared->getState() == State::ACTIVE_DETACHED)
+                newInfo.emplace_back(ParticipantInfo {
+                    "", "", false, 0, 0, 0, 0, true, true, false, true});
 
             shared->updateConferenceInfo(std::move(newInfo));
         });
