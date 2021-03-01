@@ -42,16 +42,22 @@ struct PortAudioLayer::PortAudioLayerImpl
     ~PortAudioLayerImpl();
 
     void init(PortAudioLayer&);
+    void initInput(PortAudioLayer&);
+    void initOutput(PortAudioLayer&);
     void terminate() const;
-    void initStream(PortAudioLayer&);
+    bool initInputStream(PortAudioLayer&);
+    bool initOutputStream(PortAudioLayer&);
+    bool initFullDuplexStream(PortAudioLayer&);
 
     std::vector<std::string> getDeviceByType(AudioDeviceType type) const;
     int getIndexByType(AudioDeviceType type);
     int getInternalIndexByType(const int index, AudioDeviceType type);
 
     PaDeviceIndex indexIn_;
+    bool inputInitialized_ {false};
     PaDeviceIndex indexOut_;
     PaDeviceIndex indexRing_;
+    bool outputInitialized_ {false};
 
     AudioBuffer playbackBuff_;
 
@@ -84,7 +90,20 @@ struct PortAudioLayer::PortAudioLayerImpl
 PortAudioLayer::PortAudioLayer(const AudioPreference& pref)
     : AudioLayer {pref}
     , pimpl_ {new PortAudioLayerImpl(*this, pref)}
-{}
+{
+    setHasNativeAEC(false);
+
+    auto numDevices = Pa_GetDeviceCount();
+    if (numDevices < 0) {
+        JAMI_ERR("Pa_CountDevices returned 0x%x", numDevices);
+        return;
+    }
+    const PaDeviceInfo* deviceInfo;
+    for (auto i = 0; i < numDevices; i++) {
+        deviceInfo = Pa_GetDeviceInfo(i);
+        JAMI_DBG("PortAudio device: %d, %s", i, deviceInfo->name);
+    }
+}
 
 PortAudioLayer::~PortAudioLayer()
 {
@@ -154,43 +173,104 @@ PortAudioLayer::getIndexRingtone() const
 void
 PortAudioLayer::startStream(AudioDeviceType stream)
 {
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Idle)
-            return;
-        status_ = Status::Started;
-    }
-    pimpl_->initStream(*this);
+    auto startPlayback = [this](bool fullDuplexMode = false) -> bool {
+        std::unique_lock<std::mutex> lock(mutex_);
+        if (status_.load() != Status::Idle)
+            return false;
+        bool ret {false};
+        if (fullDuplexMode)
+            ret = pimpl_->initFullDuplexStream(*this);
+        else
+            ret = pimpl_->initOutputStream(*this);
+        if (ret) {
+            status_.store(Status::Started);
+            lock.unlock();
+            flushUrgent();
+            flushMain();
+        }
+        return ret;
+    };
 
-    flushUrgent();
-    flushMain();
+    switch (stream) {
+    case AudioDeviceType::ALL:
+        if (!startPlayback(true)) {
+            pimpl_->initInputStream(*this);
+            startPlayback();
+        }
+        break;
+    case AudioDeviceType::CAPTURE:
+        pimpl_->initInputStream(*this);
+        break;
+    case AudioDeviceType::PLAYBACK:
+    case AudioDeviceType::RINGTONE:
+        startPlayback();
+        break;
+    }
 }
 
 void
 PortAudioLayer::stopStream(AudioDeviceType stream)
 {
-    {
-        std::lock_guard<std::mutex> lock {mutex_};
-
-        if (status_ != Status::Started)
-            return;
-
-        JAMI_DBG("Stop PortAudio Streams");
-
-        for (auto& st_ptr : pimpl_->streams_) {
-            if (!st_ptr)
-                continue;
-
-            auto err = Pa_StopStream(st_ptr);
-            if (err != paNoError)
-                JAMI_ERR("Pa_StopStream error : %s", Pa_GetErrorText(err));
-
-            err = Pa_CloseStream(st_ptr);
-            if (err != paNoError)
-                JAMI_ERR("Pa_StopStream error : %s", Pa_GetErrorText(err));
+    auto stopPaStream = [](PaStream* stream) -> bool {
+        if (!stream)
+            return false;
+        auto err = Pa_StopStream(stream);
+        if (err != paNoError) {
+            JAMI_ERR("Pa_StopStream error : %s", Pa_GetErrorText(err));
+            return false;
         }
+        err = Pa_CloseStream(stream);
+        if (err != paNoError) {
+            JAMI_ERR("Pa_CloseStream error : %s", Pa_GetErrorText(err));
+            return false;
+        }
+        return true;
+    };
 
-        status_ = Status::Idle;
+    auto stopPlayback = [this, &stopPaStream](bool fullDuplexMode = false) -> bool {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (status_.load() != Status::Started)
+            return false;
+        bool stopped = false;
+        if (fullDuplexMode)
+            stopped = stopPaStream(pimpl_->streams_[Direction::IO]);
+        else
+            stopped = stopPaStream(pimpl_->streams_[Direction::Output]);
+        if (stopped)
+            status_.store(Status::Idle);
+        return stopped;
+    };
+
+    bool stopped = false;
+    switch (stream) {
+    case AudioDeviceType::ALL:
+        if (pimpl_->streams_[Direction::IO]) {
+            stopped = stopPlayback(true);
+        } else {
+            stopped = stopPaStream(pimpl_->streams_[Direction::Input]) && stopPlayback();
+        }
+        if (stopped) {
+            recordChanged(false);
+            playbackChanged(false);
+            JAMI_DBG("PortAudioLayer I/O streams stopped");
+        } else
+            return;
+        break;
+    case AudioDeviceType::CAPTURE:
+        if (stopPaStream(pimpl_->streams_[Direction::Input])) {
+            recordChanged(false);
+            JAMI_DBG("PortAudioLayer input stream stopped");
+        } else
+            return;
+        break;
+    case AudioDeviceType::PLAYBACK:
+    case AudioDeviceType::RINGTONE:
+        if (stopPlayback()) {
+            playbackChanged(false);
+            JAMI_DBG("PortAudioLayer output stream stopped");
+        } else
+            return;
+        break;
     }
 
     // Flush the ring buffers
@@ -234,6 +314,72 @@ PortAudioLayer::PortAudioLayerImpl::~PortAudioLayerImpl()
     terminate();
 }
 
+void
+PortAudioLayer::PortAudioLayerImpl::initInput(PortAudioLayer& parent)
+{
+    auto numDevices = Pa_GetDeviceCount();
+    if (indexIn_ <= paNoDevice || indexIn_ >= numDevices) {
+        indexIn_ = Pa_GetDefaultInputDevice();
+    }
+
+    // Pa_GetDefaultInputDevice returned paNoDevice or we already initialized the device
+    if (indexIn_ == paNoDevice || inputInitialized_)
+        return;
+
+    if (const auto inputDeviceInfo = Pa_GetDeviceInfo(indexIn_)) {
+        if (inputDeviceInfo->maxInputChannels <= 0) {
+            indexIn_ = paNoDevice;
+            return initInput(parent);
+        }
+        parent.audioInputFormat_.sample_rate = inputDeviceInfo->defaultSampleRate;
+        parent.audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
+        parent.hardwareInputFormatAvailable(parent.audioInputFormat_);
+        JAMI_DBG("PortAudioLayer initialized input: %s {%d Hz, %d channels}",
+                 inputDeviceInfo->name,
+                 parent.audioInputFormat_.sample_rate,
+                 parent.audioInputFormat_.nb_channels);
+        inputInitialized_ = true;
+    } else {
+        JAMI_WARN("PortAudioLayer could not initialize input");
+        indexIn_ = paNoDevice;
+        inputInitialized_ = true;
+    }
+}
+
+void
+PortAudioLayer::PortAudioLayerImpl::initOutput(PortAudioLayer& parent)
+{
+    auto numDevices = Pa_GetDeviceCount();
+    if (indexOut_ <= paNoDevice || indexOut_ >= numDevices) {
+        indexRing_ = indexOut_ = Pa_GetDefaultOutputDevice();
+    } else {
+        indexRing_ = indexOut_;
+    }
+
+    // Pa_GetDefaultOutputDevice returned paNoDevice or we already initialized the device
+    if (indexOut_ == paNoDevice || outputInitialized_)
+        return;
+
+    if (const auto outputDeviceInfo = Pa_GetDeviceInfo(indexOut_)) {
+        if (outputDeviceInfo->maxOutputChannels <= 0) {
+            indexOut_ = paNoDevice;
+            return initOutput(parent);
+        }
+        parent.audioFormat_.sample_rate = outputDeviceInfo->defaultSampleRate;
+        parent.audioFormat_.nb_channels = outputDeviceInfo->maxOutputChannels;
+        parent.hardwareFormatAvailable(parent.audioFormat_);
+        JAMI_DBG("PortAudioLayer initialized output: %s {%d Hz, %d channels}",
+                 outputDeviceInfo->name,
+                 parent.audioFormat_.sample_rate,
+                 parent.audioFormat_.nb_channels);
+        outputInitialized_ = true;
+    } else {
+        JAMI_WARN("PortAudioLayer could not initialize output");
+        indexOut_ = paNoDevice;
+        outputInitialized_ = true;
+    }
+}
+
 std::vector<std::string>
 PortAudioLayer::PortAudioLayerImpl::getDeviceByType(AudioDeviceType type) const
 {
@@ -268,40 +414,14 @@ PortAudioLayer::PortAudioLayerImpl::init(PortAudioLayer& parent)
         terminate();
     }
 
-    auto numDevices = Pa_GetDeviceCount();
-    if (indexOut_ <= paNoDevice || indexOut_ >= numDevices) {
-        indexRing_ = indexOut_ = Pa_GetDefaultOutputDevice();
-    } else {
-        indexRing_ = indexOut_;
-    }
-
-    if (indexIn_ <= paNoDevice || indexIn_ >= numDevices) {
-        indexIn_ = Pa_GetDefaultInputDevice();
-    }
-
-    if (indexOut_ != paNoDevice) {
-        if (const auto outputDeviceInfo = Pa_GetDeviceInfo(indexOut_)) {
-            parent.audioFormat_.nb_channels = outputDeviceInfo->maxOutputChannels;
-            parent.audioFormat_.sample_rate = outputDeviceInfo->defaultSampleRate;
-            parent.hardwareFormatAvailable(parent.audioFormat_);
-            JAMI_DBG() << "PortAudioLayer initialized output using: " << outputDeviceInfo->name;
-        } else {
-            indexOut_ = paNoDevice;
-        }
-    }
-
-    if (indexIn_ != paNoDevice) {
-        if (const auto inputDeviceInfo = Pa_GetDeviceInfo(indexIn_)) {
-            parent.audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
-            parent.audioInputFormat_.sample_rate = inputDeviceInfo->defaultSampleRate;
-            parent.hardwareInputFormatAvailable(parent.audioInputFormat_);
-            JAMI_DBG() << "PortAudioLayer initialized input using: " << inputDeviceInfo->name;
-        } else {
-            indexIn_ = paNoDevice;
-        }
-    }
+    initInput(parent);
+    initOutput(parent);
 
     std::fill(std::begin(streams_), std::end(streams_), nullptr);
+
+    auto apiIndex = Pa_GetDefaultHostApi();
+    auto apiInfo = Pa_GetHostApiInfo(apiIndex);
+    JAMI_DBG() << "Portaudio initialized using: " << apiInfo->name;
 }
 
 int
@@ -430,21 +550,16 @@ openFullDuplexStream(PaStream** stream,
         JAMI_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
 }
 
-void
-PortAudioLayer::PortAudioLayerImpl::initStream(PortAudioLayer& parent)
+bool
+PortAudioLayer::PortAudioLayerImpl::initInputStream(PortAudioLayer& parent)
 {
-    parent.dcblocker_.reset();
-
-    auto apiIndex = Pa_GetDefaultHostApi();
-    auto apiInfo = Pa_GetHostApiInfo(apiIndex);
-    JAMI_DBG() << "Initializing Portaudio streams using: " << apiInfo->name;
-
-    JAMI_DBG("Open PortAudio Full-duplex input/output stream");
-    if (indexOut_ != paNoDevice && indexIn_ != paNoDevice) {
-        openFullDuplexStream(
-            &streams_[Direction::IO],
+    JAMI_DBG("Open PortAudio Input Stream");
+    auto& stream = streams_[Direction::Input];
+    if (indexIn_ != paNoDevice) {
+        openStreamDevice(
+            &streams_[Direction::Input],
             indexIn_,
-            indexOut_,
+            Direction::Input,
             [](const void* inputBuffer,
                void* outputBuffer,
                unsigned long framesPerBuffer,
@@ -452,76 +567,113 @@ PortAudioLayer::PortAudioLayerImpl::initStream(PortAudioLayer& parent)
                PaStreamCallbackFlags statusFlags,
                void* userData) -> int {
                 auto layer = static_cast<PortAudioLayer*>(userData);
-                return layer->pimpl_->paIOCallback(*layer,
-                                                   static_cast<const AudioSample*>(inputBuffer),
-                                                   static_cast<AudioSample*>(outputBuffer),
-                                                   framesPerBuffer,
-                                                   timeInfo,
-                                                   statusFlags);
+                return layer->pimpl_->paInputCallback(*layer,
+                                                      static_cast<const AudioSample*>(inputBuffer),
+                                                      static_cast<AudioSample*>(outputBuffer),
+                                                      framesPerBuffer,
+                                                      timeInfo,
+                                                      statusFlags);
             },
             &parent);
     } else {
-        JAMI_DBG("Open PortAudio Output Stream");
-        if (indexOut_ != paNoDevice) {
-            openStreamDevice(
-                &streams_[Direction::Output],
-                indexOut_,
-                Direction::Output,
-                [](const void* inputBuffer,
-                   void* outputBuffer,
-                   unsigned long framesPerBuffer,
-                   const PaStreamCallbackTimeInfo* timeInfo,
-                   PaStreamCallbackFlags statusFlags,
-                   void* userData) -> int {
-                    auto layer = static_cast<PortAudioLayer*>(userData);
-                    return layer->pimpl_->paOutputCallback(*layer,
-                                                           static_cast<const AudioSample*>(
-                                                               inputBuffer),
-                                                           static_cast<AudioSample*>(outputBuffer),
-                                                           framesPerBuffer,
-                                                           timeInfo,
-                                                           statusFlags);
-                },
-                &parent);
-        } else {
-            JAMI_ERR("Error: No valid output device. There will be no sound.");
-        }
-
-        JAMI_DBG("Open PortAudio Input Stream");
-        if (indexIn_ != paNoDevice) {
-            openStreamDevice(
-                &streams_[Direction::Input],
-                indexIn_,
-                Direction::Input,
-                [](const void* inputBuffer,
-                   void* outputBuffer,
-                   unsigned long framesPerBuffer,
-                   const PaStreamCallbackTimeInfo* timeInfo,
-                   PaStreamCallbackFlags statusFlags,
-                   void* userData) -> int {
-                    auto layer = static_cast<PortAudioLayer*>(userData);
-                    return layer->pimpl_->paInputCallback(*layer,
-                                                          static_cast<const AudioSample*>(
-                                                              inputBuffer),
-                                                          static_cast<AudioSample*>(outputBuffer),
-                                                          framesPerBuffer,
-                                                          timeInfo,
-                                                          statusFlags);
-                },
-                &parent);
-        } else {
-            JAMI_ERR("Error: No valid input device. There will be no mic.");
-        }
+        JAMI_ERR("Error: No valid input device. There will be no mic.");
+        return false;
     }
 
-    JAMI_DBG("Start PortAudio Streams");
-    for (auto& st_ptr : streams_) {
-        if (st_ptr) {
-            auto err = Pa_StartStream(st_ptr);
-            if (err != paNoError)
-                JAMI_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
-        }
+    JAMI_DBG("Starting PortAudio Input Stream");
+    auto err = Pa_StartStream(stream);
+    if (err != paNoError) {
+        JAMI_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
+        return false;
     }
+
+    parent.recordChanged(true);
+    return true;
+}
+
+bool
+PortAudioLayer::PortAudioLayerImpl::initOutputStream(PortAudioLayer& parent)
+{
+    JAMI_DBG("Open PortAudio Output Stream");
+    auto& stream = streams_[Direction::Output];
+    if (indexOut_ != paNoDevice) {
+        openStreamDevice(
+            &stream,
+            indexOut_,
+            Direction::Output,
+            [](const void* inputBuffer,
+               void* outputBuffer,
+               unsigned long framesPerBuffer,
+               const PaStreamCallbackTimeInfo* timeInfo,
+               PaStreamCallbackFlags statusFlags,
+               void* userData) -> int {
+                auto layer = static_cast<PortAudioLayer*>(userData);
+                return layer->pimpl_->paOutputCallback(*layer,
+                                                       static_cast<const AudioSample*>(inputBuffer),
+                                                       static_cast<AudioSample*>(outputBuffer),
+                                                       framesPerBuffer,
+                                                       timeInfo,
+                                                       statusFlags);
+            },
+            &parent);
+    } else {
+        JAMI_ERR("Error: No valid output device. There will be no sound.");
+        return false;
+    }
+
+    JAMI_DBG("Starting PortAudio Output Stream");
+    auto err = Pa_StartStream(stream);
+    if (err != paNoError) {
+        JAMI_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
+        return false;
+    }
+
+    parent.playbackChanged(true);
+    return true;
+}
+
+bool
+PortAudioLayer::PortAudioLayerImpl::initFullDuplexStream(PortAudioLayer& parent)
+{
+    if (indexOut_ == paNoDevice || indexIn_ == paNoDevice) {
+        JAMI_ERR("Error: Invalid input/output devices. There will be no audio.");
+        return false;
+    }
+
+    parent.dcblocker_.reset();
+
+    JAMI_DBG("Open PortAudio Full-duplex input/output stream");
+    auto& stream = streams_[Direction::IO];
+    openFullDuplexStream(
+        &stream,
+        indexIn_,
+        indexOut_,
+        [](const void* inputBuffer,
+           void* outputBuffer,
+           unsigned long framesPerBuffer,
+           const PaStreamCallbackTimeInfo* timeInfo,
+           PaStreamCallbackFlags statusFlags,
+           void* userData) -> int {
+            auto layer = static_cast<PortAudioLayer*>(userData);
+            return layer->pimpl_->paIOCallback(*layer,
+                                               static_cast<const AudioSample*>(inputBuffer),
+                                               static_cast<AudioSample*>(outputBuffer),
+                                               framesPerBuffer,
+                                               timeInfo,
+                                               statusFlags);
+        },
+        &parent);
+
+    JAMI_DBG("Start PortAudio I/O Streams");
+    auto err = Pa_StartStream(stream);
+    if (err != paNoError) {
+        JAMI_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
+        return false;
+    }
+
+    parent.recordChanged(true);
+    parent.playbackChanged(true);
+    return true;
 }
 
 int
@@ -545,7 +697,6 @@ PortAudioLayer::PortAudioLayerImpl::paOutputCallback(PortAudioLayer& parent,
 
     auto nFrames = toPlay->pointer()->nb_samples * toPlay->pointer()->channels;
     std::copy_n((AudioSample*) toPlay->pointer()->extended_data[0], nFrames, outputBuffer);
-
     return paContinue;
 }
 
