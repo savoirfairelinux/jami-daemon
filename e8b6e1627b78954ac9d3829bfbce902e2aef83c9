@@ -177,6 +177,24 @@
     },
     {
       "key": {
+        "uuid": "a3fa5936_97b859dc",
+        "filename": "src/plugin/callservicesmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 172,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-01T19:42:32Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "ec1ffdbc_b8ec4a8c",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "a7fab8e9_2f30af0c",
         "filename": "src/plugin/callservicesmanager.h",
         "patchSetId": 6
@@ -1466,6 +1484,24 @@
       "side": 1,
       "message": "Toggle is used in other code parts, I think it\u0027s better to keep it in the comment",
       "parentUuid": "b969ff07_6ba1bcbd",
+      "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6d72d9ee_873485da",
+        "filename": "src/plugin/pluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-01T19:42:32Z",
+      "side": 1,
+      "message": "In fact, I meant \"I am not familiar with the term untoggle\".\nI did a search and did not find it in the existing code.\nIn this particular case, you can just remove, \u0027Destroys\u0027 is probably enough.",
+      "parentUuid": "0b5def9a_67bfa233",
       "revId": "e8b6e1627b78954ac9d3829bfbce902e2aef83c9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true

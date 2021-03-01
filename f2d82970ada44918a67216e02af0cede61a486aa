@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3bb8edbc_f4727ba9",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-01T19:42:32Z",
+      "side": 1,
+      "message": "\"Flag is pverwritten\" ?",
+      "revId": "f2d82970ada44918a67216e02af0cede61a486aa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "73981972_21ca29e6",
+        "filename": "src/plugin/jamiplugin.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-01T19:42:32Z",
+      "side": 1,
+      "message": "from one -\u003e from the one ...",
+      "revId": "f2d82970ada44918a67216e02af0cede61a486aa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "aa8eb544_b7489d7d",
+        "filename": "src/plugin/jamiplugin.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-01T19:42:32Z",
+      "side": 1,
+      "message": "on API -\u003e in API",
+      "revId": "f2d82970ada44918a67216e02af0cede61a486aa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "023d14d2_b4eea919",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-01T19:42:32Z",
+      "side": 1,
+      "message": "If rue -\u003e If true",
+      "revId": "f2d82970ada44918a67216e02af0cede61a486aa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "93fa2ab9_496577e4",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-01T19:42:32Z",
+      "side": 1,
+      "message": "if plugin -\u003e if the plugin",
+      "revId": "f2d82970ada44918a67216e02af0cede61a486aa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
