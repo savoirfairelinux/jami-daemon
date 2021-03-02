@@ -19,7 +19,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "audio_input.h"
 #include "audio_sender.h"
 #include "client/videomanager.h"
 #include "libav_deps.h"
@@ -39,13 +38,11 @@ AudioSender::AudioSender(const std::string& id,
                          const MediaDescription& args,
                          SocketPair& socketPair,
                          const uint16_t seqVal,
-                         bool muteState,
                          const uint16_t mtu)
     : id_(id)
     , dest_(dest)
     , args_(args)
     , seqVal_(seqVal)
-    , muteState_(muteState)
     , mtu_(mtu)
 {
     setup(socketPair);
@@ -53,8 +50,6 @@ AudioSender::AudioSender(const std::string& id,
 
 AudioSender::~AudioSender()
 {
-    audioInput_->detach(this);
-    audioInput_.reset();
     audioEncoder_.reset();
     muxContext_.reset();
     micData_.clear();
@@ -89,12 +84,6 @@ AudioSender::setup(SocketPair& socketPair)
     audioEncoder_->print_sdp();
 #endif
 
-    // NOTE do after encoder is ready to encode
-    auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
-    audioInput_ = jami::getAudioInput(id_);
-    audioInput_->setFormat(codec->audioformat);
-    audioInput_->setMuted(muteState_);
-    audioInput_->attach(this);
     return true;
 }
 
@@ -107,13 +96,6 @@ AudioSender::update(Observable<std::shared_ptr<jami::MediaFrame>>* /*obs*/,
     sent_samples += frame->nb_samples;
     if (audioEncoder_->encodeAudio(*std::static_pointer_cast<AudioFrame>(framePtr)) < 0)
         JAMI_ERR("encoding failed");
-}
-
-void
-AudioSender::setMuted(bool isMuted)
-{
-    muteState_ = isMuted;
-    audioInput_->setMuted(isMuted);
 }
 
 uint16_t
