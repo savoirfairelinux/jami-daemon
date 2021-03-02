@@ -69,6 +69,8 @@ AudioRtpSession::startSender()
         if (sender_) {
             if (socketPair_)
                 socketPair_->interrupt();
+            if (audioInput_)
+                audioInput_->detach(sender_.get());
             sender_.reset();
         }
         return;
@@ -76,6 +78,8 @@ AudioRtpSession::startSender()
 
     if (sender_)
         JAMI_WARN("Restarting audio sender");
+    if (audioInput_)
+        audioInput_->detach(sender_.get());
 
     // sender sets up input correctly, we just keep a reference in case startSender is called
     audioInput_ = jami::getAudioInput(callID_);
@@ -102,11 +106,17 @@ AudioRtpSession::startSender()
         sender_.reset();
         socketPair_->stopSendOp(false);
         sender_.reset(new AudioSender(
-            callID_, getRemoteRtpUri(), send_, *socketPair_, initSeqVal_, muteState_, mtu_));
+            callID_, getRemoteRtpUri(), send_, *socketPair_, initSeqVal_, mtu_));
     } catch (const MediaEncoderException& e) {
         JAMI_ERR("%s", e.what());
         send_.enabled = false;
     }
+
+    // NOTE do after sender/encoder are ready
+    auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(send_.codec);
+    audioInput_->setFormat(codec->audioformat);
+    if (audioInput_)
+        audioInput_->attach(sender_.get());
 
     if (not rtcpCheckerThread_.isRunning())
         rtcpCheckerThread_.start();
@@ -184,6 +194,9 @@ AudioRtpSession::stop()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
+    if (audioInput_)
+        audioInput_->detach(sender_.get());
+
     if (socketPair_)
         socketPair_->interrupt();
 
@@ -199,10 +212,7 @@ void
 AudioRtpSession::setMuted(bool isMuted)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (sender_) {
-        muteState_ = isMuted;
-        sender_->setMuted(isMuted);
-    }
+    muteState_ = isMuted;
 }
 
 bool

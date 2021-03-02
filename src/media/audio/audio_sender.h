@@ -42,11 +42,9 @@ public:
                 const MediaDescription& args,
                 SocketPair& socketPair,
                 const uint16_t seqVal,
-                bool muteState,
                 const uint16_t mtu);
     ~AudioSender();
 
-    void setMuted(bool isMuted);
     uint16_t getLastSeqValue();
     int setPacketLoss(uint64_t pl);
 
@@ -64,14 +62,12 @@ private:
     std::unique_ptr<MediaEncoder> audioEncoder_;
     std::unique_ptr<MediaIOHandle> muxContext_;
     std::unique_ptr<Resampler> resampler_;
-    std::shared_ptr<AudioInput> audioInput_;
 
     uint64_t sent_samples = 0;
 
     AudioBuffer micData_;
     AudioBuffer resampledData_;
     const uint16_t seqVal_;
-    bool muteState_ = false;
     uint16_t mtu_;
 };
 
