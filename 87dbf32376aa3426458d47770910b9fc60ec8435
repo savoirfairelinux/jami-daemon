@@ -25,6 +25,29 @@
     },
     {
       "key": {
+        "uuid": "0c4ef3e9_1048b10a",
+        "filename": "src/conference.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 701,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-02T17:31:49Z",
+      "side": 1,
+      "message": "we do this loop multiple times now. imho this should be simplified to get a translation from a uri to calls.",
+      "range": {
+        "startLine": 698,
+        "startChar": 5,
+        "endLine": 701,
+        "endChar": 60
+      },
+      "revId": "87dbf32376aa3426458d47770910b9fc60ec8435",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "d66e8942_0b6c3e14",
         "filename": "src/conference.cpp",
         "patchSetId": 5
