@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "0dca41f0_e867d2b8",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-03-02T01:38:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3bb8edbc_f4727ba9",
+      "revId": "f2d82970ada44918a67216e02af0cede61a486aa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "73981972_21ca29e6",
         "filename": "src/plugin/jamiplugin.h",
         "patchSetId": 8
@@ -33,6 +51,24 @@
       "revId": "f2d82970ada44918a67216e02af0cede61a486aa",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8280f116_53543f32",
+        "filename": "src/plugin/jamiplugin.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-03-02T01:38:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "73981972_21ca29e6",
+      "revId": "f2d82970ada44918a67216e02af0cede61a486aa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "5a443be7_51f347da",
+        "filename": "src/plugin/jamiplugin.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-03-02T01:38:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aa8eb544_b7489d7d",
+      "revId": "f2d82970ada44918a67216e02af0cede61a486aa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "023d14d2_b4eea919",
         "filename": "src/plugin/jamipluginmanager.h",
         "patchSetId": 8
@@ -70,6 +124,24 @@
     },
     {
       "key": {
+        "uuid": "ea78b2b2_16c13ed5",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-03-02T01:38:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "023d14d2_b4eea919",
+      "revId": "f2d82970ada44918a67216e02af0cede61a486aa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "93fa2ab9_496577e4",
         "filename": "src/plugin/jamipluginmanager.h",
         "patchSetId": 8
@@ -84,6 +156,24 @@
       "revId": "f2d82970ada44918a67216e02af0cede61a486aa",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b91c9131_b15220f2",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-03-02T01:38:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "93fa2ab9_496577e4",
+      "revId": "f2d82970ada44918a67216e02af0cede61a486aa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
