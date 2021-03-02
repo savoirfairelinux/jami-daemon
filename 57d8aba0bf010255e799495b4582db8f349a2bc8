@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6e0124d8_b6711f3e",
+        "filename": "src/conference.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 739,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-02T17:40:43Z",
+      "side": 1,
+      "message": "can be const",
+      "range": {
+        "startLine": 739,
+        "startChar": 9,
+        "endLine": 739,
+        "endChar": 13
+      },
+      "revId": "57d8aba0bf010255e799495b4582db8f349a2bc8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
