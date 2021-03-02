@@ -378,7 +378,9 @@ Conference::detach()
     JAMI_INFO("Detach local participant from conference %s", id_.c_str());
 
     if (getState() == State::ACTIVE_ATTACHED) {
-        Manager::instance().getRingBufferPool().unBindAll(RingBufferPool::DEFAULT_ID);
+        for (const auto& p : participants_) {
+            Manager::instance().getRingBufferPool().unBindCallID(getCall(p)->getCallId(), RingBufferPool::DEFAULT_ID);
+        }
 #ifdef ENABLE_VIDEO
         if (auto mixer = getVideoMixer()) {
             mixer->stopInput();
