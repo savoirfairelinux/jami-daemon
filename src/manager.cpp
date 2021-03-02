@@ -1244,17 +1244,7 @@ Manager::removeConference(const std::string& conference_id)
 
     emitSignal<DRing::CallSignal::ConferenceRemoved>(conference_id);
 
-    // We now need to bind the audio to the remain participant
-    // Unbind main participant audio from conference
-    getRingBufferPool().unBindAll(RingBufferPool::DEFAULT_ID);
-
-    // bind main participant audio to remaining conference call
-    ParticipantSet participants(iter->second->getParticipantList());
-    auto iter_p = participants.begin();
-    if (iter_p != participants.end())
-        getRingBufferPool().bindCallID(*iter_p, RingBufferPool::DEFAULT_ID);
-
-    // Then remove the conference from the conference map
+    // Remove the conference from the conference map
     pimpl_->conferenceMap_.erase(iter);
     JAMI_DBG("Conference %s removed successfully", conference_id.c_str());
 }
