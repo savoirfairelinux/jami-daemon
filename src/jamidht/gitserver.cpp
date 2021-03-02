@@ -51,25 +51,39 @@ public:
         , socket_(socket)
     {
         socket_->setOnRecv([this](const uint8_t* buf, std::size_t len) {
+            JAMI_ERR("@@@ SET ON RECV %u", len);
+            std::lock_guard<std::mutex> lk(destroyMtx_);
             if (isDestroying_)
                 return len;
             std::string data(buf, buf + len);
+            JAMI_ERR("@@@ parseOrder %u", len);
             auto needMoreParsing = parseOrder(buf, len);
             while (needMoreParsing) {
+                JAMI_ERR("@@@ parseOrder");
                 needMoreParsing = parseOrder();
             };
+            JAMI_ERR("@@@ SET ON RECV END %u", len);
             return len;
         });
     }
-    ~Impl() = default;
-
+    ~Impl() { stop(); }
+    void stop()
+    {
+        JAMI_ERR("@@@ stop");
+        std::lock_guard<std::mutex> lk(destroyMtx_);
+        if (isDestroying_.exchange(true)) {
+            socket_->setOnRecv({});
+            socket_->shutdown();
+        }
+        JAMI_ERR("@@@ stop end");
+    }
     bool parseOrder(const uint8_t* buf = nullptr, std::size_t len = 0);
 
     void sendReferenceCapabilities(bool sendVersion = false);
     void answerToWantOrder();
-    void NAK();
+    bool NAK();
     void ACKCommon();
-    void ACKFirst();
+    bool ACKFirst();
     void sendPackData();
     std::map<std::string, std::string> getParameters(const std::string& pkt_line);
 
@@ -80,6 +94,7 @@ public:
     std::string common_ {};
     std::vector<std::string> haveRefs_ {};
     std::string cachedPkt_ {};
+    std::mutex destroyMtx_ {};
     std::atomic_bool isDestroying_ {false};
     onFetchedCb onFetchedCb_ {};
 };
@@ -91,6 +106,7 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
     if (buf)
         pkt += std::string({buf, buf + len});
     cachedPkt_.clear();
+    JAMI_ERR("@@@ PARSE %u", pkt.size());
 
     // Parse pkt len
     // Reference: https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L51
@@ -167,11 +183,13 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
         // not do multi-ack, just send ACK + pack file
         // In case of no common base, send NAK
         JAMI_INFO("Peer negotiation is done. Answering to want order");
+        bool sendData;
         if (common_.empty())
-            NAK();
+            sendData = NAK();
         else
-            ACKFirst();
-        sendPackData();
+            sendData = ACKFirst();
+        if (sendData)
+            sendPackData();
     } else if (pkt == FLUSH_PKT) {
         if (!haveRefs_.empty()) {
             // Reference:
@@ -206,6 +224,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     std::stringstream packet;
     if (sendVersion) {
         packet << "000eversion 1\0";
+        JAMI_ERR("######################");
         socket_->write(reinterpret_cast<const unsigned char*>(packet.str().c_str()),
                        packet.str().size(),
                        ec);
@@ -279,7 +298,7 @@ GitServer::Impl::ACKCommon()
     }
 }
 
-void
+bool
 GitServer::Impl::ACKFirst()
 {
     std::error_code ec;
@@ -293,18 +312,23 @@ GitServer::Impl::ACKFirst()
         socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
         if (ec) {
             JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
+            return false;
         }
     }
+    return true;
 }
 
-void
+bool
 GitServer::Impl::NAK()
 {
     std::error_code ec;
     // NAK
     socket_->write(reinterpret_cast<const unsigned char*>(NAK_PKT.data()), NAK_PKT.size(), ec);
-    if (ec)
+    if (ec) {
         JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
+        return false;
+    }
+    return true;
 }
 
 void
@@ -329,6 +353,7 @@ GitServer::Impl::sendPackData()
     git_oid oid;
     if (git_oid_fromstr(&oid, wantedReference_.c_str()) < 0) {
         JAMI_ERR("Cannot get reference for commit %s", wantedReference_.c_str());
+        git_packbuilder_free(pb);
         git_repository_free(repo);
         return;
     }
@@ -337,6 +362,8 @@ GitServer::Impl::sendPackData()
     if (git_revwalk_new(&walker_ptr, repo) < 0 || git_revwalk_push(walker_ptr, &oid) < 0) {
         if (walker_ptr)
             git_revwalk_free(walker_ptr);
+        git_packbuilder_free(pb);
+        git_repository_free(repo);
         return;
     }
     git_revwalk_sorting(walker_ptr, GIT_SORT_TOPOLOGICAL);
@@ -357,6 +384,7 @@ GitServer::Impl::sendPackData()
             JAMI_WARN("Couldn't open insert commit %s for %s",
                       git_oid_tostr_s(&oid),
                       repository_.c_str());
+            git_revwalk_free(walker_ptr);
             git_packbuilder_free(pb);
             git_repository_free(repo);
             return;
@@ -366,7 +394,9 @@ GitServer::Impl::sendPackData()
         git_commit* current_commit;
         if (git_commit_lookup(&current_commit, repo, &oid) < 0) {
             JAMI_ERR("Could not look up current commit");
+            git_revwalk_free(walker_ptr);
             git_packbuilder_free(pb);
+            git_repository_free(repo);
             return;
         }
         auto parentsCount = git_commit_parentcount(current_commit);
@@ -381,6 +411,8 @@ GitServer::Impl::sendPackData()
     git_buf data = {};
     if (git_packbuilder_write_buf(&data, pb) != 0) {
         JAMI_WARN("Couldn't write pack data for %s", repository_.c_str());
+        git_revwalk_free(walker_ptr);
+        git_packbuilder_free(pb);
         git_repository_free(repo);
         return;
     }
@@ -403,6 +435,7 @@ GitServer::Impl::sendPackData()
                        ec);
         if (ec) {
             JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
+            git_revwalk_free(walker_ptr);
             git_packbuilder_free(pb);
             git_repository_free(repo);
             return;
@@ -419,6 +452,7 @@ GitServer::Impl::sendPackData()
         JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
     }
 
+    git_revwalk_free(walker_ptr);
     git_packbuilder_free(pb);
     git_repository_free(repo);
     // Clear sent data
@@ -487,9 +521,7 @@ GitServer::setOnFetched(const onFetchedCb& cb)
 void
 GitServer::stop()
 {
-    pimpl_->isDestroying_.exchange(true);
-    pimpl_->socket_->setOnRecv({});
-    pimpl_->socket_->shutdown();
+    pimpl_->stop();
 }
 
 } // namespace jami
