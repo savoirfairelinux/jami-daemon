@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "74d735e1_11facc02",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 1792,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-03T14:35:26Z",
+      "side": 1,
+      "message": "homogeneize names (isAllModeratorEnabled)",
+      "range": {
+        "startLine": 1792,
+        "startChar": 31,
+        "endLine": 1792,
+        "endChar": 46
+      },
+      "revId": "1fd36bc09fe28ae79c001577d99e2f698b78632d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "67b4686d_9237597c",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 1797,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-03T14:35:26Z",
+      "side": 1,
+      "message": "API change to validate with adrien",
+      "range": {
+        "startLine": 1794,
+        "startChar": 32,
+        "endLine": 1797,
+        "endChar": 31
+      },
+      "revId": "1fd36bc09fe28ae79c001577d99e2f698b78632d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "12ed62a7_3d439202",
+        "filename": "src/account.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-03T14:35:26Z",
+      "side": 1,
+      "message": "default to true was discussed? for me it\u0027s ok and wanted, but can you confirm",
+      "range": {
+        "startLine": 121,
+        "startChar": 5,
+        "endLine": 121,
+        "endChar": 33
+      },
+      "revId": "1fd36bc09fe28ae79c001577d99e2f698b78632d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7b9f6f58_88ccc1b3",
+        "filename": "src/account_schema.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-03T14:35:26Z",
+      "side": 1,
+      "message": "homogeneize names (sometimes you use allModeratorEnabled/allModeratorsEnabled/allModEnabled)",
+      "range": {
+        "startLine": 75,
+        "startChar": 66,
+        "endLine": 75,
+        "endChar": 85
+      },
+      "revId": "1fd36bc09fe28ae79c001577d99e2f698b78632d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
