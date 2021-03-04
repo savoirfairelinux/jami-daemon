@@ -111,6 +111,8 @@ struct ParticipantInfo
 struct ConfInfo : public std::vector<ParticipantInfo>
 {
     std::vector<std::map<std::string, std::string>> toVectorMapStringString() const;
+    int h {0};
+    int w {0};
 };
 
 using ParticipantSet = std::set<std::string>;
