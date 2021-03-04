@@ -39,13 +39,14 @@
 #include "jamidht/multiplexed_socket.h"
 #include "gittransport.h"
 
-#include <string>
-#include <vector>
-#include <map>
-#include <memory>
+#include <algorithm>
 #include <atomic>
 #include <functional>
-#include <algorithm>
+#include <map>
+#include <memory>
+#include <optional>
+#include <string>
+#include <vector>
 
 namespace asio {
 class io_context;

@@ -83,7 +83,9 @@ static void transaction_state_changed_cb(pjsip_inv_session* inv,
                                          pjsip_transaction* tsx,
                                          pjsip_event* e);
 static std::shared_ptr<SIPCall> getCallFromInvite(pjsip_inv_session* inv);
+#ifdef DEBUG_SIP_REQUEST_MSG
 static void processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* e);
+#endif
 
 static void
 handleIncomingOptions(pjsip_rx_data* rdata)
@@ -1262,6 +1264,7 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     }
 }
 
+#ifdef DEBUG_SIP_REQUEST_MSG
 static void
 processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* event)
 {
@@ -1294,6 +1297,7 @@ processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* event)
 
     sip_utils::logMessageHeaders(&msg->hdr);
 }
+#endif
 
 int
 SIPVoIPLink::getModId()

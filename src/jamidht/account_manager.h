@@ -31,9 +31,10 @@
 #include <opendht/crypto.h>
 
 #include <functional>
-#include <string>
 #include <map>
 #include <mutex>
+#include <optional>
+#include <string>
 
 namespace dht {
 class DhtRunner;

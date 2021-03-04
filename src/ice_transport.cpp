@@ -554,9 +554,9 @@ IceTransport::Impl::handleEvents(unsigned max_msec)
 void
 IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_status_t status)
 {
-    const char* opname = op == PJ_ICE_STRANS_OP_INIT
-                             ? "initialization"
-                             : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
+    const char* opname = op == PJ_ICE_STRANS_OP_INIT          ? "initialization"
+                         : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation"
+                                                              : "unknown_op";
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
@@ -1486,7 +1486,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         // bytes length).
         std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
         pimpl_->waitDataCv_.wait(lk, [&] {
-            return pimpl_->lastSentLen_ >= static_cast<pj_ssize_t>(len)
+            return pimpl_->lastSentLen_ >= static_cast<pj_size_t>(len)
                    or pimpl_->destroying_.load();
         });
         pimpl_->lastSentLen_ = 0;
