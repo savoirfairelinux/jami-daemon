@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "91ac4dd3_480ab912",
+        "filename": "src/uri.cpp",
+        "patchSetId": 49
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-04T02:48:51Z",
+      "side": 1,
+      "message": "string_view: this will make the substring operation almost free",
+      "range": {
+        "startLine": 24,
+        "startChar": 9,
+        "endLine": 24,
+        "endChar": 27
+      },
+      "revId": "957f85e7be9c2be1bd56acf437c67ad46afa6eee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "d48a2d0d_cb0541eb",
         "filename": "src/uri.cpp",
         "patchSetId": 49
@@ -16,6 +39,29 @@
       "revId": "957f85e7be9c2be1bd56acf437c67ad46afa6eee",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4be8dbea_57c9c092",
+        "filename": "src/uri.cpp",
+        "patchSetId": 49
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-04T02:48:51Z",
+      "side": 1,
+      "message": "const std::string\u0026 to avoid copy in read-only cases",
+      "range": {
+        "startLine": 46,
+        "startChar": 0,
+        "endLine": 46,
+        "endChar": 11
+      },
+      "revId": "957f85e7be9c2be1bd56acf437c67ad46afa6eee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
