@@ -98,18 +98,19 @@ CertificateStore::loadRevocations(crypto::Certificate& crt) const
             JAMI_WARN("Can't load revocation list: %s", e.what());
         }
     }
-    auto ocsp_dir = ocspPath_+DIR_SEPARATOR_CH+crt.getId().toString();
+    auto ocsp_dir = ocspPath_ + DIR_SEPARATOR_CH + crt.getId().toString();
     auto ocsp_dir_content = fileutils::readDirectory(ocsp_dir);
     for (const auto& ocsp /*filename*/ : ocsp_dir_content) {
         try {
-            std::string ocsp_filepath = ocsp_dir+DIR_SEPARATOR_CH+ocsp;
+            std::string ocsp_filepath = ocsp_dir + DIR_SEPARATOR_CH + ocsp;
             JAMI_DBG("Found %s", ocsp_filepath.c_str());
             auto serial = crt.getSerialNumber();
             if (dht::toHex(serial.data(), serial.size()) != ocsp)
                 continue;
             // Save the response
             dht::Blob ocspBlob = fileutils::loadFile(ocsp_filepath);
-            crt.ocspResponse = std::make_shared<dht::crypto::OcspResponse>(ocspBlob.data(),ocspBlob.size());
+            crt.ocspResponse = std::make_shared<dht::crypto::OcspResponse>(ocspBlob.data(),
+                                                                           ocspBlob.size());
             unsigned int status = crt.ocspResponse->getCertificateStatus();
             if (status == GNUTLS_OCSP_CERT_GOOD)
                 JAMI_DBG("Certificate %s has good OCSP status", crt.getId().to_c_str());
@@ -227,6 +228,7 @@ readCertificates(const std::string& path, const std::string& crl_path)
             gnutls_x509_crt_list_import2(&certs, &cert_num, &dt, GNUTLS_X509_FMT_PEM, 0);
             for (unsigned i = 0; i < cert_num; i++)
                 ret.emplace_back(certs[i]);
+            gnutls_free(certs);
         } catch (const std::exception& e) {
         };
     }
@@ -404,21 +406,18 @@ CertificateStore::pinOcspResponse(const dht::crypto::Certificate& cert)
         return;
     try {
         cert.ocspResponse->getCertificateStatus();
-    }
-    catch (dht::crypto::CryptoException& e){
+    } catch (dht::crypto::CryptoException& e) {
         JAMI_ERR("Failed to read certificate status of OCSP response: %s", e.what());
         return;
     }
     auto id = cert.getId().toString();
     auto serialhex = dht::toHex(cert.getSerialNumber());
     auto dir = ocspPath_ + DIR_SEPARATOR_CH + id;
-    dht::ThreadPool::io().run([
-        path = dir + DIR_SEPARATOR_CH + serialhex,
-        dir = std::move(dir),
-        id = std::move(id),
-        serialhex = std::move(serialhex),
-        ocspResponse = cert.ocspResponse
-    ]{
+    dht::ThreadPool::io().run([path = dir + DIR_SEPARATOR_CH + serialhex,
+                               dir = std::move(dir),
+                               id = std::move(id),
+                               serialhex = std::move(serialhex),
+                               ocspResponse = cert.ocspResponse] {
         JAMI_DBG("Saving OCSP Response of device %s with serial %s", id.c_str(), serialhex.c_str());
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
         fileutils::check_dir(dir.c_str());
