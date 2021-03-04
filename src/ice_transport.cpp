@@ -1510,7 +1510,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         // bytes length).
         std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
         pimpl_->waitDataCv_.wait(lk, [&] {
-            return pimpl_->lastSentLen_ >= static_cast<pj_ssize_t>(len)
+            return pimpl_->lastSentLen_ >= static_cast<pj_size_t>(len)
                    or pimpl_->destroying_.load();
         });
         pimpl_->lastSentLen_ = 0;
