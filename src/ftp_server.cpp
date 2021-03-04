@@ -44,8 +44,8 @@ FtpServer::FtpServer(const DRing::DataTransferInfo& info,
                      const InternalCompletionCb& cb)
     : Stream()
     , info_ {info}
-    , transferId_(id)
     , cb_(cb)
+    , transferId_(id)
 {}
 
 DRing::DataTransferId
