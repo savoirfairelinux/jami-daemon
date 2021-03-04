@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "71651041_d1bc362b",
+        "filename": "src/call_factory.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-04T22:35:06Z",
+      "side": 1,
+      "message": "Why this method is public? Why do we need 2 APIs to do the same job? The templated version is th only one used in the code.\nEither assume that for now we only support SIP and only expose newSipCall() or stay generic and only expose  std:shared_ptr\u003cC\u003enewCall(). Having more than one API for the same result only add confusion.\nFurthermore, making reference to SIPAccount and and SIPCall here will add unnecessary (direct or indirect) dependencies on these classes (even if they are forward declared).",
+      "revId": "b3c4f995d09d1807bca7f8a617c23ea1525bb9d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
