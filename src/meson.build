@@ -314,6 +314,7 @@ if get_option('interfaces').contains('library')
         'dring/callmanager_interface.h',
         'dring/configurationmanager_interface.h',
         'dring/datatransfer_interface.h',
+        'dring/conversation_interface.h',
         'dring/def.h',
         'dring/dring.h',
         'dring/media_const.h',
