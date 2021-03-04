@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "363089ee_6cbb75db",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-04T14:49:55Z",
+      "side": 1,
+      "message": "double def",
+      "range": {
+        "startLine": 26,
+        "startChar": 0,
+        "endLine": 30,
+        "endChar": 71
+      },
+      "revId": "8712209ef57760789ca371b1609d9c1458822697",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9112bb96_28096266",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 114,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-04T14:49:55Z",
+      "side": 1,
+      "message": "I still don\u0027t like this design with retry on a thread",
+      "range": {
+        "startLine": 111,
+        "startChar": 4,
+        "endLine": 114,
+        "endChar": 5
+      },
+      "revId": "8712209ef57760789ca371b1609d9c1458822697",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c06d2d2d_a9f997a9",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-04T14:49:55Z",
+      "side": 1,
+      "message": "always true if checked just before",
+      "range": {
+        "startLine": 116,
+        "startChar": 6,
+        "endLine": 116,
+        "endChar": 25
+      },
+      "revId": "8712209ef57760789ca371b1609d9c1458822697",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d16ad22e_5210c42b",
+        "filename": "src/upnp/upnp_context.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-04T14:49:55Z",
+      "side": 1,
+      "message": "for cleanup, this can be changed to max bound and be configurable",
+      "range": {
+        "startLine": 69,
+        "startChar": 7,
+        "endLine": 73,
+        "endChar": 15
+      },
+      "revId": "8712209ef57760789ca371b1609d9c1458822697",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
