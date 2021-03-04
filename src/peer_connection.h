@@ -69,7 +69,7 @@ public:
         // Not implemented
     }
 
-    virtual void setOnStateChangedCb(const OnStateChangedCb& cb) {}
+    virtual void setOnStateChangedCb(const OnStateChangedCb&) {}
 };
 
 //==============================================================================
