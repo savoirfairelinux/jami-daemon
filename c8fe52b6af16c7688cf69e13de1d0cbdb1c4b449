@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "2583fcf5_d299c72f",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 41
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-04T17:53:51Z",
+      "side": 1,
+      "message": "My point is that the security is a media attribute as any other attribute.\nBut I tend to agree with you, and since currently the client does not control the security we should keep it that way, until there is an explicit request for it.\nRemoved from the Map but kept in the internal MediaAttribute struct.",
+      "parentUuid": "2ad5f57d_d423cd0e",
+      "range": {
+        "startLine": 66,
+        "startChar": 18,
+        "endLine": 71,
+        "endChar": 29
+      },
+      "revId": "c8fe52b6af16c7688cf69e13de1d0cbdb1c4b449",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "acd1cb31_81d03e0e",
         "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
         "patchSetId": 41
@@ -45,6 +69,30 @@
       "revId": "c8fe52b6af16c7688cf69e13de1d0cbdb1c4b449",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b7bfc211_09f44890",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 41
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-04T17:53:51Z",
+      "side": 1,
+      "message": "Ack\nAgree, we will get to the deprecation later. I added an item in the epic to deprecate all the redundant APIs once all new ones are fully functional:\nhttps://git.jami.net/savoirfairelinux/ring-daemon/-/issues/470",
+      "parentUuid": "acd1cb31_81d03e0e",
+      "range": {
+        "startLine": 52,
+        "startChar": 27,
+        "endLine": 74,
+        "endChar": 17
+      },
+      "revId": "c8fe52b6af16c7688cf69e13de1d0cbdb1c4b449",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "dd23d21e_e8680146",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 41
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-04T17:53:51Z",
+      "side": 1,
+      "message": "Ack\nI generally use assertion where the error must not happen. It much easier to debug an assert than a random crash or weird behavior. And also saves a lot if code of unnecessary error handling.\nThe assertion are expected to fail following a code change (development) only.\nRegarding the exceptions, their use is not consistent, and not sure if they are always handled.",
+      "parentUuid": "7dc757c5_1a3067b0",
+      "range": {
+        "startLine": 82,
+        "startChar": 7,
+        "endLine": 82,
+        "endChar": 22
+      },
+      "revId": "c8fe52b6af16c7688cf69e13de1d0cbdb1c4b449",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "aeed99d3_f7f378f9",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 41
@@ -91,6 +163,30 @@
       "revId": "c8fe52b6af16c7688cf69e13de1d0cbdb1c4b449",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cb78240c_927541a6",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 41
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-04T17:53:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aeed99d3_f7f378f9",
+      "range": {
+        "startLine": 146,
+        "startChar": 6,
+        "endLine": 151,
+        "endChar": 5
+      },
+      "revId": "c8fe52b6af16c7688cf69e13de1d0cbdb1c4b449",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "5f2df3c6_d37802e6",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 41
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-04T17:53:51Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "60471a9e_62de08da",
+      "range": {
+        "startLine": 168,
+        "startChar": 6,
+        "endLine": 174,
+        "endChar": 16
+      },
+      "revId": "c8fe52b6af16c7688cf69e13de1d0cbdb1c4b449",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9a844fd4_d91bb5e0",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 41
@@ -137,6 +257,30 @@
       "revId": "c8fe52b6af16c7688cf69e13de1d0cbdb1c4b449",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "24ee377b_cb616ed0",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 41
+      },
+      "lineNbr": 1336,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-04T17:53:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9a844fd4_d91bb5e0",
+      "range": {
+        "startLine": 1332,
+        "startChar": 28,
+        "endLine": 1336,
+        "endChar": 35
+      },
+      "revId": "c8fe52b6af16c7688cf69e13de1d0cbdb1c4b449",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
