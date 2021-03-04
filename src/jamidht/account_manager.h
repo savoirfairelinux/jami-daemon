@@ -31,8 +31,8 @@
 #include <opendht/crypto.h>
 
 #include <functional>
-#include <string>
 #include <map>
+#include <string>
 
 namespace dht {
 class DhtRunner;
