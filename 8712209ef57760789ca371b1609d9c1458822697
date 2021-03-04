@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "a9344f9b_c6465a17",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-04T19:33:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "363089ee_6cbb75db",
+      "range": {
+        "startLine": 26,
+        "startChar": 0,
+        "endLine": 30,
+        "endChar": 71
+      },
+      "revId": "8712209ef57760789ca371b1609d9c1458822697",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9112bb96_28096266",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 12
@@ -45,6 +69,30 @@
       "revId": "8712209ef57760789ca371b1609d9c1458822697",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dedeff61_eb0c39be",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 114,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-04T19:33:04Z",
+      "side": 1,
+      "message": "Ack.\nthere is no \"retry\". This call will be dispatched on the upnp thread only if not already on it.\nI know this might seem bulky, but it proved to be very helpful when dealing with thread race.\nWe should keep it at least in this module until we have a better option.",
+      "parentUuid": "9112bb96_28096266",
+      "range": {
+        "startLine": 111,
+        "startChar": 4,
+        "endLine": 114,
+        "endChar": 5
+      },
+      "revId": "8712209ef57760789ca371b1609d9c1458822697",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "f734d20f_109cf18e",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-04T19:33:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c06d2d2d_a9f997a9",
+      "range": {
+        "startLine": 116,
+        "startChar": 6,
+        "endLine": 116,
+        "endChar": 25
+      },
+      "revId": "8712209ef57760789ca371b1609d9c1458822697",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d16ad22e_5210c42b",
         "filename": "src/upnp/upnp_context.h",
         "patchSetId": 12
@@ -91,6 +163,30 @@
       "revId": "8712209ef57760789ca371b1609d9c1458822697",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d3c20717_068a1e19",
+        "filename": "src/upnp/upnp_context.h",
+        "patchSetId": 12
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-04T19:33:04Z",
+      "side": 1,
+      "message": "Ack\nAgree. But we should do it in a separate patch with an explicit request since it will change the behavior of the product.\nhttps://git.jami.net/savoirfairelinux/ring-daemon/-/issues/471",
+      "parentUuid": "d16ad22e_5210c42b",
+      "range": {
+        "startLine": 69,
+        "startChar": 7,
+        "endLine": 73,
+        "endChar": 15
+      },
+      "revId": "8712209ef57760789ca371b1609d9c1458822697",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
