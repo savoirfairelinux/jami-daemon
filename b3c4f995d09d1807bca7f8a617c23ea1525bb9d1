@@ -16,6 +16,23 @@
       "revId": "b3c4f995d09d1807bca7f8a617c23ea1525bb9d1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9377ca2e_39b23846",
+        "filename": "src/call_factory.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-04T23:10:53Z",
+      "side": 1,
+      "message": "LINK_TYPE reappeared 😂\n\nSeriously, if we just take the time to carefully think about it, this class (at least its declaration) doesn\u0027t even need to know about the call type (or link type). All call type related will go in the implementation(s) of the this base class.",
+      "revId": "b3c4f995d09d1807bca7f8a617c23ea1525bb9d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
