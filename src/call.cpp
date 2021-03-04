@@ -643,12 +643,30 @@ Call::setConferenceInfo(const std::string& msg)
     Json::CharReaderBuilder rbuilder;
     auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
     if (reader->parse(msg.data(), msg.data() + msg.size(), &json, &err)) {
-        for (const auto& participantInfo : json) {
-            ParticipantInfo pInfo;
-            if (!participantInfo.isMember("uri"))
-                continue;
-            pInfo.fromJson(participantInfo);
-            newInfo.emplace_back(pInfo);
+        if (json.isObject()) {
+            // new confInfo
+            if (json.isMember("p")) {
+                for (const auto& participantInfo : json["p"]) {
+                    ParticipantInfo pInfo;
+                    if (!participantInfo.isMember("uri"))
+                        continue;
+                    pInfo.fromJson(participantInfo);
+                    newInfo.emplace_back(pInfo);
+                }
+            }
+            if (json.isMember("w"))
+                newInfo.w = json["w"].asInt();
+            if (json.isMember("h"))
+                newInfo.h = json["h"].asInt();
+        } else {
+            // old confInfo
+            for (const auto& participantInfo : json) {
+                ParticipantInfo pInfo;
+                if (!participantInfo.isMember("uri"))
+                    continue;
+                pInfo.fromJson(participantInfo);
+                newInfo.emplace_back(pInfo);
+            }
         }
     }
 
