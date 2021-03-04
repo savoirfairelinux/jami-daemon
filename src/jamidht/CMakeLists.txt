@@ -17,6 +17,8 @@ list (APPEND Source_Files__jamidht
       "${CMAKE_CURRENT_SOURCE_DIR}/connectionmanager.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/conversationrepository.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/conversationrepository.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/conversation.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/conversation.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/channeled_transport.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/channeled_transport.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/channeled_transfers.cpp"
