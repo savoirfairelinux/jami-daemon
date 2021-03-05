@@ -289,7 +289,6 @@ public:
     void updateMuted();
     void muteLocalHost(bool is_muted, const std::string& mediaType);
     bool isRemoteParticipant(const std::string& uri);
-    void resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo& remoteCell);
     void mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI);
 
 private:
@@ -338,7 +337,7 @@ private:
     bool localModAdded_ {false};
 
     std::map<std::string, ConfInfo> remoteHosts_;
-    std::string confInfo2str(const ConfInfo& confInfo);
+    void resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerURI);
     std::string_view findHostforRemoteParticipant(std::string_view uri);
     std::shared_ptr<Call> getCallFromPeerURI(std::string_view peerURI);
 
