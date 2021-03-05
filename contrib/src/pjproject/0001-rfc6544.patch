@@ -961,8 +961,8 @@ index 2a4125bc5..b10a8fb51 100644
 +    if (set_timer && ice->timer_connect.id == TIMER_NONE) {
 +	/* Reschedule */
 +	pj_time_val delay = {
-+	    .sec  = 0,
-+	    .msec = 1500
++	    .sec  = 10,
++	    .msec = 0
 +	};
 +	pj_time_val_normalize(&delay);
 +	pj_timer_heap_schedule_w_grp_lock(ice->stun_cfg.timer_heap,
@@ -1102,8 +1102,8 @@ index 2a4125bc5..b10a8fb51 100644
 +                pj_assert(!"Not expected any timer active");
 +            } else {
 +                pj_time_val delay = {
-+                    .sec  = 0,
-+                    .msec = 1500,
++                    .sec  = 10,
++                    .msec = 0,
 +                };
 +                pj_time_val_normalize(&delay);
 +                pj_timer_heap_schedule_w_grp_lock(ice->stun_cfg.timer_heap,
