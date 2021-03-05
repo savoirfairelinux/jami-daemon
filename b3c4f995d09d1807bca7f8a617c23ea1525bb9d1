@@ -33,6 +33,24 @@
       "revId": "b3c4f995d09d1807bca7f8a617c23ea1525bb9d1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a071dff1_082a68d0",
+        "filename": "src/call_factory.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-05T00:52:38Z",
+      "side": 1,
+      "message": "It reappeared, but unlike before, an arbitrary Call sub-type is not technically required, to have LINK_TYPE unless getCall\u003cType\u003e is used.\n\nThis method creates value for the user, and allows to factorize more logic in this class, in a type-agnostic way.\n\nOtherwise, every user is required to be aware of the enum corresponding to the desired Call sub-type. So by removing this logic, we would just push the complexity to every user.",
+      "parentUuid": "9377ca2e_39b23846",
+      "revId": "b3c4f995d09d1807bca7f8a617c23ea1525bb9d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
