@@ -105,6 +105,10 @@ Conference::Conference()
                                                       isModeratorMuted,
                                                       isModerator});
             }
+            if (auto videoMixer = shared->getVideoMixer()) {
+                newInfo.h = videoMixer->getHeight();
+                newInfo.w = videoMixer->getWidth();
+            }
             lk.unlock();
             // Handle participants not present in the video mixer
             for (const auto& subCall : subCalls) {
@@ -290,11 +294,13 @@ ConfInfo::toVectorMapStringString() const
 std::string
 ConfInfo::toString() const
 {
-    Json::Value jsonArray = {};
+    Json::Value val = {};
     for (const auto& info : *this) {
-        jsonArray.append(info.toJson());
+        val["p"].append(info.toJson());
     }
-    return Json::writeString(Json::StreamWriterBuilder{}, jsonArray);
+    val["w"] = w;
+    val["h"] = h;
+    return Json::writeString(Json::StreamWriterBuilder{}, val);
 }
 
 void
