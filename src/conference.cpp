@@ -105,6 +105,10 @@ Conference::Conference()
                                                       isModeratorMuted,
                                                       isModerator});
             }
+            if (auto videoMixer = shared->getVideoMixer()) {
+                newInfo.h = videoMixer->getHeight();
+                newInfo.w = videoMixer->getWidth();
+            }
             lk.unlock();
             // Handle participants not present in the video mixer
             for (const auto& subCall : subCalls) {
@@ -290,11 +294,13 @@ ConfInfo::toVectorMapStringString() const
 std::string
 ConfInfo::toString() const
 {
-    Json::Value jsonArray = {};
+    Json::Value val = {};
     for (const auto& info : *this) {
-        jsonArray.append(info.toJson());
+        val["p"].append(info.toJson());
     }
-    return Json::writeString(Json::StreamWriterBuilder{}, jsonArray);
+    val["w"] = w;
+    val["h"] = h;
+    return Json::writeString(Json::StreamWriterBuilder{}, val);
 }
 
 void
@@ -853,24 +859,11 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
 }
 
 void
-Conference::resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo& remoteCell)
+Conference::resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo& remoteCell, const int& remoteH, const int& remoteW)
 {
-    int remoteFrameHeight {0};
-    int remoteFrameWidth {0};
     ParticipantInfo localCell;
 
-    // get the size of the remote frame
-    for (const auto& item : participants_) {
-        auto sipCall = std::dynamic_pointer_cast<SIPCall>(
-            Manager::instance().callFactory.getCall(item, Call::LinkType::SIP));
-        if (sipCall && sipCall->getPeerNumber().find(peerURI) != std::string::npos) {
-            remoteFrameHeight = sipCall->getVideoRtp().getVideoReceive()->getHeight();
-            remoteFrameWidth = sipCall->getVideoRtp().getVideoReceive()->getWidth();
-            break;
-        }
-    }
-
-    if (remoteFrameHeight == 0 or remoteFrameWidth == 0) {
+    if (remoteH == 0 or remoteW == 0) {
         JAMI_WARN("Remote frame size not found.");
         return;
     }
@@ -883,8 +876,8 @@ Conference::resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo&
         }
     }
 
-    const float zoomX = (float) remoteFrameWidth / localCell.w;
-    const float zoomY = (float) remoteFrameHeight / localCell.h;
+    const float zoomX = (float) remoteW / localCell.w;
+    const float zoomY = (float) remoteH / localCell.h;
 
     remoteCell.x = remoteCell.x / zoomX + localCell.x;
     remoteCell.y = remoteCell.y / zoomY + localCell.y;
@@ -913,7 +906,7 @@ Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
     }
 
     for (auto& partInfo : newInfo) {
-        resizeRemoteParticipant(peerURI, partInfo);
+        resizeRemoteParticipant(peerURI, partInfo, newInfo.h, newInfo.w);
     }
 
     bool updateNeeded = false;

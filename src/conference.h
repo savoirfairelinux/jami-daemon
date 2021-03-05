@@ -294,7 +294,6 @@ public:
     void updateMuted();
     void muteLocalHost(bool is_muted, const std::string& mediaType);
     bool isRemoteParticipant(const std::string& uri);
-    void resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo& remoteCell);
     void mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI);
 
 private:
@@ -345,6 +344,8 @@ private:
     std::map<std::string, ConfInfo> remoteHosts_;
     std::string confInfo2str(const ConfInfo& confInfo);
     std::string_view findHostforRemoteParticipant(std::string_view uri);
+    void resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo& remoteCell,
+                                    const int& remoteH, const int& remoteW);
 };
 
 } // namespace jami
