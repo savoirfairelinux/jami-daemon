@@ -105,6 +105,10 @@ Conference::Conference()
                                                       isModeratorMuted,
                                                       isModerator});
             }
+            if (auto videoMixer = shared->getVideoMixer()) {
+                newInfo.h = videoMixer->getHeight();
+                newInfo.w = videoMixer->getWidth();
+            }
             lk.unlock();
             // Handle participants not present in the video mixer
             for (const auto& subCall : subCalls) {
@@ -285,11 +289,13 @@ ConfInfo::toVectorMapStringString() const
 std::string
 ConfInfo::toString() const
 {
-    Json::Value jsonArray = {};
+    Json::Value val = {};
     for (const auto& info : *this) {
-        jsonArray.append(info.toJson());
+        val["p"].append(info.toJson());
     }
-    return Json::writeString(Json::StreamWriterBuilder{}, jsonArray);
+    val["w"] = w;
+    val["h"] = h;
+    return Json::writeString(Json::StreamWriterBuilder{}, val);
 }
 
 void
@@ -878,17 +884,21 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
 }
 
 void
-Conference::resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo& remoteCell)
+Conference::resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo& remoteCell,
+                                    const int& remoteH, const int& remoteW)
 {
-    int remoteFrameHeight {0};
-    int remoteFrameWidth {0};
+    int remoteFrameHeight = remoteH;
+    int remoteFrameWidth = remoteW;
     ParticipantInfo localCell;
 
-    // get the size of the remote frame
-    if (auto call = std::dynamic_pointer_cast<SIPCall>(
-            getCallFromPeerURI(peerURI))) {
-        remoteFrameHeight = call->getVideoRtp().getVideoReceive()->getHeight();
-        remoteFrameWidth = call->getVideoRtp().getVideoReceive()->getWidth();
+    if (remoteFrameHeight == 0 or remoteFrameWidth == 0) {
+    // get the size of the remote frame from receiveThread
+    // if the one from confInfo is empty
+        if (auto call = std::dynamic_pointer_cast<SIPCall>(
+                getCallFromPeerURI(peerURI))) {
+            remoteFrameHeight = call->getVideoRtp().getVideoReceive()->getHeight();
+            remoteFrameWidth = call->getVideoRtp().getVideoReceive()->getWidth();
+        }
     }
 
     if (remoteFrameHeight == 0 or remoteFrameWidth == 0) {
@@ -914,16 +924,6 @@ Conference::resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo&
 
 }
 
-std::string
-Conference::confInfo2str(const ConfInfo& confInfo)
-{
-    Json::Value jsonArray = {};
-    for (const auto& info : confInfo) {
-        jsonArray.append(info.toJson());
-    }
-    return Json::writeString(Json::StreamWriterBuilder{}, jsonArray);
-}
-
 void
 Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
 {
@@ -934,7 +934,7 @@ Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
     }
 
     for (auto& partInfo : newInfo) {
-        resizeRemoteParticipant(peerURI, partInfo);
+        resizeRemoteParticipant(peerURI, partInfo, newInfo.h, newInfo.w);
     }
 
     bool updateNeeded = false;
