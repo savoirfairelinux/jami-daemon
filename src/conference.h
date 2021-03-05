@@ -135,6 +135,9 @@ struct ConfInfo : public std::vector<ParticipantInfo>
 
     friend bool operator==(const ConfInfo& c1, const ConfInfo& c2)
     {
+        if (c1.h != c2.h or c1.w != c2.w)
+            return false;
+
         for (auto& p1 : c1) {
             auto it = std::find_if(c2.begin(), c2.end(), [p1](const ParticipantInfo& p2) {
                 return p1 == p2;
@@ -289,7 +292,6 @@ public:
     void updateMuted();
     void muteLocalHost(bool is_muted, const std::string& mediaType);
     bool isRemoteParticipant(const std::string& uri);
-    void resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo& remoteCell);
     void mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI);
 
 private:
@@ -338,7 +340,7 @@ private:
     bool localModAdded_ {false};
 
     std::map<std::string, ConfInfo> remoteHosts_;
-    std::string confInfo2str(const ConfInfo& confInfo);
+    void resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerURI);
     std::string_view findHostforRemoteParticipant(std::string_view uri);
     std::shared_ptr<Call> getCallFromPeerID(std::string_view peerID);
 
