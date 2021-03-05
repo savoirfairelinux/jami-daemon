@@ -109,6 +109,10 @@ Conference::Conference()
                                                       isModeratorMuted,
                                                       isModerator});
             }
+            if (auto videoMixer = shared->getVideoMixer()) {
+                newInfo.h = videoMixer->getHeight();
+                newInfo.w = videoMixer->getWidth();
+            }
             lk.unlock();
             // Handle participants not present in the video mixer
             for (const auto& subCall : subCalls) {
@@ -369,11 +373,13 @@ ConfInfo::toVectorMapStringString() const
 std::string
 ConfInfo::toString() const
 {
-    Json::Value jsonArray = {};
+    Json::Value val = {};
     for (const auto& info : *this) {
-        jsonArray.append(info.toJson());
+        val["p"].append(info.toJson());
     }
-    return Json::writeString(Json::StreamWriterBuilder {}, jsonArray);
+    val["w"] = w;
+    val["h"] = h;
+    return Json::writeString(Json::StreamWriterBuilder {}, val);
 }
 
 void
@@ -977,17 +983,19 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
 }
 
 void
-Conference::resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo& remoteCell)
+Conference::resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerURI)
 {
-    int remoteFrameHeight {0};
-    int remoteFrameWidth {0};
-    ParticipantInfo localCell;
+    int remoteFrameHeight = confInfo.h;
+    int remoteFrameWidth = confInfo.w;
 
-    // get the size of the remote frame
-    if (auto call = std::dynamic_pointer_cast<SIPCall>(
-            getCallFromPeerID(string_remove_suffix(peerURI, '@')))) {
-        remoteFrameHeight = call->getVideoRtp().getVideoReceive()->getHeight();
-        remoteFrameWidth = call->getVideoRtp().getVideoReceive()->getWidth();
+    if (remoteFrameHeight == 0 or remoteFrameWidth == 0) {
+    // get the size of the remote frame from receiveThread
+    // if the one from confInfo is empty
+        if (auto call = std::dynamic_pointer_cast<SIPCall>(
+                getCallFromPeerID(string_remove_suffix(peerURI, '@')))) {
+            remoteFrameHeight = call->getVideoRtp().getVideoReceive()->getHeight();
+            remoteFrameWidth = call->getVideoRtp().getVideoReceive()->getWidth();
+        }
     }
 
     if (remoteFrameHeight == 0 or remoteFrameWidth == 0) {
@@ -996,6 +1004,7 @@ Conference::resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo&
     }
 
     // get the size of the local frame
+    ParticipantInfo localCell;
     for (const auto& p : confInfo_) {
         if (p.uri == peerURI) {
             localCell = p;
@@ -1003,23 +1012,16 @@ Conference::resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo&
         }
     }
 
-    const float zoomX = (float) remoteFrameWidth / localCell.w;
-    const float zoomY = (float) remoteFrameHeight / localCell.h;
+    // Do the resize for each remote participant
+    for (auto& remoteCell : confInfo) {
+        const float zoomX = (float) remoteFrameWidth / localCell.w;
+        const float zoomY = (float) remoteFrameHeight / localCell.h;
 
-    remoteCell.x = remoteCell.x / zoomX + localCell.x;
-    remoteCell.y = remoteCell.y / zoomY + localCell.y;
-    remoteCell.w = remoteCell.w / zoomX;
-    remoteCell.h = remoteCell.h / zoomY;
-}
-
-std::string
-Conference::confInfo2str(const ConfInfo& confInfo)
-{
-    Json::Value jsonArray = {};
-    for (const auto& info : confInfo) {
-        jsonArray.append(info.toJson());
+        remoteCell.x = remoteCell.x / zoomX + localCell.x;
+        remoteCell.y = remoteCell.y / zoomY + localCell.y;
+        remoteCell.w = remoteCell.w / zoomX;
+        remoteCell.h = remoteCell.h / zoomY;
     }
-    return Json::writeString(Json::StreamWriterBuilder {}, jsonArray);
 }
 
 void
@@ -1031,9 +1033,7 @@ Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
         return;
     }
 
-    for (auto& partInfo : newInfo) {
-        resizeRemoteParticipant(peerURI, partInfo);
-    }
+    resizeRemoteParticipants(newInfo, peerURI);
 
     bool updateNeeded = false;
     auto it = remoteHosts_.find(peerURI);
