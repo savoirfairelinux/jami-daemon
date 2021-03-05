@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "65d631a2_5f713968",
+        "filename": "src/call_factory.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-05T19:12:29Z",
+      "side": 1,
+      "message": "Agreed. Since Call types are concrete, I moved everything to newSipCall and fully removed the template",
+      "parentUuid": "71651041_d1bc362b",
+      "revId": "b3c4f995d09d1807bca7f8a617c23ea1525bb9d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "9377ca2e_39b23846",
         "filename": "src/call_factory.h",
         "patchSetId": 9
