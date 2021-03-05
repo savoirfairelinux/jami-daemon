@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "083ceb2a_980faa2f",
+        "filename": "src/conference.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 296,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-05T22:38:17Z",
+      "side": 1,
+      "message": "better confInfoToString\neven better confInfo.toString() ???",
+      "range": {
+        "startLine": 296,
+        "startChar": 30,
+        "endLine": 296,
+        "endChar": 42
+      },
+      "revId": "664397818732f042ce1b10df3b1df8dae1bead98",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d7777c0a_138d7b87",
+        "filename": "src/conference.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 739,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-05T22:38:17Z",
+      "side": 1,
+      "message": "I believe you could also do: const auto\u0026 [hostUri, host\u003c...\u003e] for added clarity",
+      "range": {
+        "startLine": 739,
+        "startChar": 9,
+        "endLine": 739,
+        "endChar": 26
+      },
+      "revId": "664397818732f042ce1b10df3b1df8dae1bead98",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
