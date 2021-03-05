@@ -22,6 +22,30 @@
       "revId": "57d8aba0bf010255e799495b4582db8f349a2bc8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7f649556_4af68e55",
+        "filename": "src/conference.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 739,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-03-05T22:27:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6e0124d8_b6711f3e",
+      "range": {
+        "startLine": 739,
+        "startChar": 9,
+        "endLine": 739,
+        "endChar": 13
+      },
+      "revId": "57d8aba0bf010255e799495b4582db8f349a2bc8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
