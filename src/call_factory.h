@@ -41,26 +41,14 @@ public:
     CallFactory(std::mt19937_64& rand) : rand_(rand) {}
 
     /**
-     * Create a new call instance.
+     * Create and register a new SIPCall instance.
      * @param account Account used to create this call
-     * @param id Unique identifier of the call
-     * @param type Set the call type
+     * @param type The call type (incoming/outgoing)
      * @param details Call details
      */
     std::shared_ptr<SIPCall> newSipCall(const std::shared_ptr<SIPAccountBase>& account,
                                         Call::CallType type,
                                         const std::map<std::string, std::string>& details = {});
-
-    template<class C>
-    std::shared_ptr<C> newCall(std::shared_ptr<Account> account,
-                                  Call::CallType type,
-                                  const std::map<std::string, std::string>& details = {})
-    {
-        if (auto base = std::dynamic_pointer_cast<SIPAccountBase>(account)) {
-            return std::dynamic_pointer_cast<C>(newSipCall(base, type, details));
-        }
-        return nullptr;
-    }
 
     std::string getNewCallID() const;
 
@@ -126,7 +114,6 @@ public:
     std::size_t callCount(Call::LinkType link) const;
 
 private:
-
     /**
      * @brief Get the calls map
      * @param link The call type
@@ -136,10 +123,8 @@ private:
     const CallMap* getMap_(Call::LinkType link) const
     {
         auto const& itermap = callMaps_.find(link);
-
         if (itermap != callMaps_.cend())
             return &itermap->second;
-
         return nullptr;
     }
 

@@ -368,7 +368,9 @@ JamiAccount::newIncomingCall(const std::string& from,
                     if (cit->transport != sipTr)
                         continue;
 
-                    auto call = Manager::instance().callFactory.newCall<SIPCall>(shared(), Call::CallType::INCOMING);
+                    auto call = Manager::instance()
+                                    .callFactory.newSipCall(shared(),
+                                                                  Call::CallType::INCOMING);
                     call->setPeerUri(RING_URI_PREFIX + from);
                     call->setPeerNumber(from);
                     call->updateDetails(details);
@@ -407,7 +409,9 @@ JamiAccount::newOutgoingCall(std::string_view toUrl,
     auto suffix = stripPrefix(toUrl);
     JAMI_DBG() << *this << "Calling DHT peer " << suffix;
     auto& manager = Manager::instance();
-    auto call = manager.callFactory.newCall<SIPCall>(shared(), Call::CallType::OUTGOING, volatileCallDetails);
+    auto call = manager.callFactory.newSipCall(shared(),
+                                                     Call::CallType::OUTGOING,
+                                                     volatileCallDetails);
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
 
@@ -509,7 +513,9 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     // NOTE: dummyCall is a call used to avoid to mark the call as failed if the
     // cached connection is failing with ICE (close event still not detected).
     auto& manager = Manager::instance();
-    auto dummyCall = manager.callFactory.newCall<SIPCall>(shared(), Call::CallType::OUTGOING, call->getDetails());
+    auto dummyCall = manager.callFactory.newSipCall(shared(),
+                                                          Call::CallType::OUTGOING,
+                                                          call->getDetails());
     dummyCall->setIPToIP(true);
     dummyCall->setSecure(isTlsEnabled());
     call->addSubCall(*dummyCall);
@@ -531,7 +537,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 return;
 
             auto dev_call = Manager::instance()
-                               .callFactory.newCall<SIPCall>(shared(), Call::CallType::OUTGOING, call->getDetails());
+                               .callFactory.newSipCall(shared(), Call::CallType::OUTGOING, call->getDetails());
             dev_call->setIPToIP(true);
             dev_call->setSecure(isTlsEnabled());
             dev_call->setState(Call::ConnectionState::TRYING);
@@ -575,7 +581,9 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         JAMI_WARN("[call %s] A channeled socket is detected with this peer.",
                   call->getCallId().c_str());
 
-        auto dev_call = manager.callFactory.newCall<SIPCall>(shared(), Call::CallType::OUTGOING, call->getDetails());
+        auto dev_call = manager.callFactory.newSipCall(shared(),
+                                                             Call::CallType::OUTGOING,
+                                                             call->getDetails());
         dev_call->setIPToIP(true);
         dev_call->setSecure(isTlsEnabled());
         dev_call->setTransport(transport);
@@ -2397,8 +2405,7 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg,
                           const std::shared_ptr<dht::crypto::Certificate>& from_cert,
                           const dht::InfoHash& from)
 {
-    auto call = Manager::instance()
-                       .callFactory.newCall<SIPCall>(shared(), Call::CallType::INCOMING);
+    auto call = Manager::instance().callFactory.newSipCall(shared(), Call::CallType::INCOMING);
     if (!call) {
         return;
     }
