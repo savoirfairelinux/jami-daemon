@@ -943,7 +943,6 @@ public:
     void setAllModerators(const std::string& accountID, bool allModerators);
     bool isAllModerators(const std::string& accountID);
 
-
 private:
     Manager();
     ~Manager();

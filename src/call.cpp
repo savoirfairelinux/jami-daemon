@@ -683,4 +683,15 @@ Call::setConferenceInfo(const std::string& msg)
     }
 }
 
+void
+Call::sendConfOrder(const Json::Value& root)
+{
+    std::map<std::string, std::string> messages;
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    messages["application/confOrder+json"] = Json::writeString(wbuilder, root);
+    sendTextMessage(messages, getPeerDisplayName());
+}
+
 } // namespace jami

@@ -1483,12 +1483,7 @@ Manager::setConferenceLayout(const std::string& confId, int layout)
         std::map<std::string, std::string> messages;
         Json::Value root;
         root["layout"] = layout;
-        Json::StreamWriterBuilder wbuilder;
-        wbuilder["commentStyle"] = "None";
-        wbuilder["indentation"] = "";
-        auto output = Json::writeString(wbuilder, root);
-        messages["application/confOrder+json"] = output;
-        call->sendTextMessage(messages, call->getPeerDisplayName());
+        call->sendConfOrder(root);
     }
 }
 
@@ -1501,12 +1496,7 @@ Manager::setActiveParticipant(const std::string& confId, const std::string& part
         std::map<std::string, std::string> messages;
         Json::Value root;
         root["activeParticipant"] = participant;
-        Json::StreamWriterBuilder wbuilder;
-        wbuilder["commentStyle"] = "None";
-        wbuilder["indentation"] = "";
-        auto output = Json::writeString(wbuilder, root);
-        messages["application/confOrder+json"] = output;
-        call->sendTextMessage(messages, call->getPeerDisplayName());
+        call->sendConfOrder(root);
     }
 }
 
@@ -1519,12 +1509,7 @@ Manager::hangupParticipant(const std::string& confId, const std::string& partici
         std::map<std::string, std::string> messages;
         Json::Value root;
         root["hangupParticipant"] = participant;
-        Json::StreamWriterBuilder wbuilder;
-        wbuilder["commentStyle"] = "None";
-        wbuilder["indentation"] = "";
-        auto output = Json::writeString(wbuilder, root);
-        messages["application/confOrder+json"] = output;
-        call->sendTextMessage(messages, call->getPeerDisplayName());
+        call->sendConfOrder(root);
     }
 }
 
@@ -3257,12 +3242,7 @@ Manager::muteParticipant(const std::string& confId,
         Json::Value root;
         root["muteParticipant"] = participant;
         root["muteState"] = state ? TRUE_STR : FALSE_STR;
-        Json::StreamWriterBuilder wbuilder;
-        wbuilder["commentStyle"] = "None";
-        wbuilder["indentation"] = "";
-        auto output = Json::writeString(wbuilder, root);
-        messages["application/confOrder+json"] = output;
-        call->sendTextMessage(messages, call->getPeerDisplayName());
+        call->sendConfOrder(root);
     }
 }
 
