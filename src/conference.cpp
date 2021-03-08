@@ -92,11 +92,11 @@ Conference::Conference()
                 if (auto videoMixer = shared->getVideoMixer())
                     active = info.source == videoMixer->getActiveParticipant();
                 subCalls.erase(it->second);
-                std::string_view partURI = string_remove_suffix(uri, '@');
-                auto isModerator = shared->isModerator(partURI);
+                std::string_view peerID = string_remove_suffix(uri, '@');
+                auto isModerator = shared->isModerator(peerID);
                 if (uri.empty())
-                    partURI = "host"sv;
-                auto isModeratorMuted = shared->isMuted(partURI);
+                    peerID = "host"sv;
+                auto isModeratorMuted = shared->isMuted(peerID);
                 newInfo.emplace_back(ParticipantInfo {std::move(uri),
                                                       "",
                                                       active,
@@ -318,16 +318,18 @@ Conference::setActiveParticipant(const std::string& participant_id)
         videoMixer_->setActiveHost();
         return;
     }
-    for (const auto& item : participants_) {
-        if (auto call = getCall(item)) {
-            if (participant_id == item
-                || call->getPeerNumber().find(participant_id) != std::string::npos) {
-                auto videoRecv = reinterpret_cast<Observable<std::shared_ptr<MediaFrame>>*>(
-                    call->getVideoReceiver());
-                videoMixer_->setActiveParticipant(videoRecv);
-                return;
-            }
-        }
+    if (auto call = getCallFromPeerID(participant_id)) {
+        auto videoRecv = reinterpret_cast<Observable<std::shared_ptr<MediaFrame>>*>(
+            call->getVideoReceiver());
+        videoMixer_->setActiveParticipant(videoRecv);
+        return;
+    }
+
+    auto remoteHost = findHostforRemoteParticipant(participant_id);
+    if (not remoteHost.empty()) {
+        // This logic will be handled client side
+        JAMI_WARN("Change remote layout is not supported");
+        return;
     }
     // Unset active participant by default
     videoMixer_->setActiveParticipant(nullptr);
@@ -673,9 +675,9 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
 {
     // Check if the peer is a master
     if (auto call = Manager::instance().getCallFromCallID(callId)) {
-        auto uri = string_remove_suffix(call->getPeerNumber(), '@');
-        if (!isModerator(uri)) {
-            JAMI_WARN("Received conference order from a non master (%s)", uri.data());
+        auto peerID = string_remove_suffix(call->getPeerNumber(), '@');
+        if (!isModerator(peerID)) {
+            JAMI_WARN("Received conference order from a non master (%.*s)", (int) peerID.size(), peerID.data());
             return;
         }
 
@@ -684,7 +686,7 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         Json::CharReaderBuilder rbuilder;
         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         if (!reader->parse(confOrder.c_str(), confOrder.c_str() + confOrder.size(), &root, &err)) {
-            JAMI_WARN("Couldn't parse conference order from %s", uri.data());
+            JAMI_WARN("Couldn't parse conference order from %.*s", (int) peerID.size(), peerID.data());
             return;
         }
         if (root.isMember("layout")) {
@@ -716,27 +718,26 @@ Conference::isModerator(std::string_view uri) const
 }
 
 void
-Conference::setModerator(const std::string& uri, const bool& state)
+Conference::setModerator(const std::string& participant_id, const bool& state)
 {
     for (const auto& p : participants_) {
         if (auto call = getCall(p)) {
-            auto partURI = string_remove_suffix(call->getPeerNumber(), '@');
-            auto isURIModerator = isModerator(uri);
-            if (partURI == uri) {
-                if (state and not isURIModerator) {
-                    JAMI_DBG("Add %s as moderator", partURI.data());
-                    moderators_.emplace(uri);
+            auto isPeerModerator = isModerator(participant_id);
+            if (participant_id == string_remove_suffix(call->getPeerNumber(), '@')) {
+                if (state and not isPeerModerator) {
+                    JAMI_DBG("Add %s as moderator", participant_id.c_str());
+                    moderators_.emplace(participant_id);
                     updateModerators();
-                } else if (not state and isURIModerator) {
-                    JAMI_DBG("Remove %s as moderator", partURI.data());
-                    moderators_.erase(uri);
+                } else if (not state and isPeerModerator) {
+                    JAMI_DBG("Remove %s as moderator", participant_id.c_str());
+                    moderators_.erase(participant_id);
                     updateModerators();
                 }
                 return;
             }
         }
     }
-    JAMI_WARN("Fail to set %s as moderator (participant not found)", uri.c_str());
+    JAMI_WARN("Fail to set %s as moderator (participant not found)", participant_id.c_str());
 }
 
 void
@@ -756,10 +757,30 @@ Conference::isMuted(std::string_view uri) const
 }
 
 void
-Conference::muteParticipant(const std::string& uri, const bool& state)
+Conference::muteParticipant(const std::string& participant_id, const bool& state)
 {
+    // Prioritize remote mute, otherwise the mute info is lost during
+    // the conference merge (we don't send back info to remoteHost,
+    // cf. getConfInfoHostUri method)
+
+    // Transfert remote participant mute
+    auto remoteHost = findHostforRemoteParticipant(participant_id);
+    if (not remoteHost.empty()) {
+        if (auto call = getCallFromPeerID(string_remove_suffix(remoteHost, '@'))) {
+            auto w = call->getAccount();
+            auto account = w.lock();
+            if (!account)
+                return;
+            Json::Value root;
+            root["muteParticipant"] = participant_id;
+            root["muteState"] = state ? TRUE_STR : FALSE_STR;
+            call->sendConfOrder(root);
+            return;
+        }
+    }
+
     // Moderator mute host
-    if (isHost(uri)) {
+    if (isHost(participant_id)) {
         auto isHostMuted = isMuted("host"sv);
         if (state and not isHostMuted) {
             participantsMuted_.emplace("host"sv);
@@ -779,26 +800,20 @@ Conference::muteParticipant(const std::string& uri, const bool& state)
     }
 
     // Mute participant
-    auto peerURI = string_remove_suffix(uri, '@');
-    for (const auto& p : participants_) {
-        if (auto call = getCall(p)) {
-            auto partURI = string_remove_suffix(call->getPeerNumber(), '@');
-            auto isPartMuted = isMuted(partURI);
-            if (partURI == peerURI) {
-                if (state and not isPartMuted) {
-                    JAMI_DBG("Mute participant %.*s", (int) partURI.size(), partURI.data());
-                    participantsMuted_.emplace(std::string(partURI));
-                    unbindParticipant(p);
-                    updateMuted();
-                } else if (not state and isPartMuted) {
-                    JAMI_DBG("Unmute participant %.*s", (int) partURI.size(), partURI.data());
-                    participantsMuted_.erase(std::string(partURI));
-                    bindParticipant(p);
-                    updateMuted();
-                }
-                return;
-            }
+    if (auto call = getCallFromPeerID(participant_id)) {
+        auto isPartMuted = isMuted(participant_id);
+        if (state and not isPartMuted) {
+            JAMI_DBG("Mute participant %.*s", (int) participant_id.size(), participant_id.data());
+            participantsMuted_.emplace(std::string(participant_id));
+            unbindParticipant(call->getCallId());
+            updateMuted();
+        } else if (not state and isPartMuted) {
+            JAMI_DBG("Unmute participant %.*s", (int) participant_id.size(), participant_id.data());
+            participantsMuted_.erase(std::string(participant_id));
+            bindParticipant(call->getCallId());
+            updateMuted();
         }
+        return;
     }
 }
 
@@ -807,21 +822,15 @@ Conference::updateMuted()
 {
     std::lock_guard<std::mutex> lk(confInfoMutex_);
     for (auto& info : confInfo_) {
-        auto uri = string_remove_suffix(info.uri, '@');
-        if (uri.empty()) {
-            uri = "host"sv;
-            info.audioModeratorMuted = isMuted(uri);
+        auto peerID = string_remove_suffix(info.uri, '@');
+        if (peerID.empty()) {
+            peerID = "host"sv;
+            info.audioModeratorMuted = isMuted(peerID);
             info.audioLocalMuted = audioMuted_;
         } else {
-            info.audioModeratorMuted = isMuted(uri);
-            for (const auto& item : participants_) {
-                if (auto call = getCall(item)) {
-                    if (uri == string_remove_suffix(call->getPeerNumber(), '@')) {
-                        info.audioLocalMuted = call->isPeerMuted();
-                        break;
-                    }
-                }
-            }
+            info.audioModeratorMuted = isMuted(peerID);
+            if (auto call = getCallFromPeerID(peerID))
+                info.audioLocalMuted = call->isPeerMuted();
         }
     }
     sendConferenceInfos();
@@ -894,14 +903,27 @@ Conference::hangupParticipant(const std::string& participant_id)
         return;
     }
 
-    for (const auto& p : participants_) {
-        if (auto call = getCall(p)) {
-            std::string_view partURI = string_remove_suffix(call->getPeerNumber(), '@');
-            if (partURI == participant_id) {
-                Manager::instance().hangupCall(call->getCallId());
-                return;
-            }
-        }
+    if (auto call = getCallFromPeerID(participant_id)) {
+        Manager::instance().hangupCall(call->getCallId());
+        return;
+    }
+
+    // Transfert remote participant hangup
+    auto remoteHost = findHostforRemoteParticipant(participant_id);
+    if (remoteHost.empty()) {
+        JAMI_WARN("Can't hangup %s, peer not found", participant_id.c_str());
+        return;
+    }
+    if (auto call = getCallFromPeerID(string_remove_suffix(remoteHost, '@'))) {
+        auto w = call->getAccount();
+        auto account = w.lock();
+        if (!account)
+            return;
+
+        Json::Value root;
+        root["hangupParticipant"] = participant_id;
+        call->sendConfOrder(root);
+        return;
     }
 }
 
@@ -962,14 +984,10 @@ Conference::resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo&
     ParticipantInfo localCell;
 
     // get the size of the remote frame
-    for (const auto& item : participants_) {
-        auto sipCall = std::dynamic_pointer_cast<SIPCall>(
-            Manager::instance().callFactory.getCall(item, Call::LinkType::SIP));
-        if (sipCall && sipCall->getPeerNumber().find(peerURI) != std::string::npos) {
-            remoteFrameHeight = sipCall->getVideoRtp().getVideoReceive()->getHeight();
-            remoteFrameWidth = sipCall->getVideoRtp().getVideoReceive()->getWidth();
-            break;
-        }
+    if (auto call = std::dynamic_pointer_cast<SIPCall>(
+            getCallFromPeerID(string_remove_suffix(peerURI, '@')))) {
+        remoteFrameHeight = call->getVideoRtp().getVideoReceive()->getHeight();
+        remoteFrameWidth = call->getVideoRtp().getVideoReceive()->getWidth();
     }
 
     if (remoteFrameHeight == 0 or remoteFrameWidth == 0) {
@@ -1047,6 +1065,18 @@ Conference::findHostforRemoteParticipant(std::string_view uri)
         }
     }
     return "";
+}
+
+std::shared_ptr<Call>
+Conference::getCallFromPeerID(std::string_view peerID)
+{
+    for (const auto& p : participants_) {
+        auto call = getCall(p);
+        if (call && string_remove_suffix(call->getPeerNumber(), '@') == peerID) {
+            return call;
+        }
+    }
+    return nullptr;
 }
 
 } // namespace jami
