@@ -87,7 +87,7 @@ PulseLayer::PulseLayer(AudioPreference& pref)
 
     pa_context_set_state_callback(context_, context_state_callback, this);
 
-    if (pa_context_connect(context_, nullptr, PA_CONTEXT_NOAUTOSPAWN, nullptr) < 0)
+    if (pa_context_connect(context_, nullptr, PA_CONTEXT_NOFLAGS, nullptr) < 0)
         throw std::runtime_error("Could not connect pulseaudio context to the server");
 
     // wait until context is ready
