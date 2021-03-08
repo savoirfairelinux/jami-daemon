@@ -119,7 +119,8 @@ public:
     ~PulseLayer();
 
     /**
-     * Write data from the ring buffer to the harware and read data from the hardware
+     * Write data from the ring buffer to the hardware and read data
+     * from the hardware.
      */
     void readFromMic();
     void writeToSpeaker();
