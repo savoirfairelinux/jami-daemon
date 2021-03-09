@@ -197,7 +197,7 @@ Conference::add(const std::string& participant_id)
                     moderators_.emplace(mod);
                 }
 
-                // Check for localModeratorEnabled preference
+                // Check for localModeratorsEnabled preference
                 if (account->isLocalModeratorsEnabled() && not localModAdded_) {
                     auto accounts = jami::Manager::instance().getAllAccounts<JamiAccount>();
                     for (const auto& account : accounts) {
