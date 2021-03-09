@@ -3,7 +3,7 @@
     "version": "eb35fdadc072ecae2b262fd6e6709c308cadc07a",
     "url": "https://github.com/ShiftMediaProject/gmp/archive/__VERSION__.tar.gz",
     "deps": [],
-    "patches": [],
+    "patches": ["remove_SSSE3.patch"],
     "win_patches": ["gmp_addaddmul_1msb0.patch"],
     "project_paths": [
         "SMP/libgmp.vcxproj"
