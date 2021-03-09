@@ -4,7 +4,10 @@
     "url": "https://github.com/ShiftMediaProject/gmp/archive/__VERSION__.tar.gz",
     "deps": [],
     "patches": [],
-    "win_patches": ["gmp_addaddmul_1msb0.patch"],
+    "win_patches": [
+        "gmp_addaddmul_1msb0.patch",
+        "remove_SSSE3_SMP.patch"
+    ],
     "project_paths": [
         "SMP/libgmp.vcxproj"
     ],

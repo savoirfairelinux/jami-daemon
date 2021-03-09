@@ -1,0 +1,2120 @@
+--- a/SMP/config.h
++++ b/SMP/config.h
+@@ -243,10 +243,10 @@
+ #define HAVE_NATIVE_mpn_cnd_add_n 1
+ #define HAVE_NATIVE_mpn_cnd_sub_n 1
+ #if defined(__x86_64) || defined(_M_X64)
+-#define HAVE_NATIVE_mpn_com 1
++#undef HAVE_NATIVE_mpn_com
+ #endif
+-#define HAVE_NATIVE_mpn_copyd 1
+-#define HAVE_NATIVE_mpn_copyi 1
++#undef HAVE_NATIVE_mpn_copyd
++#undef HAVE_NATIVE_mpn_copyi
+ #if defined(__x86_64) || defined(_M_X64)
+ #define HAVE_NATIVE_mpn_div_qr_1n_pi1 1
+ #define HAVE_NATIVE_mpn_div_qr_2 1
+@@ -260,7 +260,7 @@
+ #if defined(__x86_64) || defined(_M_X64)
+ #define HAVE_NATIVE_mpn_divrem_2 1
+ #define HAVE_NATIVE_mpn_gcd_1 1
+-#define HAVE_NATIVE_mpn_hamdist 1
++#undef HAVE_NATIVE_mpn_hamdist
+ #define HAVE_NATIVE_mpn_invert_limb 1
+ #define HAVE_NATIVE_mpn_ior_n 1
+ #define HAVE_NATIVE_mpn_iorn_n 1
+@@ -294,7 +294,7 @@
+ #define HAVE_NATIVE_mpn_mullo_basecase 1
+ #define HAVE_NATIVE_mpn_nand_n 1
+ #define HAVE_NATIVE_mpn_nior_n 1
+-#define HAVE_NATIVE_mpn_popcount 1
++#undef HAVE_NATIVE_mpn_popcount
+ #define HAVE_NATIVE_mpn_preinv_divrem_1 1
+ #define HAVE_NATIVE_mpn_preinv_mod_1 1
+ #define HAVE_NATIVE_mpn_redc_1 1
+--- a/SMP/libgmp.vcxproj
++++ b/SMP/libgmp.vcxproj
+@@ -1024,24 +1024,12 @@
+     <YASM Include="mpn\x86_64\cnd_sub_n.s">
+       <ExcludedFromBuild Condition="'$(Platform)'=='Win32'">true</ExcludedFromBuild>
+     </YASM>
+-    <YASM Include="mpn\x86_64\com.s">
+-      <ExcludedFromBuild Condition="'$(Platform)'=='Win32'">true</ExcludedFromBuild>
+-    </YASM>
+-    <YASM Include="mpn\x86_64\copyd.s">
+-      <ExcludedFromBuild Condition="'$(Platform)'=='Win32'">true</ExcludedFromBuild>
+-    </YASM>
+-    <YASM Include="mpn\x86_64\copyi.s">
+-      <ExcludedFromBuild Condition="'$(Platform)'=='Win32'">true</ExcludedFromBuild>
+-    </YASM>
+     <YASM Include="mpn\x86_64\divexact_1.s">
+       <ExcludedFromBuild Condition="'$(Platform)'=='Win32'">true</ExcludedFromBuild>
+     </YASM>
+     <YASM Include="mpn\x86_64\gcd_1.s">
+       <ExcludedFromBuild Condition="'$(Platform)'=='Win32'">true</ExcludedFromBuild>
+     </YASM>
+-    <YASM Include="mpn\x86_64\hamdist.s">
+-      <ExcludedFromBuild Condition="'$(Platform)'=='Win32'">true</ExcludedFromBuild>
+-    </YASM>
+     <YASM Include="mpn\x86_64\invert_limb.s">
+       <ExcludedFromBuild Condition="'$(Platform)'=='Win32'">true</ExcludedFromBuild>
+     </YASM>
+@@ -1072,9 +1060,6 @@
+     <YASM Include="mpn\x86_64\mul_basecase.s">
+       <ExcludedFromBuild Condition="'$(Platform)'=='Win32'">true</ExcludedFromBuild>
+     </YASM>
+-    <YASM Include="mpn\x86_64\popcount.s">
+-      <ExcludedFromBuild Condition="'$(Platform)'=='Win32'">true</ExcludedFromBuild>
+-    </YASM>
+     <YASM Include="mpn\x86_64\rsblsh1_n.s">
+       <ExcludedFromBuild Condition="'$(Platform)'=='Win32'">true</ExcludedFromBuild>
+     </YASM>
+--- a/SMP/libgmp.vcxproj.filters
++++ b/SMP/libgmp.vcxproj.filters
+@@ -1687,24 +1687,12 @@
+     <YASM Include="mpn\x86_64\cnd_sub_n.s">
+       <Filter>Source Files\mpn\x86_64</Filter>
+     </YASM>
+-    <YASM Include="mpn\x86_64\com.s">
+-      <Filter>Source Files\mpn\x86_64</Filter>
+-    </YASM>
+-    <YASM Include="mpn\x86_64\copyd.s">
+-      <Filter>Source Files\mpn\x86_64</Filter>
+-    </YASM>
+-    <YASM Include="mpn\x86_64\copyi.s">
+-      <Filter>Source Files\mpn\x86_64</Filter>
+-    </YASM>
+     <YASM Include="mpn\x86_64\divexact_1.s">
+       <Filter>Source Files\mpn\x86_64</Filter>
+     </YASM>
+     <YASM Include="mpn\x86_64\gcd_1.s">
+       <Filter>Source Files\mpn\x86_64</Filter>
+     </YASM>
+-    <YASM Include="mpn\x86_64\hamdist.s">
+-      <Filter>Source Files\mpn\x86_64</Filter>
+-    </YASM>
+     <YASM Include="mpn\x86_64\invert_limb.s">
+       <Filter>Source Files\mpn\x86_64</Filter>
+     </YASM>
+@@ -1735,9 +1723,6 @@
+     <YASM Include="mpn\x86_64\mullo_basecase.s">
+       <Filter>Source Files\mpn\x86_64</Filter>
+     </YASM>
+-    <YASM Include="mpn\x86_64\popcount.s">
+-      <Filter>Source Files\mpn\x86_64</Filter>
+-    </YASM>
+     <YASM Include="mpn\x86_64\rsblsh_n.s">
+       <Filter>Source Files\mpn\x86_64</Filter>
+     </YASM>
+--- a/SMP/mpn/x86_64/com.s
++++ /dev/null
+@@ -1,114 +0,0 @@
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-	.text
+-	.align	32, 0x90
+-	.globl	__gmpn_com
+-	
+-__gmpn_com:
+-
+-	push	%rdi
+-	push	%rsi
+-	mov	%rcx, %rdi
+-	mov	%rdx, %rsi
+-	mov	%r8, %rdx
+-
+-	movq	(%rsi), %r8
+-	movl	%edx, %eax
+-	leaq	(%rsi,%rdx,8), %rsi
+-	leaq	(%rdi,%rdx,8), %rdi
+-	negq	%rdx
+-	andl	$3, %eax
+-	je	Lb00
+-	cmpl	$2, %eax
+-	jc	Lb01
+-	je	Lb10
+-
+-Lb11:	notq	%r8
+-	movq	%r8, (%rdi,%rdx,8)
+-	decq	%rdx
+-	jmp	Le11
+-Lb10:	addq	$-2, %rdx
+-	jmp	Le10
+-	.byte	0x90,0x90,0x90,0x90,0x90,0x90
+-Lb01:	notq	%r8
+-	movq	%r8, (%rdi,%rdx,8)
+-	incq	%rdx
+-	jz	Lret
+-
+-Loop:	movq	(%rsi,%rdx,8), %r8
+-Lb00:	movq	8(%rsi,%rdx,8), %r9
+-	notq	%r8
+-	notq	%r9
+-	movq	%r8, (%rdi,%rdx,8)
+-	movq	%r9, 8(%rdi,%rdx,8)
+-Le11:	movq	16(%rsi,%rdx,8), %r8
+-Le10:	movq	24(%rsi,%rdx,8), %r9
+-	notq	%r8
+-	notq	%r9
+-	movq	%r8, 16(%rdi,%rdx,8)
+-	movq	%r9, 24(%rdi,%rdx,8)
+-	addq	$4, %rdx
+-	jnc	Loop
+-Lret:	pop	%rsi
+-	pop	%rdi
+-	ret
+-	
+--- a/SMP/mpn/x86_64/copyd.s
++++ /dev/null
+@@ -1,285 +0,0 @@
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-	.text
+-	.align	64, 0x90
+-	.globl	__gmpn_copyd
+-	
+-__gmpn_copyd:
+-
+-	push	%rdi
+-	push	%rsi
+-	mov	%rcx, %rdi
+-	mov	%rdx, %rsi
+-	mov	%r8, %rdx
+-
+-
+-	lea	-8(%rsi,%rdx,8), %rsi
+-	lea	-8(%rdi,%rdx,8), %rdi
+-
+-	cmp	$7, %rdx
+-	jbe	Lbc
+-
+-	test	$8, %dil		
+-	jnz	Lrp_aligned		
+-
+-	mov	(%rsi), %rax		
+-	mov	%rax, (%rdi)
+-	lea	-8(%rsi), %rsi
+-	lea	-8(%rdi), %rdi
+-	dec	%rdx
+-
+-Lrp_aligned:
+-	test	$8, %sil
+-	jz	Luent
+-
+-	jmp	Lam
+-
+-	.align	16, 0x90
+-Latop:movaps	-8(%rsi), %xmm0
+-	movaps	-24(%rsi), %xmm1
+-	movaps	-40(%rsi), %xmm2
+-	movaps	-56(%rsi), %xmm3
+-	lea	-64(%rsi), %rsi
+-	movaps	%xmm0, -8(%rdi)
+-	movaps	%xmm1, -24(%rdi)
+-	movaps	%xmm2, -40(%rdi)
+-	movaps	%xmm3, -56(%rdi)
+-	lea	-64(%rdi), %rdi
+-Lam:	sub	$8, %rdx
+-	jnc	Latop
+-
+-	test	$4, %dl
+-	jz	1f
+-	movaps	-8(%rsi), %xmm0
+-	movaps	-24(%rsi), %xmm1
+-	lea	-32(%rsi), %rsi
+-	movaps	%xmm0, -8(%rdi)
+-	movaps	%xmm1, -24(%rdi)
+-	lea	-32(%rdi), %rdi
+-
+-1:	test	$2, %dl
+-	jz	1f
+-	movaps	-8(%rsi), %xmm0
+-	lea	-16(%rsi), %rsi
+-	movaps	%xmm0, -8(%rdi)
+-	lea	-16(%rdi), %rdi
+-
+-1:	test	$1, %dl
+-	jz	1f
+-	mov	(%rsi), %r8
+-	mov	%r8, (%rdi)
+-
+-1:	pop	%rsi
+-	pop	%rdi
+-	ret
+-
+-Luent:sub	$16, %rdx
+-	movaps	(%rsi), %xmm0
+-	jc	Luend
+-
+-	.align	16, 0x90
+-Lutop:sub	$16, %rdx
+-	movaps	-16(%rsi), %xmm1
+-	.byte	0x66,0x0f,0x3a,0x0f,193,8
+-	movaps	%xmm0, -8(%rdi)
+-	movaps	-32(%rsi), %xmm2
+-	.byte	0x66,0x0f,0x3a,0x0f,202,8
+-	movaps	%xmm1, -24(%rdi)
+-	movaps	-48(%rsi), %xmm3
+-	.byte	0x66,0x0f,0x3a,0x0f,211,8
+-	movaps	%xmm2, -40(%rdi)
+-	movaps	-64(%rsi), %xmm0
+-	.byte	0x66,0x0f,0x3a,0x0f,216,8
+-	movaps	%xmm3, -56(%rdi)
+-	movaps	-80(%rsi), %xmm1
+-	.byte	0x66,0x0f,0x3a,0x0f,193,8
+-	movaps	%xmm0, -72(%rdi)
+-	movaps	-96(%rsi), %xmm2
+-	.byte	0x66,0x0f,0x3a,0x0f,202,8
+-	movaps	%xmm1, -88(%rdi)
+-	movaps	-112(%rsi), %xmm3
+-	.byte	0x66,0x0f,0x3a,0x0f,211,8
+-	movaps	%xmm2, -104(%rdi)
+-	movaps	-128(%rsi), %xmm0
+-	.byte	0x66,0x0f,0x3a,0x0f,216,8
+-	movaps	%xmm3, -120(%rdi)
+-	lea	-128(%rsi), %rsi
+-	lea	-128(%rdi), %rdi
+-	jnc	Lutop
+-
+-Luend:test	$8, %dl
+-	jz	1f
+-	movaps	-16(%rsi), %xmm1
+-	.byte	0x66,0x0f,0x3a,0x0f,193,8
+-	movaps	%xmm0, -8(%rdi)
+-	movaps	-32(%rsi), %xmm0
+-	.byte	0x66,0x0f,0x3a,0x0f,200,8
+-	movaps	%xmm1, -24(%rdi)
+-	movaps	-48(%rsi), %xmm1
+-	.byte	0x66,0x0f,0x3a,0x0f,193,8
+-	movaps	%xmm0, -40(%rdi)
+-	movaps	-64(%rsi), %xmm0
+-	.byte	0x66,0x0f,0x3a,0x0f,200,8
+-	movaps	%xmm1, -56(%rdi)
+-	lea	-64(%rsi), %rsi
+-	lea	-64(%rdi), %rdi
+-
+-1:	test	$4, %dl
+-	jz	1f
+-	movaps	-16(%rsi), %xmm1
+-	.byte	0x66,0x0f,0x3a,0x0f,193,8
+-	movaps	%xmm0, -8(%rdi)
+-	movaps	-32(%rsi), %xmm0
+-	.byte	0x66,0x0f,0x3a,0x0f,200,8
+-	movaps	%xmm1, -24(%rdi)
+-	lea	-32(%rsi), %rsi
+-	lea	-32(%rdi), %rdi
+-
+-1:	test	$2, %dl
+-	jz	1f
+-	movaps	-16(%rsi), %xmm1
+-	.byte	0x66,0x0f,0x3a,0x0f,193,8
+-	movaps	%xmm0, -8(%rdi)
+-	lea	-16(%rsi), %rsi
+-	lea	-16(%rdi), %rdi
+-
+-1:	test	$1, %dl
+-	jz	1f
+-	mov	(%rsi), %r8
+-	mov	%r8, (%rdi)
+-
+-1:	pop	%rsi
+-	pop	%rdi
+-	ret
+-
+-
+-
+-
+-Lbc:	sub	$4, %edx
+-	jc	Lend
+-
+-	.align	16, 0x90
+-Ltop:	mov	(%rsi), %r8
+-	mov	-8(%rsi), %r9
+-	lea	-32(%rdi), %rdi
+-	mov	-16(%rsi), %r10
+-	mov	-24(%rsi), %r11
+-	lea	-32(%rsi), %rsi
+-	mov	%r8, 32(%rdi)
+-	mov	%r9, 24(%rdi)
+-
+-	mov	%r10, 16(%rdi)
+-	mov	%r11, 8(%rdi)
+-
+-
+-Lend:	test	$1, %dl
+-	jz	1f
+-	mov	(%rsi), %r8
+-	mov	%r8, (%rdi)
+-	lea	-8(%rdi), %rdi
+-	lea	-8(%rsi), %rsi
+-1:	test	$2, %dl
+-	jz	1f
+-	mov	(%rsi), %r8
+-	mov	-8(%rsi), %r9
+-	mov	%r8, (%rdi)
+-	mov	%r9, -8(%rdi)
+-1:	pop	%rsi
+-	pop	%rdi
+-	ret
+-	
+-
+--- a/SMP/mpn/x86_64/copyi.s
++++ /dev/null
+@@ -1,328 +0,0 @@
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-	.text
+-	.align	64, 0x90
+-	.globl	__gmpn_copyi
+-	
+-__gmpn_copyi:
+-
+-	push	%rdi
+-	push	%rsi
+-	mov	%rcx, %rdi
+-	mov	%rdx, %rsi
+-	mov	%r8, %rdx
+-
+-
+-	cmp	$7, %rdx
+-	jbe	Lbc
+-
+-	test	$8, %dil		
+-	jz	Lrp_aligned		
+-
+-	movsq				
+-	dec	%rdx
+-
+-Lrp_aligned:
+-	test	$8, %sil
+-	jnz	Luent
+-
+-	jmp	Lam
+-
+-	.align	16, 0x90
+-Latop:movdqa	0(%rsi), %xmm0
+-	movdqa	16(%rsi), %xmm1
+-	movdqa	32(%rsi), %xmm2
+-	movdqa	48(%rsi), %xmm3
+-	lea	64(%rsi), %rsi
+-	movdqa	%xmm0, (%rdi)
+-	movdqa	%xmm1, 16(%rdi)
+-	movdqa	%xmm2, 32(%rdi)
+-	movdqa	%xmm3, 48(%rdi)
+-	lea	64(%rdi), %rdi
+-Lam:	sub	$8, %rdx
+-	jnc	Latop
+-
+-	test	$4, %dl
+-	jz	1f
+-	movdqa	(%rsi), %xmm0
+-	movdqa	16(%rsi), %xmm1
+-	lea	32(%rsi), %rsi
+-	movdqa	%xmm0, (%rdi)
+-	movdqa	%xmm1, 16(%rdi)
+-	lea	32(%rdi), %rdi
+-
+-1:	test	$2, %dl
+-	jz	1f
+-	movdqa	(%rsi), %xmm0
+-	lea	16(%rsi), %rsi
+-	movdqa	%xmm0, (%rdi)
+-	lea	16(%rdi), %rdi
+-
+-1:	test	$1, %dl
+-	jz	1f
+-	mov	(%rsi), %r8
+-	mov	%r8, (%rdi)
+-
+-1:	pop	%rsi
+-	pop	%rdi
+-	ret
+-
+-Luent:
+-
+-
+-	cmp	$16, %rdx
+-	jc	Lued0
+-
+-	add	$-56, %rsp	
+-	movdqa	%xmm6, (%rsp)	
+-	movdqa	%xmm7, 16(%rsp)	
+-	movdqa	%xmm8, 32(%rsp)	
+-
+-	movaps	120(%rsi), %xmm7
+-	movaps	104(%rsi), %xmm6
+-	movaps	88(%rsi), %xmm5
+-	movaps	72(%rsi), %xmm4
+-	movaps	56(%rsi), %xmm3
+-	movaps	40(%rsi), %xmm2
+-	lea	128(%rsi), %rsi
+-	sub	$32, %rdx
+-	jc	Lued1
+-
+-	.align	16, 0x90
+-Lutop:movaps	-104(%rsi), %xmm1
+-	sub	$16, %rdx
+-	movaps	-120(%rsi), %xmm0
+-	.byte	0x66,0x0f,0x3a,0x0f,254,8
+-	movaps	-136(%rsi), %xmm8
+-	movdqa	%xmm7, 112(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,245,8
+-	movaps	120(%rsi), %xmm7
+-	movdqa	%xmm6, 96(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,236,8
+-	movaps	104(%rsi), %xmm6
+-	movdqa	%xmm5, 80(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,227,8
+-	movaps	88(%rsi), %xmm5
+-	movdqa	%xmm4, 64(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,218,8
+-	movaps	72(%rsi), %xmm4
+-	movdqa	%xmm3, 48(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,209,8
+-	movaps	56(%rsi), %xmm3
+-	movdqa	%xmm2, 32(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,200,8
+-	movaps	40(%rsi), %xmm2
+-	movdqa	%xmm1, 16(%rdi)
+-	.byte	0x66,65,0x0f,0x3a,0x0f,192,8
+-	lea	128(%rsi), %rsi
+-	movdqa	%xmm0, (%rdi)
+-	lea	128(%rdi), %rdi
+-	jnc	Lutop
+-
+-Lued1:movaps	-104(%rsi), %xmm1
+-	movaps	-120(%rsi), %xmm0
+-	movaps	-136(%rsi), %xmm8
+-	.byte	0x66,0x0f,0x3a,0x0f,254,8
+-	movdqa	%xmm7, 112(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,245,8
+-	movdqa	%xmm6, 96(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,236,8
+-	movdqa	%xmm5, 80(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,227,8
+-	movdqa	%xmm4, 64(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,218,8
+-	movdqa	%xmm3, 48(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,209,8
+-	movdqa	%xmm2, 32(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,200,8
+-	movdqa	%xmm1, 16(%rdi)
+-	.byte	0x66,65,0x0f,0x3a,0x0f,192,8
+-	movdqa	%xmm0, (%rdi)
+-	lea	128(%rdi), %rdi
+-
+-	movdqa	(%rsp), %xmm6	
+-	movdqa	16(%rsp), %xmm7	
+-	movdqa	32(%rsp), %xmm8	
+-	add	$56, %rsp	
+-
+-Lued0:test	$8, %dl
+-	jz	1f
+-	movaps	56(%rsi), %xmm3
+-	movaps	40(%rsi), %xmm2
+-	movaps	24(%rsi), %xmm1
+-	movaps	8(%rsi), %xmm0
+-	movaps	-8(%rsi), %xmm4
+-	.byte	0x66,0x0f,0x3a,0x0f,218,8
+-	movdqa	%xmm3, 48(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,209,8
+-	movdqa	%xmm2, 32(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,200,8
+-	movdqa	%xmm1, 16(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,196,8
+-	lea	64(%rsi), %rsi
+-	movdqa	%xmm0, (%rdi)
+-	lea	64(%rdi), %rdi
+-
+-1:	test	$4, %dl
+-	jz	1f
+-	movaps	24(%rsi), %xmm1
+-	movaps	8(%rsi), %xmm0
+-	.byte	0x66,0x0f,0x3a,0x0f,200,8
+-	movaps	-8(%rsi), %xmm3
+-	movdqa	%xmm1, 16(%rdi)
+-	.byte	0x66,0x0f,0x3a,0x0f,195,8
+-	lea	32(%rsi), %rsi
+-	movdqa	%xmm0, (%rdi)
+-	lea	32(%rdi), %rdi
+-
+-1:	test	$2, %dl
+-	jz	1f
+-	movdqa	8(%rsi), %xmm0
+-	movdqa	-8(%rsi), %xmm3
+-	.byte	0x66,0x0f,0x3a,0x0f,195,8
+-	lea	16(%rsi), %rsi
+-	movdqa	%xmm0, (%rdi)
+-	lea	16(%rdi), %rdi
+-
+-1:	test	$1, %dl
+-	jz	1f
+-	mov	(%rsi), %r8
+-	mov	%r8, (%rdi)
+-
+-1:	pop	%rsi
+-	pop	%rdi
+-	ret
+-
+-
+-
+-
+-Lbc:	lea	-8(%rdi), %rdi
+-	sub	$4, %edx
+-	jc	Lend
+-
+-	.align	16, 0x90
+-Ltop:	mov	(%rsi), %r8
+-	mov	8(%rsi), %r9
+-	lea	32(%rdi), %rdi
+-	mov	16(%rsi), %r10
+-	mov	24(%rsi), %r11
+-	lea	32(%rsi), %rsi
+-	mov	%r8, -24(%rdi)
+-	mov	%r9, -16(%rdi)
+-
+-	mov	%r10, -8(%rdi)
+-	mov	%r11, (%rdi)
+-
+-
+-Lend:	test	$1, %dl
+-	jz	1f
+-	mov	(%rsi), %r8
+-	mov	%r8, 8(%rdi)
+-	lea	8(%rdi), %rdi
+-	lea	8(%rsi), %rsi
+-1:	test	$2, %dl
+-	jz	1f
+-	mov	(%rsi), %r8
+-	mov	8(%rsi), %r9
+-	mov	%r8, 8(%rdi)
+-	mov	%r9, 16(%rdi)
+-1:	pop	%rsi
+-	pop	%rdi
+-	ret
+-	
+-
+--- a/SMP/mpn/x86_64/hamdist.s
++++ /dev/null
+@@ -1,140 +0,0 @@
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-	.text
+-	.align	32, 0x90
+-	.globl	__gmpn_hamdist
+-	
+-__gmpn_hamdist:
+-
+-	push	%rdi
+-	push	%rsi
+-	mov	%rcx, %rdi
+-	mov	%rdx, %rsi
+-	mov	%r8, %rdx
+-
+-	mov	(%rdi), %r8
+-	xor	(%rsi), %r8
+-
+-	lea	(%rdi,%rdx,8), %rdi			
+-	lea	(%rsi,%rdx,8), %rsi			
+-	neg	%rdx
+-
+-	bt	$0, %edx
+-	jnc	L2
+-
+-L1:	.byte	0xf3,0x49,0x0f,0xb8,0xc0	
+-	xor	%r10d, %r10d
+-	add	$1, %rdx
+-	js	Ltop
+-	pop	%rsi
+-	pop	%rdi
+-	ret
+-
+-	.align	16, 0x90
+-L2:	mov	8(%rdi,%rdx,8), %r9
+-	.byte	0xf3,0x49,0x0f,0xb8,0xc0	
+-	xor	8(%rsi,%rdx,8), %r9
+-	.byte	0xf3,0x4d,0x0f,0xb8,0xd1	
+-	add	$2, %rdx
+-	js	Ltop
+-	lea	(%r10, %rax), %rax
+-	pop	%rsi
+-	pop	%rdi
+-	ret
+-
+-	.align	16, 0x90
+-Ltop:	mov	(%rdi,%rdx,8), %r8
+-	lea	(%r10, %rax), %rax
+-	mov	8(%rdi,%rdx,8), %r9
+-	xor	(%rsi,%rdx,8), %r8
+-	xor	8(%rsi,%rdx,8), %r9
+-	.byte	0xf3,0x49,0x0f,0xb8,0xc8	
+-	lea	(%rcx, %rax), %rax
+-	.byte	0xf3,0x4d,0x0f,0xb8,0xd1	
+-	add	$2, %rdx
+-	js	Ltop
+-
+-	lea	(%r10, %rax), %rax
+-	pop	%rsi
+-	pop	%rdi
+-	ret
+-	
+-
+--- a/SMP/mpn/x86_64/popcount.s
++++ /dev/null
+@@ -1,136 +0,0 @@
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-	.text
+-	.align	32, 0x90
+-	.globl	__gmpn_popcount
+-	
+-__gmpn_popcount:
+-
+-	push	%rdi
+-	push	%rsi
+-	mov	%rcx, %rdi
+-	mov	%rdx, %rsi
+-
+-
+-	lea	(%rdi,%rsi,8), %rdi
+-	xor	%eax, %eax
+-
+-	test	$1, %sil
+-	jnz	Lbx1
+-
+-Lbx0:	test	$2, %sil
+-	jnz	Lb10
+-
+-Lb00:	mov	$0, %ecx
+-	sub	%rsi, %rcx
+-	.byte	0xf3,0x4c,0x0f,0xb8,0x04,0xcf		
+-	.byte	0xf3,0x4c,0x0f,0xb8,0x4c,0xcf,0x08	
+-	jmp	Llo0
+-
+-Lb10:	mov	$2, %ecx
+-	sub	%rsi, %rcx
+-	.byte	0xf3,0x4c,0x0f,0xb8,0x54,0xcf,0xf0	
+-	.byte	0xf3,0x4c,0x0f,0xb8,0x5c,0xcf,0xf8	
+-	test	%rcx, %rcx
+-	jz	Lcj2
+-	jmp	Llo2
+-
+-Lbx1:	test	$2, %sil
+-	jnz	Lb11
+-
+-Lb01:	mov	$1, %ecx
+-	sub	%rsi, %rcx
+-	.byte	0xf3,0x4c,0x0f,0xb8,0x5c,0xcf,0xf8	
+-	test	%rcx, %rcx
+-	jz	Lcj1
+-	.byte	0xf3,0x4c,0x0f,0xb8,0x04,0xcf		
+-	jmp	Llo1
+-
+-Lb11:	mov	$-1, %rcx
+-	sub	%rsi, %rcx
+-	.byte	0xf3,0x4c,0x0f,0xb8,0x4c,0xcf,0x08	
+-	.byte	0xf3,0x4c,0x0f,0xb8,0x54,0xcf,0x10	
+-	jmp	Llo3
+-
+-	.align	32, 0x90
+-Ltop:	add	%r9, %rax
+-Llo2:	.byte	0xf3,0x4c,0x0f,0xb8,0x04,0xcf		
+-	add	%r10, %rax
+-Llo1:	.byte	0xf3,0x4c,0x0f,0xb8,0x4c,0xcf,0x08	
+-	add	%r11, %rax
+-Llo0:	.byte	0xf3,0x4c,0x0f,0xb8,0x54,0xcf,0x10	
+-	add	%r8, %rax
+-Llo3:	.byte	0xf3,0x4c,0x0f,0xb8,0x5c,0xcf,0x18	
+-	add	$4, %rcx
+-	js	Ltop
+-
+-Lend:	add	%r9, %rax
+-Lcj2:	add	%r10, %rax
+-Lcj1:	add	%r11, %rax
+-	pop	%rsi
+-	pop	%rdi
+-	ret
+-	
+--- a/mpn/x86_64/bd1/hamdist.asm
++++ /dev/null
+@@ -1,38 +0,0 @@
+-dnl  AMD64 mpn_hamdist -- hamming distance.
+-
+-dnl  Copyright 2008, 2010-2012 Free Software Foundation, Inc.
+-
+-dnl  This file is part of the GNU MP Library.
+-dnl
+-dnl  The GNU MP Library is free software; you can redistribute it and/or modify
+-dnl  it under the terms of either:
+-dnl
+-dnl    * the GNU Lesser General Public License as published by the Free
+-dnl      Software Foundation; either version 3 of the License, or (at your
+-dnl      option) any later version.
+-dnl
+-dnl  or
+-dnl
+-dnl    * the GNU General Public License as published by the Free Software
+-dnl      Foundation; either version 2 of the License, or (at your option) any
+-dnl      later version.
+-dnl
+-dnl  or both in parallel, as here.
+-dnl
+-dnl  The GNU MP Library is distributed in the hope that it will be useful, but
+-dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-dnl  for more details.
+-dnl
+-dnl  You should have received copies of the GNU General Public License and the
+-dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+-dnl  see https://www.gnu.org/licenses/.
+-
+-
+-include(`../config.m4')
+-
+-ABI_SUPPORT(DOS64)
+-ABI_SUPPORT(STD64)
+-
+-MULFUNC_PROLOGUE(mpn_hamdist)
+-include_mpn(`x86_64/k10/hamdist.asm')
+--- a/mpn/x86_64/bd1/popcount.asm
++++ /dev/null
+@@ -1,38 +0,0 @@
+-dnl  AMD64 mpn_popcount -- population count.
+-
+-dnl  Copyright 2008, 2010-2012 Free Software Foundation, Inc.
+-
+-dnl  This file is part of the GNU MP Library.
+-dnl
+-dnl  The GNU MP Library is free software; you can redistribute it and/or modify
+-dnl  it under the terms of either:
+-dnl
+-dnl    * the GNU Lesser General Public License as published by the Free
+-dnl      Software Foundation; either version 3 of the License, or (at your
+-dnl      option) any later version.
+-dnl
+-dnl  or
+-dnl
+-dnl    * the GNU General Public License as published by the Free Software
+-dnl      Foundation; either version 2 of the License, or (at your option) any
+-dnl      later version.
+-dnl
+-dnl  or both in parallel, as here.
+-dnl
+-dnl  The GNU MP Library is distributed in the hope that it will be useful, but
+-dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-dnl  for more details.
+-dnl
+-dnl  You should have received copies of the GNU General Public License and the
+-dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+-dnl  see https://www.gnu.org/licenses/.
+-
+-
+-include(`../config.m4')
+-
+-ABI_SUPPORT(DOS64)
+-ABI_SUPPORT(STD64)
+-
+-MULFUNC_PROLOGUE(mpn_popcount)
+-include_mpn(`x86_64/k10/popcount.asm')
+--- a/mpn/x86_64/core2/popcount.asm
++++ /dev/null
+@@ -1,35 +0,0 @@
+-dnl  x86-64 mpn_popcount optimized for "Core 2".
+-
+-dnl  Copyright 2007 Free Software Foundation, Inc.
+-
+-dnl  This file is part of the GNU MP Library.
+-dnl
+-dnl  The GNU MP Library is free software; you can redistribute it and/or modify
+-dnl  it under the terms of either:
+-dnl
+-dnl    * the GNU Lesser General Public License as published by the Free
+-dnl      Software Foundation; either version 3 of the License, or (at your
+-dnl      option) any later version.
+-dnl
+-dnl  or
+-dnl
+-dnl    * the GNU General Public License as published by the Free Software
+-dnl      Foundation; either version 2 of the License, or (at your option) any
+-dnl      later version.
+-dnl
+-dnl  or both in parallel, as here.
+-dnl
+-dnl  The GNU MP Library is distributed in the hope that it will be useful, but
+-dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-dnl  for more details.
+-dnl
+-dnl  You should have received copies of the GNU General Public License and the
+-dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+-dnl  see https://www.gnu.org/licenses/.
+-
+-
+-include(`../config.m4')
+-
+-MULFUNC_PROLOGUE(mpn_popcount)
+-include_mpn(`x86/pentium4/sse2/popcount.asm')
+--- a/mpn/x86_64/fastsse/com-palignr.asm
++++ /dev/null
+@@ -1,311 +0,0 @@
+-dnl  AMD64 mpn_com optimised for CPUs with fast SSE copying and SSSE3.
+-
+-dnl  Copyright 2012, 2013, 2015 Free Software Foundation, Inc.
+-
+-dnl  Contributed to the GNU project by Torbjorn Granlund.
+-
+-dnl  This file is part of the GNU MP Library.
+-dnl
+-dnl  The GNU MP Library is free software; you can redistribute it and/or modify
+-dnl  it under the terms of either:
+-dnl
+-dnl    * the GNU Lesser General Public License as published by the Free
+-dnl      Software Foundation; either version 3 of the License, or (at your
+-dnl      option) any later version.
+-dnl
+-dnl  or
+-dnl
+-dnl    * the GNU General Public License as published by the Free Software
+-dnl      Foundation; either version 2 of the License, or (at your option) any
+-dnl      later version.
+-dnl
+-dnl  or both in parallel, as here.
+-dnl
+-dnl  The GNU MP Library is distributed in the hope that it will be useful, but
+-dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-dnl  for more details.
+-dnl
+-dnl  You should have received copies of the GNU General Public License and the
+-dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+-dnl  see https://www.gnu.org/licenses/.
+-
+-include(`../config.m4')
+-
+-C	     cycles/limb     cycles/limb     cycles/limb      good
+-C              aligned	      unaligned	      best seen	     for cpu?
+-C AMD K8,K9	 2.0		 illop		1.0/1.0		N
+-C AMD K10	 0.85		 illop				Y/N
+-C AMD bd1	 1.39		 ? 1.45				Y/N
+-C AMD bd2     0.8-1.4	       0.7-1.4				Y
+-C AMD bd3
+-C AMD bd4
+-C AMD bobcat	 1.97		 ? 8.17		1.5/1.5		N
+-C AMD jaguar	 1.02		 1.02		0.91/0.91	N
+-C Intel P4	 2.26		 illop				Y/N
+-C Intel core	 0.58		 0.87		opt/0.74	Y
+-C Intel NHM	 0.64		 1.14		opt/bad		Y
+-C Intel SBR	 0.51		 0.65		opt/opt		Y
+-C Intel IBR	 0.50		 0.64		opt/0.57	Y
+-C Intel HWL	 0.51		 0.58		opt/opt		Y
+-C Intel BWL	 0.52		 0.64		opt/opt		Y
+-C Intel SKL	 0.51		 0.63		opt/opt		Y
+-C Intel atom	 1.16		 1.70		opt/opt		Y
+-C Intel SLM	 1.02		 1.52				N
+-C VIA nano	 1.09		 1.10		opt/opt		Y
+-
+-C We use only 16-byte operations, except for unaligned top-most and bottom-most
+-C limbs.  We use the SSSE3 palignr instruction when rp - up = 8 (mod 16).  That
+-C instruction is better adapted to mpn_copyd's needs, we need to contort the
+-C code to use it here.
+-C
+-C For operands of < COM_SSE_THRESHOLD limbs, we use a plain 64-bit loop, taken
+-C from the x86_64 default code.
+-
+-C INPUT PARAMETERS
+-define(`rp', `%rdi')
+-define(`up', `%rsi')
+-define(`n',  `%rdx')
+-
+-C There are three instructions for loading an aligned 128-bit quantity.  We use
+-C movaps, since it has the shortest coding.
+-define(`movdqa', ``movaps'')
+-
+-ifdef(`COM_SSE_THRESHOLD',`',`define(`COM_SSE_THRESHOLD', 7)')
+-
+-ASM_START()
+-	TEXT
+-	ALIGN(64)
+-PROLOGUE(mpn_com)
+-	FUNC_ENTRY(3)
+-
+-	cmp	$COM_SSE_THRESHOLD, n
+-	jbe	L(bc)
+-
+-	pcmpeqb	%xmm5, %xmm5		C set to 111...111
+-
+-	test	$8, R8(rp)		C is rp 16-byte aligned?
+-	jz	L(rp_aligned)		C jump if rp aligned
+-
+-	mov	(up), %r8
+-	lea	8(up), up
+-	not	%r8
+-	mov	%r8, (rp)
+-	lea	8(rp), rp
+-	dec	n
+-
+-L(rp_aligned):
+-	test	$8, R8(up)
+-	jnz	L(uent)
+-
+-ifelse(eval(COM_SSE_THRESHOLD >= 8),1,
+-`	sub	$8, n',
+-`	jmp	L(am)')
+-
+-	ALIGN(16)
+-L(atop):movdqa	0(up), %xmm0
+-	movdqa	16(up), %xmm1
+-	movdqa	32(up), %xmm2
+-	movdqa	48(up), %xmm3
+-	lea	64(up), up
+-	pxor	%xmm5, %xmm0
+-	pxor	%xmm5, %xmm1
+-	pxor	%xmm5, %xmm2
+-	pxor	%xmm5, %xmm3
+-	movdqa	%xmm0, (rp)
+-	movdqa	%xmm1, 16(rp)
+-	movdqa	%xmm2, 32(rp)
+-	movdqa	%xmm3, 48(rp)
+-	lea	64(rp), rp
+-L(am):	sub	$8, n
+-	jnc	L(atop)
+-
+-	test	$4, R8(n)
+-	jz	1f
+-	movdqa	(up), %xmm0
+-	movdqa	16(up), %xmm1
+-	lea	32(up), up
+-	pxor	%xmm5, %xmm0
+-	pxor	%xmm5, %xmm1
+-	movdqa	%xmm0, (rp)
+-	movdqa	%xmm1, 16(rp)
+-	lea	32(rp), rp
+-
+-1:	test	$2, R8(n)
+-	jz	1f
+-	movdqa	(up), %xmm0
+-	lea	16(up), up
+-	pxor	%xmm5, %xmm0
+-	movdqa	%xmm0, (rp)
+-	lea	16(rp), rp
+-
+-1:	test	$1, R8(n)
+-	jz	1f
+-	mov	(up), %r8
+-	not	%r8
+-	mov	%r8, (rp)
+-
+-1:	FUNC_EXIT()
+-	ret
+-
+-L(uent):
+-C Code handling up - rp = 8 (mod 16)
+-
+-C FIXME: The code below only handles overlap if it is close to complete, or
+-C quite separate: up-rp < 5 or up-up > 15 limbs
+-	lea	-40(up), %rax		C 40 = 5 * GMP_LIMB_BYTES
+-	sub	rp, %rax
+-	cmp	$80, %rax		C 80 = (15-5) * GMP_LIMB_BYTES
+-	jbe	L(bc)			C deflect to plain loop
+-
+-	sub	$16, n
+-	jc	L(uend)
+-
+-	movdqa	120(up), %xmm3
+-
+-	sub	$16, n
+-	jmp	L(um)
+-
+-	ALIGN(16)
+-L(utop):movdqa	120(up), %xmm3
+-	pxor	%xmm5, %xmm0
+-	movdqa	%xmm0, -128(rp)
+-	sub	$16, n
+-L(um):	movdqa	104(up), %xmm2
+-	palignr($8, %xmm2, %xmm3)
+-	movdqa	88(up), %xmm1
+-	pxor	%xmm5, %xmm3
+-	movdqa	%xmm3, 112(rp)
+-	palignr($8, %xmm1, %xmm2)
+-	movdqa	72(up), %xmm0
+-	pxor	%xmm5, %xmm2
+-	movdqa	%xmm2, 96(rp)
+-	palignr($8, %xmm0, %xmm1)
+-	movdqa	56(up), %xmm3
+-	pxor	%xmm5, %xmm1
+-	movdqa	%xmm1, 80(rp)
+-	palignr($8, %xmm3, %xmm0)
+-	movdqa	40(up), %xmm2
+-	pxor	%xmm5, %xmm0
+-	movdqa	%xmm0, 64(rp)
+-	palignr($8, %xmm2, %xmm3)
+-	movdqa	24(up), %xmm1
+-	pxor	%xmm5, %xmm3
+-	movdqa	%xmm3, 48(rp)
+-	palignr($8, %xmm1, %xmm2)
+-	movdqa	8(up), %xmm0
+-	pxor	%xmm5, %xmm2
+-	movdqa	%xmm2, 32(rp)
+-	palignr($8, %xmm0, %xmm1)
+-	movdqa	-8(up), %xmm3
+-	pxor	%xmm5, %xmm1
+-	movdqa	%xmm1, 16(rp)
+-	palignr($8, %xmm3, %xmm0)
+-	lea	128(up), up
+-	lea	128(rp), rp
+-	jnc	L(utop)
+-
+-	pxor	%xmm5, %xmm0
+-	movdqa	%xmm0, -128(rp)
+-
+-L(uend):test	$8, R8(n)
+-	jz	1f
+-	movdqa	56(up), %xmm3
+-	movdqa	40(up), %xmm2
+-	palignr($8, %xmm2, %xmm3)
+-	movdqa	24(up), %xmm1
+-	pxor	%xmm5, %xmm3
+-	movdqa	%xmm3, 48(rp)
+-	palignr($8, %xmm1, %xmm2)
+-	movdqa	8(up), %xmm0
+-	pxor	%xmm5, %xmm2
+-	movdqa	%xmm2, 32(rp)
+-	palignr($8, %xmm0, %xmm1)
+-	movdqa	-8(up), %xmm3
+-	pxor	%xmm5, %xmm1
+-	movdqa	%xmm1, 16(rp)
+-	palignr($8, %xmm3, %xmm0)
+-	lea	64(up), up
+-	pxor	%xmm5, %xmm0
+-	movdqa	%xmm0, (rp)
+-	lea	64(rp), rp
+-
+-1:	test	$4, R8(n)
+-	jz	1f
+-	movdqa	24(up), %xmm1
+-	movdqa	8(up), %xmm0
+-	palignr($8, %xmm0, %xmm1)
+-	movdqa	-8(up), %xmm3
+-	pxor	%xmm5, %xmm1
+-	movdqa	%xmm1, 16(rp)
+-	palignr($8, %xmm3, %xmm0)
+-	lea	32(up), up
+-	pxor	%xmm5, %xmm0
+-	movdqa	%xmm0, (rp)
+-	lea	32(rp), rp
+-
+-1:	test	$2, R8(n)
+-	jz	1f
+-	movdqa	8(up), %xmm0
+-	movdqa	-8(up), %xmm3
+-	palignr($8, %xmm3, %xmm0)
+-	lea	16(up), up
+-	pxor	%xmm5, %xmm0
+-	movdqa	%xmm0, (rp)
+-	lea	16(rp), rp
+-
+-1:	test	$1, R8(n)
+-	jz	1f
+-	mov	(up), %r8
+-	not	%r8
+-	mov	%r8, (rp)
+-
+-1:	FUNC_EXIT()
+-	ret
+-
+-C Basecase code.  Needed for good small operands speed, not for
+-C correctness as the above code is currently written.
+-
+-L(bc):	lea	-8(rp), rp
+-	sub	$4, R32(n)
+-	jc	L(end)
+-
+-ifelse(eval(1 || COM_SSE_THRESHOLD >= 8),1,
+-`	ALIGN(16)')
+-L(top):	mov	(up), %r8
+-	mov	8(up), %r9
+-	lea	32(rp), rp
+-	mov	16(up), %r10
+-	mov	24(up), %r11
+-	lea	32(up), up
+-	not	%r8
+-	not	%r9
+-	not	%r10
+-	not	%r11
+-	mov	%r8, -24(rp)
+-	mov	%r9, -16(rp)
+-ifelse(eval(1 || COM_SSE_THRESHOLD >= 8),1,
+-`	sub	$4, R32(n)')
+-	mov	%r10, -8(rp)
+-	mov	%r11, (rp)
+-ifelse(eval(1 || COM_SSE_THRESHOLD >= 8),1,
+-`	jnc	L(top)')
+-
+-L(end):	test	$1, R8(n)
+-	jz	1f
+-	mov	(up), %r8
+-	not	%r8
+-	mov	%r8, 8(rp)
+-	lea	8(rp), rp
+-	lea	8(up), up
+-1:	test	$2, R8(n)
+-	jz	1f
+-	mov	(up), %r8
+-	mov	8(up), %r9
+-	not	%r8
+-	not	%r9
+-	mov	%r8, 8(rp)
+-	mov	%r9, 16(rp)
+-1:	FUNC_EXIT()
+-	ret
+-EPILOGUE()
+--- a/mpn/x86_64/fastsse/copyd-palignr.asm
++++ /dev/null
+@@ -1,254 +0,0 @@
+-dnl  AMD64 mpn_copyd optimised for CPUs with fast SSE copying and SSSE3.
+-
+-dnl  Copyright 2012, 2015 Free Software Foundation, Inc.
+-
+-dnl  Contributed to the GNU project by Torbjorn Granlund.
+-
+-dnl  This file is part of the GNU MP Library.
+-dnl
+-dnl  The GNU MP Library is free software; you can redistribute it and/or modify
+-dnl  it under the terms of either:
+-dnl
+-dnl    * the GNU Lesser General Public License as published by the Free
+-dnl      Software Foundation; either version 3 of the License, or (at your
+-dnl      option) any later version.
+-dnl
+-dnl  or
+-dnl
+-dnl    * the GNU General Public License as published by the Free Software
+-dnl      Foundation; either version 2 of the License, or (at your option) any
+-dnl      later version.
+-dnl
+-dnl  or both in parallel, as here.
+-dnl
+-dnl  The GNU MP Library is distributed in the hope that it will be useful, but
+-dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-dnl  for more details.
+-dnl
+-dnl  You should have received copies of the GNU General Public License and the
+-dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+-dnl  see https://www.gnu.org/licenses/.
+-
+-include(`../config.m4')
+-
+-C	     cycles/limb     cycles/limb     cycles/limb      good
+-C              aligned	      unaligned	      best seen	     for cpu?
+-C AMD K8,K9	 2.0		 illop		1.0/1.0		N
+-C AMD K10	 0.85		 illop				Y/N
+-C AMD bull	 0.70		 0.70				Y
+-C AMD pile	 0.68		 0.68				Y
+-C AMD steam
+-C AMD excavator
+-C AMD bobcat	 1.97		 8.24		1.5/1.5		N
+-C AMD jaguar	 0.77		 0.89		0.65/opt	N/Y
+-C Intel P4	 2.26		 illop				Y/N
+-C Intel core	 0.52		 0.80		opt/opt		Y
+-C Intel NHM	 0.52		 0.64		opt/opt		Y
+-C Intel SBR	 0.51		 0.51		opt/opt		Y
+-C Intel IBR	 0.50		 0.50		opt/opt		Y
+-C Intel HWL	 0.50		 0.51		opt/opt		Y
+-C Intel BWL	 0.55		 0.55		opt/opt		Y
+-C Intel atom	 1.16		 1.66		opt/opt		Y
+-C Intel SLM	 1.02		 1.04		opt/opt		Y
+-C VIA nano	 1.08		 1.06		opt/opt		Y
+-
+-C We use only 16-byte operations, except for unaligned top-most and bottom-most
+-C limbs.  We use the SSSE3 palignr instruction when rp - up = 8 (mod 16).
+-C
+-C For operands of < COPYD_SSE_THRESHOLD limbs, we use a plain 64-bit loop,
+-C taken from the x86_64 default code.
+-
+-C INPUT PARAMETERS
+-define(`rp', `%rdi')
+-define(`up', `%rsi')
+-define(`n',  `%rdx')
+-
+-C There are three instructions for loading an aligned 128-bit quantity.  We use
+-C movaps, since it has the shortest coding.
+-define(`movdqa', ``movaps'')
+-
+-ifdef(`COPYD_SSE_THRESHOLD',`',`define(`COPYD_SSE_THRESHOLD', 7)')
+-
+-ASM_START()
+-	TEXT
+-	ALIGN(64)
+-PROLOGUE(mpn_copyd)
+-	FUNC_ENTRY(3)
+-
+-	lea	-8(up,n,8), up
+-	lea	-8(rp,n,8), rp
+-
+-	cmp	$COPYD_SSE_THRESHOLD, n
+-	jbe	L(bc)
+-
+-	test	$8, R8(rp)		C is rp 16-byte aligned?
+-	jnz	L(rp_aligned)		C jump if rp aligned
+-
+-	mov	(up), %rax		C copy one limb
+-	mov	%rax, (rp)
+-	lea	-8(up), up
+-	lea	-8(rp), rp
+-	dec	n
+-
+-L(rp_aligned):
+-	test	$8, R8(up)
+-	jz	L(uent)
+-
+-ifelse(eval(COPYD_SSE_THRESHOLD >= 8),1,
+-`	sub	$8, n',
+-`	jmp	L(am)')
+-
+-	ALIGN(16)
+-L(atop):movdqa	-8(up), %xmm0
+-	movdqa	-24(up), %xmm1
+-	movdqa	-40(up), %xmm2
+-	movdqa	-56(up), %xmm3
+-	lea	-64(up), up
+-	movdqa	%xmm0, -8(rp)
+-	movdqa	%xmm1, -24(rp)
+-	movdqa	%xmm2, -40(rp)
+-	movdqa	%xmm3, -56(rp)
+-	lea	-64(rp), rp
+-L(am):	sub	$8, n
+-	jnc	L(atop)
+-
+-	test	$4, R8(n)
+-	jz	1f
+-	movdqa	-8(up), %xmm0
+-	movdqa	-24(up), %xmm1
+-	lea	-32(up), up
+-	movdqa	%xmm0, -8(rp)
+-	movdqa	%xmm1, -24(rp)
+-	lea	-32(rp), rp
+-
+-1:	test	$2, R8(n)
+-	jz	1f
+-	movdqa	-8(up), %xmm0
+-	lea	-16(up), up
+-	movdqa	%xmm0, -8(rp)
+-	lea	-16(rp), rp
+-
+-1:	test	$1, R8(n)
+-	jz	1f
+-	mov	(up), %r8
+-	mov	%r8, (rp)
+-
+-1:	FUNC_EXIT()
+-	ret
+-
+-L(uent):sub	$16, n
+-	movdqa	(up), %xmm0
+-	jc	L(uend)
+-
+-	ALIGN(16)
+-L(utop):sub	$16, n
+-	movdqa	-16(up), %xmm1
+-	palignr($8, %xmm1, %xmm0)
+-	movdqa	%xmm0, -8(rp)
+-	movdqa	-32(up), %xmm2
+-	palignr($8, %xmm2, %xmm1)
+-	movdqa	%xmm1, -24(rp)
+-	movdqa	-48(up), %xmm3
+-	palignr($8, %xmm3, %xmm2)
+-	movdqa	%xmm2, -40(rp)
+-	movdqa	-64(up), %xmm0
+-	palignr($8, %xmm0, %xmm3)
+-	movdqa	%xmm3, -56(rp)
+-	movdqa	-80(up), %xmm1
+-	palignr($8, %xmm1, %xmm0)
+-	movdqa	%xmm0, -72(rp)
+-	movdqa	-96(up), %xmm2
+-	palignr($8, %xmm2, %xmm1)
+-	movdqa	%xmm1, -88(rp)
+-	movdqa	-112(up), %xmm3
+-	palignr($8, %xmm3, %xmm2)
+-	movdqa	%xmm2, -104(rp)
+-	movdqa	-128(up), %xmm0
+-	palignr($8, %xmm0, %xmm3)
+-	movdqa	%xmm3, -120(rp)
+-	lea	-128(up), up
+-	lea	-128(rp), rp
+-	jnc	L(utop)
+-
+-L(uend):test	$8, R8(n)
+-	jz	1f
+-	movdqa	-16(up), %xmm1
+-	palignr($8, %xmm1, %xmm0)
+-	movdqa	%xmm0, -8(rp)
+-	movdqa	-32(up), %xmm0
+-	palignr($8, %xmm0, %xmm1)
+-	movdqa	%xmm1, -24(rp)
+-	movdqa	-48(up), %xmm1
+-	palignr($8, %xmm1, %xmm0)
+-	movdqa	%xmm0, -40(rp)
+-	movdqa	-64(up), %xmm0
+-	palignr($8, %xmm0, %xmm1)
+-	movdqa	%xmm1, -56(rp)
+-	lea	-64(up), up
+-	lea	-64(rp), rp
+-
+-1:	test	$4, R8(n)
+-	jz	1f
+-	movdqa	-16(up), %xmm1
+-	palignr($8, %xmm1, %xmm0)
+-	movdqa	%xmm0, -8(rp)
+-	movdqa	-32(up), %xmm0
+-	palignr($8, %xmm0, %xmm1)
+-	movdqa	%xmm1, -24(rp)
+-	lea	-32(up), up
+-	lea	-32(rp), rp
+-
+-1:	test	$2, R8(n)
+-	jz	1f
+-	movdqa	-16(up), %xmm1
+-	palignr($8, %xmm1, %xmm0)
+-	movdqa	%xmm0, -8(rp)
+-	lea	-16(up), up
+-	lea	-16(rp), rp
+-
+-1:	test	$1, R8(n)
+-	jz	1f
+-	mov	(up), %r8
+-	mov	%r8, (rp)
+-
+-1:	FUNC_EXIT()
+-	ret
+-
+-C Basecase code.  Needed for good small operands speed, not for
+-C correctness as the above code is currently written.
+-
+-L(bc):	sub	$4, R32(n)
+-	jc	L(end)
+-
+-	ALIGN(16)
+-L(top):	mov	(up), %r8
+-	mov	-8(up), %r9
+-	lea	-32(rp), rp
+-	mov	-16(up), %r10
+-	mov	-24(up), %r11
+-	lea	-32(up), up
+-	mov	%r8, 32(rp)
+-	mov	%r9, 24(rp)
+-ifelse(eval(COPYD_SSE_THRESHOLD >= 8),1,
+-`	sub	$4, R32(n)')
+-	mov	%r10, 16(rp)
+-	mov	%r11, 8(rp)
+-ifelse(eval(COPYD_SSE_THRESHOLD >= 8),1,
+-`	jnc	L(top)')
+-
+-L(end):	test	$1, R8(n)
+-	jz	1f
+-	mov	(up), %r8
+-	mov	%r8, (rp)
+-	lea	-8(rp), rp
+-	lea	-8(up), up
+-1:	test	$2, R8(n)
+-	jz	1f
+-	mov	(up), %r8
+-	mov	-8(up), %r9
+-	mov	%r8, (rp)
+-	mov	%r9, -8(rp)
+-1:	FUNC_EXIT()
+-	ret
+-EPILOGUE()
+--- a/mpn/x86_64/fastsse/copyi-palignr.asm
++++ /dev/null
+@@ -1,298 +0,0 @@
+-dnl  AMD64 mpn_copyi optimised for CPUs with fast SSE copying and SSSE3.
+-
+-dnl  Copyright 2012, 2013, 2015 Free Software Foundation, Inc.
+-
+-dnl  Contributed to the GNU project by Torbjörn Granlund.
+-
+-dnl  This file is part of the GNU MP Library.
+-dnl
+-dnl  The GNU MP Library is free software; you can redistribute it and/or modify
+-dnl  it under the terms of either:
+-dnl
+-dnl    * the GNU Lesser General Public License as published by the Free
+-dnl      Software Foundation; either version 3 of the License, or (at your
+-dnl      option) any later version.
+-dnl
+-dnl  or
+-dnl
+-dnl    * the GNU General Public License as published by the Free Software
+-dnl      Foundation; either version 2 of the License, or (at your option) any
+-dnl      later version.
+-dnl
+-dnl  or both in parallel, as here.
+-dnl
+-dnl  The GNU MP Library is distributed in the hope that it will be useful, but
+-dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-dnl  for more details.
+-dnl
+-dnl  You should have received copies of the GNU General Public License and the
+-dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+-dnl  see https://www.gnu.org/licenses/.
+-
+-include(`../config.m4')
+-
+-C	     cycles/limb     cycles/limb     cycles/limb      good
+-C              aligned	      unaligned	      best seen	     for cpu?
+-C AMD K8,K9	 2.0		 illop		1.0/1.0		N
+-C AMD K10	 0.85		 illop				Y/N
+-C AMD bull	 0.70		 0.66				Y
+-C AMD pile	 0.68		 0.66				Y
+-C AMD steam	 ?		 ?
+-C AMD excavator	 ?		 ?
+-C AMD bobcat	 1.97		 8.16		1.5/1.5		N
+-C AMD jaguar	 0.77		 0.93		0.65/opt	N/Y
+-C Intel P4	 2.26		 illop				Y/N
+-C Intel core	 0.52		 0.64		opt/opt		Y
+-C Intel NHM	 0.52		 0.71		opt/opt		Y
+-C Intel SBR	 0.51		 0.54		opt/0.51	Y
+-C Intel IBR	 0.50		 0.54		opt/opt		Y
+-C Intel HWL	 0.50		 0.51		opt/opt		Y
+-C Intel BWL	 0.55		 0.55		opt/opt		Y
+-C Intel atom	 1.16		 1.61		opt/opt		Y
+-C Intel SLM	 1.02		 1.07		opt/opt		Y
+-C VIA nano	 1.09		 1.08		opt/opt		Y
+-
+-C We use only 16-byte operations, except for unaligned top-most and bottom-most
+-C limbs.  We use the SSSE3 palignr instruction when rp - up = 8 (mod 16).  That
+-C instruction is better adapted to mpn_copyd's needs, we need to contort the
+-C code to use it here.
+-C
+-C For operands of < COPYI_SSE_THRESHOLD limbs, we use a plain 64-bit loop,
+-C taken from the x86_64 default code.
+-
+-C INPUT PARAMETERS
+-define(`rp', `%rdi')
+-define(`up', `%rsi')
+-define(`n',  `%rdx')
+-
+-C There are three instructions for loading an aligned 128-bit quantity.  We use
+-C movaps, since it has the shortest coding.
+-dnl define(`movdqa', ``movaps'')
+-
+-ifdef(`COPYI_SSE_THRESHOLD',`',`define(`COPYI_SSE_THRESHOLD', 7)')
+-
+-ASM_START()
+-	TEXT
+-	ALIGN(64)
+-PROLOGUE(mpn_copyi)
+-	FUNC_ENTRY(3)
+-
+-	cmp	$COPYI_SSE_THRESHOLD, n
+-	jbe	L(bc)
+-
+-	test	$8, R8(rp)		C is rp 16-byte aligned?
+-	jz	L(rp_aligned)		C jump if rp aligned
+-
+-	movsq				C copy one limb
+-	dec	n
+-
+-L(rp_aligned):
+-	test	$8, R8(up)
+-	jnz	L(uent)
+-
+-ifelse(eval(COPYI_SSE_THRESHOLD >= 8),1,
+-`	sub	$8, n',
+-`	jmp	L(am)')
+-
+-	ALIGN(16)
+-L(atop):movdqa	0(up), %xmm0
+-	movdqa	16(up), %xmm1
+-	movdqa	32(up), %xmm2
+-	movdqa	48(up), %xmm3
+-	lea	64(up), up
+-	movdqa	%xmm0, (rp)
+-	movdqa	%xmm1, 16(rp)
+-	movdqa	%xmm2, 32(rp)
+-	movdqa	%xmm3, 48(rp)
+-	lea	64(rp), rp
+-L(am):	sub	$8, n
+-	jnc	L(atop)
+-
+-	test	$4, R8(n)
+-	jz	1f
+-	movdqa	(up), %xmm0
+-	movdqa	16(up), %xmm1
+-	lea	32(up), up
+-	movdqa	%xmm0, (rp)
+-	movdqa	%xmm1, 16(rp)
+-	lea	32(rp), rp
+-
+-1:	test	$2, R8(n)
+-	jz	1f
+-	movdqa	(up), %xmm0
+-	lea	16(up), up
+-	movdqa	%xmm0, (rp)
+-	lea	16(rp), rp
+-
+-1:	test	$1, R8(n)
+-	jz	1f
+-	mov	(up), %r8
+-	mov	%r8, (rp)
+-
+-1:	FUNC_EXIT()
+-	ret
+-
+-L(uent):
+-C Code handling up - rp = 8 (mod 16)
+-
+-	cmp	$16, n
+-	jc	L(ued0)
+-
+-IFDOS(`	add	$-56, %rsp	')
+-IFDOS(`	movdqa	%xmm6, (%rsp)	')
+-IFDOS(`	movdqa	%xmm7, 16(%rsp)	')
+-IFDOS(`	movdqa	%xmm8, 32(%rsp)	')
+-
+-	movaps	120(up), %xmm7
+-	movaps	104(up), %xmm6
+-	movaps	88(up), %xmm5
+-	movaps	72(up), %xmm4
+-	movaps	56(up), %xmm3
+-	movaps	40(up), %xmm2
+-	lea	128(up), up
+-	sub	$32, n
+-	jc	L(ued1)
+-
+-	ALIGN(16)
+-L(utop):movaps	-104(up), %xmm1
+-	sub	$16, n
+-	movaps	-120(up), %xmm0
+-	palignr($8, %xmm6, %xmm7)
+-	movaps	-136(up), %xmm8
+-	movdqa	%xmm7, 112(rp)
+-	palignr($8, %xmm5, %xmm6)
+-	movaps	120(up), %xmm7
+-	movdqa	%xmm6, 96(rp)
+-	palignr($8, %xmm4, %xmm5)
+-	movaps	104(up), %xmm6
+-	movdqa	%xmm5, 80(rp)
+-	palignr($8, %xmm3, %xmm4)
+-	movaps	88(up), %xmm5
+-	movdqa	%xmm4, 64(rp)
+-	palignr($8, %xmm2, %xmm3)
+-	movaps	72(up), %xmm4
+-	movdqa	%xmm3, 48(rp)
+-	palignr($8, %xmm1, %xmm2)
+-	movaps	56(up), %xmm3
+-	movdqa	%xmm2, 32(rp)
+-	palignr($8, %xmm0, %xmm1)
+-	movaps	40(up), %xmm2
+-	movdqa	%xmm1, 16(rp)
+-	palignr($8, %xmm8, %xmm0)
+-	lea	128(up), up
+-	movdqa	%xmm0, (rp)
+-	lea	128(rp), rp
+-	jnc	L(utop)
+-
+-L(ued1):movaps	-104(up), %xmm1
+-	movaps	-120(up), %xmm0
+-	movaps	-136(up), %xmm8
+-	palignr($8, %xmm6, %xmm7)
+-	movdqa	%xmm7, 112(rp)
+-	palignr($8, %xmm5, %xmm6)
+-	movdqa	%xmm6, 96(rp)
+-	palignr($8, %xmm4, %xmm5)
+-	movdqa	%xmm5, 80(rp)
+-	palignr($8, %xmm3, %xmm4)
+-	movdqa	%xmm4, 64(rp)
+-	palignr($8, %xmm2, %xmm3)
+-	movdqa	%xmm3, 48(rp)
+-	palignr($8, %xmm1, %xmm2)
+-	movdqa	%xmm2, 32(rp)
+-	palignr($8, %xmm0, %xmm1)
+-	movdqa	%xmm1, 16(rp)
+-	palignr($8, %xmm8, %xmm0)
+-	movdqa	%xmm0, (rp)
+-	lea	128(rp), rp
+-
+-IFDOS(`	movdqa	(%rsp), %xmm6	')
+-IFDOS(`	movdqa	16(%rsp), %xmm7	')
+-IFDOS(`	movdqa	32(%rsp), %xmm8	')
+-IFDOS(`	add	$56, %rsp	')
+-
+-L(ued0):test	$8, R8(n)
+-	jz	1f
+-	movaps	56(up), %xmm3
+-	movaps	40(up), %xmm2
+-	movaps	24(up), %xmm1
+-	movaps	8(up), %xmm0
+-	movaps	-8(up), %xmm4
+-	palignr($8, %xmm2, %xmm3)
+-	movdqa	%xmm3, 48(rp)
+-	palignr($8, %xmm1, %xmm2)
+-	movdqa	%xmm2, 32(rp)
+-	palignr($8, %xmm0, %xmm1)
+-	movdqa	%xmm1, 16(rp)
+-	palignr($8, %xmm4, %xmm0)
+-	lea	64(up), up
+-	movdqa	%xmm0, (rp)
+-	lea	64(rp), rp
+-
+-1:	test	$4, R8(n)
+-	jz	1f
+-	movaps	24(up), %xmm1
+-	movaps	8(up), %xmm0
+-	palignr($8, %xmm0, %xmm1)
+-	movaps	-8(up), %xmm3
+-	movdqa	%xmm1, 16(rp)
+-	palignr($8, %xmm3, %xmm0)
+-	lea	32(up), up
+-	movdqa	%xmm0, (rp)
+-	lea	32(rp), rp
+-
+-1:	test	$2, R8(n)
+-	jz	1f
+-	movdqa	8(up), %xmm0
+-	movdqa	-8(up), %xmm3
+-	palignr($8, %xmm3, %xmm0)
+-	lea	16(up), up
+-	movdqa	%xmm0, (rp)
+-	lea	16(rp), rp
+-
+-1:	test	$1, R8(n)
+-	jz	1f
+-	mov	(up), %r8
+-	mov	%r8, (rp)
+-
+-1:	FUNC_EXIT()
+-	ret
+-
+-C Basecase code.  Needed for good small operands speed, not for
+-C correctness as the above code is currently written.
+-
+-L(bc):	lea	-8(rp), rp
+-	sub	$4, R32(n)
+-	jc	L(end)
+-
+-	ALIGN(16)
+-L(top):	mov	(up), %r8
+-	mov	8(up), %r9
+-	lea	32(rp), rp
+-	mov	16(up), %r10
+-	mov	24(up), %r11
+-	lea	32(up), up
+-	mov	%r8, -24(rp)
+-	mov	%r9, -16(rp)
+-ifelse(eval(COPYI_SSE_THRESHOLD >= 8),1,
+-`	sub	$4, R32(n)')
+-	mov	%r10, -8(rp)
+-	mov	%r11, (rp)
+-ifelse(eval(COPYI_SSE_THRESHOLD >= 8),1,
+-`	jnc	L(top)')
+-
+-L(end):	test	$1, R8(n)
+-	jz	1f
+-	mov	(up), %r8
+-	mov	%r8, 8(rp)
+-	lea	8(rp), rp
+-	lea	8(up), up
+-1:	test	$2, R8(n)
+-	jz	1f
+-	mov	(up), %r8
+-	mov	8(up), %r9
+-	mov	%r8, 8(rp)
+-	mov	%r9, 16(rp)
+-1:	FUNC_EXIT()
+-	ret
+-EPILOGUE()
+-- 
+2.8.1.windows.1
