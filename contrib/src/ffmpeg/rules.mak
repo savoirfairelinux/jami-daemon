@@ -355,6 +355,7 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	cd $< && $(HOSTVARS) ./configure \
 		--extra-cflags="$(CFLAGS)" \
 		--extra-ldflags="$(LDFLAGS)" $(FFMPEGCONF) \
-		--prefix="$(PREFIX)" --enable-static --disable-shared
+		--prefix="$(PREFIX)" --enable-static --disable-shared \
+                --pkg-config-flags="--static"
 	cd $< && $(MAKE) install-libs install-headers
 	touch $@
