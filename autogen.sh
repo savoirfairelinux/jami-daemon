@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 AUTORECONF=`which autoreconf`
 if test -z $AUTORECONF; then

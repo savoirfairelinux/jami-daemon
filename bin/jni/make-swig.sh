@@ -1,4 +1,4 @@
-#!/bin/bash -
+#!/usr/bin/env bash
 #
 #  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
 #
