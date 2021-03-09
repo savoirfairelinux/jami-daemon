@@ -322,8 +322,9 @@ Account::setAccountDetails(const std::map<std::string, std::string>& details)
 
     parseBool(details, Conf::CONFIG_UPNP_ENABLED, upnpEnabled_);
     enableUpnp(upnpEnabled_ && isEnabled());
-    auto defMod = string_join(defaultModerators_);
+    std::string defMod;
     parseString(details, Conf::CONFIG_DEFAULT_MODERATORS, defMod);
+    defaultModerators_ = string_split_set(defMod);
     parseBool(details, Conf::CONFIG_LOCAL_MODERATORS_ENABLED, localModeratorsEnabled_);
 }
 
