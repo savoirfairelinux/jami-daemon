@@ -2,9 +2,9 @@ dnl Jami - configure.ac for automake 1.9 and autoconf 2.59
 
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
-AC_INIT([Jami Daemon],[9.10.0],[ring@gnu.org],[jami])
+AC_INIT([Jami Daemon],[9.10.0],[jami@gnu.org],[jami])
 
-AC_COPYRIGHT([[Copyright (c) Savoir-faire Linux 2004-2020]])
+AC_COPYRIGHT([[Copyright (c) Savoir-faire Linux 2004-2021]])
 AC_REVISION([$Revision$])
 
 dnl Where to find configure files
@@ -403,10 +403,8 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        AC_CONFIG_FILES([bin/dbus/Makefile
                         bin/dbus/cx.ring.Ring.service])
 
-       AC_CHECK_PROG(HAVE_DBUSXML2CPP, dbusxx-xml2cpp, true, false)
-       if test "x$HAVE_DBUSXML2CPP" = "xfalse"; then
-           AC_MSG_ERROR([dbusxx-xml2cpp not found])
-       fi
+       AC_PATH_PROG([DBUSXX_XML2CPP], dbusxx-xml2cpp,
+                    [AC_MSG_ERROR([dbusxx-xml2cpp not found])])
 
        AS_IF([test "x$CLANG" = "xyes"], [
              AC_MSG_ERROR([dbus does not compile when clang is used, rerun with --without-dbus])
