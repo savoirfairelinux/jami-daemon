@@ -9,31 +9,31 @@ BUILT_SOURCES=                      \
 
 BUILT_SOURCES+=dbuspresencemanager.adaptor.h
 dbuspresencemanager.adaptor.h: cx.ring.Ring.PresenceManager.xml Makefile.am
-	dbusxx-xml2cpp $< --adaptor=$@
+	$(DBUSXX_XML2CPP) $< --adaptor=$@
 
 if ENABLE_VIDEO
 BUILT_SOURCES+=dbusvideomanager.adaptor.h
 dbusvideomanager.adaptor.h: cx.ring.Ring.VideoManager.xml Makefile.am
-	dbusxx-xml2cpp $< --adaptor=$@
+	$(DBUSXX_XML2CPP) $< --adaptor=$@
 endif
 
 # Rule to generate the binding headers
 dbuscallmanager.adaptor.h: cx.ring.Ring.CallManager.xml Makefile.am
-	dbusxx-xml2cpp $< --adaptor=$@
+	$(DBUSXX_XML2CPP) $< --adaptor=$@
 
 # Rule to generate the binding headers
 dbusconfigurationmanager.adaptor.h: cx.ring.Ring.ConfigurationManager.xml Makefile.am
-	dbusxx-xml2cpp $< --adaptor=$@
+	$(DBUSXX_XML2CPP) $< --adaptor=$@
 
 # Rule to generate the binding headers
 dbusinstance.adaptor.h: cx.ring.Ring.Instance.xml Makefile.am
-	dbusxx-xml2cpp $< --adaptor=$@
+	$(DBUSXX_XML2CPP) $< --adaptor=$@
 
 if ENABLE_PLUGIN
 BUILT_SOURCES+=dbuspluginmanagerinterface.adaptor.h
 # Rule to generate the binding headers
 dbuspluginmanagerinterface.adaptor.h: cx.ring.Ring.PluginManagerInterface.xml Makefile.am
-	dbusxx-xml2cpp $< --adaptor=$@
+	$(DBUSXX_XML2CPP) $< --adaptor=$@
 endif
 
 libclient_dbus_la_SOURCES = \
