@@ -53,7 +53,8 @@ AudioSender::AudioSender(const std::string& id,
 
 AudioSender::~AudioSender()
 {
-    audioInput_->detach(this);
+    if (audioInput_)
+        audioInput_->detach(this);
     audioInput_.reset();
     audioEncoder_.reset();
     muxContext_.reset();
@@ -113,7 +114,8 @@ void
 AudioSender::setMuted(bool isMuted)
 {
     muteState_ = isMuted;
-    audioInput_->setMuted(isMuted);
+    if (audioInput_)
+        audioInput_->setMuted(isMuted);
 }
 
 uint16_t
