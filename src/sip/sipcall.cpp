@@ -579,12 +579,12 @@ SIPCall::hangup(int reason)
             route = route->next;
         }
         const int status = reason ? reason
-                                  : inviteSession_->state <= PJSIP_INV_STATE_EARLY
-                                            and inviteSession_->role != PJSIP_ROLE_UAC
-                                        ? PJSIP_SC_CALL_TSX_DOES_NOT_EXIST
-                                        : inviteSession_->state >= PJSIP_INV_STATE_DISCONNECTED
-                                              ? PJSIP_SC_DECLINE
-                                              : 0;
+                           : inviteSession_->state <= PJSIP_INV_STATE_EARLY
+                                   and inviteSession_->role != PJSIP_ROLE_UAC
+                               ? PJSIP_SC_CALL_TSX_DOES_NOT_EXIST
+                           : inviteSession_->state >= PJSIP_INV_STATE_DISCONNECTED
+                               ? PJSIP_SC_DECLINE
+                               : 0;
         // Notify the peer
         terminateSipSession(status);
     }
@@ -1460,6 +1460,11 @@ SIPCall::startIceMedia()
 void
 SIPCall::onIceNegoSucceed()
 {
+    // Check if the call is already ended, so we don't need to restart medias
+    // This is typically the case in a multi-device context where one device
+    // can stop a call. So do not start medias
+    if (not inviteSession_ or inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not sdp_)
+        return;
     // Nego succeed: move to the new media transport
     stopAllMedia();
     {
@@ -1717,7 +1722,6 @@ SIPCall::initIceMediaTransport(bool master,
                     call->onFailure(EIO);
                     return;
                 }
-
                 call->onIceNegoSucceed();
             }
         });
