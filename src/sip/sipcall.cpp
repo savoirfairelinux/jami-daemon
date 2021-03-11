@@ -568,12 +568,12 @@ SIPCall::hangup(int reason)
             route = route->next;
         }
         const int status = reason ? reason
-                                  : inviteSession_->state <= PJSIP_INV_STATE_EARLY
-                                            and inviteSession_->role != PJSIP_ROLE_UAC
-                                        ? PJSIP_SC_CALL_TSX_DOES_NOT_EXIST
-                                        : inviteSession_->state >= PJSIP_INV_STATE_DISCONNECTED
-                                              ? PJSIP_SC_DECLINE
-                                              : 0;
+                           : inviteSession_->state <= PJSIP_INV_STATE_EARLY
+                                   and inviteSession_->role != PJSIP_ROLE_UAC
+                               ? PJSIP_SC_CALL_TSX_DOES_NOT_EXIST
+                           : inviteSession_->state >= PJSIP_INV_STATE_DISCONNECTED
+                               ? PJSIP_SC_DECLINE
+                               : 0;
         // Notify the peer
         terminateSipSession(status);
     }
@@ -1239,11 +1239,10 @@ SIPCall::startAllMedia()
 #endif
         rtp->updateMedia(remote, local);
 
-        rtp->setSuccessfulSetupCb(
-            [wthis = weak()](MediaType type, bool isRemote) {
-                if (auto this_ = wthis.lock())
-                    this_->rtpSetupSuccess(type, isRemote);
-            });
+        rtp->setSuccessfulSetupCb([wthis = weak()](MediaType type, bool isRemote) {
+            if (auto this_ = wthis.lock())
+                this_->rtpSetupSuccess(type, isRemote);
+        });
 
 #ifdef ENABLE_VIDEO
         videortp_->setRequestKeyFrameCallback([wthis = weak()] {
@@ -1395,8 +1394,7 @@ SIPCall::onMediaUpdate()
             std::lock_guard<std::recursive_mutex> lk {this_->callMutex_};
             // The call is already ended, so we don't need to restart medias
             if (not this_->inviteSession_
-                or this_->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
-                or not this_->sdp_)
+                or this_->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not this_->sdp_)
                 return;
             // If ICE is not used, start medias now
             auto rem_ice_attrs = this_->sdp_->getIceAttributes();
@@ -1454,6 +1452,11 @@ SIPCall::startIceMedia()
 void
 SIPCall::onIceNegoSucceed()
 {
+    // Check if the call is already ended, so we don't need to restart medias
+    // This is typically the case in a multi-device context where one device
+    // can stop a call. So do not start medias
+    if (not inviteSession_ or inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not sdp_)
+        return;
     // Nego succeed: move to the new media transport
     stopAllMedia();
     {
@@ -1604,10 +1607,10 @@ SIPCall::monitor() const
     JAMI_DBG("- Call %s with %s:", getCallId().c_str(), getPeerNumber().c_str());
     // TODO move in getCallDuration
     auto duration = duration_start_ == time_point::min()
-                                            ? 0
-                                            : std::chrono::duration_cast<std::chrono::milliseconds>(
-                                                  clock::now() - duration_start_)
-                                                  .count();
+                        ? 0
+                        : std::chrono::duration_cast<std::chrono::milliseconds>(clock::now()
+                                                                                - duration_start_)
+                              .count();
     JAMI_DBG("\t- Duration: %lu", duration);
 #ifdef ENABLE_VIDEO
     JAMI_DBG("\t- Video source: %s", acc->isVideoEnabled() ? mediaInput_.c_str() : "");
@@ -1735,7 +1738,6 @@ SIPCall::initIceMediaTransport(bool master,
                     call->onFailure(EIO);
                     return;
                 }
-
                 call->onIceNegoSucceed();
             }
         });
