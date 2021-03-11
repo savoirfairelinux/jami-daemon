@@ -11,7 +11,8 @@
         "speexdsp",
         "upnp",
         "yaml-cpp",
-        "libarchive"
+        "libarchive",
+        "webrtc-audio-processing"
     ],
     "configuration": "ReleaseLib_win32",
     "project_paths": ["ring-daemon.vcxproj"]
