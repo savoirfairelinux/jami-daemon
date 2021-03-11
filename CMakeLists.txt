@@ -163,6 +163,7 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/include"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/include"
        )
    endif()
 
@@ -171,18 +172,16 @@ if(MSVC)
    ################################################################################
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
        target_compile_definitions(${PROJECT_NAME} PRIVATE
-           "$<$<CONFIG:ReleaseLib_win32>:"
-               "_WIN32_WINNT=0x0A00;"
-               "ASIO_STANDALONE;"
-               "STATIC_GETOPT;"
-               "LIBARCHIVE_STATIC;"
-               "OPENDHT_PROXY_CLIENT;"
-               "OPENDHT_PROXY_SERVER;"
-               "OPENDHT_PUSH_NOTIFICATIONS;"
-               "NATPMP_STATICLIB;"
-               "ENABLE_PLUGIN;"
-               "NDEBUG;"
-           ">"
+           "_WIN32_WINNT=0x0A00;"
+           "ASIO_STANDALONE;"
+           "STATIC_GETOPT;"
+           "LIBARCHIVE_STATIC;"
+           "OPENDHT_PROXY_CLIENT;"
+           "OPENDHT_PROXY_SERVER;"
+           "OPENDHT_PUSH_NOTIFICATIONS;"
+           "NATPMP_STATICLIB;"
+           "ENABLE_PLUGIN;"
+           "NDEBUG;"
            "_USE_MATH_DEFINES;"
            "_SCL_SECURE_NO_WARNINGS;"
            "_CRT_SECURE_NO_WARNINGS;"
@@ -200,18 +199,16 @@ if(MSVC)
    ################################################################################
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
        target_compile_options(${PROJECT_NAME} PRIVATE
-           $<$<CONFIG:ReleaseLib_win32>:
-               /O2;
-               /Oi;
-               ${DEFAULT_CXX_RUNTIME_LIBRARY};
-               /Gy;
-               /MP;
-               /Oy-;
-               /sdl-;
-               /W0;
-               /FC;
-               /FS
-           >
+           /O2;
+           /Oi;
+           ${DEFAULT_CXX_RUNTIME_LIBRARY};
+           /Gy;
+           /MP;
+           /Oy-;
+           /sdl-;
+           /W0;
+           /FC;
+           /FS
            /nologo;
            /Zi;
            /wd4996;
@@ -224,11 +221,9 @@ if(MSVC)
    endif()
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
        target_link_options(${PROJECT_NAME} PRIVATE
-           $<$<CONFIG:ReleaseLib_win32>:
-               /MACHINE:X86;
-               /OPT:REF;
-               /OPT:ICF
-           >
+           /MACHINE:X64;
+           /OPT:REF;
+           /OPT:ICF
            /VERBOSE:LIB;
            /NODEFAULTLIB:libcmtd;
            /NODEFAULTLIB:libcmt;
@@ -243,42 +238,41 @@ if(MSVC)
    ################################################################################
 
    set(libAdditionalDependencies "${CMAKE_STATIC_LINKER_FLAGS} /LTCG
-   ws2_32.lib 
-   advapi32.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avcodec.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avdevice.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avfilter.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avformat.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avutil.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/swresample.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/swscale.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libgnutls.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/lib_json.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/opendht/build/Release/libopendht.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/argon2/vs2015/Argon2Ref/vs2015/build/Argon2Ref.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/secp256k1.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yaml-cpp/msvc/Release/libyaml-cppmd.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/portaudio.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libupnp.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/msvc/Release/natpmp.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/archive_static.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-core-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-simple-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsua2-lib-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsua-lib-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-ua-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/lib/pjmedia-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib-util/lib/pjlib-util-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib/lib/pjlib-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjnath/lib/pjnath-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/fmt/msvc/Release/fmt.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/http_parser/x64/Release/http-parser.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/libcrypto.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/libssl.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/lib/libspeexdsp.lib
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing/build/Release/webrtc-audio-processing.lib
-   /ignore:4006 
-   "
+        ws2_32.lib 
+        advapi32.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avcodec.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avdevice.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avfilter.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avformat.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avutil.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/swresample.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/swscale.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libgnutls.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/lib_json.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/opendht/build/Release/libopendht.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/argon2/vs2015/Argon2Ref/vs2015/build/Argon2Ref.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/secp256k1.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yaml-cpp/msvc/Release/libyaml-cppmd.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libupnp.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/msvc/Release/natpmp.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/archive_static.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-core-x86_64-x64-vc15-Release.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-simple-x86_64-x64-vc15-Release.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsua2-lib-x86_64-x64-vc15-Release.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsua-lib-x86_64-x64-vc15-Release.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-ua-x86_64-x64-vc15-Release.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/lib/pjmedia-x86_64-x64-vc15-Release.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib-util/lib/pjlib-util-x86_64-x64-vc15-Release.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib/lib/pjlib-x86_64-x64-vc15-Release.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjnath/lib/pjnath-x86_64-x64-vc15-Release.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/fmt/msvc/Release/fmt.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/http_parser/x64/Release/http-parser.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/libcrypto.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/libssl.lib 
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/lib/libspeexdsp.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing/build/Release/webrtc-audio-processing.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/build/Release/portaudio_static_x64.lib
+        /ignore:4006"
    )
 
    set ( CMAKE_STATIC_LINKER_FLAGS ${libAdditionalDependencies} )
