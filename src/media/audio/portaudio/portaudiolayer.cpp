@@ -48,6 +48,7 @@ struct PortAudioLayer::PortAudioLayerImpl
     bool initInputStream(PortAudioLayer&);
     bool initOutputStream(PortAudioLayer&);
     bool initFullDuplexStream(PortAudioLayer&);
+    bool apiInitialised_ {false};
 
     std::vector<std::string> getDeviceByType(AudioDeviceType type) const;
     int getIndexByType(AudioDeviceType type);
@@ -173,6 +174,11 @@ PortAudioLayer::getIndexRingtone() const
 void
 PortAudioLayer::startStream(AudioDeviceType stream)
 {
+    if (!pimpl_->apiInitialised_) {
+        JAMI_WARN("PortAudioLayer API not initialised");
+        return;
+    }
+
     auto startPlayback = [this](bool fullDuplexMode = false) -> bool {
         std::unique_lock<std::mutex> lock(mutex_);
         if (status_.load() != Status::Idle)
@@ -407,21 +413,23 @@ PortAudioLayer::PortAudioLayerImpl::getDeviceByType(AudioDeviceType type) const
 void
 PortAudioLayer::PortAudioLayerImpl::init(PortAudioLayer& parent)
 {
-    JAMI_DBG("Init PortAudioLayer");
+    JAMI_DBG("PortAudioLayer Init");
     const auto err = Pa_Initialize();
-    if (err != paNoError) {
+    auto apiIndex = Pa_GetDefaultHostApi();
+    auto apiInfo = Pa_GetHostApiInfo(apiIndex);
+    if (err != paNoError || apiInfo == nullptr) {
         JAMI_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
         terminate();
+        return;
     }
+
+    apiInitialised_ = true;
+    JAMI_DBG() << "Portaudio initialized using: " << apiInfo->name;
 
     initInput(parent);
     initOutput(parent);
 
     std::fill(std::begin(streams_), std::end(streams_), nullptr);
-
-    auto apiIndex = Pa_GetDefaultHostApi();
-    auto apiInfo = Pa_GetHostApiInfo(apiIndex);
-    JAMI_DBG() << "Portaudio initialized using: " << apiInfo->name;
 }
 
 int
