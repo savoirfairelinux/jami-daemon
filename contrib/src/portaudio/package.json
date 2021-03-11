@@ -2,18 +2,12 @@
     "name": "portaudio",
     "version": "v190600_20161030",
     "url": "http://www.portaudio.com/archives/pa_stable___VERSION__.tgz",
-    "deps": [],
-    "patches": [],
-    "win_patches": [
-        "pa-vs2017.patch",
-        "pa-dsound-aecns.patch",
-        "pa-dsound.patch"
+    "use_cmake" : true,
+    "defines": [
+        "MSVS=1",
+        "PA_USE_ASIO=0",
+        "PA_USE_DS=0",
+        "PA_USE_WMME=0",
+        "PA_USE_WDMKS=0"
     ],
-    "project_paths": ["MSVC/portaudio.vcxproj"],
-    "with_env" : "",
-    "custom_scripts": {
-        "pre_build": [],
-        "build": [],
-        "post_build": []
-    }
 }
