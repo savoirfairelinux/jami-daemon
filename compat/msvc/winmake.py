@@ -283,11 +283,11 @@ def make(pkg_info, force, sdk_version, toolset, isPlugin):
         if use_cmake:
             cmake_defines = ""
             for define in pkg_info.get('defines', []):
-                cmake_defines += " -D" + define + " "
+                cmake_defines += " -D" + define
             if not pkg_up_to_date or current_version is None or force:
                 cmake_conf_script = "cmake -G " + getCMakeGenerator(getLatestVSVersion(
                 )) + cmake_defines + " -S '" + pkg_build_path + "' -B '" + pkg_build_path + "\\build'"
-                log.debug("Configuring with Cmake", cmake_conf_script)
+                log.debug("Configuring with Cmake")
                 result = getSHrunner().exec_batch(cmake_conf_script)
                 if result[0] != 0:
                     log.error("Error configuring with CMake")
