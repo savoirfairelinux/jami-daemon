@@ -67,7 +67,10 @@ public:
     /* Contacts */
     std::map<std::string, std::string> getContactDetails(const dht::InfoHash&) const;
     bool removeContact(const dht::InfoHash&, bool ban);
-    bool addContact(const dht::InfoHash&, bool confirmed = false);
+    bool removeContactConversation(const dht::InfoHash&);
+    bool addContact(const dht::InfoHash&,
+                    bool confirmed = false,
+                    const std::string& conversationId = "");
 
     bool setCertificateStatus(const std::string& cert_id,
                               const tls::TrustStore::PermissionStatus status);
