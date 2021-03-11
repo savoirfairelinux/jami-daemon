@@ -47,6 +47,9 @@ struct Contact
     /** True if the contact is banned (if not active) */
     bool banned {false};
 
+    /** Non empty if a swarm is linked */
+    std::string conversationId {};
+
     /** True if the contact is an active contact (not banned nor removed) */
     bool isActive() const { return added > removed; }
     bool isBanned() const { return not isActive() and banned; }
@@ -58,6 +61,7 @@ struct Contact
         removed = json["removed"].asLargestUInt();
         confirmed = json["confirmed"].asBool();
         banned = json["banned"].asBool();
+        conversationId = json["conversationId"].asString();
     }
 
     /**
@@ -96,6 +100,7 @@ struct Contact
             json["confirmed"] = confirmed;
         if (banned)
             json["banned"] = banned;
+        json["conversationId"] = conversationId;
         return json;
     }
 
@@ -105,7 +110,8 @@ struct Contact
             return {};
         }
 
-        std::map<std::string, std::string> result {{"added", std::to_string(added)}};
+        std::map<std::string, std::string> result {{"added", std::to_string(added)},
+                                                   {"conversationId", conversationId}};
 
         if (isActive())
             result.emplace("confirmed", confirmed ? TRUE_STR : FALSE_STR);
@@ -115,7 +121,7 @@ struct Contact
         return result;
     }
 
-    MSGPACK_DEFINE_MAP(added, removed, confirmed, banned)
+    MSGPACK_DEFINE_MAP(added, removed, confirmed, banned, conversationId)
 };
 
 struct TrustRequest
