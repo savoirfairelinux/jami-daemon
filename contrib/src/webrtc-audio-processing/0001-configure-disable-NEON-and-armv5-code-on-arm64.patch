@@ -1,0 +1,59 @@
+From ffd7e4a3d6be593050190f6b83cd389a680dfb94 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Adrien=20B=C3=A9raud?= <adrien.beraud@savoirfairelinux.com>
+Date: Fri, 12 Mar 2021 14:00:52 -0500
+Subject: [PATCH] configure: disable NEON and armv5 code on arm64
+
+---
+ configure.ac                    | 6 +++---
+ webrtc/common_audio/Makefile.am | 4 ++--
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index a687e4d..768b63a 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -86,16 +86,16 @@ AM_CONDITIONAL(HAVE_WIN, [test "x${HAVE_WIN}" = "x1"])
+ # Testing __ARM_ARCH_ISA_ARM since the code contains ARM instructions,
+ # which don't work on Thumb-2 only platforms (ARMv7-M).
+ AC_CHECK_DECLS([__ARM_ARCH_ISA_ARM],
+-	[HAVE_ARM=1; ARCH_CFLAGS="${ARCH_CFLAGS} -DWEBRTC_ARCH_ARM"])
++	[HAVE_ARMV5=1; ARCH_CFLAGS="${ARCH_CFLAGS} -DWEBRTC_ARCH_ARM"])
+ AC_CHECK_DECLS([__ARM_ARCH_7A__],
+ 	[HAVE_ARMV7=1; ARCH_CFLAGS="${ARCH_CFLAGS} -DWEBRTC_ARCH_ARM_V7"])
+ AC_CHECK_DECLS([__aarch64__],
+-	[HAVE_NEON=1; ARCH_CFLAGS="${ARCH_CFLAGS} -DWEBRTC_HAS_NEON -DWEBRTC_ARCH_ARM64"])
++	[ARCH_CFLAGS="${ARCH_CFLAGS} -DWEBRTC_ARCH_ARM64"])
+ AC_CHECK_DECLS([__i386__], [HAVE_X86=1])
+ AC_CHECK_DECLS([__x86_64__], [HAVE_X86=1])
+ 
+ AM_CONDITIONAL(HAVE_X86, [test "x${HAVE_X86}" = "x1"])
+-AM_CONDITIONAL(HAVE_ARM, [test "x${HAVE_ARM}" = "x1"])
++AM_CONDITIONAL(HAVE_ARMV5, [test "x${HAVE_ARMV5}" = "x1"])
+ AM_CONDITIONAL(HAVE_ARMV7, [test "x${HAVE_ARMV7}" = "x1"])
+ 
+ # Borrowed from pulseaudio's configure.ac
+diff --git a/webrtc/common_audio/Makefile.am b/webrtc/common_audio/Makefile.am
+index 3bbd318..dd898be 100644
+--- a/webrtc/common_audio/Makefile.am
++++ b/webrtc/common_audio/Makefile.am
+@@ -106,7 +106,7 @@ libcommon_audio_sse2_la_LDFLAGS = $(AM_LDFLAGS)
+ libcommon_audio_la_LIBADD = libcommon_audio_sse2.la
+ endif
+ 
+-if HAVE_ARM
++if HAVE_ARMV5
+ libcommon_audio_la_SOURCES += \
+ 			     signal_processing/complex_bit_reverse_arm.S \
+ 			     signal_processing/spl_sqrt_floor_arm.S
+@@ -127,7 +127,7 @@ libcommon_audio_la_SOURCES += \
+ 			     fir_filter_neon.h
+ endif
+ 
+-if !HAVE_ARM
++if !HAVE_ARMV5
+ # FIXME: This condition will also hold for !HAVE_MIPS
+ libcommon_audio_la_SOURCES += \
+ 			     signal_processing/complex_bit_reverse.c \
+-- 
+2.30.1
+

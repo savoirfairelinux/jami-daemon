@@ -534,7 +534,6 @@ AS_IF([test "x$with_speex" != xno], [PKG_CHECK_MODULES([SPEEX], [speex])])
 AC_DEFINE_UNQUOTED([HAVE_SPEEX], `if test "x$with_speex" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libspeex])
 AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
 
-
 # SPEEX DSP
 # required dependency(ies): libspeexdsp
 dnl check in case the libspeexdsp is not installed
@@ -547,6 +546,27 @@ AC_ARG_WITH([speexdsp],
 AS_IF([test "x$with_speexdsp" != xno], [PKG_CHECK_MODULES([SPEEXDSP], [speexdsp])])
 AC_DEFINE_UNQUOTED([HAVE_SPEEXDSP], `if test "x$with_speexdsp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libspeexdsp])
 AM_CONDITIONAL(BUILD_SPEEXDSP, test "x$with_speexdsp" = "xyes" )
+
+# WEBRTC AUDIO PROCESSING
+if test "${SYS}" = "linux"; then
+dnl Check for webrtc-audio-processing development package
+dnl - name: libwebrtc-audio-processing-dev
+AC_ARG_WITH([webrtcap],
+    [AS_HELP_STRING([--without-webrtc-ap], [disable support for webrtc-audio-processing])],
+    [],
+    [with_webrtc_ap=yes])
+
+AS_IF([test "x$with_webrtc_ap" = "xyes"],
+      [PKG_CHECK_MODULES(WEBRTC, [webrtc-audio-processing >= 0.3.1],
+        [
+          AC_DEFINE([HAVE_WEBRTC_AP], 1, [Define if you have webrtc-audio-processing])
+          CPPFLAGS="${CPPFLAGS} ${WEBRTC_CFLAGS}"
+          LDFLAGS="${LDFLAGS} ${WEBRTC_LIBS}"
+        ],
+        AC_MSG_WARN([Missing webrtc-audio-processing development files]))
+      ])
+AM_CONDITIONAL([HAVE_WEBRTC_AP], test "x$with_webrtc_ap" = "xyes")
+fi
 
 dnl check for openDHT
 PKG_CHECK_MODULES([OPENDHT], [opendht >= 0.6.1],, AC_MSG_WARN([Missing OpenDHT]))
