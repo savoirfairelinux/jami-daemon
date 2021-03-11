@@ -211,8 +211,11 @@ public:
      * Add contact to the account contact list.
      * Set confirmed if we know the contact also added us.
      */
-    void addContact(const std::string& uri, bool confirmed = false);
+    void addContact(const std::string& uri,
+                    bool confirmed = false,
+                    const std::string& conversationId = "");
     void removeContact(const std::string& uri, bool banned = true);
+    void removeContactConversation(const std::string& uri); // for non swarm contacts
     std::vector<std::map<std::string, std::string>> getContacts() const;
 
     // Conversations
