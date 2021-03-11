@@ -366,7 +366,7 @@ AccountManager::onPeerCertificate(const std::shared_ptr<dht::crypto::Certificate
 }
 
 void
-AccountManager::addContact(const std::string& uri, bool confirmed)
+AccountManager::addContact(const std::string& uri, bool confirmed, const std::string& conversationId)
 {
     JAMI_WARN("AccountManager::addContact %d", confirmed);
     dht::InfoHash h(uri);
@@ -378,7 +378,7 @@ AccountManager::addContact(const std::string& uri, bool confirmed)
         JAMI_ERR("addContact(): account not loaded");
         return;
     }
-    if (info_->contacts->addContact(h, confirmed)) {
+    if (info_->contacts->addContact(h, confirmed, conversationId)) {
         syncDevices();
     }
 }
@@ -396,6 +396,23 @@ AccountManager::removeContact(const std::string& uri, bool banned)
         return;
     }
     if (info_->contacts->removeContact(h, banned)) {
+        syncDevices();
+    }
+}
+
+void
+AccountManager::removeContactConversation(const std::string& uri)
+{
+    dht::InfoHash h(uri);
+    if (not h) {
+        JAMI_ERR("removeContact: invalid contact URI");
+        return;
+    }
+    if (not info_) {
+        JAMI_ERR("addContact(): account not loaded");
+        return;
+    }
+    if (info_->contacts->removeContactConversation(h)) {
         syncDevices();
     }
 }
@@ -608,7 +625,7 @@ AccountManager::sendTrustRequest(const std::string& to,
         JAMI_ERR("sendTrustRequest(): account not loaded");
         return;
     }
-    if (info_->contacts->addContact(toH)) {
+    if (info_->contacts->addContact(toH, false, convId)) {
         syncDevices();
     }
     forEachDevice(toH, [this, toH, convId, payload](const dht::InfoHash& dev) {
