@@ -1227,6 +1227,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             // using an old version of Jami, without swarm support.
             // In this case, delete current conversation linked with that
             // contact because he will not get messages anyway.
+
             if (convFromReq.empty()) {
                 auto convId = getOneToOneConversation(uri);
                 if (convId.empty())
@@ -3332,9 +3333,12 @@ JamiAccount::getContactHeader(pjsip_transport* t)
 void
 JamiAccount::addContact(const std::string& uri, bool confirmed)
 {
+    auto conversation = getOneToOneConversation(uri);
+    if (!confirmed && conversation.empty())
+        conversation = startConversation(ConversationMode::ONE_TO_ONE, uri);
     std::lock_guard<std::mutex> lock(configurationMutex_);
     if (accountManager_)
-        accountManager_->addContact(uri, confirmed);
+        accountManager_->addContact(uri, confirmed, conversation);
     else
         JAMI_WARN("[Account %s] addContact: account not loaded", getAccountID().c_str());
 }
@@ -3456,10 +3460,16 @@ JamiAccount::discardTrustRequest(const std::string& from)
 void
 JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload)
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
-    if (accountManager_)
-        accountManager_->sendTrustRequest(to, {}, payload);
-    else
+    auto conversation = getOneToOneConversation(to);
+    if (conversation.empty())
+        conversation = startConversation(ConversationMode::ONE_TO_ONE, to);
+    if (not conversation.empty()) {
+        std::lock_guard<std::mutex> lock(configurationMutex_);
+        if (accountManager_)
+            accountManager_->sendTrustRequest(to, conversation, payload);
+        else
+            JAMI_WARN("[Account %s] sendTrustRequest: account not loaded", getAccountID().c_str());
+    } else
         JAMI_WARN("[Account %s] sendTrustRequest: account not loaded", getAccountID().c_str());
 }
 
@@ -5364,6 +5374,12 @@ JamiAccount::removeRepository(const std::string& conversationId, bool sync, bool
     std::unique_lock<std::mutex> lk(conversationsMtx_);
     auto it = conversations_.find(conversationId);
     if (it != conversations_.end() && it->second && (force || it->second->isRemoving())) {
+        if (it->second->mode() == ConversationMode::ONE_TO_ONE) {
+            for (const auto& member : it->second->getInitialMembers()) {
+                if (member != getUsername())
+                    accountManager_->removeContactConversation(member);
+            }
+        }
         JAMI_DBG() << "Remove conversation: " << conversationId;
         it->second->erase();
         conversations_.erase(it);
