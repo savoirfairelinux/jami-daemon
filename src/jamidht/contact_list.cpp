@@ -72,15 +72,16 @@ ContactList::setCertificateStatus(const std::string& cert_id,
 }
 
 bool
-ContactList::addContact(const dht::InfoHash& h, bool confirmed)
+ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::string& conversationId)
 {
-    JAMI_WARN("[Contacts] addContact: %s", h.to_c_str());
+    JAMI_WARN("[Contacts] addContact: %s, conversation: %s", h.to_c_str(), conversationId.c_str());
     auto c = contacts_.find(h);
     if (c == contacts_.end())
         c = contacts_.emplace(h, Contact {}).first;
     else if (c->second.isActive() and c->second.confirmed == confirmed)
         return false;
     c->second.added = std::time(nullptr);
+    c->second.conversationId = conversationId;
     c->second.confirmed |= confirmed;
     auto hStr = h.toString();
     trust_.setCertificateStatus(hStr, tls::TrustStore::PermissionStatus::ALLOWED);
@@ -118,6 +119,17 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
     }
 #endif
     callbacks_.contactRemoved(uri, ban);
+    return true;
+}
+
+bool
+ContactList::removeContactConversation(const dht::InfoHash& h)
+{
+    auto c = contacts_.find(h);
+    if (c == contacts_.end())
+        return false;
+    c->second.conversationId = "";
+    saveContacts();
     return true;
 }
 
@@ -343,12 +355,11 @@ bool
 ContactList::acceptTrustRequest(const dht::InfoHash& from)
 {
     // The contact sent us a TR so we are in its contact list
-    addContact(from, true);
-
     auto i = trustRequests_.find(from);
     if (i == trustRequests_.end())
         return false;
 
+    addContact(from, true, i->second.conversationId);
     // Clear trust request
     trustRequests_.erase(i);
     saveTrustRequests();
