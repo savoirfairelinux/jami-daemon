@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "22fb82c6_1e3a5dae",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 18
+      },
+      "lineNbr": 883,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-11T00:10:44Z",
+      "side": 1,
+      "message": "api change so version must change (9.9.1) will be correct, same for configure \u0026 meson",
+      "range": {
+        "startLine": 883,
+        "startChar": 31,
+        "endLine": 883,
+        "endChar": 36
+      },
+      "revId": "c261414206ffaa9ec54e846278af1be2fb32f266",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
