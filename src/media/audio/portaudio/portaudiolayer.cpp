@@ -426,6 +426,38 @@ PortAudioLayer::PortAudioLayerImpl::init(PortAudioLayer& parent)
     apiInitialised_ = true;
     JAMI_DBG() << "Portaudio initialized using: " << apiInfo->name;
 
+    auto defaultInputIndex = Pa_GetDefaultInputDevice();
+    if (const auto defaultInputDeviceInfo = Pa_GetDeviceInfo(defaultInputIndex)) {
+        JAMI_DBG("PortAudioLayer default input: %s {%.0f Hz, %d channels}",
+                 defaultInputDeviceInfo->name,
+                 defaultInputDeviceInfo->defaultSampleRate,
+                 defaultInputDeviceInfo->maxInputChannels);    
+    }
+
+    auto defaultOutputIndex = Pa_GetDefaultOutputDevice();
+    if (const auto defaultOutputDeviceInfo = Pa_GetDeviceInfo(defaultOutputIndex)) {
+        JAMI_DBG("PortAudioLayer default output: %s {%.0f Hz, %d channels}",
+                 defaultOutputDeviceInfo->name,
+                 defaultOutputDeviceInfo->defaultSampleRate,
+                 defaultOutputDeviceInfo->maxOutputChannels);    
+    }
+
+    auto commInputIndex = Pa_GetDefaultCommInputDevice();
+    if (const auto commInputDeviceInfo = Pa_GetDeviceInfo(commInputIndex)) {
+        JAMI_DBG("PortAudioLayer default comm input: %s {%.0f Hz, %d channels}",
+                 commInputDeviceInfo->name,
+                 commInputDeviceInfo->defaultSampleRate,
+                 commInputDeviceInfo->maxInputChannels);    
+    }
+
+    auto commOutputIndex = Pa_GetDefaultCommOutputDevice();
+    if (const auto commOutputDeviceInfo = Pa_GetDeviceInfo(commOutputIndex)) {
+        JAMI_DBG("PortAudioLayer default comm output: %s {%.0f Hz, %d channels}",
+                 commOutputDeviceInfo->name,
+                 commOutputDeviceInfo->defaultSampleRate,
+                 commOutputDeviceInfo->maxOutputChannels);    
+    }
+
     initInput(parent);
     initOutput(parent);
 
