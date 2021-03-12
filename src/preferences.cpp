@@ -104,6 +104,7 @@ static constexpr const char* ZID_FILE_KEY {"zidFile"};
 constexpr const char* const AudioPreference::CONFIG_LABEL;
 static constexpr const char* ALSAMAP_KEY {"alsa"};
 static constexpr const char* PULSEMAP_KEY {"pulse"};
+static constexpr const char* PORTAUDIO_KEY {"portaudio"};
 static constexpr const char* CARDIN_KEY {"cardIn"};
 static constexpr const char* CARDOUT_KEY {"cardOut"};
 static constexpr const char* CARDRING_KEY {"cardRing"};
@@ -446,6 +447,13 @@ AudioPreference::serialize(YAML::Emitter& out) const
     out << YAML::Key << DEVICE_RINGTONE_KEY << YAML::Value << pulseDeviceRingtone_;
     out << YAML::EndMap;
 
+    // portaudio submap
+    out << YAML::Key << PORTAUDIO_KEY << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << DEVICE_PLAYBACK_KEY << YAML::Value << portaudioDevicePlayback_;
+    out << YAML::Key << DEVICE_RECORD_KEY << YAML::Value << portaudioDeviceRecord_;
+    out << YAML::Key << DEVICE_RINGTONE_KEY << YAML::Value << portaudioDeviceRingtone_;
+    out << YAML::EndMap;
+
     // more common options!
     out << YAML::Key << RECORDPATH_KEY << YAML::Value << recordpath_;
     out << YAML::Key << VOLUMEMIC_KEY << YAML::Value << volumemic_;
@@ -494,6 +502,12 @@ AudioPreference::unserialize(const YAML::Node& in)
     parseValue(pulse, DEVICE_PLAYBACK_KEY, pulseDevicePlayback_);
     parseValue(pulse, DEVICE_RECORD_KEY, pulseDeviceRecord_);
     parseValue(pulse, DEVICE_RINGTONE_KEY, pulseDeviceRingtone_);
+
+    // portaudio submap
+    const auto& portaudio = node[PORTAUDIO_KEY];
+    parseValue(portaudio, DEVICE_PLAYBACK_KEY, portaudioDevicePlayback_);
+    parseValue(portaudio, DEVICE_RECORD_KEY, portaudioDeviceRecord_);
+    parseValue(portaudio, DEVICE_RINGTONE_KEY, portaudioDeviceRingtone_);
 
     // more common options!
     parseValue(node, RECORDPATH_KEY, recordpath_);
