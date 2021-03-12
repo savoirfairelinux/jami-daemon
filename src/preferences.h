@@ -152,7 +152,6 @@ class AudioPreference : public Serializable
 public:
     AudioPreference();
     AudioLayer* createAudioLayer();
-    AudioLayer* switchAndCreateAudioLayer();
 
     static std::vector<std::string> getSupportedAudioManagers();
 
@@ -161,10 +160,12 @@ public:
     void setAudioApi(const std::string& api) { audioApi_ = api; }
 
     void serialize(YAML::Emitter& out) const override;
+
     void unserialize(const YAML::Node& in) override;
 
     // alsa preference
     int getAlsaCardin() const { return alsaCardin_; }
+
     void setAlsaCardin(int c) { alsaCardin_ = c; }
 
     int getAlsaCardout() const { return alsaCardout_; }
@@ -180,6 +181,7 @@ public:
     void setAlsaPlugin(const std::string& p) { alsaPlugin_ = p; }
 
     int getAlsaSmplrate() const { return alsaSmplrate_; }
+
     void setAlsaSmplrate(int r) { alsaSmplrate_ = r; }
 
     // pulseaudio preference
@@ -193,6 +195,19 @@ public:
     const std::string& getPulseDeviceRingtone() const { return pulseDeviceRingtone_; }
 
     void setPulseDeviceRingtone(const std::string& r) { pulseDeviceRingtone_ = r; }
+
+    // portaudio preference
+    const std::string& getPortAudioDevicePlayback() const { return portaudioDevicePlayback_; }
+
+    void setPortAudioDevicePlayback(const std::string& p) { portaudioDevicePlayback_ = p; }
+
+    const std::string& getPortAudioDeviceRecord() const { return portaudioDeviceRecord_; }
+
+    void setPortAudioDeviceRecord(const std::string& r) { portaudioDeviceRecord_ = r; }
+
+    const std::string& getPortAudioDeviceRingtone() const { return portaudioDeviceRingtone_; }
+
+    void setPortAudioDeviceRingtone(const std::string& r) { portaudioDeviceRingtone_ = r; }
 
     // general preference
     const std::string& getRecordPath() const { return recordpath_; }
@@ -244,6 +259,11 @@ private:
     std::string pulseDevicePlayback_;
     std::string pulseDeviceRecord_;
     std::string pulseDeviceRingtone_;
+
+    // portaudio preference
+    std::string portaudioDevicePlayback_;
+    std::string portaudioDeviceRecord_;
+    std::string portaudioDeviceRingtone_;
 
     // general preference
     std::string recordpath_; //: /home/msavard/Bureau
