@@ -32,6 +32,8 @@
 #include <algorithm>
 #include <cmath>
 
+#pragma optimize("", off)
+
 namespace jami {
 
 enum Direction { Input = 0, Output = 1, IO = 2, End = 3 };
@@ -50,17 +52,21 @@ struct PortAudioLayer::PortAudioLayerImpl
     bool initFullDuplexStream(PortAudioLayer&);
     bool apiInitialised_ {false};
 
-    std::vector<std::string> getDeviceByType(AudioDeviceType type) const;
+    std::vector<std::string> getDevicesByType(AudioDeviceType type, bool aliases = false) const;
     int getIndexByType(AudioDeviceType type);
     int getInternalIndexByType(const int index, AudioDeviceType type);
+    std::string getDefaultDeviceName(AudioDeviceType type, bool commDevice) const;
+    PaDeviceIndex toApiIndex(int& index, AudioDeviceType type);
 
     PaDeviceIndex indexIn_;
     bool inputInitialized_ {false};
+
     PaDeviceIndex indexOut_;
-    PaDeviceIndex indexRing_;
     bool outputInitialized_ {false};
 
-    AudioBuffer playbackBuff_;
+    // these are internal indices and must be converted to PaDeviceIndex range
+    constexpr static const int defaultCommDeviceIndex_ {0};
+    constexpr static const int defaultDeviceIndex_ {1};
 
     std::array<PaStream*, static_cast<int>(Direction::End)> streams_;
 
@@ -114,19 +120,20 @@ PortAudioLayer::~PortAudioLayer()
 std::vector<std::string>
 PortAudioLayer::getCaptureDeviceList() const
 {
-    return pimpl_->getDeviceByType(AudioDeviceType::CAPTURE);
+    return pimpl_->getDevicesByType(AudioDeviceType::CAPTURE, true);
 }
 
 std::vector<std::string>
 PortAudioLayer::getPlaybackDeviceList() const
 {
-    return pimpl_->getDeviceByType(AudioDeviceType::PLAYBACK);
+    return pimpl_->getDevicesByType(AudioDeviceType::PLAYBACK, true);
 }
 
 int
 PortAudioLayer::getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const
 {
-    auto deviceList = pimpl_->getDeviceByType(type);
+    JAMI_ERR("getAudioDeviceIndex1 %s", name.c_str());
+    auto deviceList = pimpl_->getDevicesByType(type);
 
     int numDevices = 0;
     numDevices = deviceList.size();
@@ -136,10 +143,12 @@ PortAudioLayer::getAudioDeviceIndex(const std::string& name, AudioDeviceType typ
         int i = 0;
         for (auto d = deviceList.cbegin(); d != deviceList.cend(); ++d, ++i) {
             if (*d == name) {
+                JAMI_ERR("getAudioDeviceIndex2 %d", i);
                 return i;
             }
         }
     }
+    JAMI_ERR("getAudioDeviceIndex3 paNoDevice");
     return paNoDevice;
 }
 
@@ -149,7 +158,9 @@ PortAudioLayer::getAudioDeviceName(int index, AudioDeviceType type) const
     (void) type;
     const PaDeviceInfo* deviceInfo;
     deviceInfo = Pa_GetDeviceInfo(index);
-    return deviceInfo->name;
+    std::string deviceName = deviceInfo ? deviceInfo->name : "";
+    JAMI_ERR("getAudioDeviceName %s", deviceName);
+    return deviceName;
 }
 
 int
@@ -218,7 +229,7 @@ void
 PortAudioLayer::stopStream(AudioDeviceType stream)
 {
     auto stopPaStream = [](PaStream* stream) -> bool {
-        if (!stream)
+        if (!stream && !Pa_IsStreamStopped(stream))
             return false;
         auto err = Pa_StopStream(stream);
         if (err != paNoError) {
@@ -287,7 +298,7 @@ PortAudioLayer::stopStream(AudioDeviceType stream)
 void
 PortAudioLayer::updatePreference(AudioPreference& preference, int index, AudioDeviceType type)
 {
-    auto internalIndex = pimpl_->getInternalIndexByType(index, type);
+    auto internalIndex = index; // pimpl_->getInternalIndexByType(index, type);
     switch (type) {
     case AudioDeviceType::PLAYBACK:
         preference.setAlsaCardout(internalIndex);
@@ -309,8 +320,6 @@ PortAudioLayer::PortAudioLayerImpl::PortAudioLayerImpl(PortAudioLayer& parent,
                                                        const AudioPreference& pref)
     : indexIn_ {pref.getAlsaCardin()}
     , indexOut_ {pref.getAlsaCardout()}
-    , indexRing_ {pref.getAlsaCardring()}
-    , playbackBuff_ {0, parent.audioFormat_}
 {
     init(parent);
 }
@@ -320,49 +329,79 @@ PortAudioLayer::PortAudioLayerImpl::~PortAudioLayerImpl()
     terminate();
 }
 
+PaDeviceIndex
+PortAudioLayer::PortAudioLayerImpl::toApiIndex(int& index, AudioDeviceType type)
+{
+    PaDeviceIndex apiIndex = index;
+    if (apiIndex > defaultDeviceIndex_) {
+        // output devices are at the beginning, so we'll need to offset the input index by
+        // the number of output devices
+        if (type == AudioDeviceType::CAPTURE) {
+            auto apiIndexOffset = getDevicesByType(AudioDeviceType::PLAYBACK).size();
+            return apiIndex - 2 + apiIndexOffset;
+        } else
+            return apiIndex - 2;
+    }
+    if (apiIndex == defaultDeviceIndex_)
+        apiIndex = type == AudioDeviceType::CAPTURE ? Pa_GetDefaultInputDevice()
+                                                    : Pa_GetDefaultOutputDevice();
+    else if (apiIndex == paNoDevice || apiIndex == defaultCommDeviceIndex_
+             || apiIndex >= Pa_GetDeviceCount()) {
+        apiIndex = type == AudioDeviceType::CAPTURE ? Pa_GetDefaultCommInputDevice()
+                                                    : Pa_GetDefaultCommOutputDevice();
+        index = defaultCommDeviceIndex_;
+    }
+    return apiIndex;
+}
+
 void
 PortAudioLayer::PortAudioLayerImpl::initInput(PortAudioLayer& parent)
 {
-    auto numDevices = Pa_GetDeviceCount();
-    if (indexIn_ <= paNoDevice || indexIn_ >= numDevices) {
-        indexIn_ = Pa_GetDefaultInputDevice();
-    }
+    // convert the current internal index, which stored in the dring.yml and may correspond to
+    // the visual index of a client combobox, to an API specific index to pass to PortAudio
+    auto apiIndex = toApiIndex(indexIn_, AudioDeviceType::CAPTURE);
 
-    // Pa_GetDefaultInputDevice returned paNoDevice or we already initialized the device
-    if (indexIn_ == paNoDevice || inputInitialized_)
+    // Pa_GetDefault[Comm]InputDevice returned paNoDevice or we already initialized the device
+    if (apiIndex == paNoDevice || inputInitialized_)
         return;
 
-    if (const auto inputDeviceInfo = Pa_GetDeviceInfo(indexIn_)) {
-        if (inputDeviceInfo->maxInputChannels <= 0) {
-            indexIn_ = paNoDevice;
-            return initInput(parent);
-        }
-        parent.audioInputFormat_.sample_rate = inputDeviceInfo->defaultSampleRate;
-        parent.audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
-        parent.hardwareInputFormatAvailable(parent.audioInputFormat_);
-        JAMI_DBG("PortAudioLayer initialized input: %s {%d Hz, %d channels}",
-                 inputDeviceInfo->name,
-                 parent.audioInputFormat_.sample_rate,
-                 parent.audioInputFormat_.nb_channels);
-        inputInitialized_ = true;
-    } else {
+    const auto inputDeviceInfo = Pa_GetDeviceInfo(apiIndex);
+    if (!inputDeviceInfo) {
         JAMI_WARN("PortAudioLayer could not initialize input");
         indexIn_ = paNoDevice;
         inputInitialized_ = true;
+        return;
     }
+
+    // if the device index is somehow no longer a device of the correct type, reset the
+    // internal index to paNoDevice and reenter in an attempt to set the default
+    // communications device
+    if (inputDeviceInfo->maxInputChannels <= 0) {
+        indexIn_ = paNoDevice;
+        return initInput(parent);
+    }
+
+    // at this point, the device is of the correct type and can be opened
+    parent.audioInputFormat_.sample_rate = inputDeviceInfo->defaultSampleRate;
+    parent.audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
+    parent.hardwareInputFormatAvailable(parent.audioInputFormat_);
+    JAMI_DBG("PortAudioLayer initialized input: %s {%d Hz, %d channels}",
+             inputDeviceInfo->name,
+             parent.audioInputFormat_.sample_rate,
+             parent.audioInputFormat_.nb_channels);
+    inputInitialized_ = true;
 }
 
 void
 PortAudioLayer::PortAudioLayerImpl::initOutput(PortAudioLayer& parent)
 {
     auto numDevices = Pa_GetDeviceCount();
-    if (indexOut_ <= paNoDevice || indexOut_ >= numDevices) {
-        indexRing_ = indexOut_ = Pa_GetDefaultOutputDevice();
-    } else {
-        indexRing_ = indexOut_;
-    }
+    if (indexOut_ == paNoDevice || indexOut_ >= numDevices)
+        indexOut_ = Pa_GetDefaultOutputDevice();
+    else if (indexIn_ == defaultCommDeviceIndex_)
+        indexOut_ = Pa_GetDefaultCommOutputDevice();
 
-    // Pa_GetDefaultOutputDevice returned paNoDevice or we already initialized the device
+    // Pa_GetDefault[Comm]OutputDevice returned paNoDevice or we already initialized the device
     if (indexOut_ == paNoDevice || outputInitialized_)
         return;
 
@@ -387,9 +426,9 @@ PortAudioLayer::PortAudioLayerImpl::initOutput(PortAudioLayer& parent)
 }
 
 std::vector<std::string>
-PortAudioLayer::PortAudioLayerImpl::getDeviceByType(AudioDeviceType type) const
+PortAudioLayer::PortAudioLayerImpl::getDevicesByType(AudioDeviceType type, bool aliases) const
 {
-    std::vector<std::string> ret;
+    std::vector<std::string> deviceList;
     int numDevices = 0;
 
     numDevices = Pa_GetDeviceCount();
@@ -398,16 +437,21 @@ PortAudioLayer::PortAudioLayerImpl::getDeviceByType(AudioDeviceType type) const
     else {
         for (int i = 0; i < numDevices; i++) {
             const auto deviceInfo = Pa_GetDeviceInfo(i);
-            if (type == AudioDeviceType::PLAYBACK) {
-                if (deviceInfo->maxOutputChannels > 0)
-                    ret.push_back(deviceInfo->name);
-            } else {
+            if (type == AudioDeviceType::CAPTURE) {
                 if (deviceInfo->maxInputChannels > 0)
-                    ret.push_back(deviceInfo->name);
-            }
+                    deviceList.push_back(deviceInfo->name);
+            } else if (deviceInfo->maxOutputChannels > 0)
+                deviceList.push_back(deviceInfo->name);
+        }
+        // add the default device aliases if requested and if there are any devices of this type
+        if (aliases && !deviceList.empty()) {
+            // default (index:1)
+            deviceList.insert(deviceList.begin(), getDefaultDeviceName(type, false));
+            // default comm (index:0)
+            deviceList.insert(deviceList.begin(), getDefaultDeviceName(type, true));
         }
     }
-    return ret;
+    return deviceList;
 }
 
 void
@@ -435,14 +479,17 @@ PortAudioLayer::PortAudioLayerImpl::init(PortAudioLayer& parent)
 int
 PortAudioLayer::PortAudioLayerImpl::getIndexByType(AudioDeviceType type)
 {
-    int index = indexRing_;
+    return type == AudioDeviceType::CAPTURE ? indexIn_ : indexOut_;
+    int index = paNoDevice;
     if (type == AudioDeviceType::PLAYBACK) {
-        index = indexOut_;
+        // index = indexOut_;
+        index = toApiIndex(indexOut_, type);
     } else if (type == AudioDeviceType::CAPTURE) {
-        index = indexIn_;
+        // index = indexIn_;
+        index = toApiIndex(indexOut_, type);
     }
 
-    auto deviceList = getDeviceByType(type);
+    auto deviceList = getDevicesByType(type);
     if (!deviceList.size()) {
         return paNoDevice;
     }
@@ -455,28 +502,33 @@ PortAudioLayer::PortAudioLayerImpl::getIndexByType(AudioDeviceType type)
 
     for (int i = 0; i < deviceList.size(); ++i) {
         if (deviceList.at(i) == indexedDeviceInfo->name) {
+            JAMI_ERR("PortAudioLayerImpl::getIndexByType %d", i);
             return i;
         }
     }
 
+    JAMI_ERR("PortAudioLayerImpl::getIndexByType2 %d", paNoDevice);
     return paNoDevice;
 }
 
 int
 PortAudioLayer::PortAudioLayerImpl::getInternalIndexByType(const int index, AudioDeviceType type)
 {
-    auto deviceList = getDeviceByType(type);
+    auto deviceList = getDevicesByType(type, true);
     if (!deviceList.size() || index >= deviceList.size()) {
+        JAMI_ERR("PortAudioLayerImpl::getInternalIndexByType1 %d", paNoDevice);
         return paNoDevice;
     }
 
     for (int i = 0; i < Pa_GetDeviceCount(); i++) {
         const auto deviceInfo = Pa_GetDeviceInfo(i);
         if (deviceList.at(index) == deviceInfo->name) {
+            JAMI_ERR("PortAudioLayerImpl::getInternalIndexByType2 %d", i);
             return i;
         }
     }
 
+    JAMI_ERR("PortAudioLayerImpl::getInternalIndexByType3 %d", paNoDevice);
     return paNoDevice;
 }
 
@@ -563,10 +615,11 @@ PortAudioLayer::PortAudioLayerImpl::initInputStream(PortAudioLayer& parent)
 {
     JAMI_DBG("Open PortAudio Input Stream");
     auto& stream = streams_[Direction::Input];
-    if (indexIn_ != paNoDevice) {
+    PaDeviceIndex apiIndex = toApiIndex(indexIn_, AudioDeviceType::CAPTURE);
+    if (apiIndex != paNoDevice) {
         openStreamDevice(
             &streams_[Direction::Input],
-            indexIn_,
+            apiIndex,
             Direction::Input,
             [](const void* inputBuffer,
                void* outputBuffer,
@@ -682,6 +735,24 @@ PortAudioLayer::PortAudioLayerImpl::initFullDuplexStream(PortAudioLayer& parent)
     parent.recordChanged(true);
     parent.playbackChanged(true);
     return true;
+}
+
+std::string
+PortAudioLayer::PortAudioLayerImpl::getDefaultDeviceName(AudioDeviceType type, bool commDevice) const
+{
+    std::string deviceName {};
+    PaDeviceIndex defaultDeviceIndex;
+    if (type == AudioDeviceType::CAPTURE) {
+        defaultDeviceIndex = commDevice ? Pa_GetDefaultCommInputDevice()
+                                        : Pa_GetDefaultInputDevice();
+    } else {
+        defaultDeviceIndex = commDevice ? Pa_GetDefaultCommOutputDevice()
+                                        : Pa_GetDefaultOutputDevice();
+    }
+    if (const auto deviceInfo = Pa_GetDeviceInfo(defaultDeviceIndex)) {
+        deviceName = deviceInfo->name;
+    }
+    return deviceName;
 }
 
 int
