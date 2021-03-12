@@ -50,17 +50,16 @@ struct PortAudioLayer::PortAudioLayerImpl
     bool initFullDuplexStream(PortAudioLayer&);
     bool apiInitialised_ {false};
 
-    std::vector<std::string> getDeviceByType(AudioDeviceType type) const;
+    std::vector<std::string> getDevicesByType(AudioDeviceType type) const;
     int getIndexByType(AudioDeviceType type);
     int getInternalIndexByType(const int index, AudioDeviceType type);
+    std::string getDefaultDeviceName(AudioDeviceType type, bool commDevice) const;
 
     PaDeviceIndex indexIn_;
     bool inputInitialized_ {false};
     PaDeviceIndex indexOut_;
     PaDeviceIndex indexRing_;
     bool outputInitialized_ {false};
-
-    AudioBuffer playbackBuff_;
 
     std::array<PaStream*, static_cast<int>(Direction::End)> streams_;
 
@@ -114,19 +113,19 @@ PortAudioLayer::~PortAudioLayer()
 std::vector<std::string>
 PortAudioLayer::getCaptureDeviceList() const
 {
-    return pimpl_->getDeviceByType(AudioDeviceType::CAPTURE);
+    return pimpl_->getDevicesByType(AudioDeviceType::CAPTURE);
 }
 
 std::vector<std::string>
 PortAudioLayer::getPlaybackDeviceList() const
 {
-    return pimpl_->getDeviceByType(AudioDeviceType::PLAYBACK);
+    return pimpl_->getDevicesByType(AudioDeviceType::PLAYBACK);
 }
 
 int
 PortAudioLayer::getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const
 {
-    auto deviceList = pimpl_->getDeviceByType(type);
+    auto deviceList = pimpl_->getDevicesByType(type);
 
     int numDevices = 0;
     numDevices = deviceList.size();
@@ -310,7 +309,6 @@ PortAudioLayer::PortAudioLayerImpl::PortAudioLayerImpl(PortAudioLayer& parent,
     : indexIn_ {pref.getAlsaCardin()}
     , indexOut_ {pref.getAlsaCardout()}
     , indexRing_ {pref.getAlsaCardring()}
-    , playbackBuff_ {0, parent.audioFormat_}
 {
     init(parent);
 }
@@ -387,7 +385,7 @@ PortAudioLayer::PortAudioLayerImpl::initOutput(PortAudioLayer& parent)
 }
 
 std::vector<std::string>
-PortAudioLayer::PortAudioLayerImpl::getDeviceByType(AudioDeviceType type) const
+PortAudioLayer::PortAudioLayerImpl::getDevicesByType(AudioDeviceType type) const
 {
     std::vector<std::string> ret;
     int numDevices = 0;
@@ -398,13 +396,15 @@ PortAudioLayer::PortAudioLayerImpl::getDeviceByType(AudioDeviceType type) const
     else {
         for (int i = 0; i < numDevices; i++) {
             const auto deviceInfo = Pa_GetDeviceInfo(i);
-            if (type == AudioDeviceType::PLAYBACK) {
-                if (deviceInfo->maxOutputChannels > 0)
-                    ret.push_back(deviceInfo->name);
-            } else {
+            if (type == AudioDeviceType::CAPTURE) {
                 if (deviceInfo->maxInputChannels > 0)
                     ret.push_back(deviceInfo->name);
-            }
+            } else if (deviceInfo->maxOutputChannels > 0)
+                ret.push_back(deviceInfo->name);
+        }
+        if (!ret.empty()) {
+            ret.insert(ret.begin(), "COMM (" + getDefaultDeviceName(type, true) + ")");
+            ret.insert(ret.begin(), "DEFAULT (" + getDefaultDeviceName(type, false) + ")");
         }
     }
     return ret;
@@ -442,7 +442,7 @@ PortAudioLayer::PortAudioLayerImpl::getIndexByType(AudioDeviceType type)
         index = indexIn_;
     }
 
-    auto deviceList = getDeviceByType(type);
+    auto deviceList = getDevicesByType(type);
     if (!deviceList.size()) {
         return paNoDevice;
     }
@@ -465,7 +465,7 @@ PortAudioLayer::PortAudioLayerImpl::getIndexByType(AudioDeviceType type)
 int
 PortAudioLayer::PortAudioLayerImpl::getInternalIndexByType(const int index, AudioDeviceType type)
 {
-    auto deviceList = getDeviceByType(type);
+    auto deviceList = getDevicesByType(type);
     if (!deviceList.size() || index >= deviceList.size()) {
         return paNoDevice;
     }
@@ -682,6 +682,24 @@ PortAudioLayer::PortAudioLayerImpl::initFullDuplexStream(PortAudioLayer& parent)
     parent.recordChanged(true);
     parent.playbackChanged(true);
     return true;
+}
+
+std::string
+PortAudioLayer::PortAudioLayerImpl::getDefaultDeviceName(AudioDeviceType type, bool commDevice) const
+{
+    std::string deviceName {};
+    PaDeviceIndex defaultDeviceIndex;
+    if (type == AudioDeviceType::CAPTURE) {
+        defaultDeviceIndex = commDevice ? Pa_GetDefaultCommInputDevice()
+                                        : Pa_GetDefaultInputDevice();
+    } else {
+        defaultDeviceIndex = commDevice ? Pa_GetDefaultCommOutputDevice()
+                                        : Pa_GetDefaultOutputDevice();
+    }
+    if (const auto deviceInfo = Pa_GetDeviceInfo(defaultDeviceIndex)) {
+        deviceName = deviceInfo->name;
+    }
+    return deviceName;
 }
 
 int
