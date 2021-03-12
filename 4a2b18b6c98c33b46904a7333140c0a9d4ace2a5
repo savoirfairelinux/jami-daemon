@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c1f5e6f0_fd1ec86b",
+        "filename": "src/media/audio/portaudio/portaudiolayer.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-03-12T16:20:09Z",
+      "side": 1,
+      "message": "As we discussed",
+      "range": {
+        "startLine": 94,
+        "startChar": 4,
+        "endLine": 94,
+        "endChar": 27
+      },
+      "revId": "4a2b18b6c98c33b46904a7333140c0a9d4ace2a5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
