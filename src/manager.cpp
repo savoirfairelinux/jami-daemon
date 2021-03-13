@@ -91,6 +91,8 @@ using random_device = dht::crypto::random_device;
 #include "data_transfer.h"
 #include "dring/media_const.h"
 
+#include "upnp/upnp_context.h"
+
 #include <libavutil/ffversion.h>
 
 #include <opendht/thread_pool.h>
@@ -845,6 +847,9 @@ Manager::finish() noexcept
         return;
 
     try {
+        // Terminate UPNP context
+        jami::upnp::UPnPContext::getUPnPContext()->shutdown();
+
         // Forbid call creation
         callFactory.forbid();
 
@@ -894,6 +899,7 @@ Manager::finish() noexcept
         }
         if (pimpl_->ioContextRunner_.joinable())
             pimpl_->ioContextRunner_.join();
+
     } catch (const VoipLinkException& err) {
         JAMI_ERR("%s", err.what());
     }
@@ -2827,7 +2833,6 @@ Manager::removeAccounts()
     for (const auto& acc : getAccountList())
         removeAccount(acc);
 }
-
 
 std::vector<std::string_view>
 Manager::loadAccountOrder() const

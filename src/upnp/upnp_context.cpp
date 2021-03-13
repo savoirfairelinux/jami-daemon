@@ -35,14 +35,6 @@ constexpr static uint16_t UPNP_TCP_PORT_MAX {UPNP_TCP_PORT_MIN + 5000};
 constexpr static uint16_t UPNP_UDP_PORT_MIN {20000};
 constexpr static uint16_t UPNP_UDP_PORT_MAX {UPNP_UDP_PORT_MIN + 5000};
 
-std::shared_ptr<UPnPContext>
-UPnPContext::getUPnPContext()
-{
-    // This is the unique shared instance (singleton) of UPnPContext class.
-    static auto context = std::make_shared<UPnPContext>();
-    return context;
-}
-
 UPnPContext::UPnPContext()
 {
     JAMI_DBG("Creating UPnPContext instance [%p]", this);
@@ -57,15 +49,39 @@ UPnPContext::UPnPContext()
     }
 }
 
-UPnPContext::~UPnPContext()
+std::shared_ptr<UPnPContext>
+UPnPContext::getUPnPContext()
 {
+    // This is the unique shared instance (singleton) of UPnPContext class.
+    static auto context = std::make_shared<UPnPContext>();
+    return context;
+}
+
+void
+UPnPContext::shutdown()
+{
+    if (not isValidThread()) {
+        runOnUpnpContextThread([this] { shutdown(); });
+        return;
+    }
+
+    JAMI_DBG("Shutdown UPnPContext instance [%p]", this);
+
     stopUpnp(true);
+
+    for (auto const& [_, proto] : protocolList_)
+        proto->terminate();
 
     std::lock_guard<std::mutex> lock(mappingMutex_);
     mappingList_->clear();
-    mappingListUpdateTimer_->cancel();
+    if (mappingListUpdateTimer_)
+        mappingListUpdateTimer_->cancel();
     controllerList_.clear();
+    protocolList_.clear();
+}
 
+UPnPContext::~UPnPContext()
+{
     JAMI_DBG("UPnPContext instance [%p] destroyed", this);
 }
 
@@ -186,8 +202,6 @@ UPnPContext::connectivityChanged()
         return;
     }
 
-    CHECK_VALID_THREAD();
-
     if (controllerList_.empty())
         return;
 
@@ -297,8 +311,6 @@ UPnPContext::releaseMapping(const Mapping& map)
         return;
     }
 
-    CHECK_VALID_THREAD();
-
     auto mapPtr = getMappingWithKey(map.getMapKey());
 
     if (not mapPtr) {
@@ -327,11 +339,11 @@ UPnPContext::registerController(void* controller)
 
     auto ret = controllerList_.emplace(controller);
     if (not ret.second) {
-        JAMI_WARN("Controller %p is already registered", this);
+        JAMI_WARN("Controller %p is already registered", controller);
         return;
     }
 
-    JAMI_DBG("Successfully registered controller %p", this);
+    JAMI_DBG("Successfully registered controller %p", controller);
     if (not started_)
         startUpnp();
 }
@@ -345,13 +357,14 @@ UPnPContext::unregisterController(void* controller)
     }
 
     if (controllerList_.erase(controller) == 1) {
-        JAMI_DBG("Successfully unregistered controller %p", this);
+        JAMI_DBG("Successfully unregistered controller %p", controller);
     } else {
-        JAMI_ERR("Trying to unregister an unknown controller %p", this);
+        JAMI_DBG("Controller %p was already removed", controller);
     }
 
-    if (controllerList_.empty())
+    if (controllerList_.empty()) {
         stopUpnp();
+    }
 }
 
 uint16_t
@@ -384,8 +397,6 @@ UPnPContext::requestMapping(const Mapping::sharedPtr_t& map)
         runOnUpnpContextThread([this, map] { requestMapping(map); });
         return;
     }
-
-    CHECK_VALID_THREAD();
 
     auto const& igd = getPreferredIgd();
     // We must have at least a valid IGD pointer if we get here.
@@ -836,8 +847,6 @@ UPnPContext::onIgdUpdated(const std::shared_ptr<IGD>& igd, UpnpIgdEvent event)
         return;
     }
 
-    CHECK_VALID_THREAD();
-
     char const* IgdState = event == UpnpIgdEvent::ADDED
                                ? "ADDED"
                                : event == UpnpIgdEvent::REMOVED ? "REMOVED" : "INVALID";
@@ -1023,8 +1032,6 @@ UPnPContext::deleteAllMappings(PortType type)
         return;
     }
 
-    CHECK_VALID_THREAD();
-
     std::lock_guard<std::mutex> lock(mappingMutex_);
     auto& mappingList = getMappingList(type);
 
@@ -1043,8 +1050,6 @@ UPnPContext::onMappingRemoved(const std::shared_ptr<IGD>& igd, const Mapping& ma
         runOnUpnpContextThread([this, igd, mapRes] { onMappingRemoved(igd, mapRes); });
         return;
     }
-
-    CHECK_VALID_THREAD();
 
     auto map = getMappingWithKey(mapRes.getMapKey());
     // Notify the listener.
