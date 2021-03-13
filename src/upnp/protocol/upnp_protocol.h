@@ -124,10 +124,13 @@ public:
     // Get the host (local) address.
     const IpAddr& getHostAddress() const { return hostAddress_; }
 
+    // Terminate
+    virtual void terminate() = 0;
+
 protected:
     // The host (local) address. Must be fully set before making any request.
     IpAddr hostAddress_ {};
-    UpnpMappingObserver* observer_;
+    UpnpMappingObserver* observer_ {nullptr};
 };
 
 } // namespace upnp
