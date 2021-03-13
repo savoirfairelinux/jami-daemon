@@ -69,7 +69,6 @@ constexpr static int CONFLICT_IN_MAPPING = 718;
 
 // Timeout values (in seconds).
 constexpr static unsigned int SEARCH_TIMEOUT {60};
-constexpr static unsigned int SUBSCRIBE_TIMEOUT {300};
 // Max number of IGD search attempts before failure.
 constexpr static unsigned int PUPNP_MAX_RESTART_SEARCH_RETRIES {5};
 // Time-out between two successive IGD search.
@@ -98,14 +97,8 @@ public:
     PUPnP();
     ~PUPnP();
 
-    bool initUpnpLib();
-    bool registerClient();
-
     // Set the observer
     void setObserver(UpnpMappingObserver* obs) override;
-
-    // Start search for UPNP devices
-    void searchForDevices();
 
     // Returns the protocol type.
     NatProtocolType getProtocol() const override { return NatProtocolType::PUPNP; }
@@ -142,8 +135,24 @@ public:
     // Removes a mapping.
     void requestMappingRemove(const Mapping& igdMapping) override;
 
+    void terminate() override;
+
 private:
+    NON_COPYABLE(PUPnP);
+
     ScheduledExecutor* getUpnContextScheduler() { return UpnpThreadUtil::getScheduler(); }
+
+    // Init lib-upnp
+    void initUpnpLib();
+
+    // Register the client
+    void registerClient();
+
+    // Start the internal thread.
+    void startPUPnP();
+
+    // Start search for UPNP devices
+    void searchForDevices();
 
     // Return true if it has at least one valid IGD.
     bool hasValidIgd() const;
@@ -168,11 +177,11 @@ private:
                                 uint16_t iPort,
                                 PortType portType);
 
-    // Returns control point action callback based on xml node.
-    CtrlAction getAction(const char* xmlNode);
-
     // Validate IGD from the xml document received from the router.
     bool validateIgd(const IGDInfo&);
+
+    // Returns control point action callback based on xml node.
+    static CtrlAction getAction(const char* xmlNode);
 
     // Control point callback.
     static int ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data);
@@ -187,7 +196,8 @@ private:
                                       const std::string& igdUrl,
                                       const IpAddr& dstAddr);
     void processDiscoveryAdvertisementByebye(const std::string& deviceId);
-    void processDiscoverySubscriptionExpired(const std::string& eventSubUrl);
+    void processDiscoverySubscriptionExpired(Upnp_EventType event_type,
+                                             const std::string& eventSubUrl);
 
     // Callback event handler function for the UPnP client (control point).
     int handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event);
@@ -202,7 +212,7 @@ private:
 #endif
 
     // Callback subscription event function for handling subscription request.
-    int handleSubscriptionUPnPEvent(Upnp_EventType /*unused*/, const void* event);
+    int handleSubscriptionUPnPEvent(Upnp_EventType event_type, const void* event);
 
     // Parses the IGD candidate.
     std::unique_ptr<UPnPIGD> parseIgd(IXML_Document* doc, std::string locationUrl);
@@ -212,30 +222,24 @@ private:
     bool actionIsIgdConnected(const UPnPIGD& igd);
     IpAddr actionGetExternalIP(const UPnPIGD& igd);
 
-    bool actionDeletePortMapping(const UPnPIGD& igd,
-                                 const std::string& port_external,
-                                 const std::string& protocol);
-    bool actionAddPortMapping(const UPnPIGD& igd,
-                              const Mapping& mapping,
-                              UPnPProtocol::UpnpError& upnp_error);
-    bool actionAddPortMappingAsync(const UPnPIGD& igd, const Mapping& mapping);
+    bool actionAddPortMapping(const std::shared_ptr<UPnPIGD>& igd, const Mapping& mapping);
+    bool actionAddPortMappingAsync(const std::shared_ptr<UPnPIGD>& igd, const Mapping& mapping);
     bool actionDeletePortMappingAsync(const UPnPIGD& igd,
                                       const std::string& port_external,
                                       const std::string& protocol);
+    bool actionDeletePortMapping(const std::shared_ptr<UPnPIGD>& igd, const Mapping& mapping);
     // Event type to string
     static const char* eventTypeToString(Upnp_EventType eventType);
 
-private:
-    // Indicates of the client is registered. Since at most only one instance
-    // of this class is created, using a static is unambiguous.
-    std::atomic_bool clientRegistered_ {false};
-
     std::weak_ptr<PUPnP> weak() { return std::static_pointer_cast<PUPnP>(shared_from_this()); }
 
-    NON_COPYABLE(PUPnP);
+    // Initialization status.
+    std::atomic_bool initialized_ {false};
+    // Client registration status.
+    std::atomic_bool clientRegistered_ {false};
 
     std::condition_variable pupnpCv_ {}; // Condition variable for thread-safe signaling.
-    std::atomic_bool pupnpRun_ {true};   // Variable to allow the thread to run.
+    std::atomic_bool pupnpRun_ {false};  // Variable to allow the thread to run.
     std::thread pupnpThread_ {};         // PUPnP thread for non-blocking client registration.
     std::shared_ptr<Task> searchForIgdTimer_ {};
     unsigned int igdSearchCounter_ {0};
@@ -248,8 +252,7 @@ private:
         dwnldlXmlList_; // List of futures for blocking xml download function calls.
     std::list<std::future<pIGDInfo>> cancelXmlList_; // List of abandoned documents
 
-    mutable std::mutex igdListMutex_; // Mutex used to protect IGD instances.
-
+    mutable std::mutex igdListMutex_;     // Mutex used to protect IGD instances.
     std::mutex ctrlptMutex_;              // Mutex for client handle protection.
     UpnpClient_Handle ctrlptHandle_ {-1}; // Control point handle.
 
