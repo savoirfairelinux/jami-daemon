@@ -69,6 +69,7 @@ OpenSLLayer::startStream(AudioDeviceType stream)
                 player_->setBufQueue(&playBufQueue_, &freePlayBufQueue_);
                 player_->registerCallback(std::bind(&OpenSLLayer::engineServicePlay, this));
                 player_->start();
+                playbackChanged(true);
             } catch (const std::exception& e) {
                 JAMI_ERR("Error initializing audio playback: %s", e.what());
             }
@@ -116,6 +117,7 @@ OpenSLLayer::stopStream(AudioDeviceType stream)
 
     if (stream == AudioDeviceType::PLAYBACK) {
         if (player_) {
+            playbackChanged(false);
             player_->stop();
             player_.reset();
         }
