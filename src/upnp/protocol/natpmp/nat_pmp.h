@@ -97,6 +97,10 @@ public:
     // Removes a mapping.
     void requestMappingRemove(const Mapping& igdMapping) override;
 
+    // Terminate. Nothing to do here, the clean-up is done when
+    // the IGD is cleared.
+    void terminate() override;
+
 private:
     void initNatPmp();
     void getIgdPublicAddress();
