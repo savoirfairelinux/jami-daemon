@@ -27,6 +27,7 @@ namespace upnp {
 
 NatPmp::NatPmp()
 {
+    JAMI_DBG("NAT-PMP: Instance [%p] created", this);
     getNatpmpScheduler()->run([this] {
         threadId_ = getCurrentThread();
         igd_ = std::make_shared<PMPIGD>();
@@ -35,7 +36,7 @@ NatPmp::NatPmp()
 
 NatPmp::~NatPmp()
 {
-    clearIgds();
+    JAMI_DBG("NAT-PMP: Instance [%p] destroyed", this);
 }
 
 void
@@ -45,8 +46,6 @@ NatPmp::initNatPmp()
         getNatpmpScheduler()->run([this] { initNatPmp(); });
         return;
     }
-
-    CHECK_VALID_THREAD();
 
     initialized_ = false;
     hostAddress_ = ip_utils::getLocalAddr(pj_AF_INET());
@@ -116,8 +115,19 @@ NatPmp::initNatPmp()
 void
 NatPmp::setObserver(UpnpMappingObserver* obs)
 {
+    CHECK_VALID_THREAD();
+
     JAMI_DBG("NAT-PMP: Setting observer to %p", obs);
+
     observer_ = obs;
+}
+
+void
+NatPmp::terminate()
+{
+    CHECK_VALID_THREAD();
+
+    observer_ = nullptr;
 }
 
 void
@@ -127,8 +137,6 @@ NatPmp::clearIgds()
         getNatpmpScheduler()->run([this] { clearIgds(); });
         return;
     }
-
-    CHECK_VALID_THREAD();
 
     initialized_ = false;
     if (searchForIgdTimer_)
@@ -147,8 +155,6 @@ NatPmp::searchForIgd()
         getNatpmpScheduler()->run([this] { searchForIgd(); });
         return;
     }
-
-    CHECK_VALID_THREAD();
 
     if (not initialized_) {
         initNatPmp();
@@ -180,6 +186,11 @@ NatPmp::getIgdList(std::list<std::shared_ptr<IGD>>& igdList) const
 bool
 NatPmp::isReady() const
 {
+    if (observer_ == nullptr) {
+        JAMI_ERR("NAT-PMP: the observer is not set!");
+        return false;
+    }
+
     // Must at least have a valid local address.
     if (not getHostAddress() or getHostAddress().isLoopback())
         return false;
@@ -616,6 +627,8 @@ NatPmp::processIgdUpdate(UpnpIgdEvent event)
         removeAllMappings();
     }
 
+    if (observer_ == nullptr)
+        return;
     // Process the response on the context thread.
     runOnUpnpContextThread([obs = observer_, igd = igd_, event] { obs->onIgdUpdated(igd, event); });
 }
@@ -623,6 +636,9 @@ NatPmp::processIgdUpdate(UpnpIgdEvent event)
 void
 NatPmp::processMappingAdded(const Mapping& map)
 {
+    if (observer_ == nullptr)
+        return;
+
     // Process the response on the context thread.
     runOnUpnpContextThread([obs = observer_, igd = igd_, map] { obs->onMappingAdded(igd, map); });
 }
@@ -630,6 +646,9 @@ NatPmp::processMappingAdded(const Mapping& map)
 void
 NatPmp::processMappingRenewed(const Mapping& map)
 {
+    if (observer_ == nullptr)
+        return;
+
     // Process the response on the context thread.
     runOnUpnpContextThread([obs = observer_, igd = igd_, map] { obs->onMappingRenewed(igd, map); });
 }
@@ -637,6 +656,9 @@ NatPmp::processMappingRenewed(const Mapping& map)
 void
 NatPmp::processMappingRemoved(const Mapping& map)
 {
+    if (observer_ == nullptr)
+        return;
+
     // Process the response on the context thread.
     runOnUpnpContextThread([obs = observer_, igd = igd_, map] { obs->onMappingRemoved(igd, map); });
 }
