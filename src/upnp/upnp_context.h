@@ -90,8 +90,11 @@ public:
     UPnPContext();
     ~UPnPContext();
 
-    // Retrieve the UPnPContext singleton
+    // Retrieve the UPnPContext singleton.
     static std::shared_ptr<UPnPContext> getUPnPContext();
+
+    // Terminate the instance.
+    void shutdown();
 
     // Set the known public address
     void setPublicAddress(const IpAddr& addr);
