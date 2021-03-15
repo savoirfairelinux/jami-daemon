@@ -643,6 +643,20 @@ SIPAccountBase::onTextMessage(const std::string& id,
         } else if (m.first == MIME_TYPE_INVITE) {
             onNeedConversationRequest(from, m.second);
             return;
+        } else if (m.first == MIME_TYPE_ASK_TRANSFER) {
+            Json::Value json;
+            std::string err;
+            Json::CharReaderBuilder rbuilder;
+            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+            if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
+                JAMI_ERR("Can't parse server response: %s", err.c_str());
+                return;
+            }
+            onAskForTransfer(from,
+                             json["deviceId"].asString(),
+                             json["conversation"].asString(),
+                             json["interaction"].asString());
+            return;
         }
     }
 
