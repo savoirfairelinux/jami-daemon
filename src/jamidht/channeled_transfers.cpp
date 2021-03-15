@@ -58,16 +58,15 @@ ChanneledOutgoingTransfer::linkTransfer(const std::shared_ptr<Stream>& file)
         return;
     file_ = file;
     channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
-        file_->write(std::string_view((const char*)buf, len));
+        file_->write(std::string_view((const char*) buf, len));
         return len;
     });
-    file_->setOnRecv(
-        [channel = std::weak_ptr<ChannelSocket>(channel_)](std::string_view data) {
-            if (auto c = channel.lock()) {
-                std::error_code ec;
-                c->write((const uint8_t*)data.data(), data.size(), ec);
-            }
-        });
+    file_->setOnRecv([channel = std::weak_ptr<ChannelSocket>(channel_)](std::string_view data) {
+        if (auto c = channel.lock()) {
+            std::error_code ec;
+            c->write((const uint8_t*) data.data(), data.size(), ec);
+        }
+    });
     file_->setOnStateChangedCb(stateChangedCb_);
 }
 
@@ -78,13 +77,13 @@ ChanneledIncomingTransfer::ChanneledIncomingTransfer(const std::shared_ptr<Chann
     , channel_(channel)
 {
     channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
-        ftp_->write(std::string_view((const char*)buf, len));
+        ftp_->write(std::string_view((const char*) buf, len));
         return len;
     });
     ftp_->setOnRecv([channel = std::weak_ptr<ChannelSocket>(channel_)](std::string_view data) {
         if (auto c = channel.lock()) {
             std::error_code ec;
-            c->write((const uint8_t*)data.data(), data.size(), ec);
+            c->write((const uint8_t*) data.data(), data.size(), ec);
         }
     });
     ftp_->setOnStateChangedCb(cb);
@@ -96,6 +95,12 @@ ChanneledIncomingTransfer::~ChanneledIncomingTransfer()
     channel_->shutdown();
     if (ftp_)
         ftp_->close();
+}
+
+std::string
+ChanneledIncomingTransfer::peer() const
+{
+    return channel_ ? channel_->deviceId().toString() : "";
 }
 
 } // namespace jami
