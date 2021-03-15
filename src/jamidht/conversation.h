@@ -151,6 +151,12 @@ public:
                       const std::string& fromMessage = "",
                       const std::string& toMessage = "");
     /**
+     * Retrieve one commit
+     * @param   commitId
+     * @return  The commit if found
+     */
+    std::optional<std::map<std::string, std::string>> getCommit(const std::string& commitId) const;
+    /**
      * Get last commit id
      * @return last commit id
      */
