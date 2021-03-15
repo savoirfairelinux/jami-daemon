@@ -85,6 +85,8 @@ bool isSymLink(const std::string& path);
 
 std::chrono::system_clock::time_point writeTime(const std::string& path);
 
+void createSymLink(const std::string& src, const std::string& dest);
+
 /**
  * Read content of the directory.
  * The result is a list of relative (to @param dir) paths of all entries
