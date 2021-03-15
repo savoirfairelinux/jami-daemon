@@ -76,6 +76,7 @@
 
 #include <sstream>
 #include <fstream>
+#include <filesystem>
 #include <iostream>
 #include <stdexcept>
 #include <limits>
@@ -297,6 +298,14 @@ writeTime(const std::string& path)
     tm.tm_isdst = -1;
     return std::chrono::system_clock::from_time_t(mktime(&tm));
 #endif
+}
+
+void
+createSymLink(const std::string& src, const std::string& dest)
+{
+    check_dir(std::string(std::filesystem::path(src).parent_path()).c_str());
+    auto absolute_dest = std::string(std::filesystem::absolute(std::filesystem::path(dest)));
+    std::filesystem::create_symlink(absolute_dest, src);
 }
 
 bool
