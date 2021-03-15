@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab60b5bb_f46e682e",
+        "filename": "src/sip/sipaccountbase.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 263,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-15T21:33:29Z",
+      "side": 1,
+      "message": "transferId",
+      "range": {
+        "startLine": 263,
+        "startChar": 43,
+        "endLine": 263,
+        "endChar": 56
+      },
+      "revId": "0f8ebe947b6943332641b1c490d0c39298659a62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
