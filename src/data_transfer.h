@@ -37,6 +37,7 @@ struct IncomingFileInfo
 };
 
 typedef std::function<void(const std::string&)> InternalCompletionCb;
+typedef std::function<bool(const std::string&)> OnVerifyCb;
 typedef std::function<void(const DRing::DataTransferId&, const DRing::DataTransferEventCode&)>
     OnStateChangedCb;
 
@@ -46,7 +47,10 @@ public:
     TransferManager(const std::string& accountId, const std::string& to, bool isConversation = true);
     ~TransferManager();
 
-    DRing::DataTransferId sendFile(const std::string& path, const InternalCompletionCb& icb = {});
+    DRing::DataTransferId sendFile(const std::string& path,
+                                   const InternalCompletionCb& icb = {},
+                                   const std::string& deviceId = {},
+                                   DRing::DataTransferId resendId = {});
 
     bool acceptFile(const DRing::DataTransferId& id, const std::string& path);
 
@@ -62,6 +66,10 @@ public:
                                const DRing::DataTransferId& id,
                                const std::function<void(const IncomingFileInfo&)>& cb,
                                const InternalCompletionCb& icb = {});
+
+    void waitForTransfer(const DRing::DataTransferId& id,
+                         const std::string& sha3sum,
+                         const std::string& path);
 
 private:
     NON_COPYABLE(TransferManager);

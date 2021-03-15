@@ -834,6 +834,15 @@ DBusConfigurationManager::acceptFileTransfer(const std::string& accountId,
     return uint32_t(DRing::acceptFileTransfer(accountId, conversationId, id, file_path, offset));
 }
 
+void
+DBusConfigurationManager::askForTransfer(const std::string& accountId,
+                                         const std::string& conversationId,
+                                         const std::string& interactionId,
+                                         const std::string& path)
+{
+    DRing::askForTransfer(accountId, conversationId, interactionId, path);
+}
+
 uint32_t
 DBusConfigurationManager::cancelDataTransfer(const std::string& accountId,
                                              const std::string& conversationId,
