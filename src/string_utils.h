@@ -75,9 +75,9 @@ regex_match(string_view sv,
 }
 inline bool
 regex_search(string_view sv,
-            svmatch& m,
-            const regex& e,
-            regex_constants::match_flag_type flags = regex_constants::match_default)
+             svmatch& m,
+             const regex& e,
+             regex_constants::match_flag_type flags = regex_constants::match_default)
 {
     return regex_search(sv.begin(), sv.end(), m, e, flags);
 }
@@ -125,8 +125,8 @@ std::string_view trim(std::string_view s);
  * @param delim The delimiter.
  * @return True if line was set, false if the end of the input was reached.
  */
-inline
-bool getline_full(std::string_view& str, std::string_view& line, char delim = '\n')
+inline bool
+getline_full(std::string_view& str, std::string_view& line, char delim = '\n')
 {
     if (str.empty())
         return false;
@@ -139,8 +139,9 @@ bool getline_full(std::string_view& str, std::string_view& line, char delim = '\
 /**
  * Similar to @getline_full but skips empty results.
  */
-inline
-bool getline(std::string_view& str, std::string_view& line, char delim = '\n') {
+inline bool
+getline(std::string_view& str, std::string_view& line, char delim = '\n')
+{
     do {
         if (!getline_full(str, line, delim))
             return false;
@@ -148,11 +149,13 @@ bool getline(std::string_view& str, std::string_view& line, char delim = '\n') {
     return true;
 }
 
-inline
-std::vector<std::string_view> split_string(std::string_view str, char delim)
+inline std::vector<std::string_view>
+split_string(std::string_view str, char delim)
 {
     std::vector<std::string_view> output;
-    for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last; first = second + 1) {
+    for (auto first = str.data(), second = str.data(), last = first + str.size();
+         second != last && first != last;
+         first = second + 1) {
         second = std::find(first, last, delim);
         if (first != second)
             output.emplace_back(first, second - first);
@@ -160,11 +163,13 @@ std::vector<std::string_view> split_string(std::string_view str, char delim)
     return output;
 }
 
-inline
-std::vector<std::string_view> split_string(std::string_view str, std::string_view delims = " ")
+inline std::vector<std::string_view>
+split_string(std::string_view str, std::string_view delims = " ")
 {
     std::vector<std::string_view> output;
-    for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last; first = second + 1) {
+    for (auto first = str.data(), second = str.data(), last = first + str.size();
+         second != last && first != last;
+         first = second + 1) {
         second = std::find_first_of(first, last, std::cbegin(delims), std::cend(delims));
         if (first != second)
             output.emplace_back(first, second - first);
