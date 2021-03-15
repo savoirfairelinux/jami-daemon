@@ -105,6 +105,9 @@ DRING_PUBLIC int getMessageStatus(const std::string& accountID, uint64_t id);
 DRING_PUBLIC void setIsComposing(const std::string& accountID,
                                  const std::string& conversationUri,
                                  bool isWriting);
+DRING_PUBLIC void askForTransfer(const std::string& accountId,
+                                 const std::string& conversationUri,
+                                 const std::string& interactionId);
 DRING_PUBLIC bool setMessageDisplayed(const std::string& accountID,
                                       const std::string& conversationUri,
                                       const std::string& messageId,
@@ -312,8 +315,7 @@ DRING_PUBLIC bool isLocalModeratorsEnabled(const std::string& accountID);
 /**
  * Enable/disable all moderators for conferences
  */
-DRING_PUBLIC void setAllModerators(const std::string& accountID,
-                                        bool allModerators);
+DRING_PUBLIC void setAllModerators(const std::string& accountID, bool allModerators);
 
 /**
  * Get all moderators state
