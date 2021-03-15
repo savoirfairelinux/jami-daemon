@@ -213,6 +213,8 @@ AudioRtpSession::setMuted(bool isMuted)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     muteState_ = isMuted;
+    if (audioInput_)
+        audioInput_->setMuted(isMuted);
 }
 
 bool
