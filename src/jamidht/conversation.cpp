@@ -228,6 +228,8 @@ public:
     std::atomic_bool isRemoving_ {false};
     std::vector<std::map<std::string, std::string>> convCommitToMap(
         const std::vector<ConversationCommit>& commits) const;
+    std::optional<std::map<std::string, std::string>> convCommitToMap(
+        const ConversationCommit& commit) const;
     std::vector<std::map<std::string, std::string>> loadMessages(const std::string& fromMessage = "",
                                                                  const std::string& toMessage = "",
                                                                  size_t n = 0);
@@ -260,83 +262,94 @@ Conversation::Impl::repoPath() const
            + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository_->id();
 }
 
+std::optional<std::map<std::string, std::string>>
+Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
+{
+    auto authorDevice = commit.author.email;
+    auto cert = tls::CertificateStore::instance().getCertificate(authorDevice);
+    if (!cert) {
+        JAMI_WARN("No author found for commit %s, reload certificates", commit.id.c_str());
+        if (repository_)
+            repository_->pinCertificates();
+        // Get certificate from repo
+        try {
+            auto certPath = fileutils::getFullPath(repoPath(),
+                                                   std::string("devices") + DIR_SEPARATOR_STR
+                                                       + authorDevice + ".crt");
+            auto deviceCert = fileutils::loadTextFile(certPath);
+            cert = std::make_shared<crypto::Certificate>(deviceCert);
+            if (!cert) {
+                JAMI_ERR("No author found for commit %s", commit.id.c_str());
+                return std::nullopt;
+            }
+        } catch (...) {
+            return std::nullopt;
+        }
+    }
+    auto authorId = cert->getIssuerUID();
+    std::string parents;
+    auto parentsSize = commit.parents.size();
+    for (std::size_t i = 0; i < parentsSize; ++i) {
+        parents += commit.parents[i];
+        if (i != parentsSize - 1)
+            parents += ",";
+    }
+    std::string type {};
+    if (parentsSize > 1) {
+        type = "merge";
+    }
+    std::string body {};
+    std::map<std::string, std::string> message;
+    if (type.empty()) {
+        std::string err;
+        Json::Value cm;
+        Json::CharReaderBuilder rbuilder;
+        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+        if (reader->parse(commit.commit_msg.data(),
+                          commit.commit_msg.data() + commit.commit_msg.size(),
+                          &cm,
+                          &err)) {
+            for (auto const& id : cm.getMemberNames()) {
+                if (id == "type") {
+                    type = cm[id].asString();
+                    continue;
+                }
+                message.insert({id, cm[id].asString()});
+            }
+        } else {
+            JAMI_WARN("%s", err.c_str());
+        }
+    }
+    auto linearizedParent = repository_->linearizedParent(commit.id);
+    message["id"] = commit.id;
+    message["parents"] = parents;
+    message["linearizedParent"] = linearizedParent ? *linearizedParent : "";
+    message["author"] = authorId;
+    message["type"] = type;
+    message["timestamp"] = std::to_string(commit.timestamp);
+
+    return message;
+}
+
 std::vector<std::map<std::string, std::string>>
 Conversation::Impl::convCommitToMap(const std::vector<ConversationCommit>& commits) const
 {
     auto shared = account_.lock();
     std::vector<std::map<std::string, std::string>> result = {};
     for (const auto& commit : commits) {
-        auto authorDevice = commit.author.email;
-        auto cert = tls::CertificateStore::instance().getCertificate(authorDevice);
-        if (!cert) {
-            JAMI_WARN("No author found for commit %s, reload certificates", commit.id.c_str());
-            if (repository_)
-                repository_->pinCertificates();
-            // Get certificate from repo
-            try {
-                auto certPath = fileutils::getFullPath(repoPath(),
-                                                       std::string("devices") + DIR_SEPARATOR_STR
-                                                           + authorDevice + ".crt");
-                auto deviceCert = fileutils::loadTextFile(certPath);
-                cert = std::make_shared<crypto::Certificate>(deviceCert);
-                if (!cert) {
-                    JAMI_ERR("No author found for commit %s", commit.id.c_str());
-                    continue;
-                }
-            } catch (...) {
-                continue;
-            }
-        }
-        auto authorId = cert->getIssuerUID();
-        std::string parents;
-        auto parentsSize = commit.parents.size();
-        for (std::size_t i = 0; i < parentsSize; ++i) {
-            parents += commit.parents[i];
-            if (i != parentsSize - 1)
-                parents += ",";
-        }
-        std::string type {};
-        if (parentsSize > 1) {
-            type = "merge";
-        }
-        std::string body {};
-        std::map<std::string, std::string> message;
-        if (type.empty()) {
-            std::string err;
-            Json::Value cm;
-            Json::CharReaderBuilder rbuilder;
-            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-            if (reader->parse(commit.commit_msg.data(),
-                              commit.commit_msg.data() + commit.commit_msg.size(),
-                              &cm,
-                              &err)) {
-                for (auto const& id : cm.getMemberNames()) {
-                    if (id == "type") {
-                        type = cm[id].asString();
-                        continue;
-                    }
-                    message.insert({id, cm[id].asString()});
-                }
-            } else {
-                JAMI_WARN("%s", err.c_str());
-            }
-        }
-        auto linearizedParent = repository_->linearizedParent(commit.id);
-        message["id"] = commit.id;
-        message["parents"] = parents;
-        message["linearizedParent"] = linearizedParent ? *linearizedParent : "";
-        message["author"] = authorId;
-        message["type"] = type;
-        message["timestamp"] = std::to_string(commit.timestamp);
-        result.emplace_back(message);
+        auto message = convCommitToMap(commit);
+        if (message == std::nullopt)
+            continue;
+        result.emplace_back(*message);
 #ifdef ENABLE_PLUGIN
         auto& pluginChatManager
             = jami::Manager::instance().getJamiPluginManager().getChatServicesManager();
         std::shared_ptr<JamiMessage> cm
             = std::make_shared<JamiMessage>(shared->getAccountID(),
                                             repository_->id(),
-                                            authorId != shared->getUsername(),
-                                            const_cast<std::map<std::string, std::string>&>(message),
+                                            message->at("author") != shared->getUsername(),
+                                            const_cast<std::map<std::string, std::string>&>(
+                                                *message),
                                             false);
         cm->isSwarm = true;
         cm->fromHistory = true;
@@ -597,6 +610,15 @@ Conversation::loadMessages(const OnLoadMessages& cb, const std::string& fromMess
             cb(sthis->pimpl_->loadMessages(fromMessage, "", n));
         }
     });
+}
+
+std::optional<std::map<std::string, std::string>>
+Conversation::getCommit(const std::string& commitId) const
+{
+    auto commit = pimpl_->repository_->getCommit(commitId);
+    if (commit == std::nullopt)
+        return std::nullopt;
+    return pimpl_->convCommitToMap(*commit);
 }
 
 void

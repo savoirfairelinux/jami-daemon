@@ -355,19 +355,23 @@ public:
 #endif
     bool searchUser(const std::string& nameQuery);
 
-    ///
-    /// Send a E2E connection request to a given peer for the given transfer id
-    ///
-    /// /// \param[in] peer RingID on request's recipient
-    /// /// \param[in] tid linked outgoing data transfer
-    ///
+    /**
+     * Send a E2E connection request to a given peer for the given transfer id
+     * @param peer RingID on request's recipient
+     * @param tid linked outgoing data transfer
+     * @param isVcard if transfer is a vcard transfer
+     * @param channeledConnectedCb callback when channel is connected
+     * @param onChanneledCancelled callback when channel is canceled
+     * @param addToHistory if we need to add the transfer to the history
+     */
     void requestConnection(
         const DRing::DataTransferInfo& info,
         const DRing::DataTransferId& tid,
         bool isVCard,
         const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
             channeledConnectedCb,
-        const std::function<void(const std::string&)>& onChanneledCancelled);
+        const std::function<void(const std::string&)>& onChanneledCancelled,
+        bool addToHistory);
 
     ///
     /// Close a E2E connection between a given peer and a given transfer id.
@@ -444,6 +448,12 @@ public:
 
 #ifdef DRING_TESTABLE
     ConnectionManager& connectionManager() { return *connectionManager_; }
+
+    /**
+     * Only used for tests, disable sha3sum verification for transfers.
+     * @param newValue
+     */
+    void noSha3sumVerification(bool newValue) { noSha3sumVerification_ = newValue; }
 #endif
 
     /**
@@ -541,6 +551,18 @@ public:
                         const std::string& deviceId,
                         const std::string& conversationId,
                         const std::string& commitId) override;
+
+    /**
+     * When a new transfer is asked by a peer
+     * @param peer              account's uri of the peer
+     * @param deviceId          peer device
+     * @param conversationId    related conversation
+     * @param interactionId     interaction corresponding to the transfer asked.
+     */
+    virtual void onAskForTransfer(const std::string& peer,
+                                  const std::string& deviceId,
+                                  const std::string& conversationId,
+                                  const std::string& interactionId) override;
     /**
      * Pull remote device (do not do it if commitId is already in the current repo)
      * @param peer              Contact URI
@@ -571,7 +593,18 @@ public:
     // File transfer
     DRing::DataTransferId sendFile(const std::string& to,
                                    const std::string& path,
-                                   const InternalCompletionCb& icb = {});
+                                   const InternalCompletionCb& icb = {},
+                                   const std::string& deviceId = {},
+                                   DRing::DataTransferId resendId = {});
+    /**
+     * Ask conversation's members to send back a previous transfer to this deviec
+     * @param conversationUri   Related conversation
+     * @param interactionId     Related interaction
+     * @param path              where to download the file
+     */
+    void askForTransfer(const std::string& conversationUri,
+                        const std::string& interactionId,
+                        const std::string& path) override;
 
     void onIncomingFileRequest(const DRing::DataTransferInfo& info,
                                const DRing::DataTransferId& id,
@@ -1021,6 +1054,8 @@ private:
     //// File transfer
     std::mutex transferMutex_ {};
     std::map<std::string, TransferManager> transferManagers_ {};
+
+    bool noSha3sumVerification_ {false};
 };
 
 static inline std::ostream&
