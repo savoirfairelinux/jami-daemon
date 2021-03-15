@@ -209,6 +209,75 @@
     },
     {
       "key": {
+        "uuid": "1f8405e9_8f1c5bff",
+        "filename": "src/media/media_attribute.cpp",
+        "patchSetId": 43
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-15T15:32:07Z",
+      "side": 1,
+      "message": "This function simply converts a vector of DRing::MediaMap to a vector of MediaAttribute. No other information is used.\nSimply write a conversion function (could simply be a new constructor for MediaAttribute from MediaMap).\n\n\nstd::vector\u003cMediaAttribute\u003e\nMediaAttribute::parseMediaList(const std::vector\u003cDRing::MediaMap\u003e\u0026 mediaList)\n{\n    std::vector\u003cMediaAttribute\u003e mediaAttrList;\n    mediaAttrList.reserve(mediaList.size());\n\n    for (const auto\u0026 mediaMap : mediaList) {\n        mediaAttrList.emplace_back(attributesFromMap(mediaMap));\n    }\n\n    return mediaAttrList;\n}",
+      "range": {
+        "startLine": 22,
+        "startChar": 0,
+        "endLine": 57,
+        "endChar": 1
+      },
+      "revId": "a2ae518b6289431154c95553cb56bd38f6ef4c9d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "eef61605_c15a54fc",
+        "filename": "src/media/media_attribute.cpp",
+        "patchSetId": 43
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-15T15:32:07Z",
+      "side": 1,
+      "message": "unneeded, just take \u0027const DRing::MediaMap\u0026\u0027",
+      "range": {
+        "startLine": 70,
+        "startChar": 29,
+        "endLine": 70,
+        "endChar": 90
+      },
+      "revId": "a2ae518b6289431154c95553cb56bd38f6ef4c9d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "80129dd8_6d09c136",
+        "filename": "src/media/media_attribute.cpp",
+        "patchSetId": 43
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-15T15:32:07Z",
+      "side": 1,
+      "message": "Avoid assert is possible (return error in case of normal error, or throw exception for exceptional errors).",
+      "range": {
+        "startLine": 72,
+        "startChar": 4,
+        "endLine": 72,
+        "endChar": 37
+      },
+      "revId": "a2ae518b6289431154c95553cb56bd38f6ef4c9d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "8d025f52_26ab64f8",
         "filename": "src/media/media_attribute.cpp",
         "patchSetId": 43
