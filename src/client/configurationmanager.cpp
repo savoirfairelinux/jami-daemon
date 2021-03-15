@@ -296,6 +296,15 @@ setIsComposing(const std::string& accountID, const std::string& conversationUri,
         acc->setIsComposing(conversationUri, isWriting);
 }
 
+void
+askForTransfer(const std::string& accountId,
+               const std::string& conversationUri,
+               const std::string& interactionId)
+{
+    if (const auto acc = jami::Manager::instance().getAccount(accountId))
+        acc->askForTransfer(conversationUri, interactionId);
+}
+
 bool
 setMessageDisplayed(const std::string& accountID,
                     const std::string& conversationUri,
