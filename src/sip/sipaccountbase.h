@@ -259,6 +259,8 @@ public:
     }
 
     void setIsComposing(const std::string& conversationUri, bool isWriting) override;
+    void askForTransfer(const std::string& conversationUri,
+                        const std::string& interactionId) override;
 
     bool setMessageDisplayed(const std::string& conversationUri,
                              const std::string& messageId,

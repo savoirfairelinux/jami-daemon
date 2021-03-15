@@ -34,6 +34,7 @@ class DataTransferCallback {
 public:
     virtual ~DataTransferCallback(){}
     virtual void dataTransferEvent(const std::string& accountId, const std::string& conversationId, const DRing::DataTransferId transferId, int eventCode){}
+    virtual void askForTransferEvent(const std::string& accountId, const std::string& conversationId, const std::string& peerId, const std::string& interactionId, const DRing::DataTransferId transferId){}
 };
 %}
 
@@ -68,4 +69,5 @@ class DataTransferCallback {
 public:
     virtual ~DataTransferCallback(){}
     virtual void dataTransferEvent(const std::string& accountId, const std::string& conversationId, const DRing::DataTransferId transferId, int eventCode){}
+    virtual void askForTransferEvent(const std::string& accountId, const std::string& conversationId, const std::string& peerId, const std::string& interactionId, const DRing::DataTransferId transferId){}
 };

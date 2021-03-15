@@ -1905,6 +1905,38 @@
            </arg>
        </signal>
 
+       <signal name="askForTransferEvent" tp:name-for-bindings="askForTransferEvent">
+           <tp:added version="10.0.0"/>
+           <tp:docstring>
+               Notify clients that a peer doesn't have a data-transfer
+           </tp:docstring>
+           <arg type="s" name="accountId">
+               <tp:docstring>
+                   An account id.
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="conversationId">
+               <tp:docstring>
+                   The conversation id.
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="peer">
+               <tp:docstring>
+                   The peer asking.
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="deviceId">
+               <tp:docstring>
+                   The device asking.
+               </tp:docstring>
+           </arg>
+           <arg type="t" name="transferId">
+               <tp:docstring>
+                   Data transfer unique id.
+               </tp:docstring>
+           </arg>
+       </signal>
+
        <signal name="conversationLoaded" tp:name-for-bindings="conversationLoaded">
            <tp:added version="10.0.0"/>
            <tp:docstring>

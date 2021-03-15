@@ -194,7 +194,9 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
     JAMI_DBG() << *this << "Calling SIP peer " << toUrl;
 
     auto& manager = Manager::instance();
-    auto call = manager.callFactory.newSipCall(shared(), Call::CallType::OUTGOING, volatileCallDetails);
+    auto call = manager.callFactory.newSipCall(shared(),
+                                               Call::CallType::OUTGOING,
+                                               volatileCallDetails);
     call->setSecure(isTlsEnabled());
 
     if (isIP2IP()) {
@@ -347,7 +349,10 @@ bool
 SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 {
     // Add Ice headers to local SDP if ice transport exist
-    call->setupLocalSDPFromIce();
+    auto rem_ice_attrs = sdp_->getIceAttributes();
+    if (!rem_ice_attrs.ufrag.empty() and !rem_ice_attrs.pwd.empty()) {
+        call->setupLocalSDPFromIce();
+    }
 
     const std::string& toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
     pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);

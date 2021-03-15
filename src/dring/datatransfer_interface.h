@@ -186,6 +186,15 @@ struct DRING_PUBLIC DataTransferSignal
                              const DataTransferId& transferId,
                              int eventCode);
     };
+    struct DRING_PUBLIC AskForTransferEvent
+    {
+        constexpr static const char* name = "AskForTransferEvent";
+        using cb_type = void(const std::string& accountId,
+                             const std::string& conversationId,
+                             const std::string& peer,
+                             const std::string& deviceId,
+                             const DataTransferId& transferId);
+    };
 };
 
 } // namespace DRing

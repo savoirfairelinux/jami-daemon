@@ -103,6 +103,7 @@ getSignalHandlers()
 
         /* DataTransfer */
         exported_callback<DRing::DataTransferSignal::DataTransferEvent>(),
+        exported_callback<DRing::DataTransferSignal::AskForTransferEvent>(),
 
 #ifdef ENABLE_VIDEO
         /* MediaPlayer */

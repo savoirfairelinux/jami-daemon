@@ -62,6 +62,7 @@ static constexpr const char MIME_TYPE_GIT[] {"application/im-gitmessage-id"};
 static constexpr const char MIME_TYPE_INVITE_JSON[] {"application/invite+json"};
 static constexpr const char MIME_TYPE_INVITE[] {"application/invite"};
 static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
+static constexpr const char MIME_TYPE_ASK_TRANSFER[] {"application/data-transfer-request+json"};
 static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT {std::chrono::seconds(12)};
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
@@ -200,6 +201,27 @@ SIPAccountBase::setIsComposing(const std::string& conversationUri, bool isWritin
         composingUri_.clear();
         composingTime_ = std::chrono::steady_clock::time_point::min();
     }
+}
+
+std::string
+getAskTransfer(const std::string& uid, const std::string& interactionId)
+{
+    Json::Value askTransferValue;
+    askTransferValue["conversation"] = uid;
+    askTransferValue["interaction"] = interactionId;
+    Json::StreamWriterBuilder builder;
+    return Json::writeString(builder, syncValue);
+}
+
+void
+SIPAccountBase::askForDataTransfer(const std::string& conversationUri,
+                                   const std::string& interactionId)
+{
+    Uri uri(conversationUri);
+    if (uri.scheme() != Uri::Scheme::SWARM)
+        return;
+    auto conversationId = uri.authority();
+    sendInstantMessage(uid, {{MIME_TYPE_ASK_TRANSFER, getAskTransfer(uid, interactionId)}});
 }
 
 template<typename T>
@@ -641,6 +663,17 @@ SIPAccountBase::onTextMessage(const std::string& id,
             return;
         } else if (m.first == MIME_TYPE_INVITE) {
             onNeedConversationRequest(from, m.second);
+            return;
+        } else if (m.first == MIME_TYPE_ASK_TRANSFER) {
+            Json::Value json;
+            std::string err;
+            Json::CharReaderBuilder rbuilder;
+            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+            if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
+                JAMI_ERR("Can't parse server response: %s", err.c_str());
+                return;
+            }
+            onAskForTransfer(from, json["conversation"], json["interaction"]);
             return;
         }
     }

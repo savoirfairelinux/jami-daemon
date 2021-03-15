@@ -4517,6 +4517,40 @@ JamiAccount::onNewGitCommit(const std::string& peer,
 }
 
 void
+JamiAccount::onAskForTransfer(const std::string& peer,
+                              const std::string& conversationId,
+                              const std::string& interactionId)
+{
+    // TODO deviceid directly.
+    std::unique_lock<std::mutex> lk(conversationsMtx_);
+    auto conversation = conversations_.find(conversationId);
+    if (conversation != conversations_.end() && conversation->second) {
+        if (conversation->second->isMember(peer, true)) {
+            auto commit = conversation->second->getCommit(interactionId);
+            if (commit == std::nullopt_t)
+                return;
+            if (commit["type"] != "application/data-transfer+json")
+                return;
+            JAMI_WARN("[Account %s] %s asked for file %s in %s",
+                      getAccountID().c_str(),
+                      peer.c_str(),
+                      interactionId.c_str(),
+                      conversationId.c_str());
+            // TODO get TID & peer
+            emitSignal<DRing::DataTransferSignal::AskForTransferEvent>(getAccountId(),
+                                                                       conversationId,
+                                                                       peer,
+                                                                       /* TODO */ peer,
+                                                                       /* TODO */ 0);
+            return;
+        }
+    }
+    // TODO check if:
+    // send signal to client
+    // can receive multiple file transfer request for same id (and choose first & check shasum)
+}
+
+void
 JamiAccount::fetchNewCommits(const std::string& peer,
                              const std::string& deviceId,
                              const std::string& conversationId,
