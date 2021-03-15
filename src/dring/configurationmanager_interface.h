@@ -312,8 +312,7 @@ DRING_PUBLIC bool isLocalModeratorsEnabled(const std::string& accountID);
 /**
  * Enable/disable all moderators for conferences
  */
-DRING_PUBLIC void setAllModerators(const std::string& accountID,
-                                        bool allModerators);
+DRING_PUBLIC void setAllModerators(const std::string& accountID, bool allModerators);
 
 /**
  * Get all moderators state
