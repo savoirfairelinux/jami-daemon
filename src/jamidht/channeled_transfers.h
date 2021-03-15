@@ -53,6 +53,7 @@ public:
                               const std::shared_ptr<FtpServer>& ftp,
                               OnStateChangedCb&& cb);
     ~ChanneledIncomingTransfer();
+    std::string peer() const;
 
 private:
     std::shared_ptr<FtpServer> ftp_;
