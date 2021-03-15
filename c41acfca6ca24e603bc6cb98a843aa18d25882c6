@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f7790679_b35293f8",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 170,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-15T14:30:47Z",
+      "side": 1,
+      "message": "we don\u0027t need video, should build if ENABLE_VIDEO is false",
+      "range": {
+        "startLine": 170,
+        "startChar": 0,
+        "endLine": 170,
+        "endChar": 20
+      },
+      "revId": "c41acfca6ca24e603bc6cb98a843aa18d25882c6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fda70a96_32b83d7e",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 601,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-15T14:30:47Z",
+      "side": 1,
+      "message": "this function is duplicated a lot, should be moved in a helper somewhere.",
+      "range": {
+        "startLine": 599,
+        "startChar": 29,
+        "endLine": 601,
+        "endChar": 10
+      },
+      "revId": "c41acfca6ca24e603bc6cb98a843aa18d25882c6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
