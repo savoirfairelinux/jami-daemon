@@ -69,7 +69,7 @@ public:
 
     DRing::DataTransferId getId() const override { return id; }
 
-    virtual void accept(const std::string&, std::size_t) {};
+    virtual void accept(const std::string&, std::size_t, const OnVerifyCb& vcb) {};
 
     virtual bool start()
     {
@@ -333,6 +333,7 @@ private:
 
     void sendFile() const
     {
+        JAMI_ERR("@@@ sendFile! SubOutgoingFileTransfer");
         dht::ThreadPool::io().run([this]() {
             while (!input_.eof() && onRecvCb_) {
                 std::vector<char> buf;
@@ -410,6 +411,7 @@ SubOutgoingFileTransfer::closeAndEmit(DRing::DataTransferEventCode code) const n
 bool
 SubOutgoingFileTransfer::write(std::string_view buffer)
 {
+    JAMI_ERR("@@@ WRITE! SubOutgoingFileTransfer");
     if (buffer.empty())
         return true;
     if (not peerReady_ and headerSent_) {
@@ -550,9 +552,11 @@ public:
 
     void requestFilename(const std::function<void(const std::string&)>& cb);
 
-    void accept(const std::string&, std::size_t offset) override;
+    void accept(const std::string&, std::size_t offset, const OnVerifyCb& vcb) override;
 
     bool write(std::string_view data) override;
+
+    void setFilename(const std::string& filename);
 
     void cancel() override
     {
@@ -565,6 +569,7 @@ private:
     IncomingFileTransfer() = delete;
 
     DRing::DataTransferId internalId_;
+    OnVerifyCb vcb_ {};
 
     std::ofstream fout_;
     std::mutex cbMtx_ {};
@@ -582,6 +587,13 @@ IncomingFileTransfer::IncomingFileTransfer(const DRing::DataTransferInfo& info,
 
     info_ = info;
     info_.flags |= (uint32_t) 1 << int(DRing::DataTransferFlags::direction); // incoming
+}
+
+void
+IncomingFileTransfer::setFilename(const std::string& filename)
+{
+    JAMI_ERR("@@@ IncomingFileTransfer::setFilename()");
+    info_.path = filename;
 }
 
 void
@@ -607,6 +619,7 @@ IncomingFileTransfer::requestFilename(const std::function<void(const std::string
 bool
 IncomingFileTransfer::start()
 {
+    JAMI_ERR("@@@ IncomingFileTransfer::start()");
     if (!DataTransfer::start())
         return false;
 
@@ -640,8 +653,15 @@ IncomingFileTransfer::close() noexcept
 
     fout_.close();
 
+    JAMI_ERR("@@@ %p", this);
     JAMI_DBG() << "[FTP] file closed, rx " << info_.bytesProgress << " on " << info_.totalSize;
     if (info_.bytesProgress >= info_.totalSize) {
+        if (vcb_) {
+            if (!vcb_(fileutils::sha3File(info_.path))) {
+                JAMI_DBG() << "[FTP] Incorrect sha3sum - erasing " << info_.path;
+                fileutils::remove(info_.path, true);
+            }
+        }
         if (internalCompletionCb_)
             internalCompletionCb_(info_.path);
         emit(DRing::DataTransferEventCode::finished);
@@ -650,8 +670,9 @@ IncomingFileTransfer::close() noexcept
 }
 
 void
-IncomingFileTransfer::accept(const std::string& filename, std::size_t offset)
+IncomingFileTransfer::accept(const std::string& filename, std::size_t offset, const OnVerifyCb& vcb)
 {
+    vcb_ = std::move(vcb);
     // TODO: offset?
     (void) offset;
 
@@ -668,17 +689,27 @@ IncomingFileTransfer::accept(const std::string& filename, std::size_t offset)
 bool
 IncomingFileTransfer::write(std::string_view buffer)
 {
+    JAMI_ERR("@@@IncomingFileTransfer::write");
     if (buffer.empty())
         return true;
+    JAMI_ERR("@@@IncomingFileTransfer::write2");
     fout_ << buffer;
     if (!fout_)
         return false;
+    JAMI_ERR("@@@IncomingFileTransfer::write3");
     std::lock_guard<std::mutex> lk {infoMutex_};
     info_.bytesProgress += buffer.size();
     return true;
 }
 
 //==============================================================================
+
+struct WaitingRequest
+{
+    std::string sha3sum;
+    std::string path;
+    bool in_progress;
+};
 
 class TransferManager::Impl
 {
@@ -696,6 +727,8 @@ public:
     std::mutex mapMutex_ {};
     std::map<DRing::DataTransferId, std::shared_ptr<OutgoingFileTransfer>> oMap_ {};
     std::map<DRing::DataTransferId, std::shared_ptr<IncomingFileTransfer>> iMap_ {};
+    std::mutex waitingMtx_ {};
+    std::map<DRing::DataTransferId, WaitingRequest> waitingIds_ {};
 };
 
 TransferManager::TransferManager(const std::string& accountId,
@@ -707,7 +740,10 @@ TransferManager::TransferManager(const std::string& accountId,
 TransferManager::~TransferManager() {}
 
 DRing::DataTransferId
-TransferManager::sendFile(const std::string& path, const InternalCompletionCb& icb)
+TransferManager::sendFile(const std::string& path,
+                          const InternalCompletionCb& icb,
+                          const std::string& deviceId,
+                          DRing::DataTransferId resendId)
 {
     // IMPLEMENTATION NOTE: requestPeerConnection() may call the given callback a multiple time.
     // This happen when multiple agents handle communications of the given peer for the given
@@ -717,16 +753,17 @@ TransferManager::sendFile(const std::string& path, const InternalCompletionCb& i
         return {};
     }
 
-    auto tid = generateUID();
+    auto tid = resendId ? resendId : generateUID();
     std::size_t found = path.find_last_of(DIR_SEPARATOR_CH);
     auto filename = path.substr(found + 1);
 
     DRing::DataTransferInfo info;
     info.accountId = pimpl_->accountId_;
     info.author = account->getUsername();
-    if (pimpl_->isConversation_)
+    if (pimpl_->isConversation_) {
         info.conversationId = pimpl_->to_;
-    else
+        info.peer = deviceId;
+    } else
         info.peer = pimpl_->to_;
     info.path = path;
     info.displayName = filename;
@@ -734,7 +771,12 @@ TransferManager::sendFile(const std::string& path, const InternalCompletionCb& i
 
     auto transfer = std::make_shared<OutgoingFileTransfer>(tid, info, icb);
     {
+        // TODO ! Link if not finished or replace
         std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
+        auto it = pimpl_->oMap_.find(tid);
+        if (it != pimpl_->oMap_.end()) {
+            pimpl_->oMap_.erase(it);
+        }
         pimpl_->oMap_.emplace(tid, transfer);
     }
     transfer->emit(DRing::DataTransferEventCode::created);
@@ -755,7 +797,8 @@ TransferManager::sendFile(const std::string& path, const InternalCompletionCb& i
                     transfer->cancel();
                     transfer->close();
                 }
-            });
+            },
+            !resendId /* only add to history if we not resend a file */);
     } catch (const std::exception& ex) {
         JAMI_ERR() << "[XFER] exception during sendFile(): " << ex.what();
         return {};
@@ -773,18 +816,29 @@ TransferManager::acceptFile(const DRing::DataTransferId& id, const std::string& 
         JAMI_WARN("Cannot accept %lu, request not found", id);
         return false;
     }
-    it->second->accept(path, 0);
+    it->second->accept(path, 0, [this, id](const std::string& sha3sum) {
+        std::lock_guard<std::mutex> lk(pimpl_->waitingMtx_);
+        auto it = pimpl_->waitingIds_.find(id);
+        if (it == pimpl_->waitingIds_.end()) {
+            return true; // No validation to do
+        }
+        auto res = it->second.sha3sum == sha3sum;
+        return res;
+    });
     return true;
 }
 
 bool
 TransferManager::cancel(const DRing::DataTransferId& id)
 {
+    JAMI_ERR("@@@ CANCEL");
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     auto it = pimpl_->iMap_.find(id);
     if (it != pimpl_->iMap_.end()) {
-        if (it->second)
+        if (it->second) {
+            JAMI_ERR("@@@ CLOSE INCOMING");
             it->second->close();
+        }
         return true;
     }
     auto itO = pimpl_->oMap_.find(id);
@@ -842,18 +896,57 @@ TransferManager::onIncomingFileRequest(const DRing::DataTransferInfo& info,
                                        const std::function<void(const IncomingFileInfo&)>& cb,
                                        const InternalCompletionCb& icb)
 {
+    std::string filename;
+    auto it = pimpl_->waitingIds_.find(id);
+    if (it != pimpl_->waitingIds_.end()) {
+        // TODO remove in_progress. Check if finished.
+        auto accept = !it->second.in_progress;
+        if (accept) {
+            // Accept!
+            filename = it->second.path;
+            it->second.in_progress = true;
+        } else {
+            JAMI_DBG("Declining request for %lu. Already downloading the file", id);
+            if (cb)
+                cb({id, nullptr});
+            return;
+        }
+    }
+
     auto transfer = std::make_shared<IncomingFileTransfer>(info, id, icb);
     {
         std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
-        pimpl_->iMap_.emplace(id, transfer);
+        auto it2 = pimpl_->iMap_.find(id);
+        if (it2 != pimpl_->iMap_.end())
+            pimpl_->iMap_.erase(it2);
+        auto p = pimpl_->iMap_.emplace(id, transfer);
+        JAMI_ERR("@@@ OK? %u", p.second);
     }
     transfer->emit(DRing::DataTransferEventCode::created);
-    transfer->requestFilename([transfer, id, cb = std::move(cb)](const std::string& filename) {
-        if (!filename.empty() && transfer->start())
-            cb({id, std::static_pointer_cast<Stream>(transfer)});
-        else
-            cb({id, nullptr});
-    });
+    if (!filename.empty()) {
+        transfer->setFilename(filename);
+        if (transfer->start()) {
+            JAMI_DBG("Accepting request for %lu. Download %s", id, filename.c_str());
+            if (cb)
+                cb({id, std::static_pointer_cast<Stream>(transfer)});
+        }
+    } else {
+        transfer->requestFilename([transfer, id, cb = std::move(cb)](const std::string& filename) {
+            if (!filename.empty() && transfer->start())
+                cb({id, std::static_pointer_cast<Stream>(transfer)});
+            else
+                cb({id, nullptr});
+        });
+    }
+}
+
+void
+TransferManager::waitForTransfer(const DRing::DataTransferId& id,
+                                 const std::string& sha3sum,
+                                 const std::string& path)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->waitingMtx_);
+    pimpl_->waitingIds_[id] = {sha3sum, path, false};
 }
 
 } // namespace jami

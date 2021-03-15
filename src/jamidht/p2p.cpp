@@ -228,6 +228,8 @@ DhtPeerConnector::requestConnection(
         return;
     }
 
+    std::string channelName = "file://" + std::to_string(tid);
+
     // Notes for reader:
     // 1) dht.getPublicAddress() suffers of a non-usability into forEachDevice() callbacks.
     //    If you call it in forEachDevice callbacks, it'll never not return...
@@ -236,7 +238,6 @@ DhtPeerConnector::requestConnection(
     // 2) anyway its good to keep this processing here in case of multiple device
     //    as the result is the same for each device.
     auto addresses = acc->publicAddresses();
-    std::string channelName = "file://" + std::to_string(tid);
     std::vector<DeviceId> devices;
     if (!info.conversationId.empty()) {
         // TODO remove preSwarmCompat
@@ -255,6 +256,11 @@ DhtPeerConnector::requestConnection(
         if (!preSwarmCompat)
             channelName = "data-transfer://" + info.conversationId + "/" + acc->currentDeviceId()
                           + "/" + std::to_string(tid);
+        // If peer is not empty this means that we want to send to one device only
+        if (!info.peer.empty()) {
+            acc->connectionManager().connectDevice(DeviceId(info.peer), channelName, channelReadyCb);
+            return;
+        }
     } else {
         devices.emplace_back(DeviceId(info.peer));
     }
