@@ -94,7 +94,8 @@ public:
 
     // For Channeled transports
     std::mutex channeledIncomingMtx_;
-    std::map<DRing::DataTransferId, std::unique_ptr<ChanneledIncomingTransfer>> channeledIncoming_;
+    std::map<DRing::DataTransferId, std::vector<std::unique_ptr<ChanneledIncomingTransfer>>>
+        channeledIncoming_;
     std::mutex channeledOutgoingMtx_;
     // TODO change <<id, peer>, Channeled>
     std::map<DRing::DataTransferId, std::vector<std::shared_ptr<ChanneledOutgoingTransfer>>>
@@ -120,19 +121,32 @@ DhtPeerConnector::Impl::closeConnection(const DRing::DataTransferId& tid, const 
         auto shared = w.lock();
         if (!shared)
             return;
+        std::vector<std::unique_ptr<ChanneledIncomingTransfer>> ifiles;
         {
             std::lock_guard<std::mutex> lk(shared->channeledIncomingMtx_);
-            shared->channeledIncoming_.erase(tid);
+            auto it = shared->channeledIncoming_.find(tid);
+            if (it != shared->channeledIncoming_.end()) {
+                for (auto chanIt = it->second.begin(); chanIt != it->second.end();) {
+                    if ((*chanIt)->peer() == peer) {
+                        ifiles.emplace_back(std::move(*chanIt));
+                        chanIt = it->second.erase(chanIt);
+                    } else {
+                        ++chanIt;
+                    }
+                }
+                if (it->second.empty())
+                    shared->channeledIncoming_.erase(it);
+            }
         }
         // Cancel outgoing files
-        std::vector<std::shared_ptr<ChanneledOutgoingTransfer>> files;
+        std::vector<std::shared_ptr<ChanneledOutgoingTransfer>> ofiles;
         {
             std::lock_guard<std::mutex> lk(shared->channeledOutgoingMtx_);
             auto it = shared->channeledOutgoing_.find(tid);
             if (it != shared->channeledOutgoing_.end()) {
                 for (auto chanIt = it->second.begin(); chanIt != it->second.end();) {
                     if ((*chanIt)->peer() == peer) {
-                        files.emplace_back(std::move(*chanIt));
+                        ofiles.emplace_back(std::move(*chanIt));
                         chanIt = it->second.erase(chanIt);
                     } else {
                         ++chanIt;
@@ -228,6 +242,8 @@ DhtPeerConnector::requestConnection(
         return;
     }
 
+    std::string channelName = "file://" + std::to_string(tid);
+
     // Notes for reader:
     // 1) dht.getPublicAddress() suffers of a non-usability into forEachDevice() callbacks.
     //    If you call it in forEachDevice callbacks, it'll never not return...
@@ -236,7 +252,6 @@ DhtPeerConnector::requestConnection(
     // 2) anyway its good to keep this processing here in case of multiple device
     //    as the result is the same for each device.
     auto addresses = acc->publicAddresses();
-    std::string channelName = "file://" + std::to_string(tid);
     std::vector<DeviceId> devices;
     if (!info.conversationId.empty()) {
         // TODO remove preSwarmCompat
@@ -255,6 +270,11 @@ DhtPeerConnector::requestConnection(
         if (!preSwarmCompat)
             channelName = "data-transfer://" + info.conversationId + "/" + acc->currentDeviceId()
                           + "/" + std::to_string(tid);
+        // If peer is not empty this means that we want to send to one device only
+        if (!info.peer.empty()) {
+            acc->connectionManager().connectDevice(DeviceId(info.peer), channelName, channelReadyCb);
+            return;
+        }
     } else {
         devices.emplace_back(DeviceId(info.peer));
     }
@@ -307,18 +327,32 @@ DhtPeerConnector::onIncomingConnection(const DRing::DataTransferInfo& info,
         });
     {
         std::lock_guard<std::mutex> lk(pimpl_->channeledIncomingMtx_);
-        pimpl_->channeledIncoming_.emplace(id, std::move(incomingFile));
+        pimpl_->channeledIncoming_[id].emplace_back(std::move(incomingFile));
     }
-    channel->onShutdown([this, id]() {
+    channel->onShutdown([this, id, peer_id]() {
         JAMI_INFO("Channel down for incoming transfer with id(%lu)", id);
-        dht::ThreadPool::io().run([w = pimpl_->weak(), id] {
+        dht::ThreadPool::io().run([w = pimpl_->weak(), id, peer_id] {
             auto shared = w.lock();
             if (!shared)
                 return;
             // Cancel incoming files
-            // Note: erasing the channeled transfer will close the file via ftp_->close()
-            std::lock_guard<std::mutex> lk(shared->channeledIncomingMtx_);
-            shared->channeledIncoming_.erase(id);
+            {
+                std::lock_guard<std::mutex> lk(shared->channeledIncomingMtx_);
+                auto incomingTransfers = shared->channeledIncoming_.find(id);
+                if (incomingTransfers != shared->channeledIncoming_.end()) {
+                    auto& currentTransfers = incomingTransfers->second;
+                    auto it = currentTransfers.begin();
+                    while (it != currentTransfers.end()) {
+                        auto& transfer = *it;
+                        if (transfer && transfer->peer() == peer_id)
+                            it = currentTransfers.erase(it);
+                        else
+                            ++it;
+                    }
+                    if (currentTransfers.empty())
+                        shared->channeledIncoming_.erase(incomingTransfers);
+                }
+            }
         });
     });
 }
