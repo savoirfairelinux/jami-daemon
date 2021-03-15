@@ -707,7 +707,10 @@ TransferManager::TransferManager(const std::string& accountId,
 TransferManager::~TransferManager() {}
 
 DRing::DataTransferId
-TransferManager::sendFile(const std::string& path, const InternalCompletionCb& icb)
+TransferManager::sendFile(const std::string& path,
+                          const InternalCompletionCb& icb,
+                          const std::string& deviceId,
+                          DRing::DataTransferId resendId)
 {
     // IMPLEMENTATION NOTE: requestPeerConnection() may call the given callback a multiple time.
     // This happen when multiple agents handle communications of the given peer for the given
@@ -717,16 +720,17 @@ TransferManager::sendFile(const std::string& path, const InternalCompletionCb& i
         return {};
     }
 
-    auto tid = generateUID();
+    auto tid = resendId ? resendId : generateUID();
     std::size_t found = path.find_last_of(DIR_SEPARATOR_CH);
     auto filename = path.substr(found + 1);
 
     DRing::DataTransferInfo info;
     info.accountId = pimpl_->accountId_;
     info.author = account->getUsername();
-    if (pimpl_->isConversation_)
+    if (pimpl_->isConversation_) {
         info.conversationId = pimpl_->to_;
-    else
+        info.peer = deviceId;
+    } else
         info.peer = pimpl_->to_;
     info.path = path;
     info.displayName = filename;
@@ -735,6 +739,7 @@ TransferManager::sendFile(const std::string& path, const InternalCompletionCb& i
     auto transfer = std::make_shared<OutgoingFileTransfer>(tid, info, icb);
     {
         std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
+        // TODO if oMap_[tid] exists, add to OutgoingFileTransfer a new sub and not recreate!
         pimpl_->oMap_.emplace(tid, transfer);
     }
     transfer->emit(DRing::DataTransferEventCode::created);
@@ -755,7 +760,8 @@ TransferManager::sendFile(const std::string& path, const InternalCompletionCb& i
                     transfer->cancel();
                     transfer->close();
                 }
-            });
+            },
+            !resendId /* only add to history if we not resend a file */);
     } catch (const std::exception& ex) {
         JAMI_ERR() << "[XFER] exception during sendFile(): " << ex.what();
         return {};

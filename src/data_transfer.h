@@ -46,7 +46,10 @@ public:
     TransferManager(const std::string& accountId, const std::string& to, bool isConversation = true);
     ~TransferManager();
 
-    DRing::DataTransferId sendFile(const std::string& path, const InternalCompletionCb& icb = {});
+    DRing::DataTransferId sendFile(const std::string& path,
+                                   const InternalCompletionCb& icb = {},
+                                   const std::string& deviceId = {},
+                                   DRing::DataTransferId resendId = {});
 
     bool acceptFile(const DRing::DataTransferId& id, const std::string& path);
 
