@@ -300,7 +300,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
     };
 
     const std::map<std::string, SharedCallback> dataTransferEvHandlers = {
-        exportable_callback<DataTransferSignal::DataTransferEvent>(bind(&DataTransferCallback::dataTransferEvent, dataM, _1, _2, _3, _4))
+        exportable_callback<DataTransferSignal::DataTransferEvent>(bind(&DataTransferCallback::dataTransferEvent, dataM, _1, _2, _3, _4)),
     };
 
     const std::map<std::string, SharedCallback> videoEvHandlers = {

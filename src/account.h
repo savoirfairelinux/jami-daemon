@@ -185,6 +185,10 @@ public:
 
     virtual void setIsComposing(const std::string& /*conversationUri*/, bool /*isWriting*/) {};
 
+    virtual void askForTransfer(const std::string& /*conversationUri*/,
+                                const std::string& /*interactionId*/,
+                                const std::string& /*path*/) {};
+
     virtual void onIsComposing(const std::string& /*conversationId*/,
                                const std::string& /*peer*/,
                                bool /*isWriting*/);
@@ -321,6 +325,11 @@ public:
                                 const std::string& /*deviceId*/,
                                 const std::string& /*conversationId*/,
                                 const std::string& /*commitId*/) {};
+
+    virtual void onAskForTransfer(const std::string& /*peer*/,
+                                  const std::string& /*deviceId*/,
+                                  const std::string& /*conversationId*/,
+                                  const std::string& /*interactionId*/) {};
 
     // Invites
     virtual void onConversationRequest(const std::string& /*from*/, const Json::Value&) {};
