@@ -131,6 +131,19 @@ DRING_PUBLIC DataTransferError acceptFileTransfer(const std::string& accountId,
                                                   const std::string& file_path,
                                                   int64_t offset) noexcept;
 
+/// Asks for retransferring a file. Generally this means that the file is missing
+/// from the conversation
+///
+/// \param accountId
+/// \param conversationId
+/// \param interactionId
+/// \param path
+///
+DRING_PUBLIC void askForTransfer(const std::string& accountId,
+                                 const std::string& conversationUri,
+                                 const std::string& interactionId,
+                                 const std::string& path) noexcept;
+
 /// Refuse or abort an outgoing or an incoming file transfer.
 ///
 /// Use this function when you receive an incoming or when you want to abort an outgoing
