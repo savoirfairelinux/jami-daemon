@@ -359,7 +359,8 @@ public:
         bool isVCard,
         const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
             channeledConnectedCb,
-        const std::function<void(const std::string&)>& onChanneledCancelled);
+        const std::function<void(const std::string&)>& onChanneledCancelled,
+        bool addToHistory);
 
     ///
     /// Close a E2E connection between a given peer and a given transfer id.
@@ -438,6 +439,8 @@ public:
 
 #ifdef DRING_TESTABLE
     ConnectionManager& connectionManager() { return *connectionManager_; }
+
+    void noSha3sumVerification(bool newValue) { noSha3sumVerification_ = newValue; }
 #endif
 
     /**
@@ -535,6 +538,11 @@ public:
                         const std::string& deviceId,
                         const std::string& conversationId,
                         const std::string& commitId) override;
+
+    virtual void onAskForTransfer(const std::string& peer,
+                                  const std::string& deviceId,
+                                  const std::string& conversationId,
+                                  const std::string& interactionId) override;
     /**
      * Pull remote device (do not do it if commitId is already in the current repo)
      * @param peer              Contact URI
@@ -564,7 +572,12 @@ public:
     // File transfer
     DRing::DataTransferId sendFile(const std::string& to,
                                    const std::string& path,
-                                   const InternalCompletionCb& icb = {});
+                                   const InternalCompletionCb& icb = {},
+                                   const std::string& deviceId = {},
+                                   DRing::DataTransferId resendId = {});
+    void askForTransfer(const std::string& conversationUri,
+                        const std::string& interactionId,
+                        const std::string& path) override;
 
     void onIncomingFileRequest(const DRing::DataTransferInfo& info,
                                const DRing::DataTransferId& id,
@@ -999,6 +1012,8 @@ private:
     //// File transfer
     std::mutex transferMutex_ {};
     std::map<std::string, TransferManager> transferManagers_ {};
+
+    bool noSha3sumVerification_ {false};
 };
 
 static inline std::ostream&

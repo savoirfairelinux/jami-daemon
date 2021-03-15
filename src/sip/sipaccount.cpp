@@ -194,7 +194,9 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
     JAMI_DBG() << *this << "Calling SIP peer " << toUrl;
 
     auto& manager = Manager::instance();
-    auto call = manager.callFactory.newSipCall(shared(), Call::CallType::OUTGOING, volatileCallDetails);
+    auto call = manager.callFactory.newSipCall(shared(),
+                                               Call::CallType::OUTGOING,
+                                               volatileCallDetails);
     call->setSecure(isTlsEnabled());
 
     if (isIP2IP()) {
