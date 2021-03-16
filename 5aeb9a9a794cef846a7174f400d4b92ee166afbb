@@ -1,0 +1,188 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "85037c5b_6e104240",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 4
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-16T18:33:59Z",
+      "side": 1,
+      "message": "typo",
+      "range": {
+        "startLine": 10,
+        "startChar": 26,
+        "endLine": 10,
+        "endChar": 38
+      },
+      "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c0ac3d5c_300abc0f",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-16T18:33:59Z",
+      "side": 1,
+      "message": "observer should be protected",
+      "range": {
+        "startLine": 243,
+        "startChar": 2,
+        "endLine": 243,
+        "endChar": 20
+      },
+      "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4625b9cf_1b0d7d9e",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 384,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-16T18:33:59Z",
+      "side": 1,
+      "message": "should be weak to not depends on getUpnContextScheduler TTL",
+      "range": {
+        "startLine": 384,
+        "startChar": 63,
+        "endLine": 384,
+        "endChar": 67
+      },
+      "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a7d76edb_3b377ff6",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 384,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-16T18:33:59Z",
+      "side": 1,
+      "message": "not related to your patch but getUpnContextScheduler() should at least return a const ScheduledExecutor* as client must not release it.",
+      "range": {
+        "startLine": 384,
+        "startChar": 25,
+        "endLine": 384,
+        "endChar": 47
+      },
+      "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "062a625f_3c58662c",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 583,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-16T18:33:59Z",
+      "side": 1,
+      "message": "this should be passed via a weak_ptr for ttl correctness",
+      "range": {
+        "startLine": 583,
+        "startChar": 43,
+        "endLine": 583,
+        "endChar": 47
+      },
+      "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6c1545e5_68244f47",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 936,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-16T18:33:59Z",
+      "side": 1,
+      "message": "why?",
+      "range": {
+        "startLine": 936,
+        "startChar": 35,
+        "endLine": 936,
+        "endChar": 48
+      },
+      "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ddb0a1cf_444b703b",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1140,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-16T18:33:59Z",
+      "side": 1,
+      "message": "no need to convert to a string if you reconvert it to a const char* just after",
+      "range": {
+        "startLine": 1140,
+        "startChar": 3,
+        "endLine": 1140,
+        "endChar": 63
+      },
+      "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3d9078bb_c0b4beaf",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-16T18:33:59Z",
+      "side": 1,
+      "message": "not in your patch, but typo",
+      "range": {
+        "startLine": 132,
+        "startChar": 14,
+        "endLine": 132,
+        "endChar": 21
+      },
+      "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
