@@ -62,6 +62,7 @@ class Controller;
 } // namespace upnp
 
 class Call;
+class CallFactory;
 class SystemCodecContainer;
 struct IceTransportOptions;
 
@@ -89,6 +90,8 @@ public:
      * Virtual destructor
      */
     virtual ~Account();
+
+    virtual const std::unique_ptr<CallFactory>& getCallFactory() = 0;
 
     /**
      * Free all ressources related to this account.
@@ -326,7 +329,10 @@ public:
     bool isLocalModeratorsEnabled() const { return localModeratorsEnabled_; }
     void enableLocalModerators(bool isModEnabled) { localModeratorsEnabled_ = isModEnabled; }
     bool isAllModerators() const { return allModeratorsEnabled_; }
-    void setAllModerators(bool isAllModeratorEnabled) { allModeratorsEnabled_ = isAllModeratorEnabled; }
+    void setAllModerators(bool isAllModeratorEnabled)
+    {
+        allModeratorsEnabled_ = isAllModeratorEnabled;
+    }
 
 public: // virtual methods that has to be implemented by concrete classes
     /**

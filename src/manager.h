@@ -64,13 +64,13 @@ class JamiAccount;
 class SIPVoIPLink;
 class JamiPluginManager;
 
-
 /** Manager (controller) of daemon */
 // TODO DRING_PUBLIC only if tests
 class DRING_TESTABLE Manager
 {
 private:
     std::mt19937_64 rand_;
+
 public:
     // TODO DRING_PUBLIC only if tests
     static DRING_TESTABLE Manager& instance();
@@ -878,7 +878,7 @@ public:
         const std::string& accountId,
         const std::map<std::string, std::string>& volatileCallDetails = {});
 
-    CallFactory callFactory;
+    // CallFactory callFactory;
 
     IceTransportFactory& getIceTransportFactory();
 
@@ -934,15 +934,12 @@ public:
     void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
     void hangupParticipant(const std::string& confId, const std::string& participant);
 
-    void setDefaultModerator(const std::string& accountID,
-                                const std::string& peerURI,
-                                bool state);
+    void setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state);
     std::vector<std::string> getDefaultModerators(const std::string& accountID);
     void enableLocalModerators(const std::string& accountID, bool state);
     bool isLocalModeratorsEnabled(const std::string& accountID);
     void setAllModerators(const std::string& accountID, bool allModerators);
     bool isAllModerators(const std::string& accountID);
-
 
 private:
     Manager();

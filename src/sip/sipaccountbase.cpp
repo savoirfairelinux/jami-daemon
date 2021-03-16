@@ -65,9 +65,33 @@ SIPAccountBase::SIPAccountBase(const std::string& accountID)
                      fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID()
                          + DIR_SEPARATOR_STR "messages")
     , link_(Manager::instance().sipVoIPLink())
-{}
+{
+    callFactory_ = std::make_unique<CallFactory>(rand, createCallCb);
+}
 
 SIPAccountBase::~SIPAccountBase() {}
+
+std::shared_ptr<Call>
+SIPAccountBase::createCallCb(const std::shared_ptr<Account>& account,
+                             const std::string& id,
+                             Call::CallType type,
+                             const std::map<std::string, std::string>& details)
+{
+    auto sipAccBase = std::dynamic_pointer_cast<SIPAccountBase>(account);
+    assert(sipAccBase);
+    return std::dynamic_pointer_cast<Call>(std::make_shared<SIPCall>(sipAccBase, id, type, details));
+}
+
+std::shared_ptr<SIPCall>
+SIPAccountBase::newSipCall(const std::shared_ptr<Account>& account,
+                           Call::CallType type,
+                           const std::map<std::string, std::string>& details)
+{
+    assert(callFactory_);
+
+    return std::dynamic_pointer_cast<SIPCall>(
+        callFactory_->newCall(account, Call::CallType::INCOMING, details));
+}
 
 bool
 SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,

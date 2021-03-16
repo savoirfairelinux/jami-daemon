@@ -179,8 +179,7 @@ SIPAccount::newIncomingCall(const std::string& from UNUSED,
                             const std::map<std::string, std::string>& details,
                             const std::shared_ptr<SipTransport>&)
 {
-    auto& manager = Manager::instance();
-    return manager.callFactory.newSipCall(shared(), Call::CallType::INCOMING, details);
+    return newSipCall(shared(), Call::CallType::INCOMING, details);
 }
 
 template<>
@@ -193,8 +192,9 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
 
     JAMI_DBG() << *this << "Calling SIP peer " << toUrl;
 
-    auto& manager = Manager::instance();
-    auto call = manager.callFactory.newSipCall(shared(), Call::CallType::OUTGOING, volatileCallDetails);
+    assert(callFactory_);
+
+    auto call = newSipCall(shared(), Call::CallType::OUTGOING, volatileCallDetails);
     call->setSecure(isTlsEnabled());
 
     if (isIP2IP()) {
@@ -258,7 +258,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
 
     if (created) {
         std::weak_ptr<SIPCall> weak_call = call;
-        manager.scheduler().run([this, weak_call] {
+        Manager::instance().scheduler().run([this, weak_call] {
             if (auto call = weak_call.lock()) {
                 if (not SIPStartCall(call)) {
                     JAMI_ERR("Could not send outgoing INVITE request for new call");

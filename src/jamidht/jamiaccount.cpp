@@ -313,7 +313,9 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
                                                            std::chrono::hours(24 * 7)));
         std::getline(is, proxyServerCached_);
     } catch (const std::exception& e) {
-        JAMI_DBG("[Account %s] Can't load proxy URL from cache: %s", getAccountID().c_str(), e.what());
+        JAMI_DBG("[Account %s] Can't load proxy URL from cache: %s",
+                 getAccountID().c_str(),
+                 e.what());
     }
 
     setActiveCodecs({});
@@ -368,9 +370,7 @@ JamiAccount::newIncomingCall(const std::string& from,
                     if (cit->transport != sipTr)
                         continue;
 
-                    auto call = Manager::instance()
-                                    .callFactory.newSipCall(shared(),
-                                                                  Call::CallType::INCOMING);
+                    auto call = newSipCall(shared(), Call::CallType::INCOMING);
                     call->setPeerUri(RING_URI_PREFIX + from);
                     call->setPeerNumber(from);
                     call->updateDetails(details);
@@ -408,10 +408,8 @@ JamiAccount::newOutgoingCall(std::string_view toUrl,
 {
     auto suffix = stripPrefix(toUrl);
     JAMI_DBG() << *this << "Calling DHT peer " << suffix;
-    auto& manager = Manager::instance();
-    auto call = manager.callFactory.newSipCall(shared(),
-                                                     Call::CallType::OUTGOING,
-                                                     volatileCallDetails);
+
+    auto call = newSipCall(shared(), Call::CallType::OUTGOING, volatileCallDetails);
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
 
@@ -512,10 +510,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     std::unique_lock<std::mutex> lk(sipConnsMtx_);
     // NOTE: dummyCall is a call used to avoid to mark the call as failed if the
     // cached connection is failing with ICE (close event still not detected).
-    auto& manager = Manager::instance();
-    auto dummyCall = manager.callFactory.newSipCall(shared(),
-                                                          Call::CallType::OUTGOING,
-                                                          call->getDetails());
+    auto dummyCall = newSipCall(shared(), Call::CallType::OUTGOING, call->getDetails());
     dummyCall->setIPToIP(true);
     dummyCall->setSecure(isTlsEnabled());
     call->addSubCall(*dummyCall);
@@ -536,8 +531,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 and state != Call::ConnectionState::TRYING)
                 return;
 
-            auto dev_call = Manager::instance()
-                               .callFactory.newSipCall(shared(), Call::CallType::OUTGOING, call->getDetails());
+            auto dev_call = newSipCall(shared(), Call::CallType::OUTGOING, call->getDetails());
             dev_call->setIPToIP(true);
             dev_call->setSecure(isTlsEnabled());
             dev_call->setState(Call::ConnectionState::TRYING);
@@ -581,9 +575,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         JAMI_WARN("[call %s] A channeled socket is detected with this peer.",
                   call->getCallId().c_str());
 
-        auto dev_call = manager.callFactory.newSipCall(shared(),
-                                                             Call::CallType::OUTGOING,
-                                                             call->getDetails());
+        auto dev_call = newSipCall(shared(), Call::CallType::OUTGOING, call->getDetails());
         dev_call->setIPToIP(true);
         dev_call->setSecure(isTlsEnabled());
         dev_call->setTransport(transport);
@@ -2404,7 +2396,7 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg,
                           const std::shared_ptr<dht::crypto::Certificate>& from_cert,
                           const dht::InfoHash& from)
 {
-    auto call = Manager::instance().callFactory.newSipCall(shared(), Call::CallType::INCOMING);
+    auto call = newSipCall(shared(), Call::CallType::INCOMING);
     if (!call) {
         return;
     }
@@ -3545,7 +3537,8 @@ JamiAccount::cacheTurnServers()
             this_->isRefreshing_ = false;
             return;
         }
-        JAMI_INFO("[Account %s] Refresh cache for TURN server resolution", this_->getAccountID().c_str());
+        JAMI_INFO("[Account %s] Refresh cache for TURN server resolution",
+                  this_->getAccountID().c_str());
         // Retrieve old cached value if available.
         // This means that we directly get the correct value when launching the application on the
         // same network
@@ -3629,12 +3622,16 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
     auto id = std::make_pair(peerId, deviceId);
 
     if (sipConns_.find(id) != sipConns_.end()) {
-        JAMI_DBG("[Account %s] A SIP connection with %s already exists", getAccountID().c_str(), deviceId.to_c_str());
+        JAMI_DBG("[Account %s] A SIP connection with %s already exists",
+                 getAccountID().c_str(),
+                 deviceId.to_c_str());
         return;
     }
     sipConns_[id] = {};
     // If not present, create it
-    JAMI_INFO("[Account %s] Ask %s for a new SIP channel", getAccountID().c_str(), deviceId.to_c_str());
+    JAMI_INFO("[Account %s] Ask %s for a new SIP channel",
+              getAccountID().c_str(),
+              deviceId.to_c_str());
     if (!connectionManager_)
         return;
     connectionManager_->connectDevice(deviceId,
@@ -3822,7 +3819,8 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         return v.channel == socket;
     });
     if (conn != connections.end()) {
-        JAMI_WARN("[Account %s] Channel socket already cached with this peer", getAccountID().c_str());
+        JAMI_WARN("[Account %s] Channel socket already cached with this peer",
+                  getAccountID().c_str());
         return;
     }
 
@@ -3857,7 +3855,9 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     sip_tr->setAccount(shared());
     // Store the connection
     connections.emplace_back(SipConnection {sip_tr, socket});
-    JAMI_WARN("[Account %s] New SIP channel opened with %s", getAccountID().c_str(), deviceId.to_c_str());
+    JAMI_WARN("[Account %s] New SIP channel opened with %s",
+              getAccountID().c_str(),
+              deviceId.to_c_str());
     lk.unlock();
 
     sendProfile(deviceId.toString());

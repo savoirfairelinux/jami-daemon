@@ -273,8 +273,9 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
     }
 #ifndef __ANDROID__
     if (applyRestart) {
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(callId)) {
-            call->getVideoRtp().restartSender();
+        if (auto call = Manager::instance().getCallFromCallID(callId)) {
+            if (auto sipCall = std::dynamic_pointer_cast<SIPCall>(call))
+                sipCall->getVideoRtp().restartSender();
         }
     }
 #endif

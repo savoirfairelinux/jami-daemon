@@ -711,8 +711,8 @@ Manager::instance()
 }
 
 Manager::Manager()
-    : rand_(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
-    , preferences()
+    //: rand_(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
+    : preferences()
     , voipPreferences()
     , audioPreference()
     , shortcutPreferences()
@@ -722,7 +722,7 @@ Manager::Manager()
 #ifdef ENABLE_VIDEO
     , videoPreferences()
 #endif
-    , callFactory(rand_)
+    //, callFactory(rand_)
     , accountFactory()
     , dataTransfers(std::make_unique<DataTransferFacade>())
     , pimpl_(new ManagerPimpl(*this))
@@ -845,14 +845,17 @@ Manager::finish() noexcept
         return;
 
     try {
-        // Forbid call creation
-        callFactory.forbid();
-
-        // Hangup all remaining active calls
-        JAMI_DBG("Hangup %zu remaining call(s)", callFactory.callCount());
-        for (const auto call : callFactory.getAllCalls())
-            hangupCall(call->getCallId());
-        callFactory.clear();
+        for (const auto& account : getAllAccounts()) {
+            if (auto const& callFactory = account->getCallFactory()) {
+                // Forbid call creation
+                callFactory->forbid();
+                // Hangup remaining calls
+                for (auto const& call : callFactory->getAllCalls()) {
+                    hangupCall(call->getCallId());
+                }
+                callFactory->clear();
+            }
+        }
 
         for (const auto& account : getAllAccounts<JamiAccount>()) {
             if (account->getRegistrationState() == RegistrationState::INITIALIZING)
@@ -908,9 +911,14 @@ Manager::isCurrentCall(const Call& call) const
 bool
 Manager::hasCurrentCall() const
 {
-    for (const auto& call : callFactory.getAllCalls()) {
-        if (!call->isSubcall() && call->getStateStr() == DRing::Call::StateEvent::CURRENT)
-            return true;
+    for (auto const& account : accountFactory.getAllAccounts()) {
+        if (auto const& callFactory = account->getCallFactory()) {
+            for (const auto& call : callFactory->getAllCalls()) {
+                if (not call->isSubcall()
+                    and call->getStateStr() == DRing::Call::StateEvent::CURRENT)
+                    return true;
+            }
+        }
     }
     return false;
 }
@@ -1383,7 +1391,16 @@ Manager::addMainParticipant(const std::string& conference_id)
 std::shared_ptr<Call>
 Manager::getCallFromCallID(const std::string& callID) const
 {
-    return callFactory.getCall(callID);
+    for (auto const& account : accountFactory.getAllAccounts()) {
+        if (auto const& callFactory = account->getCallFactory()) {
+            if (const auto& call = callFactory->getCall(callID)) {
+                if (not call->isSubcall()
+                    and call->getStateStr() == DRing::Call::StateEvent::CURRENT)
+                    return call;
+            }
+        }
+    }
+    return {};
 }
 
 bool
@@ -1410,7 +1427,14 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
         return false;
     }
 
+#if 1
+    // TODO_MC. Just for testing until we have a unique Call/Conf
+    // ID generator.
+    const std::string id = std::to_string(pimpl_->conferenceMap_.size());
+    auto conf = std::make_shared<Conference>(id);
+#else
     auto conf = std::make_shared<Conference>();
+#endif
 
     pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
 
@@ -1433,6 +1457,9 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
 void
 Manager::createConfFromParticipantList(const std::vector<std::string>& participantList)
 {
+#if 1
+    // TODO_MC. Obsolete/Deprecated/Remove ?
+#else
     // we must at least have 2 participant for a conference
     if (participantList.size() <= 1) {
         JAMI_ERR("Participant number must be higher or equal to 2");
@@ -1464,6 +1491,7 @@ Manager::createConfFromParticipantList(const std::vector<std::string>& participa
         pimpl_->conferenceMap_[conf->getConfID()] = conf;
         emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
     }
+#endif
 }
 
 void
@@ -1915,9 +1943,15 @@ Manager::incomingCall(Call& call, const std::string& accountId)
                 }
             }
             // First call
+#if 1
+            // TODO_MC. Just for testing until we have a unique Call/Conf
+            // ID generator.
+            const std::string id = std::to_string(pimpl_->conferenceMap_.size());
+            auto conf = std::make_shared<Conference>(id);
+#else
             auto conf = std::make_shared<Conference>();
+#endif
             pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
-
             // Bind calls according to their state
             pimpl_->bindCallToConference(*call, *conf);
             conf->detach();
@@ -2828,7 +2862,6 @@ Manager::removeAccounts()
         removeAccount(acc);
 }
 
-
 std::vector<std::string_view>
 Manager::loadAccountOrder() const
 {
@@ -2929,9 +2962,13 @@ std::vector<std::string>
 Manager::getCallList() const
 {
     std::vector<std::string> results;
-    for (const auto& call : callFactory.getAllCalls()) {
-        if (!call->isSubcall())
-            results.push_back(call->getCallId());
+    for (auto const& account : accountFactory.getAllAccounts()) {
+        if (auto const& callFactory = account->getCallFactory()) {
+            for (const auto& call : callFactory->getAllCalls()) {
+                if (not call->isSubcall())
+                    results.push_back(call->getCallId());
+            }
+        }
     }
     return results;
 }

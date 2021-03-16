@@ -32,23 +32,29 @@
 
 namespace jami {
 
-class SIPAccountBase;
-class SIPCall;
+using createFunction
+    = std::function<std::shared_ptr<Call>(const std::shared_ptr<Account>& account,
+                                          const std::string& id,
+                                          Call::CallType type,
+                                          const std::map<std::string, std::string>& details)>;
 
 class CallFactory
 {
 public:
-    CallFactory(std::mt19937_64& rand) : rand_(rand) {}
+    CallFactory(std::mt19937_64& rand, createFunction&& createFunc)
+        : rand_(rand)
+        , createCallCb_(createFunc)
+    {}
 
     /**
-     * Create and register a new SIPCall instance.
+     * Create and register a new Call instance.
      * @param account Account used to create this call
      * @param type The call type (incoming/outgoing)
      * @param details Call details
      */
-    std::shared_ptr<SIPCall> newSipCall(const std::shared_ptr<SIPAccountBase>& account,
-                                        Call::CallType type,
-                                        const std::map<std::string, std::string>& details = {});
+    std::shared_ptr<Call> newCall(const std::shared_ptr<Account>& account,
+                                  Call::CallType type,
+                                  const std::map<std::string, std::string>& details = {});
 
     std::string getNewCallID() const;
 
@@ -71,24 +77,16 @@ public:
      * Return call pointer associated to given ID.Type can optionally be specified.
      */
     std::shared_ptr<Call> getCall(const std::string& id) const;
-    std::shared_ptr<Call> getCall(const std::string& id, Call::LinkType link) const;
-
-    template<class C>
-    std::shared_ptr<C> getCall(const std::string& id) {
-        return std::dynamic_pointer_cast<C>(getCall(id, C::LINK_TYPE));
-    }
 
     /**
      * Return if given call exists. Type can optionally be specified.
      */
     bool hasCall(const std::string& id) const;
-    bool hasCall(const std::string& id, Call::LinkType link) const;
 
     /**
      * Return if calls exist. Type can optionally be specified.
      */
     bool empty() const;
-    bool empty(Call::LinkType link) const;
 
     /**
      * Erase all calls.
@@ -99,19 +97,30 @@ public:
      * Return all calls. Type can optionally be specified.
      */
     std::vector<std::shared_ptr<Call>> getAllCalls() const;
-    std::vector<std::shared_ptr<Call>> getAllCalls(Call::LinkType link) const;
 
     /**
      * Return all call's IDs. Type can optionally be specified.
      */
     std::vector<std::string> getCallIDs() const;
-    std::vector<std::string> getCallIDs(Call::LinkType link) const;
 
     /**
      * Return number of calls. Type can optionally be specified.
      */
     std::size_t callCount() const;
+
+#if 0
+    // TODO_MC. Remove.
+    std::shared_ptr<Call> getCall(const std::string& id, Call::LinkType link) const;
+    template<class C>
+    std::shared_ptr<C> getCall(const std::string& id) {
+        return std::dynamic_pointer_cast<C>(getCall(id, C::LINK_TYPE));
+    }
+    bool hasCall(const std::string& id, Call::LinkType link) const;
+    bool empty(Call::LinkType link) const;
+    std::vector<std::shared_ptr<Call>> getAllCalls(Call::LinkType link) const;
+    std::vector<std::string> getCallIDs(Call::LinkType link) const;
     std::size_t callCount(Call::LinkType link) const;
+#endif
 
 private:
     /**
@@ -129,6 +138,8 @@ private:
     }
 
     std::mt19937_64& rand_;
+
+    createFunction createCallCb_;
 
     mutable std::recursive_mutex callMapsMutex_ {};
 
