@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "aab2c4f6_e57fad4a",
+        "filename": "src/conference.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-16T18:11:29Z",
+      "side": 1,
+      "message": "should be protected before, videoMixer_-\u003egetVideoLocal() is checked before",
+      "range": {
+        "startLine": 223,
+        "startChar": 8,
+        "endLine": 223,
+        "endChar": 19
+      },
+      "revId": "ac3749e71f044310ca74f7e79b1a943a794a3241",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
