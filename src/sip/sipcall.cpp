@@ -1,4 +1,4 @@
-/*
+﻿/*
  *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -578,13 +578,16 @@ SIPCall::hangup(int reason)
             }
             route = route->next;
         }
-        const int status = reason ? reason
-                           : inviteSession_->state <= PJSIP_INV_STATE_EARLY
-                                   and inviteSession_->role != PJSIP_ROLE_UAC
-                               ? PJSIP_SC_CALL_TSX_DOES_NOT_EXIST
-                           : inviteSession_->state >= PJSIP_INV_STATE_DISCONNECTED
-                               ? PJSIP_SC_DECLINE
-                               : 0;
+
+        int status = PJSIP_SC_OK;
+        if (reason)
+            status = reason;
+        else if (inviteSession_->state <= PJSIP_INV_STATE_EARLY
+                 and inviteSession_->role != PJSIP_ROLE_UAC)
+            status = PJSIP_SC_CALL_TSX_DOES_NOT_EXIST;
+        else if (inviteSession_->state >= PJSIP_INV_STATE_DISCONNECTED)
+            status = PJSIP_SC_DECLINE;
+
         // Notify the peer
         terminateSipSession(status);
     }
@@ -607,7 +610,7 @@ SIPCall::refuse()
     stopAllMedia();
 
     // Notify the peer
-    terminateSipSession(PJSIP_SC_DECLINE);
+    terminateSipSession(PJSIP_SC_BUSY_HERE);
 
     setState(Call::ConnectionState::DISCONNECTED, ECONNABORTED);
     removeCall();
