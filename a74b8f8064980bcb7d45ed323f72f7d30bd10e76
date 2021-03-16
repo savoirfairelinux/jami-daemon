@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "befaed4b_3b5c9536",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 95
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-16T18:21:48Z",
+      "side": 1,
+      "message": "const std::string\u0026 or std::string",
+      "range": {
+        "startLine": 58,
+        "startChar": 24,
+        "endLine": 58,
+        "endChar": 41
+      },
+      "revId": "a74b8f8064980bcb7d45ed323f72f7d30bd10e76",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9efdc070_8d4c4da9",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 95
+      },
+      "lineNbr": 181,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-16T18:21:48Z",
+      "side": 1,
+      "message": "tabs",
+      "range": {
+        "startLine": 181,
+        "startChar": 0,
+        "endLine": 181,
+        "endChar": 2
+      },
+      "revId": "a74b8f8064980bcb7d45ed323f72f7d30bd10e76",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "acc62289_57ea2855",
+        "filename": "src/jamidht/conversationrepository.h",
+        "patchSetId": 95
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-16T18:21:48Z",
+      "side": 1,
+      "message": "const std::string\u0026 to avoid copy in read-only use cases",
+      "range": {
+        "startLine": 53,
+        "startChar": 4,
+        "endLine": 53,
+        "endChar": 16
+      },
+      "revId": "a74b8f8064980bcb7d45ed323f72f7d30bd10e76",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3e798fbd_d5bad1e9",
+        "filename": "src/manager.cpp",
+        "patchSetId": 95
+      },
+      "lineNbr": 780,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-16T18:21:48Z",
+      "side": 1,
+      "message": "print libgit version after this",
+      "range": {
+        "startLine": 780,
+        "startChar": 4,
+        "endLine": 780,
+        "endChar": 59
+      },
+      "revId": "a74b8f8064980bcb7d45ed323f72f7d30bd10e76",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
