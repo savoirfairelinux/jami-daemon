@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a4b0f5f8_65eaa74a",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 75
+      },
+      "lineNbr": 1145,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-16T20:03:28Z",
+      "side": 1,
+      "message": "string_view",
+      "range": {
+        "startLine": 1145,
+        "startChar": 37,
+        "endLine": 1145,
+        "endChar": 55
+      },
+      "revId": "cf04e59a4b4aa5412735e4682786264cf2a63c1e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1c88c467_6f7acde3",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 75
+      },
+      "lineNbr": 1150,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-16T20:03:28Z",
+      "side": 1,
+      "message": "for (auto line : split_string(diffStats, \u0027\\n\u0027))",
+      "range": {
+        "startLine": 1150,
+        "startChar": 4,
+        "endLine": 1150,
+        "endChar": 42
+      },
+      "revId": "cf04e59a4b4aa5412735e4682786264cf2a63c1e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7519703c_29297b50",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 75
+      },
+      "lineNbr": 1151,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-16T20:03:28Z",
+      "side": 1,
+      "message": "static const to avoid rebuilding the regexp every time",
+      "range": {
+        "startLine": 1151,
+        "startChar": 8,
+        "endLine": 1151,
+        "endChar": 41
+      },
+      "revId": "cf04e59a4b4aa5412735e4682786264cf2a63c1e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "46af2b86_b03e72dc",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 75
+      },
+      "lineNbr": 1152,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-16T20:03:28Z",
+      "side": 1,
+      "message": "svmatch",
+      "range": {
+        "startLine": 1152,
+        "startChar": 13,
+        "endLine": 1152,
+        "endChar": 19
+      },
+      "revId": "cf04e59a4b4aa5412735e4682786264cf2a63c1e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
