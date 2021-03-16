@@ -25,7 +25,7 @@
 #endif
 
 #include "account.h"
-
+#include "sip/sipcall.h"
 #include "sip_utils.h"
 #include "ip_utils.h"
 #include "noncopyable.h"
@@ -131,6 +131,16 @@ public:
 
     virtual ~SIPAccountBase();
 
+    const std::unique_ptr<CallFactory>& getCallFactory() override { return callFactory_; }
+
+    static std::shared_ptr<Call> createCallCb(const std::shared_ptr<Account>& account,
+                                              const std::string& id,
+                                              Call::CallType type,
+                                              const std::map<std::string, std::string>& details);
+
+    std::shared_ptr<SIPCall> newSipCall(const std::shared_ptr<Account>& account,
+                                        Call::CallType type,
+                                        const std::map<std::string, std::string>& details = {});
     /**
      * Create incoming SIPCall.
      * @param[in] id The ID of the call
@@ -147,9 +157,9 @@ public:
 
     virtual bool isStunEnabled() const { return false; }
 
-    virtual pj_str_t getStunServerName() const { return pj_str_t {nullptr, 0}; };
+    virtual pj_str_t getStunServerName() const { return pj_str_t {nullptr, 0}; }
 
-    virtual pj_uint16_t getStunPort() const { return 0; };
+    virtual pj_uint16_t getStunPort() const { return 0; }
 
     virtual std::string getDtmfType() const { return dtmfType_; }
 
@@ -331,6 +341,8 @@ protected:
     virtual void setRegistrationState(RegistrationState state,
                                       unsigned code = 0,
                                       const std::string& detail_str = {}) override;
+
+    std::unique_ptr<CallFactory> callFactory_;
 
     im::MessageEngine messageEngine_;
 

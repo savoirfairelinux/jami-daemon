@@ -48,8 +48,8 @@ using namespace std::literals;
 
 namespace jami {
 
-Conference::Conference()
-    : id_(Manager::instance().callFactory.getNewCallID())
+Conference::Conference(const std::string& id)
+    : id_(id)
 #ifdef ENABLE_VIDEO
     , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
 #endif
@@ -79,7 +79,7 @@ Conference::Conference()
                     // a master of a conference and there is only one remote
                     // In the future, we should retrieve confInfo from the call
                     // To merge layouts informations
-                    if (auto call = getCall(it->second)) {
+                    if (auto call = shared->getCall(it->second)) {
                         uri = call->getPeerNumber();
                         isLocalMuted = call->isPeerMuted();
                     }
@@ -109,7 +109,7 @@ Conference::Conference()
             // Handle participants not present in the video mixer
             for (const auto& subCall : subCalls) {
                 std::string uri = "";
-                if (auto call = getCall(subCall))
+                if (auto call = shared->getCall(subCall))
                     uri = call->getPeerNumber();
                 auto isModerator = shared->isModerator(uri);
                 newInfo.emplace_back(ParticipantInfo {
@@ -117,8 +117,8 @@ Conference::Conference()
             }
             // Add host in confInfo with audio and video muted if detached
             if (shared->getState() == State::ACTIVE_DETACHED)
-                newInfo.emplace_back(ParticipantInfo {
-                    "", "", false, 0, 0, 0, 0, true, true, false, true});
+                newInfo.emplace_back(
+                    ParticipantInfo {"", "", false, 0, 0, 0, 0, true, true, false, true});
 
             shared->updateConferenceInfo(std::move(newInfo));
         });
@@ -294,7 +294,7 @@ ConfInfo::toString() const
     for (const auto& info : *this) {
         jsonArray.append(info.toJson());
     }
-    return Json::writeString(Json::StreamWriterBuilder{}, jsonArray);
+    return Json::writeString(Json::StreamWriterBuilder {}, jsonArray);
 }
 
 void
@@ -310,19 +310,20 @@ Conference::sendConferenceInfos()
             if (!account)
                 continue;
 
-            dht::ThreadPool::io().run([
-                call,
-                confInfo = getConfInfoHostUri(account->getUsername()+ "@ring.dht",
-                                                call->getPeerNumber()),
-                from = account->getFromUri()
-            ] {
+            dht::ThreadPool::io().run([call,
+                                       confInfo = getConfInfoHostUri(account->getUsername()
+                                                                         + "@ring.dht",
+                                                                     call->getPeerNumber()),
+                                       from = account->getFromUri()] {
                 call->sendTextMessage({{"application/confInfo+json", confInfo.toString()}}, from);
             });
         }
     }
 
     // Inform client that layout has changed
-    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, getConfInfoHostUri("", "").toVectorMapStringString());
+    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_,
+                                                                  getConfInfoHostUri("", "")
+                                                                      .toVectorMapStringString());
 }
 
 void
@@ -395,7 +396,8 @@ Conference::detach()
 
     if (getState() == State::ACTIVE_ATTACHED) {
         for (const auto& p : participants_) {
-            Manager::instance().getRingBufferPool().unBindCallID(getCall(p)->getCallId(), RingBufferPool::DEFAULT_ID);
+            Manager::instance().getRingBufferPool().unBindCallID(getCall(p)->getCallId(),
+                                                                 RingBufferPool::DEFAULT_ID);
         }
 #ifdef ENABLE_VIDEO
         if (auto mixer = getVideoMixer()) {
@@ -615,9 +617,18 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
 }
 
 std::shared_ptr<Call>
-Conference::getCall(const std::string& callId)
+Conference::getCall(const std::string& callId) const
 {
-    return Manager::instance().callFactory.getCall(callId);
+    for (auto account : Manager::instance().accountFactory.getAllAccounts()) {
+        auto const& callList = account->getCallFactory()->getAllCalls();
+        for (auto const& call : callList) {
+            if (call->getCallId() == callId) {
+                return call;
+            }
+        }
+    }
+
+    return {};
 }
 
 bool
@@ -779,7 +790,7 @@ Conference::isHost(std::string_view uri) const
     // Check if the URI is a local URI (AccountID) for at least one of the subcall
     // (a local URI can be in the call with another device)
     for (const auto& p : participants_) {
-        if (auto call = getCall(p)) {
+        if (auto const& call = getCall(p)) {
             if (auto account = call->getAccount().lock()) {
                 if (account->getUsername() == uri)
                     return true;
@@ -863,8 +874,13 @@ Conference::resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo&
 
     // get the size of the remote frame
     for (const auto& item : participants_) {
-        auto sipCall = std::dynamic_pointer_cast<SIPCall>(
-            Manager::instance().callFactory.getCall(item, Call::LinkType::SIP));
+        auto const& call = getCall(item);
+        if (call->getLinkType() != Call::LinkType::SIP) {
+            continue;
+        }
+        auto sipCall = std::dynamic_pointer_cast<SIPCall>(call);
+        assert(sipCall);
+
         if (sipCall && sipCall->getPeerNumber().find(peerURI) != std::string::npos) {
             remoteFrameHeight = sipCall->getVideoRtp().getVideoReceive()->getHeight();
             remoteFrameWidth = sipCall->getVideoRtp().getVideoReceive()->getWidth();
@@ -892,7 +908,6 @@ Conference::resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo&
     remoteCell.y = remoteCell.y / zoomY + localCell.y;
     remoteCell.w = remoteCell.w / zoomX;
     remoteCell.h = remoteCell.h / zoomY;
-
 }
 
 std::string
@@ -902,7 +917,7 @@ Conference::confInfo2str(const ConfInfo& confInfo)
     for (const auto& info : confInfo) {
         jsonArray.append(info.toJson());
     }
-    return Json::writeString(Json::StreamWriterBuilder{}, jsonArray);
+    return Json::writeString(Json::StreamWriterBuilder {}, jsonArray);
 }
 
 void

@@ -738,7 +738,10 @@ SIPCall::transfer(const std::string& to)
 bool
 SIPCall::attendedTransfer(const std::string& to)
 {
-    auto toCall = Manager::instance().callFactory.getCall<SIPCall>(to);
+    auto account = getAccount().lock();
+    if (not account)
+        return false;
+    auto toCall = std::dynamic_pointer_cast<SIPCall>(account->getCallFactory()->getCall(to));
     if (!toCall)
         return false;
 
@@ -1238,11 +1241,10 @@ SIPCall::startAllMedia()
 #endif
         rtp->updateMedia(remote, local);
 
-        rtp->setSuccessfulSetupCb(
-            [wthis = weak()](MediaType type, bool isRemote) {
-                if (auto this_ = wthis.lock())
-                    this_->rtpSetupSuccess(type, isRemote);
-            });
+        rtp->setSuccessfulSetupCb([wthis = weak()](MediaType type, bool isRemote) {
+            if (auto this_ = wthis.lock())
+                this_->rtpSetupSuccess(type, isRemote);
+        });
 
 #ifdef ENABLE_VIDEO
         videortp_->setRequestKeyFrameCallback([wthis = weak()] {
@@ -1394,8 +1396,7 @@ SIPCall::onMediaUpdate()
             std::lock_guard<std::recursive_mutex> lk {this_->callMutex_};
             // The call is already ended, so we don't need to restart medias
             if (not this_->inviteSession_
-                or this_->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
-                or not this_->sdp_)
+                or this_->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not this_->sdp_)
                 return;
             // If ICE is not used, start medias now
             auto rem_ice_attrs = this_->sdp_->getIceAttributes();

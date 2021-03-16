@@ -110,18 +110,11 @@ struct ParticipantInfo
 
     friend bool operator==(const ParticipantInfo& p1, const ParticipantInfo& p2)
     {
-        return
-            p1.uri == p2.uri
-            and p1.device == p2.device
-            and p1.active == p2.active
-            and p1.x == p2.x
-            and p1.y == p2.y
-            and p1.w == p2.w
-            and p1.h == p2.h
-            and p1.videoMuted == p2.videoMuted
-            and p1.audioLocalMuted == p2.audioLocalMuted
-            and p1.audioModeratorMuted == p2.audioModeratorMuted
-            and p1.isModerator == p2.isModerator;
+        return p1.uri == p2.uri and p1.device == p2.device and p1.active == p2.active
+               and p1.x == p2.x and p1.y == p2.y and p1.w == p2.w and p1.h == p2.h
+               and p1.videoMuted == p2.videoMuted and p1.audioLocalMuted == p2.audioLocalMuted
+               and p1.audioModeratorMuted == p2.audioModeratorMuted
+               and p1.isModerator == p2.isModerator;
     }
 
     friend bool operator!=(const ParticipantInfo& p1, const ParticipantInfo& p2)
@@ -138,8 +131,9 @@ struct ConfInfo : public std::vector<ParticipantInfo>
     friend bool operator==(const ConfInfo& c1, const ConfInfo& c2)
     {
         for (auto& p1 : c1) {
-            auto it = std::find_if(c2.begin(), c2.end(),
-                [p1] (const ParticipantInfo& p2) { return p1 == p2; });
+            auto it = std::find_if(c2.begin(), c2.end(), [p1](const ParticipantInfo& p2) {
+                return p1 == p2;
+            });
             if (it != c2.end())
                 continue;
             else
@@ -148,14 +142,10 @@ struct ConfInfo : public std::vector<ParticipantInfo>
         return true;
     }
 
-    friend bool operator!=(const ConfInfo& c1, const ConfInfo& c2)
-    {
-        return !(c1 == c2);
-    }
+    friend bool operator!=(const ConfInfo& c1, const ConfInfo& c2) { return !(c1 == c2); }
 
     std::vector<std::map<std::string, std::string>> toVectorMapStringString() const;
     std::string toString() const;
-
 };
 
 using ParticipantSet = std::set<std::string>;
@@ -168,7 +158,7 @@ public:
     /**
      * Constructor for this class, increment static counter
      */
-    Conference();
+    Conference(const std::string& confId);
 
     /**
      * Destructor for this class, decrement static counter
@@ -303,7 +293,7 @@ private:
         return std::static_pointer_cast<Conference>(shared_from_this());
     }
 
-    static std::shared_ptr<Call> getCall(const std::string& callId);
+    std::shared_ptr<Call> getCall(const std::string& callId) const;
     bool isModerator(std::string_view uri) const;
     void updateModerators();
 

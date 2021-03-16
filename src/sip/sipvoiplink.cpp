@@ -723,9 +723,18 @@ SIPVoIPLink::shutdown()
     // Remaining calls should not happen as possible upper callbacks
     // may be called and another instance of SIPVoIPLink can be re-created!
 
-    if (not Manager::instance().callFactory.empty(Call::LinkType::SIP))
-        JAMI_ERR("%zu SIP calls remains!",
-                 Manager::instance().callFactory.callCount(Call::LinkType::SIP));
+    int callCount = 0;
+    for (auto const& account : Manager::instance().getAllAccounts()) {
+        if (auto const& callFactory = account->getCallFactory()) {
+            for (auto const& call : callFactory->getAllCalls()) {
+                if (call->getLinkType() == Call::LinkType::SIP)
+                    callCount++;
+            }
+        }
+    }
+    if (callCount > 0) {
+        JAMI_ERR("SIPVoIPLink is shutting down but still has %i calls remaining!", callCount);
+    }
 
     sipTransportBroker->shutdown();
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);

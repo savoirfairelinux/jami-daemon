@@ -21,9 +21,12 @@
 #include <stdexcept>
 
 #include "call_factory.h"
+#include "string_utils.h"
+
+#if 0
 #include "sip/sipcall.h"
 #include "sip/sipaccountbase.h"
-#include "string_utils.h"
+#endif
 
 namespace jami {
 
@@ -33,15 +36,16 @@ CallFactory::getNewCallID() const
 {
     std::string random_id;
     do {
-        random_id = std::to_string(std::uniform_int_distribution<uint64_t>(1, DRING_ID_MAX_VAL)(rand_));
+        random_id = std::to_string(
+            std::uniform_int_distribution<uint64_t>(1, DRING_ID_MAX_VAL)(rand_));
     } while (hasCall(random_id));
     return random_id;
 }
 
-std::shared_ptr<SIPCall>
-CallFactory::newSipCall(const std::shared_ptr<SIPAccountBase>& account,
-                           Call::CallType type,
-                           const std::map<std::string, std::string>& details)
+std::shared_ptr<Call>
+CallFactory::newCall(const std::shared_ptr<Account>& account,
+                     Call::CallType type,
+                     const std::map<std::string, std::string>& details)
 {
     if (not allowNewCall_) {
         JAMI_WARN("Creation of new calls is not allowed");
@@ -50,7 +54,14 @@ CallFactory::newSipCall(const std::shared_ptr<SIPAccountBase>& account,
 
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
     auto id = getNewCallID();
-    auto call = std::make_shared<SIPCall>(account, id, type, details);
+
+    if (not createCallCb_) {
+        JAMI_ERR("No call creator set!");
+        return {};
+    }
+    auto call = createCallCb_(account, id, type, details);
+    assert(call);
+
     callMaps_[call->getLinkType()].emplace(id, call);
     return call;
 }
@@ -176,6 +187,8 @@ CallFactory::callCount() const
     return count;
 }
 
+// TODO_MC. Remove.
+#if 0
 bool
 CallFactory::hasCall(const std::string& id, Call::LinkType link) const
 {
@@ -253,5 +266,6 @@ CallFactory::callCount(Call::LinkType link) const
 
     return map->size();
 }
+#endif
 
 } // namespace jami
