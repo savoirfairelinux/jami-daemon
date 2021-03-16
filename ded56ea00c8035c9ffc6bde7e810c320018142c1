@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a6fcafa0_1e7f8477",
+        "filename": "src/jamidht/gitserver.cpp",
+        "patchSetId": 94
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-16T19:15:33Z",
+      "side": 1,
+      "message": "use string_view literal \"\"sv\n\nconstexpr auto FLUSH_PKT \u003d \"0000\"sv;",
+      "range": {
+        "startLine": 30,
+        "startChar": 45,
+        "endLine": 30,
+        "endChar": 52
+      },
+      "revId": "ded56ea00c8035c9ffc6bde7e810c320018142c1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6c482a13_cfd720d8",
+        "filename": "src/jamidht/gitserver.cpp",
+        "patchSetId": 94
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-16T19:15:33Z",
+      "side": 1,
+      "message": "use std::from_chars",
+      "range": {
+        "startLine": 135,
+        "startChar": 4,
+        "endLine": 138,
+        "endChar": 22
+      },
+      "revId": "ded56ea00c8035c9ffc6bde7e810c320018142c1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e32a7cad_4595ae61",
+        "filename": "src/jamidht/gitserver.cpp",
+        "patchSetId": 94
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-16T19:15:33Z",
+      "side": 1,
+      "message": "use constant ?",
+      "range": {
+        "startLine": 210,
+        "startChar": 20,
+        "endLine": 210,
+        "endChar": 86
+      },
+      "revId": "ded56ea00c8035c9ffc6bde7e810c320018142c1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1f5396ad_2041ebb4",
+        "filename": "src/jamidht/gitserver.cpp",
+        "patchSetId": 94
+      },
+      "lineNbr": 324,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-16T19:15:33Z",
+      "side": 1,
+      "message": "string_view to avoid unneeded copy",
+      "range": {
+        "startLine": 324,
+        "startChar": 27,
+        "endLine": 324,
+        "endChar": 38
+      },
+      "revId": "ded56ea00c8035c9ffc6bde7e810c320018142c1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
