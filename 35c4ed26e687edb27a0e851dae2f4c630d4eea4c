@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2db23668_839814c7",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 84
+      },
+      "lineNbr": 601,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-16T19:43:41Z",
+      "side": 1,
+      "message": "move",
+      "range": {
+        "startLine": 601,
+        "startChar": 17,
+        "endLine": 601,
+        "endChar": 19
+      },
+      "revId": "35c4ed26e687edb27a0e851dae2f4c630d4eea4c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cb966b59_ed0c558d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 84
+      },
+      "lineNbr": 603,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-16T19:43:41Z",
+      "side": 1,
+      "message": "move",
+      "range": {
+        "startLine": 603,
+        "startChar": 21,
+        "endLine": 603,
+        "endChar": 27
+      },
+      "revId": "35c4ed26e687edb27a0e851dae2f4c630d4eea4c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1b5e946d_dc85fe08",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 84
+      },
+      "lineNbr": 604,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-16T19:43:41Z",
+      "side": 1,
+      "message": "move",
+      "range": {
+        "startLine": 604,
+        "startChar": 21,
+        "endLine": 604,
+        "endChar": 27
+      },
+      "revId": "35c4ed26e687edb27a0e851dae2f4c630d4eea4c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
