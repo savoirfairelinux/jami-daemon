@@ -48,6 +48,30 @@
     },
     {
       "key": {
+        "uuid": "00b9f92e_20616d4f",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 243,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-16T20:53:30Z",
+      "side": 1,
+      "message": "No. \nAnd this is exactly the purpose of  CHECK_VALID_THREAD(). If it\u0027s always accessed from the same thread, then no need for protection.",
+      "parentUuid": "c0ac3d5c_300abc0f",
+      "range": {
+        "startLine": 243,
+        "startChar": 2,
+        "endLine": 243,
+        "endChar": 20
+      },
+      "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4625b9cf_1b0d7d9e",
         "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
         "patchSetId": 4
@@ -94,6 +118,54 @@
     },
     {
       "key": {
+        "uuid": "ee005b7c_9e57f5b7",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 384,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-16T20:53:30Z",
+      "side": 1,
+      "message": "Agree.\nDone",
+      "parentUuid": "4625b9cf_1b0d7d9e",
+      "range": {
+        "startLine": 384,
+        "startChar": 63,
+        "endLine": 384,
+        "endChar": 67
+      },
+      "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "15a09c83_3748143b",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 384,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-16T20:53:30Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "a7d76edb_3b377ff6",
+      "range": {
+        "startLine": 384,
+        "startChar": 25,
+        "endLine": 384,
+        "endChar": 47
+      },
+      "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "062a625f_3c58662c",
         "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
         "patchSetId": 4
@@ -117,6 +189,30 @@
     },
     {
       "key": {
+        "uuid": "79f17661_cf88e7f0",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 583,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-16T20:53:30Z",
+      "side": 1,
+      "message": "Agree.\nDone",
+      "parentUuid": "062a625f_3c58662c",
+      "range": {
+        "startLine": 583,
+        "startChar": 43,
+        "endLine": 583,
+        "endChar": 47
+      },
+      "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "6c1545e5_68244f47",
         "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
         "patchSetId": 4
@@ -128,6 +224,30 @@
       "writtenOn": "2021-03-16T18:33:59Z",
       "side": 1,
       "message": "why?",
+      "range": {
+        "startLine": 936,
+        "startChar": 35,
+        "endLine": 936,
+        "endChar": 48
+      },
+      "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "26dbfe58_01ac437a",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 936,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-16T20:53:30Z",
+      "side": 1,
+      "message": "I dont see any reason why we should limit the lifetime of the subscription. Using a shorter lifetime will just add un-necessary traffic.\nHowever, if you have a good reason to use to revert to SUBSCRIBE_TIMEOUT, just let me know.",
+      "parentUuid": "6c1545e5_68244f47",
       "range": {
         "startLine": 936,
         "startChar": 35,
@@ -163,6 +283,30 @@
     },
     {
       "key": {
+        "uuid": "66be94bf_30f8f2b2",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1140,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-16T20:53:30Z",
+      "side": 1,
+      "message": "In fact, this log is not really useful for now. Removed it.",
+      "parentUuid": "ddb0a1cf_444b703b",
+      "range": {
+        "startLine": 1140,
+        "startChar": 3,
+        "endLine": 1140,
+        "endChar": 63
+      },
+      "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "3d9078bb_c0b4beaf",
         "filename": "src/upnp/upnp_context.cpp",
         "patchSetId": 4
@@ -183,6 +327,30 @@
       "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e1e2aded_2b0696d0",
+        "filename": "src/upnp/upnp_context.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-16T20:53:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3d9078bb_c0b4beaf",
+      "range": {
+        "startLine": 132,
+        "startChar": 14,
+        "endLine": 132,
+        "endChar": 21
+      },
+      "revId": "5aeb9a9a794cef846a7174f400d4b92ee166afbb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
