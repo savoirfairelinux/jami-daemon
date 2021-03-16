@@ -1,4 +1,4 @@
-/*
+﻿/*
  *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -567,12 +567,12 @@ SIPCall::hangup(int reason)
             route = route->next;
         }
         const int status = reason ? reason
-                                  : inviteSession_->state <= PJSIP_INV_STATE_EARLY
-                                            and inviteSession_->role != PJSIP_ROLE_UAC
-                                        ? PJSIP_SC_CALL_TSX_DOES_NOT_EXIST
-                                        : inviteSession_->state >= PJSIP_INV_STATE_DISCONNECTED
-                                              ? PJSIP_SC_DECLINE
-                                              : 0;
+                           : inviteSession_->state <= PJSIP_INV_STATE_EARLY
+                                   and inviteSession_->role != PJSIP_ROLE_UAC
+                               ? PJSIP_SC_CALL_TSX_DOES_NOT_EXIST
+                           : inviteSession_->state >= PJSIP_INV_STATE_DISCONNECTED
+                               ? PJSIP_SC_DECLINE
+                               : 200;
         // Notify the peer
         terminateSipSession(status);
     }
@@ -595,7 +595,7 @@ SIPCall::refuse()
     stopAllMedia();
 
     // Notify the peer
-    terminateSipSession(PJSIP_SC_DECLINE);
+    terminateSipSession(PJSIP_SC_BUSY_HERE);
 
     setState(Call::ConnectionState::DISCONNECTED, ECONNABORTED);
     removeCall();
@@ -1238,11 +1238,10 @@ SIPCall::startAllMedia()
 #endif
         rtp->updateMedia(remote, local);
 
-        rtp->setSuccessfulSetupCb(
-            [wthis = weak()](MediaType type, bool isRemote) {
-                if (auto this_ = wthis.lock())
-                    this_->rtpSetupSuccess(type, isRemote);
-            });
+        rtp->setSuccessfulSetupCb([wthis = weak()](MediaType type, bool isRemote) {
+            if (auto this_ = wthis.lock())
+                this_->rtpSetupSuccess(type, isRemote);
+        });
 
 #ifdef ENABLE_VIDEO
         videortp_->setRequestKeyFrameCallback([wthis = weak()] {
@@ -1394,8 +1393,7 @@ SIPCall::onMediaUpdate()
             std::lock_guard<std::recursive_mutex> lk {this_->callMutex_};
             // The call is already ended, so we don't need to restart medias
             if (not this_->inviteSession_
-                or this_->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
-                or not this_->sdp_)
+                or this_->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not this_->sdp_)
                 return;
             // If ICE is not used, start medias now
             auto rem_ice_attrs = this_->sdp_->getIceAttributes();
