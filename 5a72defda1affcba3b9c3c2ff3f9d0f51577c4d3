@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "19a99139_90fd3d65",
+        "filename": "src/conference.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 206,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-03-16T16:26:37Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nusing the result of an assignment as a condition without parentheses\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-parentheses",
+      "revId": "5a72defda1affcba3b9c3c2ff3f9d0f51577c4d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c55baed3_178ee85b",
+        "filename": "src/conference.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 356,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-03-16T16:26:37Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027m\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "5a72defda1affcba3b9c3c2ff3f9d0f51577c4d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
