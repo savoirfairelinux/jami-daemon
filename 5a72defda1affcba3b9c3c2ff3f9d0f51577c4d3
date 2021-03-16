@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "58357d56_034a8d3e",
+        "filename": "src/conference.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 206,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-03-16T17:14:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "19a99139_90fd3d65",
+      "revId": "5a72defda1affcba3b9c3c2ff3f9d0f51577c4d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "c55baed3_178ee85b",
         "filename": "src/conference.h",
         "patchSetId": 11
@@ -30,6 +48,24 @@
       "writtenOn": "2021-03-16T16:26:37Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027m\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "5a72defda1affcba3b9c3c2ff3f9d0f51577c4d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1c75330b_e7d345e9",
+        "filename": "src/conference.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 356,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-03-16T17:14:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c55baed3_178ee85b",
       "revId": "5a72defda1affcba3b9c3c2ff3f9d0f51577c4d3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
