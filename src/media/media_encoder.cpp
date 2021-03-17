@@ -991,12 +991,11 @@ MediaEncoder::initH263(AVCodecContext* encoderCtx, uint64_t br)
 }
 
 void
-MediaEncoder::initOpus(AVCodecContext* /*encoderCtx*/)
+MediaEncoder::initOpus(AVCodecContext* encoderCtx)
 {
     // Enable FEC support by default with 10% packet loss
-    // Disable opus FEC for now
-    // av_opt_set_int(encoderCtx, "enable_fec", 1, AV_OPT_SEARCH_CHILDREN);
-    // av_opt_set_int(encoderCtx, "packet_loss", 10, AV_OPT_SEARCH_CHILDREN);
+    av_opt_set_int(encoderCtx, "enable_fec", 1, AV_OPT_SEARCH_CHILDREN);
+    av_opt_set_int(encoderCtx, "packet_loss", 10, AV_OPT_SEARCH_CHILDREN);
 }
 
 void
