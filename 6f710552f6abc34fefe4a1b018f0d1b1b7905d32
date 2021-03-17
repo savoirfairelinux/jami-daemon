@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "bc502a8a_aff322fe",
+        "filename": "src/gittransport.cpp",
+        "patchSetId": 96
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-17T22:26:59Z",
+      "side": 1,
+      "message": "string_view for free subsr",
+      "range": {
+        "startLine": 29,
+        "startChar": 58,
+        "endLine": 29,
+        "endChar": 76
+      },
+      "revId": "6f710552f6abc34fefe4a1b018f0d1b1b7905d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "64f3aab2_281e8530",
+        "filename": "src/gittransport.cpp",
+        "patchSetId": 96
+      },
+      "lineNbr": 156,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-17T22:26:59Z",
+      "side": 1,
+      "message": "string_view for free substr",
+      "range": {
+        "startLine": 156,
+        "startChar": 4,
+        "endLine": 156,
+        "endChar": 15
+      },
+      "revId": "6f710552f6abc34fefe4a1b018f0d1b1b7905d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f3a85bb0_b1412e46",
+        "filename": "src/gittransport.cpp",
+        "patchSetId": 96
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-17T22:26:59Z",
+      "side": 1,
+      "message": "string_view",
+      "range": {
+        "startLine": 168,
+        "startChar": 4,
+        "endLine": 168,
+        "endChar": 15
+      },
+      "revId": "6f710552f6abc34fefe4a1b018f0d1b1b7905d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e3e27c65_deef0b99",
+        "filename": "src/gittransport.cpp",
+        "patchSetId": 96
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-17T22:26:59Z",
+      "side": 1,
+      "message": "string_view constant + check size before substr",
+      "range": {
+        "startLine": 168,
+        "startChar": 43,
+        "endLine": 168,
+        "endChar": 51
+      },
+      "revId": "6f710552f6abc34fefe4a1b018f0d1b1b7905d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c736470f_0ba668f6",
+        "filename": "src/gittransport.cpp",
+        "patchSetId": 96
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-17T22:26:59Z",
+      "side": 1,
+      "message": "gitUrl",
+      "range": {
+        "startLine": 192,
+        "startChar": 22,
+        "endLine": 192,
+        "endChar": 57
+      },
+      "revId": "6f710552f6abc34fefe4a1b018f0d1b1b7905d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
