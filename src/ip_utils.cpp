@@ -180,23 +180,17 @@ ip_utils::getHostName(char* out, size_t out_len)
 std::string
 ip_utils::getGateway(char* localHost, ip_utils::subnet_mask prefix)
 {
-    std::string localHostStr(localHost);
+    std::string_view localHostStr(localHost);
     if (prefix == ip_utils::subnet_mask::prefix_32bit)
-        return localHostStr;
+        return std::string(localHostStr);
     std::string defaultGw {};
-    std::istringstream iss(localHostStr);
     // Make a vector of each individual number in the ip address.
-    std::vector<std::string> tokens;
-    std::string token;
-    while (std::getline(iss, token, '.')) {
-        if (!token.empty())
-            tokens.push_back(token);
-    }
+    std::vector<std::string_view> tokens = split_string(localHostStr, '.');
     // Build a gateway address from the individual ip components.
-    for (unsigned int i = 0; i <= (unsigned int) prefix; i++)
+    for (unsigned i = 0; i <= (unsigned) prefix; i++)
         defaultGw += tokens[i] + ".";
-    for (unsigned int i = (unsigned int) ip_utils::subnet_mask::prefix_32bit;
-         i > (unsigned int) prefix + 1;
+    for (unsigned i = (unsigned) ip_utils::subnet_mask::prefix_32bit;
+         i > (unsigned) prefix + 1;
          i--)
         defaultGw += "0.";
     defaultGw += "1";
