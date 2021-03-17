@@ -92,6 +92,7 @@ static constexpr auto ENDL = "\n";
 
 static int consoleLog;
 static int debugMode;
+static int wallClockTime {1};
 static std::mutex logMutex;
 
 // extract the last component of a pathname (extract a filename from its dirname)
@@ -105,8 +106,31 @@ stripDirName(const char* path)
 #endif
 }
 
+// Convert the epoch time to human readable format.
+static std::ostringstream
+timeofdayToString(const timeval& tv, const bool fullDate = false)
+{
+    struct tm* ptm;
+    char time_string[40];
+    long milliseconds;
+    std::ostringstream date;
+
+    ptm = localtime(&tv.tv_sec);
+
+    if (fullDate) {
+        strftime(time_string, sizeof(time_string), "%Y-%m-%d %H:%M:%S", ptm);
+    } else {
+        strftime(time_string, sizeof(time_string), "%H:%M:%S", ptm);
+    }
+
+    milliseconds = tv.tv_usec / 1000;
+    date << time_string << "." << milliseconds;
+
+    return date;
+}
+
 static std::string
-contextHeader(const char* const file, int line)
+contextHeader(const char* const file, int line, int level)
 {
 #ifdef __linux__
     auto tid = syscall(__NR_gettid) & 0xffff;
@@ -127,8 +151,17 @@ contextHeader(const char* const file, int line)
 
     std::ostringstream out;
     const auto prev_fill = out.fill();
-    out << '[' << secs << '.' << std::right << std::setw(3) << std::setfill('0') << milli
-        << std::left << '|' << std::right << std::setw(5) << std::setfill(' ') << tid << std::left;
+    // Add timestamp
+    if (wallClockTime) {
+        out << '[' << timeofdayToString(tv).str();
+    } else {
+        out << '[' << secs << '.' << std::right << std::setw(3) << std::setfill('0') << milli;
+    }
+    // Add thread id
+    out << std::left << '|' << std::right << std::setw(5) << std::setfill(' ') << tid << std::left;
+    // Add trace level
+    out << std::left << '|' << std::right << std::setw(1) << level << std::left;
+    // Put back original string.
     out.fill(prev_fill);
 
     // Context
@@ -172,6 +205,12 @@ int
 getDebugMode(void)
 {
     return debugMode;
+}
+
+void
+useWallClockTime(int mode)
+{
+    wallClockTime = mode;
 }
 
 static const char*
@@ -274,11 +313,12 @@ Logger::vlog(
         saved_attributes = consoleInfo.wAttributes;
         SetConsoleTextAttribute(hConsole, color_header);
 #endif
-        fputs(contextHeader(file, line).c_str(), stderr);
+        fputs(contextHeader(file, line, level).c_str(), stderr);
 #ifdef _MSC_VER
         std::array<char, 4096> tmp;
         vsnprintf(tmp.data(), tmp.size(), format, ap);
-        jami::emitSignal<DRing::DebugSignal::MessageSend>(contextHeader(file, line) + tmp.data());
+        jami::emitSignal<DRing::DebugSignal::MessageSend>(contextHeader(file, line, level)
+                                                          + tmp.data());
 #endif
 #ifndef _WIN32
         fputs(END_COLOR, stderr);

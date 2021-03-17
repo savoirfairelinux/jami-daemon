@@ -373,13 +373,6 @@ public:
 
     virtual bool isTlsEnabled() const override { return tlsEnable_; }
 
-    virtual KeyExchangeProtocol getSrtpKeyExchange() const override
-    {
-        if (tlsEnable_ && srtpKeyExchange_ == KeyExchangeProtocol::NONE)
-            return KeyExchangeProtocol::SDES;
-        return srtpKeyExchange_;
-    }
-
     virtual bool getSrtpFallback() const override { return srtpFallback_; }
 
     void setReceivedParameter(const std::string& received)
@@ -491,6 +484,18 @@ public:
                                              const std::map<std::string, std::string>& details = {},
                                              const std::shared_ptr<SipTransport>& = nullptr) override;
 
+    /**
+     * Create incoming SIPCall.
+     * @param[in] from The origin of the call
+     * @param mediaList A list of media
+     * @param sipTr: SIP Transport
+     * @return A shared pointer on the created call.
+     */
+    std::shared_ptr<SIPCall> newIncomingCall(
+        const std::string& from,
+        const std::vector<MediaAttribute>& mediaList,
+        const std::shared_ptr<SipTransport>& sipTr = {}) override;
+
     void onRegister(pjsip_regc_cbparam* param);
 
     virtual void sendTextMessage(const std::string& to,
@@ -540,8 +545,6 @@ private:
     bool userMatch(std::string_view username) const;
     bool hostnameMatch(std::string_view hostname) const;
     bool proxyMatch(std::string_view hostname) const;
-
-    bool isSrtpEnabled() const { return srtpKeyExchange_ != KeyExchangeProtocol::NONE; }
 
     /**
      * Callback called by the transport layer when the registration
@@ -709,12 +712,6 @@ private:
     bool tlsVerifyClient_;
     bool tlsRequireClientCertificate_;
     std::string tlsNegotiationTimeoutSec_;
-
-    /**
-     * Specifies the type of key exchange used for SRTP, if any.
-     * This only determine if the media channel is secured.
-     */
-    KeyExchangeProtocol srtpKeyExchange_ {KeyExchangeProtocol::NONE};
 
     /**
      * Determine if the softphone should fallback on non secured media channel if SRTP negotiation
