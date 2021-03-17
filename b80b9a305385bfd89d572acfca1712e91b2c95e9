@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fe673d8c_05ce9915",
+        "filename": "src/call_factory.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-17T13:25:57Z",
+      "side": 1,
+      "message": "this could be replaced by simple list/vector. And no need to make reference to LinkType anymore",
+      "revId": "b80b9a305385bfd89d572acfca1712e91b2c95e9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
