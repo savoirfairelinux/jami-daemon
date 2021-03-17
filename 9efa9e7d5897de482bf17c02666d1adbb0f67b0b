@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "ab3c09cc_fde0af6d",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1396,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-17T18:18:16Z",
+      "side": 1,
+      "message": "No at this point we can\u0027t. There is an inherent delay to get an up-to-date connectionState() and SIPCall::onClosed() can take some time.\n\nSo invite_session_state_changed_cb can reset the invite before SIPCall::onClosed() finishes. and getConnectionState() will be CONNECTED.\n\nSo, the invitesession must be checked here",
+      "parentUuid": "1a46fbf6_de7732e8",
+      "revId": "9efa9e7d5897de482bf17c02666d1adbb0f67b0b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "601cf5fc_0231ec6e",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 2
@@ -33,6 +51,24 @@
       "revId": "9efa9e7d5897de482bf17c02666d1adbb0f67b0b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "aa0da8b3_73e2e04f",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1457,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-17T18:18:16Z",
+      "side": 1,
+      "message": "same here",
+      "parentUuid": "601cf5fc_0231ec6e",
+      "revId": "9efa9e7d5897de482bf17c02666d1adbb0f67b0b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
