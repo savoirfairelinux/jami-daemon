@@ -22,6 +22,30 @@
       "revId": "491cde511c41760648f7a76b8075ad5b61f03eaf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6a86b2f0_40fd6f4f",
+        "filename": "src/vcard.h",
+        "patchSetId": 54
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-17T18:35:53Z",
+      "side": 1,
+      "message": "indeed. also replaced getline by split_string",
+      "parentUuid": "c27a430d_91e986f3",
+      "range": {
+        "startLine": 94,
+        "startChar": 16,
+        "endLine": 94,
+        "endChar": 29
+      },
+      "revId": "491cde511c41760648f7a76b8075ad5b61f03eaf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
