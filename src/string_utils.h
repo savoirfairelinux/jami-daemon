@@ -114,6 +114,34 @@ stod(const std::string& str)
 
 std::string_view trim(std::string_view s);
 
+/**
+ * Split a string_view with an API similar to std::getline.
+ * @param str The input string to iterate on.
+ * @param line The output substring, also used as an iterator.
+ *             It must be default-initialised when this function is used 
+ *             for the first time with a given string,
+ *             and should not be modified by the caller during iteration.
+ * @param delim The delimiter.
+ * @return True if line was set, false if the end of the input was reached.
+ */
+inline
+bool getline(const std::string_view str, std::string_view& line, char delim = '\n')
+{
+    if (str.empty())
+        return false;
+    if (line.data() == nullptr) {
+        // first iteration
+        line = str.substr(0, str.find(delim));
+    } else {
+        size_t prevEnd = line.data() + line.size() - str.data();
+        if (prevEnd >= str.size())
+            return false;
+        auto nextStr = str.substr(prevEnd + 1);
+        line = nextStr.substr(0, nextStr.find(delim));
+    }
+    return  true;
+}
+
 inline
 std::vector<std::string_view> split_string(std::string_view str, char delim)
 {

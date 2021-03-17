@@ -517,15 +517,16 @@ MediaEncoder::print_sdp()
 #else
     const auto sdp_size = outputCtx_->streams[currentStreamIdx_]->codec->extradata_size + 2048;
 #endif
-    std::string result;
     std::string sdp(sdp_size, '\0');
     av_sdp_create(&outputCtx_, 1, &(*sdp.begin()), sdp_size);
-    std::istringstream iss(sdp);
-    std::string line;
-    while (std::getline(iss, line)) {
+
+    std::string result;
+    result.reserve(sdp_size);
+    std::string_view line;
+    while (jami::getline(sdp, line)) {
         /* strip windows line ending */
-        line = line.substr(0, line.length() - 1);
-        result += line + "\n";
+        result += line.substr(0, line.length() - 1);
+        result += "\n"sv;
     }
 #ifdef DEBUG_SDP
     JAMI_DBG("Sending SDP:\n%s", result.c_str());

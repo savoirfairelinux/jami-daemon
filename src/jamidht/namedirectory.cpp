@@ -360,7 +360,7 @@ NameDirectory::registerName(const std::string& addr,
         std::stringstream ss;
         ss << "{\"addr\":\"" << addr << "\",\"owner\":\"" << owner << "\",\"signature\":\""
            << signedname << "\",\"publickey\":\""
-           << base64::encode(jami::Blob(publickey.begin(), publickey.end())) << "\"}";
+           << base64::encode(publickey) << "\"}";
         body = ss.str();
     }
     auto request = std::make_shared<Request>(*httpContext_,
