@@ -170,6 +170,10 @@ DBusClient::initLibrary(int flags)
                bind(&DBusCallManager::incomingMessage, callM, _1, _2, _3)),
            exportable_callback<CallSignal::IncomingCall>(
                bind(&DBusCallManager::incomingCall, callM, _1, _2, _3)),
+           exportable_callback<CallSignal::IncomingCallWithMedia>(
+               bind(&DBusCallManager::incomingCallWithMedia, callM, _1, _2, _3, _4)),
+           exportable_callback<CallSignal::MediaChangeRequested>(
+               bind(&DBusCallManager::mediaChangeRequested, callM, _1, _2, _3)),
            exportable_callback<CallSignal::RecordPlaybackFilepath>(
                bind(&DBusCallManager::recordPlaybackFilepath, callM, _1, _2)),
            exportable_callback<CallSignal::ConferenceCreated>(
@@ -199,7 +203,7 @@ DBusClient::initLibrary(int flags)
            exportable_callback<CallSignal::SmartInfo>(bind(&DBusCallManager::SmartInfo, callM, _1)),
            exportable_callback<CallSignal::RemoteRecordingChanged>(
                bind(&DBusCallManager::remoteRecordingChanged, callM, _1, _2, _3)),
-            exportable_callback<CallSignal::MediaStateChanged>(
+           exportable_callback<CallSignal::MediaStateChanged>(
                bind(&DBusCallManager::mediaStateChanged, callM, _1, _2))};
 
     // Configuration event handlers
