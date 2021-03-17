@@ -19,9 +19,6 @@
 #include "base64.h"
 #include "sip/sip_utils.h"
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <iostream>
 #include <pjlib.h>
 #include <pjlib-util/base64.h>
 
@@ -29,18 +26,17 @@ namespace jami {
 namespace base64 {
 
 std::string
-encode(const std::vector<uint8_t>::const_iterator begin,
-       const std::vector<uint8_t>::const_iterator end)
+encode(std::string_view dat)
 {
-    int input_length = std::distance(begin, end);
-    if (input_length == 0)
+    if (dat.empty())
         return {};
 
+    int input_length = dat.size();
     int output_length = PJ_BASE256_TO_BASE64_LEN(input_length);
     std::string out;
     out.resize(output_length);
 
-    if (pj_base64_encode(&(*begin), input_length, &(*out.begin()), &output_length) != PJ_SUCCESS) {
+    if (pj_base64_encode((const uint8_t*)dat.data(), input_length, &(*out.begin()), &output_length) != PJ_SUCCESS) {
         throw base64_exception();
     }
 
@@ -48,20 +44,14 @@ encode(const std::vector<uint8_t>::const_iterator begin,
     return out;
 }
 
-std::string
-encode(const std::vector<uint8_t>& dat)
-{
-    return encode(dat.cbegin(), dat.cend());
-}
-
 std::vector<uint8_t>
-decode(const std::string& str)
+decode(std::string_view str)
 {
     if (str.empty())
         return {};
 
     int output_length = PJ_BASE64_TO_BASE256_LEN(str.length());
-    const pj_str_t input(sip_utils::CONST_PJ_STR(str));
+    auto input = sip_utils::CONST_PJ_STR(str);
 
     std::vector<uint8_t> out;
     out.resize(output_length);
