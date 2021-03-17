@@ -18,12 +18,12 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <stddef.h>
-
 #include <string>
+#include <string_view>
 #include <vector>
 #include <exception>
+
+#include <cstdint>
 
 namespace jami {
 namespace base64 {
@@ -31,10 +31,13 @@ namespace base64 {
 class base64_exception : public std::exception
 {};
 
-std::string encode(const std::vector<uint8_t>::const_iterator begin,
-                   const std::vector<uint8_t>::const_iterator end);
-std::string encode(const std::vector<uint8_t>& dat);
-std::vector<uint8_t> decode(const std::string& str);
+std::string encode(std::string_view);
+
+inline std::string encode(const std::vector<uint8_t>& data) {
+    return encode(std::string_view((const char*)data.data(), data.size()));
+}
+
+std::vector<uint8_t> decode(std::string_view);
 
 } // namespace base64
 } // namespace jami

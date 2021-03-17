@@ -23,8 +23,11 @@
 
 #include "string_utils.h"
 #include <string>
+#include <string_view>
 
 #include "../../test_runner.h"
+
+using namespace std::literals;
 
 namespace jami { namespace test {
 
@@ -90,15 +93,26 @@ StringUtilsTest::to_number_test()
 void
 StringUtilsTest::split_string_test()
 {
-    auto split_string_result = split_string("*fdg454()**{&xcx*", '*');
+    constexpr auto data = "*fdg454()**{&xcx*"sv;
+    auto split_string_result = split_string(data, '*');
     CPPUNIT_ASSERT(split_string_result.size() == 2);
-    CPPUNIT_ASSERT(split_string_result.at(0) == "fdg454()"
-                   && split_string_result.at(1) == "{&xcx");
+    CPPUNIT_ASSERT(split_string_result.at(0) == "fdg454()"sv
+                   && split_string_result.at(1) == "{&xcx"sv);
 
     auto split_string_to_unsigned_result = split_string_to_unsigned("/4545497//45454/", '/');
     CPPUNIT_ASSERT(split_string_to_unsigned_result.size() == 2);
     CPPUNIT_ASSERT(split_string_to_unsigned_result.at(0) == 4545497
                    && split_string_to_unsigned_result.at(1) == 45454);
+
+    std::string_view line;
+    split_string_result.clear();
+    while (jami::getline(data, line, '*')) {
+        split_string_result.emplace_back(line);
+    }
+    CPPUNIT_ASSERT_EQUAL(4, split_string_result.size());
+    CPPUNIT_ASSERT_EQUAL(true, split_string_result.at(0).empty());
+    CPPUNIT_ASSERT_EQUAL("fdg454()"sv, split_string_result.at(1));
+    CPPUNIT_ASSERT_EQUAL(true, split_string_result.at(2).empty());
 }
 
 }} // namespace jami_test
