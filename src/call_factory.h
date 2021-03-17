@@ -30,6 +30,8 @@
 #include "call.h"
 #include "account.h"
 
+class SipCall;
+
 namespace jami {
 
 class SIPAccountBase;
