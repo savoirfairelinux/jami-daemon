@@ -83,6 +83,7 @@ AudioRtpSession::startSender()
 
     // sender sets up input correctly, we just keep a reference in case startSender is called
     audioInput_ = jami::getAudioInput(callID_);
+    audioInput_->setMuted(muteState_);
     audioInput_->setSuccessfulSetupCb(onSuccessfulSetup_);
     auto newParams = audioInput_->switchInput(input_);
     try {
@@ -105,8 +106,8 @@ AudioRtpSession::startSender()
     try {
         sender_.reset();
         socketPair_->stopSendOp(false);
-        sender_.reset(new AudioSender(
-            callID_, getRemoteRtpUri(), send_, *socketPair_, initSeqVal_, mtu_));
+        sender_.reset(
+            new AudioSender(callID_, getRemoteRtpUri(), send_, *socketPair_, initSeqVal_, mtu_));
     } catch (const MediaEncoderException& e) {
         JAMI_ERR("%s", e.what());
         send_.enabled = false;
