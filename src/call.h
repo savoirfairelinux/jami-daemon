@@ -347,6 +347,8 @@ public: // media management
 
     std::unique_ptr<AudioDeviceGuard> audioGuard;
 
+    std::recursive_mutex& getCallMutex();
+
 protected:
     virtual void merge(Call& scall);
 

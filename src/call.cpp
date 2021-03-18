@@ -164,6 +164,11 @@ Call::getConnectionState() const
     return connectionState_;
 }
 
+std::recursive_mutex&
+Call::getCallMutex() {
+    return callMutex_;
+}
+
 Call::CallState
 Call::getState() const
 {
