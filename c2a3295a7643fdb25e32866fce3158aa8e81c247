@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f42e7057_5b8ed5b2",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 71
+      },
+      "lineNbr": 638,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-18T04:44:43Z",
+      "side": 1,
+      "message": "duplicate check with line 622 ?",
+      "range": {
+        "startLine": 635,
+        "startChar": 4,
+        "endLine": 638,
+        "endChar": 5
+      },
+      "revId": "c2a3295a7643fdb25e32866fce3158aa8e81c247",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cf444355_5c995af4",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 71
+      },
+      "lineNbr": 671,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-18T04:44:43Z",
+      "side": 1,
+      "message": "Introduce conversion function from git_blob to std::string_view using git_blob_rawsize to avoid unneeded allocation+copy and to avoid assuming null-terminated strings:\n\n  std::string_view(git_blob_rawcontent(blob), git_blob_rawsize(blob))",
+      "range": {
+        "startLine": 670,
+        "startChar": 4,
+        "endLine": 671,
+        "endChar": 70
+      },
+      "revId": "c2a3295a7643fdb25e32866fce3158aa8e81c247",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c0b138f4_3f9a8748",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 71
+      },
+      "lineNbr": 769,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-18T04:44:43Z",
+      "side": 1,
+      "message": "idem",
+      "range": {
+        "startLine": 768,
+        "startChar": 4,
+        "endLine": 769,
+        "endChar": 77
+      },
+      "revId": "c2a3295a7643fdb25e32866fce3158aa8e81c247",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "efc1fee7_9d735cd3",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 71
+      },
+      "lineNbr": 994,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-18T04:44:43Z",
+      "side": 1,
+      "message": "idem",
+      "range": {
+        "startLine": 993,
+        "startChar": 4,
+        "endLine": 994,
+        "endChar": 77
+      },
+      "revId": "c2a3295a7643fdb25e32866fce3158aa8e81c247",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3e5b4fa6_15524ffb",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 71
+      },
+      "lineNbr": 996,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-18T04:44:43Z",
+      "side": 1,
+      "message": "idem",
+      "range": {
+        "startLine": 995,
+        "startChar": 4,
+        "endLine": 996,
+        "endChar": 77
+      },
+      "revId": "c2a3295a7643fdb25e32866fce3158aa8e81c247",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
