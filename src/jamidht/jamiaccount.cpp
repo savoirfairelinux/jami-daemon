@@ -3886,7 +3886,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     });
 }
 
-std::string_view
+const std::string&
 JamiAccount::currentDeviceId() const
 {
     if (!accountManager_)

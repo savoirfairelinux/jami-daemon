@@ -429,7 +429,7 @@ public:
      */
     void shutdownConnections();
 
-    std::string_view currentDeviceId() const;
+    const std::string& currentDeviceId() const;
 
 private:
     NON_COPYABLE(JamiAccount);
