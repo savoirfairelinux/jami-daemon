@@ -913,7 +913,10 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
         }
         // Reset the invite here as it must not be used on
         // a non existing link and removeCall can take time to be called
-        call->setInviteSession();
+        {
+            std::lock_guard<std::recursive_mutex> lk {call->getCallMutex()};
+            call->setInviteSession();
+        }
         break;
 
     default:
