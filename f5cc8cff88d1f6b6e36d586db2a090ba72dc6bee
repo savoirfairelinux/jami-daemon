@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e4fd1ad7_24e5a05f",
+        "filename": "src/sip/sipaccountbase.cpp",
+        "patchSetId": 43
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-03-18T21:21:58Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe variable \u0027uid\u0027 is copy-constructed from a const reference but is only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-copy-initialization",
+      "revId": "f5cc8cff88d1f6b6e36d586db2a090ba72dc6bee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
