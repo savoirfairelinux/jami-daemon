@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "02a8a10c_4f5916b8",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1396,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-18T13:41:58Z",
+      "side": 1,
+      "message": "I get it. But this reveal an even bigger problem: the invite state and call state (which IMHO carry the same information) are not synchronized!\nHowever, this is out of scope of this patch.",
+      "parentUuid": "ab3c09cc_fde0af6d",
+      "revId": "9efa9e7d5897de482bf17c02666d1adbb0f67b0b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "601cf5fc_0231ec6e",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 2
