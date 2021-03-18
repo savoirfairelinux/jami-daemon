@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "de1d34d4_dfba66ab",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 590,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-18T19:54:45Z",
+      "side": 1,
+      "message": "thanks for the modifications.\nI dont want to be very demanding, but I think you can init status\u003dPJSIP_SC_OK and skip the last else. But it\u0027s really minor. I will put my +1 anyway.",
+      "revId": "dd5f9dc7ec28f76dceb805b875f4ea1bb38564b1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
