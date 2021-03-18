@@ -448,6 +448,7 @@ SIPCall::setMute(bool state)
 void
 SIPCall::setInviteSession(pjsip_inv_session* inviteSession)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     if (inviteSession == nullptr and inviteSession_) {
         JAMI_DBG("[call:%s] Delete current invite session", getCallId().c_str());
     } else if (inviteSession != nullptr) {
@@ -1491,7 +1492,7 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer)
                        acc->getActiveAccountCodecInfoList(acc->isVideoEnabled() ? MEDIA_VIDEO
                                                                                 : MEDIA_NONE),
                        acc->getSrtpKeyExchange(),
-                       getState() == CallState::HOLD);
+                       false);
     setRemoteSdp(offer);
     sdp_->startNegotiation();
     pjsip_inv_set_sdp_answer(inviteSession_.get(), sdp_->getLocalSdpSession());
