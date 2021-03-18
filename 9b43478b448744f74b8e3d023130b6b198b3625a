@@ -2,6 +2,23 @@
   "comments": [
     {
       "key": {
+        "uuid": "9dc0b7ca_0369c9f8",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 582,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-18T17:55:41Z",
+      "side": 1,
+      "message": "can we make this check more readable ? It\u0027s not easy to follow.\nI know, it was already that way, so no big deal if dont change it.",
+      "revId": "9b43478b448744f74b8e3d023130b6b198b3625a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "ca665ffc_2f808f3b",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 3
