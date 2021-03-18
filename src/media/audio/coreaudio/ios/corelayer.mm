@@ -145,7 +145,6 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
         default:
             break;
     }
-
     setupOutputBus();
     if (setUpInput) {
         setupInputBus();
@@ -349,6 +348,7 @@ CoreLayer::startStream(AudioDeviceType stream)
 void
 CoreLayer::destroyAudioLayer()
 {
+    JAMI_DBG("iOS CoreLayer - destroy Audio layer");
     AudioOutputUnitStop(ioUnit_);
     AudioUnitUninitialize(ioUnit_);
     AudioComponentInstanceDispose(ioUnit_);
@@ -360,7 +360,9 @@ CoreLayer::stopStream(AudioDeviceType stream)
 {
     dispatch_async(audioConfigurationQueueIOS(), ^{
         JAMI_DBG("iOS CoreLayer - Stop Stream");
-        if (status_ != Status::Started)
+        auto currentCategoty =  [[AVAudioSession sharedInstance] category];
+        bool keepCurrentStream = currentCategoty == AVAudioSessionCategoryPlayAndRecord && (stream == AudioDeviceType::PLAYBACK);
+        if (status_ != Status::Started || keepCurrentStream)
             return;
         status_ = Status::Idle;
         destroyAudioLayer();
