@@ -524,7 +524,7 @@ AccountManager::sendTrustRequest(const std::string& to, const std::vector<uint8_
                   dev.toString().c_str());
         dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev.toString()),
                            dev,
-                           dht::TrustRequest(DHT_TYPE_NS, payload));
+                           dht::TrustRequest(DHT_TYPE_NS, "", payload));
     });
 }
 
