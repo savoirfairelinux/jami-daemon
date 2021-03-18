@@ -888,8 +888,10 @@ Manager::finish() noexcept
         // NOTE: sipLink_->shutdown() is needed because this will perform
         // sipTransportBroker->shutdown(); which will call Manager::instance().sipVoIPLink()
         // so the pointer MUST NOT be resetted at this point
-        pimpl_->sipLink_->shutdown();
-        pimpl_->sipLink_.reset();
+        if (pimpl_->sipLink_) {
+            pimpl_->sipLink_->shutdown();
+            pimpl_->sipLink_.reset();
+        }
 
         pj_shutdown();
 
