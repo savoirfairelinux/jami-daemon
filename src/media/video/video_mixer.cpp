@@ -279,6 +279,16 @@ VideoMixer::process()
                 // to avoid concurrent access.
                 std::shared_ptr<VideoFrame> input = x->getRenderFrame();
 
+                if (!input->height() or !input->width())
+                    continue;
+
+                // If orientation changed or if the first valid frame for source
+                // is received -> trigger layout calculation and confInfo update
+                if (x->rotation != input->getOrientation() or !x->w or !x->h) {
+                    layoutUpdated_ += 1;
+                    needsUpdate = true;
+                }
+
                 auto wantedIndex = i;
                 if (currentLayout_ == Layout::ONE_BIG) {
                     wantedIndex = 0;
@@ -293,7 +303,7 @@ VideoMixer::process()
                 }
 
                 if (needsUpdate)
-                    calc_position(x, wantedIndex);
+                    calc_position(x, input, wantedIndex);
 
                 if (input)
                     successfullyRendered |= render_frame(output, input, x);
@@ -378,12 +388,15 @@ VideoMixer::render_frame(VideoFrame& output,
 }
 
 void
-VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source, int index)
+VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source,
+                          const std::shared_ptr<VideoFrame>& input,
+                          int index)
 {
     if (!width_ or !height_)
         return;
 
-    int cell_width, cell_height, xoff, yoff;
+    // Compute cell size/position
+    int cell_width, cell_height, cellW_off, cellH_off;
     const int n = currentLayout_ == Layout::ONE_BIG ? 1 : sources_.size();
     const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL ? std::max(MIN_LINE_ZOOM, n)
                                                                   : ceil(sqrt(n));
@@ -398,28 +411,49 @@ VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source, int index)
     }
     if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
         if (index == 0) {
-            xoff = 0;
-            yoff = height_ / zoom; // First line height
+            cellW_off = 0;
+            cellH_off = height_ / zoom; // First line height
         } else {
-            xoff = (index - 1) * cell_width;
+            cellW_off = (index - 1) * cell_width;
             // Show sources in center
-            xoff += (width_ - (n - 1) * cell_width) / 2;
-            yoff = 0;
+            cellW_off += (width_ - (n - 1) * cell_width) / 2;
+            cellH_off = 0;
         }
     } else {
-        xoff = (index % zoom) * cell_width;
+        cellW_off = (index % zoom) * cell_width;
         if (currentLayout_ == Layout::GRID && n % zoom != 0 && index >= (zoom * ((n - 1) / zoom))) {
             // Last line, center participants if not full
-            xoff += (width_ - (n % zoom) * cell_width) / 2;
+            cellW_off += (width_ - (n % zoom) * cell_width) / 2;
         }
-        yoff = (index / zoom) * cell_height;
+        cellH_off = (index / zoom) * cell_height;
     }
 
+    // Compute frame size/position
+    float zoomW, zoomH;
+    int frameW, frameH, frameW_off, frameH_off;
+
+    if (input->getOrientation() % 180) {
+        // Rotated frame
+        zoomW = (float) input->height() / cell_width;
+        zoomH = (float) input->width() / cell_height;
+        frameH = std::round(input->width() / std::max(zoomW, zoomH));
+        frameW = std::round(input->height() / std::max(zoomW, zoomH));
+    } else {
+        zoomW = (float) input->width() / cell_width;
+        zoomH = (float) input->height() / cell_height;
+        frameW = std::round(input->width() / std::max(zoomW, zoomH));
+        frameH = std::round(input->height() / std::max(zoomW, zoomH));
+    }
+
+    // Center the frame in the cell
+    frameW_off = cellW_off + (cell_width - frameW) / 2;
+    frameH_off = cellH_off + (cell_height - frameH) / 2;
+
     // Update source's cache
-    source->w = cell_width;
-    source->h = cell_height;
-    source->x = xoff;
-    source->y = yoff;
+    source->w = frameW;
+    source->h = frameH;
+    source->x = frameW_off;
+    source->y = frameH_off;
 }
 
 void

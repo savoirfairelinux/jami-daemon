@@ -97,7 +97,9 @@ private:
                       const std::shared_ptr<VideoFrame>& input,
                       std::unique_ptr<VideoMixerSource>& source);
 
-    void calc_position(std::unique_ptr<VideoMixerSource>& source, int index);
+    void calc_position(std::unique_ptr<VideoMixerSource>& source,
+                       const std::shared_ptr<VideoFrame>& input,
+                       int index);
 
     void start_sink();
     void stop_sink();
