@@ -16,6 +16,52 @@
       "revId": "792648a92d4afc29e13f15f665cdc8a225d63a92",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3e60d8f7_49491246",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-19T20:22:28Z",
+      "side": 1,
+      "message": "not a big deal but just incase random access iterators become trendy, maybe std::distance would be safer",
+      "range": {
+        "startLine": 157,
+        "startChar": 15,
+        "endLine": 157,
+        "endChar": 43
+      },
+      "revId": "792648a92d4afc29e13f15f665cdc8a225d63a92",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9b9992a7_df0f7295",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-19T20:22:28Z",
+      "side": 1,
+      "message": "- this is a shared pointer ref here, but it is shadowed in the same scope with a different type\n- also, the function is called getVideoRtp, so I would expect the variable to be called videoRtp(which is used elsewhere)",
+      "range": {
+        "startLine": 242,
+        "startChar": 16,
+        "endLine": 242,
+        "endChar": 25
+      },
+      "revId": "792648a92d4afc29e13f15f665cdc8a225d63a92",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
