@@ -46,6 +46,30 @@
       "revId": "0ed4972cb98ca24e96bdb2c74240b730ae54d8b1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bdc91ed7_1d686949",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 917,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2021-03-19T18:55:47Z",
+      "side": 1,
+      "message": "Sébastien done. Mohamed setInviteSession() is not protected on the master. Is there is another patch that adds protection?",
+      "parentUuid": "b3de14ee_fc0a0167",
+      "range": {
+        "startLine": 917,
+        "startChar": 17,
+        "endLine": 917,
+        "endChar": 27
+      },
+      "revId": "0ed4972cb98ca24e96bdb2c74240b730ae54d8b1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
