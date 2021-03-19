@@ -80,6 +80,9 @@ conf.set10('HAVE_PULSE', deplibpulse.found())
 depjack = dependency('jack', required: get_option('jack'))
 conf.set10('HAVE_JACK', depjack.found())
 
+depwebrtcap = dependency('webrtc-audio-processing', required: get_option('webrtc-audio-processing'))
+conf.set10('HAVE_WEBRTC_AP', depwebrtcap.found())
+
 depportaudio = dependency('portaudio-2.0', required: get_option('portaudio'))
 conf.set10('HAVE_PORTAUDIO', depportaudio.found())
 
