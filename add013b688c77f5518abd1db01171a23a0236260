@@ -16,6 +16,23 @@
       "revId": "add013b688c77f5518abd1db01171a23a0236260",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "279c4dac_3c299a5f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 93
+      },
+      "lineNbr": 2347,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-03-19T20:51:45Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\n\u0027find_last_of\u0027 called with a string literal consisting of a single character; consider using the more effective overload accepting a character\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-faster-string-find",
+      "revId": "add013b688c77f5518abd1db01171a23a0236260",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
