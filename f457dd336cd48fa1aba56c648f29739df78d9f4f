@@ -22,6 +22,23 @@
       "revId": "f457dd336cd48fa1aba56c648f29739df78d9f4f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "84718d6a_e399dccb",
+        "filename": "contrib/src/ffmpeg/libopusenc-add-option-to-set-inband-FEC.patch",
+        "patchSetId": 6
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2021-03-19T18:27:38Z",
+      "side": 1,
+      "message": "Doesn\u0027t build on iOS and macOS\n\npatching file libavcodec/libopusenc.c\nHunk #1 FAILED at 34.\nHunk #2 succeeded at 158 with fuzz 1 (offset 8 lines).\nHunk #3 FAILED at 560.\n2 out of 3 hunks FAILED -- saving rejects to file libavcodec/libopusenc.c.rej",
+      "revId": "f457dd336cd48fa1aba56c648f29739df78d9f4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
