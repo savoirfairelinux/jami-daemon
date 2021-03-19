@@ -263,6 +263,7 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
     // Emit client state only if changed
     auto old_client_state = getStateStr();
     callState_ = call_state;
+    isHolding_ = callState_ == CallState::HOLD;
     connectionState_ = cnx_state;
     auto new_client_state = getStateStr();
 

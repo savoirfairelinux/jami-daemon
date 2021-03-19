@@ -102,7 +102,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
 #endif
     auto mediaAttrList = getSIPAccount()->createDefaultMediaList(getSIPAccount()->isVideoEnabled()
                                                                      and not isAudioOnly(),
-                                                                 getState() == CallState::HOLD);
+                                                                 isHolding_);
     initMediaStreams(mediaAttrList);
 }
 
@@ -134,7 +134,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
         JAMI_WARN("[call:%s] No media offered in the incoming invite. Will answer with audio-only",
                   getCallId().c_str());
         mediaList = getSIPAccount()->createDefaultMediaList(getSIPAccount()->isVideoEnabled(),
-                                                            getState() == CallState::HOLD);
+                                                            isHolding_);
     } else {
         JAMI_ERR("[call:%s] Media list can not be empty for outgoing calls", getCallId().c_str());
         return;
@@ -525,7 +525,7 @@ SIPCall::SIPSessionReinvite()
     // This version is kept for backward compatibility.
     auto const& acc = getSIPAccount();
     auto mediaList = acc->createDefaultMediaList(acc->isVideoEnabled() and not isAudioOnly(),
-                                                 getState() == CallState::HOLD);
+                                                 isHolding_);
     return SIPSessionReinvite(mediaList);
 }
 
@@ -2162,7 +2162,7 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
 
     // This list should be provided by the client. Kept for backward compatibility.
     auto mediaList = acc->createDefaultMediaList(acc->isVideoEnabled(),
-                                                 getState() == CallState::HOLD);
+                                                 isHolding_);
 
     if (upnp_) {
         openPortsUPnP();
