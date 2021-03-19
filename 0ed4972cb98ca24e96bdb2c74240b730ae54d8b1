@@ -22,6 +22,30 @@
       "revId": "0ed4972cb98ca24e96bdb2c74240b730ae54d8b1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b3de14ee_fc0a0167",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 917,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-19T18:24:39Z",
+      "side": 1,
+      "message": "+1.\nsetInviteSession() is already protected by the exact same mutex. \nIt would be very strange if this lock fixed the crash.",
+      "parentUuid": "d1157122_9add781e",
+      "range": {
+        "startLine": 917,
+        "startChar": 17,
+        "endLine": 917,
+        "endChar": 27
+      },
+      "revId": "0ed4972cb98ca24e96bdb2c74240b730ae54d8b1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
