@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6f0ceb0d_8bde9d20",
+        "filename": "src/string_utils.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 142,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-19T14:06:29Z",
+      "side": 1,
+      "message": "format is not done 😉 (double space here)",
+      "range": {
+        "startLine": 141,
+        "startChar": 5,
+        "endLine": 142,
+        "endChar": 17
+      },
+      "revId": "b9506ca8dea2aca4cf7b8c1fe50fbe9af9f0cd0e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
