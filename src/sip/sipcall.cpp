@@ -2162,7 +2162,7 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
 
     // This list should be provided by the client. Kept for backward compatibility.
     auto mediaList = acc->createDefaultMediaList(acc->isVideoEnabled(),
-                                                 getState() == CallState::HOLD);
+                                                 isHolding_);
 
     if (upnp_) {
         openPortsUPnP();

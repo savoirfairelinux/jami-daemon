@@ -432,6 +432,8 @@ protected:
     mutable ConfInfo confInfo_ {};
     time_point duration_start_ {time_point::min()};
 
+    std::atomic_bool isHolding_ {false};
+
 private:
     bool validStateTransition(CallState newState);
 
