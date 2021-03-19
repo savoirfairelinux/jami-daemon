@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d15951ab_c6bcfa28",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 451,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-19T18:46:55Z",
+      "side": 1,
+      "message": "sorry for comment, the lock wasn\u0027t there. In fact I added it with the patch I am working on, so I thought it was on master.",
+      "revId": "1c4dae8ea385ae6237e8c2f364384b78f504990f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
