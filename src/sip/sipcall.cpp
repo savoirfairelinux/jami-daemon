@@ -319,7 +319,7 @@ SIPCall::SIPSessionReinvite()
                                   acc->isVideoEnabled() and not isAudioOnly() ? MEDIA_VIDEO
                                                                               : MEDIA_NONE),
                               acc->getSrtpKeyExchange(),
-                              getState() == CallState::HOLD))
+                              isHolding_))
         return !PJ_SUCCESS;
 
     if (initIceMediaTransport(true))
@@ -1499,7 +1499,7 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer)
                        acc->getActiveAccountCodecInfoList(acc->isVideoEnabled() ? MEDIA_VIDEO
                                                                                 : MEDIA_NONE),
                        acc->getSrtpKeyExchange(),
-                       getState() == CallState::HOLD);
+                       isHolding_);
     setRemoteSdp(offer);
     sdp_->startNegotiation();
     pjsip_inv_set_sdp_answer(inviteSession_.get(), sdp_->getLocalSdpSession());

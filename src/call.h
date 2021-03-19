@@ -384,6 +384,8 @@ protected:
     mutable std::mutex confInfoMutex_ {};
     mutable ConfInfo confInfo_ {};
 
+    std::atomic_bool isHolding_ {false};
+
 private:
     bool validStateTransition(CallState newState);
 
