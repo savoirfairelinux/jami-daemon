@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ffec529c_c0cbec92",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 99
+      },
+      "lineNbr": 452,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-03-22T19:06:59Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027socket\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "87c5d35b8f27fd7e1ccc8571bb03fb32ca8d3c2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "86038d55_1958649a",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 99
+      },
+      "lineNbr": 452,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-03-22T19:06:59Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027socket\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "87c5d35b8f27fd7e1ccc8571bb03fb32ca8d3c2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ce0f3f16_76d171a5",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 99
+      },
+      "lineNbr": 333,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-03-22T19:06:59Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "87c5d35b8f27fd7e1ccc8571bb03fb32ca8d3c2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
