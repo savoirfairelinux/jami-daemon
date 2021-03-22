@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "0e67f894_ac670dff",
+        "filename": "src/media/media_attribute.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-22T14:14:37Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "755ee010_d4fe2a80",
+      "revId": "792648a92d4afc29e13f15f665cdc8a225d63a92",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "3e60d8f7_49491246",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 45
@@ -42,6 +60,30 @@
     },
     {
       "key": {
+        "uuid": "d3fa67b7_c2ba7fcd",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-22T14:14:37Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3e60d8f7_49491246",
+      "range": {
+        "startLine": 157,
+        "startChar": 15,
+        "endLine": 157,
+        "endChar": 43
+      },
+      "revId": "792648a92d4afc29e13f15f665cdc8a225d63a92",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9b9992a7_df0f7295",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 45
@@ -62,6 +104,30 @@
       "revId": "792648a92d4afc29e13f15f665cdc8a225d63a92",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "19754856_2885bbb3",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-22T14:14:37Z",
+      "side": 1,
+      "message": "Ack\nFor the shadowed variable (videoRtp), it was already fixed in the subsequent patch sets. They are not in the same scope anymmore.\nFor the name, I would prefer to keep it that way to more consistent with the reset of code, otherwise, I will have to change it everywhere.",
+      "parentUuid": "9b9992a7_df0f7295",
+      "range": {
+        "startLine": 242,
+        "startChar": 16,
+        "endLine": 242,
+        "endChar": 25
+      },
+      "revId": "792648a92d4afc29e13f15f665cdc8a225d63a92",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
