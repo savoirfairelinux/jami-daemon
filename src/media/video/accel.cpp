@@ -376,10 +376,14 @@ HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desir
     auto input = frame.pointer();
     if (not input)
         throw std::runtime_error("Cannot transfer null frame");
-    auto out = std::make_unique<VideoFrame>();
 
     auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input->format));
-    if (desc && not(desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
+    if (!desc) {
+        throw std::runtime_error("Cannot transfer frame with invalid format");
+    }
+
+    auto out = std::make_unique<VideoFrame>();
+    if (not(desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
         out->copyFrom(frame);
         return out;
     }
