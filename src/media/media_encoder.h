@@ -155,6 +155,7 @@ private:
     std::mutex encMutex_;
     bool linkableHW_ {false};
     RateMode mode_ {RateMode::CRF_CONSTRAINED};
+    bool fecEnabled_ {false};
 
 #ifdef ENABLE_VIDEO
     video::VideoScaler scaler_;

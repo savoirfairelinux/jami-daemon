@@ -178,7 +178,6 @@ public:
 
     rational<double> getFps() const;
     AVPixelFormat getPixelFormat() const;
-    void setOptions(const std::map<std::string, std::string>& options);
 
     void updateStartTime(int64_t startTime);
 
@@ -192,6 +191,8 @@ public:
     MediaStream getStream(std::string name = "") const;
 
     void setResolutionChangedCallback(std::function<void(int, int)> cb) { resolutionChangedCallback_ = std::move(cb); }
+
+    void setFEC(bool enable) { fecEnabled_ = enable; }
 
 private:
     NON_COPYABLE(MediaDecoder);
@@ -229,6 +230,8 @@ private:
 
     int width_;
     int height_;
+
+    bool fecEnabled_ {false};
 
 protected:
     AVDictionary* options_ = nullptr;
