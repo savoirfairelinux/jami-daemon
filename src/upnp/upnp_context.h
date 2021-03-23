@@ -3,6 +3,7 @@
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
  *  Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *  Author: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -126,6 +127,9 @@ private:
     // Initialization
     void init();
 
+    // Wait for Shutdown
+    void waitForShutdown();
+
     /**
      * @brief start the search for IGDs activate the mapping
      * list update.
@@ -159,12 +163,6 @@ private:
     // Remove all mappings of the given type.
     void deleteAllMappings(PortType type);
 
-    // Schedule a time-out timer for a in-progress request.
-    void registerAddMappingTimeout(const Mapping::sharedPtr_t& map);
-
-    // Callback invoked when a request times-out
-    void onRequestTimeOut(Mapping::key_t key);
-
     // Update the state and notify the listener
     void updateMappingState(const Mapping::sharedPtr_t& map,
                             MappingState newState,
@@ -172,6 +170,9 @@ private:
 
     // Provision ports.
     uint16_t getAvailablePortNumber(PortType type);
+
+    // Update preferred IGD
+    void updatePreferredIgd();
 
     // Get preferred IGD
     std::shared_ptr<IGD> getPreferredIgd() const;
@@ -243,6 +244,9 @@ private:
     void onIgdUpdated(const std::shared_ptr<IGD>& igd, UpnpIgdEvent event) override;
     // Callback used to report add request status.
     void onMappingAdded(const std::shared_ptr<IGD>& igd, const Mapping& map) override;
+    // Callback invoked when a request fails. Reported on failures for both
+    // new requests and renewal requests (if supported by the the protocol).
+    void onMappingRequestFailed(const Mapping& map) override;
 #if HAVE_LIBNATPMP
     // Callback used to report renew request status.
     void onMappingRenewed(const std::shared_ptr<IGD>& igd, const Mapping& map) override;
@@ -275,12 +279,19 @@ private:
 
     std::shared_ptr<Task> mappingListUpdateTimer_ {};
 
+    // Current preferred IGD. Can be null if there is no valid IGD.
+    std::shared_ptr<IGD> preferredIgd_;
+
     // This mutex must lock only these two members. All other
     // members must be accessed only from the UPNP context thread.
     std::mutex mutable mappingMutex_;
     // List of mappings.
     std::map<Mapping::key_t, Mapping::sharedPtr_t> mappingList_[2] {};
     std::set<std::shared_ptr<IGD>> validIgdList_ {};
+
+    // Shutdown synchronization
+    std::condition_variable shutdownCv_ {};
+    bool shutdownComplete_ {false};
 };
 
 } // namespace upnp
