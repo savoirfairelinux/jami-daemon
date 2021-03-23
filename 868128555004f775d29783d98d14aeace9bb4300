@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3629a332_fd3ff3bd",
+        "filename": "src/call.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 252,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-23T13:56:56Z",
+      "side": 1,
+      "message": "IMHO the problem is not specific to this particular scenario (receiving an sdp request offer while sending sip messages). The root issue is the handling of callbacks/events reported by PJ_SIP through SipVoipLink.\nIMHO, the solution is to post (reschedule) all PJSIP calls on the same thread as the one used to  invoke PJSIP methods (the MainThread in this case). This will also solve other thread races that are causing crashes.",
+      "revId": "868128555004f775d29783d98d14aeace9bb4300",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
