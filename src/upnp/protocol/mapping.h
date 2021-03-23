@@ -124,8 +124,6 @@ private:
     void setAvailable(bool val);
     void setState(const MappingState& state);
     void updateDescription();
-    void setTimeoutTimer(std::shared_ptr<Task> timer);
-    void cancelTimeoutTimer();
 #if HAVE_LIBNATPMP
     void setRenewalTime(sys_clock::time_point time);
 #endif
@@ -142,7 +140,6 @@ private:
     // Track the state of the mapping
     MappingState state_;
     NotifyCallback notifyCb_;
-    std::shared_ptr<Task> timeoutTimer_ {};
     // If true, a new mapping will be requested on behave of the mapping
     // owner when the mapping state changes from "OPEN" to "FAILED".
     bool autoUpdate_;
