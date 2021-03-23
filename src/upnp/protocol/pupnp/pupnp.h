@@ -67,22 +67,18 @@ namespace upnp {
 constexpr static int ARRAY_IDX_INVALID = 713;
 constexpr static int CONFLICT_IN_MAPPING = 718;
 
-// Timeout values (in seconds).
+// IGD search timeout (in seconds).
 constexpr static unsigned int SEARCH_TIMEOUT {60};
 // Max number of IGD search attempts before failure.
 constexpr static unsigned int PUPNP_MAX_RESTART_SEARCH_RETRIES {5};
-// Time-out between two successive IGD search.
-constexpr static auto PUPNP_TIMEOUT_BEFORE_IGD_SEARCH_RETRY {std::chrono::seconds(60)};
+// Base unit for the timeout between two successive IGD search.
+constexpr static auto PUPNP_SEARCH_RETRY_UNIT {std::chrono::seconds(15)};
 
 class PUPnP : public UPnPProtocol
 {
 public:
     using XMLDocument = std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&>;
-    struct IGDInfo
-    {
-        std::string location;
-        XMLDocument document;
-    };
+
     enum class CtrlAction {
         UNKNOWN,
         ADD_PORT_MAPPING,
@@ -91,8 +87,6 @@ public:
         GET_STATUS_INFO,
         GET_EXTERNAL_IP_ADDRESS
     };
-
-    using pIGDInfo = std::unique_ptr<IGDInfo>;
 
     PUPnP();
     ~PUPnP();
@@ -113,20 +107,17 @@ public:
     void searchForIgd() override;
 
     // Get the IGD list.
-    void getIgdList(std::list<std::shared_ptr<IGD>>& igdList) const override;
+    std::list<std::shared_ptr<IGD>> getIgdList() const override;
 
     // Return true if the it's fully setup.
     bool isReady() const override;
-
-    // Increment IGD errors counter.
-    void incrementErrorsCounter(const std::shared_ptr<IGD>& igd) override;
 
     // Get from the IGD the list of already allocated mappings if any.
     std::map<Mapping::key_t, Mapping> getMappingsListByDescr(
         const std::shared_ptr<IGD>& igd, const std::string& descr) const override;
 
     // Request a new mapping.
-    void requestMappingAdd(const std::shared_ptr<IGD>& igd, const Mapping& mapping) override;
+    void requestMappingAdd(const Mapping& mapping) override;
 
     // Renew an allocated mapping.
     // Not implemented. Currently, UPNP allocations do not have expiration time.
@@ -135,12 +126,28 @@ public:
     // Removes a mapping.
     void requestMappingRemove(const Mapping& igdMapping) override;
 
+    // Get the host (local) address.
+    const IpAddr getHostAddress() const override;
+
+    // Terminate the instance.
     void terminate() override;
 
 private:
     NON_COPYABLE(PUPnP);
 
+    // Helpers to run tasks on PUPNP private execution queue.
+    ScheduledExecutor* getPUPnPScheduler() { return &pupnpScheduler_; }
+    template<typename Callback>
+    void runOnPUPnPQueue(Callback&& cb)
+    {
+        pupnpScheduler_.run([cb = std::forward<Callback>(cb)]() mutable { cb(); });
+    }
+
+    // Helper to run tasks on UPNP context execution queue.
     ScheduledExecutor* getUpnContextScheduler() { return UpnpThreadUtil::getScheduler(); }
+
+    // Execution queue to run lib upnp actions
+    ScheduledExecutor pupnpScheduler_ {};
 
     // Init lib-upnp
     void initUpnpLib();
@@ -148,37 +155,43 @@ private:
     // Register the client
     void registerClient();
 
-    // Start the internal thread.
-    void startPUPnP();
-
     // Start search for UPNP devices
     void searchForDevices();
 
     // Return true if it has at least one valid IGD.
     bool hasValidIgd() const;
 
-    // Update and check the host (local) address. Returns true
-    // if the address is valid.
-    bool updateAndCheckHostAddress();
+    // Update the host (local) address.
+    void updateHostAddress();
+
+    // Check the host (local) address.
+    // Returns true if the address is valid.
+    bool hasValidHostAddress();
 
     // Delete mappings matching the description
     void deleteMappingsByDescription(const std::shared_ptr<IGD>& igd,
                                      const std::string& description);
 
+    // Search for the IGD in the local list of known IGDs.
+    std::shared_ptr<UPnPIGD> findMatchingIgd(const std::string& ctrlURL) const;
+
     // Process the reception of an add mapping action answer.
-    void processAddMapAction(const std::string& ctrlURL,
-                             uint16_t ePort,
-                             uint16_t iPort,
-                             PortType portType);
+    void processAddMapAction(const Mapping& map);
+
+    // Process the a mapping request failure.
+    void processRequestMappingFailure(const Mapping& map);
 
     // Process the reception of a remove mapping action answer.
-    void processRemoveMapAction(const std::string& ctrlURL,
-                                uint16_t ePort,
-                                uint16_t iPort,
-                                PortType portType);
+    void processRemoveMapAction(const Mapping& map);
+
+    // Increment IGD errors counter.
+    void incrementErrorsCounter(const std::shared_ptr<IGD>& igd);
+
+    // Download XML document.
+    void downLoadIgdDescription(const std::string& url);
 
     // Validate IGD from the xml document received from the router.
-    bool validateIgd(const IGDInfo&);
+    bool validateIgd(const std::string& location, IXML_Document* doc_container_ptr);
 
     // Returns control point action callback based on xml node.
     static CtrlAction getAction(const char* xmlNode);
@@ -217,17 +230,13 @@ private:
     // Parses the IGD candidate.
     std::unique_ptr<UPnPIGD> parseIgd(IXML_Document* doc, std::string locationUrl);
 
-    // These functions directly create UPnP actions and make synchronous UPnP control point calls.
-    // Assumes mutex is already locked.
+    // These functions directly create UPnP actions and make synchronous UPnP
+    // control point calls. Must be run on the PUPNP internal execution queue.
     bool actionIsIgdConnected(const UPnPIGD& igd);
     IpAddr actionGetExternalIP(const UPnPIGD& igd);
+    bool actionAddPortMapping(const Mapping& mapping);
+    bool actionDeletePortMapping(const Mapping& mapping);
 
-    bool actionAddPortMapping(const std::shared_ptr<UPnPIGD>& igd, const Mapping& mapping);
-    bool actionAddPortMappingAsync(const std::shared_ptr<UPnPIGD>& igd, const Mapping& mapping);
-    bool actionDeletePortMappingAsync(const UPnPIGD& igd,
-                                      const std::string& port_external,
-                                      const std::string& protocol);
-    bool actionDeletePortMapping(const std::shared_ptr<UPnPIGD>& igd, const Mapping& mapping);
     // Event type to string
     static const char* eventTypeToString(Upnp_EventType eventType);
 
@@ -238,25 +247,30 @@ private:
     // Client registration status.
     std::atomic_bool clientRegistered_ {false};
 
-    std::condition_variable pupnpCv_ {}; // Condition variable for thread-safe signaling.
-    std::atomic_bool pupnpRun_ {false};  // Variable to allow the thread to run.
-    std::thread pupnpThread_ {};         // PUPnP thread for non-blocking client registration.
     std::shared_ptr<Task> searchForIgdTimer_ {};
     unsigned int igdSearchCounter_ {0};
 
-    mutable std::mutex validIgdListMutex_;
-    std::list<std::shared_ptr<IGD>> validIgdList_; // List of valid IGDs.
+    // List of discovered IGDs.
+    std::set<std::string> discoveredIgdList_;
 
-    std::set<std::string> discoveredIgdList_; // UDN list of discovered IGDs.
-    std::list<std::future<pIGDInfo>>
-        dwnldlXmlList_; // List of futures for blocking xml download function calls.
-    std::list<std::future<pIGDInfo>> cancelXmlList_; // List of abandoned documents
+    // Control point handle.
+    UpnpClient_Handle ctrlptHandle_ {-1};
 
-    mutable std::mutex igdListMutex_;     // Mutex used to protect IGD instances.
-    std::mutex ctrlptMutex_;              // Mutex for client handle protection.
-    UpnpClient_Handle ctrlptHandle_ {-1}; // Control point handle.
+    // Observer to report the results.
+    UpnpMappingObserver* observer_ {nullptr};
 
-    std::atomic_bool searchForIgd_ {false}; // Variable to signal thread for a search.
+    // Calls from other threads that does not need synchronous access are
+    // rescheduled on the UPNP private queue. This will avoid the need to
+    // protect most of the data members of this class.
+    // For some internal members (namely the validIgdList and the hostAddress)
+    // that need to be synchronously accessed, are protected by this mutex.
+    mutable std::mutex pupnpMutex_;
+
+    // List of valid IGDs.
+    std::list<std::shared_ptr<IGD>> validIgdList_;
+
+    // Current host address.
+    IpAddr hostAddress_ {};
 };
 
 } // namespace upnp

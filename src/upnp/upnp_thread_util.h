@@ -22,12 +22,12 @@ protected:
 
     bool isValidThread() const { return threadId_ == getCurrentThread(); }
 
-    // Upnp scheduler (same as manager's thread)
+    // Upnp context execution queue (same as manager's scheduler)
     static ScheduledExecutor* getScheduler() { return &Manager::instance().scheduler(); }
 
-    // Helper to run tasks on upnp thread.
+    // Helper to run tasks on upnp context queue.
     template<typename Callback>
-    static void runOnUpnpContextThread(Callback&& cb)
+    static void runOnUpnpContextQueue(Callback&& cb)
     {
         getScheduler()->run([cb = std::forward<Callback>(cb)]() mutable { cb(); });
     }
