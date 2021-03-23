@@ -99,6 +99,8 @@ AudioRtpSession::startSender()
         return;
     }
 
+    send_.fecEnabled = true;
+
     // be sure to not send any packets before saving last RTP seq value
     socketPair_->stopSendOp();
     if (sender_)
