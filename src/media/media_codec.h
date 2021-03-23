@@ -278,6 +278,7 @@ struct MediaDescription
 
     /** Audio parameters */
     unsigned frame_size {};
+    bool fecEnabled {false};
 
     /** Video parameters */
     std::string parameters {};
