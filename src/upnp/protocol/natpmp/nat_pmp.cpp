@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *  Author: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +29,7 @@ namespace upnp {
 NatPmp::NatPmp()
 {
     JAMI_DBG("NAT-PMP: Instance [%p] created", this);
-    getNatpmpScheduler()->run([this] {
+    runOnNatPmpQueue([this] {
         threadId_ = getCurrentThread();
         igd_ = std::make_shared<PMPIGD>();
     });
@@ -43,12 +44,20 @@ void
 NatPmp::initNatPmp()
 {
     if (not isValidThread()) {
-        getNatpmpScheduler()->run([this] { initNatPmp(); });
+        runOnNatPmpQueue([w = weak()] {
+            if (auto pmpThis = w.lock()) {
+                pmpThis->initNatPmp();
+            }
+        });
         return;
     }
 
     initialized_ = false;
-    hostAddress_ = ip_utils::getLocalAddr(pj_AF_INET());
+
+    {
+        std::lock_guard<std::mutex> lock(natpmpMutex_);
+        hostAddress_ = ip_utils::getLocalAddr(AF_INET);
+    }
 
     // Local address must be valid.
     if (not getHostAddress() or getHostAddress().isLoopback()) {
@@ -113,10 +122,25 @@ NatPmp::initNatPmp()
 }
 
 void
+NatPmp::waitForShutdown()
+{
+    std::unique_lock<std::mutex> lk(natpmpMutex_);
+    if (shutdownCv_.wait_for(lk, std::chrono::seconds(10), [this] { return shutdownComplete_; })) {
+        JAMI_DBG("NAT-PMP: Shutdown completed");
+    } else {
+        JAMI_ERR("NAT-PMP: Shutdown timed-out");
+    }
+}
+
+void
 NatPmp::setObserver(UpnpMappingObserver* obs)
 {
     if (not isValidThread()) {
-        getNatpmpScheduler()->run([this, obs] { setObserver(obs); });
+        runOnNatPmpQueue([w = weak(), obs] {
+            if (auto pmpThis = w.lock()) {
+                pmpThis->setObserver(obs);
+            }
+        });
         return;
     }
 
@@ -129,20 +153,47 @@ void
 NatPmp::terminate()
 {
     if (not isValidThread()) {
-        getNatpmpScheduler()->run([this] { terminate(); });
+        runOnNatPmpQueue([w = weak()] {
+            if (auto pmpThis = w.lock()) {
+                pmpThis->terminate();
+            }
+        });
+        waitForShutdown();
         return;
     }
 
+    initialized_ = false;
     observer_ = nullptr;
+
+    {
+        std::lock_guard<std::mutex> lock(natpmpMutex_);
+        shutdownComplete_ = true;
+    }
+
+    shutdownCv_.notify_one();
+}
+
+const IpAddr
+NatPmp::getHostAddress() const
+{
+    std::lock_guard<std::mutex> lock(natpmpMutex_);
+    return hostAddress_;
 }
 
 void
 NatPmp::clearIgds()
 {
     if (not isValidThread()) {
-        getNatpmpScheduler()->run([this] { clearIgds(); });
+        runOnNatPmpQueue([w = weak()] {
+            if (auto pmpThis = w.lock()) {
+                pmpThis->clearIgds();
+            }
+        });
         return;
     }
+
+    if (igd_)
+        igd_->setValid(false);
 
     initialized_ = false;
     if (searchForIgdTimer_)
@@ -158,7 +209,11 @@ void
 NatPmp::searchForIgd()
 {
     if (not isValidThread()) {
-        getNatpmpScheduler()->run([this] { searchForIgd(); });
+        runOnNatPmpQueue([w = weak()] {
+            if (auto pmpThis = w.lock()) {
+                pmpThis->searchForIgd();
+            }
+        });
         return;
     }
 
@@ -169,12 +224,15 @@ NatPmp::searchForIgd()
     // Schedule a retry in case init failed.
     if (not initialized_) {
         if (igdSearchCounter_++ < MAX_RESTART_SEARCH_RETRIES) {
+            JAMI_DBG("NAT-PMP: Start search for IGDs. Attempt %i", igdSearchCounter_);
+
             // Cancel the current timer (if any) and re-schedule.
             if (searchForIgdTimer_)
                 searchForIgdTimer_->cancel();
 
             searchForIgdTimer_ = getNatpmpScheduler()->scheduleIn([this] { searchForIgd(); },
-                                                                  TIMEOUT_BEFORE_IGD_SEARCH_RETRY);
+                                                                  NATPMP_SEARCH_RETRY_UNIT
+                                                                      * igdSearchCounter_);
         } else {
             JAMI_WARN("NAT-PMP: Setup failed after %u trials. NAT-PMP will be disabled!",
                       MAX_RESTART_SEARCH_RETRIES);
@@ -182,11 +240,14 @@ NatPmp::searchForIgd()
     }
 }
 
-void
-NatPmp::getIgdList(std::list<std::shared_ptr<IGD>>& igdList) const
+std::list<std::shared_ptr<IGD>>
+NatPmp::getIgdList() const
 {
+    std::lock_guard<std::mutex> lock(natpmpMutex_);
+    std::list<std::shared_ptr<IGD>> igdList;
     if (igd_->isValid())
         igdList.emplace_back(igd_);
+    return igdList;
 }
 
 bool
@@ -200,6 +261,7 @@ NatPmp::isReady() const
     // Must at least have a valid local address.
     if (not getHostAddress() or getHostAddress().isLoopback())
         return false;
+
     return igd_ and igd_->isValid();
 }
 
@@ -226,37 +288,78 @@ NatPmp::incrementErrorsCounter(const std::shared_ptr<IGD>& igdIn)
 }
 
 void
-NatPmp::requestMappingAdd(const std::shared_ptr<IGD>& igd, const Mapping& mapping)
+NatPmp::requestMappingAdd(const Mapping& mapping)
 {
     // Process on nat-pmp thread.
-    getNatpmpScheduler()->run([this, igd, mapping] {
-        JAMI_DBG("NAT-PMP: Request mapping %s on %s",
-                 mapping.toString().c_str(),
-                 igd_->getLocalIp().toString().c_str());
+    if (not isValidThread()) {
+        runOnNatPmpQueue([w = weak(), mapping] {
+            if (auto pmpThis = w.lock()) {
+                pmpThis->requestMappingAdd(mapping);
+            }
+        });
+        return;
+    }
 
-        Mapping map {mapping};
-        addPortMapping(igd, map, false);
-    });
+    Mapping map(mapping);
+    assert(map.getIgd());
+    auto err = addPortMapping(map);
+    if (err < 0) {
+        JAMI_WARN("NAT-PMP: Request for mapping %s on %s failed with error %i: %s",
+                  map.toString().c_str(),
+                  igd_->toString().c_str(),
+                  err,
+                  getNatPmpErrorStr(err));
+
+        if (isErrorFatal(err)) {
+            // Fatal error, increment the counter.
+            incrementErrorsCounter(igd_);
+        }
+        // Notify the listener.
+        processMappingRequestFailed(std::move(map));
+    } else {
+        JAMI_DBG("NAT-PMP: Request for mapping %s on %s succeeded",
+                 map.toString().c_str(),
+                 igd_->toString().c_str());
+        // Notify the listener.
+        processMappingAdded(std::move(map));
+    }
 }
 
 void
 NatPmp::requestMappingRenew(const Mapping& mapping)
 {
     // Process on nat-pmp thread.
-    getNatpmpScheduler()->run([this, mapping] {
-        if (not mapping.getIgd() or not mapping.getIgd()->isValid()) {
-            JAMI_WARN("NAT-PMP: Mapping %s has an invalid IGD. Ignoring.",
-                      mapping.toString().c_str());
-            return;
+    if (not isValidThread()) {
+        runOnNatPmpQueue([w = weak(), mapping] {
+            if (auto pmpThis = w.lock()) {
+                pmpThis->requestMappingRenew(mapping);
+            }
+        });
+        return;
+    }
+
+    Mapping map(mapping);
+    auto err = addPortMapping(map);
+    if (err < 0) {
+        JAMI_WARN("NAT-PMP: Renewal request for mapping %s on %s failed with error %i: %s",
+                  map.toString().c_str(),
+                  igd_->toString().c_str(),
+                  err,
+                  getNatPmpErrorStr(err));
+        // Notify the listener.
+        processMappingRequestFailed(std::move(map));
+
+        if (isErrorFatal(err)) {
+            // Fatal error, increment the counter.
+            incrementErrorsCounter(igd_);
         }
-
-        JAMI_DBG("NAT-PMP: Renew mapping %s on %s",
-                 mapping.toString().c_str(),
-                 mapping.getIgd()->getLocalIp().toString().c_str());
-
-        Mapping map {mapping};
-        addPortMapping(mapping.getIgd(), map, true);
-    });
+    } else {
+        JAMI_DBG("NAT-PMP: Renewal request for mapping %s on %s succeeded",
+                 map.toString().c_str(),
+                 igd_->toString().c_str());
+        // Notify the listener.
+        processMappingRenewed(map);
+    }
 }
 
 int
@@ -323,14 +426,14 @@ NatPmp::sendMappingRequest(const Mapping& mapping, uint32_t& lifetime)
 
         if (err < 0) {
             JAMI_WARN("NAT-PMP: Read response on IGD %s failed with error %s",
-                      igd_->getLocalIp().toString().c_str(),
+                      igd_->toString().c_str(),
                       getNatPmpErrorStr(err));
         } else if (response.type != NATPMP_RESPTYPE_TCPPORTMAPPING
                    and response.type != NATPMP_RESPTYPE_UDPPORTMAPPING) {
             JAMI_ERR("NAT-PMP: Unexpected response type (%i) for mapping %s from IGD %s.",
                      response.type,
                      mapping.toString().c_str(),
-                     igd_->getLocalIp().toString().c_str());
+                     igd_->toString().c_str());
             // Try to read again.
             continue;
         }
@@ -343,67 +446,48 @@ NatPmp::sendMappingRequest(const Mapping& mapping, uint32_t& lifetime)
     return err;
 }
 
-void
-NatPmp::addPortMapping(const std::shared_ptr<IGD>& igdIn, Mapping& mapping, bool renew)
+int
+NatPmp::addPortMapping(Mapping& mapping)
 {
+    auto const& igdIn = mapping.getIgd();
     assert(igdIn);
     assert(igdIn->getProtocol() == NatProtocolType::NAT_PMP);
 
-    if (not igdIn->isValid())
-        return;
-
-    if (not validIgdInstance(igdIn)) {
-        return;
+    if (not igdIn->isValid() or not validIgdInstance(igdIn)) {
+        mapping.setState(MappingState::FAILED);
+        return NATPMP_ERR_INVALIDARGS;
     }
 
-    Mapping mapToAdd(mapping);
-    mapToAdd.setInternalAddress(getHostAddress().toString());
-    mapToAdd.setIgd(igd_);
+    mapping.setInternalAddress(getHostAddress().toString());
 
     uint32_t lifetime = MAPPING_ALLOCATION_LIFETIME;
     int err = sendMappingRequest(mapping, lifetime);
 
     if (err < 0) {
-        JAMI_WARN("NAT-PMP: Add mapping request failed with error %s %i",
-                  getNatPmpErrorStr(err),
-                  errno);
-
-        if (isErrorFatal(err)) {
-            // Fatal error, increment the counter.
-            incrementErrorsCounter(igd_);
-        }
-        // Mark as failed and notify.
-        mapToAdd.setState(MappingState::FAILED);
-        processMappingAdded(std::move(mapToAdd));
-    } else {
-        // Success! Set renewal and update.
-        // Renewal time is set before the allocation expires.
-        mapToAdd.setRenewalTime(sys_clock::now() + std::chrono::seconds(lifetime * 4 / 5));
-        mapToAdd.setState(MappingState::OPEN);
-        if (not renew) {
-            JAMI_DBG("NAT-PMP: Allocated mapping %s on %s",
-                     mapToAdd.toString().c_str(),
-                     igd_->getLocalIp().toString().c_str());
-            // Notify the listener.
-            processMappingAdded(std::move(mapToAdd));
-        } else {
-            JAMI_DBG("NAT-PMP: Renewed mapping %s on %s",
-                     mapToAdd.toString().c_str(),
-                     igd_->getLocalIp().toString().c_str());
-            // Notify.
-            processMappingRenewed(std::move(mapToAdd));
-        }
+        mapping.setState(MappingState::FAILED);
+        return err;
     }
+
+    // Set the renewal time and update.
+    mapping.setRenewalTime(sys_clock::now() + std::chrono::seconds(lifetime * 4 / 5));
+    mapping.setState(MappingState::OPEN);
+
+    return 0;
 }
 
 void
 NatPmp::requestMappingRemove(const Mapping& mapping)
 {
     // Process on nat-pmp thread.
-    getNatpmpScheduler()->run([this, mapping] {
-        Mapping map {mapping};
-        removePortMapping(map);
-    });
+    if (not isValidThread()) {
+        runOnNatPmpQueue([w = weak(), mapping] {
+            if (auto pmpThis = w.lock()) {
+                Mapping map {mapping};
+                pmpThis->removePortMapping(map);
+            }
+        });
+        return;
+    }
 }
 
 void
@@ -425,6 +509,7 @@ NatPmp::removePortMapping(Mapping& mapping)
     int err = sendMappingRequest(mapping, lifetime);
 
     if (err < 0) {
+        // Nothing to do if the request fails, just log the error.
         JAMI_WARN("NAT-PMP: Send remove request failed with error %s. Ignoring",
                   getNatPmpErrorStr(err));
     }
@@ -443,7 +528,7 @@ NatPmp::getIgdPublicAddress()
     // have one already.
     if (igd_->getPublicIp()) {
         JAMI_WARN("NAT-PMP: IGD %s already have a public address (%s)",
-                  igd_->getLocalIp().toString().c_str(),
+                  igd_->toString().c_str(),
                   igd_->getPublicIp().toString().c_str());
         return;
     }
@@ -453,7 +538,7 @@ NatPmp::getIgdPublicAddress()
 
     if (err < 0) {
         JAMI_ERR("NAT-PMP: send public address request on IGD %s failed with error: %s",
-                 igd_->getLocalIp().toString().c_str(),
+                 igd_->toString().c_str(),
                  getNatPmpErrorStr(err));
 
         if (isErrorFatal(err)) {
@@ -468,7 +553,7 @@ NatPmp::getIgdPublicAddress()
 
     if (err < 0) {
         JAMI_ERR("NAT-PMP: read response on IGD %s failed with error %s",
-                 igd_->getLocalIp().toString().c_str(),
+                 igd_->toString().c_str(),
                  getNatPmpErrorStr(err));
         return;
     }
@@ -476,7 +561,7 @@ NatPmp::getIgdPublicAddress()
     if (response.type != NATPMP_RESPTYPE_PUBLICADDRESS) {
         JAMI_ERR("NAT-PMP: Unexpected response type (%i) for public address request from IGD %s.",
                  response.type,
-                 igd_->getLocalIp().toString().c_str());
+                 igd_->toString().c_str());
         return;
     }
 
@@ -484,7 +569,7 @@ NatPmp::getIgdPublicAddress()
 
     if (not publicAddr) {
         JAMI_ERR("NAT-PMP: IGD %s returned an invalid public address %s",
-                 igd_->getLocalIp().toString().c_str(),
+                 igd_->toString().c_str(),
                  publicAddr.toString().c_str());
     }
 
@@ -493,7 +578,7 @@ NatPmp::getIgdPublicAddress()
     igd_->setValid(true);
 
     JAMI_DBG("NAT-PMP: Setting IGD %s public address to %s",
-             igd_->getLocalIp().toString().c_str(),
+             igd_->toString().c_str(),
              igd_->getPublicIp().toString().c_str());
 }
 
@@ -503,7 +588,7 @@ NatPmp::removeAllMappings()
     CHECK_VALID_THREAD();
 
     JAMI_WARN("NAT-PMP: Send request to close all existing mappings to IGD %s",
-              igd_->getLocalIp().toString().c_str());
+              igd_->toString().c_str());
 
     int err = sendnewportmappingrequest(&natpmpHdl_, NATPMP_PROTOCOL_TCP, 0, 0, 0);
     if (err < 0) {
@@ -616,9 +701,9 @@ bool
 NatPmp::validIgdInstance(const std::shared_ptr<IGD>& igdIn)
 {
     if (igd_.get() != igdIn.get()) {
-        JAMI_ERR("NAT-PMP: IGD (%s) does not match in local instance (%s)",
-                 igdIn->getLocalIp().toString().c_str(),
-                 igd_->getLocalIp().toString().c_str());
+        JAMI_ERR("NAT-PMP: IGD (%s) does not match local instance (%s)",
+                 igdIn->toString().c_str(),
+                 igd_->toString().c_str());
         return false;
     }
 
@@ -636,7 +721,7 @@ NatPmp::processIgdUpdate(UpnpIgdEvent event)
     if (observer_ == nullptr)
         return;
     // Process the response on the context thread.
-    runOnUpnpContextThread([obs = observer_, igd = igd_, event] { obs->onIgdUpdated(igd, event); });
+    runOnUpnpContextQueue([obs = observer_, igd = igd_, event] { obs->onIgdUpdated(igd, event); });
 }
 
 void
@@ -646,7 +731,17 @@ NatPmp::processMappingAdded(const Mapping& map)
         return;
 
     // Process the response on the context thread.
-    runOnUpnpContextThread([obs = observer_, igd = igd_, map] { obs->onMappingAdded(igd, map); });
+    runOnUpnpContextQueue([obs = observer_, igd = igd_, map] { obs->onMappingAdded(igd, map); });
+}
+
+void
+NatPmp::processMappingRequestFailed(const Mapping& map)
+{
+    if (observer_ == nullptr)
+        return;
+
+    // Process the response on the context thread.
+    runOnUpnpContextQueue([obs = observer_, igd = igd_, map] { obs->onMappingRequestFailed(map); });
 }
 
 void
@@ -656,7 +751,7 @@ NatPmp::processMappingRenewed(const Mapping& map)
         return;
 
     // Process the response on the context thread.
-    runOnUpnpContextThread([obs = observer_, igd = igd_, map] { obs->onMappingRenewed(igd, map); });
+    runOnUpnpContextQueue([obs = observer_, igd = igd_, map] { obs->onMappingRenewed(igd, map); });
 }
 
 void
@@ -666,7 +761,7 @@ NatPmp::processMappingRemoved(const Mapping& map)
         return;
 
     // Process the response on the context thread.
-    runOnUpnpContextThread([obs = observer_, igd = igd_, map] { obs->onMappingRemoved(igd, map); });
+    runOnUpnpContextQueue([obs = observer_, igd = igd_, map] { obs->onMappingRemoved(igd, map); });
 }
 
 } // namespace upnp
