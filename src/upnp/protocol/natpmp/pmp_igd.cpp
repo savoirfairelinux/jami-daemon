@@ -52,5 +52,11 @@ PMPIGD::operator==(PMPIGD& other) const
     return getPublicIp() == other.getPublicIp() and getLocalIp() == other.getLocalIp();
 }
 
+const std::string
+PMPIGD::toString() const
+{
+    return getLocalIp().toString();
+}
+
 } // namespace upnp
 } // namespace jami

@@ -49,6 +49,8 @@ public:
 
     bool operator==(IGD& other) const;
     bool operator==(PMPIGD& other) const;
+
+    const std::string toString() const override;
 };
 
 } // namespace upnp
