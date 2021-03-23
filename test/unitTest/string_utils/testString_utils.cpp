@@ -94,6 +94,7 @@ void
 StringUtilsTest::split_string_test()
 {
     constexpr auto data = "*fdg454()**{&xcx*"sv;
+    constexpr auto data2 = "a/b/c"sv;
     auto split_string_result = split_string(data, '*');
     CPPUNIT_ASSERT(split_string_result.size() == 2);
     CPPUNIT_ASSERT(split_string_result.at(0) == "fdg454()"sv
@@ -109,10 +110,19 @@ StringUtilsTest::split_string_test()
     while (jami::getline(data, line, '*')) {
         split_string_result.emplace_back(line);
     }
-    CPPUNIT_ASSERT_EQUAL(4, split_string_result.size());
+    CPPUNIT_ASSERT_EQUAL(4, (int)split_string_result.size());
     CPPUNIT_ASSERT_EQUAL(true, split_string_result.at(0).empty());
     CPPUNIT_ASSERT_EQUAL("fdg454()"sv, split_string_result.at(1));
     CPPUNIT_ASSERT_EQUAL(true, split_string_result.at(2).empty());
+    split_string_result.clear();
+    line = {};
+    while (jami::getline(data2, line, '/')) {
+        split_string_result.emplace_back(line);
+    }
+    CPPUNIT_ASSERT_EQUAL(3, (int)split_string_result.size());
+    CPPUNIT_ASSERT_EQUAL("a"sv, split_string_result.at(0));
+    CPPUNIT_ASSERT_EQUAL("b"sv, split_string_result.at(1));
+    CPPUNIT_ASSERT_EQUAL("c"sv, split_string_result.at(2));
 }
 
 }} // namespace jami_test
