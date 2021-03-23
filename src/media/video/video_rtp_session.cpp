@@ -144,6 +144,7 @@ VideoRtpSession::startSender()
 
         send_.linkableHW = conference_ == nullptr;
         send_.bitrate = videoBitrateInfo_.videoBitrateCurrent;
+        send_.fecEnabled = true;
 
         if (socketPair_)
             initSeqVal_ = socketPair_->lastSeqValOut();
