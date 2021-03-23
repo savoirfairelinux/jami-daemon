@@ -2,7 +2,8 @@
  *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
- *	Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *  Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *  Author: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -52,7 +53,12 @@ public:
             std::string&& eventSubURL,
             IpAddr&& localIp = {},
             IpAddr&& publicIp = {});
+
     ~UPnPIGD() {}
+
+    bool operator==(IGD& other) const;
+    bool operator==(UPnPIGD& other) const;
+
     const std::string& getBaseURL() const
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -89,8 +95,7 @@ public:
         return eventSubURL_;
     }
 
-    bool operator==(IGD& other) const;
-    bool operator==(UPnPIGD& other) const;
+    const std::string toString() const override { return controlURL_; }
 
 private:
     std::string baseURL_ {};

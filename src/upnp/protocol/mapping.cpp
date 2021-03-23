@@ -3,6 +3,7 @@
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
  *  Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *  Author: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,7 +35,6 @@ Mapping::Mapping(PortType type, uint16_t portExternal, uint16_t portInternal, bo
     , available_(available)
     , state_(MappingState::PENDING)
     , notifyCb_(nullptr)
-    , timeoutTimer_()
     , autoUpdate_(false)
 #if HAVE_LIBNATPMP
     , renewalTime_(sys_clock::now())
@@ -169,27 +169,6 @@ Mapping::hasPublicAddress() const
     std::lock_guard<std::mutex> lock(mutex_);
 
     return igd_ and igd_->getPublicIp() and not igd_->getPublicIp().isPrivate();
-}
-
-void
-Mapping::setTimeoutTimer(std::shared_ptr<Task> timer)
-{
-    // Cancel current timer if any.
-    cancelTimeoutTimer();
-
-    std::lock_guard<std::mutex> lock(mutex_);
-    timeoutTimer_ = std::move(timer);
-}
-
-void
-Mapping::cancelTimeoutTimer()
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    if (timeoutTimer_) {
-        timeoutTimer_->cancel();
-        timeoutTimer_.reset();
-    }
 }
 
 Mapping::key_t
