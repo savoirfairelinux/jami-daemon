@@ -545,7 +545,7 @@ MediaDecoder::prepareDecoderContext()
     }
     if (avStream_->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
         if (decoderCtx_->codec_id == AV_CODEC_ID_OPUS) {
-            av_opt_set_int(decoderCtx_, "decode_fec", 1, AV_OPT_SEARCH_CHILDREN);
+            av_opt_set_int(decoderCtx_, "decode_fec", fecEnabled_ ? 1 : 0, AV_OPT_SEARCH_CHILDREN);
         }
     }
     return 0;
