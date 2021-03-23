@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "c2466710_33514c92",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 21
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-23T20:21:15Z",
+      "side": 1,
+      "message": "without that little colon, the gitlab link doesn\u0027t get parsed :\u003c",
+      "range": {
+        "startLine": 14,
+        "startChar": 0,
+        "endLine": 14,
+        "endChar": 11
+      },
+      "revId": "4bbf51bd031c5e7a563968e332bf700bbb02a395",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "ed431259_802bd9a7",
         "filename": "bin/jni/callmanager.i",
         "patchSetId": 21
