@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ed431259_802bd9a7",
+        "filename": "bin/jni/callmanager.i",
+        "patchSetId": 21
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-23T14:38:08Z",
+      "side": 1,
+      "message": "what kind of identifier is this?",
+      "range": {
+        "startLine": 52,
+        "startChar": 82,
+        "endLine": 52,
+        "endChar": 87
+      },
+      "revId": "4bbf51bd031c5e7a563968e332bf700bbb02a395",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
