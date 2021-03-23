@@ -25,7 +25,7 @@ protected:
     // Upnp scheduler (same as manager's thread)
     static ScheduledExecutor* getScheduler() { return &Manager::instance().scheduler(); }
 
-    // Helper to run tasks on upnp thread.
+    // Helper to run tasks on upnp context thread.
     template<typename Callback>
     static void runOnUpnpContextThread(Callback&& cb)
     {

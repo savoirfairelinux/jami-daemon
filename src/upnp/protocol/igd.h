@@ -95,6 +95,8 @@ public:
     bool incrementErrorsCounter();
     int getErrorsCount() const;
 
+    virtual const std::string toString() const = 0;
+
 protected:
     const NatProtocolType protocol_ {NatProtocolType::UNKNOWN};
     std::atomic_bool valid_ {false};
