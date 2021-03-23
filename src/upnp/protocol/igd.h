@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *  Author: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -94,6 +95,8 @@ public:
     bool isValid() const { return valid_; }
     bool incrementErrorsCounter();
     int getErrorsCount() const;
+
+    virtual const std::string toString() const = 0;
 
 protected:
     const NatProtocolType protocol_ {NatProtocolType::UNKNOWN};

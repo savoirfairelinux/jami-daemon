@@ -890,6 +890,8 @@ Manager::finish() noexcept
             pimpl_->audiodriver_.reset();
         }
 
+        JAMI_DBG("Stopping schedulers and worker threads");
+
         // Flush remaining tasks (free lambda' with capture)
         pimpl_->scheduler_.stop();
         dht::ThreadPool::io().join();
