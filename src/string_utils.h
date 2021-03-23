@@ -118,7 +118,7 @@ std::string_view trim(std::string_view s);
  * Split a string_view with an API similar to std::getline.
  * @param str The input string to iterate on.
  * @param line The output substring, also used as an iterator.
- *             It must be default-initialised when this function is used 
+ *             It must be default-initialised when this function is used
  *             for the first time with a given string,
  *             and should not be modified by the caller during iteration.
  * @param delim The delimiter.
@@ -139,7 +139,7 @@ bool getline(const std::string_view str, std::string_view& line, char delim = '\
         auto nextStr = str.substr(prevEnd + 1);
         line = nextStr.substr(0, nextStr.find(delim));
     }
-    return  true;
+    return !line.empty();
 }
 
 inline
