@@ -58,6 +58,11 @@ constexpr static const char* UPNP_WANPPP_SERVICE
 
 enum class UpnpIgdEvent { ADDED, REMOVED, INVALID_STATE };
 
+// Interface used to report mapping event from the protocol implementations.
+// This interface is meant to be implemented only by UPnPConext class. Sincce
+// this class is a singleton, it's assumed that it out-lives the protocol
+// implementations. In other words, the observer is always assumed to point to a
+// valid instance.
 class UpnpMappingObserver
 {
 public:
@@ -66,6 +71,7 @@ public:
 
     virtual void onIgdUpdated(const std::shared_ptr<IGD>& igd, UpnpIgdEvent event) = 0;
     virtual void onMappingAdded(const std::shared_ptr<IGD>& igd, const Mapping& map) = 0;
+    virtual void onMappingRequestFailed(const Mapping& map) = 0;
 #if HAVE_LIBNATPMP
     virtual void onMappingRenewed(const std::shared_ptr<IGD>& igd, const Mapping& map) = 0;
 #endif
@@ -94,13 +100,10 @@ public:
     virtual void searchForIgd() = 0;
 
     // Get the IGD instance.
-    virtual void getIgdList(std::list<std::shared_ptr<IGD>>& igdList) const = 0;
+    virtual std::list<std::shared_ptr<IGD>> getIgdList() const = 0;
 
     // Return true if it has at least one valid IGD.
     virtual bool isReady() const = 0;
-
-    // Increment IGD errors counter.
-    virtual void incrementErrorsCounter(const std::shared_ptr<IGD>& igd) = 0;
 
     // Get the list of already allocated mappings if any.
     virtual std::map<Mapping::key_t, Mapping> getMappingsListByDescr(const std::shared_ptr<IGD>&,
@@ -110,7 +113,7 @@ public:
     }
 
     // Sends a request to add a mapping.
-    virtual void requestMappingAdd(const std::shared_ptr<IGD>& igd, const Mapping& map) = 0;
+    virtual void requestMappingAdd(const Mapping& map) = 0;
 
     // Renew an allocated mapping.
     virtual void requestMappingRenew(const Mapping& mapping) = 0;
@@ -121,16 +124,11 @@ public:
     // Set the user callbacks.
     virtual void setObserver(UpnpMappingObserver* obs) = 0;
 
-    // Get the host (local) address.
-    const IpAddr& getHostAddress() const { return hostAddress_; }
+    // Get the current host (local) address
+    virtual const IpAddr getHostAddress() const = 0;
 
     // Terminate
     virtual void terminate() = 0;
-
-protected:
-    // The host (local) address. Must be fully set before making any request.
-    IpAddr hostAddress_ {};
-    UpnpMappingObserver* observer_ {nullptr};
 };
 
 } // namespace upnp

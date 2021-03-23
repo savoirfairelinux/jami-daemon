@@ -52,7 +52,12 @@ public:
             std::string&& eventSubURL,
             IpAddr&& localIp = {},
             IpAddr&& publicIp = {});
+
     ~UPnPIGD() {}
+
+    bool operator==(IGD& other) const;
+    bool operator==(UPnPIGD& other) const;
+
     const std::string& getBaseURL() const
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -89,8 +94,7 @@ public:
         return eventSubURL_;
     }
 
-    bool operator==(IGD& other) const;
-    bool operator==(UPnPIGD& other) const;
+    const std::string toString() const override { return controlURL_; }
 
 private:
     std::string baseURL_ {};
