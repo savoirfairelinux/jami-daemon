@@ -44,7 +44,7 @@ IGD::setValid(bool valid)
         // Reset errors counter.
         errorsCounter_ = 0;
     } else {
-        JAMI_WARN("IGD %s [%s] was disabled", localIp_.toString().c_str(), getProtocolName());
+        JAMI_WARN("IGD %s [%s] was disabled", toString().c_str(), getProtocolName());
     }
 }
 
@@ -56,7 +56,7 @@ IGD::incrementErrorsCounter()
 
     if (++errorsCounter_ >= MAX_ERRORS_COUNT) {
         JAMI_WARN("IGD %s [%s] has too many errors, it will be disabled",
-                  localIp_.toString().c_str(),
+                  toString().c_str(),
                   getProtocolName());
         setValid(false);
         return false;
