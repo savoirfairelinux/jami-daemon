@@ -754,6 +754,30 @@
     },
     {
       "key": {
+        "uuid": "cbf61dd9_de54367b",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 43
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-23T18:43:20Z",
+      "side": 1,
+      "message": "\u003e This class is more like a struct than a class\n\nThis is exactly what I mean. class doesn\u0027t really fit here. Can be\n\nstruct MediaAttribute {\n  type {MediaType::MEDIA_NONE};\n  muted {false};\n  ...)\n\nthe constructors, destructors here are doing nothing and all methods are static",
+      "parentUuid": "051501ae_4367b513",
+      "range": {
+        "startLine": 32,
+        "startChar": 29,
+        "endLine": 37,
+        "endChar": 29
+      },
+      "revId": "a2ae518b6289431154c95553cb56bd38f6ef4c9d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "d819d28f_fa4959ab",
         "filename": "src/media/media_attribute.h",
         "patchSetId": 43
