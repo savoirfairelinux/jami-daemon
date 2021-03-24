@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "229a1983_716f67a1",
+        "filename": "src/media/media_decoder.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-24T19:32:19Z",
+      "side": 1,
+      "message": "I think on the decoder side, the FEC should always be enabled (if the codec supports it). Worst case, it will not find the FEC data and skip the FEC recovery step (and possibly use a PLC without FEC).",
+      "revId": "e10c99b3b742b9e7c33c7b02580e060b66618db1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
