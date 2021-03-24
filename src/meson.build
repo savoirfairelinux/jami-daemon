@@ -32,6 +32,7 @@ libjami_sources = files(
     'jamidht/p2p.cpp',
     'jamidht/server_account_manager.cpp',
     'jamidht/sips_transport_ice.cpp',
+    'media/audio/echo-cancel/null_echo_canceller.cpp',
     'media/audio/sound/audiofile.cpp',
     'media/audio/sound/dtmf.cpp',
     'media/audio/sound/dtmfgenerator.cpp',
@@ -45,9 +46,6 @@ libjami_sources = files(
     'media/audio/audio_receive_thread.cpp',
     'media/audio/audio_rtp_session.cpp',
     'media/audio/audio_sender.cpp',
-    'media/audio/echo-cancel/echo_canceller.h',
-    'media/audio/echo-cancel/null_echo_canceller.h',
-    'media/audio/echo-cancel/null_echo_canceller.cpp',
     'media/audio/dcblocker.cpp',
     'media/audio/dsp.cpp',
     'media/audio/resampler.cpp',
@@ -162,14 +160,6 @@ if conf.get('HAVE_PULSE') == 1
     libjami_dependencies += deplibpulse
 endif
 
-if conf.get('HAVE_WEBRTC_AP') == 1
-    libjami_sources += files(
-        'media/audio/echo-cancel/webrtc_echo_canceller.h',
-        'media/audio/echo-cancel/webrtc_echo_canceller.cpp'
-    )
-    libjami_dependencies += depwebrtcap
-endif
-
 if conf.get('HAVE_JACK') == 1
     libjami_sources += files(
         'media/audio/jack/jacklayer.cpp'
@@ -218,6 +208,13 @@ endif
 
 if conf.get('HAVE_RINGNS') == 1
     libjami_dependencies += depopenssl
+endif
+
+if conf.get('HAVE_WEBRTC_AP') == 1
+    libjami_sources += files(
+        'media/audio/echo-cancel/webrtc_echo_canceller.cpp'
+    )
+    libjami_dependencies += depwebrtcap
 endif
 
 if conf.get('ENABLE_VIDEO')

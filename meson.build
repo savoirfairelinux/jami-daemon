@@ -80,9 +80,6 @@ conf.set10('HAVE_PULSE', deplibpulse.found())
 depjack = dependency('jack', required: get_option('jack'))
 conf.set10('HAVE_JACK', depjack.found())
 
-depwebrtcap = dependency('webrtc-audio-processing', required: get_option('webrtc-audio-processing'))
-conf.set10('HAVE_WEBRTC_AP', depwebrtcap.found())
-
 depportaudio = dependency('portaudio-2.0', required: get_option('portaudio'))
 conf.set10('HAVE_PORTAUDIO', depportaudio.found())
 
@@ -106,6 +103,9 @@ conf.set10('HAVE_LIBNATPMP', depnatpmp.found())
 
 depopenssl = dependency('openssl', required: get_option('name_service'))
 conf.set10('HAVE_RINGNS', depopenssl.found())
+
+depwebrtcap = dependency('webrtc-audio-processing', required: get_option('aec'))
+conf.set10('HAVE_WEBRTC_AP', depwebrtcap.found())
 
 if get_option('video')
     conf.set('ENABLE_VIDEO', true)
