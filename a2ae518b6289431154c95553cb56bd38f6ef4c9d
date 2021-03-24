@@ -778,6 +778,30 @@
     },
     {
       "key": {
+        "uuid": "83b79569_b1c8328a",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 43
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-24T21:29:40Z",
+      "side": 1,
+      "message": "Ack\nI agree. But we dont know which direction this class will, and might be central for upcoming refactoring. So I prefer to keep it as class since it\u0027s more flexible than a struct and has zero overhead over a struct.",
+      "parentUuid": "cbf61dd9_de54367b",
+      "range": {
+        "startLine": 32,
+        "startChar": 29,
+        "endLine": 37,
+        "endChar": 29
+      },
+      "revId": "a2ae518b6289431154c95553cb56bd38f6ef4c9d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d819d28f_fa4959ab",
         "filename": "src/media/media_attribute.h",
         "patchSetId": 43

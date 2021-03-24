@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "2d3937ee_e3e9dbb3",
+        "filename": "src/call_factory.h",
+        "patchSetId": 50
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-24T21:29:40Z",
+      "side": 1,
+      "message": "sure",
+      "parentUuid": "48cc62e3_869c93ab",
+      "range": {
+        "startLine": 61,
+        "startChar": 5,
+        "endLine": 61,
+        "endChar": 52
+      },
+      "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "e8fdccfb_92bd419b",
         "filename": "src/media/media_attribute.h",
         "patchSetId": 50
@@ -45,6 +69,30 @@
       "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ed502482_34d8d1fc",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 50
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-24T21:29:40Z",
+      "side": 1,
+      "message": "Indeed.\nDone",
+      "parentUuid": "e8fdccfb_92bd419b",
+      "range": {
+        "startLine": 22,
+        "startChar": 0,
+        "endLine": 22,
+        "endChar": 19
+      },
+      "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "b6390875_37b88c48",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 50
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-24T21:29:40Z",
+      "side": 1,
+      "message": "Why not.\ndone",
+      "parentUuid": "ccb13542_cb617e25",
+      "range": {
+        "startLine": 56,
+        "startChar": 4,
+        "endLine": 56,
+        "endChar": 84
+      },
+      "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "8610249e_55081173",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 50
@@ -91,6 +163,30 @@
       "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "202df16c_c2c2f2c6",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 1932,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-24T21:29:40Z",
+      "side": 1,
+      "message": "Ack\nI like the idea. However, as discussed, this part of the code, especially the media/rtp part, will go under heavy refactoring. I will keep your suggestion in mind.",
+      "parentUuid": "8610249e_55081173",
+      "range": {
+        "startLine": 1931,
+        "startChar": 4,
+        "endLine": 1932,
+        "endChar": 35
+      },
+      "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "71db4586_9b0c566e",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 1986,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-24T21:29:40Z",
+      "side": 1,
+      "message": "sure.\nAlso changed all rtpVideo to videoRtp to be more consistent",
+      "parentUuid": "741584ac_70951a6e",
+      "range": {
+        "startLine": 1986,
+        "startChar": 20,
+        "endLine": 1986,
+        "endChar": 31
+      },
+      "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "86042b55_3d9572c4",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 50
@@ -140,6 +260,30 @@
     },
     {
       "key": {
+        "uuid": "269283bb_554ffb4a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 2010,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-24T21:29:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "86042b55_3d9572c4",
+      "range": {
+        "startLine": 2010,
+        "startChar": 20,
+        "endLine": 2010,
+        "endChar": 31
+      },
+      "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b192b27f_00510510",
         "filename": "test/unitTest/media_control/media_control.cpp",
         "patchSetId": 50
@@ -154,6 +298,24 @@
       "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b176b451_c9438767",
+        "filename": "test/unitTest/media_control/media_control.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-24T21:29:40Z",
+      "side": 1,
+      "message": "Ack\n\nDont pay attention to this test for now. Only kept it for quick checks.\nI have a more complete unit test in the upcoming patch.",
+      "parentUuid": "b192b27f_00510510",
+      "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {

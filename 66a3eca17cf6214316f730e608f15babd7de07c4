@@ -49,6 +49,30 @@
     },
     {
       "key": {
+        "uuid": "b5e8f4a2_cb55a382",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-24T21:29:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1a1a60ba_fd452855",
+      "range": {
+        "startLine": 59,
+        "startChar": 32,
+        "endLine": 59,
+        "endChar": 41
+      },
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "1f5902d2_c75e7fe4",
         "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
         "patchSetId": 11
@@ -140,6 +164,30 @@
       "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "674b789f_bc250a32",
+        "filename": "src/call.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 336,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-24T21:29:40Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "d40b73b4_f53be26d",
+      "range": {
+        "startLine": 336,
+        "startChar": 39,
+        "endLine": 336,
+        "endChar": 52
+      },
+      "revId": "66a3eca17cf6214316f730e608f15babd7de07c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
