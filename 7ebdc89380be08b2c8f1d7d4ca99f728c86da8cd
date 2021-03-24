@@ -68,6 +68,115 @@
       "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8610249e_55081173",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 1932,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-24T15:46:14Z",
+      "side": 1,
+      "message": "IMO this would be a good case to use the null object pattern and avoid rampant null pointer checks.",
+      "range": {
+        "startLine": 1931,
+        "startChar": 4,
+        "endLine": 1932,
+        "endChar": 35
+      },
+      "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "741584ac_70951a6e",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 1986,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-24T15:46:14Z",
+      "side": 1,
+      "message": "audioRtp to stay consistent ?",
+      "range": {
+        "startLine": 1986,
+        "startChar": 20,
+        "endLine": 1986,
+        "endChar": 31
+      },
+      "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "86042b55_3d9572c4",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 2010,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-24T15:46:14Z",
+      "side": 1,
+      "message": "same as above",
+      "range": {
+        "startLine": 2010,
+        "startChar": 20,
+        "endLine": 2010,
+        "endChar": 31
+      },
+      "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b192b27f_00510510",
+        "filename": "test/unitTest/media_control/media_control.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-24T15:46:14Z",
+      "side": 1,
+      "message": "just note there is some commented code in this file",
+      "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3aadd553_5f421da9",
+        "filename": "test/unitTest/media_control/media_control.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-24T15:46:14Z",
+      "side": 1,
+      "message": "should be below the local headers",
+      "range": {
+        "startLine": 18,
+        "startChar": 0,
+        "endLine": 23,
+        "endChar": 17
+      },
+      "revId": "7ebdc89380be08b2c8f1d7d4ca99f728c86da8cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
