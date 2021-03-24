@@ -23,7 +23,6 @@ deplibavformat = dependency('libavformat', version: '>= 56.40.101')
 deplibswscale = dependency('libswscale', version: '>= 3.1.101')
 deplibswresample = dependency('libswresample', version: '>= 1.2.101')
 deplibavutil = dependency('libavutil', version: '>= 55.75.100')
-depspeex = dependency('speex')
 depspeexdsp = dependency('speexdsp')
 
 depyamlcpp = dependency('yaml-cpp', version: '>= 0.5.1', required: false)
