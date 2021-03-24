@@ -22,6 +22,30 @@
       "revId": "c261414206ffaa9ec54e846278af1be2fb32f266",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b8dcc21a_82fb0e2d",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 18
+      },
+      "lineNbr": 883,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-24T21:38:16Z",
+      "side": 1,
+      "message": "As discussed, we pass to 9.10.0 for all multi-streams new APIs",
+      "parentUuid": "22fb82c6_1e3a5dae",
+      "range": {
+        "startLine": 883,
+        "startChar": 31,
+        "endLine": 883,
+        "endChar": 36
+      },
+      "revId": "c261414206ffaa9ec54e846278af1be2fb32f266",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
