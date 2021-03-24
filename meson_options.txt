@@ -11,7 +11,7 @@ option('jack', type: 'feature', value: 'auto', description: 'Enable support for 
 option('portaudio', type: 'feature', value: 'auto', description: 'Enable support for PortAudio')
 option('upnp', type: 'feature', value: 'auto', description: 'Enable support for UPnP')
 option('natpmp', type: 'feature', value: 'auto', description: 'Enable support for NAT-PMP')
-option('webrtc-audio-processing', type: 'feature', value: 'auto', description: 'Enable support for WebRtc audio processing')
+option('aec', type: 'feature', value: 'auto', description: 'Enable Acoustic Echo Cancellation')
 
 option('natpmp_prefix', type: 'string', value: '', description: 'Override a system directory to search for the library "natpmp"')
 option('tests', type: 'boolean', value: false, description: 'Build tests')
