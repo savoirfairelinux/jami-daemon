@@ -1005,7 +1005,9 @@ SIPCall::removeCall()
     Call::removeCall();
     if (mediaTransport_)
         dht::ThreadPool::io().run([ice = std::move(mediaTransport_)] {});
-    tmpMediaTransport_.reset();
+    if (tmpMediaTransport_)
+        dht::ThreadPool::io().run([ice = std::make_shared<decltype(tmpMediaTransport_)>(
+                                       std::move(tmpMediaTransport_))] {});
     setInviteSession();
     setTransport({});
 }
