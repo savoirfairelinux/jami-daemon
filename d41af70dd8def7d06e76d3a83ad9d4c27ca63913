@@ -46,6 +46,30 @@
       "revId": "d41af70dd8def7d06e76d3a83ad9d4c27ca63913",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1e73c8ea_d9f03385",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 22
+      },
+      "lineNbr": 882,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-25T15:56:35Z",
+      "side": 1,
+      "message": "The DRing API is meant for client consumption, not for testing internal daemon components. Daemon unit tests are meant for that purpose.\n\nHandling of media and low-level or hardware/network-related work is meant to be done internally by the deamon.\n\nThe client still has roles to play regarding media with the DRing API:\n* Controlling the call media at high-level, like enable/disable camera or screen sharing or mute audio.. (scope of this general work).\n* Display of video surfaces provided by the daemon (controlled by DecodingStarted/DecodingStopped). The client doesn\u0027t needs to be aware of audio-related event as this is fully handled by the dameon.\n\nSo, is this new method needed while we already have:\n* The Call moving to the \"Current\" state to signal that the call is ongoing.\n* DecodingStarted/DecodingStopped to signal that a video surface is available (linked to a call, or not, like when opening the video settings).",
+      "parentUuid": "ba631373_ca44f2d8",
+      "range": {
+        "startLine": 882,
+        "startChar": 22,
+        "endLine": 882,
+        "endChar": 39
+      },
+      "revId": "d41af70dd8def7d06e76d3a83ad9d4c27ca63913",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
