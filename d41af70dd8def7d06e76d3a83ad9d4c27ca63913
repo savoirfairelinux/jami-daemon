@@ -94,6 +94,30 @@
       "revId": "d41af70dd8def7d06e76d3a83ad9d4c27ca63913",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8d30ce0c_048ab0b9",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 22
+      },
+      "lineNbr": 882,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-25T16:31:42Z",
+      "side": 1,
+      "message": "Currently, Jami/Client are missing many features that those signals would make perfect sens. \n1- The re-invite response is handled automatically by SipCall in onReceiveOffer, meaning that the client does not even know that the media is being re-negotiated.\n2- With the upcoming features, such as adding a video to an audio-only call, the client will receive an new offer, if it accepts, a new media negotiation will start. The negotiation may succeed or fail, and the client would have no idea on the current state of the media. \nAgain the DecodingStart/Stop are specific to decoding state.\n\nMedia state should not be internal and are complementary to call states. They are correlated but carries different information and occur at different timing.\nFurthermore, the client can chose not to register to these signals (as it is now)",
+      "parentUuid": "dcdc49be_9856ab63",
+      "range": {
+        "startLine": 882,
+        "startChar": 22,
+        "endLine": 882,
+        "endChar": 39
+      },
+      "revId": "d41af70dd8def7d06e76d3a83ad9d4c27ca63913",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
