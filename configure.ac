@@ -1,7 +1,7 @@
-dnl Jami - configure.ac for automake 1.9 and autoconf 2.59
+dnl Jami - configure.ac for automake 1.9 and autoconf 2.71
 
 dnl Process this file with autoconf to produce a configure script.
-AC_PREREQ([2.65])
+AC_PREREQ([2.71])
 AC_INIT([Jami Daemon],[9.10.0],[jami@gnu.org],[jami])
 
 AC_COPYRIGHT([[Copyright (c) Savoir-faire Linux 2004-2021]])
@@ -160,7 +160,6 @@ AX_CXX_COMPILE_STDCXX(17,[ext],[mandatory])
 
 dnl Check for header files
 AC_FUNC_ALLOCA
-AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h libintl.h limits.h \
                   netdb.h netinet/in.h stdlib.h string.h \
                   sys/ioctl.h sys/socket.h sys/time.h unistd.h])
@@ -172,7 +171,6 @@ AC_C_CONST
 AC_C_INLINE
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
-AC_HEADER_TIME
 AC_C_VOLATILE
 AC_CHECK_TYPES([ptrdiff_t])
 
