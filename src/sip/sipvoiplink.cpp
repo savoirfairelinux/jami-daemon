@@ -924,8 +924,13 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
 static void
 sdp_request_offer_cb(pjsip_inv_session* inv, const pjmedia_sdp_session* offer)
 {
-    if (auto call = getCallFromInvite(inv))
-        call->onReceiveOffer(offer);
+    if (auto call = getCallFromInvite(inv)) {
+        // Need to clone the session to be sure that the object will live
+        pjmedia_sdp_session* offer_cloned = pjmedia_sdp_session_clone(Manager::instance().sipVoIPLink().getPool(), offer);
+        dht::ThreadPool::io().run([call, offer=offer_cloned] {
+            call->onReceiveOffer(offer);
+        });
+    }
 }
 
 static void
