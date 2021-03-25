@@ -589,7 +589,7 @@ AC_ARG_WITH([natpmp], [AS_HELP_STRING([--without-natpmp],
 
 AS_IF([test "x$with_natpmp" != xno],
         [AC_CHECK_HEADER([natpmp.h],
-            AC_CHECK_LIB([natpmp], [initnatpmp], [], [with_natpmp=no]),
+            AC_CHECK_LIB([natpmp], [initnatpmp], [], [with_natpmp=no], [-lpthread]),
             [AC_MSG_WARN([Unable to find the libnatpmp headers (you may need to install the dev package). You may use --without-natpmp to compile without NAT-PMP support.]);
              with_natpmp=no])
         ],[])
