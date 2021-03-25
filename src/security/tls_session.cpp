@@ -38,10 +38,11 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
-
 #include <gnutls/crypto.h>
 #include <gnutls/ocsp.h>
+
 #include <opendht/http.h>
+#include <opendht/thread_pool.h>
 
 #include <list>
 #include <mutex>
@@ -375,6 +376,8 @@ TlsSession::TlsSessionImpl::~TlsSessionImpl()
     thread_.join();
     if (not transport_->isReliable())
         transport_->setOnRecv(nullptr);
+    dht::ThreadPool::io().run(
+        [ice = std::make_shared<decltype(transport_)>(std::move(transport_))] {});
 }
 
 const char*
