@@ -57,7 +57,6 @@ static constexpr unsigned STUN_MAX_PACKET_SIZE {8192};
 static constexpr uint16_t IPV6_HEADER_SIZE = 40; ///< Size in bytes of IPV6 packet header
 static constexpr uint16_t IPV4_HEADER_SIZE = 20; ///< Size in bytes of IPV4 packet header
 static constexpr int MAX_CANDIDATES {32};
-static constexpr int MAX_DESTRUCTION_TIMEOUT {3};
 
 //==============================================================================
 
@@ -425,18 +424,6 @@ IceTransport::Impl::Impl(const char* name,
             // NOTE: handleEvents can return false in this case
             // but here we don't care if there is event or not.
             handleEvents(500); // limit polling to 500ms
-        }
-        // NOTE: This last handleEvents is necessary to close TURN socket.
-        // Because when destroying the TURN session pjproject creates a pj_timer
-        // to postpone the TURN destruction. This timer is only called if we poll
-        // the event queue.
-        auto started_destruction = std::chrono::system_clock::now();
-        while (handleEvents(500)) {
-            if (std::chrono::system_clock::now() - started_destruction
-                > std::chrono::seconds(MAX_DESTRUCTION_TIMEOUT)) {
-                // If the transport is not closed after 3 seconds, avoid blocking
-                break;
-            }
         }
     });
 
