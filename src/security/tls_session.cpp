@@ -748,7 +748,7 @@ TlsSession::TlsSessionImpl::verifyOcsp(const std::string& aia_uri,
                             return;
                         }
                         JAMI_DBG("HTTP OCSP Request done!");
-                        unsigned int verify = 0;
+                        gnutls_ocsp_cert_status_t verify = GNUTLS_OCSP_CERT_UNKNOWN;
                         try {
                             cert.ocspResponse = std::make_shared<dht::crypto::OcspResponse>(
                                 (const uint8_t*) r.body.data(), r.body.size());
@@ -756,32 +756,24 @@ TlsSession::TlsSessionImpl::verifyOcsp(const std::string& aia_uri,
                             verify = cert.ocspResponse->verifyDirect(cert, nonce);
                         } catch (dht::crypto::CryptoException& e) {
                             JAMI_ERR("Failed to verify OCSP response: %s", e.what());
+                        }
+                        if (verify == GNUTLS_OCSP_CERT_UNKNOWN) {
+                            // Soft-fail
                             if (cb)
-                                cb(GNUTLS_E_INVALID_REQUEST);
+                                cb(GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE);
                             return;
                         }
-                        if (verify == 0)
+                        int status = GNUTLS_E_SUCCESS;
+                        if (verify == GNUTLS_OCSP_CERT_GOOD) {
                             JAMI_DBG("OCSP verification success!");
-                        else
-                            JAMI_ERR("OCSP verification error!");
-                        if (verify & GNUTLS_OCSP_VERIFY_SIGNER_NOT_FOUND)
-                            JAMI_ERR("Signer cert not found");
-                        if (verify & GNUTLS_OCSP_VERIFY_SIGNER_KEYUSAGE_ERROR)
-                            JAMI_ERR("Signer cert keyusage error");
-                        if (verify & GNUTLS_OCSP_VERIFY_UNTRUSTED_SIGNER)
-                            JAMI_ERR("Signer cert is not trusted");
-                        if (verify & GNUTLS_OCSP_VERIFY_INSECURE_ALGORITHM)
-                            JAMI_ERR("Insecure algorithm");
-                        if (verify & GNUTLS_OCSP_VERIFY_SIGNATURE_FAILURE)
-                            JAMI_ERR("Signature failure");
-                        if (verify & GNUTLS_OCSP_VERIFY_CERT_NOT_ACTIVATED)
-                            JAMI_ERR("Signer cert not yet activated");
-                        if (verify & GNUTLS_OCSP_VERIFY_CERT_EXPIRED)
-                            JAMI_ERR("Signer cert expired");
+                        } else {
+                            status = GNUTLS_E_CERTIFICATE_ERROR;
+                            JAMI_ERR("OCSP verification: certificate is revoked!");
+                        }
                         // Save response into the certificate store
                         tls::CertificateStore::instance().pinOcspResponse(cert);
                         if (cb)
-                            cb(verify);
+                            cb(status);
                     });
 }
 
