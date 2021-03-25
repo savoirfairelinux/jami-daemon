@@ -27,6 +27,8 @@
 #include "string_utils.h"
 #include "security/tls_session.h"
 
+#include "opendht/thread_pool.h"
+
 #include <algorithm>
 #include <chrono>
 #include <future>
@@ -107,6 +109,7 @@ IceSocketEndpoint::shutdown()
         // any blocking operation.
         ice_->cancelOperations();
         ice_->stop();
+        dht::ThreadPool::io().run([ice = std::move(ice_)] {});
     }
 }
 
