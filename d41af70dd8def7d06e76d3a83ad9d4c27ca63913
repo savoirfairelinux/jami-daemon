@@ -70,6 +70,30 @@
       "revId": "d41af70dd8def7d06e76d3a83ad9d4c27ca63913",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "dcdc49be_9856ab63",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 22
+      },
+      "lineNbr": 882,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-25T15:56:55Z",
+      "side": 1,
+      "message": "For only testing purposes, it can be only injected via a callback like SIPCall::onMediaStateChangeCb_ called if DRING_TESTABLE is true.",
+      "parentUuid": "ba631373_ca44f2d8",
+      "range": {
+        "startLine": 882,
+        "startChar": 22,
+        "endLine": 882,
+        "endChar": 39
+      },
+      "revId": "d41af70dd8def7d06e76d3a83ad9d4c27ca63913",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
