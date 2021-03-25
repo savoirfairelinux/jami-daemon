@@ -40,7 +40,6 @@ ChanneledOutgoingTransfer::~ChanneledOutgoingTransfer()
     channel_->setOnRecv({});
     if (file_)
         file_->setOnRecv({});
-    JAMI_ERR("@@@ SHUTDOWN! ChanneledOutgoingTransfer");
     channel_->shutdown();
     if (file_)
         file_->close();
@@ -93,10 +92,15 @@ ChanneledIncomingTransfer::ChanneledIncomingTransfer(const std::shared_ptr<Chann
 ChanneledIncomingTransfer::~ChanneledIncomingTransfer()
 {
     channel_->setOnRecv({});
-    JAMI_ERR("@@@ SHUTDOWN! ChanneledIncomingTransfer %p", this);
     channel_->shutdown();
     if (ftp_)
         ftp_->close();
+}
+
+std::string
+ChanneledIncomingTransfer::peer() const
+{
+    return channel_ ? channel_->deviceId().toString() : "";
 }
 
 } // namespace jami

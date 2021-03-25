@@ -69,10 +69,10 @@ private:
     void testAskToMultipleParticipants();
 
     CPPUNIT_TEST_SUITE(FileTransferTest);
-    // CPPUNIT_TEST(testFileTransfer);
-    // CPPUNIT_TEST(testMultipleFileTransfer);
-    // CPPUNIT_TEST(testConversationFileTransfer);
-    // CPPUNIT_TEST(testFileTransferInConversation);
+    CPPUNIT_TEST(testFileTransfer);
+    CPPUNIT_TEST(testMultipleFileTransfer);
+    CPPUNIT_TEST(testConversationFileTransfer);
+    CPPUNIT_TEST(testFileTransferInConversation);
     CPPUNIT_TEST(testReaskForTransfer);
     CPPUNIT_TEST(testBadSha3sumOut);
     CPPUNIT_TEST(testBadSha3sumIn);

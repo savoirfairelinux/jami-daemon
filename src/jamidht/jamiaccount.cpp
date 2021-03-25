@@ -1134,7 +1134,6 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     return;
                 }
             }
-            JAMI_ERR("@@@@ ON TRUST REQUEST");
             emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(getAccountID(),
                                                                          conversationId,
                                                                          uri,
@@ -1153,7 +1152,6 @@ JamiAccount::loadAccount(const std::string& archive_password,
                             std::string(payload.data(), payload.data() + payload.size()));
                         req.metadatas = ConversationRepository::infosFromVCard(details);
                         acc->accountManager_->addConversationRequest(conversationId, std::move(req));
-                        JAMI_ERR("@@@@ ConversationRequestReceived");
                         emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(
                             acc->getAccountID(), conversationId, req.toMap());
                     }
@@ -2617,9 +2615,7 @@ JamiAccount::doRegister_()
                     info.author = peerId;
                     info.peer = peerId;
                     info.conversationId = conversationId;
-                    JAMI_ERR("@@@ONINCOM");
                     dhtPeerConnector_->onIncomingConnection(info, tid, std::move(channel));
-                    JAMI_ERR("@@@ONINCOM END");
                 }
             }
         });
@@ -3530,7 +3526,6 @@ JamiAccount::sendTextMessage(const std::string& to,
 
     for (auto it = sipConns_.begin(); it != sipConns_.end();) {
         auto& [key, value] = *it;
-        JAMI_ERR("@@@ %s %s", to.c_str(), key.first.c_str());
         if (key.first != to or value.empty()) {
             ++it;
             continue;
@@ -4437,7 +4432,6 @@ JamiAccount::sendMessage(const std::string& conversationId,
             value,
             parent,
             [w = weak(), conversationId, announce](bool ok, const std::string& commitId) {
-                JAMI_ERR("@@@ NEW COMMIT %s", commitId.c_str());
                 if (!announce)
                     return;
                 if (ok) {
@@ -4446,7 +4440,6 @@ JamiAccount::sendMessage(const std::string& conversationId,
                         std::lock_guard<std::mutex> lk(shared->conversationsMtx_);
                         auto it = shared->conversations_.find(conversationId);
                         if (it != shared->conversations_.end() && it->second) {
-                            JAMI_ERR("@@@ ANNOUNCE NEW COMMIT %s", commitId.c_str());
                             shared->sendMessageNotification(*it->second, commitId, true);
                         }
                     }

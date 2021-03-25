@@ -337,7 +337,6 @@ private:
 
     void sendFile() const
     {
-        JAMI_ERR("@@@ sendFile! SubOutgoingFileTransfer");
         dht::ThreadPool::io().run([this]() {
             while (!input_.eof() && onRecvCb_) {
                 std::vector<char> buf;
@@ -415,7 +414,6 @@ SubOutgoingFileTransfer::closeAndEmit(DRing::DataTransferEventCode code) const n
 bool
 SubOutgoingFileTransfer::write(std::string_view buffer)
 {
-    JAMI_ERR("@@@ WRITE! SubOutgoingFileTransfer");
     if (buffer.empty())
         return true;
     if (not peerReady_ and headerSent_) {
@@ -598,7 +596,6 @@ IncomingFileTransfer::IncomingFileTransfer(const DRing::DataTransferInfo& info,
 void
 IncomingFileTransfer::setFilename(const std::string& filename)
 {
-    JAMI_ERR("@@@ IncomingFileTransfer::setFilename()");
     info_.path = filename;
 }
 
@@ -625,7 +622,6 @@ IncomingFileTransfer::requestFilename(const std::function<void(const std::string
 bool
 IncomingFileTransfer::start()
 {
-    JAMI_ERR("@@@ IncomingFileTransfer::start()");
     if (!DataTransfer::start())
         return false;
 
@@ -659,7 +655,6 @@ IncomingFileTransfer::close() noexcept
 
     fout_.close();
 
-    JAMI_ERR("@@@ %p", this);
     JAMI_DBG() << "[FTP] file closed, rx " << info_.bytesProgress << " on " << info_.totalSize;
     if (info_.bytesProgress >= info_.totalSize) {
         if (vcb_) {
@@ -694,14 +689,11 @@ IncomingFileTransfer::accept(const std::string& filename, std::size_t offset)
 bool
 IncomingFileTransfer::write(std::string_view buffer)
 {
-    JAMI_ERR("@@@IncomingFileTransfer::write");
     if (buffer.empty())
         return true;
-    JAMI_ERR("@@@IncomingFileTransfer::write2");
     fout_ << buffer;
     if (!fout_)
         return false;
-    JAMI_ERR("@@@IncomingFileTransfer::write3");
     std::lock_guard<std::mutex> lk {infoMutex_};
     info_.bytesProgress += buffer.size();
     return true;
@@ -821,7 +813,6 @@ TransferManager::acceptFile(const DRing::DataTransferId& id, const std::string& 
         JAMI_WARN("Cannot accept %lu, request not found", id);
         return false;
     }
-    JAMI_ERR("@@@!!! ACCEPT");
     it->second->accept(path, 0);
     return true;
 }
