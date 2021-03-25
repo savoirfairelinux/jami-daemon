@@ -497,7 +497,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     }
 
     // Add user-agent header
-    sip_utils::addUserAgenttHeader(account->getUserAgentName(), tdata);
+    sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
 
     if (pjsip_inv_send_msg(call->inviteSession_.get(), tdata) != PJ_SUCCESS) {
         JAMI_ERR("Could not send msg TRYING");

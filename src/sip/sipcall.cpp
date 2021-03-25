@@ -333,7 +333,7 @@ SIPCall::SIPSessionReinvite()
             return PJ_SUCCESS;
 
         // Add user-agent header
-        sip_utils::addUserAgenttHeader(acc->getUserAgentName(), tdata);
+        sip_utils::addUserAgentHeader(acc->getUserAgentName(), tdata);
 
         result = pjsip_inv_send_msg(inviteSession_.get(), tdata);
         if (result == PJ_SUCCESS)
@@ -486,7 +486,7 @@ SIPCall::terminateSipSession(int status)
                 }
 
                 // Add user-agent header
-                sip_utils::addUserAgenttHeader(account->getUserAgentName(), tdata);
+                sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
 
                 ret = pjsip_inv_send_msg(inviteSession_.get(), tdata);
                 if (ret != PJ_SUCCESS)
@@ -553,7 +553,7 @@ SIPCall::answer()
     }
 
     // Add user-agent header
-    sip_utils::addUserAgenttHeader(account->getUserAgentName(), tdata);
+    sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
 
     if (pjsip_inv_send_msg(inviteSession_.get(), tdata) != PJ_SUCCESS) {
         setInviteSession();

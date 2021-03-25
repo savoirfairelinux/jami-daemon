@@ -187,22 +187,21 @@ addContactHeader(const pj_str_t* contact_str, pjsip_tx_data* tdata)
 }
 
 void
-addUserAgenttHeader(const std::string& userAgent, pjsip_tx_data* tdata)
+addUserAgentHeader(const std::string& userAgent, pjsip_tx_data* tdata)
 {
     if (tdata == nullptr)
         return;
 
-    pj_str_t pjUserAgent = pj_str((char*)userAgent.c_str());
-    constexpr pj_str_t STR_USER_AGENT = jami::sip_utils::CONST_PJ_STR("User-Agent");
+    auto pjUserAgent = CONST_PJ_STR(userAgent);
+    constexpr pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
 
     // Do nothing if user-agent header is present.
-    pjsip_hdr* hdr = static_cast<pjsip_hdr*>(pjsip_msg_find_hdr_by_name(tdata->msg, &STR_USER_AGENT, nullptr));
-    if (hdr != nullptr) {
+    if (pjsip_msg_find_hdr_by_name(tdata->msg, &STR_USER_AGENT, nullptr) != nullptr) {
         return;
     }
 
     // Add Header
-    hdr = reinterpret_cast<pjsip_hdr*>(
+    auto hdr = reinterpret_cast<pjsip_hdr*>(
         pjsip_user_agent_hdr_create(tdata->pool, &STR_USER_AGENT, &pjUserAgent));
 
     if (hdr != nullptr) {

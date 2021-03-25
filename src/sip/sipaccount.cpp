@@ -406,7 +406,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     }
 
     // Add user-agent header
-    sip_utils::addUserAgenttHeader(getUserAgentName(), tdata);
+    sip_utils::addUserAgentHeader(getUserAgentName(), tdata);
 
     if (pjsip_inv_send_msg(call->inviteSession_.get(), tdata) != PJ_SUCCESS) {
         JAMI_ERR("Unable to send invite message for this call");
@@ -2200,7 +2200,7 @@ SIPAccount::sendTextMessage(const std::string& to,
     pjsip_msg_add_hdr(tdata->msg, hdr);
 
     // Add user-agent header
-    sip_utils::addUserAgenttHeader(getUserAgentName(), tdata);
+    sip_utils::addUserAgentHeader(getUserAgentName(), tdata);
 
     // Set input token into callback
     std::unique_ptr<ctx> t {new ctx(new pjsip_auth_clt_sess)};
