@@ -552,9 +552,9 @@ IceTransport::Impl::handleEvents(unsigned max_msec)
 void
 IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_status_t status)
 {
-    const char* opname = op == PJ_ICE_STRANS_OP_INIT
-                             ? "initialization"
-                             : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
+    const char* opname = op == PJ_ICE_STRANS_OP_INIT          ? "initialization"
+                         : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation"
+                                                              : "unknown_op";
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
@@ -1569,7 +1569,7 @@ IceTransport::parse_SDP(std::string_view sdp_msg, const IceTransport& ice)
         } else {
             IceCandidate cand;
             if (ice.getCandidateFromSDP(std::string(line), cand)) {
-                JAMI_DBG("Add remote ICE candidate: %.*s", (int)line.size(), line.data());
+                JAMI_DBG("Add remote ICE candidate: %.*s", (int) line.size(), line.data());
                 res.rem_candidates.emplace_back(cand);
             }
         }
