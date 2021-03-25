@@ -626,7 +626,8 @@ ConversationRepository::Impl::checkOnlyDeviceCertificate(const std::string& user
         return false;
     // If modified, it's the first commit of a device, we check
     // that the file wasn't there previously
-    std::string deviceFile = std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt";
+    // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
+    std::string deviceFile = std::string("devices") + "/" + userDevice + ".crt";
     if (changedFiles[0] != deviceFile) {
         return false;
     }
@@ -661,7 +662,8 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
     std::string deviceFile = "";
     std::string votedFile = "";
     for (const auto& changedFile : changedFiles) {
-        if (changedFile == std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt") {
+        // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
+        if (changedFile == std::string("devices") + "/" + userDevice + ".crt") {
             deviceFile = changedFile;
         } else if (changedFile.find("votes") == 0) {
             votedFile = changedFile;
@@ -808,13 +810,14 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
 
     // If modified, it's the first commit of a device, we check
     // that the file wasn't there previously. And the member MUST be added
+    // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
     std::string deviceFile = "";
     std::string invitedFile = "";
-    std::string crlFile = std::string("CRLs") + DIR_SEPARATOR_STR + userUri;
+    std::string crlFile = std::string("CRLs") + "/" + userUri;
     for (const auto& changedFile : changedFiles) {
-        if (changedFile == std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt") {
+        if (changedFile == std::string("devices") + "/" + userDevice + ".crt") {
             deviceFile = changedFile;
-        } else if (changedFile == std::string("invited") + DIR_SEPARATOR_STR + uriMember) {
+        } else if (changedFile == std::string("invited") + "/" + uriMember) {
             invitedFile = changedFile;
         } else if (changedFile == crlFile) {
             // Nothing to do
@@ -940,10 +943,11 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
         return false;
 
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
-    std::string deviceFile = std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt";
-    std::string adminFile = std::string("admins") + DIR_SEPARATOR_STR + uriMember + ".crt";
-    std::string memberFile = std::string("members") + DIR_SEPARATOR_STR + uriMember + ".crt";
-    std::string crlFile = std::string("CRLs") + DIR_SEPARATOR_STR + uriMember;
+    // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
+    std::string deviceFile = std::string("devices") + "/" + userDevice + ".crt";
+    std::string adminFile = std::string("admins") + "/" + uriMember + ".crt";
+    std::string memberFile = std::string("members") + "/" + uriMember + ".crt";
+    std::string crlFile = std::string("CRLs") + "/" + uriMember;
     std::vector<std::string> voters;
     std::vector<std::string> devicesRemoved;
     std::vector<std::string> bannedFiles;
@@ -984,7 +988,7 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
 
     // Check that removed devices are for removed member (or directly uriMember)
     for (const auto& deviceUri : devicesRemoved) {
-        deviceFile = std::string("devices") + DIR_SEPARATOR_STR + deviceUri + ".crt";
+        deviceFile = std::string("devices") + "/" + deviceUri + ".crt";
         if (!fileAtTree(deviceFile, treeOld)) {
             JAMI_ERR("device not found added (%s)", deviceFile.c_str());
             return false;
@@ -1139,6 +1143,7 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
     }
     auto userUri = cert->getIssuerUID();
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, ""));
+    // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
 
     try {
         mode();
@@ -1148,9 +1153,9 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
     }
 
     auto hasDevice = false, hasAdmin = false;
-    std::string adminsFile = std::string("admins") + DIR_SEPARATOR_STR + userUri + ".crt";
-    std::string deviceFile = std::string("devices") + DIR_SEPARATOR_STR + userDevice + ".crt";
-    std::string crlFile = std::string("CRLs") + DIR_SEPARATOR_STR + userUri;
+    std::string adminsFile = std::string("admins") + "/" + userUri + ".crt";
+    std::string deviceFile = std::string("devices") + "/" + userDevice + ".crt";
+    std::string crlFile = std::string("CRLs") + "/" + userUri;
     // Check that admin cert is added
     // Check that device cert is added
     // Check CRLs added
