@@ -22,6 +22,30 @@
       "revId": "d41af70dd8def7d06e76d3a83ad9d4c27ca63913",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ba631373_ca44f2d8",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 22
+      },
+      "lineNbr": 882,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-25T15:06:49Z",
+      "side": 1,
+      "message": "DecodingStart/Stopped could be made redundant by mediaStateChanged, although they do not carry the same info.\nDecodingStart/Stop is very scoped and specific to video decoding.\nmediatStateChanged concerns all the media in the call, in both direction. And also carries media negoation result (SDP nego).\nRegarding the coupling, yes the call and the media logic must be coupled: it\u0027s the call that drives the media states.\n\nWithout those events, there is no way to know (at least when testing) media negotiation progression. We might need other signals such as IceNegotiationStarted/Succeded/Failed",
+      "parentUuid": "3b59caab_e6e992e8",
+      "range": {
+        "startLine": 882,
+        "startChar": 22,
+        "endLine": 882,
+        "endChar": 39
+      },
+      "revId": "d41af70dd8def7d06e76d3a83ad9d4c27ca63913",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
