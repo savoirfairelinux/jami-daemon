@@ -1029,7 +1029,9 @@ Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
 {
     if (newInfo.empty()) {
         JAMI_DBG("confInfo empty, remove remoteHost");
+        std::lock_guard<std::mutex> lk(confInfoMutex_);
         remoteHosts_.erase(peerURI);
+        sendConferenceInfos();
         return;
     }
 
