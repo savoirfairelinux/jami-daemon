@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3b59caab_e6e992e8",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 22
+      },
+      "lineNbr": 882,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-25T14:46:06Z",
+      "side": 1,
+      "message": "seems redundant with DecodingStarted/DecodingStopped, and adds coupling between Call logic and Media logic.",
+      "range": {
+        "startLine": 882,
+        "startChar": 22,
+        "endLine": 882,
+        "endChar": 39
+      },
+      "revId": "d41af70dd8def7d06e76d3a83ad9d4c27ca63913",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
