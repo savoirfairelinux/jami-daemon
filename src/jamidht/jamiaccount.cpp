@@ -1929,8 +1929,8 @@ JamiAccount::loadBootstrap() const
 {
     std::vector<std::string> bootstrap;
     if (!hostname_.empty()) {
-        std::string_view node_addr;
-        while (jami::getline(hostname_, node_addr, ';'))
+        std::string_view stream(hostname_), node_addr;
+        while (jami::getline(stream, node_addr, ';'))
             bootstrap.emplace_back(node_addr);
         for (const auto& b : bootstrap)
             JAMI_DBG("[Account %s] Bootstrap node: %s", getAccountID().c_str(), b.c_str());

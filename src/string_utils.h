@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <regex>
 #include <iterator>
+#include <iostream>
 #ifdef _WIN32
 #include <WTypes.h>
 #endif
@@ -116,30 +117,32 @@ std::string_view trim(std::string_view s);
 
 /**
  * Split a string_view with an API similar to std::getline.
- * @param str The input string to iterate on.
- * @param line The output substring, also used as an iterator.
- *             It must be default-initialised when this function is used 
- *             for the first time with a given string,
- *             and should not be modified by the caller during iteration.
+ * @param str The input string stream to iterate on, trimed of line during iteration.
+ * @param line The output substring.
  * @param delim The delimiter.
  * @return True if line was set, false if the end of the input was reached.
  */
 inline
-bool getline(const std::string_view str, std::string_view& line, char delim = '\n')
+bool getline_full(std::string_view& str, std::string_view& line, char delim = '\n')
 {
     if (str.empty())
         return false;
-    if (line.data() == nullptr) {
-        // first iteration
-        line = str.substr(0, str.find(delim));
-    } else {
-        size_t prevEnd = line.data() + line.size() - str.data();
-        if (prevEnd >= str.size())
+    auto pos = str.find(delim);
+    line = str.substr(0, pos);
+    str.remove_prefix(pos < str.size() ? pos + 1 : str.size());
+    return true;
+}
+
+/**
+ * Similar to @getline_full but skips empty results.
+ */
+inline
+bool getline(std::string_view& str, std::string_view& line, char delim = '\n') {
+    do {
+        if (not getline_full(str, line, delim))
             return false;
-        auto nextStr = str.substr(prevEnd + 1);
-        line = nextStr.substr(0, nextStr.find(delim));
-    }
-    return  true;
+    } while (line.empty());
+    return true;
 }
 
 inline
