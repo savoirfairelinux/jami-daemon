@@ -161,20 +161,12 @@ dnl Check for C++17 support
 AX_CXX_COMPILE_STDCXX(17,[ext],[mandatory])
 
 dnl Check for header files
-AC_FUNC_ALLOCA
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h libintl.h limits.h \
                   netdb.h netinet/in.h stdlib.h string.h \
                   sys/ioctl.h sys/socket.h sys/time.h unistd.h])
 
 dnl Check for typedefs, structures, and compiler characteristics
-AC_HEADER_STAT
-AC_HEADER_STDBOOL
-AC_C_CONST
-AC_C_INLINE
 AC_TYPE_PID_T
-AC_TYPE_SIZE_T
-AC_C_VOLATILE
-AC_CHECK_TYPES([ptrdiff_t])
 
 PKG_PROG_PKG_CONFIG()
 
