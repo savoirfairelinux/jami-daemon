@@ -78,7 +78,8 @@ libring_la_LDFLAGS = \
 		@LIBSWSCALE_LIBS@ \
 		@LIBAVUTIL_LIBS@ \
 		@LIBS@ \
-		@WEBRTC_LIBS@
+		@WEBRTC_LIBS@ \
+	        $(AM_LDFLAGS)
 
 if ENABLE_PLUGIN
 libring_la_LDFLAGS+= \
@@ -111,9 +112,10 @@ libring_la_CFLAGS = \
 		@LIBAVFILTER_CFLAGS@ \
 		@LIBSWRESAMPLE_CFLAGS@ \
 		@LIBSWSCALE_CFLAGS@ \
-		@WEBRTC_CFLAGS@
+		@WEBRTC_CFLAGS@ \
+		$(AM_CFLAGS)
 
-libring_la_CXXFLAGS = @JSONCPP_CFLAGS@
+libring_la_CXXFLAGS = $(AM_CXXFLAGS)
 
 if HAVE_LINUX
 #needed to compile the .so

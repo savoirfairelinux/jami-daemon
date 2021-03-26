@@ -11,9 +11,6 @@ if BUILD_NATPMP
 SUBDIRS += natpmp
 endif
 
-libupnpprotocol_la_CXXFLAGS = \
-                @CXXFLAGS@
-
 libupnpprotocol_la_SOURCES = \
         igd.h \
         igd.cpp \
