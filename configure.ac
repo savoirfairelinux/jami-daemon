@@ -272,12 +272,7 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
 
   AS_IF([test "${SYS}" = "darwin"], [
     export LD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$LD_LIBRARY_PATH"
-    export DYLD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$DYLD_LIBRARY_PATH"
-  ], [
-      PKG_CHECK_MODULES([Jsoncpp], [jsoncpp >= 1.6.5])
-      CPPFLAGS="${CPPFLAGS} ${Jsoncpp_CFLAGS}"
-      LDFLAGS="${LDFLAGS} ${Jsoncpp_LIBS}"
-  ])
+    export DYLD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$DYLD_LIBRARY_PATH"])
 ], [
   AS_IF([test -n "${with_contrib}" && test "${with_contrib}" != "no"], [
     AC_MSG_ERROR([Third party libraries not found!])
@@ -555,9 +550,8 @@ AC_ARG_WITH([webrtcap],
 AS_IF([test "x$with_webrtc_ap" = "xyes"],
       [PKG_CHECK_MODULES(WEBRTC, [webrtc-audio-processing >= 0.3.1],
         [
-          AC_DEFINE([HAVE_WEBRTC_AP], 1, [Define if you have webrtc-audio-processing])
-          CPPFLAGS="${CPPFLAGS} ${WEBRTC_CFLAGS}"
-          LDFLAGS="${LDFLAGS} ${WEBRTC_LIBS}"
+          AC_DEFINE([HAVE_WEBRTC_AP], 1,
+                    [Define if you have webrtc-audio-processing])
         ],
         AC_MSG_WARN([Missing webrtc-audio-processing development files]))
       ])

@@ -61,6 +61,10 @@ libaudio_la_CXXFLAGS += @SPEEXDSP_CFLAGS@
 libaudio_la_LDFLAGS += @SPEEXDSP_LIBS@
 endif
 
+if HAVE_WEBRTC_AP
+libaudio_la_CXXFLAGS += @WEBRTC_CFLAGS@
+endif
+
 noinst_HEADERS = \
 		audiobuffer.h \
 		audio_input.h \

@@ -13,10 +13,11 @@ endif
 if HAVE_WEBRTC_AP
 EC_SRC += webrtc_echo_canceller.cpp
 EC_HDR += webrtc_echo_canceller.h
+libecho_cancel_la_CXXFLAGS = @WEBRTC_CFLAGS@ $(AM_CXXFLAGS)
 endif
 
 libecho_cancel_la_SOURCES = \
-		$(EC_SRC)
+	$(EC_SRC)
 
 noinst_HEADERS = \
 	echo_canceller.h \
