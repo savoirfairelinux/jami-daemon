@@ -5,7 +5,8 @@ ringlib_PROGRAMS = ringcli
 ringcli_SOURCES = winmain.cpp
 ringcli_CXXFLAGS = -I$(top_srcdir)/src \
                    -I$(top_srcdir)/src/dring \
-                   -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
+                   -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\" \
+		   $(AM_CXXFLAGS)
 ringcli_LDADD = $(top_builddir)/src/libring.la
 endif
 
@@ -14,7 +15,8 @@ ringlib_PROGRAMS = ringcli
 ringcli_SOURCES = osxmain.cpp
 ringcli_CXXFLAGS = -I$(top_srcdir)/src \
                    -I$(top_srcdir)/src/dring \
-                   -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
+                   -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\" \
+		   $(AM_CXXFLAGS)
 ringcli_LDADD = $(top_builddir)/src/libring.la
 endif
 
