@@ -30,4 +30,5 @@ libclient_la_CXXFLAGS = \
 	-I../ \
 	-DPREFIX=\"$(prefix)\" \
 	-DPROGSHAREDIR=\"${datadir}/ring\" \
-	@JSONCPP_CFLAGS@
+	@JSONCPP_CFLAGS@ \
+	$(AM_CXXFLAGS)

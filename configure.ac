@@ -22,14 +22,17 @@ AC_CONFIG_HEADERS([config.h])
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 dnl debug mode is default-disabled
-AC_ARG_ENABLE([debug], AS_HELP_STRING([--enable-debug], [Build in debug mode, adds stricter warnings, disables optimization]))
-AS_IF([test "x$enable_debug" = "xyes"], [
-    CFLAGS="${CFLAGS} -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor -Wno-unknown-pragmas -Wformat=2 -O0"
-    CXXFLAGS="${CXXFLAGS} -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor -Wno-unknown-pragmas -Wformat=2 -O0"
-], [
-    CFLAGS="${CFLAGS} -DNDEBUG=1 -O3"
-    CXXFLAGS="${CXXFLAGS} -DNDEBUG=1 -O3"
-])
+AC_ARG_ENABLE([debug],
+  AS_HELP_STRING([--enable-debug],
+    [Build in debug mode, adds stricter warnings, disables optimization]))
+
+AS_IF([test "x$enable_debug" = "xyes"],
+  [DAEMONCFLAGS+=" -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor \
+-Wno-unknown-pragmas -Wformat=2 -O0"
+   DAEMONCXXFLAGS+=" -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor \
+-Wno-unknown-pragmas -Wformat=2 -O0"],
+  [DAEMONCFLAGS+=" -DNDEBUG=1 -O3"
+   DAEMONCXXFLAGS+=" -DNDEBUG=1 -O3"])
 
 dnl Check for programs
 AC_PROG_CC
@@ -55,9 +58,9 @@ case "${host_os}" in
   linux*)
     SYS=linux
     # Necessary for linking .a to a .so
-    LDFLAGS+=" -Wl,-Bsymbolic"
+    DAEMONLDFLAGS+=" -Wl,-Bsymbolic"
     # Needed for plugin system
-    LDFLAGS+=" -ldl"
+    DAEMONLDFLAGS+=" -ldl"
     ;;
   darwin*)
     SYS=darwin
@@ -87,8 +90,8 @@ case "${host_os}" in
 
     AC_DEFINE([WIN32_LEAN_AND_MEAN],[1], [Define to limit the scope of <windows.h>.])
 
-    CPPFLAGS+="-D_WIN32_WINNT=0x0601 -DWINVER=0x0601 -D__USE_MINGW_ANSI_STDIO=1"
-    LDFLAGS+="-Wl,--nxcompat -Wl,--dynamicbase"
+    DAEMONCPPFLAGS+=" -D_WIN32_WINNT=0x0601 -DWINVER=0x0601 -D__USE_MINGW_ANSI_STDIO=1"
+    DAEMONLDFLAGS+=" -Wl,--nxcompat -Wl,--dynamicbase"
     LIBS+=" -lws2_32 -lwsock32 -lshlwapi"
     ac_default_prefix="`pwd`/_win32"
     DESTDIR="`pwd`/_win32/"
@@ -134,11 +137,9 @@ AS_IF([test "$SYS" = linux],[
 ])
 AM_CONDITIONAL(HAVE_ANDROID, test "${HAVE_ANDROID}" = "1")
 
-AS_IF([test "$SYS" = linux && test "${HAVE_ANDROID}" != "1"],[
-    CFLAGS="${CFLAGS} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
-    CXXFLAGS="${CXXFLAGS} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
-],[
-])
+AS_IF([test "$SYS" = linux && test "${HAVE_ANDROID}" != "1"],
+  [DAEMONCPPFLAGS+=" -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"]
+  [])
 
 dnl override platform specific check for dependent libraries
 dnl otherwise libtool linking of shared libraries will
@@ -198,86 +199,67 @@ AC_MSG_RESULT([$CLANG])
 dnl define DRING_BUILD because we are building libring, not using it
 dnl if building shared library, define dring_EXPORTS
 AC_MSG_CHECKING([if compiling shared library])
-CPPFLAGS="${CPPFLAGS} -fvisibility=hidden -DDRING_BUILD "
-AS_IF([test "x$enable_shared" == "xyes"], [
-  RING_SHARED=yes
-  CPPFLAGS="${CPPFLAGS} -Ddring_EXPORTS "
-],[
-  RING_SHARED=no
-])
+DAEMONCPPFLAGS+=" -fvisibility=hidden -DDRING_BUILD"
+AS_IF([test "x$enable_shared" == "xyes"],
+  [RING_SHARED=yes
+   DAEMONCPPFLAGS+=" -Ddring_EXPORTS"],
+  [RING_SHARED=no])
 AC_MSG_RESULT([$RING_SHARED])
 
-CPPFLAGS="${CPPFLAGS} -DASIO_STANDALONE"
+DAEMONCPPFLAGS+=" -DASIO_STANDALONE"
 
 dnl
 dnl  Check for the contrib directory
 dnl
 AC_ARG_WITH(contrib,
   [AS_HELP_STRING([--with-contrib[=DIR]],
-    [search for 3rd party libraries in DIR/include and DIR/lib])
-])
+    [search for 3rd party libraries in DIR/include and DIR/lib])])
 AC_MSG_CHECKING([for 3rd party libraries path])
-AS_IF([test -z "${with_contrib}" || test "${with_contrib}" = "yes"], [
-  CONTRIB_DIR="${srcdir}/contrib/${host}"
-  AS_IF([test ! -d "${CONTRIB_DIR}"], [
-    echo "${CONTRIB_DIR} not found" >&AS_MESSAGE_LOG_FD
-    CONTRIB_DIR="${srcdir}/contrib/`$CC -dumpmachine`"
-    AS_IF([test ! -d "${CONTRIB_DIR}"], [
-      echo "${CONTRIB_DIR} not found" >&AS_MESSAGE_LOG_FD
-      CONTRIB_DIR=""
-      AC_MSG_RESULT([not found])
-    ])
-  ])
-], [
-  AS_IF([test "${with_contrib}" != "no"], [
-    CONTRIB_DIR="${with_contrib}"
-  ], [
-    CONTRIB_DIR=""
-    AC_MSG_RESULT([disabled])
-  ])
-])
+AS_IF([test -z "${with_contrib}" || test "${with_contrib}" = "yes"],
+  [CONTRIB_DIR="${srcdir}/contrib/${host}"
+   AS_IF([test ! -d "${CONTRIB_DIR}"],
+     [echo "${CONTRIB_DIR} not found" >&AS_MESSAGE_LOG_FD
+      CONTRIB_DIR="${srcdir}/contrib/`$CC -dumpmachine`"
+      AS_IF([test ! -d "${CONTRIB_DIR}"],
+        [echo "${CONTRIB_DIR} not found" >&AS_MESSAGE_LOG_FD
+         CONTRIB_DIR=""
+         AC_MSG_RESULT([not found])])])],
+  [AS_IF([test "${with_contrib}" != "no"],
+     [CONTRIB_DIR="${with_contrib}"],
+     [CONTRIB_DIR=""
+      AC_MSG_RESULT([disabled])])])
 
-AS_IF([test -n "${CONTRIB_DIR}"], [
-  AS_IF([test -d "${CONTRIB_DIR}/lib"],[
-    CONTRIB_DIR=`cd "${CONTRIB_DIR}" && pwd`
-  ], [
-    echo "${CONTRIB_DIR}/lib not found" >&AS_MESSAGE_LOG_FD
-    CONTRIB_DIR=""
-    AC_MSG_RESULT([not usable])
-  ])
-])
+AS_IF([test -n "${CONTRIB_DIR}"],
+  [AS_IF([test -d "${CONTRIB_DIR}/lib"],
+    [CONTRIB_DIR=`cd "${CONTRIB_DIR}" && pwd`],
+    [echo "${CONTRIB_DIR}/lib not found" >&AS_MESSAGE_LOG_FD
+     CONTRIB_DIR=""
+     AC_MSG_RESULT([not usable])])])
 
-AS_IF([test -n "${CONTRIB_DIR}"], [
-  AC_MSG_RESULT([${CONTRIB_DIR}])
-  export PATH=${CONTRIB_DIR}/bin:$PATH
-  CPPFLAGS="${CPPFLAGS} -I${CONTRIB_DIR}/include"
+AS_IF([test -n "${CONTRIB_DIR}"],
+  [AC_MSG_RESULT([${CONTRIB_DIR}])
+   export PATH=${CONTRIB_DIR}/bin:$PATH
 
-  CFLAGS="${CFLAGS} -DPJ_AUTOCONF=1 "
-  CXXFLAGS="${CXXFLAGS} -DPJ_AUTOCONF=1 "
-  AS_IF([test "${HAVE_WIN64}" = "1"],[
-      CFLAGS+=" -DPJ_WIN64=1"
-      CXXFLAGS+=" -DPJ_WIN64=1"
-  ])
-  CFLAGS+=" -I${CONTRIB_DIR}/include"
-  CXXFLAGS+=" -I${CONTRIB_DIR}/include"
+   DAEMONCPPFLAGS+=" -I${CONTRIB_DIR}/include  -DPJ_AUTOCONF=1"
 
-  OBJCFLAGS="${OBJCFLAGS} -I${CONTRIB_DIR}/include"
-  AS_IF([test "${SYS}" = "mingw32"],[
-        PKG_CONFIG_PATH_CUSTOM="${CONTRIB_DIR}/lib/pkgconfig:${CONTRIB_DIR}/lib64/pkgconfig"
-        AC_SUBST(PKG_CONFIG_PATH_CUSTOM)
-        export PKG_CONFIG_PATH_CUSTOM
-  ])
-  export PKG_CONFIG_PATH="${CONTRIB_DIR}/lib/pkgconfig:${CONTRIB_DIR}/lib64/pkgconfig:$PKG_CONFIG_PATH"
-  LDFLAGS="${LDFLAGS} -L${CONTRIB_DIR}/lib"
+   AS_IF([test "${HAVE_WIN64}" = "1"],
+     [DAEMONCPPFLAGS+=" -DPJ_WIN64=1"])
 
-  AS_IF([test "${SYS}" = "darwin"], [
-    export LD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$LD_LIBRARY_PATH"
-    export DYLD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$DYLD_LIBRARY_PATH"])
-], [
-  AS_IF([test -n "${with_contrib}" && test "${with_contrib}" != "no"], [
-    AC_MSG_ERROR([Third party libraries not found!])
-  ])
-])
+   AS_IF([test "${SYS}" = "mingw32"],
+     [PKG_CONFIG_PATH_CUSTOM="${CONTRIB_DIR}/lib/pkgconfig:\
+${CONTRIB_DIR}/lib64/pkgconfig"
+      AC_SUBST(PKG_CONFIG_PATH_CUSTOM)
+      export PKG_CONFIG_PATH_CUSTOM])
+
+   export PKG_CONFIG_PATH="${CONTRIB_DIR}/lib/pkgconfig:\
+${CONTRIB_DIR}/lib64/pkgconfig:$PKG_CONFIG_PATH"
+   DAEMONLDFLAGS+=" -L${CONTRIB_DIR}/lib"
+
+   AS_IF([test "${SYS}" = "darwin"],
+     [export LD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$LD_LIBRARY_PATH"
+      export DYLD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$DYLD_LIBRARY_PATH"])],
+  [AS_IF([test -n "${with_contrib}" && test "${with_contrib}" != "no"],
+     [AC_MSG_ERROR([Third party libraries not found!])])])
 AC_SUBST(CONTRIB_DIR)
 
 dnl Add extras/tools to the PATH
@@ -377,9 +359,9 @@ AM_CONDITIONAL(BUILD_JACK, test "x$have_jack" = "xyes")
 dnl Coverage is default-disabled
 AC_ARG_ENABLE([coverage], AS_HELP_STRING([--enable-coverage], [Enable coverage]))
 
-AS_IF([test "x$enable_coverage" = "xyes"], [
-        CXXFLAGS="${CXXFLAGS} --coverage"
-        LDFLAGS="${LDFLAGS} --coverage"])
+AS_IF([test "x$enable_coverage" = "xyes"],
+  [DAEMONCXXFLAGS+=" --coverage"
+   DAEMONLDFLAGS+=" --coverage"])
 
 # DBUSCPP
 dnl Check for dbuscpp, the C++ bindings for D-Bus
@@ -654,6 +636,13 @@ AC_CONFIG_FILES([Makefile \
                  man/Makefile \
                  doc/Makefile \
                  doc/doxygen/Makefile])
+
+dnl Transfer the Automake variables set here to Makefile.in.
+echo DAEMONCPPFLAGS=$DAEMONCPPFLAGS
+AC_SUBST([AM_CPPFLAGS], [$DAEMONCPPFLAGS])
+AC_SUBST([AM_CFLAGS],   [$DAEMONCFLAGS])
+AC_SUBST([AM_CXXFLAGS], [$DAEMONCXXFLAGS])
+AC_SUBST([AM_LDFLAGS],  [$DAEMONLDFLAGS])
 
 # Go!
 AC_OUTPUT
