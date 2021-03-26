@@ -1557,7 +1557,7 @@ IceTransport::isTCPEnabled()
 }
 
 ICESDP
-IceTransport::parse_SDP(const std::string& sdp_msg, const IceTransport& ice)
+IceTransport::parse_SDP(std::string_view sdp_msg, const IceTransport& ice)
 {
     ICESDP res;
     int nr = 0;

@@ -522,8 +522,9 @@ MediaEncoder::print_sdp()
 
     std::string result;
     result.reserve(sdp_size);
-    std::string_view line;
-    while (jami::getline(sdp, line)) {
+
+    std::string_view steam(sdp), line;
+    while (jami::getline(steam, line)) {
         /* strip windows line ending */
         result += line.substr(0, line.length() - 1);
         result += "\n"sv;
