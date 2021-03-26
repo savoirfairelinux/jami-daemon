@@ -1291,19 +1291,15 @@ SIPAccount::initTlsConfiguration()
 
     ciphers_.clear();
 #if PJ_VERSION_NUM > (2 << 24 | 2 << 16)
-    if (not tlsCiphers_.empty()) {
-        std::stringstream ss(tlsCiphers_);
-        std::string item;
-        while (std::getline(ss, item, ' ')) {
-            if (item.empty())
-                continue;
-            auto item_cid = pj_ssl_cipher_id(item.c_str());
-            if (item_cid != PJ_TLS_UNKNOWN_CIPHER) {
-                JAMI_WARN("Valid cipher: %s", item.c_str());
-                ciphers_.push_back(item_cid);
-            } else
-                JAMI_ERR("Invalid cipher: %s", item.c_str());
-        }
+    std::string_view stream(tlsCiphers_), item;
+    while (jami::getline(stream, item, ' ')) {
+        std::string cipher(item);
+        auto item_cid = pj_ssl_cipher_id(cipher.c_str());
+        if (item_cid != PJ_TLS_UNKNOWN_CIPHER) {
+            JAMI_WARN("Valid cipher: %s", cipher.c_str());
+            ciphers_.push_back(item_cid);
+        } else
+            JAMI_ERR("Invalid cipher: %s", cipher.c_str());
     }
 #endif
     ciphers_.erase(std::remove_if(ciphers_.begin(),

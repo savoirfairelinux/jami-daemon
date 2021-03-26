@@ -109,10 +109,9 @@ StringUtilsTest::split_string_test()
     while (jami::getline(data, line, '*')) {
         split_string_result.emplace_back(line);
     }
-    CPPUNIT_ASSERT_EQUAL(4, split_string_result.size());
-    CPPUNIT_ASSERT_EQUAL(true, split_string_result.at(0).empty());
-    CPPUNIT_ASSERT_EQUAL("fdg454()"sv, split_string_result.at(1));
-    CPPUNIT_ASSERT_EQUAL(true, split_string_result.at(2).empty());
+    CPPUNIT_ASSERT(split_string_result.size() == 2);
+    CPPUNIT_ASSERT(split_string_result.at(0) == "fdg454()"sv
+                   && split_string_result.at(1) == "{&xcx"sv);
 }
 
 }} // namespace jami_test
