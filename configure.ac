@@ -555,9 +555,8 @@ AC_ARG_WITH([webrtcap],
 AS_IF([test "x$with_webrtc_ap" = "xyes"],
       [PKG_CHECK_MODULES(WEBRTC, [webrtc-audio-processing >= 0.3.1],
         [
-          AC_DEFINE([HAVE_WEBRTC_AP], 1, [Define if you have webrtc-audio-processing])
-          CPPFLAGS="${CPPFLAGS} ${WEBRTC_CFLAGS}"
-          LDFLAGS="${LDFLAGS} ${WEBRTC_LIBS}"
+          AC_DEFINE([HAVE_WEBRTC_AP], 1,
+                    [Define if you have webrtc-audio-processing])
         ],
         AC_MSG_WARN([Missing webrtc-audio-processing development files]))
       ])
