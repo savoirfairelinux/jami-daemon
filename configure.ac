@@ -1,4 +1,4 @@
-dnl Jami - configure.ac for automake 1.9 and autoconf 2.71
+dnl Jami - configure.ac
 
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
@@ -99,9 +99,9 @@ case "${host_os}" in
     AC_SUBST(PROGRAMFILES)
 
     case "${host}" in
-            amd64*|x86_64*)
-                HAVE_WIN64="1"
-            ;;
+      amd64*|x86_64*)
+        HAVE_WIN64="1"
+        ;;
     esac
     ;;
   *)
@@ -112,13 +112,14 @@ AM_CONDITIONAL(HAVE_DARWIN,  test "${SYS}" = "darwin")
 AM_CONDITIONAL(HAVE_LINUX,   test "${SYS}" = "linux")
 AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
 AM_CONDITIONAL(HAVE_WIN64,   test "${HAVE_WIN64}" = "1")
-AM_CONDITIONAL(HAVE_OSX,   test "${HAVE_OSX}" = "1")
-AM_CONDITIONAL(HAVE_IOS,   test "${HAVE_IOS}" = "1")
+AM_CONDITIONAL(HAVE_OSX,     test "${HAVE_OSX}" = "1")
+AM_CONDITIONAL(HAVE_IOS,     test "${HAVE_IOS}" = "1")
 
 dnl FIXME this should be deduced automatically
 AC_DEFINE_UNQUOTED([HAVE_COREAUDIO],
-                    `if test "${HAVE_OSX}" = "1" || test "${HAVE_IOS}" = "1"; then echo 1; else echo 0; fi`,
-                    [Define if you have CoreAudio])
+  `if test "${HAVE_OSX}" = "1" || test "${HAVE_IOS}" = "1"; \
+then echo 1; else echo 0; fi`,
+   [Define if you have CoreAudio])
 
 dnl Android is linux, but a bit different
 AS_IF([test "$SYS" = linux],[
@@ -161,8 +162,8 @@ AX_CXX_COMPILE_STDCXX(17,[ext],[mandatory])
 
 dnl Check for header files
 AC_FUNC_ALLOCA
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h libintl.h limits.h \
-                  netdb.h netinet/in.h stdlib.h string.h \
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h libintl.h limits.h
+                  netdb.h netinet/in.h stdlib.h string.h
                   sys/ioctl.h sys/socket.h sys/time.h unistd.h])
 
 dnl Check for typedefs, structures, and compiler characteristics
@@ -178,11 +179,9 @@ AC_CHECK_TYPES([ptrdiff_t])
 PKG_PROG_PKG_CONFIG()
 
 dnl On some OS we need static linking
-AS_IF([test -n "${PKG_CONFIG}" ],[
-    AS_IF([test "${SYS}" = "mingw32" -o "${SYS}" = "darwin"],[
-        PKG_CONFIG="${PKG_CONFIG} --static"
-    ])
-])
+AS_IF([test -n "${PKG_CONFIG}"],
+  [AS_IF([test "${SYS}" = "mingw32" -o "${SYS}" = "darwin"],
+     [PKG_CONFIG="${PKG_CONFIG} --static"])])
 
 dnl Check if we are using clang
 AC_MSG_CHECKING([if compiling with clang])
@@ -265,96 +264,102 @@ AC_SUBST(CONTRIB_DIR)
 
 dnl Add extras/tools to the PATH
 TOOLS_DIR="${srcdir}/extras/tools/build/bin"
-AS_IF([test -d "${TOOLS_DIR}"], [
-  TOOLS_DIR=`cd "${TOOLS_DIR}" && pwd`
-  export PATH="${TOOLS_DIR}":$PATH
-])
+AS_IF([test -d "${TOOLS_DIR}"],
+  [TOOLS_DIR=`cd "${TOOLS_DIR}" && pwd`
+   export PATH="${TOOLS_DIR}":$PATH])
 
 dnl Check for zlib
 PKG_CHECK_MODULES(ZLIB, zlib,, AC_MSG_ERROR([zlib not found]))
 
 dnl Check for pjproject
-PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject files]))
+PKG_CHECK_MODULES(PJPROJECT, libpjproject,,
+  AC_MSG_ERROR([Missing pjproject files]))
 
-PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp >= 0.5.1],, AC_MSG_ERROR([yaml-cpp not found]))
-PKG_CHECK_MODULES([JSONCPP], [jsoncpp >= 1.6.5],, AC_MSG_ERROR([jsoncpp not found]))
+PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp >= 0.5.1],,
+  AC_MSG_ERROR([yaml-cpp not found]))
+
+PKG_CHECK_MODULES([JSONCPP], [jsoncpp >= 1.6.5],,
+  AC_MSG_ERROR([jsoncpp not found]))
 
 if test "${HAVE_ANDROID}" = "1"; then
-    dnl Check for OpenSL
-    AC_ARG_WITH([opensl],
-                AS_HELP_STRING([--without-opensl],
-                               [Ignore presence of opensl and disable it]))
+  dnl Check for OpenSL
+  AC_ARG_WITH([opensl],
+    AS_HELP_STRING([--without-opensl],
+      [Ignore presence of opensl and disable it]))
 
-    AS_IF([test "x$with_opensl" != "xno"],
-          [AC_CHECK_HEADER(["SLES/OpenSLES.h"],
-                           [have_opensl=yes], [have_opensl=no])],
-          [have_opensl=no])
-    AC_DEFINE_UNQUOTED([HAVE_OPENSL],
-                       `if test "x$have_opensl" = "xyes"; then echo 1; else echo 0; fi`,
-                       [Define if you have OpenSL])
+  AS_IF([test "x$with_opensl" != "xno"],
+    [AC_CHECK_HEADER(["SLES/OpenSLES.h"],
+      [have_opensl=yes], [have_opensl=no])],
+    [have_opensl=no])
+
+  AC_DEFINE_UNQUOTED([HAVE_OPENSL],
+    `if test "x$have_opensl" = "xyes"; then echo 1; else echo 0; fi`,
+    [Define if you have OpenSL])
 fi
 AM_CONDITIONAL([BUILD_OPENSL], test "x$have_opensl" = "xyes")
 
 if test "${SYS}" = "linux"; then
-dnl Check for alsa development package - name: libasound2-dev
-ALSA_MIN_VERSION=1.0
-AC_ARG_WITH([alsa],
+  dnl Check for alsa development package - name: libasound2-dev
+  ALSA_MIN_VERSION=1.0
+  AC_ARG_WITH([alsa],
     [AS_HELP_STRING([--without-alsa], [disable support for alsa])],
     [],
     [with_alsa=yes])
-AS_IF([test "x$with_alsa" = "xyes"], [
-       PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},, AC_MSG_ERROR([Missing alsa development files]))
-    ]);
+  AS_IF([test "x$with_alsa" = "xyes"],
+    [PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},,
+       AC_MSG_ERROR([Missing alsa development files]))]);
 
-AC_DEFINE_UNQUOTED([HAVE_ALSA], `if test "x$with_alsa" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have alsa])
+  AC_DEFINE_UNQUOTED([HAVE_ALSA],
+    `if test "x$with_alsa" = "xyes"; then echo 1; else echo 0; fi`,
+    [Define if you have alsa])
 fi
 AM_CONDITIONAL(BUILD_ALSA, test "x$with_alsa" = "xyes")
 
 
 if test "${SYS}" = "linux"; then
-dnl Check for pulseaudio development package - name: libpulse-dev
-LIBPULSE_MIN_VERSION=0.9.15
-AC_ARG_WITH([pulse],
+  dnl Check for pulseaudio development package - name: libpulse-dev
+  LIBPULSE_MIN_VERSION=0.9.15
+  AC_ARG_WITH([pulse],
     [AS_HELP_STRING([--without-pulse], [disable support for pulseaudio])],
     [],
     [with_pulse=yes])
 
-AS_IF([test "x$with_pulse" = "xyes"], [
-       PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION},, AC_MSG_ERROR([Missing pulseaudio development files]))
-      ]);
+  AS_IF([test "x$with_pulse" = "xyes"],
+    [PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION},,
+     AC_MSG_ERROR([Missing pulseaudio development files]))]);
 
-AC_DEFINE_UNQUOTED([HAVE_PULSE], `if test "x$with_pulse" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have pulseaudio])
+  AC_DEFINE_UNQUOTED([HAVE_PULSE],
+    `if test "x$with_pulse" = "xyes"; then echo 1; else echo 0; fi`,
+    [Define if you have pulseaudio])
 fi
 AM_CONDITIONAL(BUILD_PULSE, test "x$with_pulse" = "xyes")
 
 AC_ARG_WITH([jack],
-    AS_HELP_STRING([--without-jack], [Ignore presence of jack and disable it]))
+  AS_HELP_STRING([--without-jack], [Ignore presence of jack and disable it]))
 
 AS_IF([test "x$with_jack" != "xno"],
-      [PKG_CHECK_MODULES(JACK, jack, [have_jack=yes], [have_jack=no])],
-      [have_jack=no])
+  [PKG_CHECK_MODULES(JACK, jack, [have_jack=yes], [have_jack=no])],
+  [have_jack=no])
 
 AS_IF([test "x$have_jack" = "xyes"],,
-      [AS_IF([test "x$with_jack" = "xyes"],
-             [AC_MSG_ERROR([jack requested but not found])
-      ])
-])
+  [AS_IF([test "x$with_jack" = "xyes"],
+     [AC_MSG_ERROR([jack requested but not found])])])
 
 dnl check for libportaudio
 AS_IF([test "${SYS}" = "mingw32"],[
 AC_ARG_WITH([portaudio], [AS_HELP_STRING([--without-portaudio],
-            [disable support for portaudio])], [], [with_portaudio=yes])
-])
+            [disable support for portaudio])], [], [with_portaudio=yes])])
 AS_IF([test "x$with_portaudio" = "xyes"],
-      [PKG_CHECK_MODULES(PORTAUDIO, [portaudio-2.0],
-        [AC_DEFINE([HAVE_PORTAUDIO], 1, [Define if you have portaudio])],
-        [AC_MSG_ERROR([Missing libportaudio development files])])
-      ])
+  [PKG_CHECK_MODULES(PORTAUDIO, [portaudio-2.0],
+    [AC_DEFINE([HAVE_PORTAUDIO], 1, [Define if you have portaudio])],
+    [AC_MSG_ERROR([Missing libportaudio development files])])])
 
 AM_CONDITIONAL(BUILD_PORTAUDIO, test "x$with_portaudio" = "xyes")
 AM_CONDITIONAL(HAVE_PORTAUDIO, test "x$with_portaudio" = "xyes")
 
-AC_DEFINE_UNQUOTED([HAVE_JACK], `if test "x$have_jack" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have jack])
+AC_DEFINE_UNQUOTED([HAVE_JACK],
+  `if test "x$have_jack" = "xyes"; then echo 1; else echo 0; fi`,
+  [Define if you have jack])
 AM_CONDITIONAL(BUILD_JACK, test "x$have_jack" = "xyes")
 
 dnl Coverage is default-disabled
@@ -367,232 +372,249 @@ AS_IF([test "x$enable_coverage" = "xyes"],
 # DBUSCPP
 dnl Check for dbuscpp, the C++ bindings for D-Bus
 AC_ARG_WITH([dbus],
-    [AS_HELP_STRING([--without-dbus], [disable support for dbus])],
-    [],
-    [with_dbus=yes])
+  [AS_HELP_STRING([--without-dbus], [disable support for dbus])],
+  [],
+  [with_dbus=yes])
 AS_IF([test "x$with_dbus" = "xyes"], [
-       PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,, AC_MSG_WARN([Missing dbus development files]))
+  PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
+    AC_MSG_WARN([Missing dbus development files]))
 
-       AS_AC_EXPAND(LIBDIR, $libdir)
-       AC_SUBST(LIBDIR)
+  AS_AC_EXPAND(LIBDIR, $libdir)
+  AC_SUBST(LIBDIR)
 
-       AC_CONFIG_FILES([bin/dbus/Makefile
-                        bin/dbus/cx.ring.Ring.service])
+  AC_CONFIG_FILES([bin/dbus/Makefile
+                   bin/dbus/cx.ring.Ring.service])
 
-       AC_PATH_PROG([DBUSXX_XML2CPP], dbusxx-xml2cpp,
-                    [AC_MSG_ERROR([dbusxx-xml2cpp not found])])
+  AC_PATH_PROG([DBUSXX_XML2CPP], dbusxx-xml2cpp,
+    [AC_MSG_ERROR([dbusxx-xml2cpp not found])])
 
-       AS_IF([test "x$CLANG" = "xyes"], [
-             AC_MSG_ERROR([dbus does not compile when clang is used, rerun with --without-dbus])
-       ]);
-       AM_CONDITIONAL(RING_DBUS, true)],TESTS= $(check_PROGRAMS)
-       AM_CONDITIONAL(RING_DBUS, false));
+  AS_IF([test "x$CLANG" = "xyes"],
+    [AC_MSG_ERROR([dbus does not compile when clang is used,
+                   rerun with --without-dbus])]);
+  AM_CONDITIONAL(RING_DBUS, true)],TESTS= $(check_PROGRAMS)
+  AM_CONDITIONAL(RING_DBUS, false));
 
 dnl name service is default-enabled
-AC_ARG_ENABLE([ringns], AS_HELP_STRING([--disable-ringns], [Enable Name Service]))
-AM_CONDITIONAL([RINGNS], test "x$enable_ringns" != "xno", [Define if you use the Name Service])
-AC_DEFINE_UNQUOTED([HAVE_RINGNS], `if test "x$enable_ringns" != "xno"; then echo 1; else echo 0; fi`, [Define if you use the Name Service])
+AC_ARG_ENABLE([ringns], AS_HELP_STRING([--disable-ringns],
+  [Enable Name Service]))
+AM_CONDITIONAL([RINGNS], test "x$enable_ringns" != "xno",
+  [Define if you use the Name Service])
+AC_DEFINE_UNQUOTED([HAVE_RINGNS],
+  `if test "x$enable_ringns" != "xno"; then echo 1; else echo 0; fi`,
+  [Define if you use the Name Service])
 
 dnl nodejs module
 AC_ARG_WITH([nodejs], AS_HELP_STRING([--with-nodejs], [Enable NodeJS module]))
-AM_CONDITIONAL([ENABLE_NODEJS], test "x$enable_nodejs" != "xno", [Define if you use the NodeJS module])
-AC_DEFINE_UNQUOTED([HAVE_NODEJS], `if test "x$enable_ringns" != "xno"; then echo 1; else echo 0; fi`, [Define if you use the NodeJS module])
-AS_IF([test "x$with_nodejs" = "xyes"], [
-    AC_PATH_PROG(SWIG, swig, "")
-    AS_AC_EXPAND(SBINDIR, $sbindir)
-    AC_SUBST(SBINDIR)
-    AC_CONFIG_FILES([bin/nodejs/Makefile])
-    AM_CONDITIONAL(ENABLE_NODEJS, true)
-  ],
-  AM_CONDITIONAL(ENABLE_NODEJS, false)
-);
+AM_CONDITIONAL([ENABLE_NODEJS], test "x$enable_nodejs" != "xno",
+  [Define if you use the NodeJS module])
+AC_DEFINE_UNQUOTED([HAVE_NODEJS],
+  `if test "x$enable_ringns" != "xno"; then echo 1; else echo 0; fi`,
+  [Define if you use the NodeJS module])
+AS_IF([test "x$with_nodejs" = "xyes"],
+  [AC_PATH_PROG(SWIG, swig, "")
+   AS_AC_EXPAND(SBINDIR, $sbindir)
+   AC_SUBST(SBINDIR)
+   AC_CONFIG_FILES([bin/nodejs/Makefile])
+   AM_CONDITIONAL(ENABLE_NODEJS, true)],
+  [AM_CONDITIONAL(ENABLE_NODEJS, false)]);
 
-AS_IF([test "x$enable_ringns" != "xno"], [
-  PKG_CHECK_MODULES(LIBCRYPTO, libcrypto,, AC_MSG_ERROR([Missing libcrypto development files]))
-  PKG_CHECK_MODULES(LIBSSL, libssl,, AC_MSG_ERROR([Missing libssl development files]))
-  LIBS="${LIBS} -lssl -lcrypto"
-  AS_IF([test "${HAVE_WIN32}" = "1"],[
-      LIBS="${LIBS} -lssleay32 -leay32"
-  ])
-  ], []
-);
+AS_IF([test "x$enable_ringns" != "xno"],
+  [PKG_CHECK_MODULES(LIBCRYPTO, libcrypto,,
+     AC_MSG_ERROR([Missing libcrypto development files]))
+   PKG_CHECK_MODULES(LIBSSL, libssl,,
+     AC_MSG_ERROR([Missing libssl development files]))
+   LIBS="${LIBS} -lssl -lcrypto"
+   AS_IF([test "${HAVE_WIN32}" = "1"],
+     [LIBS="${LIBS} -lssleay32 -leay32"])],
+  []);
 
 dnl Check for libav
-PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 54.31.100,, AC_MSG_ERROR([Missing libavutil development files]))
+PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 54.31.100,,
+  AC_MSG_ERROR([Missing libavutil development files]))
 
-PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 56.60.100,, AC_MSG_ERROR([Missing libavcodec development files]))
+PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 56.60.100,,
+  AC_MSG_ERROR([Missing libavcodec development files]))
 LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"
 
-PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 56.40.101,, AC_MSG_ERROR([Missing libavformat development files]))
+PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 56.40.101,,
+  AC_MSG_ERROR([Missing libavformat development files]))
 
-PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 56.4.100,, AC_MSG_ERROR([Missing libavdevice development files]))
+PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 56.4.100,,
+  AC_MSG_ERROR([Missing libavdevice development files]))
 
-PKG_CHECK_MODULES(LIBAVFILTER, libavfilter >= 5.40.101,, AC_MSG_ERROR([Missing libavfilter development files]))
+PKG_CHECK_MODULES(LIBAVFILTER, libavfilter >= 5.40.101,,
+  AC_MSG_ERROR([Missing libavfilter development files]))
 
-PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 3.1.101,, AC_MSG_ERROR([Missing libswscale development files]))
+PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 3.1.101,,
+  AC_MSG_ERROR([Missing libswscale development files]))
 
-PKG_CHECK_MODULES(LIBSWRESAMPLE, libswresample >= 1.2.101,, AC_MSG_ERROR([Missing libswresample development files]))
+PKG_CHECK_MODULES(LIBSWRESAMPLE, libswresample >= 1.2.101,,
+  AC_MSG_ERROR([Missing libswresample development files]))
 
 dnl Jami Plugin is default-enabled
 AC_ARG_ENABLE([plugin], AS_HELP_STRING([--disable-plugin], [Disable plugin]))
 AS_IF([test "x$enable_plugin" != "xno"],
-      [
-        AC_DEFINE(ENABLE_PLUGIN, [], [Jami Plugin support enabled])
-        AM_CONDITIONAL(ENABLE_PLUGIN, true)
-        AS_IF([test "$SYS" = linux],[
-            PKG_CHECK_MODULES([ARCHIVE], [libarchive >= 3.0],, AC_MSG_ERROR([libarchive not found]))
-        ],[
-        ])
-    ],
-    [
-     AM_CONDITIONAL(ENABLE_PLUGIN, false)
-     ]);
+  [AC_DEFINE(ENABLE_PLUGIN, [], [Jami Plugin support enabled])
+   AM_CONDITIONAL(ENABLE_PLUGIN, true)
+   AS_IF([test "$SYS" = linux],
+     [PKG_CHECK_MODULES([ARCHIVE], [libarchive >= 3.0],,
+      AC_MSG_ERROR([libarchive not found]))],
+     [])],
+  [AM_CONDITIONAL(ENABLE_PLUGIN, false)]);
 
 dnl Video is default-enabled
 AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))
 
 AS_IF([test "x$enable_video" != "xno"],
-      [
-        AC_DEFINE(ENABLE_VIDEO, [], [Video support enabled])
-        AM_CONDITIONAL(ENABLE_VIDEO, true)
-        AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],[
-            PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev development files]))
-        ],[
-        ])
-    ],
-    [
-     AM_CONDITIONAL(ENABLE_VIDEO, false)
-     ]);
+  [AC_DEFINE(ENABLE_VIDEO, [], [Video support enabled])
+   AM_CONDITIONAL(ENABLE_VIDEO, true)
+   AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],
+     [PKG_CHECK_MODULES(UDEV, libudev,,
+        AC_MSG_ERROR([Missing libudev development files]))],
+     [])],
+  [AM_CONDITIONAL(ENABLE_VIDEO, false)]);
 
-AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable all hardware accelerations (enabled by default)]))
-AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
+AC_ARG_ENABLE([accel],
+  AS_HELP_STRING([--disable-accel],
+    [Disable all hardware accelerations (enabled by default)]))
+AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"],
   dnl if new hwaccel api is found, activate hardware accel
   dnl prefix needs to be different from the one above
-  PKG_CHECK_MODULES(AVUTIL, libavutil >= 55.75.100, [
-    ring_accel="yes"
-    AC_DEFINE([RING_ACCEL], [1], [Hardware acceleration is enabled])
-    AS_IF([test "${SYS}" = "darwin"], [
-      AC_CHECK_HEADER([VideoToolbox/VideoToolbox.h], [
-        AC_CHECK_HEADER([libavcodec/videotoolbox.h], [
-          ring_vt="yes"
-          AC_DEFINE([ENABLE_VIDEOTOOLBOX], [1], [Defined if videotoolbox is available])
-        ])
-      ])
-    ])
-  ],[])
-])
+  [PKG_CHECK_MODULES(AVUTIL, libavutil >= 55.75.100,
+     [ring_accel="yes"
+      AC_DEFINE([RING_ACCEL], [1], [Hardware acceleration is enabled])
+      AS_IF([test "${SYS}" = "darwin"],
+        [AC_CHECK_HEADER([VideoToolbox/VideoToolbox.h],
+           [AC_CHECK_HEADER([libavcodec/videotoolbox.h],
+              [ring_vt="yes"
+               AC_DEFINE([ENABLE_VIDEOTOOLBOX], [1],
+                 [Defined if videotoolbox is available])])])])],
+     [])])
 AM_CONDITIONAL([RING_ACCEL], [test "x${ring_accel}" = "xyes"])
 
 dnl check for GnuTLS
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.6.7], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])
 
 # PTHREAD
-# required dependency(ies): libxpat
+# required dependency: libxpat
 AX_PTHREAD
 
 dnl Check for libcppunit-dev
 CPPUNIT_MIN_VERSION=1.12
-PKG_CHECK_MODULES(CPPUNIT, cppunit >= ${CPPUNIT_MIN_VERSION}, AM_CONDITIONAL(BUILD_TEST, test 1 = 1 ), AM_CONDITIONAL(BUILD_TEST, test 0 = 1 ))
+PKG_CHECK_MODULES(CPPUNIT, cppunit >= ${CPPUNIT_MIN_VERSION},
+  AM_CONDITIONAL(BUILD_TEST, test 1 = 1 ),
+  AM_CONDITIONAL(BUILD_TEST, test 0 = 1 ))
 
 
 # SPEEX CODEC
-# required dependency(ies): libspeex
+# required dependency: libspeex
 dnl Check for libspeex
 AC_ARG_WITH([speex],
-        [AS_HELP_STRING([--without-speex], [disable support for speex codec])],
-        [],
-        [with_speex=yes])
+  [AS_HELP_STRING([--without-speex], [disable support for speex codec])],
+  [],
+  [with_speex=yes])
 
 AS_IF([test "x$with_speex" != xno], [PKG_CHECK_MODULES([SPEEX], [speex])])
 
-AC_DEFINE_UNQUOTED([HAVE_SPEEX], `if test "x$with_speex" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libspeex])
+AC_DEFINE_UNQUOTED([HAVE_SPEEX],
+  `if test "x$with_speex" = "xyes"; then echo 1; else echo 0; fi`,
+  [Define if you have libspeex])
 AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
 
 # SPEEX DSP
-# required dependency(ies): libspeexdsp
+# required dependency: libspeexdsp
 dnl check in case the libspeexdsp is not installed
 AC_ARG_WITH([speexdsp],
-    [AS_HELP_STRING([--without-speexdsp],
-    [disable support for speexdp Noise Suppression and Automatic Gain Control])],
-    [],
-    [with_speexdsp=yes])
+  [AS_HELP_STRING([--without-speexdsp],
+  [disable support for speexdp Noise Suppression and Automatic Gain Control])],
+  [],
+  [with_speexdsp=yes])
 
-AS_IF([test "x$with_speexdsp" != xno], [PKG_CHECK_MODULES([SPEEXDSP], [speexdsp])])
-AC_DEFINE_UNQUOTED([HAVE_SPEEXDSP], `if test "x$with_speexdsp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libspeexdsp])
+AS_IF([test "x$with_speexdsp" != xno],
+  [PKG_CHECK_MODULES([SPEEXDSP], [speexdsp])])
+AC_DEFINE_UNQUOTED([HAVE_SPEEXDSP],
+  `if test "x$with_speexdsp" = "xyes"; then echo 1; else echo 0; fi`,
+  [Define if you have libspeexdsp])
 AM_CONDITIONAL(BUILD_SPEEXDSP, test "x$with_speexdsp" = "xyes" )
 
 # WEBRTC AUDIO PROCESSING
 if test "${SYS}" = "linux"; then
-dnl Check for webrtc-audio-processing development package
-dnl - name: libwebrtc-audio-processing-dev
-AC_ARG_WITH([webrtcap],
-    [AS_HELP_STRING([--without-webrtc-ap], [disable support for webrtc-audio-processing])],
-    [],
-    [with_webrtc_ap=yes])
+  dnl Check for webrtc-audio-processing development package
+  dnl - name: libwebrtc-audio-processing-dev
+  AC_ARG_WITH([webrtcap],
+    [AS_HELP_STRING([--without-webrtc-ap],
+       [disable support for webrtc-audio-processing])],
+    [], [with_webrtc_ap=yes])
 
-AS_IF([test "x$with_webrtc_ap" = "xyes"],
-      [PKG_CHECK_MODULES(WEBRTC, [webrtc-audio-processing >= 0.3.1],
-        [
-          AC_DEFINE([HAVE_WEBRTC_AP], 1,
-                    [Define if you have webrtc-audio-processing])
-        ],
-        AC_MSG_WARN([Missing webrtc-audio-processing development files]))
-      ])
+  AS_IF([test "x$with_webrtc_ap" = "xyes"],
+    [PKG_CHECK_MODULES(WEBRTC, [webrtc-audio-processing >= 0.3.1],
+      [AC_DEFINE([HAVE_WEBRTC_AP], 1,
+         [Define if you have webrtc-audio-processing])],
+      [AC_MSG_WARN([Missing webrtc-audio-processing development files])])])
 fi
 AM_CONDITIONAL([HAVE_WEBRTC_AP], test "x$with_webrtc_ap" = "xyes")
 
 dnl check for openDHT
-PKG_CHECK_MODULES([OPENDHT], [opendht >= 0.6.1],, AC_MSG_WARN([Missing OpenDHT]))
+PKG_CHECK_MODULES([OPENDHT], [opendht >= 0.6.1],,
+  AC_MSG_WARN([Missing OpenDHT]))
 
-PKG_CHECK_MODULES([SECP256K1], [libsecp256k1 >= 0.1],, AC_MSG_FAILURE([Missing secp256k1]))
+PKG_CHECK_MODULES([SECP256K1], [libsecp256k1 >= 0.1],,
+  AC_MSG_FAILURE([Missing secp256k1]))
 
 # LIBUPNP
 dnl check for libupnp
 AC_ARG_WITH([upnp], [AS_HELP_STRING([--without-upnp],
-            [disable support for upnp])], [], [with_upnp=yes])
+  [disable support for upnp])], [], [with_upnp=yes])
 
 AS_IF([test "x$with_upnp" = "xyes"],
-      [PKG_CHECK_MODULES(LIBUPNP, [libupnp],
-        [AC_DEFINE([HAVE_LIBUPNP], 1, [Define if you have libupnp])],
-        [AC_MSG_WARN([Missing libupnp development files])
-         AC_DEFINE([HAVE_LIBUPNP], 0, [Define if you have libupnp])])
-      ])
+  [PKG_CHECK_MODULES(LIBUPNP, [libupnp],
+    [AC_DEFINE([HAVE_LIBUPNP], 1, [Define if you have libupnp])],
+    [AC_MSG_WARN([Missing libupnp development files])
+     AC_DEFINE([HAVE_LIBUPNP], 0, [Define if you have libupnp])])])
 AM_CONDITIONAL([BUILD_PUPNP], test "x$with_upnp" = "xyes")
 
 # LIBNATPMP
 dnl check for libnatpmp
 AC_ARG_WITH([natpmp], [AS_HELP_STRING([--without-natpmp],
-            [disable support for NAT-PMP])], [], [with_natpmp=yes])
+  [disable support for NAT-PMP])], [], [with_natpmp=yes])
 
 AS_IF([test "x$with_natpmp" != xno],
-        [AC_CHECK_HEADER([natpmp.h],
-            AC_CHECK_LIB([natpmp], [initnatpmp], [], [with_natpmp=no], [-lpthread]),
-            [AC_MSG_WARN([Unable to find the libnatpmp headers (you may need to install the dev package). You may use --without-natpmp to compile without NAT-PMP support.]);
-             with_natpmp=no])
-        ],[])
+  [AC_CHECK_HEADER([natpmp.h],
+     AC_CHECK_LIB([natpmp], [initnatpmp], [], [with_natpmp=no], [-lpthread]),
+       [AC_MSG_WARN([Unable to find the libnatpmp headers
+          (you may need to install the dev package). You may use
+          --without-natpmp to compile without NAT-PMP support.]);
+        with_natpmp=no])],
+  [])
 
-AC_DEFINE_UNQUOTED([HAVE_LIBNATPMP], `if test "x$with_natpmp" != xno; then echo 1; else echo 0; fi`, [Define if you have libnatpmp])
+AC_DEFINE_UNQUOTED([HAVE_LIBNATPMP],
+  `if test "x$with_natpmp" != xno; then echo 1; else echo 0; fi`,
+  [Define if you have libnatpmp])
 AM_CONDITIONAL([BUILD_NATPMP], test "x$with_natpmp" = "xyes")
 
-AC_DEFINE_UNQUOTED([HAVE_SHM], `if test -z "${HAVE_LINUX_TRUE}" && test -z "${HAVE_ANDROID_FALSE}" ; then echo 1; else echo 0; fi`,
-    [Define if you have shared memory support])
+AC_DEFINE_UNQUOTED([HAVE_SHM],
+  `if test -z "${HAVE_LINUX_TRUE}" && \
+test -z "${HAVE_ANDROID_FALSE}"; then echo 1; else echo 0; fi`,
+  [Define if you have shared memory support])
 
 # DOXYGEN
 # required dependency(ies): doxygen
 # check for doxygen, mostly stolen from http://log4cpp.sourceforge.net/
 # ----------------------------------------------------------------------------
 AC_DEFUN([BB_ENABLE_DOXYGEN],
-    [
-    AC_ARG_ENABLE(doxygen, [  --enable-doxygen        enable documentation generation with doxygen (disabled by default)])
-    AC_ARG_ENABLE(dot, [  --enable-dot            use 'dot' to generate graphs in doxygen (auto)])
-    if test "x$enable_doxygen" = xyes; then
-        AC_PATH_PROG(DOXYGEN, doxygen, , $PATH)
-        test x$DOXYGEN = x && AC_MSG_ERROR([could not find doxygen])
-        AC_PATH_PROG(DOT, dot, , $PATH)
-        test x$DOT = x -a "x$enable_dot" = xyes && AC_MSG_ERROR([could not find dot])
-    fi
-    AM_CONDITIONAL(ENABLE_DOXYGEN, test "x$DOXYGEN" != "x")
-])
+  [AC_ARG_ENABLE(doxygen,
+     [AS_HELP_STRING([--enable-doxygen],
+        [enable documentation generation with doxygen (disabled by default)])])
+   AC_ARG_ENABLE(dot,
+     [AS_HELP_STRING([--enable-dot],
+        [use 'dot' to generate graphs in doxygen (auto)])])
+   if test "x$enable_doxygen" = xyes; then
+     AC_PATH_PROG(DOXYGEN, doxygen, , $PATH)
+     test x$DOXYGEN = x && AC_MSG_ERROR([could not find doxygen])
+     AC_PATH_PROG(DOT, dot, , $PATH)
+     test x$DOT = x -a "x$enable_dot" = xyes && AC_MSG_ERROR([could not find dot])
+   fi
+   AM_CONDITIONAL(ENABLE_DOXYGEN, test "x$DOXYGEN" != "x")])
 
 # Actually perform the doxygen check
 BB_ENABLE_DOXYGEN
