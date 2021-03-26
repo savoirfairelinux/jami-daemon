@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "75220cc5_45eecd9f",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-26T14:48:46Z",
+      "side": 1,
+      "message": "medias (it\u0027s a list)",
+      "range": {
+        "startLine": 108,
+        "startChar": 22,
+        "endLine": 108,
+        "endChar": 37
+      },
+      "revId": "fd552c2779a0ae8bc3f50fe98aef938a7df045df",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
