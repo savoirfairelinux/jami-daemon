@@ -30,6 +30,7 @@
 #include <msgpack.hpp>
 #include "manager.h"
 #include "preferences.h"
+#include "dring/plugin_manager_interface.h"
 
 extern "C" {
 #include <archive.h>
@@ -139,7 +140,7 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
                                             destinationDir,
                                             PluginUtils::uncompressJplFunction);
             }
-            loadPlugin(destinationDir);
+            DRing::loadPlugin(destinationDir);
         } catch (const std::exception& e) {
             JAMI_ERR() << e.what();
         }
@@ -156,7 +157,7 @@ JamiPluginManager::uninstallPlugin(const std::string& rootPath)
             bool loaded = pm_.checkLoadedPlugin(rootPath);
             if (loaded) {
                 JAMI_INFO() << "PLUGIN: unloading before uninstall.";
-                bool status = unloadPlugin(rootPath);
+                bool status = DRing::unloadPlugin(rootPath);
                 if (!status) {
                     JAMI_INFO() << "PLUGIN: could not unload, not performing uninstall.";
                     return -1;
