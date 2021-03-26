@@ -31,4 +31,5 @@ libplugin_la_CXXFLAGS = \
 	-I./ \
 	-I../ \
 	-DPREFIX=\"$(prefix)\" \
-	-DPROGSHAREDIR=\"${datadir}/ring\"
+	-DPROGSHAREDIR=\"${datadir}/ring\" \
+	$(AM_CXXFLAGS)

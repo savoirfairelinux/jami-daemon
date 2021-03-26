@@ -1,7 +1,7 @@
 include $(top_srcdir)/globals.mk
 
 noinst_LTLIBRARIES = libsiplink.la
-libsiplink_la_CXXFLAGS = @CXXFLAGS@ -I$(top_srcdir)/src
+libsiplink_la_CXXFLAGS = -I$(top_srcdir)/src $(AM_CXXFLAGS)
 
 libsiplink_la_SOURCES = \
         sipaccountbase.cpp \

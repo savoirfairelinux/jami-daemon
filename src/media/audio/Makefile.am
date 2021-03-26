@@ -53,12 +53,19 @@ libaudio_la_SOURCES = \
 		audio_rtp_session.cpp \
 		tonecontrol.cpp
 
-libaudio_la_CXXFLAGS = -I$(top_srcdir)/src
-libaudio_la_LDFLAGS =
+libaudio_la_CXXFLAGS = \
+	-I$(top_srcdir)/src \
+	$(AM_CXXFLAGS)
+
+libaudio_la_LDFLAGS = $(AM_LDFLAGS)
 
 if BUILD_SPEEXDSP
 libaudio_la_CXXFLAGS += @SPEEXDSP_CFLAGS@
 libaudio_la_LDFLAGS += @SPEEXDSP_LIBS@
+endif
+
+if HAVE_WEBRTC_AP
+libaudio_la_CXXFLAGS += @WEBRTC_CFLAGS@
 endif
 
 noinst_HEADERS = \

@@ -10,5 +10,7 @@ noinst_LTLIBRARIES = libcoreaudiolayer.la
 libcoreaudiolayer_la_SOURCES = ios/corelayer.mm ios/corelayer.h
 endif
 
-libcoreaudiolayer_la_CXXFLAGS = -I$(top_srcdir)/src
+libcoreaudiolayer_la_CXXFLAGS = \
+	-I$(top_srcdir)/src \
+	$(AM_CXXFLAGS)
 AM_OBJCXXFLAGS = -std=c++17
