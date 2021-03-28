@@ -1,0 +1,27 @@
+From 2da87398f460ba2e671456dd5a88568b751d86bc Mon Sep 17 00:00:00 2001
+From: kkostiuk <kateryna.kostiuk@savoirfairelinux.com>
+Date: Sun, 28 Mar 2021 14:42:30 -0400
+Subject: [PATCH] use system isdigit
+
+---
+ lib/minitasn1/parser_aux.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/lib/minitasn1/parser_aux.c b/lib/minitasn1/parser_aux.c
+index d5dbbf8..ac1db6f 100644
+--- a/lib/minitasn1/parser_aux.c
++++ b/lib/minitasn1/parser_aux.c
+@@ -26,7 +26,9 @@
+ #include "gstr.h"
+ #include "structure.h"
+ #include "element.h"
+-#include "c-ctype.h"
++#include "ctype.h"
++#undef c_isdigit
++#define c_isdigit isdigit
+ 
+ char _asn1_identifierMissing[ASN1_MAX_NAME_SIZE + 1];	/* identifier name not found */
+ 
+-- 
+2.24.3 (Apple Git-128)
+
