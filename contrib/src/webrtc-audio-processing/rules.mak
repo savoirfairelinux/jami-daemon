@@ -14,7 +14,7 @@ $(TARBALLS)/webrtc-audio-processing-$(WEBRTCAP_VER).tar.gz:
 
 webrtc-audio-processing: webrtc-audio-processing-$(WEBRTCAP_VER).tar.gz .sum-webrtc-audio-processing
 	$(UNPACK)
-	$(APPLY) $(SRC)/webrtc-audio-processing/0001-configure-disable-NEON-and-armv5-code-on-arm64.patch
+	#$(APPLY) $(SRC)/webrtc-audio-processing/0001-configure-disable-NEON-and-armv5-code-on-arm64.patch
 	$(MOVE)
 
 .webrtc-audio-processing: webrtc-audio-processing
