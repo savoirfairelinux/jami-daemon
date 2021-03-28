@@ -1,4 +1,4 @@
-FFMPEG_HASH := 9f38fac053010205806ece11e6aea9b7d3bde041
+FFMPEG_HASH := cad3a5d715a8da2d449b41d3801480fb50d638c2
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 PKGS+=ffmpeg
@@ -205,7 +205,9 @@ FFMPEGCONF += \
 	--cc=$(CC) \
 	--cxx=$(CXX) \
 	--ld=$(CC) \
-	--ar=$(AR)
+	--ar=$(AR) \
+	--as=$(CC)
+
 # ASM not working on Android x86 https://trac.ffmpeg.org/ticket/4928
 ifeq ($(ARCH),i386)
 FFMPEGCONF += --disable-asm
@@ -357,5 +359,5 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 		--extra-ldflags="$(LDFLAGS)" $(FFMPEGCONF) \
 		--prefix="$(PREFIX)" --enable-static --disable-shared \
                 --pkg-config-flags="--static"
-	cd $< && $(MAKE) install-libs install-headers
+	cd $< && V=99 $(MAKE) install-libs install-headers
 	touch $@
