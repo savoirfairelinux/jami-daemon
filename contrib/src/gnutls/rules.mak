@@ -25,6 +25,9 @@ endif
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/gnutls/no-create-time-h.patch
 endif
+ifdef HAVE_DARWIN_OS
+	$(APPLY) $(SRC)/gnutls/0001-use-system-isdigit.patch
+endif
 ifdef HAVE_MACOSX
 	$(APPLY) $(SRC)/gnutls/gnutls-disable-getentropy-osx.patch
 endif
@@ -77,7 +80,7 @@ ifdef HAVE_IOS
 	cd $< && $(HOSTVARS) ac_cv_func_clock_gettime=no CFLAGS="$(CFLAGS)" ./configure $(GNUTLS_CONF)
 else
 ifdef HAVE_MACOSX
-	cd $< && $(HOSTVARS) ac_cv_func_clock_gettime=no CFLAGS="$(CFLAGS)" ./configure $(GNUTLS_CONF)
+	cd $< && $(HOSTVARS) ac_cv_func_clock_gettime=no CFLAGS="$(CFLAGS) -O1" ./configure $(GNUTLS_CONF)
 else
 	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS)" ./configure $(GNUTLS_CONF)
 endif
