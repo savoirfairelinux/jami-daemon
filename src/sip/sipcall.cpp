@@ -1324,8 +1324,9 @@ SIPCall::startAllMedia()
     }
 
 #ifdef ENABLE_PLUGIN
-    // Create AVStreams associated with the call
-    createCallAVStreams();
+    // Create AVStreams associated with the call if plugins are enabled
+    if (jami::Manager::instance().pluginPreferences.getPluginsEnabled())
+        createCallAVStreams();
 #endif
 }
 
