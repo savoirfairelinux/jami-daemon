@@ -19,6 +19,23 @@
     },
     {
       "key": {
+        "uuid": "2c238c80_607ffc53",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 87
+      },
+      "lineNbr": 2431,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-03-29T17:25:51Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\n\u0027find_last_of\u0027 called with a string literal consisting of a single character; consider using the more effective overload accepting a character\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-faster-string-find",
+      "revId": "1590d5133fb995276c53825901ada6de4b71b826",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "efa8b5cf_4175f662",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 87
@@ -28,6 +45,23 @@
         "id": 5
       },
       "writtenOn": "2021-03-29T17:25:15Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nstring concatenation results in allocation of unnecessary temporary strings; consider using \u0027operator+\u003d\u0027 or \u0027string::append()\u0027 instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-inefficient-string-concatenation",
+      "revId": "1590d5133fb995276c53825901ada6de4b71b826",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fd1082dd_4d036bed",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 87
+      },
+      "lineNbr": 4531,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-03-29T17:25:51Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nstring concatenation results in allocation of unnecessary temporary strings; consider using \u0027operator+\u003d\u0027 or \u0027string::append()\u0027 instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-inefficient-string-concatenation",
       "revId": "1590d5133fb995276c53825901ada6de4b71b826",
