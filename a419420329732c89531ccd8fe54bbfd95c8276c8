@@ -1,0 +1,412 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1945253a_c27aa0fa",
+        "filename": "bin/dbus/dbusconfigurationmanager.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 839,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "uri",
+      "range": {
+        "startLine": 839,
+        "startChar": 60,
+        "endLine": 839,
+        "endChar": 74
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "eaf053a0_0cd017a3",
+        "filename": "bin/dbus/dbusconfigurationmanager.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 241,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "uri",
+      "range": {
+        "startLine": 241,
+        "startChar": 43,
+        "endLine": 241,
+        "endChar": 57
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8ee015e4_81c0e560",
+        "filename": "bin/jni/datatransfer.i",
+        "patchSetId": 14
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "uri",
+      "range": {
+        "startLine": 61,
+        "startChar": 71,
+        "endLine": 61,
+        "endChar": 85
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b2c3f5df_a81516ea",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 664,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "emit \u0026 return",
+      "range": {
+        "startLine": 663,
+        "startChar": 52,
+        "endLine": 664,
+        "endChar": 13
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cde8181b_21a8e348",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 708,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "remove",
+      "range": {
+        "startLine": 708,
+        "startChar": 4,
+        "endLine": 708,
+        "endChar": 17
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "83ae47a0_05e7a2e6",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 727,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "remove, use mapMutex",
+      "range": {
+        "startLine": 727,
+        "startChar": 4,
+        "endLine": 727,
+        "endChar": 30
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "faca3352_72f7e116",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 771,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "missing todo",
+      "range": {
+        "startLine": 770,
+        "startChar": 5,
+        "endLine": 771,
+        "endChar": 39
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "eeea0be0_352628e3",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 828,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "clean",
+      "range": {
+        "startLine": 826,
+        "startChar": 23,
+        "endLine": 828,
+        "endChar": 9
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "075d55f3_4225afbc",
+        "filename": "src/data_transfer.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "to split",
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5b000f9b_9869075a",
+        "filename": "src/data_transfer.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "add doc\n\n+ add doc in gitlab",
+      "range": {
+        "startLine": 70,
+        "startChar": 45,
+        "endLine": 72,
+        "endChar": 46
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8e9a2227_3fbf6843",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 4577,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "to rm",
+      "range": {
+        "startLine": 4575,
+        "startChar": 18,
+        "endLine": 4577,
+        "endChar": 24
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "40314a19_2827bb20",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 363,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "doc",
+      "range": {
+        "startLine": 363,
+        "startChar": 8,
+        "endLine": 363,
+        "endChar": 22
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9a143dab_80d9b7a8",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 443,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "doc",
+      "range": {
+        "startLine": 443,
+        "startChar": 9,
+        "endLine": 443,
+        "endChar": 35
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c590c416_151f2b20",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 545,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "doc",
+      "range": {
+        "startLine": 542,
+        "startChar": 31,
+        "endLine": 545,
+        "endChar": 38
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e45c67cc_56214d58",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 580,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "doc",
+      "range": {
+        "startLine": 578,
+        "startChar": 38,
+        "endLine": 580,
+        "endChar": 42
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "62257539_f249b8bd",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "de-duplicate code",
+      "range": {
+        "startLine": 127,
+        "startChar": 15,
+        "endLine": 139,
+        "endChar": 13
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3b705f36_8df8f5c5",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 355,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 339,
+        "startChar": 13,
+        "endLine": 355,
+        "endChar": 13
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f83ee2d0_0dd0f608",
+        "filename": "test/unitTest/SEND",
+        "patchSetId": 14
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T14:13:13Z",
+      "side": 1,
+      "message": "rm",
+      "range": {
+        "startLine": 1,
+        "startChar": 341,
+        "endLine": 1,
+        "endChar": 541
+      },
+      "revId": "a419420329732c89531ccd8fe54bbfd95c8276c8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
