@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6eaf07d7_d5999f61",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 84
+      },
+      "lineNbr": 4722,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-29T16:23:49Z",
+      "side": 1,
+      "message": "saveConvInfos ??",
+      "range": {
+        "startLine": 4722,
+        "startChar": 8,
+        "endLine": 4722,
+        "endChar": 20
+      },
+      "revId": "12e0f80604618fdec90039a168354aac15ac4178",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fc2336be_3ccd0b92",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 84
+      },
+      "lineNbr": 738,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-29T16:23:49Z",
+      "side": 1,
+      "message": "i guess it\u0027s that same ws, maybe just a clang-format at the end will be fine tbh",
+      "range": {
+        "startLine": 738,
+        "startChar": 0,
+        "endLine": 738,
+        "endChar": 1
+      },
+      "revId": "12e0f80604618fdec90039a168354aac15ac4178",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "17aa19ae_ee760883",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 84
+      },
+      "lineNbr": 932,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-29T16:23:49Z",
+      "side": 1,
+      "message": "probably should stick with the underscore at end convention",
+      "range": {
+        "startLine": 932,
+        "startChar": 21,
+        "endLine": 932,
+        "endChar": 35
+      },
+      "revId": "12e0f80604618fdec90039a168354aac15ac4178",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "db01cd77_c5e6dc29",
+        "filename": "test/unitTest/conversation/conversation.cpp",
+        "patchSetId": 84
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-29T16:23:49Z",
+      "side": 1,
+      "message": "duplicate",
+      "range": {
+        "startLine": 39,
+        "startChar": 0,
+        "endLine": 39,
+        "endChar": 21
+      },
+      "revId": "12e0f80604618fdec90039a168354aac15ac4178",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
