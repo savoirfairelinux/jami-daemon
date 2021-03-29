@@ -349,7 +349,9 @@ IceTransport::Impl::Impl(const char* name,
 
     if (upnp_) {
         requestUpnpMappings();
-        addServerReflexiveCandidates(setupUpnpReflexiveCandidates());
+        auto const& upnpMaps = setupUpnpReflexiveCandidates();
+        if (not upnpMaps.empty())
+            addServerReflexiveCandidates(upnpMaps);
     }
 
     pool_.reset(
@@ -552,9 +554,9 @@ IceTransport::Impl::handleEvents(unsigned max_msec)
 void
 IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_status_t status)
 {
-    const char* opname = op == PJ_ICE_STRANS_OP_INIT          ? "initialization"
-                         : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation"
-                                                              : "unknown_op";
+    const char* opname = op == PJ_ICE_STRANS_OP_INIT
+                             ? "initialization"
+                             : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
@@ -808,7 +810,7 @@ IceTransport::Impl::requestUpnpMappings()
                           mapPtr->toString().c_str());
             }
         } else {
-            JAMI_ERR("[ice:%p]: UPNP mapping request failed!", this);
+            JAMI_WARN("[ice:%p]: UPNP mapping request failed!", this);
             upnp_->releaseMapping(requestedMap);
         }
     }
@@ -1207,8 +1209,7 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
         std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
         if (!pimpl_->icest_)
             return res;
-        if (pj_ice_strans_enum_cands(pimpl_->icest_.get(), comp_id + 1, &cand_cnt, cand)
-            != PJ_SUCCESS) {
+        if (pj_ice_strans_enum_cands(pimpl_->icest_.get(), comp_id, &cand_cnt, cand) != PJ_SUCCESS) {
             JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", pimpl_.get());
             return res;
         }
@@ -1269,13 +1270,13 @@ IceTransport::packIceMsg(uint8_t version) const
         msgpack::pack(buffer, version);
         msgpack::pack(buffer, std::make_pair(pimpl_->local_ufrag_, pimpl_->local_pwd_));
         msgpack::pack(buffer, static_cast<uint8_t>(pimpl_->component_count_));
-        for (unsigned i = 0; i < pimpl_->component_count_; i++)
+        for (unsigned i = 1; i <= pimpl_->component_count_; i++)
             msgpack::pack(buffer, getLocalCandidates(i));
     } else {
         SDP sdp;
         sdp.ufrag = pimpl_->local_ufrag_;
         sdp.pwd = pimpl_->local_pwd_;
-        for (unsigned i = 0; i < pimpl_->component_count_; i++) {
+        for (unsigned i = 1; i <= pimpl_->component_count_; i++) {
             auto candidates = getLocalCandidates(i);
             sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
             sdp.candidates.insert(sdp.candidates.end(), candidates.begin(), candidates.end());

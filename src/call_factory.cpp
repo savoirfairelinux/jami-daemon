@@ -33,15 +33,16 @@ CallFactory::getNewCallID() const
 {
     std::string random_id;
     do {
-        random_id = std::to_string(std::uniform_int_distribution<uint64_t>(1, DRING_ID_MAX_VAL)(rand_));
+        random_id = std::to_string(
+            std::uniform_int_distribution<uint64_t>(1, DRING_ID_MAX_VAL)(rand_));
     } while (hasCall(random_id));
     return random_id;
 }
 
 std::shared_ptr<SIPCall>
 CallFactory::newSipCall(const std::shared_ptr<SIPAccountBase>& account,
-                           Call::CallType type,
-                           const std::map<std::string, std::string>& details)
+                        Call::CallType type,
+                        const std::map<std::string, std::string>& details)
 {
     if (not allowNewCall_) {
         JAMI_WARN("Creation of new calls is not allowed");
@@ -52,6 +53,36 @@ CallFactory::newSipCall(const std::shared_ptr<SIPAccountBase>& account,
     auto id = getNewCallID();
     auto call = std::make_shared<SIPCall>(account, id, type, details);
     callMaps_[call->getLinkType()].emplace(id, call);
+    return call;
+}
+
+std::shared_ptr<SIPCall>
+CallFactory::newSipCall(const std::shared_ptr<Account>& account,
+                        Call::CallType type,
+                        const std::vector<MediaAttribute>& mediaList)
+{
+    if (not allowNewCall_) {
+        JAMI_WARN("Creation of new calls is not allowed");
+        return {};
+    }
+
+    if (std::strcmp(account->getAccountType(), "SIP") != 0
+        and std::strcmp(account->getAccountType(), "RING") != 0) {
+        JAMI_ERR("Unknown account type %s!", account->getAccountType());
+        throw std::runtime_error("Invalid account type");
+    }
+
+    auto accountBase = std::dynamic_pointer_cast<SIPAccountBase>(account);
+    if (not accountBase)
+        throw std::runtime_error("Can't get base account");
+
+    auto id = getNewCallID();
+    auto call = std::make_shared<SIPCall>(accountBase, id, type, mediaList);
+    if (call) {
+        std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+        callMaps_[call->getLinkType()].insert(std::make_pair(id, call));
+    }
+
     return call;
 }
 
