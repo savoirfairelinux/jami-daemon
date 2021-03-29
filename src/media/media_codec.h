@@ -299,5 +299,4 @@ struct MediaDescription
     /** Crypto parameters */
     CryptoAttribute crypto {};
 };
-
 } // namespace jami
