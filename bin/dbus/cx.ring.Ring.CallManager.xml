@@ -856,7 +856,7 @@
         <signal name="secureSdesOff" tp:name-for-bindings="secureSdesOff">
             <tp:added version="0.9.7"/>
             <tp:docstring>
-              <p>Sinal sent to notify that SDES session failed.</p>
+              <p>Signal sent to notify that SDES session failed.</p>
               <p>Media transmission is not encrypted.</p>
             </tp:docstring>
             <arg type="s" name="callID" />
@@ -919,5 +919,15 @@
             <arg type="s" name="peerNumber" />
             <arg type="b" name="remoteRecordingState" />
         </signal>
+
+        <signal name="mediaNegotiationStatus" tp:name-for-bindings="mediaNegotiationStatus">
+            <tp:added version="9.10.0"/>
+            <tp:docstring>
+              <p>Report mediation negotation status.</p>
+            </tp:docstring>
+            <arg type="s" name="callID" />
+            <arg type="s" name="event" />
+        </signal>
+
     </interface>
 </node>
