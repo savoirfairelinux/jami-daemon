@@ -462,12 +462,14 @@ MultiplexedSocket::write(const uint16_t& channel,
         ec = std::make_error_code(std::errc::message_size);
         return -1;
     }
-    msgpack::sbuffer buffer(len + 16);
+    bool oneShot = len < 8192;
+    msgpack::sbuffer buffer(oneShot ? 16 + len : 16);
     msgpack::packer<msgpack::sbuffer> pk(&buffer);
     pk.pack_array(2);
     pk.pack(channel);
     pk.pack_bin(len);
-    pk.pack_bin_body((const char*) buf, len);
+    if (oneShot)
+        pk.pack_bin_body((const char*) buf, len);
 
     std::unique_lock<std::mutex> lk(pimpl_->writeMtx);
     if (!pimpl_->endpoint) {
@@ -476,6 +478,8 @@ MultiplexedSocket::write(const uint16_t& channel,
         return -1;
     }
     int res = pimpl_->endpoint->write((const unsigned char*) buffer.data(), buffer.size(), ec);
+    if (not oneShot and res >= 0)
+        res = pimpl_->endpoint->write(buf, len, ec);
     lk.unlock();
     if (res < 0) {
         if (ec)
