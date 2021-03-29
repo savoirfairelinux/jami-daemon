@@ -462,7 +462,7 @@ MultiplexedSocket::write(const uint16_t& channel,
         ec = std::make_error_code(std::errc::message_size);
         return -1;
     }
-    msgpack::sbuffer buffer;
+    msgpack::sbuffer buffer(len + 16);
     msgpack::packer<msgpack::sbuffer> pk(&buffer);
     pk.pack_array(2);
     pk.pack(channel);
