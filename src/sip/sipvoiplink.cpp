@@ -85,7 +85,9 @@ static void transaction_state_changed_cb(pjsip_inv_session* inv,
                                          pjsip_transaction* tsx,
                                          pjsip_event* e);
 static std::shared_ptr<SIPCall> getCallFromInvite(pjsip_inv_session* inv);
+#ifdef DEBUG_SIP_REQUEST_MSG
 static void processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* e);
+#endif
 
 static void
 handleIncomingOptions(pjsip_rx_data* rdata)
@@ -361,10 +363,10 @@ transaction_request_cb(pjsip_rx_data* rdata)
                 hasVideo = true;
         }
     }
-
     auto call = account->newIncomingCall(std::string(remote_user),
                                          {{"AUDIO_ONLY", (hasVideo ? "false" : "true")}},
                                          transport);
+
     if (!call) {
         return PJ_FALSE;
     }
@@ -411,12 +413,11 @@ transaction_request_cb(pjsip_rx_data* rdata)
     if (account->isStunEnabled())
         call->updateSDPFromSTUN();
 
-    call->getSDP().receiveOffer(r_sdp,
-                                account->getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                                account->getActiveAccountCodecInfoList(
-                                    account->isVideoEnabled() and hasVideo ? MEDIA_VIDEO
-                                                                           : MEDIA_NONE),
-                                account->getSrtpKeyExchange());
+    // This list should be provided by the client. Kept for backward compatibility.
+    auto mediaList = account->createDefaultMediaList(account->isVideoEnabled() and hasVideo);
+
+    call->getSDP().receiveOffer(r_sdp, mediaList);
+
     call->setRemoteSdp(r_sdp);
 
     pjsip_dialog* dialog = nullptr;
@@ -970,16 +971,16 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
     if (not address)
         address = ifaceAddr;
 
-    auto& localSDP = call->getSDP();
-    localSDP.setPublishedIP(address);
-    const bool created = localSDP.createOffer(account->getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                                              account->getActiveAccountCodecInfoList(
-                                                  account->isVideoEnabled() ? MEDIA_VIDEO
-                                                                            : MEDIA_NONE),
-                                              account->getSrtpKeyExchange());
+    auto& sdp = call->getSDP();
+    sdp.setPublishedIP(address);
+
+    // This list should be provided by the client. Kept for backward compatibility.
+    auto mediaList = account->createDefaultMediaList(account->isVideoEnabled());
+
+    const bool created = sdp.createOffer(mediaList);
 
     if (created)
-        *p_offer = localSDP.getLocalSdpSession();
+        *p_offer = sdp.getLocalSdpSession();
 }
 
 static const pjmedia_sdp_session*
@@ -997,7 +998,6 @@ get_active_remote_sdp(pjsip_inv_session* inv)
         return nullptr;
     }
 
-    Sdp::printSession(sdp_session, "Remote active SDP Session:\n");
     return sdp_session;
 }
 
@@ -1016,7 +1016,6 @@ get_active_local_sdp(pjsip_inv_session* inv)
         return nullptr;
     }
 
-    Sdp::printSession(sdp_session, "Local active SDP Session:\n");
     return sdp_session;
 }
 
@@ -1037,6 +1036,7 @@ sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status)
                                : 0;
 
         JAMI_WARN("[call:%s] SDP offer failed, reason %d", call->getCallId().c_str(), reason);
+
         call->hangup(reason);
         return;
     }
@@ -1048,8 +1048,14 @@ sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status)
     // Update our SDP manager
     auto& sdp = call->getSDP();
     sdp.setActiveLocalSdpSession(localSDP);
-    sdp.setActiveRemoteSdpSession(remoteSDP);
+    if (localSDP != nullptr) {
+        Sdp::printSession(localSDP, "Local active session:\n", sdp.isOffer());
+    }
 
+    sdp.setActiveRemoteSdpSession(remoteSDP);
+    if (remoteSDP != nullptr) {
+        Sdp::printSession(remoteSDP, "Remote active session:\n", not sdp.isOffer());
+    }
     call->onMediaUpdate();
 }
 
@@ -1094,7 +1100,9 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
                         rotation -= 360;
                     JAMI_WARN("Rotate video %d deg.", rotation);
 #ifdef ENABLE_VIDEO
-                    call.getVideoRtp().setRotation(rotation);
+                    auto const& videoRtp = call.getVideoRtp();
+                    if (videoRtp)
+                        videoRtp->setRotation(rotation);
 #endif
                 } catch (const std::exception& e) {
                     JAMI_WARN("Error parsing angle: %s", e.what());
@@ -1266,6 +1274,7 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     }
 }
 
+#ifdef DEBUG_SIP_REQUEST_MSG
 static void
 processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* event)
 {
@@ -1298,6 +1307,7 @@ processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* event)
 
     sip_utils::logMessageHeaders(&msg->hdr);
 }
+#endif
 
 int
 SIPVoIPLink::getModId()
