@@ -50,6 +50,7 @@ getSignalHandlers()
         exported_callback<DRing::CallSignal::ConnectionUpdate>(),
         exported_callback<DRing::CallSignal::OnConferenceInfosUpdated>(),
         exported_callback<DRing::CallSignal::RemoteRecordingChanged>(),
+        exported_callback<DRing::CallSignal::MediaNegotiationStatus>(),
 
         /* Configuration */
         exported_callback<DRing::ConfigurationSignal::VolumeChanged>(),
