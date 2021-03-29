@@ -245,6 +245,12 @@ struct DRING_PUBLIC CallSignal
         constexpr static const char* name = "RemoteRecordingChanged";
         using cb_type = void(const std::string&, const std::string&, bool);
     };
+    // Report media negotiation status
+    struct DRING_PUBLIC MediaNegotiationStatus
+    {
+        constexpr static const char* name = "MediaNegotiationStatus";
+        using cb_type = void(const std::string&, const std::string&);
+    };
 };
 
 } // namespace DRing
