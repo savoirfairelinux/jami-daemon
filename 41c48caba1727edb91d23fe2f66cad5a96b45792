@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "6b1653f3_7055dab6",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 70
+      },
+      "lineNbr": 411,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T18:41:55Z",
+      "side": 1,
+      "message": "In fact I keep it as it depends on a commit and is uncommented later in the stack",
+      "parentUuid": "d179f5cc_deb559ae",
+      "range": {
+        "startLine": 409,
+        "startChar": 12,
+        "endLine": 411,
+        "endChar": 55
+      },
+      "revId": "41c48caba1727edb91d23fe2f66cad5a96b45792",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "be2d233b_4553717a",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 70
@@ -36,6 +60,30 @@
       "writtenOn": "2021-03-29T16:43:11Z",
       "side": 1,
       "message": "is something other than RAII within Conversation governing the lifetime of the pimpl?",
+      "range": {
+        "startLine": 452,
+        "startChar": 4,
+        "endLine": 453,
+        "endChar": 15
+      },
+      "revId": "41c48caba1727edb91d23fe2f66cad5a96b45792",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "24343d63_f2965fa0",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 70
+      },
+      "lineNbr": 453,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T18:41:55Z",
+      "side": 1,
+      "message": "In fact you\u0027re right, pimpl_ will be always true as the lifetime is the same of Conversation and managed by a UP. I removed the checks",
+      "parentUuid": "be2d233b_4553717a",
       "range": {
         "startLine": 452,
         "startChar": 4,
@@ -65,6 +113,24 @@
     },
     {
       "key": {
+        "uuid": "3fb516e1_8443a222",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 70
+      },
+      "lineNbr": 1223,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T18:41:55Z",
+      "side": 1,
+      "message": "If it needs, it should be managed by upper layer like conversation() or jamiaccount. \nConversationRepository should not handled threading complexity imho.\n\nBut imho we can leave it as it is for now. And we can improve the behavior while testing. I add a note in my todo about this",
+      "parentUuid": "43ac2cd4_6302792b",
+      "revId": "41c48caba1727edb91d23fe2f66cad5a96b45792",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "60d50cfe_ed38b6b9",
         "filename": "src/jamidht/conversationrepository.cpp",
         "patchSetId": 70
@@ -76,6 +142,24 @@
       "writtenOn": "2021-03-29T16:43:11Z",
       "side": 1,
       "message": "same as above",
+      "revId": "41c48caba1727edb91d23fe2f66cad5a96b45792",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f58bd16d_a9778a27",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 70
+      },
+      "lineNbr": 1297,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T18:41:55Z",
+      "side": 1,
+      "message": "same",
+      "parentUuid": "60d50cfe_ed38b6b9",
       "revId": "41c48caba1727edb91d23fe2f66cad5a96b45792",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
@@ -105,6 +189,30 @@
     },
     {
       "key": {
+        "uuid": "6b02f602_5daed0c4",
+        "filename": "src/jamidht/conversationrepository.h",
+        "patchSetId": 70
+      },
+      "lineNbr": 145,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T18:41:55Z",
+      "side": 1,
+      "message": "I generally avoid getX methods, as it\u0027s generally not needed. log() corresponds to git log. Also I needed 2 methods cause there is two signatures with the same number of arguments (logN(string, int) and log(string, string)) with both default arguments. SO needs two methods..",
+      "parentUuid": "82221a79_0bae33dd",
+      "range": {
+        "startLine": 145,
+        "startChar": 36,
+        "endLine": 145,
+        "endChar": 40
+      },
+      "revId": "41c48caba1727edb91d23fe2f66cad5a96b45792",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "3a2d8e0f_a1ca08a0",
         "filename": "test/unitTest/syncHistory/syncHistory.cpp",
         "patchSetId": 70
@@ -116,6 +224,30 @@
       "writtenOn": "2021-03-29T16:43:11Z",
       "side": 1,
       "message": "commented code",
+      "range": {
+        "startLine": 66,
+        "startChar": 4,
+        "endLine": 70,
+        "endChar": 55
+      },
+      "revId": "41c48caba1727edb91d23fe2f66cad5a96b45792",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c6689dca_fc7e83d8",
+        "filename": "test/unitTest/syncHistory/syncHistory.cpp",
+        "patchSetId": 70
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-29T18:41:55Z",
+      "side": 1,
+      "message": "yeah sometimes I only tested one thing - rebase issues, anyway, will be uncommented later :)",
+      "parentUuid": "3a2d8e0f_a1ca08a0",
       "range": {
         "startLine": 66,
         "startChar": 4,
