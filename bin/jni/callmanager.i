@@ -60,7 +60,10 @@ namespace DRing {
 
 /* Call related methods */
 std::string placeCall(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& VolatileCallDetails);
-
+std::string placeCallWithMedia(const std::string& accountID,
+                               const std::string& to,
+                               const std::vector<std::map<std::string, std::string>>& mediaList);
+bool requestMediaChange(const std::string& callID, const std::vector<std::map<std::string, std::string>>& mediaList);
 bool refuse(const std::string& callID);
 bool accept(const std::string& callID);
 bool hangUp(const std::string& callID);
