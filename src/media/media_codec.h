@@ -37,6 +37,8 @@
 
 namespace jami {
 
+enum class KeyExchangeProtocol { NONE, SDES };
+
 enum CodecType : unsigned {
     CODEC_NONE = 0, // indicates that no codec is used or defined
     CODEC_ENCODER = 1,
@@ -252,6 +254,15 @@ private:
     std::string mkiLength_;
 };
 
+// Possible values for media direction attribute. 'UNKNOWN' means that the
+// direction was not set yet. Useful to detect errors when parsing the SDP.
+enum class MediaDirection { SENDRECV, SENDONLY, RECVONLY, INACTIVE, UNKNOWN };
+
+// Possible values for media transport attribute. 'UNKNOWN' means that the
+// was not set, or not found when parsing. Useful to detect errors when
+// parsing the SDP.
+enum class MediaTransport { RTP_AVP, RTP_SAVP, UNKNOWN };
+
 /**
  * MediaDescription
  * Negotiated RTP media slot
@@ -261,7 +272,8 @@ struct MediaDescription
     /** Audio / video */
     MediaType type {};
     bool enabled {false};
-    bool holding {false};
+    bool onHold {false};
+    MediaDirection direction_ {MediaDirection::UNKNOWN};
 
     /** Endpoint socket address */
     IpAddr addr {};
