@@ -35,6 +35,10 @@ public:
     virtual void voiceMailNotify(const std::string& accountId, int newCount, int oldCount, int urgentCount){}
     virtual void incomingMessage(const std::string& id, const std::string& from, const std::map<std::string, std::string>& messages){}
     virtual void incomingCall(const std::string& account_id, const std::string& call_id, const std::string& from){}
+    virtual void incomingCallWithMedia(const std::string& account_id, const std::string& call_id, const std::string& from,
+        const std::vector<std::map<std::string, std::string>>& mediaList){}
+    virtual void mediaChangeRequested(const std::string& account_id, const std::string& call_id,
+        const std::vector<std::map<std::string, std::string>>& mediaList){}
     virtual void recordPlaybackFilepath(const std::string& id, const std::string& filename){}
     virtual void conferenceCreated(const std::string& conf_id){}
     virtual void conferenceChanged(const std::string& conf_id, const std::string& state){}
@@ -126,6 +130,10 @@ public:
     virtual void voiceMailNotify(const std::string& accountId, int newCount, int oldCount, int urgentCount){}
     virtual void incomingMessage(const std::string& id, const std::string& from, const std::map<std::string, std::string>& messages){}
     virtual void incomingCall(const std::string& account_id, const std::string& call_id, const std::string& from){}
+    virtual void incomingCallWithMedia(const std::string& account_id, const std::string& call_id, const std::string& from,
+        const std::vector<std::map<std::string, std::string>>& mediaList){}
+    virtual void mediaChangeRequested(const std::string& account_id, const std::string& call_id,
+        const std::vector<std::map<std::string, std::string>>& mediaList){}
     virtual void recordPlaybackFilepath(const std::string& id, const std::string& filename){}
     virtual void conferenceCreated(const std::string& conf_id){}
     virtual void conferenceChanged(const std::string& conf_id, const std::string& state){}
