@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4c98b07f_23505023",
+        "filename": "src/conference.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-29T18:44:49Z",
+      "side": 1,
+      "message": "capture by reference to avoid copy",
+      "range": {
+        "startLine": 144,
+        "startChar": 58,
+        "endLine": 144,
+        "endChar": 60
+      },
+      "revId": "08cfb7cd85ee26e1f58254022015140711987ea5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a2be7e2f_75303cb7",
+        "filename": "src/conference.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 160,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-29T18:44:49Z",
+      "side": 1,
+      "message": "the size comparaison added above makes this unneeded",
+      "range": {
+        "startLine": 152,
+        "startChar": 8,
+        "endLine": 160,
+        "endChar": 9
+      },
+      "revId": "08cfb7cd85ee26e1f58254022015140711987ea5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
