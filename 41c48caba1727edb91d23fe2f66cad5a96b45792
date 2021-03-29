@@ -1,0 +1,130 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d179f5cc_deb559ae",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 70
+      },
+      "lineNbr": 411,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-29T16:43:11Z",
+      "side": 1,
+      "message": "please form this into a comment or remove it",
+      "range": {
+        "startLine": 409,
+        "startChar": 12,
+        "endLine": 411,
+        "endChar": 55
+      },
+      "revId": "41c48caba1727edb91d23fe2f66cad5a96b45792",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "be2d233b_4553717a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 70
+      },
+      "lineNbr": 453,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-29T16:43:11Z",
+      "side": 1,
+      "message": "is something other than RAII within Conversation governing the lifetime of the pimpl?",
+      "range": {
+        "startLine": 452,
+        "startChar": 4,
+        "endLine": 453,
+        "endChar": 15
+      },
+      "revId": "41c48caba1727edb91d23fe2f66cad5a96b45792",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "43ac2cd4_6302792b",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 70
+      },
+      "lineNbr": 1223,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-29T16:43:11Z",
+      "side": 1,
+      "message": "I believe this is called directly through the removeConversation API and there seems to be a lot of IO, should it be threadpooled?",
+      "revId": "41c48caba1727edb91d23fe2f66cad5a96b45792",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "60d50cfe_ed38b6b9",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 70
+      },
+      "lineNbr": 1297,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-29T16:43:11Z",
+      "side": 1,
+      "message": "same as above",
+      "revId": "41c48caba1727edb91d23fe2f66cad5a96b45792",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "82221a79_0bae33dd",
+        "filename": "src/jamidht/conversationrepository.h",
+        "patchSetId": 70
+      },
+      "lineNbr": 145,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-29T16:43:11Z",
+      "side": 1,
+      "message": "nitpick: could these be more descriptive like getCommits or getLog and overloaded ??",
+      "range": {
+        "startLine": 145,
+        "startChar": 36,
+        "endLine": 145,
+        "endChar": 40
+      },
+      "revId": "41c48caba1727edb91d23fe2f66cad5a96b45792",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3a2d8e0f_a1ca08a0",
+        "filename": "test/unitTest/syncHistory/syncHistory.cpp",
+        "patchSetId": 70
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-03-29T16:43:11Z",
+      "side": 1,
+      "message": "commented code",
+      "range": {
+        "startLine": 66,
+        "startChar": 4,
+        "endLine": 70,
+        "endChar": 55
+      },
+      "revId": "41c48caba1727edb91d23fe2f66cad5a96b45792",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
