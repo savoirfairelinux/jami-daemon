@@ -137,9 +137,11 @@ struct ConfInfo : public std::vector<ParticipantInfo>
     {
         if (c1.h != c2.h or c1.w != c2.w)
             return false;
+        if (c1.size() != c2.size())
+            return false;
 
         for (auto& p1 : c1) {
-            auto it = std::find_if(c2.begin(), c2.end(), [p1](const ParticipantInfo& p2) {
+            auto it = std::find_if(c2.begin(), c2.end(), [&p1](const ParticipantInfo& p2) {
                 return p1 == p2;
             });
             if (it != c2.end())
