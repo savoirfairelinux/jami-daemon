@@ -127,6 +127,13 @@ public:
      */
     void clearCallHandlerMaps(const std::string& callId);
 
+    /**
+     * @brief used to stop/restart plugins when jami preference is changed mid call.
+     *
+     * @param isPluginEnabled
+     */
+    void pauseRestartMediaHandlers(bool isPluginEnabled);
+
 private:
     /**
      * @brief Exposes MediaHandlers' life cycle managers services to the main API.
