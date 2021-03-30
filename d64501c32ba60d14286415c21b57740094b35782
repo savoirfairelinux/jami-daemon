@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d9db7d5f_7003012e",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 421,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-03-30T14:53:23Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027location\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "d64501c32ba60d14286415c21b57740094b35782",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
