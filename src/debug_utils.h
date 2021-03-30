@@ -26,16 +26,21 @@
 #include "media_io_handle.h"
 #include "system_codec_container.h"
 
+#include <opendht/utils.h>
+
 #include <chrono>
 #include <cstdio>
 #include <fstream>
 #include <ios>
 #include <ratio>
+#include <string_view>
+
 #include "logger.h"
 
 #warning Debug utilities included in build
 
 using Clock = std::chrono::steady_clock;
+using namespace std::literals;
 
 namespace jami {
 namespace debug {
@@ -49,16 +54,25 @@ namespace debug {
 class Timer
 {
 public:
-    Timer() { start_ = Clock::now(); }
+    Timer(std::string_view name) : name_(name), start_(Clock::now()) {}
+
+    ~Timer() {
+        print("end"sv);
+    }
 
     template<class Period = std::ratio<1>>
-    uint64_t getDuration()
+    uint64_t getDuration() const
     {
         auto diff = std::chrono::duration_cast<Period>(Clock::now() - start_);
         return diff.count();
     }
 
+    void print(std::string_view action) const {
+        JAMI_DBG() << name_ << ": " << action << " after " << dht::print_duration(Clock::now() - start_);
+    }
+
 private:
+    std::string_view name_;
     std::chrono::time_point<Clock> start_;
 };
 
