@@ -41,6 +41,7 @@
 #include "dring/media_const.h"
 #include "client/ring_signal.h"
 #include "ice_transport.h"
+#include "pjsip-ua/sip_inv.h"
 
 #ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
@@ -1485,17 +1486,18 @@ SIPCall::onIceNegoSucceed()
     startAllMedia();
 }
 
-void
-SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer)
+int
+SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* rdata)
 {
     if (!sdp_)
-        return;
+        return PJ_TRUE;
     sdp_->clearIce();
     auto acc = getSIPAccount();
     if (!acc) {
         JAMI_ERR("No account detected");
-        return;
+        return PJ_TRUE;
     }
+
     sdp_->receiveOffer(offer,
                        acc->getActiveAccountCodecInfoList(MEDIA_AUDIO),
                        acc->getActiveAccountCodecInfoList(acc->isVideoEnabled() ? MEDIA_VIDEO
@@ -1504,8 +1506,41 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer)
                        getState() == CallState::HOLD);
     setRemoteSdp(offer);
     sdp_->startNegotiation();
-    pjsip_inv_set_sdp_answer(inviteSession_.get(), sdp_->getLocalSdpSession());
+
+    pjsip_tx_data* tdata = nullptr;
+
+    if (pjsip_inv_initial_answer(inviteSession_.get(),
+                                 const_cast<pjsip_rx_data*>(rdata),
+                                 PJSIP_SC_OK,
+                                 NULL,
+                                 NULL,
+                                 &tdata)
+        != PJ_SUCCESS) {
+        JAMI_ERR("Could not create initial answer OK");
+        return PJ_TRUE;
+    }
+
+    // Add user-agent header
+    sip_utils::addUserAgentHeader(getSIPAccount()->getUserAgentName(), tdata);
+
+    if (pjsip_inv_answer(inviteSession_.get(), PJSIP_SC_OK, NULL, sdp_->getLocalSdpSession(), &tdata)
+        != PJ_SUCCESS) {
+        JAMI_ERR("Could not create answer OK");
+        return PJ_TRUE;
+    }
+
+    // contactStr must stay in scope as long as tdata
+    const pj_str_t contactStr(getSIPAccount()->getContactHeader(getTransport()->get()));
+    sip_utils::addContactHeader(&contactStr, tdata);
+
+    if (pjsip_inv_send_msg(inviteSession_.get(), tdata) != PJ_SUCCESS) {
+        JAMI_ERR("Could not send msg OK");
+        return PJ_TRUE;
+    }
+
     openPortsUPnP();
+
+    return PJ_SUCCESS;
 }
 
 void
