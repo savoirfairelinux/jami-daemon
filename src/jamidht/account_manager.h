@@ -31,6 +31,7 @@
 #include <opendht/crypto.h>
 
 #include <functional>
+#include <optional>
 #include <map>
 #include <string>
 
