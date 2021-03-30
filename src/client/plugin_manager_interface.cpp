@@ -186,6 +186,10 @@ void
 setPluginsEnabled(bool state)
 {
     jami::Manager::instance().pluginPreferences.setPluginsEnabled(state);
+    jami::Manager::instance()
+        .getJamiPluginManager()
+        .getCallServicesManager()
+        .pauseRestartMediaHandlers(state);
     jami::Manager::instance().saveConfig();
 }
 } // namespace DRing
