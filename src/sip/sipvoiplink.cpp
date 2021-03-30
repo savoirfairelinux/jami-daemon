@@ -75,8 +75,10 @@ static pjsip_endpoint* endpt_;
 static pjsip_module mod_ua_;
 
 static void sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status);
-static void sdp_request_offer_cb(pjsip_inv_session* inv, const pjmedia_sdp_session* offer);
 static void sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer);
+static pj_status_t reinvite_received_cb(pjsip_inv_session* inv,
+                                        const pjmedia_sdp_session* offer,
+                                        pjsip_rx_data* rdata);
 static void invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* e);
 static void outgoing_request_forked_cb(pjsip_inv_session* inv, pjsip_event* e);
 static void transaction_state_changed_cb(pjsip_inv_session* inv,
@@ -665,12 +667,12 @@ SIPVoIPLink::SIPVoIPLink()
         = { invite_session_state_changed_cb,
             outgoing_request_forked_cb,
             transaction_state_changed_cb,
-            sdp_request_offer_cb,
+            nullptr /* on_rx_offer */,
 #if PJ_VERSION_NUM >= (2 << 24 | 7 << 16)
             nullptr /* on_rx_offer2 */,
 #endif
 #if PJ_VERSION_NUM > (2 << 24 | 1 << 16)
-            nullptr /* on_rx_reinvite */,
+            reinvite_received_cb,
 #endif
             sdp_create_offer_cb,
             sdp_media_update_cb,
@@ -921,11 +923,13 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
     }
 }
 
-static void
-sdp_request_offer_cb(pjsip_inv_session* inv, const pjmedia_sdp_session* offer)
+static pj_status_t
+reinvite_received_cb(pjsip_inv_session* inv, const pjmedia_sdp_session* offer, pjsip_rx_data* rdata)
 {
-    if (auto call = getCallFromInvite(inv))
-        call->onReceiveOffer(offer);
+    if (auto call = getCallFromInvite(inv)) {
+        return call->onReceiveOffer(offer, rdata);
+    }
+    return PJ_TRUE;
 }
 
 static void
