@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "83b2a20c_32a9af09",
+        "filename": "src/data_transfer.h",
+        "patchSetId": 17
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-03-30T18:51:51Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nbraces around scalar initializer\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-braced-scalar-init",
+      "revId": "1d1273b0b1113a19e9d922b4fbd215e38c7795b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
