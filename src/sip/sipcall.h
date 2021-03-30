@@ -51,6 +51,7 @@ struct pjsip_evsub;
 struct pjsip_inv_session;
 struct pjmedia_sdp_session;
 struct pj_ice_sess_cand;
+struct pjsip_rx_data;
 }
 
 namespace jami {
@@ -167,7 +168,7 @@ public:
      */
     void onClosed();
 
-    void onReceiveOffer(const pjmedia_sdp_session* offer);
+    int onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* rdata);
 
     void onMediaUpdate();
 
