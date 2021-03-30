@@ -1,0 +1,556 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab517e52_d9a649d7",
+        "filename": "src/call.h",
+        "patchSetId": 55
+      },
+      "lineNbr": 310,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "should be medias as there is multiple medias",
+      "range": {
+        "startLine": 310,
+        "startChar": 71,
+        "endLine": 310,
+        "endChar": 80
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a39da673_5dfcb0b1",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "must just return nullptr",
+      "range": {
+        "startLine": 72,
+        "startChar": 0,
+        "endLine": 72,
+        "endChar": 22
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "69e212e9_2d9c0f0c",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "must return",
+      "range": {
+        "startLine": 76,
+        "startChar": 7,
+        "endLine": 76,
+        "endChar": 22
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3d5b1e88_1df3e674",
+        "filename": "src/conference.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 969,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "if (const auto\u0026 videoRtp \u003d sipCall-\u003egetVideoRtp())",
+      "range": {
+        "startLine": 968,
+        "startChar": 12,
+        "endLine": 969,
+        "endChar": 27
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "18a63997_a434a242",
+        "filename": "src/dring/callmanager_interface.h",
+        "patchSetId": 55
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "unnecessary as defined in dring",
+      "range": {
+        "startLine": 37,
+        "startChar": 0,
+        "endLine": 38,
+        "endChar": 52
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c29c0022_30ee574c",
+        "filename": "src/dring/callmanager_interface.h",
+        "patchSetId": 55
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 64,
+        "startChar": 88,
+        "endLine": 64,
+        "endChar": 97
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e4dc77ca_77f0efb9",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 1211,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "pimpl_.get() was ok, all ice:%p uses pimpl and it\u0027s better to keep the same thing to follow the process",
+      "range": {
+        "startLine": 1211,
+        "startChar": 67,
+        "endLine": 1211,
+        "endChar": 71
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3e883ff7_4a0cfa9e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 733,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "if it\u0027s the case, replace by a return",
+      "range": {
+        "startLine": 732,
+        "startChar": 0,
+        "endLine": 733,
+        "endChar": 41
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ec2621fe_086bba5a",
+        "filename": "src/manager.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 997,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "I think the name of this function must be improved. outgoingCall is unclear and it\u0027s weird to must have a conf_id just for a method called \"outgoignCall\"",
+      "range": {
+        "startLine": 994,
+        "startChar": 11,
+        "endLine": 997,
+        "endChar": 5
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7c599b9a_8189ed72",
+        "filename": "src/manager.h",
+        "patchSetId": 55
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "should be clearer. it\u0027s an URI, an id?",
+      "range": {
+        "startLine": 163,
+        "startChar": 48,
+        "endLine": 163,
+        "endChar": 54
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ddc9ac2d_7cc581e7",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 55
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "can be a struct",
+      "range": {
+        "startLine": 29,
+        "startChar": 6,
+        "endLine": 31,
+        "endChar": 7
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c00626f5_54acf16f",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 55
+      },
+      "lineNbr": 60,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "default const, can be removed",
+      "range": {
+        "startLine": 32,
+        "startChar": 32,
+        "endLine": 60,
+        "endChar": 34
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "197b32de_d4b49199",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 55
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "unnecessary, duplicate of parseBool/parseString in Account",
+      "range": {
+        "startLine": 69,
+        "startChar": 0,
+        "endLine": 74,
+        "endChar": 66
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "85340ccb_a79bcbf0",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 55
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "findIf",
+      "range": {
+        "startLine": 77,
+        "startChar": 16,
+        "endLine": 77,
+        "endChar": 28
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0dfdd51b_147758db",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 55
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "jami::bool_to_str",
+      "range": {
+        "startLine": 80,
+        "startChar": 23,
+        "endLine": 80,
+        "endChar": 35
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2caf2ee1_f74c6324",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 55
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "should be located in MediType::toString()",
+      "range": {
+        "startLine": 83,
+        "startChar": 24,
+        "endLine": 83,
+        "endChar": 54
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "df73e3be_f85f0e57",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 55
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "unused and not necessary as it\u0027s the copy constructor",
+      "range": {
+        "startLine": 88,
+        "startChar": 0,
+        "endLine": 89,
+        "endChar": 47
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2603e42e_509c2e64",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 55
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "MediaType type_ { MediaType::MEDIA_NONE };\n bool muted_ { false };\n bool secure_ { true };\n bool enabled_ { true };\n std::string sourceUri_ {};\n std::string label_ {};",
+      "range": {
+        "startLine": 92,
+        "startChar": 3,
+        "endLine": 97,
+        "endChar": 23
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d6d6e132_516aa60a",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 450,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "for buffer, %.*s is preffered",
+      "range": {
+        "startLine": 450,
+        "startChar": 25,
+        "endLine": 450,
+        "endChar": 27
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "45631a52_a56f88c8",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "just throw",
+      "range": {
+        "startLine": 176,
+        "startChar": 10,
+        "endLine": 177,
+        "endChar": 22
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8cd84188_74020a68",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 1239,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "if (auto const\u0026 videoRtp \u003d sthis-\u003egetVideoRtp())",
+      "range": {
+        "startLine": 1238,
+        "startChar": 11,
+        "endLine": 1239,
+        "endChar": 27
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a62dd732_ef8751c0",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 1330,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 1328,
+        "startChar": 23,
+        "endLine": 1330,
+        "endChar": 24
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "643395c2_2c00e662",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 1340,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 1338,
+        "startChar": 17,
+        "endLine": 1340,
+        "endChar": 17
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "97bbb46f_e2ea7672",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 55
+      },
+      "lineNbr": 1469,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-03-30T15:16:39Z",
+      "side": 1,
+      "message": "std::find_if",
+      "range": {
+        "startLine": 1463,
+        "startChar": 24,
+        "endLine": 1469,
+        "endChar": 17
+      },
+      "revId": "2e466495ad1a79a10e7b1b5300c750781712e58b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
