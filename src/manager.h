@@ -36,7 +36,6 @@
 #include "preferences.h"
 #include "audio/audiolayer.h"
 #include "scheduled_executor.h"
-#include "jamidht/multiplexed_socket.h"
 #include "gittransport.h"
 
 #include <algorithm>
@@ -57,6 +56,7 @@ namespace jami {
 namespace video {
 class SinkClient;
 }
+class ChannelSocket;
 class RingBufferPool;
 struct VideoManager;
 class Conference;
