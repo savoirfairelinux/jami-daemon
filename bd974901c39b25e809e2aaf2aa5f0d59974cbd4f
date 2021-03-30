@@ -87,6 +87,23 @@
     },
     {
       "key": {
+        "uuid": "2ff03d69_1400bb30",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-30T22:10:46Z",
+      "side": 1,
+      "message": "BTW, I\u0027ve made similar changes in multi-stream patch: https://review.jami.net/c/ring-daemon/+/17083",
+      "revId": "bd974901c39b25e809e2aaf2aa5f0d59974cbd4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "fbac4385_38c3146f",
         "filename": "src/sip/sipvoiplink.cpp",
         "patchSetId": 3
