@@ -1,6 +1,7 @@
 #pragma once
 
-#define V8_STRING_NEW(str) v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), str.data(), v8::String::kNormalString, str.size())
+#define V8_STRING_NEW(str) v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), str.data(), v8::NewStringType::kNormal, str.size())
+#define V8_STRING_NEW_LOCAL(str) V8_STRING_NEW(str).ToLocalChecked()
 
 #include <uv.h>
 #include <queue>
@@ -66,12 +67,12 @@ Persistent<Function>* getPresistentCb(const std::string &signal) {
 
 void intVectToJsArray(const std::vector<uint8_t>& intVect, const Local<Array>& jsArray) {
     for (unsigned int i = 0; i < intVect.size(); i++)
-        jsArray->Set(SWIGV8_INTEGER_NEW_UNS(i), SWIGV8_INTEGER_NEW(intVect[i]));
+        jsArray->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_INTEGER_NEW_UNS(i), SWIGV8_INTEGER_NEW(intVect[i]));
 }
 
 void stringMapToJsMap(const std::map<std::string, std::string>& strmap, const Local<Object> &jsMap) {
     for (auto& kvpair : strmap)
-        jsMap->Set(V8_STRING_NEW(std::get<0>(kvpair)), V8_STRING_NEW(std::get<1>(kvpair)));
+        jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_NEW_LOCAL(std::get<0>(kvpair)), V8_STRING_NEW_LOCAL(std::get<1>(kvpair)));
 }
 
 void setCallback(const std::string& signal, Local<Function>& func) {
@@ -87,12 +88,12 @@ void setCallback(const std::string& signal, Local<Function>& func) {
 }
 
 void parseCbMap(const Local<Value>& callbackMap) {
-    Local<Object> cbAssocArray = callbackMap->ToObject();
-    Local<Array> props = cbAssocArray->GetOwnPropertyNames();
+    Local<Object> cbAssocArray = callbackMap->ToObject(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked();
+    Local<Array> props = cbAssocArray->GetOwnPropertyNames(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked();
     for (uint32_t i = 0; i < props->Length(); ++i) {
-        const Local<Value> key_local = props->Get(i);
-        std::string key = *String::Utf8Value(key_local);
-        Handle<Object> buffer = cbAssocArray->Get(V8_STRING_NEW(key))->ToObject();
+        const Local<Value> key_local = props->Get(SWIGV8_CURRENT_CONTEXT(), i).ToLocalChecked();
+        std::string key = *String::Utf8Value(Isolate::GetCurrent(), key_local);
+        Local<Object> buffer = cbAssocArray->Get(SWIGV8_CURRENT_CONTEXT(), V8_STRING_NEW_LOCAL(key)).ToLocalChecked()->ToObject(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked();
         Local<Function> func = Local<Function>::Cast(buffer);
         setCallback(key, func);
     }
@@ -113,8 +114,12 @@ void registrationStateChanged(const std::string& account_id, const std::string& 
     pendingSignals.emplace([account_id, state, code, detail_str]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), registrationStateChangedCb);
         if (!func.IsEmpty()) {
-            Local<Value> callback_args[] = {V8_STRING_NEW(account_id), V8_STRING_NEW(state), SWIGV8_INTEGER_NEW(code), V8_STRING_NEW(detail_str)};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 4, callback_args);
+            Local<Value> callback_args[] = {
+                V8_STRING_NEW_LOCAL(account_id),
+                V8_STRING_NEW_LOCAL(state),
+                SWIGV8_INTEGER_NEW(code),
+                V8_STRING_NEW_LOCAL(detail_str)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
         }
     });
 
@@ -129,8 +134,8 @@ void volatileDetailsChanged(const std::string& account_id, const std::map<std::s
         if (!func.IsEmpty()) {
             Local<Object> jsMap = SWIGV8_OBJECT_NEW();
             stringMapToJsMap(details, jsMap);
-            Local<Value> callback_args[] = {V8_STRING_NEW(account_id), jsMap};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 2, callback_args);
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id), jsMap};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 2, callback_args);
         }
     });
 
@@ -144,7 +149,7 @@ void accountsChanged() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), accountsChangedCb);
         if (!func.IsEmpty()) {
             Local<Value> callback_args[] = {};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 0, callback_args);
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 0, callback_args);
         }
     });
 
@@ -157,8 +162,8 @@ void contactAdded(const std::string& account_id, const std::string& uri, bool co
     pendingSignals.emplace([account_id, uri, confirmed]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), contactAddedCb);
         if (!func.IsEmpty()) {
-            Local<Value> callback_args[] = {V8_STRING_NEW(account_id), V8_STRING_NEW(uri), SWIGV8_BOOLEAN_NEW(confirmed)};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 3, callback_args);
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id), V8_STRING_NEW_LOCAL(uri), SWIGV8_BOOLEAN_NEW(confirmed)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
 
@@ -171,8 +176,8 @@ void contactRemoved(const std::string& account_id, const std::string& uri, bool 
     pendingSignals.emplace([account_id, uri, banned]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), contactRemovedCb);
         if (!func.IsEmpty()) {
-            Local<Value> callback_args[] = {V8_STRING_NEW(account_id), V8_STRING_NEW(uri), SWIGV8_BOOLEAN_NEW(banned)};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 3, callback_args);
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id), V8_STRING_NEW_LOCAL(uri), SWIGV8_BOOLEAN_NEW(banned)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
 
@@ -185,8 +190,8 @@ void exportOnRingEnded(const std::string& account_id, int state, const std::stri
     pendingSignals.emplace([account_id, state, pin]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), exportOnRingEndedCb);
         if (!func.IsEmpty()) {
-            Local<Value> callback_args[] = {V8_STRING_NEW(account_id), SWIGV8_INTEGER_NEW(state), V8_STRING_NEW(pin)};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 3, callback_args);
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id), SWIGV8_INTEGER_NEW(state), V8_STRING_NEW_LOCAL(pin)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
 
@@ -199,8 +204,8 @@ void nameRegistrationEnded(const std::string& account_id, int state, const std::
     pendingSignals.emplace([account_id, state, name]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), nameRegistrationEndedCb);
         if (!func.IsEmpty()) {
-            Local<Value> callback_args[] = {V8_STRING_NEW(account_id), SWIGV8_INTEGER_NEW(state), V8_STRING_NEW(name)};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 3, callback_args);
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id), SWIGV8_INTEGER_NEW(state), V8_STRING_NEW_LOCAL(name)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
 
@@ -213,8 +218,8 @@ void registeredNameFound(const std::string& account_id, int state, const std::st
     pendingSignals.emplace([account_id, state, address, name]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), registeredNameFoundCb);
         if (!func.IsEmpty()) {
-            Local<Value> callback_args[] = {V8_STRING_NEW(account_id), SWIGV8_INTEGER_NEW(state), V8_STRING_NEW(address), V8_STRING_NEW(name)};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 4, callback_args);
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id), SWIGV8_INTEGER_NEW(state), V8_STRING_NEW_LOCAL(address), V8_STRING_NEW_LOCAL(name)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
         }
     });
 
@@ -227,8 +232,8 @@ void accountMessageStatusChanged(const std::string& account_id, uint64_t message
     pendingSignals.emplace([account_id, message_id, to, state]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), accountMessageStatusChangedCb);
         if (!func.IsEmpty()) {
-            Local<Value> callback_args[] = {V8_STRING_NEW(account_id), SWIGV8_INTEGER_NEW_UNS(message_id), V8_STRING_NEW(to), SWIGV8_INTEGER_NEW(state)};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 4, callback_args);
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id), SWIGV8_INTEGER_NEW_UNS(message_id), V8_STRING_NEW_LOCAL(to), SWIGV8_INTEGER_NEW(state)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
         }
     });
 
@@ -243,8 +248,8 @@ void incomingAccountMessage(const std::string& account_id, const std::string& me
         if (!func.IsEmpty()) {
             Local<Object> jsMap = SWIGV8_OBJECT_NEW();
             stringMapToJsMap(payloads, jsMap);
-            Local<Value> callback_args[] = {V8_STRING_NEW(account_id), V8_STRING_NEW(from), jsMap};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 3, callback_args);
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id), V8_STRING_NEW_LOCAL(from), jsMap};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
 
@@ -259,8 +264,8 @@ void knownDevicesChanged(const std::string& account_id, const std::map<std::stri
         if (!func.IsEmpty()) {
             Local<Object> jsMap = SWIGV8_OBJECT_NEW();
             stringMapToJsMap(devices, jsMap);
-            Local<Value> callback_args[] = {V8_STRING_NEW(account_id), jsMap};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 2, callback_args);
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id), jsMap};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 2, callback_args);
         }
     });
 
@@ -276,8 +281,8 @@ void incomingTrustRequest(const std::string& account_id, const std::string& from
         if (!func.IsEmpty()) {
             Local<Array> jsArray = SWIGV8_ARRAY_NEW(payload.size());
             intVectToJsArray(payload, jsArray);
-            Local<Value> callback_args[] = {V8_STRING_NEW(account_id), V8_STRING_NEW(from), jsArray, SWIGV8_NUMBER_NEW(received)};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 4, callback_args);
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id), V8_STRING_NEW_LOCAL(from), jsArray, SWIGV8_NUMBER_NEW(received)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
         }
     });
     uv_async_send(&signalAsync);
@@ -289,8 +294,8 @@ void callStateChanged(const std::string& call_id, const std::string& state, int 
     pendingSignals.emplace([call_id, state, detail_code]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), callStateChangedCb);
         if (!func.IsEmpty()) {
-            Local<Value> callback_args[] = {V8_STRING_NEW(call_id), V8_STRING_NEW(state), SWIGV8_INTEGER_NEW(detail_code)};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 3, callback_args);
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(call_id), V8_STRING_NEW_LOCAL(state), SWIGV8_INTEGER_NEW(detail_code)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
 
@@ -305,8 +310,8 @@ void incomingMessage(const std::string& id, const std::string& from, const std::
         if (!func.IsEmpty()) {
             Local<Object> jsMap = SWIGV8_OBJECT_NEW();
             stringMapToJsMap(messages, jsMap);
-            Local<Value> callback_args[] = {V8_STRING_NEW(id), V8_STRING_NEW(from), jsMap};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 4, callback_args);
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(id), V8_STRING_NEW_LOCAL(from), jsMap};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
         }
     });
 
@@ -319,8 +324,8 @@ void incomingCall(const std::string& account_id, const std::string& call_id, con
     pendingSignals.emplace([account_id, call_id, from]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), incomingCallCb);
         if (!func.IsEmpty()) {
-            Local<Value> callback_args[] = {V8_STRING_NEW(account_id), V8_STRING_NEW(call_id), V8_STRING_NEW(from)};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 3, callback_args);
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id), V8_STRING_NEW_LOCAL(call_id), V8_STRING_NEW_LOCAL(from)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
 

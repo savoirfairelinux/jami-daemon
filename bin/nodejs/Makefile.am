@@ -9,7 +9,7 @@ ring_wrapper.cpp: nodejs_interface.i configurationmanager.i managerimpl.i
 	$(SWIG) -v -c++ -javascript -node -o ring_wrapper.cpp nodejs_interface.i
 
 build/Makefile: ring_wrapper.cpp binding.gyp
-	node-gyp configure --target=1.6.2 --arch=x64
+	node-gyp configure --target=v12.18.2 --arch=x64
 
 build/Release/obj.target/dring.node: build/Makefile ring_wrapper.cpp callback.h
 	node-gyp build

@@ -88,8 +88,17 @@ namespace std {
 }
 
 //typemap for handling map of functions
-%typemap(in) const v8::Handle<v8::Value>  {
+%typemap(in) SWIGV8_VALUE  {
     $1 = $input;
+}
+%typemap(in) const SWIGV8_VALUE  {
+    $1 = $input;
+}
+%typemap(varin) SWIGV8_VALUE {
+  $result = $input;
+}
+%typemap(varin) const SWIGV8_VALUE {
+  $result = $input;
 }
 
 
@@ -98,7 +107,7 @@ namespace std {
  * that are not declared elsewhere in the c++ code
  */
 
-void init(const v8::Handle<v8::Value> &funcMap){
+void init(const SWIGV8_VALUE& funcMap){
     parseCbMap(funcMap);
     uv_async_init(uv_default_loop(), &signalAsync, handlePendingSignals);
 
