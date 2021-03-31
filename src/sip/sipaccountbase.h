@@ -145,6 +145,18 @@ public:
         const std::shared_ptr<SipTransport>& = nullptr)
         = 0;
 
+    /**
+     * Create incoming SIPCall.
+     * @param[in] from The origin of the call
+     * @param mediaList A list of media
+     * @param sipTr: SIP Transport
+     * @return A shared pointer on the created call.
+     */
+    virtual std::shared_ptr<SIPCall> newIncomingCall(const std::string& from,
+                                                     const std::vector<MediaAttribute>& mediaList,
+                                                     const std::shared_ptr<SipTransport>& sipTr = {})
+        = 0;
+
     virtual bool isStunEnabled() const { return false; }
 
     virtual pj_str_t getStunServerName() const { return pj_str_t {nullptr, 0}; };
@@ -210,7 +222,7 @@ public:
      */
     bool getPublishedSameasLocal() const { return publishedSameasLocal_; }
 
-    virtual KeyExchangeProtocol getSrtpKeyExchange() const = 0;
+    virtual bool isSrtpEnabled() const { return srtpKeyExchange_ != KeyExchangeProtocol::NONE; }
 
     virtual bool getSrtpFallback() const = 0;
 
@@ -429,6 +441,12 @@ protected:
     mutable std::mutex cachedTurnMutex_ {};
     std::unique_ptr<IpAddr> cacheTurnV4_ {};
     std::unique_ptr<IpAddr> cacheTurnV6_ {};
+
+    /**
+     * Specifies the type of key exchange used for SRTP, if any.
+     * This only determine if the media channel is secured.
+     */
+    KeyExchangeProtocol srtpKeyExchange_ {KeyExchangeProtocol::NONE};
 
 private:
     NON_COPYABLE(SIPAccountBase);

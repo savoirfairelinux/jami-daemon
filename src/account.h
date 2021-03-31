@@ -165,10 +165,6 @@ public:
                                                   const std::vector<MediaAttribute>& mediaList)
         = 0;
 
-    /* Note: we forbid incoming call creation from an instance of Account.
-     * This is why no newIncomingCall() method exist here.
-     */
-
     /**
      * If supported, send a text message from this account.
      * @return a token to query the message status
@@ -349,6 +345,14 @@ public:
     {
         allModeratorsEnabled_ = isAllModeratorEnabled;
     }
+
+    // Enable/disable multi-stream feature.
+    // Multi-stream feature changes the callflow of the re-invite process. All
+    // clients must support this feature before it can be enabled by default.
+    // These two internal APIs allow controlling the callflow accordingly. They
+    // should be removed once the multi-stream feature is fully supported.
+    bool isMultiStreamEnabled() const { return multiStreamEnabled_; }
+    void enableMultiStream(bool enable) { multiStreamEnabled_ = enable; }
 
 public:
     // virtual methods that has to be implemented by concrete classes
@@ -545,6 +549,8 @@ protected:
     std::set<std::string> defaultModerators_ {};
     bool localModeratorsEnabled_;
     bool allModeratorsEnabled_;
+
+    bool multiStreamEnabled_;
 
     /**
      * private account codec searching functions
