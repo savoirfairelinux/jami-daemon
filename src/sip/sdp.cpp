@@ -64,7 +64,6 @@ Sdp::Sdp(const std::string& id)
                })
     , publishedIpAddr_()
     , publishedIpAddrType_()
-    , sdesNego_ {CryptoSuites}
     , telephoneEventPayload_(101) // same as asterisk
     , sessionName_("Call ID " + id)
 {
@@ -213,6 +212,30 @@ Sdp::getMediaDirection(pjmedia_sdp_media* media)
     return MediaDirection::UNKNOWN;
 }
 
+MediaTransport
+Sdp::getMediaTransport(pjmedia_sdp_media* media)
+{
+    if (pj_stricmp2(&media->desc.transport, "RTP/SAVP") == 0)
+        return MediaTransport::RTP_SAVP;
+    else if (pj_stricmp2(&media->desc.transport, "RTP/AVP") == 0)
+        return MediaTransport::RTP_AVP;
+
+    return MediaTransport::UNKNOWN;
+}
+
+std::vector<std::string>
+Sdp::getCrypto(pjmedia_sdp_media* media)
+{
+    std::vector<std::string> crypto;
+    for (unsigned j = 0; j < media->attr_count; j++) {
+        const auto attribute = media->attr[j];
+        if (pj_stricmp2(&attribute->name, "crypto") == 0)
+            crypto.emplace_back(attribute->value.ptr, attribute->value.slen);
+    }
+
+    return crypto;
+}
+
 pjmedia_sdp_media*
 Sdp::addMediaDescription(const MediaAttribute& mediaAttr, bool onHold)
 {
@@ -300,8 +323,8 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr, bool onHold)
             const auto accountVideoCodec = std::static_pointer_cast<AccountVideoCodecInfo>(
                 video_codec_list_[i]);
             const auto& profileLevelID = accountVideoCodec->parameters.empty()
-                                            ? libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID
-                                            : accountVideoCodec->parameters;
+                                             ? libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID
+                                             : accountVideoCodec->parameters;
             auto value = fmt::format("fmtp:{} {}", payload, profileLevelID);
             med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(),
                                                                    value.c_str(),
@@ -364,7 +387,9 @@ void
 Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media* med)
 {
     ++med->desc.fmt_count;
-    pj_strdup2(memPool_.get(), &med->desc.fmt[med->desc.fmt_count - 1], std::to_string(telephoneEventPayload_).c_str());
+    pj_strdup2(memPool_.get(),
+               &med->desc.fmt[med->desc.fmt_count - 1],
+               std::to_string(telephoneEventPayload_).c_str());
 
     pjmedia_sdp_attr* attr_rtpmap = static_cast<pjmedia_sdp_attr*>(
         pj_pool_zalloc(memPool_.get(), sizeof(pjmedia_sdp_attr)));
@@ -413,8 +438,22 @@ Sdp::setLocalMediaCapabilities(MediaType type,
     }
 }
 
+const char*
+Sdp::getSdpDirectionStr(SdpDirection direction)
+{
+    if (direction == SdpDirection::LOCAL_OFFER)
+        return "LOCAL_OFFER";
+    if (direction == SdpDirection::LOCAL_ANSWER)
+        return "LOCAL_ANSWER";
+    if (direction == SdpDirection::REMOTE_OFFER)
+        return "REMOTE_OFFER";
+    if (direction == SdpDirection::REMOTE_ANSWER)
+        return "REMOTE_ANSWER";
+    return "NONE";
+}
+
 void
-Sdp::printSession(const pjmedia_sdp_session* session, const char* header, bool isOffer)
+Sdp::printSession(const pjmedia_sdp_session* session, const char* header, SdpDirection direction)
 {
     static constexpr size_t BUF_SZ = 4095;
     sip_utils::register_thread();
@@ -440,16 +479,17 @@ Sdp::printSession(const pjmedia_sdp_session* session, const char* header, bool i
     std::array<char, BUF_SZ + 1> buffer;
     auto size = pjmedia_sdp_print(cloned_session, buffer.data(), BUF_SZ);
     if (size < 0) {
-        JAMI_ERR("%sSDP too big for dump", header);
+        JAMI_ERR("%s SDP too big for dump", header);
         return;
     }
-    JAMI_DBG("[SDP %s] %s%.*s", isOffer ? "offer" : "answer", header, size, buffer.data());
+
+    JAMI_DBG("[SDP %s] %s\n%.*s", getSdpDirectionStr(direction), header, size, buffer.data());
 }
 
 void
-Sdp::createLocalSession(bool offer)
+Sdp::createLocalSession(SdpDirection direction)
 {
-    isOffer_ = offer;
+    sdpDirection_ = direction;
     localSession_ = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_session);
     localSession_->conn = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_conn);
 
@@ -498,7 +538,7 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList)
 
     JAMI_DBG("Creating SDP offer with %lu medias", mediaList.size());
 
-    createLocalSession(true);
+    createLocalSession(SdpDirection::LOCAL_OFFER);
 
     if (validateSession() != PJ_SUCCESS) {
         JAMI_ERR("Failed to create initial offer");
@@ -522,26 +562,35 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList)
         return false;
     }
 
+    Sdp::printSession(localSession_, "Local session (initial):", sdpDirection_);
+
     return true;
 }
 
 void
-Sdp::receiveOffer(const pjmedia_sdp_session* remote, const std::vector<MediaAttribute>& mediaList)
+Sdp::setReceivedOffer(const pjmedia_sdp_session* remote)
 {
     if (remote == nullptr) {
         JAMI_ERR("Remote session is NULL");
         return;
     }
+    remoteSession_ = pjmedia_sdp_session_clone(memPool_.get(), remote);
+}
 
-    JAMI_DBG("Creating SDP answer with %lu media", mediaList.size());
+bool
+Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
+{
+    assert(remoteSession_);
 
-    printSession(remote, "Remote session:\n", isOffer_);
+    JAMI_DBG("Processing received offer for [%s] with %lu", sessionName_.c_str(), mediaList.size());
+
+    printSession(remoteSession_, "Remote session:", SdpDirection::REMOTE_OFFER);
 
     if (not localSession_) {
-        createLocalSession(false);
+        createLocalSession(SdpDirection::LOCAL_ANSWER);
         if (validateSession() != PJ_SUCCESS) {
             JAMI_ERR("Failed to create initial offer");
-            return;
+            return false;
         }
     }
 
@@ -551,14 +600,12 @@ Sdp::receiveOffer(const pjmedia_sdp_session* remote, const std::vector<MediaAttr
         localSession_->media[localSession_->media_count++] = addMediaDescription(media);
     }
 
-    printSession(localSession_, "Local session:\n", not isOffer_);
+    printSession(localSession_, "Local session:\n", sdpDirection_);
 
     if (validateSession() != PJ_SUCCESS) {
         JAMI_ERR("Failed to add medias");
-        return;
+        return false;
     }
-
-    remoteSession_ = pjmedia_sdp_session_clone(memPool_.get(), remote);
 
     if (pjmedia_sdp_neg_create_w_remote_offer(memPool_.get(),
                                               localSession_,
@@ -566,15 +613,20 @@ Sdp::receiveOffer(const pjmedia_sdp_session* remote, const std::vector<MediaAttr
                                               &negotiator_)
         != PJ_SUCCESS) {
         JAMI_ERR("Failed to initialize media negotiation");
+        return false;
     }
+
+    return true;
 }
 
-void
+bool
 Sdp::startNegotiation()
 {
+    JAMI_DBG("Starting media negotiation for [%s]", sessionName_.c_str());
+
     if (negotiator_ == NULL) {
         JAMI_ERR("Can't start negotiation with invalid negotiator");
-        return;
+        return false;
     }
 
     const pjmedia_sdp_session* active_local;
@@ -582,29 +634,34 @@ Sdp::startNegotiation()
 
     if (pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO) {
         JAMI_WARN("Negotiator not in right state for negotiation");
-        return;
+        return false;
     }
 
-    if (pjmedia_sdp_neg_negotiate(memPool_.get(), negotiator_, 0) != PJ_SUCCESS)
-        return;
+    if (pjmedia_sdp_neg_negotiate(memPool_.get(), negotiator_, 0) != PJ_SUCCESS) {
+        JAMI_ERR("Failed to start media negotiation");
+        return false;
+    }
 
     if (pjmedia_sdp_neg_get_active_local(negotiator_, &active_local) != PJ_SUCCESS)
         JAMI_ERR("Could not retrieve local active session");
-    else {
-        setActiveLocalSdpSession(active_local);
-        if (active_local != nullptr) {
-            Sdp::printSession(active_local, "Local session:\n", isOffer_);
-        }
+
+    setActiveLocalSdpSession(active_local);
+
+    if (active_local != nullptr) {
+        Sdp::printSession(active_local, "Local active session:", sdpDirection_);
     }
 
-    if (pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote) != PJ_SUCCESS)
+    if (pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote) != PJ_SUCCESS
+        or active_remote == nullptr) {
         JAMI_ERR("Could not retrieve remote active session");
-    else {
-        setActiveRemoteSdpSession(active_remote);
-        if (active_remote != nullptr) {
-            Sdp::printSession(active_remote, "Remote active session:\n", not isOffer_);
-        }
+        return false;
     }
+
+    setActiveRemoteSdpSession(active_remote);
+
+    Sdp::printSession(active_remote, "Remote active session:", sdpDirection_);
+
+    return true;
 }
 
 std::string
@@ -799,7 +856,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             if (pj_stricmp2(&attribute->name, "crypto") == 0)
                 crypto.emplace_back(attribute->value.ptr, attribute->value.slen);
         }
-        descr.crypto = sdesNego_.negotiate(crypto);
+        descr.crypto = SdesNegotiator::negotiate(crypto);
     }
     return ret;
 }
@@ -934,6 +991,53 @@ Sdp::clearIce(pjmedia_sdp_session* session)
         auto media = session->media[i];
         pjmedia_sdp_attr_remove_all(&media->attr_count, media->attr, "candidate");
     }
+}
+
+std::vector<MediaAttribute>
+Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession)
+{
+    if (sdpSession == nullptr) {
+        return {};
+    }
+
+    std::vector<MediaAttribute> mediaList;
+    for (unsigned idx = 0; idx < sdpSession->media_count; idx++) {
+        mediaList.emplace_back(MediaAttribute {});
+        auto& mediaAttr = mediaList.back();
+
+        auto const& media = sdpSession->media[idx];
+
+        // Get media type.
+        if (!pj_stricmp2(&media->desc.media, "audio"))
+            mediaAttr.type_ = MediaType::MEDIA_AUDIO;
+        else if (!pj_stricmp2(&media->desc.media, "video"))
+            mediaAttr.type_ = MediaType::MEDIA_VIDEO;
+        else {
+            JAMI_WARN("Media#%u only 'audio' and 'video' types are supported!", idx);
+            // Keep the media in the list but dont bother parsing the attributes
+            continue;
+        }
+
+        // Get mute state.
+        auto direction = getMediaDirection(media);
+        mediaAttr.muted_ = direction != MediaDirection::SENDRECV
+                           and direction != MediaDirection::SENDONLY;
+
+        // Get transport.
+        auto transp = getMediaTransport(media);
+        if (transp == MediaTransport::UNKNOWN) {
+            JAMI_WARN("Media#%u could not determine transport type!", idx);
+        }
+
+        // A media is secure if the transport is of type RTP/SAVP
+        // and the crypto materials are present.
+        mediaAttr.secure_ = transp == MediaTransport::RTP_SAVP and not getCrypto(media).empty();
+
+        mediaAttr.label_ = mediaAttr.type_ == MediaType::MEDIA_AUDIO ? "audio_" : "video_";
+        mediaAttr.label_ += std::to_string(idx);
+    }
+
+    return mediaList;
 }
 
 } // namespace jami
