@@ -1,0 +1,7 @@
+Code-Review+2: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
+Submitted-at: Wed, 31 Mar 2021 15:49:13 -0400
+Reviewed-on: https://review.jami.net/c/ring-daemon/+/17461
+Project: ring-daemon
+Branch: refs/heads/master
