@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "c95395a8_b4bd99d5",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1493,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-03-31T13:10:14Z",
+      "side": 1,
+      "message": "In sip_inv.h\n\n* @return - PJ_SUCCESS: application will answer the re-INVITE\n*                       manually\n*         - non-PJ_SUCCESS: answer the re-INVITE automatically\n*                           using the SDP set via #pjsip_inv_set_sdp_answer()\nfor on_rx_reinvite\n\nSo maybe there is a better enum, but should not be PJ_SUCCESS since\nhere we want pjsip to send the response\n\n\nin the same enum group, it has PJ_TRUE, PJ_FALSE (0), PJ_SUCCESS(0)\n\nso I choose PJ_TRUE,\n\nbut I am not sure about if other enum exists",
+      "parentUuid": "424f0c6c_1d0bb1bd",
+      "revId": "bd974901c39b25e809e2aaf2aa5f0d59974cbd4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "84e044af_9e0e2aa1",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 3
@@ -30,6 +48,24 @@
       "writtenOn": "2021-03-30T22:08:47Z",
       "side": 1,
       "message": "PJ_SUCCESS",
+      "revId": "bd974901c39b25e809e2aaf2aa5f0d59974cbd4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ae02b58c_09ff9f75",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1498,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-03-31T13:10:14Z",
+      "side": 1,
+      "message": "Same as above",
+      "parentUuid": "84e044af_9e0e2aa1",
       "revId": "bd974901c39b25e809e2aaf2aa5f0d59974cbd4f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "b6f8954f_9af0877c",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1520,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-03-31T13:10:14Z",
+      "side": 1,
+      "message": "Same as above",
+      "parentUuid": "49b715cd_f1d2cad2",
+      "revId": "bd974901c39b25e809e2aaf2aa5f0d59974cbd4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "2500fcb7_9ad5b271",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 3
@@ -64,6 +118,24 @@
       "writtenOn": "2021-03-30T22:08:47Z",
       "side": 1,
       "message": "PJ_SUCCESS",
+      "revId": "bd974901c39b25e809e2aaf2aa5f0d59974cbd4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "aabbb5c1_b3c01b5a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1529,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-03-31T13:10:14Z",
+      "side": 1,
+      "message": "Same as above",
+      "parentUuid": "2500fcb7_9ad5b271",
       "revId": "bd974901c39b25e809e2aaf2aa5f0d59974cbd4f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
@@ -87,6 +159,24 @@
     },
     {
       "key": {
+        "uuid": "7ec993f9_dc1951d4",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1538,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-03-31T13:10:14Z",
+      "side": 1,
+      "message": "Same as above\n\nonly if all steps are passed, then PJ_SUCCESS should be returned to indicate that we send the response manually",
+      "parentUuid": "fb0fcf4f_2bb85526",
+      "revId": "bd974901c39b25e809e2aaf2aa5f0d59974cbd4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "2ff03d69_1400bb30",
         "filename": "src/sip/sipvoiplink.cpp",
         "patchSetId": 3
@@ -104,6 +194,24 @@
     },
     {
       "key": {
+        "uuid": "79526866_1f0962db",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-03-31T13:10:14Z",
+      "side": 1,
+      "message": "Do you think your patch will be merged quickly,\n\nCause Guillaume wants the patch quickly so that altice side can test asap",
+      "parentUuid": "2ff03d69_1400bb30",
+      "revId": "bd974901c39b25e809e2aaf2aa5f0d59974cbd4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "fbac4385_38c3146f",
         "filename": "src/sip/sipvoiplink.cpp",
         "patchSetId": 3
@@ -115,6 +223,24 @@
       "writtenOn": "2021-03-30T22:08:47Z",
       "side": 1,
       "message": "PJ_TRUE ? shouldn\u0027t be PJ_SUCCESS ?",
+      "revId": "bd974901c39b25e809e2aaf2aa5f0d59974cbd4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0f143cfc_9fa0bb04",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 932,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-03-31T13:10:14Z",
+      "side": 1,
+      "message": "Same as what stated in other file",
+      "parentUuid": "fbac4385_38c3146f",
       "revId": "bd974901c39b25e809e2aaf2aa5f0d59974cbd4f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
