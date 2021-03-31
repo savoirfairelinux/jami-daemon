@@ -124,6 +124,47 @@
             <arg type="b" name="acceptSucceeded" direction="out"/>
         </method>
 
+        <method name="acceptWithMedia" tp:name-for-bindings="acceptWithMedia">
+            <tp:added version="9.10.0"/>
+            <tp:docstring>
+              Answer an incoming call with the list of media. This version to control
+              attributes for each media (accepted, muted, ...)
+            </tp:docstring>
+            <arg type="s" name="callID" direction="in">
+              <tp:docstring>
+                The callID.
+              </tp:docstring>
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="mediaList" direction="in">
+              <tp:docstring>
+                The list of media.
+              </tp:docstring>
+            </arg>
+            <arg type="b" name="acceptSucceeded" direction="out"/>
+        </method>
+
+        <method name="answerMediaChangeRequest" tp:name-for-bindings="answerMediaChangeRequest">
+            <tp:added version="9.10.0"/>
+            <tp:docstring>
+              Answer to a media update request.
+            </tp:docstring>
+            <arg type="s" name="callID" direction="in">
+              <tp:docstring>
+                The callID.
+              </tp:docstring>
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="mediaList" direction="in">
+              <tp:docstring>
+                The list of media. Shoudld be of the same size as the media list in
+                the media update request. An empty media list means that the media
+                update request was refused.
+              </tp:docstring>
+            </arg>
+            <arg type="b" name="answerMediaChangeRequestSucceeded" direction="out"/>
+        </method>
+
         <method name="hangUp" tp:name-for-bindings="hangUp">
             <tp:docstring>
               Hangup a call in state "CURRENT" or "HOLD".
@@ -628,6 +669,65 @@
             </arg>
         </signal>
 
+        <signal name="incomingCallWithMedia" tp:name-for-bindings="incomingCallWithMedia">
+            <tp:added version="9.10.0"/>
+            <tp:docstring>
+              <p>Notify an incoming call.</p>
+              <p>This signal is emitted when a new call is received. The list of media
+              included in the invite is reported. The client can control the media status
+              of the answer through the media attributes when when accepting the call.</p>
+              <tp:rationale>The client must subscribe to this signal to handle incoming calls.</tp:rationale>
+            </tp:docstring>
+            <arg type="s" name="accountID">
+              <tp:docstring>
+                The account ID of the callee.
+              </tp:docstring>
+            </arg>
+            <arg type="s" name="callID">
+              <tp:docstring>
+                Call ID of the incoming call.
+              </tp:docstring>
+            </arg>
+            <arg type="s" name="from">
+              <tp:docstring>
+                The caller phone number.
+              </tp:docstring>
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="mediaList" direction="in">
+              <tp:docstring>
+                The list of media offered in the incoming call.
+              </tp:docstring>
+            </arg>
+        </signal>
+
+        <signal name="mediaChangeRequested" tp:name-for-bindings="mediaChangeRequested">
+            <tp:added version="9.10.0"/>
+            <tp:docstring>
+              <p>Notify a media update on the current call.</p>
+              <p>This signal is emitted when a media update is received from the peer. The list
+              of media included in the request is reported. The client can control the media status
+              of the answer through the media attributes when when accepting the request.</p>
+              <tp:rationale>The client must subscribe to this signal to handle incoming calls.</tp:rationale>
+            </tp:docstring>
+            <arg type="s" name="accountID">
+              <tp:docstring>
+                The account ID of the callee.
+              </tp:docstring>
+            </arg>
+            <arg type="s" name="callID">
+              <tp:docstring>
+                Call ID of the incoming call.
+              </tp:docstring>
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="mediaList" direction="in">
+              <tp:docstring>
+                The list of media offered in the incoming call.
+              </tp:docstring>
+            </arg>
+        </signal>
+
         <signal name="incomingMessage" tp:name-for-bindings="incomingMessage">
             <tp:docstring>
                 Notify clients that new messages have been received. The key is
@@ -928,6 +1028,5 @@
             <arg type="s" name="callID" />
             <arg type="s" name="event" />
         </signal>
-
     </interface>
 </node>
