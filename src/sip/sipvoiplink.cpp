@@ -61,6 +61,11 @@
 #include <pjsip-simple/presence.h>
 #include <pjsip-simple/publish.h>
 
+// Only PJSIP 2.10 is supported.
+#if PJ_VERSION_NUM < (2 << 24 | 10 << 16)
+#error "Unsupported PJSIP version (requires version 2.10+)"
+#endif
+
 #include <istream>
 #include <algorithm>
 #include <regex>
@@ -84,6 +89,7 @@ static void outgoing_request_forked_cb(pjsip_inv_session* inv, pjsip_event* e);
 static void transaction_state_changed_cb(pjsip_inv_session* inv,
                                          pjsip_transaction* tsx,
                                          pjsip_event* e);
+
 static std::shared_ptr<SIPCall> getCallFromInvite(pjsip_inv_session* inv);
 #ifdef DEBUG_SIP_REQUEST_MSG
 static void processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* e);
@@ -334,12 +340,15 @@ transaction_request_cb(pjsip_rx_data* rdata)
         sip_utils::logMessageHeaders(&rdata->msg_info.msg->hdr);
     }
 
-    pjmedia_sdp_session* r_sdp;
+    pjmedia_sdp_session* r_sdp {nullptr};
 
-    if (!body
-        || pjmedia_sdp_parse(rdata->tp_info.pool, (char*) body->data, body->len, &r_sdp)
-               != PJ_SUCCESS)
-        r_sdp = NULL;
+    if (body) {
+        if (pjmedia_sdp_parse(rdata->tp_info.pool, (char*) body->data, body->len, &r_sdp)
+            != PJ_SUCCESS) {
+            JAMI_WARN("Failed to parse the SDP in offer");
+            r_sdp = nullptr;
+        }
+    }
 
     if (not account->hasActiveCodec(MEDIA_AUDIO)) {
         try_respond_stateless(endpt_, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL, NULL);
@@ -355,17 +364,8 @@ transaction_request_cb(pjsip_rx_data* rdata)
         return PJ_FALSE;
     }
 
-    bool hasVideo = false;
-    if (r_sdp) {
-        auto pj_str_video = sip_utils::CONST_PJ_STR("video");
-        for (decltype(r_sdp->media_count) i = 0; i < r_sdp->media_count; i++) {
-            if (pj_strcmp(&r_sdp->media[i]->desc.media, &pj_str_video) == 0)
-                hasVideo = true;
-        }
-    }
-    auto call = account->newIncomingCall(std::string(remote_user),
-                                         {{"AUDIO_ONLY", (hasVideo ? "false" : "true")}},
-                                         transport);
+    auto const& remoteMediaList = Sdp::getMediaAttributeListFromSdp(r_sdp);
+    auto call = account->newIncomingCall(std::string(remote_user), remoteMediaList, transport);
 
     if (!call) {
         return PJ_FALSE;
@@ -413,12 +413,18 @@ transaction_request_cb(pjsip_rx_data* rdata)
     if (account->isStunEnabled())
         call->updateSDPFromSTUN();
 
-    // This list should be provided by the client. Kept for backward compatibility.
-    auto mediaList = account->createDefaultMediaList(account->isVideoEnabled() and hasVideo);
-
-    call->getSDP().receiveOffer(r_sdp, mediaList);
-
-    call->setRemoteSdp(r_sdp);
+    {
+        auto hasVideo = MediaAttribute::hasMediaType(remoteMediaList, MediaType::MEDIA_VIDEO);
+        // TODO.
+        // This list should be built using all the medias in the incoming offer.
+        // The local media should be set temporarily inactive (and possibly unconfigured) until
+        // we receive accept(mediaList) from the client.
+        auto mediaList = account->createDefaultMediaList(account->isVideoEnabled() and hasVideo);
+        call->getSDP().setReceivedOffer(r_sdp);
+        call->getSDP().processIncomingOffer(mediaList);
+    }
+    if (r_sdp)
+        call->setupLocalIce();
 
     pjsip_dialog* dialog = nullptr;
     if (pjsip_dlg_create_uas_and_inc_lock(pjsip_ua_instance(), rdata, nullptr, &dialog)
@@ -664,22 +670,18 @@ SIPVoIPLink::SIPVoIPLink()
     TRY(pjsip_pres_init_module(endpt_, pjsip_evsub_instance()));
     TRY(pjsip_endpt_register_module(endpt_, &PresSubServer::mod_presence_server));
 
-    static const pjsip_inv_callback inv_cb
-        = { invite_session_state_changed_cb,
-            outgoing_request_forked_cb,
-            transaction_state_changed_cb,
-            nullptr /* on_rx_offer */,
-#if PJ_VERSION_NUM >= (2 << 24 | 7 << 16)
-            nullptr /* on_rx_offer2 */,
-#endif
-#if PJ_VERSION_NUM > (2 << 24 | 1 << 16)
-            reinvite_received_cb,
-#endif
-            sdp_create_offer_cb,
-            sdp_media_update_cb,
-            nullptr /* on_send_ack */,
-            nullptr /* on_redirected */,
-          };
+    static const pjsip_inv_callback inv_cb = {
+        invite_session_state_changed_cb,
+        outgoing_request_forked_cb,
+        transaction_state_changed_cb,
+        nullptr /* on_rx_offer */,
+        nullptr /* on_rx_offer2 */,
+        reinvite_received_cb,
+        sdp_create_offer_cb,
+        sdp_media_update_cb,
+        nullptr /* on_send_ack */,
+        nullptr /* on_redirected */,
+    };
     TRY(pjsip_inv_usage_init(endpt_, &inv_cb));
 
     static constexpr pj_str_t allowed[] = {
@@ -930,9 +932,18 @@ reinvite_received_cb(pjsip_inv_session* inv, const pjmedia_sdp_session* offer, p
     if (!offer)
         return !PJ_SUCCESS;
     if (auto call = getCallFromInvite(inv)) {
-        return call->onReceiveOffer(offer, rdata);
+        if (auto const& account = call->getAccount().lock()) {
+            if (account->isMultiStreamEnabled()) {
+                return call->onReceiveReinvite(offer, rdata);
+            } else {
+                return call->onReceiveOffer(offer, rdata);
+            }
+        }
     }
-    return !PJ_SUCCESS;
+
+    // Return success if there is no matching call. The re-invite
+    // should be ignored.
+    return PJ_SUCCESS;
 }
 
 static void
@@ -1051,14 +1062,14 @@ sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status)
     auto& sdp = call->getSDP();
     sdp.setActiveLocalSdpSession(localSDP);
     if (localSDP != nullptr) {
-        Sdp::printSession(localSDP, "Local active session:\n", sdp.isOffer());
+        Sdp::printSession(localSDP, "Local active session:", sdp.getSdpDirection());
     }
 
     sdp.setActiveRemoteSdpSession(remoteSDP);
     if (remoteSDP != nullptr) {
-        Sdp::printSession(remoteSDP, "Remote active session:\n", not sdp.isOffer());
+        Sdp::printSession(remoteSDP, "Remote active session:", sdp.getSdpDirection());
     }
-    call->onMediaUpdate();
+    call->onMediaNegotiationComplete();
 }
 
 static void
@@ -1518,14 +1529,7 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
     pj_sockaddr_in mapped_addr;
     pj_sock_t sipSocket = pjsip_udp_transport_get_socket(transport);
     const pjstun_setting stunOpt
-        = { PJ_TRUE,
-#if PJ_VERSION_NUM > (2 << 24 | 7 << 16)
-            localIp.getFamily(),
-#endif
-            *stunServerName,
-            stunPort,
-            *stunServerName,
-            stunPort };
+        = {PJ_TRUE, localIp.getFamily(), *stunServerName, stunPort, *stunServerName, stunPort};
     const pj_status_t stunStatus = pjstun_get_mapped_addr2(&cp_.factory,
                                                            &stunOpt,
                                                            1,
