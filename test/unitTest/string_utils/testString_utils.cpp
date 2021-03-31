@@ -29,9 +29,11 @@
 
 using namespace std::literals;
 
-namespace jami { namespace test {
+namespace jami {
+namespace test {
 
-class StringUtilsTest : public CppUnit::TestFixture {
+class StringUtilsTest : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "string_utils"; }
 
@@ -49,7 +51,7 @@ private:
     CPPUNIT_TEST_SUITE_END();
 
     const double DOUBLE = 3.14159265359;
-    const int INT = 42 ;
+    const int INT = 42;
     const std::string PI_DOUBLE = "3.14159265359";
     const std::string PI_FLOAT = "3.14159265359";
     const std::string PI_42 = "42";
@@ -73,8 +75,8 @@ StringUtilsTest::to_string_test()
     // test with float
     float varFloat = 3.14;
     std::string sVarFloat = to_string(varFloat);
-    CPPUNIT_ASSERT(sVarFloat.at(0) == '3' && sVarFloat.at(1) == '.'
-                   && sVarFloat.at(2) == '1' && sVarFloat.at(3) == '4');
+    CPPUNIT_ASSERT(sVarFloat.at(0) == '3' && sVarFloat.at(1) == '.' && sVarFloat.at(2) == '1'
+                   && sVarFloat.at(3) == '4');
 
     // test with int
     CPPUNIT_ASSERT(std::to_string(INT).compare(PI_42) == 0);
@@ -83,17 +85,17 @@ StringUtilsTest::to_string_test()
 void
 StringUtilsTest::to_number_test()
 {
-    //test with int
+    // test with int
     CPPUNIT_ASSERT(jami::stoi(PI_42) == INT);
 
-    //test with double
+    // test with double
     CPPUNIT_ASSERT(jami::stod(PI_DOUBLE) == DOUBLE);
 }
 
 void
 StringUtilsTest::split_string_test()
 {
-    constexpr auto data = "*fdg454()**{&xcx*"sv;
+    auto data = "*fdg454()**{&xcx*"sv;
     auto split_string_result = split_string(data, '*');
     CPPUNIT_ASSERT(split_string_result.size() == 2);
     CPPUNIT_ASSERT(split_string_result.at(0) == "fdg454()"sv
@@ -114,6 +116,7 @@ StringUtilsTest::split_string_test()
                    && split_string_result.at(1) == "{&xcx"sv);
 }
 
-}} // namespace jami_test
+} // namespace test
+} // namespace jami
 
 RING_TEST_RUNNER(jami::test::StringUtilsTest::name());
