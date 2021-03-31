@@ -242,6 +242,8 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<CallSignal::VoiceMailNotify>(bind(&Callback::voiceMailNotify, callM, _1, _2, _3, _4)),
         exportable_callback<CallSignal::IncomingMessage>(bind(&Callback::incomingMessage, callM, _1, _2, _3)),
         exportable_callback<CallSignal::IncomingCall>(bind(&Callback::incomingCall, callM, _1, _2, _3)),
+        exportable_callback<CallSignal::IncomingCallWithMedia>(bind(&Callback::incomingCallWithMedia, callM, _1, _2, _3, _4)),
+        exportable_callback<CallSignal::MediaChangeRequested>(bind(&Callback::mediaChangeRequested, callM, _1, _2, _3)),
         exportable_callback<CallSignal::RecordPlaybackFilepath>(bind(&Callback::recordPlaybackFilepath, callM, _1, _2)),
         exportable_callback<CallSignal::ConferenceCreated>(bind(&Callback::conferenceCreated, callM, _1)),
         exportable_callback<CallSignal::ConferenceChanged>(bind(&Callback::conferenceChanged, callM, _1, _2)),
