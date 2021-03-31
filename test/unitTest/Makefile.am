@@ -146,10 +146,10 @@ ut_conversationRepository_SOURCES = conversationRepository/conversationRepositor
 check_PROGRAMS += ut_conversation
 ut_conversation_SOURCES = conversation/conversation.cpp
 #
-# media_control
+# media_negotiation
 #
-check_PROGRAMS += ut_media_control
-ut_media_control_SOURCES = media_control/media_control.cpp
+check_PROGRAMS += ut_media_negotiation
+ut_media_negotiation_SOURCES = media_negotiation/media_negotiation.cpp
 
 #
 # syncHistory
