@@ -119,7 +119,7 @@ Conference::Conference()
                 std::string uri = "";
                 if (auto call = getCall(subCall))
                     uri = call->getPeerNumber();
-                auto isModerator = shared->isModerator(uri);
+                auto isModerator = shared->isModerator(string_remove_suffix(uri, '@'));
                 newInfo.emplace_back(ParticipantInfo {
                     std::move(uri), "", false, 0, 0, 0, 0, true, false, false, isModerator});
             }
@@ -718,9 +718,9 @@ Conference::getCall(const std::string& callId)
 }
 
 bool
-Conference::isModerator(std::string_view uri) const
+Conference::isModerator(std::string_view peerID) const
 {
-    return moderators_.find(uri) != moderators_.end() or isHost(uri);
+    return moderators_.find(peerID) != moderators_.end() or isHost(peerID);
 }
 
 void
@@ -847,7 +847,7 @@ Conference::updateMuted()
     std::lock_guard<std::mutex> lk(confInfoMutex_);
     for (auto& info : confInfo_) {
         auto peerID = string_remove_suffix(info.uri, '@');
-        if (peerID.empty()) {
+        if (isHost(peerID)) {
             peerID = "host"sv;
             info.audioModeratorMuted = isMuted(peerID);
             info.audioLocalMuted = audioMuted_;
@@ -896,6 +896,9 @@ bool
 Conference::isHost(std::string_view uri) const
 {
     if (uri.empty())
+        return true;
+
+    if (isIdLocalAccount(string_remove_suffix(uri, '@')))
         return true;
 
     // Check if the URI is a local URI (AccountID) for at least one of the subcall
@@ -1076,11 +1079,11 @@ Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
 }
 
 std::string_view
-Conference::findHostforRemoteParticipant(std::string_view uri)
+Conference::findHostforRemoteParticipant(std::string_view peerID) const
 {
     for (const auto& host : remoteHosts_) {
         for (const auto& p : host.second) {
-            if (uri == string_remove_suffix(p.uri, '@'))
+            if (peerID == string_remove_suffix(p.uri, '@'))
                 return host.first;
         }
     }
@@ -1088,7 +1091,7 @@ Conference::findHostforRemoteParticipant(std::string_view uri)
 }
 
 std::shared_ptr<Call>
-Conference::getCallFromPeerID(std::string_view peerID)
+Conference::getCallFromPeerID(std::string_view peerID) const
 {
     for (const auto& p : participants_) {
         auto call = getCall(p);
@@ -1097,6 +1100,16 @@ Conference::getCallFromPeerID(std::string_view peerID)
         }
     }
     return nullptr;
+}
+
+bool
+Conference::isIdLocalAccount(std::string_view peerID) const
+{
+    for (const auto& account : jami::Manager::instance().getAllAccounts<JamiAccount>()) {
+        if (account->getUsername() == peerID)
+            return true;
+    }
+    return false;
 }
 
 } // namespace jami
