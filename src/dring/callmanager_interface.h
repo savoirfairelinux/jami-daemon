@@ -58,13 +58,17 @@ DRING_PUBLIC bool attendedTransfer(const std::string& transferID, const std::str
 DRING_PUBLIC std::map<std::string, std::string> getCallDetails(const std::string& callID);
 DRING_PUBLIC std::vector<std::string> getCallList();
 
-/* APIs that supports arbitrary number of medias*/
+/* APIs that supports an arbitrary number of media */
 DRING_PUBLIC std::string placeCall(const std::string& accountID,
                                    const std::string& to,
                                    const std::vector<DRing::MediaMap>& mediaList);
 DRING_PUBLIC bool accept(const std::string& callID, const std::vector<DRing::MediaMap>& mediaList);
+DRING_PUBLIC bool acceptWithMedia(const std::string& callID,
+                                  const std::vector<DRing::MediaMap>& mediaList);
 DRING_PUBLIC bool requestMediaChange(const std::string& callID,
                                      const std::vector<DRing::MediaMap>& mediaList);
+DRING_PUBLIC bool answerMediaChangeRequest(const std::string& callID,
+                                           const std::vector<DRing::MediaMap>& mediaList);
 
 /* Conference related methods */
 DRING_PUBLIC void removeConference(const std::string& conference_id);
@@ -163,6 +167,21 @@ struct DRING_PUBLIC CallSignal
     {
         constexpr static const char* name = "IncomingCall";
         using cb_type = void(const std::string&, const std::string&, const std::string&);
+    };
+    struct DRING_PUBLIC IncomingCallWithMedia
+    {
+        constexpr static const char* name = "IncomingCallWithMedia";
+        using cb_type = void(const std::string&,
+                             const std::string&,
+                             const std::string&,
+                             const std::vector<std::map<std::string, std::string>>&);
+    };
+    struct DRING_PUBLIC MediaChangeRequested
+    {
+        constexpr static const char* name = "MediaChangeRequested";
+        using cb_type = void(const std::string&,
+                             const std::string&,
+                             const std::vector<std::map<std::string, std::string>>&);
     };
     struct DRING_PUBLIC RecordPlaybackFilepath
     {
