@@ -276,18 +276,25 @@ public:
         const std::map<std::string, std::string>& details = {},
         const std::shared_ptr<SipTransport>& sipTr = nullptr) override;
 
+    /**
+     * Create incoming SIPCall.
+     * @param[in] from The origin of the call
+     * @param mediaList A list of media
+     * @param sipTr: SIP Transport
+     * @return A shared pointer on the created call.
+     */
+    std::shared_ptr<SIPCall> newIncomingCall(
+        const std::string& from,
+        const std::vector<MediaAttribute>& mediaList,
+        const std::shared_ptr<SipTransport>& sipTr = {}) override;
+
     void onTextMessage(const std::string& id,
                        const std::string& from,
                        const std::map<std::string, std::string>& payloads) override;
 
     virtual bool isTlsEnabled() const override { return true; }
 
-    virtual bool isSrtpEnabled() const { return true; }
-
-    virtual KeyExchangeProtocol getSrtpKeyExchange() const override
-    {
-        return KeyExchangeProtocol::SDES;
-    }
+    KeyExchangeProtocol getSrtpKeyExchange() const { return srtpKeyExchange_; }
 
     virtual bool getSrtpFallback() const override { return false; }
 
