@@ -161,6 +161,8 @@ public:
                                                   const std::vector<MediaAttribute>& mediaList)
         = 0;
 
+    // TODO. Reassess this comment.
+
     /* Note: we forbid incoming call creation from an instance of Account.
      * This is why no newIncomingCall() method exist here.
      */
@@ -347,6 +349,12 @@ public:
     {
         allModeratorsEnabled_ = isAllModeratorEnabled;
     }
+#if 1
+    // Should be removed once the multi-stream feature is fully
+    // supported.
+    bool isMultiStreamEnabled() const { return multiStreamEnabled_; }
+    void enableMultiStream(bool enable) { multiStreamEnabled_ = enable; }
+#endif
 
 public:
     // virtual methods that has to be implemented by concrete classes
@@ -543,6 +551,12 @@ protected:
     std::set<std::string> defaultModerators_ {};
     bool localModeratorsEnabled_;
     bool allModeratorsEnabled_;
+
+#if 1
+    // Should be removed once the multi-stream feature is fully
+    // supported.
+    bool multiStreamEnabled_;
+#endif
 
     /**
      * private account codec searching functions
