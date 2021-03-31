@@ -68,6 +68,10 @@ public:
 
     bool refuse(const std::string& callID);
     bool accept(const std::string& callID);
+    bool acceptWithMedia(const std::string& callID,
+                         const std::vector<std::map<std::string, std::string>>& mediaList);
+    bool answerMediaChangeRequest(const std::string& callID,
+                                  const std::vector<std::map<std::string, std::string>>& mediaList);
     bool hangUp(const std::string& callID);
     bool hold(const std::string& callID);
     bool unhold(const std::string& callID);
