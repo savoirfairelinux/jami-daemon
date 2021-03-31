@@ -183,6 +183,18 @@ SIPAccount::newIncomingCall(const std::string& from UNUSED,
     return manager.callFactory.newSipCall(shared(), Call::CallType::INCOMING, details);
 }
 
+std::shared_ptr<SIPCall>
+SIPAccount::newIncomingCall(const std::string& from UNUSED,
+                            const std::vector<MediaAttribute>& mediaAttrList,
+                            const std::shared_ptr<SipTransport>&)
+{
+    auto call = Manager::instance().callFactory.newSipCall(shared(),
+                                                           Call::CallType::INCOMING,
+                                                           mediaAttrList);
+    assert(call);
+    return call;
+}
+
 template<>
 std::shared_ptr<SIPCall>
 SIPAccount::newOutgoingCall(std::string_view toUrl,
@@ -225,7 +237,6 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
 
     auto toUri = getToUri(to);
     call->initIceMediaTransport(true);
-    call->setIPToIP(isIP2IP());
     call->setPeerNumber(toUri);
     call->setPeerUri(toUri);
 
@@ -316,7 +327,6 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<MediaAttri
 
     auto toUri = getToUri(to);
     call->initIceMediaTransport(true);
-    call->setIPToIP(isIP2IP());
     call->setPeerNumber(toUri);
     call->setPeerUri(toUri);
 
@@ -436,7 +446,7 @@ bool
 SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 {
     // Add Ice headers to local SDP if ice transport exist
-    call->setupLocalSDPFromIce();
+    call->addLocalIceAttributes();
 
     const std::string& toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
     pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);
@@ -1379,18 +1389,20 @@ SIPAccount::initTlsConfiguration()
     avail_ciphers.resize(cipherNum);
 
     ciphers_.clear();
-#if PJ_VERSION_NUM > (2 << 24 | 2 << 16)
-    std::string_view stream(tlsCiphers_), item;
-    while (jami::getline(stream, item, ' ')) {
-        std::string cipher(item);
-        auto item_cid = pj_ssl_cipher_id(cipher.c_str());
-        if (item_cid != PJ_TLS_UNKNOWN_CIPHER) {
-            JAMI_WARN("Valid cipher: %s", cipher.c_str());
-            ciphers_.push_back(item_cid);
-        } else
-            JAMI_ERR("Invalid cipher: %s", cipher.c_str());
+    if (not tlsCiphers_.empty()) {
+        std::stringstream ss(tlsCiphers_);
+        std::string item;
+        while (std::getline(ss, item, ' ')) {
+            if (item.empty())
+                continue;
+            auto item_cid = pj_ssl_cipher_id(item.c_str());
+            if (item_cid != PJ_TLS_UNKNOWN_CIPHER) {
+                JAMI_WARN("Valid cipher: %s", item.c_str());
+                ciphers_.push_back(item_cid);
+            } else
+                JAMI_ERR("Invalid cipher: %s", item.c_str());
+        }
     }
-#endif
     ciphers_.erase(std::remove_if(ciphers_.begin(),
                                   ciphers_.end(),
                                   [&](pj_ssl_cipher c) {
