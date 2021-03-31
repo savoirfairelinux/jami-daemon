@@ -219,11 +219,7 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
 
         sipTransport = key->second.lock();
 
-#if PJ_VERSION_NUM > (2 << 24 | 1 << 16)
         bool destroyed = state == PJSIP_TP_STATE_DESTROY;
-#else
-        bool destroyed = tp->is_destroying;
-#endif
 
         // maps cleanup
         if (destroyed) {

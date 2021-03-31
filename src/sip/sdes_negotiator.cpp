@@ -33,10 +33,6 @@
 
 namespace jami {
 
-SdesNegotiator::SdesNegotiator(const std::vector<CryptoSuiteDefinition>& localCapabilites)
-    : localCapabilities_(localCapabilites)
-{}
-
 std::vector<CryptoAttribute>
 SdesNegotiator::parse(const std::vector<std::string>& attributes)
 {
@@ -144,12 +140,12 @@ SdesNegotiator::parse(const std::vector<std::string>& attributes)
 }
 
 CryptoAttribute
-SdesNegotiator::negotiate(const std::vector<std::string>& attributes) const
+SdesNegotiator::negotiate(const std::vector<std::string>& attributes)
 {
     try {
         auto cryptoAttributeVector(parse(attributes));
         for (const auto& iter_offer : cryptoAttributeVector) {
-            for (const auto& iter_local : localCapabilities_) {
+            for (const auto& iter_local : CryptoSuites) {
                 if (iter_offer.getCryptoSuite() == iter_local.name)
                     return iter_offer;
             }
