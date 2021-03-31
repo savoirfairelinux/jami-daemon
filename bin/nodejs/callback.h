@@ -235,7 +235,7 @@ void accountMessageStatusChanged(const std::string& account_id, uint64_t message
     uv_async_send(&signalAsync);
 }
 
-void incomingAccountMessage(const std::string& account_id, const std::string& from, const std::map<std::string, std::string>& payloads) {
+void incomingAccountMessage(const std::string& account_id, const std::string& messageId, const std::string& from, const std::map<std::string, std::string>& payloads) {
 
     std::lock_guard<std::mutex> lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, from, payloads]() {
@@ -274,7 +274,7 @@ void incomingTrustRequest(const std::string& account_id, const std::string& from
     pendingSignals.emplace([account_id, from, payload, received]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), incomingTrustRequestCb);
         if (!func.IsEmpty()) {
-            Local<Array> jsArray = SWIGV8_ARRAY_NEW();
+            Local<Array> jsArray = SWIGV8_ARRAY_NEW(payload.size());
             intVectToJsArray(payload, jsArray);
             Local<Value> callback_args[] = {V8_STRING_NEW(account_id), V8_STRING_NEW(from), jsArray, SWIGV8_NUMBER_NEW(received)};
             func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 4, callback_args);
