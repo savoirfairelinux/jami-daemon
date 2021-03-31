@@ -335,7 +335,7 @@ private:
     bool isMuted(std::string_view uri) const;
 
     ConfInfo getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI);
-    bool isHost(std::string_view uri) const;
+    bool isHost(std::string_view peerID) const;
     bool audioMuted_ {false};
     bool videoMuted_ {false};
 
@@ -343,8 +343,9 @@ private:
 
     std::map<std::string, ConfInfo> remoteHosts_;
     void resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerURI);
-    std::string_view findHostforRemoteParticipant(std::string_view uri);
-    std::shared_ptr<Call> getCallFromPeerID(std::string_view peerID);
+    std::string_view findHostforRemoteParticipant(std::string_view peerID) const;
+    std::shared_ptr<Call> getCallFromPeerID(std::string_view peerID) const;
+    bool isIdLocalAccount(std::string_view peerID) const;
 
 #ifdef ENABLE_PLUGIN
     /**
