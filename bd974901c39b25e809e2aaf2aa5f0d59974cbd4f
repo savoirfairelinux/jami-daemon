@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "eded67d2_974110fb",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1493,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-31T13:47:37Z",
+      "side": 1,
+      "message": "In this case it would be simply (!PJ_SUCCESS) or (not PJ_SUCCESS)",
+      "parentUuid": "c95395a8_b4bd99d5",
+      "revId": "bd974901c39b25e809e2aaf2aa5f0d59974cbd4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "84e044af_9e0e2aa1",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 3
@@ -209,6 +227,24 @@
       "revId": "bd974901c39b25e809e2aaf2aa5f0d59974cbd4f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b0bd19a8_a6976eca",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 79,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-31T13:47:37Z",
+      "side": 1,
+      "message": "I dont know when it will be merged, ss go ahead with this patch will rebase and make adjustments if needed.",
+      "parentUuid": "79526866_1f0962db",
+      "revId": "bd974901c39b25e809e2aaf2aa5f0d59974cbd4f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
