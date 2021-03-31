@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1c500907_8de563dd",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 192,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-31T21:37:26Z",
+      "side": 1,
+      "message": "at this point there *must* not be any handler remaining so this call is supposed to be useless.",
+      "range": {
+        "startLine": 189,
+        "startChar": 0,
+        "endLine": 192,
+        "endChar": 42
+      },
+      "revId": "17f9bda885844b9bd4365e572f5d9f33ddab4400",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "859390a9_859acfd9",
+        "filename": "src/plugin/chatservicesmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 115,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-03-31T21:37:26Z",
+      "side": 1,
+      "message": "if plugins are disabled, every handler is supposed to be removed and every plugin is supposed to already be unloaded so this check is not relevant here",
+      "revId": "17f9bda885844b9bd4365e572f5d9f33ddab4400",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
