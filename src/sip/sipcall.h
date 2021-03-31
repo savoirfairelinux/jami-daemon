@@ -126,6 +126,8 @@ private:
 
 public:
     void answer() override;
+    void answer(const std::vector<MediaAttribute>& mediaList) override;
+    void answerMediaChangeRequest(const std::vector<MediaAttribute>& mediaList) override;
     void hangup(int reason) override;
     void refuse() override;
     void transfer(const std::string& to) override;
@@ -148,14 +150,10 @@ public:
     std::map<std::string, std::string> getDetails() const override;
     void enterConference(const std::string& confId) override;
     void exitConference() override;
-    video::VideoGenerator* getVideoReceiver() override
-    {
-        auto const& videoRtp = getVideoRtp();
-        if (videoRtp)
-            return videoRtp->getVideoReceive().get();
-
-        return nullptr;
-    }
+    video::VideoGenerator* getVideoReceiver() override;
+    bool hasVideo() const override;
+    bool isAudioMuted() const override;
+    bool isVideoMuted() const override;
     // End of override of Call class
 
     // Override of Recordable class
@@ -173,42 +171,39 @@ public:
 
     // Implementation of events reported by SipVoipLink.
     /**
-     * Tell the user that the call is ringing
+     * Call is in ringing state on peer's side
      */
     void onPeerRinging();
-
     /**
-     * Tell the user that the call was answered
+     * Peer answered the call
      */
     void onAnswered();
-
     /**
-     * To call in case of server/internal error
+     * Called to report server/internal errors
      * @param cause Optional error code
      */
     void onFailure(signed cause = 0);
-
     /**
      * Peer answered busy
      */
     void onBusyHere();
-
     /**
-     * Peer close the connection
+     * Peer closed the connection
      */
     void onClosed();
-
     /**
      * Report a new offer from peer on a existing invite session
      * (aka re-invite)
      */
-    int onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* rdata);
+    [[deprecated("Replaced by onReceiveReinvite")]] int onReceiveOffer(
+        const pjmedia_sdp_session* offer, const pjsip_rx_data* rdata);
 
+    pj_status_t onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata);
     /**
      * Called when the media negotiation (SDP offer/answer) has
      * completed.
      */
-    void onMediaUpdate();
+    void onMediaNegotiationComplete();
     // End fo SiPVoipLink events
 
     void setContactHeader(pj_str_t* contact);
@@ -227,13 +222,14 @@ public:
 
     void updateSDPFromSTUN();
 
-    void setupLocalSDPFromIce();
+    bool remoteHasValidIceAttributes();
+    void addLocalIceAttributes();
 
     /**
      * Give peer SDP to the call for handling
      * @param sdp pointer on PJSIP sdp structure, could be nullptr (acts as no-op in such case)
      */
-    void setRemoteSdp(const pjmedia_sdp_session* sdp);
+    void setupLocalIce();
 
     void terminateSipSession(int status);
 
@@ -267,8 +263,7 @@ public:
     void setPeerUri(const std::string& peerUri) { peerUri_ = peerUri; }
 
     bool initIceMediaTransport(bool master,
-                               std::optional<IceTransportOptions> options = std::nullopt,
-                               unsigned channel_num = 4);
+                               std::optional<IceTransportOptions> options = std::nullopt);
 
     bool isIceRunning() const;
 
@@ -347,16 +342,27 @@ private:
     bool hold();
 
     bool unhold();
-    /**
-     * Update the attributes of a media stream
-     * @param newMediaAttr the new attributes
-     * @param streamIdx the index of the stream to update
-     * @return true if the update requires a new SDP and SIP re-invite.
-     */
-    bool updateMediaStreamInternal(const MediaAttribute& newMediaAttr, size_t streamIdx);
+    // Update the attributes of a media stream
+    void updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx);
+    void updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList);
+    // Check if a SIP re-invite must be sent to negotiate the new media
+    bool isReinviteRequired(const std::vector<MediaAttribute>& mediaAttrList);
     void requestReinvite();
     int SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList);
     int SIPSessionReinvite();
+    // Add a media stream to the call.
+    void addMediaStream(const MediaAttribute& mediaAttr);
+    // Init media streams
+    size_t initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList);
+    // Create a new stream from SDP description.
+    void createRtpSession(RtpStream& rtpStream);
+    // Configure the RTP session from SDP description.
+    void configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
+                             const std::shared_ptr<MediaAttribute>& mediaAttr,
+                             const MediaDescription& localMedia,
+                             const MediaDescription& remoteMedia);
+    // Find the stream index with the matching label
+    size_t findRtpStreamIndex(const std::string& label) const;
 
     std::vector<IceCandidate> getAllRemoteCandidates();
 
@@ -373,30 +379,6 @@ private:
         return std::weak_ptr<const SIPCall>(shared());
     }
     inline std::weak_ptr<SIPCall> weak() { return std::weak_ptr<SIPCall>(shared()); }
-
-    // Add a media stream to the call.
-    void addMediaStream(const MediaAttribute& mediaAttr);
-
-    // Init media streams
-    size_t initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList);
-
-    // Create a new stream from SDP description.
-    void createRtpSession(RtpStream& rtpStream);
-
-    // Configure the RTP session from SDP description.
-    void configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
-                             const std::shared_ptr<MediaAttribute>& mediaAttr,
-                             const MediaDescription& localMedia,
-                             const MediaDescription& remoteMedia);
-
-    void dumpMediaAttribute(const MediaAttribute& mediaAttr, size_t idx) const;
-
-    /**
-     * Find the stream index of the matching label.
-     * @param label the stream label
-     * @return the stream index on success, the last index past one otherwise.
-     */
-    size_t findRtpStreamIndex(const std::string& label) const;
 
     // Vector holding the current RTP sessions.
     std::vector<RtpStream> rtpStreams_;
