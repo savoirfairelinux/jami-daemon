@@ -61,6 +61,8 @@ public:
     {}
 };
 
+enum class SdpDirection { LOCAL_OFFER, LOCAL_ANSWER, REMOTE_OFFER, REMOTE_ANSWER, NONE };
+
 class Sdp
 {
 public:
@@ -119,19 +121,19 @@ public:
      */
     bool createOffer(const std::vector<MediaAttribute>& mediaList);
 
-    /*
-     * On receiving an invite outside a dialog, build the local offer and create the
-     * SDP negotiator instance with the remote offer.
+    void setReceivedOffer(const pjmedia_sdp_session* remote);
+
+    /**
+     * Build a new SDP answer using mediaList.
      *
-     * @param remote    The remote offer
+     * @param mediaList The list of media attributes to build the answer
      */
-    void receiveOffer(const pjmedia_sdp_session* remote,
-                      const std::vector<MediaAttribute>& mediaList);
+    bool processIncomingOffer(const std::vector<MediaAttribute>& mediaList);
 
     /**
      * Start the sdp negotiation.
      */
-    void startNegotiation();
+    bool startNegotiation();
 
     /**
      * Remove all media in the session media vector.
@@ -180,6 +182,9 @@ public:
     std::vector<MediaDescription> getMediaDescriptions(const pjmedia_sdp_session* session,
                                                        bool remote) const;
 
+    static std::vector<MediaAttribute> getMediaAttributeListFromSdp(
+        const pjmedia_sdp_session* sdpSession);
+
     using MediaSlot = std::pair<MediaDescription, MediaDescription>;
     std::vector<MediaSlot> getMediaSlots() const;
 
@@ -194,12 +199,14 @@ public:
     std::vector<std::string> getIceCandidates(unsigned media_index) const;
 
     void clearIce();
-    // True if the session is an offer and false if it's an answer.
-    bool isOffer() const { return isOffer_; };
+    SdpDirection getSdpDirection() const { return sdpDirection_; };
+    static const char* getSdpDirectionStr(SdpDirection direction);
 
     /// \brief Log the given session
     /// \note crypto lines with are removed for security
-    static void printSession(const pjmedia_sdp_session* session, const char* header, bool offer);
+    static void printSession(const pjmedia_sdp_session* session,
+                             const char* header,
+                             SdpDirection direction);
 
 private:
     friend class test::SDPTest;
@@ -264,15 +271,13 @@ private:
     uint16_t localVideoDataPort_ {0};
     uint16_t localVideoControlPort_ {0};
 
-    SdesNegotiator sdesNego_;
-
     unsigned int telephoneEventPayload_;
 
     // The call Id of the SDP owner
     std::string sessionName_ {};
 
     // Offer/Answer flag.
-    bool isOffer_ {true};
+    SdpDirection sdpDirection_ {SdpDirection::NONE};
 
     /*
      * Build the sdp media section
@@ -281,7 +286,6 @@ private:
     pjmedia_sdp_media* addMediaDescription(const MediaAttribute& mediaAttr, bool onHold = false);
 
     // Determine media direction
-    char const* mediaDirection(bool enabled, bool onHold, bool muted);
     char const* mediaDirection(MediaType type, bool onHold);
     char const* mediaDirection(const MediaAttribute& localAttr, const MediaAttribute& peerAttr);
 
@@ -301,7 +305,7 @@ private:
     /*
      * Create a new SDP
      */
-    void createLocalSession(bool offer);
+    void createLocalSession(SdpDirection direction);
 
     /*
      * Validate SDP
