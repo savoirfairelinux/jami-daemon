@@ -373,13 +373,6 @@ public:
 
     virtual bool isTlsEnabled() const override { return tlsEnable_; }
 
-    virtual KeyExchangeProtocol getSrtpKeyExchange() const override
-    {
-        if (tlsEnable_ && srtpKeyExchange_ == KeyExchangeProtocol::NONE)
-            return KeyExchangeProtocol::SDES;
-        return srtpKeyExchange_;
-    }
-
     virtual bool getSrtpFallback() const override { return srtpFallback_; }
 
     void setReceivedParameter(const std::string& received)
@@ -491,6 +484,18 @@ public:
                                              const std::map<std::string, std::string>& details = {},
                                              const std::shared_ptr<SipTransport>& = nullptr) override;
 
+    /**
+     * Create incoming SIPCall.
+     * @param[in] from The origin of the call
+     * @param mediaList A list of media
+     * @param sipTr: SIP Transport
+     * @return A shared pointer on the created call.
+     */
+    std::shared_ptr<SIPCall> newIncomingCall(
+        const std::string& from,
+        const std::vector<MediaAttribute>& mediaList,
+        const std::shared_ptr<SipTransport>& sipTr = {}) override;
+
     void onRegister(pjsip_regc_cbparam* param);
 
     virtual void sendTextMessage(const std::string& to,
@@ -541,7 +546,7 @@ private:
     bool hostnameMatch(std::string_view hostname) const;
     bool proxyMatch(std::string_view hostname) const;
 
-    bool isSrtpEnabled() const { return srtpKeyExchange_ != KeyExchangeProtocol::NONE; }
+    bool isSrtpEnabled() const override { return srtpKeyExchange_ != KeyExchangeProtocol::NONE; }
 
     /**
      * Callback called by the transport layer when the registration

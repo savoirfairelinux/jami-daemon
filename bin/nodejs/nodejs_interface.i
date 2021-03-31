@@ -123,6 +123,8 @@ void init(const SWIGV8_VALUE& funcMap){
         exportable_callback<CallSignal::StateChange>(bind(&callStateChanged, _1, _2, _3)),
         exportable_callback<CallSignal::IncomingMessage>(bind(&incomingMessage, _1, _2, _3)),
         exportable_callback<CallSignal::IncomingCall>(bind(&incomingCall, _1, _2, _3)),
+        exportable_callback<CallSignal::IncomingCallWithMedia>(bind(&incomingCallWithMedia, _1, _2, _3, _4)),
+        exportable_callback<CallSignal::MediaChangeRequested>(bind(&mediaChangeRequested, _1, _2, _3)
     };
 
     const std::map<std::string, SharedCallback> configEvHandlers = {
