@@ -308,6 +308,8 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     , dhtPeerConnector_ {}
     , connectionManager_ {}
 {
+    srtpKeyExchange_ = KeyExchangeProtocol::SDES;
+
     // Force the SFL turn server if none provided yet
     turnServer_ = DEFAULT_TURN_SERVER;
     turnServerUserName_ = DEFAULT_TURN_USERNAME;
@@ -423,6 +425,57 @@ JamiAccount::newIncomingCall(const std::string& from,
     return nullptr;
 }
 
+std::shared_ptr<SIPCall>
+JamiAccount::newIncomingCall(const std::string& from,
+                             const std::vector<MediaAttribute>& mediaList,
+                             const std::shared_ptr<SipTransport>& sipTransp)
+{
+    JAMI_DBG("New incoming call from %s with %lu media", from.c_str(), mediaList.size());
+
+    if (sipTransp) {
+        std::unique_lock<std::mutex> connLock(sipConnsMtx_);
+        for (auto& [key, value] : sipConns_) {
+            if (key.first == from) {
+                // Search for a matching linked SipTransport in connection list.
+                for (auto conIter = value.rbegin(); conIter != value.rend(); conIter++) {
+                    if (conIter->transport != sipTransp)
+                        continue;
+
+                    auto call = Manager::instance().callFactory.newSipCall(shared(),
+                                                                           Call::CallType::INCOMING,
+                                                                           mediaList);
+                    assert(call);
+
+                    call->setPeerUri(RING_URI_PREFIX + from);
+                    call->setPeerNumber(from);
+                    return call;
+                }
+            }
+        }
+    }
+
+    std::lock_guard<std::mutex> lock(callsMutex_);
+    auto call_it = pendingSipCalls_.begin();
+    while (call_it != pendingSipCalls_.end()) {
+        auto call = call_it->call.lock();
+        if (not call) {
+            JAMI_WARN("newIncomingCall: discarding deleted call");
+            call_it = pendingSipCalls_.erase(call_it);
+        } else if (call->getPeerNumber() == from
+                   || (call_it->from_cert and call_it->from_cert->issuer
+                       and call_it->from_cert->issuer->getId().toString() == from)) {
+            JAMI_DBG("newIncomingCall: found matching call for %s", from.c_str());
+            pendingSipCalls_.erase(call_it);
+            return call;
+        } else {
+            call_it++;
+        }
+    }
+
+    JAMI_ERR("newIncomingCall: can't find matching call for %s", from.c_str());
+    return nullptr;
+}
+
 std::shared_ptr<Call>
 JamiAccount::newOutgoingCall(std::string_view toUrl,
                              const std::map<std::string, std::string>& volatileCallDetails)
@@ -464,7 +517,6 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::st
     auto suffix = stripPrefix(toUri);
     JAMI_DBG() << *this << "Calling DHT peer " << suffix;
 
-    call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
 
     try {
@@ -580,7 +632,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     // cached connection is failing with ICE (close event still not detected).
     auto dummyCall = createSubCall(call);
 
-    dummyCall->setIPToIP(true);
     dummyCall->setSecure(isTlsEnabled());
     call->addSubCall(*dummyCall);
 
@@ -602,7 +653,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 return;
 
             auto dev_call = createSubCall(call);
-            dev_call->setIPToIP(true);
             dev_call->setSecure(isTlsEnabled());
             dev_call->setState(Call::ConnectionState::TRYING);
             call->addStateListener(
@@ -647,7 +697,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         auto dev_call = createSubCall(call);
 
-        dev_call->setIPToIP(true);
         dev_call->setSecure(isTlsEnabled());
         dev_call->setTransport(transport);
         call->addSubCall(*dev_call);
@@ -777,7 +826,6 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
             }
         });
     };
-    call->setIPToIP(true);
     call->setPeerNumber(to_id);
     call->initIceMediaTransport(true, std::move(opts));
 }
@@ -785,7 +833,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
 bool
 JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
 {
-    call.setupLocalSDPFromIce();
+    call.addLocalIceAttributes();
     std::string toUri(getToUri(call.getPeerNumber() + "@"
                                + target.toString(true))); // expecting a fully well formed sip uri
 

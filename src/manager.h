@@ -174,15 +174,53 @@ public:
      * @param mediaList a list of the new media
      * @return true on success
      */
-    bool requestMediaChange(const std::string& callID,
+    bool requestMediaChange(const std::string& callId,
                             const std::vector<DRing::MediaMap>& mediaList);
 
     /**
      * Functions which occur with a user's action
      * Answer the call
-     * @param id  The call identifier
+     * @param callId
      */
-    bool answerCall(const std::string& id);
+    bool answerCall(const std::string& callId);
+
+    /**
+     * Answer a call with a list of media
+     * @param callId
+     * @param mediaList the list of media attributes. The client can
+     * control the media through the attributes. The list should have
+     * the same size as the list reported in the incoming call signal.
+     */
+    bool answerCallWithMedia(const std::string& callId,
+                             const std::vector<DRing::MediaMap>& mediaList);
+
+    /**
+     * Answer a media change request
+     * @param callId
+     * @param mediaList the list of media attributes. The client can
+     * control the media through the attributes. The list should have
+     * the same size as the list reported in the media change request.
+     * The client can ignore the media update request by not calling this
+     * method, or calling it with an empty media list.
+     */
+    bool answerMediaChangeRequest(const std::string& callId,
+                                  const std::vector<DRing::MediaMap>& mediaList = {});
+
+    /**
+     * Handle incoming call and notify user
+     * @param call A call pointer
+     * @param accountId an account id
+     */
+    void incomingCall(Call& call, const std::string& accountId);
+
+    /**
+     * Handle a media change request from the peer
+     * @param callId
+     * @param accountId
+     */
+    void mediaChangeRequested(const std::string& callId,
+                              const std::string& accountId,
+                              const std::vector<DRing::MediaMap>& mediaList);
 
     /**
      * Functions which occur with a user's action
@@ -381,13 +419,6 @@ public:
      * Acts on the audio streams and audio files
      */
     void stopTone();
-
-    /**
-     * Handle incoming call and notify user
-     * @param call A call pointer
-     * @param accountId an account id
-     */
-    void incomingCall(Call& call, const std::string& accountId);
 
     /**
      * Notify the user that the recipient of the call has answered and the put the
@@ -994,6 +1025,7 @@ private:
     ~Manager();
     friend class AudioDeviceGuard;
 
+    // Data members
     struct ManagerPimpl;
     std::unique_ptr<ManagerPimpl> pimpl_;
 };
