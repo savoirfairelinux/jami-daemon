@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "cc3ce57c_6e282efb",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 53
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-31T23:30:19Z",
+      "side": 1,
+      "message": "Although Medias is accepted, Media is more correct:\nhttps://www.merriam-webster.com/dictionary/media",
+      "parentUuid": "4d0b7991_3865c053",
+      "range": {
+        "startLine": 52,
+        "startChar": 22,
+        "endLine": 52,
+        "endChar": 40
+      },
+      "revId": "e953ab4382ec06fe0bbe96e8627d400915bd9c5a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "e1e923eb_dfca648d",
         "filename": "src/call.h",
         "patchSetId": 53
@@ -45,6 +69,30 @@
       "revId": "e953ab4382ec06fe0bbe96e8627d400915bd9c5a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "de9f248b_4fa85d5f",
+        "filename": "src/call.h",
+        "patchSetId": 53
+      },
+      "lineNbr": 310,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-03-31T23:30:19Z",
+      "side": 1,
+      "message": "Indeed\nDone",
+      "parentUuid": "e1e923eb_dfca648d",
+      "range": {
+        "startLine": 310,
+        "startChar": 17,
+        "endLine": 310,
+        "endChar": 35
+      },
+      "revId": "e953ab4382ec06fe0bbe96e8627d400915bd9c5a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
