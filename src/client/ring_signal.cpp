@@ -34,6 +34,8 @@ getSignalHandlers()
         exported_callback<DRing::CallSignal::VoiceMailNotify>(),
         exported_callback<DRing::CallSignal::IncomingMessage>(),
         exported_callback<DRing::CallSignal::IncomingCall>(),
+        exported_callback<DRing::CallSignal::IncomingCallWithMedia>(),
+        exported_callback<DRing::CallSignal::MediaChangeRequested>(),
         exported_callback<DRing::CallSignal::RecordPlaybackFilepath>(),
         exported_callback<DRing::CallSignal::ConferenceCreated>(),
         exported_callback<DRing::CallSignal::ConferenceChanged>(),

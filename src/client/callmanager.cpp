@@ -101,6 +101,18 @@ accept(const std::string& callID)
 }
 
 bool
+acceptWithMedia(const std::string& callID, const std::vector<DRing::MediaMap>& mediaList)
+{
+    return jami::Manager::instance().answerCallWithMedia(callID, mediaList);
+}
+
+bool
+answerMediaChangeRequest(const std::string& callID, const std::vector<DRing::MediaMap>& mediaList)
+{
+    return jami::Manager::instance().answerMediaChangeRequest(callID, mediaList);
+}
+
+bool
 hangUp(const std::string& callID)
 {
     return jami::Manager::instance().hangupCall(callID);
