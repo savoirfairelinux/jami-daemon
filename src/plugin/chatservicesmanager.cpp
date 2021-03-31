@@ -112,7 +112,7 @@ ChatServicesManager::getChatHandlers()
 void
 ChatServicesManager::publishMessage(pluginMessagePtr& message)
 {
-    if (message->fromPlugin || !jami::Manager::instance().pluginPreferences.getPluginsEnabled())
+    if (message->fromPlugin)
         return;
     std::pair<std::string, std::string> mPair(message->accountId, message->peerId);
     auto& handlers = chatHandlerToggled_[mPair];
