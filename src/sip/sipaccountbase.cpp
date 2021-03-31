@@ -683,17 +683,16 @@ std::vector<MediaAttribute>
 SIPAccountBase::createDefaultMediaList(bool addVideo, bool onHold)
 {
     std::vector<MediaAttribute> mediaList;
-    bool secure = getSrtpKeyExchange() == KeyExchangeProtocol::SDES;
 
     // Add audio and DTMF events
     mediaList.emplace_back(
-        MediaAttribute(MediaType::MEDIA_AUDIO, onHold, secure, false, "", "main audio"));
+        MediaAttribute(MediaType::MEDIA_AUDIO, onHold, true, false, "", "main audio"));
 
 #ifdef ENABLE_VIDEO
     // Add video if allowed.
     if (isVideoEnabled() and addVideo) {
         mediaList.emplace_back(
-            MediaAttribute(MediaType::MEDIA_VIDEO, onHold, secure, false, "", "main video"));
+            MediaAttribute(MediaType::MEDIA_VIDEO, onHold, true, false, "", "main video"));
     }
 #endif
     return mediaList;
