@@ -71,6 +71,22 @@ DBusCallManager::accept(const std::string& callID) -> decltype(DRing::accept(cal
 }
 
 auto
+DBusCallManager::acceptWithMedia(const std::string& callID,
+                                 const std::vector<std::map<std::string, std::string>>& mediaList)
+    -> decltype(DRing::acceptWithMedia(callID, mediaList))
+{
+    return DRing::acceptWithMedia(callID, mediaList);
+}
+
+auto
+DBusCallManager::answerMediaChangeRequest(
+    const std::string& callID, const std::vector<std::map<std::string, std::string>>& mediaList)
+    -> decltype(DRing::answerMediaChangeRequest(callID, mediaList))
+{
+    return DRing::answerMediaChangeRequest(callID, mediaList);
+}
+
+auto
 DBusCallManager::hangUp(const std::string& callID) -> decltype(DRing::hangUp(callID))
 {
     return DRing::hangUp(callID);

@@ -1341,6 +1341,10 @@ IceTransport::packIceMsg(uint8_t version) const
 bool
 IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand) const
 {
+    // Silently ignore empty lines
+    if (line.empty())
+        return false;
+
     /**   Section 4.5, RFC 6544 (https://tools.ietf.org/html/rfc6544)
      *    candidate-attribute   = "candidate" ":" foundation SP component-id SP
      *                             "TCP" SP
@@ -1375,7 +1379,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand) c
                  type,
                  tcp_type);
     if (cnt != 7 && cnt != 8) {
-        JAMI_ERR("[ice:%p] Invalid ICE candidate line", pimpl_.get());
+        JAMI_ERR("[ice:%p] Invalid ICE candidate line: %s", pimpl_.get(), line.c_str());
         return false;
     }
 

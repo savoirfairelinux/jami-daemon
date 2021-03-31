@@ -59,16 +59,12 @@ namespace jami {
 /// The predicate should have <code>bool(Call*) signature</code>.
 template<typename T>
 inline void
-hangupCallsIf(Call::SubcallSet&& calls,
-              int errcode,
-              T pred)
+hangupCallsIf(Call::SubcallSet&& calls, int errcode, T pred)
 {
     for (auto& call : calls) {
         if (not pred(call.get()))
             continue;
-        dht::ThreadPool::io().run([call = std::move(call), errcode] {
-            call->hangup(errcode);
-        });
+        dht::ThreadPool::io().run([call = std::move(call), errcode] { call->hangup(errcode); });
     }
 }
 
@@ -378,23 +374,6 @@ Call::updateDetails(const std::map<std::string, std::string>& details)
 }
 
 std::map<std::string, std::string>
-Call::getDetails() const
-{
-    return {
-        {DRing::Call::Details::CALL_TYPE, std::to_string((unsigned) type_)},
-        {DRing::Call::Details::PEER_NUMBER, peerNumber_},
-        {DRing::Call::Details::DISPLAY_NAME, peerDisplayName_},
-        {DRing::Call::Details::CALL_STATE, getStateStr()},
-        {DRing::Call::Details::CONF_ID, confID_},
-        {DRing::Call::Details::TIMESTAMP_START, std::to_string(timestamp_start_)},
-        {DRing::Call::Details::ACCOUNTID, getAccountId()},
-        {DRing::Call::Details::AUDIO_MUTED, std::string(bool_to_str(isAudioMuted_))},
-        {DRing::Call::Details::VIDEO_MUTED, std::string(bool_to_str(isVideoMuted_))},
-        {DRing::Call::Details::AUDIO_ONLY, std::string(bool_to_str(isAudioOnly_))},
-    };
-}
-
-std::map<std::string, std::string>
 Call::getNullDetails()
 {
     return {
@@ -436,8 +415,12 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
 #ifdef ENABLE_PLUGIN
     auto& pluginChatManager
         = jami::Manager::instance().getJamiPluginManager().getChatServicesManager();
-    std::shared_ptr<JamiMessage> cm = std::make_shared<JamiMessage>(
-        getAccountId(), getPeerNumber(), true, const_cast<std::map<std::string, std::string>&>(messages), false);
+    std::shared_ptr<JamiMessage> cm
+        = std::make_shared<JamiMessage>(getAccountId(),
+                                        getPeerNumber(),
+                                        true,
+                                        const_cast<std::map<std::string, std::string>&>(messages),
+                                        false);
     pluginChatManager.publishMessage(cm);
 
 #endif
@@ -695,7 +678,8 @@ Call::setConferenceInfo(const std::string& msg)
             // confID_ empty -> participant set confInfo with the received one
             confInfo_ = std::move(newInfo);
             // Inform client that layout has changed
-            jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, confInfo_.toVectorMapStringString());
+            jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(
+                id_, confInfo_.toVectorMapStringString());
         } else if (auto conf = Manager::instance().getConferenceFromID(confID_)) {
             conf->mergeConfInfo(newInfo, getPeerNumber());
         }
