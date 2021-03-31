@@ -59,16 +59,12 @@ namespace jami {
 /// The predicate should have <code>bool(Call*) signature</code>.
 template<typename T>
 inline void
-hangupCallsIf(Call::SubcallSet&& calls,
-              int errcode,
-              T pred)
+hangupCallsIf(Call::SubcallSet&& calls, int errcode, T pred)
 {
     for (auto& call : calls) {
         if (not pred(call.get()))
             continue;
-        dht::ThreadPool::io().run([call = std::move(call), errcode] {
-            call->hangup(errcode);
-        });
+        dht::ThreadPool::io().run([call = std::move(call), errcode] { call->hangup(errcode); });
     }
 }
 
@@ -93,58 +89,58 @@ Call::Call(const std::shared_ptr<Account>& account,
 {
     updateDetails(details);
 
-    addStateListener(
-        [this](Call::CallState call_state, Call::ConnectionState cnx_state, UNUSED int code) {
-            checkPendingIM();
+    addStateListener([this](Call::CallState call_state,
+                            Call::ConnectionState cnx_state,
+                            UNUSED int code) {
+        checkPendingIM();
+        std::weak_ptr<Call> callWkPtr = shared_from_this();
+        runOnMainThread([callWkPtr] {
+            if (auto call = callWkPtr.lock())
+                call->checkAudio();
+        });
+
+        // if call just started ringing, schedule call timeout
+        if (type_ == CallType::INCOMING and cnx_state == ConnectionState::RINGING) {
+            auto timeout = Manager::instance().getRingingTimeout();
+            JAMI_DBG("Scheduling call timeout in %d seconds", timeout);
+
             std::weak_ptr<Call> callWkPtr = shared_from_this();
-            runOnMainThread([callWkPtr] {
-                if (auto call = callWkPtr.lock())
-                    call->checkAudio();
-            });
-
-            // if call just started ringing, schedule call timeout
-            if (type_ == CallType::INCOMING and cnx_state == ConnectionState::RINGING) {
-                auto timeout = Manager::instance().getRingingTimeout();
-                JAMI_DBG("Scheduling call timeout in %d seconds", timeout);
-
-                std::weak_ptr<Call> callWkPtr = shared_from_this();
-                Manager::instance().scheduler().scheduleIn(
-                    [callWkPtr] {
-                        if (auto callShPtr = callWkPtr.lock()) {
-                            if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
-                                JAMI_DBG(
-                                    "Call %s is still ringing after timeout, setting state to BUSY",
-                                    callShPtr->getCallId().c_str());
-                                callShPtr->hangup(PJSIP_SC_BUSY_HERE);
-                                Manager::instance().callFailure(*callShPtr);
-                            }
+            Manager::instance().scheduler().scheduleIn(
+                [callWkPtr] {
+                    if (auto callShPtr = callWkPtr.lock()) {
+                        if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
+                            JAMI_DBG(
+                                "Call %s is still ringing after timeout, setting state to BUSY",
+                                callShPtr->getCallId().c_str());
+                            callShPtr->hangup(PJSIP_SC_BUSY_HERE);
+                            Manager::instance().callFailure(*callShPtr);
                         }
-                    },
-                    std::chrono::seconds(timeout));
-            }
-
-            if (!isSubcall() && getCallType() == CallType::OUTGOING) {
-                if (cnx_state == ConnectionState::CONNECTED && duration_start_ == time_point::min())
-                    duration_start_ = clock::now();
-                else if (cnx_state == ConnectionState::DISCONNECTED && call_state == CallState::OVER) {
-                    if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(
-                            getAccount().lock())) {
-                        auto duration = duration_start_ == time_point::min()
-                                            ? 0
-                                            : std::chrono::duration_cast<std::chrono::milliseconds>(
-                                                  clock::now() - duration_start_)
-                                                  .count();
-                        jamiAccount->addCallHistoryMessage(getPeerNumber(), duration);
-
-                        monitor();
                     }
+                },
+                std::chrono::seconds(timeout));
+        }
+
+        if (!isSubcall() && getCallType() == CallType::OUTGOING) {
+            if (cnx_state == ConnectionState::CONNECTED && duration_start_ == time_point::min())
+                duration_start_ = clock::now();
+            else if (cnx_state == ConnectionState::DISCONNECTED && call_state == CallState::OVER) {
+                if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(getAccount().lock())) {
+                    auto duration = duration_start_ == time_point::min()
+                                        ? 0
+                                        : std::chrono::duration_cast<std::chrono::milliseconds>(
+                                              clock::now() - duration_start_)
+                                              .count();
+                    jamiAccount->addCallHistoryMessage(getPeerNumber(), duration);
+
+                    monitor();
                 }
             }
+        }
 
-            // kill pending subcalls at disconnect
-            if (call_state == CallState::OVER)
-                hangupCalls(safePopSubcalls(), 0);
-        });
+        // kill pending subcalls at disconnect
+        if (call_state == CallState::OVER)
+            hangupCalls(safePopSubcalls(), 0);
+    });
 
     time(&timestamp_start_);
     if (auto shared = account_.lock())
@@ -381,6 +377,7 @@ std::map<std::string, std::string>
 Call::getDetails() const
 {
     return {
+
         {DRing::Call::Details::CALL_TYPE, std::to_string((unsigned) type_)},
         {DRing::Call::Details::PEER_NUMBER, peerNumber_},
         {DRing::Call::Details::DISPLAY_NAME, peerDisplayName_},
@@ -388,9 +385,9 @@ Call::getDetails() const
         {DRing::Call::Details::CONF_ID, confID_},
         {DRing::Call::Details::TIMESTAMP_START, std::to_string(timestamp_start_)},
         {DRing::Call::Details::ACCOUNTID, getAccountId()},
-        {DRing::Call::Details::AUDIO_MUTED, std::string(bool_to_str(isAudioMuted_))},
-        {DRing::Call::Details::VIDEO_MUTED, std::string(bool_to_str(isVideoMuted_))},
-        {DRing::Call::Details::AUDIO_ONLY, std::string(bool_to_str(isAudioOnly_))},
+        {DRing::Call::Details::AUDIO_MUTED, std::string(bool_to_str(isAudioMuted()))},
+        {DRing::Call::Details::VIDEO_MUTED, std::string(bool_to_str(isVideoMuted()))},
+        {DRing::Call::Details::AUDIO_ONLY, std::string(bool_to_str(hasVideo()))},
     };
 }
 
@@ -436,8 +433,12 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
 #ifdef ENABLE_PLUGIN
     auto& pluginChatManager
         = jami::Manager::instance().getJamiPluginManager().getChatServicesManager();
-    std::shared_ptr<JamiMessage> cm = std::make_shared<JamiMessage>(
-        getAccountId(), getPeerNumber(), true, const_cast<std::map<std::string, std::string>&>(messages), false);
+    std::shared_ptr<JamiMessage> cm
+        = std::make_shared<JamiMessage>(getAccountId(),
+                                        getPeerNumber(),
+                                        true,
+                                        const_cast<std::map<std::string, std::string>&>(messages),
+                                        false);
     pluginChatManager.publishMessage(cm);
 
 #endif
@@ -695,7 +696,8 @@ Call::setConferenceInfo(const std::string& msg)
             // confID_ empty -> participant set confInfo with the received one
             confInfo_ = std::move(newInfo);
             // Inform client that layout has changed
-            jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, confInfo_.toVectorMapStringString());
+            jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(
+                id_, confInfo_.toVectorMapStringString());
         } else if (auto conf = Manager::instance().getConferenceFromID(confID_)) {
             conf->mergeConfInfo(newInfo, getPeerNumber());
         }

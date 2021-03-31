@@ -210,6 +210,25 @@ public:
     virtual void answer() = 0;
 
     /**
+     * Answer a call with a list of media attributes.
+     * @param mediaList The list of the media attributes.
+     * The media attributes set by the caller of this method will
+     * determine the response sent to the peer and the configuration
+     * of the local media.
+     */
+    virtual void answer(const std::vector<MediaAttribute>& mediaList) = 0;
+
+    /**
+     * Answer to a media update request. The media attributes set by the
+     * caller of this method will determine the response sent to the
+     * peer and the configuration of the local media.
+     * @param mediaList The list of media attributes. An empty media
+     * list means the media update request was not accepted, meaning the
+     * call continue with the current media. It's up to the implementation
+     * to determine wether an answer will be sent to the peer.
+     */
+    virtual void answerMediaChangeRequest(const std::vector<MediaAttribute>& mediaList) = 0;
+    /**
      * Hang up the call
      * @param reason
      */
@@ -335,7 +354,10 @@ public: // media management
      */
     void updateDetails(const std::map<std::string, std::string>& details);
 
-    bool hasVideo() const { return not isVideoMuted_; }
+    // Media status methods
+    virtual bool hasVideo() const = 0;
+    virtual bool isAudioMuted() const = 0;
+    virtual bool isVideoMuted() const = 0;
 
     /**
      * A Call can be in a conference. If this is the case, the other side
@@ -380,8 +402,6 @@ protected:
     // TODO all these members are not protected against multi-thread access
 
     const std::string id_ {};
-    bool isAudioMuted_ {false};
-    bool isVideoMuted_ {false};
 
     ///< MultiDevice: parent call, nullptr otherwise. Access protected by callMutex_.
     mutable std::shared_ptr<Call> parent_;
@@ -414,6 +434,7 @@ private:
 
     std::vector<StateListenerCb> stateChangedListeners_ {};
 
+protected:
     /** Unique conference ID, used exclusively in case of a conference */
     std::string confID_ {};
 
