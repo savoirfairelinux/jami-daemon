@@ -25,6 +25,7 @@
 
 #include "noncopyable.h"
 #include "generic_io.h"
+#include "diffie-hellman.h"
 
 #include <gnutls/gnutls.h>
 
@@ -45,8 +46,6 @@ struct PrivateKey;
 
 namespace jami {
 namespace tls {
-
-class DhParams;
 
 enum class TlsSessionState {
     NONE,

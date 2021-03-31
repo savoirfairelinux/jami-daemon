@@ -32,7 +32,6 @@
 #include "manager.h"
 #include "certstore.h"
 #include "array_size.h"
-#include "diffie-hellman.h"
 #include "scheduled_executor.h"
 
 #include <gnutls/gnutls.h>
