@@ -5,7 +5,7 @@ nodejs_wrapper_target = custom_target('nodejs.wrapper',
 )
 
 nodejs_makefile_target = custom_target('nodejs.makefile',
-    command: [prognodegyp, 'configure', '--target=1.6.2', '--arch=x64', '--dist-url=https://atom.io/download/electron'],
+    command: [prognodegyp, 'configure', '--target=1.6.2', '--arch=x64'],
     output: 'build/Makefile',
     depends: nodejs_wrapper_target
 )

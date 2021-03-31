@@ -55,25 +55,7 @@ namespace std {
     }
 }
 %template(StringMap) map<string, string>;
-
-
-%extend vector<string> {
-  value_type set(int i, const value_type& in) throw (std::out_of_range) {
-    const std::string old = $self->at(i);
-    $self->at(i) = in;
-    return old;
-  }
-  bool add(const value_type& in) {
-    $self->push_back(in);
-    return true;
-  }
-  int32_t size() const {
-    return $self->size();
-  }
-}
 %template(StringVect) vector<string>;
-
-
 %template(VectMap) vector< map<string,string> >;
 %template(IntegerMap) map<string,int>;
 %template(IntVect) vector<int32_t>;
@@ -89,17 +71,12 @@ namespace std {
 #include <functional>
 %}
 
-/* parsed by SWIG to generate all the glue */
-/* %include "../managerimpl.h" */
-/* %include <client/callmanager.h> */
-
 %include "managerimpl.i"
 %include "callmanager.i"
 %include "configurationmanager.i"
 %include "presencemanager.i"
 %include "callmanager.i"
 %include "videomanager.i"
-//#include "dring/callmanager_interface.h"
 
 %header %{
 #include "callback.h"
@@ -134,7 +111,6 @@ void init(const v8::Handle<v8::Value> &funcMap){
     const std::map<std::string, SharedCallback> callEvHandlers = {
         exportable_callback<CallSignal::StateChange>(bind(&callStateChanged, _1, _2, _3)),
         exportable_callback<CallSignal::IncomingMessage>(bind(&incomingMessage, _1, _2, _3)),
-        exportable_callback<CallSignal::VoiceMailNotify>(bind(&voiceMailNotify, _1, _2, _3, _4)),
         exportable_callback<CallSignal::IncomingCall>(bind(&incomingCall, _1, _2, _3)),
     };
 
@@ -146,12 +122,10 @@ void init(const v8::Handle<v8::Value> &funcMap){
         exportable_callback<ConfigurationSignal::ExportOnRingEnded>(bind(&exportOnRingEnded, _1, _2, _3 )),
         exportable_callback<ConfigurationSignal::NameRegistrationEnded>(bind(&nameRegistrationEnded, _1, _2, _3 )),
         exportable_callback<ConfigurationSignal::RegisteredNameFound>(bind(&registeredNameFound, _1, _2, _3, _4 )),
-        exportable_callback<ConfigurationSignal::UserSearchEnded>(bind(&ConfigurationCallback::userSearchEnded, confM, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::VolatileDetailsChanged>(bind(&volatileDetailsChanged, _1, _2)),
         exportable_callback<ConfigurationSignal::KnownDevicesChanged>(bind(&knownDevicesChanged, _1, _2 )),
         exportable_callback<ConfigurationSignal::IncomingAccountMessage>(bind(&incomingAccountMessage, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::AccountMessageStatusChanged>(bind(&accountMessageStatusChanged, _1, _2, _3, _4 )),
-        exportable_callback<ConfigurationSignal::ProfileReceived>(bind(&profileReceived, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4 )),
     };
 
