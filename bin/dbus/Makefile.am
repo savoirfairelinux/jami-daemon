@@ -65,6 +65,12 @@ libclient_dbus_la_CXXFLAGS = -I../ \
             -DPROGSHAREDIR=\"${datadir}/ring\" \
             $(DBUSCPP_CFLAGS)
 
+do_subst = $(SED) \
+	-e 's,[@]bindir[@],$(bindir),g'
+
+cx.ring.Ring.service: cx.ring.Ring.service.in Makefile
+	$(do_subst) < $< > $@
+
 # Dbus service file
 servicedir = $(datadir)/dbus-1/services
 service_DATA = cx.ring.Ring.service
