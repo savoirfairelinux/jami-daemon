@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "77fcb4e5_10719275",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 58
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-01T14:24:41Z",
+      "side": 1,
+      "message": "ok gerrit is fucked up, I don\u0027t see the previous comment nor answer.\n\nSo I just continue here.\nmy point here is that class is over-complexified for nothing. If complexity needs to be added, deal with it when you will need it (and imho, if MediaAttribute needs more complexity than what is here, it will be another object). Here, it\u0027s 30 lines duplicating the default behavior (constructor does nothing, copy constructor reproduces what \u003d default already do.",
+      "range": {
+        "startLine": 29,
+        "startChar": 0,
+        "endLine": 52,
+        "endChar": 34
+      },
+      "revId": "53624abbfadc5bd9ef0e2518fbb243f15cbed8e4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "258784e9_7a66070f",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 58
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-01T14:24:41Z",
+      "side": 1,
+      "message": "My point is not to depend on Account, this doesn\u0027t make sense. My point is to not create duplicate utils all other the place (I\u0027m sure there is already a lot of duplicate elsewhere).\nIf you need this, just move the static function already there in a utils namespace.",
+      "range": {
+        "startLine": 58,
+        "startChar": 69,
+        "endLine": 66,
+        "endChar": 79
+      },
+      "revId": "53624abbfadc5bd9ef0e2518fbb243f15cbed8e4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "16f01cc4_413d2214",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 58
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-01T14:24:41Z",
+      "side": 1,
+      "message": "same, avoid duplicating code",
+      "range": {
+        "startLine": 71,
+        "startChar": 30,
+        "endLine": 72,
+        "endChar": 31
+      },
+      "revId": "53624abbfadc5bd9ef0e2518fbb243f15cbed8e4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2281cdac_61d39e29",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 58
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-01T14:24:41Z",
+      "side": 1,
+      "message": "nvm, ideally this can be moved just below MediaType def",
+      "range": {
+        "startLine": 75,
+        "startChar": 23,
+        "endLine": 75,
+        "endChar": 40
+      },
+      "revId": "53624abbfadc5bd9ef0e2518fbb243f15cbed8e4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
