@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fb128d3e_04a6778d",
+        "filename": "src/dring/callmanager_interface.h",
+        "patchSetId": 59
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-01T16:44:10Z",
+      "side": 1,
+      "message": "ici",
+      "range": {
+        "startLine": 38,
+        "startChar": 15,
+        "endLine": 38,
+        "endChar": 52
+      },
+      "revId": "6359f6fe149c2e90fbe1c312f4de0fa503468257",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "240e013b_044705c3",
+        "filename": "src/dring/dring.h",
+        "patchSetId": 59
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-01T16:44:10Z",
+      "side": 1,
+      "message": "ici",
+      "revId": "6359f6fe149c2e90fbe1c312f4de0fa503468257",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
