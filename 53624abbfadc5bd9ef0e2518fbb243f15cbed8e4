@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "504bb78e_cbcb9862",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 58
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-01T15:12:02Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "77fcb4e5_10719275",
+      "range": {
+        "startLine": 29,
+        "startChar": 0,
+        "endLine": 52,
+        "endChar": 34
+      },
+      "revId": "53624abbfadc5bd9ef0e2518fbb243f15cbed8e4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "258784e9_7a66070f",
         "filename": "src/media/media_attribute.h",
         "patchSetId": 58
@@ -45,6 +69,30 @@
       "revId": "53624abbfadc5bd9ef0e2518fbb243f15cbed8e4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "483f12f1_edbdaf20",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 58
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-01T15:12:02Z",
+      "side": 1,
+      "message": "Ack\nAgree for the refactor. But for now, I need to keep the changes scoped.\nI also agree that duplication should be avoided, but not at all cost. In this case, duplication is better.\nI will not use the parsing utils until they are moved common/shared code (which I will not do in this patch).",
+      "parentUuid": "258784e9_7a66070f",
+      "range": {
+        "startLine": 58,
+        "startChar": 69,
+        "endLine": 66,
+        "endChar": 79
+      },
+      "revId": "53624abbfadc5bd9ef0e2518fbb243f15cbed8e4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "a30bfddd_5e4b28a2",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 58
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-01T15:12:02Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "16f01cc4_413d2214",
+      "range": {
+        "startLine": 71,
+        "startChar": 30,
+        "endLine": 72,
+        "endChar": 31
+      },
+      "revId": "53624abbfadc5bd9ef0e2518fbb243f15cbed8e4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "2281cdac_61d39e29",
         "filename": "src/media/media_attribute.h",
         "patchSetId": 58
@@ -82,6 +154,30 @@
       "writtenOn": "2021-04-01T14:24:41Z",
       "side": 1,
       "message": "nvm, ideally this can be moved just below MediaType def",
+      "range": {
+        "startLine": 75,
+        "startChar": 23,
+        "endLine": 75,
+        "endChar": 40
+      },
+      "revId": "53624abbfadc5bd9ef0e2518fbb243f15cbed8e4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "454277d9_b816d9de",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 58
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-01T15:12:02Z",
+      "side": 1,
+      "message": "MediaType is defined in media_codec.h. This file is a real mess. We are mixing SDP attributes with audio/video specific parameters. So I dont want to add more mess.\nUntil a full is done, I prefer to keep the changes scoped.",
+      "parentUuid": "2281cdac_61d39e29",
       "range": {
         "startLine": 75,
         "startChar": 23,
