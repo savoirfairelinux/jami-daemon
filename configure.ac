@@ -381,24 +381,21 @@ AC_ARG_WITH([dbus],
   [AS_HELP_STRING([--without-dbus], [disable support for dbus])],
   [],
   [with_dbus=yes])
-AS_IF([test "x$with_dbus" = "xyes"], [
-  PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
-    AC_MSG_WARN([Missing dbus development files]))
+AS_IF([test "x$with_dbus" = "xyes"],
+  [PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,,
+     AC_MSG_WARN([Missing dbus development files]))
 
-  AS_AC_EXPAND(LIBDIR, $libdir)
-  AC_SUBST(LIBDIR)
+   AC_CONFIG_FILES([bin/dbus/Makefile])
 
-  AC_CONFIG_FILES([bin/dbus/Makefile
-                   bin/dbus/cx.ring.Ring.service])
+   AC_PATH_PROG([DBUSXX_XML2CPP], dbusxx-xml2cpp,
+     [AC_MSG_ERROR([dbusxx-xml2cpp not found])])
 
-  AC_PATH_PROG([DBUSXX_XML2CPP], dbusxx-xml2cpp,
-    [AC_MSG_ERROR([dbusxx-xml2cpp not found])])
-
-  AS_IF([test "x$CLANG" = "xyes"],
-    [AC_MSG_ERROR([dbus does not compile when clang is used,
-                   rerun with --without-dbus])]);
-  AM_CONDITIONAL(RING_DBUS, true)],TESTS= $(check_PROGRAMS)
-  AM_CONDITIONAL(RING_DBUS, false));
+   AS_IF([test "x$CLANG" = "xyes"],
+     [AC_MSG_ERROR([dbus does not compile when clang is used,
+                    rerun with --without-dbus])]);
+   AM_CONDITIONAL(RING_DBUS, true)],
+  [TESTS= $(check_PROGRAMS)
+   AM_CONDITIONAL(RING_DBUS, false)]);
 
 dnl name service is default-enabled
 AC_ARG_ENABLE([ringns], AS_HELP_STRING([--disable-ringns],
