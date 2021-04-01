@@ -1,7 +1,5 @@
-ringlibdir = $(libdir)/ring
-
 if HAVE_WIN32
-ringlib_PROGRAMS = ringcli
+bin_PROGRAMS = ringcli
 ringcli_SOURCES = winmain.cpp
 ringcli_CXXFLAGS = -I$(top_srcdir)/src \
                    -I$(top_srcdir)/src/dring \
@@ -11,7 +9,7 @@ ringcli_LDADD = $(top_builddir)/src/libring.la
 endif
 
 if HAVE_OSX
-ringlib_PROGRAMS = ringcli
+bin_PROGRAMS = ringcli
 ringcli_SOURCES = osxmain.cpp
 ringcli_CXXFLAGS = -I$(top_srcdir)/src \
                    -I$(top_srcdir)/src/dring \
@@ -25,7 +23,7 @@ SUBDIRS=
 if RING_DBUS
 SUBDIRS+=dbus
 
-ringlib_PROGRAMS = dring
+bin_PROGRAMS = dring
 
 dring_SOURCES = main.cpp
 
