@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "851753c8_ddecd596",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-01T20:00:02Z",
+      "side": 1,
+      "message": "brain fart 😊\n\nRemoved.",
+      "parentUuid": "f51409df_4606687b",
+      "range": {
+        "startLine": 210,
+        "startChar": 16,
+        "endLine": 214,
+        "endChar": 20
+      },
+      "revId": "a3f60f1273483ef7f75045001386849e7df88440",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "db990b4a_2bd4bbcb",
         "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
         "patchSetId": 7
@@ -45,6 +69,30 @@
       "revId": "a3f60f1273483ef7f75045001386849e7df88440",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3d600498_c74024e4",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 630,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-01T20:00:02Z",
+      "side": 1,
+      "message": "UPnPContext outlives PUPnP and NatPmp instances, so weak() is needed. Were missing two places. Now weak is everywhere except in the constructors.",
+      "parentUuid": "db990b4a_2bd4bbcb",
+      "range": {
+        "startLine": 630,
+        "startChar": 4,
+        "endLine": 630,
+        "endChar": 36
+      },
+      "revId": "a3f60f1273483ef7f75045001386849e7df88440",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
