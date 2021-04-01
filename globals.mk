@@ -1,7 +1,6 @@
 # Global variables
 
 src=$(abs_top_srcdir)
-ringlibdir=$(DESTDIR)$(libdir)/ring
 
 ASTYLERC="$(top_srcdir)/../astylerc"
 indent="/usr/bin/astyle"
