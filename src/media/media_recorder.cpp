@@ -85,8 +85,7 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
                     JAMI_ERR("Accel failure: %s", e.what());
                     return;
                 }
-            }
-            else
+            } else
 #endif
                 framePtr = std::static_pointer_cast<VideoFrame>(m);
             int angle = framePtr->getOrientation();
@@ -264,10 +263,9 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
             (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
             try {
-                clone = video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
-                                                                    frame),
-                                                                static_cast<AVPixelFormat>(
-                                                                    ms.format));
+                clone = video::HardwareAccel::transferToMainMemory(
+                    *std::static_pointer_cast<VideoFrame>(frame),
+                    static_cast<AVPixelFormat>(ms.format));
             } catch (const std::runtime_error& e) {
                 JAMI_ERR("Accel failure: %s", e.what());
                 return;
@@ -355,7 +353,7 @@ MediaRecorder::initRecord()
 
     if (hasVideo_) {
         auto videoCodec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(
-            getSystemCodecContainer()->searchCodecByName("VP8", jami::MEDIA_VIDEO));
+            getSystemCodecContainer()->searchCodecByName("VP8", MediaType::MEDIA_VIDEO));
         videoIdx_ = encoder_->addStream(*videoCodec.get());
         if (videoIdx_ < 0) {
             JAMI_ERR() << "Failed to add video stream to encoder";
@@ -365,7 +363,7 @@ MediaRecorder::initRecord()
 
     if (hasAudio_) {
         auto audioCodec = std::static_pointer_cast<jami::SystemAudioCodecInfo>(
-            getSystemCodecContainer()->searchCodecByName("opus", jami::MEDIA_AUDIO));
+            getSystemCodecContainer()->searchCodecByName("opus", MediaType::MEDIA_AUDIO));
         audioIdx_ = encoder_->addStream(*audioCodec.get());
         if (audioIdx_ < 0) {
             JAMI_ERR() << "Failed to add audio stream to encoder";

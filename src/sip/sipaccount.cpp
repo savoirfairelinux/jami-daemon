@@ -32,6 +32,7 @@
 #include "sipvoiplink.h"
 #include "sipcall.h"
 #include "sip_utils.h"
+#include "map_utils.h"
 #include "array_size.h"
 
 #include "call_factory.h"
@@ -675,53 +676,57 @@ SIPAccount::setAccountDetails(const std::map<std::string, std::string>& details)
     std::lock_guard<std::mutex> lock(configurationMutex_);
 
     SIPAccountBase::setAccountDetails(details);
-    parseString(details, Conf::CONFIG_ACCOUNT_USERNAME, username_);
+    jami::parseString(details, Conf::CONFIG_ACCOUNT_USERNAME, username_);
 
-    parseInt(details, Conf::CONFIG_LOCAL_PORT, localPort_);
+    jami::parseInt(details, Conf::CONFIG_LOCAL_PORT, localPort_);
 
     // TLS
-    parseString(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
-    parseString(details, Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
-    parseString(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
-    parseString(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
+    jami::parseString(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
+    jami::parseString(details, Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
+    jami::parseString(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
+    jami::parseString(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
 
     // SIP specific account settings
-    parseString(details, Conf::CONFIG_BIND_ADDRESS, bindAddress_);
-    parseString(details, Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
-    parseBool(details, Conf::CONFIG_ACCOUNT_IP_REWRITE, allowViaRewrite_);
+    jami::parseString(details, Conf::CONFIG_BIND_ADDRESS, bindAddress_);
+    jami::parseString(details, Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
+    jami::parseBool(details, Conf::CONFIG_ACCOUNT_IP_REWRITE, allowViaRewrite_);
 
     if (not publishedSameasLocal_)
         usePublishedAddressPortInVIA();
 
-    parseInt(details, Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire_);
+    jami::parseInt(details, Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire_);
 
     if (registrationExpire_ < MIN_REGISTRATION_TIME)
         registrationExpire_ = MIN_REGISTRATION_TIME;
 
-    parseBool(details, Conf::CONFIG_KEEP_ALIVE_ENABLED, keepAliveEnabled_);
+    jami::parseBool(details, Conf::CONFIG_KEEP_ALIVE_ENABLED, keepAliveEnabled_);
     bool presenceEnabled = false;
-    parseBool(details, Conf::CONFIG_PRESENCE_ENABLED, presenceEnabled);
+    jami::parseBool(details, Conf::CONFIG_PRESENCE_ENABLED, presenceEnabled);
     enablePresence(presenceEnabled);
 
     // TLS settings
-    parseBool(details, Conf::CONFIG_TLS_ENABLE, tlsEnable_);
-    parseInt(details, Conf::CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
+    jami::parseBool(details, Conf::CONFIG_TLS_ENABLE, tlsEnable_);
+    jami::parseInt(details, Conf::CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
     auto iter = details.find(Conf::CONFIG_TLS_METHOD);
     if (iter != details.end())
         validate(tlsMethod_, iter->second, VALID_TLS_PROTOS);
-    parseString(details, Conf::CONFIG_TLS_CIPHERS, tlsCiphers_);
-    parseString(details, Conf::CONFIG_TLS_SERVER_NAME, tlsServerName_);
-    parseBool(details, Conf::CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer_);
-    parseBool(details, Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
-    parseBool(details, Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
-    parseString(details, Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
-    parseBool(details, Conf::CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer_);
-    parseBool(details, Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
-    parseBool(details, Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
-    parseString(details, Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
+    jami::parseString(details, Conf::CONFIG_TLS_CIPHERS, tlsCiphers_);
+    jami::parseString(details, Conf::CONFIG_TLS_SERVER_NAME, tlsServerName_);
+    jami::parseBool(details, Conf::CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer_);
+    jami::parseBool(details, Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
+    jami::parseBool(details,
+                    Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE,
+                    tlsRequireClientCertificate_);
+    jami::parseString(details, Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
+    jami::parseBool(details, Conf::CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer_);
+    jami::parseBool(details, Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
+    jami::parseBool(details,
+                    Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE,
+                    tlsRequireClientCertificate_);
+    jami::parseString(details, Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
 
     // srtp settings
-    parseBool(details, Conf::CONFIG_SRTP_RTP_FALLBACK, srtpFallback_);
+    jami::parseBool(details, Conf::CONFIG_SRTP_RTP_FALLBACK, srtpFallback_);
     iter = details.find(Conf::CONFIG_SRTP_KEY_EXCHANGE);
     if (iter != details.end())
         srtpKeyExchange_ = sip_utils::getKeyExchangeProtocol(iter->second.c_str());
@@ -731,7 +736,9 @@ SIPAccount::setAccountDetails(const std::map<std::string, std::string>& details)
         std::vector<std::map<std::string, std::string>> v;
         std::map<std::string, std::string> map;
         map[Conf::CONFIG_ACCOUNT_USERNAME] = username_;
-        parseString(details, Conf::CONFIG_ACCOUNT_PASSWORD, map[Conf::CONFIG_ACCOUNT_PASSWORD]);
+        jami::parseString(details,
+                          Conf::CONFIG_ACCOUNT_PASSWORD,
+                          map[Conf::CONFIG_ACCOUNT_PASSWORD]);
         map[Conf::CONFIG_ACCOUNT_REALM] = "*";
         v.push_back(map);
         setCredentials(v);

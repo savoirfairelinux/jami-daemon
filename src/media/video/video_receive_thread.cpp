@@ -82,7 +82,7 @@ VideoReceiveThread::setup()
                                             av_buffer_ref(displayMatrix.get()));
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     }));
-    videoDecoder_->setResolutionChangedCallback([this] (int width, int height){
+    videoDecoder_->setResolutionChangedCallback([this](int width, int height) {
         dstWidth_ = width;
         dstHeight_ = height;
     });
@@ -219,7 +219,7 @@ VideoReceiveThread::configureVideoOutput()
     Smartools::getInstance().setResolution(id_, dstWidth_, dstHeight_);
 
     if (onSuccessfulSetup_)
-        onSuccessfulSetup_(MEDIA_VIDEO, 1);
+        onSuccessfulSetup_(MediaType::MEDIA_VIDEO, 1);
     isVideoConfigured_ = true;
     return true;
 }

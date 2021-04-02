@@ -252,7 +252,7 @@ public:
     /* Accessor to data structures
      * @return The list that reflects the user's choice
      */
-    std::vector<unsigned> getActiveCodecs(MediaType mediaType = MEDIA_ALL) const;
+    std::vector<unsigned> getActiveCodecs(MediaType mediaType = MediaType::MEDIA_ALL) const;
     bool hasActiveCodec(MediaType mediaType) const;
 
     /**
@@ -367,30 +367,6 @@ private:
 
 protected:
     virtual void enableUpnp(bool state);
-
-    static void parseString(const std::map<std::string, std::string>& details,
-                            const char* key,
-                            std::string& s);
-    static void parseBool(const std::map<std::string, std::string>& details,
-                          const char* key,
-                          bool& b);
-    static void parsePath(const std::map<std::string, std::string>& details,
-                          const char* key,
-                          std::string& s,
-                          const std::string& base);
-
-    template<class T>
-    static inline void parseInt(const std::map<std::string, std::string>& details,
-                                const char* key,
-                                T& i)
-    {
-        const auto& iter = details.find(key);
-        if (iter == details.end()) {
-            JAMI_ERR("Couldn't find key \"%s\"", key);
-            return;
-        }
-        i = atoi(iter->second.c_str());
-    }
 
     friend class ConfigurationTest;
 

@@ -320,7 +320,7 @@ AudioInput::switchInput(const std::string& resource)
     wakeUp_ = std::chrono::high_resolution_clock::now() + MS_PER_PACKET;
     loop_.start();
     if (onSuccessfulSetup_)
-        onSuccessfulSetup_(MEDIA_AUDIO, 0);
+        onSuccessfulSetup_(MediaType::MEDIA_AUDIO, 0);
     return futureDevOpts_;
 }
 

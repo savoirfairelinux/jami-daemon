@@ -90,7 +90,7 @@ AudioReceiveThread::setup()
     ringbuffer_ = Manager::instance().getRingBufferPool().getRingBuffer(id_);
 
     if (onSuccessfulSetup_)
-        onSuccessfulSetup_(MEDIA_AUDIO, 1);
+        onSuccessfulSetup_(MediaType::MEDIA_AUDIO, 1);
 
     return true;
 }

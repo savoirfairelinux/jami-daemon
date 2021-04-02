@@ -145,7 +145,7 @@ SIPCall::findRtpStreamIndex(const std::string& label) const
     const auto iter = std::find_if(rtpStreams_.begin(),
                                    rtpStreams_.end(),
                                    [&label](const RtpStream& rtp) {
-                                       return (label.compare(rtp.mediaAttribute_->label_) == 0);
+                                       return (label.compare(rtp.mediaAttribute_->label) == 0);
                                    });
 
     // Return the index if there is a match.
@@ -162,11 +162,11 @@ SIPCall::createRtpSession(RtpStream& stream)
     if (not stream.mediaAttribute_)
         throw std::runtime_error("Missing media attribute");
 
-    if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
+    if (stream.mediaAttribute_->type == MediaType::MEDIA_AUDIO) {
         stream.rtpSession_ = std::make_shared<AudioRtpSession>(id_);
     }
 #ifdef ENABLE_VIDEO
-    else if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
+    else if (stream.mediaAttribute_->type == MediaType::MEDIA_VIDEO) {
         stream.rtpSession_ = std::make_shared<video::VideoRtpSession>(id_, getVideoSettings());
     }
 #endif
@@ -195,14 +195,14 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
     rtpSession->updateMedia(remoteMedia, localMedia);
 
     // Mute/un-mute media
-    if (mediaAttr->muted_) {
+    if (mediaAttr->muted) {
         rtpSession->setMuted(true);
         // TODO. Setting mute to true should be enough to mute.
         // Kept for backward compatiblity.
         rtpSession->setMediaSource("");
     } else {
         rtpSession->setMuted(false);
-        rtpSession->setMediaSource(mediaAttr->sourceUri_);
+        rtpSession->setMediaSource(mediaAttr->sourceUri);
     }
 
     rtpSession->setSuccessfulSetupCb([w = weak()](MediaType type, bool isRemote) {
@@ -1054,7 +1054,7 @@ SIPCall::switchInput(const std::string& source)
 
     for (auto const& stream : rtpStreams_) {
         auto mediaAttr = stream.mediaAttribute_;
-        mediaAttr->sourceUri_ = source;
+        mediaAttr->sourceUri = source;
     }
 
     // Check if the call is being recorded in order to continue
@@ -1289,7 +1289,7 @@ SIPCall::setupLocalSDPFromIce()
     for (auto const& stream : rtpStreams_) {
         JAMI_DBG("[call:%s] add ICE local candidates for media [%s] at index %u",
                  getCallId().c_str(),
-                 stream.mediaAttribute_->label_.c_str(),
+                 stream.mediaAttribute_->label.c_str(),
                  idx);
         // RTP
         sdp_->addIceCandidates(idx, media_tr->getLocalCandidates(compId));
@@ -1354,8 +1354,8 @@ SIPCall::addMediaStream(const MediaAttribute& mediaAttr)
 
     // Set default media source if empty. Kept for backward compatibility.
 #ifdef ENABLE_VIDEO
-    if (stream.mediaAttribute_->sourceUri_.empty()) {
-        stream.mediaAttribute_->sourceUri_
+    if (stream.mediaAttribute_->sourceUri.empty()) {
+        stream.mediaAttribute_->sourceUri
             = Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice();
     }
 #endif
@@ -1368,8 +1368,8 @@ SIPCall::initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
 {
     for (size_t idx = 0; idx < mediaAttrList.size(); idx++) {
         auto const& mediaAttr = mediaAttrList.at(idx);
-        if (mediaAttr.type_ != MEDIA_AUDIO && mediaAttr.type_ != MEDIA_VIDEO) {
-            JAMI_ERR("[call:%s] Unexpected media type %u", getCallId().c_str(), mediaAttr.type_);
+        if (mediaAttr.type != MEDIA_AUDIO && mediaAttr.type != MEDIA_VIDEO) {
+            JAMI_ERR("[call:%s] Unexpected media type %u", getCallId().c_str(), mediaAttr.type);
             assert(false);
         }
 
@@ -1475,9 +1475,9 @@ SIPCall::startAllMedia()
     auto const& iter = std::find_if(rtpStreams_.begin(),
                                     rtpStreams_.end(),
                                     [](const RtpStream& stream) {
-                                        return stream.mediaAttribute_->type_
+                                        return stream.mediaAttribute_->type
                                                    == MediaType::MEDIA_VIDEO
-                                               and not stream.mediaAttribute_->muted_;
+                                               and not stream.mediaAttribute_->muted;
                                     });
 
     // Video is muted if all video streams are muted.
@@ -1565,7 +1565,7 @@ SIPCall::stopAllMedia()
 void
 SIPCall::muteMedia(const std::string& mediaType, bool mute)
 {
-    auto type = MediaAttribute::stringToMediaType(mediaType);
+    auto type = stringToMediaType(mediaType);
 
     if (type == MediaType::MEDIA_AUDIO) {
         JAMI_WARN("[call:%s] %s all audio medias",
@@ -1586,8 +1586,8 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
 
     // Mute/Un-mute all medias with matching type.
     for (auto& mediaAttr : mediaList) {
-        if (mediaAttr.type_ == type) {
-            mediaAttr.muted_ = mute;
+        if (mediaAttr.type == type) {
+            mediaAttr.muted = mute;
         }
     }
 
@@ -1608,37 +1608,37 @@ SIPCall::updateMediaStreamInternal(const MediaAttribute& newMediaAttr, size_t st
 
     bool requireReinvite = false;
 
-    if (newMediaAttr.muted_ == mediaAttr->muted_) {
+    if (newMediaAttr.muted == mediaAttr->muted) {
         // Nothing to do. Already in the desired state.
         JAMI_DBG("[call:%s] [%s] already %s",
                  getCallId().c_str(),
-                 mediaAttr->label_.c_str(),
-                 mediaAttr->muted_ ? "muted " : "un-muted ");
+                 mediaAttr->label.c_str(),
+                 mediaAttr->muted ? "muted " : "un-muted ");
 
         return requireReinvite;
     }
 
     // Update
-    mediaAttr->muted_ = newMediaAttr.muted_;
-    mediaAttr->sourceUri_ = newMediaAttr.sourceUri_;
+    mediaAttr->muted = newMediaAttr.muted;
+    mediaAttr->sourceUri = newMediaAttr.sourceUri;
 
     JAMI_DBG("[call:%s] %s [%s]",
              getCallId().c_str(),
-             mediaAttr->muted_ ? "muting" : "un-muting",
-             mediaAttr->label_.c_str());
+             mediaAttr->muted ? "muting" : "un-muting",
+             mediaAttr->label.c_str());
 
-    if (mediaAttr->type_ == MediaType::MEDIA_AUDIO) {
-        rtpStream.rtpSession_->setMuted(mediaAttr->muted_);
+    if (mediaAttr->type == MediaType::MEDIA_AUDIO) {
+        rtpStream.rtpSession_->setMuted(mediaAttr->muted);
         if (not isSubcall())
-            emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), mediaAttr->muted_);
-        setMute(mediaAttr->muted_);
+            emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), mediaAttr->muted);
+        setMute(mediaAttr->muted);
         return requireReinvite;
     }
 
 #ifdef ENABLE_VIDEO
-    if (mediaAttr->type_ == MediaType::MEDIA_VIDEO) {
+    if (mediaAttr->type == MediaType::MEDIA_VIDEO) {
         if (not isSubcall())
-            emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), mediaAttr->muted_);
+            emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), mediaAttr->muted);
 
         // Changes in video attributes always trigger a re-invite.
         requireReinvite = true;
@@ -1665,7 +1665,7 @@ SIPCall::requestMediaChange(const std::vector<MediaAttribute>& mediaAttrList)
     bool reinviteRequired = false;
 
     for (auto const& newMediaAttr : mediaAttrList) {
-        auto streamIdx = findRtpStreamIndex(newMediaAttr.label_);
+        auto streamIdx = findRtpStreamIndex(newMediaAttr.label);
         if (streamIdx == rtpStreams_.size()) {
             // Media does not exist, add a new one.
             addMediaStream(newMediaAttr);
@@ -1674,7 +1674,7 @@ SIPCall::requestMediaChange(const std::vector<MediaAttribute>& mediaAttrList)
             JAMI_DBG(
                 "[call:%s] Added a new media stream - type: %s - @ index %lu. Require a re-invite",
                 getCallId().c_str(),
-                stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO ? "AUDIO" : "VIDEO",
+                stream.mediaAttribute_->type == MediaType::MEDIA_AUDIO ? "AUDIO" : "VIDEO",
                 streamIdx);
             // Needs a new SDP and reinvite.
             reinviteRequired = true;
@@ -1895,9 +1895,9 @@ SIPCall::getDetails() const
 
 #ifdef ENABLE_VIDEO
     for (auto const& stream : rtpStreams_) {
-        if (stream.mediaAttribute_->type_ != MediaType::MEDIA_VIDEO)
+        if (stream.mediaAttribute_->type != MediaType::MEDIA_VIDEO)
             continue;
-        details.emplace(DRing::Call::Details::VIDEO_SOURCE, stream.mediaAttribute_->sourceUri_);
+        details.emplace(DRing::Call::Details::VIDEO_SOURCE, stream.mediaAttribute_->sourceUri);
         if (auto const& rtpSession = stream.rtpSession_) {
             if (auto codec = rtpSession->getCodec())
                 details.emplace(DRing::Call::Details::VIDEO_CODEC, codec->systemCodecInfo.name);

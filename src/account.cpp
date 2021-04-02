@@ -43,6 +43,7 @@ using random_device = dht::crypto::random_device;
 #include "account_schema.h"
 #include "dring/account_const.h"
 #include "string_utils.h"
+#include "map_utils.h"
 #include "fileutils.h"
 #include "config/yamlparser.h"
 #include "system_codec_container.h"
@@ -224,7 +225,7 @@ join_string(const std::vector<unsigned>& v)
 void
 Account::serialize(YAML::Emitter& out) const
 {
-    const auto& activeCodecs = join_string(getActiveCodecs(MEDIA_ALL));
+    const auto& activeCodecs = join_string(getActiveCodecs(MediaType::MEDIA_ALL));
 
     out << YAML::Key << ID_KEY << YAML::Value << accountID_;
     out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
@@ -270,7 +271,7 @@ Account::unserialize(const YAML::Node& node)
         if (parseValueOptional(node, ALL_CODECS_KEY, allCodecs)) {
             JAMI_WARN("Converting deprecated codec list");
             auto list = convertIdToAVId(split_string_to_unsigned(allCodecs, '/'));
-            auto codec = searchCodecByName("H265", MEDIA_ALL);
+            auto codec = searchCodecByName("H265", MediaType::MEDIA_ALL);
             // set H265 as first active codec if found
             if (codec)
                 list.emplace(list.begin(), codec->systemCodecInfo.id);
@@ -307,30 +308,30 @@ void
 Account::setAccountDetails(const std::map<std::string, std::string>& details)
 {
     // Account setting common to any account type
-    parseString(details, Conf::CONFIG_ACCOUNT_ALIAS, alias_);
-    parseString(details, Conf::CONFIG_ACCOUNT_DISPLAYNAME, displayName_);
-    parseBool(details, Conf::CONFIG_ACCOUNT_ENABLE, enabled_);
-    parseString(details, Conf::CONFIG_ACCOUNT_HOSTNAME, hostname_);
-    parseString(details, Conf::CONFIG_ACCOUNT_MAILBOX, mailBox_);
-    parseBool(details, Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
-    parseBool(details, Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous_);
-    parseInt(details, DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, activeCallLimit_);
-    parseBool(details, Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
-    parseString(details, Conf::CONFIG_RINGTONE_PATH, ringtonePath_);
+    jami::parseString(details, Conf::CONFIG_ACCOUNT_ALIAS, alias_);
+    jami::parseString(details, Conf::CONFIG_ACCOUNT_DISPLAYNAME, displayName_);
+    jami::parseBool(details, Conf::CONFIG_ACCOUNT_ENABLE, enabled_);
+    jami::parseString(details, Conf::CONFIG_ACCOUNT_HOSTNAME, hostname_);
+    jami::parseString(details, Conf::CONFIG_ACCOUNT_MAILBOX, mailBox_);
+    jami::parseBool(details, Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
+    jami::parseBool(details, Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous_);
+    jami::parseInt(details, DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, activeCallLimit_);
+    jami::parseBool(details, Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
+    jami::parseString(details, Conf::CONFIG_RINGTONE_PATH, ringtonePath_);
     if (ringtonePath_.empty()) {
         ringtonePath_ = DEFAULT_RINGTONE_PATH;
     }
-    parseBool(details, Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_);
+    jami::parseBool(details, Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_);
     if (hasCustomUserAgent_)
-        parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent_);
+        jami::parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent_);
 
-    parseBool(details, Conf::CONFIG_UPNP_ENABLED, upnpEnabled_);
+    jami::parseBool(details, Conf::CONFIG_UPNP_ENABLED, upnpEnabled_);
     enableUpnp(upnpEnabled_ && isEnabled());
     std::string defMod;
-    parseString(details, Conf::CONFIG_DEFAULT_MODERATORS, defMod);
+    jami::parseString(details, Conf::CONFIG_DEFAULT_MODERATORS, defMod);
     defaultModerators_ = string_split_set(defMod);
-    parseBool(details, Conf::CONFIG_LOCAL_MODERATORS_ENABLED, localModeratorsEnabled_);
-    parseBool(details, Conf::CONFIG_ALL_MODERATORS_ENABLED, allModeratorsEnabled_);
+    jami::parseBool(details, Conf::CONFIG_LOCAL_MODERATORS_ENABLED, localModeratorsEnabled_);
+    jami::parseBool(details, Conf::CONFIG_ALL_MODERATORS_ENABLED, allModeratorsEnabled_);
 }
 
 std::map<std::string, std::string>
@@ -385,13 +386,13 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
 {
     // first clear the previously stored codecs
     // TODO: mutex to protect isActive
-    setAllCodecsActive(MEDIA_ALL, false);
+    setAllCodecsActive(MediaType::MEDIA_ALL, false);
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the codec vector to save the order.
     uint16_t order = 1;
     for (const auto& item : list) {
-        if (auto accCodec = searchCodecById(item, MEDIA_ALL)) {
+        if (auto accCodec = searchCodecById(item, MediaType::MEDIA_ALL)) {
             accCodec->isActive = true;
             accCodec->order = order;
             ++order;
@@ -473,60 +474,26 @@ Account::mapStateNumberToString(RegistrationState state)
 std::vector<unsigned>
 Account::getDefaultCodecsId()
 {
-    return getSystemCodecContainer()->getSystemCodecInfoIdList(MEDIA_ALL);
+    return getSystemCodecContainer()->getSystemCodecInfoIdList(MediaType::MEDIA_ALL);
 }
 
 std::map<std::string, std::string>
 Account::getDefaultCodecDetails(const unsigned& codecId)
 {
-    auto codec = jami::getSystemCodecContainer()->searchCodecById(codecId, jami::MEDIA_ALL);
+    auto codec = jami::getSystemCodecContainer()->searchCodecById(codecId,
+                                                                  jami::MediaType::MEDIA_ALL);
     if (codec) {
-        if (codec->mediaType & jami::MEDIA_AUDIO) {
+        if (codec->mediaType & MediaType::MEDIA_AUDIO) {
             auto audioCodec = std::static_pointer_cast<jami::SystemAudioCodecInfo>(codec);
             return audioCodec->getCodecSpecifications();
         }
-        if (codec->mediaType & jami::MEDIA_VIDEO) {
+        if (codec->mediaType & MediaType::MEDIA_VIDEO) {
             auto videoCodec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(codec);
             return videoCodec->getCodecSpecifications();
         }
     }
     return {};
 }
-
-#define find_iter() \
-    const auto& iter = details.find(key); \
-    if (iter == details.end()) { \
-        JAMI_ERR("Couldn't find key \"%s\"", key); \
-        return; \
-    }
-
-void
-Account::parseString(const std::map<std::string, std::string>& details,
-                     const char* key,
-                     std::string& s)
-{
-    find_iter();
-    s = iter->second;
-}
-
-void
-Account::parsePath(const std::map<std::string, std::string>& details,
-                   const char* key,
-                   std::string& s,
-                   const std::string& base)
-{
-    find_iter();
-    s = fileutils::getCleanPath(base, iter->second);
-}
-
-void
-Account::parseBool(const std::map<std::string, std::string>& details, const char* key, bool& b)
-{
-    find_iter();
-    b = iter->second == TRUE_STR;
-}
-
-#undef find_iter
 
 /**
  * Get the UPnP IP (external router) address.

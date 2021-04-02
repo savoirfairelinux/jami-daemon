@@ -173,18 +173,18 @@ Sdp::mediaDirection(MediaType type, bool onHold)
 char const*
 Sdp::mediaDirection(const MediaAttribute& localAttr, const MediaAttribute& remoteAttr)
 {
-    if (not localAttr.enabled_ or not remoteAttr.enabled_)
+    if (not localAttr.enabled or not remoteAttr.enabled)
         return "inactive";
 
-    if (localAttr.muted_) {
-        if (remoteAttr.muted_)
+    if (localAttr.muted) {
+        if (remoteAttr.muted)
             return "inactive";
         else
             return "recvonly";
     }
 
     // Local is enabled and not muted. Check remote.
-    if (remoteAttr.muted_)
+    if (remoteAttr.muted)
         return "sendonly";
 
     // Both enabled and not muted.
@@ -216,8 +216,8 @@ Sdp::getMediaDirection(pjmedia_sdp_media* media)
 pjmedia_sdp_media*
 Sdp::addMediaDescription(const MediaAttribute& mediaAttr, bool onHold)
 {
-    auto type = mediaAttr.type_;
-    auto secure = mediaAttr.secure_;
+    auto type = mediaAttr.type;
+    auto secure = mediaAttr.secure;
 
     JAMI_DBG("Add media description [%s]", mediaAttr.toString(true).c_str());
 

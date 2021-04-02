@@ -236,7 +236,7 @@ SystemCodecContainer::checkInstalledCodecs()
 std::vector<std::shared_ptr<SystemCodecInfo>>
 SystemCodecContainer::getSystemCodecInfoList(MediaType mediaType)
 {
-    if (mediaType & MEDIA_ALL)
+    if (mediaType & MediaType::MEDIA_ALL)
         return availableCodecList_;
 
     // otherwise we have to instantiate a new list containing filtered objects

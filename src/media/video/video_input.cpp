@@ -336,7 +336,7 @@ VideoInput::createDecoder()
              decOpts_.framerate.real(),
              decOpts_.pixel_format.c_str());
     if (onSuccessfulSetup_)
-        onSuccessfulSetup_(MEDIA_VIDEO, 0);
+        onSuccessfulSetup_(MediaType::MEDIA_VIDEO, 0);
 
     decoder_ = std::move(decoder);
     foundDecOpts(decOpts_);

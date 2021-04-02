@@ -37,6 +37,7 @@
 #include "fileutils.h"
 #include "sip_utils.h"
 #include "utf8_utils.h"
+#include "map_utils.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -307,39 +308,39 @@ SIPAccountBase::setAccountDetails(const std::map<std::string, std::string>& deta
 {
     Account::setAccountDetails(details);
 
-    parseBool(details, Conf::CONFIG_VIDEO_ENABLED, videoEnabled_);
+    jami::parseBool(details, Conf::CONFIG_VIDEO_ENABLED, videoEnabled_);
 
     // general sip settings
-    parseString(details, Conf::CONFIG_LOCAL_INTERFACE, interface_);
-    parseBool(details, Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_);
-    parseString(details, Conf::CONFIG_PUBLISHED_ADDRESS, publishedIpAddress_);
-    parseInt(details, Conf::CONFIG_PUBLISHED_PORT, publishedPort_);
+    jami::parseString(details, Conf::CONFIG_LOCAL_INTERFACE, interface_);
+    jami::parseBool(details, Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_);
+    jami::parseString(details, Conf::CONFIG_PUBLISHED_ADDRESS, publishedIpAddress_);
+    jami::parseInt(details, Conf::CONFIG_PUBLISHED_PORT, publishedPort_);
 
-    parseString(details, Conf::CONFIG_ACCOUNT_DTMF_TYPE, dtmfType_);
+    jami::parseString(details, Conf::CONFIG_ACCOUNT_DTMF_TYPE, dtmfType_);
 
     int tmpMin = -1;
-    parseInt(details, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MIN, tmpMin);
+    jami::parseInt(details, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MIN, tmpMin);
     int tmpMax = -1;
-    parseInt(details, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX, tmpMax);
+    jami::parseInt(details, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX, tmpMax);
     updateRange(tmpMin, tmpMax, audioPortRange_);
 #ifdef ENABLE_VIDEO
     tmpMin = -1;
-    parseInt(details, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN, tmpMin);
+    jami::parseInt(details, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN, tmpMin);
     tmpMax = -1;
-    parseInt(details, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX, tmpMax);
+    jami::parseInt(details, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX, tmpMax);
     updateRange(tmpMin, tmpMax, videoPortRange_);
 #endif
 
     // ICE - STUN
-    parseBool(details, Conf::CONFIG_STUN_ENABLE, stunEnabled_);
-    parseString(details, Conf::CONFIG_STUN_SERVER, stunServer_);
+    jami::parseBool(details, Conf::CONFIG_STUN_ENABLE, stunEnabled_);
+    jami::parseString(details, Conf::CONFIG_STUN_SERVER, stunServer_);
 
     // ICE - TURN
-    parseBool(details, Conf::CONFIG_TURN_ENABLE, turnEnabled_);
-    parseString(details, Conf::CONFIG_TURN_SERVER, turnServer_);
-    parseString(details, Conf::CONFIG_TURN_SERVER_UNAME, turnServerUserName_);
-    parseString(details, Conf::CONFIG_TURN_SERVER_PWD, turnServerPwd_);
-    parseString(details, Conf::CONFIG_TURN_SERVER_REALM, turnServerRealm_);
+    jami::parseBool(details, Conf::CONFIG_TURN_ENABLE, turnEnabled_);
+    jami::parseString(details, Conf::CONFIG_TURN_SERVER, turnServer_);
+    jami::parseString(details, Conf::CONFIG_TURN_SERVER_UNAME, turnServerUserName_);
+    jami::parseString(details, Conf::CONFIG_TURN_SERVER_PWD, turnServerPwd_);
+    jami::parseString(details, Conf::CONFIG_TURN_SERVER_REALM, turnServerRealm_);
 }
 
 std::map<std::string, std::string>
@@ -669,16 +670,24 @@ SIPAccountBase::createDefaultMediaList(bool addVideo, bool onHold)
 {
     std::vector<MediaAttribute> mediaList;
     bool secure = getSrtpKeyExchange() == KeyExchangeProtocol::SDES;
+    MediaAttribute attr;
+    attr.type = MediaType::MEDIA_AUDIO;
+    attr.muted = onHold;
+    attr.secure = secure;
+    attr.label = "main audio";
 
     // Add audio and DTMF events
-    mediaList.emplace_back(
-        MediaAttribute(MediaType::MEDIA_AUDIO, onHold, secure, true, "", "main audio"));
+    mediaList.emplace_back(std::move(attr));
 
 #ifdef ENABLE_VIDEO
     // Add video if allowed.
     if (isVideoEnabled() and addVideo) {
-        mediaList.emplace_back(
-            MediaAttribute(MediaType::MEDIA_VIDEO, onHold, secure, true, "", "main video"));
+        MediaAttribute attr;
+        attr.type = MediaType::MEDIA_VIDEO;
+        attr.muted = onHold;
+        attr.secure = secure;
+        attr.label = "main video";
+        mediaList.emplace_back(std::move(attr));
     }
 #endif
     return mediaList;

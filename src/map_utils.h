@@ -25,6 +25,8 @@
 #include <algorithm>
 #include <tuple>
 
+#include "fileutils.h"
+
 namespace jami {
 namespace map_utils {
 
@@ -63,4 +65,46 @@ extractValues(const M& map) -> decltype(extractElements<1>(map))
 }
 
 } // namespace map_utils
+
+#define find_iter(m) \
+    const auto& iter = m.find(key); \
+    if (iter == m.end()) { \
+        JAMI_ERR("Couldn't find key \"%s\"", key); \
+        return; \
+    }
+
+static inline void
+parseString(const std::map<std::string, std::string>& details, const char* key, std::string& s)
+{
+    find_iter(details);
+    s = iter->second;
+}
+
+static inline void
+parseBool(const std::map<std::string, std::string>& details, const char* key, bool& b)
+{
+    find_iter(details);
+    b = iter->second == TRUE_STR;
+}
+
+static inline void
+parsePath(const std::map<std::string, std::string>& details,
+          const char* key,
+          std::string& s,
+          const std::string& base)
+{
+    find_iter(details);
+    s = fileutils::getCleanPath(base, iter->second);
+}
+
+template<class T>
+static inline void
+parseInt(const std::map<std::string, std::string>& details, const char* key, T& i)
+{
+    find_iter(details);
+    i = atoi(iter->second.c_str());
+}
+
+#undef find_iter
+
 } // namespace jami

@@ -53,6 +53,31 @@ enum MediaType : unsigned {
     MEDIA_ALL = MEDIA_AUDIO | MEDIA_VIDEO
 };
 
+namespace MediaAttributeValue {
+constexpr static auto AUDIO = "MEDIA_TYPE_AUDIO";
+constexpr static auto VIDEO = "MEDIA_TYPE_VIDEO";
+} // namespace MediaAttributeValue
+
+static inline MediaType
+stringToMediaType(const std::string& mediaType)
+{
+    if (mediaType.compare(MediaAttributeValue::AUDIO) == 0)
+        return MediaType::MEDIA_AUDIO;
+    if (mediaType.compare(MediaAttributeValue::VIDEO) == 0)
+        return MediaType::MEDIA_VIDEO;
+    return MediaType::MEDIA_NONE;
+}
+
+static constexpr char const*
+mediaTypeToString(MediaType type)
+{
+    if (type == MediaType::MEDIA_AUDIO)
+        return MediaAttributeValue::AUDIO;
+    if (type == MediaType::MEDIA_VIDEO)
+        return MediaAttributeValue::VIDEO;
+    return nullptr;
+}
+
 enum class RateMode : unsigned { CRF_CONSTRAINED, CQ, CBR };
 
 /*

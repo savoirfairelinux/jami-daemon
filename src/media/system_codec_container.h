@@ -41,19 +41,20 @@ public:
     ~SystemCodecContainer();
 
     std::vector<std::shared_ptr<SystemCodecInfo>> getSystemCodecInfoList(
-        MediaType mediaType = MEDIA_ALL);
+        MediaType mediaType = MediaType::MEDIA_ALL);
 
-    std::vector<unsigned> getSystemCodecInfoIdList(MediaType type = MEDIA_ALL);
+    std::vector<unsigned> getSystemCodecInfoIdList(MediaType type = MediaType::MEDIA_ALL);
 
-    std::shared_ptr<SystemCodecInfo> searchCodecById(unsigned codecId, MediaType type = MEDIA_ALL);
+    std::shared_ptr<SystemCodecInfo> searchCodecById(unsigned codecId,
+                                                     MediaType type = MediaType::MEDIA_ALL);
 
     std::shared_ptr<SystemCodecInfo> searchCodecByName(const std::string& name,
-                                                       MediaType type = MEDIA_ALL);
+                                                       MediaType type = MediaType::MEDIA_ALL);
 
     std::shared_ptr<SystemCodecInfo> searchCodecByPayload(unsigned payload,
-                                                          MediaType type = MEDIA_ALL);
+                                                          MediaType type = MediaType::MEDIA_ALL);
 
-    void removeCodecByName(const std::string& name, MediaType type = MEDIA_ALL);
+    void removeCodecByName(const std::string& name, MediaType type = MediaType::MEDIA_ALL);
 
     void initCodecConfig();
 

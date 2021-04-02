@@ -71,6 +71,7 @@
 #endif
 #include "fileutils.h"
 #include "string_utils.h"
+#include "map_utils.h"
 #include "array_size.h"
 #include "archiver.h"
 #include "data_transfer.h"
@@ -1329,51 +1330,53 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     SIPAccountBase::setAccountDetails(details);
 
     // TLS
-    parsePath(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_, idPath_);
-    parsePath(details, Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_, idPath_);
-    parsePath(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_, idPath_);
-    parseString(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
+    jami::parsePath(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_, idPath_);
+    jami::parsePath(details, Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_, idPath_);
+    jami::parsePath(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_, idPath_);
+    jami::parseString(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
 
     if (hostname_.empty())
         hostname_ = DHT_DEFAULT_BOOTSTRAP;
-    parseString(details, DRing::Account::ConfProperties::BOOTSTRAP_LIST_URL, bootstrapListUrl_);
+    jami::parseString(details,
+                      DRing::Account::ConfProperties::BOOTSTRAP_LIST_URL,
+                      bootstrapListUrl_);
     parseInt(details, Conf::CONFIG_DHT_PORT, dhtDefaultPort_);
-    parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
-    parseBool(details, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
-    parseBool(details,
-              DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
-              accountPeerDiscovery_);
-    parseBool(details, DRing::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish_);
-    parseBool(details,
-              DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY,
-              allowPeersFromHistory_);
-    parseBool(details,
-              DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT,
-              allowPeersFromContact_);
-    parseBool(details,
-              DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED,
-              allowPeersFromTrusted_);
+    jami::parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
+    jami::parseBool(details, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
+    jami::parseBool(details,
+                    DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
+                    accountPeerDiscovery_);
+    jami::parseBool(details, DRing::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish_);
+    jami::parseBool(details,
+                    DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY,
+                    allowPeersFromHistory_);
+    jami::parseBool(details,
+                    DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT,
+                    allowPeersFromContact_);
+    jami::parseBool(details,
+                    DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED,
+                    allowPeersFromTrusted_);
     if (not dhtDefaultPort_)
         dhtDefaultPort_ = getRandomEvenPort(DHT_PORT_RANGE);
 
-    parseString(details, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
-    parseString(details, DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
-    parseString(details, DRing::Account::ConfProperties::USERNAME, username_);
+    jami::parseString(details, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
+    jami::parseString(details, DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
+    jami::parseString(details, DRing::Account::ConfProperties::USERNAME, username_);
 
     std::string archive_password;
     std::string archive_pin;
     std::string archive_path;
-    parseString(details, DRing::Account::ConfProperties::ARCHIVE_PASSWORD, archive_password);
-    parseString(details, DRing::Account::ConfProperties::ARCHIVE_PIN, archive_pin);
+    jami::parseString(details, DRing::Account::ConfProperties::ARCHIVE_PASSWORD, archive_password);
+    jami::parseString(details, DRing::Account::ConfProperties::ARCHIVE_PIN, archive_pin);
     std::transform(archive_pin.begin(), archive_pin.end(), archive_pin.begin(), ::toupper);
-    parsePath(details, DRing::Account::ConfProperties::ARCHIVE_PATH, archive_path, idPath_);
-    parseString(details, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
+    jami::parsePath(details, DRing::Account::ConfProperties::ARCHIVE_PATH, archive_path, idPath_);
+    jami::parseString(details, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
 
     auto oldProxyServer = proxyServer_, oldProxyServerList = proxyListUrl_;
-    parseString(details, DRing::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
-    parseBool(details, DRing::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_);
-    parseString(details, DRing::Account::ConfProperties::PROXY_SERVER, proxyServer_);
-    parseString(details, DRing::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey_);
+    jami::parseString(details, DRing::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
+    jami::parseBool(details, DRing::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_);
+    jami::parseString(details, DRing::Account::ConfProperties::PROXY_SERVER, proxyServer_);
+    jami::parseString(details, DRing::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey_);
     // Migrate from old versions
     if (proxyServer_.empty()
         || ((proxyServer_ == "dhtproxy.jami.net" || proxyServer_ == "dhtproxy.ring.cx")
@@ -1392,7 +1395,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     }
 
 #if HAVE_RINGNS
-    parseString(details, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
+    jami::parseString(details, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
 #endif
 
     loadAccount(archive_password, archive_pin, archive_path);
