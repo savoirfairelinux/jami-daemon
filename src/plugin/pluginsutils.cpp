@@ -25,28 +25,30 @@
 #include <fstream>
 #include <regex>
 
-#if defined(__arm__)
-#if defined(__ARM_ARCH_7A__)
-#define ABI "armeabi-v7a"
-#else
-#define ABI "armeabi"
-#endif
+#if defined(__APPLE__)
+    #if defined(__MACOSX__)
+        #define ABI "x86_64-apple-darwin"
+    #elif defined(__IPHONEOS__)
+        #define ABI "iphone"
+    #endif
+#elif defined(__arm__)
+    #if defined(__ARM_ARCH_7A__)
+        #define ABI "armeabi-v7a"
+    #else
+        #define ABI "armeabi"
+    #endif
 #elif defined(__i386__)
-#if __ANDROID__
-#define ABI "x86"
-#else
-#define ABI "x86-linux-gnu"
-#endif
+    #if __ANDROID__
+        #define ABI "x86"
+    #else
+        #define ABI "x86-linux-gnu"
+    #endif
 #elif defined(__x86_64__)
-#if __ANDROID__
-#define ABI "x86_64"
-#else
-#define ABI "x86_64-linux-gnu"
-#endif
-#elif defined(__mips64) /* mips64el-* toolchain defines __mips__ too */
-#define ABI "mips64"
-#elif defined(__mips__)
-#define ABI "mips"
+    #if __ANDROID__
+        #define ABI "x86_64"
+    #else
+        #define ABI "x86_64-linux-gnu"
+    #endif
 #elif defined(__aarch64__)
 #define ABI "arm64-v8a"
 #elif defined(WIN32)
