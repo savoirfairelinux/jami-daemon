@@ -63,6 +63,7 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0016-use-addrinfo-instead-CFHOST.patch
 	$(APPLY) $(SRC)/pjproject/0017-CVE-2020-15260.patch
 	$(APPLY) $(SRC)/pjproject/0018-CVE-2021-21375.patch
+	$(APPLY) $(SRC)/pjproject/0019-ignore-down-interfaces.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch
 endif
