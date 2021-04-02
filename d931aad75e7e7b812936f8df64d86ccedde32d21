@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "72e36f75_ae7d13a2",
+        "filename": "src/map_utils.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-04-02T19:48:29Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nmacro argument should be enclosed in parentheses\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-macro-parentheses",
+      "revId": "d931aad75e7e7b812936f8df64d86ccedde32d21",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "562e4894_f9cbe9e6",
+        "filename": "src/map_utils.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-04-02T19:48:29Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nmacro argument should be enclosed in parentheses\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-macro-parentheses",
+      "revId": "d931aad75e7e7b812936f8df64d86ccedde32d21",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
