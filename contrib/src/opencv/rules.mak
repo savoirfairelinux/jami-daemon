@@ -6,6 +6,7 @@ OPENCV_URL := https://github.com/opencv/opencv/archive/$(OPENCV_VERSION).tar.gz
 DEPS_opencv += opencv_contrib
 
 OPENCV_CMAKECONF := \
+		-DCMAKE_BUILD_TYPE=RELEASE \
 		-DCMAKE_INSTALL_LIBDIR=lib \
 		-DBUILD_SHARED_LIBS=no \
 		-DOPENCV_EXTRA_MODULES_PATH="./../../${HOST}/../opencv_contrib/modules" \
@@ -54,6 +55,10 @@ OPENCV_CMAKECONF := \
 		-DBUILD_opencv_java=OFF \
 		-DBUILD_opencv_python=OFF
 
+ifdef HAVE_MACOSX
+OPENCV_CMAKECONF += \
+		-DOPENCV_EXTRA_CXX_FLAGS="-D'CV_PAUSE(int)'"
+endif
 
 $(TARBALLS)/opencv-$(OPENCV_VERSION).tar.gz:
 	$(call download,$(OPENCV_URL))

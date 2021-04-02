@@ -19,6 +19,12 @@ ifdef HAVE_ANDROID
 	cd $< && sh build.sh --parallel --android --android_sdk_path $(ANDROID_SDK) --android_ndk_path $(ANDROID_NDK) --android_abi $(ANDROID_ABI) --android_api 29 --use_nnapi --config Release --build_shared_lib --skip_tests --android_cpp_shared --minimal_build extended
 	cd $< && cp ./build/Linux/Release/libonnxruntime.so $(PREFIX)/lib/
 else
+ifdef HAVE_MACOSX
+	cd $< && sh ./build.sh --config Release --build_shared_lib --parallel --skip_tests
+	if [ ! -d "$(PREFIX)/lib/onnxruntime" ] ; then (mkdir $(PREFIX)/lib/onnxruntime) fi
+	if [ ! -d "$(PREFIX)/lib/onnxruntime/cpu" ] ; then (mkdir $(PREFIX)/lib/onnxruntime/cpu) fi
+	cd $< && cp ./build/MacOS/Release/libonnxruntime.dylib $(PREFIX)/lib/onnxruntime/cpu/libonnxruntime.dylib
+else
 ifdef USE_NVIDIA
 	cd $< && sh ./build.sh --config Release --build_shared_lib --parallel --use_cuda --cuda_version $(CUDA_VERSION) --cuda_home $(CUDA_PATH) --cudnn_home $(CUDNN_PATH) --skip_tests
 	if [ ! -d "$(PREFIX)/lib/onnxruntime" ] ; then (mkdir $(PREFIX)/lib/onnxruntime) fi
@@ -29,6 +35,7 @@ else
 	if [ ! -d "$(PREFIX)/lib/onnxruntime" ] ; then (mkdir $(PREFIX)/lib/onnxruntime) fi
 	if [ ! -d "$(PREFIX)/lib/onnxruntime/cpu" ] ; then (mkdir $(PREFIX)/lib/onnxruntime/cpu) fi
 	cd $< && cp ./build/Linux/Release/libonnxruntime.so $(PREFIX)/lib/onnxruntime/cpu/libonnxruntime.so
+endif
 endif
 endif
 	if [ ! -d "$(PREFIX)/include/onnxruntime" ] ; then ( mkdir $(PREFIX)/include/onnxruntime ) fi

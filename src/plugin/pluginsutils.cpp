@@ -25,28 +25,30 @@
 #include <fstream>
 #include <regex>
 
-#if defined(__arm__)
-#if defined(__ARM_ARCH_7A__)
-#define ABI "armeabi-v7a"
-#else
-#define ABI "armeabi"
-#endif
+#if defined(__APPLE__)
+    #if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+        #define ABI "iphone"
+    #else
+        #define ABI "x86_64-apple-Darwin"
+    #endif
+#elif defined(__arm__)
+    #if defined(__ARM_ARCH_7A__)
+        #define ABI "armeabi-v7a"
+    #else
+        #define ABI "armeabi"
+    #endif
 #elif defined(__i386__)
-#if __ANDROID__
-#define ABI "x86"
-#else
-#define ABI "x86-linux-gnu"
-#endif
+    #if __ANDROID__
+        #define ABI "x86"
+    #else
+        #define ABI "x86-linux-gnu"
+    #endif
 #elif defined(__x86_64__)
-#if __ANDROID__
-#define ABI "x86_64"
-#else
-#define ABI "x86_64-linux-gnu"
-#endif
-#elif defined(__mips64) /* mips64el-* toolchain defines __mips__ too */
-#define ABI "mips64"
-#elif defined(__mips__)
-#define ABI "mips"
+    #if __ANDROID__
+        #define ABI "x86_64"
+    #else
+        #define ABI "x86_64-linux-gnu"
+    #endif
 #elif defined(__aarch64__)
 #define ABI "arm64-v8a"
 #elif defined(WIN32)
@@ -62,7 +64,7 @@ namespace PluginUtils {
 const std::regex DATA_REGEX("^data" DIR_SEPARATOR_STR_ESC ".+");
 // SO_REGEX is used to find libraries during the plugin jpl uncompressing
 const std::regex SO_REGEX("([a-zA-Z0-9]+(?:[_-]?[a-zA-Z0-9]+)*)" DIR_SEPARATOR_STR_ESC
-                          "([a-zA-Z0-9_-]+\\.(so|dll|lib).*)");
+                          "([a-zA-Z0-9_-]+\\.(dylib|so|dll|lib).*)");
 
 std::string
 manifestPath(const std::string& rootPath)

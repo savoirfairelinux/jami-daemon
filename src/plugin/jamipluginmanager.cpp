@@ -1,4 +1,4 @@
-﻿/*
+/*
  *  Copyright (C) 2020-2021 Savoir-faire Linux Inc.
  *
  *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
@@ -43,8 +43,13 @@ extern "C" {
 #define LIB_TYPE   ".dll"
 #define LIB_PREFIX ""
 #else
+#ifdef __APPLE__
+#define LIB_TYPE ".dylib"
+#define LIB_PREFIX "lib"
+#else
 #define LIB_TYPE   ".so"
 #define LIB_PREFIX "lib"
+#endif
 #endif
 
 namespace jami {
