@@ -39,21 +39,6 @@ public:
 
 namespace DRing {
 
-  struct DataTransferInfo
-  {
-    std::string accountId;
-    DRing::DataTransferEventCode lastEvent;
-    uint32_t flags;
-    int64_t totalSize;
-    int64_t bytesProgress;
-    std::string author;
-    std::string peer;
-    std::string conversationId;
-    std::string displayName;
-    std::string path;
-    std::string mimetype;
-  };
-
   // Conversation management
   std::string startConversation(const std::string& accountId);
   void acceptConversationRequest(const std::string& accountId, const std::string& conversationId);
