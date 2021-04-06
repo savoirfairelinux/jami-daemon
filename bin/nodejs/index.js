@@ -21,7 +21,7 @@
 
 class JamiDaemon {
     constructor(callbackMap) {
-        if(callbackMap){
+        if (callbackMap){
             this.dring = require("./build/Release/dring.node");
             this.dring.init(callbackMap);
         }
