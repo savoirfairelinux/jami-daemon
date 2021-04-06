@@ -77,6 +77,7 @@ namespace std {
 %include "presencemanager.i"
 %include "callmanager.i"
 %include "videomanager.i"
+%include "conversation.i"
 
 %header %{
 #include "callback.h"
@@ -116,6 +117,7 @@ void init(const SWIGV8_VALUE& funcMap){
     using DRing::exportable_callback;
     using DRing::ConfigurationSignal;
     using DRing::CallSignal;
+    using DRing::ConversationSignal;
     using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
     const std::map<std::string, SharedCallback> callEvHandlers = {
         exportable_callback<CallSignal::StateChange>(bind(&callStateChanged, _1, _2, _3)),
@@ -136,8 +138,18 @@ void init(const SWIGV8_VALUE& funcMap){
         exportable_callback<ConfigurationSignal::KnownDevicesChanged>(bind(&knownDevicesChanged, _1, _2 )),
         exportable_callback<ConfigurationSignal::IncomingAccountMessage>(bind(&incomingAccountMessage, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::AccountMessageStatusChanged>(bind(&accountMessageStatusChanged, _1, _2, _3, _4, _5 )),
-        exportable_callback<ConfigurationSignal::ProfileReceived>(bind(&profileReceived, _1, _2, _3, _4 )),
+        //exportable_callback<ConfigurationSignal::ProfileReceived>(bind(&profileReceived, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4, _5 )),
+    };
+
+    const std::map<std::string, SharedCallback> conversationHandlers = {
+        exportable_callback<ConversationSignal::ConversationLoaded>(bind(&conversationLoaded, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::MessageReceived>(bind(&messageReceived, _1, _2, _3)),
+        exportable_callback<ConversationSignal::ConversationRequestReceived>(bind(&conversationRequestReceived, _1, _2, _3)),
+        exportable_callback<ConversationSignal::ConversationReady>(bind(&conversationReady, _1, _2)),
+        exportable_callback<ConversationSignal::ConversationRemoved>(bind(&conversationRemoved, _1, _2)),
+        exportable_callback<ConversationSignal::ConversationMemberEvent>(bind(&conversationMemberEvent, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::OnConversationError>(bind(&onConversationError, _1, _2, _3, _4))
     };
 
     if (!DRing::init(static_cast<DRing::InitFlag>(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG)))
