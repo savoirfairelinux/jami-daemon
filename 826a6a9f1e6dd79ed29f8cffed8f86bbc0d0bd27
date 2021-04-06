@@ -25,6 +25,23 @@
     },
     {
       "key": {
+        "uuid": "f2363c08_1147f7bc",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1076,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-06T20:58:16Z",
+      "side": 1,
+      "message": "According to the logs in https://git.jami.net/savoirfairelinux/ring-daemon/-/issues/495, the problem is caused by a high number of interfaces.\nThe remote should filter out the interfaces and keep only the one(s) that has the highest chance to succeed (e.g. the one used by the dht).\nArbitrarly filtering out candidates may reduce the chances of success, since the ones they are kept may not be the best ones.",
+      "revId": "826a6a9f1e6dd79ed29f8cffed8f86bbc0d0bd27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "30eb573f_b2e3230c",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 3
