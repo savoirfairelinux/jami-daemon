@@ -1072,10 +1072,37 @@ IceTransport::startIce(const Attribute& rem_attrs, const std::vector<IceCandidat
         return false;
     }
 
+    std::vector<IceCandidate> rcands;
+    if (rem_candidates.size() > PJ_ICE_ST_MAX_CAND-1) {
+        JAMI_WARN("[ice:%p] too much candidates detected, trim list.", pimpl_.get());
+        // Just trim some candidates. To avoid to only take host candidates, iterate
+        // through the whole list and select some host, some turn and peer reflexives
+        // It should give at least enough infos to negotiate.
+        auto maxHosts = 8;
+        auto maxRelays = PJ_ICE_MAX_TURN;
+        for (const auto& c: rem_candidates) {
+            auto type = pj_ice_get_cand_type_name(c.type);
+            if (type == "host") {
+                if (maxHosts == 0)
+                    continue;
+                maxHosts -= 1;
+            } else if (type == "relay") {
+                if (maxRelays == 0)
+                    continue;
+                maxRelays -= 1;
+            }
+            if (rcands.size() == PJ_ICE_ST_MAX_CAND-1)
+                break;
+            rcands.emplace_back(c);
+        }
+    } else {
+        rcands = rem_candidates;
+    }
+
     pj_str_t ufrag, pwd;
     JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)",
              pimpl_.get(),
-             rem_candidates.size());
+             rcands.size());
     auto status = pj_ice_strans_start_ice(pimpl_->icest_.get(),
                                           pj_strset(&ufrag,
                                                     (char*) rem_attrs.ufrag.c_str(),
@@ -1083,8 +1110,8 @@ IceTransport::startIce(const Attribute& rem_attrs, const std::vector<IceCandidat
                                           pj_strset(&pwd,
                                                     (char*) rem_attrs.pwd.c_str(),
                                                     rem_attrs.pwd.size()),
-                                          rem_candidates.size(),
-                                          rem_candidates.data());
+                                          rcands.size(),
+                                          rcands.data());
     if (status != PJ_SUCCESS) {
         pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
         JAMI_ERR("[ice:%p] start failed: %s", pimpl_.get(), pimpl_->last_errmsg_.c_str());
