@@ -17,8 +17,9 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-"use strict";
 
+
+"use strict";
 class JamiDaemon {
     constructor(callbackMap) {
         if (callbackMap){
@@ -28,69 +29,82 @@ class JamiDaemon {
     }
 
     boolToStr(bool) {
-        return bool ? "TRUE" : "FALSE";
+        return bool ? JamiDaemon.BOOL_TRUE : JamiDaemon.BOOL_FALSE;
     }
 
     addAccount(account) {
         const params = new this.dring.StringMap();
         params.set("Account.type", "RING");
-        if(account.archivePassword){
+        if (account.managerUri)
+            params.set("Account.managerUri", account.managerUri);
+        if (account.managerUsername)
+            params.set("Account.managerUsername", account.managerUsername);
+        if (account.archivePassword) {
             params.set("Account.archivePassword", account.archivePassword);
         } else {
             console.log("archivePassword required");
             return;
         }
-        if(account.alias)
+        if (account.alias)
             params.set("Account.alias", account.alias);
-        if(account.displayName)
+        if (account.displayName)
             params.set("Account.displayName", account.displayName);
-        if(account.enable)
+        if (account.enable)
             params.set("Account.enable", this.boolToStr(account.enable));
-        if(account.autoAnswer)
+        if (account.autoAnswer)
             params.set("Account.autoAnswer", this.boolToStr(account.autoAnswer));
-        if(account.ringtonePath)
+        if (account.ringtonePath)
             params.set("Account.ringtonePath", account.ringtonePath);
-        if(account.ringtoneEnabled)
+        if (account.ringtoneEnabled)
             params.set("Account.ringtoneEnabled", this.boolToStr(account.ringtoneEnabled));
-        if(account.videoEnabled)
+        if (account.videoEnabled)
             params.set("Account.videoEnabled", this.boolToStr(account.videoEnabled));
-        if(account.useragent){
+        if (account.useragent) {
             params.set("Account.useragent", account.useragent);
-            params.set("Account.hasCustomUserAgent","TRUE");
+            params.set("Account.hasCustomUserAgent", JamiDaemon.BOOL_TRUE);
         } else {
-            params.set("Account.hasCustomUserAgent","FALSE");
+            params.set("Account.hasCustomUserAgent", JamiDaemon.BOOL_FALSE);
         }
-        if(account.audioPortMin)
+        if (account.audioPortMin)
             params.set("Account.audioPortMin", account.audioPortMin);
-        if(account.audioPortMax)
+        if (account.audioPortMax)
             params.set("Account.audioPortMax", account.audioPortMax);
-        if(account.videoPortMin)
+        if (account.videoPortMin)
             params.set("Account.videoPortMin", account.videoPortMin);
-        if(account.videoPortMax)
+        if (account.videoPortMax)
             params.set("Account.videoPortMax", account.videoPortMax);
-        if(account.localInterface)
+        if (account.localInterface)
             params.set("Account.localInterface", account.localInterface);
-        if(account.publishedSameAsLocal)
+        if (account.publishedSameAsLocal)
             params.set("Account.publishedSameAsLocal", this.boolToStr(account.publishedSameAsLocal));
-        if(account.localPort)
+        if (account.localPort)
             params.set("Account.localPort", account.localPort);
-        if(account.publishedPort)
+        if (account.publishedPort)
             params.set("Account.publishedPort", account.publishedPort);
-        if(account.publishedAddress)
+        if (account.publishedAddress)
             params.set("Account.publishedAddress", account.publishedAddress);
-        if(account.upnpEnabled)
+        if (account.upnpEnabled)
             params.set("Account.upnpEnabled", this.boolToStr(account.upnpEnabled));
 
         this.dring.addAccount(params);
     }
-    stringVectToArr(stringvect){
+    stringVectToArr(stringvect) {
         const outputArr = [];
-        for(var i=0; i<stringvect.size(); i++)
+        for (let i = 0; i < stringvect.size(); i++)
             outputArr.push(stringvect.get(i));
         return outputArr;
     }
-    getAccountList(){
+    mapToJs(m) {
+        const outputObj = {};
+        this.stringVectToArr(m.keys())
+            .forEach(k => outputObj[k] = m.get(k));
+        return outputObj;
+    }
+    getAccountList() {
         return this.stringVectToArr(this.dring.getAccountList());
+    }
+    getAccountDetails(accountId) {
+        return this.mapToJs(this.dring.getAccountDetails(accountId));
     }
     getAudioOutputDeviceList() {
         return this.stringVectToArr(this.dring.getAudioOutputDeviceList());
@@ -100,12 +114,15 @@ class JamiDaemon {
     }
 
     setVolume(deviceName, volume) {
-        return this.dring.setVolume(deviceName,volume);
+        return this.dring.setVolume(deviceName, volume);
     }
 
     stop() {
         this.dring.fini();
     }
 }
+
+JamiDaemon.BOOL_TRUE = "true"
+JamiDaemon.BOOL_FALSE = "false"
 
 module.exports = JamiDaemon;
