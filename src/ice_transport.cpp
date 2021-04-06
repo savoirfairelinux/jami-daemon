@@ -1057,7 +1057,7 @@ IceTransport::isInitiator() const
 }
 
 bool
-IceTransport::startIce(const Attribute& rem_attrs, const std::vector<IceCandidate>& rem_candidates)
+IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& rem_candidates)
 {
     if (not isInitialized()) {
         JAMI_ERR("[ice:%p] not initialized transport", pimpl_.get());
@@ -1070,6 +1070,31 @@ IceTransport::startIce(const Attribute& rem_attrs, const std::vector<IceCandidat
         JAMI_ERR("[ice:%p] start failed: no remote candidates", pimpl_.get());
         pimpl_->is_stopped_ = true;
         return false;
+    }
+
+    if (rem_candidates.size() > PJ_ICE_ST_MAX_CAND-1) {
+        std::vector<IceCandidate> rcands;
+        JAMI_WARN("[ice:%p] too much candidates detected, trim list.", pimpl_.get());
+        // Just trim some candidates. To avoid to only take host candidates, iterate
+        // through the whole list and select some host, some turn and peer reflexives
+        // It should give at least enough infos to negotiate.
+        auto maxHosts = 8;
+        auto maxRelays = PJ_ICE_MAX_TURN;
+        for (auto& c: rem_candidates) {
+            if (c.type == PJ_ICE_CAND_TYPE_HOST) {
+                if (maxHosts == 0)
+                    continue;
+                maxHosts -= 1;
+            } else if (c.type == PJ_ICE_CAND_TYPE_RELAYED) {
+                if (maxRelays == 0)
+                    continue;
+                maxRelays -= 1;
+            }
+            if (rcands.size() == PJ_ICE_ST_MAX_CAND-1)
+                break;
+            rcands.emplace_back(std::move(c));
+        }
+        rem_candidates = std::move(rcands);
     }
 
     pj_str_t ufrag, pwd;
