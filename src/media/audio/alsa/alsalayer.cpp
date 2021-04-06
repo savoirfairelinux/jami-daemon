@@ -122,14 +122,8 @@ AlsaLayer::shutdown()
         at = std::move(audioThread_);
     }
     at.reset();
-
-    /* Then close the audio devices */
-    closeCaptureStream();
-    closePlaybackStream();
-    playbackHandle_ = nullptr;
-    captureHandle_ = nullptr;
-    ringtoneHandle_ = nullptr;
-    status_ = Status::Idle;
+    flushUrgent();
+    flushMain();
 }
 
 void
@@ -193,22 +187,28 @@ void
 AlsaLayer::run()
 {
     initAudioLayer();
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        status_ = AudioLayer::Status::Started;
-    }
+    status_ = AudioLayer::Status::Started;
     startedCv_.notify_all();
 
     while (status_ == AudioLayer::Status::Started) {
         {
             std::lock_guard<std::mutex> lock(audioThreadMtx_);
-            if (!audioThread_ or !audioThread_->isRunning())
-                return;
+            if (!audioThread_ or !audioThread_->isRunning()) {
+                status_ = Status::Idle;
+                break;
+            }
         }
         playback();
         ringtone();
         capture();
     }
+
+    /* Close the audio devices */
+    closeCaptureStream();
+    closePlaybackStream();
+    playbackHandle_ = nullptr;
+    captureHandle_ = nullptr;
+    ringtoneHandle_ = nullptr;
 }
 
 // Retry approach taken from pa_linux_alsa.c, part of PortAudio
@@ -257,12 +257,9 @@ AlsaLayer::openDevice(snd_pcm_t** pcm,
 
 void AlsaLayer::startStream(AudioDeviceType)
 {
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Idle)
-            return;
-        status_ = Status::Starting;
-    }
+    if (status_ != Status::Idle)
+        return;
+    status_ = Status::Starting;
 
     dcblocker_.reset();
 
@@ -278,13 +275,10 @@ void AlsaLayer::startStream(AudioDeviceType)
     }
 }
 
-void
-AlsaLayer::stopStream(AudioDeviceType)
+void AlsaLayer::stopStream(AudioDeviceType)
 {
     /* Flush the ring buffers */
     shutdown();
-    flushUrgent();
-    flushMain();
 }
 
 /*
