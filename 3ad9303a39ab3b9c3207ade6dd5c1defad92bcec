@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9bfef7a1_538bd0b6",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1085,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-06T18:02:37Z",
+      "side": 1,
+      "message": "comparaison of const char* and const char* likely to always be false or undefined.\nCompare the type enum c.type directly to PJ_ICE_CAND_TYPE_HOST or PJ_ICE_CAND_TYPE_SRFLX instead",
+      "range": {
+        "startLine": 1085,
+        "startChar": 16,
+        "endLine": 1085,
+        "endChar": 30
+      },
+      "revId": "3ad9303a39ab3b9c3207ade6dd5c1defad92bcec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
