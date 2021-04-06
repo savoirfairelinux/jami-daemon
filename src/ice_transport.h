@@ -147,7 +147,7 @@ public:
      * with the negotiation result when operation is really done.
      * Return false if negotiation cannot be started else true.
      */
-    bool startIce(const Attribute& rem_attrs, const std::vector<IceCandidate>& rem_candidates);
+    bool startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& rem_candidates);
     bool startIce(const SDP& sdp);
 
     /**

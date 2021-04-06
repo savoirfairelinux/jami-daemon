@@ -326,7 +326,7 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
 
     auto sdp = IceTransport::parse_SDP(response.ice_msg, *ice);
 
-    if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
+    if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates))) {
         JAMI_WARN("[Account:%s] start ICE failed", account.getAccountID().c_str());
         onError();
     }
@@ -721,7 +721,7 @@ ConnectionManager::Impl::onRequestStartIce(const PeerConnectionRequest& req)
 
     auto sdp = IceTransport::parse_SDP(req.ice_msg, *ice);
     answerTo(*ice, req.id, req.from);
-    if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
+    if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates))) {
         JAMI_ERR("[Account:%s] start ICE failed - fallback to TURN", account.getAccountID().c_str());
         ice = nullptr;
         if (connReadyCb_)
