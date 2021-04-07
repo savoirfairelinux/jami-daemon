@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "aa71b598_bf7dcbe6",
+        "filename": "bin/jni/conversation.i",
+        "patchSetId": 97
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2021-04-07T15:45:52Z",
+      "side": 1,
+      "message": "2021",
+      "revId": "67a1b13ab67df8d4a3e65d80bad71300e9324bf1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "33a0c7db_d89b964f",
+        "filename": "bin/nodejs/conversation.i",
+        "patchSetId": 97
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2021-04-07T15:45:52Z",
+      "side": 1,
+      "message": "2021",
+      "revId": "67a1b13ab67df8d4a3e65d80bad71300e9324bf1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5d272766_7b55335a",
+        "filename": "src/dring/conversation_interface.h",
+        "patchSetId": 97
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2021-04-07T15:45:52Z",
+      "side": 1,
+      "message": "maybe MessagesLoaded?",
+      "revId": "67a1b13ab67df8d4a3e65d80bad71300e9324bf1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7f014855_f95fe2cc",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 97
+      },
+      "lineNbr": 333,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2021-04-07T15:45:52Z",
+      "side": 1,
+      "message": "JAMI_INFO?",
+      "revId": "67a1b13ab67df8d4a3e65d80bad71300e9324bf1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
