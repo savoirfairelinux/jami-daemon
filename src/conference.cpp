@@ -1012,11 +1012,10 @@ Conference::resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerUR
         }
     }
 
+    const float zoomX = (float) remoteFrameWidth / localCell.w;
+    const float zoomY = (float) remoteFrameHeight / localCell.h;
     // Do the resize for each remote participant
     for (auto& remoteCell : confInfo) {
-        const float zoomX = (float) remoteFrameWidth / localCell.w;
-        const float zoomY = (float) remoteFrameHeight / localCell.h;
-
         remoteCell.x = remoteCell.x / zoomX + localCell.x;
         remoteCell.y = remoteCell.y / zoomY + localCell.y;
         remoteCell.w = remoteCell.w / zoomX;
@@ -1052,8 +1051,10 @@ Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
     }
     // Send confInfo only if needed to avoid loops
     if (updateNeeded) {
-        std::lock_guard<std::mutex> lk(confInfoMutex_);
-        sendConferenceInfos();
+        // Trigger the layout update in the mixer because the frame resolution may
+        // change from participant to conference and cause a mismatch between
+        // confInfo layout and rendering layout.
+        getVideoMixer()->updateLayout();
     }
 }
 
