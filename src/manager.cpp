@@ -2917,9 +2917,11 @@ Manager::loadAccountMap(const YAML::Node& node)
 #ifdef ENABLE_PLUGIN
         pluginPreferences.unserialize(node);
 
-        std::vector<std::string> loadedPlugins = pluginPreferences.getLoadedPlugins();
-        for (const std::string& plugin : loadedPlugins) {
-            jami::Manager::instance().getJamiPluginManager().loadPlugin(plugin);
+        if (pluginPreferences.getPluginsEnabled()) {
+            std::vector<std::string> loadedPlugins = pluginPreferences.getLoadedPlugins();
+            for (const std::string& plugin : loadedPlugins) {
+                jami::Manager::instance().getJamiPluginManager().loadPlugin(plugin);
+            }
         }
 #endif
     } catch (const YAML::Exception& e) {

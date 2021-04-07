@@ -194,7 +194,11 @@ public:
         : map_ {f}
     {}
 
-    void update(Observable<T1>*, const T1& t) override { this->notify(map_(t)); }
+    void update(Observable<T1>*, const T1& t) override
+    {
+        std::lock_guard<std::mutex> lk(pmtx_);
+        this->notify(map_(t));
+    }
 
     /**
      * @brief attached
@@ -218,6 +222,7 @@ public:
     virtual void detached(Observable<T1>*) override
     {
         std::lock_guard<std::mutex> lk(this->mutex_);
+        std::lock_guard<std::mutex> lk2(pmtx_);
         for (auto& pobs : this->priority_observers_) {
             if (auto so = pobs.lock()) {
                 so->detached(this);
@@ -236,6 +241,7 @@ public:
 
 private:
     F map_;
+    std::mutex pmtx_;
     Observable<T1>* obs_ = nullptr;
 };
 

@@ -51,7 +51,7 @@ bool
 PluginManager::load(const std::string& path)
 {
     auto it = dynPluginMap_.find(path);
-    if (it != dynPluginMap_.end() && !it->second.second) {
+    if (it != dynPluginMap_.end()) {
         dynPluginMap_.erase(it);
     }
 
@@ -87,7 +87,8 @@ PluginManager::unload(const std::string& path)
     if (it != dynPluginMap_.end()) {
         std::lock_guard<std::mutex> lk(mtx_);
         exitFunc_[path]();
-        dynPluginMap_.erase(it);
+        static_cast<DLPlugin*>(it->second.first.get())->unload();
+        it->second.second = false;
     }
 
     return true;
