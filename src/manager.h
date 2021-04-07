@@ -152,6 +152,29 @@ public:
                              const std::map<std::string, std::string>& volatileCallDetails = {});
 
     /**
+     * Place a new call
+     * @param accountId the user's account ID
+     * @param callee the callee's ID/URI. Depends on the account type.
+     * Refer to placeCall/placeCallWithMedia documentations.
+     * @param mediaList a list of medias to include
+     * @param confId the conference ID if any
+     * @return the call ID on success, empty string otherwise
+     */
+    std::string outgoingCall(const std::string& accountId,
+                             const std::string& callee,
+                             const std::vector<DRing::MediaMap>& mediaList,
+                             const std::string& confId = "");
+
+    /**
+     * Request a media change of an ongoing call
+     * @param callID the call ID.
+     * @param mediaList a list of the new media
+     * @return true on success
+     */
+    bool requestMediaChange(const std::string& callID,
+                            const std::vector<DRing::MediaMap>& mediaList);
+
+    /**
      * Functions which occur with a user's action
      * Answer the call
      * @param id  The call identifier
@@ -877,6 +900,18 @@ public:
         std::string_view toUrl,
         const std::string& accountId,
         const std::map<std::string, std::string>& volatileCallDetails = {});
+
+    /**
+     * Create a new outgoing call
+     * @param toUrl Destination address
+     * @param accountId local account
+     * @param mediaList the list of medias
+     * @return A (shared) pointer of Call class type.
+     * @note This function raises VoipLinkException() on error.
+     */
+    std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
+                                          const std::string& accountId,
+                                          const std::vector<DRing::MediaMap>& mediaList);
 
     CallFactory callFactory;
 

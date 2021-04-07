@@ -284,7 +284,7 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
     std::stringstream icemsg;
     icemsg << iceAttributes.ufrag << "\n";
     icemsg << iceAttributes.pwd << "\n";
-    for (const auto& addr : ice->getLocalCandidates(0)) {
+    for (const auto& addr : ice->getLocalCandidates(1)) {
         icemsg << addr << "\n";
         JAMI_DBG() << "Added local ICE candidate " << addr;
     }
@@ -696,7 +696,7 @@ ConnectionManager::Impl::answerTo(IceTransport& ice, const dht::Value::Id& id, c
     std::stringstream icemsg;
     icemsg << iceAttributes.ufrag << "\n";
     icemsg << iceAttributes.pwd << "\n";
-    for (const auto& addr : ice.getLocalCandidates(0)) {
+    for (const auto& addr : ice.getLocalCandidates(1)) {
         icemsg << addr << "\n";
     }
 
