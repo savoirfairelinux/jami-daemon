@@ -186,6 +186,21 @@ void
 setPluginsEnabled(bool state)
 {
     jami::Manager::instance().pluginPreferences.setPluginsEnabled(state);
+    for (auto& item : jami::Manager::instance().pluginPreferences.getLoadedPlugins()) {
+        if (state) {
+            jami::Manager::instance().getJamiPluginManager().loadPlugin(item);
+            jami::Manager::instance()
+                .getJamiPluginManager()
+                .getCallServicesManager()
+                .stopStartMediaHandlers(state);
+        } else {
+            jami::Manager::instance()
+                .getJamiPluginManager()
+                .getCallServicesManager()
+                .stopStartMediaHandlers(state);
+            jami::Manager::instance().getJamiPluginManager().unloadPlugin(item);
+        }
+    }
     jami::Manager::instance().saveConfig();
 }
 } // namespace DRing

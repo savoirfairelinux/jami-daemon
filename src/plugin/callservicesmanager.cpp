@@ -84,6 +84,19 @@ CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subje
 }
 
 void
+CallServicesManager::stopStartMediaHandlers(bool isPluginEnabled)
+{
+    auto calls = Manager::instance().callFactory.getAllCalls();
+    for (auto& call : calls) {
+        if (call->getState() == Call::CallState::ACTIVE) {
+            auto callId = call->getCallId();
+            for (const auto& toggledMediaHandlerPair : mediaHandlerToggled_[callId])
+                toggleCallMediaHandler(toggledMediaHandlerPair.first, callId, isPluginEnabled);
+        }
+    }
+}
+
+void
 CallServicesManager::clearAVSubject(const std::string& callId)
 {
     callAVsubjects_.erase(callId);
@@ -258,6 +271,7 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
 {
     auto& handlers = mediaHandlerToggled_[callId];
     bool applyRestart = false;
+    auto isPluginEnabled = jami::Manager::instance().pluginPreferences.getPluginsEnabled();
 
     for (auto subject : callAVsubjects_[callId]) {
         auto handlerIt = std::find_if(callMediaHandlers_.begin(),
@@ -273,9 +287,11 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
                     handlers[mediaHandlerId] = true;
             } else {
                 (*handlerIt)->detach();
-                handlers[mediaHandlerId] = false;
+                if (isPluginEnabled)
+                    handlers[mediaHandlerId] = false;
             }
-            if (subject.first.type == StreamType::video && isVideoType((*handlerIt)))
+            if (subject.first.type == StreamType::video && isVideoType((*handlerIt))
+                && isPluginEnabled)
                 applyRestart = true;
         }
     }
