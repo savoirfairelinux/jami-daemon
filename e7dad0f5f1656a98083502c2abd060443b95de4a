@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e0632fa4_920b6ecf",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 89
+      },
+      "lineNbr": 3480,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2021-04-07T17:09:35Z",
+      "side": 1,
+      "message": "user have one device?",
+      "revId": "e7dad0f5f1656a98083502c2abd060443b95de4a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "562405c3_b4e146f7",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 89
+      },
+      "lineNbr": 712,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2021-04-07T17:09:35Z",
+      "side": 1,
+      "message": "is it used?",
+      "revId": "e7dad0f5f1656a98083502c2abd060443b95de4a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
