@@ -596,26 +596,43 @@ ConnectionManager::Impl::onDhtConnected(const DeviceId& deviceId)
                 return true;
             }
             if (req.isAnswer) {
-                shared->onPeerResponse(req);
+                JAMI_DBG() << "Received request answer from " << req.from;
             } else {
-                // Async certificate checking
-                shared->account.findCertificate(
-                    req.from,
-                    [w, req = std::move(req)](
-                        const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
-                        auto shared = w.lock();
-                        if (!shared)
-                            return;
-                        dht::InfoHash peer_h;
-                        if (AccountManager::foundPeerDevice(cert, peer_h)) {
-                            shared->onDhtPeerRequest(req, cert);
-                        } else {
-                            JAMI_WARN()
-                                << shared->account << "Rejected untrusted connection request from "
-                                << req.from;
-                        }
-                    });
+                JAMI_DBG() << "Received request from " << req.from;
             }
+            // Hack:
+            // Note: This reschedule on the io pool should not be necessary
+            // however https://git.jami.net/savoirfairelinux/ring-daemon/-/issues/421
+            // is a bit clueless and not reproductible in a debug env for now. However,
+            // the behavior makes me think this callback is blocked (maybe in getInfos())
+            // and this must never happen.
+            dht::ThreadPool::io().run([w, req = std::move(req)] {
+                auto shared = w.lock();
+                if (!shared)
+                    return;
+                if (req.isAnswer) {
+                    shared->onPeerResponse(req);
+                } else {
+                    // Async certificate checking
+                    shared->account.findCertificate(
+                        req.from,
+                        [w, req = std::move(req)](
+                            const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
+                            auto shared = w.lock();
+                            if (!shared)
+                                return;
+                            dht::InfoHash peer_h;
+                            if (AccountManager::foundPeerDevice(cert, peer_h)) {
+                                shared->onDhtPeerRequest(req, cert);
+                            } else {
+                                JAMI_WARN()
+                                    << shared->account
+                                    << "Rejected untrusted connection request from " << req.from;
+                            }
+                        });
+                }
+            });
+
             return true;
         },
         dht::Value::UserTypeFilter("peer_request"));
@@ -843,6 +860,9 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         std::lock_guard<std::mutex> lk(infosMtx_);
         infos_[{req.from, req.id}] = info;
     }
+    JAMI_INFO("[Account:%s] accepting connection from %s",
+              account.getAccountID().c_str(),
+              deviceId.c_str());
     std::unique_lock<std::mutex> lk {info->mutex_};
     info->ice_ = Manager::instance()
                      .getIceTransportFactory()
