@@ -649,4 +649,38 @@ SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr)
     }
 }
 
+std::vector<DRing::Message>
+SIPAccountBase::getLastMessages(const uint64_t& base_timestamp)
+{
+    std::lock_guard<std::mutex> lck(mutexLastMessages_);
+    auto it = lastMessages_.begin();
+    size_t num = lastMessages_.size();
+    while (it != lastMessages_.end() and it->received <= base_timestamp) {
+        num--;
+        ++it;
+    }
+    if (num == 0)
+        return {};
+    return {it, lastMessages_.end()};
+}
+
+std::vector<MediaAttribute>
+SIPAccountBase::createDefaultMediaList(bool addVideo, bool onHold)
+{
+    std::vector<MediaAttribute> mediaList;
+    bool secure = getSrtpKeyExchange() == KeyExchangeProtocol::SDES;
+
+    // Add audio and DTMF events
+    mediaList.emplace_back(
+        MediaAttribute(MediaType::MEDIA_AUDIO, onHold, secure, true, "", "main audio"));
+
+#ifdef ENABLE_VIDEO
+    // Add video if allowed.
+    if (isVideoEnabled() and addVideo) {
+        mediaList.emplace_back(
+            MediaAttribute(MediaType::MEDIA_VIDEO, onHold, secure, true, "", "main video"));
+    }
+#endif
+    return mediaList;
+}
 } // namespace jami
