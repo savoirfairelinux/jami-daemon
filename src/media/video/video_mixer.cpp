@@ -189,6 +189,12 @@ VideoMixer::setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob)
 }
 
 void
+VideoMixer::updateLayout()
+{
+    layoutUpdated_ += 1;
+}
+
+void
 VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
     auto lock(rwMutex_.write());
