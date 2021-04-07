@@ -145,5 +145,10 @@ ut_conversationRepository_SOURCES = conversationRepository/conversationRepositor
 #
 check_PROGRAMS += ut_conversation
 ut_conversation_SOURCES = conversation/conversation.cpp
+#
+# media_control
+#
+check_PROGRAMS += ut_media_control
+ut_media_control_SOURCES = media_control/media_control.cpp
 
 TESTS = $(check_PROGRAMS)

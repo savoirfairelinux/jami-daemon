@@ -349,7 +349,9 @@ IceTransport::Impl::Impl(const char* name,
 
     if (upnp_) {
         requestUpnpMappings();
-        addServerReflexiveCandidates(setupUpnpReflexiveCandidates());
+        auto const& upnpMaps = setupUpnpReflexiveCandidates();
+        if (not upnpMaps.empty())
+            addServerReflexiveCandidates(upnpMaps);
     }
 
     pool_.reset(
@@ -552,9 +554,9 @@ IceTransport::Impl::handleEvents(unsigned max_msec)
 void
 IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_status_t status)
 {
-    const char* opname = op == PJ_ICE_STRANS_OP_INIT          ? "initialization"
-                         : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation"
-                                                              : "unknown_op";
+    const char* opname = op == PJ_ICE_STRANS_OP_INIT
+                             ? "initialization"
+                             : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
@@ -808,7 +810,7 @@ IceTransport::Impl::requestUpnpMappings()
                           mapPtr->toString().c_str());
             }
         } else {
-            JAMI_ERR("[ice:%p]: UPNP mapping request failed!", this);
+            JAMI_WARN("[ice:%p]: UPNP mapping request failed!", this);
             upnp_->releaseMapping(requestedMap);
         }
     }
@@ -1072,16 +1074,16 @@ IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& r
         return false;
     }
 
-    if (rem_candidates.size() > PJ_ICE_ST_MAX_CAND-1) {
+    if (rem_candidates.size() > PJ_ICE_ST_MAX_CAND - 1) {
         std::vector<IceCandidate> rcands;
-        rcands.reserve(PJ_ICE_ST_MAX_CAND-1);
+        rcands.reserve(PJ_ICE_ST_MAX_CAND - 1);
         JAMI_WARN("[ice:%p] too much candidates detected, trim list.", pimpl_.get());
         // Just trim some candidates. To avoid to only take host candidates, iterate
         // through the whole list and select some host, some turn and peer reflexives
         // It should give at least enough infos to negotiate.
         auto maxHosts = 8;
         auto maxRelays = PJ_ICE_MAX_TURN;
-        for (auto& c: rem_candidates) {
+        for (auto& c : rem_candidates) {
             if (c.type == PJ_ICE_CAND_TYPE_HOST) {
                 if (maxHosts == 0)
                     continue;
@@ -1091,7 +1093,7 @@ IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& r
                     continue;
                 maxRelays -= 1;
             }
-            if (rcands.size() == PJ_ICE_ST_MAX_CAND-1)
+            if (rcands.size() == PJ_ICE_ST_MAX_CAND - 1)
                 break;
             rcands.emplace_back(std::move(c));
         }
@@ -1233,8 +1235,7 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
         std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
         if (!pimpl_->icest_)
             return res;
-        if (pj_ice_strans_enum_cands(pimpl_->icest_.get(), comp_id + 1, &cand_cnt, cand)
-            != PJ_SUCCESS) {
+        if (pj_ice_strans_enum_cands(pimpl_->icest_.get(), comp_id, &cand_cnt, cand) != PJ_SUCCESS) {
             JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", pimpl_.get());
             return res;
         }
@@ -1295,13 +1296,13 @@ IceTransport::packIceMsg(uint8_t version) const
         msgpack::pack(buffer, version);
         msgpack::pack(buffer, std::make_pair(pimpl_->local_ufrag_, pimpl_->local_pwd_));
         msgpack::pack(buffer, static_cast<uint8_t>(pimpl_->component_count_));
-        for (unsigned i = 0; i < pimpl_->component_count_; i++)
+        for (unsigned i = 1; i <= pimpl_->component_count_; i++)
             msgpack::pack(buffer, getLocalCandidates(i));
     } else {
         SDP sdp;
         sdp.ufrag = pimpl_->local_ufrag_;
         sdp.pwd = pimpl_->local_pwd_;
-        for (unsigned i = 0; i < pimpl_->component_count_; i++) {
+        for (unsigned i = 1; i <= pimpl_->component_count_; i++) {
             auto candidates = getLocalCandidates(i);
             sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
             sdp.candidates.insert(sdp.candidates.end(), candidates.begin(), candidates.end());

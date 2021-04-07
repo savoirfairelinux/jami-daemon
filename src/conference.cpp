@@ -322,8 +322,7 @@ Conference::setActiveParticipant(const std::string& participant_id)
         if (auto call = getCall(item)) {
             if (participant_id == item
                 || call->getPeerNumber().find(participant_id) != std::string::npos) {
-                auto videoRecv = reinterpret_cast<Observable<std::shared_ptr<MediaFrame>>*>(
-                    call->getVideoReceiver());
+                Observable<std::shared_ptr<MediaFrame>>* videoRecv = call->getVideoReceiver();
                 videoMixer_->setActiveParticipant(videoRecv);
                 return;
             }
@@ -966,8 +965,10 @@ Conference::resizeRemoteParticipant(const std::string& peerURI, ParticipantInfo&
         auto sipCall = std::dynamic_pointer_cast<SIPCall>(
             Manager::instance().callFactory.getCall(item, Call::LinkType::SIP));
         if (sipCall && sipCall->getPeerNumber().find(peerURI) != std::string::npos) {
-            remoteFrameHeight = sipCall->getVideoRtp().getVideoReceive()->getHeight();
-            remoteFrameWidth = sipCall->getVideoRtp().getVideoReceive()->getWidth();
+            if (auto const& videoRtp = sipCall->getVideoRtp()) {
+                remoteFrameHeight = videoRtp->getVideoReceive()->getHeight();
+                remoteFrameWidth = videoRtp->getVideoReceive()->getWidth();
+            }
             break;
         }
     }

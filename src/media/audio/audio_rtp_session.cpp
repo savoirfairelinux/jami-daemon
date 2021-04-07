@@ -49,9 +49,12 @@
 namespace jami {
 
 AudioRtpSession::AudioRtpSession(const std::string& id)
-    : RtpSession(id)
+    : RtpSession(id, MediaType::MEDIA_AUDIO)
     , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
+
 {
+    JAMI_DBG("Created Audio RTP session: %p - call Id %s", this, callID_.c_str());
+
     // don't move this into the initializer list or Cthulus will emerge
     ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(callID_);
 }
@@ -59,12 +62,17 @@ AudioRtpSession::AudioRtpSession(const std::string& id)
 AudioRtpSession::~AudioRtpSession()
 {
     stop();
+    JAMI_DBG("Destroyed Audio RTP session: %p - call Id %s", this, callID_.c_str());
 }
 
 void
 AudioRtpSession::startSender()
 {
-    if (not send_.enabled or send_.holding) {
+    JAMI_DBG("Start audio RTP sender: input [%s] - muted [%s]",
+             input_.c_str(),
+             muteState_ ? "YES" : "NO");
+
+    if (not send_.enabled or send_.onHold) {
         JAMI_WARN("Audio sending disabled");
         if (sender_) {
             if (socketPair_)
@@ -139,7 +147,7 @@ AudioRtpSession::restartSender()
 void
 AudioRtpSession::startReceiver()
 {
-    if (not receive_.enabled or receive_.holding) {
+    if (not receive_.enabled or receive_.onHold) {
         JAMI_WARN("Audio receiving disabled");
         receiveThread_.reset();
         return;
