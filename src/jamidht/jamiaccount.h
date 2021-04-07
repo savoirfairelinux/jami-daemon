@@ -220,7 +220,6 @@ public:
      */
     void doUnregister(std::function<void(bool)> cb = {}) override;
 
-    void enableUpnp(bool enable) override;
     /**
      * @return pj_str_t "From" uri based on account information.
      * From RFC3261: "The To header field first and foremost specifies the desired
