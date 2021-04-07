@@ -153,14 +153,18 @@ Account::hangupCalls()
 }
 
 void
-Account::enableUpnp(bool state)
+Account::updateUpnpController()
 {
     std::lock_guard<std::mutex> lk {upnp_mtx};
 
-    if (state and !upnpCtrl_)
+    if (upnpEnabled_ and not upnpCtrl_) {
         upnpCtrl_.reset(new upnp::Controller());
-    else if (!state and upnpCtrl_)
+        if (not upnpCtrl_) {
+            throw std::runtime_error("Failed to create a UPNP Controller instance!");
+        }
+    } else if (not upnpEnabled_) {
         upnpCtrl_.reset();
+    }
 }
 
 void
@@ -294,7 +298,7 @@ Account::unserialize(const YAML::Node& node)
     }
 
     parseValue(node, UPNP_ENABLED_KEY, upnpEnabled_);
-    enableUpnp(upnpEnabled_ && isEnabled());
+    updateUpnpController();
 
     std::string defMod;
     parseValueOptional(node, DEFAULT_MODERATORS_KEY, defMod);
@@ -325,7 +329,7 @@ Account::setAccountDetails(const std::map<std::string, std::string>& details)
         parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent_);
 
     parseBool(details, Conf::CONFIG_UPNP_ENABLED, upnpEnabled_);
-    enableUpnp(upnpEnabled_ && isEnabled());
+
     std::string defMod;
     parseString(details, Conf::CONFIG_DEFAULT_MODERATORS, defMod);
     defaultModerators_ = string_split_set(defMod);
