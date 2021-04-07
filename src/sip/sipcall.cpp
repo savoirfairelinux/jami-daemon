@@ -84,8 +84,8 @@ static constexpr int SDP_VIDEO_MEDIA_ID {1};
 // ICE components Id used on SIP
 static constexpr int ICE_AUDIO_RTP_COMPID {0};
 static constexpr int ICE_AUDIO_RTCP_COMPID {1};
-static constexpr int ICE_VIDEO_RTP_COMPID {2};
-static constexpr int ICE_VIDEO_RTCP_COMPID {3};
+static constexpr int ICE_VIDEO_RTP_COMPID {0};
+static constexpr int ICE_VIDEO_RTCP_COMPID {1};
 
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& id,
