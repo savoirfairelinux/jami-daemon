@@ -233,7 +233,7 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     bool initIceMediaTransport(bool master,
                                std::optional<IceTransportOptions> options = std::nullopt,
-                               unsigned channel_num = 4);
+                               unsigned channel_num = 2);
 
     bool isIceRunning() const;
 
