@@ -89,6 +89,8 @@ public:
 
     std::shared_ptr<VideoFrameActiveWriter>& getVideoLocal() { return videoLocal_; }
 
+    void updateLayout();
+
 private:
     NON_COPYABLE(VideoMixer);
     struct VideoMixerSource;

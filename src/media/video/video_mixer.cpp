@@ -178,13 +178,19 @@ void
 VideoMixer::setActiveHost()
 {
     activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get() : videoLocal_.get();
-    layoutUpdated_ += 1;
+    updateLayout();
 }
 
 void
 VideoMixer::setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
     activeSource_ = ob;
+    updateLayout();
+}
+
+void
+VideoMixer::updateLayout()
+{
     layoutUpdated_ += 1;
 }
 
@@ -197,7 +203,7 @@ VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
     src->render_frame = std::make_shared<VideoFrame>();
     src->source = ob;
     sources_.emplace_back(std::move(src));
-    layoutUpdated_ += 1;
+    updateLayout();
 }
 
 void
@@ -213,7 +219,7 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
                 activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get() : videoLocal_.get();
             }
             sources_.remove(x);
-            layoutUpdated_ += 1;
+            updateLayout();
             break;
         }
     }
@@ -285,7 +291,7 @@ VideoMixer::process()
                 // If orientation changed or if the first valid frame for source
                 // is received -> trigger layout calculation and confInfo update
                 if (x->rotation != input->getOrientation() or !x->w or !x->h) {
-                    layoutUpdated_ += 1;
+                    updateLayout();
                     needsUpdate = true;
                 }
 
@@ -313,7 +319,7 @@ VideoMixer::process()
                 auto hasVideo = x->hasVideo;
                 x->hasVideo = input && successfullyRendered;
                 if (hasVideo != x->hasVideo) {
-                    layoutUpdated_ += 1;
+                    updateLayout();
                     needsUpdate = true;
                 }
             } else if (needsUpdate) {
@@ -471,7 +477,7 @@ VideoMixer::setParameters(int width, int height, AVPixelFormat format)
         libav_utils::fillWithBlack(previous_p->pointer());
 
     start_sink();
-    layoutUpdated_ += 1;
+    updateLayout();
     startTime_ = av_gettime();
 }
 
