@@ -1,0 +1,234 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab7abb30_b43b5561",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-07T15:37:43Z",
+      "side": 1,
+      "message": "Not needed. The only requirement here is that the account class extends SIPAccountBase.\n\nThe simplest and most idiomatic way to enforce this requirement is to take a SIPAccountBase shared-ptr argument.",
+      "range": {
+        "startLine": 69,
+        "startChar": 0,
+        "endLine": 77,
+        "endChar": 59
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0d1a8098_3d9818e4",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-07T15:37:43Z",
+      "side": 1,
+      "message": "Not needed. Call is guaranteed to evaluate to true as per the  language specification. \n\nstd::make_shared would throw an exception if allocation or construction failed.",
+      "range": {
+        "startLine": 81,
+        "startChar": 8,
+        "endLine": 81,
+        "endChar": 12
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "82ed7718_0df24554",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-07T15:37:43Z",
+      "side": 1,
+      "message": "lock before getNewCallId to make the whole process atomic (no call with the same ID would be created between choosing the id and placing the call in the map)",
+      "range": {
+        "startLine": 82,
+        "startChar": 8,
+        "endLine": 82,
+        "endChar": 65
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b5f1ee9e_fcbf336f",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-07T15:37:43Z",
+      "side": 1,
+      "message": "emplace(id, call)",
+      "range": {
+        "startLine": 83,
+        "startChar": 39,
+        "endLine": 83,
+        "endChar": 72
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e379269c_c6d8904a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 428,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-07T15:37:43Z",
+      "side": 1,
+      "message": "* In general, we try to avoid using assert in production-ready code.\n* `call` could be null during a normal production runtime if placeCall is called after daemon destruction started. So check the call for null instead of assert",
+      "range": {
+        "startLine": 428,
+        "startChar": 4,
+        "endLine": 428,
+        "endChar": 17
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dc47e6a6_b88822ca",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 446,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-07T15:37:43Z",
+      "side": 1,
+      "message": "idem",
+      "range": {
+        "startLine": 446,
+        "startChar": 4,
+        "endLine": 446,
+        "endChar": 17
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "62aad9b9_4ae72248",
+        "filename": "src/media/media_attribute.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-07T15:37:43Z",
+      "side": 1,
+      "message": "Functions such as getMediaType and getBoolValue are not needed.\nThe same behavior can be achieved cleaner without them,\n(just add `bool string_utils::parseBool(string_view str)`).\n\nauto it \u003d mediaMap.find(MediaAttributeKey::MEDIA_TYPE);\nif (it !\u003d mediaMap.end())\n    type_ \u003d stringToMediaType(it-\u003esecond);\n\nit \u003d mediaMap.find(MediaAttributeKey::MUTED);\nif (it !\u003d mediaMap.end())\n    muted_ \u003d string_utils::parseBool(it-\u003esecond);\n\nit \u003d mediaMap.find(MediaAttributeKey::SOURCE);\nif (it !\u003d mediaMap.end())\n    sourceUri_ \u003d it-\u003esecond;",
+      "range": {
+        "startLine": 25,
+        "startChar": 0,
+        "endLine": 28,
+        "endChar": 0
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2f40dc12_6f4dffd2",
+        "filename": "src/media/media_attribute.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-07T15:37:43Z",
+      "side": 1,
+      "message": "not needed (see above)",
+      "range": {
+        "startLine": 70,
+        "startChar": 1,
+        "endLine": 120,
+        "endChar": 0
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f25fef2f_96b1c677",
+        "filename": "src/media/media_attribute.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-07T15:37:43Z",
+      "side": 1,
+      "message": "Add MediaAttribute::toMap():\n\nmediaList.emplace_back(media.toMap());\n\nOr build the map inline:\n\nmediaList.emplace_back({\n    {MediaAttributeKey::MEDIA_TYPE, mediaTypeToString(media.type_)},\n    {MediaAttributeKey::LABEL, media.label_},\n    {MediaAttributeKey::SOURCE, media.sourceUri_},\n})",
+      "range": {
+        "startLine": 151,
+        "startChar": 0,
+        "endLine": 158,
+        "endChar": 70
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1f1f8cb4_d97b3ca8",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 62
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-07T15:37:43Z",
+      "side": 1,
+      "message": "use TRUE_STR and FALSE_STR directly instead of redefining",
+      "range": {
+        "startLine": 91,
+        "startChar": 31,
+        "endLine": 93,
+        "endChar": 44
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
