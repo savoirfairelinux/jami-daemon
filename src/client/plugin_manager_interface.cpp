@@ -83,7 +83,7 @@ getInstalledPlugins()
 std::vector<std::string>
 getLoadedPlugins()
 {
-    return jami::Manager::instance().getJamiPluginManager().getLoadedPlugins();
+    return jami::Manager::instance().pluginPreferences.getLoadedPlugins();
 }
 
 int
@@ -186,6 +186,12 @@ void
 setPluginsEnabled(bool state)
 {
     jami::Manager::instance().pluginPreferences.setPluginsEnabled(state);
+    for (auto& item : jami::Manager::instance().pluginPreferences.getLoadedPlugins()) {
+        if (state)
+            jami::Manager::instance().getJamiPluginManager().loadPlugin(item);
+        else
+            jami::Manager::instance().getJamiPluginManager().unloadPlugin(item);
+    }
     jami::Manager::instance().saveConfig();
 }
 } // namespace DRing

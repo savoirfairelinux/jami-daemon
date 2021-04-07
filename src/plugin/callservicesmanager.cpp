@@ -133,6 +133,8 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
             }
             callMediaHandlers_.erase(handlerIt);
         }
+        // wait to free frames that may had be passed to plugins
+        std::this_thread::sleep_for(std::chrono::milliseconds(150));
         return true;
     };
 
