@@ -67,7 +67,9 @@ public:
 
     void removeUnusedConnections(const DeviceId& deviceId = {})
     {
+        JAMI_ERR("##### LOCK5 INFO?");
         std::lock_guard<std::mutex> lk(infosMtx_);
+        JAMI_ERR("##### LOCK5 INFO!");
         for (auto it = infos_.begin(); it != infos_.end();) {
             auto& [key, info] = *it;
             bool erased = false;
@@ -91,6 +93,7 @@ public:
         }
         if (!deviceId)
             dht::ThreadPool::io().run([infos = std::move(infos_)]() mutable { infos.clear(); });
+        JAMI_ERR("##### LOCK5 INFO END");
     }
     void shutdown()
     {
@@ -163,7 +166,9 @@ public:
     std::shared_ptr<ConnectionInfo> getInfo(const DeviceId& deviceId,
                                             const dht::Value::Id& id = dht::Value::INVALID_ID)
     {
+        JAMI_ERR("#### LOCK INFO?");
         std::lock_guard<std::mutex> lk(infosMtx_);
+        JAMI_ERR("#### LOCK INFO!");
         decltype(infos_)::iterator it;
         if (id == dht::Value::INVALID_ID) {
             it = std::find_if(infos_.begin(), infos_.end(), [&](const auto& item) {
@@ -453,8 +458,11 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                 // all stored structures.
                 auto eraseInfo = [w, cbId] {
                     if (auto shared = w.lock()) {
+                        JAMI_ERR("##### LOCK INFO?");
                         std::lock_guard<std::mutex> lk(shared->infosMtx_);
+                        JAMI_ERR("##### LOCK INFO!");
                         shared->infos_.erase(cbId);
+                        JAMI_ERR("##### LOCK INFO END");
                     }
                 };
 
@@ -588,11 +596,15 @@ ConnectionManager::Impl::onDhtConnected(const DeviceId& deviceId)
     account.dht()->listen<PeerConnectionRequest>(
         dht::InfoHash::get(PeerConnectionRequest::key_prefix + deviceId.toString()),
         [w = weak()](PeerConnectionRequest&& req) {
+            JAMI_ERR("@@@ Receive peer req %u", req.id);
             auto shared = w.lock();
-            if (!shared)
+            if (!shared) {
+                JAMI_ERR("@@@ No account for %u", req.id);
                 return false;
+            }
             if (shared->account.isMessageTreated(to_hex_string(req.id))) {
                 // Message already treated. Just ignore
+                JAMI_ERR("@@@ Message Treated %u", req.id);
                 return true;
             }
             if (req.isAnswer) {
@@ -633,6 +645,7 @@ ConnectionManager::Impl::onDhtConnected(const DeviceId& deviceId)
                 }
             });
 
+            JAMI_ERR("@@@ Receive peer req END %u", req.id);
             return true;
         },
         dht::Value::UserTypeFilter("peer_request"));
@@ -808,8 +821,11 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
     // all stored structures.
     auto eraseInfo = [w = weak(), id = req.id, from = req.from] {
         if (auto shared = w.lock()) {
+            JAMI_ERR("##### LOCK2 INFO?");
             std::lock_guard<std::mutex> lk(shared->infosMtx_);
+            JAMI_ERR("##### LOCK2 INFO!");
             shared->infos_.erase({from, id});
+            JAMI_ERR("##### LOCK2 INFO END");
         }
     };
 
@@ -857,7 +873,9 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
     // Negotiate a new ICE socket
     auto info = std::make_shared<ConnectionInfo>();
     {
+        JAMI_ERR("### LOCK INFO?");
         std::lock_guard<std::mutex> lk(infosMtx_);
+        JAMI_ERR("### LOCK INFO!");
         infos_[{req.from, req.id}] = info;
     }
     JAMI_INFO("[Account:%s] accepting connection from %s",
@@ -917,8 +935,11 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const
                 for (const auto& pending : sthis->extractPendingCallbacks(cbId.first, cbId.second))
                     pending.cb(nullptr, deviceId);
 
+            JAMI_ERR("##### LOCK3 INFO?");
             std::lock_guard<std::mutex> lk(sthis->infosMtx_);
+            JAMI_ERR("##### LOCK3 INFO!");
             sthis->infos_.erase({deviceId, vid});
+            JAMI_ERR("##### LOCK3 INFO END");
         });
     });
 }
@@ -949,7 +970,9 @@ ConnectionManager::closeConnectionsWith(const DeviceId& deviceId)
 
     std::vector<std::shared_ptr<ConnectionInfo>> connInfos;
     {
+        JAMI_ERR("##### LOCK4 INFO?");
         std::lock_guard<std::mutex> lk(pimpl_->infosMtx_);
+        JAMI_ERR("##### LOCK4 INFO!");
         for (auto iter = pimpl_->infos_.begin(); iter != pimpl_->infos_.end();) {
             auto const& [key, value] = *iter;
             if (key.first == deviceId) {
@@ -959,6 +982,7 @@ ConnectionManager::closeConnectionsWith(const DeviceId& deviceId)
                 iter++;
             }
         }
+        JAMI_ERR("##### LOCK4 INFO END");
     }
     for (auto& info : connInfos) {
         if (info->ice_) {
