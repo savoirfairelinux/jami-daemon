@@ -331,7 +331,10 @@ public:
     bool isLocalModeratorsEnabled() const { return localModeratorsEnabled_; }
     void enableLocalModerators(bool isModEnabled) { localModeratorsEnabled_ = isModEnabled; }
     bool isAllModerators() const { return allModeratorsEnabled_; }
-    void setAllModerators(bool isAllModeratorEnabled) { allModeratorsEnabled_ = isAllModeratorEnabled; }
+    void setAllModerators(bool isAllModeratorEnabled)
+    {
+        allModeratorsEnabled_ = isAllModeratorEnabled;
+    }
 
 public: // virtual methods that has to be implemented by concrete classes
     /**
@@ -350,7 +353,7 @@ private:
     std::set<std::string> callIDSet_;
 
 protected:
-    virtual void enableUpnp(bool state);
+    void updateUpnpController();
 
     static void parseString(const std::map<std::string, std::string>& details,
                             const char* key,
