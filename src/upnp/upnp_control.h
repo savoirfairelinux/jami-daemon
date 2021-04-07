@@ -48,12 +48,12 @@ class Controller
 {
 public:
     Controller();
-    Controller(const IpAddr& addr);
     ~Controller();
 
+    // Set known public address
+    void setPublicAddress(const IpAddr& addr);
     // Checks if a valid IGD is available.
     bool isReady() const;
-
     // Gets the external ip of the first valid IGD in the list.
     IpAddr getExternalIP() const;
 

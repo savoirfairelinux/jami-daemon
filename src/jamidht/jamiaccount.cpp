@@ -2079,35 +2079,6 @@ JamiAccount::doRegister()
     cacheTurnServers(); // reset cache for TURN servers
 }
 
-void
-JamiAccount::enableUpnp(bool enable)
-{
-    std::lock_guard<std::mutex> lk {upnp_mtx};
-
-    if (enable) {
-        auto const& addr = getPublishedIpAddress();
-
-        if (upnpCtrl_ and upnpCtrl_->getExternalIP() == addr) {
-            JAMI_DBG(
-                "[Account %s] Already have a valid controller instance with external address [%s]",
-                getAccountID().c_str(),
-                upnpCtrl_->getExternalIP().toString().c_str());
-            return;
-        }
-
-        JAMI_DBG("[Account %s] Creating a new upnp controller instance", getAccountID().c_str());
-        // Need a known IPv4 address to validate the external address
-        // returned by the IGD.
-        if (addr and addr.getFamily() == AF_INET) {
-            upnpCtrl_.reset(new upnp::Controller(addr));
-        } else {
-            upnpCtrl_.reset(new upnp::Controller());
-        }
-    } else {
-        upnpCtrl_.reset();
-    }
-}
-
 std::vector<std::string>
 JamiAccount::loadBootstrap() const
 {
@@ -3741,9 +3712,9 @@ JamiAccount::storeActiveIpAddress()
                  getAccountID().c_str(),
                  publicAddr.toString().c_str());
 
-        // Check if we need to create a new UPNP controller instance.
-        if (upnpEnabled_ and (not upnpCtrl_ or not upnpCtrl_->isReady())) {
-            enableUpnp(true);
+        // Set the known public address in UPNP if enabled.
+        if (upnpCtrl_) {
+            upnpCtrl_->setPublicAddress(publicAddr);
         }
     }
 
