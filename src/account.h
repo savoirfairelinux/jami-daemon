@@ -373,7 +373,7 @@ private:
     std::set<std::string> callIDSet_;
 
 protected:
-    virtual void enableUpnp(bool state);
+    void updateUpnpController();
 
     static void parseString(const std::map<std::string, std::string>& details,
                             const char* key,
