@@ -4,6 +4,12 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
 AC_INIT([Jami Daemon],[10.0.0],[jami@gnu.org],[jami])
 
+dnl Clear the implicit flags that default to '-g -O2', otherwise they
+dnl take precedence over the values we set via the
+dnl DAEMONCFLAGS/DAEMONCXXFLAGS variables below.
+: ${CFLAGS=""}
+: ${CXXFLAGS=""}
+
 AC_COPYRIGHT([[Copyright (c) Savoir-faire Linux 2004-2021]])
 AC_REVISION([$Revision$])
 
