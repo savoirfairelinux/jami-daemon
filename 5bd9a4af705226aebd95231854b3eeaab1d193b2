@@ -22,6 +22,30 @@
       "revId": "5bd9a4af705226aebd95231854b3eeaab1d193b2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5904ede5_5b84faf0",
+        "filename": "src/account.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 328,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-08T15:29:42Z",
+      "side": 0,
+      "message": "Done\nI guess we need it when creating a fresh account, in that case, Account::unserialize() is not called. Right?",
+      "parentUuid": "cc803aa5_51d5bc5d",
+      "range": {
+        "startLine": 328,
+        "startChar": 17,
+        "endLine": 328,
+        "endChar": 26
+      },
+      "revId": "5bd9a4af705226aebd95231854b3eeaab1d193b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }

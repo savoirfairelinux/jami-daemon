@@ -22,6 +22,30 @@
       "revId": "4c542b88ba0ca1c3eef0086ff50ee841f5f97779",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "57d2e984_39af6a2b",
+        "filename": "src/account.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-08T15:29:42Z",
+      "side": 1,
+      "message": "Failing here means we are out-of-memory. So no use to go further. But anyway, I can use the log instead.",
+      "parentUuid": "ff38c4a9_6cfdb443",
+      "range": {
+        "startLine": 162,
+        "startChar": 28,
+        "endLine": 163,
+        "endChar": 85
+      },
+      "revId": "4c542b88ba0ca1c3eef0086ff50ee841f5f97779",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
