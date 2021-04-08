@@ -532,7 +532,7 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::st
                                      // be called in main thread
                                      runOnMainThread([wthis_, result, response, call]() {
                                          if (response != NameDirectory::Response::found) {
-                                             call->onFailure(EINVAL);
+                                             call->callFailed(EINVAL);
                                              return;
                                          }
                                          if (auto sthis = wthis_.lock()) {
@@ -540,15 +540,15 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::st
                                                  const std::string toUri {parseJamiUri(result)};
                                                  sthis->startOutgoingCall(call, toUri);
                                              } catch (...) {
-                                                 call->onFailure(ENOENT);
+                                                 call->callFailed(ENOENT);
                                              }
                                          } else {
-                                             call->onFailure();
+                                             call->callFailed();
                                          }
                                      });
                                  });
 #else
-        call->onFailure(ENOENT);
+        call->callFailed(ENOENT);
 #endif
     }
 }
@@ -600,7 +600,7 @@ void
 JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri)
 {
     if (not accountManager_ or not dht_) {
-        call->onFailure(ENETDOWN);
+        call->callFailed(ENETDOWN);
         return;
     }
     // TODO: for now, we automatically trust all explicitly called peers
@@ -633,7 +633,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     auto dummyCall = createSubCall(call);
 
     dummyCall->setSecure(isTlsEnabled());
-    call->addSubCall(*dummyCall);
+    call->addSubCall(dummyCall);
 
     auto sendRequest =
         [this, wCall, toUri, dummyCall = std::move(dummyCall)](const DeviceId& deviceId,
@@ -641,7 +641,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             if (eraseDummy) {
                 // Mark the temp call as failed to stop the main call if necessary
                 if (dummyCall)
-                    dummyCall->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
+                    dummyCall->callFailed(static_cast<int>(std::errc::no_such_device_or_address));
                 return;
             }
             auto call = wCall.lock();
@@ -663,7 +663,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                             shared->callConnectionClosed(deviceId, true);
                     }
                 });
-            call->addSubCall(*dev_call);
+            call->addSubCall(dev_call);
             {
                 std::lock_guard<std::mutex> lk(pendingCallsMutex_);
                 pendingCalls_[deviceId].emplace_back(dev_call);
@@ -699,7 +699,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         dev_call->setSecure(isTlsEnabled());
         dev_call->setTransport(transport);
-        call->addSubCall(*dev_call);
+        call->addSubCall(dev_call);
         // Set the call in PROGRESSING State because the ICE session
         // is already ready. Note that this line should be after
         // addSubcall() to change the state of the main call
@@ -752,7 +752,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             if (not ok) {
                 if (auto call = wCall.lock()) {
                     JAMI_WARN("[call:%s] no devices found", call->getCallId().c_str());
-                    call->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
+                    call->callFailed(static_cast<int>(std::errc::no_such_device_or_address));
                 }
             }
         });
@@ -816,15 +816,16 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
         // So, we need to run the call creation in the main thread
         // Also, we do not directly call SIPStartCall before receiving onInitDone, because
         // there is an inside waitForInitialization that can block the thread.
-        runOnMainThread([w = std::move(w), target = std::move(target), call = std::move(call)] {
-            auto shared = w.lock();
-            if (!shared)
-                return;
+        Manager::instance().sipVoIPLink().getExecQueue()->runOnExecQueue(
+            [w = std::move(w), target = std::move(target), call = std::move(call)] {
+                auto shared = w.lock();
+                if (!shared)
+                    return;
 
-            if (not shared->SIPStartCall(*call, target)) {
-                JAMI_ERR("Could not send outgoing INVITE request for new call");
-            }
-        });
+                if (not shared->SIPStartCall(*call, target)) {
+                    JAMI_ERR("Could not send outgoing INVITE request for new call");
+                }
+            });
     };
     call->setPeerNumber(to_id);
     call->initIceMediaTransport(true, std::move(opts));
@@ -866,7 +867,6 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
     if (!CreateClientDialogAndInvite(&pjFrom, &pjContact, &pjTo, &pjTarget, local_sdp, &dialog, &inv))
         return false;
 
-    inv->mod_data[link_.getModId()] = &call;
     call.setInviteSession(inv);
 
     /*
@@ -878,7 +878,7 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
 
     pjsip_tx_data* tdata;
 
-    if (pjsip_inv_invite(call.inviteSession_.get(), &tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_invite(inv, &tdata) != PJ_SUCCESS) {
         JAMI_ERR("Could not initialize invite messager for this call");
         return false;
     }
@@ -900,7 +900,7 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
     // Add user-agent header
     sip_utils::addUserAgentHeader(getUserAgentName(), tdata);
 
-    if (pjsip_inv_send_msg(call.inviteSession_.get(), tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS) {
         JAMI_ERR("Unable to send invite message for this call");
         return false;
     }
@@ -1212,7 +1212,8 @@ JamiAccount::loadAccount(const std::string& archive_password,
                             req.conversationId = conversationId;
                             req.received = std::time(nullptr);
                             auto details = vCard::utils::toMap(
-                                std::string_view(reinterpret_cast<const char*>(payload.data()), payload.size()));
+                                std::string_view(reinterpret_cast<const char*>(payload.data()),
+                                                 payload.size()));
                             req.metadatas = ConversationRepository::infosFromVCard(details);
                             acc->conversationsRequests_[conversationId] = std::move(req);
                         }
@@ -1744,7 +1745,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
 
     if ((std::chrono::steady_clock::now() - pc.start) >= ICE_NEGOTIATION_TIMEOUT) {
         JAMI_WARN("[call:%s] Timeout on ICE negotiation", call->getCallId().c_str());
-        call->onFailure();
+        call->callFailed();
         return true;
     }
 
@@ -1781,7 +1782,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
     // If both transport are not running, the negotiation failed
     if (not udp_finished and not tcp_finished) {
         JAMI_ERR("[call:%s] Both ICE negotiations failed", call->getCallId().c_str());
-        call->onFailure();
+        call->callFailed();
         return true;
     }
 
@@ -2397,8 +2398,8 @@ JamiAccount::doRegister_()
                 auto channelName = "sync://" + deviceId;
                 if (connectionManager_->isConnecting(crt->getId(), channelName)) {
                     JAMI_INFO("[Account %s] Already connecting to %s",
-                        getAccountID().c_str(),
-                        deviceId.c_str());
+                              getAccountID().c_str(),
+                              deviceId.c_str());
                     return;
                 }
                 connectionManager_->connectDevice(crt,
@@ -2430,14 +2431,14 @@ JamiAccount::doRegister_()
                 deviceId, [this, &accept](const std::shared_ptr<dht::crypto::Certificate>& cert) {
                     dht::InfoHash peer_account_id;
                     auto res = accountManager_->onPeerCertificate(cert,
-                                                                dhtPublicInCalls_,
-                                                                peer_account_id);
+                                                                  dhtPublicInCalls_,
+                                                                  peer_account_id);
                     if (res)
                         JAMI_INFO("Accepting ICE request from account %s",
-                                peer_account_id.toString().c_str());
+                                  peer_account_id.toString().c_str());
                     else
                         JAMI_INFO("Discarding ICE request from account %s",
-                                peer_account_id.toString().c_str());
+                                  peer_account_id.toString().c_str());
                     accept.set_value(res);
                 });
             fut.wait();
@@ -2471,7 +2472,8 @@ JamiAccount::doRegister_()
                 fut.wait();
                 auto result = fut.get();
                 return result;
-            } */else if (isFile or isVCard) {
+            } */
+            else if (isFile or isVCard) {
                 auto tid_str = isFile ? name.substr(7) : name.substr(8);
                 uint64_t tid;
                 std::istringstream iss(tid_str);
@@ -2498,7 +2500,8 @@ JamiAccount::doRegister_()
                     cacheSIPConnection(std::move(channel), peerId, deviceId);
                 } /*else if (name.find("sync://") == 0) {
                     cacheSyncConnection(std::move(channel), peerId, deviceId);
-                }*/ else if (isFile or isVCard) {
+                }*/
+                else if (isFile or isVCard) {
                     auto tid_str = isFile ? name.substr(7) : name.substr(8);
                     std::unique_lock<std::mutex> lk(transfersMtx_);
                     auto it = incomingFileTransfers_.find(tid_str);
@@ -2773,7 +2776,7 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg,
 
         if (ice->isFailed()) {
             JAMI_ERR("[call:%s] ice init failed", call->getCallId().c_str());
-            call->onFailure(EIO);
+            call->callFailed(EIO);
             return false;
         }
 
@@ -2825,7 +2828,7 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                            if (!ok) {
                                JAMI_WARN("Can't put ICE descriptor reply on DHT");
                                if (auto call = wcall.lock())
-                                   call->onFailure();
+                                   call->callFailed();
                            } else
                                JAMI_DBG("Successfully put ICE descriptor reply on DHT");
                        });
@@ -2837,7 +2840,7 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
     initICE(peer_ice_msg.ice_data, ice, ice_tcp, udp_failed, tcp_failed);
 
     if (udp_failed && tcp_failed) {
-        call->onFailure(EIO);
+        call->callFailed(EIO);
         return;
     }
 
@@ -2989,7 +2992,8 @@ loadIdList(const std::string& path)
             ids.emplace(std::move(line));
         } else if constexpr (std::is_integral<ID>::value) {
             ID vid;
-            if(auto [p, ec] = std::from_chars(line.data(), line.data()+line.size(), vid, 16); ec == std::errc()) {
+            if (auto [p, ec] = std::from_chars(line.data(), line.data() + line.size(), vid, 16);
+                ec == std::errc()) {
                 ids.emplace(vid);
             }
         }
@@ -3727,8 +3731,8 @@ JamiAccount::storeActiveIpAddress()
                 if (not hasIpv4) {
                     hasIpv4 = true;
                     JAMI_DBG("[Account %s] Store DHT public IPv4 address : %s",
-                            getAccountID().c_str(),
-                            result.toString().c_str());
+                             getAccountID().c_str(),
+                             result.toString().c_str());
                     setPublishedAddress(*result.get());
                     if (upnpCtrl_) {
                         upnpCtrl_->setPublicAddress(*result.get());
@@ -3738,8 +3742,8 @@ JamiAccount::storeActiveIpAddress()
                 if (not hasIpv6) {
                     hasIpv6 = true;
                     JAMI_DBG("[Account %s] Store DHT public IPv6 address : %s",
-                            getAccountID().c_str(),
-                            result.toString().c_str());
+                             getAccountID().c_str(),
+                             result.toString().c_str());
                     setPublishedAddress(*result.get());
                 }
             }
@@ -4785,8 +4789,8 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
     // if there is no pending request
     if (connectionManager_->isConnecting(deviceId, "sip")) {
         JAMI_INFO("[Account %s] Already connecting to %s",
-              getAccountID().c_str(),
-              deviceId.to_c_str());
+                  getAccountID().c_str(),
+                  deviceId.to_c_str());
         return;
     }
     JAMI_INFO("[Account %s] Ask %s for a new SIP channel",
@@ -4796,18 +4800,18 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
                                       "sip",
                                       [w = weak(), id](std::shared_ptr<ChannelSocket> socket,
                                                        const DeviceId&) {
-                                            if (socket) return;
-                                            auto shared = w.lock();
-                                            if (!shared)
-                                                return;
-                                            // If this is triggered, this means that the
-                                            // connectDevice didn't get any response from the DHT.
-                                            // Stop searching pending call.
-                                            shared->callConnectionClosed(id.second, true);
-                                            shared->forEachPendingCall(id.second,
-                                                                        [](const auto& pc) {
-                                                                            pc->onFailure();
-                                                                        });
+                                          if (socket)
+                                              return;
+                                          auto shared = w.lock();
+                                          if (!shared)
+                                              return;
+                                          // If this is triggered, this means that the
+                                          // connectDevice didn't get any response from the DHT.
+                                          // Stop searching pending call.
+                                          shared->callConnectionClosed(id.second, true);
+                                          shared->forEachPendingCall(id.second, [](const auto& pc) {
+                                              pc->callFailed();
+                                          });
                                       });
 }
 
@@ -5020,23 +5024,26 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
 }
 
 void
-JamiAccount::shutdownSIPConnection(const std::shared_ptr<ChannelSocket>& channel, const std::string& peerId, const DeviceId& deviceId)
+JamiAccount::shutdownSIPConnection(const std::shared_ptr<ChannelSocket>& channel,
+                                   const std::string& peerId,
+                                   const DeviceId& deviceId)
 {
     std::unique_lock<std::mutex> lk(sipConnsMtx_);
     SipConnectionKey key(peerId, deviceId);
     auto it = sipConns_.find(key);
     if (it != sipConns_.end()) {
         auto& conns = it->second;
-        conns.erase(std::remove_if(conns.begin(), conns.end(),
-            [&](auto v) {
-                return v.channel == channel;
-            }), conns.end());
+        conns.erase(std::remove_if(conns.begin(),
+                                   conns.end(),
+                                   [&](auto v) { return v.channel == channel; }),
+                    conns.end());
         if (conns.empty())
             sipConns_.erase(it);
     }
     lk.unlock();
     // Shutdown after removal to let the callbacks do stuff if needed
-    if (channel) channel->shutdown();
+    if (channel)
+        channel->shutdown();
 }
 
 std::string_view

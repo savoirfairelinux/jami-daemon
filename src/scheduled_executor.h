@@ -122,6 +122,10 @@ public:
 
     /**
      * Schedule job to be run every dt, starting now.
+     * @param job task to run. The repeated job is stopped
+     * if job() returns 'false'
+     * @param dt the periode between two runs.
+     * @return a shared pointer on the scheduled task
      */
     std::shared_ptr<RepeatedTask> scheduleAtFixedRate(RepeatedJob&& job, duration dt);
 

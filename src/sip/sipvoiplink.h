@@ -31,6 +31,8 @@
 #include "ring_types.h"
 #include "ip_utils.h"
 #include "noncopyable.h"
+#include "utils/async_execution_queue.h"
+#include "sip_events_handler.h"
 
 #include <pjsip.h>
 #include <pjlib.h>
@@ -51,10 +53,18 @@
 
 namespace jami {
 
-class SIPCall;
 class SIPAccountBase;
 class SIPVoIPLink;
 class SipTransportBroker;
+class SipTransport;
+class ScheduledExecutor;
+
+pj_status_t try_respond_stateless(pjsip_endpoint* endpt,
+                                  pjsip_rx_data* rdata,
+                                  int st_code,
+                                  const pj_str_t* st_text,
+                                  const pjsip_hdr* hdr_list,
+                                  const pjsip_msg_body* body);
 
 /**
  * @file sipvoiplink.h
@@ -75,7 +85,7 @@ public:
     /**
      * Event listener. Each event send by the call manager is received and handled from here
      */
-    void handleEvents();
+    void handleEvents(const pj_time_val timeout = {1, 0});
 
     /**
      * Register a new keepalive registration timer to this endpoint
@@ -97,7 +107,6 @@ public:
      */
     void createDefaultSipUdpTransport();
 
-public:
     static void createSDPOffer(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer);
 
     /**
@@ -156,6 +165,11 @@ public:
         tp.u.transport = transport;
         return tp;
     }
+    std::shared_ptr<AsyncExecutionQueue> getExecQueue() const { return sipExecQueue_; }
+
+    bool registerCall(void* call, pjsip_inv_session* invite);
+    bool unregisterCall(void* call, pjsip_inv_session* invite);
+    std::shared_ptr<SipEventsHandler> getEventsHandler(pjsip_inv_session* inv);
 
 private:
     NON_COPYABLE(SIPVoIPLink);
@@ -164,6 +178,16 @@ private:
     std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
     std::atomic_bool running_ {true};
     std::thread sipThread_;
+    // Scheduler used for SIP operations. All operations involving
+    // SIP should use this scheduler in order to perform all
+    // SIP operations on the same thread. This will prevent thread
+    // race and reduce the need for mutexes.
+    std::shared_ptr<ScheduledExecutor> sipScheduler_;
+    std::shared_ptr<AsyncExecutionQueue> sipExecQueue_;
+    std::shared_ptr<RepeatedTask> pollTask_;
+    // Keep the list of active calls.
+    std::map<void*, pjsip_inv_session*> inviteMaps_;
+    std::mutex inviteMutex_;
 
 #ifdef ENABLE_VIDEO
     void requestKeyframe(const std::string& callID);
