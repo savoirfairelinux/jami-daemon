@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "05cae566_7955653b",
+        "filename": "src/media/media_attribute.cpp",
+        "patchSetId": 66
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-04-08T20:33:13Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\n\u0027emplace_back\u0027 is called inside a loop; consider pre-allocating the vector capacity before the loop\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-inefficient-vector-operation",
+      "revId": "d63653107cbf2644896354d9ef50398f7d7105d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
