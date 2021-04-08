@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "183cd341_e6efaa99",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 89
+      },
+      "lineNbr": 3480,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-08T18:46:24Z",
+      "side": 1,
+      "message": "This if is to avoid to wait a confirmation if user has no devices",
+      "parentUuid": "e0632fa4_920b6ecf",
+      "revId": "e7dad0f5f1656a98083502c2abd060443b95de4a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "562405c3_b4e146f7",
         "filename": "src/jamidht/jamiaccount.h",
         "patchSetId": 89
@@ -33,6 +51,24 @@
       "revId": "e7dad0f5f1656a98083502c2abd060443b95de4a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "30124145_59f0fab3",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 89
+      },
+      "lineNbr": 712,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-08T18:46:24Z",
+      "side": 1,
+      "message": "No it\u0027s removed two patches after that, updated",
+      "parentUuid": "562405c3_b4e146f7",
+      "revId": "e7dad0f5f1656a98083502c2abd060443b95de4a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
