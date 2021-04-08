@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0df512d5_d7d5a08c",
+        "filename": "src/conference.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1094,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-08T13:53:05Z",
+      "side": 1,
+      "message": "nitpick, std::find_if",
+      "range": {
+        "startLine": 1090,
+        "startChar": 24,
+        "endLine": 1094,
+        "endChar": 17
+      },
+      "revId": "180d580f81cd9db5ad65f7e62228f492b08e6ea3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
