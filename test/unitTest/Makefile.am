@@ -162,5 +162,9 @@ ut_syncHistory_SOURCES = syncHistory/syncHistory.cpp
 #
 check_PROGRAMS += ut_ice
 ut_ice_SOURCES = ice/ice.cpp
+# sipcall
+#
+check_PROGRAMS += ut_sipcall
+ut_sipcall_SOURCES = sipcall/sipcall.cpp
 
 TESTS = $(check_PROGRAMS)
