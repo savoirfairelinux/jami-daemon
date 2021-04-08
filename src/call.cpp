@@ -691,7 +691,32 @@ Call::sendConfOrder(const Json::Value& root)
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
     messages["application/confOrder+json"] = Json::writeString(wbuilder, root);
-    sendTextMessage(messages, getPeerDisplayName());
+
+    auto w = getAccount();
+    auto account = w.lock();
+    if (account)
+        sendTextMessage(messages, account->getFromUri());
+}
+
+void
+Call::sendConfInfo(const std::string& json)
+{
+    std::map<std::string, std::string> messages;
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    messages["application/confInfo+json"] = json;
+
+    auto w = getAccount();
+    auto account = w.lock();
+    if (account)
+        sendTextMessage(messages, account->getFromUri());
+}
+
+void
+Call::resetConfInfo()
+{
+    sendConfInfo("{}");
 }
 
 } // namespace jami

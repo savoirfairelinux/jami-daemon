@@ -143,14 +143,7 @@ Conference::~Conference()
         if (auto call = getCall(participant_id)) {
             call->exitConference();
             // Reset distant callInfo
-            auto w = call->getAccount();
-            auto account = w.lock();
-            if (!account)
-                continue;
-            call->sendTextMessage(std::map<std::string, std::string> {{"application/confInfo+json",
-                                                                       "[]"}},
-                                  account->getFromUri());
-
+            call->resetConfInfo();
             // Trigger the SIP negotiation to update the resolution for the remaining call
             // ideally this sould be done without renegotiation
             call->switchInput(
@@ -398,9 +391,8 @@ Conference::sendConferenceInfos()
             dht::ThreadPool::io().run([call,
                                        confInfo = getConfInfoHostUri(account->getUsername()
                                                                          + "@ring.dht",
-                                                                     call->getPeerNumber()),
-                                       from = account->getFromUri()] {
-                call->sendTextMessage({{"application/confInfo+json", confInfo.toString()}}, from);
+                                                                     call->getPeerNumber())] {
+                call->sendConfInfo(confInfo.toString());
             });
         }
     }

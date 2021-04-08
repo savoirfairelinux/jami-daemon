@@ -347,6 +347,8 @@ public: // media management
 
     std::unique_ptr<AudioDeviceGuard> audioGuard;
     void sendConfOrder(const Json::Value& root);
+    void sendConfInfo(const std::string& json);
+    void resetConfInfo();
 
 protected:
     virtual void merge(Call& scall);
