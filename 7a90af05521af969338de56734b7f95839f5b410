@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "be70eb7b_018fc5a5",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-08T13:40:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ab7abb30_b43b5561",
+      "range": {
+        "startLine": 69,
+        "startChar": 0,
+        "endLine": 77,
+        "endChar": 59
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0d1a8098_3d9818e4",
         "filename": "src/call_factory.cpp",
         "patchSetId": 62
@@ -45,6 +69,30 @@
       "revId": "7a90af05521af969338de56734b7f95839f5b410",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "350f56d4_7ba3e259",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-08T13:40:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0d1a8098_3d9818e4",
+      "range": {
+        "startLine": 81,
+        "startChar": 8,
+        "endLine": 81,
+        "endChar": 12
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "cf014a30_3c5d34d6",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-08T13:40:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "82ed7718_0df24554",
+      "range": {
+        "startLine": 82,
+        "startChar": 8,
+        "endLine": 82,
+        "endChar": 65
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b5f1ee9e_fcbf336f",
         "filename": "src/call_factory.cpp",
         "patchSetId": 62
@@ -91,6 +163,30 @@
       "revId": "7a90af05521af969338de56734b7f95839f5b410",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "53bfd9ab_9f71f5d2",
+        "filename": "src/call_factory.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-08T13:40:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b5f1ee9e_fcbf336f",
+      "range": {
+        "startLine": 83,
+        "startChar": 39,
+        "endLine": 83,
+        "endChar": 72
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "4042d139_9aa224b4",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 428,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-08T13:40:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e379269c_c6d8904a",
+      "range": {
+        "startLine": 428,
+        "startChar": 4,
+        "endLine": 428,
+        "endChar": 17
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "dc47e6a6_b88822ca",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 62
@@ -137,6 +257,30 @@
       "revId": "7a90af05521af969338de56734b7f95839f5b410",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "36d3e5d2_cbbe0b74",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 446,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-08T13:40:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dc47e6a6_b88822ca",
+      "range": {
+        "startLine": 446,
+        "startChar": 4,
+        "endLine": 446,
+        "endChar": 17
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -163,6 +307,30 @@
     },
     {
       "key": {
+        "uuid": "abc7a82a_e6714caa",
+        "filename": "src/media/media_attribute.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-08T13:40:16Z",
+      "side": 1,
+      "message": "Ack\nAgain, this class will likely evolve. These are local helpers and implementation details, which may be changed anytime without impacting other code.\nBeside, there is no such thing as string_utils::parseBool(). If you mean Account::parseBool(), I don\u0027t think it\u0027s a good a idea to add dependency just for that.",
+      "parentUuid": "62aad9b9_4ae72248",
+      "range": {
+        "startLine": 25,
+        "startChar": 0,
+        "endLine": 28,
+        "endChar": 0
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "2f40dc12_6f4dffd2",
         "filename": "src/media/media_attribute.cpp",
         "patchSetId": 62
@@ -183,6 +351,30 @@
       "revId": "7a90af05521af969338de56734b7f95839f5b410",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "614afa80_756a3974",
+        "filename": "src/media/media_attribute.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-08T13:40:16Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "2f40dc12_6f4dffd2",
+      "range": {
+        "startLine": 70,
+        "startChar": 1,
+        "endLine": 120,
+        "endChar": 0
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -209,6 +401,30 @@
     },
     {
       "key": {
+        "uuid": "db886771_79ece76d",
+        "filename": "src/media/media_attribute.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-08T13:40:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f25fef2f_96b1c677",
+      "range": {
+        "startLine": 151,
+        "startChar": 0,
+        "endLine": 158,
+        "endChar": 70
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "1f1f8cb4_d97b3ca8",
         "filename": "src/media/media_attribute.h",
         "patchSetId": 62
@@ -229,6 +445,30 @@
       "revId": "7a90af05521af969338de56734b7f95839f5b410",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "647aefef_68319aea",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 62
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-08T13:40:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1f1f8cb4_d97b3ca8",
+      "range": {
+        "startLine": 91,
+        "startChar": 31,
+        "endLine": 93,
+        "endChar": 44
+      },
+      "revId": "7a90af05521af969338de56734b7f95839f5b410",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
