@@ -19,6 +19,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#include "manager.h"
 #include "siptransport.h"
 #include "sip_utils.h"
 #include "ip_utils.h"
@@ -441,7 +442,11 @@ SipTransportBroker::getChanneledTransport(const std::shared_ptr<ChannelSocket>& 
                                                                 socket,
                                                                 local,
                                                                 remote,
-                                                                std::move(cb));
+                                                                std::move(cb),
+                                                                Manager::instance()
+                                                                    .sipVoIPLink()
+                                                                    .getExecQueue()
+                                                                    ->getScheduler());
     auto tr = sips_tr->getTransportBase();
     auto sip_tr = std::make_shared<SipTransport>(tr);
     sip_tr->setIsChanneledTransport();

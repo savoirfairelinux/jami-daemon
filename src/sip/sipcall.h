@@ -30,9 +30,11 @@
 
 #include "call.h"
 #include "ice_transport.h"
-#include "media_codec.h" // for MediaType enum
+#include "media_codec.h"
 #include "sip_utils.h"
 #include "sip/sdp.h"
+#include "sipvoiplink.h"
+#include "sip_events_handler.h"
 
 #ifdef ENABLE_VIDEO
 #include "media/video/video_receive_thread.h"
@@ -45,6 +47,7 @@
 
 #include <memory>
 #include <optional>
+#include <thread>
 
 extern "C" {
 #include <pjsip/sip_config.h>
@@ -73,7 +76,7 @@ class Controller;
  * @file sipcall.h
  * @brief SIPCall are SIP implementation of a normal Call
  */
-class SIPCall : public Call
+class SIPCall : public Call, public SipEventsHandler
 {
 private:
     using clock = std::chrono::steady_clock;
@@ -117,14 +120,13 @@ public:
             Call::CallType type,
             const std::vector<MediaAttribute>& mediaList);
 
-    // Inherited from Call class
-    LinkType getLinkType() const override { return LINK_TYPE; }
-
-    // Override of Call class
+    //=== Override of Call class
 private:
-    void merge(Call& call) override; // not public - only called by Call
+    void merge(std::shared_ptr<Call> subCall) override; // not public - only called by Call
 
 public:
+    LinkType getLinkType() const override { return LINK_TYPE; }
+    std::weak_ptr<SIPCall> weak() { return std::static_pointer_cast<SIPCall>(shared_from_this()); }
     void answer() override;
     void answer(const std::vector<MediaAttribute>& mediaList) override;
     void answerMediaChangeRequest(const std::vector<MediaAttribute>& mediaList) override;
@@ -156,11 +158,11 @@ public:
     bool isVideoMuted() const override;
     // End of override of Call class
 
-    // Override of Recordable class
+    //=== Override of Recordable class
     bool toggleRecording() override;
     void peerRecording(bool state) override;
     void peerMuted(bool state) override;
-    // End of override of Recordable class
+    //=== End of override of Recordable class
 
     void monitor() const override;
 
@@ -169,50 +171,38 @@ public:
      */
     Sdp& getSDP() { return *sdp_; }
 
-    // Implementation of events reported by SipVoipLink.
-    /**
-     * Call is in ringing state on peer's side
-     */
-    void onPeerRinging();
-    /**
-     * Peer answered the call
-     */
-    void onAnswered();
-    /**
-     * Called to report server/internal errors
-     * @param cause Optional error code
-     */
-    void onFailure(signed cause = 0);
-    /**
-     * Peer answered busy
-     */
-    void onBusyHere();
-    /**
-     * Peer closed the connection
-     */
-    void onClosed();
-    /**
-     * Report a new offer from peer on a existing invite session
-     * (aka re-invite)
-     */
-    [[deprecated("Replaced by onReceiveReinvite")]] int onReceiveOffer(
-        const pjmedia_sdp_session* offer, const pjsip_rx_data* rdata);
+    //=== Override of SipEventsHandler (reported by SipVoipLink)
+    std::weak_ptr<SipEventsHandler> weakPtr() override;
+    const std::string& getSipCallId() override;
 
-    pj_status_t onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata);
-    /**
-     * Called when the media negotiation (SDP offer/answer) has
-     * completed.
-     */
-    void onMediaNegotiationComplete();
-    // End fo SiPVoipLink events
+    void onReceivedCall(const std::string& from,
+                        const std::string& peerNumber,
+                        pjmedia_sdp_session* remoteSdp,
+                        pjsip_rx_data* rdata,
+                        const std::shared_ptr<SipTransport>& sipTr = {}) override;
+    void onSdpMediaUpdate(pjsip_inv_session* inv, pj_status_t status) override;
+    void onSdpCreateOffer(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer) override;
+    void onInviteSessionStateChanged(pjsip_inv_session* inv, pjsip_event* ev) override;
+    pj_status_t onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata) override;
 
-    void setContactHeader(pj_str_t* contact);
+    void onReceivedTextMessage(std::map<std::string, std::string> messages) override;
+
+    void onRequestInfo(pjsip_inv_session* inv, pjsip_rx_data* rdata, pjsip_msg* msg) override;
+    void onRequestRefer(pjsip_inv_session* inv, pjsip_rx_data* rdata, pjsip_msg* msg) override;
+    void onRequestNotify(pjsip_inv_session* inv, pjsip_rx_data* rdata, pjsip_msg* msg) override;
+    //=== End of SipInviteEvents
+
+    void callFailed(signed cause = 0);
+
+    void setInviteSession(pjsip_inv_session* inviteSession = nullptr);
 
     void setTransport(const std::shared_ptr<SipTransport>& t);
 
+    void setContactHeader(pj_str_t* contact);
+
     SipTransport* getTransport() { return transport_.get(); }
 
-    void sendSIPInfo(std::string_view body, std::string_view subtype);
+    void sendSIPInfo(std::string body, std::string subtype);
 
     void requestKeyframe();
 
@@ -232,14 +222,6 @@ public:
     void setupLocalIce();
 
     void terminateSipSession(int status);
-
-    /**
-     * The invite session to be reused in case of transfer
-     */
-    struct InvSessionDeleter
-    {
-        void operator()(pjsip_inv_session*) const noexcept;
-    };
 
     // NOT SIP RELATED (good candidates to be moved elsewhere)
     std::shared_ptr<AudioRtpSession> getAudioRtp() const;
@@ -275,9 +257,7 @@ public:
 
     void setMute(bool state);
 
-    void setInviteSession(pjsip_inv_session* inviteSession = nullptr);
-
-    std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
+    pjsip_inv_session* getInviteSession();
 
 private:
     /**
@@ -331,18 +311,50 @@ private:
 
     void startAllMedia();
     void stopAllMedia();
+    void mediaNegotiationComplete();
+
+    //=== Helper methods for SIP processing
+    pjsip_status_code receiveCall(const std::string& peerNumber,
+                                  pjmedia_sdp_session* remoteSdp,
+                                  pjsip_rx_data* rdata,
+                                  const std::shared_ptr<SipTransport>& sipTr = {});
+    // Transfer method used for both type of transfer
+    bool transferCommon(const pj_str_t* dst);
+    bool internalOffHold(const std::function<void()>& SDPUpdateFunc);
+    bool hold();
+    bool unhold();
+    // Helper to process media control requests sent through SIP Info.
+    bool handleMediaControl(pjsip_msg_body* body);
+    void replyToRequest(pjsip_inv_session* inv, pjsip_rx_data* rdata, int status_code);
+    static void transfer_client_cb(pjsip_evsub* sub, pjsip_event* event);
+
+    // Process REFER method on a call transfer
+    bool transferCall(const std::string& refer_to);
+    // Call is in ringing state on peer's side
+    void peerRinging();
+    // Peer answered the call
+    void peerAnswered();
+    // Peer answered busy
+    void peerBusy();
+    // Peer closed the connection
+    void closeCall();
+    // Process reinvite.
+    void processReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata);
+    // Process reinvite (legacy).
+    int processReinviteLegacy(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata);
+    //== End of helpers
+
+    SIPVoIPLink& getSipVoIPLink() const;
+    pjsip_endpoint* getSipEndpoint() const;
+    static const pjmedia_sdp_session* getActiveLocalSdpFromInvite(pjsip_inv_session* inv);
+    static const pjmedia_sdp_session* getActiveRemoteSdpFromInvite(pjsip_inv_session* inv);
 
     /**
-     * Transfer method used for both type of transfer
+     * Update the attributes of a media stream
+     * @param newMediaAttr the new attributes
+     * @param streamIdx the index of the stream to update
+     * @return true if the update requires a new SDP and SIP re-invite.
      */
-    bool transferCommon(const pj_str_t* dst);
-
-    bool internalOffHold(const std::function<void()>& SDPUpdateFunc);
-
-    bool hold();
-
-    bool unhold();
-    // Update the attributes of a media stream
     void updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx);
     void updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList);
     // Check if a SIP re-invite must be sent to negotiate the new media
@@ -350,10 +362,14 @@ private:
     void requestReinvite();
     int SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList);
     int SIPSessionReinvite();
+
+    // init SIP call
+    void initCall(const std::shared_ptr<SIPAccountBase>& account,
+                  const std::vector<MediaAttribute>& mediaAttrList);
     // Add a media stream to the call.
     void addMediaStream(const MediaAttribute& mediaAttr);
     // Init media streams
-    size_t initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList);
+    void initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList);
     // Create a new stream from SDP description.
     void createRtpSession(RtpStream& rtpStream);
     // Configure the RTP session from SDP description.
@@ -363,7 +379,7 @@ private:
                              const MediaDescription& remoteMedia);
     // Find the stream index with the matching label
     size_t findRtpStreamIndex(const std::string& label) const;
-
+    unsigned getStreamCount() const;
     std::vector<IceCandidate> getAllRemoteCandidates();
 
     inline std::shared_ptr<const SIPCall> shared() const
@@ -378,12 +394,14 @@ private:
     {
         return std::weak_ptr<const SIPCall>(shared());
     }
-    inline std::weak_ptr<SIPCall> weak() { return std::weak_ptr<SIPCall>(shared()); }
 
     // Vector holding the current RTP sessions.
     std::vector<RtpStream> rtpStreams_;
 
     bool srtpEnabled_ {false};
+
+    // A ref-counted invite instance.
+    pjsip_inv_session* inviteSession_ {nullptr};
 
     /**
      * Hold the transport used for SIP communication.

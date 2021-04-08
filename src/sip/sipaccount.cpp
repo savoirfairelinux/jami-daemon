@@ -266,11 +266,11 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
 
     if (created) {
         std::weak_ptr<SIPCall> weak_call = call;
-        manager.scheduler().run([this, weak_call] {
+        Manager::instance().sipVoIPLink().getExecQueue()->runOnExecQueue([this, weak_call] {
             if (auto call = weak_call.lock()) {
                 if (not SIPStartCall(call)) {
                     JAMI_ERR("Could not send outgoing INVITE request for new call");
-                    call->onFailure();
+                    call->callFailed();
                 }
             }
             return false;
@@ -355,11 +355,11 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<MediaAttri
 
     if (created) {
         std::weak_ptr<SIPCall> weak_call = call;
-        manager.scheduler().run([this, weak_call] {
+        Manager::instance().sipVoIPLink().getExecQueue()->runOnExecQueue([this, weak_call] {
             if (auto call = weak_call.lock()) {
                 if (not SIPStartCall(call)) {
                     JAMI_ERR("Could not send outgoing INVITE request for new call");
-                    call->onFailure();
+                    call->callFailed();
                 }
             }
             return false;
@@ -472,7 +472,6 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     if (!CreateClientDialogAndInvite(&pjFrom, &pjContact, &pjTo, nullptr, local_sdp, &dialog, &inv))
         return false;
 
-    inv->mod_data[link_.getModId()] = call.get();
     call->setInviteSession(inv);
 
     updateDialogViaSentBy(dialog);
@@ -480,7 +479,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     if (hasServiceRoute())
         pjsip_dlg_set_route_set(dialog,
                                 sip_utils::createRouteSet(getServiceRoute(),
-                                                          call->inviteSession_->pool));
+                                                          call->getInviteSession()->pool));
 
     if (hasCredentials()
         and pjsip_auth_clt_set_credentials(&dialog->auth_sess, getCredentialCount(), getCredInfo())
@@ -491,7 +490,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
     pjsip_tx_data* tdata;
 
-    if (pjsip_inv_invite(call->inviteSession_.get(), &tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_invite(inv, &tdata) != PJ_SUCCESS) {
         JAMI_ERR("Could not initialize invite messager for this call");
         return false;
     }
@@ -505,7 +504,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     // Add user-agent header
     sip_utils::addUserAgentHeader(getUserAgentName(), tdata);
 
-    if (pjsip_inv_send_msg(call->inviteSession_.get(), tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS) {
         JAMI_ERR("Unable to send invite message for this call");
         return false;
     }

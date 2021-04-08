@@ -28,7 +28,7 @@
 #endif
 
 #include "logger.h"
-
+#include "utils/async_execution_queue.h"
 #include "recordable.h"
 #include "peerrecorder.h"
 #include "ip_utils.h"
@@ -53,6 +53,7 @@ class VoIPLink;
 class Account;
 struct AccountVideoCodecInfo;
 class AudioDeviceGuard;
+class Manager;
 
 class Call;
 
@@ -281,6 +282,8 @@ public:
      */
     virtual void updateRecState(bool state) = 0;
 
+    // Add state change callback. All callbacks are called on the
+    // call execution queue
     void addStateListener(StateListenerCb&& listener)
     {
         stateChangedListeners_.emplace_back(std::move(listener));
@@ -290,7 +293,7 @@ public:
      * Attach subcall to this instance.
      * If this subcall is answered, this subcall and this instance will be merged using merge().
      */
-    void addSubCall(Call& call);
+    void addSubCall(std::shared_ptr<Call> call);
 
     ///
     /// Return true if this call instance is a subcall (internal call for multi-device handling)
@@ -385,8 +388,26 @@ public: // media management
 protected:
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
-    virtual void merge(Call& scall);
 
+    virtual void merge(std::shared_ptr<Call> subCall);
+
+    bool isValidThread() { return execQueue_->isValidThread(); }
+
+    template<typename Callback>
+    void runOnExecQueue(Callback&& cb)
+    {
+        execQueue_->runOnExecQueue(cb);
+    }
+
+    template<typename T, typename Callback>
+    void runOnExecQueueW(std::weak_ptr<T> wPtr, Callback&& cb)
+    {
+        execQueue_->runOnExecQueueW(wPtr, cb);
+    }
+
+    auto getCurrentThread() const { return execQueue_->getCurrentThread(); }
+
+    auto getThreadId() const { return execQueue_->getThreadId(); }
     /**
      * Constructor of a call
      * @param id Unique identifier of the call
@@ -421,14 +442,13 @@ protected:
     time_point duration_start_ {time_point::min()};
 
 private:
-
     bool validStateTransition(CallState newState);
 
     void checkPendingIM();
 
     void checkAudio();
 
-    void subcallStateChanged(Call&, Call::CallState, Call::ConnectionState);
+    void subcallStateChanged(std::shared_ptr<Call> subCall, Call::CallState, Call::ConnectionState);
 
     SubcallSet safePopSubcalls();
 
@@ -463,6 +483,9 @@ protected:
 
     ///< MultiDevice: message received by subcall to merged yet
     MsgList pendingInMessages_;
+
+    // Execution queue.
+    std::shared_ptr<AsyncExecutionQueue> execQueue_;
 };
 
 // Helpers
