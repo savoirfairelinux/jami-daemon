@@ -7,10 +7,12 @@
 
 // This macro is used to validate that a code is executed from the expected
 // thread. It's useful to detect unexpected race on data members.
+#ifndef CHECK_VALID_THREAD
 #define CHECK_VALID_THREAD() \
     if (not isValidThread()) \
         JAMI_ERR() << "The calling thread " << getCurrentThread() \
                    << " is not the expected thread: " << threadId_;
+#endif
 
 namespace jami {
 namespace upnp {
