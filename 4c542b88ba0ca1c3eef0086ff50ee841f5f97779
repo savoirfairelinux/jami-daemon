@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ff38c4a9_6cfdb443",
+        "filename": "src/account.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-08T14:01:39Z",
+      "side": 1,
+      "message": "not sure we want to abort there, a JAMI_ERR() is enough imho. Unless if the updater should manage it. In this case, we should ensure that it\u0027s catched",
+      "range": {
+        "startLine": 162,
+        "startChar": 28,
+        "endLine": 163,
+        "endChar": 85
+      },
+      "revId": "4c542b88ba0ca1c3eef0086ff50ee841f5f97779",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
