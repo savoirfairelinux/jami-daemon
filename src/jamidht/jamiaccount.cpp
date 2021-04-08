@@ -2669,9 +2669,7 @@ JamiAccount::connectivityChanged()
         // nothing to do
         return;
     }
-    // Let UPNP handle connectivity change if enabled.
-    if (not upnpCtrl_)
-        dht_->connectivityChanged();
+    dht_->connectivityChanged();
     // reset cache
     setPublishedAddress({});
     cacheTurnServers();
