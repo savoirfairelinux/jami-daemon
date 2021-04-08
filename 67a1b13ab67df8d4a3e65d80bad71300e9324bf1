@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "8c43ecfd_4ffa3bfd",
+        "filename": "bin/jni/conversation.i",
+        "patchSetId": 97
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-08T18:46:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aa71b598_bf7dcbe6",
+      "revId": "67a1b13ab67df8d4a3e65d80bad71300e9324bf1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "33a0c7db_d89b964f",
         "filename": "bin/nodejs/conversation.i",
         "patchSetId": 97
@@ -33,6 +51,24 @@
       "revId": "67a1b13ab67df8d4a3e65d80bad71300e9324bf1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "edb17be6_534fb0d8",
+        "filename": "bin/nodejs/conversation.i",
+        "patchSetId": 97
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-08T18:46:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "33a0c7db_d89b964f",
+      "revId": "67a1b13ab67df8d4a3e65d80bad71300e9324bf1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "6664af76_16c08d14",
+        "filename": "src/dring/conversation_interface.h",
+        "patchSetId": 97
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-08T18:46:19Z",
+      "side": 1,
+      "message": "Will not change this here. this will explode all the stack and that\u0027s why we did meetings on the API. We can discuss this on another patch at the end imho",
+      "parentUuid": "5d272766_7b55335a",
+      "revId": "67a1b13ab67df8d4a3e65d80bad71300e9324bf1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "7f014855_f95fe2cc",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 97
@@ -67,6 +121,24 @@
       "revId": "67a1b13ab67df8d4a3e65d80bad71300e9324bf1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fc6077a5_67eb1340",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 97
+      },
+      "lineNbr": 333,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-08T18:46:19Z",
+      "side": 1,
+      "message": "removed",
+      "parentUuid": "7f014855_f95fe2cc",
+      "revId": "67a1b13ab67df8d4a3e65d80bad71300e9324bf1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
