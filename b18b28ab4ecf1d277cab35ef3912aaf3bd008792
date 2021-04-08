@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "dd1cf022_e351c0a9",
+        "filename": "test/unitTest/ice/ice.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-08T21:52:12Z",
+      "side": 1,
+      "message": "may be with some factorization we can test other variations: UDP, without UPNP, ...",
+      "revId": "b18b28ab4ecf1d277cab35ef3912aaf3bd008792",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
