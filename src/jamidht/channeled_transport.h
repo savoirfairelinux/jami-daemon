@@ -53,7 +53,8 @@ public:
                           const std::shared_ptr<ChannelSocket>& socket,
                           const IpAddr& local,
                           const IpAddr& remote,
-                          onShutdownCb&& cb);
+                          onShutdownCb&& cb,
+                          std::shared_ptr<ScheduledExecutor> scheduler);
     ~ChanneledSIPTransport();
 
     pjsip_transport* getTransportBase() override { return &trData_.base; }
@@ -63,7 +64,7 @@ public:
 private:
     NON_COPYABLE(ChanneledSIPTransport);
 
-    // The SIP transport uses a ChannelSocket to send and receive datas
+    // The SIP transport uses a ChannelSocket to send and receive data
     std::shared_ptr<ChannelSocket> socket_ {};
     IpAddr local_ {};
     IpAddr remote_ {};
@@ -81,8 +82,7 @@ private:
     std::mutex txMutex_ {};
     std::condition_variable txCv_ {};
     std::list<pjsip_tx_data*> txQueue_ {};
-
-    ScheduledExecutor scheduler_ {};
+    std::shared_ptr<ScheduledExecutor> scheduler_;
 
     pj_status_t send(pjsip_tx_data*, const pj_sockaddr_t*, int, void*, pjsip_transport_callback);
     void handleEvents();

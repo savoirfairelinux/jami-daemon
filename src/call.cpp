@@ -89,58 +89,54 @@ Call::Call(const std::shared_ptr<Account>& account,
 {
     updateDetails(details);
 
-    addStateListener(
-        [this](Call::CallState call_state, Call::ConnectionState cnx_state, UNUSED int code) {
-            checkPendingIM();
+    addStateListener([this](Call::CallState call_state,
+                            Call::ConnectionState cnx_state,
+                            UNUSED int code) {
+        checkPendingIM();
+        checkAudio();
+
+        // if call just started ringing, schedule call timeout
+        if (type_ == CallType::INCOMING and cnx_state == ConnectionState::RINGING) {
+            auto timeout = Manager::instance().getRingingTimeout();
+            JAMI_DBG("Scheduling call timeout in %d seconds", timeout);
+
             std::weak_ptr<Call> callWkPtr = shared_from_this();
-            runOnMainThread([callWkPtr] {
-                if (auto call = callWkPtr.lock())
-                    call->checkAudio();
-            });
-
-            // if call just started ringing, schedule call timeout
-            if (type_ == CallType::INCOMING and cnx_state == ConnectionState::RINGING) {
-                auto timeout = Manager::instance().getRingingTimeout();
-                JAMI_DBG("Scheduling call timeout in %d seconds", timeout);
-
-                std::weak_ptr<Call> callWkPtr = shared_from_this();
-                Manager::instance().scheduler().scheduleIn(
-                    [callWkPtr] {
-                        if (auto callShPtr = callWkPtr.lock()) {
-                            if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
-                                JAMI_DBG(
-                                    "Call %s is still ringing after timeout, setting state to BUSY",
-                                    callShPtr->getCallId().c_str());
-                                callShPtr->hangup(PJSIP_SC_BUSY_HERE);
-                                Manager::instance().callFailure(*callShPtr);
-                            }
+            Manager::instance().scheduler().scheduleIn(
+                [callWkPtr] {
+                    if (auto callShPtr = callWkPtr.lock()) {
+                        if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
+                            JAMI_DBG(
+                                "Call %s is still ringing after timeout, setting state to BUSY",
+                                callShPtr->getCallId().c_str());
+                            callShPtr->hangup(PJSIP_SC_BUSY_HERE);
+                            Manager::instance().callFailure(*callShPtr);
                         }
-                    },
-                    std::chrono::seconds(timeout));
-            }
-
-            if (!isSubcall() && getCallType() == CallType::OUTGOING) {
-                if (cnx_state == ConnectionState::CONNECTED && duration_start_ == time_point::min())
-                    duration_start_ = clock::now();
-                else if (cnx_state == ConnectionState::DISCONNECTED && call_state == CallState::OVER) {
-                    if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(
-                            getAccount().lock())) {
-                        auto duration = duration_start_ == time_point::min()
-                                            ? 0
-                                            : std::chrono::duration_cast<std::chrono::milliseconds>(
-                                                  clock::now() - duration_start_)
-                                                  .count();
-                        jamiAccount->addCallHistoryMessage(getPeerNumber(), duration);
-
-                        monitor();
                     }
+                },
+                std::chrono::seconds(timeout));
+        }
+
+        if (!isSubcall() && getCallType() == CallType::OUTGOING) {
+            if (cnx_state == ConnectionState::CONNECTED && duration_start_ == time_point::min())
+                duration_start_ = clock::now();
+            else if (cnx_state == ConnectionState::DISCONNECTED && call_state == CallState::OVER) {
+                if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(getAccount().lock())) {
+                    auto duration = duration_start_ == time_point::min()
+                                        ? 0
+                                        : std::chrono::duration_cast<std::chrono::milliseconds>(
+                                              clock::now() - duration_start_)
+                                              .count();
+                    jamiAccount->addCallHistoryMessage(getPeerNumber(), duration);
+
+                    monitor();
                 }
             }
+        }
 
-            // kill pending subcalls at disconnect
-            if (call_state == CallState::OVER)
-                hangupCalls(safePopSubcalls(), 0);
-        });
+        // kill pending subcalls at disconnect
+        if (call_state == CallState::OVER)
+            hangupCalls(safePopSubcalls(), 0);
+    });
 
     time(&timestamp_start_);
     if (auto shared = account_.lock())
@@ -156,6 +152,8 @@ Call::~Call()
 void
 Call::removeCall()
 {
+    CHECK_VALID_EXEC_THREAD();
+
     auto this_ = shared_from_this();
     Manager::instance().callFactory.removeCall(*this);
     setState(CallState::OVER);
@@ -271,8 +269,11 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
     connectionState_ = cnx_state;
     auto new_client_state = getStateStr();
 
-    for (auto& l : stateChangedListeners_)
-        l(callState_, connectionState_, code);
+    runOnExecQueueW(weak(), [this, code] {
+        for (auto& l : stateChangedListeners_) {
+            l(callState_, connectionState_, code);
+        }
+    });
 
     if (old_client_state != new_client_state) {
         if (not parent_) {
@@ -392,6 +393,8 @@ Call::getNullDetails()
 void
 Call::onTextMessage(std::map<std::string, std::string>&& messages)
 {
+    CHECK_VALID_EXEC_THREAD();
+
     auto it = messages.find("application/confInfo+json");
     if (it != messages.end()) {
         setConferenceInfo(it->second);
@@ -436,8 +439,13 @@ Call::peerHungup()
 }
 
 void
-Call::addSubCall(Call& subcall)
+Call::addSubCall(std::shared_ptr<Call> subcall)
 {
+    if (not isValidThread()) {
+        runOnExecQueueW(weak(), [this, subcall] { addSubCall(subcall); });
+        return;
+    }
+
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
 
     // Add subCall only if call is not connected or terminated
@@ -445,31 +453,31 @@ Call::addSubCall(Call& subcall)
     // So till it's <= RINGING
     if (connectionState_ == ConnectionState::CONNECTED
         || connectionState_ == ConnectionState::DISCONNECTED || callState_ == CallState::OVER) {
-        subcall.removeCall();
+        subcall->removeCall();
         return;
     }
 
-    if (not subcalls_.emplace(getPtr(subcall)).second) {
-        JAMI_ERR("[call:%s] add twice subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
+    if (not subcalls_.emplace(subcall).second) {
+        JAMI_ERR("[call:%s] add twice subcall %s",
+                 getCallId().c_str(),
+                 subcall->getCallId().c_str());
         return;
     }
 
-    JAMI_DBG("[call:%s] add subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
-    subcall.parent_ = getPtr(*this);
+    JAMI_DBG("[call:%s] add subcall %s", getCallId().c_str(), subcall->getCallId().c_str());
+    subcall->parent_ = getPtr(*this);
 
     for (const auto& msg : pendingOutMessages_)
-        subcall.sendTextMessage(msg.first, msg.second);
+        subcall->sendTextMessage(msg.first, msg.second);
 
-    subcall.addStateListener(
-        [sub = subcall.weak(),
+    subcall->addStateListener(
+        [sub = subcall->weak(),
          parent = weak()](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
-            runOnMainThread([sub, parent, new_state, new_cstate, code]() {
-                if (auto p = parent.lock()) {
-                    if (auto s = sub.lock()) {
-                        p->subcallStateChanged(*s, new_state, new_cstate);
-                    }
+            if (auto p = parent.lock()) {
+                if (auto s = sub.lock()) {
+                    p->subcallStateChanged(s, new_state, new_cstate);
                 }
-            });
+            }
         });
 }
 
@@ -479,15 +487,19 @@ Call::addSubCall(Call& subcall)
 /// Parent call states are managed by these subcalls.
 /// \note this method may decrease the given \a subcall ref count.
 void
-Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::ConnectionState new_cstate)
+Call::subcallStateChanged(std::shared_ptr<Call> subCall,
+                          Call::CallState new_state,
+                          Call::ConnectionState new_cstate)
 {
+    CHECK_VALID_EXEC_THREAD();
+
     {
         // This condition happens when a subcall hangups/fails after removed from parent's list.
         // This is normal to keep parent_ != nullptr on the subcall, as it's the way to flag it
         // as an subcall and not a master call.
         // XXX: having a way to unsubscribe the state listener could be better than such test
         std::lock_guard<std::recursive_mutex> lk {callMutex_};
-        auto sit = subcalls_.find(getPtr(subcall));
+        auto sit = subcalls_.find(subCall);
         if (sit == subcalls_.end())
             return;
     }
@@ -496,10 +508,10 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
     if (new_state == CallState::ACTIVE and new_cstate == ConnectionState::CONNECTED) {
         JAMI_DBG("[call:%s] subcall %s answered by peer",
                  getCallId().c_str(),
-                 subcall.getCallId().c_str());
+                 subCall->getCallId().c_str());
 
-        hangupCallsIf(safePopSubcalls(), 0, [&](const Call* call) { return call != &subcall; });
-        merge(subcall);
+        hangupCallsIf(safePopSubcalls(), 0, [&](const Call* call) { return call != subCall.get(); });
+        merge(subCall);
         Manager::instance().peerAnsweredCall(*this);
         return;
     }
@@ -509,7 +521,7 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
     if (new_state == CallState::ACTIVE and new_cstate == ConnectionState::DISCONNECTED) {
         JAMI_WARN("[call:%s] subcall %s hangup by peer",
                   getCallId().c_str(),
-                  subcall.getCallId().c_str());
+                  subCall->getCallId().c_str());
 
         hangupCalls(safePopSubcalls(), 0);
         Manager::instance().peerHungupCall(*this);
@@ -520,13 +532,15 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
     // Subcall is busy or failed
     if (new_state >= CallState::BUSY) {
         if (new_state == CallState::BUSY || new_state == CallState::PEER_BUSY)
-            JAMI_WARN("[call:%s] subcall %s busy", getCallId().c_str(), subcall.getCallId().c_str());
+            JAMI_WARN("[call:%s] subcall %s busy",
+                      getCallId().c_str(),
+                      subCall->getCallId().c_str());
         else
             JAMI_WARN("[call:%s] subcall %s failed",
                       getCallId().c_str(),
-                      subcall.getCallId().c_str());
+                      subCall->getCallId().c_str());
         std::lock_guard<std::recursive_mutex> lk {callMutex_};
-        subcalls_.erase(getPtr(subcall));
+        subcalls_.erase(subCall);
 
         // Parent call fails if last subcall is busy or failed
         if (subcalls_.empty()) {
@@ -566,22 +580,19 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
 /// Replace current call data with ones from the given \a subcall.
 /// Must be called while locked by subclass
 void
-Call::merge(Call& subcall)
+Call::merge(std::shared_ptr<Call> subCall)
 {
-    JAMI_DBG("[call:%s] merge subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
+    CHECK_VALID_EXEC_THREAD();
+
+    JAMI_DBG("[call:%s] merge subcall %s", getCallId().c_str(), subCall->getCallId().c_str());
 
     // Merge data
-    pendingInMessages_ = std::move(subcall.pendingInMessages_);
+    pendingInMessages_ = std::move(subCall->pendingInMessages_);
     if (peerNumber_.empty())
-        peerNumber_ = std::move(subcall.peerNumber_);
-    peerDisplayName_ = std::move(subcall.peerDisplayName_);
-    setState(subcall.getState(), subcall.getConnectionState());
-
-    std::weak_ptr<Call> subCallWeak = subcall.shared_from_this();
-    runOnMainThread([subCallWeak] {
-        if (auto subcall = subCallWeak.lock())
-            subcall->removeCall();
-    });
+        peerNumber_ = std::move(subCall->peerNumber_);
+    peerDisplayName_ = std::move(subCall->peerDisplayName_);
+    setState(subCall->getState(), subCall->getConnectionState());
+    subCall->removeCall();
 }
 
 /// Handle pending IM message
@@ -590,6 +601,8 @@ Call::merge(Call& subcall)
 void
 Call::checkPendingIM()
 {
+    CHECK_VALID_EXEC_THREAD();
+
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
 
     auto state = getStateStr();
@@ -600,11 +613,9 @@ Call::checkPendingIM()
                 Manager::instance().incomingMessage(getCallId(), getPeerNumber(), msg.first);
             pendingInMessages_.clear();
 
-            std::weak_ptr<Call> callWkPtr = shared_from_this();
-            runOnMainThread([callWkPtr, pending = std::move(pendingOutMessages_)] {
-                if (auto call = callWkPtr.lock())
-                    for (const auto& msg : pending)
-                        call->sendTextMessage(msg.first, msg.second);
+            runOnExecQueueW(weak(), [this, pending = std::move(pendingOutMessages_)] {
+                for (const auto& msg : pending)
+                    sendTextMessage(msg.first, msg.second);
             });
         }
     }

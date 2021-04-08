@@ -750,6 +750,8 @@ Manager::init(const std::string& config_file)
     // FIXME: this is no good
     initialized = true;
 
+    runOnMainThread([] { JAMI_DBG("Manager core (main) thread is ready"); });
+
     git_libgit2_init();
     auto res = git_transport_register("git", p2p_transport_cb, nullptr);
     if (res < 0) {
