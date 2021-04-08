@@ -157,4 +157,10 @@ ut_media_control_SOURCES = media_control/media_control.cpp
 check_PROGRAMS += ut_syncHistory
 ut_syncHistory_SOURCES = syncHistory/syncHistory.cpp
 
+#
+# ice
+#
+check_PROGRAMS += ut_ice
+ut_ice_SOURCES = ice/ice.cpp
+
 TESTS = $(check_PROGRAMS)
