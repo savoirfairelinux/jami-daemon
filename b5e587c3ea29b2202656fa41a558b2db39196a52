@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fb223808_ea0bb181",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 90
+      },
+      "lineNbr": 2439,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2021-04-08T20:17:14Z",
+      "side": 1,
+      "message": "typo remoteDevice?",
+      "revId": "b5e587c3ea29b2202656fa41a558b2db39196a52",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
