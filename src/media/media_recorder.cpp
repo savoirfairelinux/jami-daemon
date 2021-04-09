@@ -313,9 +313,7 @@ MediaRecorder::initRecord()
     timestampString << std::put_time(&startTime_, "%Y-%m-%d %H:%M:%S");
 
     if (title_.empty()) {
-        std::stringstream ss;
-        ss << "Conversation at %TIMESTAMP";
-        title_ = ss.str();
+        title_ = "Conversation at %TIMESTAMP";
     }
     title_ = replaceAll(title_, "%TIMESTAMP", timestampString.str());
 
