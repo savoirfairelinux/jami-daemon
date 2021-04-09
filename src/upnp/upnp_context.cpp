@@ -596,24 +596,25 @@ UPnPContext::updateMappingList(bool async)
     // Update the preferred IGD.
     updatePreferredIgd();
 
+    if (mappingListUpdateTimer_) {
+        mappingListUpdateTimer_->cancel();
+        mappingListUpdateTimer_ = {};
+    }
+
     // Skip if no controller registered.
     if (controllerList_.empty())
         return;
 
     // Cancel the current timer (if any) and re-schedule.
-    if (mappingListUpdateTimer_)
-        mappingListUpdateTimer_->cancel();
-    mappingListUpdateTimer_ = getScheduler()->scheduleIn([this] { updateMappingList(false); },
-                                                         MAP_UPDATE_INTERVAL);
-
     std::shared_ptr<IGD> prefIgd = getPreferredIgd();
-
     if (not prefIgd) {
         JAMI_DBG("UPNP/NAT-PMP enabled, but no valid IGDs available");
-        std::lock_guard<std::mutex> lock(mappingMutex_);
         // No valid IGD. Nothing to do.
         return;
     }
+
+    mappingListUpdateTimer_ = getScheduler()->scheduleIn([this] { updateMappingList(false); },
+                                                         MAP_UPDATE_INTERVAL);
 
     JAMI_DBG("Current preferred protocol [%s] IGD [%s %s] ",
              prefIgd->getProtocolName(),
