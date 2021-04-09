@@ -182,12 +182,7 @@ add_initial_files(GitRepository& repo, const std::shared_ptr<JamiAccount>& accou
     for (const auto& crl : account->identity().second->getRevocationLists()) {
         if (!crl)
             continue;
-        auto v = crl->getNumber();
-        std::stringstream ss;
-        ss << std::hex;
-        for (const auto& b : v)
-            ss << (unsigned) b;
-        std::string crlPath = crlsPath + DIR_SEPARATOR_STR + deviceId + DIR_SEPARATOR_STR + ss.str()
+        std::string crlPath = crlsPath + DIR_SEPARATOR_STR + deviceId + DIR_SEPARATOR_STR + dht::toHex(crl->getNumber())
                               + ".crl";
         file = fileutils::ofstream(crlPath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
