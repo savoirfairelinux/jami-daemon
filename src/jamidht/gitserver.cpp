@@ -24,6 +24,8 @@
 #include "multiplexed_socket.h"
 #include "opendht/thread_pool.h"
 
+#include <fmt/core.h>
+
 #include <charconv>
 #include <ctime>
 #include <fstream>
