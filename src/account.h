@@ -322,6 +322,7 @@ public:
     virtual void onConversationRequest(const std::string& /*from*/, const Json::Value&) {};
     virtual void onNeedConversationRequest(const std::string& /*from*/,
                                            const std::string& /*conversationId*/) {};
+    virtual void checkIfRemoveForCompat(const std::string& /*peerUri*/) {};
 
     /**
      * Helper function used to load the default codec order from the codec factory
