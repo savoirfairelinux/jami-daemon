@@ -49,6 +49,49 @@
             <arg type="s" name="callID" direction="out"/>
         </method>
 
+        <method name="placeCallWithMedia" tp:name-for-bindings="placeCallWithMedia">
+            <tp:added version="9.10.0"/>
+            <tp:docstring>
+              <p>Place a new call. This version allows passing the list of medias and their attributes.</p>
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in">
+              <tp:docstring>
+                The local account ID. Also supports SIP URI (i.e. sip:num@server) using the "IP2IP_PROFILE" as the account ID.
+              </tp:docstring>
+            </arg>
+            <arg type="s" name="to" direction="in">
+              <tp:docstring>
+                For SIP accounts, the argument is the phone number. In case of calls involving "IP2IP_PROFILE", a complete SIP URI must be specified.
+              </tp:docstring>
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="mediaList" direction="in">
+              <tp:docstring>
+                A list of medias to offer in the call.
+              </tp:docstring>
+            </arg>
+            <arg type="s" name="callID" direction="out"/>
+        </method>
+
+        <method name="requestMediaChange" tp:name-for-bindings="requestMediaChange">
+            <tp:added version="9.10.0"/>
+            <tp:docstring>
+              <p>Request changes in the media of the specified call.</p>
+            </tp:docstring>
+            <arg type="s" name="callID" direction="in">
+              <tp:docstring>
+                The ID of the call.
+              </tp:docstring>
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="mediaList" direction="in">
+              <tp:docstring>
+                A list of media attributes to apply.
+              </tp:docstring>
+            </arg>
+            <arg type="b" name="requestMediaChangeSucceeded" direction="out"/>
+        </method>
+
         <method name="refuse" tp:name-for-bindings="refuse">
             <tp:docstring>
               Refuse an incoming call.
@@ -152,8 +195,6 @@
                </tp:docstring>
            </arg>
         </method>
-
-
 
         <method name="transfer" tp:name-for-bindings="transfer">
             <tp:docstring>

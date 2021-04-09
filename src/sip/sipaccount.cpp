@@ -194,7 +194,9 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
     JAMI_DBG() << *this << "Calling SIP peer " << toUrl;
 
     auto& manager = Manager::instance();
-    auto call = manager.callFactory.newSipCall(shared(), Call::CallType::OUTGOING, volatileCallDetails);
+    auto call = manager.callFactory.newSipCall(shared(),
+                                               Call::CallType::OUTGOING,
+                                               volatileCallDetails);
     call->setSecure(isTlsEnabled());
 
     if (isIP2IP()) {
@@ -250,11 +252,98 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
     else
         sdp.setPublishedIP(getPublishedAddress());
 
-    const bool created = sdp.createOffer(getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                                         getActiveAccountCodecInfoList(
-                                             videoEnabled_ and not call->isAudioOnly() ? MEDIA_VIDEO
-                                                                                       : MEDIA_NONE),
-                                         getSrtpKeyExchange());
+    auto mediaList = createDefaultMediaList(videoEnabled_ and not call->isAudioOnly());
+    const bool created = sdp.createOffer(mediaList);
+
+    if (created) {
+        std::weak_ptr<SIPCall> weak_call = call;
+        manager.scheduler().run([this, weak_call] {
+            if (auto call = weak_call.lock()) {
+                if (not SIPStartCall(call)) {
+                    JAMI_ERR("Could not send outgoing INVITE request for new call");
+                    call->onFailure();
+                }
+            }
+            return false;
+        });
+    } else {
+        throw VoipLinkException("Could not send outgoing INVITE request for new call");
+    }
+
+    return call;
+}
+
+std::shared_ptr<Call>
+SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<MediaAttribute>& mediaAttrList)
+{
+    std::string to;
+    int family;
+
+    JAMI_DBG() << *this << "Calling SIP peer " << toUrl;
+
+    auto& manager = Manager::instance();
+
+    auto call = manager.callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaAttrList);
+    if (not call)
+        throw std::runtime_error("Failed to create the call");
+    ;
+
+    call->setSecure(isTlsEnabled());
+
+    if (isIP2IP()) {
+        bool ipv6 = IpAddr::isIpv6(toUrl);
+        to = ipv6 ? IpAddr(toUrl).toString(false, true) : toUrl;
+        family = ipv6 ? pj_AF_INET6() : pj_AF_INET();
+
+        // TODO: resolve remote host using SIPVoIPLink::resolveSrvName
+        std::shared_ptr<SipTransport> t
+            = isTlsEnabled()
+                  ? link_.sipTransportBroker->getTlsTransport(tlsListener_,
+                                                              IpAddr(sip_utils::getHostFromUri(to)))
+                  : transport_;
+        setTransport(t);
+        call->setTransport(t);
+
+        JAMI_DBG("New %s IP to IP call to %s", ipv6 ? "IPv6" : "IPv4", to.c_str());
+    } else {
+        to = toUrl;
+        call->setTransport(transport_);
+        // Use the same address family as the SIP transport
+        family = pjsip_transport_type_get_af(getTransportType());
+
+        JAMI_DBG("UserAgent: New registered account call to %.*s", (int) toUrl.size(), toUrl.data());
+    }
+
+    auto toUri = getToUri(to);
+    call->initIceMediaTransport(true);
+    call->setIPToIP(isIP2IP());
+    call->setPeerNumber(toUri);
+    call->setPeerUri(toUri);
+
+    const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), family);
+
+    IpAddr addrSdp;
+    if (getUPnPActive()) {
+        /* use UPnP addr, or published addr if its set */
+        addrSdp = getPublishedSameasLocal() ? getUPnPIpAddress() : getPublishedIpAddress();
+    } else {
+        addrSdp = isStunEnabled() or (not getPublishedSameasLocal()) ? getPublishedIpAddress()
+                                                                     : localAddress;
+    }
+
+    /* fallback on local address */
+    if (not addrSdp)
+        addrSdp = localAddress;
+
+    // Building the local SDP offer
+    auto& sdp = call->getSDP();
+
+    if (getPublishedSameasLocal())
+        sdp.setPublishedIP(addrSdp);
+    else
+        sdp.setPublishedIP(getPublishedAddress());
+
+    const bool created = sdp.createOffer(mediaAttrList);
 
     if (created) {
         std::weak_ptr<SIPCall> weak_call = call;
