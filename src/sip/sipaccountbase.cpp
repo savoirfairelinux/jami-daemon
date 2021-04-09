@@ -641,6 +641,12 @@ SIPAccountBase::onTextMessage(const std::string& id,
         } else if (m.first == MIME_TYPE_INVITE) {
             onNeedConversationRequest(from, m.second);
             return;
+        } else if (m.first == MIME_TYPE_TEXT_PLAIN) {
+            // This means that a text is received, so that
+            // the conversation is not a swarm. For compatibility,
+            // check if we have a swarm created. It can be the case
+            // when the trust request confirm was not received.
+            checkIfRemoveForCompat(from);
         }
     }
 
