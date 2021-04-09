@@ -52,6 +52,7 @@ struct pjmedia_sdp_session;
 }
 
 static constexpr const char MIME_TYPE_ASK_TRANSFER[] {"application/data-transfer-request+json"};
+static constexpr const char MIME_TYPE_TEXT_PLAIN[] {"text/plain"};
 
 namespace jami {
 
