@@ -1241,6 +1241,7 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
         }
     }
 
+    res.reserve(cand_cnt);
     for (unsigned i = 0; i < cand_cnt; ++i) {
         std::ostringstream val;
         char ipaddr[PJ_INET6_ADDRSTRLEN];
@@ -1279,7 +1280,7 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
             }
         }
 
-        res.push_back(val.str());
+        res.emplace_back(val.str());
     }
 
     return res;

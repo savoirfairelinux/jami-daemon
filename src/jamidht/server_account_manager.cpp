@@ -92,7 +92,6 @@ ServerAccountManager::initAuthentication(PrivateKey key,
             auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
             Json::Value body;
             {
-                std::stringstream ss;
                 auto csr = ctx->request.get()->toString();
                 body["csr"] = csr;
                 body["deviceName"] = ctx->deviceName;
