@@ -102,7 +102,9 @@ AlsaLayer::AlsaLayer(const AudioPreference& pref)
     , is_playback_open_(false)
     , is_capture_open_(false)
     , audioThread_(nullptr)
-{}
+{
+    setHasNativeAEC(false);
+}
 
 AlsaLayer::~AlsaLayer()
 {
@@ -121,11 +123,19 @@ AlsaLayer::~AlsaLayer()
 void
 AlsaLayer::run()
 {
+    if (playbackHandle_)
+        playbackChanged(true)
+    if (captureHandle_)
+        recordChanged(true)
+
     while (status_ == Status::Started and audioThread_ and audioThread_->isRunning()) {
         playback();
         ringtone();
         capture();
     }
+
+    playbackChanged(false)
+    recordChanged(false)
 }
 
 // Retry approach taken from pa_linux_alsa.c, part of PortAudio
