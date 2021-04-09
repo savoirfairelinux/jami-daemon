@@ -175,7 +175,7 @@ RingBufferPool::bindCallID(const std::string& call_id1, const std::string& call_
 
     const auto& rb_call1 = getRingBuffer(call_id1);
     if (not rb_call1) {
-        JAMI_ERR("No ringbuffer associated to call '%s'", call_id1.c_str());
+        JAMI_ERR("No ringbuffer associated with call '%s'", call_id1.c_str());
         return;
     }
 

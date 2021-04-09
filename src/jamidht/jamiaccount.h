@@ -263,6 +263,15 @@ public:
         const std::map<std::string, std::string>& volatileCallDetails = {}) override;
 
     /**
+     * Create outgoing SIPCall.
+     * @param[in] toUrl The address to call
+     * @param[in] mediaList list of medias
+     * @return A shared pointer on the created call.
+     */
+    std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
+                                          const std::vector<MediaAttribute>& mediaList) override;
+
+    /**
      * Create incoming SIPCall.
      * @param[in] from The origin of the call
      * @param details Call details
@@ -282,9 +291,9 @@ public:
 
     virtual bool isSrtpEnabled() const { return true; }
 
-    virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const override
+    virtual KeyExchangeProtocol getSrtpKeyExchange() const override
     {
-        return sip_utils::KeyExchangeProtocol::SDES;
+        return KeyExchangeProtocol::SDES;
     }
 
     virtual bool getSrtpFallback() const override { return false; }
@@ -658,6 +667,8 @@ private:
 
     template<class... Args>
     std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
+    void newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::string_view toUri);
+    std::shared_ptr<SIPCall> createSubCall(const std::shared_ptr<SIPCall>& mainCall);
 
 #if HAVE_RINGNS
     std::string nameServer_;

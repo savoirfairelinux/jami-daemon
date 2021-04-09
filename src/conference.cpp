@@ -993,8 +993,10 @@ Conference::resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerUR
     // if the one from confInfo is empty
         if (auto call = std::dynamic_pointer_cast<SIPCall>(
                 getCallFromPeerID(string_remove_suffix(peerURI, '@')))) {
-            remoteFrameHeight = call->getVideoRtp().getVideoReceive()->getHeight();
-            remoteFrameWidth = call->getVideoRtp().getVideoReceive()->getWidth();
+            if (auto const& videoRtp = call->getVideoRtp()) {
+                remoteFrameHeight = videoRtp->getVideoReceive()->getHeight();
+                remoteFrameWidth = videoRtp->getVideoReceive()->getWidth();
+            }
         }
     }
 

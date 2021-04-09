@@ -43,7 +43,10 @@ DRING_PUBLIC std::string placeCall(const std::string& accountID, const std::stri
 DRING_PUBLIC std::string placeCall(const std::string& accountID,
                                    const std::string& to,
                                    const std::map<std::string, std::string>& VolatileCallDetails);
-
+DRING_PUBLIC std::string placeCallWithMedia(
+    const std::string& accountID,
+    const std::string& to,
+    const std::vector<std::map<std::string, std::string>>& mediaList);
 DRING_PUBLIC bool refuse(const std::string& callID);
 DRING_PUBLIC bool accept(const std::string& callID);
 DRING_PUBLIC bool hangUp(const std::string& callID);
@@ -54,6 +57,14 @@ DRING_PUBLIC bool transfer(const std::string& callID, const std::string& to);
 DRING_PUBLIC bool attendedTransfer(const std::string& transferID, const std::string& targetID);
 DRING_PUBLIC std::map<std::string, std::string> getCallDetails(const std::string& callID);
 DRING_PUBLIC std::vector<std::string> getCallList();
+
+/* APIs that supports arbitrary number of medias*/
+DRING_PUBLIC std::string placeCall(const std::string& accountID,
+                                   const std::string& to,
+                                   const std::vector<DRing::MediaMap>& mediaList);
+DRING_PUBLIC bool accept(const std::string& callID, const std::vector<DRing::MediaMap>& mediaList);
+DRING_PUBLIC bool requestMediaChange(const std::string& callID,
+                                     const std::vector<DRing::MediaMap>& mediaList);
 
 /* Conference related methods */
 DRING_PUBLIC void removeConference(const std::string& conference_id);
@@ -77,8 +88,12 @@ DRING_PUBLIC std::string getConferenceId(const std::string& callID);
 DRING_PUBLIC std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConferenceInfos(
     const std::string& confId);
-DRING_PUBLIC void setModerator(const std::string& confId, const std::string& peerId, const bool& state);
-DRING_PUBLIC void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
+DRING_PUBLIC void setModerator(const std::string& confId,
+                               const std::string& peerId,
+                               const bool& state);
+DRING_PUBLIC void muteParticipant(const std::string& confId,
+                                  const std::string& peerId,
+                                  const bool& state);
 DRING_PUBLIC void hangupParticipant(const std::string& confId, const std::string& participant);
 
 /* Statistic related methods */
@@ -225,10 +240,11 @@ struct DRING_PUBLIC CallSignal
         using cb_type = void(const std::string&,
                              const std::vector<std::map<std::string, std::string>>&);
     };
-    struct DRING_PUBLIC RemoteRecordingChanged {
-                constexpr static const char* name = "RemoteRecordingChanged";
-                using cb_type = void(const std::string&, const std::string&, bool);
-        };
+    struct DRING_PUBLIC RemoteRecordingChanged
+    {
+        constexpr static const char* name = "RemoteRecordingChanged";
+        using cb_type = void(const std::string&, const std::string&, bool);
+    };
 };
 
 } // namespace DRing

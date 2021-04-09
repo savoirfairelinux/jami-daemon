@@ -1002,6 +1002,56 @@ Manager::outgoingCall(const std::string& account_id,
     return call_id;
 }
 
+std::string
+Manager::outgoingCall(const std::string& account_id,
+                      const std::string& to,
+                      const std::vector<DRing::MediaMap>& mediaList,
+                      const std::string& conf_id)
+{
+    if (not conf_id.empty() and not isConference(conf_id)) {
+        JAMI_ERR("outgoingCall() failed, invalid conference id");
+        return {};
+    }
+
+    JAMI_DBG() << "try outgoing call to '" << to << "'"
+               << " with account '" << account_id << "'";
+
+    std::shared_ptr<Call> call;
+
+    try {
+        call = newOutgoingCall(trim(to), account_id, mediaList);
+    } catch (const std::exception& e) {
+        JAMI_ERR("%s", e.what());
+        return {};
+    }
+
+    if (not call)
+        return {};
+
+    auto call_id = call->getCallId();
+
+    stopTone();
+
+    pimpl_->switchCall(call);
+    call->setConfId(conf_id);
+
+    return call_id;
+}
+
+bool
+Manager::requestMediaChange(const std::string& callID, const std::vector<DRing::MediaMap>& mediaList)
+{
+    auto call = getCallFromCallID(callID);
+    if (not call) {
+        JAMI_ERR("No call with ID %s", callID.c_str());
+        return false;
+    }
+
+    auto const& mediaAttrList = MediaAttribute::parseMediaList(mediaList);
+
+    return call->requestMediaChange(mediaAttrList);
+}
+
 // THREAD=Main : for outgoing Call
 bool
 Manager::answerCall(const std::string& call_id)
@@ -2076,7 +2126,7 @@ void
 Manager::peerHungupCall(Call& call)
 {
     const auto& call_id = call.getCallId();
-    JAMI_DBG("[call:%s] Peer hungup", call_id.c_str());
+    JAMI_DBG("[call:%s] Peer hung up", call_id.c_str());
 
     if (isConferenceParticipant(call_id)) {
         removeParticipant(call_id);
@@ -2114,14 +2164,16 @@ void
 Manager::callFailure(Call& call)
 {
     const auto& call_id = call.getCallId();
-    JAMI_DBG("[call:%s] Failed", call.getCallId().c_str());
+    JAMI_DBG("[call:%s] %s failed",
+             call.getCallId().c_str(),
+             call.isSubcall() ? "Sub-call" : "Parent call");
 
     if (isCurrentCall(call)) {
         pimpl_->unsetCurrentCall();
     }
 
     if (isConferenceParticipant(call_id)) {
-        JAMI_DBG("Call %s participating in a conference failed", call_id.c_str());
+        JAMI_DBG("[call %s] Participating in a conference. Remove", call_id.c_str());
         // remove this participant
         removeParticipant(call_id);
     }
@@ -3151,6 +3203,25 @@ Manager::newOutgoingCall(std::string_view toUrl,
     }
 
     return account->newOutgoingCall(toUrl, volatileCallDetails);
+}
+
+std::shared_ptr<Call>
+Manager::newOutgoingCall(std::string_view toUrl,
+                         const std::string& accountId,
+                         const std::vector<DRing::MediaMap>& mediaList)
+{
+    auto account = getAccount(accountId);
+    if (not account) {
+        JAMI_WARN("No account matches ID %s", accountId.c_str());
+        return {};
+    }
+
+    if (not account->isUsable()) {
+        JAMI_WARN("Account %s is not usable", accountId.c_str());
+        return {};
+    }
+
+    return account->newOutgoingCall(toUrl, MediaAttribute::parseMediaList(mediaList));
 }
 
 #ifdef ENABLE_VIDEO
