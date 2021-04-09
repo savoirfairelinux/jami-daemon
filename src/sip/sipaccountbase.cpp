@@ -657,6 +657,12 @@ SIPAccountBase::onTextMessage(const std::string& id,
                              json["conversation"].asString(),
                              json["interaction"].asString());
             return;
+        } else if (m.first == MIME_TYPE_TEXT_PLAIN) {
+            // This means that a text is received, so that
+            // the conversation is not a swarm. For compatibility,
+            // check if we have a swarm created. It can be the case
+            // when the trust request confirm was not received.
+            checkIfRemoveForCompat(from);
         }
     }
 
