@@ -96,9 +96,6 @@ AlsaLayer::AlsaLayer(const AudioPreference& pref)
     , audioPlugin_(pref.getAlsaPlugin())
     , playbackBuff_(0, audioFormat_)
     , captureBuff_(0, audioFormat_)
-    , playbackIBuff_(1024)
-    , captureIBuff_(1024)
-    , is_playback_prepared_(false)
     , is_capture_prepared_(false)
     , is_playback_running_(false)
     , is_capture_running_(false)
@@ -116,74 +113,13 @@ AlsaLayer::~AlsaLayer()
     closePlaybackStream();
 }
 
-void
-AlsaLayer::initAudioLayer()
-{
-    std::string pcmp;
-    std::string pcmr;
-    std::string pcmc;
-
-    if (audioPlugin_ == PCM_DMIX_DSNOOP) {
-        pcmp = buildDeviceTopo(PCM_DMIX, indexOut_);
-        pcmr = buildDeviceTopo(PCM_DMIX, indexRing_);
-        pcmc = buildDeviceTopo(PCM_DSNOOP, indexIn_);
-    } else {
-        pcmp = buildDeviceTopo(audioPlugin_, indexOut_);
-        pcmr = buildDeviceTopo(audioPlugin_, indexRing_);
-        pcmc = buildDeviceTopo(audioPlugin_, indexIn_);
-    }
-
-    if (not is_capture_open_) {
-        is_capture_open_ = openDevice(&captureHandle_,
-                                      pcmc,
-                                      SND_PCM_STREAM_CAPTURE,
-                                      audioInputFormat_);
-
-        if (not is_capture_open_)
-            emitSignal<DRing::ConfigurationSignal::Error>(ALSA_CAPTURE_DEVICE);
-    }
-
-    if (not is_playback_open_) {
-        is_playback_open_ = openDevice(&playbackHandle_,
-                                       pcmp,
-                                       SND_PCM_STREAM_PLAYBACK,
-                                       audioFormat_);
-
-        if (not is_playback_open_)
-            emitSignal<DRing::ConfigurationSignal::Error>(ALSA_PLAYBACK_DEVICE);
-
-        if (getIndexPlayback() != getIndexRingtone())
-            if (!openDevice(&ringtoneHandle_, pcmr, SND_PCM_STREAM_PLAYBACK, audioFormat_))
-                emitSignal<DRing::ConfigurationSignal::Error>(ALSA_PLAYBACK_DEVICE);
-    }
-
-    hardwareFormatAvailable(getFormat());
-    hardwareInputFormatAvailable(audioInputFormat_);
-
-    prepareCaptureStream();
-    preparePlaybackStream();
-
-    startCaptureStream();
-    startPlaybackStream();
-
-    flushMain();
-    flushUrgent();
-}
-
 /**
  * Reimplementation of run()
  */
 void
 AlsaLayer::run()
 {
-    initAudioLayer();
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        status_ = AudioLayer::Status::Started;
-    }
-    startedCv_.notify_all();
-
-    while (status_ == AudioLayer::Status::Started and audioThread_ and audioThread_->isRunning()) {
+    while (status_ == Status::Started and audioThread_ and audioThread_->isRunning()) {
         playback();
         ringtone();
         capture();
@@ -197,7 +133,9 @@ AlsaLayer::openDevice(snd_pcm_t** pcm,
                       snd_pcm_stream_t stream,
                       AudioFormat& format)
 {
-    JAMI_DBG("Alsa: Opening %s", dev.c_str());
+    JAMI_DBG("Alsa: Opening %s device '%s'",
+        (stream == SND_PCM_STREAM_CAPTURE) ? "capture" : "playback",
+        dev.c_str());
 
     static const int MAX_RETRIES = 20; // times of 100ms
     int err, tries = 0;
@@ -207,7 +145,7 @@ AlsaLayer::openDevice(snd_pcm_t** pcm,
         if (err == -EBUSY) {
             // We're called in audioThread_ context, so if exit is requested
             // force return now
-            if ((not audioThread_) or (not audioThread_->isRunning()))
+            if (not audioThread_ or not audioThread_->isRunning())
                 return false;
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
@@ -231,45 +169,76 @@ AlsaLayer::openDevice(snd_pcm_t** pcm,
     return true;
 }
 
-void AlsaLayer::startStream(AudioDeviceType)
+void AlsaLayer::startStream(AudioDeviceType type)
 {
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Idle)
-            return;
-        status_ = Status::Starting;
+    std::lock_guard<std::mutex> lock(mutex_);
+    status_ = Status::Starting;
+    audioThread_.reset();
+
+    bool dsnop = audioPlugin_ == PCM_DMIX_DSNOOP;
+
+    if (type == AudioDeviceType::PLAYBACK and not is_playback_open_) {
+        is_playback_open_ = openDevice(&playbackHandle_,
+                                       buildDeviceTopo(dsnop ? PCM_DMIX : audioPlugin_, indexOut_),
+                                       SND_PCM_STREAM_PLAYBACK,
+                                       audioFormat_);
+        if (not is_playback_open_)
+            emitSignal<DRing::ConfigurationSignal::Error>(ALSA_PLAYBACK_DEVICE);
+
+        hardwareFormatAvailable(getFormat());
+        startPlaybackStream();
     }
 
-    dcblocker_.reset();
-
-    if (is_playback_running_ and is_capture_running_)
-        return;
-
-    if (not audioThread_) {
-        audioThread_.reset(new AlsaThread(this));
-        audioThread_->start();
-    } else if (!audioThread_->isRunning()) {
-        audioThread_->start();
+    if (type == AudioDeviceType::RINGTONE and getIndexPlayback() != getIndexRingtone() and not ringtoneHandle_) {
+        if (!openDevice(&ringtoneHandle_,
+                        buildDeviceTopo(dsnop ? PCM_DMIX : audioPlugin_, indexRing_),
+                        SND_PCM_STREAM_PLAYBACK,
+                        audioFormat_))
+            emitSignal<DRing::ConfigurationSignal::Error>(ALSA_PLAYBACK_DEVICE);
     }
+
+    if (type == AudioDeviceType::CAPTURE and not is_capture_open_) {
+        dcblocker_.reset();
+        is_capture_open_ = openDevice(&captureHandle_,
+                                      buildDeviceTopo(dsnop ? PCM_DSNOOP : audioPlugin_, indexIn_),
+                                      SND_PCM_STREAM_CAPTURE,
+                                      audioInputFormat_);
+
+        if (not is_capture_open_)
+            emitSignal<DRing::ConfigurationSignal::Error>(ALSA_CAPTURE_DEVICE);
+        prepareCaptureStream();
+        startCaptureStream();
+    }
+
+    status_ = Status::Started;
+    audioThread_.reset(new AlsaThread(this));
+    audioThread_->start();
 }
 
 void
-AlsaLayer::stopStream(AudioDeviceType /*stream*/)
+AlsaLayer::stopStream(AudioDeviceType stream)
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     audioThread_.reset();
 
-    closeCaptureStream();
-    closePlaybackStream();
+    if (stream == AudioDeviceType::CAPTURE && is_capture_open_) {
+        closeCaptureStream();
+    }
 
-    playbackHandle_ = nullptr;
-    captureHandle_ = nullptr;
-    ringtoneHandle_ = nullptr;
+    if (stream == AudioDeviceType::PLAYBACK && is_playback_open_) {
+        closePlaybackStream();
+        flushUrgent();
+        flushMain();
+    }
 
-    /* Flush the ring buffers */
-    flushUrgent();
-    flushMain();
+    if (stream == AudioDeviceType::RINGTONE and ringtoneHandle_) {
+        closeRingtoneStream();
+    }
 
-    status_ = Status::Idle;
+    if (is_capture_open_ or is_playback_open_) {
+        audioThread_.reset(new AlsaThread(this));
+        audioThread_->start();
+    }
 }
 
 /*
@@ -303,6 +272,7 @@ AlsaLayer::closeCaptureStream()
     if (is_capture_prepared_ and is_capture_running_)
         stopCaptureStream();
 
+    JAMI_DBG("Alsa: Closing capture stream");
     if (is_capture_open_ && ALSA_CALL(snd_pcm_close(captureHandle_), "Couldn't close capture") >= 0)
         is_capture_open_ = false;
 }
@@ -318,13 +288,9 @@ AlsaLayer::startCaptureStream()
 void
 AlsaLayer::stopPlaybackStream()
 {
-    if (ringtoneHandle_ and is_playback_running_)
-        ALSA_CALL(snd_pcm_drop(ringtoneHandle_), "Couldn't stop ringtone");
-
     if (playbackHandle_ and is_playback_running_) {
         if (ALSA_CALL(snd_pcm_drop(playbackHandle_), "Couldn't stop playback") >= 0) {
             is_playback_running_ = false;
-            is_playback_prepared_ = false;
         }
     }
 }
@@ -332,15 +298,24 @@ AlsaLayer::stopPlaybackStream()
 void
 AlsaLayer::closePlaybackStream()
 {
-    if (is_playback_prepared_ and is_playback_running_)
+    if (is_playback_running_)
         stopPlaybackStream();
 
     if (is_playback_open_) {
-        if (ringtoneHandle_)
-            ALSA_CALL(snd_pcm_close(ringtoneHandle_), "Couldn't stop ringtone");
-
+        JAMI_DBG("Alsa: Closing playback stream");
         if (ALSA_CALL(snd_pcm_close(playbackHandle_), "Coulnd't close playback") >= 0)
             is_playback_open_ = false;
+        playbackHandle_ = nullptr;
+    }
+}
+
+void
+AlsaLayer::closeRingtoneStream()
+{
+    if (ringtoneHandle_) {
+        ALSA_CALL(snd_pcm_drop(ringtoneHandle_), "Couldn't stop ringtone");
+        ALSA_CALL(snd_pcm_close(ringtoneHandle_), "Couldn't close ringtone");
+        ringtoneHandle_ = nullptr;
     }
 }
 
@@ -356,12 +331,6 @@ AlsaLayer::prepareCaptureStream()
     if (is_capture_open_ and not is_capture_prepared_)
         if (ALSA_CALL(snd_pcm_prepare(captureHandle_), "Couldn't prepare capture") >= 0)
             is_capture_prepared_ = true;
-}
-
-void
-AlsaLayer::preparePlaybackStream()
-{
-    is_playback_prepared_ = true;
 }
 
 bool
@@ -480,7 +449,6 @@ AlsaLayer::write(const AudioFrame& buffer, snd_pcm_t* handle)
         if (ALSA_CALL(snd_pcm_status(handle, status), "Cannot get playback handle status") >= 0)
             if (snd_pcm_status_get_state(status) == SND_PCM_STATE_XRUN) {
                 stopPlaybackStream();
-                preparePlaybackStream();
                 startPlaybackStream();
             }
 
@@ -559,21 +527,18 @@ AlsaLayer::read(unsigned frames)
         break;
     }
 
-    return 0;
+    return {};
 }
 
 std::string
 AlsaLayer::buildDeviceTopo(const std::string& plugin, int card)
 {
+    if (plugin == PCM_DEFAULT)
+        return plugin;
+
     std::stringstream ss;
-    std::string pcm(plugin);
-
-    if (pcm == PCM_DEFAULT)
-        return pcm;
-
-    ss << ":" << card;
-
-    return pcm + ss.str();
+    ss << plugin << ":" << card;
+    return ss.str();
 }
 
 static bool
@@ -634,9 +599,7 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
         return audioDevice;
 
     do {
-        std::stringstream ss;
-        ss << numCard;
-        std::string name = "hw:" + ss.str();
+        std::string name = "hw:" + std::to_string(numCard);
 
         if (snd_ctl_open(&handle, name.c_str(), 0) == 0) {
             if (snd_ctl_card_info(handle, info) == 0) {
@@ -646,7 +609,6 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
                                                    : SND_PCM_STREAM_PLAYBACK);
 
                 int err;
-
                 if ((err = snd_ctl_pcm_info(handle, pcminfo)) < 0) {
                     JAMI_WARN("Cannot get info for %s %s: %s",
                               getCapture ? "capture device" : "playback device",
@@ -662,7 +624,7 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
                     description.append(snd_pcm_info_get_name(pcminfo));
 
                     // The number of the sound card is associated with a string description
-                    audioDevice.push_back(HwIDPair(numCard, description));
+                    audioDevice.emplace_back(numCard, std::move(description));
                 }
             }
 
@@ -730,6 +692,8 @@ AlsaLayer::capture()
 {
     if (!captureHandle_ or !is_capture_running_)
         return;
+
+    snd_pcm_wait(captureHandle_, 10);
 
     int toGetFrames = snd_pcm_avail_update(captureHandle_);
     if (toGetFrames < 0)

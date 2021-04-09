@@ -140,7 +140,6 @@ public:
     void run();
 
 private:
-    void initAudioLayer();
     /**
      * Returns a map of audio device hardware description and index
      */
@@ -185,7 +184,7 @@ private:
     void closePlaybackStream();
     void stopPlaybackStream();
     void startPlaybackStream();
-    void preparePlaybackStream();
+    void closeRingtoneStream();
 
     bool alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format);
 
@@ -235,11 +234,6 @@ private:
     AudioBuffer playbackBuff_;
     AudioBuffer captureBuff_;
 
-    /** Interleaved buffer */
-    std::vector<AudioSample> playbackIBuff_;
-    std::vector<AudioSample> captureIBuff_;
-
-    bool is_playback_prepared_;
     bool is_capture_prepared_;
     bool is_playback_running_;
     bool is_capture_running_;
