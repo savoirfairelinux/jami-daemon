@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a37f6f6d_34aad259",
+        "filename": "src/media/video/video_mixer.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-09T16:20:03Z",
+      "side": 1,
+      "message": "why not replace all the layoutUpdated_ +\u003d 1 in video mixer by this?",
+      "range": {
+        "startLine": 92,
+        "startChar": 11,
+        "endLine": 92,
+        "endChar": 24
+      },
+      "revId": "bf234d54b3c030c1475338f27ca2095d1188f590",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
