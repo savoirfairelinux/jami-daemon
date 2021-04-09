@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6d537d39_87d6576e",
+        "filename": "src/media/audio/alsa/alsalayer.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-09T15:00:39Z",
+      "side": 0,
+      "message": "+1",
+      "revId": "911cd1f8874c05cc13fce313798df1ef3f8b2796",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
