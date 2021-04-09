@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "e4a80090_7b7410c1",
+        "filename": "src/media/audio/alsa/alsalayer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 201,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-09T17:01:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e5c3c8d5_c9791826",
+      "revId": "071f0f30f9dbd5c3f8b75a355b9c5351e495af2c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "db0a261e_fbe0e72b",
         "filename": "src/media/audio/alsa/alsalayer.cpp",
         "patchSetId": 1
@@ -30,6 +48,24 @@
       "writtenOn": "2021-04-09T15:00:39Z",
       "side": 1,
       "message": "When running with ASAN, it always detects a thread race when openDevice is callled a second time. Is it fixed now?\n\n```\nWARNING: ThreadSanitizer: data race (pid\u003d137249)\n  Write of size 8 at 0x7b2800295198 by thread T57 (mutexes: write M491309125830430352):\n    #0 recvmsg \u003cnull\u003e (libtsan.so.0+0x58dde)\n    #1 pa_iochannel_read_with_ancil_data \u003cnull\u003e (libpulsecommon-13.99.so+0x2fdda)\n\n  Previous write of size 8 at 0x7b2800295198 by thread T56 (mutexes: write M463161628159365904):\n    #0 memcpy \u003cnull\u003e (libtsan.so.0+0x42333)\n    #1 pa_srbchannel_read \u003cnull\u003e (libpulsecommon-13.99.so+0x444e3)\n\n  Location is heap block of size 152 at 0x7b2800295180 allocated by thread T56: \n    #0 malloc \u003cnull\u003e (libtsan.so.0+0x30343)\n    #1 pa_xmalloc \u003cnull\u003e (libpulsecommon-13.99.so+0x175da)\n\n  Mutex M491309125830430352 is already destroyed.\n\n  Mutex M463161628159365904 is already destroyed.\n```",
+      "revId": "071f0f30f9dbd5c3f8b75a355b9c5351e495af2c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ff121cda_d96c795d",
+        "filename": "src/media/audio/alsa/alsalayer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 202,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-09T17:01:29Z",
+      "side": 1,
+      "message": "This should be fixed because the thread doesn\u0027t run anymore during startStream/stopStream",
+      "parentUuid": "db0a261e_fbe0e72b",
       "revId": "071f0f30f9dbd5c3f8b75a355b9c5351e495af2c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "487a41ce_94cf61d0",
+        "filename": "src/media/audio/alsa/alsalayer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 240,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-09T17:01:29Z",
+      "side": 1,
+      "message": "Some stream might sill be running.\n\nWe stop the thread while startStream/stopStream is running to avoid race conditions during stream creation/destruction, and restart the thread after if a stream is still open.",
+      "parentUuid": "5c2f7861_feb8f144",
+      "revId": "071f0f30f9dbd5c3f8b75a355b9c5351e495af2c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "e69960e2_827b3ac5",
         "filename": "src/media/audio/alsa/alsalayer.cpp",
         "patchSetId": 1
@@ -64,6 +118,24 @@
       "writtenOn": "2021-04-09T15:00:39Z",
       "side": 1,
       "message": "Why?",
+      "revId": "071f0f30f9dbd5c3f8b75a355b9c5351e495af2c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "181a1609_06bf6192",
+        "filename": "src/media/audio/alsa/alsalayer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 696,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-09T17:01:29Z",
+      "side": 1,
+      "message": "This avoids a 100% CPU loop when only recording (no playback).\n\nIt waits for data to be available on this stream (with a max timeout). Otherwise, toGetFrames will be 0 99.5% of the time.",
+      "parentUuid": "e69960e2_827b3ac5",
       "revId": "071f0f30f9dbd5c3f8b75a355b9c5351e495af2c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
