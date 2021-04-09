@@ -51,6 +51,8 @@ struct pjsip_inv_session;
 struct pjmedia_sdp_session;
 }
 
+static constexpr const char MIME_TYPE_TEXT_PLAIN[] {"text/plain"};
+
 namespace jami {
 
 class SipTransport;

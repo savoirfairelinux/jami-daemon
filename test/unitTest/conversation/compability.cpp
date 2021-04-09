@@ -60,11 +60,13 @@ public:
 private:
     void testIsComposing();
     void testRemoveConvOnOldTrustRequestConfirm();
+    void testRemoveConvOnDhtTextMessage();
     void testSendFileCompatibility();
 
     CPPUNIT_TEST_SUITE(CompabilityTest);
     CPPUNIT_TEST(testIsComposing);
     CPPUNIT_TEST(testRemoveConvOnOldTrustRequestConfirm);
+    CPPUNIT_TEST(testRemoveConvOnDhtTextMessage);
     CPPUNIT_TEST(testSendFileCompatibility);
     CPPUNIT_TEST_SUITE_END();
 };
@@ -256,6 +258,58 @@ CompabilityTest::testRemoveConvOnOldTrustRequestConfirm()
     CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri, false));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationRemoved; }));
+}
+
+void
+CompabilityTest::testRemoveConvOnDhtTextMessage()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationRemoved = false, requestReceived = false;
+    std::string convId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::string& /*conversationId*/,
+            const std::vector<uint8_t>& /*payload*/,
+            time_t /*received*/) {
+            if (account_id == bobId)
+                requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
+        [&](const std::string& accountId, const std::string&) {
+            if (accountId == aliceId) {
+                conversationRemoved = true;
+            }
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&]() { return !convId.empty(); }));
+    ConversationRepository repo(aliceAccount, convId);
+    // Mode must be one to one
+    CPPUNIT_ASSERT(repo.mode() == ConversationMode::ONE_TO_ONE);
+    // Assert that repository exists
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    bobAccount->sendTextMessage(aliceUri, {{"text/plain", "Hi!"}});
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationRemoved; }));
 }
 
