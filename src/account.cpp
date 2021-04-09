@@ -58,6 +58,10 @@ using random_device = dht::crypto::random_device;
 #include "compiler_intrinsics.h"
 #include "dring/account_const.h"
 
+#include <fmt/ranges.h>
+
+using namespace std::literals;
+
 namespace jami {
 
 const char* const Account::ALL_CODECS_KEY = "allCodecs";
@@ -210,21 +214,10 @@ Account::loadDefaultCodecs()
     }
 }
 
-// Convert a list of payloads in a special format, readable by the server.
-// Required format: payloads separated by slashes.
-// @return std::string The serializable string
-static std::string
-join_string(const std::vector<unsigned>& v)
-{
-    std::ostringstream os;
-    std::copy(std::begin(v), std::end(v), std::ostream_iterator<unsigned>(os, "/"));
-    return os.str();
-}
-
 void
 Account::serialize(YAML::Emitter& out) const
 {
-    const auto& activeCodecs = join_string(getActiveCodecs(MEDIA_ALL));
+    const auto& activeCodecs = fmt::format("{}", fmt::join(getActiveCodecs(MEDIA_ALL), "/"sv));
 
     out << YAML::Key << ID_KEY << YAML::Value << accountID_;
     out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;

@@ -2012,14 +2012,14 @@ SIPCall::toggleRecording()
     // add streams to recorder before starting the record
     if (not Call::isRecording()) {
         updateRecState(true);
-        std::stringstream ss;
         auto account = getSIPAccount();
         if (!account) {
             JAMI_ERR("No account detected");
             return false;
         }
-        ss << "Conversation at %TIMESTAMP between " << account->getUserUri() << " and " << peerUri_;
-        recorder_->setMetadata(ss.str(), ""); // use default description
+        auto title = fmt::format("Conversation at %TIMESTAMP between {} and {}",
+            account->getUserUri(), peerUri_);
+        recorder_->setMetadata(title, ""); // use default description
         auto const& audioRtp = getAudioRtp();
         if (audioRtp)
             audioRtp->initRecorder(recorder_);

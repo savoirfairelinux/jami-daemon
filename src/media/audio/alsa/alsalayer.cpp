@@ -31,6 +31,8 @@
 #include "audio/audioloop.h"
 #include "libav_utils.h"
 
+#include <fmt/core.h>
+
 #include <thread>
 #include <atomic>
 #include <chrono>
@@ -547,9 +549,7 @@ AlsaLayer::buildDeviceTopo(const std::string& plugin, int card)
     if (plugin == PCM_DEFAULT)
         return plugin;
 
-    std::stringstream ss;
-    ss << plugin << ":" << card;
-    return ss.str();
+    return fmt::format("{}:{}", plugin, card);
 }
 
 static bool
@@ -610,7 +610,7 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
         return audioDevice;
 
     do {
-        std::string name = "hw:" + std::to_string(numCard);
+        std::string name = fmt::format("hw: {}", numCard);
 
         if (snd_ctl_open(&handle, name.c_str(), 0) == 0) {
             if (snd_ctl_card_info(handle, info) == 0) {
@@ -649,7 +649,7 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
 bool
 AlsaLayer::soundCardIndexExists(int card, AudioDeviceType stream)
 {
-    const std::string name("hw:" + std::to_string(card));
+    std::string name = fmt::format("hw: {}", card);
 
     snd_ctl_t* handle;
     if (snd_ctl_open(&handle, name.c_str(), 0) != 0)
