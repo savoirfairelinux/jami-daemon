@@ -150,11 +150,7 @@ DeviceParams
 VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
-    std::stringstream ss1, ss2;
-
-    ss1 << fmt_->pixfmt;
-    ss1 >> params.format;
-
+    params.format = std::to_string(fmt_->pixfmt);
     params.name = name;
     params.input = name;
     params.unique_id = name;
