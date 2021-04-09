@@ -1273,25 +1273,8 @@ JamiAccount::loadAccount(const std::string& archive_password,
             // using an old version of Jami, without swarm support.
             // In this case, delete current conversation linked with that
             // contact because he will not get messages anyway.
-
-            if (convFromReq.empty()) {
-                auto convId = getOneToOneConversation(uri);
-                if (convId.empty())
-                    return;
-                std::unique_lock<std::mutex> lk(conversationsMtx_);
-                auto it = conversations_.find(convId);
-                if (it == conversations_.end()) {
-                    JAMI_ERR("Conversation %s doesn't exist", convId.c_str());
-                    return;
-                }
-                // We will only removes the conversation if the member is invited
-                // the contact can have mutiple devices with only some with swarm
-                // support, in this case, just go with recent versions.
-                if (it->second->isMember(uri))
-                    return;
-                lk.unlock();
-                removeConversation(convId);
-            }
+            if (convFromReq.empty())
+                checkIfRemoveForCompat(uri);
         }};
 
     try {
@@ -4766,6 +4749,27 @@ JamiAccount::onNeedConversationRequest(const std::string& from, const std::strin
         JAMI_DBG("%s is asking a new invite for %s", from.c_str(), conversationId.c_str());
         sendTextMessage(from, invite);
     }
+}
+
+void
+JamiAccount::checkIfRemoveForCompat(const std::string& peerUri)
+{
+    auto convId = getOneToOneConversation(peerUri);
+    if (convId.empty())
+        return;
+    std::unique_lock<std::mutex> lk(conversationsMtx_);
+    auto it = conversations_.find(convId);
+    if (it == conversations_.end()) {
+        JAMI_ERR("Conversation %s doesn't exist", convId.c_str());
+        return;
+    }
+    // We will only removes the conversation if the member is invited
+    // the contact can have mutiple devices with only some with swarm
+    // support, in this case, just go with recent versions.
+    if (it->second->isMember(peerUri))
+        return;
+    lk.unlock();
+    removeConversation(convId);
 }
 
 void
