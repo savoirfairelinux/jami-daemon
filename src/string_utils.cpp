@@ -21,6 +21,8 @@
 
 #include "string_utils.h"
 
+#include <fmt/core.h>
+
 #include <sstream>
 #include <cctype>
 #include <algorithm>
@@ -85,19 +87,16 @@ to_string(double value)
 std::string
 to_hex_string(uint64_t id)
 {
-    std::ostringstream ss;
-    ss << std::hex << std::setfill('0') << std::setw(16) << id;
-    return ss.str();
+    return fmt::format("{:016x}", id);
 }
 
 uint64_t
 from_hex_string(const std::string& str)
 {
-    std::istringstream ss(str);
-    ss >> std::hex;
     uint64_t id;
-    if (!(ss >> id))
+    if (auto [p, ec] = std::from_chars(str.data(), str.data()+str.size(), id, 16); ec != std::errc()) {
         throw std::invalid_argument("Can't parse id: " + str);
+    }
     return id;
 }
 

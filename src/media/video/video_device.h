@@ -198,9 +198,7 @@ private:
 
     std::string sizeToString(unsigned w, unsigned h) const
     {
-        std::stringstream video_size;
-        video_size << w << "x" << h;
-        return video_size.str();
+        return fmt::format("{}x{}", w, h);
     }
 
     FrameRate rateFromString(const std::string& channel,
