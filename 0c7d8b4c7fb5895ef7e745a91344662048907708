@@ -19,6 +19,23 @@
     },
     {
       "key": {
+        "uuid": "46852cc4_ee6814f9",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2605,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-04-10T22:39:43Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\n\u0027find\u0027 called with a string literal consisting of a single character; consider using the more effective overload accepting a character\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-faster-string-find",
+      "revId": "0c7d8b4c7fb5895ef7e745a91344662048907708",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "cd0a5f8a_c834932f",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 4
@@ -28,6 +45,23 @@
         "id": 5
       },
       "writtenOn": "2021-04-10T22:39:14Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\n\u0027find_last_of\u0027 called with a string literal consisting of a single character; consider using the more effective overload accepting a character\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-faster-string-find",
+      "revId": "0c7d8b4c7fb5895ef7e745a91344662048907708",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "65fdb55f_71e6a136",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2606,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-04-10T22:39:43Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\n\u0027find_last_of\u0027 called with a string literal consisting of a single character; consider using the more effective overload accepting a character\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-faster-string-find",
       "revId": "0c7d8b4c7fb5895ef7e745a91344662048907708",
