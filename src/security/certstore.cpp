@@ -388,14 +388,8 @@ CertificateStore::pinRevocationList(const std::string& id,
 void
 CertificateStore::pinRevocationList(const std::string& id, const dht::crypto::RevocationList& crl)
 {
-    auto v = crl.getNumber();
-    std::stringstream ss;
-    ss << std::hex;
-    for (const auto& b : v)
-        ss << (unsigned) b;
-
     fileutils::check_dir((crlPath_ + DIR_SEPARATOR_CH + id).c_str());
-    fileutils::saveFile(crlPath_ + DIR_SEPARATOR_CH + id + DIR_SEPARATOR_CH + ss.str(),
+    fileutils::saveFile(crlPath_ + DIR_SEPARATOR_CH + id + DIR_SEPARATOR_CH + dht::toHex(crl.getNumber()),
                         crl.getPacked());
 }
 
