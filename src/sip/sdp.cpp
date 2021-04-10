@@ -299,13 +299,12 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr, bool onHold)
             // our peer will send us
             const auto accountVideoCodec = std::static_pointer_cast<AccountVideoCodecInfo>(
                 video_codec_list_[i]);
-            const auto profileLevelID = accountVideoCodec->parameters.empty()
+            const auto& profileLevelID = accountVideoCodec->parameters.empty()
                                             ? libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID
                                             : accountVideoCodec->parameters;
-            std::ostringstream os;
-            os << "fmtp:" << payload << " " << profileLevelID;
+            auto value = fmt::format("fmtp:{} {}", payload, profileLevelID);
             med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(),
-                                                                   os.str().c_str(),
+                                                                   value.c_str(),
                                                                    NULL);
         }
 #endif
@@ -364,10 +363,8 @@ Sdp::setPublishedIP(const IpAddr& ip_addr)
 void
 Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media* med)
 {
-    std::ostringstream s;
-    s << telephoneEventPayload_;
     ++med->desc.fmt_count;
-    pj_strdup2(memPool_.get(), &med->desc.fmt[med->desc.fmt_count - 1], s.str().c_str());
+    pj_strdup2(memPool_.get(), &med->desc.fmt[med->desc.fmt_count - 1], std::to_string(telephoneEventPayload_).c_str());
 
     pjmedia_sdp_attr* attr_rtpmap = static_cast<pjmedia_sdp_attr*>(
         pj_pool_zalloc(memPool_.get(), sizeof(pjmedia_sdp_attr)));

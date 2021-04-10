@@ -80,6 +80,9 @@ StringUtilsTest::to_string_test()
 
     // test with int
     CPPUNIT_ASSERT(std::to_string(INT).compare(PI_42) == 0);
+
+    CPPUNIT_ASSERT_EQUAL("0000000000000010"s, to_hex_string(16));
+    CPPUNIT_ASSERT_EQUAL((uint64_t)16, from_hex_string("0000000000000010"s));
 }
 
 void
