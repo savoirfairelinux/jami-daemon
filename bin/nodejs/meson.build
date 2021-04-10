@@ -5,7 +5,7 @@ nodejs_wrapper_target = custom_target('nodejs.wrapper',
 )
 
 nodejs_makefile_target = custom_target('nodejs.makefile',
-    command: [prognodegyp, 'configure', '--target=v12.18.2', '--arch=x64'],
+    command: [prognodegyp, 'configure', '--target=v14.16.1', '--arch=x64'],
     output: 'build/Makefile',
     depends: nodejs_wrapper_target
 )
