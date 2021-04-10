@@ -234,9 +234,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     currentHead = git_oid_tostr_s(&commit_id);
 
     // Send references
-    std::stringstream capabilities;
-    capabilities << currentHead << SERVER_CAPABILITIES;
-    std::string capStr = capabilities.str();
+    std::string capStr = currentHead + SERVER_CAPABILITIES;
 
     packet.str("");
     packet << std::setw(4) << std::setfill('0') << std::hex << ((5 + capStr.size()) & 0x0FFFF);
@@ -420,10 +418,7 @@ GitServer::Impl::sendPackData()
     git_buf_dispose(&data);
 
     // And finish by a little FLUSH
-    std::stringstream packet;
-    packet << FLUSH_PKT;
-    auto toSend = packet.str();
-    socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
+    socket_->write(reinterpret_cast<const uint8_t*>(FLUSH_PKT.data()), FLUSH_PKT.size(), ec);
     if (ec) {
         JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
     }
