@@ -216,9 +216,7 @@ MessageEngine::load()
             auto& p = messages_[to];
             for (auto m = pmessages.begin(); m != pmessages.end(); ++m) {
                 const auto& jmsg = *m;
-                MessageToken token;
-                std::istringstream iss(m.key().asString());
-                iss >> std::hex >> token;
+                MessageToken token = from_hex_string(m.key().asString());
                 Message msg;
                 msg.status = (MessageStatus) jmsg["status"].asInt();
                 msg.to = jmsg["to"].asString();
@@ -266,8 +264,6 @@ MessageEngine::save_() const
                     || v.status == MessageStatus::CANCELLED)
                     continue;
                 Json::Value msg;
-                std::ostringstream msgsId;
-                msgsId << std::hex << m.first;
                 msg["status"] = (int) (v.status == MessageStatus::SENDING ? MessageStatus::IDLE
                                                                           : v.status);
                 msg["to"] = v.to;
@@ -280,7 +276,7 @@ MessageEngine::save_() const
                 auto& payloads = msg["payload"];
                 for (const auto& p : v.payloads)
                     payloads[p.first] = p.second;
-                peerRoot[msgsId.str()] = std::move(msg);
+                peerRoot[to_hex_string(m.first)] = std::move(msg);
             }
             root[c.first] = std::move(peerRoot);
         }

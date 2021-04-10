@@ -92,15 +92,16 @@
 
 #include <algorithm>
 #include <array>
-#include <cctype>
-#include <cinttypes>
-#include <cstdarg>
+#include <charconv>
 #include <initializer_list>
 #include <memory>
 #include <regex>
 #include <sstream>
 #include <string>
 #include <system_error>
+#include <cctype>
+#include <cinttypes>
+#include <cstdarg>
 
 using namespace std::placeholders;
 
@@ -2945,12 +2946,14 @@ loadIdList(const std::string& path)
     }
     std::string line;
     while (std::getline(file, line)) {
-        std::istringstream iss(line);
-        ID vid;
-        if (!(iss >> std::hex >> vid)) {
-            break;
+        if constexpr (std::is_same<ID, std::string>::value) {
+            ids.emplace(std::move(line));
+        } else if constexpr (std::is_integral<ID>::value) {
+            ID vid;
+            if(auto [p, ec] = std::from_chars(line.data(), line.data()+line.size(), vid, 16); ec == std::errc()) {
+                ids.emplace(vid);
+            }
         }
-        ids.insert(vid);
     }
     return ids;
 }
