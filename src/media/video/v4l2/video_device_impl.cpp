@@ -244,7 +244,6 @@ pixelformat_score(unsigned pixelformat)
 
 using std::vector;
 using std::string;
-using std::stringstream;
 
 vector<FrameRate>
 VideoV4l2Size::getRateList() const
