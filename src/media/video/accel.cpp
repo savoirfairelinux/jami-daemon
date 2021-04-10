@@ -247,11 +247,9 @@ HardwareAccel::getCodecName() const
     if (type_ == CODEC_DECODER) {
         return avcodec_get_name(id_);
     } else if (type_ == CODEC_ENCODER) {
-        std::stringstream ss;
-        ss << avcodec_get_name(id_) << '_' << name_;
-        return ss.str();
+        return fmt::format("{}_{}", avcodec_get_name(id_), name_);
     }
-    return "";
+    return {};
 }
 
 std::unique_ptr<VideoFrame>
