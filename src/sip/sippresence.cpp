@@ -31,6 +31,7 @@
 #include "sip_utils.h"
 
 #include <opendht/crypto.h>
+#include <fmt/core.h>
 
 #include <thread>
 #include <sstream>
@@ -365,11 +366,7 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam* param)
     if (param->code / 100 != 2 || param->status != PJ_SUCCESS) {
         pjsip_publishc_destroy(param->pubc);
         pres->publish_sess_ = NULL;
-        std::ostringstream os;
-        os << param->code;
-        const std::string error = os.str() + " / "
-                                  + std::string(param->reason.ptr, param->reason.slen);
-
+        std::string error = fmt::format("{} / {}", param->code, sip_utils::as_view(param->reason));
         if (param->status != PJ_SUCCESS) {
             char errmsg[PJ_ERR_MSG_SIZE];
             pj_strerror(param->status, errmsg, sizeof(errmsg));

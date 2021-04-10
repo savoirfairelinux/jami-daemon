@@ -38,6 +38,14 @@
 #include "sip_utils.h"
 #include "utf8_utils.h"
 
+#include "manager.h"
+#ifdef ENABLE_PLUGIN
+#include "plugin/jamipluginmanager.h"
+#include "plugin/streamdata.h"
+#endif
+
+#include <fmt/core.h>
+#include <json/json.h>
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <yaml-cpp/yaml.h>
@@ -45,15 +53,10 @@
 
 #include <type_traits>
 #include <regex>
-
-#include <json/json.h>
 #include <ctime>
 
-#include "manager.h"
-#ifdef ENABLE_PLUGIN
-#include "plugin/jamipluginmanager.h"
-#include "plugin/streamdata.h"
-#endif
+using namespace std::literals;
+
 namespace jami {
 
 static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
@@ -125,24 +128,19 @@ std::string
 getIsComposing(bool isWriting)
 {
     // implementing https://tools.ietf.org/rfc/rfc3994.txt
-    std::ostringstream ss;
-    ss << "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" << std::endl
-       << "<isComposing><state>" << (isWriting ? "active" : "idle") << "</state></isComposing>";
-    return ss.str();
+    return fmt::format("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
+                       "<isComposing><state>{}</state></isComposing>",
+                       isWriting ? "active"sv : "idle"sv);
 }
 
 std::string
 getDisplayed(const std::string& messageId)
 {
     // implementing https://tools.ietf.org/rfc/rfc5438.txt
-    std::ostringstream ss;
-    ss << "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" << std::endl
-       << "<imdn>" << std::endl
-       << "<message-id>" << messageId << "</message-id>" << std::endl
-       << "<display-notification><status><displayed/></status></display-notification>" << std::endl
-       << "</imdn>";
-
-    return ss.str();
+    return fmt::format("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
+                       "<imdn><message-id>{}</message-id>\n"
+                       "<display-notification><status><displayed/></status></display-notification>\n"
+                       "</imdn>", messageId);
 }
 
 void
