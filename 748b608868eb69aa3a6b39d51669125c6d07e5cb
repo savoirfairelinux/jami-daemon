@@ -22,6 +22,30 @@
       "revId": "748b608868eb69aa3a6b39d51669125c6d07e5cb",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ab5fa8b5_60f86fb3",
+        "filename": "configure.ac",
+        "patchSetId": 4
+      },
+      "lineNbr": 571,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-12T20:50:58Z",
+      "side": 1,
+      "message": "actual name of the lib is {fmt}",
+      "parentUuid": "1cd9aff1_4675f8e9",
+      "range": {
+        "startLine": 571,
+        "startChar": 26,
+        "endLine": 571,
+        "endChar": 31
+      },
+      "revId": "748b608868eb69aa3a6b39d51669125c6d07e5cb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
