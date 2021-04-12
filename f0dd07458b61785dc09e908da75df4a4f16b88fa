@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2fb6729d_8ce61ed5",
+        "filename": "src/media/audio/alsa/alsalayer.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 200,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-12T18:47:37Z",
+      "side": 1,
+      "message": "The ASAN (thread sanitizer) still detect thread race here. Seems to be from the lib itself, but still worth checking, because technically this an invalid memory write and may crash.\n\nBTW, ASAN detects other thread races than this one in AlsaLayer class.\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nWARNING: ThreadSanitizer: data race (pid\u003d260584)\n  Write of size 8 at 0x7b2800370018 by thread T42 (mutexes: write M155790953591040832):\n    #0 memcpy \u003cnull\u003e (libtsan.so.0+0x42333)\n    #1 pa_packet_new_data \u003cnull\u003e (libpulsecommon-13.99.so+0x3c962)\n\n  Previous write of size 8 at 0x7b2800370018 by thread T1 (mutexes: write M550982216030489352, write M334246501142887192, write M340438538313231936):\n\n...\n\n Mutex M155790953591040832 is already destroyed.\n \n  Mutex M550982216030489352 is already destroyed.\n\n  Mutex M334246501142887192 is already destroyed.\n\n  Mutex M340438538313231936 is already destroyed.",
+      "revId": "f0dd07458b61785dc09e908da75df4a4f16b88fa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ce4cbf05_b04b8ca6",
+        "filename": "src/media/audio/alsa/alsalayer.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 719,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-12T18:47:37Z",
+      "side": 1,
+      "message": "20 ms seems a bit large. Isn\u0027t the cause of the underrun we observe ?",
+      "revId": "f0dd07458b61785dc09e908da75df4a4f16b88fa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
