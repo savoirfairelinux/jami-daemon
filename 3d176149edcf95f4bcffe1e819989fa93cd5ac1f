@@ -16,6 +16,23 @@
       "revId": "3d176149edcf95f4bcffe1e819989fa93cd5ac1f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "102fa1ab_821f4c11",
+        "filename": "src/sip/sipaccountbase.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-04-12T21:14:05Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe variable \u0027uid\u0027 is copy-constructed from a const reference but is only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-copy-initialization",
+      "revId": "3d176149edcf95f4bcffe1e819989fa93cd5ac1f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
