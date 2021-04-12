@@ -567,6 +567,9 @@ PKG_CHECK_MODULES([OPENDHT], [opendht >= 0.6.1],,
 PKG_CHECK_MODULES([SECP256K1], [libsecp256k1 >= 0.1],,
   AC_MSG_FAILURE([Missing secp256k1]))
 
+PKG_CHECK_MODULES([FMT], [fmt >= 5.3],,
+  AC_MSG_FAILURE([Missing {fmt}]))
+
 # LIBUPNP
 dnl check for libupnp
 AC_ARG_WITH([upnp], [AS_HELP_STRING([--without-upnp],

@@ -76,9 +76,8 @@ MediaDemuxer::openInput(const DeviceParams& params)
         JAMI_WARN("Cannot find format \"%s\"", params.format.c_str());
 
     if (params.width and params.height) {
-        std::stringstream ss;
-        ss << params.width << "x" << params.height;
-        av_dict_set(&options_, "video_size", ss.str().c_str(), 0);
+        auto sizeStr = fmt::format("{}x{}", params.width, params.height);
+        av_dict_set(&options_, "video_size", sizeStr.c_str(), 0);
     }
 
     if (params.framerate) {

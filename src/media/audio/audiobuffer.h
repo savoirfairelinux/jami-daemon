@@ -24,11 +24,6 @@
 #undef isblank
 #endif
 
-#include <sstream>
-#include <vector>
-#include <string>
-#include <cstddef> // for size_t
-
 extern "C" {
 #include <libavutil/samplefmt.h>
 struct AVFrame;
@@ -37,7 +32,13 @@ struct AVFrame;
 #include "ring_types.h"
 #include "media_buffer.h"
 
+#include <fmt/core.h>
+
 #include <ciso646> // fix windows compiler bug
+#include <sstream>
+#include <vector>
+#include <string>
+#include <cstddef> // for size_t
 
 namespace jami {
 
@@ -72,10 +73,7 @@ struct AudioFormat
 
     inline std::string toString() const
     {
-        std::stringstream ss;
-        ss << "{" << av_get_sample_fmt_name(sampleFormat) << ", " << nb_channels << " channels, "
-           << sample_rate << "Hz}";
-        return ss.str();
+        return fmt::format("{{{}, {} channels, {}Hz}}", av_get_sample_fmt_name(sampleFormat), nb_channels, sample_rate);
     }
 
     /**
@@ -149,9 +147,7 @@ public:
      */
     inline std::string toString() const
     {
-        std::stringstream ss;
-        ss << "[AudioBuffer " << frames() << " frames; " << getFormat().toString() << "]";
-        return ss.str();
+        return fmt::format("[AudioBuffer {} frames; {}]", frames(), getFormat().toString());
     }
 
     inline size_t size() const { return frames() * channels() * sizeof(AudioSample); }
