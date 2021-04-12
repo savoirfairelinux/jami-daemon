@@ -25,6 +25,12 @@
 #include "video_base.h"
 #include "rational.h"
 
+#include "videomanager_interface.h"
+#include "string_utils.h"
+#include "logger.h"
+
+#include <fmt/core.h>
+
 #include <cmath>
 #include <map>
 #include <memory>
@@ -32,10 +38,6 @@
 #include <vector>
 #include <algorithm>
 #include <sstream>
-
-#include "videomanager_interface.h"
-#include "string_utils.h"
-#include "logger.h"
 
 namespace jami {
 namespace video {
@@ -81,14 +83,13 @@ public:
 
         for (const auto& chan : getChannelList())
             for (const auto& size : getSizeList(chan)) {
-                std::stringstream sz;
-                sz << size.first << "x" << size.second;
+                std::string sz = fmt::format("{}x{}", size.first, size.second);
                 auto rates = getRateList(chan, size);
                 std::vector<std::string> rates_str {rates.size()};
-                std::transform(rates.begin(), rates.end(), rates_str.begin(), [](FrameRate r) {
+                std::transform(rates.begin(), rates.end(), rates_str.begin(), [](const FrameRate& r) {
                     return jami::to_string(r.real());
                 });
-                cap[chan][sz.str()] = std::move(rates_str);
+                cap[chan][sz] = std::move(rates_str);
             }
 
         return cap;
@@ -126,9 +127,7 @@ public:
             }
         }
         if (max_size.second > 0) {
-            std::stringstream video_size;
-            video_size << max_size.first << "x" << max_size.second;
-            settings.video_size = video_size.str();
+            settings.video_size = fmt::format("{}x{}", max_size.first, max_size.second);
             settings.framerate = jami::to_string(max_size_rate.real());
             JAMI_WARN("Default video settings: %s, %s FPS",
                       settings.video_size.c_str(),

@@ -302,29 +302,23 @@ public:
             onRecvCb_ = std::move(cb);
         }
         if (send) {
-            std::vector<uint8_t> buf;
-            sendHeader(buf); // Pass headers to the new callback
+            sendHeader(); // Pass headers to the new callback
         }
     }
 
 private:
     SubOutgoingFileTransfer() = delete;
 
-    void sendHeader(std::vector<uint8_t>& buf) const
+    void sendHeader() const
     {
-        std::stringstream ss;
-        ss << "Content-Length: " << info_.totalSize << '\n'
-           << "Display-Name: " << info_.displayName << '\n'
-           << "Offset: 0\n"
-           << '\n';
-        auto header = ss.str();
-        buf.resize(header.size());
-        std::copy(std::begin(header), std::end(header), std::begin(buf));
-
+        auto header = fmt::format(
+            "Content-Length: {}\n"
+            "Display-Name: {}\n"
+            "Offset: 0\n\n", info_.totalSize, info_.displayName);
         headerSent_ = true;
         emit(DRing::DataTransferEventCode::wait_peer_acceptance);
         if (onRecvCb_)
-            onRecvCb_(std::string_view((const char*) buf.data(), buf.size()));
+            onRecvCb_(header);
     }
 
     void sendFile() const
