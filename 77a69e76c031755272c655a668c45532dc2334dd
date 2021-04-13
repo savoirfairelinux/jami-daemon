@@ -22,6 +22,30 @@
       "revId": "77a69e76c031755272c655a668c45532dc2334dd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cb1bbecb_dbc71a3c",
+        "filename": "src/account.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 328,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-13T17:38:51Z",
+      "side": 0,
+      "message": "yes, otherwise, upnp_context will always run and actively keep the list of provisioned mappings",
+      "parentUuid": "88f14533_76bf7c76",
+      "range": {
+        "startLine": 328,
+        "startChar": 4,
+        "endLine": 328,
+        "endChar": 44
+      },
+      "revId": "77a69e76c031755272c655a668c45532dc2334dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
