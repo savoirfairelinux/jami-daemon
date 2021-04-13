@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "88f14533_76bf7c76",
+        "filename": "src/account.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 328,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-13T17:33:56Z",
+      "side": 0,
+      "message": "if upnp is disabled, will the controller be destroyed ?",
+      "range": {
+        "startLine": 328,
+        "startChar": 4,
+        "endLine": 328,
+        "endChar": 44
+      },
+      "revId": "77a69e76c031755272c655a668c45532dc2334dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
