@@ -152,7 +152,7 @@ public:
     {
         auto const& videoRtp = getVideoRtp();
         if (videoRtp)
-            videoRtp->getVideoReceive().get();
+            return videoRtp->getVideoReceive().get();
 
         return nullptr;
     }
