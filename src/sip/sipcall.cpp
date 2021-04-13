@@ -1408,6 +1408,9 @@ SIPCall::startAllMedia()
     bool peer_holding {true};
     int slotN = -1;
 
+    // reset
+    resetMediaReady();
+
     for (const auto& slot : slots) {
         ++slotN;
         const auto& local = slot.first;
@@ -2033,8 +2036,6 @@ SIPCall::toggleRecording()
     } else {
         updateRecState(false);
         deinitRecorder();
-        readyToRecord_ = false;
-        resetMediaReady();
     }
     pendingRecord_ = false;
     return Call::toggleRecording();
