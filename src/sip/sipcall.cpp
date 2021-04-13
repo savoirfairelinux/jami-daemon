@@ -1408,6 +1408,10 @@ SIPCall::startAllMedia()
     bool peer_holding {true};
     int slotN = -1;
 
+    // reset
+    readyToRecord_ = false;
+    resetMediaReady();
+
     for (const auto& slot : slots) {
         ++slotN;
         const auto& local = slot.first;
@@ -2018,7 +2022,8 @@ SIPCall::toggleRecording()
             return false;
         }
         auto title = fmt::format("Conversation at %TIMESTAMP between {} and {}",
-            account->getUserUri(), peerUri_);
+                                 account->getUserUri(),
+                                 peerUri_);
         recorder_->setMetadata(title, ""); // use default description
         auto const& audioRtp = getAudioRtp();
         if (audioRtp)
@@ -2033,8 +2038,6 @@ SIPCall::toggleRecording()
     } else {
         updateRecState(false);
         deinitRecorder();
-        readyToRecord_ = false;
-        resetMediaReady();
     }
     pendingRecord_ = false;
     return Call::toggleRecording();
