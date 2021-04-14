@@ -2376,11 +2376,7 @@ JamiAccount::doRegister_()
             case dht::NodeStatus::Connected:
                 JAMI_WARN("[Account %s] connected to the DHT network", getAccountID().c_str());
                 state = RegistrationState::REGISTERED;
-                runOnMainThread([w = weak()] {
-                    if (auto acc = w.lock()) {
-                        acc->storeActiveIpAddress();
-                    }
-                });
+                storeActiveIpAddress();
                 break;
             case dht::NodeStatus::Disconnected:
                 JAMI_WARN("[Account %s] disconnected from the DHT network", getAccountID().c_str());
@@ -3694,30 +3690,32 @@ JamiAccount::getIceOptions() const noexcept
 void
 JamiAccount::storeActiveIpAddress()
 {
-    // IPv4
-    const auto& addr4 = dht_->getPublicAddress(AF_INET);
-    if (addr4.size()) {
-        IpAddr publicAddr {*addr4[0].get()};
-        setPublishedAddress(publicAddr);
-        JAMI_DBG("[Account %s] Store DHT public IPv4 address : %s",
-                 getAccountID().c_str(),
-                 publicAddr.toString().c_str());
-
-        // Set the known public address in UPNP if enabled.
-        if (upnpCtrl_) {
-            upnpCtrl_->setPublicAddress(publicAddr);
+    dht_->getPublicAddress([this](std::vector<dht::SockAddr>&& results) {
+        bool hasIpv4 {false}, hasIpv6 {false};
+        for (auto& result : results) {
+            auto family = result.getFamily();
+            if (family == AF_INET) {
+                if (not hasIpv4) {
+                    hasIpv4 = true;
+                    JAMI_DBG("[Account %s] Store DHT public IPv4 address : %s",
+                            getAccountID().c_str(),
+                            result.toString().c_str());
+                    setPublishedAddress(*result.get());
+                    if (upnpCtrl_) {
+                        upnpCtrl_->setPublicAddress(*result.get());
+                    }
+                }
+            } else if (family == AF_INET6) {
+                if (not hasIpv6) {
+                    hasIpv6 = true;
+                    JAMI_DBG("[Account %s] Store DHT public IPv6 address : %s",
+                            getAccountID().c_str(),
+                            result.toString().c_str());
+                    setPublishedAddress(*result.get());
+                }
+            }
         }
-    }
-
-    // IPv6
-    const auto& addr6 = dht_->getPublicAddress(AF_INET6);
-    if (addr6.size()) {
-        IpAddr publicAddr {*addr6[0].get()};
-        setPublishedAddress(publicAddr);
-        JAMI_DBG("[Account %s] Store DHT public IPv6 address : %s",
-                 getAccountID().c_str(),
-                 publicAddr.toString().c_str());
-    }
+    });
 }
 
 void
