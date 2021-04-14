@@ -50,6 +50,7 @@ AudioReceiveThread::AudioReceiveThread(const std::string& id,
 
 AudioReceiveThread::~AudioReceiveThread()
 {
+    onSuccessfulSetup_ = nullptr;
     loop_.join();
 }
 
