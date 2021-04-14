@@ -198,7 +198,11 @@ public:
         };
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
 
-        ep_->underlyingICE()->setOnShutdown([this]() { tls->shutdown(); });
+        if (const auto& ice = ep_->underlyingICE())
+            ice->setOnShutdown([this]() {
+                if (tls)
+                    tls->shutdown();
+            });
     }
 
     Impl(std::unique_ptr<IceSocketEndpoint>&& ep,
@@ -231,10 +235,11 @@ public:
         };
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
 
-        ep_->underlyingICE()->setOnShutdown([this]() {
-            if (tls)
-                tls->shutdown();
-        });
+        if (const auto& ice = ep_->underlyingICE())
+            ice->setOnShutdown([this]() {
+                if (tls)
+                    tls->shutdown();
+            });
     }
 
     ~Impl()
