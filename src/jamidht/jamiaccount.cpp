@@ -3729,19 +3729,6 @@ JamiAccount::storeActiveIpAddress()
     }
 }
 
-std::vector<std::string>
-JamiAccount::publicAddresses()
-{
-    std::vector<std::string> addresses;
-    for (auto& addr : dht_->getPublicAddress(AF_INET)) {
-        addresses.emplace_back(addr.toString());
-    }
-    for (auto& addr : dht_->getPublicAddress(AF_INET6)) {
-        addresses.emplace_back(addr.toString());
-    }
-    return addresses;
-}
-
 void
 JamiAccount::requestPeerConnection(
     const std::string& peer_id,
