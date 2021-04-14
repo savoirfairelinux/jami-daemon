@@ -2393,6 +2393,35 @@ JamiAccount::doRegister_()
             *currentDhtStatus = newStatus;
             setRegistrationState(state);
         };
+        context.identityAnnouncedCb = [this](bool ok) {
+            if (!ok)
+                return;
+            accountManager_->startSync([this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                if (!crt)
+                    return;
+                auto deviceId = crt->getId().toString();
+                if (accountManager_->getInfo()->deviceId == deviceId)
+                    return;
+
+                std::lock_guard<std::mutex> lk(connManagerMtx_);
+                if (!connectionManager_)
+                    connectionManager_ = std::make_unique<ConnectionManager>(*this);
+                auto channelName = "sync://" + deviceId;
+                if (connectionManager_->isConnecting(crt->getId(), channelName)) {
+                    JAMI_INFO("[Account %s] Already connecting to %s",
+                        getAccountID().c_str(),
+                        deviceId.c_str());
+                    return;
+                }
+                connectionManager_->connectDevice(crt,
+                                                channelName,
+                                                [this](std::shared_ptr<ChannelSocket> socket,
+                                                        const DeviceId& deviceId) {
+                                                    if (socket)
+                                                        syncWith(deviceId.toString(), socket);
+                                                });
+            });
+        };
 
         setRegistrationState(RegistrationState::TRYING);
         dht_->run(dhtPortUsed(), config, std::move(context));
@@ -2401,34 +2430,7 @@ JamiAccount::doRegister_()
             dht_->bootstrap(bootstrap);
 
         accountManager_->setDht(dht_);
-        accountManager_->startSync([this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-            if (!crt)
-                return;
-            auto deviceId = crt->getId().toString();
-            if (accountManager_->getInfo()->deviceId == deviceId)
-                return;
 
-            std::lock_guard<std::mutex> lk(connManagerMtx_);
-            if (!connectionManager_)
-                return;
-
-            auto channelName = "sync://" + deviceId;
-            if (connectionManager_->isConnecting(crt->getId(), channelName)) {
-                JAMI_INFO("[Account %s] Already connecting to %s",
-                    getAccountID().c_str(),
-                    deviceId.c_str());
-                return;
-            }
-            connectionManager_->connectDevice(crt,
-                                              channelName,
-                                              [this](std::shared_ptr<ChannelSocket> socket,
-                                                     const DeviceId& deviceId) {
-                                                  if (socket)
-                                                      syncWith(deviceId.toString(), socket);
-                                              });
-        });
-
-        // Init connection manager
         std::unique_lock<std::mutex> lkCM(connManagerMtx_);
         if (!connectionManager_)
             connectionManager_ = std::make_unique<ConnectionManager>(*this);
@@ -2440,14 +2442,14 @@ JamiAccount::doRegister_()
                 deviceId, [this, &accept](const std::shared_ptr<dht::crypto::Certificate>& cert) {
                     dht::InfoHash peer_account_id;
                     auto res = accountManager_->onPeerCertificate(cert,
-                                                                  dhtPublicInCalls_,
-                                                                  peer_account_id);
+                                                                dhtPublicInCalls_,
+                                                                peer_account_id);
                     if (res)
                         JAMI_INFO("Accepting ICE request from account %s",
-                                  peer_account_id.toString().c_str());
+                                peer_account_id.toString().c_str());
                     else
                         JAMI_INFO("Discarding ICE request from account %s",
-                                  peer_account_id.toString().c_str());
+                                peer_account_id.toString().c_str());
                     accept.set_value(res);
                 });
             fut.wait();
