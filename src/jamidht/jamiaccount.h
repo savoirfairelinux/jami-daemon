@@ -394,8 +394,6 @@ public:
     ///
     void closePeerConnection(const DRing::DataTransferId& tid);
 
-    std::vector<std::string> publicAddresses();
-
     /// \return true if the given DHT message identifier has been treated
     /// \note if message has not been treated yet this method store this id and returns true at
     /// further calls
