@@ -424,23 +424,6 @@ sendTrustRequest(const std::string& accountId,
         acc->sendTrustRequest(to, payload);
 }
 
-/*
- * Import/Export accounts
- */
-int
-exportAccounts(const std::vector<std::string>& accountIDs,
-               const std::string& filepath,
-               const std::string& password)
-{
-    return jami::archiver::exportAccounts(accountIDs, filepath, password);
-}
-
-int
-importAccounts(const std::string& archivePath, const std::string& password)
-{
-    return jami::archiver::importAccounts(archivePath, password);
-}
-
 /// This function is used as a base for new accounts for clients that support it
 std::map<std::string, std::string>
 getAccountTemplate(const std::string& accountType)

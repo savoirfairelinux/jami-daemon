@@ -510,54 +510,6 @@
            </arg>
        </method>
 
-        <method name="importAccounts" tp:name-for-bindings="importAccounts">
-            <tp:docstring>
-              Import previously exported accounts
-            </tp:docstring>
-           <arg type="s" name="path" direction="in">
-               <tp:docstring>
-                    Path of the file to import
-               </tp:docstring>
-           </arg>
-           <arg type="s" name="password" direction="in">
-               <tp:docstring>
-                    Decryption password
-               </tp:docstring>
-           </arg>
-           <arg type="i" direction="out">
-               <tp:docstring>
-                    <p>Return code, 0 for success.</p>
-               </tp:docstring>
-           </arg>
-        </method>
-
-        <method name="exportAccounts" tp:name-for-bindings="exportAccounts">
-            <tp:docstring>
-              Export account configuration to an encrypted file.
-            </tp:docstring>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="VectorString"/>
-           <arg type="as" name="accountIDs" direction="in">
-               <tp:docstring>
-                   A list of account IDs
-               </tp:docstring>
-           </arg>
-           <arg type="s" name="filepath" direction="in">
-               <tp:docstring>
-                    Where to export the account
-               </tp:docstring>
-           </arg>
-           <arg type="s" name="password" direction="in">
-               <tp:docstring>
-                    File encryption password
-               </tp:docstring>
-           </arg>
-           <arg type="i" direction="out">
-               <tp:docstring>
-                    <p>Return code, 0 for success.</p>
-               </tp:docstring>
-           </arg>
-        </method>
-
        <method name="registerAllAccounts" tp:name-for-bindings="registerAllAccounts">
            <tp:docstring>
                 Send account registration (REGISTER) for all accounts, even if they are not enabled.

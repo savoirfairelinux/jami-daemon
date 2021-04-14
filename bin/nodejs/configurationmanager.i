@@ -208,9 +208,6 @@ void addContact(const std::string& accountId, const std::string& uri);
 void removeContact(const std::string& accountId, const std::string& uri, const bool& ban);
 std::vector<std::map<std::string, std::string>> getContacts(const std::string& accountId);
 
-int exportAccounts(std::vector<std::string> accountIDs, std::string toDir, std::string password);
-int importAccounts(std::string archivePath, std::string password);
-
 void connectivityChanged();
 
 bool isAudioMeterActive(const std::string& id);

@@ -173,8 +173,6 @@ public:
         void removeContact(const std::string& accountId, const std::string& uri, const bool& ban);
         std::map<std::string, std::string> getContactDetails(const std::string& accountId, const std::string& uri);
         std::vector<std::map<std::string, std::string>> getContacts(const std::string& accountId);
-        int exportAccounts(const std::vector<std::string>& accountIDs, const std::string& filepath, const std::string& password);
-        int importAccounts(const std::string& archivePath, const std::string& password);
         void connectivityChanged();
         std::vector<uint64_t> dataTransferList();
         void sendFile(const RingDBusDataTransferInfo& info, uint32_t& error, DRing::DataTransferId& id);

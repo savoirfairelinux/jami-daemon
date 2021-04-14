@@ -737,22 +737,6 @@ DBusConfigurationManager::getVolume(const std::string& device) -> decltype(DRing
     return DRing::getVolume(device);
 }
 
-auto
-DBusConfigurationManager::exportAccounts(const std::vector<std::string>& accountIDs,
-                                         const std::string& filepath,
-                                         const std::string& password)
-    -> decltype(DRing::exportAccounts(accountIDs, filepath, password))
-{
-    return DRing::exportAccounts(accountIDs, filepath, password);
-}
-
-auto
-DBusConfigurationManager::importAccounts(const std::string& archivePath, const std::string& password)
-    -> decltype(DRing::importAccounts(archivePath, password))
-{
-    return DRing::importAccounts(archivePath, password);
-}
-
 void
 DBusConfigurationManager::connectivityChanged()
 {

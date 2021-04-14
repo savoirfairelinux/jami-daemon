@@ -43,26 +43,6 @@ namespace archiver {
 using FileMatchPair = std::function<std::pair<bool, const std::string>(const std::string&)>;
 
 /**
- * Create a protected archive containing a list of accounts
- * @param accountIDs The accounts to exports
- * @param filepath The filepath where to put the resulting archive
- * @param password The mandatory password to set on the archive
- * @returns 0 for OK, error code otherwise
- */
-int exportAccounts(const std::vector<std::string>& accountIDs,
-                   const std::string& filepath,
-                   const std::string& password);
-
-/**
- * Read a protected archive and add accounts found in it
- * Warning: this function must be called from a registered pjsip thread
- * @param archivePath The path to the archive file
- * @param password The password to read the archive
- * @returns 0 for OK, error code otherwise
- */
-int importAccounts(const std::string& archivePath, const std::string& password);
-
-/**
  * Compress a STL string using zlib with given compression level and return
  * the binary data.
  */
