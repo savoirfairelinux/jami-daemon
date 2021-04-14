@@ -274,15 +274,6 @@ DhtPeerConnector::requestConnection(
         return;
     }
 
-    // Notes for reader:
-    // 1) dht.getPublicAddress() suffers of a non-usability into forEachDevice() callbacks.
-    //    If you call it in forEachDevice callbacks, it'll never not return...
-    //    Seems that getPublicAddress() and forEachDevice() need to process into the same thread
-    //    (here the one where dht_ loop runs).
-    // 2) anyway its good to keep this processing here in case of multiple device
-    //    as the result is the same for each device.
-    auto addresses = acc->publicAddresses();
-
     acc->forEachDevice(
         peer_h,
         [this, addresses, tid, channelReadyCb = std::move(channelReadyCb)](
