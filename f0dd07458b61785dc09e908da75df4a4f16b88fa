@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "315313d5_dca55d0e",
+        "filename": "src/media/audio/alsa/alsalayer.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 200,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-14T18:41:58Z",
+      "side": 1,
+      "message": "can be send on a ticket if still the case. But at least original issue is ok on jenkins",
+      "parentUuid": "2fb6729d_8ce61ed5",
+      "revId": "f0dd07458b61785dc09e908da75df4a4f16b88fa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "ce4cbf05_b04b8ca6",
         "filename": "src/media/audio/alsa/alsalayer.cpp",
         "patchSetId": 10
@@ -33,6 +51,24 @@
       "revId": "f0dd07458b61785dc09e908da75df4a4f16b88fa",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1998b6b2_071f3e87",
+        "filename": "src/media/audio/alsa/alsalayer.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 719,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-14T18:41:58Z",
+      "side": 1,
+      "message": "maybe, anyway the underrun is another issue and will be fixed in another patch",
+      "parentUuid": "ce4cbf05_b04b8ca6",
+      "revId": "f0dd07458b61785dc09e908da75df4a4f16b88fa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
