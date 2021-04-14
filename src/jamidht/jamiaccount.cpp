@@ -2392,6 +2392,43 @@ JamiAccount::doRegister_()
             *currentDhtStatus = newStatus;
             setRegistrationState(state);
         };
+        context.identityAnnouncedCb = [this](bool ok) {
+            if (!ok)
+                return;
+            accountManager_->startSync([this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                if (!crt)
+                    return;
+                auto deviceId = crt->getId().toString();
+                if (accountManager_->getInfo()->deviceId == deviceId)
+                    return;
+
+                {
+                    // Avoid to create multiple sync channels with a device
+                    std::lock_guard<std::mutex> lk(syncConnectionsMtx_);
+                    auto syncConn = syncConnections_.find(deviceId);
+                    if ((syncConn != syncConnections_.end() and not syncConn->second.empty())
+                        or pendingSync_.find(deviceId) != pendingSync_.end())
+                        return; // Already syncing
+                    pendingSync_.emplace(deviceId);
+                }
+
+                std::lock_guard<std::mutex> lk(connManagerMtx_);
+                if (!connectionManager_)
+                    connectionManager_ = std::make_unique<ConnectionManager>(*this);
+                connectionManager_->connectDevice(crt->getId(),
+                                                  "sync://" + deviceId,
+                                                  [this](std::shared_ptr<ChannelSocket> socket,
+                                                         const DeviceId& deviceId) {
+                                                      if (socket)
+                                                          syncWith(deviceId.toString(), socket);
+                                                      {
+                                                          std::lock_guard<std::mutex> lk(
+                                                              syncConnectionsMtx_);
+                                                          pendingSync_.erase(deviceId.toString());
+                                                      }
+                                                  });
+            });
+        };
 
         setRegistrationState(RegistrationState::TRYING);
         dht_->run(dhtPortUsed(), config, std::move(context));
@@ -2400,39 +2437,6 @@ JamiAccount::doRegister_()
             dht_->bootstrap(bootstrap);
 
         accountManager_->setDht(dht_);
-        accountManager_->startSync([this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-            if (!crt)
-                return;
-            auto deviceId = crt->getId().toString();
-            if (accountManager_->getInfo()->deviceId == deviceId)
-                return;
-
-            {
-                // Avoid to create multiple sync channels with a device
-                std::lock_guard<std::mutex> lk(syncConnectionsMtx_);
-                auto syncConn = syncConnections_.find(deviceId);
-                if ((syncConn != syncConnections_.end() and not syncConn->second.empty())
-                    or pendingSync_.find(deviceId) != pendingSync_.end())
-                    return; // Already syncing
-                pendingSync_.emplace(deviceId);
-            }
-
-            std::lock_guard<std::mutex> lk(connManagerMtx_);
-            if (!connectionManager_)
-                return;
-            connectionManager_->connectDevice(crt->getId(),
-                                              "sync://" + deviceId,
-                                              [this](std::shared_ptr<ChannelSocket> socket,
-                                                     const DeviceId& deviceId) {
-                                                  if (socket)
-                                                      syncWith(deviceId.toString(), socket);
-                                                  {
-                                                      std::lock_guard<std::mutex> lk(
-                                                          syncConnectionsMtx_);
-                                                      pendingSync_.erase(deviceId.toString());
-                                                  }
-                                              });
-        });
 
         // Init connection manager
         std::unique_lock<std::mutex> lkCM(connManagerMtx_);

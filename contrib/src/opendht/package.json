@@ -19,6 +19,7 @@
         "OPENDHT_TOOLS=0"
     ],
     "patches": [
+        "add-identity-announced-callback.patch"
     ],
     "win_patches": [],
     "project_paths": [],

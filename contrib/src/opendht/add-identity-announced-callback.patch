@@ -1,0 +1,90 @@
+ include/opendht/callbacks.h | 1 +
+ include/opendht/dhtrunner.h | 1 +
+ include/opendht/securedht.h | 4 +++-
+ src/dhtrunner.cpp           | 2 +-
+ src/securedht.cpp           | 6 ++++--
+ 5 files changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/include/opendht/callbacks.h b/include/opendht/callbacks.h
+index 21236eb..9e231f1 100644
+--- a/include/opendht/callbacks.h
++++ b/include/opendht/callbacks.h
+@@ -164,6 +164,7 @@ using GetCallback = std::function<bool(const std::vector<std::shared_ptr<Value>>
+ using ValueCallback = std::function<bool(const std::vector<std::shared_ptr<Value>>& values, bool expired)>;
+ using GetCallbackSimple = std::function<bool(std::shared_ptr<Value> value)>;
+ using ShutdownCallback = std::function<void()>;
++using IdentityAnnouncedCb = std::function<void(bool)>;
+ 
+ using CertificateStoreQuery = std::function<std::vector<std::shared_ptr<crypto::Certificate>>(const InfoHash& pk_id)>;
+ 
+diff --git a/include/opendht/dhtrunner.h b/include/opendht/dhtrunner.h
+index 097b003..83357eb 100644
+--- a/include/opendht/dhtrunner.h
++++ b/include/opendht/dhtrunner.h
+@@ -74,6 +74,7 @@ public:
+         std::shared_ptr<PeerDiscovery> peerDiscovery {};
+         StatusCallback statusChangedCallback {};
+         CertificateStoreQuery certificateStore {};
++        IdentityAnnouncedCb identityAnnouncedCb {};
+         Context() {}
+     };
+ 
+diff --git a/include/opendht/securedht.h b/include/opendht/securedht.h
+index 9f6ff4a..a5fccc0 100644
+--- a/include/opendht/securedht.h
++++ b/include/opendht/securedht.h
+@@ -53,7 +53,7 @@ public:
+      * id:    the identity to use for the crypto layer and to compute
+      *        our own hash on the Dht.
+      */
+-    SecureDht(std::unique_ptr<DhtInterface> dht, Config config);
++    SecureDht(std::unique_ptr<DhtInterface> dht, Config config, const IdentityAnnouncedCb& iacb = {});
+ 
+     virtual ~SecureDht();
+ 
+@@ -348,6 +348,8 @@ private:
+     ValueCallback getCallbackFilter(const ValueCallback&, Value::Filter&&);
+     GetCallback getCallbackFilter(const GetCallback&, Value::Filter&&);
+ 
++    IdentityAnnouncedCb iacb_ {};
++
+     Sp<crypto::PrivateKey> key_ {};
+     Sp<crypto::Certificate> certificate_ {};
+ 
+diff --git a/src/dhtrunner.cpp b/src/dhtrunner.cpp
+index c027df8..5e0c179 100644
+--- a/src/dhtrunner.cpp
++++ b/src/dhtrunner.cpp
+@@ -169,7 +169,7 @@ DhtRunner::run(const Config& config, Context&& context)
+     });
+ 
+     auto dht = std::unique_ptr<DhtInterface>(new Dht(std::move(context.sock), SecureDht::getConfig(config.dht_config), context.logger));
+-    dht_ = std::unique_ptr<SecureDht>(new SecureDht(std::move(dht), config.dht_config));
++    dht_ = std::unique_ptr<SecureDht>(new SecureDht(std::move(dht), config.dht_config, std::move(context.identityAnnouncedCb)));
+ 
+ #ifdef OPENDHT_PROXY_CLIENT
+     config_ = config;
+diff --git a/src/securedht.cpp b/src/securedht.cpp
+index e4dfc22..4322dfd 100644
+--- a/src/securedht.cpp
++++ b/src/securedht.cpp
+@@ -36,8 +36,8 @@ extern "C" {
+ 
+ namespace dht {
+ 
+-SecureDht::SecureDht(std::unique_ptr<DhtInterface> dht, SecureDht::Config conf)
+-: dht_(std::move(dht)), key_(conf.id.first), certificate_(conf.id.second), enableCache_(conf.cert_cache_all)
++SecureDht::SecureDht(std::unique_ptr<DhtInterface> dht, SecureDht::Config conf, const IdentityAnnouncedCb& iacb)
++: dht_(std::move(dht)), key_(conf.id.first), certificate_(conf.id.second), enableCache_(conf.cert_cache_all), iacb_(iacb)
+ {
+     if (!dht_) return;
+     for (const auto& type : DEFAULT_TYPES)
+@@ -58,6 +58,8 @@ SecureDht::SecureDht(std::unique_ptr<DhtInterface> dht, SecureDht::Config conf)
+             *certificate_,
+             1
+         }, [this, certId](bool ok) {
++            printf("@@@\n");
++            if (iacb_) iacb_(ok);
+             if (ok)
+                 if (logger_)
+                     logger_->d(certId, "SecureDht: public key announced successfully");
