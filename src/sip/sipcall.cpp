@@ -1707,6 +1707,7 @@ std::vector<MediaAttribute>
 SIPCall::getMediaAttributeList() const
 {
     std::vector<MediaAttribute> mediaList;
+    mediaList.reserve(rtpStreams_.size());
     for (auto const& stream : rtpStreams_) {
         mediaList.emplace_back(*stream.mediaAttribute_);
     }
@@ -2028,12 +2029,7 @@ SIPCall::monitor() const
     }
     JAMI_DBG("- Call %s with %s:", getCallId().c_str(), getPeerNumber().c_str());
     // TODO move in getCallDuration
-    auto duration = duration_start_ == time_point::min()
-                        ? 0
-                        : std::chrono::duration_cast<std::chrono::milliseconds>(clock::now()
-                                                                                - duration_start_)
-                              .count();
-    JAMI_DBG("\t- Duration: %lu", duration);
+    JAMI_DBG("\t- Duration: %s", dht::print_duration(clock::now() - duration_start_).c_str());
     for (auto& mediaAttr : getMediaAttributeList())
         JAMI_DBG("\t- Media: %s", mediaAttr.toString(true).c_str());
 #ifdef ENABLE_VIDEO
