@@ -117,6 +117,7 @@ public:
                                  const dht::Value::Id& vid,
                                  const std::shared_ptr<dht::crypto::Certificate>& cert);
     void connectDevice(const DeviceId& deviceId, const std::string& uri, ConnectCallback cb);
+    void connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name, ConnectCallback cb);
     /**
      * Send a ChannelRequest on the TLS socket. Triggers cb when ready
      * @param sock      socket used to send the request
@@ -394,149 +395,156 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                 cb(nullptr, deviceId);
                 return;
             }
-
-            // Avoid dht operation in a DHT callback to avoid deadlocks
-            runOnMainThread([w,
-                             deviceId = std::move(deviceId),
-                             name = std::move(name),
-                             cert = std::move(cert),
-                             cb = std::move(cb)] {
-                auto sthis = w.lock();
-                if (!sthis || sthis->isDestroying_) {
-                    cb(nullptr, deviceId);
-                    return;
-                }
-                dht::Value::Id vid;
-                auto tentatives = 0;
-                do {
-                    vid = ValueIdDist(1, DRING_ID_MAX_VAL)(sthis->account.rand);
-                    --tentatives;
-                } while (sthis->getPendingCallbacks(deviceId, vid).size() != 0
-                         && tentatives != MAX_TENTATIVES);
-                if (tentatives == MAX_TENTATIVES) {
-                    JAMI_ERR("Couldn't get a current random channel number");
-                    cb(nullptr, deviceId);
-                    return;
-                }
-                auto isConnectingToDevice = false;
-                {
-                    std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
-                    // Check if already connecting
-                    auto pendingsIt = sthis->pendingCbs_.find(deviceId);
-                    isConnectingToDevice = pendingsIt != sthis->pendingCbs_.end();
-                    // Save current request for sendChannelRequest.
-                    // Note: do not return here, cause we can be in a state where first
-                    // socket is negotiated and first channel is pending
-                    // so return only after we checked the info
-                    if (isConnectingToDevice)
-                        pendingsIt->second.emplace_back(PendingCb {name, std::move(cb), vid});
-                    else
-                        sthis->pendingCbs_[deviceId] = {{name, std::move(cb), vid}};
-                }
-
-                // Check if already negotiated
-                CallbackId cbId(deviceId, vid);
-                if (auto info = sthis->getInfo(deviceId)) {
-                    std::lock_guard<std::mutex> lk(info->mutex_);
-                    if (info->socket_) {
-                        JAMI_DBG("Peer already connected to %s. Add a new channel",
-                                 deviceId.to_c_str());
-                        info->cbIds_.emplace(cbId);
-                        sthis->sendChannelRequest(info->socket_, name, deviceId, vid);
-                        return;
-                    }
-                }
-
-                if (isConnectingToDevice) {
-                    JAMI_DBG("Already connecting to %s, wait for the ICE negotiation",
-                             deviceId.to_c_str());
-                    return;
-                }
-
-                // Note: used when the ice negotiation fails to erase
-                // all stored structures.
-                auto eraseInfo = [w, cbId] {
-                    if (auto shared = w.lock()) {
-                        std::lock_guard<std::mutex> lk(shared->infosMtx_);
-                        shared->infos_.erase(cbId);
-                    }
-                };
-
-                // If no socket exists, we need to initiate an ICE connection.
-                auto ice_config = sthis->account.getIceOptions();
-                ice_config.tcpEnable = true;
-                ice_config.onInitDone = [w,
-                                         cbId,
-                                         deviceId = std::move(deviceId),
-                                         name = std::move(name),
-                                         cert = std::move(cert),
-                                         vid,
-                                         eraseInfo](bool ok) {
-                    auto sthis = w.lock();
-                    if (!sthis)
-                        return;
-                    if (!ok) {
-                        JAMI_ERR("Cannot initialize ICE session.");
-                        for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
-                            pending.cb(nullptr, deviceId);
-                        runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
-                        return;
-                    }
-
-                    dht::ThreadPool::io().run(
-                        [w = std::move(w), deviceId = std::move(deviceId), vid = std::move(vid)] {
-                            if (auto sthis = w.lock())
-                                sthis->connectDeviceStartIce(deviceId, vid);
-                        });
-                };
-                ice_config.onNegoDone = [w,
-                                         cbId,
-                                         deviceId = std::move(deviceId),
-                                         name = std::move(name),
-                                         cert = std::move(cert),
-                                         vid,
-                                         eraseInfo](bool ok) {
-                    auto sthis = w.lock();
-                    if (!sthis)
-                        return;
-                    if (!ok) {
-                        JAMI_ERR("ICE negotiation failed.");
-                        for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
-                            pending.cb(nullptr, deviceId);
-                        runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
-                        return;
-                    }
-
-                    dht::ThreadPool::io().run([w = std::move(w),
-                                               deviceId = std::move(deviceId),
-                                               name = std::move(name),
-                                               cert = std::move(cert),
-                                               vid = std::move(vid)] {
-                        auto sthis = w.lock();
-                        if (!sthis)
-                            return;
-                        sthis->connectDeviceOnNegoDone(deviceId, name, vid, cert);
-                    });
-                };
-
-                auto info = std::make_shared<ConnectionInfo>();
-                {
-                    std::lock_guard<std::mutex> lk(sthis->infosMtx_);
-                    sthis->infos_[{deviceId, vid}] = info;
-                }
-                std::unique_lock<std::mutex> lk {info->mutex_};
-                info->ice_ = Manager::instance().getIceTransportFactory().createUTransport(
-                    sthis->account.getAccountID().c_str(), 1, false, ice_config);
-
-                if (!info->ice_) {
-                    JAMI_ERR("Cannot initialize ICE session.");
-                    for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
-                        pending.cb(nullptr, deviceId);
-                    eraseInfo();
-                    return;
-                }
-            });
+            if (auto shared = w.lock()) {
+                shared->connectDevice(cert, name, std::move(cb));
+            }
         });
+}
+
+void
+ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name, ConnectCallback cb)
+{
+    // Avoid dht operation in a DHT callback to avoid deadlocks
+    runOnMainThread([w=weak(),
+                     name = std::move(name),
+                     cert = std::move(cert),
+                     cb = std::move(cb)] {
+        auto deviceId = cert->getId();
+        auto sthis = w.lock();
+        if (!sthis || sthis->isDestroying_) {
+            cb(nullptr, deviceId);
+            return;
+        }
+        dht::Value::Id vid;
+        auto tentatives = 0;
+        do {
+            vid = ValueIdDist(1, DRING_ID_MAX_VAL)(sthis->account.rand);
+            --tentatives;
+        } while (sthis->getPendingCallbacks(deviceId, vid).size() != 0
+                    && tentatives != MAX_TENTATIVES);
+        if (tentatives == MAX_TENTATIVES) {
+            JAMI_ERR("Couldn't get a current random channel number");
+            cb(nullptr, deviceId);
+            return;
+        }
+        auto isConnectingToDevice = false;
+        {
+            std::lock_guard<std::mutex> lk(sthis->connectCbsMtx_);
+            // Check if already connecting
+            auto pendingsIt = sthis->pendingCbs_.find(deviceId);
+            isConnectingToDevice = pendingsIt != sthis->pendingCbs_.end();
+            // Save current request for sendChannelRequest.
+            // Note: do not return here, cause we can be in a state where first
+            // socket is negotiated and first channel is pending
+            // so return only after we checked the info
+            if (isConnectingToDevice)
+                pendingsIt->second.emplace_back(PendingCb {name, std::move(cb), vid});
+            else
+                sthis->pendingCbs_[deviceId] = {{name, std::move(cb), vid}};
+        }
+
+        // Check if already negotiated
+        CallbackId cbId(deviceId, vid);
+        if (auto info = sthis->getInfo(deviceId)) {
+            std::lock_guard<std::mutex> lk(info->mutex_);
+            if (info->socket_) {
+                JAMI_DBG("Peer already connected to %s. Add a new channel",
+                            deviceId.to_c_str());
+                info->cbIds_.emplace(cbId);
+                sthis->sendChannelRequest(info->socket_, name, deviceId, vid);
+                return;
+            }
+        }
+
+        if (isConnectingToDevice) {
+            JAMI_DBG("Already connecting to %s, wait for the ICE negotiation",
+                        deviceId.to_c_str());
+            return;
+        }
+
+        // Note: used when the ice negotiation fails to erase
+        // all stored structures.
+        auto eraseInfo = [w, cbId] {
+            if (auto shared = w.lock()) {
+                std::lock_guard<std::mutex> lk(shared->infosMtx_);
+                shared->infos_.erase(cbId);
+            }
+        };
+
+        // If no socket exists, we need to initiate an ICE connection.
+        auto ice_config = sthis->account.getIceOptions();
+        ice_config.tcpEnable = true;
+        ice_config.onInitDone = [w,
+                                    cbId,
+                                    deviceId = std::move(deviceId),
+                                    name = std::move(name),
+                                    cert = std::move(cert),
+                                    vid,
+                                    eraseInfo](bool ok) {
+            auto sthis = w.lock();
+            if (!sthis)
+                return;
+            if (!ok) {
+                JAMI_ERR("Cannot initialize ICE session.");
+                for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
+                    pending.cb(nullptr, deviceId);
+                runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                return;
+            }
+
+            dht::ThreadPool::io().run(
+                [w = std::move(w), deviceId = std::move(deviceId), vid = std::move(vid)] {
+                    if (auto sthis = w.lock())
+                        sthis->connectDeviceStartIce(deviceId, vid);
+                });
+        };
+        ice_config.onNegoDone = [w,
+                                    cbId,
+                                    deviceId = std::move(deviceId),
+                                    name = std::move(name),
+                                    cert = std::move(cert),
+                                    vid,
+                                    eraseInfo](bool ok) {
+            auto sthis = w.lock();
+            if (!sthis)
+                return;
+            if (!ok) {
+                JAMI_ERR("ICE negotiation failed.");
+                for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
+                    pending.cb(nullptr, deviceId);
+                runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                return;
+            }
+
+            dht::ThreadPool::io().run([w = std::move(w),
+                                        deviceId = std::move(deviceId),
+                                        name = std::move(name),
+                                        cert = std::move(cert),
+                                        vid = std::move(vid)] {
+                auto sthis = w.lock();
+                if (!sthis)
+                    return;
+                sthis->connectDeviceOnNegoDone(deviceId, name, vid, cert);
+            });
+        };
+
+        auto info = std::make_shared<ConnectionInfo>();
+        {
+            std::lock_guard<std::mutex> lk(sthis->infosMtx_);
+            sthis->infos_[{deviceId, vid}] = info;
+        }
+        std::unique_lock<std::mutex> lk {info->mutex_};
+        info->ice_ = Manager::instance().getIceTransportFactory().createUTransport(
+            sthis->account.getAccountID().c_str(), 1, false, ice_config);
+
+        if (!info->ice_) {
+            JAMI_ERR("Cannot initialize ICE session.");
+            for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
+                pending.cb(nullptr, deviceId);
+            eraseInfo();
+            return;
+        }
+    });
 }
 
 void
@@ -943,6 +951,14 @@ ConnectionManager::connectDevice(const DeviceId& deviceId,
                                  ConnectCallback cb)
 {
     pimpl_->connectDevice(deviceId, name, std::move(cb));
+}
+
+void
+ConnectionManager::connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                                 const std::string& name,
+                                 ConnectCallback cb)
+{
+    pimpl_->connectDevice(cert, name, std::move(cb));
 }
 
 bool
