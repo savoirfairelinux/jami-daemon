@@ -2408,30 +2408,23 @@ JamiAccount::doRegister_()
             if (accountManager_->getInfo()->deviceId == deviceId)
                 return;
 
-            {
-                // Avoid to create multiple sync channels with a device
-                std::lock_guard<std::mutex> lk(syncConnectionsMtx_);
-                auto syncConn = syncConnections_.find(deviceId);
-                if ((syncConn != syncConnections_.end() and not syncConn->second.empty())
-                    or pendingSync_.find(deviceId) != pendingSync_.end())
-                    return; // Already syncing
-                pendingSync_.emplace(deviceId);
-            }
-
             std::lock_guard<std::mutex> lk(connManagerMtx_);
             if (!connectionManager_)
                 return;
-            connectionManager_->connectDevice(crt->getId(),
-                                              "sync://" + deviceId,
+
+            auto channelName = "sync://" + deviceId;
+            if (connectionManager_->isConnecting(crt->getId(), channelName)) {
+                JAMI_INFO("[Account %s] Already connecting to %s",
+                    getAccountID().c_str(),
+                    deviceId.c_str());
+                return;
+            }
+            connectionManager_->connectDevice(crt,
+                                              channelName,
                                               [this](std::shared_ptr<ChannelSocket> socket,
                                                      const DeviceId& deviceId) {
                                                   if (socket)
                                                       syncWith(deviceId.toString(), socket);
-                                                  {
-                                                      std::lock_guard<std::mutex> lk(
-                                                          syncConnectionsMtx_);
-                                                      pendingSync_.erase(deviceId.toString());
-                                                  }
                                               });
         });
 
