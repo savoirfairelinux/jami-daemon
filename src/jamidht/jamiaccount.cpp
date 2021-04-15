@@ -124,6 +124,7 @@ struct TextMessageCtx
     DeviceId deviceId;
     uint64_t id;
     bool retryOnTimeout;
+    std::shared_ptr<ChannelSocket> channel;
     std::shared_ptr<PendingConfirmation> confirmation;
 };
 
@@ -3482,6 +3483,7 @@ JamiAccount::sendTextMessage(const std::string& to,
             continue;
         }
         auto& conn = value.back();
+        auto& channel = conn.channel;
 
         // Set input token into callback
         std::unique_ptr<TextMessageCtx> ctx {std::make_unique<TextMessageCtx>()};
@@ -3490,6 +3492,7 @@ JamiAccount::sendTextMessage(const std::string& to,
         ctx->deviceId = key.second;
         ctx->id = token;
         ctx->retryOnTimeout = retryOnTimeout;
+        ctx->channel = channel;
         ctx->confirmation = confirm;
 
         try {
@@ -3508,15 +3511,7 @@ JamiAccount::sendTextMessage(const std::string& to,
                         acc->messageEngine_.onMessageSent(c->to, c->id, true);
                     } else {
                         JAMI_WARN("Timeout when send a message, close current connection");
-                        {
-                            std::unique_lock<std::mutex> lk(acc->sipConnsMtx_);
-                            acc->sipConns_.erase(std::make_pair(c->to, c->deviceId));
-                        }
-                        {
-                            std::lock_guard<std::mutex> lk(acc->connManagerMtx_);
-                            if (acc->connectionManager_)
-                                acc->connectionManager_->closeConnectionsWith(c->deviceId);
-                        }
+                        acc->shutdownSIPConnection(c->channel, c->to, c->deviceId);
                         // This MUST be done after closing the connection to avoid race condition
                         // with messageEngine_
                         acc->messageEngine_.onMessageSent(c->to, c->id, false);
@@ -3536,8 +3531,9 @@ JamiAccount::sendTextMessage(const std::string& to,
         } catch (const std::runtime_error& ex) {
             JAMI_WARN("%s", ex.what());
             messageEngine_.onMessageSent(to, token, false);
+            ++it;
             // Remove connection in incorrect state
-            it = sipConns_.erase(it);
+            shutdownSIPConnection(channel, to, key.second);
             continue;
         }
 
@@ -4625,41 +4621,38 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
                  deviceId.to_c_str());
         return;
     }
-    sipConns_[id] = {};
     // If not present, create it
-    JAMI_INFO("[Account %s] Ask %s for a new SIP channel",
-              getAccountID().c_str(),
-              deviceId.to_c_str());
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;
+    // Note, Even if we send 50 "sip" request, the connectionManager_ will only use one socket.
+    // however, this will still ask for multiple channels, so only ask
+    // if there is no pending request
+    if (connectionManager_->isConnecting(deviceId, "sip")) {
+        JAMI_INFO("[Account %s] Already connecting to %s",
+              getAccountID().c_str(),
+              deviceId.to_c_str());
+        return;
+    }
+    JAMI_INFO("[Account %s] Ask %s for a new SIP channel",
+              getAccountID().c_str(),
+              deviceId.to_c_str());
     connectionManager_->connectDevice(deviceId,
                                       "sip",
                                       [w = weak(), id](std::shared_ptr<ChannelSocket> socket,
                                                        const DeviceId&) {
-                                          auto shared = w.lock();
-                                          if (!shared)
-                                              return;
-                                          // NOTE: No need to cache Connection there.
-                                          // OnConnectionReady is called before this callback, so
-                                          // the socket is already cached if succeed. We just need
-                                          // to remove the pending request.
-                                          if (!socket) {
-                                              // If this is triggered, this means that the
-                                              // connectDevice didn't get any response from the DHT.
-                                              // Stop searching pending call.
-                                              shared->callConnectionClosed(id.second, true);
-                                              shared->forEachPendingCall(id.second,
-                                                                         [](const auto& pc) {
-                                                                             pc->onFailure();
-                                                                         });
-                                          }
-
-                                          std::lock_guard<std::mutex> lk(shared->sipConnsMtx_);
-                                          auto it = shared->sipConns_.find(id);
-                                          if (it != shared->sipConns_.end() && it->second.empty()) {
-                                              shared->sipConns_.erase(it);
-                                          }
+                                            if (socket) return;
+                                            auto shared = w.lock();
+                                            if (!shared)
+                                                return;
+                                            // If this is triggered, this means that the
+                                            // connectDevice didn't get any response from the DHT.
+                                            // Stop searching pending call.
+                                            shared->callConnectionClosed(id.second, true);
+                                            shared->forEachPendingCall(id.second,
+                                                                        [](const auto& pc) {
+                                                                            pc->onFailure();
+                                                                        });
                                       });
 }
 
@@ -4829,22 +4822,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         auto shared = w.lock();
         if (!shared)
             return;
-        {
-            std::lock_guard<std::mutex> lk(shared->sipConnsMtx_);
-            auto it = shared->sipConns_.find(key);
-            if (it == shared->sipConns_.end())
-                return;
-            auto& connections = it->second;
-            auto conn = connections.begin();
-            while (conn != connections.end()) {
-                if (conn->channel == socket)
-                    conn = connections.erase(conn);
-                else
-                    conn++;
-            }
-            if (connections.empty())
-                shared->sipConns_.erase(it);
-        }
+        shared->shutdownSIPConnection(socket, key.first, key.second);
         // The connection can be closed during the SIP initialization, so
         // if this happens, the request should be re-sent to ask for a new
         // SIP channel to make the call pass through
@@ -4884,6 +4862,26 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
             }
         }
     });
+}
+
+void
+JamiAccount::shutdownSIPConnection(const std::shared_ptr<ChannelSocket>& channel, const std::string& peerId, const DeviceId& deviceId)
+{
+    std::unique_lock<std::mutex> lk(sipConnsMtx_);
+    SipConnectionKey key(peerId, deviceId);
+    auto it = sipConns_.find(key);
+    if (it != sipConns_.end()) {
+        auto& conns = it->second;
+        conns.erase(std::remove_if(conns.begin(), conns.end(),
+            [&](auto v) {
+                return v.channel == channel;
+            }), conns.end());
+        if (conns.empty())
+            sipConns_.erase(it);
+    }
+    lk.unlock();
+    // Shutdown after removal to let the callbacks do stuff if needed
+    if (channel) channel->shutdown();
 }
 
 std::string_view
