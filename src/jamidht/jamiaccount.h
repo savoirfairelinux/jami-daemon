@@ -874,7 +874,6 @@ private:
 
     // Sync connections
     std::mutex syncConnectionsMtx_;
-    std::set<std::string> pendingSync_ {};
     std::map<std::string /* deviceId */, std::vector<std::shared_ptr<ChannelSocket>>>
         syncConnections_;
 
