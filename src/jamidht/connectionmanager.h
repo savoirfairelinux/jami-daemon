@@ -86,6 +86,7 @@ public:
      * @param cb            Callback called when socket is ready ready
      */
     void connectDevice(const DeviceId& deviceId, const std::string& name, ConnectCallback cb);
+    void connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name, ConnectCallback cb);
 
     /**
      * Check if we are already connecting to a device with a specific name
