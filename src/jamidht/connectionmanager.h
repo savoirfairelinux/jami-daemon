@@ -88,6 +88,15 @@ public:
     void connectDevice(const DeviceId& deviceId, const std::string& name, ConnectCallback cb);
 
     /**
+     * Check if we are already connecting to a device with a specific name
+     * @param deviceId      Remote device
+     * @param name          Name of the channel
+     * @return if connecting
+     * @note isConnecting is not true just after connectDevice() as connectDevice is full async
+     */
+    bool isConnecting(const DeviceId& deviceId, const std::string& name) const;
+
+    /**
      * Close all connections with a current device
      * @param deviceId      Remote device
      */

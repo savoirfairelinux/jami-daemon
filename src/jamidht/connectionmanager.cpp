@@ -945,6 +945,13 @@ ConnectionManager::connectDevice(const DeviceId& deviceId,
     pimpl_->connectDevice(deviceId, name, std::move(cb));
 }
 
+bool
+ConnectionManager::isConnecting(const DeviceId& deviceId, const std::string& name) const
+{
+    auto pending = pimpl_->getPendingCallbacks(deviceId);
+    return std::find_if(pending.begin(), pending.end(), [&](auto p) { return p.name == name; }) != pending.end();
+}
+
 void
 ConnectionManager::closeConnectionsWith(const DeviceId& deviceId)
 {
