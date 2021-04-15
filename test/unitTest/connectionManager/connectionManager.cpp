@@ -68,6 +68,7 @@ private:
     void testShutdownCallbacks();
     void testFloodSocket();
     void testDestroyWhileSending();
+    void testIsConnecting();
 
     CPPUNIT_TEST_SUITE(ConnectionManagerTest);
     CPPUNIT_TEST(testConnectDevice);
@@ -84,6 +85,7 @@ private:
     CPPUNIT_TEST(testShutdownCallbacks);
     CPPUNIT_TEST(testFloodSocket);
     CPPUNIT_TEST(testDestroyWhileSending);
+    CPPUNIT_TEST(testIsConnecting);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -998,6 +1000,52 @@ ConnectionManagerTest::testDestroyWhileSending()
     }
 
     // No need to wait, immediately destroy, no segfault must occurs
+}
+
+void
+ConnectionManagerTest::testIsConnecting()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
+
+    bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
+    aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    bool successfullyConnected = false, successfullyReceive = false;
+
+    bobAccount->connectionManager().onChannelRequest(
+        [&](const DeviceId&, const std::string&) {
+            successfullyReceive = true;
+            cv.notify_one();
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+            return true;
+        });
+
+    CPPUNIT_ASSERT(!aliceAccount->connectionManager().isConnecting(bobDeviceId, "sip"));
+    aliceAccount->connectionManager()
+        .connectDevice(bobDeviceId,
+                       "sip",
+                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
+                                                     const DeviceId&) {
+                           if (socket) {
+                               successfullyConnected = true;
+                           }
+                           cv.notify_one();
+                       });
+    // connectDevice is full async, so isConnecting will be true after a few ms.
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] {
+        return successfullyReceive;
+    }));
+    CPPUNIT_ASSERT(aliceAccount->connectionManager().isConnecting(bobDeviceId, "sip"));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] {
+        return successfullyConnected;
+    }));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Just to wait for the callback to finish
+    CPPUNIT_ASSERT(!aliceAccount->connectionManager().isConnecting(bobDeviceId, "sip"));
 }
 
 } // namespace test
