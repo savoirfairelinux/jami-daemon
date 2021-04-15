@@ -885,13 +885,23 @@ private:
     void requestSIPConnection(const std::string& peerId, const DeviceId& deviceId);
     /**
      * Store a new SIP connection into sipConnections_
-     * @param socket    The new sip channel
+     * @param channel   The new sip channel
      * @param peerId    The contact who owns the device
      * @param deviceId  Device linked to that transport
      */
-    void cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
+    void cacheSIPConnection(std::shared_ptr<ChannelSocket>&& channel,
                             const std::string& peerId,
                             const DeviceId& deviceId);
+    /**
+     * Shutdown a SIP connection
+     * @param channel   The channel to close
+     * @param peerId    The contact who owns the device
+     * @param deviceId  Device linked to that transport
+     */
+    void shutdownSIPConnection(const std::shared_ptr<ChannelSocket>& channel,
+                               const std::string& peerId,
+                               const DeviceId& deviceId);
+
     /**
      * Store a new Sync connection
      * @param socket    The new sync channel
