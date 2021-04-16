@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "527e332a_d0994595",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1303,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-16T15:32:56Z",
+      "side": 1,
+      "message": "string_view",
+      "range": {
+        "startLine": 1303,
+        "startChar": 37,
+        "endLine": 1303,
+        "endChar": 48
+      },
+      "revId": "7f4ed34a6debcd7415712296a29348b9423f0dbe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
