@@ -548,7 +548,7 @@ if test "${SYS}" = "linux"; then
   dnl Check for webrtc-audio-processing development package
   dnl - name: libwebrtc-audio-processing-dev
   AC_ARG_WITH([webrtcap],
-    [AS_HELP_STRING([--without-webrtc-ap],
+    [AS_HELP_STRING([--without-webrtcap],
        [disable support for webrtc-audio-processing])],
     [], [with_webrtc_ap=yes])
 
