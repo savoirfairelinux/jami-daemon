@@ -30,7 +30,7 @@ on behalf of Savoir-faire Linux.
  pjnath/src/pjnath-test/sess_auth.c      |   14 +-
  pjnath/src/pjnath-test/stun_sock_test.c |    7 +-
  pjnath/src/pjnath/ice_session.c         |  597 +++++++++++--
- pjnath/src/pjnath/ice_strans.c          |  743 +++++++++++++---
+ pjnath/src/pjnath/ice_strans.c          |  747 +++++++++++++---
  pjnath/src/pjnath/nat_detect.c          |    7 +-
  pjnath/src/pjnath/stun_session.c        |   19 +-
  pjnath/src/pjnath/stun_sock.c           | 1081 +++++++++++++++++++----
@@ -42,7 +42,7 @@ on behalf of Savoir-faire Linux.
  pjnath/src/pjturn-srv/server.c          |    2 +-
  pjsip-apps/src/samples/icedemo.c        |  116 ++-
  pjsip/src/pjsua-lib/pjsua_core.c        |    2 +-
- 22 files changed, 2547 insertions(+), 422 deletions(-)
+ 22 files changed, 2549 insertions(+), 424 deletions(-)
 
 diff --git a/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h
 index fc1e27550..9b44c2645 100644
@@ -683,7 +683,7 @@ index fff4fad26..e7f8b84eb 100644
      if (status != PJ_SUCCESS && status != PJ_EPENDING) {
  	app_perror("    error: server sending data", status);
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index 2a4125bc5..b10a8fb51 100644
+index 2a4125bc5..b50a3d229 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
 @@ -18,6 +18,7 @@
@@ -1554,7 +1554,7 @@ index 2a4125bc5..b10a8fb51 100644
  	}
      }
 diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
-index 3cb350c2a..82175e9e8 100644
+index 3cb350c2a..283b1a40c 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
 @@ -69,6 +69,7 @@ enum tp_type
@@ -1969,7 +1969,7 @@ index 3cb350c2a..82175e9e8 100644
  
  /*
   * Create the component.
-@@ -816,7 +918,7 @@ static pj_status_t alloc_send_buf(pj_ice_strans *ice_st, unsigned buf_size)
+@@ -816,10 +918,10 @@ static pj_status_t alloc_send_buf(pj_ice_strans *ice_st, unsigned buf_size)
  {
      if (buf_size > ice_st->buf_size) {
          unsigned i;
@@ -1977,7 +1977,11 @@ index 3cb350c2a..82175e9e8 100644
 +
          if (ice_st->is_pending) {
              /* The current buffer is insufficient, but still currently used.*/
-             return PJ_EBUSY;
+-            return PJ_EBUSY;
++            return PJ_EPENDING;
+         }
+ 
+     	pj_pool_safe_release(&ice_st->buf_pool);
 @@ -839,7 +941,7 @@ static pj_status_t alloc_send_buf(pj_ice_strans *ice_st, unsigned buf_size)
  	}
  	ice_st->buf_idx = ice_st->empty_idx = 0;
@@ -2045,7 +2049,7 @@ index 3cb350c2a..82175e9e8 100644
      /* Protect with group lock, since this may cause race condition with
       * pj_ice_strans_sendto2().
       * See ticket #1877.
-@@ -1578,7 +1686,7 @@ static pj_status_t use_buffer( pj_ice_strans *ice_st,
+@@ -1578,10 +1686,10 @@ static pj_status_t use_buffer( pj_ice_strans *ice_st,
      status = alloc_send_buf(ice_st, data_len);
      if (status != PJ_SUCCESS)
      	return status;
@@ -2053,7 +2057,11 @@ index 3cb350c2a..82175e9e8 100644
 +
      if (ice_st->is_pending && ice_st->empty_idx == ice_st->buf_idx) {
      	/* We don't use buffer or there's no more empty buffer. */
-     	return PJ_EBUSY;
+-    	return PJ_EBUSY;
++    	return PJ_EPENDING;
+     }
+ 
+     idx = ice_st->empty_idx;
 @@ -1593,12 +1701,12 @@ static pj_status_t use_buffer( pj_ice_strans *ice_st,
      pj_sockaddr_cp(&ice_st->send_buf[idx].dst_addr, dst_addr);
      ice_st->send_buf[idx].dst_addr_len = dst_addr_len;
@@ -4326,4 +4334,4 @@ index 474a8d07c..9257f07a4 100644
  	if (status != PJ_SUCCESS) {
  	    char errmsg[PJ_ERR_MSG_SIZE];
 -- 
-2.29.2
+2.25.1
