@@ -554,9 +554,9 @@ IceTransport::Impl::handleEvents(unsigned max_msec)
 void
 IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_status_t status)
 {
-    const char* opname = op == PJ_ICE_STRANS_OP_INIT
-                             ? "initialization"
-                             : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
+    const char* opname = op == PJ_ICE_STRANS_OP_INIT          ? "initialization"
+                         : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation"
+                                                              : "unknown_op";
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
@@ -1243,9 +1243,6 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
 
     res.reserve(cand_cnt);
     for (unsigned i = 0; i < cand_cnt; ++i) {
-        std::ostringstream val;
-        char ipaddr[PJ_INET6_ADDRSTRLEN];
-
         /**   Section 4.5, RFC 6544 (https://tools.ietf.org/html/rfc6544)
          *    candidate-attribute   = "candidate" ":" foundation SP component-id
          * SP "TCP" SP priority SP connection-address SP port SP cand-type [SP
@@ -1256,31 +1253,33 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
          *     tcp-type-ext          = "tcptype" SP tcp-type
          *     tcp-type              = "active" / "passive" / "so"
          */
-        val.write(cand[i].foundation.ptr, cand[i].foundation.slen);
-        val << " " << std::to_string(cand[i].comp_id);
-        val << (cand[i].transport == PJ_CAND_UDP ? " UDP " : " TCP ");
-        val << std::to_string(cand[i].prio);
-        val << " " << pj_sockaddr_print(&cand[i].addr, ipaddr, sizeof(ipaddr), 0);
-        val << " " << std::to_string((unsigned) pj_sockaddr_get_port(&cand[i].addr));
-        val << " typ " << pj_ice_get_cand_type_name(cand[i].type);
-
+        char ipaddr[PJ_INET6_ADDRSTRLEN];
+        std::string tcp_type;
         if (cand[i].transport != PJ_CAND_UDP) {
-            val << " tcptype";
+            tcp_type += " tcptype";
             switch (cand[i].transport) {
             case PJ_CAND_TCP_ACTIVE:
-                val << " active";
+                tcp_type += " active";
                 break;
             case PJ_CAND_TCP_PASSIVE:
-                val << " passive";
+                tcp_type += " passive";
                 break;
             case PJ_CAND_TCP_SO:
             default:
-                val << " so";
+                tcp_type += " so";
                 break;
             }
         }
-
-        res.emplace_back(val.str());
+        res.emplace_back(
+            fmt::format("{} {} {} {} {} {} typ {}{}",
+                        std::string_view(cand[i].foundation.ptr, cand[i].foundation.slen),
+                        cand[i].comp_id,
+                        (cand[i].transport == PJ_CAND_UDP ? "UDP" : "TCP"),
+                        cand[i].prio,
+                        pj_sockaddr_print(&cand[i].addr, ipaddr, sizeof(ipaddr), 0),
+                        pj_sockaddr_get_port(&cand[i].addr),
+                        pj_ice_get_cand_type_name(cand[i].type),
+                        tcp_type));
     }
 
     return res;
