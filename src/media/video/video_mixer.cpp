@@ -58,7 +58,8 @@ struct VideoMixer::VideoMixerSource
         render_frame = newFrame;
     }
 
-    std::shared_ptr<VideoFrame> getRenderFrame() {
+    std::shared_ptr<VideoFrame> getRenderFrame()
+    {
         std::lock_guard<std::mutex> lock(mutex_);
         return render_frame;
     }
@@ -68,7 +69,7 @@ struct VideoMixer::VideoMixerSource
     int y {};
     int w {};
     int h {};
-    bool hasVideo {false};
+    bool hasVideo {true};
 
 private:
     std::mutex mutex_;
@@ -140,7 +141,8 @@ VideoMixer::switchInput(const std::string& input)
 }
 
 void
-VideoMixer::switchSecondaryInput(const std::string& input) {
+VideoMixer::switchSecondaryInput(const std::string& input)
+{
     if (auto local = videoLocalSecondary_) {
         // Detach videoInput from mixer
         local->detach(this);
@@ -216,7 +218,8 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
             // Handle the case where the current shown source leave the conference
             if (activeSource_ == ob) {
                 currentLayout_ = Layout::GRID;
-                activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get() : videoLocal_.get();
+                activeSource_ = videoLocalSecondary_ ? videoLocalSecondary_.get()
+                                                     : videoLocal_.get();
             }
             sources_.remove(x);
             updateLayout();
@@ -236,7 +239,9 @@ VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob,
 #ifdef RING_ACCEL
             std::shared_ptr<VideoFrame> frame;
             try {
-                frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame_p), AV_PIX_FMT_NV12);
+                frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
+                                                                frame_p),
+                                                            AV_PIX_FMT_NV12);
                 x->atomic_copy(*std::static_pointer_cast<VideoFrame>(frame));
             } catch (const std::runtime_error& e) {
                 JAMI_ERR("Accel failure: %s", e.what());
@@ -285,16 +290,6 @@ VideoMixer::process()
                 // to avoid concurrent access.
                 std::shared_ptr<VideoFrame> input = x->getRenderFrame();
 
-                if (!input->height() or !input->width())
-                    continue;
-
-                // If orientation changed or if the first valid frame for source
-                // is received -> trigger layout calculation and confInfo update
-                if (x->rotation != input->getOrientation() or !x->w or !x->h) {
-                    updateLayout();
-                    needsUpdate = true;
-                }
-
                 auto wantedIndex = i;
                 if (currentLayout_ == Layout::ONE_BIG) {
                     wantedIndex = 0;
@@ -306,6 +301,30 @@ VideoMixer::process()
                     } else if (not activeFound) {
                         wantedIndex += 1;
                     }
+                }
+
+                if (!input->height() or !input->width()) {
+                    // force black frame if no frame
+                    // input->reserve(format_, 1280, 720);
+                    // libav_utils::fillWithBlack(input->pointer());
+                    successfullyRendered = true;
+                    std::shared_ptr<DRing::VideoFrame> fooInput
+                        = std::make_shared<DRing::VideoFrame>();
+                    fooInput->reserve(format_, 1280, 720);
+                    if (x->hasVideo) {
+                        x->hasVideo = false;
+                        updateLayout();
+                        needsUpdate = true;
+                        calc_position(x, fooInput, wantedIndex);
+                    }
+                    continue;
+                }
+
+                // If orientation changed or if the first valid frame for source
+                // is received -> trigger layout calculation and confInfo update
+                if (x->rotation != input->getOrientation() or !x->w or !x->h) {
+                    updateLayout();
+                    needsUpdate = true;
                 }
 
                 if (needsUpdate)
@@ -348,10 +367,10 @@ VideoMixer::process()
     }
 
     output.pointer()->pts = av_rescale_q_rnd(av_gettime() - startTime_,
-                                      {1, AV_TIME_BASE},
-                                      {1, MIXER_FRAMERATE},
-                                      static_cast<AVRounding>(AV_ROUND_NEAR_INF
-                                                              | AV_ROUND_PASS_MINMAX));
+                                             {1, AV_TIME_BASE},
+                                             {1, MIXER_FRAMERATE},
+                                             static_cast<AVRounding>(AV_ROUND_NEAR_INF
+                                                                     | AV_ROUND_PASS_MINMAX));
     lastTimestamp_ = output.pointer()->pts;
     publishFrame();
 }
