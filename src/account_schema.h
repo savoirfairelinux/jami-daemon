@@ -53,6 +53,7 @@ static const char* const CONFIG_PRESENCE_NOTE = "Account.presenceNote";
 static const char* const CONFIG_ACCOUNT_HOSTNAME = "Account.hostname";
 static const char* const CONFIG_ACCOUNT_USERNAME = "Account.username";
 static const char* const CONFIG_ACCOUNT_ROUTESET = "Account.routeset";
+static const char* const CONFIG_ACCOUNT_AUTHENTICATION_USERNAME = "Account.authenticationUsername";
 static const char* const CONFIG_ACCOUNT_IP_REWRITE = "Account.allowViaRewrite";
 static const char* const CONFIG_ACCOUNT_PASSWORD = "Account.password";
 static const char* const CONFIG_ACCOUNT_REALM = "Account.realm";

@@ -133,6 +133,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , bRegister_(false)
     , registrationExpire_(MIN_REGISTRATION_TIME)
     , serviceRoute_()
+    , authenticationUsername_()
     , cred_()
     , tlsSetting_()
     , ciphers_(100)
@@ -533,6 +534,7 @@ SIPAccount::serialize(YAML::Emitter& out) const
 
     out << YAML::Key << Preferences::REGISTRATION_EXPIRE_KEY << YAML::Value << registrationExpire_;
     out << YAML::Key << Conf::SERVICE_ROUTE_KEY << YAML::Value << serviceRoute_;
+    out << YAML::Key << Conf::AUTHENTICATION_USERNAME_KEY << YAML::Value << authenticationUsername_;
     out << YAML::Key << Conf::ALLOW_VIA_REWRITE << YAML::Value << allowViaRewrite_;
 
     // tls submap
@@ -610,6 +612,7 @@ SIPAccount::unserialize(const YAML::Node& node)
         parseValue(node, Preferences::REGISTRATION_EXPIRE_KEY, registrationExpire_);
         parseValue(node, Conf::KEEP_ALIVE_ENABLED, keepAliveEnabled_);
         parseValue(node, Conf::SERVICE_ROUTE_KEY, serviceRoute_);
+        parseValueOptional(node, Conf::AUTHENTICATION_USERNAME_KEY, authenticationUsername_);
         parseValueOptional(node, Conf::ALLOW_VIA_REWRITE, allowViaRewrite_);
 
         const auto& credsNode = node[Conf::CRED_KEY];
@@ -688,6 +691,7 @@ SIPAccount::setAccountDetails(const std::map<std::string, std::string>& details)
     // SIP specific account settings
     parseString(details, Conf::CONFIG_BIND_ADDRESS, bindAddress_);
     parseString(details, Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
+    parseString(details, Conf::CONFIG_ACCOUNT_AUTHENTICATION_USERNAME, authenticationUsername_);
     parseBool(details, Conf::CONFIG_ACCOUNT_IP_REWRITE, allowViaRewrite_);
 
     if (not publishedSameasLocal_)
@@ -766,6 +770,7 @@ SIPAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_BIND_ADDRESS, bindAddress_);
     a.emplace(Conf::CONFIG_LOCAL_PORT, std::to_string(localPort_));
     a.emplace(Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
+    a.emplace(Conf::CONFIG_ACCOUNT_AUTHENTICATION_USERNAME, authenticationUsername_);
     a.emplace(Conf::CONFIG_ACCOUNT_IP_REWRITE, allowViaRewrite_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, std::to_string(registrationExpire_));
     a.emplace(Conf::CONFIG_KEEP_ALIVE_ENABLED, keepAliveEnabled_ ? TRUE_STR : FALSE_STR);

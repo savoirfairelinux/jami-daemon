@@ -121,6 +121,7 @@ constexpr static const char HOSTNAME[] = "Account.hostname";
 constexpr static const char USERNAME[] = "Account.username";
 constexpr static const char BIND_ADDRESS[] = "Account.bindAddress";
 constexpr static const char ROUTE[] = "Account.routeset";
+constexpr static const char AUTHENTICATION_USERNAME[] = "Account.authenticationUsername";
 constexpr static const char PASSWORD[] = "Account.password";
 constexpr static const char REALM[] = "Account.realm";
 constexpr static const char LOCAL_INTERFACE[] = "Account.localInterface";

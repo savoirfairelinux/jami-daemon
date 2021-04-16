@@ -50,6 +50,7 @@ namespace Conf {
 const char* const KEEP_ALIVE_ENABLED = "keepAlive";
 
 // TODO: write an object to store credential which implement serializable
+const char* const AUTHENTICATION_USERNAME_KEY = "authenticationUsername";
 const char* const SRTP_KEY = "srtp";
 const char* const SRTP_ENABLE_KEY = "enable";
 const char* const KEY_EXCHANGE_KEY = "keyExchange";
@@ -654,6 +655,11 @@ private:
      * Input Outbound Proxy Server Address
      */
     std::string serviceRoute_;
+
+    /**
+     * Optional Authentication Username
+     */
+    std::string authenticationUsername_;
 
     /**
      * Credential information stored for further registration.
