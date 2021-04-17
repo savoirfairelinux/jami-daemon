@@ -11,6 +11,7 @@
 using namespace v8;
 
 Persistent<Function> accountsChangedCb;
+Persistent<Function> accountDetailsChangedCb;
 Persistent<Function> registrationStateChangedCb;
 Persistent<Function> volatileDetailsChangedCb;
 Persistent<Function> incomingAccountMessageCb;
@@ -34,6 +35,8 @@ uv_async_t signalAsync;
 Persistent<Function>* getPresistentCb(const std::string &signal) {
     if (signal == "AccountsChanged")
         return &accountsChangedCb;
+    else if (signal == "AccountDetailsChanged")
+        return &accountDetailsChangedCb;
     else if (signal == "RegistrationStateChanged")
         return &registrationStateChangedCb;
     else if (signal == "VolatileDetailsChanged")
@@ -135,6 +138,22 @@ void volatileDetailsChanged(const std::string& account_id, const std::map<std::s
             Local<Object> jsMap = SWIGV8_OBJECT_NEW();
             stringMapToJsMap(details, jsMap);
             Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id), jsMap};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 2, callback_args);
+        }
+    });
+
+    uv_async_send(&signalAsync);
+}
+
+void accountDetailsChanged(const std::string& accountId, const std::map<std::string, std::string>& details) {
+
+    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, details]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), accountDetailsChangedCb);
+        if (!func.IsEmpty()) {
+            Local<Object> jsDetails = SWIGV8_OBJECT_NEW();
+            stringMapToJsMap(payloads, jsDetails);
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(accountId), jsDetails};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 2, callback_args);
         }
     });
