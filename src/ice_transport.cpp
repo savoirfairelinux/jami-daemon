@@ -127,9 +127,9 @@ public:
     // reflexive candidates using STUN config.
     void addServerReflexiveCandidates(const std::vector<std::pair<IpAddr, IpAddr>>& addrList);
     // Generate server reflexive candidates using the published (DHT/Account) address
-    const std::vector<std::pair<IpAddr, IpAddr>> setupGenericReflexiveCandidates();
+    std::vector<std::pair<IpAddr, IpAddr>> setupGenericReflexiveCandidates();
     // Generate server reflexive candidates using UPNP mappings.
-    const std::vector<std::pair<IpAddr, IpAddr>> setupUpnpReflexiveCandidates();
+    std::vector<std::pair<IpAddr, IpAddr>> setupUpnpReflexiveCandidates();
     void setDefaultRemoteAddress(unsigned comp_id, const IpAddr& addr);
     const IpAddr& getDefaultRemoteAddress(unsigned comp_id) const;
     bool handleEvents(unsigned max_msec);
@@ -842,8 +842,8 @@ IceTransport::Impl::addServerReflexiveCandidates(
     auto& stun = config_.stun_tp[config_.stun_tp_cnt - 1];
 
     for (unsigned compIdx = 0; compIdx < component_count_; compIdx++) {
-        auto localAddr = addrList[compIdx].first;
-        auto publicAddr = addrList[compIdx].second;
+        auto& localAddr = addrList[compIdx].first;
+        auto& publicAddr = addrList[compIdx].second;
 
         pj_sockaddr_cp(&stun.cfg.user_mapping[compIdx].local_addr, localAddr.pjPtr());
         pj_sockaddr_cp(&stun.cfg.user_mapping[compIdx].mapped_addr, publicAddr.pjPtr());
@@ -863,7 +863,7 @@ IceTransport::Impl::addServerReflexiveCandidates(
     assert(stun.cfg.user_mapping_cnt < PJ_ICE_MAX_COMP);
 }
 
-const std::vector<std::pair<IpAddr, IpAddr>>
+std::vector<std::pair<IpAddr, IpAddr>>
 IceTransport::Impl::setupGenericReflexiveCandidates()
 {
     std::vector<std::pair<IpAddr, IpAddr>> addrList;
@@ -876,6 +876,7 @@ IceTransport::Impl::setupGenericReflexiveCandidates()
     // candidates and set to active otherwise.
 
     if (accountLocalAddr_ and accountPublicAddr_) {
+        addrList.reserve(component_count_);
         for (unsigned compIdx = 0; compIdx < component_count_; compIdx++) {
             // For TCP, the type is set to active, because most likely the incoming
             // connection will be blocked by the NAT.
@@ -899,7 +900,7 @@ IceTransport::Impl::setupGenericReflexiveCandidates()
     return addrList;
 }
 
-const std::vector<std::pair<IpAddr, IpAddr>>
+std::vector<std::pair<IpAddr, IpAddr>>
 IceTransport::Impl::setupUpnpReflexiveCandidates()
 {
     // Add UPNP server reflexive candidates if available.
@@ -919,6 +920,7 @@ IceTransport::Impl::setupUpnpReflexiveCandidates()
     std::vector<std::pair<IpAddr, IpAddr>> addrList;
 
     unsigned compId = 1;
+    addrList.reserve(upnpMappings_.size());
     for (auto const& [_, map] : upnpMappings_) {
         assert(map.getMapKey());
         IpAddr localAddr {map.getInternalAddress()};
@@ -973,7 +975,7 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void* pkt, pj_size_t size)
         io.cb((uint8_t*) pkt, size);
     } else {
         std::error_code ec;
-        auto err = peerChannels_.at(comp_id - 1).write((char*) pkt, size, ec);
+        auto err = peerChannels_.at(comp_id - 1).write((const char*) pkt, size, ec);
         if (err < 0) {
             JAMI_ERR("[ice:%p] rx: channel is closed", this);
         }
