@@ -188,7 +188,7 @@ FFMPEGCONF += \
 endif
 
 ifdef HAVE_LINUX
-FFMPEGCONF += --enable-pic
+FFMPEGCONF += --enable-pic --enable-lto
 ifdef HAVE_ANDROID
 # Android Linux
 FFMPEGCONF += \
