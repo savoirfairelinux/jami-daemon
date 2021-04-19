@@ -139,7 +139,7 @@ void init(const SWIGV8_VALUE& funcMap){
         exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4 )),
     };
 
-    if (!DRing::init(static_cast<DRing::InitFlag>(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG)))
+    if (!DRing::init(static_cast<DRing::InitFlag>(DRing::DRING_FLAG_DEBUG)))
         return;
 
     registerSignalHandlers(configEvHandlers);
