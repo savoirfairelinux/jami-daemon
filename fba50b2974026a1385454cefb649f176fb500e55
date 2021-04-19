@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8a64dac6_c2490e2b",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 73
+      },
+      "lineNbr": 1235,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-19T17:53:22Z",
+      "side": 1,
+      "message": "string_view",
+      "range": {
+        "startLine": 1235,
+        "startChar": 32,
+        "endLine": 1235,
+        "endChar": 43
+      },
+      "revId": "fba50b2974026a1385454cefb649f176fb500e55",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f47595fd_8042f212",
+        "filename": "src/vcard.h",
+        "patchSetId": 73
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-19T17:53:22Z",
+      "side": 1,
+      "message": "std::string_view (no const ref)",
+      "range": {
+        "startLine": 86,
+        "startChar": 6,
+        "endLine": 86,
+        "endChar": 29
+      },
+      "revId": "fba50b2974026a1385454cefb649f176fb500e55",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c557d844_56553119",
+        "filename": "src/vcard.h",
+        "patchSetId": 73
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-19T17:53:22Z",
+      "side": 1,
+      "message": "use jami::getline",
+      "range": {
+        "startLine": 91,
+        "startChar": 21,
+        "endLine": 91,
+        "endChar": 39
+      },
+      "revId": "fba50b2974026a1385454cefb649f176fb500e55",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8baed071_1afad87d",
+        "filename": "src/vcard.h",
+        "patchSetId": 73
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-19T17:53:22Z",
+      "side": 1,
+      "message": "assign directly to avoid unneeded copy",
+      "range": {
+        "startLine": 96,
+        "startChar": 11,
+        "endLine": 97,
+        "endChar": 25
+      },
+      "revId": "fba50b2974026a1385454cefb649f176fb500e55",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
