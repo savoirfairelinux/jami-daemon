@@ -1,6 +1,6 @@
 {
     "name": "ffmpeg",
-    "version": "9f38fac053010205806ece11e6aea9b7d3bde041",
+    "version": "n4.4",
     "url": "https://github.com/FFmpeg/FFmpeg/archive/__VERSION__.tar.gz",
     "deps": [
         "vpx",
