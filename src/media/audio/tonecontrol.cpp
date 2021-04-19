@@ -36,7 +36,11 @@ ToneControl::ToneControl(const Preferences& preferences)
     , sampleRate_(DEFAULT_SAMPLE_RATE)
 {}
 
-ToneControl::~ToneControl() {}
+ToneControl::~ToneControl()
+{
+    std::lock_guard<std::mutex> lk(mutex_);
+    audioFile_.reset();
+}
 
 void
 ToneControl::setSampleRate(unsigned rate)
