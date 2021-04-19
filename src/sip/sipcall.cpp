@@ -1476,16 +1476,19 @@ SIPCall::startAllMedia()
 
 #ifdef ENABLE_VIDEO
     // Check if there is an un-muted video stream
-    auto const& iter = std::find_if(rtpStreams_.begin(),
-                                    rtpStreams_.end(),
-                                    [](const RtpStream& stream) {
-                                        return stream.mediaAttribute_->type_
-                                                   == MediaType::MEDIA_VIDEO
-                                               and not stream.mediaAttribute_->muted_;
-                                    });
+    auto const& iter = std::find_if(slots.begin(), slots.end(), [](const Sdp::MediaSlot& slot) {
+        if ((slot.first.type == MediaType::MEDIA_VIDEO && slot.first.enabled)
+            || (slot.second.type == MediaType::MEDIA_VIDEO && slot.second.enabled))
+            return true;
+        return false;
+    });
 
     // Video is muted if all video streams are muted.
-    isVideoMuted_ = iter == rtpStreams_.end();
+    isVideoMuted_ = iter == slots.end();
+    if (isVideoMuted_ && !getConfId().empty()) {
+        auto conference = Manager::instance().getConferenceFromID(getConfId());
+        conference->attachVideo(fooVideoReceive_.get(), getCallId());
+    }
 #endif
 
     // Media is restarted, we can process the last holding request.

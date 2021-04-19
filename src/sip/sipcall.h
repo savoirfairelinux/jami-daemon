@@ -456,6 +456,9 @@ private:
     void resetMediaReady();
 
     std::mutex setupSuccessMutex_;
+
+    std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>> fooVideoReceive_
+        = std::make_shared<Observable<std::shared_ptr<MediaFrame>>>();
 };
 
 // Helpers
