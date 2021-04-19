@@ -78,6 +78,7 @@ private:
     DRing::DataTransferId outId_ {0};
     std::size_t fileSize_ {0};
     std::size_t rx_ {0};
+    std::mutex streamMtx_ {};
     std::stringstream headerStream_;
     std::string displayName_;
     std::array<char, 1024> line_;
