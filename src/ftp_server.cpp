@@ -62,8 +62,10 @@ FtpServer::getId() const
 void
 FtpServer::close() noexcept
 {
-    closeCurrentFile();
-    JAMI_WARN() << "[FTP] server closed";
+    dht::ThreadPool::io().run([w = weak()] {
+        if (auto shared = w.lock())
+            shared->closeCurrentFile();
+    });
 }
 
 void
@@ -103,35 +105,44 @@ FtpServer::startNewFile()
                 shared->onRecvCb_(shared->go_ ? "GO\n"sv : "NGO\n"sv);
             }
 
-            if (shared->out_.stream) {
-                shared->state_ = FtpState::READ_DATA;
-                while (shared->headerStream_) {
-                    shared->headerStream_.read(&shared->line_[0], shared->line_.size());
-                    std::size_t count = shared->headerStream_.gcount();
-                    if (!count)
+            shared->state_ = FtpState::READ_DATA;
+            std::unique_lock<std::mutex> lkH(shared->headerStreamMtx_);
+            while (shared->headerStream_) {
+                shared->headerStream_.read(&shared->line_[0], shared->line_.size());
+                std::size_t count = shared->headerStream_.gcount();
+                if (!count)
+                    break;
+                lkH.unlock();
+                auto size_needed = shared->fileSize_ - shared->rx_;
+                count = std::min(count, size_needed);
+                {
+                    std::lock_guard<std::mutex> lk(shared->outStreamMtx_);
+                    if (shared->out_.stream)
+                        shared->out_.stream->write(std::string_view(shared->line_.data(), count));
+                    else
                         break;
-                    auto size_needed = shared->fileSize_ - shared->rx_;
-                    count = std::min(count, size_needed);
-                    shared->out_.stream->write(std::string_view(shared->line_.data(), count));
-                    shared->rx_ += count;
-                    if (shared->rx_ == shared->fileSize_) {
-                        shared->closeCurrentFile();
-                        shared->state_ = FtpState::PARSE_HEADERS;
-                        return;
-                    }
                 }
+                shared->rx_ += count;
+                if (shared->rx_ == shared->fileSize_) {
+                    shared->closeCurrentFile();
+                    shared->state_ = FtpState::PARSE_HEADERS;
+                    return;
+                }
+                lkH.lock();
             }
             shared->headerStream_.clear();
-            shared->headerStream_.str({}); // reset
+            shared->headerStream_.str({});
         });
 }
 
 void
 FtpServer::closeCurrentFile()
 {
-    if (out_.stream && not closed_.exchange(true)) {
+    if (not closed_.exchange(true)) {
+        std::lock_guard<std::mutex> lk(outStreamMtx_);
         out_.stream->close();
         out_.stream.reset();
+        JAMI_WARN() << "[FTP] server closed";
     }
 }
 
@@ -152,17 +163,22 @@ FtpServer::write(std::string_view buffer)
         break;
 
     case FtpState::READ_DATA: {
-        if (out_.stream)
-            out_.stream->write(buffer);
+        {
+            std::lock_guard<std::mutex> lk(outStreamMtx_);
+            if (out_.stream)
+                out_.stream->write(buffer);
+        }
         auto size_needed = fileSize_ - rx_;
         auto read_size = std::min(buffer.size(), size_needed);
         rx_ += read_size;
         if (rx_ == fileSize_) {
             closeCurrentFile();
             // data may remains into the buffer: copy into the header stream for next header parsing
-            if (read_size < buffer.size())
+            if (read_size < buffer.size()) {
+                std::lock_guard<std::mutex> lk(headerStreamMtx_);
                 headerStream_.write((const char*) (buffer.data() + read_size),
                                     buffer.size() - read_size);
+            }
             state_ = FtpState::PARSE_HEADERS;
         }
     } break;
@@ -177,6 +193,7 @@ FtpServer::write(std::string_view buffer)
 bool
 FtpServer::parseStream(std::string_view buffer)
 {
+    std::lock_guard<std::mutex> lk(headerStreamMtx_);
     headerStream_ << buffer;
 
     // Simple line stream parser

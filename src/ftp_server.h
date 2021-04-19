@@ -74,10 +74,12 @@ private:
     std::atomic_bool isVCard_ {false};
     std::atomic_bool isTreatingRequest_ {false};
     DRing::DataTransferId transferId_ {0};
+    std::mutex outStreamMtx_ {};
     IncomingFileInfo out_ {0, nullptr};
     DRing::DataTransferId outId_ {0};
     std::size_t fileSize_ {0};
     std::size_t rx_ {0};
+    std::mutex headerStreamMtx_ {};
     std::stringstream headerStream_;
     std::string displayName_;
     std::array<char, 1024> line_;
