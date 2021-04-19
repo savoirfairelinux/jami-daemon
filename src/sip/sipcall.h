@@ -151,8 +151,11 @@ public:
     video::VideoGenerator* getVideoReceiver() override
     {
         auto const& videoRtp = getVideoRtp();
-        if (videoRtp)
+        if (videoRtp && videoRtp->isReceiving())
             return videoRtp->getVideoReceive().get();
+        else if (fooVideoReceive_) {
+            return std::static_pointer_cast<video::VideoGenerator>(fooVideoReceive_).get();
+        }
 
         return nullptr;
     }
@@ -458,6 +461,9 @@ private:
     void resetMediaReady();
 
     std::mutex setupSuccessMutex_;
+
+    std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>> fooVideoReceive_
+        = std::make_shared<Observable<std::shared_ptr<MediaFrame>>>();
 };
 
 // Helpers
