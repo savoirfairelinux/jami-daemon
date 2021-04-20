@@ -1,0 +1,23 @@
+ pjnath/src/pjnath/ice_strans.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 283b1a40c..2f5837cb3 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -921,6 +921,7 @@ static pj_status_t alloc_send_buf(pj_ice_strans *ice_st, unsigned buf_size)
+ 
+         if (ice_st->is_pending) {
+             /* The current buffer is insufficient, but still currently used.*/
++			printf("@@@ The current buffer is insufficient, but still currently used. %u vs %u\n", buf_size, ice_st->buf_size);
+             return PJ_EPENDING;
+         }
+ 
+@@ -1689,6 +1690,7 @@ static pj_status_t use_buffer( pj_ice_strans *ice_st,
+ 
+     if (ice_st->is_pending && ice_st->empty_idx == ice_st->buf_idx) {
+     	/* We don't use buffer or there's no more empty buffer. */
++		printf("@@@ We don't use buffer or there's no more empty buffer %u vs %u\n", ice_st->empty_idx, ice_st->buf_idx);
+     	return PJ_EPENDING;
+     }
+ 
