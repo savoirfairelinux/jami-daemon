@@ -1,0 +1,320 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "aaddd902_c5a8d9b3",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 25
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-20T13:45:43Z",
+      "side": 1,
+      "message": "In1, here breaks build",
+      "range": {
+        "startLine": 138,
+        "startChar": 62,
+        "endLine": 138,
+        "endChar": 65
+      },
+      "revId": "91b76e69bf2018d0a4ec0d97199ac5e5188ec542",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2e8aa52b_28cd32db",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 25
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-20T13:45:43Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 157,
+        "startChar": 62,
+        "endLine": 157,
+        "endChar": 65
+      },
+      "revId": "91b76e69bf2018d0a4ec0d97199ac5e5188ec542",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fc1eb9a4_a9aa4a6e",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 25
+      },
+      "lineNbr": 696,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-20T13:45:43Z",
+      "side": 1,
+      "message": "3",
+      "range": {
+        "startLine": 696,
+        "startChar": 62,
+        "endLine": 696,
+        "endChar": 65
+      },
+      "revId": "91b76e69bf2018d0a4ec0d97199ac5e5188ec542",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "64a10911_3135236c",
+        "filename": "src/account.h",
+        "patchSetId": 25
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-20T13:45:43Z",
+      "side": 1,
+      "message": "this comment can be removed as the method was removed one day",
+      "range": {
+        "startLine": 167,
+        "startChar": 0,
+        "endLine": 168,
+        "endChar": 35
+      },
+      "revId": "91b76e69bf2018d0a4ec0d97199ac5e5188ec542",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9b672f25_c7926860",
+        "filename": "src/account.h",
+        "patchSetId": 25
+      },
+      "lineNbr": 365,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-20T13:45:43Z",
+      "side": 1,
+      "message": "this should not be a method of the account but daemon wide. maybe just a constant like ENABLE_MULTI_STREAM 0/1 ; once we want to enable this features, we will just enable this in the daemon. No reason to export this outside",
+      "revId": "91b76e69bf2018d0a4ec0d97199ac5e5188ec542",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "055de3bd_84a030eb",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 1322,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-20T13:45:43Z",
+      "side": 1,
+      "message": "should not happen, should not have empty lines here",
+      "range": {
+        "startLine": 1321,
+        "startChar": 2,
+        "endLine": 1322,
+        "endChar": 21
+      },
+      "revId": "91b76e69bf2018d0a4ec0d97199ac5e5188ec542",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0b3a689c_933696d4",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 1005,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-20T13:45:43Z",
+      "side": 1,
+      "message": "can be a const ref",
+      "range": {
+        "startLine": 1005,
+        "startChar": 9,
+        "endLine": 1005,
+        "endChar": 21
+      },
+      "revId": "91b76e69bf2018d0a4ec0d97199ac5e5188ec542",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "618c1156_7f7d2491",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 844,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-20T13:45:43Z",
+      "side": 1,
+      "message": "just remove the unsigned here and no need for {}",
+      "range": {
+        "startLine": 844,
+        "startChar": 8,
+        "endLine": 844,
+        "endChar": 16
+      },
+      "revId": "91b76e69bf2018d0a4ec0d97199ac5e5188ec542",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fa936e2b_6f1c7057",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 1582,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-20T13:45:43Z",
+      "side": 1,
+      "message": "find_if",
+      "range": {
+        "startLine": 1575,
+        "startChar": 0,
+        "endLine": 1582,
+        "endChar": 15
+      },
+      "revId": "91b76e69bf2018d0a4ec0d97199ac5e5188ec542",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9b8f399a_a392f9ff",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 1594,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-20T13:45:43Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 1589,
+        "startChar": 35,
+        "endLine": 1594,
+        "endChar": 5
+      },
+      "revId": "91b76e69bf2018d0a4ec0d97199ac5e5188ec542",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a4df515d_f6adf566",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 1611,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-20T13:45:43Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 1604,
+        "startChar": 19,
+        "endLine": 1611,
+        "endChar": 5
+      },
+      "revId": "91b76e69bf2018d0a4ec0d97199ac5e5188ec542",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bdbdeb45_f6c8dedd",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 2108,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-20T13:45:43Z",
+      "side": 1,
+      "message": "should be in a #if ISMULTISTREAMENABLED",
+      "range": {
+        "startLine": 2108,
+        "startChar": 8,
+        "endLine": 2108,
+        "endChar": 40
+      },
+      "revId": "91b76e69bf2018d0a4ec0d97199ac5e5188ec542",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0bf62d71_6139a4b0",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 2536,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-20T13:45:43Z",
+      "side": 1,
+      "message": "return !rem_ice_attrs.ufrag.empty() and !rem_ice_attrs.pwd.empty()",
+      "range": {
+        "startLine": 2533,
+        "startChar": 20,
+        "endLine": 2536,
+        "endChar": 16
+      },
+      "revId": "91b76e69bf2018d0a4ec0d97199ac5e5188ec542",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0fe37db0_5094d77d",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-20T13:45:43Z",
+      "side": 1,
+      "message": "This test is failing on my machine:\n\n\n!!!FAILURES!!!\nTest Results:\nRun:  3   Failures: 1   Errors: 0\n\n\n1) test: jami::test::MediaNegotiationTest::audio_and_video_then_mute_video (F) line: 591 media_negotiation/media_negotiation.cpp\nequality assertion failed\n- Expected: 1\n- Actual  : 0",
+      "range": {
+        "startLine": 112,
+        "startChar": 17,
+        "endLine": 112,
+        "endChar": 48
+      },
+      "revId": "91b76e69bf2018d0a4ec0d97199ac5e5188ec542",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
