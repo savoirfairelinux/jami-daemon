@@ -51,13 +51,18 @@ public:
     void tearDown();
 
     // For future tests with publicIp
-    // std::shared_ptr<dht::DhtRunner> dht_ {};
+    std::shared_ptr<dht::DhtRunner> dht_ {};
+    std::unique_ptr<IpAddr> turnV4_ {};
 
 private:
     void testRawIceConnection();
+    void testTurnMasterIceConnection();
+    void testTurnSlaveIceConnection();
 
     CPPUNIT_TEST_SUITE(IceTest);
     CPPUNIT_TEST(testRawIceConnection);
+    CPPUNIT_TEST(testTurnMasterIceConnection);
+    CPPUNIT_TEST(testTurnSlaveIceConnection);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -66,19 +71,17 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(IceTest, IceTest::name());
 void
 IceTest::setUp()
 {
-    // if (!dht_) {
-    //    dht_ = std::make_shared<dht::DhtRunner>();
-    //    dht::DhtRunner::Config config {};
-    //    dht::DhtRunner::Context context {};
-    //    dht_->run(0, config, std::move(context));
-    //    dht_->bootstrap("bootstrap.jami.net:4222");
-    //    std::this_thread::sleep_for(std::chrono::seconds(5));
-    //
-    // TO USE IT: const auto& addr4 = dht_->getPublicAddress(AF_INET);
-    // TO USE IT: CPPUNIT_ASSERT(addr4.size() != 0);
-    // TO USE IT: ice_config.accountPublicAddr = IpAddr(*addr4[0].get());
-    // TO USE IT: ice_config.accountLocalAddr = ip_utils::getLocalAddr(AF_INET);
-    //}
+    if (!dht_) {
+        dht_ = std::make_shared<dht::DhtRunner>();
+        dht::DhtRunner::Config config {};
+        dht::DhtRunner::Context context {};
+        dht_->run(0, config, std::move(context));
+        dht_->bootstrap("bootstrap.jami.net:4222");
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+    }
+    if (!turnV4_) {
+        turnV4_ = std::make_unique<IpAddr>("turn.jami.net", AF_INET);
+    }
 }
 
 void
@@ -109,7 +112,7 @@ IceTest::testRawIceConnection()
             std::stringstream icemsg;
             icemsg << iceAttributes.ufrag << "\n";
             icemsg << iceAttributes.pwd << "\n";
-            for (const auto& addr : ice_master->getLocalCandidates(0)) {
+            for (const auto& addr : ice_master->getLocalCandidates(1)) {
                 icemsg << addr << "\n";
                 JAMI_DBG() << "Added local ICE candidate " << addr;
             }
@@ -142,7 +145,7 @@ IceTest::testRawIceConnection()
             std::stringstream icemsg;
             icemsg << iceAttributes.ufrag << "\n";
             icemsg << iceAttributes.pwd << "\n";
-            for (const auto& addr : ice_slave->getLocalCandidates(0)) {
+            for (const auto& addr : ice_slave->getLocalCandidates(1)) {
                 icemsg << addr << "\n";
                 JAMI_DBG() << "Added local ICE candidate " << addr;
             }
@@ -166,6 +169,231 @@ IceTest::testRawIceConnection()
     cv_create.notify_all();
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(10), [&] { return iceMasterReady && iceSlaveReady; }));
+}
+
+void
+IceTest::testTurnMasterIceConnection()
+{
+    const auto& addr4 = dht_->getPublicAddress(AF_INET);
+    CPPUNIT_ASSERT(addr4.size() != 0);
+    CPPUNIT_ASSERT(turnV4_);
+    IceTransportOptions ice_config;
+    ice_config.upnpEnable = true;
+    ice_config.tcpEnable = true;
+    std::shared_ptr<IceTransport> ice_master, ice_slave;
+    std::mutex mtx, mtx_create, mtx_resp, mtx_init;
+    std::unique_lock<std::mutex> lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
+        lk_init {mtx_init};
+    std::condition_variable cv, cv_create, cv_resp, cv_init;
+    std::string init = {};
+    std::string response = {};
+    bool iceMasterReady = false, iceSlaveReady = false;
+    ice_config.onInitDone = [&](bool ok) {
+        CPPUNIT_ASSERT(ok);
+        dht::ThreadPool::io().run([&] {
+            CPPUNIT_ASSERT(cv_create.wait_for(lk_create, std::chrono::seconds(10), [&] {
+                return ice_master != nullptr;
+            }));
+            auto iceAttributes = ice_master->getLocalAttributes();
+            std::stringstream icemsg;
+            icemsg << iceAttributes.ufrag << "\n";
+            icemsg << iceAttributes.pwd << "\n";
+            for (const auto& addr : ice_master->getLocalCandidates(1)) {
+                if (addr.find("host") == std::string::npos) {
+                    // We only want to add relayed + public ip
+                    icemsg << addr << "\n";
+                    JAMI_DBG() << "Added local ICE candidate " << addr;
+                } else {
+                    // Replace host by non existing IP (we still need host to not fail the start)
+                    std::regex e("((?:[0-9]{1,3}\\.){3}[0-9]{1,3})");
+                    auto newaddr = std::regex_replace(addr, e, "100.100.100.100");
+                    if (newaddr != addr)
+                        icemsg << newaddr << "\n";
+                }
+            }
+            init = icemsg.str();
+            cv_init.notify_one();
+            CPPUNIT_ASSERT(cv_resp.wait_for(lk_resp, std::chrono::seconds(10), [&] {
+                return !response.empty();
+            }));
+            auto sdp = IceTransport::parse_SDP(response, *ice_master);
+            CPPUNIT_ASSERT(
+                ice_master->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates)));
+        });
+    };
+    ice_config.onNegoDone = [&](bool ok) {
+        iceMasterReady = ok;
+        cv.notify_one();
+    };
+    ice_config.accountPublicAddr = IpAddr(*addr4[0].get());
+    ice_config.accountLocalAddr = ip_utils::getLocalAddr(AF_INET);
+    ice_config.turnServers.emplace_back(TurnServerInfo()
+                                            .setUri(turnV4_->toString(true))
+                                            .setUsername("ring")
+                                            .setPassword("ring")
+                                            .setRealm("ring"));
+    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
+                                                                              1,
+                                                                              true,
+                                                                              ice_config);
+    cv_create.notify_all();
+    ice_config.turnServers = {};
+    ice_config.onInitDone = [&](bool ok) {
+        CPPUNIT_ASSERT(ok);
+        dht::ThreadPool::io().run([&] {
+            CPPUNIT_ASSERT(cv_create.wait_for(lk_create, std::chrono::seconds(10), [&] {
+                return ice_slave != nullptr;
+            }));
+            auto iceAttributes = ice_slave->getLocalAttributes();
+            std::stringstream icemsg;
+            icemsg << iceAttributes.ufrag << "\n";
+            icemsg << iceAttributes.pwd << "\n";
+            for (const auto& addr : ice_slave->getLocalCandidates(1)) {
+                if (addr.find("host") == std::string::npos) {
+                    // We only want to add relayed + public ip
+                    icemsg << addr << "\n";
+                    JAMI_DBG() << "Added local ICE candidate " << addr;
+                } else {
+                    // Replace host by non existing IP (we still need host to not fail the start)
+                    std::regex e("((?:[0-9]{1,3}\\.){3}[0-9]{1,3})");
+                    auto newaddr = std::regex_replace(addr, e, "100.100.100.100");
+                    if (newaddr != addr)
+                        icemsg << newaddr << "\n";
+                }
+            }
+            response = icemsg.str();
+            cv_resp.notify_one();
+            CPPUNIT_ASSERT(
+                cv_init.wait_for(lk_resp, std::chrono::seconds(10), [&] { return !init.empty(); }));
+            auto sdp = IceTransport::parse_SDP(init, *ice_slave);
+            CPPUNIT_ASSERT(
+                ice_slave->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates)));
+        });
+    };
+    ice_config.onNegoDone = [&](bool ok) {
+        iceSlaveReady = ok;
+        cv.notify_one();
+    };
+    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
+                                                                             1,
+                                                                             false,
+                                                                             ice_config);
+    cv_create.notify_all();
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(10), [&] { return iceMasterReady && iceSlaveReady; }));
+    CPPUNIT_ASSERT(ice_master->getLocalAddress(0).toString(false) == turnV4_->toString(false));
+}
+
+void
+IceTest::testTurnSlaveIceConnection()
+{
+    const auto& addr4 = dht_->getPublicAddress(AF_INET);
+    CPPUNIT_ASSERT(addr4.size() != 0);
+    CPPUNIT_ASSERT(turnV4_);
+    IceTransportOptions ice_config;
+    ice_config.upnpEnable = true;
+    ice_config.tcpEnable = true;
+    std::shared_ptr<IceTransport> ice_master, ice_slave;
+    std::mutex mtx, mtx_create, mtx_resp, mtx_init;
+    std::unique_lock<std::mutex> lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
+        lk_init {mtx_init};
+    std::condition_variable cv, cv_create, cv_resp, cv_init;
+    std::string init = {};
+    std::string response = {};
+    bool iceMasterReady = false, iceSlaveReady = false;
+    ice_config.onInitDone = [&](bool ok) {
+        CPPUNIT_ASSERT(ok);
+        dht::ThreadPool::io().run([&] {
+            CPPUNIT_ASSERT(cv_create.wait_for(lk_create, std::chrono::seconds(10), [&] {
+                return ice_master != nullptr;
+            }));
+            auto iceAttributes = ice_master->getLocalAttributes();
+            std::stringstream icemsg;
+            icemsg << iceAttributes.ufrag << "\n";
+            icemsg << iceAttributes.pwd << "\n";
+            for (const auto& addr : ice_master->getLocalCandidates(1)) {
+                if (addr.find("host") == std::string::npos) {
+                    // We only want to add relayed + public ip
+                    icemsg << addr << "\n";
+                    JAMI_DBG() << "Added local ICE candidate " << addr;
+                } else {
+                    // Replace host by non existing IP (we still need host to not fail the start)
+                    std::regex e("((?:[0-9]{1,3}\\.){3}[0-9]{1,3})");
+                    auto newaddr = std::regex_replace(addr, e, "100.100.100.100");
+                    if (newaddr != addr)
+                        icemsg << newaddr << "\n";
+                }
+            }
+            init = icemsg.str();
+            cv_init.notify_one();
+            CPPUNIT_ASSERT(cv_resp.wait_for(lk_resp, std::chrono::seconds(10), [&] {
+                return !response.empty();
+            }));
+            auto sdp = IceTransport::parse_SDP(response, *ice_master);
+            CPPUNIT_ASSERT(
+                ice_master->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates)));
+        });
+    };
+    ice_config.onNegoDone = [&](bool ok) {
+        iceMasterReady = ok;
+        cv.notify_one();
+    };
+    ice_config.accountPublicAddr = IpAddr(*addr4[0].get());
+    ice_config.accountLocalAddr = ip_utils::getLocalAddr(AF_INET);
+    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
+                                                                              1,
+                                                                              true,
+                                                                              ice_config);
+    cv_create.notify_all();
+    ice_config.onInitDone = [&](bool ok) {
+        CPPUNIT_ASSERT(ok);
+        dht::ThreadPool::io().run([&] {
+            CPPUNIT_ASSERT(cv_create.wait_for(lk_create, std::chrono::seconds(10), [&] {
+                return ice_slave != nullptr;
+            }));
+            auto iceAttributes = ice_slave->getLocalAttributes();
+            std::stringstream icemsg;
+            icemsg << iceAttributes.ufrag << "\n";
+            icemsg << iceAttributes.pwd << "\n";
+            for (const auto& addr : ice_slave->getLocalCandidates(1)) {
+                if (addr.find("host") == std::string::npos) {
+                    // We only want to add relayed + public ip
+                    icemsg << addr << "\n";
+                    JAMI_DBG() << "Added local ICE candidate " << addr;
+                } else {
+                    // Replace host by non existing IP (we still need host to not fail the start)
+                    std::regex e("((?:[0-9]{1,3}\\.){3}[0-9]{1,3})");
+                    auto newaddr = std::regex_replace(addr, e, "100.100.100.100");
+                    if (newaddr != addr)
+                        icemsg << newaddr << "\n";
+                }
+            }
+            response = icemsg.str();
+            cv_resp.notify_one();
+            CPPUNIT_ASSERT(
+                cv_init.wait_for(lk_resp, std::chrono::seconds(10), [&] { return !init.empty(); }));
+            auto sdp = IceTransport::parse_SDP(init, *ice_slave);
+            CPPUNIT_ASSERT(
+                ice_slave->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates)));
+        });
+    };
+    ice_config.onNegoDone = [&](bool ok) {
+        iceSlaveReady = ok;
+        cv.notify_one();
+    };
+    ice_config.turnServers.emplace_back(TurnServerInfo()
+                                            .setUri(turnV4_->toString(true))
+                                            .setUsername("ring")
+                                            .setPassword("ring")
+                                            .setRealm("ring"));
+    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
+                                                                             1,
+                                                                             false,
+                                                                             ice_config);
+    cv_create.notify_all();
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(10), [&] { return iceMasterReady && iceSlaveReady; }));
+    CPPUNIT_ASSERT(ice_slave->getLocalAddress(0).toString(false) == turnV4_->toString(false));
 }
 
 } // namespace test
