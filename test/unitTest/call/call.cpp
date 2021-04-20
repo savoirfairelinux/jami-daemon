@@ -74,7 +74,7 @@ CallTest::setUp()
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE";
     details[ConfProperties::ALIAS] = "ALICE";
-    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::UPNP_ENABLED] = "false";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
     details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = "";
@@ -84,7 +84,7 @@ CallTest::setUp()
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "BOB";
     details[ConfProperties::ALIAS] = "BOB";
-    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::UPNP_ENABLED] = "false";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
     details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = "";

@@ -1037,7 +1037,7 @@ ConnectionManagerTest::testIsConnecting()
                            cv.notify_one();
                        });
     // connectDevice is full async, so isConnecting will be true after a few ms.
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] {
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] {
         return successfullyReceive;
     }));
     CPPUNIT_ASSERT(aliceAccount->connectionManager().isConnecting(bobDeviceId, "sip"));
