@@ -83,7 +83,7 @@ void closelog(void)
     CONST CHAR *arr[1];
     char tmp[1024];
 
-    vsprintf(tmp, format, arglist);
+    vsnprintf(tmp, 1024, format, arglist);
 
 #ifndef RING_UWP
     arr[0] = tmp;
