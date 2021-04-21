@@ -185,7 +185,7 @@ public:
 
     virtual void setIsComposing(const std::string& /*conversationUri*/, bool /*isWriting*/) {};
 
-    virtual void askForTransfer(const std::string& /*conversationUri*/,
+    virtual void downloadFile(const std::string& /*conversationUri*/,
                                 const std::string& /*interactionId*/,
                                 const std::string& /*path*/) {};
 

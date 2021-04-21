@@ -819,12 +819,12 @@ DBusConfigurationManager::acceptFileTransfer(const std::string& accountId,
 }
 
 void
-DBusConfigurationManager::askForTransfer(const std::string& accountId,
+DBusConfigurationManager::downloadFile(const std::string& accountId,
                                          const std::string& conversationUri,
                                          const std::string& interactionId,
                                          const std::string& path)
 {
-    DRing::askForTransfer(accountId, conversationUri, interactionId, path);
+    DRing::downloadFile(accountId, conversationUri, interactionId, path);
 }
 
 uint32_t
