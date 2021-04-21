@@ -215,30 +215,28 @@ public:
                                                          const std::string& uri);
     std::vector<std::map<std::string, std::string>> getContacts(const std::string& accountId);
     void connectivityChanged();
-    void sendFile(const RingDBusDataTransferInfo& info, uint32_t& error, DRing::DataTransferId& id);
+    void sendFile(const RingDBusDataTransferInfo& info, uint32_t& error, std::string& fileId);
     void dataTransferInfo(const std::string& accountId,
-                          const std::string& conversationId,
-                          const DRing::DataTransferId& id,
+                          const std::string& fileId,
                           uint32_t& error,
                           RingDBusDataTransferInfo& info);
-    void dataTransferBytesProgress(const std::string& accountId,
-                                   const std::string& conversationId,
-                                   const uint64_t& id,
-                                   uint32_t& error,
-                                   int64_t& total,
-                                   int64_t& progress);
+    void fileTransferInfo(const std::string& accountId,
+                          const std::string& conversationId,
+                          const std::string& fileId,
+                          uint32_t& error,
+                          std::string& path,
+                          int64_t& total,
+                          int64_t& progress);
     uint32_t acceptFileTransfer(const std::string& accountId,
-                                const std::string& conversationId,
-                                const uint64_t& id,
-                                const std::string& file_path,
-                                const int64_t& offset);
-    void askForTransfer(const std::string& accountId,
-                        const std::string& conversationUri,
-                        const std::string& interactionId,
-                        const std::string& path);
+                                const std::string& fileId,
+                                const std::string& file_path);
+    bool downloadFile(const std::string& accountId,
+                      const std::string& conversationId,
+                      const std::string& fileId,
+                      const std::string& path);
     uint32_t cancelDataTransfer(const std::string& accountId,
                                 const std::string& conversationId,
-                                const uint64_t& id);
+                                const std::string& fileId);
     bool isAudioMeterActive(const std::string& id);
     void setAudioMeterState(const std::string& id, const bool& state);
     void setDefaultModerator(const std::string& accountID,

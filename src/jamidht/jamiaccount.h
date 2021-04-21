@@ -338,6 +338,9 @@ public:
                              const std::map<std::string, std::string>& payloads) override;
     void sendInstantMessage(const std::string& convId,
                             const std::map<std::string, std::string>& msg) override;
+    void sendSIPMessageToDevice(const std::string& to,
+                                const DeviceId& deviceId,
+                                const std::map<std::string, std::string>& payloads);
     void onIsComposing(const std::string& conversationId,
                        const std::string& peer,
                        bool isWriting) override;
@@ -546,12 +549,14 @@ public:
     void sendMessage(const std::string& conversationId,
                      const Json::Value& value,
                      const std::string& parent = "",
-                     bool announce = true);
+                     bool announce = true,
+                     const OnDoneCb& cb = {});
     void sendMessage(const std::string& conversationId,
                      const std::string& message,
                      const std::string& parent = "",
                      const std::string& type = "text/plain",
-                     bool announce = true);
+                     bool announce = true,
+                     const OnDoneCb& cb = {});
     /**
      * Add to the related conversation the call history message
      * @param uri           Peer number
@@ -573,12 +578,16 @@ public:
      * @param peer              account's uri of the peer
      * @param deviceId          peer device
      * @param conversationId    related conversation
-     * @param interactionId     interaction corresponding to the transfer asked.
+     * @param fileId
+     * @param start             First byte we need to send
+     * @param lastByte          we need to send
      */
     virtual void onAskForTransfer(const std::string& peer,
                                   const std::string& deviceId,
                                   const std::string& conversationId,
-                                  const std::string& interactionId) override;
+                                  const std::string& fileId,
+                                  size_t start,
+                                  size_t end) override;
     /**
      * Pull remote device (do not do it if commitId is already in the current repo)
      * @param peer              Contact URI
@@ -604,41 +613,50 @@ public:
      * @param deviceId
      * @param convId
      */
-    void cloneConversation(const std::string& deviceId, const std::string& convId);
+    void cloneConversation(const std::string& deviceId,
+                           const std::string& peer,
+                           const std::string& convId);
 
     // File transfer
-    DRing::DataTransferId sendFile(const std::string& to,
-                                   const std::string& path,
-                                   const InternalCompletionCb& icb = {},
-                                   const std::string& deviceId = {},
-                                   DRing::DataTransferId resendId = {});
+    // Note return nothing for swarm
+    std::string sendFile(const std::string& to,
+                         const std::string& path,
+                         const InternalCompletionCb& icb = {});
+    void transferFile(const std::string& conversationId,
+                      const std::string& path,
+                      const std::string& deviceId,
+                      const std::string& tid,
+                      size_t start = 0,
+                      size_t end = 0);
     /**
      * Ask conversation's members to send back a previous transfer to this deviec
      * @param conversationUri   Related conversation
-     * @param interactionId     Related interaction
+     * @param fileId            Related interaction
      * @param path              where to download the file
      */
-    void askForTransfer(const std::string& conversationUri,
-                        const std::string& interactionId,
-                        const std::string& path) override;
+    bool downloadFile(const std::string& conversationUri,
+                      const std::string& fileId,
+                      const std::string& path,
+                      size_t start = 0,
+                      size_t end = 0);
 
-    void onIncomingFileRequest(const DRing::DataTransferInfo& info,
-                               const DRing::DataTransferId& id,
-                               const std::function<void(const IncomingFileInfo&)>& cb,
-                               const InternalCompletionCb& icb);
-
-    bool acceptFile(const std::string& to,
-                    DRing::DataTransferId id,
-                    const std::string& path,
-                    int64_t progress);
-
-    bool cancel(const std::string& to, DRing::DataTransferId id);
-    bool info(const std::string& to, DRing::DataTransferId id, DRing::DataTransferInfo& info);
-    bool bytesProgress(const std::string& to,
-                       DRing::DataTransferId id,
-                       int64_t& total,
-                       int64_t& progress);
     void loadConversations();
+
+    /**
+     * Retrieve linked transfer manager
+     * @param id    conversationId or empty for fallback
+     * @return linked transfer manager
+     */
+    std::shared_ptr<TransferManager> dataTransfer(const std::string& id = "") const;
+
+    /**
+     * Send Profile via cached SIP connection
+     * @param deviceId      Device that will receive the profile
+     */
+    // Note: when swarm will be merged, this can be moved in transferManager
+    bool needToSendProfile(const std::string& deviceId);
+
+    std::string profilePath() const;
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -1017,11 +1035,6 @@ private:
      * Send Profile via cached SIP connection
      * @param deviceId      Device that will receive the profile
      */
-    bool needToSendProfile(const std::string& deviceId);
-    /**
-     * Send Profile via cached SIP connection
-     * @param deviceId      Device that will receive the profile
-     */
     void sendProfile(const std::string& deviceId);
 
     // Conversations
@@ -1066,8 +1079,9 @@ private:
     std::string getOneToOneConversation(const std::string& uri) const;
 
     //// File transfer
+    std::shared_ptr<TransferManager> nonSwarmTransferManager_;
     std::mutex transferMutex_ {};
-    std::map<std::string, TransferManager> transferManagers_ {};
+    std::map<std::string, std::shared_ptr<TransferManager>> transferManagers_ {};
 
     bool noSha3sumVerification_ {false};
 };
