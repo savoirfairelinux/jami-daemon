@@ -133,20 +133,23 @@ getIsComposing(const std::string& conversationId, bool isWriting)
     return fmt::format("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
                        "<isComposing><state>{}</state>{}</isComposing>",
                        isWriting ? "active"sv : "idle"sv,
-                       conversationId.empty()? "" : "<conversation>" + conversationId + "</conversation>");
+                       conversationId.empty()
+                           ? ""
+                           : "<conversation>" + conversationId + "</conversation>");
 }
 
 std::string
 getDisplayed(const std::string& conversationId, const std::string& messageId)
 {
     // implementing https://tools.ietf.org/rfc/rfc5438.txt
-    return fmt::format("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
-                       "<imdn><message-id>{}</message-id>\n"
-                       "{}"
-                       "<display-notification><status><displayed/></status></display-notification>\n"
-                       "</imdn>",
-                       messageId,
-                       conversationId.empty()? "" : "<conversation>" + conversationId + "</conversation>");
+    return fmt::format(
+        "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
+        "<imdn><message-id>{}</message-id>\n"
+        "{}"
+        "<display-notification><status><displayed/></status></display-notification>\n"
+        "</imdn>",
+        messageId,
+        conversationId.empty() ? "" : "<conversation>" + conversationId + "</conversation>");
 }
 
 void
@@ -549,7 +552,6 @@ SIPAccountBase::onTextMessage(const std::string& id,
                     && matched_pattern[1].matched) {
                     conversationId = matched_pattern[1];
                 }
-                JAMI_WARN("@@@ %s", m.second.c_str());
                 onIsComposing(conversationId, from, isComposing);
                 if (payloads.size() == 1)
                     return;
@@ -647,20 +649,6 @@ SIPAccountBase::onTextMessage(const std::string& id,
             // check if we have a swarm created. It can be the case
             // when the trust request confirm was not received.
             checkIfRemoveForCompat(from);
-        } else if (m.first == MIME_TYPE_ASK_TRANSFER) {
-            Json::Value json;
-            std::string err;
-            Json::CharReaderBuilder rbuilder;
-            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-            if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
-                JAMI_ERR("Can't parse server response: %s", err.c_str());
-                return;
-            }
-            onAskForTransfer(from,
-                             json["deviceId"].asString(),
-                             json["conversation"].asString(),
-                             json["interaction"].asString());
-            return;
         }
     }
 
