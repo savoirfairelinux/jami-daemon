@@ -24,6 +24,7 @@
 #include "conversationrepository.h"
 #include "client/ring_signal.h"
 
+#include <charconv>
 #include <json/json.h>
 #include <string_view>
 #include <opendht/thread_pool.h>
@@ -118,6 +119,10 @@ public:
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
+        if (auto shared = account_.lock())
+            transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
+                                                                 repository_->id(),
+                                                                 true);
     }
 
     Impl(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId)
@@ -127,6 +132,10 @@ public:
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
+        if (auto shared = account_.lock())
+            transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
+                                                                 repository_->id(),
+                                                                 true);
     }
 
     Impl(const std::weak_ptr<JamiAccount>& account,
@@ -144,6 +153,10 @@ public:
             }
             throw std::logic_error("Couldn't clone repository");
         }
+        if (auto shared = account_.lock())
+            transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
+                                                                 repository_->id(),
+                                                                 true);
     }
     ~Impl() = default;
 
@@ -237,6 +250,7 @@ public:
     std::mutex pullcbsMtx_ {};
     std::set<std::string> fetchingRemotes_ {}; // store current remote in fetch
     std::deque<std::tuple<std::string, std::string, OnPullCb>> pullcbs_ {};
+    std::shared_ptr<TransferManager> transferManager_ {};
 };
 
 bool
@@ -319,6 +333,10 @@ Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
         } else {
             JAMI_WARN("%s", err.c_str());
         }
+    }
+    if (type == "application/data-transfer+json") {
+        // Avoid the client to do the concatenation
+        message["fileId"] = commit.id + "_" + message["tid"];
     }
     auto linearizedParent = repository_->linearizedParent(commit.id);
     message["id"] = commit.id;
@@ -698,12 +716,12 @@ Conversation::mergeHistory(const std::string& uri)
 }
 
 void
-Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
+Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commitId)
 {
     std::lock_guard<std::mutex> lk(pimpl_->pullcbsMtx_);
     auto isInProgress = not pimpl_->pullcbs_.empty();
     pimpl_->pullcbs_.emplace_back(
-        std::make_tuple<std::string, std::string, OnPullCb>(std::string(uri),
+        std::make_tuple<std::string, std::string, OnPullCb>(std::string(deviceId),
                                                             std::move(commitId),
                                                             std::move(cb)));
     if (isInProgress)
@@ -773,6 +791,27 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
                 cb(true);
         }
     });
+}
+
+void
+Conversation::sync(const std::string& member,
+                   const std::string& deviceId,
+                   OnPullCb&& cb,
+                   std::string commitId)
+{
+    pull(deviceId, std::move(cb), commitId);
+    // For waiting request, downloadFile
+    for (const auto& wr : dataTransfer()->waitingRequests())
+        downloadFile(wr.fileId, wr.path, member, deviceId);
+    // VCard sync for member
+    if (auto account = pimpl_->account_.lock()) {
+        if (not account->needToSendProfile(deviceId)) {
+            JAMI_INFO() << "Peer " << deviceId << " already got an up-to-date vcard";
+            return;
+        }
+        // We need a new channel
+        account->transferFile(id(), std::string(account->profilePath()), deviceId, "profile.vcf");
+    }
 }
 
 std::map<std::string, std::string>
@@ -869,6 +908,64 @@ Conversation::vCard() const
     } catch (...) {
     }
     return {};
+}
+
+std::shared_ptr<TransferManager>
+Conversation::dataTransfer() const
+{
+    return pimpl_->transferManager_;
+}
+
+bool
+Conversation::onFileChannelRequest(const std::string& member, const std::string& fileId) const
+{
+    if (!isMember(member))
+        return false;
+    return dataTransfer()->onFileChannelRequest(fileId);
+}
+
+bool
+Conversation::downloadFile(const std::string& fileId,
+                           const std::string& path,
+                           const std::string& member,
+                           const std::string& deviceId,
+                           std::size_t start,
+                           std::size_t end)
+{
+    auto commit = getCommit(fileId);
+    if (commit == std::nullopt || commit->find("type") == commit->end()
+        || commit->find("sha3sum") == commit->end() || commit->find("tid") == commit->end()
+        || commit->at("type") != "application/data-transfer+json") {
+        return false;
+    }
+    auto sha3sum = commit->at("sha3sum");
+    auto size_str = commit->at("totalSize");
+    std::size_t totalSize;
+    std::from_chars(size_str.data(), size_str.data() + size_str.size(), totalSize);
+    dataTransfer()->waitForTransfer(fileId, sha3sum, path, totalSize);
+
+    if (auto account = pimpl_->account_.lock()) {
+        Json::Value askTransferValue;
+        askTransferValue["conversation"] = id();
+        askTransferValue["fileId"] = fileId;
+        askTransferValue["deviceId"] = std::string(account->currentDeviceId());
+        askTransferValue["start"] = std::to_string(start);
+        askTransferValue["end"] = std::to_string(end);
+        Json::StreamWriterBuilder builder;
+        std::map<std::string, std::string> data = {
+            {MIME_TYPE_ASK_TRANSFER, Json::writeString(builder, askTransferValue)}};
+        // Be sure to not lock conversation
+        dht::ThreadPool().io().run(
+            [w = pimpl_->account_, conversationId = id(), data = std::move(data), member, deviceId] {
+                if (auto shared = w.lock()) {
+                    if (!member.empty() && !deviceId.empty())
+                        shared->sendSIPMessageToDevice(member, DeviceId(deviceId), data);
+                    else
+                        shared->sendInstantMessage(conversationId, data);
+                }
+            });
+    }
+    return true;
 }
 
 } // namespace jami

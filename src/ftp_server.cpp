@@ -79,7 +79,7 @@ FtpServer::startNewFile()
         to = info_.peer;
 
     if (auto acc = Manager::instance().getAccount<JamiAccount>(info_.accountId)) {
-        acc->onIncomingFileRequest(
+        acc->dataTransfer()->onIncomingFileRequest(
             info_,
             transferId_,
             [w = weak()](const IncomingFileInfo& fileInfo) {
