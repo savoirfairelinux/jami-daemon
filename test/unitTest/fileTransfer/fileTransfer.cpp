@@ -63,7 +63,7 @@ private:
     void testMultipleFileTransfer();
     void testConversationFileTransfer();
     void testFileTransferInConversation();
-    void testReaskForTransfer();
+    void testdownloadFile();
     void testBadSha3sumOut();
     void testBadSha3sumIn();
     void testAskToMultipleParticipants();
@@ -73,7 +73,7 @@ private:
     CPPUNIT_TEST(testMultipleFileTransfer);
     CPPUNIT_TEST(testConversationFileTransfer);
     CPPUNIT_TEST(testFileTransferInConversation);
-    CPPUNIT_TEST(testReaskForTransfer);
+    CPPUNIT_TEST(testdownloadFile);
     CPPUNIT_TEST(testBadSha3sumOut);
     CPPUNIT_TEST(testBadSha3sumIn);
     CPPUNIT_TEST(testAskToMultipleParticipants);
@@ -611,7 +611,7 @@ FileTransferTest::testFileTransferInConversation()
 }
 
 void
-FileTransferTest::testReaskForTransfer()
+FileTransferTest::testdownloadFile()
 {
     std::this_thread::sleep_for(std::chrono::seconds(5));
     // TODO remove. This sleeps is because it take some time for the DHT to be connected
@@ -726,7 +726,7 @@ FileTransferTest::testReaskForTransfer()
     CPPUNIT_ASSERT(mid != "");
     transferWaiting = false;
     transferFinished = false;
-    DRing::askForTransfer(bobId, "swarm:" + convId, mid, "RECV");
+    DRing::downloadFile(bobId, "swarm:" + convId, mid, "RECV");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferFinished; }));
     CPPUNIT_ASSERT(fileutils::isFile("RECV"));
@@ -861,7 +861,7 @@ FileTransferTest::testBadSha3sumOut()
     CPPUNIT_ASSERT(mid != "");
     transferWaiting = false;
     transferFinished = false;
-    DRing::askForTransfer(bobId, "swarm:" + convId, mid, "RECV");
+    DRing::downloadFile(bobId, "swarm:" + convId, mid, "RECV");
 
     // The file transfer will not be sent as modified
     CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferFinished; }));
@@ -997,7 +997,7 @@ FileTransferTest::testBadSha3sumIn()
     transferWaiting = false;
     transferInFinished = false;
     transferOutFinished = false;
-    DRing::askForTransfer(bobId, "swarm:" + convId, mid, "RECV");
+    DRing::downloadFile(bobId, "swarm:" + convId, mid, "RECV");
     aliceAccount->noSha3sumVerification(true);
 
     CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::seconds(30), [&]() {
@@ -1157,7 +1157,7 @@ FileTransferTest::testAskToMultipleParticipants()
     std::this_thread::sleep_for(std::chrono::seconds(10));
     CPPUNIT_ASSERT(mid != "");
     transferFinished = false;
-    DRing::askForTransfer(bobId, "swarm:" + convId, mid, "RECV");
+    DRing::downloadFile(bobId, "swarm:" + convId, mid, "RECV");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferFinished; }));
     CPPUNIT_ASSERT(fileutils::isFile("RECV"));
