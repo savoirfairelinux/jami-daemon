@@ -21,12 +21,16 @@
 #pragma once
 
 #include "dring/datatransfer_interface.h"
+#include "jamidht/multiplexed_socket.h"
 #include "noncopyable.h"
 
 #include <memory>
 #include <string>
 
 namespace jami {
+
+// TODO move def
+DRing::DataTransferId generateUID();
 
 class Stream;
 
@@ -41,6 +45,30 @@ typedef std::function<bool(const std::string&)> OnVerifyCb;
 typedef std::function<void(const DRing::DataTransferId&, const DRing::DataTransferEventCode&)>
     OnStateChangedCb;
 
+class FileInfo
+{
+public:
+    virtual void process() = 0;
+    std::shared_ptr<ChannelSocket> channel() const { return channel_; }
+    DRing::DataTransferInfo info() const;
+
+protected:
+    DRing::DataTransferInfo info_ {};
+    std::shared_ptr<ChannelSocket> channel_ {};
+};
+
+class IncomingFile : public FileInfo
+{
+public:
+    void process() override {}
+};
+
+class OutgoingFile : public FileInfo
+{
+public:
+    void process() override {}
+};
+
 class TransferManager
 {
 public:
@@ -54,17 +82,19 @@ public:
      * @param deviceId  if we only want to transmit to one device
      * @param resendId  if we need to resend a file, just specify previous id there.
      */
-    DRing::DataTransferId sendFile(const std::string& path,
-                                   const InternalCompletionCb& icb = {},
-                                   const std::string& deviceId = {},
-                                   DRing::DataTransferId resendId = {0});
+    [[deprecated("Non swarm method")]] DRing::DataTransferId sendFile(
+        const std::string& path,
+        const InternalCompletionCb& icb = {},
+        const std::string& deviceId = {},
+        DRing::DataTransferId resendId = {0});
 
     /**
      * Accepts a transfer
      * @param id        of the transfer
      * @param path      of the file
      */
-    bool acceptFile(const DRing::DataTransferId& id, const std::string& path);
+    [[deprecated("Non swarm method")]] bool acceptFile(const DRing::DataTransferId& id,
+                                                       const std::string& path);
 
     /**
      * Refuse a transfer
@@ -112,6 +142,10 @@ public:
     void waitForTransfer(const DRing::DataTransferId& id,
                          const std::string& sha3sum,
                          const std::string& path);
+
+    bool acceptIncomingChannel(const DRing::DataTransferId& id) const;
+    void handleChannel(const DRing::DataTransferId& id,
+                       const std::shared_ptr<ChannelSocket>& channel);
 
 private:
     NON_COPYABLE(TransferManager);

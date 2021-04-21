@@ -336,7 +336,7 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, std::vector<uint8
         }
     } else if (pkt.size() != 0) {
         std::string p = std::string(pkt.begin(), pkt.end());
-        JAMI_WARN("Non existing channel: %u - %.*s", channel, (int) pkt.size(), p.c_str());
+        JAMI_WARN("Non existing channel: %u", channel);
     }
 }
 
@@ -700,6 +700,11 @@ ChannelSocket::read(ValueType* buf, std::size_t len, std::error_code& ec)
 std::size_t
 ChannelSocket::write(const ValueType* buf, std::size_t len, std::error_code& ec)
 {
+    if (pimpl_->isShutdown_) {
+        JAMI_ERR() << "BAD";
+        ec = std::make_error_code(std::errc::broken_pipe);
+        return -1;
+    }
     if (auto ep = pimpl_->endpoint.lock()) {
         std::size_t sent = 0;
         do {
