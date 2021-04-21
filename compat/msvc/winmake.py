@@ -266,7 +266,9 @@ def make(pkg_info, force, sdk_version, toolset, isPlugin):
             log.debug('Forcing fetch/patch/build for ' + pkg_name)
         should_fetch = not pkg_up_to_date
         pkg_build_path = contrib_build_dir + '\\' + pkg_name
-        should_fetch &= not os.path.exists(pkg_build_path)
+        if os.path.exists(pkg_build_path):
+            log.warning('Cleaning build for ' + pkg_name)
+            shutil.rmtree(pkg_build_path)
         if not pkg_up_to_date or force:
             if not force and not current_version is None:
                 log.warning(pkg_name + ' is not up to date')
