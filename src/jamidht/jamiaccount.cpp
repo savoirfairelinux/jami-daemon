@@ -2040,6 +2040,7 @@ JamiAccount::doRegister()
 
     JAMI_DBG("[Account %s] Starting account..", getAccountID().c_str());
 
+    /** /
     JAMI_INFO("[Account %s] Start loading conversations…", getAccountID().c_str());
     auto conversationsRepositories = fileutils::readDirectory(idPath_ + DIR_SEPARATOR_STR
                                                               + "conversations");
@@ -2057,6 +2058,7 @@ JamiAccount::doRegister()
     loadConvInfos();
     loadConvRequests();
     JAMI_INFO("[Account %s] Conversations loaded!", getAccountID().c_str());
+    /**/
 
     // invalid state transitions:
     // INITIALIZING: generating/loading certificates, can't register
@@ -2399,6 +2401,7 @@ JamiAccount::doRegister_()
                 if (accountManager_->getInfo()->deviceId == deviceId)
                     return;
 
+                /** /
                 std::lock_guard<std::mutex> lk(connManagerMtx_);
                 if (!connectionManager_)
                     connectionManager_ = std::make_unique<ConnectionManager>(*this);
@@ -2416,6 +2419,7 @@ JamiAccount::doRegister_()
                                                     if (socket)
                                                         syncWith(deviceId.toString(), socket);
                                                 });
+                /**/
             });
         };
 
@@ -2461,7 +2465,7 @@ JamiAccount::doRegister_()
                 return true;
             } else if (name == "sip") {
                 return true;
-            } else if (name.find("sync://") == 0) {
+            } /*else if (name.find("sync://") == 0) {
                 // Check if sync request is from same account
                 std::promise<bool> accept;
                 std::future<bool> fut = accept.get_future();
@@ -2479,7 +2483,7 @@ JamiAccount::doRegister_()
                 fut.wait();
                 auto result = fut.get();
                 return result;
-            } else if (isFile or isVCard) {
+            } */else if (isFile or isVCard) {
                 auto tid_str = isFile ? name.substr(7) : name.substr(8);
                 uint64_t tid;
                 std::istringstream iss(tid_str);
@@ -2504,9 +2508,9 @@ JamiAccount::doRegister_()
                 auto isVCard = name.substr(0, 8) == "vcard://";
                 if (name == "sip") {
                     cacheSIPConnection(std::move(channel), peerId, deviceId);
-                } else if (name.find("sync://") == 0) {
+                } /*else if (name.find("sync://") == 0) {
                     cacheSyncConnection(std::move(channel), peerId, deviceId);
-                } else if (isFile or isVCard) {
+                }*/ else if (isFile or isVCard) {
                     auto tid_str = isFile ? name.substr(7) : name.substr(8);
                     std::unique_lock<std::mutex> lk(transfersMtx_);
                     auto it = incomingFileTransfers_.find(tid_str);
