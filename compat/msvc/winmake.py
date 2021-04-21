@@ -41,6 +41,7 @@ import logging
 import traceback
 import re
 import fileinput
+import hashlib
 
 root_logger = logging.getLogger(__name__)
 log = None
@@ -75,6 +76,15 @@ vs_where_path = os.path.join(
 host_is_64bit = (False, True)[platform.machine().endswith('64')]
 python_is_64bit = (False, True)[8 * struct.calcsize("P") == 64]
 
+def getMd5ForDirectory(path):
+    hasher = hashlib.md5()
+    for root, _, files in os.walk(path, topdown=True):
+        for name in files:
+            fileName = (os.path.join(root, name))
+            with open(str(fileName), 'rb') as aFile:
+                buf = aFile.read()
+                hasher.update(buf)
+    return hasher.hexdigest()
 
 def shellquote(s, windows=False):
     if not windows:
@@ -238,6 +248,7 @@ def make(pkg_info, force, sdk_version, toolset, isPlugin):
         return make_daemon(pkg_info, force, sdk_version, toolset)
     if isPlugin:
         return make_plugin(pkg_info, force, sdk_version, toolset)
+    md5 = getMd5ForDirectory(contrib_src_dir + r'\\' + pkg_name)
     version = pkg_info.get('version')
     pkg_build_uptodate = False
     pkg_ver_uptodate = False
@@ -252,7 +263,7 @@ def make(pkg_info, force, sdk_version, toolset, isPlugin):
             pkg_build_uptodate = is_build_uptodate(pkg_name, build_file)
             with open(build_file, 'r+', encoding="utf8", errors='ignore') as f:
                 current_version = f.read()
-                if current_version == version:
+                if current_version == md5:
                     pkg_ver_uptodate = True
     for dep in pkg_info.get('deps', []):
         dep_build_dep = resolve(dep, False, sdk_version, toolset)
@@ -303,7 +314,7 @@ def make(pkg_info, force, sdk_version, toolset, isPlugin):
                  sdk_to_use,
                  toolset,
                  use_cmake=use_cmake):
-            track_build(pkg_name, version, isPlugin)
+            track_build(pkg_name, md5, False)
         else:
             log.error("Couldn't build contrib " + pkg_name)
             exit(1)
