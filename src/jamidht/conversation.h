@@ -27,6 +27,8 @@
 #include <json/json.h>
 #include <msgpack.hpp>
 
+#include "dring/datatransfer_interface.h"
+
 namespace jami {
 
 /**
@@ -71,6 +73,8 @@ struct ConvInfo
 
 class JamiAccount;
 class ConversationRepository;
+class TransferManager;
+class ChannelSocket;
 enum class ConversationMode;
 
 using OnPullCb = std::function<void(bool fetchOk)>;
@@ -177,11 +181,22 @@ public:
 
     /**
      * Fetch and merge from peer
-     * @param uri       Peer
+     * @param deviceId  Peer device
      * @param cb        On pulled callback
      * @param commitId  Commit id that triggered this fetch
      */
-    void pull(const std::string& uri, OnPullCb&& cb, std::string commitId = "");
+    void pull(const std::string& deviceId, OnPullCb&& cb, std::string commitId = "");
+    /**
+     * Fetch new commits and re-ask for waiting files
+     * @param member
+     * @param deviceId
+     * @param cb        cf pull()
+     * @param commitId  cf pull()
+     */
+    void sync(const std::string& member,
+              const std::string& deviceId,
+              OnPullCb&& cb,
+              std::string commitId = "");
 
     /**
      * Generate an invitation to send to new contacts
@@ -239,6 +254,37 @@ public:
      */
     std::map<std::string, std::string> infos() const;
     std::vector<uint8_t> vCard() const;
+
+    /////// File transfer
+
+    /**
+     * Access to transfer manager
+     */
+    std::shared_ptr<TransferManager> dataTransfer() const;
+
+    /**
+     * Choose if we can accept channel request
+     * @param member    member to check
+     * @param fileId    file transfer to check (needs to be waiting)
+     * @return if we accept the channel request
+     */
+    bool onFileChannelRequest(const std::string& member, const std::string& fileId) const;
+    /**
+     * Adds a file to the waiting list and ask members
+     * @param fileID            Related id
+     * @param path              Destination
+     * @param member            Member if we know from who to pull file
+     * @param deviceId          Device if we know from who to pull file
+     * @param start             Offset (unused for now)
+     * @param end               Offset (unused)
+     * @return id of the file
+     */
+    bool downloadFile(const std::string& fileId,
+                      const std::string& path,
+                      const std::string& member = "",
+                      const std::string& deviceId = "",
+                      std::size_t start = 0,
+                      std::size_t end = 0);
 
 private:
     std::shared_ptr<Conversation> shared()
