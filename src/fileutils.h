@@ -87,6 +87,8 @@ std::chrono::system_clock::time_point writeTime(const std::string& path);
 
 void createSymLink(const std::string& src, const std::string& dest);
 
+std::string getFileExtension(const std::string& filename);
+
 /**
  * Read content of the directory.
  * The result is a list of relative (to @param dir) paths of all entries
