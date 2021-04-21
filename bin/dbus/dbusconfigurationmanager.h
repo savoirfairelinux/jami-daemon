@@ -217,7 +217,6 @@ public:
     void connectivityChanged();
     void sendFile(const RingDBusDataTransferInfo& info, uint32_t& error, DRing::DataTransferId& id);
     void dataTransferInfo(const std::string& accountId,
-                          const std::string& conversationId,
                           const DRing::DataTransferId& id,
                           uint32_t& error,
                           RingDBusDataTransferInfo& info);
@@ -228,14 +227,12 @@ public:
                                    int64_t& total,
                                    int64_t& progress);
     uint32_t acceptFileTransfer(const std::string& accountId,
-                                const std::string& conversationId,
                                 const uint64_t& id,
-                                const std::string& file_path,
-                                const int64_t& offset);
-    void askForTransfer(const std::string& accountId,
-                        const std::string& conversationUri,
-                        const std::string& interactionId,
-                        const std::string& path);
+                                const std::string& file_path);
+    uint64_t downloadFile(const std::string& accountId,
+                          const std::string& conversationUri,
+                          const std::string& interactionId,
+                          const std::string& path);
     uint32_t cancelDataTransfer(const std::string& accountId,
                                 const std::string& conversationId,
                                 const uint64_t& id);

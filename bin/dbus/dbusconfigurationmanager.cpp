@@ -766,13 +766,12 @@ DBusConfigurationManager::sendFile(const RingDBusDataTransferInfo& in,
 
 void
 DBusConfigurationManager::dataTransferInfo(const std::string& accountId,
-                                           const std::string& conversationId,
                                            const DRing::DataTransferId& id,
                                            uint32_t& error,
                                            RingDBusDataTransferInfo& out)
 {
     DRing::DataTransferInfo info;
-    auto res = DRing::dataTransferInfo(accountId, conversationId, id, info);
+    auto res = DRing::dataTransferInfo(accountId, id, info);
     if (res == DRing::DataTransferError::success) {
         out._1 = info.accountId;
         out._2 = uint32_t(info.lastEvent);
@@ -803,21 +802,19 @@ DBusConfigurationManager::dataTransferBytesProgress(const std::string& accountId
 
 uint32_t
 DBusConfigurationManager::acceptFileTransfer(const std::string& accountId,
-                                             const std::string& conversationId,
                                              const uint64_t& id,
-                                             const std::string& file_path,
-                                             const int64_t& offset)
+                                             const std::string& file_path)
 {
-    return uint32_t(DRing::acceptFileTransfer(accountId, conversationId, id, file_path, offset));
+    return uint32_t(DRing::acceptFileTransfer(accountId, id, file_path));
 }
 
-void
-DBusConfigurationManager::askForTransfer(const std::string& accountId,
-                                         const std::string& conversationUri,
-                                         const std::string& interactionId,
-                                         const std::string& path)
+uint64_t
+DBusConfigurationManager::downloadFile(const std::string& accountId,
+                                       const std::string& conversationUri,
+                                       const std::string& interactionId,
+                                       const std::string& path)
 {
-    DRing::askForTransfer(accountId, conversationUri, interactionId, path);
+    return DRing::downloadFile(accountId, conversationUri, interactionId, path);
 }
 
 uint32_t
