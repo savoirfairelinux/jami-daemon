@@ -549,7 +549,6 @@ SIPAccountBase::onTextMessage(const std::string& id,
                     && matched_pattern[1].matched) {
                     conversationId = matched_pattern[1];
                 }
-                JAMI_WARN("@@@ %s", m.second.c_str());
                 onIsComposing(conversationId, from, isComposing);
                 if (payloads.size() == 1)
                     return;
@@ -659,7 +658,9 @@ SIPAccountBase::onTextMessage(const std::string& id,
             onAskForTransfer(from,
                              json["deviceId"].asString(),
                              json["conversation"].asString(),
-                             json["interaction"].asString());
+                             json["interaction"].asString(),
+                             std::stoi(json["start"].asString()),
+                             std::stoi(json["end"].asString()));
             return;
         }
     }
