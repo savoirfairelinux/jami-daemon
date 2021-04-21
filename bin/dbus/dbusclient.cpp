@@ -293,7 +293,7 @@ DBusClient::initLibrary(int flags)
 
     const std::map<std::string, SharedCallback> dataXferEvHandlers = {
         exportable_callback<DataTransferSignal::DataTransferEvent>(
-            bind(&DBusConfigurationManager::dataTransferEvent, confM, _1, _2, _3, _4)),
+            bind(&DBusConfigurationManager::dataTransferEvent, confM, _1, _2, _3, _4, _5)),
     };
 
     const std::map<std::string, SharedCallback> convEvHandlers = {

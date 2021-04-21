@@ -54,7 +54,7 @@ public:
     virtual void connectionUpdate(const std::string& id, int state){}
     virtual void remoteRecordingChanged(const std::string& call_id, const std::string& peer_number, bool state){}
     virtual void mediaNegotiationStatus(const std::string& call_id, const std::string& event, 
-        const std::vector<std::map<std::string, std::string>>& mediaList){}){}
+        const std::vector<std::map<std::string, std::string>>& mediaList){}
 };
 
 
@@ -157,5 +157,5 @@ public:
     virtual void connectionUpdate(const std::string& id, int state){}
     virtual void remoteRecordingChanged(const std::string& call_id, const std::string& peer_number, bool state){}
     virtual void mediaNegotiationStatus(const std::string& call_id, const std::string& event, 
-        const std::vector<std::map<std::string, std::string>>& mediaList){}){}
+        const std::vector<std::map<std::string, std::string>>& mediaList){}
 };
