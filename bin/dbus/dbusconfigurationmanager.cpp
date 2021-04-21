@@ -818,13 +818,13 @@ DBusConfigurationManager::acceptFileTransfer(const std::string& accountId,
     return uint32_t(DRing::acceptFileTransfer(accountId, conversationId, id, file_path, offset));
 }
 
-void
-DBusConfigurationManager::askForTransfer(const std::string& accountId,
-                                         const std::string& conversationUri,
-                                         const std::string& interactionId,
-                                         const std::string& path)
+uint64_t
+DBusConfigurationManager::downloadFile(const std::string& accountId,
+                                       const std::string& conversationUri,
+                                       const std::string& interactionId,
+                                       const std::string& path)
 {
-    DRing::askForTransfer(accountId, conversationUri, interactionId, path);
+    return DRing::downloadFile(accountId, conversationUri, interactionId, path);
 }
 
 uint32_t
