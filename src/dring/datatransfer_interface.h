@@ -108,7 +108,7 @@ struct DRING_PUBLIC DataTransferInfo
 /// DataTransferEvent signal for such event. There is no reserved or special values on
 /// DataTransferId type.
 ///
-DRING_PUBLIC DataTransferError sendFile(const DataTransferInfo& info, DataTransferId& id) noexcept;
+DRING_PUBLIC DataTransferError sendFile(const DataTransferInfo& info, std::string& fileId) noexcept;
 
 /// Accept an incoming file transfer.
 ///
@@ -119,30 +119,26 @@ DRING_PUBLIC DataTransferError sendFile(const DataTransferInfo& info, DataTransf
 ///
 /// \param id data transfer identification value as given by a DataTransferEvent signal.
 /// \param file_path file path going to be open in binary write mode to put incoming data.
-/// \param offset used to indicate the remote side about the number of bytes already received in
-/// a previous transfer session, useful in transfer continuation mode.
 ///
 /// \return DataTransferError::invalid_argument if id is unknown.
 /// \note unknown \a id results to a no-op call.
 ///
 DRING_PUBLIC DataTransferError acceptFileTransfer(const std::string& accountId,
-                                                  const std::string& conversationId,
-                                                  const DataTransferId& id,
-                                                  const std::string& file_path,
-                                                  int64_t offset) noexcept;
+                                                  const std::string& fileId,
+                                                  const std::string& file_path) noexcept;
 
 /// Asks for retransferring a file. Generally this means that the file is missing
 /// from the conversation
 ///
 /// \param accountId
 /// \param conversationId
-/// \param interactionId
+/// \param fileId
 /// \param path
 ///
-DRING_PUBLIC void askForTransfer(const std::string& accountId,
-                                 const std::string& conversationUri,
-                                 const std::string& interactionId,
-                                 const std::string& path) noexcept;
+DRING_PUBLIC bool downloadFile(const std::string& accountId,
+                               const std::string& conversationUri,
+                               const std::string& fileId,
+                               const std::string& path) noexcept;
 
 /// Refuse or abort an outgoing or an incoming file transfer.
 ///
@@ -158,7 +154,7 @@ DRING_PUBLIC void askForTransfer(const std::string& accountId,
 ///
 DataTransferError cancelDataTransfer(const std::string& accountId,
                                      const std::string& conversationId,
-                                     const DataTransferId& id) noexcept DRING_PUBLIC;
+                                     const std::string fileId) noexcept DRING_PUBLIC;
 
 /// Return some information on given data transfer.
 ///
@@ -169,8 +165,7 @@ DataTransferError cancelDataTransfer(const std::string& accountId,
 /// \note \a info structure is in undefined state in case of error.
 ///
 DRING_PUBLIC DataTransferError dataTransferInfo(const std::string& accountId,
-                                                const std::string& conversationId,
-                                                const DataTransferId& id,
+                                                const std::string& fileId,
                                                 DataTransferInfo& info) noexcept;
 
 /// Return the amount of sent/received bytes of an existing data transfer.
@@ -182,11 +177,12 @@ DRING_PUBLIC DataTransferError dataTransferInfo(const std::string& accountId,
 /// \return DataTransferError::success if \a total and \a progress is set with valid values.
 /// DataTransferError::invalid_argument if the id is unknown.
 ///
-DRING_PUBLIC DataTransferError dataTransferBytesProgress(const std::string& accountId,
-                                                         const std::string& conversationId,
-                                                         const DataTransferId& id,
-                                                         int64_t& total,
-                                                         int64_t& progress) noexcept;
+DRING_PUBLIC DataTransferError fileTransferInfo(const std::string& accountId,
+                                                const std::string& conversationId,
+                                                const std::string& fileId,
+                                                std::string& path,
+                                                int64_t& total,
+                                                int64_t& progress) noexcept;
 
 // Signals
 struct DRING_PUBLIC DataTransferSignal
@@ -196,7 +192,7 @@ struct DRING_PUBLIC DataTransferSignal
         constexpr static const char* name = "DataTransferEvent";
         using cb_type = void(const std::string& accountId,
                              const std::string& conversationId,
-                             const DataTransferId& transferId,
+                             const std::string& fileId,
                              int eventCode);
     };
 };
