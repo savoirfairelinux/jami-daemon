@@ -65,6 +65,7 @@
 #ifndef _WIN32
 #include <pwd.h>
 #else
+#include <filesystem>
 #include <shlobj.h>
 #define NAME_MAX 255
 #endif
@@ -76,7 +77,6 @@
 
 #include <sstream>
 #include <fstream>
-#include <filesystem>
 #include <iostream>
 #include <stdexcept>
 #include <limits>
@@ -317,11 +317,29 @@ writeTime(const std::string& path)
 }
 
 void
-createSymLink(const std::string& src, const std::string& dest)
+createSymLink(const std::string& linkFile, const std::string& target)
 {
-    check_dir(std::string(std::filesystem::path(src).parent_path()).c_str());
-    auto absolute_dest = std::string(std::filesystem::absolute(std::filesystem::path(dest)));
-    std::filesystem::create_symlink(absolute_dest, src);
+    auto sep = target.find_last_of('/');
+    if (sep != std::string::npos)
+        check_dir(target.substr(0, sep).c_str());
+#ifndef _WIN32
+    symlink(target.c_str(), linkFile.c_str());
+#else
+    std::error_code ec;
+    std::filesystem::create_symlink(target, linkFile, ec);
+#endif
+}
+
+std::string
+getFileExtension(const std::string& filename)
+{
+    std::string result = "";
+    auto sep = filename.find_last_of('.');
+    if (sep != std::string::npos && sep != filename.size() - 1)
+        result = filename.substr(sep + 1);
+    if (result.size() >= 8)
+        return {};
+    return result;
 }
 
 bool
@@ -961,7 +979,7 @@ size(const std::string& path)
     std::ifstream file;
     int64_t size;
     try {
-        openStream(file, path);
+        openStream(file, path, std::ios::binary | std::ios::in);
         file.seekg(0, std::ios_base::end);
         size = file.tellg();
         file.close();
@@ -980,7 +998,7 @@ sha3File(const std::string& path)
     try {
         if (!fileutils::isFile(path))
             return {};
-        openStream(file, path);
+        openStream(file, path, std::ios::binary | std::ios::in);
         if (!file)
             return {};
         std::vector<char> buffer(8192, 0);
