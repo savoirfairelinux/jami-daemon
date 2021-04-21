@@ -1587,7 +1587,7 @@
            <tp:added version="10.0.0"/>
            <arg type="u" name="dataTransferError" direction="out"/>
            <arg type="(suuxxssssss)" name="DataTransferInfo" direction="in"/>
-           <arg type="t" name="dataTransferId" direction="out"/>
+           <arg type="s" name="fileId" direction="out"/>
            <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="DataTransferInfo"/>
        </method>
 
@@ -1595,18 +1595,18 @@
            <tp:added version="10.0.0"/>
            <arg type="u" name="dataTransferError" direction="out"/>
            <arg type="s" name="accountId" direction="in"/>
-           <arg type="s" name="to" direction="in"/>
-           <arg type="t" name="dataTransferId" direction="in"/>
+           <arg type="s" name="fileId" direction="in"/>
            <arg type="(suuxxssssss)" name="dataTransferInfo" direction="out"/>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="DataTransferInfo"/>
        </method>
 
-       <method name="dataTransferBytesProgress" tp:name-for-bindings="dataTransferBytesProgress">
+       <method name="fileTransferInfo" tp:name-for-bindings="fileTransferInfo">
            <tp:added version="10.0.0"/>
            <arg type="u" name="dataTransferError" direction="out"/>
            <arg type="s" name="accountId" direction="in"/>
            <arg type="s" name="to" direction="in"/>
-           <arg type="t" name="dataTransferId" direction="in"/>
+           <arg type="s" name="fileId" direction="in"/>
+           <arg type="s" name="path" direction="out"/>
            <arg type="x" name="totalSize" direction="out"/>
            <arg type="x" name="bytesProgress" direction="out"/>
        </method>
@@ -1615,17 +1615,16 @@
            <tp:added version="10.0.0"/>
            <arg type="u" name="dataTransferError" direction="out"/>
            <arg type="s" name="accountId" direction="in"/>
-           <arg type="s" name="to" direction="in"/>
-           <arg type="t" name="dataTransferId" direction="in"/>
+           <arg type="s" name="fileId" direction="in"/>
            <arg type="s" name="filePath" direction="in"/>
-           <arg type="x" name="offset" direction="in"/>
        </method>
 
-       <method name="askForTransfer" tp:name-for-bindings="askForTransfer">
+       <method name="downloadFile" tp:name-for-bindings="downloadFile">
            <tp:added version="10.1.0"/>
+           <arg type="b" name="result" direction="out"/>
            <arg type="s" name="accountId" direction="in"/>
            <arg type="s" name="conversationUri" direction="in"/>
-           <arg type="s" name="interactionId" direction="in"/>
+           <arg type="s" name="fileId" direction="in"/>
            <arg type="s" name="path" direction="in"/>
        </method>
 
@@ -1634,7 +1633,7 @@
            <arg type="u" name="dataTransferError" direction="out"/>
            <arg type="s" name="accountId" direction="in"/>
            <arg type="s" name="to" direction="in"/>
-           <arg type="t" name="dataTransferId" direction="in"/>
+           <arg type="s" name="fileId" direction="in"/>
        </method>
 
        <method name="monitor" tp:name-for-bindings="monitor">
@@ -1834,9 +1833,9 @@
                    The peer or conversation id.
                </tp:docstring>
            </arg>
-           <arg type="t" name="id">
+           <arg type="s" name="fileId">
                <tp:docstring>
-                   Data transfer unique id.
+                   File transfer unique id.
                </tp:docstring>
            </arg>
            <arg type="i" name="code">
