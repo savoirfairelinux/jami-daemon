@@ -21,12 +21,16 @@
 #pragma once
 
 #include "dring/datatransfer_interface.h"
+#include "jamidht/multiplexed_socket.h"
 #include "noncopyable.h"
 
 #include <memory>
 #include <string>
 
 namespace jami {
+
+// TODO move def
+DRing::DataTransferId generateUID();
 
 class Stream;
 
@@ -112,6 +116,9 @@ public:
     void waitForTransfer(const DRing::DataTransferId& id,
                          const std::string& sha3sum,
                          const std::string& path);
+    
+    bool acceptIncomingChannel(const DRing::DataTransferId& id) const;
+    void handleChannel(const DRing::DataTransferId& id, const std::shared_ptr<ChannelSocket>& channel);
 
 private:
     NON_COPYABLE(TransferManager);
