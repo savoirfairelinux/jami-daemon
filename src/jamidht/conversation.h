@@ -27,6 +27,8 @@
 #include <json/json.h>
 #include <msgpack.hpp>
 
+#include "dring/datatransfer_interface.h"
+
 namespace jami {
 
 /**
@@ -71,12 +73,15 @@ struct ConvInfo
 
 class JamiAccount;
 class ConversationRepository;
+class TransferManager;
+class ChannelSocket;
 enum class ConversationMode;
 
 using OnPullCb = std::function<void(bool fetchOk)>;
 using OnLoadMessages
     = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
+using OnWaitingFileCb = std::function<void(bool ok)>;
 
 class Conversation : public std::enable_shared_from_this<Conversation>
 {
@@ -239,6 +244,43 @@ public:
      */
     std::map<std::string, std::string> infos() const;
     std::vector<uint8_t> vCard() const;
+
+    /////// File transfer
+
+    /**
+     * Access to transfer manager
+     */
+    std::shared_ptr<TransferManager> dataTransfer() const;
+
+    /**
+     * Choose if we can accept channel request
+     * @param member    member to check
+     * @param id        file transfer to check (needs to be waiting)
+     * @return if we accept the channel request
+     */
+    bool onFileChannelRequest(const std::string& member, const DRing::DataTransferId& id) const;
+    /**
+     * Handle incoming channel
+     * @param id        linked id
+     * @param channel   linked channel
+     */
+    void onIncomingFileTransfer(const DRing::DataTransferId& id,
+                                const std::shared_ptr<ChannelSocket>& channel);
+    /**
+     * Adds a file to the waiting list and ask members
+     * @param path      Destination
+     * @param cb        When we are waiting
+     */
+    DRing::DataTransferId downloadFile(const std::string& interactionId,
+                                       const std::string& path,
+                                       OnWaitingFileCb cb);
+    /**
+     * Retrieve file informations
+     * @param conversationId
+     * @param interactionId
+     * @param info
+     */
+    void info(const std::string& interactionId, DRing::DataTransferInfo& info) const;
 
 private:
     std::shared_ptr<Conversation> shared()
