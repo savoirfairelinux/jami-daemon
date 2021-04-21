@@ -372,14 +372,14 @@ CompabilityTest::testSendFileCompatibility()
 
     // Send File
     DRing::DataTransferInfo info;
-    uint64_t id;
+    std::string unused;
     info.accountId = aliceAccount->getAccountID();
     info.conversationId = convId;
     info.path = "SEND";
     info.displayName = "SEND";
     info.bytesProgress = 0;
 
-    CPPUNIT_ASSERT(DRing::sendFile(info, id) == DRing::DataTransferError::success);
+    CPPUNIT_ASSERT(DRing::sendFile(info, unused) == DRing::DataTransferError::success);
 
     cv.wait_for(lk, std::chrono::seconds(30), [&]() { return successfullyReceive; });
     std::remove("SEND");
