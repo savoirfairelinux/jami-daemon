@@ -558,11 +558,15 @@ public:
      * @param deviceId          peer device
      * @param conversationId    related conversation
      * @param interactionId     interaction corresponding to the transfer asked.
+     * @param start             First byte we need to send
+     * @param lastByte          we need to send
      */
     virtual void onAskForTransfer(const std::string& peer,
                                   const std::string& deviceId,
                                   const std::string& conversationId,
-                                  const std::string& interactionId) override;
+                                  const std::string& interactionId,
+                                  size_t start,
+                                  size_t end) override;
     /**
      * Pull remote device (do not do it if commitId is already in the current repo)
      * @param peer              Contact URI
@@ -596,33 +600,26 @@ public:
                                    const InternalCompletionCb& icb = {},
                                    const std::string& deviceId = {},
                                    DRing::DataTransferId resendId = {});
+    void transferFile(const std::string& conversationId,
+                      const std::string& path,
+                      const std::string& deviceId,
+                      DRing::DataTransferId tid,
+                      size_t start,
+                      size_t end);
     /**
      * Ask conversation's members to send back a previous transfer to this deviec
      * @param conversationUri   Related conversation
      * @param interactionId     Related interaction
      * @param path              where to download the file
      */
-    void askForTransfer(const std::string& conversationUri,
-                        const std::string& interactionId,
-                        const std::string& path) override;
-
-    void onIncomingFileRequest(const DRing::DataTransferInfo& info,
-                               const DRing::DataTransferId& id,
-                               const std::function<void(const IncomingFileInfo&)>& cb,
-                               const InternalCompletionCb& icb);
-
-    bool acceptFile(const std::string& to,
-                    DRing::DataTransferId id,
-                    const std::string& path,
-                    int64_t progress);
-
-    bool cancel(const std::string& to, DRing::DataTransferId id);
-    bool info(const std::string& to, DRing::DataTransferId id, DRing::DataTransferInfo& info);
-    bool bytesProgress(const std::string& to,
-                       DRing::DataTransferId id,
-                       int64_t& total,
-                       int64_t& progress);
+    uint64_t downloadFile(const std::string& conversationUri,
+                          const std::string& interactionId,
+                          const std::string& path,
+                          size_t start = 0,
+                          size_t end = 0) override;
     void loadConversations();
+
+    std::shared_ptr<TransferManager> dataTransfer(const std::string& id = "") const;
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -1024,7 +1021,8 @@ private:
     void syncWithConnected();
     std::atomic_bool needsConvSync_ {true};
 
-    std::pair<dht::NodeStatus, dht::NodeStatus> currentDhtStatus_ {dht::NodeStatus::Disconnected, dht::NodeStatus::Disconnected};
+    std::pair<dht::NodeStatus, dht::NodeStatus> currentDhtStatus_ {dht::NodeStatus::Disconnected,
+                                                                   dht::NodeStatus::Disconnected};
 
     /**
      * Remove a repository and all files
@@ -1052,8 +1050,9 @@ private:
     std::string getOneToOneConversation(const std::string& uri) const;
 
     //// File transfer
+    std::shared_ptr<TransferManager> nonSwarmTransferManager_;
     std::mutex transferMutex_ {};
-    std::map<std::string, TransferManager> transferManagers_ {};
+    std::map<std::string, std::shared_ptr<TransferManager>> transferManagers_ {};
 
     bool noSha3sumVerification_ {false};
 };

@@ -27,6 +27,8 @@
 #include <json/json.h>
 #include <msgpack.hpp>
 
+#include "dring/datatransfer_interface.h"
+
 namespace jami {
 
 /**
@@ -71,12 +73,15 @@ struct ConvInfo
 
 class JamiAccount;
 class ConversationRepository;
+class TransferManager;
+class ChannelSocket;
 enum class ConversationMode;
 
 using OnPullCb = std::function<void(bool fetchOk)>;
 using OnLoadMessages
     = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
+using OnWaitingFileCb = std::function<void(bool ok)>;
 
 class Conversation : public std::enable_shared_from_this<Conversation>
 {
@@ -239,6 +244,17 @@ public:
      */
     std::map<std::string, std::string> infos() const;
     std::vector<uint8_t> vCard() const;
+
+    /////// File transfer
+
+    std::shared_ptr<TransferManager> dataTransfer() const;
+
+    bool onFileChannelRequest(const std::string& member, const DRing::DataTransferId& id) const;
+    void onIncomingFileTransfer(const DRing::DataTransferId& id,
+                                const std::shared_ptr<ChannelSocket>& channel);
+    DRing::DataTransferId downloadFile(const std::string& interactionId,
+                                       const std::string& path,
+                                       OnWaitingFileCb cb);
 
 private:
     std::shared_ptr<Conversation> shared()
