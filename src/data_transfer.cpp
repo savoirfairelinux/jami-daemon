@@ -46,7 +46,7 @@
 
 namespace jami {
 
-static DRing::DataTransferId
+DRing::DataTransferId
 generateUID()
 {
     thread_local dht::crypto::random_device rd;
@@ -319,10 +319,11 @@ private:
 
     void sendHeader() const
     {
-        auto header = fmt::format(
-            "Content-Length: {}\n"
-            "Display-Name: {}\n"
-            "Offset: 0\n\n", info_.totalSize, info_.displayName);
+        auto header = fmt::format("Content-Length: {}\n"
+                                  "Display-Name: {}\n"
+                                  "Offset: 0\n\n",
+                                  info_.totalSize,
+                                  info_.displayName);
         headerSent_ = true;
         emit(DRing::DataTransferEventCode::wait_peer_acceptance);
         if (onRecvCb_)
@@ -720,6 +721,12 @@ public:
     std::map<DRing::DataTransferId, std::shared_ptr<OutgoingFileTransfer>> oMap_ {};
     std::map<DRing::DataTransferId, std::shared_ptr<IncomingFileTransfer>> iMap_ {};
     std::map<DRing::DataTransferId, WaitingRequest> waitingIds_ {};
+    struct IncomingFile
+    {
+        std::shared_ptr<ChannelSocket> channel;
+        std::ofstream stream;
+    };
+    std::map<DRing::DataTransferId, IncomingFile> incomingChannels_ {};
 };
 
 TransferManager::TransferManager(const std::string& accountId,
@@ -902,7 +909,7 @@ TransferManager::onIncomingFileRequest(const DRing::DataTransferInfo& info,
         if (itW != pimpl_->waitingIds_.end())
             filename = itW->second.path;
         transfer = std::make_shared<IncomingFileTransfer>(info, id, icb);
-        auto p = pimpl_->iMap_.emplace(id, transfer);
+        pimpl_->iMap_.emplace(id, transfer);
     }
 
     transfer->setVerifyShaSum([this, id](const std::string& sha3sum) {
@@ -939,6 +946,69 @@ TransferManager::waitForTransfer(const DRing::DataTransferId& id,
 {
     std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
     pimpl_->waitingIds_[id] = {sha3sum, path};
+}
+
+bool
+TransferManager::acceptIncomingChannel(const DRing::DataTransferId& id) const
+{
+    std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
+    auto itW = pimpl_->waitingIds_.find(id);
+    if (itW == pimpl_->waitingIds_.end())
+        return false;
+    auto itC = pimpl_->incomingChannels_.find(id);
+    return itC == pimpl_->incomingChannels_.end();
+}
+
+void
+TransferManager::handleChannel(const DRing::DataTransferId& id,
+                               const std::shared_ptr<ChannelSocket>& channel)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
+    auto itC = pimpl_->incomingChannels_.find(id);
+    if (itC != pimpl_->incomingChannels_.end()) {
+        channel->shutdown();
+        return;
+    }
+    auto itW = pimpl_->waitingIds_.find(id);
+    if (itW == pimpl_->waitingIds_.end()) {
+        channel->shutdown();
+        return;
+    }
+    auto path = itW->second.path;
+    auto wantedSha3 = itW->second.sha3sum;
+    TransferManager::Impl::IncomingFile ifile;
+    fileutils::openStream(ifile.stream, path);
+    if (!ifile.stream) {
+        channel->shutdown();
+        return;
+    }
+    // TODO send info to client
+    channel->setOnRecv([&](const uint8_t* buf, size_t len) {
+        JAMI_ERR() << "@@@ RECV" << len;
+        if (ifile.stream.is_open())
+            ifile.stream << std::string_view((const char*) buf, len);
+        JAMI_ERR() << "@@@ RECV END" << len;
+        return len;
+    });
+    channel->onShutdown([&]() {
+        JAMI_ERR() << "@@@ SHUT!";
+        if (ifile.stream.is_open())
+            ifile.stream.close();
+        // TODO move in cb like before
+        std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
+        auto it = pimpl_->waitingIds_.find(id);
+        if (it != pimpl_->waitingIds_.end()) {
+            auto sha3sum = fileutils::sha3File(it->second.path);
+            if (it->second.sha3sum == sha3sum) {
+                JAMI_ERR() << "@@@ VALID!";
+                pimpl_->waitingIds_.erase(it);
+            }
+        }
+        pimpl_->incomingChannels_.erase(id);
+    });
+
+    // TODO insert
+    pimpl_->incomingChannels_.emplace(id, std::move(ifile));
 }
 
 } // namespace jami

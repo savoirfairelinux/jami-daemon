@@ -63,13 +63,13 @@ acceptFileTransfer(const std::string& accountId,
 }
 
 void
-askForTransfer(const std::string& accountId,
+downloadFile(const std::string& accountId,
                const std::string& conversationUri,
                const std::string& interactionId,
                const std::string& path) noexcept
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        acc->askForTransfer(conversationUri, interactionId, path);
+        acc->downloadFile(conversationUri, interactionId, path);
 }
 
 DataTransferError

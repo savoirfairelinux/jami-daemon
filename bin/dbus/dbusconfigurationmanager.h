@@ -233,7 +233,7 @@ public:
                                 const uint64_t& id,
                                 const std::string& file_path,
                                 const int64_t& offset);
-    void askForTransfer(const std::string& accountId,
+    void downloadFile(const std::string& accountId,
                         const std::string& conversationUri,
                         const std::string& interactionId,
                         const std::string& path);
