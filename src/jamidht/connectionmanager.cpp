@@ -114,10 +114,14 @@ public:
                                  const std::string& name,
                                  const dht::Value::Id& vid,
                                  const std::shared_ptr<dht::crypto::Certificate>& cert);
-    void connectDevice(const DeviceId& deviceId, const std::string& uri, ConnectCallback cb);
+    void connectDevice(const DeviceId& deviceId,
+                       const std::string& uri,
+                       ConnectCallback cb,
+                       bool noNewSocket = false);
     void connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
                        const std::string& name,
-                       ConnectCallback cb);
+                       ConnectCallback cb,
+                       bool noNewSocket = false);
     /**
      * Send a ChannelRequest on the TLS socket. Triggers cb when ready
      * @param sock      socket used to send the request
@@ -378,7 +382,8 @@ ConnectionManager::Impl::connectDeviceOnNegoDone(
 void
 ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                                        const std::string& name,
-                                       ConnectCallback cb)
+                                       ConnectCallback cb,
+                                       bool noNewSocket)
 {
     if (!account.dht()) {
         cb(nullptr, deviceId);
@@ -389,7 +394,7 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
         return;
     }
     account.findCertificate(deviceId,
-                            [w = weak(), deviceId, name, cb = std::move(cb)](
+                            [w = weak(), deviceId, name, cb = std::move(cb), noNewSocket](
                                 const std::shared_ptr<dht::crypto::Certificate>& cert) {
                                 if (!cert) {
                                     JAMI_ERR("Invalid certificate found for device %s",
@@ -398,7 +403,7 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
                                     return;
                                 }
                                 if (auto shared = w.lock()) {
-                                    shared->connectDevice(cert, name, std::move(cb));
+                                    shared->connectDevice(cert, name, std::move(cb), noNewSocket);
                                 }
                             });
 }
@@ -406,10 +411,15 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
 void
 ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
                                        const std::string& name,
-                                       ConnectCallback cb)
+                                       ConnectCallback cb,
+                                       bool noNewSocket)
 {
     // Avoid dht operation in a DHT callback to avoid deadlocks
-    runOnMainThread([w = weak(), name = std::move(name), cert = std::move(cert), cb = std::move(cb)] {
+    runOnMainThread([w = weak(),
+                     name = std::move(name),
+                     cert = std::move(cert),
+                     cb = std::move(cb),
+                     noNewSocket] {
         auto deviceId = cert->getId();
         auto sthis = w.lock();
         if (!sthis || sthis->isDestroying_) {
@@ -458,6 +468,12 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
 
         if (isConnectingToDevice) {
             JAMI_DBG("Already connecting to %s, wait for the ICE negotiation", deviceId.to_c_str());
+            return;
+        }
+        if (noNewSocket) {
+            // If no new socket is specified, we don't try to generate a new socket
+            for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
+                pending.cb(nullptr, deviceId);
             return;
         }
 
@@ -542,8 +558,9 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
             ice_config.master = false;
             ice_config.streamsCount = JamiAccount::ICE_STREAMS_COUNT;
             ice_config.compCountPerStream = JamiAccount::ICE_COMP_COUNT_PER_STREAM;
-            info->ice_ = Manager::instance().getIceTransportFactory().createUTransport(
-                sthis->account.getAccountID().c_str(), ice_config);
+            info->ice_ = Manager::instance()
+                             .getIceTransportFactory()
+                             .createUTransport(sthis->account.getAccountID().c_str(), ice_config);
 
             if (!info->ice_) {
                 JAMI_ERR("Cannot initialize ICE session.");
@@ -894,8 +911,8 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         ice_config.compCountPerStream = JamiAccount::ICE_COMP_COUNT_PER_STREAM;
         ice_config.master = true;
         info->ice_ = Manager::instance()
-                        .getIceTransportFactory()
-                        .createUTransport(shared->account.getAccountID().c_str(), ice_config);
+                         .getIceTransportFactory()
+                         .createUTransport(shared->account.getAccountID().c_str(), ice_config);
         if (not info->ice_) {
             JAMI_ERR("Cannot initialize ICE session.");
             if (shared->connReadyCb_)
@@ -965,17 +982,19 @@ ConnectionManager::~ConnectionManager()
 void
 ConnectionManager::connectDevice(const DeviceId& deviceId,
                                  const std::string& name,
-                                 ConnectCallback cb)
+                                 ConnectCallback cb,
+                                 bool noNewSocket)
 {
-    pimpl_->connectDevice(deviceId, name, std::move(cb));
+    pimpl_->connectDevice(deviceId, name, std::move(cb), noNewSocket);
 }
 
 void
 ConnectionManager::connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
                                  const std::string& name,
-                                 ConnectCallback cb)
+                                 ConnectCallback cb,
+                                 bool noNewSocket)
 {
-    pimpl_->connectDevice(cert, name, std::move(cb));
+    pimpl_->connectDevice(cert, name, std::move(cb), noNewSocket);
 }
 
 bool
