@@ -745,9 +745,9 @@ DBusConfigurationManager::connectivityChanged()
 }
 
 void
-DBusConfigurationManager::sendFile(const RingDBusDataTransferInfo& in,
-                                   uint32_t& error,
-                                   DRing::DataTransferId& id)
+DBusConfigurationManager::sendFileLegacy(const RingDBusDataTransferInfo& in,
+                                         uint32_t& error,
+                                         DRing::DataTransferId& id)
 {
     DRing::DataTransferInfo info;
     info.accountId = in._1;
@@ -761,18 +761,27 @@ DBusConfigurationManager::sendFile(const RingDBusDataTransferInfo& in,
     info.displayName = in._9;
     info.path = in._10;
     info.mimetype = in._11;
-    error = uint32_t(DRing::sendFile(info, id));
+    error = uint32_t(DRing::sendFileLegacy(info, id));
+}
+
+void
+DBusConfigurationManager::sendFile(const std::string& accountId,
+                                   const std::string& conversationId,
+                                   const std::string& path,
+                                   const std::string& displayName,
+                                   const std::string& parent)
+{
+    DRing::sendFile(accountId, conversationId, path, displayName, parent);
 }
 
 void
 DBusConfigurationManager::dataTransferInfo(const std::string& accountId,
-                                           const std::string& conversationId,
-                                           const DRing::DataTransferId& id,
+                                           const std::string& fileId,
                                            uint32_t& error,
                                            RingDBusDataTransferInfo& out)
 {
     DRing::DataTransferInfo info;
-    auto res = DRing::dataTransferInfo(accountId, conversationId, id, info);
+    auto res = DRing::dataTransferInfo(accountId, fileId, info);
     if (res == DRing::DataTransferError::success) {
         out._1 = info.accountId;
         out._2 = uint32_t(info.lastEvent);
@@ -790,42 +799,41 @@ DBusConfigurationManager::dataTransferInfo(const std::string& accountId,
 }
 
 void
-DBusConfigurationManager::dataTransferBytesProgress(const std::string& accountId,
-                                                    const std::string& conversationId,
-                                                    const uint64_t& id,
-                                                    uint32_t& error,
-                                                    int64_t& total,
-                                                    int64_t& progress)
+DBusConfigurationManager::fileTransferInfo(const std::string& accountId,
+                                           const std::string& conversationId,
+                                           const std::string& fileId,
+                                           uint32_t& error,
+                                           std::string& path,
+                                           int64_t& total,
+                                           int64_t& progress)
 {
     error = uint32_t(
-        DRing::dataTransferBytesProgress(accountId, conversationId, id, total, progress));
+        DRing::fileTransferInfo(accountId, conversationId, fileId, path, total, progress));
 }
 
 uint32_t
 DBusConfigurationManager::acceptFileTransfer(const std::string& accountId,
-                                             const std::string& conversationId,
-                                             const uint64_t& id,
-                                             const std::string& file_path,
-                                             const int64_t& offset)
+                                             const std::string& fileId,
+                                             const std::string& file_path)
 {
-    return uint32_t(DRing::acceptFileTransfer(accountId, conversationId, id, file_path, offset));
+    return uint32_t(DRing::acceptFileTransfer(accountId, fileId, file_path));
 }
 
-void
-DBusConfigurationManager::askForTransfer(const std::string& accountId,
-                                         const std::string& conversationUri,
-                                         const std::string& interactionId,
-                                         const std::string& path)
+bool
+DBusConfigurationManager::downloadFile(const std::string& accountId,
+                                       const std::string& conversationUri,
+                                       const std::string& interactionId,
+                                       const std::string& path)
 {
-    DRing::askForTransfer(accountId, conversationUri, interactionId, path);
+    return DRing::downloadFile(accountId, conversationUri, interactionId, path);
 }
 
 uint32_t
 DBusConfigurationManager::cancelDataTransfer(const std::string& accountId,
                                              const std::string& conversationId,
-                                             const uint64_t& id)
+                                             const std::string& fileId)
 {
-    return uint32_t(DRing::cancelDataTransfer(accountId, conversationId, id));
+    return uint32_t(DRing::cancelDataTransfer(accountId, conversationId, fileId));
 }
 
 std::string
