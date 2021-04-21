@@ -84,11 +84,16 @@ public:
      * @param deviceId      Remote device
      * @param name          Name of the channel
      * @param cb            Callback called when socket is ready ready
+     * @param noNewSocket   Do not negotiate a new socekt if there is none
      */
-    void connectDevice(const DeviceId& deviceId, const std::string& name, ConnectCallback cb);
+    void connectDevice(const DeviceId& deviceId,
+                       const std::string& name,
+                       ConnectCallback cb,
+                       bool noNewSocket = false);
     void connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
                        const std::string& name,
-                       ConnectCallback cb);
+                       ConnectCallback cb,
+                       bool noNewSocket = false);
 
     /**
      * Check if we are already connecting to a device with a specific name
