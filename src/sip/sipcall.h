@@ -148,11 +148,11 @@ public:
     std::map<std::string, std::string> getDetails() const override;
     void enterConference(const std::string& confId) override;
     void exitConference() override;
-    video::VideoGenerator* getVideoReceiver() override
+    std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>> getRecordableVideoReceiver() override
     {
         auto const& videoRtp = getVideoRtp();
         if (videoRtp)
-            return videoRtp->getVideoReceive().get();
+            return videoRtp->getRecordableVideoReceive();
 
         return nullptr;
     }

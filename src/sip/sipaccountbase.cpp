@@ -138,10 +138,12 @@ std::string
 getDisplayed(const std::string& messageId)
 {
     // implementing https://tools.ietf.org/rfc/rfc5438.txt
-    return fmt::format("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
-                       "<imdn><message-id>{}</message-id>\n"
-                       "<display-notification><status><displayed/></status></display-notification>\n"
-                       "</imdn>", messageId);
+    return fmt::format(
+        "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
+        "<imdn><message-id>{}</message-id>\n"
+        "<display-notification><status><displayed/></status></display-notification>\n"
+        "</imdn>",
+        messageId);
 }
 
 void
@@ -684,13 +686,13 @@ SIPAccountBase::createDefaultMediaList(bool addVideo, bool onHold)
 
     // Add audio and DTMF events
     mediaList.emplace_back(
-        MediaAttribute(MediaType::MEDIA_AUDIO, onHold, secure, true, "", "main audio"));
+        MediaAttribute(MediaType::MEDIA_AUDIO, onHold, secure, false, "", "main audio"));
 
 #ifdef ENABLE_VIDEO
     // Add video if allowed.
     if (isVideoEnabled() and addVideo) {
         mediaList.emplace_back(
-            MediaAttribute(MediaType::MEDIA_VIDEO, onHold, secure, true, "", "main video"));
+            MediaAttribute(MediaType::MEDIA_VIDEO, onHold, secure, false, "", "main video"));
     }
 #endif
     return mediaList;
