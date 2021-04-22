@@ -346,7 +346,8 @@ public: // media management
 
     virtual void enterConference(const std::string& confId) = 0;
     virtual void exitConference() = 0;
-    virtual video::VideoGenerator* getVideoReceiver() = 0;
+    virtual std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>>
+    getReceiveVideoFrameActiveWriter() = 0;
 
     std::vector<std::map<std::string, std::string>> getConferenceInfos() const
     {
@@ -401,7 +402,6 @@ protected:
     time_point duration_start_ {time_point::min()};
 
 private:
-
     bool validStateTransition(CallState newState);
 
     void checkPendingIM();

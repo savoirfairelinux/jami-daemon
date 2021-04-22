@@ -1412,6 +1412,7 @@ SIPCall::startAllMedia()
     // reset
     readyToRecord_ = false;
     resetMediaReady();
+    bool isVideoEnabled = false;
 
     for (const auto& slot : slots) {
         ++slotN;
@@ -1453,6 +1454,9 @@ SIPCall::startAllMedia()
         }
 
         // Configure the media.
+        rtpStream.mediaAttribute_->enabled_ = true;
+        if (rtpStream.mediaAttribute_->type_ == MEDIA_VIDEO)
+            isVideoEnabled = true;
         configureRtpSession(rtpStream.rtpSession_, rtpStream.mediaAttribute_, local, remote);
 
         // Not restarting media loop on hold as it's a huge waste of CPU ressources
@@ -1487,6 +1491,11 @@ SIPCall::startAllMedia()
 
     // Video is muted if all video streams are muted.
     isVideoMuted_ = iter == rtpStreams_.end();
+
+    if (!isVideoEnabled && !getConfId().empty()) {
+        auto conference = Manager::instance().getConferenceFromID(getConfId());
+        conference->attachVideo(getReceiveVideoFrameActiveWriter().get(), getCallId());
+    }
 #endif
 
     // Media is restarted, we can process the last holding request.
