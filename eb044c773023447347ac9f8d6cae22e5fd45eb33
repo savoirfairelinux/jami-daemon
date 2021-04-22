@@ -1,0 +1,211 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "36a7a71b_5703a804",
+        "filename": "src/call.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 155,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-22T14:13:48Z",
+      "side": 1,
+      "message": "These checks should not even exists and every methods must not care about threading, they should do their stuff (here removeCall())",
+      "range": {
+        "startLine": 154,
+        "startChar": 1,
+        "endLine": 155,
+        "endChar": 30
+      },
+      "revId": "eb044c773023447347ac9f8d6cae22e5fd45eb33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a44802f1_d0cc27f8",
+        "filename": "src/call.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 447,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-22T14:13:48Z",
+      "side": 1,
+      "message": "hacky way of doing threading",
+      "range": {
+        "startLine": 444,
+        "startChar": 5,
+        "endLine": 447,
+        "endChar": 5
+      },
+      "revId": "eb044c773023447347ac9f8d6cae22e5fd45eb33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d459a987_03383fc8",
+        "filename": "src/call.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 410,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-22T14:13:48Z",
+      "side": 1,
+      "message": "I am clearly not in favor of this logic. It\u0027s already hacky in upnp classes\nWe already have all tools for threading mecanisms and don\u0027t want to add execQueue per class",
+      "range": {
+        "startLine": 393,
+        "startChar": 0,
+        "endLine": 410,
+        "endChar": 66
+      },
+      "revId": "eb044c773023447347ac9f8d6cae22e5fd45eb33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dfebeda4_7ef684e2",
+        "filename": "src/manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 753,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-22T14:13:48Z",
+      "side": 1,
+      "message": "rm",
+      "range": {
+        "startLine": 752,
+        "startChar": 0,
+        "endLine": 753,
+        "endChar": 77
+      },
+      "revId": "eb044c773023447347ac9f8d6cae22e5fd45eb33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dab6c631_a140ec4c",
+        "filename": "src/sip/Makefile.am",
+        "patchSetId": 3
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-22T14:13:48Z",
+      "side": 1,
+      "message": "to rm",
+      "range": {
+        "startLine": 5,
+        "startChar": 21,
+        "endLine": 5,
+        "endChar": 43
+      },
+      "revId": "eb044c773023447347ac9f8d6cae22e5fd45eb33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a1184f55_4c0c5566",
+        "filename": "src/sip/sip_events_handler.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-22T14:13:48Z",
+      "side": 1,
+      "message": "this class doesn\u0027t solve anything and add a useless wrapper",
+      "range": {
+        "startLine": 34,
+        "startChar": 22,
+        "endLine": 67,
+        "endChar": 33
+      },
+      "revId": "eb044c773023447347ac9f8d6cae22e5fd45eb33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "84efb89e_1d4f3459",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-22T14:13:48Z",
+      "side": 1,
+      "message": "already ocmmented about this",
+      "range": {
+        "startLine": 93,
+        "startChar": 4,
+        "endLine": 93,
+        "endChar": 10
+      },
+      "revId": "eb044c773023447347ac9f8d6cae22e5fd45eb33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0e32b463_73ed71da",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 261,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-22T14:13:48Z",
+      "side": 1,
+      "message": "Major design change. You now have a pointer that can be invalidated without the daemon knowing whenever pj will decrease its ref counter to 0.\n\nThe unique_ptr was here for a reason and InvSessionDeleter care about the refcounting",
+      "range": {
+        "startLine": 261,
+        "startChar": 3,
+        "endLine": 261,
+        "endChar": 42
+      },
+      "revId": "eb044c773023447347ac9f8d6cae22e5fd45eb33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "823062fa_44a6fd14",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 551,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-22T14:13:48Z",
+      "side": 1,
+      "message": "The std::thread was a better approach for the handleEvents()",
+      "range": {
+        "startLine": 538,
+        "startChar": 3,
+        "endLine": 551,
+        "endChar": 7
+      },
+      "revId": "eb044c773023447347ac9f8d6cae22e5fd45eb33",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
