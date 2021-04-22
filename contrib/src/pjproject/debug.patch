@@ -1,0 +1,49 @@
+ pjnath/src/pjnath/stun_session.c | 7 +++++++
+ pjnath/src/pjnath/turn_sock.c    | 2 ++
+ 2 files changed, 9 insertions(+)
+
+diff --git a/pjnath/src/pjnath/stun_session.c b/pjnath/src/pjnath/stun_session.c
+index 20a9b1320..f29872897 100644
+--- a/pjnath/src/pjnath/stun_session.c
++++ b/pjnath/src/pjnath/stun_session.c
+@@ -1018,6 +1018,10 @@ PJ_DEF(pj_status_t) pj_stun_session_send_msg( pj_stun_session *sess,
+ 	    goto on_return;
+ 	}
+ 
++	if (status == PJ_EPENDING) {
++		printf("@@@ pj_stun_client_tsx_send_msg pending (is request)\n");
++	}
++
+ 	/* Add to pending request list */
+ 	tsx_add(sess, tdata);
+ 
+@@ -1074,6 +1078,9 @@ PJ_DEF(pj_status_t) pj_stun_session_send_msg( pj_stun_session *sess,
+ 	    LOG_ERR_(sess, "Error sending STUN request (pj_stun_session_send_msg)", status);
+ 	    goto on_return;
+ 	}
++	if (status == PJ_EPENDING) {
++		printf("@@@ sess->cb.on_send_msg pending\n");
++	}
+ 
+ 	/* Destroy only when response is not cached*/
+ 	if (tdata->res_timer.id == 0) {
+diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
+index a6e192e9f..ed184c53b 100644
+--- a/pjnath/src/pjnath/turn_sock.c
++++ b/pjnath/src/pjnath/turn_sock.c
+@@ -1547,6 +1547,7 @@ static void turn_on_connection_attempt(pj_turn_session *sess,
+ 		      turn_sock->alloc_param.peer_conn_type == PJ_TURN_TP_TCP,
+ 		      return);
+ 
++	printf("@@@ Connection attempt from peer!\n");
+     PJ_LOG(5,(turn_sock->pool->obj_name, "Connection attempt from peer %s",
+ 	      pj_sockaddr_print(&peer_addr, addrtxt, sizeof(addrtxt), 3)));
+ 
+@@ -1694,6 +1695,7 @@ static void turn_on_connection_attempt(pj_turn_session *sess,
+ 
+ on_return:
+     if (status == PJ_EPENDING) {
++	printf("@@@ Accepting connection from peer %s\n", pj_sockaddr_print(&peer_addr, addrtxt, sizeof(addrtxt), 3));
+ 	PJ_LOG(5,(pool->obj_name,
+ 		  "Accepting connection from peer %s",
+ 		  pj_sockaddr_print(peer_addr, addrtxt, sizeof(addrtxt), 3)));
