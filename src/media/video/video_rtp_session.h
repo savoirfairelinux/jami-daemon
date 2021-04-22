@@ -104,7 +104,15 @@ public:
 
     std::shared_ptr<VideoMixer>& getVideoMixer() { return videoMixer_; }
 
-    std::unique_ptr<VideoReceiveThread>& getVideoReceive() { return receiveThread_; }
+    std::shared_ptr<VideoReceiveThread>& getVideoReceive() { return receiveThread_; }
+
+    std::shared_ptr<VideoFrameActiveWriter> getRecordableVideoReceive()
+    {
+        if (isReceiving() && receiveThread_)
+            return std::static_pointer_cast<VideoFrameActiveWriter>(receiveThread_);
+        else
+            return dummyVideoReceive_;
+    }
 
 private:
     void setupConferenceVideoPipeline(Conference& conference);
@@ -117,7 +125,9 @@ private:
     DeviceParams localVideoParams_;
 
     std::unique_ptr<VideoSender> sender_;
-    std::unique_ptr<VideoReceiveThread> receiveThread_;
+    std::shared_ptr<VideoReceiveThread> receiveThread_;
+    std::shared_ptr<VideoFrameActiveWriter> dummyVideoReceive_
+        = std::make_shared<VideoFrameActiveWriter>();
     Conference* conference_ {nullptr};
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
