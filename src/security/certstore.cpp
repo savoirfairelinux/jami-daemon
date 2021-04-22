@@ -99,8 +99,7 @@ CertificateStore::loadRevocations(crypto::Certificate& crt) const
         }
     }
     auto ocsp_dir = ocspPath_ + DIR_SEPARATOR_CH + crt.getId().toString();
-    auto ocsp_dir_content = fileutils::readDirectory(ocsp_dir);
-    for (const auto& ocsp /*filename*/ : ocsp_dir_content) {
+    for (const auto& ocsp : fileutils::readDirectory(ocsp_dir)) {
         try {
             std::string ocsp_filepath = ocsp_dir + DIR_SEPARATOR_CH + ocsp;
             JAMI_DBG("Found %s", ocsp_filepath.c_str());
@@ -405,8 +404,18 @@ CertificateStore::pinOcspResponse(const dht::crypto::Certificate& cert)
         return;
     }
     auto id = cert.getId().toString();
-    auto serialhex = dht::toHex(cert.getSerialNumber());
+    auto serial = cert.getSerialNumber();
+    auto serialhex = dht::toHex(serial);
     auto dir = ocspPath_ + DIR_SEPARATOR_CH + id;
+
+    if (auto localCert = getCertificate(id)) {
+        // Update certificate in the local store if relevant
+        if (localCert.get() != &cert && serial == localCert->getSerialNumber()) {
+            JAMI_DBG("Updating OCSP for certificate %s in the local store", id.c_str());
+            localCert->ocspResponse = cert.ocspResponse;
+        }
+    }
+
     dht::ThreadPool::io().run([path = dir + DIR_SEPARATOR_CH + serialhex,
                                dir = std::move(dir),
                                id = std::move(id),
