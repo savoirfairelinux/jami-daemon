@@ -397,6 +397,8 @@ VideoRtpSession::exitConference()
         if (receiveThread_) {
             conference_->detachVideo(receiveThread_.get());
             receiveThread_->exitConference();
+        } else {
+            conference_->detachVideo(dummyVideoReceive_.get());
         }
 
         videoMixer_.reset();

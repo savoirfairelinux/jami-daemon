@@ -316,8 +316,7 @@ Conference::setActiveParticipant(const std::string& participant_id)
         return;
     }
     if (auto call = getCallFromPeerID(participant_id)) {
-        auto videoRecv = reinterpret_cast<Observable<std::shared_ptr<MediaFrame>>*>(
-            call->getVideoReceiver());
+        auto videoRecv = call->getRecordableVideoReceiver().get();
         videoMixer_->setActiveParticipant(videoRecv);
         return;
     }
@@ -388,12 +387,12 @@ Conference::sendConferenceInfos()
             if (!account)
                 continue;
 
-            dht::ThreadPool::io().run([call,
-                                       confInfo = getConfInfoHostUri(account->getUsername()
-                                                                         + "@ring.dht",
-                                                                     call->getPeerNumber())] {
-                call->sendConfInfo(confInfo.toString());
-            });
+            dht::ThreadPool::io().run(
+                [call,
+                 confInfo = getConfInfoHostUri(account->getUsername() + "@ring.dht",
+                                               call->getPeerNumber())] {
+                    call->sendConfInfo(confInfo.toString());
+                });
         }
     }
 
@@ -675,7 +674,9 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
     if (auto call = Manager::instance().getCallFromCallID(callId)) {
         auto peerID = string_remove_suffix(call->getPeerNumber(), '@');
         if (!isModerator(peerID)) {
-            JAMI_WARN("Received conference order from a non master (%.*s)", (int) peerID.size(), peerID.data());
+            JAMI_WARN("Received conference order from a non master (%.*s)",
+                      (int) peerID.size(),
+                      peerID.data());
             return;
         }
 
@@ -684,7 +685,9 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         Json::CharReaderBuilder rbuilder;
         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         if (!reader->parse(confOrder.c_str(), confOrder.c_str() + confOrder.size(), &root, &err)) {
-            JAMI_WARN("Couldn't parse conference order from %.*s", (int) peerID.size(), peerID.data());
+            JAMI_WARN("Couldn't parse conference order from %.*s",
+                      (int) peerID.size(),
+                      peerID.data());
             return;
         }
         if (root.isMember("layout")) {
@@ -981,8 +984,8 @@ Conference::resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerUR
     int remoteFrameWidth = confInfo.w;
 
     if (remoteFrameHeight == 0 or remoteFrameWidth == 0) {
-    // get the size of the remote frame from receiveThread
-    // if the one from confInfo is empty
+        // get the size of the remote frame from receiveThread
+        // if the one from confInfo is empty
         if (auto call = std::dynamic_pointer_cast<SIPCall>(
                 getCallFromPeerID(string_remove_suffix(peerURI, '@')))) {
             if (auto const& videoRtp = call->getVideoRtp()) {
