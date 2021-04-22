@@ -151,8 +151,11 @@ public:
     video::VideoGenerator* getVideoReceiver() override
     {
         auto const& videoRtp = getVideoRtp();
-        if (videoRtp)
+        if (videoRtp && videoRtp->isReceiving())
             return videoRtp->getVideoReceive().get();
+        else
+            return std::static_pointer_cast<video::VideoGenerator>(videoRtp->getFooVideoReceive())
+                .get();
 
         return nullptr;
     }

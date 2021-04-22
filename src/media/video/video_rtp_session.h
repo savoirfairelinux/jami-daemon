@@ -106,6 +106,8 @@ public:
 
     std::unique_ptr<VideoReceiveThread>& getVideoReceive() { return receiveThread_; }
 
+    std::shared_ptr<VideoFrameActiveWriter> getFooVideoReceive() { return fooVideoReceive_; }
+
 private:
     void setupConferenceVideoPipeline(Conference& conference);
     void setupVideoPipeline();
@@ -118,6 +120,8 @@ private:
 
     std::unique_ptr<VideoSender> sender_;
     std::unique_ptr<VideoReceiveThread> receiveThread_;
+    std::shared_ptr<VideoFrameActiveWriter> fooVideoReceive_
+        = std::make_shared<VideoFrameActiveWriter>();
     Conference* conference_ {nullptr};
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
