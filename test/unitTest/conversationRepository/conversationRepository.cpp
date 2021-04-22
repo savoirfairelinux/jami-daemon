@@ -256,7 +256,7 @@ ConversationRepositoryTest::testCloneViaChannelSocket()
         });
 
     aliceAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string& name) { return true; });
+        [&successfullyReceive](const DeviceId&, const std::string&) { return true; });
 
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
@@ -605,7 +605,7 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
     // git commit -S
     auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
     auto signed_buf = account->identity().first->sign(to_sign_vec);
-    std::string signed_str = base64::encode(signed_buf.begin(), signed_buf.end());
+    std::string signed_str = base64::encode(signed_buf);
     if (git_commit_create_with_signature(&commit_id,
                                          repo,
                                          to_sign.ptr,
