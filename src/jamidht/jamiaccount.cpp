@@ -5757,7 +5757,7 @@ JamiAccount::downloadFile(const std::string& conversationUri,
         }
         it = res.first;
     }
-    it->second.waitForTransfer(tid, sha3sum, path);
+    it->second.waitForTransfer(tid, interactionId, sha3sum, path);
 
     Json::Value askTransferValue;
     askTransferValue["conversation"] = conversationId;
@@ -5861,6 +5861,25 @@ JamiAccount::bytesProgress(const std::string& to,
     }
 
     return it->second.bytesProgress(id, total, progress);
+}
+
+void
+JamiAccount::onGitSocketConnected(const std::string& conversationId)
+{
+    std::unique_lock<std::mutex> lk(transferMutex_);
+    auto it = transferManagers_.find(conversationId);
+    if (it == transferManagers_.end()) {
+        std::string accId = getAccountID();
+        auto res = transferManagers_.emplace(std::piecewise_construct,
+                                             std::forward_as_tuple(conversationId),
+                                             std::forward_as_tuple(accId, conversationId, true));
+        if (!res.second)
+            return;
+        it = res.first;
+    }
+    auto requests = it->second.waitingRequests();
+    lk.unlock();
+    // TODO download files from connected device;
 }
 
 } // namespace jami

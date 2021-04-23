@@ -485,6 +485,8 @@ public:
     {
         auto& deviceSockets = gitSocketList_[deviceId];
         deviceSockets[conversationId] = socket;
+
+        onGitSocketConnected(conversationId);
     }
 
     void removeGitSocket(const std::string& deviceId, const std::string& conversationId)
@@ -1058,6 +1060,11 @@ private:
      * @return the conversation id if found else empty
      */
     std::string getOneToOneConversation(const std::string& uri) const;
+
+    /**
+     * Inform the account that a new git socket is connected
+     */
+    void onGitSocketConnected(const std::string& conversationId);
 
     //// File transfer
     std::mutex transferMutex_ {};
