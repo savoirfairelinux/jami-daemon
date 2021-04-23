@@ -330,6 +330,9 @@ public:
                              const std::map<std::string, std::string>& payloads) override;
     void sendInstantMessage(const std::string& convId,
                             const std::map<std::string, std::string>& msg) override;
+    void sendSIPMessageToDevice(const std::string& to,
+                                const DeviceId& deviceId,
+                                const std::map<std::string, std::string>& payloads);
     void onIsComposing(const std::string& conversationId,
                        const std::string& peer,
                        bool isWriting) override;
@@ -600,7 +603,9 @@ public:
      * @param deviceId
      * @param convId
      */
-    void cloneConversation(const std::string& deviceId, const std::string& convId);
+    void cloneConversation(const std::string& deviceId,
+                           const std::string& peer,
+                           const std::string& convId);
 
     // File transfer
     DRing::DataTransferId sendFile(const std::string& to,
