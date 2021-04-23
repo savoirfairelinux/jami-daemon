@@ -1981,7 +1981,7 @@ JamiAccount::doRegister()
 
     JAMI_DBG("[Account %s] Starting account..", getAccountID().c_str());
 
-    /** /
+    /*
     JAMI_INFO("[Account %s] Start loading conversations…", getAccountID().c_str());
     auto conversationsRepositories = fileutils::readDirectory(idPath_ + DIR_SEPARATOR_STR
                                                               + "conversations");
@@ -1999,7 +1999,7 @@ JamiAccount::doRegister()
     loadConvInfos();
     loadConvRequests();
     JAMI_INFO("[Account %s] Conversations loaded!", getAccountID().c_str());
-    /**/
+    */
 
     // invalid state transitions:
     // INITIALIZING: generating/loading certificates, can't register
@@ -2019,8 +2019,6 @@ JamiAccount::doRegister()
     } else {
         doRegister_();
     }
-
-    cacheTurnServers(); // reset cache for TURN servers
 }
 
 std::vector<std::string>
@@ -2320,6 +2318,7 @@ JamiAccount::doRegister_()
                 JAMI_WARN("[Account %s] connected to the DHT network", getAccountID().c_str());
                 state = RegistrationState::REGISTERED;
                 storeActiveIpAddress();
+                cacheTurnServers();
                 break;
             case dht::NodeStatus::Disconnected:
                 JAMI_WARN("[Account %s] disconnected from the DHT network", getAccountID().c_str());
@@ -2881,7 +2880,6 @@ JamiAccount::connectivityChanged()
     dht_->connectivityChanged();
     // reset cache
     setPublishedAddress({});
-    cacheTurnServers();
 }
 
 bool
@@ -4644,6 +4642,17 @@ JamiAccount::cacheTurnServers()
         // This means that we directly get the correct value when launching the application on the
         // same network
         std::string server = this_->turnServer_.empty() ? DEFAULT_TURN_SERVER : this_->turnServer_;
+        // No need to resolve, it's already a valid address
+        if (IpAddr::isValid(server, AF_INET)) {
+            this_->cacheTurnV4_ = std::make_unique<IpAddr>(server, AF_INET);
+            this_->isRefreshing_ = false;
+            return;
+        } else if (IpAddr::isValid(server, AF_INET6)) {
+            this_->cacheTurnV6_ = std::make_unique<IpAddr>(server, AF_INET6);
+            this_->isRefreshing_ = false;
+            return;
+        }
+        // Else cache resolution result
         fileutils::recursive_mkdir(this_->cachePath_ + DIR_SEPARATOR_STR + "domains", 0700);
         auto pathV4 = this_->cachePath_ + DIR_SEPARATOR_STR + "domains" + DIR_SEPARATOR_STR + "v4."
                       + server;
@@ -4668,9 +4677,8 @@ JamiAccount::cacheTurnServers()
                 // Cache value to avoid a delay when starting up Jami
                 std::ofstream turnV4File(pathV4);
                 turnV4File << turnV4.toString();
-            } else {
+            } else
                 fileutils::remove(pathV4, true);
-            }
             std::lock_guard<std::mutex> lk(this_->cachedTurnMutex_);
             // Update TURN
             this_->cacheTurnV4_ = std::make_unique<IpAddr>(std::move(turnV4));
@@ -4681,15 +4689,24 @@ JamiAccount::cacheTurnServers()
                 // Cache value to avoid a delay when starting up Jami
                 std::ofstream turnV6File(pathV6);
                 turnV6File << turnV6.toString();
-            } else {
+            } else
                 fileutils::remove(pathV6, true);
-            }
             std::lock_guard<std::mutex> lk(this_->cachedTurnMutex_);
             // Update TURN
             this_->cacheTurnV6_ = std::make_unique<IpAddr>(std::move(turnV6));
         }
         this_->isRefreshing_ = false;
-        JAMI_INFO("[Account %s] Cache refreshed for TURN resolution", this_->getAccountID().c_str());
+        if (!this_->cacheTurnV6_ && !this_->cacheTurnV4_) {
+            JAMI_WARN("[Account %s] Cache for TURN resolution failed.", this_->getAccountID().c_str());
+            Manager::instance().scheduleTaskIn([w]() {
+                if (auto shared = w.lock())
+                    shared->cacheTurnServers();
+            }, this_->turnRefreshDelay_);
+            this_->turnRefreshDelay_ *= 2;
+        } else {
+            JAMI_INFO("[Account %s] Cache refreshed for TURN resolution", this_->getAccountID().c_str());
+            this_->turnRefreshDelay_ = std::chrono::seconds(10);
+        }
     });
 }
 
