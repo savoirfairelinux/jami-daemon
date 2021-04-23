@@ -836,6 +836,8 @@ private:
      */
     void cacheTurnServers();
 
+    std::chrono::duration<int> turnRefreshDelay_ {std::chrono::seconds(10)};
+
     std::set<std::shared_ptr<dht::http::Request>> requests_;
 
     std::mutex sipConnsMtx_ {};
