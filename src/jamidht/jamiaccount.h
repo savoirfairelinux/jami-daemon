@@ -322,6 +322,9 @@ public:
                              const std::map<std::string, std::string>& payloads) override;
     void sendInstantMessage(const std::string& convId,
                             const std::map<std::string, std::string>& msg) override;
+    void sendSIPMessageToDevice(const std::string& to,
+                                const DeviceId& deviceId,
+                                const std::map<std::string, std::string>& payloads);
     void onIsComposing(const std::string& conversationId,
                        const std::string& peer,
                        bool isWriting) override;
@@ -480,11 +483,14 @@ public:
     }
 
     void addGitSocket(const std::string& deviceId,
+                      const std::string& member,
                       const std::string& conversationId,
                       const std::shared_ptr<ChannelSocket>& socket)
     {
         auto& deviceSockets = gitSocketList_[deviceId];
         deviceSockets[conversationId] = socket;
+
+        onGitSocketConnected(conversationId, member, deviceId);
     }
 
     void removeGitSocket(const std::string& deviceId, const std::string& conversationId)
@@ -592,7 +598,9 @@ public:
      * @param deviceId
      * @param convId
      */
-    void cloneConversation(const std::string& deviceId, const std::string& convId);
+    void cloneConversation(const std::string& deviceId,
+                           const std::string& peer,
+                           const std::string& convId);
 
     // File transfer
     DRing::DataTransferId sendFile(const std::string& to,
@@ -1048,6 +1056,13 @@ private:
      * @return the conversation id if found else empty
      */
     std::string getOneToOneConversation(const std::string& uri) const;
+
+    /**
+     * Inform the account that a new git socket is connected
+     */
+    void onGitSocketConnected(const std::string& conversationId,
+                              const std::string& member,
+                              const std::string& deviceId);
 
     //// File transfer
     std::shared_ptr<TransferManager> nonSwarmTransferManager_;

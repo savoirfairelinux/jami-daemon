@@ -2700,6 +2700,7 @@ JamiAccount::doRegister_()
                                                     if (!shared)
                                                         return;
                                                     shared->cloneConversation(dev.toString(),
+                                                                              member,
                                                                               convId);
                                                 });
                                     },
@@ -3703,6 +3704,67 @@ JamiAccount::sendTextMessage(const std::string& to,
 }
 
 void
+JamiAccount::sendSIPMessageToDevice(const std::string& to,
+                                    const DeviceId& deviceId,
+                                    const std::map<std::string, std::string>& payloads)
+{
+    std::lock_guard<std::mutex> lk(sipConnsMtx_);
+    sip_utils::register_thread();
+
+    for (auto it = sipConns_.begin(); it != sipConns_.end();) {
+        auto& [key, value] = *it;
+        if (key.first == to && key.second != deviceId) {
+            ++it;
+            continue;
+        }
+        auto& conn = value.back();
+        auto& channel = conn.channel;
+
+        // Set input token into callback
+        std::unique_ptr<TextMessageCtx> ctx {std::make_unique<TextMessageCtx>()};
+        ctx->acc = weak();
+        ctx->to = to;
+        ctx->deviceId = key.second;
+        ctx->channel = channel;
+
+        try {
+            auto res = sendSIPMessage(
+                conn, to, ctx.release(), {}, payloads, [](void* token, pjsip_event* event) {
+                    std::unique_ptr<TextMessageCtx> c {(TextMessageCtx*) token};
+                    auto code = event->body.tsx_state.tsx->status_code;
+                    auto acc = c->acc.lock();
+                    if (not acc)
+                        return;
+
+                    if (code == PJSIP_SC_OK) {
+                        std::unique_lock<std::mutex> l(c->confirmation->lock);
+                        c->confirmation->replied = true;
+                        l.unlock();
+                        if (!c->onlyConnected)
+                            acc->messageEngine_.onMessageSent(c->to, c->id, true);
+                    } else {
+                        JAMI_WARN("Timeout when send a message, close current connection");
+                        acc->shutdownSIPConnection(c->channel, c->to, c->deviceId);
+                    }
+                });
+            if (!res) {
+                ++it;
+                continue;
+            }
+            break;
+        } catch (const std::runtime_error& ex) {
+            JAMI_WARN("%s", ex.what());
+            ++it;
+            // Remove connection in incorrect state
+            shutdownSIPConnection(channel, to, key.second);
+            continue;
+        }
+
+        ++it;
+    }
+}
+
+void
 JamiAccount::onIsComposing(const std::string& conversationId,
                            const std::string& peer,
                            bool isWriting)
@@ -4003,13 +4065,13 @@ JamiAccount::acceptConversationRequest(const std::string& conversationId)
         JAMI_WARN("Invalid member detected: %s", request->from.c_str());
         return;
     }
-    forEachDevice(memberHash, [this, request = *request](const dht::InfoHash& dev) {
+    forEachDevice(memberHash, [this, request = *request, memberHash](const dht::InfoHash& dev) {
         if (dev == dht()->getId())
             return;
         connectionManager().connectDevice(
             dev,
             "git://" + dev.toString() + "/" + request.conversationId,
-            [this, request](std::shared_ptr<ChannelSocket> socket, const DeviceId& dev) {
+            [this, request, memberHash](std::shared_ptr<ChannelSocket> socket, const DeviceId& dev) {
                 if (socket) {
                     std::unique_lock<std::mutex> lk(pendingConversationsFetchMtx_);
                     auto& pending = pendingConversationsFetch_[request.conversationId];
@@ -4018,7 +4080,10 @@ JamiAccount::acceptConversationRequest(const std::string& conversationId)
                         pending.deviceId = dev.toString();
                         lk.unlock();
                         // Save the git socket
-                        addGitSocket(dev.toString(), request.conversationId, socket);
+                        addGitSocket(dev.toString(),
+                                     memberHash.toString(),
+                                     request.conversationId,
+                                     socket);
                     } else {
                         lk.unlock();
                         socket->shutdown();
@@ -4615,50 +4680,52 @@ JamiAccount::fetchNewCommits(const std::string& peer,
             connectionManager_->connectDevice(
                 DeviceId(deviceId),
                 "git://" + deviceId + "/" + conversationId,
-                [this, conversationId, commitId](std::shared_ptr<ChannelSocket> socket,
-                                                 const DeviceId& deviceId) {
-                    dht::ThreadPool::io().run(
-                        [w = weak(), conversationId, socket = std::move(socket), deviceId, commitId] {
-                            auto shared = w.lock();
-                            if (!shared)
-                                return;
-                            std::unique_lock<std::mutex> lk(shared->conversationsMtx_);
-                            auto conversation = shared->conversations_.find(conversationId);
-                            if (!conversation->second)
-                                return;
-                            if (socket) {
-                                shared->addGitSocket(deviceId.toString(), conversationId, socket);
+                [this, conversationId, commitId, peer](std::shared_ptr<ChannelSocket> socket,
+                                                       const DeviceId& deviceId) {
+                    dht::ThreadPool::io().run([w = weak(),
+                                               conversationId,
+                                               socket = std::move(socket),
+                                               deviceId,
+                                               commitId,
+                                               peer] {
+                        auto shared = w.lock();
+                        if (!shared)
+                            return;
+                        std::unique_lock<std::mutex> lk(shared->conversationsMtx_);
+                        auto conversation = shared->conversations_.find(conversationId);
+                        if (!conversation->second)
+                            return;
+                        if (socket) {
+                            shared->addGitSocket(deviceId.toString(), peer, conversationId, socket);
 
-                                conversation->second->pull(
-                                    deviceId.toString(),
-                                    [deviceId, conversationId, w](bool ok) {
-                                        auto shared = w.lock();
-                                        if (!shared)
-                                            return;
-                                        if (!ok) {
-                                            JAMI_WARN("[Account %s] Could not fetch new commit "
-                                                      "from %s for %s",
-                                                      shared->getAccountID().c_str(),
-                                                      deviceId.to_c_str(),
-                                                      conversationId.c_str());
-                                            shared->removeGitSocket(deviceId.toString(),
-                                                                    conversationId);
-                                        }
-                                    },
-                                    commitId);
-                            } else {
-                                JAMI_ERR("[Account %s] Couldn't open a new git channel with %s for "
-                                         "conversation %s",
-                                         shared->getAccountID().c_str(),
-                                         deviceId.to_c_str(),
-                                         conversationId.c_str());
-                            }
-                            {
-                                std::lock_guard<std::mutex> lk(
-                                    shared->pendingConversationsFetchMtx_);
-                                shared->pendingConversationsFetch_.erase(conversationId);
-                            }
-                        });
+                            conversation->second->pull(
+                                deviceId.toString(),
+                                [deviceId, conversationId, w](bool ok) {
+                                    auto shared = w.lock();
+                                    if (!shared)
+                                        return;
+                                    if (!ok) {
+                                        JAMI_WARN("[Account %s] Could not fetch new commit "
+                                                  "from %s for %s",
+                                                  shared->getAccountID().c_str(),
+                                                  deviceId.to_c_str(),
+                                                  conversationId.c_str());
+                                        shared->removeGitSocket(deviceId.toString(), conversationId);
+                                    }
+                                },
+                                commitId);
+                        } else {
+                            JAMI_ERR("[Account %s] Couldn't open a new git channel with %s for "
+                                     "conversation %s",
+                                     shared->getAccountID().c_str(),
+                                     deviceId.to_c_str(),
+                                     conversationId.c_str());
+                        }
+                        {
+                            std::lock_guard<std::mutex> lk(shared->pendingConversationsFetchMtx_);
+                            shared->pendingConversationsFetch_.erase(conversationId);
+                        }
+                    });
                 });
         }
     } else {
@@ -4676,7 +4743,7 @@ JamiAccount::fetchNewCommits(const std::string& peer,
             return;
         for (const auto& ci : infos->conversations) {
             if (ci.id == conversationId) {
-                cloneConversation(deviceId, conversationId);
+                cloneConversation(deviceId, peer, conversationId);
                 return;
             }
         }
@@ -5184,7 +5251,7 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
         }
     });
 
-    socket->setOnRecv([this, deviceId](const uint8_t* buf, size_t len) {
+    socket->setOnRecv([this, deviceId, peerId](const uint8_t* buf, size_t len) {
         if (!buf)
             return len;
 
@@ -5215,7 +5282,7 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
                         }
                     }
                     if (!wasRemoved)
-                        cloneConversation(deviceId, convId);
+                        cloneConversation(deviceId, peerId, convId);
                 } else {
                     {
                         std::lock_guard<std::mutex> lk(conversationsMtx_);
@@ -5539,7 +5606,9 @@ JamiAccount::monitor() const
 }
 
 void
-JamiAccount::cloneConversation(const std::string& deviceId, const std::string& convId)
+JamiAccount::cloneConversation(const std::string& deviceId,
+                               const std::string& peer,
+                               const std::string& convId)
 {
     if (!isConversation(convId)) {
         {
@@ -5560,8 +5629,8 @@ JamiAccount::cloneConversation(const std::string& deviceId, const std::string& c
         connectionManager_
             ->connectDevice(DeviceId(deviceId),
                             "git://" + deviceId + "/" + convId,
-                            [this, convId](std::shared_ptr<ChannelSocket> socket,
-                                           const DeviceId& deviceId) {
+                            [this, convId, peer](std::shared_ptr<ChannelSocket> socket,
+                                                 const DeviceId& deviceId) {
                                 if (socket) {
                                     std::unique_lock<std::mutex> lk(pendingConversationsFetchMtx_);
                                     auto& pending = pendingConversationsFetch_[convId];
@@ -5570,7 +5639,7 @@ JamiAccount::cloneConversation(const std::string& deviceId, const std::string& c
                                         pending.deviceId = deviceId.toString();
                                         lk.unlock();
                                         // Save the git socket
-                                        addGitSocket(deviceId.toString(), convId, socket);
+                                        addGitSocket(deviceId.toString(), peer, convId, socket);
                                         checkConversationsEvents();
                                     } else {
                                         lk.unlock();
@@ -5732,10 +5801,30 @@ JamiAccount::downloadFile(const std::string& conversationUri,
             dht::ThreadPool().io().run([w = std::move(w),
                                         conversationId = std::move(conversationId),
                                         msg = std::move(msg)] {
-                if (auto shared = w.lock())
+                if (auto shared = w.lock()) {
                     shared->sendInstantMessage(conversationId, {{MIME_TYPE_ASK_TRANSFER, msg}});
+                }
             });
         }));
+}
+
+void
+JamiAccount::onGitSocketConnected(const std::string& conversationId,
+                                  const std::string& member,
+                                  const std::string& deviceId)
+{
+    // TODO move into conversation
+    std::unique_lock<std::mutex> lk(conversationsMtx_);
+    auto it = conversations_.find(conversationId);
+    if (it == conversations_.end())
+        return;
+
+    auto requests = it->second->dataTransfer()->waitingRequests();
+    lk.unlock();
+    for (const auto& wr : requests) {
+        // downloadFile(conversationId, wr.interactionId, member, deviceId, 0, 0);
+        // TODO
+    }
 }
 
 } // namespace jami

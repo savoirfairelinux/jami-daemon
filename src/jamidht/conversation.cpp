@@ -926,7 +926,7 @@ Conversation::downloadFile(const std::string& interactionId,
     DRing::DataTransferId tid;
     std::from_chars(tid_str.data(), tid_str.data() + tid_str.size(), tid);
     std::from_chars(size_str.data(), size_str.data() + size_str.size(), totalSize);
-    dataTransfer()->waitForTransfer(tid, sha3sum, path, totalSize);
+    dataTransfer()->waitForTransfer(tid, interactionId, sha3sum, path, totalSize);
     if (cb)
         cb(true);
     return tid;
