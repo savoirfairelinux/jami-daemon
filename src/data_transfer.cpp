@@ -698,11 +698,6 @@ IncomingFileTransfer::write(std::string_view buffer)
 
 //==============================================================================
 
-struct WaitingRequest
-{
-    std::string sha3sum;
-    std::string path;
-};
 
 class TransferManager::Impl
 {
@@ -711,11 +706,34 @@ public:
         : accountId_(accountId)
         , to_(to)
         , isConversation_(isConversation)
-    {}
+    {
+        waitingPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_
+                           + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + to_
+                           + DIR_SEPARATOR_STR + "waiting";
+        loadWaiting();
+    }
+
+    void loadWaiting() {
+        try {
+            // read file
+            auto file = fileutils::loadFile(waitingPath_);
+            // load values
+            msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
+            std::lock_guard<std::mutex> lk {mapMutex_};
+            oh.get().convert(waitingIds_);
+        } catch (const std::exception& e) {
+            return;
+        }
+    }
+    void saveWaiting() {
+        std::ofstream file(waitingPath_, std::ios::trunc | std::ios::binary);
+        msgpack::pack(file, waitingIds_);
+    }
 
     std::string accountId_ {};
     std::string to_ {};
     bool isConversation_ {true};
+    std::string waitingPath_ {};
 
     std::mutex mapMutex_ {};
     std::map<DRing::DataTransferId, std::shared_ptr<OutgoingFileTransfer>> oMap_ {};
@@ -979,11 +997,17 @@ TransferManager::onIncomingFileRequest(const DRing::DataTransferInfo& info,
 
 void
 TransferManager::waitForTransfer(const DRing::DataTransferId& id,
+                                 const std::string& interactionId,
                                  const std::string& sha3sum,
                                  const std::string& path)
 {
     std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
-    pimpl_->waitingIds_[id] = {sha3sum, path};
+    auto itW = pimpl_->waitingIds_.find(id);
+    if (itW != pimpl_->waitingIds_.end())
+        return;
+    pimpl_->waitingIds_[id] = {interactionId, sha3sum, path};
+    if (pimpl_->isConversation_)
+        pimpl_->saveWaiting();
 }
 
 bool
@@ -1047,6 +1071,7 @@ TransferManager::handleChannel(const DRing::DataTransferId& id,
                 JAMI_INFO() << "New file received: " << it->second.path;
                 correct = true;
                 pimpl_->waitingIds_.erase(it);
+                pimpl_->saveWaiting();
             } else {
                 JAMI_WARN() << "Remove file, invalid sha3sum detected for " << it->second.path;
                 fileutils::remove(it->second.path, true);
@@ -1066,5 +1091,19 @@ TransferManager::handleChannel(const DRing::DataTransferId& id,
     emitSignal<DRing::DataTransferSignal::DataTransferEvent>(
         pimpl_->accountId_, pimpl_->to_, id, uint32_t(DRing::DataTransferEventCode::ongoing));
 }
+
+std::vector<WaitingRequest>
+TransferManager::waitingRequests() const
+{
+    std::vector<WaitingRequest> res;
+    std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
+    for (const auto& [id, req]: pimpl_->waitingIds_) {
+        auto itC = pimpl_->incomingChannels_.find(id);
+        if (itC == pimpl_->incomingChannels_.end())
+            res.emplace_back(req);
+    }
+    return res;
+}
+
 
 } // namespace jami
