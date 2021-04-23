@@ -712,12 +712,12 @@ Conversation::mergeHistory(const std::string& uri)
 }
 
 void
-Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
+Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commitId)
 {
     std::lock_guard<std::mutex> lk(pimpl_->pullcbsMtx_);
     auto isInProgress = not pimpl_->pullcbs_.empty();
     pimpl_->pullcbs_.emplace_back(
-        std::make_tuple<std::string, std::string, OnPullCb>(std::string(uri),
+        std::make_tuple<std::string, std::string, OnPullCb>(std::string(deviceId),
                                                             std::move(commitId),
                                                             std::move(cb)));
     if (isInProgress)
@@ -787,6 +787,18 @@ Conversation::pull(const std::string& uri, OnPullCb&& cb, std::string commitId)
                 cb(true);
         }
     });
+}
+
+void
+Conversation::sync(const std::string& member,
+                   const std::string& deviceId,
+                   OnPullCb&& cb,
+                   std::string commitId)
+{
+    pull(deviceId, std::move(cb), commitId);
+    // For waiting request, downloadFile
+    for (const auto& wr : dataTransfer()->waitingRequests())
+        downloadFile(wr.interactionId, wr.path, member, deviceId);
 }
 
 std::map<std::string, std::string>
@@ -909,14 +921,15 @@ Conversation::onIncomingFileTransfer(const DRing::DataTransferId& id,
 DRing::DataTransferId
 Conversation::downloadFile(const std::string& interactionId,
                            const std::string& path,
-                           OnWaitingFileCb cb)
+                           const std::string& member,
+                           const std::string& deviceId,
+                           std::size_t start,
+                           std::size_t end)
 {
     auto commit = getCommit(interactionId);
     if (commit == std::nullopt || commit->find("type") == commit->end()
         || commit->find("sha3sum") == commit->end() || commit->find("tid") == commit->end()
         || commit->at("type") != "application/data-transfer+json") {
-        if (cb)
-            cb(false);
         return {};
     }
     auto sha3sum = commit->at("sha3sum");
@@ -926,9 +939,29 @@ Conversation::downloadFile(const std::string& interactionId,
     DRing::DataTransferId tid;
     std::from_chars(tid_str.data(), tid_str.data() + tid_str.size(), tid);
     std::from_chars(size_str.data(), size_str.data() + size_str.size(), totalSize);
-    dataTransfer()->waitForTransfer(tid, sha3sum, path, totalSize);
-    if (cb)
-        cb(true);
+    dataTransfer()->waitForTransfer(tid, interactionId, sha3sum, path, totalSize);
+
+    if (auto account = pimpl_->account_.lock()) {
+        Json::Value askTransferValue;
+        askTransferValue["conversation"] = id();
+        askTransferValue["interaction"] = interactionId;
+        askTransferValue["deviceId"] = std::string(account->currentDeviceId());
+        askTransferValue["start"] = std::to_string(start);
+        askTransferValue["end"] = std::to_string(end);
+        Json::StreamWriterBuilder builder;
+        std::map<std::string, std::string> data = {
+            {MIME_TYPE_ASK_TRANSFER, Json::writeString(builder, askTransferValue)}};
+        // Be sure to not lock conversation
+        dht::ThreadPool().io().run(
+            [w = pimpl_->account_, conversationId = id(), data = std::move(data), member, deviceId] {
+                if (auto shared = w.lock()) {
+                    if (!member.empty() && !deviceId.empty())
+                        shared->sendSIPMessageToDevice(member, DeviceId(deviceId), data);
+                    else
+                        shared->sendInstantMessage(conversationId, data);
+                }
+            });
+    }
     return tid;
 }
 
@@ -954,6 +987,5 @@ Conversation::info(const std::string& interactionId, DRing::DataTransferInfo& in
     std::from_chars(totalSize_str.data(), totalSize_str.data() + totalSize_str.size(), info.totalSize);
     dataTransfer()->info(tid, info);
 }
-
 
 } // namespace jami

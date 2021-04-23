@@ -27,6 +27,7 @@
 #include <memory>
 #include <string>
 #include <fstream>
+#include <optional>
 
 namespace jami {
 
@@ -38,6 +39,15 @@ struct IncomingFileInfo
 {
     DRing::DataTransferId id;
     std::shared_ptr<Stream> stream;
+};
+
+struct WaitingRequest
+{
+    std::string interactionId;
+    std::string sha3sum;
+    std::string path;
+    std::size_t totalSize;
+    MSGPACK_DEFINE(interactionId, sha3sum, path, totalSize)
 };
 
 typedef std::function<void(const std::string&)> InternalCompletionCb;
@@ -182,11 +192,13 @@ public:
     /**
      * Inform the transfer manager that a transfer is waited (and will be automatically accepted)
      * @param id        of the transfer
+     * @param interactionId  of the transfer in the confirmation
      * @param sha3sum   attended sha3sum
      * @param path      where the file will be downloaded
      * @param total     total size of the file
      */
     void waitForTransfer(const DRing::DataTransferId& id,
+                         const std::string& interactionId,
                          const std::string& sha3sum,
                          const std::string& path,
                          std::size_t total);
@@ -211,6 +223,12 @@ public:
      * @param id
      */
     std::string path(const DRing::DataTransferId& id) const;
+
+    /**
+     * Retrieve waiting files
+     * @return waiting list
+     */
+    std::vector<WaitingRequest> waitingRequests() const;
 
 private:
     std::weak_ptr<TransferManager> weak()
