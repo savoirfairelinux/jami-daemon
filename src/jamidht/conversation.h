@@ -81,7 +81,6 @@ using OnPullCb = std::function<void(bool fetchOk)>;
 using OnLoadMessages
     = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
-using OnWaitingFileCb = std::function<void(bool ok)>;
 
 class Conversation : public std::enable_shared_from_this<Conversation>
 {
@@ -182,11 +181,11 @@ public:
 
     /**
      * Fetch and merge from peer
-     * @param uri       Peer
+     * @param deviceId  Peer device
      * @param cb        On pulled callback
      * @param commitId  Commit id that triggered this fetch
      */
-    void pull(const std::string& uri, OnPullCb&& cb, std::string commitId = "");
+    void pull(const std::string& deviceId, OnPullCb&& cb, std::string commitId = "");
 
     /**
      * Generate an invitation to send to new contacts
@@ -254,7 +253,14 @@ public:
                                 const std::shared_ptr<ChannelSocket>& channel);
     DRing::DataTransferId downloadFile(const std::string& interactionId,
                                        const std::string& path,
-                                       OnWaitingFileCb cb);
+                                       const std::string& member = "",
+                                       const std::string& deviceId = "",
+                                       std::size_t start = 0,
+                                       std::size_t end = 0);
+    void sync(const std::string& member,
+              const std::string& deviceId,
+              OnPullCb&& cb,
+              std::string commitId = "");
 
 private:
     std::shared_ptr<Conversation> shared()
