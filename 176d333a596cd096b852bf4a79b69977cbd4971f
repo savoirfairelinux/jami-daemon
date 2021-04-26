@@ -16,6 +16,29 @@
       "revId": "176d333a596cd096b852bf4a79b69977cbd4971f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b7680c74_2f252bbe",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 5957,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-26T21:09:02Z",
+      "side": 1,
+      "message": "why is it related to Git ? Should be onPeerConnected ?",
+      "range": {
+        "startLine": 5957,
+        "startChar": 13,
+        "endLine": 5957,
+        "endChar": 33
+      },
+      "revId": "176d333a596cd096b852bf4a79b69977cbd4971f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
