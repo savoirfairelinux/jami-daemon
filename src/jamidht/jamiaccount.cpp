@@ -2298,16 +2298,22 @@ JamiAccount::doRegister_()
             return ret;
         };
 
-        auto currentDhtStatus = std::make_shared<dht::NodeStatus>(dht::NodeStatus::Disconnected);
-        context.statusChangedCallback = [this, currentDhtStatus](dht::NodeStatus s4,
+        context.statusChangedCallback = [this](dht::NodeStatus s4,
                                                                  dht::NodeStatus s6) {
             JAMI_DBG("[Account %s] Dht status : IPv4 %s; IPv6 %s",
                      getAccountID().c_str(),
                      dhtStatusStr(s4),
                      dhtStatusStr(s6));
             RegistrationState state;
+            auto prevStatus = std::max(currentDhtStatus_.first, currentDhtStatus_.second);
             auto newStatus = std::max(s4, s6);
-            if (newStatus == *currentDhtStatus)
+            if ((s4 != currentDhtStatus_.first && s4 == dht::NodeStatus::Connected)
+                || (s6 != currentDhtStatus_.second && s6 == dht::NodeStatus::Connected)) {
+                // Store ip whatever status changes.
+                storeActiveIpAddress();
+            }
+            currentDhtStatus_ = {s4, s6};
+            if (prevStatus == newStatus)
                 return;
             switch (newStatus) {
             case dht::NodeStatus::Connecting:
@@ -2317,7 +2323,6 @@ JamiAccount::doRegister_()
             case dht::NodeStatus::Connected:
                 JAMI_WARN("[Account %s] connected to the DHT network", getAccountID().c_str());
                 state = RegistrationState::REGISTERED;
-                storeActiveIpAddress();
                 cacheTurnServers();
                 break;
             case dht::NodeStatus::Disconnected:
@@ -2328,7 +2333,6 @@ JamiAccount::doRegister_()
                 state = RegistrationState::ERROR_GENERIC;
                 break;
             }
-            *currentDhtStatus = newStatus;
             setRegistrationState(state);
         };
         context.identityAnnouncedCb = [this](bool ok) {
