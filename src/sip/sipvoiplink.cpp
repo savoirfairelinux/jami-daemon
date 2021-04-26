@@ -90,10 +90,15 @@ static void transaction_state_changed_cb(pjsip_inv_session* inv,
                                          pjsip_transaction* tsx,
                                          pjsip_event* e);
 
-static std::shared_ptr<SIPCall> getCallFromInvite(pjsip_inv_session* inv);
 #ifdef DEBUG_SIP_REQUEST_MSG
 static void processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* e);
 #endif
+
+static std::shared_ptr<SipEventsHandler>
+getSipEventsHandler(pjsip_inv_session* inv)
+{
+    return Manager::instance().sipVoIPLink().getEventsHandler(inv);
+}
 
 static void
 handleIncomingOptions(pjsip_rx_data* rdata)
@@ -154,7 +159,7 @@ transaction_response_cb(pjsip_rx_data* rdata)
     return PJ_FALSE;
 }
 
-static pj_status_t
+pj_status_t
 try_respond_stateless(pjsip_endpoint* endpt,
                       pjsip_rx_data* rdata,
                       int st_code,
@@ -234,7 +239,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
         peerNumber = sip_utils::stripSipUriPrefix(std::string_view(tmp, length));
     }
 
-    auto transport = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(
+    auto transport = Manager::instance().sipVoIPLink().sipTransportBroker_->addTransport(
         rdata->tp_info.transport);
 
     std::shared_ptr<SIPAccountBase> account;
@@ -365,189 +370,12 @@ transaction_request_cb(pjsip_rx_data* rdata)
     }
 
     auto const& remoteMediaList = Sdp::getMediaAttributeListFromSdp(r_sdp);
-    auto call = account->newIncomingCall(std::string(remote_user), remoteMediaList, transport);
-
-    if (!call) {
-        return PJ_FALSE;
-    }
-    call->setTransport(transport);
-
-    // JAMI_DBG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s
-    // peerNumber: %s" , viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(),
-    // addrSdp.toString().c_str(), peerNumber.c_str());
-
-    // FIXME : for now, use the same address family as the SIP transport
-    auto family = pjsip_transport_type_get_af(
-        pjsip_transport_get_type_from_flag(transport->get()->flag));
-
-    IpAddr addrSdp;
-    if (account->getUPnPActive()) {
-        /* use UPnP addr, or published addr if its set */
-        addrSdp = account->getPublishedSameasLocal() ? account->getUPnPIpAddress()
-                                                     : account->getPublishedIpAddress();
-    } else {
-        addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
-                      ? account->getPublishedIpAddress()
-                      : ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
-    }
-
-    /* fallback on local address */
-    if (not addrSdp)
-        addrSdp = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
-
-    // Try to obtain display name from From: header first, fallback on Contact:
-    auto peerDisplayName = sip_utils::parseDisplayName(rdata->msg_info.from);
-    if (peerDisplayName.empty()) {
-        if (auto hdr = static_cast<const pjsip_contact_hdr*>(
-                pjsip_msg_find_hdr(rdata->msg_info.msg, PJSIP_H_CONTACT, nullptr))) {
-            peerDisplayName = sip_utils::parseDisplayName(hdr);
-        }
-    }
-
-    call->setPeerNumber(peerNumber);
-    call->setPeerUri(account->getToUri(peerNumber));
-    call->setPeerDisplayName(peerDisplayName);
-    call->setState(Call::ConnectionState::PROGRESSING);
-    call->getSDP().setPublishedIP(addrSdp);
-
-    if (account->isStunEnabled())
-        call->updateSDPFromSTUN();
-
-    {
-        auto hasVideo = MediaAttribute::hasMediaType(remoteMediaList, MediaType::MEDIA_VIDEO);
-        // TODO.
-        // This list should be built using all the medias in the incoming offer.
-        // The local media should be set temporarily inactive (and possibly unconfigured) until
-        // we receive accept(mediaList) from the client.
-        auto mediaList = account->createDefaultMediaList(account->isVideoEnabled() and hasVideo);
-        call->getSDP().setReceivedOffer(r_sdp);
-        call->getSDP().processIncomingOffer(mediaList);
-    }
-    if (r_sdp)
-        call->setupLocalIce();
-
-    pjsip_dialog* dialog = nullptr;
-    if (pjsip_dlg_create_uas_and_inc_lock(pjsip_ua_instance(), rdata, nullptr, &dialog)
-        != PJ_SUCCESS) {
-        JAMI_ERR("Could not create uas");
-        call.reset();
-        try_respond_stateless(endpt_,
-                              rdata,
-                              PJSIP_SC_INTERNAL_SERVER_ERROR,
-                              nullptr,
-                              nullptr,
-                              nullptr);
-        return PJ_FALSE;
-    }
-
-    pjsip_tpselector tp_sel = SIPVoIPLink::getTransportSelector(transport->get());
-    if (!dialog or pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
-        JAMI_ERR("Could not set transport for dialog");
-        if (dialog)
-            pjsip_dlg_dec_lock(dialog);
-        return PJ_FALSE;
-    }
-
-    pjsip_inv_session* inv = nullptr;
-    pjsip_inv_create_uas(dialog,
-                         rdata,
-                         call->getSDP().getLocalSdpSession(),
-                         PJSIP_INV_SUPPORT_ICE,
-                         &inv);
-    if (!inv) {
-        JAMI_ERR("Call invite is not initialized");
-        pjsip_dlg_dec_lock(dialog);
-        return PJ_FALSE;
-    }
-
-    // dialog is now owned by invite
-    pjsip_dlg_dec_lock(dialog);
-
-    inv->mod_data[mod_ua_.id] = call.get();
-    // NOTE: The invitation counter is managed by pjsip. If that counter goes down to zero
-    // the invite will be destroyed, and the unique_ptr will point freed datas.
-    // To avoid this, we increment the ref counter and let our unique_ptr manage
-    // when the invite will be freed
-    pjsip_inv_add_ref(inv);
-    call->setInviteSession(inv);
-
-    // Check whether Replaces header is present in the request and process accordingly.
-    pjsip_dialog* replaced_dlg;
-    pjsip_tx_data* response;
-
-    if (pjsip_replaces_verify_request(rdata, &replaced_dlg, PJ_FALSE, &response) != PJ_SUCCESS) {
-        JAMI_ERR("Something wrong with Replaces request.");
-        call.reset();
-
-        // Something wrong with the Replaces header.
-        if (response) {
-            pjsip_response_addr res_addr;
-            pjsip_get_response_addr(response->pool, rdata, &res_addr);
-            pjsip_endpt_send_response(endpt_, &res_addr, response, NULL, NULL);
-        } else {
-            try_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, NULL, NULL, NULL);
-        }
-
-        return PJ_FALSE;
-    }
-
-    // Check if call has been transferred
-    pjsip_tx_data* tdata = nullptr;
-
-    if (pjsip_inv_initial_answer(call->inviteSession_.get(),
-                                 rdata,
-                                 PJSIP_SC_TRYING,
-                                 NULL,
-                                 NULL,
-                                 &tdata)
-        != PJ_SUCCESS) {
-        JAMI_ERR("Could not create answer TRYING");
-        return PJ_FALSE;
-    }
-
-    // Add user-agent header
-    sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
-
-    if (pjsip_inv_send_msg(call->inviteSession_.get(), tdata) != PJ_SUCCESS) {
-        JAMI_ERR("Could not send msg TRYING");
-        return PJ_FALSE;
-    }
-
-    call->setState(Call::ConnectionState::TRYING);
-
-    if (pjsip_inv_answer(call->inviteSession_.get(), PJSIP_SC_RINGING, NULL, NULL, &tdata)
-        != PJ_SUCCESS) {
-        JAMI_ERR("Could not create answer RINGING");
-        return PJ_FALSE;
-    }
-
-    // contactStr must stay in scope as long as tdata
-    const pj_str_t contactStr(account->getContactHeader(transport->get()));
-    sip_utils::addContactHeader(&contactStr, tdata);
-
-    if (pjsip_inv_send_msg(call->inviteSession_.get(), tdata) != PJ_SUCCESS) {
-        JAMI_ERR("Could not send msg RINGING");
-        return PJ_FALSE;
-    }
-
-    call->setState(Call::ConnectionState::RINGING);
-
-    Manager::instance().incomingCall(*call, account->getAccountID());
-
-    if (replaced_dlg) {
-        // Get the INVITE session associated with the replaced dialog.
-        auto replaced_inv = pjsip_dlg_get_inv_session(replaced_dlg);
-
-        // Disconnect the "replaced" INVITE session.
-        if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, nullptr, &tdata) == PJ_SUCCESS
-            && tdata) {
-            pjsip_inv_send_msg(replaced_inv, tdata);
-        }
-
-        // Close call at application level
-        if (auto replacedCall = getCallFromInvite(replaced_inv))
-            replacedCall->hangup(PJSIP_SC_OK);
-    }
+    // Use SipEventsHandler instead of SIPCall. We dont want to give
+    // full access to SIPCall from this file to prevent misuse.
+    std::shared_ptr<SipEventsHandler> call = account->newIncomingCall(std::string(remote_user),
+                                                                      remoteMediaList,
+                                                                      transport);
+    call->onReceivedCall(peerNumber, r_sdp, rdata, transport);
 
     return PJ_FALSE;
 }
@@ -557,7 +385,7 @@ tp_state_callback(pjsip_transport* tp,
                   pjsip_transport_state state,
                   const pjsip_transport_state_info* info)
 {
-    if (auto& broker = Manager::instance().sipVoIPLink().sipTransportBroker)
+    if (auto& broker = Manager::instance().sipVoIPLink().sipTransportBroker_)
         broker->transportStateChanged(tp, state, info);
     else
         JAMI_ERR("SIPVoIPLink with invalid SipTransportBroker");
@@ -644,7 +472,7 @@ SIPVoIPLink::SIPVoIPLink()
         }
     }
 
-    sipTransportBroker.reset(new SipTransportBroker(endpt_));
+    sipTransportBroker_.reset(new SipTransportBroker(endpt_));
 
     auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), tp_state_callback);
     if (status != PJ_SUCCESS)
@@ -732,9 +560,9 @@ SIPVoIPLink::shutdown()
         JAMI_ERR("%zu SIP calls remains!",
                  Manager::instance().callFactory.callCount(Call::LinkType::SIP));
 
-    sipTransportBroker->shutdown();
+    sipTransportBroker_->shutdown();
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
-    sipTransportBroker.reset();
+    sipTransportBroker_.reset();
 
     running_ = false;
     sipThread_.join();
@@ -828,117 +656,19 @@ SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
 
-static std::shared_ptr<SIPCall>
-getCallFromInvite(pjsip_inv_session* inv)
-{
-    if (auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]))
-        return std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
-    return nullptr;
-}
-
 static void
 invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
 {
-    auto call = getCallFromInvite(inv);
-    if (not call)
-        return;
-
-    if (ev->type != PJSIP_EVENT_TSX_STATE and ev->type != PJSIP_EVENT_TX_MSG) {
-        JAMI_WARN("[call:%s] INVITE@%p state changed to %d (%s): unexpected event type %d",
-                  call->getCallId().c_str(),
-                  inv,
-                  inv->state,
-                  pjsip_inv_state_name(inv->state),
-                  ev->type);
-        return;
-    }
-
-    decltype(pjsip_transaction::status_code) status_code;
-
-    if (ev->type != PJSIP_EVENT_TX_MSG) {
-        const auto tsx = ev->body.tsx_state.tsx;
-        status_code = tsx ? tsx->status_code : PJSIP_SC_NOT_FOUND;
-        const pj_str_t* description = pjsip_get_status_text(status_code);
-
-        JAMI_DBG("[call:%s] INVITE@%p state changed to %d (%s): cause=%d, tsx@%p status %d (%.*s)",
-                 call->getCallId().c_str(),
-                 inv,
-                 inv->state,
-                 pjsip_inv_state_name(inv->state),
-                 inv->cause,
-                 tsx,
-                 status_code,
-                 (int) description->slen,
-                 description->ptr);
-    } else {
-        status_code = 0;
-        JAMI_DBG("[call:%s] INVITE@%p state changed to %d (%s): cause=%d (TX_MSG)",
-                 call->getCallId().c_str(),
-                 inv,
-                 inv->state,
-                 pjsip_inv_state_name(inv->state),
-                 inv->cause);
-    }
-
-    switch (inv->state) {
-    case PJSIP_INV_STATE_EARLY:
-        if (status_code == PJSIP_SC_RINGING)
-            call->onPeerRinging();
-        break;
-
-    case PJSIP_INV_STATE_CONFIRMED:
-        // After we sent or received a ACK - The connection is established
-        call->onAnswered();
-        break;
-
-    case PJSIP_INV_STATE_DISCONNECTED:
-        switch (inv->cause) {
-        // When a peer's device replies busy
-        case PJSIP_SC_BUSY_HERE:
-            call->onBusyHere();
-            break;
-        // When the peer manually refuse the call
-        case PJSIP_SC_DECLINE:
-        case PJSIP_SC_BUSY_EVERYWHERE:
-            if (inv->role != PJSIP_ROLE_UAC)
-                break;
-            // close call
-            call->onClosed();
-            break;
-        // The call terminates normally - BYE / CANCEL
-        case PJSIP_SC_OK:
-        case PJSIP_SC_REQUEST_TERMINATED:
-            call->onClosed();
-            break;
-
-        // Error/unhandled conditions
-        default:
-            call->onFailure(inv->cause);
-            break;
-        }
-        // Reset the invite here as it must not be used on
-        // a non existing link and removeCall can take time to be called
-        call->setInviteSession();
-        break;
-
-    default:
-        break;
+    if (auto call = getSipEventsHandler(inv)) {
+        call->onInviteSessionStateChanged(inv, ev);
     }
 }
 
 static pj_status_t
 reinvite_received_cb(pjsip_inv_session* inv, const pjmedia_sdp_session* offer, pjsip_rx_data* rdata)
 {
-    if (!offer)
-        return !PJ_SUCCESS;
-    if (auto call = getCallFromInvite(inv)) {
-        if (auto const& account = call->getAccount().lock()) {
-            if (account->isMultiStreamEnabled()) {
-                return call->onReceiveReinvite(offer, rdata);
-            } else {
-                return call->onReceiveOffer(offer, rdata);
-            }
-        }
+    if (auto call = getSipEventsHandler(inv)) {
+        return call->onReceiveReinvite(offer, rdata);
     }
 
     // Return success if there is no matching call. The re-invite
@@ -949,291 +679,28 @@ reinvite_received_cb(pjsip_inv_session* inv, const pjmedia_sdp_session* offer, p
 static void
 sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
 {
-    auto call = getCallFromInvite(inv);
-    if (not call)
-        return;
-
-    auto account = call->getSIPAccount();
-    if (not account) {
-        JAMI_ERR("No account detected");
-        return;
+    if (auto call = getSipEventsHandler(inv)) {
+        call->onSdpCreateOffer(inv, p_offer);
     }
-    auto family = pj_AF_INET();
-    // FIXME : for now, use the same address family as the SIP transport
-    if (auto dlg = inv->dlg) {
-        if (dlg->tp_sel.type == PJSIP_TPSELECTOR_TRANSPORT) {
-            if (auto tr = dlg->tp_sel.u.transport)
-                family = tr->local_addr.addr.sa_family;
-        } else if (dlg->tp_sel.type == PJSIP_TPSELECTOR_TRANSPORT) {
-            if (auto tr = dlg->tp_sel.u.listener)
-                family = tr->local_addr.addr.sa_family;
-        }
-    }
-    auto ifaceAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
-
-    IpAddr address;
-    if (account->getUPnPActive()) {
-        /* use UPnP addr, or published addr if its set */
-        address = account->getPublishedSameasLocal() ? account->getUPnPIpAddress()
-                                                     : account->getPublishedIpAddress();
-    } else {
-        address = account->getPublishedSameasLocal() ? ifaceAddr : account->getPublishedIpAddress();
-    }
-
-    /* fallback on local address */
-    if (not address)
-        address = ifaceAddr;
-
-    auto& sdp = call->getSDP();
-    sdp.setPublishedIP(address);
-
-    // This list should be provided by the client. Kept for backward compatibility.
-    auto mediaList = account->createDefaultMediaList(!call->isAudioOnly());
-
-    const bool created = sdp.createOffer(mediaList);
-
-    if (created)
-        *p_offer = sdp.getLocalSdpSession();
-}
-
-static const pjmedia_sdp_session*
-get_active_remote_sdp(pjsip_inv_session* inv)
-{
-    const pjmedia_sdp_session* sdp_session {};
-
-    if (pjmedia_sdp_neg_get_active_remote(inv->neg, &sdp_session) != PJ_SUCCESS) {
-        JAMI_ERR("Active remote not present");
-        return nullptr;
-    }
-
-    if (pjmedia_sdp_validate(sdp_session) != PJ_SUCCESS) {
-        JAMI_ERR("Invalid remote SDP session");
-        return nullptr;
-    }
-
-    return sdp_session;
-}
-
-static const pjmedia_sdp_session*
-get_active_local_sdp(pjsip_inv_session* inv)
-{
-    const pjmedia_sdp_session* sdp_session {};
-
-    if (pjmedia_sdp_neg_get_active_local(inv->neg, &sdp_session) != PJ_SUCCESS) {
-        JAMI_ERR("Active local not present");
-        return nullptr;
-    }
-
-    if (pjmedia_sdp_validate(sdp_session) != PJ_SUCCESS) {
-        JAMI_ERR("Invalid local SDP session");
-        return nullptr;
-    }
-
-    return sdp_session;
 }
 
 // This callback is called after SDP offer/answer session has completed.
 static void
 sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status)
 {
-    auto call = getCallFromInvite(inv);
-    if (not call)
-        return;
-
-    JAMI_DBG("[call:%s] INVITE@%p media update: status %d", call->getCallId().c_str(), inv, status);
-
-    if (status != PJ_SUCCESS) {
-        const int reason = inv->state != PJSIP_INV_STATE_NULL
-                                   and inv->state != PJSIP_INV_STATE_CONFIRMED
-                               ? PJSIP_SC_UNSUPPORTED_MEDIA_TYPE
-                               : 0;
-
-        JAMI_WARN("[call:%s] SDP offer failed, reason %d", call->getCallId().c_str(), reason);
-
-        call->hangup(reason);
-        return;
+    if (auto call = getSipEventsHandler(inv)) {
+        call->onSdpMediaUpdate(inv, status);
     }
-
-    // Fetch SDP data from request
-    const auto localSDP = get_active_local_sdp(inv);
-    const auto remoteSDP = get_active_remote_sdp(inv);
-
-    // Update our SDP manager
-    auto& sdp = call->getSDP();
-    sdp.setActiveLocalSdpSession(localSDP);
-    if (localSDP != nullptr) {
-        Sdp::printSession(localSDP, "Local active session:", sdp.getSdpDirection());
-    }
-
-    sdp.setActiveRemoteSdpSession(remoteSDP);
-    if (remoteSDP != nullptr) {
-        Sdp::printSession(remoteSDP, "Remote active session:", sdp.getSdpDirection());
-    }
-    call->onMediaNegotiationComplete();
 }
 
 static void
 outgoing_request_forked_cb(pjsip_inv_session* /*inv*/, pjsip_event* /*e*/)
 {}
 
-static bool
-handleMediaControl(SIPCall& call, pjsip_msg_body* body)
-{
-    /*
-     * Incoming INFO request for media control.
-     */
-    constexpr pj_str_t STR_APPLICATION = CONST_PJ_STR("application");
-    constexpr pj_str_t STR_MEDIA_CONTROL_XML = CONST_PJ_STR("media_control+xml");
-
-    if (body->len and pj_stricmp(&body->content_type.type, &STR_APPLICATION) == 0
-        and pj_stricmp(&body->content_type.subtype, &STR_MEDIA_CONTROL_XML) == 0) {
-        auto body_msg = std::string_view((char*) body->data, (size_t) body->len);
-
-        /* Apply and answer the INFO request */
-        static constexpr auto PICT_FAST_UPDATE = "picture_fast_update"sv;
-        static constexpr auto DEVICE_ORIENTATION = "device_orientation"sv;
-        static constexpr auto RECORDING_STATE = "recording_state"sv;
-        static constexpr auto MUTE_STATE = "mute_state"sv;
-
-        if (body_msg.find(PICT_FAST_UPDATE) != std::string_view::npos) {
-            call.sendKeyframe();
-            return true;
-        } else if (body_msg.find(DEVICE_ORIENTATION) != std::string_view::npos) {
-            static const std::regex ORIENTATION_REGEX("device_orientation=([-+]?[0-9]+)");
-
-            std::svmatch matched_pattern;
-            std::regex_search(body_msg, matched_pattern, ORIENTATION_REGEX);
-
-            if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
-                try {
-                    int rotation = -std::stoi(matched_pattern[1]);
-                    while (rotation <= -180)
-                        rotation += 360;
-                    while (rotation > 180)
-                        rotation -= 360;
-                    JAMI_WARN("Rotate video %d deg.", rotation);
-#ifdef ENABLE_VIDEO
-                    auto const& videoRtp = call.getVideoRtp();
-                    if (videoRtp)
-                        videoRtp->setRotation(rotation);
-#endif
-                } catch (const std::exception& e) {
-                    JAMI_WARN("Error parsing angle: %s", e.what());
-                }
-                return true;
-            }
-        } else if (body_msg.find(RECORDING_STATE) != std::string_view::npos) {
-            static const std::regex REC_REGEX("recording_state=([0-1])");
-            std::svmatch matched_pattern;
-            std::regex_search(body_msg, matched_pattern, REC_REGEX);
-
-            if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
-                try {
-                    bool state = std::stoi(matched_pattern[1]);
-                    call.peerRecording(state);
-                } catch (const std::exception& e) {
-                    JAMI_WARN("Error parsing state remote recording: %s", e.what());
-                }
-                return true;
-            }
-        } else if (body_msg.find(MUTE_STATE) != std::string_view::npos) {
-            static const std::regex REC_REGEX("mute_state=([0-1])");
-            std::svmatch matched_pattern;
-            std::regex_search(body_msg, matched_pattern, REC_REGEX);
-
-            if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
-                try {
-                    bool state = std::stoi(matched_pattern[1]);
-                    call.peerMuted(state);
-                } catch (const std::exception& e) {
-                    JAMI_WARN("Error parsing state remote mute: %s", e.what());
-                }
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-/**
- * Helper function to process refer function on call transfer
- */
-static bool
-transferCall(SIPCall& call, const std::string& refer_to)
-{
-    const auto& callId = call.getCallId();
-    JAMI_WARN("[call:%s] Trying to transfer to %s", callId.c_str(), refer_to.c_str());
-    try {
-        Manager::instance().newOutgoingCall(refer_to, call.getAccountId());
-        Manager::instance().hangupCall(callId);
-    } catch (const std::exception& e) {
-        JAMI_ERR("[call:%s] SIP transfer failed: %s", callId.c_str(), e.what());
-        return false;
-    }
-    return true;
-}
-
-static void
-replyToRequest(pjsip_inv_session* inv, pjsip_rx_data* rdata, int status_code)
-{
-    const auto ret = pjsip_dlg_respond(inv->dlg, rdata, status_code, nullptr, nullptr, nullptr);
-    if (ret != PJ_SUCCESS)
-        JAMI_WARN("SIP: failed to reply %d to request", status_code);
-}
-
-static void
-onRequestRefer(pjsip_inv_session* inv, pjsip_rx_data* rdata, pjsip_msg* msg, SIPCall& call)
-{
-    static constexpr pj_str_t str_refer_to = CONST_PJ_STR("Refer-To");
-
-    if (auto refer_to = static_cast<pjsip_generic_string_hdr*>(
-            pjsip_msg_find_hdr_by_name(msg, &str_refer_to, nullptr))) {
-        // RFC 3515, 2.4.2: reply bad request if no or too many refer-to header.
-        if (static_cast<void*>(refer_to->next) == static_cast<void*>(&msg->hdr)
-            or !pjsip_msg_find_hdr_by_name(msg, &str_refer_to, refer_to->next)) {
-            replyToRequest(inv, rdata, PJSIP_SC_ACCEPTED);
-            transferCall(call, std::string(refer_to->hvalue.ptr, refer_to->hvalue.slen));
-
-            // RFC 3515, 2.4.4: we MUST handle the processing using NOTIFY msgs
-            // But your current design doesn't permit that
-            return;
-        } else
-            JAMI_ERR("[call:%s] REFER: too many Refer-To headers", call.getCallId().c_str());
-    } else
-        JAMI_ERR("[call:%s] REFER: no Refer-To header", call.getCallId().c_str());
-
-    replyToRequest(inv, rdata, PJSIP_SC_BAD_REQUEST);
-}
-
-static void
-onRequestInfo(pjsip_inv_session* inv, pjsip_rx_data* rdata, pjsip_msg* msg, SIPCall& call)
-{
-    if (!msg->body or handleMediaControl(call, msg->body))
-        replyToRequest(inv, rdata, PJSIP_SC_OK);
-}
-
-static void
-onRequestNotify(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg* msg, SIPCall& call)
-{
-    if (!msg->body)
-        return;
-
-    const std::string bodyText {static_cast<char*>(msg->body->data), msg->body->len};
-    JAMI_DBG("[call:%s] NOTIFY body start - %p\n%s\n[call:%s] NOTIFY body end - %p",
-             call.getCallId().c_str(),
-             msg->body,
-             bodyText.c_str(),
-             call.getCallId().c_str(),
-             msg->body);
-
-    // TODO
-}
-
 static void
 transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjsip_event* event)
 {
-    auto call = getCallFromInvite(inv);
+    auto call = getSipEventsHandler(inv);
     if (not call)
         return;
 
@@ -1254,6 +721,9 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     }
 
     const auto msg = rdata->msg_info.msg;
+    if (msg == nullptr)
+        throw VoipLinkException("Unexpected null pointer");
+
     if (msg->type != PJSIP_REQUEST_MSG) {
         JAMI_ERR("[INVITE:%p] SIP RX request without msg", inv);
         return;
@@ -1274,16 +744,14 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
 #endif // DEBUG_SIP_MESSAGE
 
     if (methodName == "REFER")
-        onRequestRefer(inv, rdata, msg, *call);
+        call->onRequestRefer(inv, rdata, msg);
     else if (methodName == "INFO")
-        onRequestInfo(inv, rdata, msg, *call);
+        call->onRequestInfo(rdata, msg);
     else if (methodName == "NOTIFY")
-        onRequestNotify(inv, rdata, msg, *call);
+        call->onRequestNotify(inv, rdata, msg);
     else if (methodName == "MESSAGE") {
         if (msg->body)
-            runOnMainThread([call, m = im::parseSipMessage(msg)]() mutable {
-                call->onTextMessage(std::move(m));
-            });
+            call->onReceivedTextMessage(im::parseSipMessage(msg));
     }
 }
 
@@ -1564,6 +1032,15 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
         return false;
     }
 }
+
+std::shared_ptr<SipEventsHandler>
+SIPVoIPLink::getEventsHandler(pjsip_inv_session* inv)
+{
+    if (auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]))
+        return std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
+    return nullptr;
+}
+
 #undef RETURN_IF_NULL
 #undef RETURN_FALSE_IF_NULL
 } // namespace jami
