@@ -1816,11 +1816,12 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
     // This list should be provided by the client. Kept for backward compatibility.
     auto mediaList = acc->createDefaultMediaList(acc->isVideoEnabled(),
                                                  getState() == CallState::HOLD);
+    if (offer) {
+        sdp_->receiveOffer(offer, mediaList);
 
-    sdp_->receiveOffer(offer, mediaList);
-
-    setRemoteSdp(offer);
-    sdp_->startNegotiation();
+        setRemoteSdp(offer);
+        sdp_->startNegotiation();
+    }
 
     pjsip_tx_data* tdata = nullptr;
 
