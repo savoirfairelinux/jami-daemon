@@ -1,44 +1,42 @@
- src/http.cpp | 57 ++++++++++++++++++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 54 insertions(+), 3 deletions(-)
+ src/http.cpp | 59 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 56 insertions(+), 3 deletions(-)
 
 diff --git a/src/http.cpp b/src/http.cpp
-index 983bcc4..ea5ad21 100644
+index 983bcc4..868c8fc 100644
 --- a/src/http.cpp
 +++ b/src/http.cpp
-@@ -561,10 +561,61 @@ void
+@@ -561,10 +561,57 @@ void
  Connection::async_connect(std::vector<asio::ip::tcp::endpoint>&& endpoints, ConnectHandlerCb cb)
  {
      std::lock_guard<std::mutex> lock(mutex_);
-+    auto& socket = ssl_socket_? ssl_socket_->lowest_layer() : *socket_;
++    auto& base = ssl_socket_? ssl_socket_->lowest_layer() : *socket_;
 +
-+    auto wcb = [&socket, cb=std::move(cb)](const asio::error_code& ec, const asio::ip::tcp::endpoint& endpoint) {
-+
-+
-+    auto setDefaultOptions = [](auto socket) {
-+        printf("@@@\n");
-+        uint32_t start = 30;
-+        uint32_t interval = 30;
-+        uint32_t cnt = 1;
++    ConnectHandlerCb wcb = [&base, cb=std::move(cb)](const asio::error_code& ec, const asio::ip::tcp::endpoint& endpoint) {
++        if (!ec) {
++            auto socket = base.native_handle();
++            uint32_t start = 30;
++            uint32_t interval = 30;
++            uint32_t cnt = 1;
 +#ifdef _WIN32
 +            std::string val = "1";
 +            setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, val.c_str(), sizeof(val));
 +
 +            // TCP_KEEPIDLE and TCP_KEEPINTVL are available since Win 10 version 1709
 +            // TCP_KEEPCNT since Win 10 version 1703
-+#ifdef TCP_KEEPIDLE 
++#ifdef TCP_KEEPIDLE
 +            std::string start_str = std::to_string(start);
 +            setsockopt(socket, IPPROTO_TCP, TCP_KEEPIDLE,
-+                       start_str.c_str(), sizeof(start_str));
++                    start_str.c_str(), sizeof(start_str));
 +#endif
 +#ifdef TCP_KEEPINTVL
 +            std::string interval_str = std::to_string(interval);
 +            setsockopt(socket, IPPROTO_TCP, TCP_KEEPINTVL,
-+                       interval_str.c_str(), sizeof(interval_str));
++                    interval_str.c_str(), sizeof(interval_str));
 +#endif
 +#ifdef TCP_KEEPCNT
 +            std::string cnt_str = std::to_string(cnt);
 +            setsockopt(socket, IPPROTO_TCP, TCP_KEEPCNT,
-+                       cnt_str.c_str(), sizeof(cnt_str));
++                    cnt_str.c_str(), sizeof(cnt_str));
 +#endif
 +#else
 +            uint32_t val = 1;
@@ -54,9 +52,7 @@ index 983bcc4..ea5ad21 100644
 +            setsockopt(socket, SOL_TCP, TCP_KEEPCNT, &cnt, sizeof(uint32_t));
 +#endif
 +#endif
-+    };
-+        printf("@@@ %p\n", socket.native_handle());
-+        setDefaultOptions(socket.native_handle());
++        }
 +        if (cb)
 +            cb(ec, endpoint);
 +    };
@@ -69,7 +65,34 @@ index 983bcc4..ea5ad21 100644
      else if (cb)
          cb(asio::error::operation_aborted, {});
  }
-@@ -1415,7 +1466,7 @@ Request::await()
+@@ -1250,6 +1297,7 @@ Request::post()
+ void
+ Request::terminate(const asio::error_code& ec)
+ {
++    printf("@@@ TERM\n");
+     if (finishing_.exchange(true))
+         return;
+ 
+@@ -1287,6 +1335,8 @@ Request::handle_request(const asio::error_code& ec)
+ 
+     std::weak_ptr<Request> wthis = shared_from_this();
+     conn_->async_read_until(HTTP_HEADER_DELIM, [wthis](const asio::error_code& ec, size_t n_bytes){
++        if (ec)
++            printf("@@@@@@@ERR\n");
+         if (auto sthis = wthis.lock())
+             sthis->handle_response(ec, n_bytes);
+     });
+@@ -1315,6 +1365,9 @@ Request::handle_response(const asio::error_code& ec, size_t /* n_bytes */)
+         auto toRead = parser_->content_length ? std::min<uint64_t>(parser_->content_length, 64 * 1024) : 64 * 1024;
+         std::weak_ptr<Request> wthis = shared_from_this();
+         conn_->async_read_some(toRead, [wthis](const asio::error_code& ec, size_t bytes){
++            
++            if (ec)
++                printf("@@@@@@@ERR2\n");
+             if (auto sthis = wthis.lock())
+                 sthis->handle_response(ec, bytes);
+         });
+@@ -1415,7 +1468,7 @@ Request::await()
      std::unique_lock<std::mutex> lock(mtx);
      std::condition_variable cv;
      bool ok {false};
