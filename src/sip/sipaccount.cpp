@@ -217,8 +217,8 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
         // TODO: resolve remote host using SIPVoIPLink::resolveSrvName
         std::shared_ptr<SipTransport> t
             = isTlsEnabled()
-                  ? link_.sipTransportBroker->getTlsTransport(tlsListener_,
-                                                              IpAddr(sip_utils::getHostFromUri(to)))
+                  ? link_.sipTransportBroker_->getTlsTransport(tlsListener_,
+                                                               IpAddr(sip_utils::getHostFromUri(to)))
                   : transport_;
         setTransport(t);
         call->setTransport(t);
@@ -270,7 +270,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
             if (auto call = weak_call.lock()) {
                 if (not SIPStartCall(call)) {
                     JAMI_ERR("Could not send outgoing INVITE request for new call");
-                    call->onFailure();
+                    call->callFailed();
                 }
             }
             return false;
@@ -307,8 +307,8 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<MediaAttri
         // TODO: resolve remote host using SIPVoIPLink::resolveSrvName
         std::shared_ptr<SipTransport> t
             = isTlsEnabled()
-                  ? link_.sipTransportBroker->getTlsTransport(tlsListener_,
-                                                              IpAddr(sip_utils::getHostFromUri(to)))
+                  ? link_.sipTransportBroker_->getTlsTransport(tlsListener_,
+                                                               IpAddr(sip_utils::getHostFromUri(to)))
                   : transport_;
         setTransport(t);
         call->setTransport(t);
@@ -359,7 +359,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<MediaAttri
             if (auto call = weak_call.lock()) {
                 if (not SIPStartCall(call)) {
                     JAMI_ERR("Could not send outgoing INVITE request for new call");
-                    call->onFailure();
+                    call->callFailed();
                 }
             }
             return false;
@@ -472,7 +472,6 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     if (!CreateClientDialogAndInvite(&pjFrom, &pjContact, &pjTo, nullptr, local_sdp, &dialog, &inv))
         return false;
 
-    inv->mod_data[link_.getModId()] = call.get();
     call->setInviteSession(inv);
 
     updateDialogViaSentBy(dialog);
@@ -957,7 +956,7 @@ SIPAccount::doRegister2_()
         initTlsConfiguration();
 
         if (!tlsListener_) {
-            tlsListener_ = link_.sipTransportBroker->getTlsListener(bindAddress, getTlsSetting());
+            tlsListener_ = link_.sipTransportBroker_->getTlsListener(bindAddress, getTlsSetting());
             if (!tlsListener_) {
                 setRegistrationState(RegistrationState::ERROR_GENERIC);
                 JAMI_ERR("Error creating TLS listener.");
@@ -979,7 +978,7 @@ SIPAccount::doRegister2_()
     if (isIP2IP()) {
         // If we use Tls for IP2IP, transports will be created on connection.
         if (!tlsEnable_) {
-            setTransport(link_.sipTransportBroker->getUdpTransport(bindAddress));
+            setTransport(link_.sipTransportBroker_->getUdpTransport(bindAddress));
         }
         setRegistrationState(RegistrationState::REGISTERED);
         return;
@@ -989,13 +988,13 @@ SIPAccount::doRegister2_()
         JAMI_WARN("Creating transport");
         transport_.reset();
         if (isTlsEnabled()) {
-            setTransport(link_.sipTransportBroker->getTlsTransport(tlsListener_,
-                                                                   hostIp_,
-                                                                   tlsServerName_.empty()
-                                                                       ? hostname_
-                                                                       : tlsServerName_));
+            setTransport(link_.sipTransportBroker_->getTlsTransport(tlsListener_,
+                                                                    hostIp_,
+                                                                    tlsServerName_.empty()
+                                                                        ? hostname_
+                                                                        : tlsServerName_));
         } else {
-            setTransport(link_.sipTransportBroker->getUdpTransport(bindAddress));
+            setTransport(link_.sipTransportBroker_->getUdpTransport(bindAddress));
         }
         if (!transport_)
             throw VoipLinkException("Can't create transport");

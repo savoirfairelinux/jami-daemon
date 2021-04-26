@@ -905,7 +905,7 @@ Manager::finish() noexcept
         pimpl_->ice_tf_.reset();
 
         // NOTE: sipLink_->shutdown() is needed because this will perform
-        // sipTransportBroker->shutdown(); which will call Manager::instance().sipVoIPLink()
+        // sipTransportBroker_->shutdown(); which will call Manager::instance().sipVoIPLink()
         // so the pointer MUST NOT be resetted at this point
         if (pimpl_->sipLink_) {
             pimpl_->sipLink_->shutdown();
