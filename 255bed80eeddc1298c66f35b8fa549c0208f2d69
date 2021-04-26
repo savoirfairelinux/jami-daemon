@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c7bebb78_a86f9720",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-26T12:22:28Z",
+      "side": 1,
+      "message": "I was expecting to also move this check into videoRtpSesssion",
+      "revId": "255bed80eeddc1298c66f35b8fa549c0208f2d69",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
