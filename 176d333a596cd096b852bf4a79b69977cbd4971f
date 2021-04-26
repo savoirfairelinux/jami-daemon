@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "dcaadf40_5d20b305",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 5838,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-04-26T20:47:51Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nUndefined or garbage value returned to caller\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-core.uninitialized.UndefReturn",
+      "revId": "176d333a596cd096b852bf4a79b69977cbd4971f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
