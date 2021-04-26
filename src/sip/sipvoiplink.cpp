@@ -927,6 +927,8 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
 static pj_status_t
 reinvite_received_cb(pjsip_inv_session* inv, const pjmedia_sdp_session* offer, pjsip_rx_data* rdata)
 {
+    if (!offer)
+        return !PJ_SUCCESS;
     if (auto call = getCallFromInvite(inv)) {
         return call->onReceiveOffer(offer, rdata);
     }
@@ -975,7 +977,7 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
     sdp.setPublishedIP(address);
 
     // This list should be provided by the client. Kept for backward compatibility.
-    auto mediaList = account->createDefaultMediaList(account->isVideoEnabled());
+    auto mediaList = account->createDefaultMediaList(!call->isAudioOnly());
 
     const bool created = sdp.createOffer(mediaList);
 
