@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c644a221_860a65c3",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1819,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-26T15:04:35Z",
+      "side": 1,
+      "message": "The fix seems fine, but I wonder what the RFC says about it ?",
+      "revId": "5403ee09d39213cf8c778e599dfa7778db4e72f3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
