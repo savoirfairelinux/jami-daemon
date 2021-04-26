@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9066fde9_92eb1305",
+        "filename": "src/data_transfer.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-04-26T21:31:05Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nbraces around scalar initializer\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-braced-scalar-init",
+      "revId": "65b4621384fafc5e430bfbd75a92a363da6f73b8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b036b7e4_a7990dad",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 5771,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-04-26T21:31:05Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nUndefined or garbage value returned to caller\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-core.uninitialized.UndefReturn",
+      "revId": "65b4621384fafc5e430bfbd75a92a363da6f73b8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
