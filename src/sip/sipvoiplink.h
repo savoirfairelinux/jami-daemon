@@ -31,6 +31,7 @@
 #include "ring_types.h"
 #include "ip_utils.h"
 #include "noncopyable.h"
+#include "sip_events_handler.h"
 
 #include <pjsip.h>
 #include <pjlib.h>
@@ -51,10 +52,17 @@
 
 namespace jami {
 
-class SIPCall;
 class SIPAccountBase;
 class SIPVoIPLink;
 class SipTransportBroker;
+class SipTransport;
+
+pj_status_t try_respond_stateless(pjsip_endpoint* endpt,
+                                  pjsip_rx_data* rdata,
+                                  int st_code,
+                                  const pj_str_t* st_text,
+                                  const pjsip_hdr* hdr_list,
+                                  const pjsip_msg_body* body);
 
 /**
  * @file sipvoiplink.h
@@ -97,13 +105,7 @@ public:
      */
     void createDefaultSipUdpTransport();
 
-public:
     static void createSDPOffer(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer);
-
-    /**
-     * Instance that maintain and manage transport (UDP, TLS)
-     */
-    std::unique_ptr<SipTransportBroker> sipTransportBroker;
 
     typedef std::function<void(std::vector<IpAddr>)> SrvResolveCallback;
     void resolveSrvName(const std::string& name,
@@ -157,6 +159,13 @@ public:
         return tp;
     }
 
+    std::shared_ptr<SipEventsHandler> getEventsHandler(pjsip_inv_session* inv);
+
+    /**
+     * Instance that maintain and manage transport (UDP, TLS)
+     */
+    std::unique_ptr<SipTransportBroker> sipTransportBroker_;
+
 private:
     NON_COPYABLE(SIPVoIPLink);
 
@@ -164,12 +173,6 @@ private:
     std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
     std::atomic_bool running_ {true};
     std::thread sipThread_;
-
-#ifdef ENABLE_VIDEO
-    void requestKeyframe(const std::string& callID);
-#endif
-
-    friend class SIPTest;
 };
 
 } // namespace jami
