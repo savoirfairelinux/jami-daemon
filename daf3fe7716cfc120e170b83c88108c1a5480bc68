@@ -22,6 +22,30 @@
       "revId": "daf3fe7716cfc120e170b83c88108c1a5480bc68",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "83c60f2f_c71c42bb",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2301,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-26T14:55:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3b708a76_bdd71c0d",
+      "range": {
+        "startLine": 2301,
+        "startChar": 0,
+        "endLine": 2301,
+        "endChar": 98
+      },
+      "revId": "daf3fe7716cfc120e170b83c88108c1a5480bc68",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
