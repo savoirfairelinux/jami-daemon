@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "612430d9_c16f1666",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 647,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-04-26T19:07:56Z",
+      "side": 1,
+      "message": "bracket around?\n\notherwise it will just return false upto here",
+      "range": {
+        "startLine": 645,
+        "startChar": 4,
+        "endLine": 647,
+        "endChar": 17
+      },
+      "revId": "cce90f4c5029077b51c710fb9c5ca02e948285b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fd8a9d89_9f352573",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 653,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-04-26T19:07:56Z",
+      "side": 1,
+      "message": "do we need to return here?",
+      "range": {
+        "startLine": 653,
+        "startChar": 8,
+        "endLine": 653,
+        "endChar": 21
+      },
+      "revId": "cce90f4c5029077b51c710fb9c5ca02e948285b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "27d66309_69d3cfba",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 659,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-04-26T19:07:56Z",
+      "side": 1,
+      "message": "do we need to return here?",
+      "range": {
+        "startLine": 659,
+        "startChar": 8,
+        "endLine": 659,
+        "endChar": 21
+      },
+      "revId": "cce90f4c5029077b51c710fb9c5ca02e948285b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
