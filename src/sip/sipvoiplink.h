@@ -31,6 +31,7 @@
 #include "ring_types.h"
 #include "ip_utils.h"
 #include "noncopyable.h"
+#include "sip_events_handler.h"
 
 #include <pjsip.h>
 #include <pjlib.h>
@@ -51,10 +52,17 @@
 
 namespace jami {
 
-class SIPCall;
 class SIPAccountBase;
 class SIPVoIPLink;
 class SipTransportBroker;
+class SipTransport;
+
+pj_status_t try_respond_stateless(pjsip_endpoint* endpt,
+                                  pjsip_rx_data* rdata,
+                                  int st_code,
+                                  const pj_str_t* st_text,
+                                  const pjsip_hdr* hdr_list,
+                                  const pjsip_msg_body* body);
 
 /**
  * @file sipvoiplink.h
@@ -97,7 +105,6 @@ public:
      */
     void createDefaultSipUdpTransport();
 
-public:
     static void createSDPOffer(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer);
 
     /**
@@ -156,6 +163,8 @@ public:
         tp.u.transport = transport;
         return tp;
     }
+
+    std::shared_ptr<SipEventsHandler> getEventsHandler(pjsip_inv_session* inv);
 
 private:
     NON_COPYABLE(SIPVoIPLink);

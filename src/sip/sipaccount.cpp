@@ -270,7 +270,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
             if (auto call = weak_call.lock()) {
                 if (not SIPStartCall(call)) {
                     JAMI_ERR("Could not send outgoing INVITE request for new call");
-                    call->onFailure();
+                    call->callFailed();
                 }
             }
             return false;
@@ -359,7 +359,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<MediaAttri
             if (auto call = weak_call.lock()) {
                 if (not SIPStartCall(call)) {
                     JAMI_ERR("Could not send outgoing INVITE request for new call");
-                    call->onFailure();
+                    call->callFailed();
                 }
             }
             return false;
@@ -472,7 +472,6 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     if (!CreateClientDialogAndInvite(&pjFrom, &pjContact, &pjTo, nullptr, local_sdp, &dialog, &inv))
         return false;
 
-    inv->mod_data[link_.getModId()] = call.get();
     call->setInviteSession(inv);
 
     updateDialogViaSentBy(dialog);
