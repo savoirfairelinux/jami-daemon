@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3b708a76_bdd71c0d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2301,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-26T14:32:58Z",
+      "side": 1,
+      "message": "store as std::pair\u003cdht::NodeStatus, dht::NodeStatus\u003e",
+      "range": {
+        "startLine": 2301,
+        "startChar": 0,
+        "endLine": 2301,
+        "endChar": 98
+      },
+      "revId": "daf3fe7716cfc120e170b83c88108c1a5480bc68",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
