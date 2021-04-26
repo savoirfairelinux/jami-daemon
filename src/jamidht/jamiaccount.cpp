@@ -1579,8 +1579,12 @@ JamiAccount::registerName(const std::string& password, const std::string& name)
                                                ? 3
                                                : 4)));
                 if (response == NameDirectory::RegistrationResponse::success) {
-                    if (auto this_ = w.lock())
+                    if (auto this_ = w.lock()) {
                         this_->registeredName_ = name;
+                        this_->saveConfig();
+                        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+                                this_->accountID_, this_->getVolatileAccountDetails());
+                    }
                 }
                 emitSignal<DRing::ConfigurationSignal::NameRegistrationEnded>(acc, res, name);
             });
