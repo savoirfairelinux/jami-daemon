@@ -958,6 +958,8 @@ private:
     void syncWithConnected();
     std::atomic_bool needsConvSync_ {true};
 
+    std::pair<dht::NodeStatus, dht::NodeStatus> currentDhtStatus_ {dht::NodeStatus::Disconnected, dht::NodeStatus::Disconnected};
+
     /**
      * Remove a repository and all files
      * @param convId
