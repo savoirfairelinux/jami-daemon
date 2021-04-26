@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "218cb85e_8df61ea3",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1985,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-26T13:07:04Z",
+      "side": 1,
+      "message": "Yeah this adds a warning when compiling, This will be removed with the swarm stack anyway, but I don\u0027t like warnings",
+      "parentUuid": "54bd6120_b614decc",
+      "revId": "a247ea150345588bdd6477226abc171e910ee0bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "696946e5_5480ed5a",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 4
@@ -33,6 +51,24 @@
       "revId": "a247ea150345588bdd6477226abc171e910ee0bd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "31953ad7_c01ad853",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 4647,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-26T13:07:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "696946e5_5480ed5a",
+      "revId": "a247ea150345588bdd6477226abc171e910ee0bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -59,6 +95,30 @@
     },
     {
       "key": {
+        "uuid": "b799c87b_4e4a0319",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 4699,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-26T13:07:04Z",
+      "side": 1,
+      "message": "typo",
+      "parentUuid": "f4496d01_5b16f35d",
+      "range": {
+        "startLine": 4699,
+        "startChar": 69,
+        "endLine": 4699,
+        "endChar": 70
+      },
+      "revId": "a247ea150345588bdd6477226abc171e910ee0bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "3e047011_683f8c40",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 4
@@ -70,6 +130,24 @@
       "writtenOn": "2021-04-26T12:30:25Z",
       "side": 1,
       "message": "There is no limit to the number of cache trials ?",
+      "revId": "a247ea150345588bdd6477226abc171e910ee0bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5cd0bf82_1aa4abc6",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 4700,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-26T13:07:04Z",
+      "side": 1,
+      "message": "No, and imho no need. Resolving servers costs basically nothing, and a DNS can change whenever. SFL can basically remove all DNS entries from turn.jami.net during a night it should be able to re-work. And this is only used when the TURN is set but not resolvable",
+      "parentUuid": "3e047011_683f8c40",
       "revId": "a247ea150345588bdd6477226abc171e910ee0bd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
