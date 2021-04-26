@@ -86,37 +86,6 @@ public:
     bool cancel(const DRing::DataTransferId& id);
 
     /**
-     * Get current transfer infos
-     * @param id        of the transfer
-     * @param info      to fill
-     * @return if found
-     */
-    bool info(const DRing::DataTransferId& id, DRing::DataTransferInfo& info) const noexcept;
-
-    /**
-     * Get current transfer progress
-     * @param id        of the transfer
-     * @param total     size
-     * @param progress  current progress
-     * @return if found
-     */
-    bool bytesProgress(const DRing::DataTransferId& id,
-                       int64_t& total,
-                       int64_t& progress) const noexcept;
-
-    /**
-     * Inform the transfer manager that a new file is incoming
-     * @param info      of the transfer
-     * @param id        of the transfer
-     * @param cb        callback to trigger when connected
-     * @param icb       used for vcard
-     */
-    void onIncomingFileRequest(const DRing::DataTransferInfo& info,
-                               const DRing::DataTransferId& id,
-                               const std::function<void(const IncomingFileInfo&)>& cb,
-                               const InternalCompletionCb& icb = {});
-
-    /**
      * Inform the transfer manager that a transfer is waited (and will be automatically accepted)
      * @param id             of the transfer
      * @param interactionId  of the transfer in the confirmation
@@ -127,11 +96,12 @@ public:
                          const std::string& interactionId,
                          const std::string& sha3sum,
                          const std::string& path);
-    
-    bool acceptIncomingChannel(const DRing::DataTransferId& id) const;
-    void handleChannel(const DRing::DataTransferId& id, const std::shared_ptr<ChannelSocket>& channel);
 
-    std::vector<WaitingRequest> waitingRequests() const; 
+    bool acceptIncomingChannel(const DRing::DataTransferId& id) const;
+    void handleChannel(const DRing::DataTransferId& id,
+                       const std::shared_ptr<ChannelSocket>& channel);
+
+    std::vector<WaitingRequest> waitingRequests() const;
 
 private:
     NON_COPYABLE(TransferManager);

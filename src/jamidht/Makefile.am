@@ -17,8 +17,6 @@ libringacc_la_SOURCES = \
         connectionmanager.cpp \
         channeled_transport.h \
         channeled_transport.cpp \
-        channeled_transfers.h \
-        channeled_transfers.cpp \
         conversation.h \
         conversation.cpp \
         conversationrepository.h \
@@ -31,8 +29,6 @@ libringacc_la_SOURCES = \
         sips_transport_ice.h \
         accountarchive.cpp \
         accountarchive.h \
-        p2p.cpp \
-        p2p.h \
         contact_list.h \
         contact_list.cpp \
         account_manager.h \
