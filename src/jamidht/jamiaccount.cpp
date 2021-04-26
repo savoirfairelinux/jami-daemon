@@ -2298,16 +2298,25 @@ JamiAccount::doRegister_()
             return ret;
         };
 
-        auto currentDhtStatus = std::make_shared<dht::NodeStatus>(dht::NodeStatus::Disconnected);
-        context.statusChangedCallback = [this, currentDhtStatus](dht::NodeStatus s4,
+        auto currentDhtStatus4 = std::make_shared<dht::NodeStatus>(dht::NodeStatus::Disconnected);
+        auto currentDhtStatus6 = std::make_shared<dht::NodeStatus>(dht::NodeStatus::Disconnected);
+        context.statusChangedCallback = [this, currentDhtStatus4, currentDhtStatus6](dht::NodeStatus s4,
                                                                  dht::NodeStatus s6) {
             JAMI_DBG("[Account %s] Dht status : IPv4 %s; IPv6 %s",
                      getAccountID().c_str(),
                      dhtStatusStr(s4),
                      dhtStatusStr(s6));
             RegistrationState state;
+            auto prevStatus = std::max(*currentDhtStatus4, *currentDhtStatus6);
             auto newStatus = std::max(s4, s6);
-            if (newStatus == *currentDhtStatus)
+            if ((s4 != *currentDhtStatus4 && s4 == dht::NodeStatus::Connected)
+                || (s6 != *currentDhtStatus6 && s6 == dht::NodeStatus::Connected)) {
+                // Store ip whatever status changes.
+                storeActiveIpAddress();
+            }
+            *currentDhtStatus4 = s4;
+            *currentDhtStatus6 = s6;
+            if (prevStatus == newStatus)
                 return;
             switch (newStatus) {
             case dht::NodeStatus::Connecting:
@@ -2317,7 +2326,6 @@ JamiAccount::doRegister_()
             case dht::NodeStatus::Connected:
                 JAMI_WARN("[Account %s] connected to the DHT network", getAccountID().c_str());
                 state = RegistrationState::REGISTERED;
-                storeActiveIpAddress();
                 cacheTurnServers();
                 break;
             case dht::NodeStatus::Disconnected:
@@ -2328,7 +2336,6 @@ JamiAccount::doRegister_()
                 state = RegistrationState::ERROR_GENERIC;
                 break;
             }
-            *currentDhtStatus = newStatus;
             setRegistrationState(state);
         };
         context.identityAnnouncedCb = [this](bool ok) {
