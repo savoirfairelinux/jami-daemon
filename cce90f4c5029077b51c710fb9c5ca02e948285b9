@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "38ad1088_e2a1224f",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 647,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-26T19:53:50Z",
+      "side": 1,
+      "message": "indeed. But why it didnt break anything ? weird !\nFixed",
+      "parentUuid": "612430d9_c16f1666",
+      "range": {
+        "startLine": 645,
+        "startChar": 4,
+        "endLine": 647,
+        "endChar": 17
+      },
+      "revId": "cce90f4c5029077b51c710fb9c5ca02e948285b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "fd8a9d89_9f352573",
         "filename": "src/sip/sdp.cpp",
         "patchSetId": 32
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "54e79fce_202db7b3",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 653,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-26T19:53:50Z",
+      "side": 1,
+      "message": "no, we shouldn\u0027t.",
+      "parentUuid": "fd8a9d89_9f352573",
+      "range": {
+        "startLine": 653,
+        "startChar": 8,
+        "endLine": 653,
+        "endChar": 21
+      },
+      "revId": "cce90f4c5029077b51c710fb9c5ca02e948285b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "27d66309_69d3cfba",
         "filename": "src/sip/sdp.cpp",
         "patchSetId": 32
@@ -68,6 +116,30 @@
       "revId": "cce90f4c5029077b51c710fb9c5ca02e948285b9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "65d1c983_21b1ce59",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 659,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-26T19:53:50Z",
+      "side": 1,
+      "message": "may be not, but seems we never get here.\nI will keep keep it as it\u0027s the original behavior.",
+      "parentUuid": "27d66309_69d3cfba",
+      "range": {
+        "startLine": 659,
+        "startChar": 8,
+        "endLine": 659,
+        "endChar": 21
+      },
+      "revId": "cce90f4c5029077b51c710fb9c5ca02e948285b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
