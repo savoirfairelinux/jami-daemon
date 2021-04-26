@@ -1,0 +1,78 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "54bd6120_b614decc",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1985,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-26T12:30:25Z",
+      "side": 1,
+      "message": "I guess this will be clean-up with in the previous patch.",
+      "revId": "a247ea150345588bdd6477226abc171e910ee0bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "696946e5_5480ed5a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 4647,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-26T12:30:25Z",
+      "side": 1,
+      "message": "There is some redundancy between this \u0027if\u0027 and the previous one. Either only check the family here, or remove the first \u0027if\u0027 and duplicate the \u0027this_-\u003eisRefreshing_ \u003d false\u0027 line",
+      "revId": "a247ea150345588bdd6477226abc171e910ee0bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f4496d01_5b16f35d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 4699,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-26T12:30:25Z",
+      "side": 1,
+      "message": "what for ?",
+      "range": {
+        "startLine": 4699,
+        "startChar": 69,
+        "endLine": 4699,
+        "endChar": 70
+      },
+      "revId": "a247ea150345588bdd6477226abc171e910ee0bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3e047011_683f8c40",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 4700,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-26T12:30:25Z",
+      "side": 1,
+      "message": "There is no limit to the number of cache trials ?",
+      "revId": "a247ea150345588bdd6477226abc171e910ee0bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
