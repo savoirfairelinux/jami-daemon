@@ -534,7 +534,14 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
                                        AUTOANSWER,
                                        PROXY_ENABLED,
                                        PROXY_SERVER,
-                                       PROXY_PUSH_TOKEN};
+                                       PROXY_PUSH_TOKEN,
+                                       TURN::SERVER,
+                                       TURN::ENABLED,
+                                       TURN::SERVER_UNAME,
+                                       TURN::SERVER_PWD,
+                                       TURN::SERVER_REALM,
+                                       STUN::SERVER,
+                                       STUN::ENABLED};
 
     // Keys with meaning of file path where the contents has to be exported in base64
     static const auto encoded_keys = {TLS::CA_LIST_FILE,

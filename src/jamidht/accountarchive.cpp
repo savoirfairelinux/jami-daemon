@@ -58,6 +58,13 @@ AccountArchive::deserialize(const std::vector<uint8_t>& dat)
                 } else if (key.compare(DRing::Account::ConfProperties::PROXY_ENABLED) == 0) {
                 } else if (key.compare(DRing::Account::ConfProperties::PROXY_SERVER) == 0) {
                 } else if (key.compare(DRing::Account::ConfProperties::PROXY_PUSH_TOKEN) == 0) {
+                } else if (key.compare(DRing::Account::ConfProperties::TURN::SERVER) == 0) {
+                } else if (key.compare(DRing::Account::ConfProperties::TURN::ENABLED) == 0) {
+                } else if (key.compare(DRing::Account::ConfProperties::TURN::SERVER_UNAME) == 0) {
+                } else if (key.compare(DRing::Account::ConfProperties::TURN::SERVER_PWD) == 0) {
+                } else if (key.compare(DRing::Account::ConfProperties::TURN::SERVER_REALM) == 0) {
+                } else if (key.compare(DRing::Account::ConfProperties::STUN::SERVER) == 0) {
+                } else if (key.compare(DRing::Account::ConfProperties::STUN::ENABLED) == 0) {
                 } else if (key.compare(Conf::RING_CA_KEY) == 0) {
                     ca_key = std::make_shared<dht::crypto::PrivateKey>(
                         base64::decode(itr->asString()));
