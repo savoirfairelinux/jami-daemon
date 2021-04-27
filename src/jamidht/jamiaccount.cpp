@@ -3590,7 +3590,6 @@ JamiAccount::sendTextMessage(const std::string& to,
                                        if (lt != confirm->listenTokens.end()) {
                                            std::shared_future<size_t> tok = std::move(lt->second);
                                            confirm->listenTokens.erase(lt);
-                                           l.unlock();
                                            dht_->cancelListen(h, tok);
                                        }
                                        if (confirm->listenTokens.empty() and not confirm->replied) {
