@@ -198,11 +198,6 @@ public:
     virtual std::map<std::string, std::string> getNearbyPeers() const { return {}; }
 
     /**
-     * Store the local/public addresses used to register
-     */
-    virtual void storeActiveIpAddress() {};
-
-    /**
      * Return the status corresponding to the token.
      */
     virtual im::MessageStatus getMessageStatus(uint64_t /*id*/) const
@@ -304,8 +299,6 @@ public:
      * If use UPnP is set to false, the address will be empty.
      */
     IpAddr getUPnPIpAddress() const;
-
-    virtual const IceTransportOptions getIceOptions() const noexcept;
 
     /**
      * Random generator engine
