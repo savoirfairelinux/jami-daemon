@@ -57,6 +57,7 @@ DRING_PUBLIC bool transfer(const std::string& callID, const std::string& to);
 DRING_PUBLIC bool attendedTransfer(const std::string& transferID, const std::string& targetID);
 DRING_PUBLIC std::map<std::string, std::string> getCallDetails(const std::string& callID);
 DRING_PUBLIC std::vector<std::string> getCallList();
+DRING_PUBLIC std::vector<std::string> getCallList(const std::string& accountID);
 
 /* APIs that supports arbitrary number of medias*/
 DRING_PUBLIC std::string placeCall(const std::string& accountID,

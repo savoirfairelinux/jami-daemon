@@ -96,8 +96,7 @@ Call::Call(const std::shared_ptr<Account>& account,
     addStateListener(
         [this](Call::CallState call_state, Call::ConnectionState cnx_state, UNUSED int code) {
             checkPendingIM();
-            std::weak_ptr<Call> callWkPtr = shared_from_this();
-            runOnMainThread([callWkPtr] {
+            runOnMainThread([callWkPtr = weak()] {
                 if (auto call = callWkPtr.lock())
                     call->checkAudio();
             });
@@ -107,9 +106,8 @@ Call::Call(const std::shared_ptr<Account>& account,
                 auto timeout = Manager::instance().getRingingTimeout();
                 JAMI_DBG("Scheduling call timeout in %d seconds", timeout);
 
-                std::weak_ptr<Call> callWkPtr = shared_from_this();
                 Manager::instance().scheduler().scheduleIn(
-                    [callWkPtr] {
+                    [callWkPtr = weak()] {
                         if (auto callShPtr = callWkPtr.lock()) {
                             if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
                                 JAMI_DBG(
@@ -147,15 +145,10 @@ Call::Call(const std::shared_ptr<Account>& account,
         });
 
     time(&timestamp_start_);
-    if (auto shared = account_.lock())
-        shared->attachCall(id_);
 }
 
 Call::~Call()
-{
-    if (auto shared = account_.lock())
-        shared->detachCall(id_);
-}
+{}
 
 void
 Call::removeCall()
@@ -165,6 +158,8 @@ Call::removeCall()
     setState(CallState::OVER);
     if (Recordable::isRecording())
         Recordable::stopRecording();
+    if (auto account = account_.lock())
+        account->detachCall(shared_from_this());
 }
 
 std::string
