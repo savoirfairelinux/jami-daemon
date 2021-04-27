@@ -468,7 +468,8 @@ SIPAccountBase::generateVideoPort() const
 const IceTransportOptions
 SIPAccountBase::getIceOptions() const noexcept
 {
-    auto opts = Account::getIceOptions(); // Local copy of global account ICE settings
+    IceTransportOptions opts;
+    opts.upnpEnable = getUPnPActive();
 
     if (stunEnabled_)
         opts.stunServers.emplace_back(StunServerInfo().setUri(stunServer_));
