@@ -2822,31 +2822,6 @@ Manager::setAccountDetails(const std::string& accountID,
     });
 }
 
-std::map<std::string, std::string>
-Manager::testAccountICEInitialization(const std::string& accountID)
-{
-    const auto account = getAccount(accountID);
-    const auto transportOptions = account->getIceOptions();
-
-    auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    std::shared_ptr<IceTransport> ice
-        = iceTransportFactory.createTransport(accountID.c_str(), 4, true, account->getIceOptions());
-
-    std::map<std::string, std::string> result;
-
-    if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
-        result["STATUS"] = std::to_string(
-            (int) DRing::Account::testAccountICEInitializationStatus::FAILURE);
-        result["MESSAGE"] = ice->getLastErrMsg();
-    } else {
-        result["STATUS"] = std::to_string(
-            (int) DRing::Account::testAccountICEInitializationStatus::SUCCESS);
-        result["MESSAGE"] = "";
-    }
-
-    return result;
-}
-
 std::string
 Manager::getNewAccountId()
 {

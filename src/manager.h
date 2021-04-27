@@ -533,8 +533,6 @@ public:
 
     void setAccountActive(const std::string& accountID, bool active);
 
-    std::map<std::string, std::string> testAccountICEInitialization(const std::string& accountID);
-
     /**
      * Return a new random accountid that is not present in the list
      * @return A brand new accountid

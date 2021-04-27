@@ -91,12 +91,6 @@ getVolatileAccountDetails(const std::string& accountID)
 }
 
 std::map<std::string, std::string>
-testAccountICEInitialization(const std::string& accountID)
-{
-    return jami::Manager::instance().testAccountICEInitialization(accountID);
-}
-
-std::map<std::string, std::string>
 validateCertificate(const std::string&, const std::string& certificate)
 {
     try {
