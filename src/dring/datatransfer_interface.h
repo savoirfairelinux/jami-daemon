@@ -119,17 +119,13 @@ DRING_PUBLIC DataTransferError sendFile(const DataTransferInfo& info, DataTransf
 ///
 /// \param id data transfer identification value as given by a DataTransferEvent signal.
 /// \param file_path file path going to be open in binary write mode to put incoming data.
-/// \param offset used to indicate the remote side about the number of bytes already received in
-/// a previous transfer session, useful in transfer continuation mode.
 ///
 /// \return DataTransferError::invalid_argument if id is unknown.
 /// \note unknown \a id results to a no-op call.
 ///
 DRING_PUBLIC DataTransferError acceptFileTransfer(const std::string& accountId,
-                                                  const std::string& conversationId,
                                                   const DataTransferId& id,
-                                                  const std::string& file_path,
-                                                  int64_t offset) noexcept;
+                                                  const std::string& file_path) noexcept;
 
 /// Asks for retransferring a file. Generally this means that the file is missing
 /// from the conversation

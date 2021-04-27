@@ -49,15 +49,13 @@ sendFile(const DataTransferInfo& info, DataTransferId& id) noexcept
 
 DataTransferError
 acceptFileTransfer(const std::string& accountId,
-                   const std::string& conversationId,
                    const DataTransferId& id,
-                   const std::string& file_path,
-                   int64_t offset) noexcept
+                   const std::string& file_path) noexcept
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        return acc->acceptFile(conversationId, id, file_path, offset)
-                   ? DRing::DataTransferError::success
-                   : DRing::DataTransferError::invalid_argument;
+        if (auto dt = acc->dataTransfer())
+            return dt->acceptFile(id, file_path) ? DRing::DataTransferError::success
+                                                 : DRing::DataTransferError::invalid_argument;
     }
     return DRing::DataTransferError::invalid_argument;
 }
@@ -79,8 +77,9 @@ cancelDataTransfer(const std::string& accountId,
                    const DataTransferId& id) noexcept
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        return acc->cancel(conversationId, id) ? DRing::DataTransferError::success
-                                               : DRing::DataTransferError::invalid_argument;
+        if (auto dt = acc->dataTransfer(conversationId))
+            return dt->cancel(id) ? DRing::DataTransferError::success
+                                  : DRing::DataTransferError::invalid_argument;
     }
     return DRing::DataTransferError::invalid_argument;
 }

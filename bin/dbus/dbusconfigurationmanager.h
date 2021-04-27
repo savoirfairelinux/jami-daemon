@@ -228,10 +228,8 @@ public:
                                    int64_t& total,
                                    int64_t& progress);
     uint32_t acceptFileTransfer(const std::string& accountId,
-                                const std::string& conversationId,
                                 const uint64_t& id,
-                                const std::string& file_path,
-                                const int64_t& offset);
+                                const std::string& file_path);
     uint64_t downloadFile(const std::string& accountId,
                           const std::string& conversationUri,
                           const std::string& interactionId,
