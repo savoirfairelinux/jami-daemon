@@ -922,8 +922,8 @@ JamiAccount::serialize(YAML::Emitter& out) const
     if (receiptSignature_.size() > 0)
         out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT_SIG << YAML::Value
             << YAML::Binary(receiptSignature_.data(), receiptSignature_.size());
-    out << YAML::Key << DRing::Account::ConfProperties::RING_DEVICE_NAME << YAML::Value
-        << ringDeviceName_;
+    out << YAML::Key << DRing::Account::ConfProperties::DEVICE_NAME << YAML::Value
+        << deviceName_;
     out << YAML::Key << DRing::Account::ConfProperties::MANAGER_URI << YAML::Value << managerUri_;
     out << YAML::Key << DRing::Account::ConfProperties::MANAGER_USERNAME << YAML::Value
         << managerUsername_;
@@ -967,7 +967,7 @@ JamiAccount::unserialize(const YAML::Node& node)
         proxyListUrl_ = DHT_DEFAULT_PROXY_LIST_URL;
     }
 
-    parseValueOptional(node, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
+    parseValueOptional(node, DRing::Account::ConfProperties::DEVICE_NAME, deviceName_);
     parseValueOptional(node, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
     parseValueOptional(node, DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
 
@@ -1299,7 +1299,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
 
                     username_ = info.accountId;
                     registeredName_ = managerUsername_;
-                    ringDeviceName_ = accountManager_->getAccountDeviceName();
+                    deviceName_ = accountManager_->getAccountDeviceName();
 
                     auto nameServerIt = config.find(DRing::Account::ConfProperties::RingNS::URI);
                     if (nameServerIt != config.end() && !nameServerIt->second.empty()) {
@@ -1419,7 +1419,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     parseString(details, DRing::Account::ConfProperties::ARCHIVE_PIN, archive_pin);
     std::transform(archive_pin.begin(), archive_pin.end(), archive_pin.begin(), ::toupper);
     parsePath(details, DRing::Account::ConfProperties::ARCHIVE_PATH, archive_path, idPath_);
-    parseString(details, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
+    parseString(details, DRing::Account::ConfProperties::DEVICE_NAME, deviceName_);
 
     auto oldProxyServer = proxyServer_, oldProxyServerList = proxyListUrl_;
     parseString(details, DRing::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
@@ -1451,7 +1451,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
 
     // update device name if necessary
     if (accountManager_)
-        accountManager_->setAccountDeviceName(ringDeviceName_);
+        accountManager_->setAccountDeviceName(deviceName_);
 }
 
 std::map<std::string, std::string>
@@ -1469,11 +1469,11 @@ JamiAccount::getAccountDetails() const
               accountPublish_ ? TRUE_STR : FALSE_STR);
     if (accountManager_) {
         if (auto info = accountManager_->getInfo()) {
-            a.emplace(DRing::Account::ConfProperties::RING_DEVICE_ID, info->deviceId);
+            a.emplace(DRing::Account::ConfProperties::DEVICE_ID, info->deviceId);
             a.emplace(DRing::Account::ConfProperties::RingNS::ACCOUNT, info->ethAccount);
         }
     }
-    a.emplace(DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
+    a.emplace(DRing::Account::ConfProperties::DEVICE_NAME, deviceName_);
     a.emplace(DRing::Account::ConfProperties::Presence::SUPPORT_SUBSCRIBE, TRUE_STR);
     if (not archivePath_.empty() or not managerUri_.empty())
         a.emplace(DRing::Account::ConfProperties::ARCHIVE_HAS_PASSWORD,

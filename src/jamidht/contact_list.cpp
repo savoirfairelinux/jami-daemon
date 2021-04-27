@@ -522,7 +522,7 @@ ContactList::getSyncData() const
 {
     DeviceSync sync_data;
     sync_data.date = clock::now().time_since_epoch().count();
-    // sync_data.device_name = ringDeviceName_;
+    // sync_data.device_name = deviceName_;
     sync_data.peers = getContacts();
 
     static constexpr size_t MAX_TRUST_REQUESTS = 20;

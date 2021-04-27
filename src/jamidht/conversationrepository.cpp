@@ -2515,7 +2515,7 @@ ConversationRepository::leave()
     if (!account)
         return {};
     auto details = account->getAccountDetails();
-    auto deviceId = details[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto deviceId = details[DRing::Account::ConfProperties::DEVICE_ID];
     auto uri = details[DRing::Account::ConfProperties::USERNAME];
     auto name = details[DRing::Account::ConfProperties::DISPLAYNAME];
     if (name.empty())
