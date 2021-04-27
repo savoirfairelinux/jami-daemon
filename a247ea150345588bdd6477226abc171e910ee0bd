@@ -246,6 +246,24 @@
       "revId": "a247ea150345588bdd6477226abc171e910ee0bd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b2c26b85_2fec78ee",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 4704,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-27T14:29:53Z",
+      "side": 1,
+      "message": "Or any connectivityChange() yes. It\u0027s not really a problem. This should never really happen as if the DNS is empty this will not be triggered",
+      "parentUuid": "8b545cb4_2c3ebc3f",
+      "revId": "a247ea150345588bdd6477226abc171e910ee0bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
