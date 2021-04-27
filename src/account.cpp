@@ -668,14 +668,6 @@ Account::getActiveAccountCodecInfoList(MediaType mediaType) const
     return accountCodecList;
 }
 
-const IceTransportOptions
-Account::getIceOptions() const noexcept
-{
-    IceTransportOptions opts;
-    opts.upnpEnable = getUPnPActive();
-    return opts;
-}
-
 const std::string&
 Account::getUserAgentName()
 {
