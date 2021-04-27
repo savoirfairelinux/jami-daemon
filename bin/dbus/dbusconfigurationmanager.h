@@ -73,7 +73,6 @@ public:
         std::map<std::string, std::string> getAccountDetails(const std::string& accountID);
         std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountID);
         void setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details);
-        std::map<std::string, std::string> testAccountICEInitialization(const std::string& accountID);
         void setAccountActive(const std::string& accountID, const bool& active);
         std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
         void monitor(const bool& continuous);

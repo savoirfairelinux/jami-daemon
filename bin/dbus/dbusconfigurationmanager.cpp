@@ -48,13 +48,6 @@ DBusConfigurationManager::setAccountDetails(const std::string& accountID,
     DRing::setAccountDetails(accountID, details);
 }
 
-auto
-DBusConfigurationManager::testAccountICEInitialization(const std::string& accountID)
-    -> decltype(DRing::testAccountICEInitialization(accountID))
-{
-    return DRing::testAccountICEInitialization(accountID);
-}
-
 void
 DBusConfigurationManager::setAccountActive(const std::string& accountID, const bool& active)
 {
