@@ -75,7 +75,7 @@ public:
     bool transfer(const std::string& callID, const std::string& to);
     bool attendedTransfer(const std::string& transferID, const std::string& targetID);
     std::map<std::string, std::string> getCallDetails(const std::string& callID);
-    std::vector<std::string> getCallList();
+    std::vector<std::string> getCallList(const std::string& accountId);
     std::vector<std::map<std::string, std::string>> getConferenceInfos(const std::string& confId);
     void removeConference(const std::string& conference_id);
     bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
