@@ -31,6 +31,7 @@
 #include "ring_types.h"
 #include "ip_utils.h"
 #include "noncopyable.h"
+#include "scheduled_executor.h"
 #include "sip_events_handler.h"
 
 #include <pjsip.h>
@@ -83,7 +84,7 @@ public:
     /**
      * Event listener. Each event send by the call manager is received and handled from here
      */
-    void handleEvents();
+    void handleEvents(const pj_time_val timeout);
 
     /**
      * Register a new keepalive registration timer to this endpoint
@@ -161,6 +162,8 @@ public:
 
     std::shared_ptr<SipEventsHandler> getEventsHandler(pjsip_inv_session* inv);
 
+    std::shared_ptr<ScheduledExecutor> getScheduler() const { return sipScheduler_; }
+
     /**
      * Instance that maintain and manage transport (UDP, TLS)
      */
@@ -172,7 +175,12 @@ private:
     mutable pj_caching_pool cp_;
     std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
     std::atomic_bool running_ {true};
-    std::thread sipThread_;
+    // Scheduler used for SIP operations. All operations involving
+    // SIP should use this scheduler in order to perform all
+    // SIP operations on the same thread. This will prevent thread
+    // race and reduce the need for mutexes.
+    std::shared_ptr<ScheduledExecutor> sipScheduler_;
+    std::shared_ptr<RepeatedTask> pollTask_;
 };
 
 } // namespace jami
