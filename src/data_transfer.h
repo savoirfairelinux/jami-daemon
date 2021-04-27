@@ -26,10 +26,10 @@
 
 #include <memory>
 #include <string>
+#include <fstream>
 
 namespace jami {
 
-// TODO move def
 DRing::DataTransferId generateUID();
 
 class Stream;
@@ -48,28 +48,62 @@ typedef std::function<void(const DRing::DataTransferId&, const DRing::DataTransf
 class FileInfo
 {
 public:
+    FileInfo(const std::shared_ptr<ChannelSocket>& channel,
+             DRing::DataTransferId tid,
+             const DRing::DataTransferInfo& info);
+    virtual ~FileInfo() {}
     virtual void process() = 0;
     std::shared_ptr<ChannelSocket> channel() const { return channel_; }
-    DRing::DataTransferInfo info() const;
+    DRing::DataTransferInfo info() const { return info_; }
+    virtual void cancel() = 0;
+    void onFinished(std::function<void(uint32_t)>&& cb) { finishedCb_ = std::move(cb); }
+    void emit(DRing::DataTransferEventCode code);
 
 protected:
+    DRing::DataTransferId tid_ {};
     DRing::DataTransferInfo info_ {};
     std::shared_ptr<ChannelSocket> channel_ {};
+    std::function<void(uint32_t)>
+        finishedCb_ {}; // TODO transferManager sould listen on >= finished & trigger deletion
 };
 
 class IncomingFile : public FileInfo
 {
 public:
-    void process() override {}
+    IncomingFile(const std::shared_ptr<ChannelSocket>& channel,
+                 DRing::DataTransferId tid,
+                 const DRing::DataTransferInfo& info,
+                 const std::string& sha3Sum);
+    ~IncomingFile();
+    void process() override;
+    void cancel() override;
+
+private:
+    std::ofstream stream_;
+    std::string sha3Sum_ {};
 };
 
 class OutgoingFile : public FileInfo
 {
 public:
-    void process() override {}
+    OutgoingFile(const std::shared_ptr<ChannelSocket>& channel,
+                 DRing::DataTransferId tid,
+                 const DRing::DataTransferInfo& info,
+                 size_t start = 0,
+                 size_t end = 0);
+    ~OutgoingFile();
+    void process() override;
+    void cancel() override;
+
+private:
+    std::atomic_bool isUserCancelled_ {false};
+    std::ifstream stream_;
+    size_t start_ {0};
+    size_t end_ {0};
 };
 
-class TransferManager
+// TODO move in conversation
+class TransferManager : public std::enable_shared_from_this<TransferManager>
 {
 public:
     TransferManager(const std::string& accountId, const std::string& to, bool isConversation = true);
@@ -97,6 +131,33 @@ public:
                                                        const std::string& path);
 
     /**
+     * Inform the transfer manager that a new file is incoming
+     * @param info      of the transfer
+     * @param id        of the transfer
+     * @param cb        callback to trigger when connected
+     * @param icb       used for vcard
+     */
+    [[deprecated("Non swarm method")]] void onIncomingFileRequest(
+        const DRing::DataTransferInfo& info,
+        const DRing::DataTransferId& id,
+        const std::function<void(const IncomingFileInfo&)>& cb,
+        const InternalCompletionCb& icb = {});
+
+    /**
+     * Send a file to a channel
+     * @param channel       channel to use
+     * @param tid           tid of the transfer
+     * @param path          path of the file
+     * @param start         start offset
+     * @param end           end
+     */
+    void transferFile(const std::shared_ptr<ChannelSocket>& channel,
+                      DRing::DataTransferId tid,
+                      const std::string& path,
+                      size_t start,
+                      size_t end);
+
+    /**
      * Refuse a transfer
      * @param id        of the transfer
      */
@@ -122,32 +183,37 @@ public:
                        int64_t& progress) const noexcept;
 
     /**
-     * Inform the transfer manager that a new file is incoming
-     * @param info      of the transfer
-     * @param id        of the transfer
-     * @param cb        callback to trigger when connected
-     * @param icb       used for vcard
-     */
-    void onIncomingFileRequest(const DRing::DataTransferInfo& info,
-                               const DRing::DataTransferId& id,
-                               const std::function<void(const IncomingFileInfo&)>& cb,
-                               const InternalCompletionCb& icb = {});
-
-    /**
      * Inform the transfer manager that a transfer is waited (and will be automatically accepted)
      * @param id        of the transfer
      * @param sha3sum   attended sha3sum
      * @param path      where the file will be downloaded
+     * @param total     total size of the file
      */
     void waitForTransfer(const DRing::DataTransferId& id,
                          const std::string& sha3sum,
-                         const std::string& path);
+                         const std::string& path,
+                         std::size_t total);
 
-    bool acceptIncomingChannel(const DRing::DataTransferId& id) const;
-    void handleChannel(const DRing::DataTransferId& id,
-                       const std::shared_ptr<ChannelSocket>& channel);
+    /**
+     * When a new channel request come for a transfer id
+     * @param id        id of the transfer
+     * @return if we can accept this transfer
+     */
+    bool onFileChannelRequest(const DRing::DataTransferId& id) const;
+
+    /**
+     * Handle incoming transfer
+     * @param id        Related id
+     * @param channel   Related channel
+     */
+    void onIncomingFileTransfer(const DRing::DataTransferId& id,
+                                const std::shared_ptr<ChannelSocket>& channel);
 
 private:
+    std::weak_ptr<TransferManager> weak()
+    {
+        return std::static_pointer_cast<TransferManager>(shared_from_this());
+    }
     NON_COPYABLE(TransferManager);
     class Impl;
     std::unique_ptr<Impl> pimpl_;

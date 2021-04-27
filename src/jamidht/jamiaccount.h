@@ -617,24 +617,9 @@ public:
                           const std::string& path,
                           size_t start = 0,
                           size_t end = 0) override;
-
-    void onIncomingFileRequest(const DRing::DataTransferInfo& info,
-                               const DRing::DataTransferId& id,
-                               const std::function<void(const IncomingFileInfo&)>& cb,
-                               const InternalCompletionCb& icb);
-
-    bool acceptFile(const std::string& to,
-                    DRing::DataTransferId id,
-                    const std::string& path,
-                    int64_t progress);
-
-    bool cancel(const std::string& to, DRing::DataTransferId id);
-    bool info(const std::string& to, DRing::DataTransferId id, DRing::DataTransferInfo& info);
-    bool bytesProgress(const std::string& to,
-                       DRing::DataTransferId id,
-                       int64_t& total,
-                       int64_t& progress);
     void loadConversations();
+
+    std::shared_ptr<TransferManager> dataTransfer(const std::string& id = "") const;
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -1036,7 +1021,8 @@ private:
     void syncWithConnected();
     std::atomic_bool needsConvSync_ {true};
 
-    std::pair<dht::NodeStatus, dht::NodeStatus> currentDhtStatus_ {dht::NodeStatus::Disconnected, dht::NodeStatus::Disconnected};
+    std::pair<dht::NodeStatus, dht::NodeStatus> currentDhtStatus_ {dht::NodeStatus::Disconnected,
+                                                                   dht::NodeStatus::Disconnected};
 
     /**
      * Remove a repository and all files
@@ -1064,8 +1050,9 @@ private:
     std::string getOneToOneConversation(const std::string& uri) const;
 
     //// File transfer
+    std::shared_ptr<TransferManager> nonSwarmTransferManager_;
     std::mutex transferMutex_ {};
-    std::map<std::string, TransferManager> transferManagers_ {};
+    std::map<std::string, std::shared_ptr<TransferManager>> transferManagers_ {};
 
     bool noSha3sumVerification_ {false};
 };
