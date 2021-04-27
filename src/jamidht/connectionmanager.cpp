@@ -472,78 +472,87 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         };
 
         // If no socket exists, we need to initiate an ICE connection.
-        auto ice_config = sthis->account.getIceOptions();
-        ice_config.tcpEnable = true;
-        ice_config.onInitDone = [w,
-                                    cbId,
-                                    deviceId = std::move(deviceId),
-                                    name = std::move(name),
-                                    cert = std::move(cert),
-                                    vid,
-                                    eraseInfo](bool ok) {
+        sthis->account.getIceOptions(std::move([w,
+                                     cbId,
+                                     deviceId = std::move(deviceId),
+                                     name = std::move(name),
+                                     cert = std::move(cert),
+                                     vid,
+                                     eraseInfo](auto ice_config) {
             auto sthis = w.lock();
             if (!sthis)
                 return;
-            if (!ok) {
-                JAMI_ERR("Cannot initialize ICE session.");
-                for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
-                    pending.cb(nullptr, deviceId);
-                runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
-                return;
-            }
-
-            dht::ThreadPool::io().run(
-                [w = std::move(w), deviceId = std::move(deviceId), vid = std::move(vid)] {
-                    if (auto sthis = w.lock())
-                        sthis->connectDeviceStartIce(deviceId, vid);
-                });
-        };
-        ice_config.onNegoDone = [w,
-                                    cbId,
-                                    deviceId = std::move(deviceId),
-                                    name = std::move(name),
-                                    cert = std::move(cert),
-                                    vid,
-                                    eraseInfo](bool ok) {
-            auto sthis = w.lock();
-            if (!sthis)
-                return;
-            if (!ok) {
-                JAMI_ERR("ICE negotiation failed.");
-                for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
-                    pending.cb(nullptr, deviceId);
-                runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
-                return;
-            }
-
-            dht::ThreadPool::io().run([w = std::move(w),
-                                        deviceId = std::move(deviceId),
-                                        name = std::move(name),
-                                        cert = std::move(cert),
-                                        vid = std::move(vid)] {
+            ice_config.tcpEnable = true;
+            ice_config.onInitDone = [w,
+                                     cbId,
+                                     deviceId = std::move(deviceId),
+                                     name = std::move(name),
+                                     cert = std::move(cert),
+                                     vid,
+                                     eraseInfo](bool ok) {
                 auto sthis = w.lock();
                 if (!sthis)
                     return;
-                sthis->connectDeviceOnNegoDone(deviceId, name, vid, cert);
-            });
-        };
+                if (!ok) {
+                    JAMI_ERR("Cannot initialize ICE session.");
+                    for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
+                        pending.cb(nullptr, deviceId);
+                    runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                    return;
+                }
 
-        auto info = std::make_shared<ConnectionInfo>();
-        {
-            std::lock_guard<std::mutex> lk(sthis->infosMtx_);
-            sthis->infos_[{deviceId, vid}] = info;
-        }
-        std::unique_lock<std::mutex> lk {info->mutex_};
-        info->ice_ = Manager::instance().getIceTransportFactory().createUTransport(
-            sthis->account.getAccountID().c_str(), 1, false, ice_config);
+                dht::ThreadPool::io().run(
+                    [w = std::move(w), deviceId = std::move(deviceId), vid = std::move(vid)] {
+                        if (auto sthis = w.lock())
+                            sthis->connectDeviceStartIce(deviceId, vid);
+                    });
+            };
+            ice_config.onNegoDone = [w,
+                                     cbId,
+                                     deviceId = std::move(deviceId),
+                                     name = std::move(name),
+                                     cert = std::move(cert),
+                                     vid,
+                                     eraseInfo](bool ok) {
+                auto sthis = w.lock();
+                if (!sthis)
+                    return;
+                if (!ok) {
+                    JAMI_ERR("ICE negotiation failed.");
+                    for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
+                        pending.cb(nullptr, deviceId);
+                    runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                    return;
+                }
 
-        if (!info->ice_) {
-            JAMI_ERR("Cannot initialize ICE session.");
-            for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
-                pending.cb(nullptr, deviceId);
-            eraseInfo();
-            return;
-        }
+                dht::ThreadPool::io().run([w = std::move(w),
+                                            deviceId = std::move(deviceId),
+                                            name = std::move(name),
+                                            cert = std::move(cert),
+                                            vid = std::move(vid)] {
+                    auto sthis = w.lock();
+                    if (!sthis)
+                        return;
+                    sthis->connectDeviceOnNegoDone(deviceId, name, vid, cert);
+                });
+            };
+
+            auto info = std::make_shared<ConnectionInfo>();
+            {
+                std::lock_guard<std::mutex> lk(sthis->infosMtx_);
+                sthis->infos_[{deviceId, vid}] = info;
+            }
+            std::unique_lock<std::mutex> lk {info->mutex_};
+            info->ice_ = Manager::instance().getIceTransportFactory().createUTransport(
+                sthis->account.getAccountID().c_str(), 1, false, ice_config);
+
+            if (!info->ice_) {
+                JAMI_ERR("Cannot initialize ICE session.");
+                for (const auto& pending : sthis->extractPendingCallbacks(deviceId))
+                    pending.cb(nullptr, deviceId);
+                eraseInfo();
+            }
+        }));
     });
 }
 
@@ -816,76 +825,80 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         return;
     }
 
-    // Note: used when the ice negotiation fails to erase
-    // all stored structures.
-    auto eraseInfo = [w = weak(), id = req.id, from = req.from] {
-        if (auto shared = w.lock()) {
-            std::lock_guard<std::mutex> lk(shared->infosMtx_);
-            shared->infos_.erase({from, id});
-        }
-    };
-
     // Because the connection is accepted, create an ICE socket.
-    auto ice_config = account.getIceOptions();
-    ice_config.tcpEnable = true;
-    ice_config.onInitDone = [w = weak(), req, eraseInfo](bool ok) {
+    account.getIceOptions(std::move([w=weak(), req](auto ice_config) {
+        auto deviceId = req.from.toString();
         auto shared = w.lock();
         if (!shared)
             return;
-        if (!ok) {
-            JAMI_ERR("Cannot initialize ICE session.");
-            if (shared->connReadyCb_)
-                shared->connReadyCb_(req.from, "", nullptr);
-            runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
-            return;
-        }
+        // Note: used when the ice negotiation fails to erase
+        // all stored structures.
+        auto eraseInfo = [w, id = req.id, from = req.from] {
+            if (auto shared = w.lock()) {
+                std::lock_guard<std::mutex> lk(shared->infosMtx_);
+                shared->infos_.erase({from, id});
+            }
+        };
 
-        dht::ThreadPool::io().run([w = std::move(w), req = std::move(req)] {
+        ice_config.tcpEnable = true;
+        ice_config.onInitDone = [w, req, eraseInfo](bool ok) {
             auto shared = w.lock();
             if (!shared)
                 return;
-            shared->onRequestStartIce(req);
-        });
-    };
+            if (!ok) {
+                JAMI_ERR("Cannot initialize ICE session.");
+                if (shared->connReadyCb_)
+                    shared->connReadyCb_(req.from, "", nullptr);
+                runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                return;
+            }
 
-    ice_config.onNegoDone = [w = weak(), req, eraseInfo](bool ok) {
-        auto shared = w.lock();
-        if (!shared)
-            return;
-        if (!ok) {
-            JAMI_ERR("ICE negotiation failed");
+            dht::ThreadPool::io().run([w = std::move(w), req = std::move(req)] {
+                auto shared = w.lock();
+                if (!shared)
+                    return;
+                shared->onRequestStartIce(req);
+            });
+        };
+
+        ice_config.onNegoDone = [w, req, eraseInfo](bool ok) {
+            auto shared = w.lock();
+            if (!shared)
+                return;
+            if (!ok) {
+                JAMI_ERR("ICE negotiation failed");
+                if (shared->connReadyCb_)
+                    shared->connReadyCb_(req.from, "", nullptr);
+                runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
+                return;
+            }
+
+            dht::ThreadPool::io().run([w = std::move(w), req = std::move(req)] {
+                if (auto shared = w.lock())
+                    shared->onRequestOnNegoDone(req);
+            });
+        };
+
+        // Negotiate a new ICE socket
+        auto info = std::make_shared<ConnectionInfo>();
+        {
+            std::lock_guard<std::mutex> lk(shared->infosMtx_);
+            shared->infos_[{req.from, req.id}] = info;
+        }
+        JAMI_INFO("[Account:%s] accepting connection from %s",
+                shared->account.getAccountID().c_str(),
+                deviceId.c_str());
+        std::unique_lock<std::mutex> lk {info->mutex_};
+        info->ice_ = Manager::instance()
+                        .getIceTransportFactory()
+                        .createUTransport(shared->account.getAccountID().c_str(), 1, true, ice_config);
+        if (not info->ice_) {
+            JAMI_ERR("Cannot initialize ICE session.");
             if (shared->connReadyCb_)
                 shared->connReadyCb_(req.from, "", nullptr);
-            runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
-            return;
+            eraseInfo();
         }
-
-        dht::ThreadPool::io().run([w = std::move(w), req = std::move(req)] {
-            if (auto shared = w.lock())
-                shared->onRequestOnNegoDone(req);
-        });
-    };
-
-    // Negotiate a new ICE socket
-    auto info = std::make_shared<ConnectionInfo>();
-    {
-        std::lock_guard<std::mutex> lk(infosMtx_);
-        infos_[{req.from, req.id}] = info;
-    }
-    JAMI_INFO("[Account:%s] accepting connection from %s",
-              account.getAccountID().c_str(),
-              deviceId.c_str());
-    std::unique_lock<std::mutex> lk {info->mutex_};
-    info->ice_ = Manager::instance()
-                     .getIceTransportFactory()
-                     .createUTransport(account.getAccountID().c_str(), 1, true, ice_config);
-    if (not info->ice_) {
-        JAMI_ERR("Cannot initialize ICE session.");
-        if (connReadyCb_)
-            connReadyCb_(req.from, "", nullptr);
-        eraseInfo();
-        return;
-    }
+    }));
 }
 
 void
