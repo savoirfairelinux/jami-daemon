@@ -62,6 +62,7 @@ constexpr const char* TRANSPORT_STATE_STR[] = {"CONNECTED",
                                                "DESTROY",
                                                "UNKNOWN STATE"};
 constexpr const size_t TRANSPORT_STATE_SZ = arraySize(TRANSPORT_STATE_STR);
+static constexpr int ICE_COMP_ID_SIP_TRANSP {1};
 
 void
 SipTransport::deleteTransport(pjsip_transport* t)
@@ -433,8 +434,8 @@ SipTransportBroker::getChanneledTransport(const std::shared_ptr<ChannelSocket>& 
     auto ice = socket->underlyingICE();
     if (!ice)
         return {};
-    auto local = ice->getLocalAddress(0);
-    auto remote = ice->getRemoteAddress(0);
+    auto local = ice->getLocalAddress(ICE_COMP_ID_SIP_TRANSP);
+    auto remote = ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSP);
     auto type = local.isIpv6() ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
     auto sips_tr = std::make_unique<tls::ChanneledSIPTransport>(endpt_,
                                                                 type,
