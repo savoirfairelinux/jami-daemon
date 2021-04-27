@@ -37,13 +37,15 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
                                              const std::shared_ptr<ChannelSocket>& socket,
                                              const IpAddr& local,
                                              const IpAddr& remote,
-                                             onShutdownCb&& cb)
+                                             onShutdownCb&& cb,
+                                             const std::shared_ptr<ScheduledExecutor>& scheduler)
     : socket_(socket)
     , local_ {local}
     , remote_ {remote}
     , trData_()
     , pool_ {nullptr, pj_pool_release}
     , rxPool_(nullptr, pj_pool_release)
+    , scheduler_(scheduler)
 {
     JAMI_DBG("ChanneledSIPTransport@%p {tr=%p}", this, &trData_.base);
 
@@ -147,12 +149,12 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
         std::lock_guard<std::mutex> l(rxMtx_);
         std::vector<uint8_t> rx {buf, buf + len};
         rxPending_.emplace_back(std::move(rx));
-        scheduler_.run([this] { handleEvents(); });
+        scheduler_->run([this] { handleEvents(); });
         return len;
     });
     socket->onShutdown([cb = std::move(cb), this] {
         disconnected_ = true;
-        scheduler_.run([this] { handleEvents(); });
+        scheduler_->run([this] { handleEvents(); });
         cb();
     });
 }
@@ -227,7 +229,6 @@ ChanneledSIPTransport::handleEvents()
         rxPending_.clear();
     }
 
-    sip_utils::register_thread();
     for (auto it = rx.begin(); it != rx.end(); ++it) {
         auto& pck = *it;
         pj_pool_reset(rdata_.tp_info.pool);
@@ -307,7 +308,7 @@ ChanneledSIPTransport::send(pjsip_tx_data* tdata,
     tdata->op_key.token = token;
     tdata->op_key.callback = callback;
     txQueue_.push_back(tdata);
-    scheduler_.run([this] { handleEvents(); });
+    scheduler_->run([this] { handleEvents(); });
     return PJ_EPENDING;
 }
 
