@@ -88,7 +88,10 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     : Call(account, callId, type, details)
     , sdp_(new Sdp(callId))
 {
-    initCall(account, {});
+    auto mediaAttrList = getSIPAccount()->createDefaultMediaList(getSIPAccount()->isVideoEnabled()
+                                                                     and not isAudioOnly(),
+                                                                 getState() == CallState::HOLD);
+    initCall(account, mediaAttrList);
 }
 
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
@@ -150,11 +153,14 @@ SIPCall::initCall(const std::shared_ptr<SIPAccountBase>& account,
     std::vector<MediaAttribute> mediaList;
     if (mediaAttrList.size() > 0) {
         mediaList = mediaAttrList;
-    } else {
+    } else if (type_ == Call::CallType::INCOMING) {
         // Handle incoming call without media offer.
         JAMI_WARN("[call:%s] No media offered in the incoming invite. Will answer with audio-only",
                   getCallId().c_str());
         mediaList = getSIPAccount()->createDefaultMediaList(false, getState() == CallState::HOLD);
+    } else {
+        JAMI_ERR("[call:%s] Media list can not be empty for outgoing calls", getCallId().c_str());
+        return;
     }
 
     JAMI_DBG("[call:%s] Create a new SIP call with %lu medias",
