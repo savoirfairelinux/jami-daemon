@@ -117,7 +117,9 @@ public:
                                  const dht::Value::Id& vid,
                                  const std::shared_ptr<dht::crypto::Certificate>& cert);
     void connectDevice(const DeviceId& deviceId, const std::string& uri, ConnectCallback cb);
-    void connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name, ConnectCallback cb);
+    void connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                       const std::string& name,
+                       ConnectCallback cb);
     /**
      * Send a ChannelRequest on the TLS socket. Triggers cb when ready
      * @param sock      socket used to send the request
@@ -325,7 +327,7 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
     if (!ice)
         return;
 
-    auto sdp = IceTransport::parse_SDP(response.ice_msg, *ice);
+    auto sdp = ice->parseIceCandidates(response.ice_msg);
 
     if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates))) {
         JAMI_WARN("[Account:%s] start ICE failed", account.getAccountID().c_str());
@@ -386,29 +388,28 @@ ConnectionManager::Impl::connectDevice(const DeviceId& deviceId,
         cb(nullptr, deviceId);
         return;
     }
-    account.findCertificate(
-        deviceId,
-        [w = weak(), deviceId, name, cb = std::move(cb)](
-            const std::shared_ptr<dht::crypto::Certificate>& cert) {
-            if (!cert) {
-                JAMI_ERR("Invalid certificate found for device %s", deviceId.to_c_str());
-                cb(nullptr, deviceId);
-                return;
-            }
-            if (auto shared = w.lock()) {
-                shared->connectDevice(cert, name, std::move(cb));
-            }
-        });
+    account.findCertificate(deviceId,
+                            [w = weak(), deviceId, name, cb = std::move(cb)](
+                                const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                                if (!cert) {
+                                    JAMI_ERR("Invalid certificate found for device %s",
+                                             deviceId.to_c_str());
+                                    cb(nullptr, deviceId);
+                                    return;
+                                }
+                                if (auto shared = w.lock()) {
+                                    shared->connectDevice(cert, name, std::move(cb));
+                                }
+                            });
 }
 
 void
-ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name, ConnectCallback cb)
+ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                                       const std::string& name,
+                                       ConnectCallback cb)
 {
     // Avoid dht operation in a DHT callback to avoid deadlocks
-    runOnMainThread([w=weak(),
-                     name = std::move(name),
-                     cert = std::move(cert),
-                     cb = std::move(cb)] {
+    runOnMainThread([w = weak(), name = std::move(name), cert = std::move(cert), cb = std::move(cb)] {
         auto deviceId = cert->getId();
         auto sthis = w.lock();
         if (!sthis || sthis->isDestroying_) {
@@ -421,7 +422,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
             vid = ValueIdDist(1, DRING_ID_MAX_VAL)(sthis->account.rand);
             --tentatives;
         } while (sthis->getPendingCallbacks(deviceId, vid).size() != 0
-                    && tentatives != MAX_TENTATIVES);
+                 && tentatives != MAX_TENTATIVES);
         if (tentatives == MAX_TENTATIVES) {
             JAMI_ERR("Couldn't get a current random channel number");
             cb(nullptr, deviceId);
@@ -448,8 +449,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         if (auto info = sthis->getInfo(deviceId)) {
             std::lock_guard<std::mutex> lk(info->mutex_);
             if (info->socket_) {
-                JAMI_DBG("Peer already connected to %s. Add a new channel",
-                            deviceId.to_c_str());
+                JAMI_DBG("Peer already connected to %s. Add a new channel", deviceId.to_c_str());
                 info->cbIds_.emplace(cbId);
                 sthis->sendChannelRequest(info->socket_, name, deviceId, vid);
                 return;
@@ -457,8 +457,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         }
 
         if (isConnectingToDevice) {
-            JAMI_DBG("Already connecting to %s, wait for the ICE negotiation",
-                        deviceId.to_c_str());
+            JAMI_DBG("Already connecting to %s, wait for the ICE negotiation", deviceId.to_c_str());
             return;
         }
 
@@ -543,8 +542,11 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                 sthis->infos_[{deviceId, vid}] = info;
             }
             std::unique_lock<std::mutex> lk {info->mutex_};
+            ice_config.master = false;
+            ice_config.streamsCount = JamiAccount::ICE_STREAMS_COUNT;
+            ice_config.compCountPerStream = JamiAccount::ICE_COMP_COUNT_PER_STREAM;
             info->ice_ = Manager::instance().getIceTransportFactory().createUTransport(
-                sthis->account.getAccountID().c_str(), 1, false, ice_config);
+                sthis->account.getAccountID().c_str(), ice_config);
 
             if (!info->ice_) {
                 JAMI_ERR("Cannot initialize ICE session.");
@@ -757,7 +759,7 @@ ConnectionManager::Impl::onRequestStartIce(const PeerConnectionRequest& req)
         return;
     }
 
-    auto sdp = IceTransport::parse_SDP(req.ice_msg, *ice);
+    auto sdp = ice->parseIceCandidates(req.ice_msg);
     answerTo(*ice, req.id, req.from);
     if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates))) {
         JAMI_ERR("[Account:%s] start ICE failed - fallback to TURN", account.getAccountID().c_str());
@@ -889,9 +891,12 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
                 shared->account.getAccountID().c_str(),
                 deviceId.c_str());
         std::unique_lock<std::mutex> lk {info->mutex_};
+        ice_config.streamsCount = JamiAccount::ICE_STREAMS_COUNT;
+        ice_config.compCountPerStream = JamiAccount::ICE_COMP_COUNT_PER_STREAM;
+        ice_config.master = true;
         info->ice_ = Manager::instance()
                         .getIceTransportFactory()
-                        .createUTransport(shared->account.getAccountID().c_str(), 1, true, ice_config);
+                        .createUTransport(shared->account.getAccountID().c_str(), ice_config);
         if (not info->ice_) {
             JAMI_ERR("Cannot initialize ICE session.");
             if (shared->connReadyCb_)
@@ -978,7 +983,8 @@ bool
 ConnectionManager::isConnecting(const DeviceId& deviceId, const std::string& name) const
 {
     auto pending = pimpl_->getPendingCallbacks(deviceId);
-    return std::find_if(pending.begin(), pending.end(), [&](auto p) { return p.name == name; }) != pending.end();
+    return std::find_if(pending.begin(), pending.end(), [&](auto p) { return p.name == name; })
+           != pending.end();
 }
 
 void
@@ -1053,12 +1059,16 @@ void
 ConnectionManager::monitor() const
 {
     std::lock_guard<std::mutex> lk(pimpl_->infosMtx_);
-    JAMI_DBG("ConnectionManager for account %s (%s), current status:", pimpl_->account.getAccountID().c_str(), pimpl_->account.getUserUri().c_str());
+    JAMI_DBG("ConnectionManager for account %s (%s), current status:",
+             pimpl_->account.getAccountID().c_str(),
+             pimpl_->account.getUserUri().c_str());
     for (const auto& [_, ci] : pimpl_->infos_) {
         if (ci->socket_)
             ci->socket_->monitor();
     }
-    JAMI_DBG("ConnectionManager for account %s (%s), end status.", pimpl_->account.getAccountID().c_str(), pimpl_->account.getUserUri().c_str());
+    JAMI_DBG("ConnectionManager for account %s (%s), end status.",
+             pimpl_->account.getAccountID().c_str(),
+             pimpl_->account.getUserUri().c_str());
 }
 
 } // namespace jami

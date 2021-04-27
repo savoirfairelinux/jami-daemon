@@ -163,4 +163,7 @@ ut_syncHistory_SOURCES = syncHistory/syncHistory.cpp
 check_PROGRAMS += ut_ice
 ut_ice_SOURCES = ice/ice.cpp
 
+check_PROGRAMS += ut_ice_sdp_parser
+ut_ice_sdp_parser_SOURCES = ice/ice_sdp_parser.cpp
+
 TESTS = $(check_PROGRAMS)

@@ -897,9 +897,9 @@ Sdp::addIceCandidates(unsigned media_index, const std::vector<std::string>& cand
 std::vector<std::string>
 Sdp::getIceCandidates(unsigned media_index) const
 {
-    auto session = activeRemoteSession_ ? activeRemoteSession_ : remoteSession_;
+    auto remoteSession = activeRemoteSession_ ? activeRemoteSession_ : remoteSession_;
     auto localSession = activeLocalSession_ ? activeLocalSession_ : localSession_;
-    if (not session) {
+    if (not remoteSession) {
         JAMI_ERR("getIceCandidates failed: no remote session");
         return {};
     }
@@ -907,12 +907,12 @@ Sdp::getIceCandidates(unsigned media_index) const
         JAMI_ERR("getIceCandidates failed: no local session");
         return {};
     }
-    if (media_index >= session->media_count || media_index >= localSession->media_count) {
+    if (media_index >= remoteSession->media_count || media_index >= localSession->media_count) {
         JAMI_ERR("getIceCandidates failed: cannot access media#%u (may be deactivated)",
                  media_index);
         return {};
     }
-    auto media = session->media[media_index];
+    auto media = remoteSession->media[media_index];
     auto localMedia = localSession->media[media_index];
     if (media->desc.port == 0 || localMedia->desc.port == 0) {
         JAMI_WARN("Media#%u is disabled. Media ports: local %u, remote %u",
