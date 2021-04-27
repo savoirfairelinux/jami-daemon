@@ -262,10 +262,11 @@ UPnPContext::setPublicAddress(const IpAddr& addr)
     if (not addr)
         return;
 
-    JAMI_DBG("Setting the known public address to %s", addr.toString().c_str());
-
     std::lock_guard<std::mutex> lock(mappingMutex_);
-    knownPublicAddress_ = std::move(addr);
+    if (knownPublicAddress_ != addr) {
+        knownPublicAddress_ = std::move(addr);
+        JAMI_DBG("Setting the known public address to %s", addr.toString().c_str());
+    }
 }
 
 bool
