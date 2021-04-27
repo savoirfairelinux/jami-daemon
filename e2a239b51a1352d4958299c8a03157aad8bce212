@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c5da2892_229d43e0",
+        "filename": "src/account.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 165,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-04-27T21:08:47Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nloop variable is copied but only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "e2a239b51a1352d4958299c8a03157aad8bce212",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
