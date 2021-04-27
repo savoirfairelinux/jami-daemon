@@ -2094,28 +2094,23 @@ Manager::sendCallTextMessage(const std::string& callID,
         JAMI_DBG("Is a conference, send instant message to everyone");
         pimpl_->sendTextMessageToConference(*conf, messages, from);
 
-    } else if (isConferenceParticipant(callID)) {
-        auto conf = getConferenceFromCallID(callID);
-        if (not conf) {
-            JAMI_ERR("no conference associated to call ID %s", callID.c_str());
-            return;
+    } else if (auto call = getCallFromCallID(callID)) {
+        if (not call->getConfId().empty()) {
+            if (auto conf = getConferenceFromID(call->getConfId())) {
+                JAMI_DBG("Call is participant in a conference, send instant message to everyone");
+                pimpl_->sendTextMessageToConference(*conf, messages, from);
+            } else {
+                JAMI_ERR("no conference associated to call ID %s", callID.c_str());
+            }
+        } else {
+             try {
+                call->sendTextMessage(messages, from);
+            } catch (const im::InstantMessageException& e) {
+                JAMI_ERR("Failed to send message to call %s: %s", call->getCallId().c_str(), e.what());
+            }
         }
-
-        JAMI_DBG("Call is participant in a conference, send instant message to everyone");
-        pimpl_->sendTextMessageToConference(*conf, messages, from);
-
     } else {
-        auto call = getCallFromCallID(callID);
-        if (not call) {
-            JAMI_ERR("Failed to send message to %s: inexistant call ID", callID.c_str());
-            return;
-        }
-
-        try {
-            call->sendTextMessage(messages, from);
-        } catch (const im::InstantMessageException& e) {
-            JAMI_ERR("Failed to send message to call %s: %s", call->getCallId().c_str(), e.what());
-        }
+        JAMI_ERR("Failed to send message to %s: inexistant call ID", callID.c_str());
     }
 }
 
