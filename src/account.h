@@ -354,6 +354,22 @@ public:
     bool isMultiStreamEnabled() const { return multiStreamEnabled_; }
     void enableMultiStream(bool enable) { multiStreamEnabled_ = enable; }
 
+    // Enable/disable compliancy with RFC-5245 for component IDs format.
+    // The ICE component IDs are enumerated relative to the SDP session,
+    // i.e., starts from 1 and incremented for each component.
+    // However, RFC-5245 requires that the ICE component IDs are enumerated
+    // relative to the media stream, e.g., component IDs 1 and 2 for audio,
+    // and component IDs 1 and 2 for video. This non-conformity can cause
+    // inter-operability issues.
+    // When the compliancy feature is enabled, the component ID in the
+    // generated SDP will be compliant to RFC-5245. This feature should be
+    // enabled only when the peer is compliant to RFC-5245 as well.
+    // The current version is able to correctly parse both formats.
+    // This feature is needed for backward compatiblity, and should be removed
+    // once the  backward compatibility is no more required.
+    bool isIceCompIdRfc5245Compliant() const { return iceCompIdRfc5245Compliant_; }
+    void enableIceCompIdRfc5245Compliance(bool enable) { iceCompIdRfc5245Compliant_ = enable; }
+
 public:
     // virtual methods that has to be implemented by concrete classes
     /**
@@ -551,6 +567,7 @@ protected:
     bool allModeratorsEnabled_;
 
     bool multiStreamEnabled_;
+    bool iceCompIdRfc5245Compliant_;
 
     /**
      * private account codec searching functions
