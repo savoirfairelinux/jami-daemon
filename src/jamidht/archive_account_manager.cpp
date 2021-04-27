@@ -527,8 +527,8 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
     // Keys not exported to archive
     static const auto filtered_keys = {Ringtone::PATH,
                                        ARCHIVE_PATH,
-                                       RING_DEVICE_ID,
-                                       RING_DEVICE_NAME,
+                                       DEVICE_ID,
+                                       DEVICE_NAME,
                                        Conf::CONFIG_DHT_PORT,
                                        DHT_PROXY_LIST_URL,
                                        AUTOANSWER,
