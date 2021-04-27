@@ -1036,7 +1036,8 @@ private:
     void syncWithConnected();
     std::atomic_bool needsConvSync_ {true};
 
-    std::pair<dht::NodeStatus, dht::NodeStatus> currentDhtStatus_ {dht::NodeStatus::Disconnected, dht::NodeStatus::Disconnected};
+    std::pair<dht::NodeStatus, dht::NodeStatus> currentDhtStatus_ {dht::NodeStatus::Disconnected,
+                                                                   dht::NodeStatus::Disconnected};
 
     /**
      * Remove a repository and all files
@@ -1065,7 +1066,7 @@ private:
 
     //// File transfer
     std::mutex transferMutex_ {};
-    std::map<std::string, TransferManager> transferManagers_ {};
+    std::map<std::string, std::shared_ptr<TransferManager>> transferManagers_ {};
 
     bool noSha3sumVerification_ {false};
 };
