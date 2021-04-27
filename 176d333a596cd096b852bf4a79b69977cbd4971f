@@ -63,6 +63,30 @@
       "revId": "176d333a596cd096b852bf4a79b69977cbd4971f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3b5fc457_a390c55a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 5957,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-27T19:36:54Z",
+      "side": 1,
+      "message": "But yeah the name should be changed",
+      "parentUuid": "9cd9ea9d_e9a81ba6",
+      "range": {
+        "startLine": 5957,
+        "startChar": 13,
+        "endLine": 5957,
+        "endChar": 33
+      },
+      "revId": "176d333a596cd096b852bf4a79b69977cbd4971f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
