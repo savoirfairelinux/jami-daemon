@@ -1595,7 +1595,6 @@
            <tp:added version="10.0.0"/>
            <arg type="u" name="dataTransferError" direction="out"/>
            <arg type="s" name="accountId" direction="in"/>
-           <arg type="s" name="to" direction="in"/>
            <arg type="t" name="dataTransferId" direction="in"/>
            <arg type="(suuxxssssss)" name="dataTransferInfo" direction="out"/>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="DataTransferInfo"/>
@@ -1615,10 +1614,8 @@
            <tp:added version="10.0.0"/>
            <arg type="u" name="dataTransferError" direction="out"/>
            <arg type="s" name="accountId" direction="in"/>
-           <arg type="s" name="to" direction="in"/>
            <arg type="t" name="dataTransferId" direction="in"/>
            <arg type="s" name="filePath" direction="in"/>
-           <arg type="x" name="offset" direction="in"/>
        </method>
 
        <method name="downloadFile" tp:name-for-bindings="downloadFile">

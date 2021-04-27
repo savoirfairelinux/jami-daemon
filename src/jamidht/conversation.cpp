@@ -24,6 +24,7 @@
 #include "conversationrepository.h"
 #include "client/ring_signal.h"
 
+#include <charconv>
 #include <json/json.h>
 #include <string_view>
 #include <opendht/thread_pool.h>
@@ -118,6 +119,10 @@ public:
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
+        if (auto shared = account_.lock())
+            transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
+                                                                 repository_->id(),
+                                                                 true);
     }
 
     Impl(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId)
@@ -127,6 +132,10 @@ public:
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
+        if (auto shared = account_.lock())
+            transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
+                                                                 repository_->id(),
+                                                                 true);
     }
 
     Impl(const std::weak_ptr<JamiAccount>& account,
@@ -144,6 +153,10 @@ public:
             }
             throw std::logic_error("Couldn't clone repository");
         }
+        if (auto shared = account_.lock())
+            transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
+                                                                 repository_->id(),
+                                                                 true);
     }
     ~Impl() = default;
 
@@ -237,6 +250,7 @@ public:
     std::mutex pullcbsMtx_ {};
     std::set<std::string> fetchingRemotes_ {}; // store current remote in fetch
     std::deque<std::tuple<std::string, std::string, OnPullCb>> pullcbs_ {};
+    std::shared_ptr<TransferManager> transferManager_ {};
 };
 
 bool
@@ -869,6 +883,53 @@ Conversation::vCard() const
     } catch (...) {
     }
     return {};
+}
+
+std::shared_ptr<TransferManager>
+Conversation::dataTransfer() const
+{
+    return pimpl_->transferManager_;
+}
+
+bool
+Conversation::onFileChannelRequest(const std::string& member, const DRing::DataTransferId& id) const
+{
+    if (!isMember(member))
+        return false;
+    dataTransfer()->onFileChannelRequest(id);
+}
+
+void
+Conversation::onIncomingFileTransfer(const DRing::DataTransferId& id,
+                                     const std::shared_ptr<ChannelSocket>& channel)
+{
+    dataTransfer()->onIncomingFileTransfer(id, channel);
+}
+
+DRing::DataTransferId
+Conversation::downloadFile(const std::string& interactionId,
+                           const std::string& path,
+                           OnWaitingFileCb cb)
+{
+    auto commit = getCommit(interactionId);
+    if (commit == std::nullopt || commit->find("type") == commit->end()
+        || commit->find("sha3sum") == commit->end() || commit->find("tid") == commit->end()
+        || commit->at("type") != "application/data-transfer+json") {
+        if (cb)
+            cb(false);
+        return {};
+    }
+    auto sha3sum = commit->at("sha3sum");
+    auto tid_str = commit->at("tid");
+    auto size_str = commit->at("totalSize");
+    std::size_t totalSize;
+    DRing::DataTransferId tid;
+    std::from_chars(tid_str.data(), tid_str.data() + tid_str.size(), tid);
+    std::from_chars(size_str.data(), size_str.data() + size_str.size(), totalSize);
+    dataTransfer()->waitForTransfer(tid, sha3sum, path, totalSize);
+    if (cb)
+        cb(true);
+    return tid;
 }
 
 } // namespace jami

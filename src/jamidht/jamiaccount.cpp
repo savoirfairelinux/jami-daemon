@@ -319,6 +319,7 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
 
     proxyListUrl_ = DHT_DEFAULT_PROXY_LIST_URL;
     proxyServer_ = DHT_DEFAULT_PROXY;
+    nonSwarmTransferManager_ = std::make_shared<TransferManager>(getAccountID(), "");
 
     try {
         std::istringstream is(fileutils::loadCacheTextFile(cachePath_ + DIR_SEPARATOR_STR "dhtproxy",
@@ -358,10 +359,6 @@ JamiAccount::shutdownConnections()
     {
         std::lock_guard<std::mutex> lk(connManagerMtx_);
         connectionManager_.reset();
-    }
-    {
-        std::unique_lock<std::mutex> lk(transferMutex_);
-        transferManagers_.clear();
     }
     {
         std::unique_lock<std::mutex> lk(syncConnectionsMtx_);
@@ -2466,18 +2463,12 @@ JamiAccount::doRegister_()
                             accept.set_value(false);
                             return;
                         }
-                        accept.set_value(conversation->second->isMember(cert->getIssuerUID()));
+                        accept.set_value(
+                            conversation->second->onFileChannelRequest(cert->getIssuerUID(),
+                                                                       std::stoull(fileId)));
                     });
                 fut.wait();
-                if (fut.get()) {
-                    std::unique_lock<std::mutex> lk(transferMutex_);
-                    auto it = transferManagers_.find(conversationId);
-                    if (it != transferManagers_.end()) {
-                        // Check if wait, else do not care
-                        return it->second.acceptIncomingChannel(std::stoull(fileId));
-                    }
-                }
-                return false;
+                return fut.get();
             }
             return false;
         });
@@ -2511,22 +2502,6 @@ JamiAccount::doRegister_()
                                                                                     peerId,
                                                                                     path);
                         };
-
-                    std::unique_lock<std::mutex> lk2(transferMutex_);
-                    auto itManager = transferManagers_.find(peerId);
-                    if (itManager == transferManagers_.end()) {
-                        std::string accId = getAccountID();
-                        auto res = transferManagers_.emplace(std::piecewise_construct,
-                                                             std::forward_as_tuple(peerId),
-                                                             std::forward_as_tuple(accId,
-                                                                                   peerId,
-                                                                                   false));
-                        if (!res.second) {
-                            JAMI_ERR("Couldn't create manager for peer %s", peerId.c_str());
-                            return;
-                        }
-                        itManager = res.first;
-                    }
 
                     DRing::DataTransferInfo info;
                     info.accountId = getAccountID();
@@ -2615,14 +2590,11 @@ JamiAccount::doRegister_()
                     if (fileHost == currentDeviceId()) // This means we are the host, so the file is
                                                        // outgoing, ignore
                         return;
-                    std::unique_lock<std::mutex> lk(transferMutex_);
-                    auto it = transferManagers_.find(conversationId);
-                    if (it != transferManagers_.end()) {
-                        it->second.handleChannel(std::stoull(fileId), channel);
-                    } else {
+                    if (auto dt = dataTransfer(conversationId))
+                        dt->onIncomingFileTransfer(std::stoull(fileId), channel);
+                    else
                         JAMI_WARN() << "Transfer manager not found but channel accepted, this "
                                        "should not happen";
-                    }
                 }
             }
         });
@@ -5453,6 +5425,18 @@ JamiAccount::loadConversations()
     JAMI_INFO("[Account %s] Conversations loaded!", getAccountID().c_str());
 }
 
+std::shared_ptr<TransferManager>
+JamiAccount::dataTransfer(const std::string& id) const
+{
+    if (id.empty())
+        return nonSwarmTransferManager_;
+    std::unique_lock<std::mutex> lk(conversationsMtx_);
+    auto it = conversations_.find(id);
+    if (it != conversations_.end() && it->second)
+        return it->second->dataTransfer();
+    return nullptr;
+}
+
 void
 JamiAccount::removeRepository(const std::string& conversationId, bool sync, bool force)
 {
@@ -5653,14 +5637,16 @@ JamiAccount::sendFile(const std::string& to,
         return tid;
     }
 
+    ////// TODO!!!! clean
     // Else, it's fallback
     std::unique_lock<std::mutex> lk(transferMutex_);
     auto it = transferManagers_.find(to);
     if (it == transferManagers_.end()) {
         std::string accId = getAccountID();
+        auto tman = std::make_shared<TransferManager>(accId, to, false);
         auto res = transferManagers_.emplace(std::piecewise_construct,
                                              std::forward_as_tuple(to),
-                                             std::forward_as_tuple(accId, to, isConversation));
+                                             std::forward_as_tuple(tman));
         if (!res.second) {
             JAMI_ERR("Couldn't send file %s to %s", path.c_str(), to.c_str());
             return {};
@@ -5668,7 +5654,7 @@ JamiAccount::sendFile(const std::string& to,
         it = res.first;
     }
 
-    auto tid = it->second.sendFile(path, icb, deviceId, resendId);
+    auto tid = it->second->sendFile(path, icb, deviceId, resendId);
     return tid;
 }
 
@@ -5681,67 +5667,34 @@ JamiAccount::transferFile(const std::string& conversationId,
                           size_t end)
 {
     // TODO move transfer part in a class. JamiAccount is too big
-    // Connect channel
-    // Once connected write in loop
-    // Ask device to transfer a file
     auto channelName = "data-transfer://" + conversationId + "/" + currentDeviceId() + "/"
                        + std::to_string(tid);
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;
-    connectionManager_->connectDevice(
-        DeviceId(deviceId),
-        channelName,
-        [this, conversationId, path = std::move(path), tid, start, end](std::shared_ptr<ChannelSocket> socket,
-                                                            const DeviceId&) {
-            if (!socket)
-                return;
-            // TODO move
-            // TODO need to inform client that somebody downloaded the file
-            dht::ThreadPool::io().run([w = weak(),
-                                       path = std::move(path),
-                                       socket = std::move(socket),
-                                       conversationId = std::move(conversationId),
-                                       tid, start, end] {
-                if (auto shared = w.lock()) {
-                    std::ifstream file;
-                    try {
-                        if (!fileutils::isFile(path)) {
-                            socket->shutdown();
-                            return;
-                        }
-                        fileutils::openStream(file, path);
-                        if (!file) {
-                            socket->shutdown();
-                            return;
-                        }
-                        std::vector<char> buffer(UINT16_MAX, 0);
-                        std::error_code ec;
-                        file.seekg(start, std::ios::beg);
-                        auto pos = start;
-                        while (!file.eof()) {
-                            file.read(buffer.data(), end > start ? std::min(end - pos, buffer.size()) : buffer.size());
-                            auto gcount = file.gcount();
-                            pos += gcount;
-                            socket->write(reinterpret_cast<const uint8_t*>(buffer.data()),
-                                          gcount,
-                                          ec);
-                            if (ec)
-                                break;
-                        }
-                        // TODO shutdown = closed by host
-                        auto code = ec ? DRing::DataTransferEventCode::closed_by_peer
-                                       : DRing::DataTransferEventCode::finished;
-                        JAMI_ERR() << uint32_t(code) << "--->" << uint32_t(DRing::DataTransferEventCode::finished);
-                        emitSignal<DRing::DataTransferSignal::DataTransferEvent>(
-                            shared->getAccountID(), conversationId, tid, uint32_t(code));
-                        file.close();
-                    } catch (...) {
-                    }
-                    socket->shutdown();
-                }
-            });
-        });
+    connectionManager_
+        ->connectDevice(DeviceId(deviceId),
+                        channelName,
+                        [this,
+                         conversationId,
+                         path = std::move(path),
+                         tid,
+                         start,
+                         end](std::shared_ptr<ChannelSocket> socket, const DeviceId&) {
+                            if (!socket)
+                                return;
+                            dht::ThreadPool::io().run([w = weak(),
+                                                       path = std::move(path),
+                                                       socket = std::move(socket),
+                                                       conversationId = std::move(conversationId),
+                                                       tid,
+                                                       start,
+                                                       end] {
+                                if (auto shared = w.lock())
+                                    if (auto dt = shared->dataTransfer(conversationId))
+                                        dt->transferFile(socket, tid, path, start, end);
+                            });
+                        });
 }
 
 uint64_t
@@ -5758,36 +5711,11 @@ JamiAccount::downloadFile(const std::string& conversationUri,
     if (uri.scheme() != Uri::Scheme::SWARM)
         return {};
     const auto& conversationId = uri.authority();
-    DRing::DataTransferId tid;
     std::string sha3sum = {};
-    {
-        std::lock_guard<std::mutex> lk(conversationsMtx_);
-        auto conversation = conversations_.find(conversationId);
-        if (conversation == conversations_.end() || !conversation->second)
-            return {};
-        auto commit = conversation->second->getCommit(interactionId);
-        if (commit == std::nullopt || commit->find("type") == commit->end()
-            || commit->find("sha3sum") == commit->end() || commit->find("tid") == commit->end()
-            || commit->at("type") != "application/data-transfer+json")
-            return {};
-        sha3sum = commit->at("sha3sum");
-        auto tid_str = commit->at("tid");
-        std::from_chars(tid_str.data(), tid_str.data() + tid_str.size(), tid);
-    }
-
-    std::unique_lock<std::mutex> lk(transferMutex_);
-    auto it = transferManagers_.find(conversationId);
-    if (it == transferManagers_.end()) {
-        auto res = transferManagers_.emplace(std::piecewise_construct,
-                                             std::forward_as_tuple(conversationId),
-                                             std::forward_as_tuple(getAccountID(), conversationId));
-        if (!res.second) {
-            JAMI_ERR("Couldn't create manager for conversation %s", conversationId.c_str());
-            return {};
-        }
-        it = res.first;
-    }
-    it->second.waitForTransfer(tid, sha3sum, path);
+    std::lock_guard<std::mutex> lk(conversationsMtx_);
+    auto conversation = conversations_.find(conversationId);
+    if (conversation == conversations_.end() || !conversation->second)
+        return {};
 
     Json::Value askTransferValue;
     askTransferValue["conversation"] = conversationId;
@@ -5796,101 +5724,19 @@ JamiAccount::downloadFile(const std::string& conversationUri,
     askTransferValue["start"] = std::to_string(start);
     askTransferValue["end"] = std::to_string(end);
     Json::StreamWriterBuilder builder;
-    sendInstantMessage(conversationId,
-                       {{MIME_TYPE_ASK_TRANSFER, Json::writeString(builder, askTransferValue)}});
-    return tid;
-}
-
-void
-JamiAccount::onIncomingFileRequest(const DRing::DataTransferInfo& info,
-                                   const DRing::DataTransferId& id,
-                                   const std::function<void(const IncomingFileInfo&)>& cb,
-                                   const InternalCompletionCb& icb)
-{
-    auto to = info.conversationId.empty() ? info.peer : info.conversationId;
-    std::unique_lock<std::mutex> lk(transferMutex_);
-    auto it = transferManagers_.find(to);
-    if (it == transferManagers_.end()) {
-        JAMI_ERR("Couldn't accept file %lu to %s", id, to.c_str());
-        return;
-    }
-
-    it->second.onIncomingFileRequest(info, id, cb, icb);
-}
-
-bool
-JamiAccount::acceptFile(const std::string& to,
-                        DRing::DataTransferId id,
-                        const std::string& path,
-                        int64_t)
-{
-    std::unique_lock<std::mutex> lk(transferMutex_);
-    auto it = transferManagers_.find(to);
-    if (it == transferManagers_.end()) {
-        JAMI_ERR("Couldn't accept file %s to %s", path.c_str(), to.c_str());
-        return false;
-    }
-
-    auto res = it->second.acceptFile(id, path);
-
-    bool isConversation;
-    {
-        std::lock_guard<std::mutex> lk(conversationsMtx_);
-        isConversation = conversations_.find(to) != conversations_.end();
-    }
-    if (isConversation) {
-        // Create a symlink to answer to re-ask
-        auto symlinkPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID()
-                           + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + to
-                           + DIR_SEPARATOR_STR + std::to_string(id);
-        if (path != symlinkPath && !fileutils::isSymLink(symlinkPath)) {
-            fileutils::createSymLink(symlinkPath, path);
-        }
-    }
-
-    return res;
-}
-
-bool
-JamiAccount::cancel(const std::string& to, DRing::DataTransferId id)
-{
-    std::unique_lock<std::mutex> lk(transferMutex_);
-    auto it = transferManagers_.find(to);
-    if (it == transferManagers_.end()) {
-        JAMI_ERR("Couldn't cancel file %lu to %s", id, to.c_str());
-        return false;
-    }
-
-    return it->second.cancel(id);
-}
-
-bool
-JamiAccount::info(const std::string& to, DRing::DataTransferId id, DRing::DataTransferInfo& info)
-{
-    std::unique_lock<std::mutex> lk(transferMutex_);
-    auto it = transferManagers_.find(to);
-    if (it == transferManagers_.end()) {
-        JAMI_ERR("Couldn't get file %lu to %s", id, to.c_str());
-        return false;
-    }
-
-    return it->second.info(id, info);
-}
-
-bool
-JamiAccount::bytesProgress(const std::string& to,
-                           DRing::DataTransferId id,
-                           int64_t& total,
-                           int64_t& progress)
-{
-    std::unique_lock<std::mutex> lk(transferMutex_);
-    auto it = transferManagers_.find(to);
-    if (it == transferManagers_.end()) {
-        JAMI_ERR("Couldn't get file %lu to %s", id, to.c_str());
-        return false;
-    }
-
-    return it->second.bytesProgress(id, total, progress);
+    auto msg = Json::writeString(builder, askTransferValue);
+    return conversation->second->downloadFile(
+        interactionId, path, std::move([w = weak(), conversationId, msg](bool ok) {
+            if (!ok)
+                return;
+            // Be sure to not lock conversation
+            dht::ThreadPool().io().run([w = std::move(w),
+                                        conversationId = std::move(conversationId),
+                                        msg = std::move(msg)] {
+                if (auto shared = w.lock())
+                    shared->sendInstantMessage(conversationId, {{MIME_TYPE_ASK_TRANSFER, msg}});
+            });
+        }));
 }
 
 } // namespace jami
