@@ -205,20 +205,24 @@ addUserAgentHeader(const std::string& userAgent, pjsip_tx_data* tdata)
         pjsip_user_agent_hdr_create(tdata->pool, &STR_USER_AGENT, &pjUserAgent));
 
     if (hdr != nullptr) {
-        JAMI_DBG("Add header to SIP message: \"%.*s: %.*s\"", (int) hdr->name.slen, hdr->name.ptr,
-           (int) pjUserAgent.slen, pjUserAgent.ptr);
+        JAMI_DBG("Add header to SIP message: \"%.*s: %.*s\"",
+                 (int) hdr->name.slen,
+                 hdr->name.ptr,
+                 (int) pjUserAgent.slen,
+                 pjUserAgent.ptr);
         pjsip_msg_add_hdr(tdata->msg, hdr);
     }
 }
 
-void logMessageHeaders(const pjsip_hdr* hdr_list)
+void
+logMessageHeaders(const pjsip_hdr* hdr_list)
 {
     const pjsip_hdr* hdr = hdr_list->next;
     const pjsip_hdr* end = hdr_list;
     std::string msgHdrStr("Message headers:\n");
     for (; hdr != end; hdr = hdr->next) {
         char buf[1024];
-        int size = pjsip_hdr_print_on((void*)hdr, buf, sizeof(buf));
+        int size = pjsip_hdr_print_on((void*) hdr, buf, sizeof(buf));
         if (size > 0) {
             msgHdrStr.append(buf, size);
             msgHdrStr.push_back('\n');
@@ -233,23 +237,31 @@ sip_strerror(pj_status_t code)
 {
     char err_msg[PJ_ERR_MSG_SIZE];
     auto ret = pj_strerror(code, err_msg, sizeof err_msg);
-    return std::string {ret.ptr, ret.ptr+ret.slen};
+    return std::string {ret.ptr, ret.ptr + ret.slen};
 }
 
-void
+pj_status_t
 register_thread()
 {
-    if (!pj_thread_is_registered()) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined _MSC_VER
-        static thread_local pj_thread_desc desc;
-        static thread_local pj_thread_t* this_thread;
-#else
-        static __thread pj_thread_desc desc;
-        static __thread pj_thread_t* this_thread;
-#endif
-        pj_thread_register(NULL, desc, &this_thread);
-        JAMI_DBG("Registered thread %p (0x%X)", this_thread, pj_getpid());
+    if (pj_thread_is_registered()) {
+        // Already registered.
+        return PJ_SUCCESS;
     }
+
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined _MSC_VER
+    static thread_local pj_thread_desc desc;
+    static thread_local pj_thread_t* this_thread;
+#else
+    static __thread pj_thread_desc desc;
+    static __thread pj_thread_t* this_thread;
+#endif
+    auto status = pj_thread_register(NULL, desc, &this_thread);
+    if (status == PJ_SUCCESS)
+        JAMI_DBG("Registered thread %p (0x%X)", this_thread, pj_getpid());
+    else
+        JAMI_ERR("Failed to register thread %p (0x%X)", this_thread, pj_getpid());
+
+    return status;
 }
 
 void
