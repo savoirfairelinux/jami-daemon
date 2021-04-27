@@ -74,7 +74,7 @@ bool muteLocalMedia(const std::string& callid, const std::string& mediaType, boo
 bool transfer(const std::string& callID, const std::string& to);
 bool attendedTransfer(const std::string& transferID, const std::string& targetID);
 std::map<std::string, std::string> getCallDetails(const std::string& callID);
-std::vector<std::string> getCallList();
+std::vector<std::string> getCallList(const std::string& accountId);
 
 /* Conference related methods */
 void removeConference(const std::string& conference_id);

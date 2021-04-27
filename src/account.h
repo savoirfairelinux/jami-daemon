@@ -280,8 +280,8 @@ public:
 
     bool isRendezVous() const { return isRendezVous_; }
 
-    void attachCall(const std::string& id);
-    void detachCall(const std::string& id);
+    void attachCall(const std::shared_ptr<Call>& call);
+    void detachCall(const std::shared_ptr<Call>& call);
 
     static const char* const VIDEO_CODEC_ENABLED;
     static const char* const VIDEO_CODEC_NAME;
@@ -350,6 +350,8 @@ public:
         allModeratorsEnabled_ = isAllModeratorEnabled;
     }
 
+    std::vector<std::string> getCallList() const;
+
 public:
     // virtual methods that has to be implemented by concrete classes
     /**
@@ -364,8 +366,8 @@ private:
     /**
      * Set of call's ID attached to the account.
      */
-    std::mutex callIDSetMtx_;
-    std::set<std::string> callIDSet_;
+    mutable std::mutex callSetMtx_;
+    std::set<std::weak_ptr<Call>, std::owner_less<std::weak_ptr<Call>>> callSet_;
 
 protected:
     void updateUpnpController();

@@ -119,9 +119,9 @@ DBusCallManager::getCallDetails(const std::string& callID)
 }
 
 auto
-DBusCallManager::getCallList() -> decltype(DRing::getCallList())
+DBusCallManager::getCallList(const std::string& accountId) -> decltype(DRing::getCallList(accountId))
 {
-    return DRing::getCallList();
+    return DRing::getCallList(accountId);
 }
 
 std::vector<std::map<std::string, std::string>>
