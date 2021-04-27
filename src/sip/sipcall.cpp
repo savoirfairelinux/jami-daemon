@@ -78,6 +78,8 @@ getVideoSettings()
 static constexpr std::chrono::seconds DEFAULT_ICE_INIT_TIMEOUT {35}; // seconds
 static constexpr std::chrono::seconds DEFAULT_ICE_NEGO_TIMEOUT {60}; // seconds
 static constexpr std::chrono::milliseconds MS_BETWEEN_2_KEYFRAME_REQUEST {1000};
+static constexpr int ICE_COMP_ID_RTP {1};
+static constexpr int ICE_COMP_COUNT_PER_STREAM {2};
 
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& callId,
@@ -655,12 +657,12 @@ SIPCall::terminateSipSession(int status)
                     auto contact = account->getContactHeader(transport_ ? transport_->get()
                                                                         : nullptr);
                     sip_utils::addContactHeader(&contact, tdata);
+                    // Add user-agent header
+                    sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
                 } else {
                     JAMI_ERR("No account detected");
+                    // TODO. Shouldn't thrown an exception here?
                 }
-
-                // Add user-agent header
-                sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
 
                 ret = pjsip_inv_send_msg(inviteSession_.get(), tdata);
                 if (ret != PJ_SUCCESS)
@@ -1467,20 +1469,38 @@ SIPCall::addLocalIceAttributes()
     JAMI_DBG("[call:%s] fill SDP with ICE transport %p", getCallId().c_str(), media_tr);
     sdp_->addIceAttributes(media_tr->getLocalAttributes());
 
-    unsigned idx = 0;
-    unsigned compId = 1;
-    for (auto const& stream : rtpStreams_) {
-        JAMI_DBG("[call:%s] add ICE local candidates for media [%s] @ %u",
-                 getCallId().c_str(),
-                 stream.mediaAttribute_->toString().c_str(),
-                 idx);
-        // RTP
-        sdp_->addIceCandidates(idx, media_tr->getLocalCandidates(compId));
-        // RTCP
-        sdp_->addIceCandidates(idx, media_tr->getLocalCandidates(compId + 1));
+    if (account->isIceCompIdRfc5245Compliant()) {
+        unsigned streamIdx = 0;
+        for (auto const& stream : rtpStreams_) {
+            JAMI_DBG("[call:%s] add ICE local candidates for media [%s] @ %u",
+                     getCallId().c_str(),
+                     stream.mediaAttribute_->toString().c_str(),
+                     streamIdx);
+            // RTP
+            sdp_->addIceCandidates(streamIdx,
+                                   media_tr->getLocalCandidates(streamIdx, ICE_COMP_ID_RTP));
+            // RTCP
+            sdp_->addIceCandidates(streamIdx,
+                                   media_tr->getLocalCandidates(streamIdx, ICE_COMP_ID_RTP + 1));
 
-        idx++;
-        compId += 2;
+            streamIdx++;
+        }
+    } else {
+        unsigned idx = 0;
+        unsigned compId = 1;
+        for (auto const& stream : rtpStreams_) {
+            JAMI_DBG("[call:%s] add ICE local candidates for media [%s] @ %u",
+                     getCallId().c_str(),
+                     stream.mediaAttribute_->toString().c_str(),
+                     idx);
+            // RTP
+            sdp_->addIceCandidates(idx, media_tr->getLocalCandidates(compId));
+            // RTCP
+            sdp_->addIceCandidates(idx, media_tr->getLocalCandidates(compId + 1));
+
+            idx++;
+            compId += 2;
+        }
     }
 }
 
@@ -1498,7 +1518,7 @@ SIPCall::getAllRemoteCandidates()
     for (unsigned mediaIdx = 0; mediaIdx < static_cast<unsigned>(rtpStreams_.size()); mediaIdx++) {
         IceCandidate cand;
         for (auto& line : sdp_->getIceCandidates(mediaIdx)) {
-            if (media_tr->getCandidateFromSDP(line, cand)) {
+            if (media_tr->parseIceAttributeLine(mediaIdx, line, cand)) {
                 JAMI_DBG("[call:%s] add remote ICE candidate: %s",
                          getCallId().c_str(),
                          line.c_str());
@@ -1631,9 +1651,8 @@ SIPCall::startAllMedia()
     }
 
     auto slots = sdp_->getMediaSlots();
-    unsigned ice_comp_id = 0;
     bool peer_holding {true};
-    int slotN = -1;
+    int streamIdx = -1;
 
     // reset
     readyToRecord_ = false;
@@ -1641,7 +1660,7 @@ SIPCall::startAllMedia()
     bool isVideoEnabled = false;
 
     for (const auto& slot : slots) {
-        ++slotN;
+        streamIdx++;
         const auto& local = slot.first;
         const auto& remote = slot.second;
 
@@ -1653,16 +1672,18 @@ SIPCall::startAllMedia()
         if (local.type != remote.type) {
             JAMI_ERR("[call:%s] [SDP:slot#%u] Inconsistent media type between local and remote",
                      getCallId().c_str(),
-                     slotN);
+                     streamIdx);
             continue;
         }
 
         if (!local.codec) {
-            JAMI_WARN("[call:%s] [SDP:slot#%u] Missing local codec", getCallId().c_str(), slotN);
+            JAMI_WARN("[call:%s] [SDP:slot#%u] Missing local codec", getCallId().c_str(), streamIdx);
             continue;
         }
         if (!remote.codec) {
-            JAMI_WARN("[call:%s] [SDP:slot#%u] Missing remote codec", getCallId().c_str(), slotN);
+            JAMI_WARN("[call:%s] [SDP:slot#%u] Missing remote codec",
+                      getCallId().c_str(),
+                      streamIdx);
             continue;
         }
 
@@ -1670,11 +1691,11 @@ SIPCall::startAllMedia()
             JAMI_WARN(
                 "[call:%s] [SDP:slot#%u] Secure mode but no crypto attributes. Ignoring the media",
                 getCallId().c_str(),
-                slotN);
+                streamIdx);
             continue;
         }
 
-        auto const& rtpStream = rtpStreams_[slotN];
+        auto const& rtpStream = rtpStreams_[streamIdx];
         if (not rtpStream.mediaAttribute_) {
             throw std::runtime_error("Missing media attribute");
         }
@@ -1689,9 +1710,9 @@ SIPCall::startAllMedia()
         // because of the audio loop
         if (getState() != CallState::HOLD) {
             if (isIceRunning()) {
-                rtpStream.rtpSession_->start(newIceSocket(ice_comp_id),
-                                             newIceSocket(ice_comp_id + 1));
-                ice_comp_id += 2;
+                // Create sockets for RTP and RTCP, and start the session.
+                auto compId = ICE_COMP_ID_RTP + streamIdx * ICE_COMP_COUNT_PER_STREAM;
+                rtpStream.rtpSession_->start(newIceSocket(compId), newIceSocket(compId + 1));
             } else
                 rtpStream.rtpSession_->start(nullptr, nullptr);
         }
@@ -2495,13 +2516,12 @@ SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> o
         });
     };
 
+    iceOptions.master = master;
+    iceOptions.streamsCount = static_cast<unsigned>(rtpStreams_.size());
     // Each RTP stream requires a pair of ICE components (RTP + RTCP).
-    int compCount = static_cast<int>(rtpStreams_.size() * 2);
+    iceOptions.compCountPerStream = ICE_COMP_COUNT_PER_STREAM;
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    auto transport = iceTransportFactory.createUTransport(getCallId().c_str(),
-                                                          compCount,
-                                                          master,
-                                                          iceOptions);
+    auto transport = iceTransportFactory.createUTransport(getCallId().c_str(), iceOptions);
     std::lock_guard<std::mutex> lk(transportMtx_);
     // Destroy old ice on a separate io pool
     if (tmpMediaTransport_)

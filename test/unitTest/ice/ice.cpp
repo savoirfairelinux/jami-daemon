@@ -121,7 +121,7 @@ IceTest::testRawIceConnection()
             CPPUNIT_ASSERT(cv_resp.wait_for(lk_resp, std::chrono::seconds(10), [&] {
                 return !response.empty();
             }));
-            auto sdp = IceTransport::parse_SDP(response, *ice_master);
+            auto sdp = ice_master->parseIceCandidates(response);
             CPPUNIT_ASSERT(
                 ice_master->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates)));
         });
@@ -130,9 +130,11 @@ IceTest::testRawIceConnection()
         iceMasterReady = ok;
         cv.notify_one();
     };
+    ice_config.master = true;
+    ice_config.streamsCount = 1;
+    ice_config.compCountPerStream = 1;
+
     ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
-                                                                              1,
-                                                                              true,
                                                                               ice_config);
     cv_create.notify_all();
     ice_config.onInitDone = [&](bool ok) {
@@ -153,7 +155,7 @@ IceTest::testRawIceConnection()
             cv_resp.notify_one();
             CPPUNIT_ASSERT(
                 cv_init.wait_for(lk_resp, std::chrono::seconds(10), [&] { return !init.empty(); }));
-            auto sdp = IceTransport::parse_SDP(init, *ice_slave);
+            auto sdp = ice_slave->parseIceCandidates(init);
             CPPUNIT_ASSERT(
                 ice_slave->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates)));
         });
@@ -162,9 +164,11 @@ IceTest::testRawIceConnection()
         iceSlaveReady = ok;
         cv.notify_one();
     };
+    ice_config.master = false;
+    ice_config.streamsCount = 1;
+    ice_config.compCountPerStream = 1;
+
     ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
-                                                                             1,
-                                                                             false,
                                                                              ice_config);
     cv_create.notify_all();
     CPPUNIT_ASSERT(
@@ -216,7 +220,8 @@ IceTest::testTurnMasterIceConnection()
             CPPUNIT_ASSERT(cv_resp.wait_for(lk_resp, std::chrono::seconds(10), [&] {
                 return !response.empty();
             }));
-            auto sdp = IceTransport::parse_SDP(response, *ice_master);
+
+            auto sdp = ice_master->parseIceCandidates(response);
             CPPUNIT_ASSERT(
                 ice_master->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates)));
         });
@@ -232,9 +237,10 @@ IceTest::testTurnMasterIceConnection()
                                             .setUsername("ring")
                                             .setPassword("ring")
                                             .setRealm("ring"));
+    ice_config.master = true;
+    ice_config.streamsCount = 1;
+    ice_config.compCountPerStream = 1;
     ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
-                                                                              1,
-                                                                              true,
                                                                               ice_config);
     cv_create.notify_all();
     ice_config.turnServers = {};
@@ -265,7 +271,7 @@ IceTest::testTurnMasterIceConnection()
             cv_resp.notify_one();
             CPPUNIT_ASSERT(
                 cv_init.wait_for(lk_resp, std::chrono::seconds(10), [&] { return !init.empty(); }));
-            auto sdp = IceTransport::parse_SDP(init, *ice_slave);
+            auto sdp = ice_slave->parseIceCandidates(init);
             CPPUNIT_ASSERT(
                 ice_slave->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates)));
         });
@@ -274,14 +280,15 @@ IceTest::testTurnMasterIceConnection()
         iceSlaveReady = ok;
         cv.notify_one();
     };
+    ice_config.master = false;
+    ice_config.streamsCount = 1;
+    ice_config.compCountPerStream = 1;
     ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
-                                                                             1,
-                                                                             false,
                                                                              ice_config);
     cv_create.notify_all();
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(10), [&] { return iceMasterReady && iceSlaveReady; }));
-    CPPUNIT_ASSERT(ice_master->getLocalAddress(0).toString(false) == turnV4_->toString(false));
+    CPPUNIT_ASSERT(ice_master->getLocalAddress(1).toString(false) == turnV4_->toString(false));
 }
 
 void
@@ -329,7 +336,7 @@ IceTest::testTurnSlaveIceConnection()
             CPPUNIT_ASSERT(cv_resp.wait_for(lk_resp, std::chrono::seconds(10), [&] {
                 return !response.empty();
             }));
-            auto sdp = IceTransport::parse_SDP(response, *ice_master);
+            auto sdp = ice_master->parseIceCandidates(response);
             CPPUNIT_ASSERT(
                 ice_master->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates)));
         });
@@ -340,9 +347,10 @@ IceTest::testTurnSlaveIceConnection()
     };
     ice_config.accountPublicAddr = IpAddr(*addr4[0].get());
     ice_config.accountLocalAddr = ip_utils::getLocalAddr(AF_INET);
+    ice_config.master = true;
+    ice_config.streamsCount = 1;
+    ice_config.compCountPerStream = 1;
     ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
-                                                                              1,
-                                                                              true,
                                                                               ice_config);
     cv_create.notify_all();
     ice_config.onInitDone = [&](bool ok) {
@@ -372,7 +380,7 @@ IceTest::testTurnSlaveIceConnection()
             cv_resp.notify_one();
             CPPUNIT_ASSERT(
                 cv_init.wait_for(lk_resp, std::chrono::seconds(10), [&] { return !init.empty(); }));
-            auto sdp = IceTransport::parse_SDP(init, *ice_slave);
+            auto sdp = ice_slave->parseIceCandidates(init);
             CPPUNIT_ASSERT(
                 ice_slave->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates)));
         });
@@ -386,14 +394,15 @@ IceTest::testTurnSlaveIceConnection()
                                             .setUsername("ring")
                                             .setPassword("ring")
                                             .setRealm("ring"));
+    ice_config.master = false;
+    ice_config.streamsCount = 1;
+    ice_config.compCountPerStream = 1;
     ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
-                                                                             1,
-                                                                             false,
                                                                              ice_config);
     cv_create.notify_all();
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(10), [&] { return iceMasterReady && iceSlaveReady; }));
-    CPPUNIT_ASSERT(ice_slave->getLocalAddress(0).toString(false) == turnV4_->toString(false));
+    CPPUNIT_ASSERT(ice_slave->getLocalAddress(1).toString(false) == turnV4_->toString(false));
 }
 
 } // namespace test
