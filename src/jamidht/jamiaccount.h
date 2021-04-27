@@ -750,7 +750,7 @@ private:
     std::map<dht::Value::Id, PendingMessage> sentMessages_;
     std::set<std::string> treatedMessages_ {};
 
-    std::string ringDeviceName_ {};
+    std::string deviceName_ {};
     std::string idPath_ {};
     std::string cachePath_ {};
     std::string dataPath_ {};
