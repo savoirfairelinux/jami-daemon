@@ -535,11 +535,23 @@ SIPVoIPLink::SIPVoIPLink()
     TRY(pjsip_replaces_init_module(endpt_));
 #undef TRY
 
-    sipThread_ = std::thread([this] {
-        sip_utils::register_thread();
-        while (running_)
-            handleEvents();
+    sipScheduler_ = std::make_shared<ScheduledExecutor>();
+
+    sipScheduler_->run([this] {
+        if (sip_utils::register_thread() != PJ_SUCCESS) {
+            JAMI_WARN("Failed to register SIP execution thread");
+        } else {
+            JAMI_DBG("SIP thread registered. Start polling SIP events on this thread");
+        }
     });
+
+    JAMI_DBG("Start polling SIP events");
+    pollTask_ = sipScheduler_->scheduleAtFixedRate(
+        [this] {
+            handleEvents({0, 0});
+            return running_.load();
+        },
+        std::chrono::milliseconds(500));
 
     JAMI_DBG("SIPVoIPLink@%p", this);
 }
@@ -609,9 +621,8 @@ SIPVoIPLink::guessAccount(std::string_view userName,
 
 // Called from EventThread::run (not main thread)
 void
-SIPVoIPLink::handleEvents()
+SIPVoIPLink::handleEvents(const pj_time_val timeout)
 {
-    const pj_time_val timeout = {1, 0};
     if (auto ret = pjsip_endpt_handle_events(endpt_, &timeout))
         JAMI_ERR("pjsip_endpt_handle_events failed with error %s",
                  sip_utils::sip_strerror(ret).c_str());
