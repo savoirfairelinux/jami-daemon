@@ -121,7 +121,7 @@ IceTest::testRawIceConnection()
             CPPUNIT_ASSERT(cv_resp.wait_for(lk_resp, std::chrono::seconds(10), [&] {
                 return !response.empty();
             }));
-            auto sdp = IceTransport::parse_SDP(response, *ice_master);
+            auto sdp = ice_master->parseIceCandidates(response);
             CPPUNIT_ASSERT(
                 ice_master->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates)));
         });
@@ -130,9 +130,11 @@ IceTest::testRawIceConnection()
         iceMasterReady = ok;
         cv.notify_one();
     };
+    ice_config.master = true;
+    ice_config.streamsCount = 1;
+    ice_config.compCountPerStream = 1;
+
     ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
-                                                                              1,
-                                                                              true,
                                                                               ice_config);
     cv_create.notify_all();
     ice_config.onInitDone = [&](bool ok) {
@@ -153,7 +155,7 @@ IceTest::testRawIceConnection()
             cv_resp.notify_one();
             CPPUNIT_ASSERT(
                 cv_init.wait_for(lk_resp, std::chrono::seconds(10), [&] { return !init.empty(); }));
-            auto sdp = IceTransport::parse_SDP(init, *ice_slave);
+            auto sdp = ice_slave->parseIceCandidates(init);
             CPPUNIT_ASSERT(
                 ice_slave->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates)));
         });
@@ -162,9 +164,11 @@ IceTest::testRawIceConnection()
         iceSlaveReady = ok;
         cv.notify_one();
     };
+    ice_config.master = false;
+    ice_config.streamsCount = 1;
+    ice_config.compCountPerStream = 1;
+
     ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
-                                                                             1,
-                                                                             false,
                                                                              ice_config);
     cv_create.notify_all();
     CPPUNIT_ASSERT(

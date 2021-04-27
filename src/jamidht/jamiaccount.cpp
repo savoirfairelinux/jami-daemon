@@ -219,7 +219,6 @@ struct JamiAccount::DiscoveredPeer
     std::shared_ptr<Task> cleanupTask;
 };
 
-static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
 static constexpr auto TLS_TIMEOUT = std::chrono::seconds(40);
@@ -2748,15 +2747,17 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg,
                     shared->checkPendingCall(callId);
             });
         };
-        auto ice = createIceTransport(("sip:" + call->getCallId()).c_str(),
-                                    ICE_COMPONENTS,
-                                    false,
-                                    iceOptions);
+
+        iceOptions.streamsCount = ICE_STREAMS_COUNT;
+        iceOptions.compCountPerStream = ICE_COMP_COUNT_PER_STREAM;
+
+        iceOptions.master = false;
+        iceOptions.tcpEnable = false;
+        auto ice = createIceTransport(("sip:" + call->getCallId()).c_str(), iceOptions);
+
         iceOptions.tcpEnable = true;
-        auto ice_tcp = createIceTransport(("sip:" + call->getCallId()).c_str(),
-                                        ICE_COMPONENTS,
-                                        true,
-                                        iceOptions);
+        iceOptions.master = true;
+        auto ice_tcp = createIceTransport(("sip:" + call->getCallId()).c_str(), iceOptions);
 
         std::weak_ptr<SIPCall> wcall = call;
         Manager::instance().addTask([account = shared(), wcall, ice, ice_tcp, msg, from_cert, from] {

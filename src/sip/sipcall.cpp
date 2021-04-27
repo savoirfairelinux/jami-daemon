@@ -655,12 +655,11 @@ SIPCall::terminateSipSession(int status)
                     auto contact = account->getContactHeader(transport_ ? transport_->get()
                                                                         : nullptr);
                     sip_utils::addContactHeader(&contact, tdata);
+                    // Add user-agent header
+                    sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
                 } else {
                     JAMI_ERR("No account detected");
                 }
-
-                // Add user-agent header
-                sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
 
                 ret = pjsip_inv_send_msg(inviteSession_.get(), tdata);
                 if (ret != PJ_SUCCESS)
@@ -1467,20 +1466,36 @@ SIPCall::addLocalIceAttributes()
     JAMI_DBG("[call:%s] fill SDP with ICE transport %p", getCallId().c_str(), media_tr);
     sdp_->addIceAttributes(media_tr->getLocalAttributes());
 
-    unsigned idx = 0;
-    unsigned compId = 1;
-    for (auto const& stream : rtpStreams_) {
-        JAMI_DBG("[call:%s] add ICE local candidates for media [%s] @ %u",
-                 getCallId().c_str(),
-                 stream.mediaAttribute_->toString().c_str(),
-                 idx);
-        // RTP
-        sdp_->addIceCandidates(idx, media_tr->getLocalCandidates(compId));
-        // RTCP
-        sdp_->addIceCandidates(idx, media_tr->getLocalCandidates(compId + 1));
+    if (account->isIceCompIdRfc5245Compliant()) {
+        unsigned streamIdx = 0;
+        for (auto const& stream : rtpStreams_) {
+            JAMI_DBG("[call:%s] add ICE local candidates for media [%s] @ %u",
+                     getCallId().c_str(),
+                     stream.mediaAttribute_->toString().c_str(),
+                     streamIdx);
+            // RTP
+            sdp_->addIceCandidates(streamIdx, media_tr->getLocalCandidates(streamIdx, 1));
+            // RTCP
+            sdp_->addIceCandidates(streamIdx, media_tr->getLocalCandidates(streamIdx, 2));
 
-        idx++;
-        compId += 2;
+            streamIdx++;
+        }
+    } else {
+        unsigned idx = 0;
+        unsigned compId = 1;
+        for (auto const& stream : rtpStreams_) {
+            JAMI_DBG("[call:%s] add ICE local candidates for media [%s] @ %u",
+                     getCallId().c_str(),
+                     stream.mediaAttribute_->toString().c_str(),
+                     idx);
+            // RTP
+            sdp_->addIceCandidates(idx, media_tr->getLocalCandidates(0, compId));
+            // RTCP
+            sdp_->addIceCandidates(idx, media_tr->getLocalCandidates(0, compId + 1));
+
+            idx++;
+            compId += 2;
+        }
     }
 }
 
@@ -1498,7 +1513,7 @@ SIPCall::getAllRemoteCandidates()
     for (unsigned mediaIdx = 0; mediaIdx < static_cast<unsigned>(rtpStreams_.size()); mediaIdx++) {
         IceCandidate cand;
         for (auto& line : sdp_->getIceCandidates(mediaIdx)) {
-            if (media_tr->getCandidateFromSDP(line, cand)) {
+            if (media_tr->parseIceAttributeLine(mediaIdx, line, cand)) {
                 JAMI_DBG("[call:%s] add remote ICE candidate: %s",
                          getCallId().c_str(),
                          line.c_str());
@@ -2495,13 +2510,12 @@ SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> o
         });
     };
 
+    iceOptions.master = master;
+    iceOptions.streamsCount = static_cast<unsigned>(rtpStreams_.size());
     // Each RTP stream requires a pair of ICE components (RTP + RTCP).
-    int compCount = static_cast<int>(rtpStreams_.size() * 2);
+    iceOptions.compCountPerStream = 2;
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    auto transport = iceTransportFactory.createUTransport(getCallId().c_str(),
-                                                          compCount,
-                                                          master,
-                                                          iceOptions);
+    auto transport = iceTransportFactory.createUTransport(getCallId().c_str(), iceOptions);
     std::lock_guard<std::mutex> lk(transportMtx_);
     // Destroy old ice on a separate io pool
     if (tmpMediaTransport_)
