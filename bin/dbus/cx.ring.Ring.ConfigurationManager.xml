@@ -456,25 +456,6 @@
            </arg>
        </signal>
 
-       <method name="testAccountICEInitialization" tp:name-for-bindings="testAccountICEInitialization">
-           <tp:docstring>
-               Test initializing an ICE transport with the current account configuration.
-           </tp:docstring>
-           <arg type="s" name="accountID" direction="in">
-           </arg>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-           <arg type="a{ss}" name="result" direction="out" tp:type="String_String_Map">
-               <tp:docstring>
-                   A string map.
-                   Available attributes:
-                   <ul>
-                       <li>STATUS: 0 for success, non-0 for error</li>
-                       <li>MESSAGE: message explaining the status</li>
-                   </ul>
-               </tp:docstring>
-           </arg>
-       </method>
-
        <method name="setAccountsOrder" tp:name-for-bindings="setAccountsOrder">
            <tp:docstring>
                 Update the accounts order.
