@@ -435,12 +435,12 @@ public:
     /**
      * Store the local/public addresses used to register
      */
-    void storeActiveIpAddress() override;
+    void storeActiveIpAddress(std::function<void()>&& cb = {});
 
     /**
      * Create and return ICE options.
      */
-    const IceTransportOptions getIceOptions() const noexcept override;
+    void getIceOptions(std::function<void(IceTransportOptions)> cb) noexcept;
 
 #ifdef DRING_TESTABLE
     ConnectionManager& connectionManager() { return *connectionManager_; }

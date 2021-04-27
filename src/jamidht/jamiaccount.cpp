@@ -718,68 +718,69 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
         return;
     JAMI_DBG("[call:%s] outgoing call connected to %s", call->getCallId().c_str(), to_id.c_str());
 
-    auto opts = getIceOptions();
-    opts.onInitDone = [w = weak(), target = std::move(target), call](bool ok) {
-        if (!ok) {
-            JAMI_ERR("ICE medias are not initialized");
-            return;
-        }
-        auto shared = w.lock();
-        if (!shared or !call)
-            return;
-
-        const auto localAddress = ip_utils::getInterfaceAddr(shared->getLocalInterface(),
-                                                             target.getFamily());
-
-        IpAddr addrSdp = shared->getPublishedSameasLocal()
-                             ? localAddress
-                             : shared->getPublishedIpAddress(target.getFamily());
-
-        // fallback on local address
-        if (not addrSdp)
-            addrSdp = localAddress;
-
-        // Initialize the session using ULAW as default codec in case of early media
-        // The session should be ready to receive media once the first INVITE is sent, before
-        // the session initialization is completed
-        if (!getSystemCodecContainer()->searchCodecByName("PCMA", jami::MEDIA_AUDIO))
-            JAMI_WARN("Could not instantiate codec for early media");
-
-        // Building the local SDP offer
-        auto& sdp = call->getSDP();
-
-        sdp.setPublishedIP(addrSdp);
-
-        auto mediaAttrList = call->getMediaAttributeList();
-
-        if (mediaAttrList.empty()) {
-            JAMI_ERR("Call [%s] has no media. Abort!", call->getCallId().c_str());
-            return;
-        }
-
-        if (not sdp.createOffer(mediaAttrList)) {
-            JAMI_ERR("Could not send outgoing INVITE request for new call");
-            return;
-        }
-
-        // Note: pj_ice_strans_create can call onComplete in the same thread
-        // This means that iceMutex_ in IceTransport can be locked when onInitDone is called
-        // So, we need to run the call creation in the main thread
-        // Also, we do not directly call SIPStartCall before receiving onInitDone, because
-        // there is an inside waitForInitialization that can block the thread.
-        runOnMainThread([w = std::move(w), target = std::move(target), call = std::move(call)] {
+    getIceOptions(std::move([=](auto opts) {
+        opts.onInitDone = [w = weak(), target = std::move(target), call](bool ok) {
+            if (!ok) {
+                JAMI_ERR("ICE medias are not initialized");
+                return;
+            }
             auto shared = w.lock();
-            if (!shared)
+            if (!shared or !call)
                 return;
 
-            if (not shared->SIPStartCall(*call, target)) {
-                JAMI_ERR("Could not send outgoing INVITE request for new call");
+            const auto localAddress = ip_utils::getInterfaceAddr(shared->getLocalInterface(),
+                                                                target.getFamily());
+
+            IpAddr addrSdp = shared->getPublishedSameasLocal()
+                                ? localAddress
+                                : shared->getPublishedIpAddress(target.getFamily());
+
+            // fallback on local address
+            if (not addrSdp)
+                addrSdp = localAddress;
+
+            // Initialize the session using ULAW as default codec in case of early media
+            // The session should be ready to receive media once the first INVITE is sent, before
+            // the session initialization is completed
+            if (!getSystemCodecContainer()->searchCodecByName("PCMA", jami::MEDIA_AUDIO))
+                JAMI_WARN("Could not instantiate codec for early media");
+
+            // Building the local SDP offer
+            auto& sdp = call->getSDP();
+
+            sdp.setPublishedIP(addrSdp);
+
+            auto mediaAttrList = call->getMediaAttributeList();
+
+            if (mediaAttrList.empty()) {
+                JAMI_ERR("Call [%s] has no media. Abort!", call->getCallId().c_str());
+                return;
             }
-        });
-    };
-    call->setIPToIP(true);
-    call->setPeerNumber(to_id);
-    call->initIceMediaTransport(true, std::move(opts));
+
+            if (not sdp.createOffer(mediaAttrList)) {
+                JAMI_ERR("Could not send outgoing INVITE request for new call");
+                return;
+            }
+
+            // Note: pj_ice_strans_create can call onComplete in the same thread
+            // This means that iceMutex_ in IceTransport can be locked when onInitDone is called
+            // So, we need to run the call creation in the main thread
+            // Also, we do not directly call SIPStartCall before receiving onInitDone, because
+            // there is an inside waitForInitialization that can block the thread.
+            runOnMainThread([w = std::move(w), target = std::move(target), call = std::move(call)] {
+                auto shared = w.lock();
+                if (!shared)
+                    return;
+
+                if (not shared->SIPStartCall(*call, target)) {
+                    JAMI_ERR("Could not send outgoing INVITE request for new call");
+                }
+            });
+        };
+        call->setIPToIP(true);
+        call->setPeerNumber(to_id);
+        call->initIceMediaTransport(true, std::move(opts));
+    }));
 }
 
 bool
@@ -2691,46 +2692,47 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg,
         return;
     }
     auto callId = call->getCallId();
-    auto iceOptions = getIceOptions();
-    iceOptions.onNegoDone = [callId, w = weak()](bool) {
-        runOnMainThread([callId, w]() {
-            if (auto shared = w.lock())
-                shared->checkPendingCall(callId);
+    getIceOptions(std::move([=](auto iceOptions) {
+        iceOptions.onNegoDone = [callId, w = weak()](bool) {
+            runOnMainThread([callId, w]() {
+                if (auto shared = w.lock())
+                    shared->checkPendingCall(callId);
+            });
+        };
+        auto ice = createIceTransport(("sip:" + call->getCallId()).c_str(),
+                                    ICE_COMPONENTS,
+                                    false,
+                                    iceOptions);
+        iceOptions.tcpEnable = true;
+        auto ice_tcp = createIceTransport(("sip:" + call->getCallId()).c_str(),
+                                        ICE_COMPONENTS,
+                                        true,
+                                        iceOptions);
+
+        std::weak_ptr<SIPCall> wcall = call;
+        Manager::instance().addTask([account = shared(), wcall, ice, ice_tcp, msg, from_cert, from] {
+            auto call = wcall.lock();
+
+            // call aborted?
+            if (not call)
+                return false;
+
+            if (ice->isFailed()) {
+                JAMI_ERR("[call:%s] ice init failed", call->getCallId().c_str());
+                call->onFailure(EIO);
+                return false;
+            }
+
+            // Loop until ICE transport is initialized.
+            // Note: we suppose that ICE init routine has a an internal timeout (bounded in time)
+            // and we let upper layers decide when the call shall be aborted (our first check upper).
+            if ((not ice->isInitialized()) || (ice_tcp && !ice_tcp->isInitialized()))
+                return true;
+
+            account->replyToIncomingIceMsg(call, ice, ice_tcp, msg, from_cert, from);
+            return false;
         });
-    };
-    auto ice = createIceTransport(("sip:" + call->getCallId()).c_str(),
-                                  ICE_COMPONENTS,
-                                  false,
-                                  iceOptions);
-    iceOptions.tcpEnable = true;
-    auto ice_tcp = createIceTransport(("sip:" + call->getCallId()).c_str(),
-                                      ICE_COMPONENTS,
-                                      true,
-                                      iceOptions);
-
-    std::weak_ptr<SIPCall> wcall = call;
-    Manager::instance().addTask([account = shared(), wcall, ice, ice_tcp, msg, from_cert, from] {
-        auto call = wcall.lock();
-
-        // call aborted?
-        if (not call)
-            return false;
-
-        if (ice->isFailed()) {
-            JAMI_ERR("[call:%s] ice init failed", call->getCallId().c_str());
-            call->onFailure(EIO);
-            return false;
-        }
-
-        // Loop until ICE transport is initialized.
-        // Note: we suppose that ICE init routine has a an internal timeout (bounded in time)
-        // and we let upper layers decide when the call shall be aborted (our first check upper).
-        if ((not ice->isInitialized()) || (ice_tcp && !ice_tcp->isInitialized()))
-            return true;
-
-        account->replyToIncomingIceMsg(call, ice, ice_tcp, msg, from_cert, from);
-        return false;
-    });
+    }));
 }
 
 void
@@ -3662,28 +3664,30 @@ JamiAccount::onIsComposing(const std::string& peer, bool isWriting)
     }
 }
 
-const IceTransportOptions
-JamiAccount::getIceOptions() const noexcept
+void
+JamiAccount::getIceOptions(std::function<void(IceTransportOptions)> cb) noexcept
 {
-    auto opts = SIPAccountBase::getIceOptions();
-    auto publishedAddr = getPublishedIpAddress();
+    storeActiveIpAddress([this, cb=std::move(cb)] {
+        auto opts = SIPAccountBase::getIceOptions();
+        auto publishedAddr = getPublishedIpAddress();
 
-    if (publishedAddr) {
-        auto interfaceAddr = ip_utils::getInterfaceAddr(getLocalInterface(),
-                                                        publishedAddr.getFamily());
-        if (interfaceAddr) {
-            opts.accountLocalAddr = interfaceAddr;
-            opts.accountPublicAddr = publishedAddr;
+        if (publishedAddr) {
+            auto interfaceAddr = ip_utils::getInterfaceAddr(getLocalInterface(),
+                                                            publishedAddr.getFamily());
+            if (interfaceAddr) {
+                opts.accountLocalAddr = interfaceAddr;
+                opts.accountPublicAddr = publishedAddr;
+            }
         }
-    }
-
-    return opts;
+        if (cb)
+            cb(std::move(opts));
+    });
 }
 
 void
-JamiAccount::storeActiveIpAddress()
+JamiAccount::storeActiveIpAddress(std::function<void()>&& cb)
 {
-    dht_->getPublicAddress([this](std::vector<dht::SockAddr>&& results) {
+    dht_->getPublicAddress([this, cb = std::move(cb)](std::vector<dht::SockAddr>&& results) {
         bool hasIpv4 {false}, hasIpv6 {false};
         for (auto& result : results) {
             auto family = result.getFamily();
@@ -3710,6 +3714,8 @@ JamiAccount::storeActiveIpAddress()
             if (hasIpv4 and hasIpv6)
                 break;
         }
+        if (cb)
+            cb();
     });
 }
 
