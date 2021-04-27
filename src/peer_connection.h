@@ -106,7 +106,7 @@ private:
     std::shared_ptr<IceTransport> ice_ {nullptr};
     std::atomic_bool iceStopped {false};
     std::atomic_bool iceIsSender {false};
-    uint8_t compId_ {0};
+    uint8_t compId_ {1};
 };
 
 //==============================================================================
