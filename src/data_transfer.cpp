@@ -696,6 +696,93 @@ IncomingFileTransfer::write(std::string_view buffer)
     return true;
 }
 
+FileInfo::FileInfo(const std::shared_ptr<ChannelSocket>& channel,
+                   DRing::DataTransferId tid,
+                   const DRing::DataTransferInfo& info)
+    : info_(info)
+    , tid_(tid)
+    , channel_(channel)
+{}
+
+OutgoingFile::OutgoingFile(const std::shared_ptr<ChannelSocket>& channel,
+                           DRing::DataTransferId tid,
+                           const DRing::DataTransferInfo& info,
+                           size_t start,
+                           size_t end)
+    : FileInfo(channel, tid, info)
+    , start_(start)
+    , end_(end)
+{
+    if (!fileutils::isFile(info_.path)) {
+        channel_->shutdown();
+        return;
+    }
+    fileutils::openStream(stream_, info_.path);
+    if (!stream_) {
+        channel_->shutdown();
+        return;
+    }
+    stream_.seekg(start, std::ios::beg);
+}
+
+OutgoingFile::~OutgoingFile()
+{
+    if (stream_ && stream_.is_open())
+        stream_.close();
+    if (channel_)
+        channel_->shutdown();
+}
+
+void
+OutgoingFile::process()
+{
+    if (!channel_ or !stream_)
+        return;
+    try {
+        std::vector<char> buffer(UINT16_MAX, 0);
+        std::error_code ec;
+        auto pos = start_;
+        while (!stream_.eof()) {
+            stream_.read(buffer.data(),
+                         end_ > start_ ? std::min(end_ - pos, buffer.size()) : buffer.size());
+            auto gcount = stream_.gcount();
+            pos += gcount;
+            channel_->write(reinterpret_cast<const uint8_t*>(buffer.data()), gcount, ec);
+            if (ec)
+                break;
+        }
+        auto code = ec ? DRing::DataTransferEventCode::closed_by_peer
+                       : DRing::DataTransferEventCode::finished;
+        if (!isUserCancelled_)
+            emitSignal<DRing::DataTransferSignal::DataTransferEvent>(info_.accountId,
+                                                                     info_.conversationId,
+                                                                     tid_,
+                                                                     uint32_t(code));
+        stream_.close();
+    } catch (...) {
+    }
+    channel_->shutdown();
+    if (finishedCb_)
+        finishedCb_();
+}
+
+void
+OutgoingFile::cancel()
+{
+    // Remove link, not original file
+    auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + info_.accountId + DIR_SEPARATOR_STR
+                + "conversation_data" + DIR_SEPARATOR_STR + info_.conversationId + DIR_SEPARATOR_STR
+                + std::to_string(tid_);
+    if (fileutils::isSymLink(path))
+        fileutils::remove(path);
+    isUserCancelled_ = true;
+    emitSignal<DRing::DataTransferSignal::DataTransferEvent>(
+        info_.accountId,
+        info_.conversationId,
+        tid_,
+        uint32_t(DRing::DataTransferEventCode::closed_by_host));
+}
+
 //==============================================================================
 
 struct WaitingRequest
@@ -712,21 +799,36 @@ public:
         , to_(to)
         , isConversation_(isConversation)
     {}
+    ~Impl()
+    {
+        std::lock_guard<std::mutex> lk {mapMutex_};
+        for (const auto& [channel, _of] : outgoings_) {
+            channel->shutdown();
+        }
+        outgoings_.clear();
+        incomings_.clear();
+    }
 
     std::string accountId_ {};
     std::string to_ {};
     bool isConversation_ {true};
 
+    [[deprecated(
+        "Use outgoings_")]] std::map<DRing::DataTransferId, std::shared_ptr<OutgoingFileTransfer>>
+        oMap_ {};
+    [[deprecated(
+        "Use incomings_")]] std::map<DRing::DataTransferId, std::shared_ptr<IncomingFileTransfer>>
+        iMap_ {};
+
     std::mutex mapMutex_ {};
-    std::map<DRing::DataTransferId, std::shared_ptr<OutgoingFileTransfer>> oMap_ {};
-    std::map<DRing::DataTransferId, std::shared_ptr<IncomingFileTransfer>> iMap_ {};
     std::map<DRing::DataTransferId, WaitingRequest> waitingIds_ {};
     struct IncomingFile
     {
         std::shared_ptr<ChannelSocket> channel;
         std::shared_ptr<std::ofstream> stream;
     };
-    std::map<DRing::DataTransferId, IncomingFile> incomingChannels_ {};
+    std::map<std::shared_ptr<ChannelSocket>, std::shared_ptr<OutgoingFile>> outgoings_ {};
+    std::map<DRing::DataTransferId, IncomingFile> incomings_ {};
 };
 
 TransferManager::TransferManager(const std::string& accountId,
@@ -822,14 +924,43 @@ TransferManager::acceptFile(const DRing::DataTransferId& id, const std::string& 
     return true;
 }
 
+void
+TransferManager::transferFile(const std::shared_ptr<ChannelSocket>& channel,
+                              DRing::DataTransferId tid,
+                              const std::string& path,
+                              size_t start,
+                              size_t end)
+{
+    std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
+    if (pimpl_->outgoings_.find(channel) != pimpl_->outgoings_.end())
+        return;
+    DRing::DataTransferInfo info;
+    info.accountId = pimpl_->accountId_;
+    info.conversationId = pimpl_->to_;
+    info.path = path;
+    auto f = std::make_shared<OutgoingFile>(channel, tid, info, start, end);
+    f->onFinished([this, channel] {
+        JAMI_ERR() << "@@@ TODO weak";
+        std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
+        auto itO = pimpl_->outgoings_.find(channel);
+        if (itO != pimpl_->outgoings_.end())
+            pimpl_->outgoings_.erase(itO);
+    });
+    pimpl_->outgoings_.emplace(channel, std::move(f));
+    dht::ThreadPool::io().run([w = std::weak_ptr<OutgoingFile>()] {
+        if (auto of = w.lock())
+            of->process();
+    });
+}
+
 bool
 TransferManager::cancel(const DRing::DataTransferId& id)
 {
     std::shared_ptr<ChannelSocket> channel;
     std::unique_lock<std::mutex> lk {pimpl_->mapMutex_};
     if (pimpl_->isConversation_) {
-        auto itC = pimpl_->incomingChannels_.find(id);
-        if (itC == pimpl_->incomingChannels_.end())
+        auto itC = pimpl_->incomings_.find(id);
+        if (itC == pimpl_->incomings_.end())
             return false;
         channel = itC->second.channel;
         lk.unlock();
@@ -993,8 +1124,8 @@ TransferManager::acceptIncomingChannel(const DRing::DataTransferId& id) const
     auto itW = pimpl_->waitingIds_.find(id);
     if (itW == pimpl_->waitingIds_.end())
         return false;
-    auto itC = pimpl_->incomingChannels_.find(id);
-    return itC == pimpl_->incomingChannels_.end();
+    auto itC = pimpl_->incomings_.find(id);
+    return itC == pimpl_->incomings_.end();
 }
 
 void
@@ -1002,8 +1133,8 @@ TransferManager::handleChannel(const DRing::DataTransferId& id,
                                const std::shared_ptr<ChannelSocket>& channel)
 {
     std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
-    auto itC = pimpl_->incomingChannels_.find(id);
-    if (itC != pimpl_->incomingChannels_.end()) {
+    auto itC = pimpl_->incomings_.find(id);
+    if (itC != pimpl_->incomings_.end()) {
         channel->shutdown();
         return;
     }
@@ -1034,8 +1165,8 @@ TransferManager::handleChannel(const DRing::DataTransferId& id,
     channel->onShutdown([this, id]() {
         // TODO move in cb like before
         std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
-        auto itC = pimpl_->incomingChannels_.find(id);
-        if (itC == pimpl_->incomingChannels_.end())
+        auto itC = pimpl_->incomings_.find(id);
+        if (itC == pimpl_->incomings_.end())
             return;
         if (itC->second.stream && itC->second.stream->is_open())
             itC->second.stream->close();
@@ -1059,10 +1190,10 @@ TransferManager::handleChannel(const DRing::DataTransferId& id,
                                                                  pimpl_->to_,
                                                                  id,
                                                                  uint32_t(code));
-        pimpl_->incomingChannels_.erase(itC);
+        pimpl_->incomings_.erase(itC);
     });
 
-    pimpl_->incomingChannels_.emplace(id, std::move(ifile));
+    pimpl_->incomings_.emplace(id, std::move(ifile));
     emitSignal<DRing::DataTransferSignal::DataTransferEvent>(
         pimpl_->accountId_, pimpl_->to_, id, uint32_t(DRing::DataTransferEventCode::ongoing));
 }

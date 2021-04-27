@@ -26,6 +26,7 @@
 
 #include <memory>
 #include <string>
+#include <fstream>
 
 namespace jami {
 
@@ -48,25 +49,46 @@ typedef std::function<void(const DRing::DataTransferId&, const DRing::DataTransf
 class FileInfo
 {
 public:
+    FileInfo(const std::shared_ptr<ChannelSocket>& channel,
+             DRing::DataTransferId tid,
+             const DRing::DataTransferInfo& info);
     virtual void process() = 0;
     std::shared_ptr<ChannelSocket> channel() const { return channel_; }
-    DRing::DataTransferInfo info() const;
+    virtual void cancel() = 0;
 
 protected:
+    DRing::DataTransferId tid_ {};
     DRing::DataTransferInfo info_ {};
     std::shared_ptr<ChannelSocket> channel_ {};
 };
 
-class IncomingFile : public FileInfo
+/*class IncomingFile : public FileInfo
 {
 public:
     void process() override {}
-};
+    void cancel() override {}
+    DRing::DataTransferInfo info() const;
+};*/
 
 class OutgoingFile : public FileInfo
 {
 public:
-    void process() override {}
+    OutgoingFile(const std::shared_ptr<ChannelSocket>& channel,
+                 DRing::DataTransferId tid,
+                 const DRing::DataTransferInfo& info,
+                 size_t start = 0,
+                 size_t end = 0);
+    ~OutgoingFile();
+    void process() override;
+    void cancel() override;
+    void onFinished(std::function<void()>&& cb) { finishedCb_ = std::move(cb); }
+
+private:
+    std::ifstream stream_;
+    size_t start_ {0};
+    size_t end_ {0};
+    std::atomic_bool isUserCancelled_ {false};
+    std::function<void()> finishedCb_ {};
 };
 
 class TransferManager
@@ -95,6 +117,20 @@ public:
      */
     [[deprecated("Non swarm method")]] bool acceptFile(const DRing::DataTransferId& id,
                                                        const std::string& path);
+
+    /**
+     * Send a file to a channel
+     * @param channel       channel to use
+     * @param tid           tid of the transfer
+     * @param path          path of the file
+     * @param start         start offset
+     * @param end           end
+     */
+    void transferFile(const std::shared_ptr<ChannelSocket>& channel,
+                      DRing::DataTransferId tid,
+                      const std::string& path,
+                      size_t start,
+                      size_t end);
 
     /**
      * Refuse a transfer
