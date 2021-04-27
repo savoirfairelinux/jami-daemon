@@ -219,8 +219,7 @@ struct JamiAccount::DiscoveredPeer
     std::shared_ptr<Task> cleanupTask;
 };
 
-static constexpr int ICE_COMPONENTS {1};
-static constexpr int ICE_COMP_SIP_TRANSPORT {0};
+static constexpr int ICE_COMP_ID_SIP_TRANSPORT {1};
 static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
 static constexpr auto TLS_TIMEOUT = std::chrono::seconds(40);
 const constexpr auto EXPORT_KEY_RENEWAL_TIME = std::chrono::minutes(20);
@@ -719,7 +718,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             });
 
         auto remoted_address = sipConn.channel->underlyingICE()->getRemoteAddress(
-            ICE_COMP_SIP_TRANSPORT);
+            ICE_COMP_ID_SIP_TRANSPORT);
         try {
             onConnectedOutgoingCall(dev_call, toUri, remoted_address);
         } catch (const VoipLinkException&) {
@@ -1861,7 +1860,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
     // Following can create a transport that need to be negotiated (TLS).
     // This is a asynchronous task. So we're going to process the SIP after this negotiation.
     auto transport = link_.sipTransportBroker->getTlsIceTransport(best_transport,
-                                                                  ICE_COMP_SIP_TRANSPORT,
+                                                                  ICE_COMP_ID_SIP_TRANSPORT,
                                                                   tlsParams);
     if (!transport)
         throw std::runtime_error("transport creation failed");
@@ -1875,7 +1874,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
         // Be acknowledged on transport connection/disconnection
         auto lid = reinterpret_cast<uintptr_t>(this);
         auto remote_id = remote_device.toString();
-        auto remote_addr = best_transport->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
+        auto remote_addr = best_transport->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT);
         auto& tr_self = *transport;
 
         transport->addStateListener(lid,
@@ -2749,15 +2748,17 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg,
                     shared->checkPendingCall(callId);
             });
         };
-        auto ice = createIceTransport(("sip:" + call->getCallId()).c_str(),
-                                      ICE_COMPONENTS,
-                                      false,
-                                      iceOptions);
+
+        iceOptions.streamsCount = ICE_STREAMS_COUNT;
+        iceOptions.compCountPerStream = ICE_COMP_COUNT_PER_STREAM;
+
+        iceOptions.master = false;
+        iceOptions.tcpEnable = false;
+        auto ice = createIceTransport(("sip:" + call->getCallId()).c_str(), iceOptions);
+
+        iceOptions.master = true;
         iceOptions.tcpEnable = true;
-        auto ice_tcp = createIceTransport(("sip:" + call->getCallId()).c_str(),
-                                          ICE_COMPONENTS,
-                                          true,
-                                          iceOptions);
+        auto ice_tcp = createIceTransport(("sip:" + call->getCallId()).c_str(), iceOptions);
 
         std::weak_ptr<SIPCall> wcall = call;
         Manager::instance().addTask([account = shared(), wcall, ice, ice_tcp, msg, from_cert, from] {
@@ -4896,7 +4897,9 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
 
     // Build SIP Message
     // "deviceID@IP"
-    auto toURI = getToUri(to + "@" + channel->underlyingICE()->getRemoteAddress(0).toString(true));
+    auto toURI = getToUri(
+        to + "@"
+        + channel->underlyingICE()->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT).toString(true));
     std::string from = getFromUri();
     pjsip_tx_data* tdata;
 
@@ -5050,7 +5053,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         pc->setTransport(sip_tr);
         pc->setState(Call::ConnectionState::PROGRESSING);
         if (auto ice = socket->underlyingICE()) {
-            auto remoted_address = ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
+            auto remoted_address = ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT);
             try {
                 onConnectedOutgoingCall(pc, peerId, remoted_address);
             } catch (const VoipLinkException&) {

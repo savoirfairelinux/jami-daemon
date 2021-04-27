@@ -327,7 +327,7 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
     if (!ice)
         return;
 
-    auto sdp = IceTransport::parse_SDP(response.ice_msg, *ice);
+    auto sdp = ice->parseIceCandidates(response.ice_msg);
 
     if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates))) {
         JAMI_WARN("[Account:%s] start ICE failed", account.getAccountID().c_str());
@@ -542,8 +542,11 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                 sthis->infos_[{deviceId, vid}] = info;
             }
             std::unique_lock<std::mutex> lk {info->mutex_};
+            ice_config.master = false;
+            ice_config.streamsCount = JamiAccount::ICE_STREAMS_COUNT;
+            ice_config.compCountPerStream = JamiAccount::ICE_COMP_COUNT_PER_STREAM;
             info->ice_ = Manager::instance().getIceTransportFactory().createUTransport(
-                sthis->account.getAccountID().c_str(), 1, false, ice_config);
+                sthis->account.getAccountID().c_str(), ice_config);
 
             if (!info->ice_) {
                 JAMI_ERR("Cannot initialize ICE session.");
@@ -756,7 +759,7 @@ ConnectionManager::Impl::onRequestStartIce(const PeerConnectionRequest& req)
         return;
     }
 
-    auto sdp = IceTransport::parse_SDP(req.ice_msg, *ice);
+    auto sdp = ice->parseIceCandidates(req.ice_msg);
     answerTo(*ice, req.id, req.from);
     if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates))) {
         JAMI_ERR("[Account:%s] start ICE failed - fallback to TURN", account.getAccountID().c_str());
@@ -888,8 +891,12 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
                   shared->account.getAccountID().c_str(),
                   deviceId.c_str());
         std::unique_lock<std::mutex> lk {info->mutex_};
-        info->ice_ = Manager::instance().getIceTransportFactory().createUTransport(
-            shared->account.getAccountID().c_str(), 1, true, ice_config);
+        ice_config.streamsCount = JamiAccount::ICE_STREAMS_COUNT;
+        ice_config.compCountPerStream = JamiAccount::ICE_COMP_COUNT_PER_STREAM;
+        ice_config.master = true;
+        info->ice_ = Manager::instance()
+                        .getIceTransportFactory()
+                        .createUTransport(shared->account.getAccountID().c_str(), ice_config);
         if (not info->ice_) {
             JAMI_ERR("Cannot initialize ICE session.");
             if (shared->connReadyCb_)

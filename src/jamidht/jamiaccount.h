@@ -108,6 +108,8 @@ public:
         = "https://config.jami.net/proxyList";
 
     /* constexpr */ static const std::pair<uint16_t, uint16_t> DHT_PORT_RANGE;
+    constexpr static int ICE_STREAMS_COUNT {1};
+    constexpr static int ICE_COMP_COUNT_PER_STREAM {1};
 
     const char* getAccountType() const override { return ACCOUNT_TYPE; }
 
