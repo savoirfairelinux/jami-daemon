@@ -79,8 +79,9 @@ cancelDataTransfer(const std::string& accountId,
                    const DataTransferId& id) noexcept
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        return acc->cancel(conversationId, id) ? DRing::DataTransferError::success
-                                               : DRing::DataTransferError::invalid_argument;
+        if (auto dt = acc->dataTransfer(conversationId))
+            return dt->cancel(id) ? DRing::DataTransferError::success
+                                  : DRing::DataTransferError::invalid_argument;
     }
     return DRing::DataTransferError::invalid_argument;
 }
