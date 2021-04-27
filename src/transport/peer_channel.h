@@ -38,12 +38,6 @@ public:
         o.cv_.notify_all();
     }
 
-    ssize_t isDataAvailable()
-    {
-        std::lock_guard<std::mutex> lk {mutex_};
-        return stream_.size();
-    }
-
     template<typename Duration>
     ssize_t wait(Duration timeout, std::error_code& ec)
     {

@@ -95,6 +95,9 @@ struct TurnServerInfo
 
 struct IceTransportOptions
 {
+    bool master {true};
+    unsigned streamsCount {1};
+    unsigned compCountPerStream {1};
     bool upnpEnable {false};
     IceTransportCompleteCb onInitDone {};
     IceTransportCompleteCb onNegoDone {};
@@ -130,10 +133,7 @@ public:
     /**
      * Constructor
      */
-    IceTransport(const char* name,
-                 int component_count,
-                 bool master,
-                 const IceTransportOptions& options = {});
+    IceTransport(const char* name, const IceTransportOptions& options = {});
     ~IceTransport();
     /**
      * Get current state
@@ -196,7 +196,7 @@ public:
 
     std::string getLastErrMsg() const;
 
-    IpAddr getDefaultLocalAddress() const { return getLocalAddress(0); }
+    IpAddr getDefaultLocalAddress() const { return getLocalAddress(1); }
 
     /**
      * Return ICE session attributes
@@ -209,11 +209,18 @@ public:
     std::vector<std::string> getLocalCandidates(unsigned comp_id) const;
 
     /**
+     * Return ICE session attributes
+     */
+    std::vector<std::string> getLocalCandidates(unsigned streamIdx, unsigned compId) const;
+
+    /**
      * Returns serialized ICE attributes and candidates.
      */
     std::vector<uint8_t> packIceMsg(uint8_t version = 1) const;
 
-    bool getCandidateFromSDP(const std::string& line, IceCandidate& cand) const;
+    bool parseIceAttributeLine(unsigned streamIdx,
+                               const std::string& line,
+                               IceCandidate& cand) const;
 
     // I/O methods
 
@@ -231,13 +238,6 @@ public:
 
     ssize_t waitForData(int comp_id, std::chrono::milliseconds timeout, std::error_code& ec);
 
-    /**
-     * Return without waiting how many bytes are ready to read
-     * @param comp_id   Ice component
-     * @return the number of bytes ready to read
-     */
-    ssize_t isDataAvailable(int comp_id);
-
     unsigned getComponentCount() const;
 
     // Set session state
@@ -253,7 +253,7 @@ public:
 
     bool isTCPEnabled();
 
-    static ICESDP parse_SDP(std::string_view sdp_msg, const IceTransport& ice);
+    ICESDP parseIceCandidates(std::string_view sdp_msg);
 
     void setDefaultRemoteAddress(int comp_id, const IpAddr& addr);
 
@@ -271,13 +271,9 @@ public:
     ~IceTransportFactory();
 
     std::shared_ptr<IceTransport> createTransport(const char* name,
-                                                  int component_count,
-                                                  bool master,
                                                   const IceTransportOptions& options = {});
 
     std::unique_ptr<IceTransport> createUTransport(const char* name,
-                                                   int component_count,
-                                                   bool master,
                                                    const IceTransportOptions& options = {});
 
     /**
