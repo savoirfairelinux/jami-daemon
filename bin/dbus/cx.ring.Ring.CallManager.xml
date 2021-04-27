@@ -549,6 +549,7 @@
               Get the list of active calls.
               <tp:rationale>To get the call details, iterate on the return value and call <tp:member-ref>getCallDetails</tp:member-ref> method.</tp:rationale>
             </tp:docstring>
+            <arg type="s" name="accountId" direction="in">
             <arg type="as" name="list" direction="out">
               <tp:docstring>
                 A list of call IDs.

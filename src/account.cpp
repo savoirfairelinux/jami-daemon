@@ -131,29 +131,43 @@ Account::Account(const std::string& accountID)
 Account::~Account() {}
 
 void
-Account::attachCall(const std::string& id)
+Account::attachCall(const std::shared_ptr<Call>& call)
 {
-    std::lock_guard<std::mutex> lk {callIDSetMtx_};
-    callIDSet_.insert(id);
+    std::lock_guard<std::mutex> lk {callSetMtx_};
+    callSet_.emplace(call);
 }
 
 void
-Account::detachCall(const std::string& id)
+Account::detachCall(const std::shared_ptr<Call>& call)
 {
-    std::lock_guard<std::mutex> lk {callIDSetMtx_};
-    callIDSet_.erase(id);
+    std::lock_guard<std::mutex> lk {callSetMtx_};
+    callSet_.erase(call);
 }
 
 void
 Account::hangupCalls()
 {
-    decltype(callIDSet_) calls;
+    decltype(callSet_) calls;
     {
-        std::lock_guard<std::mutex> lk {callIDSetMtx_};
-        calls = callIDSet_;
+        std::lock_guard<std::mutex> lk {callSetMtx_};
+        calls = callSet_;
     }
-    for (const auto& id : calls)
-        Manager::instance().hangupCall(id);
+    for (const auto& wcall : calls)
+        if (auto call = wcall.lock())
+            Manager::instance().hangupCall(call->getCallId());
+}
+
+std::vector<std::string>
+Account::getCallList() const
+{
+    std::lock_guard<std::mutex> lk {callSetMtx_};
+    std::vector<std::string> ret;
+    for (auto wcall : callSet_) {
+        if (auto call = wcall.lock())
+            if (not call->isSubcall())
+                ret.emplace_back(call->getCallId());
+    }
+    return ret;
 }
 
 void

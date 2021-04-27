@@ -317,6 +317,17 @@ getCallList()
     return jami::Manager::instance().getCallList();
 }
 
+std::vector<std::string>
+getCallList(const std::string& accountId)
+{
+    if (accountId.empty())
+        return jami::Manager::instance().getCallList();
+    else if (const auto account = jami::Manager::instance().getAccount(accountId))
+        return account->getCallList();
+    JAMI_WARN("Unknown account: %s", accountId.c_str());
+    return {};
+}
+
 std::vector<std::map<std::string, std::string>>
 getConferenceInfos(const std::string& confId)
 {
