@@ -95,6 +95,9 @@ struct TurnServerInfo
 
 struct IceTransportOptions
 {
+    bool master {true};
+    unsigned streamsCount {1};
+    unsigned compCountPerStream {1};
     bool upnpEnable {false};
     IceTransportCompleteCb onInitDone {};
     IceTransportCompleteCb onNegoDone {};
@@ -130,10 +133,7 @@ public:
     /**
      * Constructor
      */
-    IceTransport(const char* name,
-                 int component_count,
-                 bool master,
-                 const IceTransportOptions& options = {});
+    IceTransport(const char* name, const IceTransportOptions& options = {});
     ~IceTransport();
     /**
      * Get current state
@@ -196,7 +196,7 @@ public:
 
     std::string getLastErrMsg() const;
 
-    IpAddr getDefaultLocalAddress() const { return getLocalAddress(0); }
+    IpAddr getDefaultLocalAddress() const { return getLocalAddress(1); }
 
     /**
      * Return ICE session attributes
@@ -208,6 +208,15 @@ public:
      */
     std::vector<std::string> getLocalCandidates(unsigned comp_id) const;
 
+    /**
+     * Return ICE session attributes
+     */
+    std::vector<std::string> getLocalCandidates(unsigned streamIdx, unsigned compId) const;
+
+    bool parseIceAttributeLine(unsigned streamIdx,
+                               const std::string& line,
+                               IceCandidate& cand) const;
+
     bool getCandidateFromSDP(const std::string& line, IceCandidate& cand) const;
 
     // I/O methods
@@ -215,23 +224,16 @@ public:
     void setOnRecv(unsigned comp_id, IceRecvCb cb);
     void setOnShutdown(onShutdownCb&& cb);
 
-    ssize_t recv(int comp_id, unsigned char* buf, size_t len, std::error_code& ec);
-    ssize_t recvfrom(int comp_id, char* buf, size_t len, std::error_code& ec);
+    ssize_t recv(unsigned comp_id, unsigned char* buf, size_t len, std::error_code& ec);
+    ssize_t recvfrom(unsigned comp_id, char* buf, size_t len, std::error_code& ec);
 
-    ssize_t send(int comp_id, const unsigned char* buf, size_t len);
+    ssize_t send(unsigned comp_id, const unsigned char* buf, size_t len);
 
     int waitForInitialization(std::chrono::milliseconds timeout);
 
     int waitForNegotiation(std::chrono::milliseconds timeout);
 
-    ssize_t waitForData(int comp_id, std::chrono::milliseconds timeout, std::error_code& ec);
-
-    /**
-     * Return without waiting how many bytes are ready to read
-     * @param comp_id   Ice component
-     * @return the number of bytes ready to read
-     */
-    ssize_t isDataAvailable(int comp_id);
+    ssize_t waitForData(unsigned comp_id, std::chrono::milliseconds timeout, std::error_code& ec);
 
     unsigned getComponentCount() const;
 
@@ -248,9 +250,9 @@ public:
 
     bool isTCPEnabled();
 
-    static ICESDP parse_SDP(std::string_view sdp_msg, const IceTransport& ice);
+    ICESDP parseIceCandidates(std::string_view sdp_msg);
 
-    void setDefaultRemoteAddress(int comp_id, const IpAddr& addr);
+    void setDefaultRemoteAddress(unsigned comp_id, const IpAddr& addr);
 
     std::string link() const;
 
@@ -266,13 +268,9 @@ public:
     ~IceTransportFactory();
 
     std::shared_ptr<IceTransport> createTransport(const char* name,
-                                                  int component_count,
-                                                  bool master,
                                                   const IceTransportOptions& options = {});
 
     std::unique_ptr<IceTransport> createUTransport(const char* name,
-                                                   int component_count,
-                                                   bool master,
                                                    const IceTransportOptions& options = {});
 
     /**

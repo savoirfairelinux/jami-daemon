@@ -218,7 +218,7 @@ struct JamiAccount::DiscoveredPeer
     std::shared_ptr<Task> cleanupTask;
 };
 
-static constexpr int ICE_COMP_SIP_TRANSPORT {0};
+static constexpr int ICE_COMP_ID_SIP_TRANSPORT {1};
 
 static constexpr const char* const RING_URI_PREFIX = "ring:";
 static constexpr const char* const JAMI_URI_PREFIX = "jami:";
@@ -682,7 +682,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             });
 
         auto remoted_address = sipConn.channel->underlyingICE()->getRemoteAddress(
-            ICE_COMP_SIP_TRANSPORT);
+            ICE_COMP_ID_SIP_TRANSPORT);
         try {
             onConnectedOutgoingCall(dev_call, toUri, remoted_address);
         } catch (const VoipLinkException&) {
@@ -4499,7 +4499,9 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
 
     // Build SIP Message
     // "deviceID@IP"
-    auto toURI = getToUri(to + "@" + channel->underlyingICE()->getRemoteAddress(0).toString(true));
+    auto toURI = getToUri(
+        to + "@"
+        + channel->underlyingICE()->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT).toString(true));
     std::string from = getFromUri();
     pjsip_tx_data* tdata;
 
@@ -4653,7 +4655,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         pc->setTransport(sip_tr);
         pc->setState(Call::ConnectionState::PROGRESSING);
         if (auto ice = socket->underlyingICE()) {
-            auto remoted_address = ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
+            auto remoted_address = ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT);
             try {
                 onConnectedOutgoingCall(pc, peerId, remoted_address);
             } catch (const VoipLinkException&) {
