@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "60106c5e_2d172fd4",
+        "filename": "src/jamidht/channeled_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-04-27T14:13:52Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027scheduler\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "60fa47d2a8fd2e9223597496fd182bce7f02d87f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
