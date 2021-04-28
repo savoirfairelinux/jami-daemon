@@ -95,13 +95,25 @@ static std::shared_ptr<SIPCall> getCallFromInvite(pjsip_inv_session* inv);
 static void processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* e);
 #endif
 
-static void
+static pj_bool_t
 handleIncomingOptions(pjsip_rx_data* rdata)
 {
     pjsip_tx_data* tdata;
 
-    if (pjsip_endpt_create_response(endpt_, rdata, PJSIP_SC_OK, NULL, &tdata) != PJ_SUCCESS)
-        return;
+    auto dlg = pjsip_rdata_get_dlg(rdata);
+    if (dlg) {
+        JAMI_INFO("Processing in-dialog option request");
+        if (pjsip_dlg_create_response(dlg, rdata, PJSIP_SC_OK, NULL, &tdata) != PJ_SUCCESS) {
+            JAMI_ERR("Failed to create in-dialog response for option request");
+            return PJ_FALSE;
+        }
+    } else {
+        JAMI_INFO("Processing out-of-dialog option request");
+        if (pjsip_endpt_create_response(endpt_, rdata, PJSIP_SC_OK, NULL, &tdata) != PJ_SUCCESS) {
+            JAMI_ERR("Failed to create out-of-dialog response for option request");
+            return PJ_FALSE;
+        }
+    }
 
 #define ADD_HDR(hdr) \
     do { \
@@ -116,11 +128,27 @@ handleIncomingOptions(pjsip_rx_data* rdata)
     ADD_CAP(PJSIP_H_SUPPORTED);
     ADD_HDR(pjsip_evsub_get_allow_events_hdr(NULL));
 
+    if (dlg) {
+        if (pjsip_dlg_send_response(dlg, pjsip_rdata_get_tsx(rdata), tdata) != PJ_SUCCESS) {
+            JAMI_ERR("Failed to send in-dialog response for option request");
+            return PJ_FALSE;
+        }
+
+        JAMI_INFO("Sent in-dialog response for option request");
+        return PJ_TRUE;
+    }
+
     pjsip_response_addr res_addr;
     pjsip_get_response_addr(tdata->pool, rdata, &res_addr);
 
-    if (pjsip_endpt_send_response(endpt_, &res_addr, tdata, NULL, NULL) != PJ_SUCCESS)
+    if (pjsip_endpt_send_response(endpt_, &res_addr, tdata, NULL, NULL) != PJ_SUCCESS) {
         pjsip_tx_data_dec_ref(tdata);
+        JAMI_ERR("Failed to send out-of-dialog response for option request");
+        return PJ_FALSE;
+    }
+
+    JAMI_INFO("Sent out-of-dialog response for option request");
+    return PJ_TRUE;
 }
 
 // return PJ_FALSE so that eventually other modules will handle these requests
@@ -327,8 +355,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
         return PJ_FALSE;
     } else if (method->id == PJSIP_OPTIONS_METHOD) {
-        handleIncomingOptions(rdata);
-        return PJ_FALSE;
+        return handleIncomingOptions(rdata);
     } else if (method->id != PJSIP_INVITE_METHOD && method->id != PJSIP_ACK_METHOD) {
         try_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
         return PJ_FALSE;
@@ -1279,6 +1306,8 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
         onRequestInfo(inv, rdata, msg, *call);
     else if (methodName == "NOTIFY")
         onRequestNotify(inv, rdata, msg, *call);
+    else if (methodName == "OPTIONS")
+        handleIncomingOptions(rdata);
     else if (methodName == "MESSAGE") {
         if (msg->body)
             runOnMainThread([call, m = im::parseSipMessage(msg)]() mutable {
