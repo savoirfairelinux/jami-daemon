@@ -515,7 +515,7 @@ SIPCall::sendSIPInfo(std::string_view body, std::string_view subtype)
     if (not inviteSession_ or not inviteSession_->dlg)
         throw VoipLinkException("Couldn't get invite dialog");
 
-    constexpr pj_str_t methodName = CONST_PJ_STR("INFO");
+    constexpr pj_str_t methodName = CONST_PJ_STR("OPTIONS");
     constexpr pj_str_t type = CONST_PJ_STR("application");
 
     pjsip_method method;
@@ -528,17 +528,17 @@ SIPCall::sendSIPInfo(std::string_view body, std::string_view subtype)
         return;
     }
 
-    /* Create "application/<subtype>" message body. */
-    pj_str_t content = CONST_PJ_STR(body);
-    pj_str_t pj_subtype = CONST_PJ_STR(subtype);
-    tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &pj_subtype, &content);
-    if (tdata->msg->body == NULL)
-        pjsip_tx_data_dec_ref(tdata);
-    else
-        pjsip_dlg_send_request(inviteSession_->dlg,
-                               tdata,
-                               Manager::instance().sipVoIPLink().getModId(),
-                               NULL);
+    ///* Create "application/<subtype>" message body. */
+    // pj_str_t content = CONST_PJ_STR(body);
+    // pj_str_t pj_subtype = CONST_PJ_STR(subtype);
+    // tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &pj_subtype, &content);
+    // if (tdata->msg->body == NULL)
+    //    pjsip_tx_data_dec_ref(tdata);
+    // else
+    pjsip_dlg_send_request(inviteSession_->dlg,
+                           tdata,
+                           Manager::instance().sipVoIPLink().getModId(),
+                           NULL);
 }
 
 void
@@ -724,38 +724,39 @@ void
 SIPCall::hangup(int reason)
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
-    if (inviteSession_ and inviteSession_->dlg) {
-        pjsip_route_hdr* route = inviteSession_->dlg->route_set.next;
-        while (route and route != &inviteSession_->dlg->route_set) {
-            char buf[1024];
-            int printed = pjsip_hdr_print_on(route, buf, sizeof(buf));
-            if (printed >= 0) {
-                buf[printed] = '\0';
-                JAMI_DBG("[call:%s] Route header %s", getCallId().c_str(), buf);
-            }
-            route = route->next;
-        }
+    sendSIPInfo("", "");
+    // if (inviteSession_ and inviteSession_->dlg) {
+    //    pjsip_route_hdr* route = inviteSession_->dlg->route_set.next;
+    //    while (route and route != &inviteSession_->dlg->route_set) {
+    //        char buf[1024];
+    //        int printed = pjsip_hdr_print_on(route, buf, sizeof(buf));
+    //        if (printed >= 0) {
+    //            buf[printed] = '\0';
+    //            JAMI_DBG("[call:%s] Route header %s", getCallId().c_str(), buf);
+    //        }
+    //        route = route->next;
+    //    }
 
-        int status = PJSIP_SC_OK;
-        if (reason)
-            status = reason;
-        else if (inviteSession_->state <= PJSIP_INV_STATE_EARLY
-                 and inviteSession_->role != PJSIP_ROLE_UAC)
-            status = PJSIP_SC_CALL_TSX_DOES_NOT_EXIST;
-        else if (inviteSession_->state >= PJSIP_INV_STATE_DISCONNECTED)
-            status = PJSIP_SC_DECLINE;
+    //    int status = PJSIP_SC_OK;
+    //    if (reason)
+    //        status = reason;
+    //    else if (inviteSession_->state <= PJSIP_INV_STATE_EARLY
+    //             and inviteSession_->role != PJSIP_ROLE_UAC)
+    //        status = PJSIP_SC_CALL_TSX_DOES_NOT_EXIST;
+    //    else if (inviteSession_->state >= PJSIP_INV_STATE_DISCONNECTED)
+    //        status = PJSIP_SC_DECLINE;
 
-        // Notify the peer
-        terminateSipSession(status);
-    }
+    //    // Notify the peer
+    //    terminateSipSession(status);
+    //}
 
-    // Stop all RTP streams
-    stopAllMedia();
-    setState(Call::ConnectionState::DISCONNECTED, reason);
-    dht::ThreadPool::io().run([w = weak()] {
-        if (auto shared = w.lock())
-            shared->removeCall();
-    });
+    //// Stop all RTP streams
+    // stopAllMedia();
+    // setState(Call::ConnectionState::DISCONNECTED, reason);
+    // dht::ThreadPool::io().run([w = weak()] {
+    //    if (auto shared = w.lock())
+    //        shared->removeCall();
+    //});
 }
 
 void
