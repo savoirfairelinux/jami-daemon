@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5fc752ec_317c726d",
+        "filename": "src/media/video/video_rtp_session.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-28T14:08:19Z",
+      "side": 1,
+      "message": "Do we still need this ? Can\u0027t be unified with the new one ?",
+      "revId": "6accf3412e68cb04701fe1cb63c7782332119253",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bd226849_a545a8cd",
+        "filename": "src/media/video/video_rtp_session.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-28T14:08:19Z",
+      "side": 1,
+      "message": "Why do you specify \u0027Recordable\u0027 ?",
+      "revId": "6accf3412e68cb04701fe1cb63c7782332119253",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2f2dd1e7_f5f8de77",
+        "filename": "src/media/video/video_rtp_session.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-28T14:08:19Z",
+      "side": 1,
+      "message": "this good. +1",
+      "revId": "6accf3412e68cb04701fe1cb63c7782332119253",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "47f4fd77_b182aa34",
+        "filename": "src/media/video/video_rtp_session.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-28T14:08:19Z",
+      "side": 1,
+      "message": "I dont really like the prefix foo here. something like dummy or fake would be more appropriate.",
+      "revId": "6accf3412e68cb04701fe1cb63c7782332119253",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
