@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "1487ff06_fe2198eb",
+        "filename": "src/media/video/video_rtp_session.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-04-28T14:36:02Z",
+      "side": 1,
+      "message": "It is used elsewhere.\nCannot be unified because of VideoReceiveThread vs VideoFrameActiveWriter.",
+      "parentUuid": "5fc752ec_317c726d",
+      "revId": "6accf3412e68cb04701fe1cb63c7782332119253",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "bd226849_a545a8cd",
         "filename": "src/media/video/video_rtp_session.h",
         "patchSetId": 5
@@ -30,6 +48,24 @@
       "writtenOn": "2021-04-28T14:08:19Z",
       "side": 1,
       "message": "Why do you specify \u0027Recordable\u0027 ?",
+      "revId": "6accf3412e68cb04701fe1cb63c7782332119253",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fa38c80a_1f3628be",
+        "filename": "src/media/video/video_rtp_session.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-04-28T14:36:02Z",
+      "side": 1,
+      "message": "to differenciate from getVideoReceive()",
+      "parentUuid": "bd226849_a545a8cd",
       "revId": "6accf3412e68cb04701fe1cb63c7782332119253",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
@@ -67,6 +103,24 @@
       "revId": "6accf3412e68cb04701fe1cb63c7782332119253",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "14bc4266_72a029de",
+        "filename": "src/media/video/video_rtp_session.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-04-28T14:36:02Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "47f4fd77_b182aa34",
+      "revId": "6accf3412e68cb04701fe1cb63c7782332119253",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
