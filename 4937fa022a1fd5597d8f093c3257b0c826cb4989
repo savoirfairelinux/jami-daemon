@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "23e23d63_6a068234",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 3
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-28T13:48:00Z",
+      "side": 1,
+      "message": "daemon\u0027s version changes",
+      "range": {
+        "startLine": 551,
+        "startChar": 27,
+        "endLine": 552,
+        "endChar": 59
+      },
+      "revId": "4937fa022a1fd5597d8f093c3257b0c826cb4989",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "05cb591a_0bdca04e",
+        "filename": "src/account.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-28T13:48:00Z",
+      "side": 1,
+      "message": "not a big deal but if we don\u0027t attach subcalls there, only call ids can be kept in Account",
+      "range": {
+        "startLine": 288,
+        "startChar": 0,
+        "endLine": 289,
+        "endChar": 44
+      },
+      "revId": "4937fa022a1fd5597d8f093c3257b0c826cb4989",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
