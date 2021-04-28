@@ -138,6 +138,7 @@ public:
 
     inline std::unique_ptr<AudioDeviceGuard> startAudioStream(AudioDeviceType stream)
     {
+        startAudio();
         return std::make_unique<AudioDeviceGuard>(*this, stream);
     }
 
