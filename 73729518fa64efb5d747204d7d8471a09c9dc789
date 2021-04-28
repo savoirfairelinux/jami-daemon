@@ -16,6 +16,75 @@
       "revId": "73729518fa64efb5d747204d7d8471a09c9dc789",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "16ff3f56_61516e6a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3657,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-28T17:56:01Z",
+      "side": 1,
+      "message": "no const-ref, pass by value",
+      "range": {
+        "startLine": 3657,
+        "startChar": 27,
+        "endLine": 3657,
+        "endChar": 79
+      },
+      "revId": "73729518fa64efb5d747204d7d8471a09c9dc789",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2abcea54_816160b5",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3659,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-28T17:56:01Z",
+      "side": 1,
+      "message": "move cb to lambda",
+      "range": {
+        "startLine": 3659,
+        "startChar": 32,
+        "endLine": 3659,
+        "endChar": 34
+      },
+      "revId": "73729518fa64efb5d747204d7d8471a09c9dc789",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f341c807_554ac0c2",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3677,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-04-28T17:56:01Z",
+      "side": 1,
+      "message": "give results as cb arguments",
+      "range": {
+        "startLine": 3677,
+        "startChar": 52,
+        "endLine": 3677,
+        "endChar": 54
+      },
+      "revId": "73729518fa64efb5d747204d7d8471a09c9dc789",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
