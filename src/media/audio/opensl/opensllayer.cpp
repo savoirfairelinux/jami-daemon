@@ -44,7 +44,6 @@ namespace jami {
 OpenSLLayer::OpenSLLayer(const AudioPreference& pref)
     : AudioLayer(pref)
 {
-    initAudioEngine();
 }
 
 // Destructor
@@ -57,8 +56,12 @@ void
 OpenSLLayer::startStream(AudioDeviceType stream)
 {
     using namespace std::placeholders;
+    if (engineObject_)
+        initAudioEngine();
+
     std::lock_guard<std::mutex> lock(mutex_);
     JAMI_WARN("Start OpenSL audio layer");
+
     if (stream == AudioDeviceType::PLAYBACK) {
         if (not player_) {
             try {
@@ -181,8 +184,6 @@ OpenSLLayer::shutdownAudioEngine()
 {
     JAMI_DBG("Stopping OpenSL");
     stopAudioCapture();
-    freeRecBufQueue_.clear();
-    recBufQueue_.clear();
 
     if (player_) {
         player_->stop();
@@ -192,10 +193,6 @@ OpenSLLayer::shutdownAudioEngine()
         ringtone_->stop();
         ringtone_.reset();
     }
-    freePlayBufQueue_.clear();
-    playBufQueue_.clear();
-    freeRingBufQueue_.clear();
-    ringBufQueue_.clear();
 
     // destroy engine object, and invalidate all associated interfaces
     JAMI_DBG("Shutdown audio engine");
@@ -204,6 +201,13 @@ OpenSLLayer::shutdownAudioEngine()
         engineObject_ = nullptr;
         engineInterface_ = nullptr;
     }
+
+    freeRecBufQueue_.clear();
+    recBufQueue_.clear();
+    freePlayBufQueue_.clear();
+    playBufQueue_.clear();
+    freeRingBufQueue_.clear();
+    ringBufQueue_.clear();
 
     startedCv_.notify_all();
     bufs_.clear();
