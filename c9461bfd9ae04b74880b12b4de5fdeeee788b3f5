@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "5f20c91b_082385e9",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 447,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-29T16:01:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "79d9a3fd_4730e63a",
+      "range": {
+        "startLine": 447,
+        "startChar": 19,
+        "endLine": 447,
+        "endChar": 33
+      },
+      "revId": "c9461bfd9ae04b74880b12b4de5fdeeee788b3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "70c0b955_5f2771c7",
         "filename": "src/manager.cpp",
         "patchSetId": 38
@@ -45,6 +69,30 @@
       "revId": "c9461bfd9ae04b74880b12b4de5fdeeee788b3f5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "33220e7d_4b220069",
+        "filename": "src/manager.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2762,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-29T16:01:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "70c0b955_5f2771c7",
+      "range": {
+        "startLine": 2758,
+        "startChar": 4,
+        "endLine": 2762,
+        "endChar": 20
+      },
+      "revId": "c9461bfd9ae04b74880b12b4de5fdeeee788b3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "7957759a_4ea9142b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 743,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-29T16:01:05Z",
+      "side": 1,
+      "message": "Ack\nNo need to refactor, the other one should be removed anyway.",
+      "parentUuid": "2f5eada2_0ab683cb",
+      "range": {
+        "startLine": 742,
+        "startChar": 0,
+        "endLine": 743,
+        "endChar": 66
+      },
+      "revId": "c9461bfd9ae04b74880b12b4de5fdeeee788b3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "32c37a32_ecbd55d2",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 38
@@ -94,6 +166,30 @@
     },
     {
       "key": {
+        "uuid": "f6f2ab83_eab904b7",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 1581,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-29T16:01:05Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "32c37a32_ecbd55d2",
+      "range": {
+        "startLine": 1581,
+        "startChar": 65,
+        "endLine": 1581,
+        "endChar": 87
+      },
+      "revId": "c9461bfd9ae04b74880b12b4de5fdeeee788b3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "e27492e7_c8edc9ba",
         "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
         "patchSetId": 38
@@ -114,6 +210,30 @@
       "revId": "c9461bfd9ae04b74880b12b4de5fdeeee788b3f5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3317b377_dea6b614",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-29T16:01:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e27492e7_c8edc9ba",
+      "range": {
+        "startLine": 1,
+        "startChar": 2,
+        "endLine": 2,
+        "endChar": 46
+      },
+      "revId": "c9461bfd9ae04b74880b12b4de5fdeeee788b3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
