@@ -34,8 +34,17 @@
 
 #ifdef ENABLE_PLUGIN
 extern "C" {
+#if defined(__APPLE__)
+#include <mz.h>
+#include <mz_strm.h>
+#include <mz_strm_os.h>
+#include <mz_zip.h>
+#include <mz_zip_rw.h>
+#include <filesystem>
+#else
 #include <archive.h>
 #include <archive_entry.h>
+#endif
 }
 #endif
 
@@ -207,6 +216,7 @@ openGzip(const std::string& path, const char* mode)
 }
 
 #ifdef ENABLE_PLUGIN
+#if !defined(__APPLE__)
 // LIBARCHIVE DEFINITIONS
 //==========================
 using ArchivePtr = std::unique_ptr<archive, void (*)(archive*)>;
@@ -249,40 +259,67 @@ createArchiveDiskWriter()
                 archive_write_free(a);
             }};
 }
-#endif
 //==========================
-
-std::vector<std::string>
-listArchiveContent(const std::string& archivePath)
-{
-    std::vector<std::string> fileNames;
-#ifdef ENABLE_PLUGIN
-    ArchivePtr archiveReader = createArchiveReader();
-    struct archive_entry* entry;
-    int r;
-
-    // Set reader formats(archive) and filters(compression)
-    archive_read_support_filter_all(archiveReader.get());
-    archive_read_support_format_all(archiveReader.get());
-
-    // Try to read the archive
-    if ((r = archive_read_open_filename(archiveReader.get(), archivePath.c_str(), 10240))) {
-        throw std::runtime_error(archive_error_string(archiveReader.get()));
-    }
-
-    while (archive_read_next_header(archiveReader.get(), &entry) == ARCHIVE_OK) {
-        std::string fileEntry = archive_entry_pathname(entry) ? archive_entry_pathname(entry)
-                                                              : "Undefined";
-        fileNames.push_back(fileEntry);
-    }
 #endif
-    return fileNames;
-}
+#endif
 
 void
 uncompressArchive(const std::string& archivePath, const std::string& dir, const FileMatchPair& f)
 {
 #ifdef ENABLE_PLUGIN
+#if defined(__APPLE__)
+    void* zip_handle = NULL;
+    mz_zip_file* info = NULL;
+
+    fileutils::check_dir(dir.c_str());
+
+    mz_zip_create(&zip_handle);
+    auto status = mz_zip_reader_open_file(zip_handle, archivePath.c_str());
+    status |= mz_zip_reader_goto_first_entry(zip_handle);
+
+    while (status == MZ_OK) {
+        status |= mz_zip_reader_entry_get_info(zip_handle, &info);
+        if (status != MZ_OK) {
+            fileutils::removeAll(dir, true);
+            break;
+        }
+        std::string filename(info->filename, (size_t)info->filename_size);
+        const auto& fileMatchPair = f(filename);
+        if (fileMatchPair.first) {
+            auto filePath = dir + DIR_SEPARATOR_STR + fileMatchPair.second;
+            std::filesystem::path directory(filePath);
+            directory = directory.remove_filename();
+            if (!std::filesystem::exists(directory))
+                fileutils::check_dir(directory.c_str());
+            mz_zip_reader_entry_open(zip_handle);
+            void* buffStream = NULL;
+            buffStream = mz_stream_os_create(&buffStream);
+            if (mz_stream_os_open(buffStream, filePath.c_str(), MZ_OPEN_MODE_WRITE | MZ_OPEN_MODE_CREATE) == MZ_OK) {
+                int chunkSize = 8192;
+                std::vector<uint8_t> fileContent;
+                fileContent.resize(chunkSize);
+                while (auto ret = mz_zip_reader_entry_read(zip_handle, (void*) fileContent.data(), chunkSize)) {
+                    ret = mz_stream_os_write(buffStream, (void*) fileContent.data(), ret);
+                    if (ret < 0) {
+                        fileutils::removeAll(dir, true);
+                        status = 1;
+                    }
+                }
+                mz_stream_os_close(buffStream);
+                mz_stream_os_delete(&buffStream);
+            } else {
+                fileutils::removeAll(dir, true);
+                status = 1;
+            }
+            mz_zip_reader_entry_close(zip_handle);
+        }
+        status |= mz_zip_reader_goto_next_entry(zip_handle);
+    }
+
+    mz_zip_reader_close(zip_handle);
+    mz_zip_delete(&zip_handle);
+
+#else
     int r;
 
     ArchivePtr archiveReader = createArchiveReader();
@@ -360,6 +397,7 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
         }
     }
 #endif
+#endif
 }
 
 std::vector<uint8_t>
@@ -367,6 +405,33 @@ readFileFromArchive(const std::string& archivePath, const std::string& fileRelat
 {
     std::vector<uint8_t> fileContent;
 #ifdef ENABLE_PLUGIN
+#if defined(__APPLE__)
+    void* zip_handle = NULL;
+    mz_zip_file* info;
+
+    mz_zip_create(&zip_handle);
+    auto status = mz_zip_reader_open_file(zip_handle, archivePath.c_str());
+    status |= mz_zip_reader_goto_first_entry(zip_handle);
+
+    while (status == MZ_OK) {
+        status = mz_zip_reader_entry_get_info(zip_handle, &info);
+        if (status != MZ_OK)
+            break;
+        std::string_view filename(info->filename, (size_t)info->filename_size);
+        if (filename == fileRelativePathName) {
+            mz_zip_reader_entry_open(zip_handle);
+            fileContent.resize(info->uncompressed_size);
+            mz_zip_reader_entry_read(zip_handle, (void*) fileContent.data(), info->uncompressed_size);
+            mz_zip_reader_entry_close(zip_handle);
+            status = -1;
+        } else {
+            status = mz_zip_reader_goto_next_entry(zip_handle);
+        }
+    }
+
+    mz_zip_reader_close(zip_handle);
+    mz_zip_delete(&zip_handle);
+#else
     long r;
     ArchivePtr archiveReader = createArchiveReader();
     struct archive_entry* entry;
@@ -422,6 +487,7 @@ readFileFromArchive(const std::string& archivePath, const std::string& fileRelat
         }
     }
     throw std::runtime_error("File " + fileRelativePathName + " not found in the archive");
+#endif
 #endif
     return fileContent;
 }
