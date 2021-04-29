@@ -128,17 +128,24 @@ endif
 
 if get_option('plugins')
     conf.set('ENABLE_PLUGIN', true)
-    deplibarchive = dependency('libarchive', version: '>= 3.4.0', required: false)
-    if not deplibarchive.found()
-        deplibarchive = modcmake.subproject('libarchive', cmake_options: [
+    depminizip = dependency('minizip', version: '>= 3.0.0', required: false)
+    if not depminizip.found()
+        depminizip = modcmake.subproject('minizip', cmake_options: [
             '-DCMAKE_BUILD_TYPE=Release',
             '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
-            '-DENABLE_TEST=OFF',
-            '-DENABLE_TAR=OFF',
-            '-DENABLE_CPIO=OFF',
-            '-DENABLE_CAT=OFF',
-            '-DENABLE_LIBXML2=OFF'
-        ]).dependency('archive_static')
+            '-DMZ_ICONV=OFF'
+            '-DMZ_BZIP2=OFF'
+            '-DMZ_BZIP2=OFF'
+            '-DMZ_LZMA=OFF'
+            '-DMZ_ZSTD=OFF'
+            '-DMZ_LIBCOMP=OFF'
+            '-DMZ_FETCH_LIBS=OFF'
+            '-DMZ_FORCE_FETCH_LIBS=OFF'
+            '-DMZ_WZAES=OFF'
+            '-DMZ_OPENSSL=OFF'
+		    '-DMZ_LIBBSD=OFF'
+		    '-DMZ_SIGNING=OFF'
+        ]).dependency('minizip')
     endif
     depdl = meson.get_compiler('cpp').find_library('dl', required: false)
 else

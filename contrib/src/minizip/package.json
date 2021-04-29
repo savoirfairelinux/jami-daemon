@@ -1,0 +1,20 @@
+{
+    "name": "minizip",
+    "version": "3.0.0",
+    "url": "https://github.com/zlib-ng/minizip-ng/archive/refs/tags/__VERSION__.tar.gz",
+    "deps": ["zlib"],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": [],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [
+            "mkdir build"
+	],
+        "build": [
+            "cmake -G %CMAKE_GENERATOR% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_LIBDIR=lib -DMZ_ICONV=OFF -DMZ_BZIP2=OFF -DMZ_BZIP2=OFF -DMZ_LZMA=OFF -DMZ_ZSTD=OFF -DMZ_LIBCOMP=OFF -DMZ_FETCH_LIBS=OFF -DMZ_FORCE_FETCH_LIBS=OFF -DMZ_WZAES=OFF -DMZ_OPENSSL=OFF -DMZ_LIBBSD=OFF -DMZ_SIGNING=OFF -S . -B ./build",
+            "cmake --build ./build --config Release --target install"
+            ],
+        "post_build": []
+    }
+}

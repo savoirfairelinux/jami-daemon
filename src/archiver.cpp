@@ -34,8 +34,10 @@
 
 #ifdef ENABLE_PLUGIN
 extern "C" {
-#include <archive.h>
-#include <archive_entry.h>
+#include <mz.h>
+#include <mz_strm.h>
+#include <mz_zip.h>
+#include <mz_zip_rw.h>
 }
 #endif
 
@@ -206,159 +208,42 @@ openGzip(const std::string& path, const char* mode)
 #endif
 }
 
-#ifdef ENABLE_PLUGIN
-// LIBARCHIVE DEFINITIONS
-//==========================
-using ArchivePtr = std::unique_ptr<archive, void (*)(archive*)>;
-using ArchiveEntryPtr = std::unique_ptr<archive_entry, void (*)(archive_entry*)>;
-
-struct DataBlock
-{
-    const void* buff;
-    size_t size;
-    int64_t offset;
-};
-
-long
-readDataBlock(const ArchivePtr& a, DataBlock& b)
-{
-    return archive_read_data_block(a.get(), &b.buff, &b.size, &b.offset);
-}
-
-long
-writeDataBlock(const ArchivePtr& a, DataBlock& b)
-{
-    return archive_write_data_block(a.get(), b.buff, b.size, b.offset);
-}
-
-ArchivePtr
-createArchiveReader()
-{
-    ArchivePtr archivePtr {archive_read_new(), [](archive* a) {
-                               archive_read_close(a);
-                               archive_read_free(a);
-                           }};
-    return archivePtr;
-}
-
-static ArchivePtr
-createArchiveDiskWriter()
-{
-    return {archive_write_disk_new(), [](archive* a) {
-                archive_write_close(a);
-                archive_write_free(a);
-            }};
-}
-#endif
-//==========================
-
-std::vector<std::string>
-listArchiveContent(const std::string& archivePath)
-{
-    std::vector<std::string> fileNames;
-#ifdef ENABLE_PLUGIN
-    ArchivePtr archiveReader = createArchiveReader();
-    struct archive_entry* entry;
-    int r;
-
-    // Set reader formats(archive) and filters(compression)
-    archive_read_support_filter_all(archiveReader.get());
-    archive_read_support_format_all(archiveReader.get());
-
-    // Try to read the archive
-    if ((r = archive_read_open_filename(archiveReader.get(), archivePath.c_str(), 10240))) {
-        throw std::runtime_error(archive_error_string(archiveReader.get()));
-    }
-
-    while (archive_read_next_header(archiveReader.get(), &entry) == ARCHIVE_OK) {
-        std::string fileEntry = archive_entry_pathname(entry) ? archive_entry_pathname(entry)
-                                                              : "Undefined";
-        fileNames.push_back(fileEntry);
-    }
-#endif
-    return fileNames;
-}
-
 void
 uncompressArchive(const std::string& archivePath, const std::string& dir, const FileMatchPair& f)
 {
 #ifdef ENABLE_PLUGIN
-    int r;
+    void* zip_handle = NULL;
+    mz_zip_file* info;
+    std::vector<uint8_t> fileContent;
 
-    ArchivePtr archiveReader = createArchiveReader();
-    ArchivePtr archiveDiskWriter = createArchiveDiskWriter();
-    struct archive_entry* entry;
+    fileutils::check_dir(dir.c_str());
+    // fileutils::saveFile()
 
-    int flags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_NO_HFS_COMPRESSION;
+    mz_zip_create(&zip_handle);
+    auto status = mz_zip_reader_open_file(zip_handle, archivePath.c_str());
+    status |= mz_zip_reader_goto_first_entry(zip_handle);
 
-    // Set reader formats(archive) and filters(compression)
-    archive_read_support_filter_all(archiveReader.get());
-    archive_read_support_format_all(archiveReader.get());
-
-    // Set written files flags and standard lookup(uid/gid)
-    archive_write_disk_set_options(archiveDiskWriter.get(), flags);
-    archive_write_disk_set_standard_lookup(archiveDiskWriter.get());
-
-    // Try to read the archive
-    if ((r = archive_read_open_filename(archiveReader.get(), archivePath.c_str(), 10240))) {
-        throw std::runtime_error("Open Archive: " + archivePath + "\t"
-                                 + archive_error_string(archiveReader.get()));
-    }
-
-    while (true) {
-        // Read headers until End of File
-        r = archive_read_next_header(archiveReader.get(), &entry);
-        if (r == ARCHIVE_EOF) {
+    while (status == MZ_OK) {
+        status |= mz_zip_reader_entry_get_info(zip_handle, &info);
+        if (status != MZ_OK)
             break;
-        }
-
-        std::string fileEntry = archive_entry_pathname(entry) ? archive_entry_pathname(entry)
-                                                              : "Undefined";
-
-        if (r != ARCHIVE_OK) {
-            throw std::runtime_error("Read file pathname: " + fileEntry + "\t"
-                                     + archive_error_string(archiveReader.get()));
-        }
-
-        // File is ok, copy its header to the ext writer
-        const auto& fileMatchPair = f(fileEntry);
+        auto filenamePtr = info->filename;
+        auto filenameSize = info->filename_size;
+        std::string filename(&filenamePtr[0], &filenamePtr[filenameSize]);
+        const auto& fileMatchPair = f(filename);
         if (fileMatchPair.first) {
-            std::string entryDestinationPath = dir + DIR_SEPARATOR_CH + fileMatchPair.second;
-            archive_entry_set_pathname(entry, entryDestinationPath.c_str());
-            r = archive_write_header(archiveDiskWriter.get(), entry);
-            if (r != ARCHIVE_OK) {
-                // Rollback if failed at a write operation
-                fileutils::removeAll(dir);
-                throw std::runtime_error("Write file header: " + fileEntry + "\t"
-                                         + archive_error_string(archiveDiskWriter.get()));
-            } else {
-                // Here both the reader and the writer have moved past the headers
-                // Copying the data content
-                DataBlock db;
-
-                while (true) {
-                    r = readDataBlock(archiveReader, db);
-                    if (r == ARCHIVE_EOF) {
-                        break;
-                    }
-
-                    if (r != ARCHIVE_OK) {
-                        throw std::runtime_error("Read file data: " + fileEntry + "\t"
-                                                 + archive_error_string(archiveReader.get()));
-                    }
-
-                    r = writeDataBlock(archiveDiskWriter, db);
-
-                    if (r != ARCHIVE_OK) {
-                        // Rollback if failed at a write operation
-                        fileutils::removeAll(dir);
-                        throw std::runtime_error("Write file data: " + fileEntry + "\t"
-                                                 + archive_error_string(archiveDiskWriter.get()));
-                    }
-                }
+            auto filePath = dir + DIR_SEPARATOR_STR + fileMatchPair.second;
+            if (mz_zip_reader_entry_save_file(zip_handle, filePath.c_str()) != 0) {
+                fileutils::removeAll(dir, true);
+                break;
             }
         }
+        status |= mz_zip_reader_goto_next_entry(zip_handle);
     }
+
+    mz_zip_reader_close(zip_handle);
+    mz_zip_delete(&zip_handle);
+
 #endif
 }
 
@@ -367,61 +252,36 @@ readFileFromArchive(const std::string& archivePath, const std::string& fileRelat
 {
     std::vector<uint8_t> fileContent;
 #ifdef ENABLE_PLUGIN
-    long r;
-    ArchivePtr archiveReader = createArchiveReader();
-    struct archive_entry* entry;
+    void* zip_handle = NULL;
+    mz_zip_file* info;
 
-    // Set reader formats(archive) and filters(compression)
-    archive_read_support_filter_all(archiveReader.get());
-    archive_read_support_format_all(archiveReader.get());
+    mz_zip_create(&zip_handle);
+    auto status = mz_zip_reader_open_file(zip_handle, archivePath.c_str());
+    status |= mz_zip_reader_goto_first_entry(zip_handle);
 
-    // Try to read the archive
-    if ((r = archive_read_open_filename(archiveReader.get(), archivePath.c_str(), 10240))) {
-        throw std::runtime_error("Open Archive: " + archivePath + "\t"
-                                 + archive_error_string(archiveReader.get()));
-    }
-
-    while (true) {
-        // Read headers until End of File
-        r = archive_read_next_header(archiveReader.get(), &entry);
-        if (r == ARCHIVE_EOF) {
+    while (status == MZ_OK) {
+        status = mz_zip_reader_entry_get_info(zip_handle, &info);
+        if (status != MZ_OK)
             break;
-        }
-
-        std::string fileEntry = archive_entry_pathname(entry) ? archive_entry_pathname(entry) : "";
-
-        if (r != ARCHIVE_OK) {
-            throw std::runtime_error("Read file pathname: " + fileEntry + "\t"
-                                     + archive_error_string(archiveReader.get()));
-        }
-
-        // File is ok and the reader has moved past the header
-        if (fileEntry == fileRelativePathName) {
-            // Copying the data content
-            DataBlock db;
-
-            while (true) {
-                r = readDataBlock(archiveReader, db);
-                if (r == ARCHIVE_EOF) {
-                    return fileContent;
-                }
-
-                if (r != ARCHIVE_OK) {
-                    throw std::runtime_error("Read file data: " + fileEntry + "\t"
-                                             + archive_error_string(archiveReader.get()));
-                }
-
-                if (fileContent.size() < static_cast<size_t>(db.offset)) {
-                    fileContent.resize(db.offset);
-                }
-
-                auto dat = static_cast<const uint8_t*>(db.buff);
-                // push the buffer data in the string stream
-                fileContent.insert(fileContent.end(), dat, dat + db.size);
-            }
+        auto filenamePtr = info->filename;
+        auto filenameSize = info->filename_size;
+        std::string filename(&filenamePtr[0], &filenamePtr[filenameSize]);
+        if (filename == fileRelativePathName) {
+            mz_zip_reader_entry_open(zip_handle);
+            uint8_t* buff;
+            buff = (uint8_t*) malloc(info->uncompressed_size + 1);
+            mz_zip_reader_entry_read(zip_handle, (void*) buff, info->uncompressed_size);
+            fileContent = std::vector<uint8_t>(&buff[0], &buff[info->uncompressed_size]);
+            free(buff);
+            mz_zip_reader_entry_close(zip_handle);
+            status = -1;
+        } else {
+            status = mz_zip_reader_goto_next_entry(zip_handle);
         }
     }
-    throw std::runtime_error("File " + fileRelativePathName + " not found in the archive");
+
+    mz_zip_reader_close(zip_handle);
+    mz_zip_delete(&zip_handle);
 #endif
     return fileContent;
 }

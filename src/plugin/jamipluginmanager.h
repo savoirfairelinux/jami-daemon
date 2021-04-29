@@ -70,7 +70,7 @@ public:
      * @return 0 if success
      * 100 if already installed with similar version
      * 200 if already installed with newer version
-     * libarchive error codes otherwise
+     * mizip error codes otherwise
      */
     int installPlugin(const std::string& jplPath, bool force);
 

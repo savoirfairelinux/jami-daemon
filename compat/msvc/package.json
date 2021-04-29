@@ -11,7 +11,7 @@
         "speexdsp",
         "upnp",
         "yaml-cpp",
-        "libarchive",
+        "minizip",
         "webrtc-audio-processing",
         "libgit2"
     ],
