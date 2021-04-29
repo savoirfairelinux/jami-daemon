@@ -85,7 +85,7 @@ libring_la_LDFLAGS = \
 
 if ENABLE_PLUGIN
 libring_la_LDFLAGS+= \
-		@ARCHIVE_LIBS@
+		@MINIZIP_LIBS@
 endif
 
 

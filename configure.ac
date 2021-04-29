@@ -463,8 +463,8 @@ AS_IF([test "x$enable_plugin" != "xno"],
   [AC_DEFINE(ENABLE_PLUGIN, [], [Jami Plugin support enabled])
    AM_CONDITIONAL(ENABLE_PLUGIN, true)
    AS_IF([test "$SYS" = linux],
-     [PKG_CHECK_MODULES([ARCHIVE], [libarchive >= 3.0],,
-      AC_MSG_ERROR([libarchive not found]))],
+     [PKG_CHECK_MODULES([MINIZIP], [minizip >= 3.0.0],,
+      AC_MSG_ERROR([libminizip not found]))],
      [])],
   [AM_CONDITIONAL(ENABLE_PLUGIN, false)]);
 

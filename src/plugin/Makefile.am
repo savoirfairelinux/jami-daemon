@@ -25,7 +25,7 @@ libplugin_la_SOURCES = \
 	callservicesmanager.cpp
 
 
-libplugin_la_LIBADD = @ARCHIVE_LIBS@
+libplugin_la_LIBADD = @MINIZIP_LIBS@
 
 libplugin_la_CXXFLAGS = \
 	-I./ \
