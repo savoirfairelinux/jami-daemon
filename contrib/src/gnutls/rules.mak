@@ -1,8 +1,8 @@
 # GnuTLS
 
-GNUTLS_VERSION := 3.6.15
+GNUTLS_VERSION := 3.7.1
 
-GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.6/gnutls-$(GNUTLS_VERSION).tar.xz
+GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.7/gnutls-$(GNUTLS_VERSION).tar.xz
 
 PKGS += gnutls
 
