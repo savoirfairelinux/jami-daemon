@@ -32,10 +32,6 @@
 #include "preferences.h"
 #include "dring/plugin_manager_interface.h"
 
-extern "C" {
-#include <archive.h>
-}
-
 #define PLUGIN_ALREADY_INSTALLED 100 /* Plugin already installed with the same version */
 #define PLUGIN_OLD_VERSION       200 /* Plugin already installed with a newer version */
 
@@ -44,7 +40,7 @@ extern "C" {
 #define LIB_PREFIX ""
 #else
 #ifdef __APPLE__
-#define LIB_TYPE ".dylib"
+#define LIB_TYPE   ".dylib"
 #define LIB_PREFIX "lib"
 #else
 #define LIB_TYPE   ".so"
