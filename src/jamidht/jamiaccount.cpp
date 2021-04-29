@@ -2308,15 +2308,12 @@ JamiAccount::doRegister_()
             auto newStatus = std::max(s4, s6);
             switch (newStatus) {
             case dht::NodeStatus::Connecting:
-                JAMI_WARN("[Account %s] connecting to the DHT network...", getAccountID().c_str());
                 state = RegistrationState::TRYING;
                 break;
             case dht::NodeStatus::Connected:
-                JAMI_WARN("[Account %s] connected to the DHT network", getAccountID().c_str());
                 state = RegistrationState::REGISTERED;
                 break;
             case dht::NodeStatus::Disconnected:
-                JAMI_WARN("[Account %s] disconnected from the DHT network", getAccountID().c_str());
                 state = RegistrationState::UNREGISTERED;
                 break;
             default:
@@ -2872,9 +2869,15 @@ JamiAccount::setRegistrationState(RegistrationState state,
                                   const std::string& detail_str)
 {
     if (registrationState_ != state) {
-        // Store ip whatever status changes.
-        cacheTurnServers();
-        storeActiveIpAddress();
+        if (state == RegistrationState::REGISTERED) {
+            JAMI_WARN("[Account %s] connected", getAccountID().c_str());
+            cacheTurnServers();
+            storeActiveIpAddress();
+        } else if (state == RegistrationState::TRYING) {
+            JAMI_WARN("[Account %s] connecting…", getAccountID().c_str());
+        } else {
+            JAMI_WARN("[Account %s] disconnected", getAccountID().c_str());
+        }
     }
     // Update registrationState_ & emit signals
     Account::setRegistrationState(state, detail_code, detail_str);
