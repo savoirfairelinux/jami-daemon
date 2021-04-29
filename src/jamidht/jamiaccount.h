@@ -197,6 +197,14 @@ public:
     void doUnregister(std::function<void(bool)> cb = {}) override;
 
     /**
+     * Set the registration state of the specified link
+     * @param state The registration state of underlying VoIPLink
+     */
+    void setRegistrationState(RegistrationState state,
+                              unsigned detail_code = 0,
+                              const std::string& detail_str = {}) override;
+
+    /**
      * @return pj_str_t "From" uri based on account information.
      * From RFC3261: "The To header field first and foremost specifies the desired
      * logical" recipient of the request, or the address-of-record of the
@@ -957,8 +965,6 @@ private:
     void syncInfos(const std::shared_ptr<ChannelSocket>& socket);
     void syncWithConnected();
     std::atomic_bool needsConvSync_ {true};
-
-    std::pair<dht::NodeStatus, dht::NodeStatus> currentDhtStatus_ {dht::NodeStatus::Disconnected, dht::NodeStatus::Disconnected};
 
     /**
      * Remove a repository and all files

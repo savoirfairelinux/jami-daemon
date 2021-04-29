@@ -1164,7 +1164,8 @@ JamiAccount::loadAccount(const std::string& archive_password,
                             req.conversationId = conversationId;
                             req.received = std::time(nullptr);
                             auto details = vCard::utils::toMap(
-                                std::string_view(reinterpret_cast<const char*>(payload.data()), payload.size()));
+                                std::string_view(reinterpret_cast<const char*>(payload.data()),
+                                                 payload.size()));
                             req.metadatas = ConversationRepository::infosFromVCard(details);
                             acc->conversationsRequests_[conversationId] = std::move(req);
                         }
@@ -2298,23 +2299,13 @@ JamiAccount::doRegister_()
             return ret;
         };
 
-        context.statusChangedCallback = [this](dht::NodeStatus s4,
-                                                                 dht::NodeStatus s6) {
-            JAMI_DBG("[Account %s] Dht status : IPv4 %s; IPv6 %s",
+        context.statusChangedCallback = [this](dht::NodeStatus s4, dht::NodeStatus s6) {
+            JAMI_DBG("[Account %s] Dht status: IPv4 %s; IPv6 %s",
                      getAccountID().c_str(),
                      dhtStatusStr(s4),
                      dhtStatusStr(s6));
             RegistrationState state;
-            auto prevStatus = std::max(currentDhtStatus_.first, currentDhtStatus_.second);
             auto newStatus = std::max(s4, s6);
-            if ((s4 != currentDhtStatus_.first && s4 == dht::NodeStatus::Connected)
-                || (s6 != currentDhtStatus_.second && s6 == dht::NodeStatus::Connected)) {
-                // Store ip whatever status changes.
-                storeActiveIpAddress();
-            }
-            currentDhtStatus_ = {s4, s6};
-            if (prevStatus == newStatus)
-                return;
             switch (newStatus) {
             case dht::NodeStatus::Connecting:
                 JAMI_WARN("[Account %s] connecting to the DHT network...", getAccountID().c_str());
@@ -2323,7 +2314,6 @@ JamiAccount::doRegister_()
             case dht::NodeStatus::Connected:
                 JAMI_WARN("[Account %s] connected to the DHT network", getAccountID().c_str());
                 state = RegistrationState::REGISTERED;
-                cacheTurnServers();
                 break;
             case dht::NodeStatus::Disconnected:
                 JAMI_WARN("[Account %s] disconnected from the DHT network", getAccountID().c_str());
@@ -2333,6 +2323,7 @@ JamiAccount::doRegister_()
                 state = RegistrationState::ERROR_GENERIC;
                 break;
             }
+
             setRegistrationState(state);
         };
         context.identityAnnouncedCb = [this](bool ok) {
@@ -2385,14 +2376,14 @@ JamiAccount::doRegister_()
                 deviceId, [this, &accept](const std::shared_ptr<dht::crypto::Certificate>& cert) {
                     dht::InfoHash peer_account_id;
                     auto res = accountManager_->onPeerCertificate(cert,
-                                                                dhtPublicInCalls_,
-                                                                peer_account_id);
+                                                                  dhtPublicInCalls_,
+                                                                  peer_account_id);
                     if (res)
                         JAMI_INFO("Accepting ICE request from account %s",
-                                peer_account_id.toString().c_str());
+                                  peer_account_id.toString().c_str());
                     else
                         JAMI_INFO("Discarding ICE request from account %s",
-                                peer_account_id.toString().c_str());
+                                  peer_account_id.toString().c_str());
                     accept.set_value(res);
                 });
             fut.wait();
@@ -2426,7 +2417,8 @@ JamiAccount::doRegister_()
                 fut.wait();
                 auto result = fut.get();
                 return result;
-            } */else if (isFile or isVCard) {
+            } */
+            else if (isFile or isVCard) {
                 auto tid_str = isFile ? name.substr(7) : name.substr(8);
                 uint64_t tid;
                 std::istringstream iss(tid_str);
@@ -2453,7 +2445,8 @@ JamiAccount::doRegister_()
                     cacheSIPConnection(std::move(channel), peerId, deviceId);
                 } /*else if (name.find("sync://") == 0) {
                     cacheSyncConnection(std::move(channel), peerId, deviceId);
-                }*/ else if (isFile or isVCard) {
+                }*/
+                else if (isFile or isVCard) {
                     auto tid_str = isFile ? name.substr(7) : name.substr(8);
                     std::unique_lock<std::mutex> lk(transfersMtx_);
                     auto it = incomingFileTransfers_.find(tid_str);
@@ -2833,8 +2826,10 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     }
 
     JAMI_WARN("[Account %s] unregistering account %p", getAccountID().c_str(), this);
-    dht_->shutdown(
-        [this]() { JAMI_WARN("[Account %s] dht shutdown complete", getAccountID().c_str()); });
+    dht_->shutdown([this] {
+        JAMI_WARN("[Account %s] dht shutdown complete", getAccountID().c_str());
+        setRegistrationState(RegistrationState::UNREGISTERED);
+    });
 
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
@@ -2863,14 +2858,26 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
 
     lock.unlock();
 
-    setRegistrationState(RegistrationState::UNREGISTERED);
-
     if (released_cb)
         released_cb(false);
 #ifdef ENABLE_PLUGIN
     jami::Manager::instance().getJamiPluginManager().getChatServicesManager().cleanChatSubjects(
         getAccountID());
 #endif
+}
+
+void
+JamiAccount::setRegistrationState(RegistrationState state,
+                                  unsigned detail_code,
+                                  const std::string& detail_str)
+{
+    if (registrationState_ != state) {
+        // Store ip whatever status changes.
+        cacheTurnServers();
+        storeActiveIpAddress();
+    }
+    // Update registrationState_ & emit signals
+    Account::setRegistrationState(state, detail_code, detail_str);
 }
 
 void
@@ -2943,7 +2950,8 @@ loadIdList(const std::string& path)
             ids.emplace(std::move(line));
         } else if constexpr (std::is_integral<ID>::value) {
             ID vid;
-            if(auto [p, ec] = std::from_chars(line.data(), line.data()+line.size(), vid, 16); ec == std::errc()) {
+            if (auto [p, ec] = std::from_chars(line.data(), line.data() + line.size(), vid, 16);
+                ec == std::errc()) {
                 ids.emplace(vid);
             }
         }
@@ -3680,8 +3688,8 @@ JamiAccount::storeActiveIpAddress()
                 if (not hasIpv4) {
                     hasIpv4 = true;
                     JAMI_DBG("[Account %s] Store DHT public IPv4 address : %s",
-                            getAccountID().c_str(),
-                            result.toString().c_str());
+                             getAccountID().c_str(),
+                             result.toString().c_str());
                     setPublishedAddress(*result.get());
                     if (upnpCtrl_) {
                         upnpCtrl_->setPublicAddress(*result.get());
@@ -3691,8 +3699,8 @@ JamiAccount::storeActiveIpAddress()
                 if (not hasIpv6) {
                     hasIpv6 = true;
                     JAMI_DBG("[Account %s] Store DHT public IPv6 address : %s",
-                            getAccountID().c_str(),
-                            result.toString().c_str());
+                             getAccountID().c_str(),
+                             result.toString().c_str());
                     setPublishedAddress(*result.get());
                 }
             }
@@ -4700,15 +4708,19 @@ JamiAccount::cacheTurnServers()
         }
         this_->isRefreshing_ = false;
         if (!this_->cacheTurnV6_ && !this_->cacheTurnV4_) {
-            JAMI_WARN("[Account %s] Cache for TURN resolution failed.", this_->getAccountID().c_str());
-            Manager::instance().scheduleTaskIn([w]() {
-                if (auto shared = w.lock())
-                    shared->cacheTurnServers();
-            }, this_->turnRefreshDelay_);
+            JAMI_WARN("[Account %s] Cache for TURN resolution failed.",
+                      this_->getAccountID().c_str());
+            Manager::instance().scheduleTaskIn(
+                [w]() {
+                    if (auto shared = w.lock())
+                        shared->cacheTurnServers();
+                },
+                this_->turnRefreshDelay_);
             if (this_->turnRefreshDelay_ < std::chrono::minutes(30))
                 this_->turnRefreshDelay_ *= 2;
         } else {
-            JAMI_INFO("[Account %s] Cache refreshed for TURN resolution", this_->getAccountID().c_str());
+            JAMI_INFO("[Account %s] Cache refreshed for TURN resolution",
+                      this_->getAccountID().c_str());
             this_->turnRefreshDelay_ = std::chrono::seconds(10);
         }
     });
@@ -4758,8 +4770,8 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
     // if there is no pending request
     if (connectionManager_->isConnecting(deviceId, "sip")) {
         JAMI_INFO("[Account %s] Already connecting to %s",
-              getAccountID().c_str(),
-              deviceId.to_c_str());
+                  getAccountID().c_str(),
+                  deviceId.to_c_str());
         return;
     }
     JAMI_INFO("[Account %s] Ask %s for a new SIP channel",
@@ -4769,18 +4781,18 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
                                       "sip",
                                       [w = weak(), id](std::shared_ptr<ChannelSocket> socket,
                                                        const DeviceId&) {
-                                            if (socket) return;
-                                            auto shared = w.lock();
-                                            if (!shared)
-                                                return;
-                                            // If this is triggered, this means that the
-                                            // connectDevice didn't get any response from the DHT.
-                                            // Stop searching pending call.
-                                            shared->callConnectionClosed(id.second, true);
-                                            shared->forEachPendingCall(id.second,
-                                                                        [](const auto& pc) {
-                                                                            pc->onFailure();
-                                                                        });
+                                          if (socket)
+                                              return;
+                                          auto shared = w.lock();
+                                          if (!shared)
+                                              return;
+                                          // If this is triggered, this means that the
+                                          // connectDevice didn't get any response from the DHT.
+                                          // Stop searching pending call.
+                                          shared->callConnectionClosed(id.second, true);
+                                          shared->forEachPendingCall(id.second, [](const auto& pc) {
+                                              pc->onFailure();
+                                          });
                                       });
 }
 
@@ -4993,23 +5005,26 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
 }
 
 void
-JamiAccount::shutdownSIPConnection(const std::shared_ptr<ChannelSocket>& channel, const std::string& peerId, const DeviceId& deviceId)
+JamiAccount::shutdownSIPConnection(const std::shared_ptr<ChannelSocket>& channel,
+                                   const std::string& peerId,
+                                   const DeviceId& deviceId)
 {
     std::unique_lock<std::mutex> lk(sipConnsMtx_);
     SipConnectionKey key(peerId, deviceId);
     auto it = sipConns_.find(key);
     if (it != sipConns_.end()) {
         auto& conns = it->second;
-        conns.erase(std::remove_if(conns.begin(), conns.end(),
-            [&](auto v) {
-                return v.channel == channel;
-            }), conns.end());
+        conns.erase(std::remove_if(conns.begin(),
+                                   conns.end(),
+                                   [&](auto v) { return v.channel == channel; }),
+                    conns.end());
         if (conns.empty())
             sipConns_.erase(it);
     }
     lk.unlock();
     // Shutdown after removal to let the callbacks do stuff if needed
-    if (channel) channel->shutdown();
+    if (channel)
+        channel->shutdown();
 }
 
 std::string_view
