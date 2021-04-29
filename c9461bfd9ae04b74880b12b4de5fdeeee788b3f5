@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "79d9a3fd_4730e63a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 447,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-29T13:30:03Z",
+      "side": 1,
+      "message": "unnecessary means no more memory",
+      "range": {
+        "startLine": 447,
+        "startChar": 19,
+        "endLine": 447,
+        "endChar": 33
+      },
+      "revId": "c9461bfd9ae04b74880b12b4de5fdeeee788b3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "70c0b955_5f2771c7",
+        "filename": "src/manager.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2762,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-29T13:30:03Z",
+      "side": 1,
+      "message": "the if is checking account",
+      "range": {
+        "startLine": 2758,
+        "startChar": 4,
+        "endLine": 2762,
+        "endChar": 20
+      },
+      "revId": "c9461bfd9ae04b74880b12b4de5fdeeee788b3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2f5eada2_0ab683cb",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 743,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-29T13:30:03Z",
+      "side": 1,
+      "message": "missing todo, if done after, a ticket can be created",
+      "range": {
+        "startLine": 742,
+        "startChar": 0,
+        "endLine": 743,
+        "endChar": 66
+      },
+      "revId": "c9461bfd9ae04b74880b12b4de5fdeeee788b3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "32c37a32_ecbd55d2",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 1581,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-29T13:30:03Z",
+      "side": 1,
+      "message": "fyi lambdas accept auto",
+      "range": {
+        "startLine": 1581,
+        "startChar": 65,
+        "endLine": 1581,
+        "endChar": 87
+      },
+      "revId": "c9461bfd9ae04b74880b12b4de5fdeeee788b3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e27492e7_c8edc9ba",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-29T13:30:03Z",
+      "side": 1,
+      "message": "missing author",
+      "range": {
+        "startLine": 1,
+        "startChar": 2,
+        "endLine": 2,
+        "endChar": 46
+      },
+      "revId": "c9461bfd9ae04b74880b12b4de5fdeeee788b3f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
