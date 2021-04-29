@@ -85,7 +85,11 @@ libring_la_LDFLAGS = \
 
 if ENABLE_PLUGIN
 libring_la_LDFLAGS+= \
+if HAVE_OSX
+		@MINIZIP_LIBS@
+else
 		@ARCHIVE_LIBS@
+endif
 endif
 
 

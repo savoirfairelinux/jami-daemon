@@ -24,8 +24,11 @@ libplugin_la_SOURCES = \
 	chatservicesmanager.cpp \
 	callservicesmanager.cpp
 
-
-libplugin_la_LIBADD = @ARCHIVE_LIBS@
+if HAVE_OSX
+	libplugin_la_LIBADD = @MINIZIP_LIBS@
+else
+	libplugin_la_LIBADD = @ARCHIVE_LIBS@
+endif
 
 libplugin_la_CXXFLAGS = \
 	-I./ \
