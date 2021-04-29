@@ -24,9 +24,6 @@ libplugin_la_SOURCES = \
 	chatservicesmanager.cpp \
 	callservicesmanager.cpp
 
-
-libplugin_la_LIBADD = @ARCHIVE_LIBS@
-
 libplugin_la_CXXFLAGS = \
 	-I./ \
 	-I../ \

@@ -2,11 +2,13 @@
 LIBARCHIVE_VERSION := 3.4.0
 LIBARCHIVE_URL := https://github.com/libarchive/libarchive/releases/download/v$(LIBARCHIVE_VERSION)/libarchive-$(LIBARCHIVE_VERSION).tar.gz
 
+ifndef HAVE_MACOSX
 PKGS += libarchive
 ifeq ($(call need_pkg,"libarchive >= 3.4.0"),)
 PKGS_FOUND += libarchive
 else
 DEPS_libarchive += nettle
+endif
 endif
 
 LIBARCHIVE_CMAKECONF := \
