@@ -69,13 +69,6 @@ std::vector<uint8_t> decompressGzip(const std::string& path);
 gzFile openGzip(const std::string& path, const char* mode);
 
 /**
- * @brief listArchiveContent
- * @param archivePath
- * @return list of relative file path names
- */
-std::vector<std::string> listArchiveContent(const std::string& archivePath);
-
-/**
  * @brief uncompressArchive Uncompresses an archive and puts the different files
  * in dir folder according to a FileMatchPair f
  * @param path
