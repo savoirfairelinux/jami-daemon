@@ -1,0 +1,56 @@
+ pjnath/src/pjnath/ice_session.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index b50a3d229..715d77569 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -2017,6 +2017,7 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+     case PJ_CAND_TCP_ACTIVE:
+         switch (check->state) {
+         case PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY:
++			printf("@@@ reconnect_tcp_connection %u\n", check_id);
+             status = (*ice->cb.reconnect_tcp_connection)(ice, clist, check_id);
+             break;
+         case PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET:
+@@ -2514,6 +2515,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 	 * In this case, we can try to reconnect a bit after and this until the check
+ 	 * reached its timeout.
+ 	 */
++	printf("@@@ check turn set retry status %u\n", status);
+ 	check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY;
+ 	check_set_state(ice, check,PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
+ 			status);
+@@ -2557,9 +2559,9 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 					       check->tdata);
+ 
+     if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED && (
+-		status == PJ_ERRNO_START_SYS + 104 || status == 130054 || /* CONNECTION RESET BY PEER */
+-		status == PJ_ERRNO_START_SYS + 32 /* EPIPE */ ||
+-		status == PJ_ERRNO_START_SYS + 111 /* Connection refused */
++		status_send_msg == PJ_ERRNO_START_SYS + 104 || status_send_msg == 130054 || /* CONNECTION RESET BY PEER */
++		status_send_msg == PJ_ERRNO_START_SYS + 32 /* EPIPE */ ||
++		status_send_msg == PJ_ERRNO_START_SYS + 111 /* Connection refused */
+ 		)) {
+ 		/**
+ 		 * This part of the code is triggered when using ICE over TCP via TURN
+@@ -2570,9 +2572,11 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 		 * In this case, we can try to reconnect a bit after and this until the check
+ 		 * reached its timeout.
+ 		 */
++		printf("@@@ check turn set retry 2 status %u\n", status);
+ 		check_set_state(ice, check,PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
+ 				status_send_msg);
+     } else if (status_send_msg == PJ_EBUSY /* EBUSY */) {
++		printf("@@@ check turn set first packet status %u\n", status);
+ 		check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
+ 				status_send_msg);
+     } else if (status_send_msg != PJ_SUCCESS) {
+@@ -2620,6 +2624,7 @@ void ice_sess_on_peer_reset_connection(pj_ice_sess *ice,
+ 			"Connection to TURN (%s) is reset",
+ 			pj_sockaddr_print(&rcand->addr, raddr, sizeof(raddr), 3)));
+ 
++	printf("@@@ check turn set retry 4 (peer reset) status %u\n", 120104);
+ 	check->state = PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY;
+ 	check_set_state(ice, check,
+ 			PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY, 120104);
