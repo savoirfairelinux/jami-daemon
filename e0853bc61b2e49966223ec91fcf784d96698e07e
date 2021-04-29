@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2b524a38_7b49a3c8",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2880,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-04-29T18:37:14Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nqualified name \u0027Account::setRegistrationState\u0027 refers to a member overridden in subclass; did you mean \u0027jami::SIPAccountBase\u0027?\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-parent-virtual-call",
+      "revId": "e0853bc61b2e49966223ec91fcf784d96698e07e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
