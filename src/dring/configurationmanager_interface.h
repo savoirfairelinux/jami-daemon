@@ -302,8 +302,7 @@ DRING_PUBLIC bool isLocalModeratorsEnabled(const std::string& accountID);
 /**
  * Enable/disable all moderators for conferences
  */
-DRING_PUBLIC void setAllModerators(const std::string& accountID,
-                                        bool allModerators);
+DRING_PUBLIC void setAllModerators(const std::string& accountID, bool allModerators);
 
 /**
  * Get all moderators state
@@ -512,7 +511,8 @@ struct DRING_PUBLIC ConfigurationSignal
         using cb_type = void(std::vector<int32_t>* /* params_ret */);
     };
 #endif
-#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+#if defined(__ANDROID__) || defined(RING_UWP) || defined(_WIN32) \
+    || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     struct DRING_PUBLIC GetAppDataPath
     {
         constexpr static const char* name = "GetAppDataPath";
