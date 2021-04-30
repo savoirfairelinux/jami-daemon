@@ -93,6 +93,30 @@
       "revId": "63a6429aac0f839b11905c794c40c00e9597481e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "94b555a7_2d732cb1",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-30T18:13:36Z",
+      "side": 1,
+      "message": "To be more precise, a media is assumed disabled unless is locally enabled and the remote counterpart is found in the SDP (with valid SDP attributes).",
+      "parentUuid": "efe1b3a5_4a50c927",
+      "range": {
+        "startLine": 37,
+        "startChar": 26,
+        "endLine": 37,
+        "endChar": 40
+      },
+      "revId": "63a6429aac0f839b11905c794c40c00e9597481e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
