@@ -851,6 +851,12 @@ remove(const std::string& path, bool erase)
         eraseFile(path, true);
     }
 
+#ifdef _WIN32
+    // use Win32 api since std::remove will not unlink directory in use
+    if (isDirectory(path))
+        return !RemoveDirectory(jami::to_wstring(path).c_str());
+#endif
+
     return std::remove(path.c_str());
 }
 
