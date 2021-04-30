@@ -81,6 +81,7 @@ endif
 VPX_CONF := \
 	--as=yasm \
 	--disable-docs \
+	--disable-tools \
 	--disable-examples \
 	--disable-unit-tests \
 	--disable-install-bins \
@@ -89,9 +90,6 @@ VPX_CONF := \
 	--enable-error-concealment \
 	--disable-webm-io
 
-ifdef HAVE_ANDROID
-	VPX_CONF += --disable-runtime-cpu-detect
-endif
 ifdef HAVE_IOS
 	VPX_CONF += --disable-runtime-cpu-detect
 endif
@@ -101,8 +99,8 @@ VPX_CONF += --enable-pic
 endif
 LOCAL_HOSTVARS=
 ifdef HAVE_ANDROID
-VPX_CONF += --disable-tools --extra-cflags="-I$(ANDROID_NDK)/sources/cpufeatures/ -fvisibility=hidden"
-LOCAL_HOSTVARS=$(HOSTVARS)
+VPX_CONF += --disable-tools --extra-cflags="-I$(ANDROID_NDK)/sources/android/cpufeatures/ -fvisibility=hidden"
+LOCAL_HOSTVARS=$(HOSTVARS) LD=$(CC)
 endif
 ifdef HAVE_WIN32
 ifeq ($(ARCH),i386)
