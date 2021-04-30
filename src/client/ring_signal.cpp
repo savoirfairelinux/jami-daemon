@@ -83,8 +83,8 @@ getSignalHandlers()
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
         exported_callback<DRing::ConfigurationSignal::GetHardwareAudioFormat>(),
 #endif
-#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS) || defined(RING_UWP)
         exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
+#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS) || defined(RING_UWP)
         exported_callback<DRing::ConfigurationSignal::GetDeviceName>(),
 #endif
         exported_callback<DRing::ConfigurationSignal::HardwareDecodingChanged>(),
