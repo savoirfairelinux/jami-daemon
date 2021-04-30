@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9eb5c985_76ddf949",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-04-30T14:22:28Z",
+      "side": 1,
+      "message": "unnecessary else as it\u0027s the end",
+      "range": {
+        "startLine": 121,
+        "startChar": 5,
+        "endLine": 121,
+        "endChar": 12
+      },
+      "revId": "7b8607239b885ea74dd43cfe125e22467c8e5078",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
