@@ -1,6 +1,6 @@
 # libvpx
 
-VPX_HASH := v1.8.1
+VPX_HASH := v1.10.0
 VPX_URL := https://github.com/webmproject/libvpx/archive/$(VPX_HASH).tar.gz
 
 $(TARBALLS)/libvpx-$(VPX_HASH).tar.gz:
@@ -55,11 +55,8 @@ VPX_OS := darwin
 else ifeq ($(ARCH),arm64)
 VPX_OS := darwin
 else
-ifeq ($(OSX_VERSION),10.5)
-VPX_OS := darwin9
-else
-VPX_OS := darwin10
-endif
+#to support minimum macOS version 10.13
+VPX_OS := darwin17
 endif
 else ifdef HAVE_SOLARIS
 VPX_OS := solaris
