@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "bedd7a2a_a17c3157",
+        "filename": "src/conference.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 397,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-04-30T14:21:07Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "ecb56e72_0d9b3819",
+      "range": {
+        "startLine": 380,
+        "startChar": 9,
+        "endLine": 397,
+        "endChar": 5
+      },
+      "revId": "63a6429aac0f839b11905c794c40c00e9597481e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "eb178b72_875906f2",
         "filename": "src/media/media_attribute.h",
         "patchSetId": 9
@@ -36,6 +60,30 @@
       "writtenOn": "2021-04-30T13:26:13Z",
       "side": 1,
       "message": "why this change?",
+      "range": {
+        "startLine": 37,
+        "startChar": 26,
+        "endLine": 37,
+        "endChar": 40
+      },
+      "revId": "63a6429aac0f839b11905c794c40c00e9597481e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "efe1b3a5_4a50c927",
+        "filename": "src/media/media_attribute.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-04-30T14:21:07Z",
+      "side": 1,
+      "message": "After talking to Mohamed, we agreed that a media should be disabled by default and enabled only when we configure a rtp session for it.",
+      "parentUuid": "eb178b72_875906f2",
       "range": {
         "startLine": 37,
         "startChar": 26,
