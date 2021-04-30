@@ -2,6 +2,23 @@
   "comments": [
     {
       "key": {
+        "uuid": "836da7ac_224ae5b8",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-04-30T19:29:49Z",
+      "side": 1,
+      "message": "no need for else after a return",
+      "revId": "7b8607239b885ea74dd43cfe125e22467c8e5078",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "9eb5c985_76ddf949",
         "filename": "src/sip/sipvoiplink.cpp",
         "patchSetId": 2
