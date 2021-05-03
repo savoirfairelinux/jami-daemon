@@ -269,6 +269,11 @@ public:
     virtual void sendKeyframe() = 0;
 
     /**
+     * Check wether ICE is enabled for media
+     */
+    virtual bool isIceEnabled() const = 0;
+
+    /**
      * Peer has hung up a call
      */
     virtual void peerHungup();
