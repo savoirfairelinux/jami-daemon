@@ -1,0 +1,46 @@
+ pjlib/src/pj/ip_helper_generic.c | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/pjlib/src/pj/ip_helper_generic.c b/pjlib/src/pj/ip_helper_generic.c
+index d7bbf725e..64fe0ba83 100644
+--- a/pjlib/src/pj/ip_helper_generic.c
++++ b/pjlib/src/pj/ip_helper_generic.c
+@@ -92,6 +92,12 @@ static pj_status_t if_enum_by_af(int af,
+ 
+ 	TRACE_((THIS_FILE, " checking %s", it->ifa_name));
+ 
++	struct sockaddr* net_addr = it->ifa_netmask;
++	if (net_addr && strncmp(inet_ntoa(((struct sockaddr_in *)net_addr)->sin_addr), "192.0.0.0", 9) == 0) {
++	    TRACE_((THIS_FILE, "  skip RFC7335"));
++		continue; /* skip RFC7335 */
++	}
++
+ 	if ((it->ifa_flags & IFF_UP)==0) {
+ 	    TRACE_((THIS_FILE, "  interface is down"));
+ 	    continue; /* Skip when interface is down */
+@@ -203,6 +209,12 @@ static pj_status_t if_enum_by_af(int af,
+ 	    continue;	/* Failed to get flags, continue */
+ 	}
+ 
++	struct sockaddr* net_addr = &itf->ifr_netmask;
++	if (net_addr && strncmp(inet_ntoa(((struct sockaddr_in *)net_addr)->sin_addr), "192.0.0.0", 9) == 0) {
++	    TRACE_((THIS_FILE, "  skip RFC7335"));
++		continue; /* skip RFC7335 */
++	}
++
+ 	if ((iff.ifr_flags & IFF_UP)==0) {
+ 	    TRACE_((THIS_FILE, "  interface is down"));
+ 	    continue; /* Skip when interface is down */
+@@ -281,6 +293,12 @@ static pj_status_t if_enum_by_af(int af, unsigned *p_cnt, pj_sockaddr ifs[])
+ 	    continue;	/* Failed to get flags, continue */
+ 	}
+ 
++	struct sockaddr* net_addr = &ifreq.ifr_netmask;
++	if (net_addr && strncmp(inet_ntoa(((struct sockaddr_in *)net_addr)->sin_addr), "192.0.0.0", 9) == 0) {
++	    TRACE_((THIS_FILE, "  skip RFC7335"));
++		continue; /* skip RFC7335 */
++	}
++
+ 	if ((ifreq.ifr_flags & IFF_UP)==0) {
+ 	    TRACE_((THIS_FILE, "  interface is down"));
+ 	    continue; /* Skip when interface is down */
