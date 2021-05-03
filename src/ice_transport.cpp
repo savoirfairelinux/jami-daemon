@@ -1642,6 +1642,15 @@ IceTransport::link() const
     return pimpl_->link();
 }
 
+void
+IceTransport::sendKeepAlive()
+{
+    sip_utils::register_thread();
+    JAMI_ERR() << "@@@";
+    send_keep_alive(pimpl_->icest_.get());
+}
+
+
 //==============================================================================
 
 IceTransportFactory::IceTransportFactory()

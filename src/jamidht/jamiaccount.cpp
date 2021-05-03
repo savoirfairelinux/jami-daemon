@@ -2892,6 +2892,7 @@ JamiAccount::connectivityChanged()
         return;
     }
     dht_->connectivityChanged();
+    connectionManager_->connectivityChanged();
     // reset cache
     setPublishedAddress({});
 }
