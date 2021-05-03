@@ -259,6 +259,8 @@ public:
 
     std::string link() const;
 
+    void sendKeepAlive();
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
