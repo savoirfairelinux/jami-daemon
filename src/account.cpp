@@ -128,6 +128,7 @@ Account::Account(const std::string& accountID)
 #else
     , multiStreamEnabled_(false)
 #endif
+    , iceForMediaEnabled_(true)
     , iceCompIdRfc5245Compliant_(false)
 {
     // Initialize the codec order, used when creating a new account

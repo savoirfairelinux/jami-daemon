@@ -231,7 +231,9 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
     }
 
     auto toUri = getToUri(to);
-    call->initIceMediaTransport(true);
+    if (isIceForMediaEnabled()) {
+        call->initIceMediaTransport(true);
+    }
     call->setPeerNumber(toUri);
     call->setPeerUri(toUri);
 
@@ -321,7 +323,9 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<MediaAttri
     }
 
     auto toUri = getToUri(to);
-    call->initIceMediaTransport(true);
+    if (isIceForMediaEnabled()) {
+        call->initIceMediaTransport(true);
+    }
     call->setPeerNumber(toUri);
     call->setPeerUri(toUri);
 
@@ -441,7 +445,8 @@ bool
 SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 {
     // Add Ice headers to local SDP if ice transport exist
-    call->addLocalIceAttributes();
+    if (isIceForMediaEnabled())
+        call->addLocalIceAttributes();
 
     const std::string& toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
     pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);

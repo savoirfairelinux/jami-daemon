@@ -453,8 +453,10 @@ transaction_request_cb(pjsip_rx_data* rdata)
         call->getSDP().setReceivedOffer(r_sdp);
         call->getSDP().processIncomingOffer(mediaList);
     }
-    if (r_sdp)
-        call->setupLocalIce();
+    if (account->isIceForMediaEnabled()) {
+        if (r_sdp)
+            call->setupLocalIce();
+    }
 
     pjsip_dialog* dialog = nullptr;
     if (pjsip_dlg_create_uas_and_inc_lock(pjsip_ua_instance(), rdata, nullptr, &dialog)
