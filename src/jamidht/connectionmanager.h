@@ -135,6 +135,9 @@ public:
     std::size_t activeSockets() const;
     void monitor() const;
 
+
+    void connectivityChanged();
+
 private:
     ConnectionManager() = delete;
     class Impl;
