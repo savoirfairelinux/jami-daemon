@@ -1,0 +1,97 @@
+ pjlib/src/pj/ip_helper_generic.c | 18 ++++++++++++++++++
+ pjlib/src/pj/sock_bsd.c          |  8 +++++---
+ pjnath/include/pjnath/config.h   |  4 ++--
+ 3 files changed, 25 insertions(+), 5 deletions(-)
+
+diff --git a/pjlib/src/pj/ip_helper_generic.c b/pjlib/src/pj/ip_helper_generic.c
+index d7bbf725e..64fe0ba83 100644
+--- a/pjlib/src/pj/ip_helper_generic.c
++++ b/pjlib/src/pj/ip_helper_generic.c
+@@ -92,6 +92,12 @@ static pj_status_t if_enum_by_af(int af,
+ 
+ 	TRACE_((THIS_FILE, " checking %s", it->ifa_name));
+ 
++	struct sockaddr* net_addr = it->ifa_netmask;
++	if (net_addr && strncmp(inet_ntoa(((struct sockaddr_in *)net_addr)->sin_addr), "192.0.0.0", 9) == 0) {
++	    TRACE_((THIS_FILE, "  skip RFC7335"));
++		continue; /* skip RFC7335 */
++	}
++
+ 	if ((it->ifa_flags & IFF_UP)==0) {
+ 	    TRACE_((THIS_FILE, "  interface is down"));
+ 	    continue; /* Skip when interface is down */
+@@ -203,6 +209,12 @@ static pj_status_t if_enum_by_af(int af,
+ 	    continue;	/* Failed to get flags, continue */
+ 	}
+ 
++	struct sockaddr* net_addr = &itf->ifr_netmask;
++	if (net_addr && strncmp(inet_ntoa(((struct sockaddr_in *)net_addr)->sin_addr), "192.0.0.0", 9) == 0) {
++	    TRACE_((THIS_FILE, "  skip RFC7335"));
++		continue; /* skip RFC7335 */
++	}
++
+ 	if ((iff.ifr_flags & IFF_UP)==0) {
+ 	    TRACE_((THIS_FILE, "  interface is down"));
+ 	    continue; /* Skip when interface is down */
+@@ -281,6 +293,12 @@ static pj_status_t if_enum_by_af(int af, unsigned *p_cnt, pj_sockaddr ifs[])
+ 	    continue;	/* Failed to get flags, continue */
+ 	}
+ 
++	struct sockaddr* net_addr = &ifreq.ifr_netmask;
++	if (net_addr && strncmp(inet_ntoa(((struct sockaddr_in *)net_addr)->sin_addr), "192.0.0.0", 9) == 0) {
++	    TRACE_((THIS_FILE, "  skip RFC7335"));
++		continue; /* skip RFC7335 */
++	}
++
+ 	if ((ifreq.ifr_flags & IFF_UP)==0) {
+ 	    TRACE_((THIS_FILE, "  interface is down"));
+ 	    continue; /* Skip when interface is down */
+diff --git a/pjlib/src/pj/sock_bsd.c b/pjlib/src/pj/sock_bsd.c
+index 0cb395949..95590cc2a 100644
+--- a/pjlib/src/pj/sock_bsd.c
++++ b/pjlib/src/pj/sock_bsd.c
+@@ -604,8 +604,8 @@ PJ_DEF(pj_status_t) pj_sock_socket(int af,
+     else {
+ 	pj_int32_t val = 1;
+ 	if (type == pj_SOCK_STREAM()) {
+-	    pj_sock_setsockopt(*sock, pj_SOL_SOCKET(), pj_SO_NOSIGPIPE(),
+-			       &val, sizeof(val));
++	   // pj_sock_setsockopt(*sock, pj_SOL_SOCKET(), pj_SO_NOSIGPIPE(),
++		//	       &val, sizeof(val));
+ 	    pj_sock_setsockopt(*sock, pj_SOL_SOCKET(), pj_SO_KEEPALIVE(),
+ 			       &val, sizeof(val));
+ 	    pj_sock_setsockopt(*sock, pj_SOL_TCP(), pj_TCP_KEEPCNT(),
+@@ -753,10 +753,12 @@ PJ_DEF(pj_status_t) pj_sock_send(pj_sock_t sock,
+ 
+ #ifdef MSG_NOSIGNAL
+     /* Suppress SIGPIPE. See https://trac.pjsip.org/repos/ticket/1538 */
+-    flags |= MSG_NOSIGNAL;
++	printf("@@@ NO SIGPIPE - flags: %u\n", flags);
++ //   flags |= MSG_NOSIGNAL;
+ #endif
+ 
+     *len = send(sock, (const char*)buf, (int)(*len), flags);
++	printf("@@@pj_sock_send %u\n", *len);
+ 
+     if (*len < 0)
+ 	return PJ_RETURN_OS_ERROR(pj_get_native_netos_error());
+diff --git a/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h
+index e58f207e6..991d3bb7d 100644
+--- a/pjnath/include/pjnath/config.h
++++ b/pjnath/include/pjnath/config.h
+@@ -197,13 +197,13 @@
+  * TURN protocol specification.
+  */
+ #ifndef PJ_TURN_CHANNEL_TIMEOUT
+-#   define PJ_TURN_CHANNEL_TIMEOUT		    600
++#   define PJ_TURN_CHANNEL_TIMEOUT		    30
+ #endif
+ 
+ 
+ /**
+  * Number of seconds to refresh the permission/channel binding before the 
+- * permission/channel binding expires. This value should be greater than 
++ * permission/channel binding expires. This value should be lower than 
+  * PJ_TURN_PERM_TIMEOUT setting.
+  */
+ #ifndef PJ_TURN_REFRESH_SEC_BEFORE

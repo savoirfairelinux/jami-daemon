@@ -652,9 +652,11 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             dev_call->setSecure(isTlsEnabled());
             dev_call->setState(Call::ConnectionState::TRYING);
             call->addStateListener(
-                [w = weak(), deviceId](Call::CallState, Call::ConnectionState state, int) {
+                [w = weak(), deviceId](Call::CallState cs, Call::ConnectionState state, int) {
+                    JAMI_ERR() << "@@@ STATE" << (int) state << " : " << (int) cs;
                     if (state != Call::ConnectionState::PROGRESSING
                         and state != Call::ConnectionState::TRYING) {
+                        JAMI_ERR() << "@@@ CALL! ON CO CLOSED";
                         if (auto shared = w.lock())
                             shared->callConnectionClosed(deviceId, true);
                     }
@@ -704,17 +706,21 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         {
             std::lock_guard<std::mutex> lk(onConnectionClosedMtx_);
+            JAMI_ERR() << "@@@ EMPLACE ON CO CLOSED";
             onConnectionClosed_[key.second] = sendRequest;
         }
 
-        call->addStateListener(
-            [w = weak(), deviceId = key.second](Call::CallState, Call::ConnectionState state, int) {
-                if (state != Call::ConnectionState::PROGRESSING
-                    and state != Call::ConnectionState::TRYING) {
-                    if (auto shared = w.lock())
-                        shared->callConnectionClosed(deviceId, true);
-                }
-            });
+        call->addStateListener([w = weak(), deviceId = key.second](Call::CallState cs,
+                                                                   Call::ConnectionState state,
+                                                                   int) {
+            JAMI_ERR() << "@@@ STATE" << (int) state << " : " << (int) cs;
+            if (state != Call::ConnectionState::PROGRESSING
+                and state != Call::ConnectionState::TRYING) {
+                JAMI_ERR() << "@@@ CALL! ON CO CLOSED";
+                if (auto shared = w.lock())
+                    shared->callConnectionClosed(deviceId, true);
+            }
+        });
 
         auto remoted_address = sipConn.channel->underlyingICE()->getRemoteAddress(
             ICE_COMP_SIP_TRANSPORT);
@@ -774,11 +780,11 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
                 return;
 
             const auto localAddress = ip_utils::getInterfaceAddr(shared->getLocalInterface(),
-                                                                target.getFamily());
+                                                                 target.getFamily());
 
             IpAddr addrSdp = shared->getPublishedSameasLocal()
-                                ? localAddress
-                                : shared->getPublishedIpAddress(target.getFamily());
+                                 ? localAddress
+                                 : shared->getPublishedIpAddress(target.getFamily());
 
             // fallback on local address
             if (not addrSdp)
@@ -2749,14 +2755,14 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg,
             });
         };
         auto ice = createIceTransport(("sip:" + call->getCallId()).c_str(),
-                                    ICE_COMPONENTS,
-                                    false,
-                                    iceOptions);
+                                      ICE_COMPONENTS,
+                                      false,
+                                      iceOptions);
         iceOptions.tcpEnable = true;
         auto ice_tcp = createIceTransport(("sip:" + call->getCallId()).c_str(),
-                                        ICE_COMPONENTS,
-                                        true,
-                                        iceOptions);
+                                          ICE_COMPONENTS,
+                                          true,
+                                          iceOptions);
 
         std::weak_ptr<SIPCall> wcall = call;
         Manager::instance().addTask([account = shared(), wcall, ice, ice_tcp, msg, from_cert, from] {
@@ -2943,6 +2949,7 @@ JamiAccount::connectivityChanged()
         return;
     }
     dht_->connectivityChanged();
+    connectionManager_->connectivityChanged();
     // reset cache
     setPublishedAddress({});
 }
@@ -3716,7 +3723,7 @@ JamiAccount::onIsComposing(const std::string& peer, bool isWriting)
 void
 JamiAccount::getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept
 {
-    storeActiveIpAddress([this, cb=std::move(cb)] {
+    storeActiveIpAddress([this, cb = std::move(cb)] {
         auto opts = SIPAccountBase::getIceOptions();
         auto publishedAddr = getPublishedIpAddress();
 
@@ -4793,17 +4800,21 @@ JamiAccount::callConnectionClosed(const DeviceId& deviceId, bool eraseDummy)
         auto it = onConnectionClosed_.find(deviceId);
         if (it != onConnectionClosed_.end()) {
             if (eraseDummy) {
+                JAMI_ERR() << "@@@ ERASE";
                 cb = std::move(it->second);
                 onConnectionClosed_.erase(it);
             } else {
+                JAMI_ERR() << "@@@ NOT ERASE";
                 // In this case a new subcall is created and the callback
                 // will be re-called once with eraseDummy = true
                 cb = it->second;
             }
         }
     }
-    if (cb)
+    if (cb) {
+        JAMI_ERR() << "@@@ LAUNCH";
         cb(deviceId, eraseDummy);
+    }
 }
 
 void
@@ -4847,6 +4858,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& dev
                                           // If this is triggered, this means that the
                                           // connectDevice didn't get any response from the DHT.
                                           // Stop searching pending call.
+                                          JAMI_ERR() << "@@@CALL2";
                                           shared->callConnectionClosed(id.second, true);
                                           shared->forEachPendingCall(id.second, [](const auto& pc) {
                                               pc->onFailure();
@@ -5020,10 +5032,12 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         auto shared = w.lock();
         if (!shared)
             return;
+        JAMI_ERR() << "@@@onShutdown!!!";
         shared->shutdownSIPConnection(socket, key.first, key.second);
         // The connection can be closed during the SIP initialization, so
         // if this happens, the request should be re-sent to ask for a new
         // SIP channel to make the call pass through
+        JAMI_ERR() << "@@@CALL3";
         shared->callConnectionClosed(key.second, false);
     };
     auto sip_tr = link_.sipTransportBroker->getChanneledTransport(socket, std::move(onShutdown));
