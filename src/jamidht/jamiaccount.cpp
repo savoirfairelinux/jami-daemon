@@ -811,7 +811,9 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
 bool
 JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
 {
-    call.addLocalIceAttributes();
+    if (isIceForMediaEnabled())
+        call.addLocalIceAttributes();
+
     std::string toUri(getToUri(call.getPeerNumber() + "@"
                                + target.toString(true))); // expecting a fully well formed sip uri
 

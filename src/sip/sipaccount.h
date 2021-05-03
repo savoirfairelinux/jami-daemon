@@ -303,6 +303,16 @@ public:
      */
     bool isStunEnabled() const override { return stunEnabled_; }
 
+#if 1
+    /**
+     * @brief Enable/Disable empty offers
+     *
+     * @param enable if true, the outgoing offers will have no SDP. If the
+     * peer answers the call, it will include the SDP offer in the 200 OK
+     * answer.
+     */
+    void enableEmptyOffers(bool enable);
+#endif
     /**
      * @return pj_str_t "From" uri based on account information.
      * From RFC3261: "The To header field first and foremost specifies the desired
