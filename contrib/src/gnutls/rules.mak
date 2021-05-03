@@ -17,6 +17,7 @@ $(TARBALLS)/gnutls-$(GNUTLS_VERSION).tar.xz:
 
 gnutls: gnutls-$(GNUTLS_VERSION).tar.xz .sum-gnutls
 	$(UNPACK)
+	$(APPLY) $(SRC)/gnutls/gnutls_tasn.patch
 ifdef HAVE_WIN32
 	$(APPLY) $(SRC)/gnutls/gnutls-win32.patch
 else
@@ -73,13 +74,11 @@ endif
 ifdef HAVE_ANDROID
 	cd $< && $(HOSTVARS) gl_cv_header_working_stdint_h=yes ./configure $(GNUTLS_CONF)
 else
-#use O1 to compile gnutls on darwin platforms. It is a workaround to fix
-#libtasn1 certificate loading https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=252548
 ifdef HAVE_IOS
-	cd $< && $(HOSTVARS) ac_cv_func_clock_gettime=no CFLAGS="$(CFLAGS) -O1" ./configure $(GNUTLS_CONF)
+	cd $< && $(HOSTVARS) ac_cv_func_clock_gettime=no ./configure $(GNUTLS_CONF)
 else
 ifdef HAVE_MACOSX
-	cd $< && $(HOSTVARS) ac_cv_func_clock_gettime=no CFLAGS="$(CFLAGS) -O1" ./configure $(GNUTLS_CONF)
+	cd $< && $(HOSTVARS) ac_cv_func_clock_gettime=no ./configure $(GNUTLS_CONF)
 else
 	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS)" ./configure $(GNUTLS_CONF)
 endif

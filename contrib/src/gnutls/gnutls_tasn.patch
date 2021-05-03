@@ -1,0 +1,423 @@
+diff --git a/lib/minitasn1/Makefile.in b/lib/minitasn1/Makefile.in
+index fe3586d..b4f2d8c 100644
+--- a/lib/minitasn1/Makefile.in
++++ b/lib/minitasn1/Makefile.in
+@@ -137,6 +137,7 @@ am__aclocal_m4_deps = $(top_srcdir)/lib/unistring/m4/gnulib-comp.m4 \
+ 	$(top_srcdir)/src/gl/m4/gnulib-comp.m4 \
+ 	$(top_srcdir)/src/gl/m4/hostent.m4 \
+ 	$(top_srcdir)/src/gl/m4/intl-thread-locale.m4 \
++	$(top_srcdir)/src/gl/m4/intlmacosx.m4 \
+ 	$(top_srcdir)/src/gl/m4/inttostr.m4 \
+ 	$(top_srcdir)/src/gl/m4/ioctl.m4 \
+ 	$(top_srcdir)/src/gl/m4/isblank.m4 \
+@@ -163,6 +164,7 @@ am__aclocal_m4_deps = $(top_srcdir)/lib/unistring/m4/gnulib-comp.m4 \
+ 	$(top_srcdir)/src/gl/m4/putenv.m4 \
+ 	$(top_srcdir)/src/gl/m4/raise.m4 \
+ 	$(top_srcdir)/src/gl/m4/sched_h.m4 \
++	$(top_srcdir)/src/gl/m4/sched_yield.m4 \
+ 	$(top_srcdir)/src/gl/m4/select.m4 \
+ 	$(top_srcdir)/src/gl/m4/semaphore.m4 \
+ 	$(top_srcdir)/src/gl/m4/servent.m4 \
+@@ -188,7 +190,6 @@ am__aclocal_m4_deps = $(top_srcdir)/lib/unistring/m4/gnulib-comp.m4 \
+ 	$(top_srcdir)/src/gl/m4/tzset.m4 \
+ 	$(top_srcdir)/src/gl/m4/ungetc.m4 \
+ 	$(top_srcdir)/src/gl/m4/usleep.m4 \
+-	$(top_srcdir)/src/gl/m4/visibility.m4 \
+ 	$(top_srcdir)/src/gl/m4/xalloc.m4 \
+ 	$(top_srcdir)/src/gl/m4/yield.m4 \
+ 	$(top_srcdir)/src/libopts/m4/libopts.m4 \
+@@ -217,11 +218,10 @@ am__aclocal_m4_deps = $(top_srcdir)/lib/unistring/m4/gnulib-comp.m4 \
+ 	$(top_srcdir)/m4/getdtablesize.m4 $(top_srcdir)/m4/getline.m4 \
+ 	$(top_srcdir)/m4/gettext.m4 $(top_srcdir)/m4/gettimeofday.m4 \
+ 	$(top_srcdir)/m4/gnulib-common.m4 \
+-	$(top_srcdir)/m4/gnulib-comp.m4 $(top_srcdir)/m4/gtk-doc.m4 \
+-	$(top_srcdir)/m4/guile.m4 $(top_srcdir)/m4/hooks.m4 \
+-	$(top_srcdir)/m4/host-cpu-c-abi.m4 $(top_srcdir)/m4/iconv.m4 \
+-	$(top_srcdir)/m4/include_next.m4 $(top_srcdir)/m4/inet_ntop.m4 \
+-	$(top_srcdir)/m4/inet_pton.m4 $(top_srcdir)/m4/intlmacosx.m4 \
++	$(top_srcdir)/m4/gnulib-comp.m4 $(top_srcdir)/m4/guile.m4 \
++	$(top_srcdir)/m4/hooks.m4 $(top_srcdir)/m4/host-cpu-c-abi.m4 \
++	$(top_srcdir)/m4/iconv.m4 $(top_srcdir)/m4/include_next.m4 \
++	$(top_srcdir)/m4/inet_ntop.m4 $(top_srcdir)/m4/inet_pton.m4 \
+ 	$(top_srcdir)/m4/intmax_t.m4 $(top_srcdir)/m4/inttypes.m4 \
+ 	$(top_srcdir)/m4/inttypes_h.m4 $(top_srcdir)/m4/largefile.m4 \
+ 	$(top_srcdir)/m4/ld-output-def.m4 \
+@@ -265,11 +265,11 @@ am__aclocal_m4_deps = $(top_srcdir)/lib/unistring/m4/gnulib-comp.m4 \
+ 	$(top_srcdir)/m4/time_r.m4 $(top_srcdir)/m4/unistd_h.m4 \
+ 	$(top_srcdir)/m4/valgrind-tests.m4 \
+ 	$(top_srcdir)/m4/vasnprintf.m4 $(top_srcdir)/m4/vasprintf.m4 \
+-	$(top_srcdir)/m4/vsnprintf.m4 $(top_srcdir)/m4/warn-on-use.m4 \
+-	$(top_srcdir)/m4/warnings.m4 $(top_srcdir)/m4/wchar_h.m4 \
+-	$(top_srcdir)/m4/wchar_t.m4 $(top_srcdir)/m4/wint_t.m4 \
+-	$(top_srcdir)/m4/xsize.m4 $(top_srcdir)/m4/zzgnulib.m4 \
+-	$(top_srcdir)/configure.ac
++	$(top_srcdir)/m4/visibility.m4 $(top_srcdir)/m4/vsnprintf.m4 \
++	$(top_srcdir)/m4/warn-on-use.m4 $(top_srcdir)/m4/warnings.m4 \
++	$(top_srcdir)/m4/wchar_h.m4 $(top_srcdir)/m4/wchar_t.m4 \
++	$(top_srcdir)/m4/wint_t.m4 $(top_srcdir)/m4/xsize.m4 \
++	$(top_srcdir)/m4/zzgnulib.m4 $(top_srcdir)/configure.ac
+ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
+ 	$(ACLOCAL_M4)
+ DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
+@@ -722,6 +722,7 @@ GNULIB_SYMLINK = @GNULIB_SYMLINK@
+ GNULIB_SYMLINKAT = @GNULIB_SYMLINKAT@
+ GNULIB_SYSTEM_POSIX = @GNULIB_SYSTEM_POSIX@
+ GNULIB_TIMEGM = @GNULIB_TIMEGM@
++GNULIB_TIMESPEC_GET = @GNULIB_TIMESPEC_GET@
+ GNULIB_TIME_R = @GNULIB_TIME_R@
+ GNULIB_TIME_RZ = @GNULIB_TIME_RZ@
+ GNULIB_TMPFILE = @GNULIB_TMPFILE@
+@@ -787,12 +788,6 @@ GNULIB__EXIT = @GNULIB__EXIT@
+ GNUTLS_LIBS_PRIVATE = @GNUTLS_LIBS_PRIVATE@
+ GNUTLS_REQUIRES_PRIVATE = @GNUTLS_REQUIRES_PRIVATE@
+ GREP = @GREP@
+-GTKDOC_CHECK = @GTKDOC_CHECK@
+-GTKDOC_CHECK_PATH = @GTKDOC_CHECK_PATH@
+-GTKDOC_DEPS_CFLAGS = @GTKDOC_DEPS_CFLAGS@
+-GTKDOC_DEPS_LIBS = @GTKDOC_DEPS_LIBS@
+-GTKDOC_MKPDF = @GTKDOC_MKPDF@
+-GTKDOC_REBASE = @GTKDOC_REBASE@
+ GUILD = @GUILD@
+ GUILE = @GUILE@
+ GUILE_CFLAGS = @GUILE_CFLAGS@
+@@ -1088,6 +1083,7 @@ HAVE_SYS_TIME_H = @HAVE_SYS_TIME_H@
+ HAVE_SYS_TYPES_H = @HAVE_SYS_TYPES_H@
+ HAVE_SYS_UIO_H = @HAVE_SYS_UIO_H@
+ HAVE_TIMEGM = @HAVE_TIMEGM@
++HAVE_TIMESPEC_GET = @HAVE_TIMESPEC_GET@
+ HAVE_TIMEZONE_T = @HAVE_TIMEZONE_T@
+ HAVE_TYPE_VOLATILE_SIG_ATOMIC_T = @HAVE_TYPE_VOLATILE_SIG_ATOMIC_T@
+ HAVE_UNISTD_H = @HAVE_UNISTD_H@
+@@ -1142,7 +1138,6 @@ HAVE__EXIT = @HAVE__EXIT@
+ HOGWEED_CFLAGS = @HOGWEED_CFLAGS@
+ HOGWEED_LIBS = @HOGWEED_LIBS@
+ HOSTENT_LIB = @HOSTENT_LIB@
+-HTML_DIR = @HTML_DIR@
+ INCLUDE_NEXT = @INCLUDE_NEXT@
+ INCLUDE_NEXT_AS_FIRST_DIRECTIVE = @INCLUDE_NEXT_AS_FIRST_DIRECTIVE@
+ INET_NTOP_LIB = @INET_NTOP_LIB@
+@@ -1175,6 +1170,8 @@ LIBICONV = @LIBICONV@
+ LIBIDN2_CFLAGS = @LIBIDN2_CFLAGS@
+ LIBIDN2_LIBS = @LIBIDN2_LIBS@
+ LIBINTL = @LIBINTL@
++LIBKCAPI_CFLAGS = @LIBKCAPI_CFLAGS@
++LIBKCAPI_LIBS = @LIBKCAPI_LIBS@
+ LIBMULTITHREAD = @LIBMULTITHREAD@
+ LIBOBJS = @LIBOBJS@
+ LIBOPTS_CFLAGS = @LIBOPTS_CFLAGS@
+@@ -1212,6 +1209,7 @@ LIB_SETLOCALE_NULL = @LIB_SETLOCALE_NULL@
+ LIMITS_H = @LIMITS_H@
+ LIPO = @LIPO@
+ LN_S = @LN_S@
++LOCALENAME_ENHANCE_LOCALE_FUNCS = @LOCALENAME_ENHANCE_LOCALE_FUNCS@
+ LOCALE_FR = @LOCALE_FR@
+ LOCALE_FR_UTF8 = @LOCALE_FR_UTF8@
+ LOCALE_JA = @LOCALE_JA@
+@@ -1249,8 +1247,8 @@ MANIFEST_TOOL = @MANIFEST_TOOL@
+ MINOR_VERSION = @MINOR_VERSION@
+ MKDIR_P = @MKDIR_P@
+ MSGFMT = @MSGFMT@
++MSGFMT_015 = @MSGFMT_015@
+ MSGMERGE = @MSGMERGE@
+-MSGMERGE_FOR_MSGFMT_OPTION = @MSGMERGE_FOR_MSGFMT_OPTION@
+ NETINET_IN_H = @NETINET_IN_H@
+ NETTLE_CFLAGS = @NETTLE_CFLAGS@
+ NETTLE_LIBS = @NETTLE_LIBS@
+@@ -1377,6 +1375,7 @@ REPLACE_FCLOSE = @REPLACE_FCLOSE@
+ REPLACE_FCNTL = @REPLACE_FCNTL@
+ REPLACE_FDOPEN = @REPLACE_FDOPEN@
+ REPLACE_FFLUSH = @REPLACE_FFLUSH@
++REPLACE_FFSLL = @REPLACE_FFSLL@
+ REPLACE_FOPEN = @REPLACE_FOPEN@
+ REPLACE_FPRINTF = @REPLACE_FPRINTF@
+ REPLACE_FPURGE = @REPLACE_FPURGE@
+@@ -1430,7 +1429,9 @@ REPLACE_MEMCHR = @REPLACE_MEMCHR@
+ REPLACE_MEMMEM = @REPLACE_MEMMEM@
+ REPLACE_MKDIR = @REPLACE_MKDIR@
+ REPLACE_MKFIFO = @REPLACE_MKFIFO@
++REPLACE_MKFIFOAT = @REPLACE_MKFIFOAT@
+ REPLACE_MKNOD = @REPLACE_MKNOD@
++REPLACE_MKNODAT = @REPLACE_MKNODAT@
+ REPLACE_MKSTEMP = @REPLACE_MKSTEMP@
+ REPLACE_MKTIME = @REPLACE_MKTIME@
+ REPLACE_NANOSLEEP = @REPLACE_NANOSLEEP@
+@@ -1590,6 +1591,7 @@ SYS_IOCTL_H_HAVE_WINSOCK2_H = @SYS_IOCTL_H_HAVE_WINSOCK2_H@
+ SYS_IOCTL_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS = @SYS_IOCTL_H_HAVE_WINSOCK2_H_AND_USE_SOCKETS@
+ SYS_TIME_H_DEFINES_STRUCT_TIMESPEC = @SYS_TIME_H_DEFINES_STRUCT_TIMESPEC@
+ TIME_H_DEFINES_STRUCT_TIMESPEC = @TIME_H_DEFINES_STRUCT_TIMESPEC@
++TIME_H_DEFINES_TIME_UTC = @TIME_H_DEFINES_TIME_UTC@
+ TROUSERS_LIB = @TROUSERS_LIB@
+ TSS_CFLAGS = @TSS_CFLAGS@
+ TSS_LIBS = @TSS_LIBS@
+@@ -1689,6 +1691,7 @@ program_transform_name = @program_transform_name@
+ psdir = @psdir@
+ pyexecdir = @pyexecdir@
+ pythondir = @pythondir@
++runstatedir = @runstatedir@
+ sbindir = @sbindir@
+ sharedstatedir = @sharedstatedir@
+ srcdir = @srcdir@
+diff --git a/lib/minitasn1/coding.c b/lib/minitasn1/coding.c
+index 245ea64..e76114d 100644
+--- a/lib/minitasn1/coding.c
++++ b/lib/minitasn1/coding.c
+@@ -265,9 +265,6 @@ _asn1_time_der (unsigned char *str, int str_len, unsigned char *der,
+   int len_len;
+   int max_len;
+ 
+-  if (der == NULL)
+-    return ASN1_VALUE_NOT_VALID;
+-
+   max_len = *der_len;
+ 
+   asn1_length_der (str_len, (max_len > 0) ? der : NULL, &len_len);
+@@ -959,9 +956,6 @@ _asn1_ordering_set_of (unsigned char *der, int der_len, asn1_node node)
+   unsigned char *out = NULL;
+   int err;
+ 
+-  if (der == NULL)
+-    return ASN1_VALUE_NOT_VALID;
+-
+   counter = 0;
+ 
+   if (type_field (node->type) != ASN1_ETYPE_SET_OF)
+@@ -1084,6 +1078,7 @@ asn1_der_coding (asn1_node_const element, const char *name, void *ider, int *len
+   int counter, counter_old, len2, len3, move, max_len, max_len_old;
+   int err;
+   unsigned char *der = ider;
++  unsigned char dummy;
+ 
+   if (ErrorDescription)
+     ErrorDescription[0] = 0;
+@@ -1204,7 +1199,7 @@ asn1_der_coding (asn1_node_const element, const char *name, void *ider, int *len
+ 		  goto error;
+ 		}
+ 	      len2 = max_len;
+-	      err = _asn1_object_id_der ((char*)p->value, der + counter, &len2);
++	      err = _asn1_object_id_der ((char*)p->value, der ? der + counter : &dummy, &len2);
+ 	      if (err != ASN1_SUCCESS && err != ASN1_MEM_ERROR)
+ 		goto error;
+ 
+@@ -1222,7 +1217,7 @@ asn1_der_coding (asn1_node_const element, const char *name, void *ider, int *len
+ 	      goto error;
+ 	    }
+ 	  len2 = max_len;
+-	  err = _asn1_time_der (p->value, p->value_len, der + counter, &len2);
++	  err = _asn1_time_der (p->value, p->value_len, der ? der + counter : &dummy, &len2);
+ 	  if (err != ASN1_SUCCESS && err != ASN1_MEM_ERROR)
+ 	    goto error;
+ 
+@@ -1290,7 +1285,7 @@ asn1_der_coding (asn1_node_const element, const char *name, void *ider, int *len
+ 	      p->tmp_ival = 0;
+ 	      if ((type_field (p->type) == ASN1_ETYPE_SET) && (max_len >= 0))
+ 		{
+-		  err = _asn1_ordering_set (der + len2, counter - len2, p);
++		  err = _asn1_ordering_set (der ? der + len2 : &dummy, counter - len2, p);
+ 		  if (err != ASN1_SUCCESS)
+ 		    goto error;
+ 		}
+@@ -1331,7 +1326,7 @@ asn1_der_coding (asn1_node_const element, const char *name, void *ider, int *len
+ 	      if ((type_field (p->type) == ASN1_ETYPE_SET_OF)
+ 		  && (counter - len2 > 0) && (max_len >= 0))
+ 		{
+-		  err = _asn1_ordering_set_of (der + len2, counter - len2, p);
++		  err = _asn1_ordering_set_of (der ? der + len2 : &dummy, counter - len2, p);
+ 		  if (err != ASN1_SUCCESS)
+ 		    goto error;
+ 		}
+diff --git a/lib/minitasn1/decoding.c b/lib/minitasn1/decoding.c
+index ff04eb7..5c26c67 100644
+--- a/lib/minitasn1/decoding.c
++++ b/lib/minitasn1/decoding.c
+@@ -32,7 +32,7 @@
+ #include <element.h>
+ #include <limits.h>
+ #include <intprops.h>
+-#include <c-ctype.h>
++#include "c-ctype.h"
+ 
+ #ifdef DEBUG
+ # define warn() fprintf(stderr, "%s: %d\n", __func__, __LINE__)
+diff --git a/lib/minitasn1/gstr.c b/lib/minitasn1/gstr.c
+index e91a3a1..50bf6e4 100644
+--- a/lib/minitasn1/gstr.c
++++ b/lib/minitasn1/gstr.c
+@@ -40,7 +40,7 @@ _asn1_str_cat (char *dest, size_t dest_tot_size, const char *src)
+     }
+   else
+     {
+-      if (dest_tot_size - dest_size > 0)
++      if (dest_tot_size > dest_size)
+ 	{
+ 	  strncat (dest, src, (dest_tot_size - dest_size) - 1);
+ 	  dest[dest_tot_size - 1] = 0;
+diff --git a/lib/minitasn1/libtasn1.h b/lib/minitasn1/libtasn1.h
+index 6fd7a30..f8818e1 100644
+--- a/lib/minitasn1/libtasn1.h
++++ b/lib/minitasn1/libtasn1.h
+@@ -21,12 +21,8 @@
+  */
+ 
+ /**
+- * libtasn1:Short_Description:
+- *
+- * GNU ASN.1 library
+- */
+-/**
+- * libtasn1:Long_Description:
++ * SECTION:libtasn1
++ * @short_description: GNU ASN.1 library
+  *
+  * The Libtasn1 library provides Abstract Syntax Notation One (ASN.1, as
+  * specified by the X.680 ITU-T recommendation) parsing and structures
+@@ -207,13 +203,12 @@ typedef const asn1_node_st *asn1_node_const;
+  *
+  * For the on-disk format of ASN.1 trees, created by asn1_parser2array().
+  */
+-struct asn1_static_node_st
++typedef struct asn1_static_node_st
+ {
+   const char *name;		/* Node name */
+   unsigned int type;		/* Node type */
+   const void *value;		/* Node value */
+-};
+-typedef struct asn1_static_node_st asn1_static_node;
++} asn1_static_node;
+ 
+ /* List of constants for field type of node_asn  */
+ #define ASN1_ETYPE_INVALID        0
+@@ -498,7 +493,7 @@ extern ASN1_API int
+  *
+  * Deprecated: 3.0: Use int instead.
+  */
+-typedef int asn1_retCode;
++typedef int asn1_retCode _ASN1_GCC_ATTR_DEPRECATED;
+ 
+ /**
+  * node_asn_struct:
+@@ -507,7 +502,13 @@ typedef int asn1_retCode;
+  *
+  * Deprecated: 3.0: Use #asn1_node instead.
+  */
++#ifndef ASN1_DISABLE_DEPRECATED
++#if _ASN1_GCC_VERSION >= 30100
++#define node_asn_struct _Pragma ("GCC warning \"'node_asn_struct' macro is deprecated, use 'asn1_node' instead.\"") asn1_node_st
++#else
+ #define node_asn_struct asn1_node_st
++#endif
++#endif /* !ASN1_DISABLE_DEPRECATED */
+ 
+ /**
+  * node_asn:
+@@ -516,7 +517,13 @@ typedef int asn1_retCode;
+  *
+  * Deprecated: 3.0: Use #asn1_node instead.
+  */
++#ifndef ASN1_DISABLE_DEPRECATED
++#if _ASN1_GCC_VERSION >= 30100
++#define node_asn _Pragma ("GCC warning \"'node_asn' macro is deprecated, use 'asn1_node' instead.\"") asn1_node_st
++#else
+ #define node_asn asn1_node_st
++#endif
++#endif /* !ASN1_DISABLE_DEPRECATED */
+ 
+ /**
+  * ASN1_TYPE:
+@@ -525,7 +532,13 @@ typedef int asn1_retCode;
+  *
+  * Deprecated: 3.0: Use #asn1_node instead.
+  */
++#ifndef ASN1_DISABLE_DEPRECATED
++#if _ASN1_GCC_VERSION >= 30100
++#define ASN1_TYPE _Pragma ("GCC warning \"'ASN1_TYPE' macro is deprecated, use 'asn1_node' instead.\"") asn1_node
++#else
+ #define ASN1_TYPE asn1_node
++#endif
++#endif /* !ASN1_DISABLE_DEPRECATED */
+ 
+ /**
+  * ASN1_TYPE_EMPTY:
+@@ -534,7 +547,13 @@ typedef int asn1_retCode;
+  *
+  * Deprecated: 3.0: Use NULL instead.
+  */
++#ifndef ASN1_DISABLE_DEPRECATED
++#if _ASN1_GCC_VERSION >= 30100
++#define ASN1_TYPE_EMPTY _Pragma ("GCC warning \"'ASN1_TYPE_EMPTY' macro is deprecated, use 'NULL' instead.\"") NULL
++#else
+ #define ASN1_TYPE_EMPTY NULL
++#endif
++#endif /* !ASN1_DISABLE_DEPRECATED */
+ 
+ /**
+  * static_struct_asn:
+@@ -543,7 +562,13 @@ typedef int asn1_retCode;
+  *
+  * Deprecated: 3.0: Use #asn1_static_node instead.
+  */
++#ifndef ASN1_DISABLE_DEPRECATED
++#if _ASN1_GCC_VERSION >= 30100
++#define static_struct_asn _Pragma ("GCC warning \"'static_struct_asn' macro is deprecated, use 'asn1_static_node_st' instead.\"") asn1_static_node_st
++#else
+ #define static_struct_asn asn1_static_node_st
++#endif
++#endif /* !ASN1_DISABLE_DEPRECATED */
+ 
+ /**
+  * ASN1_ARRAY_TYPE:
+@@ -552,7 +577,13 @@ typedef int asn1_retCode;
+  *
+  * Deprecated: 3.0: Use #asn1_static_node instead.
+  */
++#ifndef ASN1_DISABLE_DEPRECATED
++#if _ASN1_GCC_VERSION >= 30100
++#define ASN1_ARRAY_TYPE _Pragma ("GCC warning \"'ASN1_ARRAY_TYPE' macro is deprecated, use 'asn1_static_node' instead.\"") asn1_static_node
++#else
+ #define ASN1_ARRAY_TYPE asn1_static_node
++#endif
++#endif /* !ASN1_DISABLE_DEPRECATED */
+ 
+ /**
+  * asn1_static_node_t:
+@@ -561,7 +592,13 @@ typedef int asn1_retCode;
+  *
+  * Deprecated: 3.0: Use #asn1_static_node instead.
+  */
++#ifndef ASN1_DISABLE_DEPRECATED
++#if _ASN1_GCC_VERSION >= 30100
++#define asn1_static_node_t _Pragma ("GCC warning \"'asn1_static_node_t' macro is deprecated, use 'asn1_static_node' instead.\"") asn1_static_node
++#else
+ #define asn1_static_node_t asn1_static_node
++#endif
++#endif /* !ASN1_DISABLE_DEPRECATED */
+ 
+ /**
+  * node_data_struct:
+@@ -570,7 +607,13 @@ typedef int asn1_retCode;
+  *
+  * Deprecated: 3.0: Use #asn1_data_node_st instead.
+  */
++#ifndef ASN1_DISABLE_DEPRECATED
++#if _ASN1_GCC_VERSION >= 30100
++#define node_data_struct _Pragma ("GCC warning \"'node_data_struct' macro is deprecated, use 'asn1_data_node_st' instead.\"") asn1_data_node_st
++#else
+ #define node_data_struct asn1_data_node_st
++#endif
++#endif /* !ASN1_DISABLE_DEPRECATED */
+ 
+ /**
+  * ASN1_DATA_NODE:
+@@ -579,7 +622,13 @@ typedef int asn1_retCode;
+  *
+  * Deprecated: 3.0: Use #asn1_data_node_st instead.
+  */
++#ifndef ASN1_DISABLE_DEPRECATED
++#if _ASN1_GCC_VERSION >= 30100
++#define ASN1_DATA_NODE _Pragma ("GCC warning \"'asn1_static_node_t' macro is deprecated, use 'asn1_static_node' instead.\"") asn1_data_node_st
++#else
+ #define ASN1_DATA_NODE asn1_data_node_st
++#endif
++#endif /* !ASN1_DISABLE_DEPRECATED */
+ 
+ #ifdef __cplusplus
+ }
