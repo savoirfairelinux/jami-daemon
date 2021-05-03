@@ -147,6 +147,7 @@ public:
     std::shared_ptr<AccountCodecInfo> getAudioCodec() const override;
     std::shared_ptr<AccountCodecInfo> getVideoCodec() const override;
     void sendKeyframe() override;
+    bool isIceEnabled() const override;
     std::map<std::string, std::string> getDetails() const override;
     void enterConference(const std::string& confId) override;
     void exitConference() override;
@@ -425,6 +426,8 @@ private:
     unsigned int localAudioPort_ {0};
     /** Local video port, as seen by me. */
     unsigned int localVideoPort_ {0};
+
+    bool enableIce_ {true};
 
     ///< Transport used for media streams
     std::shared_ptr<IceTransport> mediaTransport_;
