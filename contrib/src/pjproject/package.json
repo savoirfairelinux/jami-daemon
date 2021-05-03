@@ -21,6 +21,8 @@
         "0016-use-addrinfo-instead-CFHOST.patch",
         "0017-CVE-2020-15260.patch",
         "0018-CVE-2021-21375.patch",
+        "0019-ignore-down-interfaces.patch",
+        "0020-ignore-addresses-for-RFC7335.patch",
         "0001-win-config.patch",
         "0002-win-vs-gnutls.patch",
         "0003-win-vs2017-props.patch"
