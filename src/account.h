@@ -353,6 +353,10 @@ public:
         allModeratorsEnabled_ = isAllModeratorEnabled;
     }
 
+    // Enable/disable ICE for media
+    bool isIceForMediaEnabled() const { return iceForMediaEnabled_; }
+    void enableIceForMedia(bool enable) { iceForMediaEnabled_ = enable; }
+
     // Enable/disable multi-stream feature.
     // Multi-stream feature changes the callflow of the re-invite process. All
     // clients must support this feature before it can be enabled by default.
@@ -580,6 +584,7 @@ protected:
 
     bool multiStreamEnabled_ {false};
     bool iceCompIdRfc5245Compliant_ {false};
+    bool iceForMediaEnabled_;
 
     /**
      * private account codec searching functions
