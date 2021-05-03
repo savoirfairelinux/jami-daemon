@@ -1,0 +1,229 @@
+ pjlib/src/pj/activesock.c           |  4 ++++
+ pjlib/src/pj/ioqueue_common_abs.c   |  1 +
+ pjnath/include/pjnath/ice_session.h |  2 ++
+ pjnath/include/pjnath/ice_strans.h  |  1 +
+ pjnath/src/pjnath/ice_session.c     | 65 ++++++++++++++++++++++++++++++++++++++++++++++++++----
+ pjnath/src/pjnath/ice_strans.c      |  8 +++++++
+ pjnath/src/pjnath/stun_session.c    |  1 +
+ 7 files changed, 78 insertions(+), 4 deletions(-)
+
+diff --git a/pjlib/src/pj/activesock.c b/pjlib/src/pj/activesock.c
+index 61aed1c88..36d2fbfc8 100644
+--- a/pjlib/src/pj/activesock.c
++++ b/pjlib/src/pj/activesock.c
+@@ -684,6 +684,8 @@ PJ_DEF(pj_status_t) pj_activesock_send( pj_activesock_t *asock,
+ 
+     send_key->activesock_data = NULL;
+ 
++	printf("@@@ SEND %u\n", *size);
++
+     if (asock->whole_data) {
+ 	pj_ssize_t whole;
+ 	pj_status_t status;
+@@ -698,6 +700,7 @@ PJ_DEF(pj_status_t) pj_activesock_send( pj_activesock_t *asock,
+ 
+ 	if (*size == whole) {
+ 	    /* The whole data has been sent. */
++	printf("@@@ SEND ALL\n");
+ 	    return PJ_SUCCESS;
+ 	}
+ 
+@@ -710,6 +713,7 @@ PJ_DEF(pj_status_t) pj_activesock_send( pj_activesock_t *asock,
+ 
+ 	/* Try again */
+ 	status = send_remaining(asock, send_key);
++	printf("@@@ SEND REMAINING...\n");
+ 	if (status == PJ_SUCCESS) {
+ 	    *size = whole;
+ 	}
+diff --git a/pjlib/src/pj/ioqueue_common_abs.c b/pjlib/src/pj/ioqueue_common_abs.c
+index aaefc80e8..522cfef62 100644
+--- a/pjlib/src/pj/ioqueue_common_abs.c
++++ b/pjlib/src/pj/ioqueue_common_abs.c
+@@ -893,6 +893,7 @@ PJ_DEF(pj_status_t) pj_ioqueue_send( pj_ioqueue_key_t *key,
+          */
+         sent = *length;
+         status = pj_sock_send(key->fd, data, &sent, flags);
++        printf("@@@ pj_sock_send %u\n", status);
+         if (status == PJ_SUCCESS) {
+             /* Success! */
+             *length = sent;
+diff --git a/pjnath/include/pjnath/ice_session.h b/pjnath/include/pjnath/ice_session.h
+index b036f7d30..8417ff2cc 100644
+--- a/pjnath/include/pjnath/ice_session.h
++++ b/pjnath/include/pjnath/ice_session.h
+@@ -1138,6 +1138,8 @@ PJ_DECL(void) ice_sess_on_peer_packet(pj_ice_sess *ice,
+ 				      pj_sockaddr_t* remote_addr);
+ 
+ 
++PJ_DECL(void) ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now);
++
+ /**
+  * @}
+  */
+diff --git a/pjnath/include/pjnath/ice_strans.h b/pjnath/include/pjnath/ice_strans.h
+index 9eb74b35f..d99c2c943 100644
+--- a/pjnath/include/pjnath/ice_strans.h
++++ b/pjnath/include/pjnath/ice_strans.h
+@@ -1052,6 +1052,7 @@ PJ_DECL(pj_status_t) pj_ice_strans_sendto2(pj_ice_strans *ice_st,
+  * @}
+  */
+ 
++PJ_DECL(void) send_keep_alive(pj_ice_strans *ice_st);
+ 
+ PJ_END_DECL
+ 
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index f27c2bab3..07443cd28 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -81,6 +81,7 @@ enum timer_type
+     TIMER_START_NOMINATED_CHECK,/**< Controlling agent start connectivity
+ 				     checks with USE-CANDIDATE flag.	*/
+     TIMER_KEEP_ALIVE,		/**< ICE keep-alive timer.		*/
++    TIMER_RECONNECT_TCP,		/**< ICE retry turn connection.		*/
+     TIMER_CONNECTION_TIMEOUT
+ 
+ };
+@@ -142,8 +143,8 @@ typedef struct timer_data
+ /* Forward declarations */
+ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te);
+ static void on_tcp_connect_timeout(pj_ice_sess *ice);
++static void on_reconnect_tcp(pj_ice_sess *ice);
+ static void on_ice_complete(pj_ice_sess *ice, pj_status_t status);
+-static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now);
+ static void ice_on_destroy(void *obj);
+ static void destroy_ice(pj_ice_sess *ice,
+ 			pj_status_t reason);
+@@ -1213,6 +1214,9 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
+     case TIMER_KEEP_ALIVE:
+ 	ice_keep_alive(ice, PJ_TRUE);
+ 	break;
++	case TIMER_RECONNECT_TCP:
++	on_reconnect_tcp(ice);
++	break;
+     case TIMER_CONNECTION_TIMEOUT:
+ 	on_tcp_connect_timeout(ice);
+ 	break;
+@@ -1225,7 +1229,7 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
+ }
+ 
+ /* Send keep-alive */
+-static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
++void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
+ {
+     if (send_now) {
+ 	/* Send Binding Indication for the component */
+@@ -1266,6 +1270,7 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
+ 					  &the_check->rcand->addr, 
+ 					  addr_len, tdata);
+ 
++	printf("@@@@! STATUS %u\n", status);
+ 	/* Restore FINGERPRINT usage */
+ 	pj_stun_session_use_fingerprint(comp->stun_sess, saved);
+ 
+@@ -1726,6 +1731,44 @@ static void on_tcp_connect_timeout(pj_ice_sess* ice)
+ 	}
+     }
+ 
++    if (set_timer && ice->timer_connect.id == TIMER_NONE) {
++	/* Reschedule */
++	pj_time_val delay = {
++	    .sec  = 0,
++	    .msec = 250
++	};
++	pj_time_val_normalize(&delay);
++	pj_timer_heap_schedule_w_grp_lock(ice->stun_cfg.timer_heap,
++				    &ice->timer_connect, &delay,
++				    TIMER_CONNECTION_TIMEOUT,
++				    ice->grp_lock);
++    }
++}
++
++static void on_reconnect_tcp(pj_ice_sess* ice)
++{
++    pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap,&ice->timer_connect,
++				   TIMER_NONE);
++
++    pj_bool_t first_found = PJ_FALSE, set_timer = PJ_FALSE;
++
++    for (int i = 0; i<ice->clist.count && !set_timer; ++i) {
++	pj_ice_sess_check *check = &ice->clist.checks[i];
++	if (check->state == PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY) {
++	    if (first_found) {
++		set_timer = PJ_TRUE;
++	    } else {
++		first_found = PJ_TRUE;
++		if (*ice->cb.reconnect_tcp_connection)
++		    (*ice->cb.reconnect_tcp_connection)(ice, &ice->clist, i);
++
++		check_set_state(ice, check,
++		    PJ_ICE_SESS_CHECK_STATE_FAILED, PJ_ECANCELLED);
++		on_check_complete(ice, check);
++	    }
++	}
++    }
++
+     if (set_timer && ice->timer_connect.id == TIMER_NONE) {
+ 	/* Reschedule */
+ 	pj_time_val delay = {
+@@ -1735,7 +1778,7 @@ static void on_tcp_connect_timeout(pj_ice_sess* ice)
+ 	pj_time_val_normalize(&delay);
+ 	pj_timer_heap_schedule_w_grp_lock(ice->stun_cfg.timer_heap,
+ 				    &ice->timer_connect, &delay,
+-				    TIMER_CONNECTION_TIMEOUT,
++				    TIMER_RECONNECT_TCP,
+ 				    ice->grp_lock);
+     }
+ }
+@@ -2017,7 +2060,21 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+     case PJ_CAND_TCP_ACTIVE:
+         switch (check->state) {
+         case PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY:
+-            status = (*ice->cb.reconnect_tcp_connection)(ice, clist, check_id);
++            pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap,
++                                           &ice->timer_connect, TIMER_NONE);
++            if (ice->timer_connect.id != TIMER_NONE) {
++                pj_assert(!"Not expected any timer active");
++            } else {
++                pj_time_val delay = {
++                    .sec  = 0,
++                    .msec = 250,
++                };
++                pj_time_val_normalize(&delay);
++                pj_timer_heap_schedule_w_grp_lock(ice->stun_cfg.timer_heap,
++                                                  &ice->timer_connect, &delay,
++                                                  TIMER_RECONNECT_TCP,
++                                                  ice->grp_lock);
++            }
+             break;
+         case PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET:
+             status = send_connectivity_check(ice, clist, check_id,
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 283b1a40c..a0aa23d94 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -3056,3 +3056,11 @@ static void turn_on_state(pj_turn_sock *turn_sock, pj_turn_state_t old_state,
+     pj_log_pop_indent();
+ }
+ 
++void
++send_keep_alive(pj_ice_strans *ice_st)
++{
++	if (ice_st && ice_st->ice)
++		ice_keep_alive(ice_st->ice, PJ_TRUE);
++}
++
++
+diff --git a/pjnath/src/pjnath/stun_session.c b/pjnath/src/pjnath/stun_session.c
+index 20a9b1320..5c76fa984 100644
+--- a/pjnath/src/pjnath/stun_session.c
++++ b/pjnath/src/pjnath/stun_session.c
+@@ -1068,6 +1068,7 @@ PJ_DEF(pj_status_t) pj_stun_session_send_msg( pj_stun_session *sess,
+ 	/* Send to transport directly. */
+ 	status = sess->cb.on_send_msg(sess, token, tdata->pkt, 
+ 				      tdata->pkt_size, server, addr_len);
++	printf("@@@on send msg status %u\n", status);
+ 
+ 	if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+ 	    pj_stun_msg_destroy_tdata(sess, tdata);
