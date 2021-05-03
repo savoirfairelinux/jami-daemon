@@ -1061,4 +1061,14 @@ ConnectionManager::monitor() const
     JAMI_DBG("ConnectionManager for account %s (%s), end status.", pimpl_->account.getAccountID().c_str(), pimpl_->account.getUserUri().c_str());
 }
 
+void
+ConnectionManager::connectivityChanged()
+{
+    std::lock_guard<std::mutex> lk(pimpl_->infosMtx_);
+    for (const auto& [_, ci] : pimpl_->infos_) {
+        if (ci->socket_ && ci->socket_->underlyingICE())
+            ci->socket_->underlyingICE()->sendKeepAlive();
+    }
+}
+
 } // namespace jami

@@ -1100,7 +1100,7 @@ IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& r
         return false;
     }
 
-    auto comp_cmp = std::max(1u, getComponentCount());
+    auto comp_cnt = std::max(1u, getComponentCount());
     if (rem_candidates.size() / comp_cnt > PJ_ICE_ST_MAX_CAND - 1) {
         std::vector<IceCandidate> rcands;
         rcands.reserve(PJ_ICE_ST_MAX_CAND - 1);
@@ -1642,6 +1642,15 @@ IceTransport::link() const
 {
     return pimpl_->link();
 }
+
+void
+IceTransport::sendKeepAlive()
+{
+    sip_utils::register_thread();
+    JAMI_ERR() << "@@@";
+    send_keep_alive(pimpl_->icest_.get());
+}
+
 
 //==============================================================================
 
