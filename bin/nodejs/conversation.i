@@ -39,19 +39,6 @@ public:
 
 namespace DRing {
 
-  struct DataTransferInfo
-  {
-    std::string accountId;
-    DRing::DataTransferEventCode lastEvent;
-    uint32_t flags;
-    int64_t totalSize;
-    int64_t bytesProgress;
-    std::string peer;
-    std::string displayName;
-    std::string path;
-    std::string mimetype;
-  };
-
   // Conversation management
   std::string startConversation(const std::string& accountId);
   void acceptConversationRequest(const std::string& accountId, const std::string& conversationId);
@@ -63,8 +50,8 @@ namespace DRing {
   std::map<std::string, std::string> conversationInfos(const std::string& accountId, const std::string& conversationId);
 
   // Member management
-  bool addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
-  bool removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
+  void addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
+  void removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
   std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId, const std::string& conversationId);
 
   // Message send/load

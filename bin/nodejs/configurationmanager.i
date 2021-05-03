@@ -208,6 +208,7 @@ void sendTrustRequest(const std::string& accountId, const std::string& to, const
 void addContact(const std::string& accountId, const std::string& uri);
 void removeContact(const std::string& accountId, const std::string& uri, const bool& ban);
 std::vector<std::map<std::string, std::string>> getContacts(const std::string& accountId);
+std::map<std::string, std::string> getContactDetails(const std::string& accountId, const std::string& uri);
 
 void connectivityChanged();
 
@@ -257,5 +258,5 @@ public:
     virtual void hardwareEncodingChanged(bool /*state*/){}
 
     virtual void audioMeter(const std::string& /*id*/, float /*level*/){}
-    virtual void messageSend(const std::string& /*message*/){}
+    //virtual void messageSend(const std::string& /*message*/){}
 };
