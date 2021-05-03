@@ -4,7 +4,7 @@ NETTLE_VERSION := 91df68136ad1562cf9217599254706d8cfa970ea
 NETTLE_URL := https://git.lysator.liu.se/aberaud/nettle/-/archive/$(NETTLE_VERSION)/nettle-$(NETTLE_VERSION).tar.gz
 PKGS += nettle
 
-ifeq ($(call need_pkg,"nettle >= 3.4.1"),)
+ifeq ($(call need_pkg,"nettle >= 3.6"),)
 PKGS_FOUND += nettle
 endif
 
