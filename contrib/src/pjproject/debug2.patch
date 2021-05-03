@@ -1,0 +1,29 @@
+diff --git a/pjlib/src/pj/sock_bsd.c b/pjlib/src/pj/sock_bsd.c
+index 0cb395949..95590cc2a 100644
+--- a/pjlib/src/pj/sock_bsd.c
++++ b/pjlib/src/pj/sock_bsd.c
+@@ -604,8 +604,8 @@ PJ_DEF(pj_status_t) pj_sock_socket(int af,
+     else {
+ 	pj_int32_t val = 1;
+ 	if (type == pj_SOCK_STREAM()) {
+-	    pj_sock_setsockopt(*sock, pj_SOL_SOCKET(), pj_SO_NOSIGPIPE(),
+-			       &val, sizeof(val));
++	   // pj_sock_setsockopt(*sock, pj_SOL_SOCKET(), pj_SO_NOSIGPIPE(),
++		//	       &val, sizeof(val));
+ 	    pj_sock_setsockopt(*sock, pj_SOL_SOCKET(), pj_SO_KEEPALIVE(),
+ 			       &val, sizeof(val));
+ 	    pj_sock_setsockopt(*sock, pj_SOL_TCP(), pj_TCP_KEEPCNT(),
+@@ -753,10 +753,12 @@ PJ_DEF(pj_status_t) pj_sock_send(pj_sock_t sock,
+ 
+ #ifdef MSG_NOSIGNAL
+     /* Suppress SIGPIPE. See https://trac.pjsip.org/repos/ticket/1538 */
+-    flags |= MSG_NOSIGNAL;
++	printf("@@@ NO SIGPIPE - flags: %u\n", flags);
++ //   flags |= MSG_NOSIGNAL;
+ #endif
+ 
+     *len = send(sock, (const char*)buf, (int)(*len), flags);
++	printf("@@@pj_sock_send %u\n", *len);
+ 
+     if (*len < 0)
+ 	return PJ_RETURN_OS_ERROR(pj_get_native_netos_error());
