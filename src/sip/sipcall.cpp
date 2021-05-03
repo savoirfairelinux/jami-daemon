@@ -87,6 +87,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::map<std::string, std::string>& details)
     : Call(account, callId, type, details)
     , sdp_(new Sdp(callId))
+    , enableIce_(account->isIceForMediaEnabled())
 {
     if (account->getUPnPActive())
         upnp_.reset(new upnp::Controller());
@@ -120,6 +121,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     : Call(account, callId, type)
     , peerSupportMultiStream_(false)
     , sdp_(new Sdp(callId))
+    , enableIce_(account->isIceForMediaEnabled())
 {
     if (account->getUPnPActive())
         upnp_.reset(new upnp::Controller());
@@ -503,8 +505,10 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList)
     if (not sdp_->createOffer(mediaAttrList))
         return !PJ_SUCCESS;
 
-    if (initIceMediaTransport(true))
-        addLocalIceAttributes();
+    if (isIceEnabled()) {
+        if (initIceMediaTransport(true))
+            addLocalIceAttributes();
+    }
 
     pjsip_tx_data* tdata;
     auto local_sdp = sdp_->getLocalSdpSession();
@@ -888,7 +892,8 @@ SIPCall::answerMediaChangeRequest(const std::vector<MediaAttribute>& mediaAttrLi
         return;
     }
 
-    setupLocalIce();
+    if (isIceEnabled())
+        setupLocalIce();
 
     if (not sdp_->startNegotiation()) {
         JAMI_ERR("[call:%s] Could not start media negotiation for a re-invite request",
@@ -1456,6 +1461,12 @@ SIPCall::sendKeyframe()
 #endif
 }
 
+bool
+SIPCall::isIceEnabled() const
+{
+    return enableIce_;
+}
+
 void
 SIPCall::setPeerUaVersion(const std::string& ua)
 {
@@ -1560,7 +1571,10 @@ SIPCall::addLocalIceAttributes()
     }
 
     JAMI_DBG("[call:%s] fill SDP with ICE transport %p", getCallId().c_str(), media_tr);
-    sdp_->addIceAttributes(media_tr->getLocalAttributes());
+
+    if (isIceEnabled()) {
+        sdp_->addIceAttributes(media_tr->getLocalAttributes());
+    }
 
     if (account->isIceCompIdRfc5245Compliant()) {
         unsigned streamIdx = 0;
@@ -2166,24 +2180,33 @@ SIPCall::onMediaNegotiationComplete()
             JAMI_WARN("[call:%s] media changed", this_->getCallId().c_str());
             // The call is already ended, so we don't need to restart medias
             if (not this_->inviteSession_
-                or this_->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not this_->sdp_)
+                or this_->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
+                or not this_->sdp_) {
                 return;
-            // If ICE is not used, start media now
-            auto rem_ice_attrs = this_->sdp_->getIceAttributes();
-            if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
-                JAMI_DBG("[call:%s] No ICE, starting media using default ",
-                         this_->getCallId().c_str());
+            }
 
+            bool hasIce = this_->isIceEnabled();
+            if (hasIce) {
+                // If ICE is not used, start medias now
+                auto rem_ice_attrs = this_->sdp_->getIceAttributes();
+                hasIce = not rem_ice_attrs.ufrag.empty() and not rem_ice_attrs.pwd.empty();
+            }
+            if (hasIce) {
+                if (not this_->isSubcall()) {
+                    // Start ICE checks. Media will be started once ICE checks complete.
+                    this_->startIceMedia();
+                }
+            } else {
+                // No ICE, start media now.
+                JAMI_WARN("[call:%s] ICE media disabled, using default media ports",
+                          this_->getCallId().c_str());
                 // Update the negotiated media.
                 this_->updateNegotiatedMedia();
 
                 // Start the media.
                 this_->stopAllMedia();
                 this_->startAllMedia();
-                return;
             }
-            if (not this_->isSubcall())
-                this_->startIceMedia();
         }
     });
 }
@@ -2328,8 +2351,10 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
     // Use current media list.
     sdp_->processIncomingOffer(getMediaAttributeList());
 
-    if (offer)
-        setupLocalIce();
+    if (isIceEnabled()) {
+        if (offer)
+            setupLocalIce();
+    }
     sdp_->startNegotiation();
 
     pjsip_tx_data* tdata = nullptr;
