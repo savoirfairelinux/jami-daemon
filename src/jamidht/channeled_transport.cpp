@@ -151,6 +151,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
         return len;
     });
     socket->onShutdown([cb = std::move(cb), this] {
+        JAMI_ERR() << "@@@ SOCKET ON SHUTDOWN";
         disconnected_ = true;
         scheduler_.run([this] { handleEvents(); });
         cb();

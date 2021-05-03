@@ -36,8 +36,8 @@ ut_base64_SOURCES = base64/base64.cpp
 #
 # channel
 #
-check_PROGRAMS += ut_channel
-ut_channel_SOURCES = channel/testChannel.cpp
+#ut_account_factcheck_PROGRAMS += ut_channel
+#ut_account_factut_channel_SOURCES = channel/testChannel.cpp
 
 #
 # map_utils
@@ -90,8 +90,8 @@ ut_media_decoder_SOURCES = media/test_media_decoder.cpp
 #
 # media_filter
 #
-check_PROGRAMS += ut_media_filter
-ut_media_filter_SOURCES = media/test_media_filter.cpp
+#check_PROGRAMS += ut_media_filter
+#ut_media_filter_SOURCES = media/test_media_filter.cpp
 
 #
 # resampler
