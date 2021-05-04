@@ -472,13 +472,13 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         };
 
         // If no socket exists, we need to initiate an ICE connection.
-        sthis->account.getIceOptions(std::move([w,
+        sthis->account.getIceOptions([w,
                                      cbId,
                                      deviceId = std::move(deviceId),
                                      name = std::move(name),
                                      cert = std::move(cert),
                                      vid,
-                                     eraseInfo](auto ice_config) {
+                                     eraseInfo](auto&& ice_config) {
             auto sthis = w.lock();
             if (!sthis)
                 return;
@@ -552,7 +552,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                     pending.cb(nullptr, deviceId);
                 eraseInfo();
             }
-        }));
+        });
     });
 }
 
@@ -826,7 +826,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
     }
 
     // Because the connection is accepted, create an ICE socket.
-    account.getIceOptions(std::move([w=weak(), req](auto ice_config) {
+    account.getIceOptions([w=weak(), req](auto&& ice_config) {
         auto deviceId = req.from.toString();
         auto shared = w.lock();
         if (!shared)
@@ -898,7 +898,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
                 shared->connReadyCb_(req.from, "", nullptr);
             eraseInfo();
         }
-    }));
+    });
 }
 
 void

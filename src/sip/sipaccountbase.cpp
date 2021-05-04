@@ -465,7 +465,7 @@ SIPAccountBase::generateVideoPort() const
 }
 #endif
 
-const IceTransportOptions
+IceTransportOptions
 SIPAccountBase::getIceOptions() const noexcept
 {
     IceTransportOptions opts;

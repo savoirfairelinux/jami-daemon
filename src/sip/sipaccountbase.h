@@ -243,7 +243,7 @@ public:
 
     void setStunServer(const std::string& srv) { stunServer_ = srv; }
 
-    const IceTransportOptions getIceOptions() const noexcept;
+    IceTransportOptions getIceOptions() const noexcept;
 
     virtual void sendTextMessage(const std::string& to,
                                  const std::map<std::string, std::string>& payloads,

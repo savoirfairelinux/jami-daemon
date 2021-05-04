@@ -440,7 +440,7 @@ public:
     /**
      * Create and return ICE options.
      */
-    void getIceOptions(std::function<void(IceTransportOptions)> cb) noexcept;
+    void getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept;
 
 #ifdef DRING_TESTABLE
     ConnectionManager& connectionManager() { return *connectionManager_; }
