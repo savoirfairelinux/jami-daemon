@@ -2455,9 +2455,13 @@ JamiAccount::doRegister_()
                             accept.set_value(false);
                             return;
                         }
-                        accept.set_value(
-                            conversation->second->onFileChannelRequest(cert->getIssuerUID(),
-                                                                       std::stoull(fileId)));
+                        if (fileId == "profile.vcf") {
+                            accept.set_value(conversation->second->isMember(cert->getIssuerUID()));
+                        } else {
+                            accept.set_value(
+                                conversation->second->onFileChannelRequest(cert->getIssuerUID(),
+                                                                           std::stoull(fileId)));
+                        }
                     });
                 fut.wait();
                 return fut.get();
@@ -2582,9 +2586,12 @@ JamiAccount::doRegister_()
                     if (fileHost == currentDeviceId()) // This means we are the host, so the file is
                                                        // outgoing, ignore
                         return;
-                    if (auto dt = dataTransfer(conversationId))
-                        dt->onIncomingFileTransfer(std::stoull(fileId), channel);
-                    else
+                    if (auto dt = dataTransfer(conversationId)) {
+                        if (fileId == "profile.vcf")
+                            dt->onIncomingProfile(channel);
+                        else
+                            dt->onIncomingFileTransfer(std::stoull(fileId), channel);
+                    } else
                         JAMI_WARN() << "Transfer manager not found but channel accepted, this "
                                        "should not happen";
                 }
@@ -4616,7 +4623,7 @@ JamiAccount::onAskForTransfer(const std::string& peer,
               conversationId.c_str());
     dht::ThreadPool::io().run([w = weak(), conversationId, path, deviceId, tid, start, end] {
         if (auto shared = w.lock())
-            shared->transferFile(conversationId, path, deviceId, tid, start, end);
+            shared->transferFile(conversationId, path, deviceId, std::to_string(tid), start, end);
     });
 }
 
@@ -5136,6 +5143,12 @@ JamiAccount::sendProfile(const std::string& deviceId)
     } catch (const std::exception& e) {
         JAMI_ERR() << e.what();
     }
+}
+
+std::string_view
+JamiAccount::profilePath() const
+{
+    return idPath_ + DIR_SEPARATOR_STR + "profile.vcf";
 }
 
 void
@@ -5741,12 +5754,11 @@ void
 JamiAccount::transferFile(const std::string& conversationId,
                           const std::string& path,
                           const std::string& deviceId,
-                          DRing::DataTransferId tid,
+                          const std::string& tid,
                           size_t start,
                           size_t end)
 {
-    auto channelName = "data-transfer://" + conversationId + "/" + currentDeviceId() + "/"
-                       + std::to_string(tid);
+    auto channelName = "data-transfer://" + conversationId + "/" + currentDeviceId() + "/" + tid;
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;

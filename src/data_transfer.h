@@ -81,9 +81,9 @@ class IncomingFile : public FileInfo
 {
 public:
     IncomingFile(const std::shared_ptr<ChannelSocket>& channel,
-                 DRing::DataTransferId tid,
                  const DRing::DataTransferInfo& info,
-                 const std::string& sha3Sum);
+                 DRing::DataTransferId tid = generateUID(),
+                 const std::string& sha3Sum = "");
     ~IncomingFile();
     void process() override;
     void cancel() override;
@@ -160,7 +160,7 @@ public:
      * @param end           end
      */
     void transferFile(const std::shared_ptr<ChannelSocket>& channel,
-                      DRing::DataTransferId tid,
+                      const std::string& tid,
                       const std::string& path,
                       size_t start,
                       size_t end);
@@ -220,6 +220,7 @@ public:
                                 const std::shared_ptr<ChannelSocket>& channel);
 
     std::vector<WaitingRequest> waitingRequests() const;
+    void onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel);
 
 private:
     std::weak_ptr<TransferManager> weak()

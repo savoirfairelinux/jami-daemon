@@ -249,8 +249,6 @@ public:
     std::shared_ptr<TransferManager> dataTransfer() const;
 
     bool onFileChannelRequest(const std::string& member, const DRing::DataTransferId& id) const;
-    void onIncomingFileTransfer(const DRing::DataTransferId& id,
-                                const std::shared_ptr<ChannelSocket>& channel);
     DRing::DataTransferId downloadFile(const std::string& interactionId,
                                        const std::string& path,
                                        const std::string& member = "",

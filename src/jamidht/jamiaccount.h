@@ -616,9 +616,9 @@ public:
     void transferFile(const std::string& conversationId,
                       const std::string& path,
                       const std::string& deviceId,
-                      DRing::DataTransferId tid,
-                      size_t start,
-                      size_t end);
+                      const std::string& tid,
+                      size_t start = 0,
+                      size_t end = 0);
     /**
      * Ask conversation's members to send back a previous transfer to this deviec
      * @param conversationUri   Related conversation
@@ -633,6 +633,15 @@ public:
     void loadConversations();
 
     std::shared_ptr<TransferManager> dataTransfer(const std::string& id = "") const;
+
+    /**
+     * Send Profile via cached SIP connection
+     * @param deviceId      Device that will receive the profile
+     */
+    // Note: when swarm will be merged, this can be moved in transferManager
+    bool needToSendProfile(const std::string& deviceId);
+
+    std::string_view profilePath() const;
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -1007,11 +1016,6 @@ private:
                         const std::map<std::string, std::string>& data,
                         pjsip_endpt_send_callback cb);
 
-    /**
-     * Send Profile via cached SIP connection
-     * @param deviceId      Device that will receive the profile
-     */
-    bool needToSendProfile(const std::string& deviceId);
     /**
      * Send Profile via cached SIP connection
      * @param deviceId      Device that will receive the profile

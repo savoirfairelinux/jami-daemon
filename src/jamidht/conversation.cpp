@@ -899,13 +899,6 @@ Conversation::onFileChannelRequest(const std::string& member, const DRing::DataT
     return dataTransfer()->onFileChannelRequest(id);
 }
 
-void
-Conversation::onIncomingFileTransfer(const DRing::DataTransferId& id,
-                                     const std::shared_ptr<ChannelSocket>& channel)
-{
-    dataTransfer()->onIncomingFileTransfer(id, channel);
-}
-
 DRing::DataTransferId
 Conversation::downloadFile(const std::string& interactionId,
                            const std::string& path,
@@ -963,6 +956,14 @@ Conversation::sync(const std::string& member,
     // For waiting request, downloadFile
     for (const auto& wr : dataTransfer()->waitingRequests())
         downloadFile(wr.interactionId, wr.path, member, deviceId);
+    if (auto account = pimpl_->account_.lock()) {
+        if (not account->needToSendProfile(deviceId)) {
+            JAMI_INFO() << "Peer " << deviceId << " already got an up-to-date vcard";
+            return;
+        }
+        // We need a new channel
+        account->transferFile(id(), std::string(account->profilePath()), deviceId, "profile.vcf");
+    }
 }
 
 } // namespace jami
