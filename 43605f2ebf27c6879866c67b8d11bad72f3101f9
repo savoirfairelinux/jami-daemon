@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c684e5b1_73b1bed6",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 297,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-04T14:13:09Z",
+      "side": 1,
+      "message": "For Jami accounts, this is not configurable by the user to enforce secure calls with JamiAccounts. Not having srtpKeyExchange_ in JamiAccount is on purpose.\n\nThe abstraction is provided by the getSrtpKeyExchange() and isSrtpEnabled() interface so that srtpKeyExchange_ is not needed.",
+      "range": {
+        "startLine": 297,
+        "startChar": 60,
+        "endLine": 297,
+        "endChar": 76
+      },
+      "revId": "43605f2ebf27c6879866c67b8d11bad72f3101f9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
