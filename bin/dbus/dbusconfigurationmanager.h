@@ -216,10 +216,6 @@ public:
     std::vector<std::map<std::string, std::string>> getContacts(const std::string& accountId);
     void connectivityChanged();
     void sendFile(const RingDBusDataTransferInfo& info, uint32_t& error, DRing::DataTransferId& id);
-    void dataTransferInfo(const std::string& accountId,
-                          const DRing::DataTransferId& id,
-                          uint32_t& error,
-                          RingDBusDataTransferInfo& info);
     void fileTransferInfo(const std::string& accountId,
                           const std::string& conversationdId,
                           const std::string& interactionId,
@@ -231,9 +227,6 @@ public:
                                    uint32_t& error,
                                    int64_t& total,
                                    int64_t& progress);
-    uint32_t acceptFileTransfer(const std::string& accountId,
-                                const uint64_t& id,
-                                const std::string& file_path);
     uint64_t downloadFile(const std::string& accountId,
                           const std::string& conversationUri,
                           const std::string& interactionId,

@@ -68,8 +68,6 @@ public:
     {
         // Not implemented
     }
-
-    virtual void setOnStateChangedCb(const OnStateChangedCb&) {}
 };
 
 //==============================================================================

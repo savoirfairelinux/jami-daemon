@@ -28,8 +28,6 @@ list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/enumclass_utils.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/fileutils.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/fileutils.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/ftp_server.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/ftp_server.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/generic_io.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/gittransport.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/gittransport.h"
