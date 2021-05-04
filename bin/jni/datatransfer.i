@@ -57,10 +57,8 @@ namespace DRing {
   };
 
   DRing::DataTransferError sendFile(const DRing::DataTransferInfo info, DRing::DataTransferId& id);
-  DRing::DataTransferError acceptFileTransfer(const std::string& accountId,  const DRing::DataTransferId id, const std::string file_path);
   uint64_t downloadFile(const std::string& accountId, const std::string& conversationUri, const std::string& interactionId, const std::string& path);
   DRing::DataTransferError cancelDataTransfer(const std::string& accountId, const std::string& conversationId, const DRing::DataTransferId id);
-  DRing::DataTransferError dataTransferInfo(const std::string& accountId, const DRing::DataTransferId id, DRing::DataTransferInfo &info);
   DRing::DataTransferError dataTransferBytesProgress(const std::string& accountId, const std::string& conversationId, const DRing::DataTransferId id, int64_t &total, int64_t &progress);
 
 }

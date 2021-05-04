@@ -110,23 +110,6 @@ struct DRING_PUBLIC DataTransferInfo
 ///
 DRING_PUBLIC DataTransferError sendFile(const DataTransferInfo& info, DataTransferId& id) noexcept;
 
-/// Accept an incoming file transfer.
-///
-/// Use this function when you receive an incoming transfer request throught DataTransferEvent signal.
-/// The data reception and writting will occurs asynchronously.
-/// User should listen to DataTransferEvent event to follow the transfer progess.
-/// This function can be used only once per data transfer identifiant, when used more it's ignored.
-///
-/// \param id data transfer identification value as given by a DataTransferEvent signal.
-/// \param file_path file path going to be open in binary write mode to put incoming data.
-///
-/// \return DataTransferError::invalid_argument if id is unknown.
-/// \note unknown \a id results to a no-op call.
-///
-DRING_PUBLIC DataTransferError acceptFileTransfer(const std::string& accountId,
-                                                  const DataTransferId& id,
-                                                  const std::string& file_path) noexcept;
-
 /// Asks for retransferring a file. Generally this means that the file is missing
 /// from the conversation
 ///
@@ -155,18 +138,6 @@ DRING_PUBLIC uint64_t downloadFile(const std::string& accountId,
 DataTransferError cancelDataTransfer(const std::string& accountId,
                                      const std::string& conversationId,
                                      const DataTransferId& id) noexcept DRING_PUBLIC;
-
-/// Return some information on given data transfer.
-///
-/// \param id data transfer identification value as given by a DataTransferEvent signal.
-/// \param[out] info data transfer information.
-///
-/// \return DataTransferError::invalid_argument if id is unknown.
-/// \note \a info structure is in undefined state in case of error.
-///
-DRING_PUBLIC DataTransferError dataTransferInfo(const std::string& accountId,
-                                                const DataTransferId& id,
-                                                DataTransferInfo& info) noexcept;
 
 /// Return the amount of sent/received bytes of an existing data transfer.
 ///

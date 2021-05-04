@@ -47,19 +47,6 @@ sendFile(const DataTransferInfo& info, DataTransferId& id) noexcept
     return DRing::DataTransferError::invalid_argument;
 }
 
-DataTransferError
-acceptFileTransfer(const std::string& accountId,
-                   const DataTransferId& id,
-                   const std::string& file_path) noexcept
-{
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        if (auto dt = acc->dataTransfer())
-            return dt->acceptFile(id, file_path) ? DRing::DataTransferError::success
-                                                 : DRing::DataTransferError::invalid_argument;
-    }
-    return DRing::DataTransferError::invalid_argument;
-}
-
 uint64_t
 downloadFile(const std::string& accountId,
              const std::string& conversationUri,
@@ -93,19 +80,9 @@ dataTransferBytesProgress(const std::string& accountId,
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         if (auto dt = acc->dataTransfer(conversationId))
-            return dt->bytesProgress(id, total, progress) ? DRing::DataTransferError::success : DRing::DataTransferError::invalid_argument;
-    }
-    return DRing::DataTransferError::invalid_argument;
-}
-
-DataTransferError
-dataTransferInfo(const std::string& accountId,
-                 const DataTransferId& id,
-                 DataTransferInfo& info) noexcept
-{
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        if (auto dt = acc->dataTransfer())
-            return dt->info(id, info) ? DRing::DataTransferError::success : DRing::DataTransferError::invalid_argument;
+            return dt->bytesProgress(id, total, progress)
+                       ? DRing::DataTransferError::success
+                       : DRing::DataTransferError::invalid_argument;
     }
     return DRing::DataTransferError::invalid_argument;
 }

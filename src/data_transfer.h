@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
- *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,11 +49,6 @@ struct WaitingRequest
     std::size_t totalSize;
     MSGPACK_DEFINE(interactionId, sha3sum, path, totalSize)
 };
-
-typedef std::function<void(const std::string&)> InternalCompletionCb;
-typedef std::function<bool(const std::string&)> OnVerifyCb;
-typedef std::function<void(const DRing::DataTransferId&, const DRing::DataTransferEventCode&)>
-    OnStateChangedCb;
 
 class FileInfo
 {
@@ -114,42 +109,8 @@ private:
 class TransferManager : public std::enable_shared_from_this<TransferManager>
 {
 public:
-    TransferManager(const std::string& accountId, const std::string& to, bool isConversation = true);
+    TransferManager(const std::string& accountId, const std::string& to);
     ~TransferManager();
-
-    /**
-     * Send a file
-     * @param path      of the file
-     * @param icb       used for internal files (like vcard)
-     * @param deviceId  if we only want to transmit to one device
-     * @param resendId  if we need to resend a file, just specify previous id there.
-     */
-    [[deprecated("Non swarm method")]] DRing::DataTransferId sendFile(
-        const std::string& path,
-        const InternalCompletionCb& icb = {},
-        const std::string& deviceId = {},
-        DRing::DataTransferId resendId = {0});
-
-    /**
-     * Accepts a transfer
-     * @param id        of the transfer
-     * @param path      of the file
-     */
-    [[deprecated("Non swarm method")]] bool acceptFile(const DRing::DataTransferId& id,
-                                                       const std::string& path);
-
-    /**
-     * Inform the transfer manager that a new file is incoming
-     * @param info      of the transfer
-     * @param id        of the transfer
-     * @param cb        callback to trigger when connected
-     * @param icb       used for vcard
-     */
-    [[deprecated("Non swarm method")]] void onIncomingFileRequest(
-        const DRing::DataTransferInfo& info,
-        const DRing::DataTransferId& id,
-        const std::function<void(const IncomingFileInfo&)>& cb,
-        const InternalCompletionCb& icb = {});
 
     /**
      * Send a file to a channel
