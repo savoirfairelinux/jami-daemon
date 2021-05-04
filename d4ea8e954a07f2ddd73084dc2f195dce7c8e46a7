@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "49e80321_70f3acbd",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-04T02:27:41Z",
+      "side": 1,
+      "message": "std::string_view filename(info-\u003efilename, (size_t)info-\u003efilename_size);",
+      "range": {
+        "startLine": 287,
+        "startChar": 0,
+        "endLine": 289,
+        "endChar": 74
+      },
+      "revId": "d4ea8e954a07f2ddd73084dc2f195dce7c8e46a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ad87b17f_9fcb955e",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 301,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-04T02:27:41Z",
+      "side": 1,
+      "message": "use std::vector for automatic memory management (see bellow)",
+      "range": {
+        "startLine": 301,
+        "startChar": 16,
+        "endLine": 301,
+        "endChar": 30
+      },
+      "revId": "d4ea8e954a07f2ddd73084dc2f195dce7c8e46a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "22bd1d34_6410dd45",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-04T02:27:41Z",
+      "side": 1,
+      "message": "should be at least 8192 (8K) for reasonable performance",
+      "range": {
+        "startLine": 302,
+        "startChar": 32,
+        "endLine": 302,
+        "endChar": 35
+      },
+      "revId": "d4ea8e954a07f2ddd73084dc2f195dce7c8e46a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e8de01a0_df95ccca",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 426,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-04T02:27:41Z",
+      "side": 1,
+      "message": "std::string_view filename(info-\u003efilename, (size_t)info-\u003efilename_size);",
+      "range": {
+        "startLine": 424,
+        "startChar": 8,
+        "endLine": 426,
+        "endChar": 74
+      },
+      "revId": "d4ea8e954a07f2ddd73084dc2f195dce7c8e46a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1677759f_0dd07bc4",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 433,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-04T02:27:41Z",
+      "side": 1,
+      "message": "fileContent.resize(info-\u003euncompressed_size);\nmz_zip_reader_entry_read(zip_handle, (void*) fileContent.data(), info-\u003euncompressed_size);",
+      "range": {
+        "startLine": 429,
+        "startChar": 0,
+        "endLine": 433,
+        "endChar": 23
+      },
+      "revId": "d4ea8e954a07f2ddd73084dc2f195dce7c8e46a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
