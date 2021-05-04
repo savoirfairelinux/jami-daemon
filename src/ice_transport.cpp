@@ -1100,7 +1100,8 @@ IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& r
         return false;
     }
 
-    if (rem_candidates.size() > PJ_ICE_ST_MAX_CAND - 1) {
+    auto comp_cmp = std::max(1, getComponentCount());
+    if (rem_candidates.size() / comp_cnt > PJ_ICE_ST_MAX_CAND - 1) {
         std::vector<IceCandidate> rcands;
         rcands.reserve(PJ_ICE_ST_MAX_CAND - 1);
         JAMI_WARN("[ice:%p] too much candidates detected, trim list.", pimpl_.get());
