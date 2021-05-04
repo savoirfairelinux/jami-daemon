@@ -559,7 +559,7 @@ FileTransferTest::testFileTransferInConversation()
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
-            const long unsigned int& id,
+            const long unsigned int&,
             int code) {
             if (code == static_cast<int>(DRing::DataTransferEventCode::finished)
                 && conversationId == convId) {
@@ -662,7 +662,7 @@ FileTransferTest::testBadSha3sumOut()
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
-            const long unsigned int& id,
+            const long unsigned int&,
             int code) {
             if (conversationId == convId
                 && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
@@ -722,6 +722,8 @@ FileTransferTest::testBadSha3sumOut()
         sendFile << "B";
     sendFile.close();
 
+    transferAFinished = false;
+    transferBFinished = false;
     DRing::downloadFile(bobId, "swarm:" + convId, mid, "RECV");
 
     // The file transfer will not be sent as modified
@@ -784,7 +786,7 @@ FileTransferTest::testBadSha3sumIn()
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
-            const long unsigned int& id,
+            const long unsigned int&,
             int code) {
             if (conversationId == convId
                 && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
@@ -845,6 +847,8 @@ FileTransferTest::testBadSha3sumIn()
         sendFile << "B";
     sendFile.close();
 
+    transferAFinished = false;
+    transferBFinished = false;
     DRing::downloadFile(bobId, "swarm:" + convId, mid, "RECV");
 
     // The file transfer will be sent but refused by bob
@@ -911,7 +915,7 @@ FileTransferTest::testAskToMultipleParticipants()
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
-            const long unsigned int& id,
+            const long unsigned int&,
             int code) {
             if (conversationId == convId
                 && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
@@ -977,10 +981,12 @@ FileTransferTest::testAskToMultipleParticipants()
         return !bobTid.empty() && !carlaTid.empty();
     }));
 
+    transferCFinished = false;
     DRing::downloadFile(carlaId, "swarm:" + convId, carlaTid, "RECV2");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferCFinished; }));
     CPPUNIT_ASSERT(fileutils::isFile("RECV2"));
 
+    transferBFinished = false;
     DRing::downloadFile(bobId, "swarm:" + convId, bobTid, "RECV");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBFinished; }));
     CPPUNIT_ASSERT(fileutils::isFile("RECV"));
@@ -1046,13 +1052,13 @@ FileTransferTest::testCancelTransfer()
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
-            const long unsigned int& id,
+            const long unsigned int&,
             int code) {
             if (code == static_cast<int>(DRing::DataTransferEventCode::ongoing)
                 && conversationId == convId) {
                 if (accountId == bobId)
                     transferBOngoing = true;
-            } else if (code > static_cast<int>(DRing::DataTransferEventCode::finished)
+            } else if (code >= static_cast<int>(DRing::DataTransferEventCode::finished)
                        && conversationId == convId) {
                 if (accountId == aliceId)
                     transferAFinished = true;
@@ -1090,8 +1096,11 @@ FileTransferTest::testCancelTransfer()
     CPPUNIT_ASSERT(DRing::sendFile(info, id) == DRing::DataTransferError::success);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !tidBob.empty(); }));
 
+    transferBOngoing = false;
     auto fileId = DRing::downloadFile(bobId, "swarm:" + convId, tidBob, "RECV");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBOngoing; }));
+    transferAFinished = false;
+    transferBFinished = false;
     DRing::cancelDataTransfer(bobId, convId, fileId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return transferAFinished && transferBFinished;
