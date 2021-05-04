@@ -283,7 +283,7 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
             fileutils::removeAll(dir, true);
             break;
         }
-        std::string filename(info->filename, (size_t)info->filename_size);
+        std::string_view filename(info->filename, (size_t)info->filename_size);
         const auto& fileMatchPair = f(filename);
         if (fileMatchPair.first) {
             auto filePath = dir + DIR_SEPARATOR_STR + fileMatchPair.second;

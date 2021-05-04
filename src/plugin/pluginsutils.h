@@ -102,6 +102,6 @@ std::map<std::string, std::string> readPluginManifestFromArchive(const std::stri
  * @param relativeFileName
  * @return Pair <bool, string> meaning if file should be extracted and where to.
  */
-std::pair<bool, const std::string> uncompressJplFunction(const std::string& relativeFileName);
+std::pair<bool, std::string_view> uncompressJplFunction(std::string_view relativeFileName);
 } // namespace PluginUtils
 } // namespace jami
