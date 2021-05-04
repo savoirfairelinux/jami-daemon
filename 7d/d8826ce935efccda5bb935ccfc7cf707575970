@@ -1,0 +1,7 @@
+Code-Review+2: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
+Submitted-at: Tue, 04 May 2021 10:52:51 -0400
+Reviewed-on: https://review.jami.net/c/ring-daemon/+/17824
+Project: ring-daemon
+Branch: refs/heads/master
