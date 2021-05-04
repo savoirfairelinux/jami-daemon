@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9879cce8_4589322f",
+        "filename": "src/call.cpp",
+        "patchSetId": 49
+      },
+      "lineNbr": 381,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-04T17:33:01Z",
+      "side": 0,
+      "message": "why ? this was clean",
+      "revId": "7dd8826ce935efccda5bb935ccfc7cf707575970",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
