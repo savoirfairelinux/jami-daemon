@@ -46,7 +46,8 @@ public:
     FileTransferTest()
     {
         // Init daemon
-        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+        libjami::init(
+            libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
             CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
@@ -65,9 +66,6 @@ public:
     std::string recv2Path {std::filesystem::current_path() / "RECV2"};
 
 private:
-    void testFileTransfer();
-    void testDataTransferInfo();
-    void testMultipleFileTransfer();
     void testConversationFileTransfer();
     void testFileTransferInConversation();
     void testVcfFileTransferInConversation();
@@ -79,9 +77,6 @@ private:
     void testTransferInfo();
 
     CPPUNIT_TEST_SUITE(FileTransferTest);
-    CPPUNIT_TEST(testFileTransfer);
-    CPPUNIT_TEST(testDataTransferInfo);
-    CPPUNIT_TEST(testMultipleFileTransfer);
     CPPUNIT_TEST(testConversationFileTransfer);
     CPPUNIT_TEST(testFileTransferInConversation);
     CPPUNIT_TEST(testVcfFileTransferInConversation);
@@ -128,6 +123,7 @@ FileTransferTest::tearDown()
 }
 
 void
+<<<<<<< HEAD
 FileTransferTest::testFileTransfer()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
@@ -394,6 +390,8 @@ FileTransferTest::testMultipleFileTransfer()
 }
 
 void
+=======
+>>>>>>> 4ec963ea8 (fileTransfer: massive cleanup)
 FileTransferTest::testConversationFileTransfer()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
