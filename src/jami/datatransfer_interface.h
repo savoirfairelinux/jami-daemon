@@ -108,31 +108,12 @@ struct DRING_PUBLIC DataTransferInfo
 /// DataTransferEvent signal for such event. There is no reserved or special values on
 /// DataTransferId type.
 ///
-DRING_PUBLIC DataTransferError sendFileLegacy(const DataTransferInfo& info,
-                                              DataTransferId& tid) noexcept;
 
 DRING_PUBLIC void sendFile(const std::string& accountId,
                            const std::string& conversationId,
                            const std::string& path,
                            const std::string& displayName,
                            const std::string& replyTo) noexcept;
-
-/// Accept an incoming file transfer.
-///
-/// Use this function when you receive an incoming transfer request throught DataTransferEvent signal.
-/// The data reception and writting will occurs asynchronously.
-/// User should listen to DataTransferEvent event to follow the transfer progess.
-/// This function can be used only once per data transfer identifiant, when used more it's ignored.
-///
-/// \param id data transfer identification value as given by a DataTransferEvent signal.
-/// \param file_path file path going to be open in binary write mode to put incoming data.
-///
-/// \return DataTransferError::invalid_argument if id is unknown.
-/// \note unknown \a id results to a no-op call.
-///
-DRING_PUBLIC DataTransferError acceptFileTransfer(const std::string& accountId,
-                                                  const std::string& fileId,
-                                                  const std::string& file_path) noexcept;
 
 /// Asks for retransferring a file. Generally this means that the file is missing
 /// from the conversation
@@ -166,14 +147,17 @@ DataTransferError cancelDataTransfer(const std::string& accountId,
 
 /// Return some information on given data transfer.
 ///
-/// \param id data transfer identification value as given by a DataTransferEvent signal.
+/// \param accountId
+/// \param conversationId
+/// \param interactionId
 /// \param[out] info data transfer information.
 ///
 /// \return DataTransferError::invalid_argument if id is unknown.
 /// \note \a info structure is in undefined state in case of error.
 ///
-DRING_PUBLIC DataTransferError dataTransferInfo(const std::string& accountId,
-                                                const std::string& fileId,
+DRING_PUBLIC DataTransferError fileTransferInfo(const std::string& accountId,
+                                                const std::string& conversationId,
+                                                const std::string& interactionId,
                                                 DataTransferInfo& info) noexcept;
 
 /// Return the amount of sent/received bytes of an existing data transfer.
