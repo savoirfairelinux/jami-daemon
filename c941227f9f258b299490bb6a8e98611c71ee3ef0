@@ -19,6 +19,23 @@
     },
     {
       "key": {
+        "uuid": "e2fd29fa_4952f53f",
+        "filename": "src/data_transfer.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-05-04T16:04:19Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nbraces around scalar initializer\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-braced-scalar-init",
+      "revId": "c941227f9f258b299490bb6a8e98611c71ee3ef0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "3e836baa_8c00d4ea",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 11
@@ -36,6 +53,23 @@
     },
     {
       "key": {
+        "uuid": "7dff26a5_303a77c1",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 912,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-05-04T16:04:19Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "c941227f9f258b299490bb6a8e98611c71ee3ef0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b72011c4_c11d56fb",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 11
@@ -45,6 +79,23 @@
         "id": 5
       },
       "writtenOn": "2021-05-04T16:01:06Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027sendFile\u0027 is deprecated: Non swarm method\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-deprecated-declarations",
+      "revId": "c941227f9f258b299490bb6a8e98611c71ee3ef0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d146388d_15f15091",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 5668,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-05-04T16:04:19Z",
       "side": 1,
       "message": "MAJOR SonarQube violation:\n\n\n\u0027sendFile\u0027 is deprecated: Non swarm method\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-deprecated-declarations",
       "revId": "c941227f9f258b299490bb6a8e98611c71ee3ef0",
