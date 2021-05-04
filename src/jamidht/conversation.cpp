@@ -121,8 +121,7 @@ public:
         }
         if (auto shared = account_.lock())
             transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
-                                                                 repository_->id(),
-                                                                 true);
+                                                                 repository_->id());
     }
 
     Impl(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId)
@@ -134,8 +133,7 @@ public:
         }
         if (auto shared = account_.lock())
             transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
-                                                                 repository_->id(),
-                                                                 true);
+                                                                 repository_->id());
     }
 
     Impl(const std::weak_ptr<JamiAccount>& account,
@@ -155,8 +153,7 @@ public:
         }
         if (auto shared = account_.lock())
             transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
-                                                                 repository_->id(),
-                                                                 true);
+                                                                 repository_->id());
     }
     ~Impl() = default;
 
