@@ -718,7 +718,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
         return;
     JAMI_DBG("[call:%s] outgoing call connected to %s", call->getCallId().c_str(), to_id.c_str());
 
-    getIceOptions(std::move([=](auto opts) {
+    getIceOptions([=](auto&& opts) {
         opts.onInitDone = [w = weak(), target = std::move(target), call](bool ok) {
             if (!ok) {
                 JAMI_ERR("ICE medias are not initialized");
@@ -780,7 +780,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
         call->setIPToIP(true);
         call->setPeerNumber(to_id);
         call->initIceMediaTransport(true, std::move(opts));
-    }));
+    });
 }
 
 bool
@@ -2696,7 +2696,7 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg,
         return;
     }
     auto callId = call->getCallId();
-    getIceOptions(std::move([=](auto iceOptions) {
+    getIceOptions([=](auto&& iceOptions) {
         iceOptions.onNegoDone = [callId, w = weak()](bool) {
             runOnMainThread([callId, w]() {
                 if (auto shared = w.lock())
@@ -2736,7 +2736,7 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg,
             account->replyToIncomingIceMsg(call, ice, ice_tcp, msg, from_cert, from);
             return false;
         });
-    }));
+    });
 }
 
 void
@@ -3669,7 +3669,7 @@ JamiAccount::onIsComposing(const std::string& peer, bool isWriting)
 }
 
 void
-JamiAccount::getIceOptions(std::function<void(IceTransportOptions)> cb) noexcept
+JamiAccount::getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept
 {
     storeActiveIpAddress([this, cb=std::move(cb)] {
         auto opts = SIPAccountBase::getIceOptions();
