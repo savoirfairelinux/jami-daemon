@@ -559,7 +559,7 @@ FileTransferTest::testFileTransferInConversation()
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
-            const long unsigned int& id,
+            const long unsigned int&,
             int code) {
             if (code == static_cast<int>(DRing::DataTransferEventCode::finished)
                 && conversationId == convId) {
@@ -662,7 +662,7 @@ FileTransferTest::testBadSha3sumOut()
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
-            const long unsigned int& id,
+            const long unsigned int&,
             int code) {
             if (conversationId == convId
                 && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
@@ -784,7 +784,7 @@ FileTransferTest::testBadSha3sumIn()
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
-            const long unsigned int& id,
+            const long unsigned int&,
             int code) {
             if (conversationId == convId
                 && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
@@ -911,7 +911,7 @@ FileTransferTest::testAskToMultipleParticipants()
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
-            const long unsigned int& id,
+            const long unsigned int&,
             int code) {
             if (conversationId == convId
                 && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
@@ -1046,7 +1046,7 @@ FileTransferTest::testCancelTransfer()
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
-            const long unsigned int& id,
+            const long unsigned int&,
             int code) {
             if (code == static_cast<int>(DRing::DataTransferEventCode::ongoing)
                 && conversationId == convId) {
