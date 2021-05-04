@@ -80,11 +80,8 @@ namespace libjami {
 
   void sendFile(const std::string& accountId, const std::string& conversationId, const std::string& path, const std::string& displayName, const std::string& replyTo);
 
-  libjami::DataTransferError sendFileLegacy(const libjami::DataTransferInfo info, libjami::DataTransferId& id);
-  libjami::DataTransferError acceptFileTransfer(const std::string& accountId, const std::string& fileId, const std::string& file_path);
   uint64_t downloadFile(const std::string& accountId, const std::string& conversationId, const std::string& interactionId,const std::string& fileId, const std::string& path);
   libjami::DataTransferError cancelDataTransfer(const std::string& accountId, const std::string& conversationId, const std::string& fileId);
-  libjami::DataTransferError dataTransferInfo(const std::string& accountId, const std::string& fileId, libjami::DataTransferInfo &info);
   libjami::DataTransferError fileTransferInfo(const std::string& accountId, const std::string& conversationId, const std::string& fileId, std::string &path_out, int64_t &total_out, int64_t &progress_out);
 
 }
