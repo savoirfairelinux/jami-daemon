@@ -16,6 +16,29 @@
       "revId": "639e8d0be536dfe0ff9c64fcc7cec43def729961",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9a430a30_13471c9d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 3736,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-04T17:43:58Z",
+      "side": 1,
+      "message": "auto ctx \u003d std::make_unique\u003cTextMessageCtx\u003e();",
+      "range": {
+        "startLine": 3736,
+        "startChar": 8,
+        "endLine": 3736,
+        "endChar": 81
+      },
+      "revId": "639e8d0be536dfe0ff9c64fcc7cec43def729961",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
