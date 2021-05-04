@@ -1271,7 +1271,7 @@ MediaEncoder::getHWFrameFromSWFrame(const VideoFrame& input)
 std::shared_ptr<VideoFrame>
 MediaEncoder::getScaledSWFrame(const VideoFrame& input)
 {
-    libav_utils::fillWithBlack(scaledFrame_->pointer());
+    //libav_utils::fillWithBlack(scaledFrame_->pointer());
     scaler_.scale_with_aspect(input, *scaledFrame_);
     return scaledFrame_;
 }
