@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c46d6711_ae3b4694",
+        "filename": "src/data_transfer.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-05-04T20:12:30Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nbraces around scalar initializer\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-braced-scalar-init",
+      "revId": "a65a3753b247418b27882675aaf89f833cdc0c64",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "665d8c24_a8416828",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 912,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-05-04T20:12:30Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "a65a3753b247418b27882675aaf89f833cdc0c64",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "28ed94b4_3077b2c2",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 5668,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-05-04T20:12:30Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027sendFile\u0027 is deprecated: Non swarm method\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-deprecated-declarations",
+      "revId": "a65a3753b247418b27882675aaf89f833cdc0c64",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
