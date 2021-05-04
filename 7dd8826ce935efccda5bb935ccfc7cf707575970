@@ -16,6 +16,24 @@
       "revId": "7dd8826ce935efccda5bb935ccfc7cf707575970",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a2715bb8_e85866f9",
+        "filename": "src/call.cpp",
+        "patchSetId": 49
+      },
+      "lineNbr": 381,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-04T21:26:46Z",
+      "side": 0,
+      "message": "It was not that clean. The map was partly filled in the base class and the rest in the derived class. Furthermore, the fields in the \"details\" map need to be revisited to be inline with the multi-stream feature. For example, VIDEO/AUDIO_MUTED flags do not make much sense. Instead, we need to report a vector of media with their respective attributes.\nSo, I believe it\u0027s best to keep everything in the derived class.",
+      "parentUuid": "9879cce8_4589322f",
+      "revId": "7dd8826ce935efccda5bb935ccfc7cf707575970",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
