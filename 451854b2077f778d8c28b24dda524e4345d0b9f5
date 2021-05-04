@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b723f25a_ca30a705",
+        "filename": "src/sip/sipaccountbase.cpp",
+        "patchSetId": 48
+      },
+      "lineNbr": 686,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-04T17:00:03Z",
+      "side": 0,
+      "message": "why remove ?",
+      "range": {
+        "startLine": 686,
+        "startChar": 4,
+        "endLine": 686,
+        "endChar": 68
+      },
+      "revId": "451854b2077f778d8c28b24dda524e4345d0b9f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
