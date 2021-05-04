@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "23d5af32_31574150",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-05-04T17:37:09Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027commitId\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "639e8d0be536dfe0ff9c64fcc7cec43def729961",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
