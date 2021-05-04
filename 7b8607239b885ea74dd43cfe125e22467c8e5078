@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "0dd179f7_d55d4650",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-05-04T16:24:34Z",
+      "side": 1,
+      "message": "em, I think we need it since it is \"else\" for if (dlg)",
+      "parentUuid": "836da7ac_224ae5b8",
+      "revId": "7b8607239b885ea74dd43cfe125e22467c8e5078",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "9eb5c985_76ddf949",
         "filename": "src/sip/sipvoiplink.cpp",
         "patchSetId": 2
@@ -39,6 +57,30 @@
       "revId": "7b8607239b885ea74dd43cfe125e22467c8e5078",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "80c8e599_b7e3cd8b",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-05-04T16:24:34Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "9eb5c985_76ddf949",
+      "range": {
+        "startLine": 121,
+        "startChar": 5,
+        "endLine": 121,
+        "endChar": 12
+      },
+      "revId": "7b8607239b885ea74dd43cfe125e22467c8e5078",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
