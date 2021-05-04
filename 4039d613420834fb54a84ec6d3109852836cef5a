@@ -49,6 +49,30 @@
     },
     {
       "key": {
+        "uuid": "68314820_73a7cffc",
+        "filename": "src/manager.cpp",
+        "patchSetId": 48
+      },
+      "lineNbr": 2027,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-04T17:37:35Z",
+      "side": 1,
+      "message": "right by bad",
+      "parentUuid": "03d6139e_7b47d626",
+      "range": {
+        "startLine": 2027,
+        "startChar": 16,
+        "endLine": 2027,
+        "endChar": 30
+      },
+      "revId": "4039d613420834fb54a84ec6d3109852836cef5a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "ab633e63_8355e22c",
         "filename": "src/manager.cpp",
         "patchSetId": 48
@@ -84,6 +108,30 @@
       "side": 1,
       "message": "We only need it in this class, so why put it outside the class. It could be static though.",
       "parentUuid": "ab633e63_8355e22c",
+      "range": {
+        "startLine": 2725,
+        "startChar": 0,
+        "endLine": 2739,
+        "endChar": 1
+      },
+      "revId": "4039d613420834fb54a84ec6d3109852836cef5a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3bed00b5_e2318537",
+        "filename": "src/manager.cpp",
+        "patchSetId": 48
+      },
+      "lineNbr": 2739,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-04T17:37:35Z",
+      "side": 1,
+      "message": "What this method does is not related to the manager, it\u0027s URI parsing.\nIt should either be static or a free method in the cpp. It would later be replaced by logic from the Uri class (part of the swarm stack).",
+      "parentUuid": "6c133075_bf2d52c8",
       "range": {
         "startLine": 2725,
         "startChar": 0,
