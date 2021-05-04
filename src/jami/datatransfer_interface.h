@@ -108,31 +108,12 @@ struct LIBJAMI_PUBLIC DataTransferInfo
 /// DataTransferEvent signal for such event. There is no reserved or special values on
 /// DataTransferId type.
 ///
-LIBJAMI_PUBLIC DataTransferError sendFileLegacy(const DataTransferInfo& info,
-                                              DataTransferId& tid) noexcept;
 
 LIBJAMI_PUBLIC void sendFile(const std::string& accountId,
-                           const std::string& conversationId,
-                           const std::string& path,
-                           const std::string& displayName,
-                           const std::string& replyTo) noexcept;
-
-/// Accept an incoming file transfer.
-///
-/// Use this function when you receive an incoming transfer request throught DataTransferEvent signal.
-/// The data reception and writting will occurs asynchronously.
-/// User should listen to DataTransferEvent event to follow the transfer progess.
-/// This function can be used only once per data transfer identifiant, when used more it's ignored.
-///
-/// \param id data transfer identification value as given by a DataTransferEvent signal.
-/// \param file_path file path going to be open in binary write mode to put incoming data.
-///
-/// \return DataTransferError::invalid_argument if id is unknown.
-/// \note unknown \a id results to a no-op call.
-///
-LIBJAMI_PUBLIC DataTransferError acceptFileTransfer(const std::string& accountId,
-                                                  const std::string& fileId,
-                                                  const std::string& file_path) noexcept;
+                             const std::string& conversationId,
+                             const std::string& path,
+                             const std::string& displayName,
+                             const std::string& replyTo) noexcept;
 
 /// Asks for retransferring a file. Generally this means that the file is missing
 /// from the conversation
@@ -143,10 +124,10 @@ LIBJAMI_PUBLIC DataTransferError acceptFileTransfer(const std::string& accountId
 /// \param path
 ///
 LIBJAMI_PUBLIC bool downloadFile(const std::string& accountId,
-                               const std::string& conversationId,
-                               const std::string& interactionId,
-                               const std::string& fileId,
-                               const std::string& path) noexcept;
+                                 const std::string& conversationId,
+                                 const std::string& interactionId,
+                                 const std::string& fileId,
+                                 const std::string& path) noexcept;
 
 /// Refuse or abort an outgoing or an incoming file transfer.
 ///
@@ -164,18 +145,6 @@ DataTransferError cancelDataTransfer(const std::string& accountId,
                                      const std::string& conversationId,
                                      const std::string& fileId) noexcept LIBJAMI_PUBLIC;
 
-/// Return some information on given data transfer.
-///
-/// \param id data transfer identification value as given by a DataTransferEvent signal.
-/// \param[out] info data transfer information.
-///
-/// \return DataTransferError::invalid_argument if id is unknown.
-/// \note \a info structure is in undefined state in case of error.
-///
-LIBJAMI_PUBLIC DataTransferError dataTransferInfo(const std::string& accountId,
-                                                const std::string& fileId,
-                                                DataTransferInfo& info) noexcept;
-
 /// Return the amount of sent/received bytes of an existing data transfer.
 ///
 /// \param id data transfer identification value as given by a DataTransferEvent signal.
@@ -186,11 +155,11 @@ LIBJAMI_PUBLIC DataTransferError dataTransferInfo(const std::string& accountId,
 /// DataTransferError::invalid_argument if the id is unknown.
 ///
 LIBJAMI_PUBLIC DataTransferError fileTransferInfo(const std::string& accountId,
-                                                const std::string& conversationId,
-                                                const std::string& fileId,
-                                                std::string& path,
-                                                int64_t& total,
-                                                int64_t& progress) noexcept;
+                                                  const std::string& conversationId,
+                                                  const std::string& fileId,
+                                                  std::string& path,
+                                                  int64_t& total,
+                                                  int64_t& progress) noexcept;
 
 // Signals
 struct LIBJAMI_PUBLIC DataTransferSignal

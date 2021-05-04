@@ -67,7 +67,7 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
     }
 
     // Check if peer is member of the conversation
-    if (fileId == fmt::format("{}.vcf", acc->getUsername())) {
+    if (fileId == fmt::format("{}.vcf", acc->getUsername()) || fileId == "profile.vcf") {
         auto members = acc->convModule()->getConversationMembers(conversationId);
         return std::find_if(members.begin(), members.end(), [&](auto m) { return m["uri"] == uri; })
                != members.end();
@@ -121,6 +121,9 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
     } else if (isContactProfile && fileId.find(".vcf") != std::string::npos) {
         auto path = acc->dataTransfer()->profilePath(fileId.substr(0, fileId.size() - 4));
         acc->dataTransfer()->transferFile(channel, fileId, "", path);
+        return;
+    } else if (fileId == "profile.vcf") {
+        acc->dataTransfer()->onIncomingProfile(channel);
         return;
     }
     auto dt = acc->dataTransfer(conversationId);
