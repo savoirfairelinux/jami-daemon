@@ -733,26 +733,6 @@ DBusConfigurationManager::connectivityChanged()
 }
 
 void
-DBusConfigurationManager::sendFileLegacy(const RingDBusDataTransferInfo& in,
-                                         uint32_t& error,
-                                         DRing::DataTransferId& id)
-{
-    DRing::DataTransferInfo info;
-    info.accountId = in._1;
-    info.lastEvent = DRing::DataTransferEventCode(in._2);
-    info.flags = in._3;
-    info.totalSize = in._4;
-    info.bytesProgress = in._5;
-    info.author = in._6;
-    info.peer = in._7;
-    info.conversationId = in._8;
-    info.displayName = in._9;
-    info.path = in._10;
-    info.mimetype = in._11;
-    error = uint32_t(DRing::sendFileLegacy(info, id));
-}
-
-void
 DBusConfigurationManager::sendFile(const std::string& accountId,
                                    const std::string& conversationId,
                                    const std::string& path,
@@ -760,30 +740,6 @@ DBusConfigurationManager::sendFile(const std::string& accountId,
                                    const std::string& replyTo)
 {
     DRing::sendFile(accountId, conversationId, path, displayName, replyTo);
-}
-
-void
-DBusConfigurationManager::dataTransferInfo(const std::string& accountId,
-                                           const std::string& fileId,
-                                           uint32_t& error,
-                                           RingDBusDataTransferInfo& out)
-{
-    DRing::DataTransferInfo info;
-    auto res = DRing::dataTransferInfo(accountId, fileId, info);
-    if (res == DRing::DataTransferError::success) {
-        out._1 = info.accountId;
-        out._2 = uint32_t(info.lastEvent);
-        out._3 = info.flags;
-        out._4 = info.totalSize;
-        out._5 = info.bytesProgress;
-        out._6 = info.author;
-        out._7 = info.peer;
-        out._8 = info.conversationId;
-        out._9 = info.displayName;
-        out._10 = info.path;
-        out._11 = info.mimetype;
-    }
-    error = uint32_t(res);
 }
 
 void
@@ -797,14 +753,6 @@ DBusConfigurationManager::fileTransferInfo(const std::string& accountId,
 {
     error = uint32_t(
         DRing::fileTransferInfo(accountId, conversationId, fileId, path, total, progress));
-}
-
-uint32_t
-DBusConfigurationManager::acceptFileTransfer(const std::string& accountId,
-                                             const std::string& fileId,
-                                             const std::string& file_path)
-{
-    return uint32_t(DRing::acceptFileTransfer(accountId, fileId, file_path));
 }
 
 bool

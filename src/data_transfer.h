@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 2004-2022 Savoir-faire Linux Inc.
  *
- *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,10 +50,6 @@ struct WaitingRequest
     std::size_t totalSize;
     MSGPACK_DEFINE(fileId, interactionId, sha3sum, path, totalSize)
 };
-
-typedef std::function<void(const std::string&)> InternalCompletionCb;
-typedef std::function<void(const DRing::DataTransferId&, const DRing::DataTransferEventCode&)>
-    OnStateChangedCb;
 
 class FileInfo
 {
@@ -124,45 +120,6 @@ class TransferManager : public std::enable_shared_from_this<TransferManager>
 public:
     TransferManager(const std::string& accountId, const std::string& to);
     ~TransferManager();
-
-    /**
-     * Send a file
-     * @param path      of the file
-     * @param peer      DeviceId for vcard or dest
-     * @param icb       used for internal files (like vcard)
-     */
-    /*[[deprecated("Non swarm method")]]*/ DRing::DataTransferId sendFile(
-        const std::string& path, const std::string& peer, const InternalCompletionCb& icb = {});
-
-    /**
-     * Accepts a transfer
-     * @param id        of the transfer
-     * @param path      of the file
-     */
-    /*[[deprecated("Non swarm method")]]*/ bool acceptFile(const DRing::DataTransferId& id,
-                                                           const std::string& path);
-
-    /**
-     * Inform the transfer manager that a new file is incoming
-     * @param info      of the transfer
-     * @param id        of the transfer
-     * @param cb        callback to trigger when connected
-     * @param icb       used for vcard
-     */
-    /*[[deprecated("Non swarm method")]]*/ void onIncomingFileRequest(
-        const DRing::DataTransferInfo& info,
-        const DRing::DataTransferId& id,
-        const std::function<void(const IncomingFileInfo&)>& cb,
-        const InternalCompletionCb& icb = {});
-
-    /**
-     * Get current transfer infos
-     * @param id        of the transfer
-     * @param info      to fill
-     * @return if found
-     */
-    /*[[deprecated("Non swarm method")]]*/ bool info(const DRing::DataTransferId& id,
-                                                     DRing::DataTransferInfo& info) const noexcept;
 
     /**
      * Send a file to a channel

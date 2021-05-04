@@ -33,17 +33,6 @@ registerDataXferHandlers(const std::map<std::string, std::shared_ptr<CallbackWra
     registerSignalHandlers(handlers);
 }
 
-DataTransferError
-sendFileLegacy(const DataTransferInfo& info, DataTransferId& tid) noexcept
-{
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(info.accountId)) {
-        tid = acc->sendFile(info.peer, info.path);
-        return DRing::DataTransferError::success;
-    }
-
-    return DRing::DataTransferError::invalid_argument;
-}
-
 void
 sendFile(const std::string& accountId,
          const std::string& conversationId,
@@ -54,25 +43,6 @@ sendFile(const std::string& accountId,
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         acc->sendFile(conversationId, path, displayName, replyTo);
     }
-}
-
-DataTransferError
-acceptFileTransfer(const std::string& accountId,
-                   const std::string& fileId,
-                   const std::string& file_path) noexcept
-{
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        if (auto dt = acc->dataTransfer()) {
-            try {
-                return dt->acceptFile(std::stoull(fileId), file_path)
-                           ? DRing::DataTransferError::success
-                           : DRing::DataTransferError::invalid_argument;
-            } catch (...) {
-                JAMI_ERR() << "Invalid file Id" << fileId;
-            }
-        }
-    }
-    return DRing::DataTransferError::invalid_argument;
 }
 
 bool
@@ -114,25 +84,6 @@ fileTransferInfo(const std::string& accountId,
             return dt->info(fileId, path, total, progress)
                        ? DRing::DataTransferError::success
                        : DRing::DataTransferError::invalid_argument;
-    }
-    return DRing::DataTransferError::invalid_argument;
-}
-
-DataTransferError
-dataTransferInfo(const std::string& accountId,
-                 const std::string& fileId,
-                 DataTransferInfo& info) noexcept
-{
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        if (auto dt = acc->dataTransfer()) {
-            try {
-                return dt->info(std::stoull(fileId), info)
-                           ? DRing::DataTransferError::success
-                           : DRing::DataTransferError::invalid_argument;
-            } catch (...) {
-                JAMI_ERR() << "Invalid fileId: " << fileId;
-            }
-        }
     }
     return DRing::DataTransferError::invalid_argument;
 }

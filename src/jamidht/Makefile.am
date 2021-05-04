@@ -12,8 +12,6 @@ libringacc_la_SOURCES = \
 	./jamidht/connectionmanager.cpp \
 	./jamidht/channeled_transport.h \
 	./jamidht/channeled_transport.cpp \
-	./jamidht/channeled_transfers.h \
-	./jamidht/channeled_transfers.cpp \
 	./jamidht/conversation.h \
 	./jamidht/conversation.cpp \
 	./jamidht/conversationrepository.h \
@@ -29,8 +27,6 @@ libringacc_la_SOURCES = \
 	./jamidht/multiplexed_socket.cpp \
 	./jamidht/accountarchive.cpp \
 	./jamidht/accountarchive.h \
-	./jamidht/p2p.cpp \
-	./jamidht/p2p.h \
 	./jamidht/jami_contact.h \
 	./jamidht/contact_list.h \
 	./jamidht/contact_list.cpp \
