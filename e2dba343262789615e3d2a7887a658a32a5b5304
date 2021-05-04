@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b1126f7e_c3fa3afd",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-04T14:08:30Z",
+      "side": 1,
+      "message": "std::string_view",
+      "range": {
+        "startLine": 286,
+        "startChar": 8,
+        "endLine": 286,
+        "endChar": 19
+      },
+      "revId": "e2dba343262789615e3d2a7887a658a32a5b5304",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8ae8b89e_a0d869a0",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 300,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-04T14:08:30Z",
+      "side": 1,
+      "message": "chunkSize",
+      "range": {
+        "startLine": 300,
+        "startChar": 35,
+        "endLine": 300,
+        "endChar": 58
+      },
+      "revId": "e2dba343262789615e3d2a7887a658a32a5b5304",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
