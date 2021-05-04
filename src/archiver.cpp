@@ -51,6 +51,8 @@ extern "C" {
 #include <sys/stat.h>
 #include <fstream>
 
+using namespace std::literals;
+
 namespace jami {
 namespace archiver {
 
@@ -283,7 +285,7 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
             fileutils::removeAll(dir, true);
             break;
         }
-        std::string filename(info->filename, (size_t)info->filename_size);
+        std::string_view filename(info->filename, (size_t)info->filename_size);
         const auto& fileMatchPair = f(filename);
         if (fileMatchPair.first) {
             auto filePath = dir + DIR_SEPARATOR_STR + fileMatchPair.second;
@@ -348,14 +350,11 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
         if (r == ARCHIVE_EOF) {
             break;
         }
-
-        std::string fileEntry = archive_entry_pathname(entry) ? archive_entry_pathname(entry)
-                                                              : "Undefined";
-
-        if (r != ARCHIVE_OK) {
-            throw std::runtime_error("Read file pathname: " + fileEntry + "\t"
-                                     + archive_error_string(archiveReader.get()));
+        if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
+            throw std::runtime_error("Error reading archive: "s + archive_error_string(archiveReader.get()));
         }
+
+        std::string_view fileEntry(archive_entry_pathname(entry));
 
         // File is ok, copy its header to the ext writer
         const auto& fileMatchPair = f(fileEntry);

@@ -167,21 +167,21 @@ readPluginManifestFromArchive(const std::string& jplPath)
     return {};
 }
 
-std::pair<bool, const std::string>
-uncompressJplFunction(const std::string& relativeFileName)
+std::pair<bool, std::string_view>
+uncompressJplFunction(std::string_view relativeFileName)
 {
-    std::smatch match;
+    std::svmatch match;
     // manifest.json and files under data/ folder remains in the same structure
     // but libraries files are extracted from the folder that matches the running ABI to
     // the main installation path.
     if (relativeFileName == "manifest.json" || std::regex_match(relativeFileName, DATA_REGEX)) {
         return std::make_pair(true, relativeFileName);
-    } else if (regex_search(relativeFileName, match, SO_REGEX)) {
-        if (match.str(1) == ABI) {
-            return std::make_pair(true, match.str(2));
+    } else if (std::regex_search(relativeFileName, match, SO_REGEX)) {
+        if (std::svsub_match_view(match[1]) == std::string_view(ABI)) {
+            return std::make_pair(true, std::svsub_match_view(match[2]));
         }
     }
-    return std::make_pair(false, std::string {""});
+    return std::make_pair(false, std::string_view {});
 }
 } // namespace PluginUtils
 } // namespace jami

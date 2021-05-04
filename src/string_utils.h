@@ -55,6 +55,9 @@ operator+(const string_view& sv, const string& s)
 }
 using svmatch = match_results<string_view::const_iterator>;
 using svsub_match = sub_match<string_view::const_iterator>;
+constexpr string_view svsub_match_view(const svsub_match& submatch) noexcept {
+    return string_view(submatch.first, submatch.second - submatch.first);
+}
 inline bool
 regex_match(string_view sv,
             svmatch& m,

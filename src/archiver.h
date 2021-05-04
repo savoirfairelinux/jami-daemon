@@ -40,7 +40,7 @@ namespace jami {
  */
 namespace archiver {
 
-using FileMatchPair = std::function<std::pair<bool, const std::string>(const std::string&)>;
+using FileMatchPair = std::function<std::pair<bool, std::string_view>(std::string_view)>;
 
 /**
  * Compress a STL string using zlib with given compression level and return
