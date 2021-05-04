@@ -366,32 +366,6 @@ public:
 #endif
     bool searchUser(const std::string& nameQuery);
 
-    /**
-     * Send a E2E connection request to a given peer for the given transfer id
-     * @param peer RingID on request's recipient
-     * @param tid linked outgoing data transfer
-     * @param isVcard if transfer is a vcard transfer
-     * @param channeledConnectedCb callback when channel is connected
-     * @param onChanneledCancelled callback when channel is canceled
-     * @param addToHistory if we need to add the transfer to the history
-     */
-    void requestConnection(
-        const DRing::DataTransferInfo& info,
-        const DRing::DataTransferId& tid,
-        bool isVCard,
-        const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
-            channeledConnectedCb,
-        const std::function<void(const std::string&)>& onChanneledCancelled,
-        bool addToHistory);
-
-    ///
-    /// Close a E2E connection between a given peer and a given transfer id.
-    ///
-    /// /// \param[in] peer RingID on request's recipient
-    /// /// \param[in] tid linked outgoing data transfer
-    ///
-    void closePeerConnection(const DRing::DataTransferId& tid);
-
     /// \return true if the given DHT message identifier has been treated
     /// \note if message has not been treated yet this method store this id and returns true at
     /// further calls
@@ -608,11 +582,7 @@ public:
                            const std::string& convId);
 
     // File transfer
-    DRing::DataTransferId sendFile(const std::string& to,
-                                   const std::string& path,
-                                   const InternalCompletionCb& icb = {},
-                                   const std::string& deviceId = {},
-                                   DRing::DataTransferId resendId = {});
+    DRing::DataTransferId sendFile(const std::string& to, const std::string& path);
     void transferFile(const std::string& conversationId,
                       const std::string& path,
                       const std::string& deviceId,
@@ -917,7 +887,6 @@ private:
     pj_str_t contact_ {contactBuffer_, 0};
     pjsip_transport* via_tp_ {nullptr};
 
-    std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
     mutable std::mutex connManagerMtx_ {};
     std::unique_ptr<ConnectionManager> connectionManager_;
     GitSocketList gitSocketList_ {};
@@ -1010,10 +979,6 @@ private:
                              const std::string& peerId,
                              const DeviceId& deviceId);
 
-    // File transfers
-    std::mutex transfersMtx_ {};
-    std::set<std::string> incomingFileTransfers_ {};
-
     /**
      * Helper used to send SIP messages on a channeled connection
      * @param conn      The connection used
@@ -1031,12 +996,6 @@ private:
                         uint64_t token,
                         const std::map<std::string, std::string>& data,
                         pjsip_endpt_send_callback cb);
-
-    /**
-     * Send Profile via cached SIP connection
-     * @param deviceId      Device that will receive the profile
-     */
-    void sendProfile(const std::string& deviceId);
 
     // Conversations
     std::mutex pendingConversationsFetchMtx_ {};
@@ -1078,11 +1037,6 @@ private:
      * @return the conversation id if found else empty
      */
     std::string getOneToOneConversation(const std::string& uri) const;
-
-    //// File transfer
-    std::shared_ptr<TransferManager> nonSwarmTransferManager_;
-    std::mutex transferMutex_ {};
-    std::map<std::string, std::shared_ptr<TransferManager>> transferManagers_ {};
 
     bool noSha3sumVerification_ {false};
 };

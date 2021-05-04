@@ -765,30 +765,6 @@ DBusConfigurationManager::sendFile(const RingDBusDataTransferInfo& in,
 }
 
 void
-DBusConfigurationManager::dataTransferInfo(const std::string& accountId,
-                                           const DRing::DataTransferId& id,
-                                           uint32_t& error,
-                                           RingDBusDataTransferInfo& out)
-{
-    DRing::DataTransferInfo info;
-    auto res = DRing::dataTransferInfo(accountId, id, info);
-    if (res == DRing::DataTransferError::success) {
-        out._1 = info.accountId;
-        out._2 = uint32_t(info.lastEvent);
-        out._3 = info.flags;
-        out._4 = info.totalSize;
-        out._5 = info.bytesProgress;
-        out._6 = info.author;
-        out._7 = info.peer;
-        out._8 = info.conversationId;
-        out._9 = info.displayName;
-        out._10 = info.path;
-        out._11 = info.mimetype;
-    }
-    error = uint32_t(res);
-}
-
-void
 DBusConfigurationManager::fileTransferInfo(const std::string& accountId,
                                            const std::string& conversationId,
                                            const std::string& interactionId,
@@ -823,14 +799,6 @@ DBusConfigurationManager::dataTransferBytesProgress(const std::string& accountId
 {
     error = uint32_t(
         DRing::dataTransferBytesProgress(accountId, conversationId, id, total, progress));
-}
-
-uint32_t
-DBusConfigurationManager::acceptFileTransfer(const std::string& accountId,
-                                             const uint64_t& id,
-                                             const std::string& file_path)
-{
-    return uint32_t(DRing::acceptFileTransfer(accountId, id, file_path));
 }
 
 uint64_t
