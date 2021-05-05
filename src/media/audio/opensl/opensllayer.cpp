@@ -56,7 +56,7 @@ void
 OpenSLLayer::startStream(AudioDeviceType stream)
 {
     using namespace std::placeholders;
-    if (engineObject_)
+    if (!engineObject_)
         initAudioEngine();
 
     std::lock_guard<std::mutex> lock(mutex_);
