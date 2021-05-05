@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ee8c1cb4_d613c0be",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1103,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-05T11:58:00Z",
+      "side": 1,
+      "message": "we should not clip the component but rather throw an exception if the comp count \u003d\u003d 0.",
+      "revId": "060b1fc6ca835bf31710fdae8ed361e51e8d4193",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
