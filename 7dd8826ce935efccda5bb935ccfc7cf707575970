@@ -34,6 +34,24 @@
       "revId": "7dd8826ce935efccda5bb935ccfc7cf707575970",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0ad55300_267b8c61",
+        "filename": "src/call.cpp",
+        "patchSetId": 49
+      },
+      "lineNbr": 381,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-05T14:40:14Z",
+      "side": 0,
+      "message": "It was cleaner than the current change. Call properties are filled by the call, SipCall properties are filled by the SipCall. It\u0027s ok to change the call properties according to the needs of this change. This is a common pattern, for instance during serialization of Activity data on Android, a bundle is filled by parent classes, then by child classes.",
+      "parentUuid": "a2715bb8_e85866f9",
+      "revId": "7dd8826ce935efccda5bb935ccfc7cf707575970",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
