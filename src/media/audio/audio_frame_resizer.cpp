@@ -90,6 +90,9 @@ AudioFrameResizer::setFrameSize(int frameSize)
 void
 AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
 {
+    if (not frame or frame->pointer() == nullptr)
+        return;
+
     int ret = 0;
     auto f = frame->pointer();
     AudioFormat format(f->sample_rate, f->channels, (AVSampleFormat) f->format);

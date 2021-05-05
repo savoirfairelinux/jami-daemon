@@ -181,14 +181,26 @@ Resampler::resample(std::unique_ptr<AudioFrame>&& in, const AudioFormat& format)
 std::shared_ptr<AudioFrame>
 Resampler::resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& format)
 {
-    if (in->pointer()->sample_rate == (int) format.sample_rate
-        && in->pointer()->channels == (int) format.nb_channels
-        && (AVSampleFormat) in->pointer()->format == format.sampleFormat) {
+    if (not in) {
+        return {};
+    }
+    auto inPtr = in->pointer();
+    if (inPtr == nullptr) {
+        return {};
+    }
+
+    if (inPtr->sample_rate == (int) format.sample_rate
+        && inPtr->channels == (int) format.nb_channels
+        && (AVSampleFormat) inPtr->format == format.sampleFormat) {
         return std::move(in);
     }
+
     auto output = std::make_shared<AudioFrame>(format);
-    resample(in->pointer(), output->pointer());
-    return output;
+    if (auto formatPtr = output->pointer()) {
+        resample(inPtr, formatPtr);
+        return output;
+    }
+    return {};
 }
 
 } // namespace jami
