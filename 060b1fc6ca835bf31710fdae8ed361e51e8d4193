@@ -34,6 +34,24 @@
       "revId": "060b1fc6ca835bf31710fdae8ed361e51e8d4193",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "168bfa8f_93861a34",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1103,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-05T17:24:43Z",
+      "side": 1,
+      "message": "this is exactly why we need exception, so in case we accidentally set comp count to 0, it\u0027s better to assert here than hide the condition.",
+      "parentUuid": "ff1454b1_85e4e38b",
+      "revId": "060b1fc6ca835bf31710fdae8ed361e51e8d4193",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
