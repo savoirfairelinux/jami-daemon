@@ -70,6 +70,30 @@
       "revId": "1c9be7438481dc66a5b7a321622d9b4ecb88f0de",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b4afd01a_7f5bfbc1",
+        "filename": "src/media/audio/resampler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 199,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-06T16:30:12Z",
+      "side": 1,
+      "message": "Even with the null check, this method and the whole class would be broken/useless anyway if the constructor of AudioFrame did not build an AVFrame.\nIn this case, we actually know exactly what the implementation does, and we rely on it, not only there but through the whole codebase.",
+      "parentUuid": "bdce7edb_bce4b789",
+      "range": {
+        "startLine": 199,
+        "startChar": 4,
+        "endLine": 199,
+        "endChar": 45
+      },
+      "revId": "1c9be7438481dc66a5b7a321622d9b4ecb88f0de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
