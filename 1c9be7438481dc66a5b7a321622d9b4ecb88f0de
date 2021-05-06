@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "bb854571_eb757819",
+        "filename": "src/media/audio/resampler.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 199,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-06T15:24:24Z",
+      "side": 1,
+      "message": "guaranteed to be true as it was just created above.",
+      "range": {
+        "startLine": 199,
+        "startChar": 4,
+        "endLine": 199,
+        "endChar": 45
+      },
+      "revId": "1c9be7438481dc66a5b7a321622d9b4ecb88f0de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
