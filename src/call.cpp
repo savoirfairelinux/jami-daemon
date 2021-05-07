@@ -387,7 +387,7 @@ Call::getDetails() const
         {DRing::Call::Details::ACCOUNTID, getAccountId()},
         {DRing::Call::Details::AUDIO_MUTED, std::string(bool_to_str(isAudioMuted()))},
         {DRing::Call::Details::VIDEO_MUTED, std::string(bool_to_str(isVideoMuted()))},
-        {DRing::Call::Details::AUDIO_ONLY, std::string(bool_to_str(hasVideo()))},
+        {DRing::Call::Details::AUDIO_ONLY, std::string(bool_to_str(not hasVideo()))},
     };
 }
 
