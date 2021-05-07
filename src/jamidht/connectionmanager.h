@@ -86,7 +86,9 @@ public:
      * @param cb            Callback called when socket is ready ready
      */
     void connectDevice(const DeviceId& deviceId, const std::string& name, ConnectCallback cb);
-    void connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name, ConnectCallback cb);
+    void connectDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                       const std::string& name,
+                       ConnectCallback cb);
 
     /**
      * Check if we are already connecting to a device with a specific name
@@ -133,7 +135,16 @@ public:
      * @return the number of active sockets
      */
     std::size_t activeSockets() const;
+
+    /**
+     * Log informations for all sockets
+     */
     void monitor() const;
+
+    /**
+     * Send beacon on peers supporting it
+     */
+    void connectivityChanged();
 
 private:
     ConnectionManager() = delete;
