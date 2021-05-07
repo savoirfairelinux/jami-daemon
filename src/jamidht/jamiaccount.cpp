@@ -688,6 +688,8 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         if (!transport)
             continue;
 
+        sipConn.channel->sendBeacon();
+
         JAMI_WARN("[call %s] A channeled socket is detected with this peer.",
                   call->getCallId().c_str());
 
@@ -774,11 +776,11 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
                 return;
 
             const auto localAddress = ip_utils::getInterfaceAddr(shared->getLocalInterface(),
-                                                                target.getFamily());
+                                                                 target.getFamily());
 
             IpAddr addrSdp = shared->getPublishedSameasLocal()
-                                ? localAddress
-                                : shared->getPublishedIpAddress(target.getFamily());
+                                 ? localAddress
+                                 : shared->getPublishedIpAddress(target.getFamily());
 
             // fallback on local address
             if (not addrSdp)
@@ -967,8 +969,7 @@ JamiAccount::serialize(YAML::Emitter& out) const
     if (receiptSignature_.size() > 0)
         out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT_SIG << YAML::Value
             << YAML::Binary(receiptSignature_.data(), receiptSignature_.size());
-    out << YAML::Key << DRing::Account::ConfProperties::DEVICE_NAME << YAML::Value
-        << deviceName_;
+    out << YAML::Key << DRing::Account::ConfProperties::DEVICE_NAME << YAML::Value << deviceName_;
     out << YAML::Key << DRing::Account::ConfProperties::MANAGER_URI << YAML::Value << managerUri_;
     out << YAML::Key << DRing::Account::ConfProperties::MANAGER_USERNAME << YAML::Value
         << managerUsername_;
@@ -2749,14 +2750,14 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg,
             });
         };
         auto ice = createIceTransport(("sip:" + call->getCallId()).c_str(),
-                                    ICE_COMPONENTS,
-                                    false,
-                                    iceOptions);
+                                      ICE_COMPONENTS,
+                                      false,
+                                      iceOptions);
         iceOptions.tcpEnable = true;
         auto ice_tcp = createIceTransport(("sip:" + call->getCallId()).c_str(),
-                                        ICE_COMPONENTS,
-                                        true,
-                                        iceOptions);
+                                          ICE_COMPONENTS,
+                                          true,
+                                          iceOptions);
 
         std::weak_ptr<SIPCall> wcall = call;
         Manager::instance().addTask([account = shared(), wcall, ice, ice_tcp, msg, from_cert, from] {
@@ -2943,6 +2944,7 @@ JamiAccount::connectivityChanged()
         return;
     }
     dht_->connectivityChanged();
+    connectionManager_->connectivityChanged();
     // reset cache
     setPublishedAddress({});
 }
@@ -3716,7 +3718,7 @@ JamiAccount::onIsComposing(const std::string& peer, bool isWriting)
 void
 JamiAccount::getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept
 {
-    storeActiveIpAddress([this, cb=std::move(cb)] {
+    storeActiveIpAddress([this, cb = std::move(cb)] {
         auto opts = SIPAccountBase::getIceOptions();
         auto publishedAddr = getPublishedIpAddress();
 
