@@ -62,6 +62,12 @@ struct ChanneledMessage
     MSGPACK_DEFINE(channel, data)
 };
 
+struct BeaconMsg
+{
+    bool isRequest;
+    MSGPACK_DEFINE(isRequest)
+};
+
 /**
  * A socket divided in channels over a TLS session
  */
@@ -129,7 +135,16 @@ public:
 
     std::shared_ptr<IceTransport> underlyingICE() const;
 
+    /**
+     * Get informations from socket (channels opened)
+     */
     void monitor() const;
+
+    /**
+     * Send a beacon on the socket and close if no response come
+     * @param timeout
+     */
+    void sendBeacon(std::chrono::milliseconds timeout = std::chrono::milliseconds(3000));
 
 private:
     class Impl;
@@ -185,6 +200,12 @@ public:
     void setOnRecv(RecvCb&&) override;
 
     std::shared_ptr<IceTransport> underlyingICE() const;
+
+    /**
+     * Send a beacon on the socket and close if no response come
+     * @param timeout
+     */
+    void sendBeacon(std::chrono::milliseconds timeout = std::chrono::milliseconds(3000));
 
 private:
     class Impl;

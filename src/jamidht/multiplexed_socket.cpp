@@ -124,6 +124,12 @@ public:
     void setOnReady(OnConnectionReadyCb&& cb) { onChannelReady_ = std::move(cb); }
     void setOnRequest(OnConnectionRequestCb&& cb) { onRequest_ = std::move(cb); }
 
+    // Beacon
+    void sendBeacon(std::chrono::milliseconds timeout);
+    void handleBeaconRequest();
+    void handleBeaconResponse();
+    std::atomic_int beaconCounter_ {0};
+
     msgpack::unpacker pac_ {};
 
     MultiplexedSocket& parent_;
@@ -197,7 +203,15 @@ MultiplexedSocket::Impl::eventLoop()
                 else
                     handleChannelPacket(msg.channel, std::move(msg.data));
             } catch (const msgpack::unpack_error& e) {
-                JAMI_WARN("Error when decoding msgpack message: %s", e.what());
+                try {
+                    auto msg = oh.get().as<BeaconMsg>();
+                    if (msg.isRequest)
+                        handleBeaconRequest();
+                    else
+                        handleBeaconResponse();
+                } catch (const msgpack::unpack_error& e) {
+                    JAMI_WARN("Error when decoding msgpack message: %s", e.what());
+                }
             }
         }
     }
@@ -219,6 +233,51 @@ MultiplexedSocket::Impl::onAccept(const std::string& name, uint16_t channel)
     if (channelCbsIt != channelCbs.end()) {
         (channelCbsIt->second)();
     }
+}
+
+void
+MultiplexedSocket::Impl::sendBeacon(std::chrono::milliseconds timeout)
+{
+    // TODO only do this if peer supports it.
+    // TODO do it for calls
+    // TODO do it for connectivityChanged()
+    beaconCounter_++;
+    auto now = std::chrono::steady_clock::now();
+    Manager::instance().scheduleTask(
+        [w = parent_.weak()]() {
+            if (auto shared = w.lock()) {
+                if (shared->pimpl_->beaconCounter_ != 0) {
+                    JAMI_ERR() << "Beacon doesn't get any response. Stopping socket";
+                    shared->shutdown();
+                }
+            }
+        },
+        now + timeout);
+}
+
+void
+MultiplexedSocket::Impl::handleBeaconRequest()
+{
+    // Run this on dedicated thread because some callbacks can take time
+    dht::ThreadPool::io().run([w = parent_.weak()]() {
+        if (auto shared = w.lock()) {
+            BeaconMsg val;
+            val.isRequest = false;
+            msgpack::sbuffer buffer(512);
+            msgpack::pack(buffer, val);
+            std::error_code ec;
+            int wr = shared->write(CONTROL_CHANNEL,
+                                   reinterpret_cast<const uint8_t*>(buffer.data()),
+                                   buffer.size(),
+                                   ec);
+        }
+    });
+}
+
+void
+MultiplexedSocket::Impl::handleBeaconResponse()
+{
+    beaconCounter_--;
 }
 
 void
@@ -575,6 +634,12 @@ MultiplexedSocket::monitor() const
     }
 }
 
+void
+MultiplexedSocket::sendBeacon(std::chrono::milliseconds timeout)
+{
+    pimpl_->sendBeacon(timeout);
+}
+
 ////////////////////////////////////////////////////////////////
 
 class ChannelSocket::Impl
@@ -740,6 +805,16 @@ ChannelSocket::onShutdown(OnShutdownCb&& cb)
     pimpl_->shutdownCb_ = std::move(cb);
     if (pimpl_->isShutdown_) {
         pimpl_->shutdownCb_();
+    }
+}
+
+void
+ChannelSocket::sendBeacon(std::chrono::milliseconds timeout)
+{
+    if (auto ep = pimpl_->endpoint.lock()) {
+        ep->sendBeacon(timeout);
+    } else {
+        shutdown();
     }
 }
 
