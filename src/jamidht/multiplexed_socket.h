@@ -62,6 +62,20 @@ struct ChanneledMessage
     MSGPACK_DEFINE(channel, data)
 };
 
+struct BeaconMsg
+{
+    bool isRequest;
+    MSGPACK_DEFINE(isRequest)
+};
+
+struct VersionMsg
+{
+    int major;
+    int minor;
+    int patch;
+    MSGPACK_DEFINE(major, minor, patch)
+};
+
 /**
  * A socket divided in channels over a TLS session
  */
@@ -129,7 +143,49 @@ public:
 
     std::shared_ptr<IceTransport> underlyingICE() const;
 
+    /**
+     * Get informations from socket (channels opened)
+     */
     void monitor() const;
+
+    /**
+     * Send a beacon on the socket and close if no response come
+     * @param timeout
+     */
+    void sendBeacon(std::chrono::milliseconds timeout = std::chrono::milliseconds(3000));
+
+#ifdef DRING_TESTABLE
+    /**
+     * Check if we can send beacon on the socket
+     */
+    bool canSendBeacon() const;
+
+    /**
+     * Decide if yes or not we answer to beacon
+     * @param value     New value
+     */
+    void answerToBeacon(bool value);
+
+    /**
+     * Change version sent to the peer
+     */
+    void setFakeVersion(const std::string& fakeVersion);
+
+    /**
+     * Triggered when a beacon comes
+     */
+    void onBeacon(const std::function<void(BeaconMsg)>& cb);
+
+    /**
+     * Triggered when a version is announced
+     */
+    void onVersion(const std::function<void(VersionMsg)>& cb);
+
+    /**
+     * Send the version
+     */
+    void sendVersion();
+#endif
 
 private:
     class Impl;
@@ -185,6 +241,14 @@ public:
     void setOnRecv(RecvCb&&) override;
 
     std::shared_ptr<IceTransport> underlyingICE() const;
+
+    /**
+     * Send a beacon on the socket and close if no response come
+     * @param timeout
+     */
+    void sendBeacon(std::chrono::milliseconds timeout = std::chrono::milliseconds(3000));
+
+    std::shared_ptr<MultiplexedSocket> underlyingSocket() const;
 
 private:
     class Impl;
