@@ -54,6 +54,7 @@ public:
                 eventLoop();
             } catch (const std::exception& e) {
                 JAMI_ERR() << "[CNX] peer connection event loop failure: " << e.what();
+                shutdown();
             }
         }}
     {}
@@ -97,6 +98,8 @@ public:
             return;
         stop.store(true);
         isShutdown_ = true;
+        if (beaconTask_)
+            beaconTask_->cancel();
         if (onShutdown_)
             onShutdown_();
         if (endpoint) {
@@ -123,6 +126,12 @@ public:
 
     void setOnReady(OnConnectionReadyCb&& cb) { onChannelReady_ = std::move(cb); }
     void setOnRequest(OnConnectionRequestCb&& cb) { onRequest_ = std::move(cb); }
+
+    // Beacon
+    void sendBeacon(std::chrono::milliseconds timeout);
+    void handleBeaconRequest();
+    void handleBeaconResponse();
+    std::atomic_int beaconCounter_ {0};
 
     msgpack::unpacker pac_ {};
 
@@ -155,6 +164,12 @@ public:
     std::mutex writeMtx {};
 
     time_point start_ {clock::now()};
+    std::shared_ptr<Task> beaconTask_ {};
+
+    // version related stuff
+    void sendVersion();
+    void onVersion(int major, int minor, int patch);
+    std::atomic_bool canSendBeacon_ {false};
 };
 
 void
@@ -168,6 +183,7 @@ MultiplexedSocket::Impl::eventLoop()
         }
         return true;
     });
+    sendVersion();
     std::error_code ec;
     while (!stop) {
         if (!endpoint) {
@@ -196,8 +212,21 @@ MultiplexedSocket::Impl::eventLoop()
                     handleControlPacket(std::move(msg.data));
                 else
                     handleChannelPacket(msg.channel, std::move(msg.data));
-            } catch (const msgpack::unpack_error& e) {
-                JAMI_WARN("Error when decoding msgpack message: %s", e.what());
+            } catch (...) {
+                try {
+                    auto msg = oh.get().as<BeaconMsg>();
+                    if (msg.isRequest)
+                        handleBeaconRequest();
+                    else
+                        handleBeaconResponse();
+                } catch (const std::exception& e) {
+                    try {
+                        auto msg = oh.get().as<VersionMsg>();
+                        onVersion(msg.major, msg.minor, msg.patch);
+                    } catch (const std::exception& e) {
+                        JAMI_WARN("Error when decoding msgpack message: %s", e.what());
+                    }
+                }
             }
         }
     }
@@ -218,6 +247,113 @@ MultiplexedSocket::Impl::onAccept(const std::string& name, uint16_t channel)
     auto channelCbsIt = channelCbs.find(channel);
     if (channelCbsIt != channelCbs.end()) {
         (channelCbsIt->second)();
+    }
+}
+
+void
+MultiplexedSocket::Impl::sendBeacon(std::chrono::milliseconds timeout)
+{
+    if (!canSendBeacon_)
+        return;
+    beaconCounter_++;
+    JAMI_DBG("Send beacon to peer %s", deviceId.to_c_str());
+    BeaconMsg val;
+    val.isRequest = true;
+    // TODO pack bool
+    msgpack::sbuffer buffer(512);
+    msgpack::pack(buffer, val);
+    std::error_code ec;
+    int wr = endpoint->write((const unsigned char*) buffer.data(), buffer.size(), ec);
+    if (wr < 0) {
+        if (ec)
+            JAMI_ERR("Error when writing on socket: %s", ec.message().c_str());
+        shutdown();
+        return;
+    }
+    beaconTask_ = Manager::instance().scheduleTaskIn(
+        [w = parent_.weak()]() {
+            if (auto shared = w.lock()) {
+                if (shared->pimpl_->beaconCounter_ != 0) {
+                    JAMI_ERR() << "Beacon doesn't get any response. Stopping socket";
+                    shared->shutdown();
+                }
+            }
+        },
+        timeout);
+}
+
+void
+MultiplexedSocket::Impl::handleBeaconRequest()
+{
+    // Run this on dedicated thread because some callbacks can take time
+    dht::ThreadPool::io().run([w = parent_.weak()]() {
+        if (auto shared = w.lock()) {
+            BeaconMsg val;
+            val.isRequest = false;
+            // TODO pack bool
+            msgpack::sbuffer buffer(512);
+            msgpack::pack(buffer, val);
+            std::error_code ec;
+            JAMI_DBG("Send beacon response to peer %s", shared->deviceId().to_c_str());
+            int wr = shared->pimpl_->endpoint->write((const unsigned char*) buffer.data(),
+                                                     buffer.size(),
+                                                     ec);
+            if (wr < 0) {
+                if (ec)
+                    JAMI_ERR("Error when writing on socket: %s", ec.message().c_str());
+                shared->shutdown();
+                return;
+            }
+        }
+    });
+}
+
+void
+MultiplexedSocket::Impl::handleBeaconResponse()
+{
+    JAMI_DBG("Get beacon response from peer %s", deviceId.to_c_str());
+    beaconCounter_--;
+}
+
+void
+MultiplexedSocket::Impl::sendVersion()
+{
+    dht::ThreadPool::io().run([w = parent_.weak()]() {
+        if (auto shared = w.lock()) {
+            VersionMsg val;
+            auto version = split_string_to_unsigned(PACKAGE_VERSION, '.');
+            if (version.size() != 3)
+                return;
+            val.major = version[0];
+            val.minor = version[1];
+            val.patch = version[2];
+            // TODO pack int/int/int
+            msgpack::sbuffer buffer(512);
+            msgpack::pack(buffer, val);
+            std::error_code ec;
+            JAMI_DBG("Send beacon response to peer %s", shared->deviceId().to_c_str());
+            int wr = shared->pimpl_->endpoint->write((const unsigned char*) buffer.data(),
+                                                     buffer.size(),
+                                                     ec);
+            if (wr < 0) {
+                if (ec)
+                    JAMI_ERR("Error when writing on socket: %s", ec.message().c_str());
+                shared->shutdown();
+                return;
+            }
+        }
+    });
+}
+
+void
+MultiplexedSocket::Impl::onVersion(int major, int minor, int patch)
+{
+    // Check if peer > 10.0.0
+    if ((major > 10)
+        || (major == 10 && minor > 0)
+        || (major == 10 && minor == 0 && patch > 0)) {
+        JAMI_INFO() << "Enable beacon support for " << deviceId;
+        canSendBeacon_ = true;
     }
 }
 
@@ -295,8 +431,6 @@ MultiplexedSocket::Impl::handleControlPacket(std::vector<uint8_t>&& pkt)
             }
         } catch (const std::exception& e) {
             JAMI_ERR("Error on the control channel: %s", e.what());
-            if (auto shared = w.lock())
-                shared->pimpl_->stop.store(true);
         }
     });
 }
@@ -575,6 +709,12 @@ MultiplexedSocket::monitor() const
     }
 }
 
+void
+MultiplexedSocket::sendBeacon(std::chrono::milliseconds timeout)
+{
+    pimpl_->sendBeacon(timeout);
+}
+
 ////////////////////////////////////////////////////////////////
 
 class ChannelSocket::Impl
@@ -740,6 +880,16 @@ ChannelSocket::onShutdown(OnShutdownCb&& cb)
     pimpl_->shutdownCb_ = std::move(cb);
     if (pimpl_->isShutdown_) {
         pimpl_->shutdownCb_();
+    }
+}
+
+void
+ChannelSocket::sendBeacon(std::chrono::milliseconds timeout)
+{
+    if (auto ep = pimpl_->endpoint.lock()) {
+        ep->sendBeacon(timeout);
+    } else {
+        shutdown();
     }
 }
 
