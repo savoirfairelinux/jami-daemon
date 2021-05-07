@@ -54,6 +54,7 @@ public:
                 eventLoop();
             } catch (const std::exception& e) {
                 JAMI_ERR() << "[CNX] peer connection event loop failure: " << e.what();
+                shutdown();
             }
         }}
     {}
@@ -97,6 +98,8 @@ public:
             return;
         stop.store(true);
         isShutdown_ = true;
+        if (beaconTask_)
+            beaconTask_->cancel();
         if (onShutdown_)
             onShutdown_();
         if (endpoint) {
@@ -114,6 +117,8 @@ public:
      * Triggered when a new control packet is received
      */
     void handleControlPacket(std::vector<uint8_t>&& pkt);
+    void handleProtocolPacket(std::vector<uint8_t>&& pkt);
+    bool handleProtocolMsg(const msgpack::object& o);
     /**
      * Triggered when a new packet on a channel is received
      */
@@ -123,6 +128,14 @@ public:
 
     void setOnReady(OnConnectionReadyCb&& cb) { onChannelReady_ = std::move(cb); }
     void setOnRequest(OnConnectionRequestCb&& cb) { onRequest_ = std::move(cb); }
+
+    // Beacon
+    void sendBeacon(const std::chrono::milliseconds& timeout);
+    void handleBeaconRequest();
+    void handleBeaconResponse();
+    std::atomic_int beaconCounter_ {0};
+
+    bool writeProtocolMessage(const msgpack::sbuffer& buffer);
 
     msgpack::unpacker pac_ {};
 
@@ -155,6 +168,16 @@ public:
     std::mutex writeMtx {};
 
     time_point start_ {clock::now()};
+    std::shared_ptr<Task> beaconTask_ {};
+
+    // version related stuff
+    void sendVersion();
+    void onVersion(int version);
+    std::atomic_bool canSendBeacon_ {false};
+    std::atomic_bool answerBeacon_ {true};
+    int version_ {MULTIPLEXED_SOCKET_VERSION};
+    std::function<void(BeaconMsg)> onBeaconCb_ {};
+    std::function<void(VersionMsg)> onVersionCb_ {};
 };
 
 void
@@ -168,6 +191,7 @@ MultiplexedSocket::Impl::eventLoop()
         }
         return true;
     });
+    sendVersion();
     std::error_code ec;
     while (!stop) {
         if (!endpoint) {
@@ -192,12 +216,14 @@ MultiplexedSocket::Impl::eventLoop()
         while (pac_.next(oh) && !stop) {
             try {
                 auto msg = oh.get().as<ChanneledMessage>();
-                if (msg.channel == 0)
+                if (msg.channel == CONTROL_CHANNEL)
                     handleControlPacket(std::move(msg.data));
+                else if (msg.channel == PROTOCOL_CHANNEL)
+                    handleProtocolPacket(std::move(msg.data));
                 else
                     handleChannelPacket(msg.channel, std::move(msg.data));
-            } catch (const msgpack::unpack_error& e) {
-                JAMI_WARN("Error when decoding msgpack message: %s", e.what());
+                continue;
+            } catch (...) {
             }
         }
     }
@@ -218,6 +244,98 @@ MultiplexedSocket::Impl::onAccept(const std::string& name, uint16_t channel)
     auto channelCbsIt = channelCbs.find(channel);
     if (channelCbsIt != channelCbs.end()) {
         (channelCbsIt->second)();
+    }
+}
+
+void
+MultiplexedSocket::Impl::sendBeacon(const std::chrono::milliseconds& timeout)
+{
+    if (!canSendBeacon_)
+        return;
+    beaconCounter_++;
+    JAMI_DBG("Send beacon to peer %s", deviceId.to_c_str());
+
+    msgpack::sbuffer buffer(8);
+    msgpack::packer<msgpack::sbuffer> pk(&buffer);
+    pk.pack_array(1);
+    pk.pack(true); // isRequest = true
+    if (!writeProtocolMessage(buffer))
+        return;
+    beaconTask_ = Manager::instance().scheduleTaskIn(
+        [w = parent_.weak()]() {
+            if (auto shared = w.lock()) {
+                if (shared->pimpl_->beaconCounter_ != 0) {
+                    JAMI_ERR() << "Beacon doesn't get any response. Stopping socket";
+                    shared->shutdown();
+                }
+            }
+        },
+        timeout);
+}
+
+void
+MultiplexedSocket::Impl::handleBeaconRequest()
+{
+    if (!answerBeacon_)
+        return;
+    // Run this on dedicated thread because some callbacks can take time
+    dht::ThreadPool::io().run([w = parent_.weak()]() {
+        if (auto shared = w.lock()) {
+            msgpack::sbuffer buffer(8);
+            msgpack::packer<msgpack::sbuffer> pk(&buffer);
+            pk.pack_array(1);
+            pk.pack(false); // isRequest = false
+            JAMI_DBG("Send beacon response to peer %s", shared->deviceId().to_c_str());
+            shared->pimpl_->writeProtocolMessage(buffer);
+        }
+    });
+}
+
+void
+MultiplexedSocket::Impl::handleBeaconResponse()
+{
+    JAMI_DBG("Get beacon response from peer %s", deviceId.to_c_str());
+    beaconCounter_--;
+}
+
+bool
+MultiplexedSocket::Impl::writeProtocolMessage(const msgpack::sbuffer& buffer)
+{
+    std::error_code ec;
+    int wr = parent_.write(PROTOCOL_CHANNEL,
+                           (const unsigned char*) buffer.data(),
+                           buffer.size(),
+                           ec);
+    return wr > 0;
+}
+
+void
+MultiplexedSocket::Impl::sendVersion()
+{
+    dht::ThreadPool::io().run([w = parent_.weak()]() {
+        if (auto shared = w.lock()) {
+            auto version = shared->pimpl_->version_;
+            msgpack::sbuffer buffer(8);
+            msgpack::packer<msgpack::sbuffer> pk(&buffer);
+            pk.pack_array(1);
+            pk.pack(version);
+            shared->pimpl_->writeProtocolMessage(buffer);
+        }
+    });
+}
+
+void
+MultiplexedSocket::Impl::onVersion(int version)
+{
+    // Check if version > 1
+    if (version >= 1) {
+        JAMI_INFO() << "Enable beacon support for " << deviceId;
+        canSendBeacon_ = true;
+    } else {
+        JAMI_WARN("Peer %s uses an old version which doesn't support all the features (%d)",
+                  deviceId.to_c_str(),
+                  version);
+        canSendBeacon_ = false;
     }
 }
 
@@ -275,28 +393,30 @@ MultiplexedSocket::Impl::handleControlPacket(std::vector<uint8_t>&& pkt)
 {
     // Run this on dedicated thread because some callbacks can take time
     dht::ThreadPool::io().run([w = parent_.weak(), pkt = std::move(pkt)]() {
+        auto shared = w.lock();
+        if (!shared)
+            return;
         try {
             size_t off = 0;
             while (off != pkt.size()) {
                 msgpack::unpacked result;
                 msgpack::unpack(result, (const char*) pkt.data(), pkt.size(), off);
-                auto req = result.get().as<ChannelRequest>();
-                if (auto shared = w.lock()) {
-                    if (req.state == ChannelRequestState::ACCEPT) {
-                        shared->pimpl_->onAccept(req.name, req.channel);
-                    } else if (req.state == ChannelRequestState::DECLINE) {
-                        std::lock_guard<std::mutex> lkSockets(shared->pimpl_->socketsMutex);
-                        shared->pimpl_->channelDatas_.erase(req.channel);
-                        shared->pimpl_->sockets.erase(req.channel);
-                    } else if (shared->pimpl_->onRequest_) {
-                        shared->pimpl_->onRequest(req.name, req.channel);
-                    }
+                auto object = result.get();
+                if (shared->pimpl_->handleProtocolMsg(object))
+                    continue;
+                auto req = object.as<ChannelRequest>();
+                if (req.state == ChannelRequestState::ACCEPT) {
+                    shared->pimpl_->onAccept(req.name, req.channel);
+                } else if (req.state == ChannelRequestState::DECLINE) {
+                    std::lock_guard<std::mutex> lkSockets(shared->pimpl_->socketsMutex);
+                    shared->pimpl_->channelDatas_.erase(req.channel);
+                    shared->pimpl_->sockets.erase(req.channel);
+                } else if (shared->pimpl_->onRequest_) {
+                    shared->pimpl_->onRequest(req.name, req.channel);
                 }
             }
         } catch (const std::exception& e) {
             JAMI_ERR("Error on the control channel: %s", e.what());
-            if (auto shared = w.lock())
-                shared->pimpl_->stop.store(true);
         }
     });
 }
@@ -340,6 +460,55 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, std::vector<uint8
     }
 }
 
+bool
+MultiplexedSocket::Impl::handleProtocolMsg(const msgpack::object& o)
+{
+    if (o.type == msgpack::type::ARRAY && o.via.array.size == 1) {
+        if (o.via.array.ptr[0].type == msgpack::type::BOOLEAN) {
+            auto msg = o.as<BeaconMsg>();
+            if (msg.isRequest)
+                handleBeaconRequest();
+            else
+                handleBeaconResponse();
+            if (onBeaconCb_)
+                onBeaconCb_(msg);
+            return true;
+        } else if (o.via.array.ptr[0].type == msgpack::type::POSITIVE_INTEGER) {
+            auto msg = o.as<VersionMsg>();
+            onVersion(msg.version);
+            if (onVersionCb_)
+                onVersionCb_(msg);
+            return true;
+        } else {
+            JAMI_WARN("Unknown message type");
+        }
+    }
+    return false;
+}
+
+void
+MultiplexedSocket::Impl::handleProtocolPacket(std::vector<uint8_t>&& pkt)
+{
+    // Run this on dedicated thread because some callbacks can take time
+    dht::ThreadPool::io().run([w = parent_.weak(), pkt = std::move(pkt)]() {
+        auto shared = w.lock();
+        if (!shared)
+            return;
+        try {
+            size_t off = 0;
+            while (off != pkt.size()) {
+                msgpack::unpacked result;
+                msgpack::unpack(result, (const char*) pkt.data(), pkt.size(), off);
+                auto object = result.get();
+                if (shared->pimpl_->handleProtocolMsg(object))
+                    return;
+            }
+        } catch (const std::exception& e) {
+            JAMI_ERR("Error on the protocol channel: %s", e.what());
+        }
+    });
+}
+
 MultiplexedSocket::MultiplexedSocket(const DeviceId& deviceId,
                                      std::unique_ptr<TlsSocketEndpoint> endpoint)
     : pimpl_(std::make_unique<Impl>(*this, deviceId, std::move(endpoint)))
@@ -358,6 +527,8 @@ MultiplexedSocket::addChannel(const std::string& name)
     std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
     for (int i = 1; i < UINT16_MAX; ++i) {
         auto c = (offset + i) % UINT16_MAX;
+        if (c == CONTROL_CHANNEL || c == PROTOCOL_CHANNEL)
+            continue;
         auto& socket = pimpl_->sockets[c];
         if (!socket) {
             auto& channel = pimpl_->channelDatas_[c];
@@ -575,6 +746,50 @@ MultiplexedSocket::monitor() const
     }
 }
 
+void
+MultiplexedSocket::sendBeacon(const std::chrono::milliseconds& timeout)
+{
+    pimpl_->sendBeacon(timeout);
+}
+
+#ifdef DRING_TESTABLE
+bool
+MultiplexedSocket::canSendBeacon() const
+{
+    return pimpl_->canSendBeacon_;
+}
+
+void
+MultiplexedSocket::answerToBeacon(bool value)
+{
+    pimpl_->answerBeacon_ = value;
+}
+
+void
+MultiplexedSocket::setVersion(int version)
+{
+    pimpl_->version_ = version;
+}
+
+void
+MultiplexedSocket::setOnBeaconCb(const std::function<void(BeaconMsg)>& cb)
+{
+    pimpl_->onBeaconCb_ = cb;
+}
+
+void
+MultiplexedSocket::setOnVersionCb(const std::function<void(VersionMsg)>& cb)
+{
+    pimpl_->onVersionCb_ = cb;
+}
+
+void
+MultiplexedSocket::sendVersion()
+{
+    pimpl_->sendVersion();
+}
+#endif
+
 ////////////////////////////////////////////////////////////////
 
 class ChannelSocket::Impl
@@ -666,6 +881,16 @@ ChannelSocket::underlyingICE() const
     return {};
 }
 
+#ifdef DRING_TESTABLE
+std::shared_ptr<MultiplexedSocket>
+ChannelSocket::underlyingSocket() const
+{
+    if (auto mtx = pimpl_->endpoint.lock())
+        return mtx;
+    return {};
+}
+#endif
+
 void
 ChannelSocket::stop()
 {
@@ -740,6 +965,16 @@ ChannelSocket::onShutdown(OnShutdownCb&& cb)
     pimpl_->shutdownCb_ = std::move(cb);
     if (pimpl_->isShutdown_) {
         pimpl_->shutdownCb_();
+    }
+}
+
+void
+ChannelSocket::sendBeacon(const std::chrono::milliseconds& timeout)
+{
+    if (auto ep = pimpl_->endpoint.lock()) {
+        ep->sendBeacon(timeout);
+    } else {
+        shutdown();
     }
 }
 
