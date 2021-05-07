@@ -36,6 +36,8 @@ using onChannelReadyCb = std::function<void(void)>;
 using OnShutdownCb = std::function<void(void)>;
 
 static constexpr uint16_t CONTROL_CHANNEL {0};
+static constexpr uint16_t PROTOCOL_CHANNEL {0xffff};
+static constexpr int MULTIPLEXED_SOCKET_VERSION {1};
 
 enum class ChannelRequestState {
     REQUEST,
@@ -60,6 +62,18 @@ struct ChanneledMessage
     uint16_t channel;
     std::vector<uint8_t> data;
     MSGPACK_DEFINE(channel, data)
+};
+
+struct BeaconMsg
+{
+    bool isRequest;
+    MSGPACK_DEFINE(isRequest)
+};
+
+struct VersionMsg
+{
+    int version;
+    MSGPACK_DEFINE(version)
 };
 
 /**
@@ -129,7 +143,49 @@ public:
 
     std::shared_ptr<IceTransport> underlyingICE() const;
 
+    /**
+     * Get informations from socket (channels opened)
+     */
     void monitor() const;
+
+    /**
+     * Send a beacon on the socket and close if no response come
+     * @param timeout
+     */
+    void sendBeacon(const std::chrono::milliseconds& timeout = std::chrono::milliseconds(3000));
+
+#ifdef DRING_TESTABLE
+    /**
+     * Check if we can send beacon on the socket
+     */
+    bool canSendBeacon() const;
+
+    /**
+     * Decide if yes or not we answer to beacon
+     * @param value     New value
+     */
+    void answerToBeacon(bool value);
+
+    /**
+     * Change version sent to the peer
+     */
+    void setVersion(int version);
+
+    /**
+     * Set a callback to detect beacon messages
+     */
+    void setOnBeaconCb(const std::function<void(BeaconMsg)>& cb);
+
+    /**
+     * Set a callback to detect version messages
+     */
+    void setOnVersionCb(const std::function<void(VersionMsg)>& cb);
+
+    /**
+     * Send the version
+     */
+    void sendVersion();
+#endif
 
 private:
     class Impl;
@@ -185,6 +241,16 @@ public:
     void setOnRecv(RecvCb&&) override;
 
     std::shared_ptr<IceTransport> underlyingICE() const;
+
+    /**
+     * Send a beacon on the socket and close if no response come
+     * @param timeout
+     */
+    void sendBeacon(const std::chrono::milliseconds& timeout = std::chrono::milliseconds(3000));
+
+#ifdef DRING_TESTABLE
+    std::shared_ptr<MultiplexedSocket> underlyingSocket() const;
+#endif
 
 private:
     class Impl;
