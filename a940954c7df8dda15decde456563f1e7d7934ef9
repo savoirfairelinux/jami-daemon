@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "870aac94_1f217054",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 659,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-07T12:48:30Z",
+      "side": 1,
+      "message": "prevent segfault if the account was already removed.",
+      "revId": "a940954c7df8dda15decde456563f1e7d7934ef9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
