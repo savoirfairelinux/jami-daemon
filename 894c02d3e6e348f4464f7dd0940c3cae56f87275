@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2f22ca70_28315ab8",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 557,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-08T18:37:36Z",
+      "side": 1,
+      "message": "This delays the processing of PJSIP events by an average of 250ms, max 500ms (compared to the current code), adding unnecessary delay and impacting user experience.\nIn my opinion, the clean way to integrate with PJSIP event loop would be to be able to schedule events on the PJSIP event loop, but it is not strictly necessary since PJSIP supports multithreading.",
+      "range": {
+        "startLine": 552,
+        "startChar": 3,
+        "endLine": 557,
+        "endChar": 40
+      },
+      "revId": "894c02d3e6e348f4464f7dd0940c3cae56f87275",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
