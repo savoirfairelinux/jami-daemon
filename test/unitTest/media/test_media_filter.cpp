@@ -246,8 +246,8 @@ MediaFilterTest::testVideoFilter()
 
     // construct the filter parameters
     rational<int> one = rational<int>(1);
-    auto params1 = MediaStream("main", format, one, width1, height1, one, one);
-    auto params2 = MediaStream("top", format, one, width2, height2, one, one);
+    auto params1 = MediaStream("main", format, one, width1, height1, one.real(), one);
+    auto params2 = MediaStream("top", format, one, width2, height2, one.real(), one);
 
     // allocate and fill frame buffers
     CPPUNIT_ASSERT(av_frame_get_buffer(frame, 32) >= 0);
@@ -286,8 +286,8 @@ MediaFilterTest::testFilterParams()
 
     // construct the filter parameters
     rational<int> one = rational<int>(1);
-    auto params1 = MediaStream("main", format, one, width1, height1, one, one);
-    auto params2 = MediaStream("top", format, one, width2, height2, one, one);
+    auto params1 = MediaStream("main", format, one, width1, height1, one.real(), one);
+    auto params2 = MediaStream("top", format, one, width2, height2, one.real(), one);
 
     // returned params should be invalid
     CPPUNIT_ASSERT(filter_->getOutputParams().format < 0);
