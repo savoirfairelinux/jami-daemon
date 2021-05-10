@@ -113,7 +113,7 @@ private:
 class TransferManager : public std::enable_shared_from_this<TransferManager>
 {
 public:
-    TransferManager(const std::string& accountId, const std::string& to, bool isConversation = true);
+    TransferManager(const std::string& accountId, const std::string& to, bool isConversation = false);
     ~TransferManager();
 
     /**

@@ -33,7 +33,7 @@
 class DataTransferCallback {
 public:
     virtual ~DataTransferCallback(){}
-    virtual void dataTransferEvent(const std::string& accountId, const std::string& conversationId, const DRing::DataTransferId transferId, int eventCode){}
+    virtual void dataTransferEvent(const std::string& accountId, const std::string& conversationId, const std::string& fileId, int eventCode){}
 };
 %}
 
@@ -56,10 +56,12 @@ namespace DRing {
     std::string mimetype;
   };
 
-  DRing::DataTransferError sendFile(const DRing::DataTransferInfo info, DRing::DataTransferId& id);
-  DRing::DataTransferError acceptFileTransfer(const std::string& accountId,  const DRing::DataTransferId id, const std::string file_path);
+  void sendFile(const std::string& accountId, const std::string& conversationId, const std::string& path, const std::string& displayName, const std::string& parent);
+  
+  DRing::DataTransferError sendFileLegacy(const DRing::DataTransferInfo info, DRing::DataTransferId& id);
+  DRing::DataTransferError acceptFileTransfer(const std::string& accountId, const std::string& fileId, const std::string& file_path);
   uint64_t downloadFile(const std::string& accountId, const std::string& conversationUri, const std::string& interactionId, const std::string& path);
-  DRing::DataTransferError cancelDataTransfer(const std::string& accountId, const std::string& conversationId, const DRing::DataTransferId id);
+  DRing::DataTransferError cancelDataTransfer(const std::string& accountId, const std::string& conversationId, const std::string& fileId);
   DRing::DataTransferError dataTransferInfo(const std::string& accountId, const std::string& fileId, DRing::DataTransferInfo &info);
   DRing::DataTransferError fileTransferInfo(const std::string& accountId, const std::string& conversationId, const std::string& fileId, std::string &path, int64_t &total, int64_t &progress);
 
@@ -68,5 +70,5 @@ namespace DRing {
 class DataTransferCallback {
 public:
     virtual ~DataTransferCallback(){}
-    virtual void dataTransferEvent(const std::string& accountId, const std::string& conversationId, const DRing::DataTransferId transferId, int eventCode){}
+    virtual void dataTransferEvent(const std::string& accountId, const std::string& conversationId, const std::string& fileId, int eventCode){}
 };

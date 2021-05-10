@@ -1077,16 +1077,14 @@ TransferManager::info(const DRing::DataTransferId& id, DRing::DataTransferInfo& 
     if (pimpl_->isConversation_)
         return false;
     // Else it's fallback
-    auto it = pimpl_->iMap_.find(id);
-    if (it != pimpl_->iMap_.end()) {
+    if (auto it = pimpl_->iMap_.find(id); it != pimpl_->iMap_.end()) {
         if (it->second)
             it->second->info(info);
         return true;
     }
-    auto itO = pimpl_->oMap_.find(id);
-    if (itO != pimpl_->oMap_.end()) {
-        if (itO->second)
-            itO->second->info(info);
+    if (auto it = pimpl_->oMap_.find(id); it != pimpl_->oMap_.end()) {
+        if (it->second)
+            it->second->info(info);
         return true;
     }
     return false;
@@ -1128,8 +1126,8 @@ TransferManager::info(const std::string& fileId,
         return false;
     }
     // Else it's fallback
-    auto it = pimpl_->iMap_.find(std::stoull(fileId));
-    if (it != pimpl_->iMap_.end()) {
+    auto tid = std::stoull(fileId);
+    if (auto it = pimpl_->iMap_.find(tid); it != pimpl_->iMap_.end()) {
         if (it->second) {
             DRing::DataTransferInfo info;
             it->second->info(info);
@@ -1138,13 +1136,12 @@ TransferManager::info(const std::string& fileId,
         }
         return true;
     }
-    auto itO = pimpl_->oMap_.find(std::stoull(fileId));
-    if (itO != pimpl_->oMap_.end()) {
-        if (itO->second) {
+    if (auto it = pimpl_->oMap_.find(tid); it != pimpl_->oMap_.end()) {
+        if (it->second) {
             DRing::DataTransferInfo info;
-            itO->second->info(info);
+            it->second->info(info);
             path = info.path;
-            itO->second->bytesProgress(total, progress);
+            it->second->bytesProgress(total, progress);
         }
         return true;
     }

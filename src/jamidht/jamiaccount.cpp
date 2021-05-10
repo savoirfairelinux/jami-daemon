@@ -5732,7 +5732,55 @@ JamiAccount::cloneConversation(const std::string& deviceId,
     }
 }
 
-std::string
+void
+JamiAccount::sendFile(const std::string& conversationId,
+                      const std::string& path,
+                      const std::string& name,
+                      const std::string& parent)
+{
+    if (!fileutils::isFile(path)) {
+        JAMI_ERR() << "invalid filename '" << path << "'";
+        return;
+    }
+    // NOTE: this sendMessage is in a computation thread because
+    // sha3sum can take quite some time to computer if the user decide
+    // to send a big file
+    dht::ThreadPool::computation().run([w = weak(), conversationId, path, name, parent]() {
+        if (auto shared = w.lock()) {
+            Json::Value value;
+            auto tid = jami::generateUID();
+            value["tid"] = std::to_string(tid);
+            std::size_t found = path.find_last_of(DIR_SEPARATOR_CH);
+            value["displayName"] = name.empty() ? path.substr(found + 1) : name;
+            value["totalSize"] = std::to_string(fileutils::size(path));
+            value["sha3sum"] = fileutils::sha3File(path);
+            value["type"] = "application/data-transfer+json";
+            
+            shared->sendMessage(conversationId,
+                                value,
+                                parent,
+                                true,
+                                [   accId = shared->getAccountID(),
+                                    conversationId,
+                                    tid,
+                                    path
+                                ](bool, const std::string& commitId) {
+                                    // Create a symlink to answer to re-ask
+                                    auto symlinkPath = fileutils::get_data_dir()
+                                                        + DIR_SEPARATOR_STR + accId
+                                                        + DIR_SEPARATOR_STR + "conversation_data"
+                                                        + DIR_SEPARATOR_STR + conversationId
+                                                        + DIR_SEPARATOR_STR + commitId + "_"
+                                                        + std::to_string(tid);
+                                    if (path != symlinkPath
+                                        && !fileutils::isSymLink(symlinkPath))
+                                        fileutils::createSymLink(symlinkPath, path);
+                                });
+        }
+    });
+}
+
+DRing::DataTransferId
 JamiAccount::sendFile(const std::string& to,
                       const std::string& path,
                       const InternalCompletionCb& icb)
@@ -5742,52 +5790,6 @@ JamiAccount::sendFile(const std::string& to,
         return {};
     }
 
-    bool isConversation;
-    {
-        std::lock_guard<std::mutex> lk(conversationsMtx_);
-        isConversation = conversations_.find(to) != conversations_.end();
-    }
-
-    if (isConversation) {
-        // NOTE: this sendMessage is in a computation thread because
-        // sha3sum can take quite some time to computer if the user decide
-        // to send a big file
-        dht::ThreadPool::computation().run([w = weak(), to, path]() {
-            if (auto shared = w.lock()) {
-                Json::Value value;
-                auto tid = jami::generateUID();
-                value["tid"] = std::to_string(tid);
-                std::size_t found = path.find_last_of(DIR_SEPARATOR_CH);
-                auto filename = path.substr(found + 1);
-                value["displayName"] = filename;
-                value["totalSize"] = std::to_string(fileutils::size(path));
-                value["sha3sum"] = fileutils::sha3File(path);
-                value["type"] = "application/data-transfer+json";
-                shared->sendMessage(to,
-                                    value,
-                                    "",
-                                    true,
-                                    [accId = shared->getAccountID(),
-                                     to,
-                                     tid,
-                                     path](bool, const std::string& commitId) {
-                                        // Create a symlink to answer to re-ask
-                                        auto symlinkPath = fileutils::get_data_dir()
-                                                           + DIR_SEPARATOR_STR + accId
-                                                           + DIR_SEPARATOR_STR + "conversation_data"
-                                                           + DIR_SEPARATOR_STR + to
-                                                           + DIR_SEPARATOR_STR + commitId + "_"
-                                                           + std::to_string(tid);
-                                        if (path != symlinkPath
-                                            && !fileutils::isSymLink(symlinkPath))
-                                            fileutils::createSymLink(symlinkPath, path);
-                                    });
-            }
-        });
-        return {};
-    }
-
-    // Else, it's fallback
     std::unique_lock<std::mutex> lk(transferMutex_);
     auto it = transferManagers_.find(to);
     if (it == transferManagers_.end()) {
@@ -5803,7 +5805,7 @@ JamiAccount::sendFile(const std::string& to,
         it = res.first;
     }
 
-    return std::to_string(it->second->sendFile(path, icb));
+    return it->second->sendFile(path, icb);
 }
 
 void
