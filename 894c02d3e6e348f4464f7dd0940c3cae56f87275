@@ -22,6 +22,30 @@
       "revId": "894c02d3e6e348f4464f7dd0940c3cae56f87275",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8b5bcca6_2d6a12e6",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 557,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T12:44:10Z",
+      "side": 1,
+      "message": "The polling rate (500ms) was somehow chosen arbitrarily, I agree we can do some experiments to figure the optimal value. A lower value would make sense. The idea is leave enough time to process other events (SIP transport in particular) or perform operations on this thread.\nRegarding the user experience, \nI don\u0027t there is any noticeable impact (especially if we reduce the polling rate). SIP events are rare compared to other events (e.g, media), and PJ_SIP will process most pending events (up to MAX_EVENTS. see pj_ioqueue_poll) in one call to pjsip_endpt_handle_events() method.\nThe problem is not with PJ_SIP supporting multi-threading or not, but the way it\u0027s integrated with our code.\nRunning all SIP/PS_SIP operations on a single thread would make things much simpler as already discussed.",
+      "parentUuid": "2f22ca70_28315ab8",
+      "range": {
+        "startLine": 552,
+        "startChar": 3,
+        "endLine": 557,
+        "endChar": 40
+      },
+      "revId": "894c02d3e6e348f4464f7dd0940c3cae56f87275",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
