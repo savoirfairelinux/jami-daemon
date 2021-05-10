@@ -38,24 +38,25 @@ class VideoInputTest : public CppUnit::TestFixture {
 public:
     static std::string name() { return "video_input"; }
 
+    VideoInputTest()
+    {
+        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        DRing::start("dring-sample.yml");
+    }
+
+    ~VideoInputTest() { DRing::fini(); }
+
 private:
     void testInput();
     void init_daemon();
+    void fini_daemon();
 
     CPPUNIT_TEST_SUITE(VideoInputTest);
-    CPPUNIT_TEST(init_daemon);
     CPPUNIT_TEST(testInput);
     CPPUNIT_TEST_SUITE_END();
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(VideoInputTest, VideoInputTest::name());
-
-void
-VideoInputTest::init_daemon()
-{
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-    DRing::start("dring-sample.yml");
-}
 
 void
 VideoInputTest::testInput()
