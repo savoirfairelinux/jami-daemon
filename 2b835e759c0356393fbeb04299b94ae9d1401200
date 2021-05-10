@@ -49,6 +49,30 @@
     },
     {
       "key": {
+        "uuid": "8d5308fe_72817b88",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T18:57:40Z",
+      "side": 1,
+      "message": "+1",
+      "parentUuid": "9e0abc03_c3f39160",
+      "range": {
+        "startLine": 223,
+        "startChar": 13,
+        "endLine": 242,
+        "endChar": 13
+      },
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "d1f36023_9f152df3",
         "filename": "src/jamidht/multiplexed_socket.cpp",
         "patchSetId": 7
@@ -93,6 +117,137 @@
       "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "e31901d6_2aa02286",
+        "filename": "src/jamidht/multiplexed_socket.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T18:57:40Z",
+      "side": 1,
+      "message": "The name and the documentation is not accurate (and a bit misleading). This method sets the callback, and the one in the implementation that reports the event.\nCould be something like setBeaconCb",
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6e7b019d_28f6ad8f",
+        "filename": "src/jamidht/multiplexed_socket.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T18:57:40Z",
+      "side": 1,
+      "message": "same as onBeacon",
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f58b802d_ac344df1",
+        "filename": "src/jamidht/multiplexed_socket.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T18:57:40Z",
+      "side": 1,
+      "message": "can we use a const here instead",
+      "range": {
+        "startLine": 249,
+        "startChar": 82,
+        "endLine": 249,
+        "endChar": 86
+      },
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e4af9246_8ccf24ed",
+        "filename": "src/jamidht/multiplexed_socket.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 251,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T18:57:40Z",
+      "side": 1,
+      "message": "only for testing I assume. If so, it should be protected.",
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "532f5bbd_878d68d5",
+        "filename": "test/unitTest/connectionManager/connectionManager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T18:57:40Z",
+      "side": 1,
+      "message": "copyright",
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "16b50cb5_cb43e0a8",
+        "filename": "test/unitTest/connectionManager/connectionManager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1040,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T18:57:40Z",
+      "side": 1,
+      "message": "very prone to errors",
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8460c36d_d235f3fd",
+        "filename": "test/unitTest/connectionManager/connectionManager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1131,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T18:57:40Z",
+      "side": 1,
+      "message": "does it need to be that long ?",
+      "range": {
+        "startLine": 1131,
+        "startChar": 56,
+        "endLine": 1131,
+        "endChar": 58
+      },
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }

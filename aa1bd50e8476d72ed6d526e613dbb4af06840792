@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "634da120_7012c14f",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T18:57:40Z",
+      "side": 1,
+      "message": "I dont think we the term fake...\nCould simply be version_ whis is initialized to PACKAGE_VERSION by default, and could be overridden by setVersion (aka setFakeVersion)",
+      "range": {
+        "startLine": 178,
+        "startChar": 25,
+        "endLine": 178,
+        "endChar": 37
+      },
+      "revId": "aa1bd50e8476d72ed6d526e613dbb4af06840792",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
