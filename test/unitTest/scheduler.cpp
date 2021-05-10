@@ -71,14 +71,14 @@ SchedulerTest::schedulerTest()
     for (unsigned i=0; i<N; i++)
         executor.run(task);
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(2), [&]{
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(3), [&]{
         return taskRun == N;
     }));
 
     for (unsigned i=0; i<N; i++)
         executor.scheduleIn(task, std::chrono::microseconds(1));
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(2), [&]{
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(3), [&]{
         return taskRun == 2 * N;
     }));
 
