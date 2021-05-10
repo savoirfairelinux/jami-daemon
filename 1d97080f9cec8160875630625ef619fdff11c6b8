@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "98eae8db_d0cc21ed",
+        "filename": "src/jamidht/multiplexed_socket.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T20:15:10Z",
+      "side": 1,
+      "message": "I also meant a const variable, something like:\nconstexpr auto SEND_BEACON_TIMEOUT \u003d std::chrono::milliseconds(3000);",
+      "range": {
+        "startLine": 249,
+        "startChar": 89,
+        "endLine": 249,
+        "endChar": 93
+      },
+      "revId": "1d97080f9cec8160875630625ef619fdff11c6b8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}

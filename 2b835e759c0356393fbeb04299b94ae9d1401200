@@ -410,6 +410,30 @@
       "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "614fb9fa_2ded593a",
+        "filename": "test/unitTest/connectionManager/connectionManager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1131,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T20:15:10Z",
+      "side": 1,
+      "message": "except when it fails. If we have a long list of test cases, we will wait 30s for every test that fail.",
+      "parentUuid": "d4fbf41c_35ff48c9",
+      "range": {
+        "startLine": 1131,
+        "startChar": 56,
+        "endLine": 1131,
+        "endChar": 58
+      },
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
