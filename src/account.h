@@ -550,7 +550,11 @@ protected:
     bool localModeratorsEnabled_;
     bool allModeratorsEnabled_;
 
-    bool multiStreamEnabled_;
+#if not(defined(__APPLE__) || __ANDROID__)
+    bool multiStreamEnabled_ {true};
+#else
+    bool multiStreamEnabled_ {false};
+#endif
 
     /**
      * private account codec searching functions
