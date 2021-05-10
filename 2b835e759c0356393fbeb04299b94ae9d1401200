@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9e0abc03_c3f39160",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-10T16:35:20Z",
+      "side": 1,
+      "message": "handle as a control packet",
+      "range": {
+        "startLine": 223,
+        "startChar": 13,
+        "endLine": 242,
+        "endChar": 13
+      },
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d1f36023_9f152df3",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 427,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-10T16:35:20Z",
+      "side": 1,
+      "message": "possible implementation: check if result is array or may (directly using `result`), and unpack as ChannelRequest or map-based structure depending on that.",
+      "range": {
+        "startLine": 427,
+        "startChar": 16,
+        "endLine": 427,
+        "endChar": 61
+      },
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
