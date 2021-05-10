@@ -22,6 +22,30 @@
       "revId": "aa1bd50e8476d72ed6d526e613dbb4af06840792",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ddbd84e6_6661ffaa",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T19:19:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "634da120_7012c14f",
+      "range": {
+        "startLine": 178,
+        "startChar": 25,
+        "endLine": 178,
+        "endChar": 37
+      },
+      "revId": "aa1bd50e8476d72ed6d526e613dbb4af06840792",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }

@@ -73,6 +73,30 @@
     },
     {
       "key": {
+        "uuid": "50d6d3fa_533793a7",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T19:19:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8d5308fe_72817b88",
+      "range": {
+        "startLine": 223,
+        "startChar": 13,
+        "endLine": 242,
+        "endChar": 13
+      },
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d1f36023_9f152df3",
         "filename": "src/jamidht/multiplexed_socket.cpp",
         "patchSetId": 7
@@ -137,6 +161,24 @@
     },
     {
       "key": {
+        "uuid": "40ef7d40_e25b4239",
+        "filename": "src/jamidht/multiplexed_socket.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T19:19:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e31901d6_2aa02286",
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "6e7b019d_28f6ad8f",
         "filename": "src/jamidht/multiplexed_socket.h",
         "patchSetId": 7
@@ -151,6 +193,24 @@
       "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4080150f_7f65e427",
+        "filename": "src/jamidht/multiplexed_socket.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T19:19:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6e7b019d_28f6ad8f",
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -177,6 +237,30 @@
     },
     {
       "key": {
+        "uuid": "85031ada_41438536",
+        "filename": "src/jamidht/multiplexed_socket.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T19:19:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f58b802d_ac344df1",
+      "range": {
+        "startLine": 249,
+        "startChar": 82,
+        "endLine": 249,
+        "endChar": 86
+      },
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "e4af9246_8ccf24ed",
         "filename": "src/jamidht/multiplexed_socket.h",
         "patchSetId": 7
@@ -191,6 +275,24 @@
       "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d5abbdfa_df2db989",
+        "filename": "src/jamidht/multiplexed_socket.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 251,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T19:19:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e4af9246_8ccf24ed",
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -211,6 +313,24 @@
     },
     {
       "key": {
+        "uuid": "d9af8d4a_1408be2c",
+        "filename": "test/unitTest/connectionManager/connectionManager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T19:19:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "532f5bbd_878d68d5",
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "16b50cb5_cb43e0a8",
         "filename": "test/unitTest/connectionManager/connectionManager.cpp",
         "patchSetId": 7
@@ -228,6 +348,24 @@
     },
     {
       "key": {
+        "uuid": "c0dec082_3a812058",
+        "filename": "test/unitTest/connectionManager/connectionManager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1040,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T19:19:45Z",
+      "side": 1,
+      "message": "not related to the patch, but testing isConnecting() is not really simple but this should not fail, even on very slow devices",
+      "parentUuid": "16b50cb5_cb43e0a8",
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "8460c36d_d235f3fd",
         "filename": "test/unitTest/connectionManager/connectionManager.cpp",
         "patchSetId": 7
@@ -239,6 +377,30 @@
       "writtenOn": "2021-05-10T18:57:40Z",
       "side": 1,
       "message": "does it need to be that long ?",
+      "range": {
+        "startLine": 1131,
+        "startChar": 56,
+        "endLine": 1131,
+        "endChar": 58
+      },
+      "revId": "2b835e759c0356393fbeb04299b94ae9d1401200",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d4fbf41c_35ff48c9",
+        "filename": "test/unitTest/connectionManager/connectionManager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1131,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T19:19:45Z",
+      "side": 1,
+      "message": "No 30 secs is enough, but this doesn\u0027t change anything",
+      "parentUuid": "8460c36d_d235f3fd",
       "range": {
         "startLine": 1131,
         "startChar": 56,
