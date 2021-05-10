@@ -46,6 +46,30 @@
       "revId": "894c02d3e6e348f4464f7dd0940c3cae56f87275",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1495b923_1530f769",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 557,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-10T14:49:10Z",
+      "side": 1,
+      "message": "We used to do pooling this way, and we worked to stop doing it because it\u0027s suboptimal from an engineering perspective:\n\n* sub-par user experience (adds unnecessary delays)\n* sub-par performance/energy consumption (pooling is waking up the CPU even when Jami is not used, and almost all the time there is nothing to do).",
+      "parentUuid": "8b5bcca6_2d6a12e6",
+      "range": {
+        "startLine": 552,
+        "startChar": 3,
+        "endLine": 557,
+        "endChar": 40
+      },
+      "revId": "894c02d3e6e348f4464f7dd0940c3cae56f87275",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
