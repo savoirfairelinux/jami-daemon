@@ -123,10 +123,14 @@ Account::Account(const std::string& accountID)
     , upnpEnabled_(true)
     , localModeratorsEnabled_(true)
     , allModeratorsEnabled_(true)
-    , multiStreamEnabled_(false)
 {
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
+    std::string platform = DRing::platform();
+    if (platform == "win32" || platform == "linux") {
+        multiStreamEnabled_ = true;
+        JAMI_DBG() << "MultiStream Enabled";
+    }
 }
 
 Account::~Account() {}
