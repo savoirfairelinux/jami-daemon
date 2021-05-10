@@ -1593,8 +1593,6 @@ SIPCall::initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
                  stream.mediaAttribute_->toString(true).c_str());
     }
 
-    assert(rtpStreams_.size() == mediaAttrList.size());
-
     JAMI_DBG("[call:%s] Created %lu Media streams", getCallId().c_str(), rtpStreams_.size());
 
     return rtpStreams_.size();
@@ -2318,10 +2316,20 @@ SIPCall::enterConference(const std::string& confId)
         JAMI_ERR("Unknown conference [%s]", confId.c_str());
         return;
     }
-    auto const& videoRtp = getVideoRtp();
-    if (videoRtp)
-        videoRtp->enterConference(conf.get());
+
+    auto videoRtp = getVideoRtp();
+    if (not videoRtp) {
+        // In conference, we need to have a video RTP session even
+        // if it's an audio only call
+        videoRtp = addDummyVideoRtpSession();
+        if (not videoRtp) {
+            throw std::runtime_error("Failed to create dummy RTP video session");
+        }
+    }
+
+    videoRtp->enterConference(conf.get());
 #endif
+
 #ifdef ENABLE_PLUGIN
     clearCallAVStreams();
 #endif
@@ -2338,6 +2346,34 @@ SIPCall::exitConference()
 #ifdef ENABLE_PLUGIN
     createCallAVStreams();
 #endif
+}
+
+std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>>
+SIPCall::getReceiveVideoFrameActiveWriter()
+{
+#ifdef ENABLE_VIDEO
+    auto videoRtp = getVideoRtp();
+    if (videoRtp)
+        return videoRtp->getReceiveVideoFrameActiveWriter();
+#endif
+
+    return {};
+}
+
+std::shared_ptr<video::VideoRtpSession>
+SIPCall::addDummyVideoRtpSession()
+{
+#ifdef ENABLE_VIDEO
+    MediaAttribute mediaAttr(MediaType::MEDIA_VIDEO, true, true, false, "", "dummy video session");
+    addMediaStream(mediaAttr);
+    auto& stream = rtpStreams_.back();
+    createRtpSession(stream);
+    if (stream.rtpSession_) {
+        return std::dynamic_pointer_cast<video::VideoRtpSession>(stream.rtpSession_);
+    }
+#endif
+
+    return {};
 }
 
 std::shared_ptr<AudioRtpSession>
