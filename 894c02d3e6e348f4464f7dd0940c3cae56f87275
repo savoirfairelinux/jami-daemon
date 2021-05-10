@@ -94,6 +94,30 @@
       "revId": "894c02d3e6e348f4464f7dd0940c3cae56f87275",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3e6fc5cf_7e094959",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 557,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-10T19:02:30Z",
+      "side": 1,
+      "message": "* It\u0027s a blocking loop, so that events are processed immediately, instead of being processed during the next loop.\n* 1s is to avoid a delay on shutdown but the goal is to remove the need for this 1s and be able to run with no wakeup if possible.",
+      "parentUuid": "dde0fe6a_7aebdc89",
+      "range": {
+        "startLine": 552,
+        "startChar": 3,
+        "endLine": 557,
+        "endChar": 40
+      },
+      "revId": "894c02d3e6e348f4464f7dd0940c3cae56f87275",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
