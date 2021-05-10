@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a49f378b_0ff19429",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 565,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T18:40:09Z",
+      "side": 1,
+      "message": "why wstring? if string avoid an unnecessary ifdef",
+      "range": {
+        "startLine": 565,
+        "startChar": 15,
+        "endLine": 565,
+        "endChar": 22
+      },
+      "revId": "f29d331c3febe4bdcc91e68c06d89d980f011581",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1fffcf77_7f01ae5f",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 640,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T18:40:09Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 640,
+        "startChar": 15,
+        "endLine": 640,
+        "endChar": 22
+      },
+      "revId": "f29d331c3febe4bdcc91e68c06d89d980f011581",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
