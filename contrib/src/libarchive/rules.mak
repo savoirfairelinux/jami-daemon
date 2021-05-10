@@ -1,6 +1,6 @@
 # LIBARCHIVE
-LIBARCHIVE_VERSION := 3.4.0
-LIBARCHIVE_URL := https://github.com/libarchive/libarchive/releases/download/v$(LIBARCHIVE_VERSION)/libarchive-$(LIBARCHIVE_VERSION).tar.gz
+LIBARCHIVE_VERSION := 3.5.1
+LIBARCHIVE_URL := https://github.com/libarchive/libarchive/releases/download/$(LIBARCHIVE_VERSION)/libarchive-$(LIBARCHIVE_VERSION).tar.xz
 
 ifndef HAVE_MACOSX
 PKGS += libarchive
@@ -20,13 +20,14 @@ LIBARCHIVE_CMAKECONF := \
 		-DENABLE_CAT=OFF \
 		-DENABLE_LIBXML2=OFF
 
-$(TARBALLS)/libarchive-$(LIBARCHIVE_VERSION).tar.gz:
+$(TARBALLS)/libarchive-$(LIBARCHIVE_VERSION).tar.xz:
 	$(call download,$(LIBARCHIVE_URL))
 
-.sum-libarchive: libarchive-$(LIBARCHIVE_VERSION).tar.gz
+.sum-libarchive: libarchive-$(LIBARCHIVE_VERSION).tar.xz
 
-libarchive: libarchive-$(LIBARCHIVE_VERSION).tar.gz
+libarchive: libarchive-$(LIBARCHIVE_VERSION).tar.xz
 	$(UNPACK)
+	$(APPLY) $(SRC)/libarchive/0001-disable-shared-library.patch
 	$(MOVE)
 
 .libarchive: libarchive toolchain.cmake .sum-libarchive
@@ -35,10 +36,5 @@ ifdef HAVE_ANDROID
 	cd $< && cp -R contrib/android/include/* $(PREFIX)/include
 endif
 	cd $< && cd buildlib && $(HOSTVARS) $(CMAKE) .. $(LIBARCHIVE_CMAKECONF)
-	cd $< && cd buildlib && $(MAKE) install
-ifdef HAVE_LINUX
-	cd $< && cd $(PREFIX)/lib && rm libarchive.so*
-else ifdef HAVE_DARWIN_OS
-	cd $< && cd $(PREFIX)/lib && rm libarchive*.dylib
-endif
+	cd $< && cd buildlib && $(MAKE) install VERBOSE=1
 	touch $@
