@@ -566,8 +566,8 @@ protected:
     bool localModeratorsEnabled_;
     bool allModeratorsEnabled_;
 
-    bool multiStreamEnabled_;
-    bool iceCompIdRfc5245Compliant_;
+    bool multiStreamEnabled_ {false};
+    bool iceCompIdRfc5245Compliant_ {false};
 
     /**
      * private account codec searching functions
