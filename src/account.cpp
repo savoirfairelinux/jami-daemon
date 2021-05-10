@@ -123,10 +123,11 @@ Account::Account(const std::string& accountID)
     , upnpEnabled_(true)
     , localModeratorsEnabled_(true)
     , allModeratorsEnabled_(true)
-    , multiStreamEnabled_(false)
 {
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
+    if (DRing::platform() == "win32" || DRing::platform() == "linux")
+        multiStreamEnabled_ = true;
 }
 
 Account::~Account() {}

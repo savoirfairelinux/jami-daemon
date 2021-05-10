@@ -151,15 +151,7 @@ public:
     void enterConference(const std::string& confId) override;
     void exitConference() override;
     std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>> getReceiveVideoFrameActiveWriter()
-        override
-    {
-        auto const& videoRtp = getVideoRtp();
-        if (videoRtp)
-            return videoRtp->getReceiveVideoFrameActiveWriter();
-
-        return nullptr;
-    }
-
+        override;
     bool hasVideo() const override;
     bool isAudioMuted() const override;
     bool isVideoMuted() const override;
@@ -257,6 +249,7 @@ public:
      * Returns a pointer to the VideoRtp object
      */
     std::shared_ptr<video::VideoRtpSession> getVideoRtp() const;
+    std::shared_ptr<video::VideoRtpSession> addDummyVideoRtpSession();
 #endif
 
     void setSecure(bool sec);
