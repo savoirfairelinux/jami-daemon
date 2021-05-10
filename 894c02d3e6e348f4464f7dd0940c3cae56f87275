@@ -70,6 +70,30 @@
       "revId": "894c02d3e6e348f4464f7dd0940c3cae56f87275",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dde0fe6a_7aebdc89",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 557,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T15:24:08Z",
+      "side": 1,
+      "message": "how running handleEvents() in an infinite loop is more optimal ? it\u0027s called with a time-out of 1s (meaining called every second).",
+      "parentUuid": "1495b923_1530f769",
+      "range": {
+        "startLine": 552,
+        "startChar": 3,
+        "endLine": 557,
+        "endChar": 40
+      },
+      "revId": "894c02d3e6e348f4464f7dd0940c3cae56f87275",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
