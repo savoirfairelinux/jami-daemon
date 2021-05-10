@@ -618,10 +618,16 @@ public:
                            const std::string& convId);
 
     // File transfer
-    // Note return nothing for swarm
-    std::string sendFile(const std::string& to,
+    void sendFile(const std::string& conversationId,
+                        const std::string& path,
+                        const std::string& name,
+                        const std::string& parent);
+
+    // non-swarm version
+    DRing::DataTransferId sendFile(const std::string& to,
                          const std::string& path,
                          const InternalCompletionCb& icb = {});
+
     void transferFile(const std::string& conversationId,
                       const std::string& path,
                       const std::string& deviceId,

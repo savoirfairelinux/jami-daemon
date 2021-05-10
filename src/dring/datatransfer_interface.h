@@ -108,7 +108,13 @@ struct DRING_PUBLIC DataTransferInfo
 /// DataTransferEvent signal for such event. There is no reserved or special values on
 /// DataTransferId type.
 ///
-DRING_PUBLIC DataTransferError sendFile(const DataTransferInfo& info, std::string& fileId) noexcept;
+DRING_PUBLIC DataTransferError sendFileLegacy(const DataTransferInfo& info, DataTransferId& tid) noexcept;
+
+DRING_PUBLIC void sendFile(const std::string& accountId,
+                              const std::string& conversationId,
+                              const std::string& path,
+                              const std::string& displayName,
+                              const std::string& parent) noexcept;
 
 /// Accept an incoming file transfer.
 ///

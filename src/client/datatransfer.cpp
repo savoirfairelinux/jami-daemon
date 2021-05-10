@@ -34,16 +34,24 @@ registerDataXferHandlers(const std::map<std::string, std::shared_ptr<CallbackWra
 }
 
 DataTransferError
-sendFile(const DataTransferInfo& info, std::string& fileId) noexcept
+sendFileLegacy(const DataTransferInfo& info, DataTransferId& tid) noexcept
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(info.accountId)) {
-        auto to = info.conversationId;
-        if (to.empty())
-            to = info.peer;
-        fileId = acc->sendFile(to, info.path);
+        tid = acc->sendFile(info.peer, info.path);
         return DRing::DataTransferError::success;
     }
     return DRing::DataTransferError::invalid_argument;
+}
+
+void sendFile(const std::string& accountId,
+                              const std::string& conversationId,
+                              const std::string& path,
+                              const std::string& displayName,
+                              const std::string& parent) noexcept
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        acc->sendFile(conversationId, path, displayName, parent);
+    }
 }
 
 DataTransferError
