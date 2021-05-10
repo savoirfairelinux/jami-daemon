@@ -550,7 +550,7 @@ protected:
     bool localModeratorsEnabled_;
     bool allModeratorsEnabled_;
 
-    bool multiStreamEnabled_;
+    bool multiStreamEnabled_ {false};
 
     /**
      * private account codec searching functions
