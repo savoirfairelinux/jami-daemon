@@ -856,14 +856,14 @@ IncomingFile::process()
 class TransferManager::Impl
 {
 public:
-    Impl(const std::string& accountId, const std::string& to, bool isConversation)
+    Impl(const std::string& accountId, const std::string& to)
         : accountId_(accountId)
         , to_(to)
-        , isConversation_(isConversation)
     {
-        waitingPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_
-                       + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + to_
-                       + DIR_SEPARATOR_STR + "waiting";
+        if (!to_.empty())
+            waitingPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_
+                           + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + to_
+                           + DIR_SEPARATOR_STR + "waiting";
         loadWaiting();
     }
 
@@ -899,7 +899,6 @@ public:
 
     std::string accountId_ {};
     std::string to_ {};
-    bool isConversation_ {true};
     std::string waitingPath_ {};
 
     // Pre swarm
@@ -913,19 +912,16 @@ public:
     std::map<std::string, std::shared_ptr<IncomingFile>> vcards_ {};
 };
 
-TransferManager::TransferManager(const std::string& accountId,
-                                 const std::string& to,
-                                 bool isConversation)
-    : pimpl_ {std::make_unique<Impl>(accountId, to, isConversation)}
+TransferManager::TransferManager(const std::string& accountId, const std::string& to)
+    : pimpl_ {std::make_unique<Impl>(accountId, to)}
 {}
 
 TransferManager::~TransferManager() {}
 
 DRing::DataTransferId
 TransferManager::sendFile(const std::string& path,
-                          const InternalCompletionCb& icb,
-                          const std::string&,
-                          DRing::DataTransferId resendId)
+                          const std::string& peer,
+                          const InternalCompletionCb& icb)
 {
     // IMPLEMENTATION NOTE: requestPeerConnection() may call the given callback a multiple time.
     // This happen when multiple agents handle communications of the given peer for the given
@@ -935,17 +931,14 @@ TransferManager::sendFile(const std::string& path,
         return {};
     }
 
-    auto tid = resendId ? resendId : generateUID();
+    auto tid = generateUID();
     std::size_t found = path.find_last_of(DIR_SEPARATOR_CH);
     auto filename = path.substr(found + 1);
 
     DRing::DataTransferInfo info;
     info.accountId = pimpl_->accountId_;
     info.author = account->getUsername();
-    if (pimpl_->isConversation_) {
-        info.conversationId = pimpl_->to_;
-    } else
-        info.peer = pimpl_->to_;
+    info.peer = peer;
     info.path = path;
     info.displayName = filename;
     info.bytesProgress = 0;
@@ -983,8 +976,7 @@ TransferManager::sendFile(const std::string& path,
                     transfer->cancel();
                     transfer->close();
                 }
-            },
-            !resendId /* only add to history if we not resend a file */);
+            });
     } catch (const std::exception& ex) {
         JAMI_ERR() << "[XFER] exception during sendFile(): " << ex.what();
         return {};
@@ -1045,7 +1037,7 @@ TransferManager::cancel(const std::string& fileId)
 {
     std::shared_ptr<ChannelSocket> channel;
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
-    if (pimpl_->isConversation_) {
+    if (!pimpl_->to_.empty()) {
         // Note: For now, there is no cancel for outgoings.
         // The client can just remove the file.
         auto itC = pimpl_->incomings_.find(fileId);
@@ -1074,7 +1066,7 @@ bool
 TransferManager::info(const DRing::DataTransferId& id, DRing::DataTransferInfo& info) const noexcept
 {
     std::unique_lock<std::mutex> lk {pimpl_->mapMutex_};
-    if (pimpl_->isConversation_)
+    if (!pimpl_->to_.empty())
         return false;
     // Else it's fallback
     if (auto it = pimpl_->iMap_.find(id); it != pimpl_->iMap_.end()) {
@@ -1097,54 +1089,34 @@ TransferManager::info(const std::string& fileId,
                       int64_t& progress) const noexcept
 {
     std::unique_lock<std::mutex> lk {pimpl_->mapMutex_};
-    if (pimpl_->isConversation_) {
-        auto itI = pimpl_->incomings_.find(fileId);
-        auto itW = pimpl_->waitingIds_.find(fileId);
-        path = this->path(fileId);
-        if (itI != pimpl_->incomings_.end()) {
-            total = itI->second->info().totalSize;
-            progress = itI->second->info().bytesProgress;
-            return true;
-        } else if (fileutils::isFile(path)) {
-            std::ifstream transfer(path, std::ios::binary);
-            transfer.seekg(0, std::ios::end);
-            progress = transfer.tellg();
-            if (itW != pimpl_->waitingIds_.end()) {
-                total = itW->second.totalSize;
-            } else {
-                // If not waiting it's finished
-                total = progress;
-            }
-            return true;
-        } else if (itW != pimpl_->waitingIds_.end()) {
-            total = itW->second.totalSize;
-            progress = 0;
-            return true;
-        }
-        // Else we don't know infos there.
-        progress = 0;
+    if (pimpl_->to_.empty())
         return false;
-    }
-    // Else it's fallback
-    auto tid = std::stoull(fileId);
-    if (auto it = pimpl_->iMap_.find(tid); it != pimpl_->iMap_.end()) {
-        if (it->second) {
-            DRing::DataTransferInfo info;
-            it->second->info(info);
-            path = info.path;
-            it->second->bytesProgress(total, progress);
+
+    auto itI = pimpl_->incomings_.find(fileId);
+    auto itW = pimpl_->waitingIds_.find(fileId);
+    path = this->path(fileId);
+    if (itI != pimpl_->incomings_.end()) {
+        total = itI->second->info().totalSize;
+        progress = itI->second->info().bytesProgress;
+        return true;
+    } else if (fileutils::isFile(path)) {
+        std::ifstream transfer(path, std::ios::binary);
+        transfer.seekg(0, std::ios::end);
+        progress = transfer.tellg();
+        if (itW != pimpl_->waitingIds_.end()) {
+            total = itW->second.totalSize;
+        } else {
+            // If not waiting it's finished
+            total = progress;
         }
         return true;
-    }
-    if (auto it = pimpl_->oMap_.find(tid); it != pimpl_->oMap_.end()) {
-        if (it->second) {
-            DRing::DataTransferInfo info;
-            it->second->info(info);
-            path = info.path;
-            it->second->bytesProgress(total, progress);
-        }
+    } else if (itW != pimpl_->waitingIds_.end()) {
+        total = itW->second.totalSize;
+        progress = 0;
         return true;
     }
+    // Else we don't know infos there.
+    progress = 0;
     return false;
 }
 
@@ -1179,7 +1151,7 @@ TransferManager::waitForTransfer(const std::string& fileId,
     if (itW != pimpl_->waitingIds_.end())
         return;
     pimpl_->waitingIds_[fileId] = {fileId, sha3sum, path, total};
-    if (pimpl_->isConversation_)
+    if (!pimpl_->to_.empty())
         pimpl_->saveWaiting();
 }
 

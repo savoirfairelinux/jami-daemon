@@ -113,21 +113,17 @@ private:
 class TransferManager : public std::enable_shared_from_this<TransferManager>
 {
 public:
-    TransferManager(const std::string& accountId, const std::string& to, bool isConversation = false);
+    TransferManager(const std::string& accountId, const std::string& to);
     ~TransferManager();
 
     /**
      * Send a file
      * @param path      of the file
+     * @param peer      DeviceId for vcard or dest
      * @param icb       used for internal files (like vcard)
-     * @param deviceId  if we only want to transmit to one device
-     * @param resendId  if we need to resend a file, just specify previous id there.
      */
     /*[[deprecated("Non swarm method")]]*/ DRing::DataTransferId sendFile(
-        const std::string& path,
-        const InternalCompletionCb& icb = {},
-        const std::string& deviceId = {},
-        DRing::DataTransferId resendId = {0});
+        const std::string& path, const std::string& peer, const InternalCompletionCb& icb = {});
 
     /**
      * Accepts a transfer

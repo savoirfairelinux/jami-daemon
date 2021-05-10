@@ -381,7 +381,6 @@ public:
      * @param isVcard if transfer is a vcard transfer
      * @param channeledConnectedCb callback when channel is connected
      * @param onChanneledCancelled callback when channel is canceled
-     * @param addToHistory if we need to add the transfer to the history
      */
     void requestConnection(
         const DRing::DataTransferInfo& info,
@@ -389,8 +388,7 @@ public:
         bool isVCard,
         const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
             channeledConnectedCb,
-        const std::function<void(const std::string&)>& onChanneledCancelled,
-        bool addToHistory);
+        const std::function<void(const std::string&)>& onChanneledCancelled);
 
     ///
     /// Close a E2E connection between a given peer and a given transfer id.
@@ -619,14 +617,14 @@ public:
 
     // File transfer
     void sendFile(const std::string& conversationId,
-                        const std::string& path,
-                        const std::string& name,
-                        const std::string& parent);
+                  const std::string& path,
+                  const std::string& name,
+                  const std::string& parent);
 
     // non-swarm version
-    DRing::DataTransferId sendFile(const std::string& to,
-                         const std::string& path,
-                         const InternalCompletionCb& icb = {});
+    DRing::DataTransferId sendFile(const std::string& peer,
+                                   const std::string& path,
+                                   const InternalCompletionCb& icb = {});
 
     void transferFile(const std::string& conversationId,
                       const std::string& path,

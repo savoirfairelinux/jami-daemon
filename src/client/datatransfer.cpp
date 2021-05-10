@@ -40,14 +40,16 @@ sendFileLegacy(const DataTransferInfo& info, DataTransferId& tid) noexcept
         tid = acc->sendFile(info.peer, info.path);
         return DRing::DataTransferError::success;
     }
+
     return DRing::DataTransferError::invalid_argument;
 }
 
-void sendFile(const std::string& accountId,
-                              const std::string& conversationId,
-                              const std::string& path,
-                              const std::string& displayName,
-                              const std::string& parent) noexcept
+void
+sendFile(const std::string& accountId,
+         const std::string& conversationId,
+         const std::string& path,
+         const std::string& displayName,
+         const std::string& parent) noexcept
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         acc->sendFile(conversationId, path, displayName, parent);
