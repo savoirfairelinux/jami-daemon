@@ -693,8 +693,8 @@
                 The caller phone number.
               </tp:docstring>
             </arg>
-            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
-            <arg type="aa{ss}" name="mediaList" direction="in">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In3" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="mediaList">
               <tp:docstring>
                 The list of media offered in the incoming call.
               </tp:docstring>
