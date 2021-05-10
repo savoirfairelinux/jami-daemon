@@ -41,10 +41,12 @@ public:
 private:
     void testInput();
     void init_daemon();
+    void fini_daemon();
 
     CPPUNIT_TEST_SUITE(VideoInputTest);
     CPPUNIT_TEST(init_daemon);
     CPPUNIT_TEST(testInput);
+    CPPUNIT_TEST(fini_daemon);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -64,6 +66,12 @@ VideoInputTest::testInput()
     std::string resource = DRing::Media::VideoProtocolPrefix::DISPLAY + sep + std::string(getenv("DISPLAY") ? : ":0.0");
     video::VideoInput video;
     video.switchInput(resource);
+}
+
+void
+VideoInputTest::fini_daemon()
+{
+        DRing::fini();
 }
 
 }} // namespace jami::test
