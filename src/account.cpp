@@ -123,7 +123,11 @@ Account::Account(const std::string& accountID)
     , upnpEnabled_(true)
     , localModeratorsEnabled_(true)
     , allModeratorsEnabled_(true)
+#if (defined(__linux__) and not defined(__ANDROID__)) || defined(WIN32)
+    , multiStreamEnabled_(true)
+#else
     , multiStreamEnabled_(false)
+#endif
     , iceCompIdRfc5245Compliant_(false)
 {
     // Initialize the codec order, used when creating a new account
