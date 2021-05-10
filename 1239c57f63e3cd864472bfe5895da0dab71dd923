@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "677ccdeb_65feedf5",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T20:15:57Z",
+      "side": 1,
+      "message": "right, I was confused by the way it was used. But anyway, it\u0027s not needed.",
+      "parentUuid": "d2587662_5819f290",
+      "range": {
+        "startLine": 157,
+        "startChar": 27,
+        "endLine": 157,
+        "endChar": 41
+      },
+      "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "47536bae_ea83e192",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 7
@@ -45,6 +69,30 @@
       "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ff10f831_39a2ca20",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 870,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T20:15:57Z",
+      "side": 1,
+      "message": "I believe I made it clearer hope by stressing on the difference between the ID and the index. But yes, we need to be careful, or may be use maps or sets to use only comp ID.",
+      "parentUuid": "47536bae_ea83e192",
+      "range": {
+        "startLine": 868,
+        "startChar": 0,
+        "endLine": 870,
+        "endChar": 26
+      },
+      "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -88,6 +136,30 @@
     },
     {
       "key": {
+        "uuid": "3f3be865_b9d661b6",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 664,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T20:15:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a4a87a93_7b0723dd",
+      "range": {
+        "startLine": 663,
+        "startChar": 52,
+        "endLine": 664,
+        "endChar": 64
+      },
+      "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "51d637ca_75837f22",
         "filename": "test/unitTest/ice/ice_sdp_parser.cpp",
         "patchSetId": 7
@@ -108,6 +180,30 @@
       "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f365b537_4ebc3c12",
+        "filename": "test/unitTest/ice/ice_sdp_parser.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 401,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T20:15:57Z",
+      "side": 1,
+      "message": "right.\ndone",
+      "parentUuid": "51d637ca_75837f22",
+      "range": {
+        "startLine": 401,
+        "startChar": 16,
+        "endLine": 401,
+        "endChar": 22
+      },
+      "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -134,6 +230,30 @@
     },
     {
       "key": {
+        "uuid": "239ea912_979918e6",
+        "filename": "test/unitTest/ice/ice_sdp_parser.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 451,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T20:15:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cf5b32d4_da63115e",
+      "range": {
+        "startLine": 449,
+        "startChar": 4,
+        "endLine": 451,
+        "endChar": 21
+      },
+      "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "aa1ce456_85075349",
         "filename": "test/unitTest/ice/ice_sdp_parser.cpp",
         "patchSetId": 7
@@ -154,6 +274,30 @@
       "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "04606edb_9ced2a2b",
+        "filename": "test/unitTest/ice/ice_sdp_parser.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 463,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-10T20:15:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aa1ce456_85075349",
+      "range": {
+        "startLine": 461,
+        "startChar": 11,
+        "endLine": 463,
+        "endChar": 5
+      },
+      "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
