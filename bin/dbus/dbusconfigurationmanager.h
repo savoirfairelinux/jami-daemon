@@ -215,7 +215,14 @@ public:
                                                          const std::string& uri);
     std::vector<std::map<std::string, std::string>> getContacts(const std::string& accountId);
     void connectivityChanged();
-    void sendFile(const RingDBusDataTransferInfo& info, uint32_t& error, std::string& fileId);
+    void sendFileLegacy(const RingDBusDataTransferInfo& info,
+                        uint32_t& error,
+                        DRing::DataTransferId& id);
+    void sendFile(const std::string& accountId,
+                  const std::string& conversationId,
+                  const std::string& path,
+                  const std::string& displayName,
+                  const std::string& parent);
     void dataTransferInfo(const std::string& accountId,
                           const std::string& fileId,
                           uint32_t& error,

@@ -975,8 +975,7 @@ JamiAccount::serialize(YAML::Emitter& out) const
     if (receiptSignature_.size() > 0)
         out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT_SIG << YAML::Value
             << YAML::Binary(receiptSignature_.data(), receiptSignature_.size());
-    out << YAML::Key << DRing::Account::ConfProperties::DEVICE_NAME << YAML::Value
-        << deviceName_;
+    out << YAML::Key << DRing::Account::ConfProperties::DEVICE_NAME << YAML::Value << deviceName_;
     out << YAML::Key << DRing::Account::ConfProperties::MANAGER_URI << YAML::Value << managerUri_;
     out << YAML::Key << DRing::Account::ConfProperties::MANAGER_USERNAME << YAML::Value
         << managerUsername_;
@@ -5755,25 +5754,22 @@ JamiAccount::sendFile(const std::string& conversationId,
             value["totalSize"] = std::to_string(fileutils::size(path));
             value["sha3sum"] = fileutils::sha3File(path);
             value["type"] = "application/data-transfer+json";
-            
+
             shared->sendMessage(conversationId,
                                 value,
                                 parent,
                                 true,
-                                [   accId = shared->getAccountID(),
-                                    conversationId,
-                                    tid,
-                                    path
-                                ](bool, const std::string& commitId) {
+                                [accId = shared->getAccountID(),
+                                 conversationId,
+                                 tid,
+                                 path](bool, const std::string& commitId) {
                                     // Create a symlink to answer to re-ask
-                                    auto symlinkPath = fileutils::get_data_dir()
-                                                        + DIR_SEPARATOR_STR + accId
-                                                        + DIR_SEPARATOR_STR + "conversation_data"
-                                                        + DIR_SEPARATOR_STR + conversationId
-                                                        + DIR_SEPARATOR_STR + commitId + "_"
-                                                        + std::to_string(tid);
-                                    if (path != symlinkPath
-                                        && !fileutils::isSymLink(symlinkPath))
+                                    auto symlinkPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR
+                                                       + accId + DIR_SEPARATOR_STR
+                                                       + "conversation_data" + DIR_SEPARATOR_STR
+                                                       + conversationId + DIR_SEPARATOR_STR
+                                                       + commitId + "_" + std::to_string(tid);
+                                    if (path != symlinkPath && !fileutils::isSymLink(symlinkPath))
                                         fileutils::createSymLink(symlinkPath, path);
                                 });
         }
@@ -5790,22 +5786,7 @@ JamiAccount::sendFile(const std::string& to,
         return {};
     }
 
-    std::unique_lock<std::mutex> lk(transferMutex_);
-    auto it = transferManagers_.find(to);
-    if (it == transferManagers_.end()) {
-        std::string accId = getAccountID();
-        auto tman = std::make_shared<TransferManager>(accId, to, false);
-        auto res = transferManagers_.emplace(std::piecewise_construct,
-                                             std::forward_as_tuple(to),
-                                             std::forward_as_tuple(tman));
-        if (!res.second) {
-            JAMI_ERR("Couldn't send file %s to %s", path.c_str(), to.c_str());
-            return {};
-        }
-        it = res.first;
-    }
-
-    return it->second->sendFile(path, icb);
+    return nonSwarmTransferManager_->sendFile(path, icb);
 }
 
 void

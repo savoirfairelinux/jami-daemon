@@ -745,9 +745,9 @@ DBusConfigurationManager::connectivityChanged()
 }
 
 void
-DBusConfigurationManager::sendFile(const RingDBusDataTransferInfo& in,
-                                   uint32_t& error,
-                                   std::string& fileId)
+DBusConfigurationManager::sendFileLegacy(const RingDBusDataTransferInfo& in,
+                                         uint32_t& error,
+                                         DRing::DataTransferId& id)
 {
     DRing::DataTransferInfo info;
     info.accountId = in._1;
@@ -761,7 +761,17 @@ DBusConfigurationManager::sendFile(const RingDBusDataTransferInfo& in,
     info.displayName = in._9;
     info.path = in._10;
     info.mimetype = in._11;
-    error = uint32_t(DRing::sendFile(info, fileId));
+    error = uint32_t(DRing::sendFileLegacy(info, id));
+}
+
+void
+DBusConfigurationManager::sendFile(const std::string& accountId,
+                                   const std::string& conversationId,
+                                   const std::string& path,
+                                   const std::string& displayName,
+                                   const std::string& parent)
+{
+    DRing::sendFile(accountId, conversationId, path, displayName, parent);
 }
 
 void
