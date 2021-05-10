@@ -2,6 +2,52 @@
   "comments": [
     {
       "key": {
+        "uuid": "d2587662_5819f290",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T18:57:10Z",
+      "side": 1,
+      "message": "cand_ store all candidates regardless the component linked. MAX_COMPONENTS !\u003d MAX_CANDIDATES",
+      "range": {
+        "startLine": 157,
+        "startChar": 27,
+        "endLine": 157,
+        "endChar": 41
+      },
+      "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "47536bae_ea83e192",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 870,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T18:57:10Z",
+      "side": 1,
+      "message": "id/idx can be a bit error prone",
+      "range": {
+        "startLine": 868,
+        "startChar": 0,
+        "endLine": 870,
+        "endChar": 26
+      },
+      "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "9163356f_3b21f214",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 7
@@ -16,6 +62,98 @@
       "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "a4a87a93_7b0723dd",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 664,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T18:57:10Z",
+      "side": 1,
+      "message": "probably yes",
+      "range": {
+        "startLine": 663,
+        "startChar": 52,
+        "endLine": 664,
+        "endChar": 64
+      },
+      "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "51d637ca_75837f22",
+        "filename": "test/unitTest/ice/ice_sdp_parser.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 401,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T18:57:10Z",
+      "side": 1,
+      "message": "just return true there, and the pred can be removed",
+      "range": {
+        "startLine": 401,
+        "startChar": 16,
+        "endLine": 401,
+        "endChar": 22
+      },
+      "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cf5b32d4_da63115e",
+        "filename": "test/unitTest/ice/ice_sdp_parser.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 451,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T18:57:10Z",
+      "side": 1,
+      "message": "this cannot happen as CPPUNIT_ASSERT() will stop the test on failure",
+      "range": {
+        "startLine": 449,
+        "startChar": 4,
+        "endLine": 451,
+        "endChar": 21
+      },
+      "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "aa1ce456_85075349",
+        "filename": "test/unitTest/ice/ice_sdp_parser.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 463,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-10T18:57:10Z",
+      "side": 1,
+      "message": "the assert will fail the test just after this line",
+      "range": {
+        "startLine": 461,
+        "startChar": 11,
+        "endLine": 463,
+        "endChar": 5
+      },
+      "revId": "1239c57f63e3cd864472bfe5895da0dab71dd923",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
