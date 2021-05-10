@@ -351,7 +351,7 @@ public:
     // clients must support this feature before it can be enabled by default.
     // These two internal APIs allow controlling the callflow accordingly. They
     // should be removed once the multi-stream feature is fully supported.
-    bool isMultiStreamEnabled() const { return multiStreamEnabled_; }
+    bool isMultiStreamEnabled() const { return true; }
     void enableMultiStream(bool enable) { multiStreamEnabled_ = enable; }
 
 public:
