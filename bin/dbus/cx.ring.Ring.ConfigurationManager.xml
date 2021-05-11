@@ -1595,9 +1595,9 @@
        <method name="sendFileLegacy" tp:name-for-bindings="sendFileLegacy">
            <tp:added version="10.0.0"/>
            <arg type="u" name="dataTransferError" direction="out"/>
-           <arg type="(suuxxssss)" name="DataTransferInfo" direction="in"/>
-           <arg type="t" name="dataTransferId" direction="out"/>
+           <arg type="(suuxxssssss)" name="DataTransferInfo" direction="in"/>
            <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="DataTransferInfo"/>
+           <arg type="t" name="dataTransferId" direction="out"/>
        </method>
 
        <method name="dataTransferInfo" tp:name-for-bindings="dataTransferInfo">
