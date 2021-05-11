@@ -125,12 +125,7 @@ Call::Call(const std::shared_ptr<Account>& account,
                 duration_start_ = clock::now();
             else if (cnx_state == ConnectionState::DISCONNECTED && call_state == CallState::OVER) {
                 if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(getAccount().lock())) {
-                    auto duration = duration_start_ == time_point::min()
-                                        ? 0
-                                        : std::chrono::duration_cast<std::chrono::milliseconds>(
-                                              clock::now() - duration_start_)
-                                              .count();
-                    jamiAccount->addCallHistoryMessage(getPeerNumber(), duration);
+                    jamiAccount->addCallHistoryMessage(getPeerNumber(), getCallDuration().count());
 
                     monitor();
                 }
