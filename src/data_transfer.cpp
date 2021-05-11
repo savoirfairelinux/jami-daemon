@@ -860,10 +860,12 @@ public:
         : accountId_(accountId)
         , to_(to)
     {
-        if (!to_.empty())
-            waitingPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_
-                           + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + to_
-                           + DIR_SEPARATOR_STR + "waiting";
+        if (!to_.empty()) {
+            auto waitingDir = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_
+                              + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + to_;
+            fileutils::check_dir(waitingDir.c_str());
+            waitingPath_ = waitingDir + DIR_SEPARATOR_STR + "waiting";
+        }
         loadWaiting();
     }
 
@@ -1047,17 +1049,21 @@ TransferManager::cancel(const std::string& fileId)
         return true;
     }
     // Else, this is fallack.
-    auto it = pimpl_->iMap_.find(std::stoull(fileId));
-    if (it != pimpl_->iMap_.end()) {
-        if (it->second)
-            it->second->close();
-        return true;
-    }
-    auto itO = pimpl_->oMap_.find(std::stoull(fileId));
-    if (itO != pimpl_->oMap_.end()) {
-        if (itO->second)
-            itO->second->close();
-        return true;
+    try {
+        auto it = pimpl_->iMap_.find(std::stoull(fileId));
+        if (it != pimpl_->iMap_.end()) {
+            if (it->second)
+                it->second->close();
+            return true;
+        }
+        auto itO = pimpl_->oMap_.find(std::stoull(fileId));
+        if (itO != pimpl_->oMap_.end()) {
+            if (itO->second)
+                itO->second->close();
+            return true;
+        }
+    } catch (...) {
+        JAMI_ERR() << "Invalid fileId: " << fileId;
     }
     return false;
 }
@@ -1151,6 +1157,7 @@ TransferManager::waitForTransfer(const std::string& fileId,
     if (itW != pimpl_->waitingIds_.end())
         return;
     pimpl_->waitingIds_[fileId] = {fileId, sha3sum, path, total};
+    JAMI_DBG() << "Wait for " << fileId;
     if (!pimpl_->to_.empty())
         pimpl_->saveWaiting();
 }

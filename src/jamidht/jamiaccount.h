@@ -735,6 +735,11 @@ private:
     void onTrackedBuddyOnline(const dht::InfoHash&);
 
     /**
+     * Sync conversations with detected peer
+     */
+    void syncConversations(const std::string& peer, const std::string& deviceId);
+
+    /**
      * Maps require port via UPnP and other async ops
      */
     void registerAsyncOps();

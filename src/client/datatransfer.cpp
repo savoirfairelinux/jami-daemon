@@ -62,10 +62,15 @@ acceptFileTransfer(const std::string& accountId,
                    const std::string& file_path) noexcept
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        if (auto dt = acc->dataTransfer())
-            return dt->acceptFile(std::stoull(fileId), file_path)
-                       ? DRing::DataTransferError::success
-                       : DRing::DataTransferError::invalid_argument;
+        if (auto dt = acc->dataTransfer()) {
+            try {
+                return dt->acceptFile(std::stoull(fileId), file_path)
+                           ? DRing::DataTransferError::success
+                           : DRing::DataTransferError::invalid_argument;
+            } catch (...) {
+                JAMI_ERR() << "Invalid file Id" << fileId;
+            }
+        }
     }
     return DRing::DataTransferError::invalid_argument;
 }
@@ -117,9 +122,15 @@ dataTransferInfo(const std::string& accountId,
                  DataTransferInfo& info) noexcept
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        if (auto dt = acc->dataTransfer())
-            return dt->info(std::stoull(fileId), info) ? DRing::DataTransferError::success
-                                                       : DRing::DataTransferError::invalid_argument;
+        if (auto dt = acc->dataTransfer()) {
+            try {
+                return dt->info(std::stoull(fileId), info)
+                           ? DRing::DataTransferError::success
+                           : DRing::DataTransferError::invalid_argument;
+            } catch (...) {
+                JAMI_ERR() << "Invalid fileId: " << fileId;
+            }
+        }
     }
     return DRing::DataTransferError::invalid_argument;
 }

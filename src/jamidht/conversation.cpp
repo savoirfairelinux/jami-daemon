@@ -796,6 +796,7 @@ Conversation::sync(const std::string& member,
                    OnPullCb&& cb,
                    std::string commitId)
 {
+    JAMI_INFO() << "Sync " << id() << " with " << deviceId;
     pull(deviceId, std::move(cb), commitId);
     // For waiting request, downloadFile
     for (const auto& wr : dataTransfer()->waitingRequests())
@@ -929,6 +930,7 @@ Conversation::downloadFile(const std::string& fileId,
                            std::size_t start,
                            std::size_t end)
 {
+    JAMI_ERR() << "@@@ DOWNLOAD " << fileId;
     auto commit = getCommit(fileId);
     if (commit == std::nullopt || commit->find("type") == commit->end()
         || commit->find("sha3sum") == commit->end() || commit->find("tid") == commit->end()
@@ -955,10 +957,15 @@ Conversation::downloadFile(const std::string& fileId,
         dht::ThreadPool().io().run(
             [w = pimpl_->account_, conversationId = id(), data = std::move(data), member, deviceId] {
                 if (auto shared = w.lock()) {
-                    if (!member.empty() && !deviceId.empty())
+                    if (!member.empty() && !deviceId.empty()) {
+                        JAMI_ERR() << "@@@ sendSIPMessageToDevice " << member;
+
                         shared->sendSIPMessageToDevice(member, DeviceId(deviceId), data);
-                    else
+                    } else {
+                        JAMI_ERR() << "@@@ sendInstantMessage " << conversationId;
+
                         shared->sendInstantMessage(conversationId, data);
+                    }
                 }
             });
     }
