@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4e7bd2f0_68539df3",
+        "filename": "src/account.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 354,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-11T16:22:24Z",
+      "side": 1,
+      "message": "the best would be to add enableMultiStream(true)  (in Account constructor) within an #ifdef/#endif\nexample:\n#if MULTISTREAM_ENABLED\nenableMultiStream(true);\n#endif\nthen build the daemon with the MULTISTREAM_ENABLED defined\nCXXFLAGS\u003d\"-DMULTISTREAM_ENABLED\" ./configure ...",
+      "revId": "11e835816b7d7213f625087c2f412d0e46042df4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
