@@ -154,7 +154,7 @@ CallTest::testCall()
     // TODO remove. This sleeps is because it take some time for the DHT to be connected
     // and account announced
     JAMI_INFO("Waiting....");
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(std::chrono::seconds(10));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
