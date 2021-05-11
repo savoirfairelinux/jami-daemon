@@ -2352,8 +2352,7 @@ SIPCall::monitor() const
         return;
     }
     JAMI_DBG("- Call %s with %s:", getCallId().c_str(), getPeerNumber().c_str());
-    // TODO move in getCallDuration
-    JAMI_DBG("\t- Duration: %s", dht::print_duration(clock::now() - duration_start_).c_str());
+    JAMI_DBG("\t- Duration: %s", dht::print_duration(getCallDuration()).c_str());
     for (auto& mediaAttr : getMediaAttributeList())
         JAMI_DBG("\t- Media: %s", mediaAttr.toString(true).c_str());
 #ifdef ENABLE_VIDEO
