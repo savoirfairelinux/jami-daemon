@@ -301,6 +301,17 @@ public:
         return parent_ != nullptr;
     }
 
+    /**
+     * @return Call duration in milliseconds
+     */
+    uint64_t getCallDuration() const
+    {
+            return duration_start_ == time_point::min()
+                    ? 0
+                    : std::chrono::duration_cast<std::chrono::milliseconds>(
+                            clock::now() - duration_start_).count();
+    }
+
 public: // media management
     virtual bool toggleRecording();
 
