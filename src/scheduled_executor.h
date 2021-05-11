@@ -137,7 +137,7 @@ private:
     void schedule(std::shared_ptr<Task>, time_point t);
     void reschedule(std::shared_ptr<RepeatedTask>, time_point t, duration dt);
 
-    std::atomic_bool running_ {true};
+    std::shared_ptr<std::atomic<bool>> running_;
     std::map<time_point, std::vector<Job>> jobs_ {};
     std::mutex jobLock_ {};
     std::condition_variable cv_ {};
