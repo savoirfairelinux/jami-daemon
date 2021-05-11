@@ -2153,7 +2153,7 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
         return;
     }
     buddy.listenToken
-        = dht->listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&&, bool expired) {
+        = dht->listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&& dev, bool expired) {
               bool wasConnected, isConnected;
               {
                   std::lock_guard<std::mutex> lock(buddyInfoMtx);
@@ -2170,6 +2170,7 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
               if (not expired) {
                   // Retry messages every time a new device announce its presence
                   messageEngine_.onPeerOnline(h.toString());
+                  requestSIPConnection(h.toString(), dev.dev);
               }
               if (isConnected and not wasConnected) {
                   onTrackedBuddyOnline(h);
@@ -2221,6 +2222,22 @@ JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
                                                             contactId.toString(),
                                                             0,
                                                             "");
+}
+
+void
+JamiAccount::syncConversations(const std::string& peer, const std::string& deviceId)
+{
+    // Sync conversations where peer is member
+    std::set<std::string> convIds;
+    {
+        std::unique_lock<std::mutex> lk(conversationsMtx_);
+        for (const auto& [cid, conv] : conversations_) {
+            if (conv->isMember(peer, true))
+                convIds.emplace(cid);
+        }
+    }
+    for (const auto& cid : convIds)
+        fetchNewCommits(peer, deviceId, cid);
 }
 
 void
@@ -2547,10 +2564,14 @@ JamiAccount::doRegister_()
                     DRing::DataTransferInfo info;
                     info.accountId = getAccountID();
                     info.peer = peerId;
-                    dhtPeerConnector_->onIncomingConnection(info,
-                                                            std::stoull(tid),
-                                                            std::move(channel),
-                                                            std::move(cb));
+                    try {
+                        dhtPeerConnector_->onIncomingConnection(info,
+                                                                std::stoull(tid),
+                                                                std::move(channel),
+                                                                std::move(cb));
+                    } catch (...) {
+                        JAMI_ERR() << "Invalid tid: " << tid;
+                    }
 
                 } else if (name.find("git://") == 0) {
                     auto sep = name.find_last_of('/');
@@ -4493,7 +4514,8 @@ JamiAccount::sendMessage(const std::string& conversationId,
             parent,
             [w = weak(), conversationId, announce, cb = std::move(cb)](bool ok,
                                                                        const std::string& commitId) {
-                cb(ok, commitId);
+                if (cb)
+                    cb(ok, commitId);
                 if (!announce)
                     return;
                 if (ok) {
@@ -5205,6 +5227,8 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     lk.unlock();
 
     sendProfile(deviceId.toString());
+
+    syncConversations(peerId, deviceId.toString());
 
     // Retry messages
     messageEngine_.onPeerOnline(peerId);

@@ -796,6 +796,7 @@ Conversation::sync(const std::string& member,
                    OnPullCb&& cb,
                    std::string commitId)
 {
+    JAMI_INFO() << "Sync " << id() << " with " << deviceId;
     pull(deviceId, std::move(cb), commitId);
     // For waiting request, downloadFile
     for (const auto& wr : dataTransfer()->waitingRequests())
