@@ -23,17 +23,32 @@
 namespace jami {
 
 ScheduledExecutor::ScheduledExecutor()
-    : thread_([this] {
-        while (running_.load())
-            loop();
+        : running_(std::make_shared<std::atomic<bool>>(true))
+        ,thread_([this] {
+
+            // The thread needs its own reference in case the scheduler is
+            // destroyed within the thread because of a job
+            auto is_running = running_;
+
+            while (*is_running)
+                    loop();
     })
 {}
 
 ScheduledExecutor::~ScheduledExecutor()
 {
     stop();
-    if (thread_.joinable())
-        thread_.join();
+
+    if (not thread_.joinable()) {
+            return;
+    }
+
+    // Avoid deadlock
+    if (std::this_thread::get_id() == thread_.get_id()) {
+            thread_.detach();
+    } else {
+            thread_.join();
+    }
 }
 
 void
@@ -41,7 +56,7 @@ ScheduledExecutor::stop()
 {
     {
         std::lock_guard<std::mutex> lock(jobLock_);
-        running_ = false;
+        *running_ = false;
         jobs_.clear();
     }
     cv_.notify_all();
@@ -106,7 +121,7 @@ ScheduledExecutor::loop()
     std::vector<Job> jobs;
     {
         std::unique_lock<std::mutex> lock(jobLock_);
-        while (running_ and (jobs_.empty() or jobs_.begin()->first > clock::now())) {
+        while (*running_ and (jobs_.empty() or jobs_.begin()->first > clock::now())) {
             if (jobs_.empty())
                 cv_.wait(lock);
             else {
@@ -114,7 +129,7 @@ ScheduledExecutor::loop()
                 cv_.wait_until(lock, nextJob);
             }
         }
-        if (not running_)
+        if (not *running_)
             return;
         jobs = std::move(jobs_.begin()->second);
         jobs_.erase(jobs_.begin());
