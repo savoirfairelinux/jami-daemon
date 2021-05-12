@@ -208,11 +208,6 @@ public:
      */
     std::vector<std::string> getLocalCandidates(unsigned comp_id) const;
 
-    /**
-     * Returns serialized ICE attributes and candidates.
-     */
-    std::vector<uint8_t> packIceMsg(uint8_t version = 1) const;
-
     bool getCandidateFromSDP(const std::string& line, IceCandidate& cand) const;
 
     // I/O methods

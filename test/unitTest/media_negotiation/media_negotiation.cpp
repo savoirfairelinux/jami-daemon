@@ -189,21 +189,28 @@ MediaNegotiationTest::setUp()
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::atomic_bool accountsReady {false};
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                bool ready = false;
-                auto details = aliceAccount->getVolatileAccountDetails();
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+        [&cv,
+         &accountsReady,
+         aliceAccW = aliceAccount->weak(),
+         bobAccW = bobAccount->weak()](const std::string&,
+                                       const std::map<std::string, std::string>&) {
+            bool ready = false;
+            if (auto acc = aliceAccW.lock()) {
+                auto details = acc->getVolatileAccountDetails();
                 auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
                 ready = (daemonStatus == "REGISTERED");
-                details = bobAccount->getVolatileAccountDetails();
-                daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+            }
+            if (auto acc = aliceAccW.lock()) {
+                auto details = acc->getVolatileAccountDetails();
+                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
                 ready &= (daemonStatus == "REGISTERED");
-                if (ready) {
-                    accountsReady = true;
-                    cv.notify_one();
-                }
-            }));
+            }
+            if (ready) {
+                accountsReady = true;
+                cv.notify_one();
+            }
+        }));
     DRing::registerSignalHandlers(confHandlers);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsReady.load(); }));
     DRing::unregisterSignalHandlers();

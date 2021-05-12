@@ -556,9 +556,9 @@ IceTransport::Impl::handleEvents(unsigned max_msec)
 void
 IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_status_t status)
 {
-    const char* opname = op == PJ_ICE_STRANS_OP_INIT          ? "initialization"
-                         : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation"
-                                                              : "unknown_op";
+    const char* opname = op == PJ_ICE_STRANS_OP_INIT
+                             ? "initialization"
+                             : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
@@ -1310,33 +1310,6 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
     }
 
     return res;
-}
-
-std::vector<uint8_t>
-IceTransport::packIceMsg(uint8_t version) const
-{
-    if (not isInitialized())
-        return {};
-
-    msgpack::sbuffer buffer;
-    if (version == 1) {
-        msgpack::pack(buffer, version);
-        msgpack::pack(buffer, std::make_pair(pimpl_->local_ufrag_, pimpl_->local_pwd_));
-        msgpack::pack(buffer, static_cast<uint8_t>(pimpl_->component_count_));
-        for (unsigned i = 1; i <= pimpl_->component_count_; i++)
-            msgpack::pack(buffer, getLocalCandidates(i));
-    } else {
-        SDP sdp;
-        sdp.ufrag = pimpl_->local_ufrag_;
-        sdp.pwd = pimpl_->local_pwd_;
-        for (unsigned i = 1; i <= pimpl_->component_count_; i++) {
-            auto candidates = getLocalCandidates(i);
-            sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
-            sdp.candidates.insert(sdp.candidates.end(), candidates.begin(), candidates.end());
-        }
-        msgpack::pack(buffer, sdp);
-    }
-    return std::vector<uint8_t>(buffer.data(), buffer.data() + buffer.size());
 }
 
 bool
