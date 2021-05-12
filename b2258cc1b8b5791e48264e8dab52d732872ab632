@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "68b5c0eb_a4baf44b",
+        "filename": "src/jamidht/multiplexed_socket.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-12T20:39:49Z",
+      "side": 1,
+      "message": "move to cpp",
+      "range": {
+        "startLine": 38,
+        "startChar": 0,
+        "endLine": 78,
+        "endChar": 2
+      },
+      "revId": "b2258cc1b8b5791e48264e8dab52d732872ab632",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3756fc9c_26afb974",
+        "filename": "src/jamidht/multiplexed_socket.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-12T20:39:49Z",
+      "side": 1,
+      "message": "bool",
+      "range": {
+        "startLine": 178,
+        "startChar": 48,
+        "endLine": 178,
+        "endChar": 57
+      },
+      "revId": "b2258cc1b8b5791e48264e8dab52d732872ab632",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "73320f25_77ff63a3",
+        "filename": "src/jamidht/multiplexed_socket.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-12T20:39:49Z",
+      "side": 1,
+      "message": "int",
+      "range": {
+        "startLine": 183,
+        "startChar": 49,
+        "endLine": 183,
+        "endChar": 59
+      },
+      "revId": "b2258cc1b8b5791e48264e8dab52d732872ab632",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
