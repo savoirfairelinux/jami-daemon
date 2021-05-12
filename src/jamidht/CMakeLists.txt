@@ -39,8 +39,6 @@ list (APPEND Source_Files__jamidht
       "${CMAKE_CURRENT_SOURCE_DIR}/jami_contact.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/server_account_manager.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/server_account_manager.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/sips_transport_ice.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/sips_transport_ice.h"
 )
 
 set (Source_Files__jamidht ${Source_Files__jamidht} PARENT_SCOPE)
