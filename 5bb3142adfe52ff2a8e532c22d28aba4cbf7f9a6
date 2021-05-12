@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b29e93e1_f16df010",
+        "filename": "src/account.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 553,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-12T12:26:22Z",
+      "side": 1,
+      "message": "use inclusive logic rather than exclusive even if it\u0027s longer:\n\n#if defined(__linux__) and not defined(__ANDROID__) || \\\n    defined (_WIN32)\n...\n#else\n...\n#endif\n\n\nAlso, you can use platform() and move the logic to Account constructor.",
+      "revId": "5bb3142adfe52ff2a8e532c22d28aba4cbf7f9a6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "57d5bc45_fe93b4a7",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2295,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-12T12:26:22Z",
+      "side": 1,
+      "message": "fix type (if)",
+      "range": {
+        "startLine": 2295,
+        "startChar": 11,
+        "endLine": 2295,
+        "endChar": 13
+      },
+      "revId": "5bb3142adfe52ff2a8e532c22d28aba4cbf7f9a6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}

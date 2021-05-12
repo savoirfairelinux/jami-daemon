@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f4936294_da5d7152",
+        "filename": "src/account.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-12T12:26:22Z",
+      "side": 0,
+      "message": "see comments in account.h",
+      "revId": "b1ab54fcdcb19bf628ae257624dd22c60a7e2f2d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
