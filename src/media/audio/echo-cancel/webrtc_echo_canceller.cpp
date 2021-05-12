@@ -39,7 +39,7 @@ struct WebRTCEchoCanceller::WebRTCAPMImpl
     APMPtr apm;
     webrtc::StreamConfig streamConfig;
 
-    WebRTCAPMImpl(AudioFormat format, unsigned frameSize)
+    WebRTCAPMImpl(AudioFormat format, unsigned)
         : streamConfig(format.sample_rate, format.nb_channels)
     {
         webrtc::ProcessingConfig pconfig;
@@ -128,7 +128,7 @@ WebRTCEchoCanceller::getProcessed()
                                   frameSize_,
                                   format_.nb_channels);
     std::vector<float*> playData {format_.nb_channels};
-    for (auto c = 0; c < format_.nb_channels; ++c) {
+    for (unsigned c = 0; c < format_.nb_channels; ++c) {
         playData[c] = fPlaybackBuffer_[c].data();
         iPlaybackBuffer_.channelToFloat(playData[c], c);
     }
@@ -141,7 +141,7 @@ WebRTCEchoCanceller::getProcessed()
                                 frameSize_,
                                 format_.nb_channels);
     std::vector<float*> recData {format_.nb_channels};
-    for (auto c = 0; c < format_.nb_channels; ++c) {
+    for (unsigned c = 0; c < format_.nb_channels; ++c) {
         recData[c] = fRecordBuffer_[c].data();
         iRecordBuffer_.channelToFloat(recData[c], c);
     }
