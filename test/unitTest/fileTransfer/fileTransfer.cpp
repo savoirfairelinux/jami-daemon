@@ -195,7 +195,7 @@ FileTransferTest::testCachedFileTransfer()
     // Create file to send
     std::ofstream sendFile("SEND");
     CPPUNIT_ASSERT(sendFile.is_open());
-    sendFile << std::string("A", 64000);
+    sendFile << std::string(64000, 'A');
     sendFile.close();
 
     // Send File
@@ -268,11 +268,11 @@ FileTransferTest::testMultipleFileTransfer()
     // Create file to send
     std::ofstream sendFile("SEND");
     CPPUNIT_ASSERT(sendFile.is_open());
-    sendFile << std::string("A", 64000);
+    sendFile << std::string(64000, 'A');
     sendFile.close();
     std::ofstream sendFile2("SEND2");
     CPPUNIT_ASSERT(sendFile2.is_open());
-    sendFile2 << std::string("B", 64000);
+    sendFile2 << std::string(64000, 'B');
     sendFile2.close();
 
     // Send first File
