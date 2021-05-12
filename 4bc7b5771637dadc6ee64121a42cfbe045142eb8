@@ -91,6 +91,52 @@
       "revId": "4bc7b5771637dadc6ee64121a42cfbe045142eb8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b7f13450_b0a3ef4c",
+        "filename": "src/jamidht/multiplexed_socket.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-12T16:19:56Z",
+      "side": 1,
+      "message": "struct BeaconMsg\n{\n    bool p;\n    MSGPACK_DEFINE_MAP(p)\n};",
+      "range": {
+        "startLine": 68,
+        "startChar": 0,
+        "endLine": 72,
+        "endChar": 2
+      },
+      "revId": "4bc7b5771637dadc6ee64121a42cfbe045142eb8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "79de8d4a_1cdb845b",
+        "filename": "src/jamidht/multiplexed_socket.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-12T16:19:56Z",
+      "side": 1,
+      "message": "struct VersionMsg\n{\n    int v;\n    MSGPACK_DEFINE_MAP(v)\n};",
+      "range": {
+        "startLine": 74,
+        "startChar": 0,
+        "endLine": 78,
+        "endChar": 2
+      },
+      "revId": "4bc7b5771637dadc6ee64121a42cfbe045142eb8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
