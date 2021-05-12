@@ -115,12 +115,8 @@ public:
 
     void setIsIceTransport() { isIceTransport_ = true; }
     void setIsChanneledTransport() { isChanneledTransport_ = true; }
-    inline void setAccount(const std::shared_ptr<SIPAccountBase>& account) {
-        account_ = account;
-    }
-    inline const std::weak_ptr<SIPAccountBase>& getAccount() const {
-        return account_;
-    }
+    inline void setAccount(const std::shared_ptr<SIPAccountBase>& account) { account_ = account; }
+    inline const std::weak_ptr<SIPAccountBase>& getAccount() const { return account_; }
 
     uint16_t getTlsMtu();
 
@@ -163,10 +159,6 @@ public:
     std::shared_ptr<SipTransport> getTlsTransport(const std::shared_ptr<TlsListener>&,
                                                   const IpAddr& remote,
                                                   const std::string& remote_name = {});
-
-    std::shared_ptr<SipTransport> getTlsIceTransport(const std::shared_ptr<IceTransport>&,
-                                                     unsigned comp_id,
-                                                     const tls::TlsParams&);
 
     std::shared_ptr<SipTransport> addTransport(pjsip_transport*);
 

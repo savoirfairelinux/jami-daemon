@@ -45,7 +45,6 @@
 #include "sip/siptransport.h"
 #include "sip/sip_utils.h"
 
-#include "sips_transport_ice.h"
 #include "ice_transport.h"
 
 #include "p2p.h"
@@ -346,6 +345,8 @@ JamiAccount::~JamiAccount()
 void
 JamiAccount::shutdownConnections()
 {
+    JAMI_DBG("[Account %s] Shutdown connections", getAccountID().c_str());
+
     decltype(gitServers_) gservers;
     {
         std::lock_guard<std::mutex> lk(gitServersMtx_);
@@ -378,8 +379,6 @@ JamiAccount::newIncomingCall(const std::string& from,
                              const std::map<std::string, std::string>& details,
                              const std::shared_ptr<SipTransport>& sipTr)
 {
-    std::lock_guard<std::mutex> lock(callsMutex_);
-
     if (sipTr) {
         std::unique_lock<std::mutex> lk(sipConnsMtx_);
         for (auto& [key, value] : sipConns_) {
@@ -402,23 +401,6 @@ JamiAccount::newIncomingCall(const std::string& from,
         lk.unlock();
     }
 
-    auto call_it = pendingSipCalls_.begin();
-    while (call_it != pendingSipCalls_.end()) {
-        auto call = call_it->call.lock();
-        if (not call) {
-            JAMI_WARN("newIncomingCall: discarding deleted call");
-            call_it = pendingSipCalls_.erase(call_it);
-        } else if (call->getPeerNumber() == from
-                   || (call_it->from_cert and call_it->from_cert->issuer
-                       and call_it->from_cert->issuer->getId().toString() == from)) {
-            JAMI_DBG("newIncomingCall: found matching call for %s", from.c_str());
-            pendingSipCalls_.erase(call_it);
-            call->updateDetails(details);
-            return call;
-        } else {
-            ++call_it;
-        }
-    }
     JAMI_ERR("newIncomingCall: can't find matching call for %s", from.c_str());
     return nullptr;
 }
@@ -447,24 +429,6 @@ JamiAccount::newIncomingCall(const std::string& from,
                     return call;
                 }
             }
-        }
-    }
-
-    std::lock_guard<std::mutex> lock(callsMutex_);
-    auto call_it = pendingSipCalls_.begin();
-    while (call_it != pendingSipCalls_.end()) {
-        auto call = call_it->call.lock();
-        if (not call) {
-            JAMI_WARN("newIncomingCall: discarding deleted call");
-            call_it = pendingSipCalls_.erase(call_it);
-        } else if (call->getPeerNumber() == from
-                   || (call_it->from_cert and call_it->from_cert->issuer
-                       and call_it->from_cert->issuer->getId().toString() == from)) {
-            JAMI_DBG("newIncomingCall: found matching call for %s", from.c_str());
-            pendingSipCalls_.erase(call_it);
-            return call;
-        } else {
-            call_it++;
         }
     }
 
@@ -774,11 +738,11 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
                 return;
 
             const auto localAddress = ip_utils::getInterfaceAddr(shared->getLocalInterface(),
-                                                                target.getFamily());
+                                                                 target.getFamily());
 
             IpAddr addrSdp = shared->getPublishedSameasLocal()
-                                ? localAddress
-                                : shared->getPublishedIpAddress(target.getFamily());
+                                 ? localAddress
+                                 : shared->getPublishedIpAddress(target.getFamily());
 
             // fallback on local address
             if (not addrSdp)
@@ -967,8 +931,7 @@ JamiAccount::serialize(YAML::Emitter& out) const
     if (receiptSignature_.size() > 0)
         out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT_SIG << YAML::Value
             << YAML::Binary(receiptSignature_.data(), receiptSignature_.size());
-    out << YAML::Key << DRing::Account::ConfProperties::DEVICE_NAME << YAML::Value
-        << deviceName_;
+    out << YAML::Key << DRing::Account::ConfProperties::DEVICE_NAME << YAML::Value << deviceName_;
     out << YAML::Key << DRing::Account::ConfProperties::MANAGER_URI << YAML::Value << managerUri_;
     out << YAML::Key << DRing::Account::ConfProperties::MANAGER_USERNAME << YAML::Value
         << managerUsername_;
@@ -1654,34 +1617,6 @@ JamiAccount::searchUser(const std::string& query)
     return false;
 }
 
-void
-JamiAccount::checkPendingCall(const std::string& callId)
-{
-    // Note only one check at a time. In fact, the UDP and TCP negotiation
-    // can finish at the same time and we need to avoid potential race conditions.
-    std::lock_guard<std::mutex> lk(callsMutex_);
-    auto it = pendingCallsDht_.find(callId);
-    if (it == pendingCallsDht_.end())
-        return;
-
-    bool incoming = !it->second.call_key;
-    bool handled;
-    try {
-        handled = handlePendingCall(it->second, incoming);
-    } catch (const std::exception& e) {
-        JAMI_ERR("[DHT] exception during pending call handling: %s", e.what());
-        handled = true; // drop from pending list
-    }
-
-    if (handled) {
-        if (not incoming) {
-            // Cancel pending listen (outgoing call)
-            dht_->cancelListen(it->second.call_key, std::move(it->second.listen_key));
-        }
-        pendingCallsDht_.erase(it);
-    }
-}
-
 pj_status_t
 JamiAccount::checkPeerTlsCertificate(dht::InfoHash from,
                                      dht::InfoHash from_account,
@@ -1735,176 +1670,6 @@ JamiAccount::checkPeerTlsCertificate(dht::InfoHash from,
     JAMI_DBG("[peer:%s] Certificate verified", from.toString().c_str());
     cert_out = std::move(crt);
     return PJ_SUCCESS;
-}
-
-bool
-JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
-{
-    auto call = pc.call.lock();
-    // Cleanup pending call if call is over (cancelled by user or any other reason)
-    if (not call || call->getState() == Call::CallState::OVER)
-        return true;
-
-    if ((std::chrono::steady_clock::now() - pc.start) >= ICE_NEGOTIATION_TIMEOUT) {
-        JAMI_WARN("[call:%s] Timeout on ICE negotiation", call->getCallId().c_str());
-        call->onFailure();
-        return true;
-    }
-
-    auto ice_tcp = pc.ice_tcp_sp.get();
-    auto ice = pc.ice_sp.get();
-
-    bool tcp_finished = ice_tcp == nullptr || ice_tcp->isStopped();
-    bool udp_finished = ice == nullptr || ice->isStopped();
-
-    if (not udp_finished and ice->isFailed()) {
-        udp_finished = true;
-    }
-
-    if (not tcp_finished and ice_tcp->isFailed()) {
-        tcp_finished = true;
-    }
-
-    // At least wait for TCP
-    if (not tcp_finished and not ice_tcp->isRunning()) {
-        return false;
-    } else if (tcp_finished and (not ice_tcp or not ice_tcp->isRunning())) {
-        // If TCP is finished but not running, wait for UDP
-        if (not udp_finished and ice and not ice->isRunning()) {
-            return false;
-        }
-    }
-
-    udp_finished = ice && ice->isRunning();
-    if (udp_finished)
-        JAMI_INFO("[call:%s] UDP negotiation is ready", call->getCallId().c_str());
-    tcp_finished = ice_tcp && ice_tcp->isRunning();
-    if (tcp_finished)
-        JAMI_INFO("[call:%s] TCP negotiation is ready", call->getCallId().c_str());
-    // If both transport are not running, the negotiation failed
-    if (not udp_finished and not tcp_finished) {
-        JAMI_ERR("[call:%s] Both ICE negotiations failed", call->getCallId().c_str());
-        call->onFailure();
-        return true;
-    }
-
-    // Securize a SIP transport with TLS (on top of ICE tranport) and assign the call with it
-    auto remote_device = pc.from;
-    auto remote_account = pc.from_account;
-    auto id = id_;
-    if (not id.first or not id.second)
-        throw std::runtime_error("No identity configured for this account.");
-
-    std::weak_ptr<JamiAccount> waccount = weak();
-    std::weak_ptr<SIPCall> wcall = call;
-    tls::TlsParams tlsParams {
-        /*.ca_list = */ "",
-        /*.ca = */ pc.from_cert,
-        /*.cert = */ id.second,
-        /*.cert_key = */ id.first,
-        /*.dh_params = */ dhParams_,
-        /*.timeout = */ TLS_TIMEOUT,
-        /*.cert_check = */
-        [waccount, wcall, remote_device, remote_account](unsigned status,
-                                                         const gnutls_datum_t* cert_list,
-                                                         unsigned cert_num) -> pj_status_t {
-            try {
-                if (auto call = wcall.lock()) {
-                    if (auto sthis = waccount.lock()) {
-                        auto& this_ = *sthis;
-                        std::shared_ptr<dht::crypto::Certificate> peer_cert;
-                        auto ret = this_.checkPeerTlsCertificate(remote_device,
-                                                                 remote_account,
-                                                                 status,
-                                                                 cert_list,
-                                                                 cert_num,
-                                                                 peer_cert);
-                        if (ret == PJ_SUCCESS and peer_cert) {
-                            std::lock_guard<std::mutex> lock(this_.callsMutex_);
-                            for (auto& pscall : this_.pendingSipCalls_) {
-                                if (auto pcall = pscall.call.lock()) {
-                                    if (pcall == call and not pscall.from_cert) {
-                                        JAMI_DBG(
-                                            "[call:%s] got peer certificate from TLS negotiation",
-                                            call->getCallId().c_str());
-                                        tls::CertificateStore::instance().pinCertificate(peer_cert);
-                                        pscall.from_cert = peer_cert;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        return ret;
-                    }
-                }
-                return PJ_SSL_CERT_EUNTRUSTED;
-            } catch (const std::exception& e) {
-                JAMI_ERR("[peer:%s] TLS certificate check exception: %s",
-                         remote_device.toString().c_str(),
-                         e.what());
-                return PJ_SSL_CERT_EUNKNOWN;
-            }
-        }};
-
-    auto best_transport = pc.ice_tcp_sp;
-    if (!tcp_finished) {
-        JAMI_DBG("TCP not running, will use SIP over UDP");
-        best_transport = pc.ice_sp;
-        // Move the ice destruction in its own thread to avoid
-        // slow operations on main thread
-        dht::ThreadPool::io().run([ice = std::move(pc.ice_tcp_sp)] {});
-    } else {
-        dht::ThreadPool::io().run([ice = std::move(pc.ice_sp)] {});
-    }
-
-    // Following can create a transport that need to be negotiated (TLS).
-    // This is a asynchronous task. So we're going to process the SIP after this negotiation.
-    auto transport = link_.sipTransportBroker->getTlsIceTransport(best_transport,
-                                                                  ICE_COMP_SIP_TRANSPORT,
-                                                                  tlsParams);
-    if (!transport)
-        throw std::runtime_error("transport creation failed");
-
-    transport->setAccount(shared());
-    call->setTransport(transport);
-
-    if (incoming) {
-        pendingSipCalls_.emplace_back(std::move(pc)); // copy of pc
-    } else {
-        // Be acknowledged on transport connection/disconnection
-        auto lid = reinterpret_cast<uintptr_t>(this);
-        auto remote_id = remote_device.toString();
-        auto remote_addr = best_transport->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
-        auto& tr_self = *transport;
-
-        transport->addStateListener(lid,
-                                    [&tr_self,
-                                     lid,
-                                     wcall,
-                                     waccount,
-                                     remote_id,
-                                     remote_addr](pjsip_transport_state state,
-                                                  UNUSED const pjsip_transport_state_info* info) {
-                                        if (state == PJSIP_TP_STATE_CONNECTED) {
-                                            if (auto call = wcall.lock()) {
-                                                if (auto account = waccount.lock()) {
-                                                    // Start SIP layer when TLS negotiation is successful
-                                                    account->onConnectedOutgoingCall(call,
-                                                                                     remote_id,
-                                                                                     remote_addr);
-                                                    return;
-                                                }
-                                            }
-                                        } else if (state == PJSIP_TP_STATE_DISCONNECTED) {
-                                            tr_self.removeStateListener(lid);
-                                        }
-                                    });
-    }
-
-    // Notify of fully available connection between peers
-    call->setState(Call::ConnectionState::PROGRESSING);
-
-    return true;
 }
 
 void
@@ -2089,6 +1854,8 @@ JamiAccount::loadBootstrap() const
 void
 JamiAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
 {
+    JAMI_DBG("[Account %s] Track buddy [%s] presence", getAccountID().c_str(), buddy_id.c_str());
+
     std::string buddyUri;
 
     try {
@@ -2233,7 +2000,6 @@ JamiAccount::doRegister_()
         if (not accountManager_ or not accountManager_->getInfo())
             throw std::runtime_error("No identity configured for this account.");
 
-        loadTreatedCalls();
         loadTreatedMessages();
         if (dht_->isRunning()) {
             JAMI_ERR("[Account %s] DHT already running (stopping it first).",
@@ -2589,37 +2355,7 @@ JamiAccount::doRegister_()
         });
         lkCM.unlock();
 
-        // Listen for incoming calls
-        callKey_ = dht::InfoHash::get("callto:" + accountManager_->getInfo()->deviceId);
-        JAMI_DBG("[Account %s] Listening on callto:%s : %s",
-                 getAccountID().c_str(),
-                 accountManager_->getInfo()->deviceId.c_str(),
-                 callKey_.toString().c_str());
-        dht_->listen<dht::IceCandidates>(callKey_, [this](dht::IceCandidates&& msg) {
-            // callback for incoming call
-            auto from = msg.from;
-            if (from == dht_->getId())
-                return true;
-
-            auto res = treatedCalls_.insert(msg.id);
-            saveTreatedCalls();
-            if (!res.second)
-                return true;
-
-            JAMI_WARN("[Account %s] ICE candidate from %s.",
-                      getAccountID().c_str(),
-                      from.toString().c_str());
-
-            accountManager_->onPeerMessage(
-                from,
-                dhtPublicInCalls_,
-                [this, msg = std::move(msg)](const std::shared_ptr<dht::crypto::Certificate>& cert,
-                                             const dht::InfoHash& account) mutable {
-                    incomingCall(std::move(msg), cert, account);
-                });
-            return true;
-        });
-
+        // Note: this code should be unused unless for DHT text messages
         auto inboxDeviceKey = dht::InfoHash::get("inbox:" + accountManager_->getInfo()->deviceId);
         dht_->listen<dht::ImMessage>(inboxDeviceKey, [this, inboxDeviceKey](dht::ImMessage&& v) {
             auto msgId = to_hex_string(v.id);
@@ -2732,135 +2468,6 @@ JamiAccount::onTextMessage(const std::string& id,
 }
 
 void
-JamiAccount::incomingCall(dht::IceCandidates&& msg,
-                          const std::shared_ptr<dht::crypto::Certificate>& from_cert,
-                          const dht::InfoHash& from)
-{
-    auto call = Manager::instance().callFactory.newSipCall(shared(), Call::CallType::INCOMING);
-    if (!call) {
-        return;
-    }
-    auto callId = call->getCallId();
-    getIceOptions([=](auto&& iceOptions) {
-        iceOptions.onNegoDone = [callId, w = weak()](bool) {
-            runOnMainThread([callId, w]() {
-                if (auto shared = w.lock())
-                    shared->checkPendingCall(callId);
-            });
-        };
-        auto ice = createIceTransport(("sip:" + call->getCallId()).c_str(),
-                                    ICE_COMPONENTS,
-                                    false,
-                                    iceOptions);
-        iceOptions.tcpEnable = true;
-        auto ice_tcp = createIceTransport(("sip:" + call->getCallId()).c_str(),
-                                        ICE_COMPONENTS,
-                                        true,
-                                        iceOptions);
-
-        std::weak_ptr<SIPCall> wcall = call;
-        Manager::instance().addTask([account = shared(), wcall, ice, ice_tcp, msg, from_cert, from] {
-            auto call = wcall.lock();
-
-            // call aborted?
-            if (not call)
-                return false;
-
-            if (ice->isFailed()) {
-                JAMI_ERR("[call:%s] ice init failed", call->getCallId().c_str());
-                call->onFailure(EIO);
-                return false;
-            }
-
-            // Loop until ICE transport is initialized.
-            // Note: we suppose that ICE init routine has a an internal timeout (bounded in time)
-            // and we let upper layers decide when the call shall be aborted (our first check upper).
-            if ((not ice->isInitialized()) || (ice_tcp && !ice_tcp->isInitialized()))
-                return true;
-
-            account->replyToIncomingIceMsg(call, ice, ice_tcp, msg, from_cert, from);
-            return false;
-        });
-    });
-}
-
-void
-JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
-                                   const std::shared_ptr<IceTransport>& ice,
-                                   const std::shared_ptr<IceTransport>& ice_tcp,
-                                   const dht::IceCandidates& peer_ice_msg,
-                                   const std::shared_ptr<dht::crypto::Certificate>& from_cert,
-                                   const dht::InfoHash& from_id)
-{
-    auto from = from_id.toString();
-    call->setPeerUri(JAMI_URI_PREFIX + from);
-    std::weak_ptr<SIPCall> wcall = call;
-#if HAVE_RINGNS
-    accountManager_->lookupAddress(from,
-                                   [wcall](const std::string& result,
-                                           const NameDirectory::Response& response) {
-                                       if (response == NameDirectory::Response::found)
-                                           if (auto call = wcall.lock()) {
-                                               call->setPeerRegisteredName(result);
-                                               call->setPeerUri(JAMI_URI_PREFIX + result);
-                                           }
-                                   });
-#endif
-
-    auto blob = ice->packIceMsg();
-    if (ice_tcp) {
-        auto ice_tcp_msg = ice_tcp->packIceMsg(2);
-        blob.insert(blob.end(), ice_tcp_msg.begin(), ice_tcp_msg.end());
-    }
-
-    // Asynchronous DHT put of our local ICE data
-    dht_->putEncrypted(callKey_,
-                       peer_ice_msg.from,
-                       dht::Value {dht::IceCandidates(peer_ice_msg.id, blob)},
-                       [wcall](bool ok) {
-                           if (!ok) {
-                               JAMI_WARN("Can't put ICE descriptor reply on DHT");
-                               if (auto call = wcall.lock())
-                                   call->onFailure();
-                           } else
-                               JAMI_DBG("Successfully put ICE descriptor reply on DHT");
-                       });
-
-    auto started_time = std::chrono::steady_clock::now();
-
-    auto sdp_list = IceTransport::parseSDPList(peer_ice_msg.ice_data);
-    auto udp_failed = true, tcp_failed = true;
-    initICE(peer_ice_msg.ice_data, ice, ice_tcp, udp_failed, tcp_failed);
-
-    if (udp_failed && tcp_failed) {
-        call->onFailure(EIO);
-        return;
-    }
-
-    call->setPeerNumber(from);
-
-    // Let the call handled by the PendingCall handler loop
-    std::lock_guard<std::mutex> lock(callsMutex_);
-    pendingCallsDht_.emplace(call->getCallId(),
-                             PendingCall {/*.start = */ started_time,
-                                          /*.ice_sp = */ udp_failed ? nullptr : ice,
-                                          /*.ice_tcp_sp = */ tcp_failed ? nullptr : ice_tcp,
-                                          /*.call = */ wcall,
-                                          /*.listen_key = */ {},
-                                          /*.call_key = */ {},
-                                          /*.from = */ peer_ice_msg.from,
-                                          /*.from_account = */ from_id,
-                                          /*.from_cert = */ from_cert});
-
-    Manager::instance().scheduleTaskIn(
-        [w = weak(), callId = call->getCallId()]() {
-            if (auto shared = w.lock())
-                shared->checkPendingCall(callId);
-        },
-        ICE_NEGOTIATION_TIMEOUT);
-}
-
-void
 JamiAccount::doUnregister(std::function<void(bool)> released_cb)
 {
     std::unique_lock<std::mutex> lock(configurationMutex_);
@@ -2878,12 +2485,6 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
         JAMI_WARN("[Account %s] dht shutdown complete", getAccountID().c_str());
         setRegistrationState(RegistrationState::UNREGISTERED);
     });
-
-    {
-        std::lock_guard<std::mutex> lock(callsMutex_);
-        pendingCallsDht_.clear();
-        pendingSipCalls_.clear();
-    }
 
     {
         std::lock_guard<std::mutex> lk(pendingCallsMutex_);
@@ -3024,19 +2625,6 @@ saveIdList(const std::string& path, const std::set<ID>& ids)
     }
     for (auto& c : ids)
         file << std::hex << c << "\n";
-}
-
-void
-JamiAccount::loadTreatedCalls()
-{
-    treatedCalls_ = loadIdList(cachePath_ + DIR_SEPARATOR_STR "treatedCalls");
-}
-
-void
-JamiAccount::saveTreatedCalls() const
-{
-    fileutils::check_dir(cachePath_.c_str());
-    saveIdList(cachePath_ + DIR_SEPARATOR_STR "treatedCalls", treatedCalls_);
 }
 
 void
@@ -3716,7 +3304,7 @@ JamiAccount::onIsComposing(const std::string& peer, bool isWriting)
 void
 JamiAccount::getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept
 {
-    storeActiveIpAddress([this, cb=std::move(cb)] {
+    storeActiveIpAddress([this, cb = std::move(cb)] {
         auto opts = SIPAccountBase::getIceOptions();
         auto publishedAddr = getPublishedIpAddress();
 
@@ -4463,6 +4051,11 @@ JamiAccount::fetchNewCommits(const std::string& peer,
                              const std::string& conversationId,
                              const std::string& commitId)
 {
+    JAMI_DBG("[Account %s] fetch commits for peer %s on device %s",
+             getAccountID().c_str(),
+             peer.c_str(),
+             deviceId.c_str());
+
     std::unique_lock<std::mutex> lk(conversationsMtx_);
     auto conversation = conversations_.find(conversationId);
     if (conversation != conversations_.end() && conversation->second) {
@@ -4809,6 +4402,11 @@ JamiAccount::callConnectionClosed(const DeviceId& deviceId, bool eraseDummy)
 void
 JamiAccount::requestSIPConnection(const std::string& peerId, const DeviceId& deviceId)
 {
+    JAMI_DBG("[Account %s] Request SIP connection to peer %s on device %s",
+             getAccountID().c_str(),
+             peerId.c_str(),
+             deviceId.to_c_str());
+
     // If a connection already exists or is in progress, no need to do this
     std::lock_guard<std::mutex> lk(sipConnsMtx_);
     auto id = std::make_pair(peerId, deviceId);
@@ -5039,27 +4637,6 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
 
     // Retry messages
     messageEngine_.onPeerOnline(peerId);
-
-    // Connect pending calls
-    forEachPendingCall(deviceId, [&](const auto& pc) {
-        if (pc->getConnectionState() != Call::ConnectionState::TRYING
-            and pc->getConnectionState() != Call::ConnectionState::PROGRESSING)
-            return;
-        pc->setTransport(sip_tr);
-        pc->setState(Call::ConnectionState::PROGRESSING);
-        if (auto ice = socket->underlyingICE()) {
-            auto remoted_address = ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
-            try {
-                onConnectedOutgoingCall(pc, peerId, remoted_address);
-            } catch (const VoipLinkException&) {
-                // In this case, the main scenario is that SIPStartCall failed because
-                // the ICE is dead and the TLS session didn't send any packet on that dead
-                // link (connectivity change, killed by the os, etc)
-                // Here, we don't need to do anything, the TLS will fail and will delete
-                // the cached transport
-            }
-        }
-    });
 }
 
 void
@@ -5449,6 +5026,8 @@ JamiAccount::addCallHistoryMessage(const std::string& uri, uint64_t duration_ms)
 void
 JamiAccount::monitor() const
 {
+    JAMI_DBG("[Account %s] Monitor connections", getAccountID().c_str());
+
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (connectionManager_)
         connectionManager_->monitor();
@@ -5457,6 +5036,10 @@ JamiAccount::monitor() const
 void
 JamiAccount::cloneConversation(const std::string& deviceId, const std::string& convId)
 {
+    JAMI_DBG("[Account %s] Clone conversation on device %s",
+             getAccountID().c_str(),
+             deviceId.c_str());
+
     if (!isConversation(convId)) {
         {
             std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);

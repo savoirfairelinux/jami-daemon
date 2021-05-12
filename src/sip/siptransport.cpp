@@ -25,7 +25,6 @@
 #include "ice_transport.h"
 #include "security/tls_session.h"
 
-#include "jamidht/sips_transport_ice.h"
 #include "jamidht/channeled_transport.h"
 #include "jamidht/multiplexed_socket.h"
 
@@ -172,11 +171,6 @@ SipTransport::removeStateListener(uintptr_t lid)
 uint16_t
 SipTransport::getTlsMtu()
 {
-    auto* td = reinterpret_cast<tls::AbstractSIPTransport::TransportData*>(transport_.get());
-    if (isIceTransport_ && isSecure()) {
-        auto* tls_tr = reinterpret_cast<tls::SipsIceTransport*>(td->self);
-        return tls_tr->getTlsSessionMtu();
-    }
     return 1232; /* Hardcoded yes (it's the IPv6 value).
                   * This method is broken by definition.
                   * A MTU should not be defined at this layer.
@@ -399,31 +393,6 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l,
         transports_[ret->get()] = ret;
     }
     return ret;
-}
-
-std::shared_ptr<SipTransport>
-SipTransportBroker::getTlsIceTransport(const std::shared_ptr<jami::IceTransport>& ice,
-                                       unsigned comp_id,
-                                       const tls::TlsParams& params)
-{
-    auto ipv6 = ice->getLocalAddress(comp_id).isIpv6();
-    auto type = ipv6 ? PJSIP_TRANSPORT_DTLS6 : PJSIP_TRANSPORT_DTLS;
-    if (ice->isTCPEnabled()) {
-        type = ipv6 ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
-    }
-    auto sip_ice_tr = std::make_unique<tls::SipsIceTransport>(endpt_, type, params, ice, comp_id);
-    auto tr = sip_ice_tr->getTransportBase();
-    auto sip_tr = std::make_shared<SipTransport>(tr);
-    sip_tr->setIsIceTransport();
-    sip_ice_tr.release(); // managed by PJSIP now
-
-    {
-        std::lock_guard<std::mutex> lock(transportMapMutex_);
-        // we do not check for key existence as we've just created it
-        // (member of new SipIceTransport instance)
-        transports_.emplace(std::make_pair(tr, sip_tr));
-    }
-    return sip_tr;
 }
 
 std::shared_ptr<SipTransport>
