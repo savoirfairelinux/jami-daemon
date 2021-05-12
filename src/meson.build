@@ -31,7 +31,6 @@ libjami_sources = files(
     'jamidht/namedirectory.cpp',
     'jamidht/p2p.cpp',
     'jamidht/server_account_manager.cpp',
-    'jamidht/sips_transport_ice.cpp',
     'media/audio/echo-cancel/null_echo_canceller.cpp',
     'media/audio/sound/audiofile.cpp',
     'media/audio/sound/dtmf.cpp',

@@ -92,6 +92,7 @@ public:
         if (!deviceId)
             dht::ThreadPool::io().run([infos = std::move(infos_)]() mutable { infos.clear(); });
     }
+
     void shutdown()
     {
         if (isDestroying_)
