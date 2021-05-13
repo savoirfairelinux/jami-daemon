@@ -337,6 +337,7 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
 
     if (receiveThread_) {
         receiveThread_->enterConference();
+        conference.detachVideo(dummyVideoReceive_.get());
         conference.attachVideo(receiveThread_.get(), callID_);
     } else
         JAMI_WARN("[call:%s] no receiver", callID_.c_str());
