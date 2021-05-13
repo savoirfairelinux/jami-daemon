@@ -21,6 +21,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <condition_variable>
+#include <filesystem>
 #include <string>
 
 #include "manager.h"
@@ -52,16 +53,19 @@ public:
 
     std::string aliceId;
     std::string bobId;
+    std::string bob2Id;
 
 private:
     void testCall();
     void testCachedCall();
     void testStopSearching();
+    void testDeclineMultiDevice();
 
     CPPUNIT_TEST_SUITE(CallTest);
     CPPUNIT_TEST(testCall);
     CPPUNIT_TEST(testCachedCall);
     CPPUNIT_TEST(testStopSearching);
+    CPPUNIT_TEST(testDeclineMultiDevice);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -124,6 +128,9 @@ CallTest::tearDown()
     DRing::unregisterSignalHandlers();
     JAMI_INFO("Remove created accounts...");
 
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    std::remove(bobArchive.c_str());
+
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -132,7 +139,9 @@ CallTest::tearDown()
     std::atomic_bool accountsRemoved {false};
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
-            if (Manager::instance().getAccountList().size() <= currentAccSize - 2) {
+            if (Manager::instance().getAccountList().size() <= currentAccSize - bob2Id.empty()
+                    ? 2
+                    : 3) {
                 accountsRemoved = true;
                 cv.notify_one();
             }
@@ -141,6 +150,8 @@ CallTest::tearDown()
 
     Manager::instance().removeAccount(aliceId, true);
     Manager::instance().removeAccount(bobId, true);
+    if (!bob2Id.empty())
+        Manager::instance().removeAccount(bob2Id, true);
     // Because cppunit is not linked with dbus, just poll if removed
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsRemoved.load(); }));
@@ -287,6 +298,90 @@ CallTest::testStopSearching()
     JAMI_INFO("Wait OVER state");
     // Then wait for the DHT no answer. this can take some times
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] { return callStopped.load(); }));
+}
+
+void
+CallTest::testDeclineMultiDevice()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+
+    // Add second device for Bob
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    std::remove(bobArchive.c_str());
+    bobAccount->exportArchive(bobArchive);
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "BOB2";
+    details[ConfProperties::ALIAS] = "BOB2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = bobArchive;
+    bob2Id = Manager::instance().addAccount(details);
+
+    bool ready = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
+                if (!bob2Account)
+                    return;
+                auto details = bob2Account->getVolatileAccountDetails();
+                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    ready = true;
+                    cv.notify_one();
+                }
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(20), [&] { return ready; }));
+    DRing::unregisterSignalHandlers();
+
+    // TODO remove. This sleeps is because it take some time for the DHT to be connected
+    // and account announced
+    JAMI_INFO("Waiting....");
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+
+    std::atomic<int> callReceived {0};
+    std::atomic<int> callStopped {0};
+    std::string callIdBob;
+    // Watch signals
+    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCall>(
+        [&](const std::string& accountId, const std::string& callId, const std::string&) {
+            if (accountId == bobId)
+                callIdBob = callId;
+            callReceived += 1;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
+        [&](const std::string&, const std::string& state, signed) {
+            if (state == "OVER") {
+                callStopped += 1;
+                if (callStopped == 2)
+                    cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    JAMI_INFO("Start call between alice and Bob");
+    auto call = aliceAccount->newOutgoingCall(bobUri);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
+        return callReceived == 2 && !callIdBob.empty();
+    }));
+
+    JAMI_INFO("Stop call between alice and Bob");
+    callStopped = 0;
+    Manager::instance().hangupCall(callIdBob);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callStopped == 3; }));
 }
 
 } // namespace test
