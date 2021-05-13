@@ -1,0 +1,12 @@
+--- a/contrib/build/msgpack-c/CMakeLists.txt
++++ b/contrib/build/msgpack-c/CMakeLists.txt
+@@ -56,7 +56,7 @@ ELSE ()
+       ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+          SET (CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS}")
+       ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+-         MESSAGE ( FATAL_ERROR "MSVC doesn't support C++17.")
++         SET (CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS}")
+       ENDIF ()
+    ELSEIF (MSGPACK_CXX11)
+       IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+--
