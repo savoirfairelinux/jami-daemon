@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "00d462fa_42669ed5",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1497,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-13T13:57:47Z",
+      "side": 0,
+      "message": "in fact, to avoid unnecessary cast, methods can directly take an unsigned, as we will not send on -1",
+      "range": {
+        "startLine": 1497,
+        "startChar": 19,
+        "endLine": 1497,
+        "endChar": 30
+      },
+      "revId": "eea1798779dafcc92c897cd9a6a917b86bee9847",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}

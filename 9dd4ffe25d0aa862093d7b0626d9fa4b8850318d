@@ -2,6 +2,75 @@
   "comments": [
     {
       "key": {
+        "uuid": "398178e2_7de28bd1",
+        "filename": "src/account.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-13T13:57:47Z",
+      "side": 1,
+      "message": "maybe we can enable it by default for sipaccount? As it\u0027s the main necessary part where it\u0027s necessary.\n\nJust for a test I did a conference between two Jami account + my landline phone (audio) via SIP with the option enabled only for the sip account and it was still working, so this will solve the case for the client and still work for Jami accounts.",
+      "range": {
+        "startLine": 127,
+        "startChar": 6,
+        "endLine": 127,
+        "endChar": 39
+      },
+      "revId": "9dd4ffe25d0aa862093d7b0626d9fa4b8850318d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "11ce0430_ecef39a5",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-13T13:57:47Z",
+      "side": 1,
+      "message": "if replaced by\n\nif ((compId) \u003d\u003d 0 or (compId) \u003e (compCount)) {\\\n            throw std::runtime_error(\"Invalid component ID \" + (std::to_string(compId))); \\\n    }\n\nI don\u0027t think the ugly macro hack is necessary as the instruction is separated.",
+      "range": {
+        "startLine": 56,
+        "startChar": 4,
+        "endLine": 59,
+        "endChar": 15
+      },
+      "revId": "9dd4ffe25d0aa862093d7b0626d9fa4b8850318d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5f1effa3_91f61114",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1420,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-13T13:57:47Z",
+      "side": 1,
+      "message": "cnt will be too low",
+      "range": {
+        "startLine": 1419,
+        "startChar": 66,
+        "endLine": 1420,
+        "endChar": 75
+      },
+      "revId": "9dd4ffe25d0aa862093d7b0626d9fa4b8850318d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "b73b6645_1b2dc96f",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 9
@@ -16,6 +85,29 @@
       "revId": "9dd4ffe25d0aa862093d7b0626d9fa4b8850318d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "82368055_a5e327a9",
+        "filename": "test/unitTest/Makefile.am",
+        "patchSetId": 9
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-13T13:57:47Z",
+      "side": 1,
+      "message": "once merged update daemon-tests",
+      "range": {
+        "startLine": 166,
+        "startChar": 35,
+        "endLine": 167,
+        "endChar": 50
+      },
+      "revId": "9dd4ffe25d0aa862093d7b0626d9fa4b8850318d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
