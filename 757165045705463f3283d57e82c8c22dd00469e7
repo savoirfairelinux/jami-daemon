@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "32c1e752_dca0eccd",
+        "filename": "contrib/src/msgpack-c/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-13T19:52:38Z",
+      "side": 1,
+      "message": "change dependency name in opendht/rules.mak",
+      "range": {
+        "startLine": 5,
+        "startChar": 8,
+        "endLine": 5,
+        "endChar": 17
+      },
+      "revId": "757165045705463f3283d57e82c8c22dd00469e7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
