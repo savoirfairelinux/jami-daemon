@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7128c78c_f8e460e6",
+        "filename": "contrib/src/msgpack/package.json",
+        "patchSetId": 8
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-13T21:19:51Z",
+      "side": 1,
+      "message": "CMAKE_INSTALL_LIBDIR\u003dlib missing, no warning?",
+      "range": {
+        "startLine": 8,
+        "startChar": 22,
+        "endLine": 9,
+        "endChar": 35
+      },
+      "revId": "03b30951959197369950214c1f25e59b242f14c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
