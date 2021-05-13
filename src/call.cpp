@@ -517,9 +517,9 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
         return;
     }
 
-    // Hangup the call if any device hangup
-    // XXX: not sure it's what we really want
-    if (new_state == CallState::ACTIVE and new_cstate == ConnectionState::DISCONNECTED) {
+    // Hangup the call if any device hangup or send busy
+    if ((new_state == CallState::ACTIVE or new_state == CallState::PEER_BUSY)
+        and new_cstate == ConnectionState::DISCONNECTED) {
         JAMI_WARN("[call:%s] subcall %s hangup by peer",
                   getCallId().c_str(),
                   subcall.getCallId().c_str());
