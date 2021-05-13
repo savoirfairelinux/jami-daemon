@@ -2,14 +2,10 @@
     "name": "msgpack-c",
     "version": "cpp-3.2.0",
     "url": "https://github.com/msgpack/msgpack-c/archive/__VERSION__.tar.gz",
-    "deps": [],
-    "patches": [],
-    "win_patches": [],
-    "project_paths": [],
-    "with_env" : "",
-    "custom_scripts": {
-        "pre_build": [],
-        "build": [],
-        "post_build": []
-    }
+    "use_cmake" : true,
+    "defines": [
+        "MSGPACK_CXX11=ON",
+        "MSGPACK_BUILD_EXAMPLES=OFF",
+        "MSGPACK_ENABLE_SHARED=OFF"
+    ]
 }
