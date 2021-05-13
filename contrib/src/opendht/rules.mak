@@ -8,8 +8,8 @@ PKGS_FOUND += opendht
 endif
 
 # Avoid building distro-provided dependencies in case opendht was built manually
-ifneq ($(call need_pkg,"msgpack >= 1.2"),)
-DEPS_opendht += msgpack
+ifneq ($(call need_pkg,"msgpack-c >= 1.2"),)
+DEPS_opendht += msgpack-c
 endif
 ifneq ($(call need_pkg,"libargon2"),)
 DEPS_opendht += argon2
