@@ -16,21 +16,25 @@ EXTRA_DIST = m4/libtool.m4 \
 			 contrib/bootstrap \
 			 contrib/src
 
-precoverage:
+coverage-html:
 	$(AM_V_at)lcov --no-external --capture --initial --directory $(top_builddir) --output-file dring-coverage-base.info
-
-coverage: precoverage check
 	$(AM_V_at)lcov --no-external --capture --directory $(top_builddir) --output-file dring-coverage-tests.info
 	$(AM_V_at)lcov --add-tracefile dring-coverage-base.info --add-tracefile dring-coverage-tests.info --output-file dring-coverage.info
-	$(AM_V_at)lcov --remove dring-coverage.info '/contrib/*' '/usr/include/*' '/bin/*' '/foo/bin/*' '/foo/contrib/*' --output-file dring-coverage-filtered.info
-	$(MKDIR_P) html-output
-	genhtml -o html-output dring-coverage-filtered.info
+	$(AM_V_at)lcov --remove dring-coverage.info "$(abs_top_builddir)/contrib/*"  --output-file dring-coverage-filtered.info
+	$(MKDIR_P) html-coverage-output
+	genhtml -o html-coverage-output dring-coverage-filtered.info
+
+coverage-%:
+	gcovr --filter src --filter test --$*-pretty --$* --output $*-coverage-output.$*
 
 coverage-clean:
 	$(AM_V_at)lcov --directory $(top_builddir) --zerocounters
-	$(AM_V_at)rm -rf dring-coverage-filtered.info
-	$(AM_V_at)rm -rf html-output
-	$(AM_V_at)find -name '*.gcda' -exec rm -f {} +
-	$(AM_V_at)find -name '*.gcno' -exec rm -f {} +
+	$(AM_V_at)rm -f *.info
+	$(AM_V_at)rm -rf *-coverage-output
 
-.PHONY: precoverage coverage coverage-clean
+coverage-cleaner: coverage-clean
+	$(AM_V_at)find -name '*.gcda' -delete -or -name "*.gcno" -delete
+
+all-coverage: coverage-clean coverage-html coverage-xml coverage-json
+
+.PHONY: all-coverage coverage-html coverage-json coverage-xml coverage-clean coverage-cleaner
