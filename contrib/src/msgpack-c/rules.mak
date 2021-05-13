@@ -2,9 +2,9 @@
 MSGPACK_VERSION := cpp-3.2.0
 MSGPACK_URL := https://github.com/msgpack/msgpack-c/archive/$(MSGPACK_VERSION).tar.gz
 
-PKGS += msgpack
+PKGS += msgpack-c
 ifeq ($(call need_pkg,"msgpack >= 1.1"),)
-PKGS_FOUND += msgpack
+PKGS_FOUND += msgpack-c
 endif
 
 MSGPACK_CMAKECONF := -DMSGPACK_CXX11=ON \
@@ -15,13 +15,13 @@ MSGPACK_CMAKECONF := -DMSGPACK_CXX11=ON \
 $(TARBALLS)/msgpack-c-$(MSGPACK_VERSION).tar.gz:
 	$(call download,$(MSGPACK_URL))
 
-.sum-msgpack: msgpack-c-$(MSGPACK_VERSION).tar.gz
+.sum-msgpack-c: msgpack-c-$(MSGPACK_VERSION).tar.gz
 
-msgpack: msgpack-c-$(MSGPACK_VERSION).tar.gz
+msgpack-c: msgpack-c-$(MSGPACK_VERSION).tar.gz
 	$(UNPACK)
 	$(MOVE)
 
-.msgpack: msgpack toolchain.cmake .sum-msgpack
+.msgpack-c: msgpack-c toolchain.cmake .sum-msgpack-c
 	cd $< && $(HOSTVARS) $(CMAKE) . $(MSGPACK_CMAKECONF)
 	cd $< && $(MAKE) install
 	touch $@
