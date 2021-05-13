@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "56775ea2_bb5aae8e",
+        "filename": "test/unitTest/call/call.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-13T20:04:26Z",
+      "side": 1,
+      "message": "std::filesystem::remove(std::filesystem::current_path() / \"bob.gz\");",
+      "range": {
+        "startLine": 131,
+        "startChar": 0,
+        "endLine": 132,
+        "endChar": 36
+      },
+      "revId": "edf2e59caaca9ef37aaa3dc60443486f3f1c5c26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0f7a3fbe_39b58ddf",
+        "filename": "test/unitTest/call/call.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 317,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-13T20:04:26Z",
+      "side": 1,
+      "message": "auto bobArchive \u003d std::filesystem::current_path() / \"bob.gz\";\nstd::filesystem::remove(bobArchive);",
+      "range": {
+        "startLine": 316,
+        "startChar": 0,
+        "endLine": 317,
+        "endChar": 36
+      },
+      "revId": "edf2e59caaca9ef37aaa3dc60443486f3f1c5c26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
