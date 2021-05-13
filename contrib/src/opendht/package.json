@@ -7,7 +7,7 @@
         "asio",
         "gnutls",
         "jsoncpp",
-        "msgpack",
+        "msgpack-c",
         "restinio"
     ],
     "use_cmake" : true,
