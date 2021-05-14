@@ -26,6 +26,9 @@ ARGON2_CONF = \
 ifdef HAVE_ANDROID
 	ARGON2_CONF += LIBRARY_REL="lib"
 endif
+ifdef HAVE_LINUX
+	ARGON2_CONF += LIBRARY_REL="lib"
+endif
 
 .argon2: argon2 .sum-argon2
 	cd $< && $(HOSTVARS) $(MAKE) libs $(ARGON2_CONF)
