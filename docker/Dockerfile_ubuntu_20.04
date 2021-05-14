@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 RUN apt-get update && \
     apt install -y software-properties-common
@@ -6,9 +6,9 @@ RUN apt-get update && \
 RUN add-apt-repository universe && \
     apt-get update && \
     apt-get install -y -o Acquire::Retries=10 \
-        g++-8 \
-        gcc-8 \
-        cpp-8 \
+        g++ \
+        gcc \
+        cpp \
         file \
         make \
         libc6-dev \
@@ -22,7 +22,7 @@ RUN add-apt-repository universe && \
         libdbus-c++-dev \
         libupnp-dev \
         libgnutls28-dev \
-        libargon2-0-dev \
+        libargon2-dev \
         libcanberra-gtk3-dev \
         libclutter-gtk-1.0-dev \
         libclutter-1.0-dev \
@@ -69,9 +69,6 @@ RUN add-apt-repository universe && \
         libasio-dev \
         libexpat1 libexpat1-dev \
         lcov gcovr
-
-RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 50
-RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 50
 
 RUN ls -la /usr/include/c++/8/charconv
 
