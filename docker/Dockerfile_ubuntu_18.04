@@ -81,3 +81,9 @@ RUN apt-get install -y -o Acquire::Retries=10 \
         sip-tester
 
 RUN apt-get clean
+
+# We're compiling with gcc-8, but the default gcov is using gcc-7.  There's a
+# mismatch between the versions of the gcov format from gcc-7 to gcc-8,
+# resulting in failure of lcov to generate anything.  Thus, make gcov a symlink
+# to gcov-8.
+RUN rm /usr/bin/gcov && ln -s /usr/bin/gcov-8 /usr/bin/gcov
