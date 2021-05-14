@@ -1,0 +1,8 @@
+Code-Review+1: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Code-Review+2: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Submitted-at: Fri, 14 May 2021 10:06:17 -0400
+Reviewed-on: https://review.jami.net/c/ring-daemon/+/17961
+Project: ring-daemon
+Branch: refs/heads/master
