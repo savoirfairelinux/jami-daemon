@@ -67,7 +67,8 @@ RUN add-apt-repository universe && \
         libsndfile1-dev \
         libsecp256k1-dev \
         libasio-dev \
-        libexpat1 libexpat1-dev
+        libexpat1 libexpat1-dev \
+        lcov gcov
 
 RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 50
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 50
