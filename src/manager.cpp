@@ -896,8 +896,10 @@ Manager::finish() noexcept
 
         // Flush remaining tasks (free lambda' with capture)
         pimpl_->scheduler_.stop();
-        dht::ThreadPool::io().join();
-        dht::ThreadPool::computation().join();
+
+        // TODO - Don't join global pool but wait for tasks
+        // dht::ThreadPool::io().join();
+        // dht::ThreadPool::computation().join();
 
         // IceTransportFactory should be stopped after the io pool
         // as some ICE are destroyed in a ioPool (see ConnectionManager)
