@@ -280,7 +280,7 @@ ConversationTest::tearDown()
     if (!bob2Id.empty())
         Manager::instance().removeAccount(bob2Id, true);
 
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::temp_directory_path().string() + "/bob.gz";
     std::remove(bobArchive.c_str());
 
     // Because cppunit is not linked with dbus, just poll if removed
@@ -1370,7 +1370,7 @@ ConversationTest::testBanDevice()
         cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberMessageGenerated; }));
 
     // Add second device for Bob
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::temp_directory_path().string() + "/bob.gz";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
     std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");

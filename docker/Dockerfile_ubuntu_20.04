@@ -83,3 +83,6 @@ RUN apt-get install -y -o Acquire::Retries=10 \
 
 RUN apt-get clean
 
+RUN useradd -ms /bin/bash foo
+USER foo
+WORKDIR /home/foo
