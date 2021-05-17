@@ -1,0 +1,7 @@
+Code-Review+2: Kateryna Kostiuk <kateryna.kostiuk@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
+Submitted-at: Mon, 17 May 2021 15:50:44 -0400
+Reviewed-on: https://review.jami.net/c/ring-daemon/+/18014
+Project: ring-daemon
+Branch: refs/heads/master
