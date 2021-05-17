@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "364abc84_bb67f30c",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1533,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-05-17T17:49:10Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "1a6b15456ba08be8db76113b47f950d3b2040038",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
