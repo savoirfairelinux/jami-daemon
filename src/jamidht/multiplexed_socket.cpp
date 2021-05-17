@@ -180,7 +180,7 @@ public:
     std::thread eventLoopThread_ {};
 
     // Multiplexed available datas
-    std::map<uint16_t, std::unique_ptr<ChannelInfo>> channelDatas_ {};
+    std::map<uint16_t, std::shared_ptr<ChannelInfo>> channelDatas_ {};
     std::mutex channelCbsMtx_ {};
     std::map<uint16_t, GenericSocket<uint8_t>::RecvCb> channelCbs_ {};
     std::atomic_bool isShutdown_ {false};
@@ -255,7 +255,7 @@ MultiplexedSocket::Impl::onAccept(const std::string& name, uint16_t channel)
     std::lock_guard<std::mutex> lkSockets(socketsMutex);
     auto& channelData = channelDatas_[channel];
     if (not channelData)
-        channelData = std::make_unique<ChannelInfo>();
+        channelData = std::make_shared<ChannelInfo>();
     auto& channelSocket = sockets[channel];
     if (not channelSocket)
         channelSocket = std::make_shared<ChannelSocket>(parent_.weak(), name, channel);
@@ -371,7 +371,7 @@ MultiplexedSocket::Impl::onRequest(const std::string& name, uint16_t channel)
                           "the request will close the previous one");
                 sockets.erase(sockIt);
             }
-            channelDatas_.emplace(channel, std::make_unique<ChannelInfo>());
+            channelDatas_.emplace(channel, std::make_shared<ChannelInfo>());
             sockets.emplace(channel, channelSocket);
         }
     }
@@ -419,17 +419,23 @@ MultiplexedSocket::Impl::handleControlPacket(std::vector<uint8_t>&& pkt)
                 msgpack::unpacked result;
                 msgpack::unpack(result, (const char*) pkt.data(), pkt.size(), off);
                 auto object = result.get();
-                if (shared->pimpl_->handleProtocolMsg(object))
+                auto* pimpl = shared->pimpl_.get();
+                if (pimpl->handleProtocolMsg(object))
                     continue;
                 auto req = object.as<ChannelRequest>();
                 if (req.state == ChannelRequestState::ACCEPT) {
-                    shared->pimpl_->onAccept(req.name, req.channel);
+                    pimpl->onAccept(req.name, req.channel);
                 } else if (req.state == ChannelRequestState::DECLINE) {
-                    std::lock_guard<std::mutex> lkSockets(shared->pimpl_->socketsMutex);
-                    shared->pimpl_->channelDatas_.erase(req.channel);
-                    shared->pimpl_->sockets.erase(req.channel);
-                } else if (shared->pimpl_->onRequest_) {
-                    shared->pimpl_->onRequest(req.name, req.channel);
+                    std::lock_guard<std::mutex> lkSockets(pimpl->socketsMutex);
+                    auto& channelDatas = pimpl->channelDatas_;
+                    auto dataIt = channelDatas.find(req.channel);
+                    if (dataIt != channelDatas.end() && dataIt->second) {
+                        dataIt->second->cv.notify_all();
+                        channelDatas.erase(dataIt);
+                    }
+                    pimpl->sockets.erase(req.channel);
+                } else if (pimpl->onRequest_) {
+                    pimpl->onRequest(req.name, req.channel);
                 }
             }
         } catch (const std::exception& e) {
@@ -691,15 +697,14 @@ MultiplexedSocket::waitForData(const uint16_t& channel,
         ec = std::make_error_code(std::errc::broken_pipe);
         return -1;
     }
+    std::unique_lock lkSockets {pimpl_->socketsMutex};
     auto dataIt = pimpl_->channelDatas_.find(channel);
-    if (dataIt == pimpl_->channelDatas_.end()) {
+    if (dataIt == pimpl_->channelDatas_.end() or not dataIt->second) {
         ec = std::make_error_code(std::errc::broken_pipe);
         return -1;
     }
-    auto& channelData = dataIt->second;
-    if (!channelData) {
-        return -1;
-    }
+    auto channelData = dataIt->second;
+    lkSockets.unlock();
     std::unique_lock<std::mutex> lk {channelData->mutex};
     channelData->cv.wait_for(lk, timeout, [&] {
         return !channelData->buf.empty() or pimpl_->isShutdown_;
@@ -712,6 +717,7 @@ MultiplexedSocket::setOnRecv(const uint16_t& channel, GenericSocket<uint8_t>::Re
 {
     std::deque<uint8_t> recv;
     {
+        std::lock_guard<std::mutex> lkSockets(pimpl_->socketsMutex);
         std::lock_guard<std::mutex> lk(pimpl_->channelCbsMtx_);
         pimpl_->channelCbs_[channel] = cb;
 
