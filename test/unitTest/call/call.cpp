@@ -128,7 +128,7 @@ CallTest::tearDown()
     DRing::unregisterSignalHandlers();
     JAMI_INFO("Remove created accounts...");
 
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::temp_directory_path().string() + "/bob.gz";
     std::remove(bobArchive.c_str());
 
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
@@ -139,9 +139,8 @@ CallTest::tearDown()
     std::atomic_bool accountsRemoved {false};
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
-            if (Manager::instance().getAccountList().size() <= currentAccSize - bob2Id.empty()
-                    ? 2
-                    : 3) {
+            if (Manager::instance().getAccountList().size()
+                <= currentAccSize - (bob2Id.empty() ? 2 : 3)) {
                 accountsRemoved = true;
                 cv.notify_one();
             }
@@ -313,7 +312,7 @@ CallTest::testDeclineMultiDevice()
 
     // Add second device for Bob
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::temp_directory_path().string() + "/bob.gz";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
     std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");

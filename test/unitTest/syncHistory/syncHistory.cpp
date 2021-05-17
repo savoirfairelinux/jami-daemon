@@ -135,7 +135,7 @@ void
 SyncHistoryTest::tearDown()
 {
     JAMI_INFO("Remove created accounts...");
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::temp_directory_path().string() + "/alice.gz";
     std::remove(aliceArchive.c_str());
 
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
@@ -170,7 +170,7 @@ SyncHistoryTest::testCreateConversationThenSync()
     auto convId = aliceAccount->startConversation();
 
     // Now create alice2
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::temp_directory_path().string() + "/alice.gz";
     std::remove(aliceArchive.c_str());
     aliceAccount->exportArchive(aliceArchive);
     std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
@@ -220,7 +220,7 @@ SyncHistoryTest::testCreateConversationWithOnlineDevice()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
 
     // Now create alice2
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::temp_directory_path().string() + "/alice.gz";
     std::remove(aliceArchive.c_str());
     aliceAccount->exportArchive(aliceArchive);
     std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
@@ -278,7 +278,7 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     aliceAccount->sendMessage(convId, std::string("Message 3"));
 
     // Now create alice2
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::temp_directory_path().string() + "/alice.gz";
     std::remove(aliceArchive.c_str());
     aliceAccount->exportArchive(aliceArchive);
     std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
@@ -368,7 +368,7 @@ SyncHistoryTest::testCreateMultipleConversationThenAddDevice()
     aliceAccount->sendMessage(convId4, std::string("Message 3"));
 
     // Now create alice2
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::temp_directory_path().string() + "/alice.gz";
     std::remove(aliceArchive.c_str());
     aliceAccount->exportArchive(aliceArchive);
     std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
@@ -419,7 +419,7 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
 
     // Export alice
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::temp_directory_path().string() + "/alice.gz";
     std::remove(aliceArchive.c_str());
     aliceAccount->exportArchive(aliceArchive);
 
@@ -486,7 +486,7 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
 
     // Now create alice2
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::temp_directory_path().string() + "/alice.gz";
     std::remove(aliceArchive.c_str());
     aliceAccount->exportArchive(aliceArchive);
     std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
@@ -552,7 +552,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     auto bobUri = bobAccount->getUsername();
 
     // Backup alice before start conversation, worst scenario for invites
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::temp_directory_path().string() + "/alice.gz";
     std::remove(aliceArchive.c_str());
     aliceAccount->exportArchive(aliceArchive);
 
@@ -728,7 +728,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
     cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageAliceReceived == 1; });
 
     // Backup alice after startConversation with member
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::temp_directory_path().string() + "/alice.gz";
     std::remove(aliceArchive.c_str());
     aliceAccount->exportArchive(aliceArchive);
 
@@ -829,7 +829,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
     // Backup alice after startConversation with member
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::temp_directory_path().string() + "/alice.gz";
     std::remove(aliceArchive.c_str());
     aliceAccount->exportArchive(aliceArchive);
 

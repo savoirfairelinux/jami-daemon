@@ -83,3 +83,8 @@ RUN apt-get install -y -o Acquire::Retries=10 \
 
 RUN apt-get clean
 
+RUN useradd -ms /bin/bash -d /home/jenkins jenkins
+USER jenkins
+
+ENV HOME /home/jenkins
+WORKDIR /home/jenkins
