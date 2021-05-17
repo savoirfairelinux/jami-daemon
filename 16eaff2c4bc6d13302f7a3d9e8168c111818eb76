@@ -22,6 +22,30 @@
       "revId": "16eaff2c4bc6d13302f7a3d9e8168c111818eb76",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "593ffcdb_cc304d2d",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 619,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-17T21:36:45Z",
+      "side": 1,
+      "message": "we need a second opinion here.\n@sblin @aberaud. FYI",
+      "parentUuid": "a8fc7ece_10cdd951",
+      "range": {
+        "startLine": 619,
+        "startChar": 8,
+        "endLine": 619,
+        "endChar": 18
+      },
+      "revId": "16eaff2c4bc6d13302f7a3d9e8168c111818eb76",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
