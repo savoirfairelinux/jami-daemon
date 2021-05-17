@@ -88,9 +88,8 @@ using yaml_utils::parseValueOptional;
 using yaml_utils::parseVectorMap;
 using sip_utils::CONST_PJ_STR;
 
-static constexpr int KEEP_ALIVE_DELAY = 10;                       // seconds
 static constexpr int MIN_REGISTRATION_TIME = 60;                  // seconds
-static constexpr unsigned DEFAULT_REGISTRATION_TIME = 3600;       // seconds
+static constexpr unsigned DEFAULT_REGISTRATION_EXPIRE = 3600;     // seconds
 static constexpr unsigned REGISTRATION_FIRST_RETRY_INTERVAL = 60; // seconds
 static constexpr unsigned REGISTRATION_RETRY_INTERVAL = 300;      // seconds
 static const char* const VALID_TLS_PROTOS[] = {"Default", "TLSv1.2", "TLSv1.1", "TLSv1"};
@@ -131,7 +130,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , credentials_()
     , regc_(nullptr)
     , bRegister_(false)
-    , registrationExpire_(MIN_REGISTRATION_TIME)
+    , registrationExpire_(DEFAULT_REGISTRATION_EXPIRE)
     , serviceRoute_()
     , cred_()
     , tlsSetting_()
@@ -144,9 +143,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , tlsRequireClientCertificate_(true)
     , tlsNegotiationTimeoutSec_("2")
     , registrationStateDetailed_()
-    , keepAliveEnabled_(true)
-    , keepAliveTimer_()
-    , keepAliveTimerActive_(false)
+    , registrationRefreshEnabled_(true)
     , receivedParameter_("")
     , rPort_(-1)
     , via_addr_()
@@ -530,7 +527,8 @@ SIPAccount::serialize(YAML::Emitter& out) const
 
     // each credential is a map, and we can have multiple credentials
     out << YAML::Key << Conf::CRED_KEY << YAML::Value << getCredentials();
-    out << YAML::Key << Conf::KEEP_ALIVE_ENABLED << YAML::Value << keepAliveEnabled_;
+
+    out << YAML::Key << Conf::KEEP_ALIVE_ENABLED << YAML::Value << registrationRefreshEnabled_;
 
     out << YAML::Key << PRESENCE_MODULE_ENABLED_KEY << YAML::Value
         << (presence_ and presence_->isEnabled());
@@ -539,7 +537,8 @@ SIPAccount::serialize(YAML::Emitter& out) const
     out << YAML::Key << Conf::PRESENCE_SUBSCRIBE_SUPPORTED_KEY << YAML::Value
         << (presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE));
 
-    out << YAML::Key << Preferences::REGISTRATION_EXPIRE_KEY << YAML::Value << registrationExpire_;
+    out << YAML::Key << Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE << YAML::Value
+        << registrationExpire_;
     out << YAML::Key << Conf::SERVICE_ROUTE_KEY << YAML::Value << serviceRoute_;
     out << YAML::Key << Conf::ALLOW_VIA_REWRITE << YAML::Value << allowViaRewrite_;
 
@@ -615,8 +614,14 @@ SIPAccount::unserialize(const YAML::Node& node)
     localPort_ = port;
 
     if (not isIP2IP()) {
-        parseValue(node, Preferences::REGISTRATION_EXPIRE_KEY, registrationExpire_);
-        parseValue(node, Conf::KEEP_ALIVE_ENABLED, keepAliveEnabled_);
+        unsigned expire = 0;
+        if (not parseValueOptional(node, Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, expire)) {
+            // Proably using an older config file.
+            parseValueOptional(node, Preferences::REGISTRATION_EXPIRE_KEY, expire);
+        }
+        setRegistrationExpire(expire);
+
+        parseValue(node, Conf::KEEP_ALIVE_ENABLED, registrationRefreshEnabled_);
         parseValue(node, Conf::SERVICE_ROUTE_KEY, serviceRoute_);
         parseValueOptional(node, Conf::ALLOW_VIA_REWRITE, allowViaRewrite_);
 
@@ -701,12 +706,11 @@ SIPAccount::setAccountDetails(const std::map<std::string, std::string>& details)
     if (not publishedSameasLocal_)
         usePublishedAddressPortInVIA();
 
-    parseInt(details, Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire_);
+    unsigned expire = 0;
+    parseInt(details, Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, expire);
+    setRegistrationExpire(expire);
 
-    if (registrationExpire_ < MIN_REGISTRATION_TIME)
-        registrationExpire_ = MIN_REGISTRATION_TIME;
-
-    parseBool(details, Conf::CONFIG_KEEP_ALIVE_ENABLED, keepAliveEnabled_);
+    parseBool(details, Conf::CONFIG_KEEP_ALIVE_ENABLED, registrationRefreshEnabled_);
     bool presenceEnabled = false;
     parseBool(details, Conf::CONFIG_PRESENCE_ENABLED, presenceEnabled);
     enablePresence(presenceEnabled);
@@ -776,7 +780,7 @@ SIPAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
     a.emplace(Conf::CONFIG_ACCOUNT_IP_REWRITE, allowViaRewrite_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, std::to_string(registrationExpire_));
-    a.emplace(Conf::CONFIG_KEEP_ALIVE_ENABLED, keepAliveEnabled_ ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_KEEP_ALIVE_ENABLED, registrationRefreshEnabled_ ? TRUE_STR : FALSE_STR);
 
     a.emplace(Conf::CONFIG_PRESENCE_ENABLED,
               presence_ and presence_->isEnabled() ? TRUE_STR : FALSE_STR);
@@ -1052,61 +1056,6 @@ SIPAccount::connectivityChanged()
 }
 
 void
-SIPAccount::startKeepAliveTimer()
-{
-    if (isTlsEnabled())
-        return;
-
-    if (isIP2IP())
-        return;
-
-    if (keepAliveTimerActive_)
-        return;
-
-    JAMI_DBG("Start keep alive timer for account %s", getAccountID().c_str());
-
-    // make sure here we have an entirely new timer
-    memset(&keepAliveTimer_, 0, sizeof(pj_timer_entry));
-
-    keepAliveTimer_.cb = [](pj_timer_heap_t* /*th*/, pj_timer_entry* te) {
-        if (auto sipAccount = static_cast<std::weak_ptr<SIPAccount>*>(te->user_data)->lock())
-            sipAccount->keepAliveRegistrationCb();
-    };
-    if (not keepAliveTimer_.user_data)
-        keepAliveTimer_.user_data = new std::weak_ptr<SIPAccount>(weak());
-    keepAliveTimer_.id = timerIdDist_(rand);
-
-    // expiration may be undetermined during the first registration request
-    pj_time_val keepAliveDelay_;
-    if (registrationExpire_ == 0) {
-        JAMI_DBG("Registration Expire: 0, taking 60 instead");
-        keepAliveDelay_.sec = MIN_REGISTRATION_TIME;
-    } else {
-        JAMI_DBG("Registration Expire: %d", registrationExpire_);
-        keepAliveDelay_.sec = registrationExpire_ + KEEP_ALIVE_DELAY;
-    }
-    keepAliveDelay_.msec = 0;
-    keepAliveTimerActive_ = true;
-    link_.registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_);
-}
-
-void
-SIPAccount::stopKeepAliveTimer()
-{
-    if (keepAliveTimerActive_) {
-        JAMI_DBG("Stop keep alive timer %d for account %s",
-                 keepAliveTimer_.id,
-                 getAccountID().c_str());
-        keepAliveTimerActive_ = false;
-        link_.cancelKeepAliveTimer(keepAliveTimer_);
-        if (keepAliveTimer_.user_data) {
-            delete ((std::weak_ptr<SIPAccount>*) keepAliveTimer_.user_data);
-            keepAliveTimer_.user_data = nullptr;
-        }
-    }
-}
-
-void
 SIPAccount::sendRegister()
 {
     if (not isUsable()) {
@@ -1134,6 +1083,8 @@ SIPAccount::sendRegister()
     // Get the contact header
     const pj_str_t pjContact(getContactHeader());
 
+    JAMI_DBG("Using contact header %.*s in registration", (int) pjContact.slen, pjContact.ptr);
+
     if (transport_) {
         if (getUPnPActive() or not getPublishedSameasLocal()
             or (not received.empty() and received != getPublishedAddress())) {
@@ -1153,8 +1104,6 @@ SIPAccount::sendRegister()
 
     pj_status_t status;
 
-    // JAMI_DBG("pjsip_regc_init from:%s, srv:%s, contact:%s", from.c_str(), srvUri.c_str(),
-    // std::string(pj_strbuf(&pjContact), pj_strlen(&pjContact)).c_str());
     if ((status
          = pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, getRegistrationExpire()))
         != PJ_SUCCESS) {
@@ -1182,7 +1131,8 @@ SIPAccount::sendRegister()
     pjsip_regc_add_headers(regc, &hdr_list);
 
     pjsip_tx_data* tdata;
-    if (pjsip_regc_register(regc, PJ_FALSE, &tdata) != PJ_SUCCESS)
+
+    if (pjsip_regc_register(regc, isRegistrationRefreshEnabled(), &tdata) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize transaction data for account registration");
 
     const pjsip_tpselector tp_sel = getTransportSelector();
@@ -1225,7 +1175,6 @@ SIPAccount::onRegister(pjsip_regc_cbparam* param)
     if (param->status != PJ_SUCCESS) {
         JAMI_ERR("SIP registration error %d", param->status);
         destroyRegistrationInfo();
-        stopKeepAliveTimer();
         setRegistrationState(RegistrationState::ERROR_GENERIC, param->code);
     } else if (param->code < 0 || param->code >= 300) {
         JAMI_ERR("SIP registration failed, status=%d (%.*s)",
@@ -1233,7 +1182,6 @@ SIPAccount::onRegister(pjsip_regc_cbparam* param)
                  (int) param->reason.slen,
                  param->reason.ptr);
         destroyRegistrationInfo();
-        stopKeepAliveTimer();
         switch (param->code) {
         case PJSIP_SC_FORBIDDEN:
             setRegistrationState(RegistrationState::ERROR_AUTH, param->code);
@@ -1256,8 +1204,6 @@ SIPAccount::onRegister(pjsip_regc_cbparam* param)
 
         if (param->expiration < 1) {
             destroyRegistrationInfo();
-            /* Stop keep-alive timer if any. */
-            stopKeepAliveTimer();
             JAMI_DBG("Unregistration success");
             setRegistrationState(RegistrationState::UNREGISTERED, param->code);
         } else {
@@ -1274,11 +1220,6 @@ SIPAccount::onRegister(pjsip_regc_cbparam* param)
                 pjsip_regc_set_route_set(param->regc,
                                          sip_utils::createRouteSet(getServiceRoute(),
                                                                    link_.getPool()));
-
-            // start the periodic registration request based on Expire header
-            // account determines itself if a keep alive is required
-            if (isKeepAliveEnabled())
-                startKeepAliveTimer();
 
             setRegistrationState(RegistrationState::REGISTERED, param->code);
         }
@@ -1302,7 +1243,15 @@ SIPAccount::onRegister(pjsip_regc_cbparam* param)
         if (PJSIP_IS_STATUS_IN_CLASS(param->code, 600))
             scheduleReregistration();
     }
-    setRegistrationExpire(param->expiration);
+
+    if (param->expiration != registrationExpire_) {
+        JAMI_DBG("Registrar returned EXPIRE value [%u s] different from the requested [%u s]",
+                 param->expiration,
+                 registrationExpire_);
+        // NOTE: We don't alter the EXPIRE set by the user even if the registrar
+        // returned a different value. PJSIP lib will set the proper timer for
+        // the refresh, if the auto-regisration is enabled.
+    }
 }
 
 void
@@ -1314,8 +1263,6 @@ SIPAccount::sendUnregister()
         return;
     }
 
-    // Make sure to cancel any ongoing timers before unregister
-    stopKeepAliveTimer();
     setRegister(false);
 
     pjsip_regc* regc = getRegistrationInfo();
@@ -1461,7 +1408,7 @@ SIPAccount::loadConfig()
 {
     if (registrationExpire_ == 0)
         registrationExpire_
-            = DEFAULT_REGISTRATION_TIME; /** Default expire value for registration */
+            = DEFAULT_REGISTRATION_EXPIRE; /** Default expire value for registration */
 
     if (tlsEnable_) {
         initTlsConfiguration();
@@ -1733,25 +1680,6 @@ SIPAccount::getSupportedTlsProtocols()
 }
 
 void
-SIPAccount::keepAliveRegistrationCb()
-{
-    JAMI_ERR("Keep alive registration callback for account %s", getAccountID().c_str());
-
-    // IP2IP default does not require keep-alive
-    if (isIP2IP())
-        return;
-
-    // TLS is connection oriented and does not require keep-alive
-    if (isTlsEnabled())
-        return;
-
-    stopKeepAliveTimer();
-
-    if (isRegistered())
-        doRegister();
-}
-
-void
 SIPAccount::Credentials::computePasswordHash()
 {
     pj_md5_context pms;
@@ -1839,6 +1767,20 @@ SIPAccount::setRegistrationState(RegistrationState state,
         details_str = {description->ptr, (size_t) description->slen};
     setRegistrationStateDetailed({details_code, details_str});
     SIPAccountBase::setRegistrationState(state, details_code, details_str);
+}
+
+void
+SIPAccount::setRegistrationExpire(unsigned expire)
+{
+    if (expire >= MIN_REGISTRATION_TIME) {
+        JAMI_DBG("Set SIP registration EXPIRE to %u - current %u", expire, registrationExpire_);
+        registrationExpire_ = expire;
+    } else {
+        JAMI_WARN("SIP registration EXPIRE %u is lower than min value %u",
+                  expire,
+                  MIN_REGISTRATION_TIME);
+        registrationExpire_ = MIN_REGISTRATION_TIME;
+    }
 }
 
 std::map<std::string, std::string>
