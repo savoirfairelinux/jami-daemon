@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c4b6b859_49e69f91",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 422,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-17T20:28:01Z",
+      "side": 1,
+      "message": "to assert non-nullity:\n\n    auto\u0026 pimpl \u003d *shared-\u003epimpl_;",
+      "range": {
+        "startLine": 422,
+        "startChar": 16,
+        "endLine": 422,
+        "endChar": 51
+      },
+      "revId": "d0a9c84e768127cadc1ce17cf09f52c1fc98cf64",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
