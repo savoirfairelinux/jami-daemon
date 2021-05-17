@@ -80,10 +80,6 @@ public:
 
     void setZoneToneChoice(const std::string& str) { zoneToneChoice_ = str; }
 
-    int getRegistrationExpire() const { return registrationExpire_; }
-
-    void setRegistrationExpire(int exp) { registrationExpire_ = exp; }
-
     int getPortNum() const { return portNum_; }
 
     void setPortNum(int port) { portNum_ = port; }
@@ -101,7 +97,6 @@ private:
     int historyMaxCalls_;
     int ringingTimeout_;
     std::string zoneToneChoice_;
-    int registrationExpire_;
     int portNum_;
     bool searchBarDisplay_;
     bool md5Hash_;

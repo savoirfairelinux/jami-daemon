@@ -161,18 +161,6 @@ public:
     void doUnregister(std::function<void(bool)> cb = std::function<void(bool)>()) override;
 
     /**
-     * Start the keep alive function, once started, the account will be registered periodically
-     * a new REGISTER request is sent bey the client application. The account must be initially
-     * registered for this call to be effective.
-     */
-    void startKeepAliveTimer();
-
-    /**
-     * Stop the keep alive timer. Once canceled, no further registration will be scheduled
-     */
-    void stopKeepAliveTimer();
-
-    /**
      * Build and send SIP registration request
      */
     void sendRegister();
@@ -222,22 +210,7 @@ public:
      * Set the expiration for this account as found in
      * the "Expire" sip header or the CONTACT's "expire" param.
      */
-    void setRegistrationExpire(int expire)
-    {
-        if (expire > 0)
-            registrationExpire_ = expire;
-    }
-
-    /**
-     * Doubles the Expiration Interval sepecified for registration.
-     */
-    void doubleRegistrationExpire()
-    {
-        registrationExpire_ *= 2;
-
-        if (registrationExpire_ < 0)
-            registrationExpire_ = 0;
-    }
+    void setRegistrationExpire(unsigned expire);
 
     /**
      * Registration flag
@@ -399,13 +372,7 @@ public:
         via_addr_.port = rPort;
     }
 
-    /**
-     * Timer used to periodically send re-register request based
-     * on the "Expire" sip header (or the "expire" Contact parameter)
-     */
-    void keepAliveRegistrationCb();
-
-    bool isKeepAliveEnabled() const { return keepAliveEnabled_; }
+    bool isRegistrationRefreshEnabled() const { return registrationRefreshEnabled_; }
 
     void setTransport(const std::shared_ptr<SipTransport>& = nullptr);
 
@@ -653,7 +620,7 @@ private:
     /**
      * Network settings
      */
-    int registrationExpire_;
+    unsigned registrationExpire_;
 
     /**
      * Input Outbound Proxy Server Address
@@ -735,22 +702,11 @@ private:
     std::pair<int, std::string> registrationStateDetailed_;
 
     /**
-     * Determine if the keep alive timer will be activated or not
+     * Enable/disable automatic refresh of the registration.
+     * If enabled, a new registration request is sent shortly before
+     * the current registration expires.
      */
-    bool keepAliveEnabled_;
-
-    /**
-     * Timer used to regularrly send re-register request based
-     * on the "Expire" sip header (or the "expire" Contact parameter)
-     */
-    pj_timer_entry keepAliveTimer_;
-    std::uniform_int_distribution<decltype(pj_timer_entry::id)> timerIdDist_ {};
-
-    /**
-     * Once enabled, this variable tells if the keepalive timer is activated
-     * for this accout
-     */
-    bool keepAliveTimerActive_;
+    bool registrationRefreshEnabled_;
 
     /**
      * Optional: "received" parameter from VIA header
