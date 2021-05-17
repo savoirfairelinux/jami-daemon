@@ -162,7 +162,7 @@ Preferences::Preferences()
     , historyMaxCalls_(20)
     , ringingTimeout_(30)
     , zoneToneChoice_(DFT_ZONE) // DFT_ZONE
-    , registrationExpire_(180)
+    , registrationExpire_(30 * 60)
     , portNum_(sip_utils::DEFAULT_SIP_PORT)
     , searchBarDisplay_(true)
     , md5Hash_(false)
