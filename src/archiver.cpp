@@ -40,7 +40,6 @@ extern "C" {
 #include <mz_strm_os.h>
 #include <mz_zip.h>
 #include <mz_zip_rw.h>
-#include <filesystem>
 #else
 #include <archive.h>
 #include <archive_entry.h>
@@ -285,22 +284,26 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
             fileutils::removeAll(dir, true);
             break;
         }
-        std::string_view filename(info->filename, (size_t)info->filename_size);
+        std::string_view filename(info->filename, (size_t) info->filename_size);
         const auto& fileMatchPair = f(filename);
         if (fileMatchPair.first) {
             auto filePath = dir + DIR_SEPARATOR_STR + fileMatchPair.second;
-            std::filesystem::path directory(filePath);
-            directory = directory.remove_filename();
-            if (!std::filesystem::exists(directory))
-                fileutils::check_dir(directory.c_str());
+            std::string directory(filePath);
+            directory = directory.substr(0, directory.find_last_of(DIR_SEPARATOR_CH));
+            fileutils::check_dir(directory.c_str());
             mz_zip_reader_entry_open(zip_handle);
             void* buffStream = NULL;
             buffStream = mz_stream_os_create(&buffStream);
-            if (mz_stream_os_open(buffStream, filePath.c_str(), MZ_OPEN_MODE_WRITE | MZ_OPEN_MODE_CREATE) == MZ_OK) {
+            if (mz_stream_os_open(buffStream,
+                                  filePath.c_str(),
+                                  MZ_OPEN_MODE_WRITE | MZ_OPEN_MODE_CREATE)
+                == MZ_OK) {
                 int chunkSize = 8192;
                 std::vector<uint8_t> fileContent;
                 fileContent.resize(chunkSize);
-                while (auto ret = mz_zip_reader_entry_read(zip_handle, (void*) fileContent.data(), chunkSize)) {
+                while (auto ret = mz_zip_reader_entry_read(zip_handle,
+                                                           (void*) fileContent.data(),
+                                                           chunkSize)) {
                     ret = mz_stream_os_write(buffStream, (void*) fileContent.data(), ret);
                     if (ret < 0) {
                         fileutils::removeAll(dir, true);
@@ -351,7 +354,8 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
             break;
         }
         if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
-            throw std::runtime_error("Error reading archive: "s + archive_error_string(archiveReader.get()));
+            throw std::runtime_error("Error reading archive: "s
+                                     + archive_error_string(archiveReader.get()));
         }
 
         std::string_view fileEntry(archive_entry_pathname(entry));
@@ -416,11 +420,13 @@ readFileFromArchive(const std::string& archivePath, const std::string& fileRelat
         status = mz_zip_reader_entry_get_info(zip_handle, &info);
         if (status != MZ_OK)
             break;
-        std::string_view filename(info->filename, (size_t)info->filename_size);
+        std::string_view filename(info->filename, (size_t) info->filename_size);
         if (filename == fileRelativePathName) {
             mz_zip_reader_entry_open(zip_handle);
             fileContent.resize(info->uncompressed_size);
-            mz_zip_reader_entry_read(zip_handle, (void*) fileContent.data(), info->uncompressed_size);
+            mz_zip_reader_entry_read(zip_handle,
+                                     (void*) fileContent.data(),
+                                     info->uncompressed_size);
             mz_zip_reader_entry_close(zip_handle);
             status = -1;
         } else {
