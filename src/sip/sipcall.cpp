@@ -1583,7 +1583,7 @@ SIPCall::isAudioMuted() const
 
     const auto iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), mutedCheck);
 
-    return iter != rtpStreams_.end();
+    return iter == rtpStreams_.end();
 }
 
 bool
@@ -1611,7 +1611,7 @@ SIPCall::isVideoMuted() const
                 and not stream.mediaAttribute_->muted_);
     };
     const auto iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), mutedCheck);
-    return iter != rtpStreams_.end();
+    return iter == rtpStreams_.end();
 #else
     return true;
 #endif
