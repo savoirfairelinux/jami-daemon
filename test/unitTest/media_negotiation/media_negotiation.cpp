@@ -681,6 +681,14 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
             CPPUNIT_ASSERT_EQUAL(mediaCount, mediaAttr.size());
             for (size_t idx = 0; idx < mediaCount; idx++) {
                 CPPUNIT_ASSERT_EQUAL(scenario.offerUpdate_[idx].muted_, mediaAttr[idx].muted_);
+
+                if (mediaAttr[idx].type_ == MediaType::MEDIA_AUDIO) {
+                    // Check isAudioMuted API
+                    CPPUNIT_ASSERT_EQUAL(mediaAttr[idx].muted_, aliceCall->isAudioMuted());
+                } else {
+                    // Check isVideoMuted API
+                    CPPUNIT_ASSERT_EQUAL(mediaAttr[idx].muted_, aliceCall->isVideoMuted());
+                }
             }
         }
 
@@ -692,6 +700,14 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
             CPPUNIT_ASSERT_EQUAL(mediaCount, mediaAttr.size());
             for (size_t idx = 0; idx < mediaCount; idx++) {
                 CPPUNIT_ASSERT_EQUAL(scenario.answerUpdate_[idx].muted_, mediaAttr[idx].muted_);
+
+                if (mediaAttr[idx].type_ == MediaType::MEDIA_AUDIO) {
+                    // Check isAudioMuted API
+                    CPPUNIT_ASSERT_EQUAL(mediaAttr[idx].muted_, bobCall->isAudioMuted());
+                } else {
+                    // Check isVideoMuted API
+                    CPPUNIT_ASSERT_EQUAL(mediaAttr[idx].muted_, bobCall->isVideoMuted());
+                }
             }
         }
     }
