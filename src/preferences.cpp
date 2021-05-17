@@ -162,7 +162,6 @@ Preferences::Preferences()
     , historyMaxCalls_(20)
     , ringingTimeout_(30)
     , zoneToneChoice_(DFT_ZONE) // DFT_ZONE
-    , registrationExpire_(180)
     , portNum_(sip_utils::DEFAULT_SIP_PORT)
     , searchBarDisplay_(true)
     , md5Hash_(false)
@@ -226,7 +225,6 @@ Preferences::serialize(YAML::Emitter& out) const
     out << YAML::Key << MD5_HASH_KEY << YAML::Value << md5Hash_;
     out << YAML::Key << ORDER_KEY << YAML::Value << accountOrder_;
     out << YAML::Key << PORT_NUM_KEY << YAML::Value << portNum_;
-    out << YAML::Key << REGISTRATION_EXPIRE_KEY << YAML::Value << registrationExpire_;
     out << YAML::Key << SEARCH_BAR_DISPLAY_KEY << YAML::Value << searchBarDisplay_;
     out << YAML::Key << ZONE_TONE_CHOICE_KEY << YAML::Value << zoneToneChoice_;
     out << YAML::EndMap;
@@ -242,7 +240,6 @@ Preferences::unserialize(const YAML::Node& in)
     parseValue(node, RINGING_TIMEOUT, ringingTimeout_);
     parseValue(node, HISTORY_MAX_CALLS_KEY, historyMaxCalls_);
     parseValue(node, ZONE_TONE_CHOICE_KEY, zoneToneChoice_);
-    parseValue(node, REGISTRATION_EXPIRE_KEY, registrationExpire_);
     parseValue(node, PORT_NUM_KEY, portNum_);
     parseValue(node, SEARCH_BAR_DISPLAY_KEY, searchBarDisplay_);
     parseValue(node, MD5_HASH_KEY, md5Hash_);
