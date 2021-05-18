@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f789919f_e319e8f3",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 321,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-05-18T18:04:37Z",
+      "side": 1,
+      "message": "`dataPath_` could be renamed to `dataPath` if it\u0027s not a member of `this` to avoid confusion?",
+      "revId": "e822c0dd04e917d7c5ef05202473d89230d4eec4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
