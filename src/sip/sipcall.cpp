@@ -103,6 +103,13 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     auto mediaAttrList = getSIPAccount()->createDefaultMediaList(getSIPAccount()->isVideoEnabled()
                                                                      and not isAudioOnly(),
                                                                  getState() == CallState::HOLD);
+    JAMI_DBG("[call:%s] Create a new [%s] SIP call with %lu medias",
+             getCallId().c_str(),
+             type == Call::CallType::INCOMING
+                 ? "INCOMING"
+                 : (type == Call::CallType::OUTGOING ? "OUTGOING" : "MISSED"),
+             mediaAttrList.size());
+
     initMediaStreams(mediaAttrList);
 }
 
@@ -140,8 +147,11 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
         return;
     }
 
-    JAMI_DBG("[call:%s] Create a new SIP call with %lu medias",
+    JAMI_DBG("[call:%s] Create a new [%s] SIP call with %lu medias",
              getCallId().c_str(),
+             type == Call::CallType::INCOMING
+                 ? "INCOMING"
+                 : (type == Call::CallType::OUTGOING ? "OUTGOING" : "MISSED"),
              mediaList.size());
 
     initMediaStreams(mediaList);
@@ -2160,16 +2170,10 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
 
     JAMI_DBG("[call:%s] Received a new offer (re-invite)", getCallId().c_str());
 
-    // This list should be provided by the client. Kept for backward compatibility.
-    auto mediaList = acc->createDefaultMediaList(acc->isVideoEnabled(),
-                                                 getState() == CallState::HOLD);
-
-    if (upnp_) {
-        openPortsUPnP();
-    }
-
     sdp_->setReceivedOffer(offer);
-    sdp_->processIncomingOffer(mediaList);
+
+    // Use current media list.
+    sdp_->processIncomingOffer(getMediaAttributeList());
 
     if (offer)
         setupLocalIce();
