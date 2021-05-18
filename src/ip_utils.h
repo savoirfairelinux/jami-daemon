@@ -92,7 +92,7 @@ public:
     IpAddr(const pj_sockaddr& ip, socklen_t len)
         : addr()
     {
-        if (len > sizeof(addr))
+        if (len > (socklen_t)sizeof(addr))
             throw std::invalid_argument("IpAddr(): length overflows internal storage type");
         memcpy(&addr, &ip, len);
     }
