@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d81f918e_7b961968",
+        "filename": "src/ip_utils.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-18T17:50:38Z",
+      "side": 1,
+      "message": "we should avoid c-style casts, even if this one seems safe. std::static_cast would be more appropriate here.",
+      "revId": "285ed166d474c0e814ee0309f8032132e54df8ab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
