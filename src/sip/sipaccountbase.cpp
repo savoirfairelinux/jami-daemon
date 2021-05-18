@@ -74,7 +74,7 @@ SIPAccountBase::SIPAccountBase(const std::string& accountID)
     , link_(Manager::instance().sipVoIPLink())
 {}
 
-SIPAccountBase::~SIPAccountBase() {}
+SIPAccountBase::~SIPAccountBase() noexcept {}
 
 bool
 SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
