@@ -34,9 +34,9 @@ AC_ARG_ENABLE([debug],
 
 AS_IF([test "x$enable_debug" = "xyes"],
   [DAEMONCFLAGS+=" -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor \
--Wno-unknown-pragmas -Wformat=2 -O0"
+-Wno-unknown-pragmas -Wformat=2 -Og"
    DAEMONCXXFLAGS+=" -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor \
--Wno-unknown-pragmas -Wformat=2 -O0"],
+-Wno-unknown-pragmas -Wformat=2 -Og"],
   [DAEMONCFLAGS+=" -DNDEBUG=1 -O3"
    DAEMONCXXFLAGS+=" -DNDEBUG=1 -O3"])
 
