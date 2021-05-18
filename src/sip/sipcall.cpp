@@ -103,6 +103,13 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     auto mediaAttrList = getSIPAccount()->createDefaultMediaList(getSIPAccount()->isVideoEnabled()
                                                                      and not isAudioOnly(),
                                                                  getState() == CallState::HOLD);
+    JAMI_DBG("[call:%s] Create a new [%s] SIP call with %lu media",
+             getCallId().c_str(),
+             type == Call::CallType::INCOMING
+                 ? "INCOMING"
+                 : (type == Call::CallType::OUTGOING ? "OUTGOING" : "MISSED"),
+             mediaAttrList.size());
+
     initMediaStreams(mediaAttrList);
 }
 
@@ -131,7 +138,8 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
         mediaList = mediaAttrList;
     } else if (type_ == Call::CallType::INCOMING) {
         // Handle incoming call without media offer.
-        JAMI_WARN("[call:%s] No media offered in the incoming invite. Will answer with audio-only",
+        JAMI_WARN("[call:%s] No media offered in the incoming invite. Will provide an offer in the "
+                  "answer",
                   getCallId().c_str());
         mediaList = getSIPAccount()->createDefaultMediaList(getSIPAccount()->isVideoEnabled(),
                                                             getState() == CallState::HOLD);
@@ -140,8 +148,11 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
         return;
     }
 
-    JAMI_DBG("[call:%s] Create a new SIP call with %lu medias",
+    JAMI_DBG("[call:%s] Create a new [%s] SIP call with %lu media",
              getCallId().c_str(),
+             type == Call::CallType::INCOMING
+                 ? "INCOMING"
+                 : (type == Call::CallType::OUTGOING ? "OUTGOING" : "MISSED"),
              mediaList.size());
 
     initMediaStreams(mediaList);
@@ -2008,8 +2019,10 @@ SIPCall::onMediaNegotiationComplete()
     // to a negotiated transport.
     runOnMainThread([w = weak()] {
         if (auto this_ = w.lock()) {
+            // Notify using the parent Id if it's a subcall.
+            auto callId = this_->isSubcall() ? this_->parent_->getCallId() : this_->getCallId();
             emitSignal<DRing::CallSignal::MediaNegotiationStatus>(
-                this_->getCallId(), MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS);
+                callId, MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS);
 
             std::lock_guard<std::recursive_mutex> lk {this_->callMutex_};
             JAMI_WARN("[call:%s] media changed", this_->getCallId().c_str());
@@ -2162,16 +2175,10 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
 
     JAMI_DBG("[call:%s] Received a new offer (re-invite)", getCallId().c_str());
 
-    // This list should be provided by the client. Kept for backward compatibility.
-    auto mediaList = acc->createDefaultMediaList(acc->isVideoEnabled(),
-                                                 getState() == CallState::HOLD);
-
-    if (upnp_) {
-        openPortsUPnP();
-    }
-
     sdp_->setReceivedOffer(offer);
-    sdp_->processIncomingOffer(mediaList);
+
+    // Use current media list.
+    sdp_->processIncomingOffer(getMediaAttributeList());
 
     if (offer)
         setupLocalIce();
