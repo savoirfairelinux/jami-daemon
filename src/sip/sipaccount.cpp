@@ -165,7 +165,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     setActiveCodecs({});
 }
 
-SIPAccount::~SIPAccount()
+SIPAccount::~SIPAccount() noexcept
 {
     // ensure that no registration callbacks survive past this point
     destroyRegistrationInfo();

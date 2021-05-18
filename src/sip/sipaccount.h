@@ -93,7 +93,7 @@ public:
      */
     SIPAccount(const std::string& accountID, bool presenceEnabled);
 
-    ~SIPAccount();
+    ~SIPAccount() noexcept;
 
     const char* getAccountType() const override { return ACCOUNT_TYPE; }
 
