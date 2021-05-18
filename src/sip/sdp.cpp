@@ -582,7 +582,9 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
 {
     assert(remoteSession_);
 
-    JAMI_DBG("Processing received offer for [%s] with %lu", sessionName_.c_str(), mediaList.size());
+    JAMI_DBG("Processing received offer for [%s] with %lu media",
+             sessionName_.c_str(),
+             mediaList.size());
 
     printSession(remoteSession_, "Remote session:", SdpDirection::REMOTE_OFFER);
 
