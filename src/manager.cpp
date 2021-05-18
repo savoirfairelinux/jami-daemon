@@ -872,7 +872,7 @@ Manager::finish() noexcept
 
         // Hangup all remaining active calls
         JAMI_DBG("Hangup %zu remaining call(s)", callFactory.callCount());
-        for (const auto call : callFactory.getAllCalls())
+        for (const auto& call : callFactory.getAllCalls())
             hangupCall(call->getCallId());
         callFactory.clear();
 

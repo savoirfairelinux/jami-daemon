@@ -38,7 +38,7 @@ namespace tls {
 class AbstractSIPTransport
 {
 public:
-    using TransportData = struct
+    struct TransportData
     {
         pjsip_transport base; // do not move, SHOULD be the fist member
         AbstractSIPTransport* self {nullptr};

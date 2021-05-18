@@ -79,7 +79,7 @@ JamiPluginManager::getInstalledPlugins()
     std::for_each(pluginsPaths.begin(), pluginsPaths.end(), [&pluginsPath](std::string& x) {
         x = pluginsPath + DIR_SEPARATOR_CH + x;
     });
-    auto predicate = [this](std::string path) {
+    auto predicate = [](std::string path) {
         return !PluginUtils::checkPluginValidity(path);
     };
     auto returnIterator = std::remove_if(pluginsPaths.begin(), pluginsPaths.end(), predicate);
@@ -217,7 +217,7 @@ JamiPluginManager::getLoadedPlugins() const
     std::transform(loadedSoPlugins.begin(),
                    loadedSoPlugins.end(),
                    std::back_inserter(loadedPlugins),
-                   [this](const std::string& soPath) {
+                   [](const std::string& soPath) {
                        return PluginUtils::getRootPathFromSoPath(soPath);
                    });
     return loadedPlugins;
@@ -308,7 +308,7 @@ void
 JamiPluginManager::registerServices()
 {
     // Register getPluginPreferences so that plugin's can receive it's preferences
-    pm_.registerService("getPluginPreferences", [this](const DLPlugin* plugin, void* data) {
+    pm_.registerService("getPluginPreferences", [](const DLPlugin* plugin, void* data) {
         auto ppp = static_cast<std::map<std::string, std::string>*>(data);
         *ppp = PluginPreferencesUtils::getPreferencesValuesMap(
             PluginUtils::getRootPathFromSoPath(plugin->getPath()));
@@ -316,7 +316,7 @@ JamiPluginManager::registerServices()
     });
 
     // Register getPluginDataPath so that plugin's can receive the path to it's data folder
-    pm_.registerService("getPluginDataPath", [this](const DLPlugin* plugin, void* data) {
+    pm_.registerService("getPluginDataPath", [](const DLPlugin* plugin, void* data) {
         auto dataPath_ = static_cast<std::string*>(data);
         dataPath_->assign(PluginUtils::dataPath(plugin->getPath()));
         return 0;

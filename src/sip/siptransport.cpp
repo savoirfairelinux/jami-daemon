@@ -420,7 +420,7 @@ SipTransportBroker::getChanneledTransport(const std::shared_ptr<ChannelSocket>& 
         std::lock_guard<std::mutex> lock(transportMapMutex_);
         // we do not check for key existence as we've just created it
         // (member of new SipIceTransport instance)
-        transports_.emplace(std::make_pair(tr, sip_tr));
+        transports_.emplace(tr, sip_tr);
     }
     return sip_tr;
 }

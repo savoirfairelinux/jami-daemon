@@ -34,10 +34,7 @@
 #include <condition_variable>
 #include <set>
 
-static constexpr std::chrono::seconds ICE_NEGOTIATION_TIMEOUT {10};
-static constexpr std::chrono::seconds ICE_INIT_TIMEOUT {10};
 static constexpr std::chrono::seconds DHT_MSG_TIMEOUT {30};
-static constexpr std::chrono::seconds SOCK_TIMEOUT {10};
 static constexpr int MAX_TENTATIVES {100};
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
 using CallbackId = std::pair<jami::DeviceId, dht::Value::Id>;
@@ -307,7 +304,7 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
                                                    + deviceId.toString()),
                                 deviceId,
                                 value,
-                                [this, deviceId](bool ok) {
+                                [deviceId](bool ok) {
                                     if (!ok)
                                         JAMI_ERR("Tried to send request to %s, but put failed",
                                                  deviceId.to_c_str());
@@ -473,7 +470,6 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
 
         // If no socket exists, we need to initiate an ICE connection.
         sthis->account.getIceOptions([w,
-                                      cbId,
                                       deviceId = std::move(deviceId),
                                       name = std::move(name),
                                       cert = std::move(cert),
@@ -484,7 +480,6 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                 return;
             ice_config.tcpEnable = true;
             ice_config.onInitDone = [w,
-                                     cbId,
                                      deviceId = std::move(deviceId),
                                      name = std::move(name),
                                      cert = std::move(cert),
@@ -508,7 +503,6 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
                     });
             };
             ice_config.onNegoDone = [w,
-                                     cbId,
                                      deviceId = std::move(deviceId),
                                      name = std::move(name),
                                      cert = std::move(cert),
@@ -734,7 +728,7 @@ ConnectionManager::Impl::answerTo(IceTransport& ice, const dht::Value::Id& id, c
         dht::InfoHash::get(PeerConnectionRequest::key_prefix + from.toString()),
         from,
         value,
-        [this, from](bool ok) {
+        [from](bool ok) {
             if (!ok)
                 JAMI_ERR("Tried to answer to connection request from %s, but put failed",
                          from.to_c_str());

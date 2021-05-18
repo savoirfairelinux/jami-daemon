@@ -351,7 +351,6 @@ private:
 
     mutable std::shared_ptr<OptimisticMetaOutgoingInfo> metaInfo_;
     mutable std::ifstream input_;
-    std::size_t tx_ {0};
     mutable bool headerSent_ {false};
     bool peerReady_ {false};
     const std::string peerUri_;

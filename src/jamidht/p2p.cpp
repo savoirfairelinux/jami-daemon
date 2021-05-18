@@ -47,13 +47,6 @@
 
 namespace jami {
 
-static constexpr std::chrono::seconds DHT_MSG_TIMEOUT {30};
-static constexpr std::chrono::seconds NET_CONNECTION_TIMEOUT {10};
-static constexpr std::chrono::seconds SOCK_TIMEOUT {10};
-static constexpr std::chrono::seconds ICE_READY_TIMEOUT {10};
-static constexpr std::chrono::seconds ICE_INIT_TIMEOUT {10};
-static constexpr std::chrono::seconds ICE_NEGOTIATION_TIMEOUT {10};
-
 using Clock = std::chrono::system_clock;
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
 

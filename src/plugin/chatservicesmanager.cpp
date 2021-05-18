@@ -63,8 +63,8 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
             for (auto& toggledList : chatHandlerToggled_) {
                 auto handlerId = std::find_if(toggledList.second.begin(),
                                               toggledList.second.end(),
-                                              [this, handlerIt](uintptr_t handlerId) {
-                                                  return (handlerId == (uintptr_t) handlerIt->get());
+                                              [id = (uintptr_t) handlerIt->get()](uintptr_t handlerId) {
+                                                  return (handlerId == id);
                                               });
                 // If ChatHandler we're trying to destroy is currently in use, we deactivate it.
                 if (handlerId != toggledList.second.end()) {
@@ -88,7 +88,7 @@ void
 ChatServicesManager::registerChatService(PluginManager& pluginManager)
 {
     // sendTextMessage is a service that allows plugins to send a message in a conversation.
-    auto sendTextMessage = [this](const DLPlugin*, void* data) {
+    auto sendTextMessage = [](const DLPlugin*, void* data) {
         auto cm = static_cast<JamiMessage*>(data);
         jami::Manager::instance().sendTextMessage(cm->accountId, cm->peerId, cm->data, true);
         return 0;
