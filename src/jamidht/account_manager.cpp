@@ -544,10 +544,11 @@ AccountManager::sendTrustRequestConfirm(const dht::InfoHash& toH, const std::str
     JAMI_WARN("AccountManager::sendTrustRequestConfirm");
     dht::TrustRequest answer {DHT_TYPE_NS, ""};
     answer.confirm = true;
-    answer.conversationId = convId;
+    // SWARM
+    ///////answer.conversationId = convId;
 
-    if (!convId.empty() && info_)
-        info_->contacts->acceptConversation(convId);
+    ///////if (!convId.empty() && info_)
+    ///////    info_->contacts->acceptConversation(convId);
 
     forEachDevice(toH, [this, toH, answer](const dht::InfoHash& dev) {
         JAMI_WARN("sending trust request reply: %s / %s",
