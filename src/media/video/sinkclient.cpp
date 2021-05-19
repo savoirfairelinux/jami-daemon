@@ -286,6 +286,7 @@ bool
 SinkClient::stop() noexcept
 {
     setFrameSize(0, 0);
+    setFramePosition(0, 0);
     shm_.reset();
     return true;
 }
@@ -308,6 +309,7 @@ bool
 SinkClient::stop() noexcept
 {
     setFrameSize(0, 0);
+    setFramePosition(0, 0);
     return true;
 }
 
@@ -343,6 +345,15 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     if (avTarget_.push) {
         auto outFrame = std::make_unique<VideoFrame>();
         outFrame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
+        outFrame->pointer()->crop_top = y_;
+        outFrame->pointer()->crop_bottom = outFrame->pointer()->height - y_ - height_;
+        outFrame->pointer()->crop_left = x_;
+        outFrame->pointer()->crop_right = outFrame->pointer()->width - x_ - width_;
+        if (auto ret = av_frame_apply_cropping(outFrame->pointer(), 0) < 0) {
+            JAMI_INFO() << "BAD CROP!!: " << ret;
+        } else {
+            JAMI_INFO() << outFrame->pointer()->width << " vs " << outFrame->pointer()->height;
+        }
         avTarget_.push(std::move(outFrame));
     }
 
@@ -365,10 +376,18 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                 JAMI_ERR("Accel failure: %s", e.what());
                 return;
             }
-        }
-        else
+        } else
 #endif
-        frame = std::static_pointer_cast<VideoFrame>(frame_p);
+            frame = std::static_pointer_cast<VideoFrame>(frame_p);
+        frame->pointer()->crop_top = y_;
+        frame->pointer()->crop_bottom = frame->pointer()->height - y_ - height_;
+        frame->pointer()->crop_left = x_;
+        frame->pointer()->crop_right = frame->pointer()->width - x_ - width_;
+        if (auto ret = av_frame_apply_cropping(frame->pointer(), 0) < 0) {
+            JAMI_INFO() << "BAD CROP!!: " << ret;
+        } else {
+            JAMI_INFO() << frame->pointer()->width << " vs " << frame->pointer()->height;
+        }
         int angle = frame->getOrientation();
         if (angle != rotation_) {
             filter_ = getTransposeFilter(angle,
@@ -434,6 +453,13 @@ SinkClient::setFrameSize(int width, int height)
         emitSignal<DRing::VideoSignal::DecodingStopped>(getId(), openedName(), mixer_);
         started_ = false;
     }
+}
+
+void
+SinkClient::setFramePosition(int x, int y)
+{
+    x_ = x;
+    y_ = y;
 }
 
 } // namespace video
