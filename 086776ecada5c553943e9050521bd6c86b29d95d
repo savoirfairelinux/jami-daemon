@@ -19,6 +19,23 @@
     },
     {
       "key": {
+        "uuid": "8c36d987_17c6fc8b",
+        "filename": "src/client/datatransfer.cpp",
+        "patchSetId": 30
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-05-19T19:13:47Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027fileId\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "086776ecada5c553943e9050521bd6c86b29d95d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "a74d9e78_6861af2a",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 30
@@ -28,6 +45,23 @@
         "id": 5
       },
       "writtenOn": "2021-05-19T19:13:42Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027commitId\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "086776ecada5c553943e9050521bd6c86b29d95d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "463495dd_e25884f4",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 30
+      },
+      "lineNbr": 800,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-05-19T19:13:47Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nparameter \u0027commitId\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
       "revId": "086776ecada5c553943e9050521bd6c86b29d95d",
