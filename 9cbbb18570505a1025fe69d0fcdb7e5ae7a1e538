@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "680649ef_59db9dcf",
+        "filename": "src/client/datatransfer.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-05-19T18:46:48Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027fileId\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "9cbbb18570505a1025fe69d0fcdb7e5ae7a1e538",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2d260c05_2ccfd4d2",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 28
+      },
+      "lineNbr": 800,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-05-19T18:46:48Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027commitId\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "9cbbb18570505a1025fe69d0fcdb7e5ae7a1e538",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
