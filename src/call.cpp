@@ -476,7 +476,7 @@ Call::addSubCall(Call& subcall)
     subcall.addStateListener(
         [sub = subcall.weak(),
          parent = weak()](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
-            runOnMainThread([sub, parent, new_state, new_cstate, code]() {
+            runOnMainThread([sub, parent, new_state, new_cstate]() {
                 if (auto p = parent.lock()) {
                     if (auto s = sub.lock()) {
                         p->subcallStateChanged(*s, new_state, new_cstate);

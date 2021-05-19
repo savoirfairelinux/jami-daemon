@@ -79,10 +79,9 @@ JamiPluginManager::getInstalledPlugins()
     std::for_each(pluginsPaths.begin(), pluginsPaths.end(), [&pluginsPath](std::string& x) {
         x = pluginsPath + DIR_SEPARATOR_CH + x;
     });
-    auto predicate = [this](std::string path) {
+    auto returnIterator = std::remove_if(pluginsPaths.begin(), pluginsPaths.end(), [](const std::string& path) {
         return !PluginUtils::checkPluginValidity(path);
-    };
-    auto returnIterator = std::remove_if(pluginsPaths.begin(), pluginsPaths.end(), predicate);
+    });
     pluginsPaths.erase(returnIterator, std::end(pluginsPaths));
 
     // Gets plugins installed in non standard path
@@ -103,11 +102,11 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
     if (fileutils::isFile(jplPath)) {
         try {
             auto manifestMap = PluginUtils::readPluginManifestFromArchive(jplPath);
-            std::string name = manifestMap["name"];
+            const std::string& name = manifestMap["name"];
             if (name.empty())
                 return 0;
-            std::string version = manifestMap["version"];
-            const std::string destinationDir {fileutils::get_data_dir() + DIR_SEPARATOR_CH
+            const std::string& version = manifestMap["version"];
+            std::string destinationDir {fileutils::get_data_dir() + DIR_SEPARATOR_CH
                                               + "plugins" + DIR_SEPARATOR_CH + name};
             // Find if there is an existing version of this plugin
             const auto alreadyInstalledManifestMap = PluginUtils::parseManifestFile(
@@ -217,7 +216,7 @@ JamiPluginManager::getLoadedPlugins() const
     std::transform(loadedSoPlugins.begin(),
                    loadedSoPlugins.end(),
                    std::back_inserter(loadedPlugins),
-                   [this](const std::string& soPath) {
+                   [](const std::string& soPath) {
                        return PluginUtils::getRootPathFromSoPath(soPath);
                    });
     return loadedPlugins;
@@ -308,7 +307,7 @@ void
 JamiPluginManager::registerServices()
 {
     // Register getPluginPreferences so that plugin's can receive it's preferences
-    pm_.registerService("getPluginPreferences", [this](const DLPlugin* plugin, void* data) {
+    pm_.registerService("getPluginPreferences", [](const DLPlugin* plugin, void* data) {
         auto ppp = static_cast<std::map<std::string, std::string>*>(data);
         *ppp = PluginPreferencesUtils::getPreferencesValuesMap(
             PluginUtils::getRootPathFromSoPath(plugin->getPath()));
@@ -316,9 +315,9 @@ JamiPluginManager::registerServices()
     });
 
     // Register getPluginDataPath so that plugin's can receive the path to it's data folder
-    pm_.registerService("getPluginDataPath", [this](const DLPlugin* plugin, void* data) {
-        auto dataPath_ = static_cast<std::string*>(data);
-        dataPath_->assign(PluginUtils::dataPath(plugin->getPath()));
+    pm_.registerService("getPluginDataPath", [](const DLPlugin* plugin, void* data) {
+        auto dataPath = static_cast<std::string*>(data);
+        dataPath->assign(PluginUtils::dataPath(plugin->getPath()));
         return 0;
     });
 }
