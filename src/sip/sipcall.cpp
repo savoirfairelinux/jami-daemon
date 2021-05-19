@@ -53,6 +53,7 @@
 #include "dring/videomanager_interface.h"
 #include <chrono>
 #include <libavutil/display.h>
+#include <video/sinkclient.h>
 #endif
 #include "jamidht/channeled_transport.h"
 
@@ -1804,6 +1805,16 @@ SIPCall::stopAllMedia()
     auto const& videoRtp = getVideoRtp();
     if (videoRtp)
         videoRtp->stop();
+
+    for (auto it = callSinksMap_.begin(); it != callSinksMap_.end();) {
+        auto& videoReceive = videoRtp->getVideoReceive();
+        if (videoReceive) {
+            videoReceive->detach(it->second.get());
+        }
+
+        it->second->stop();
+        it = callSinksMap_.erase(it);
+    }
 #endif
 
 #ifdef ENABLE_PLUGIN
@@ -2374,6 +2385,64 @@ SIPCall::addDummyVideoRtpSession()
 #endif
 
     return {};
+}
+
+void
+SIPCall::createSinks(const ConfInfo& infos)
+{
+#ifdef ENABLE_VIDEO
+    if (!hasVideo())
+        return;
+
+    std::lock_guard<std::mutex> lk(sinksMtx_);
+    auto videoRtp = getVideoRtp();
+    auto& videoReceive = videoRtp->getVideoReceive();
+    if (!videoReceive)
+        return;
+    std::set<std::string> sinkIdsList {};
+
+    // create peers vsinks
+    for (const auto& participant : infos) {
+        if (participant.w && participant.h) {
+            std::string sinkId = getConfId().empty() ? getCallId() : getConfId();
+            sinkId += participant.uri + participant.device;
+            auto currentSink = Manager::instance().getSinkClient(sinkId);
+            if (currentSink) {
+                videoReceive->detach(currentSink.get());
+                currentSink->stop();
+                currentSink->setFramePosition(participant.x, participant.y);
+                currentSink->setFrameSize(participant.w, participant.h);
+                videoReceive->attach(currentSink.get());
+                continue;
+            }
+            auto newSink = Manager::instance().createSinkClient(sinkId);
+            newSink->start();
+            newSink->setFramePosition(participant.x, participant.y);
+            newSink->setFrameSize(participant.w, participant.h);
+
+            videoReceive->attach(newSink.get());
+
+            callSinksMap_.emplace(sinkId, newSink);
+            sinkIdsList.emplace(sinkId);
+        } else {
+            JAMI_INFO() << "sinkexists!";
+        }
+    }
+
+    // remove any non used vsink
+    for (auto it = callSinksMap_.begin(); it != callSinksMap_.end();) {
+        if (sinkIdsList.find(it->first) == sinkIdsList.end()) {
+            videoReceive->detach(it->second.get());
+
+            it->second->stop();
+            it = callSinksMap_.erase(it);
+            // should be removed from manager map too ?
+            continue;
+        } else {
+            it++;
+        }
+    }
+#endif
 }
 
 std::shared_ptr<AudioRtpSession>
