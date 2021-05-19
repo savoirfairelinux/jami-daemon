@@ -2036,7 +2036,7 @@ SIPCall::startIceMedia()
         onFailure(EIO);
         return;
     }
-    if (not ice->startIce(rem_ice_attrs, std::move(getAllRemoteCandidates()))) {
+    if (not ice->startIce(rem_ice_attrs, getAllRemoteCandidates())) {
         JAMI_ERR("[call:%s] Media ICE start failed", getCallId().c_str());
         onFailure(EIO);
     }

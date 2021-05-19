@@ -56,7 +56,7 @@ public:
     void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) override;
     void restartSender() override;
     void stop() override;
-    void setMuted(bool isMuted);
+    void setMuted(bool isMuted) override;
 
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;

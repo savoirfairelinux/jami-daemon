@@ -218,11 +218,7 @@ struct JamiAccount::DiscoveredPeer
     std::shared_ptr<Task> cleanupTask;
 };
 
-static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
-static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
-static constexpr auto TLS_TIMEOUT = std::chrono::seconds(40);
-const constexpr auto EXPORT_KEY_RENEWAL_TIME = std::chrono::minutes(20);
 
 static constexpr const char* const RING_URI_PREFIX = "ring:";
 static constexpr const char* const JAMI_URI_PREFIX = "jami:";
@@ -330,7 +326,7 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     setActiveCodecs({});
 }
 
-JamiAccount::~JamiAccount()
+JamiAccount::~JamiAccount() noexcept
 {
     hangupCalls();
     shutdownConnections();

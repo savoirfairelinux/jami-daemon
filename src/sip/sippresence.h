@@ -223,7 +223,6 @@ private:
     std::list<PresSubClient*> sub_client_list_; /**< Subcribed buddy list.*/
 
     std::recursive_mutex mutex_;
-    unsigned mutex_nesting_level_ {0};
     pj_caching_pool cp_;
     pj_pool_t* pool_;
 };

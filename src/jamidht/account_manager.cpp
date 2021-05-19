@@ -575,7 +575,7 @@ AccountManager::forEachDevice(const dht::InfoHash& to,
     });
     dht_->get<DeviceAnnouncement>(
         to,
-        [this, to, treatedDevices, op = std::move(op)](DeviceAnnouncement&& dev) {
+        [to, treatedDevices, op = std::move(op)](DeviceAnnouncement&& dev) {
             if (dev.from != to)
                 return true;
             if (treatedDevices->emplace(dev.dev).second) {

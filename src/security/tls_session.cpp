@@ -738,7 +738,7 @@ TlsSession::TlsSessionImpl::verifyOcsp(const std::string& aia_uri,
     sendOcspRequest(aia_uri,
                     std::move(ocsp_req.first),
                     OCSP_REQUEST_TIMEOUT,
-                    [this, cb = std::move(cb), &cert, nonce = std::move(ocsp_req.second)](
+                    [cb = std::move(cb), &cert, nonce = std::move(ocsp_req.second)](
                         const dht::http::Response& r) {
                         // Prepare response data
                         // Verify response validity

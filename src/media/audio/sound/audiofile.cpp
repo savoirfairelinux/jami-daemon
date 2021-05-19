@@ -65,7 +65,7 @@ AudioFile::AudioFile(const std::string& fileName, unsigned int sampleRate)
     auto buf = std::make_unique<AudioBuffer>(0, format);
     Resampler r {};
     auto decoder = std::make_unique<MediaDecoder>(
-        [this, &r, &format, &buf](const std::shared_ptr<MediaFrame>& frame) mutable {
+        [&r, &format, &buf](const std::shared_ptr<MediaFrame>& frame) mutable {
             buf->append(*r.resample(std::static_pointer_cast<AudioFrame>(frame), format));
         });
     DeviceParams dev;
