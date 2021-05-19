@@ -207,6 +207,7 @@ cppcheck = $(shell $(CC) $(CFLAGS) -E -dM - < /dev/null | grep -E $(1))
 
 EXTRA_CPPFLAGS += -I$(PREFIX)/include
 EXTRA_LDFLAGS += -L$(PREFIX)/lib
+EXTRA_CXXFLAGS += -std=gnu++17
 
 CPPFLAGS := $(CPPFLAGS) $(EXTRA_CPPFLAGS)
 CFLAGS := $(CFLAGS) $(EXTRA_CPPFLAGS) $(EXTRA_COMMON) $(EXTRA_CFLAGS)
