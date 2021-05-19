@@ -53,6 +53,7 @@
 #include "dring/videomanager_interface.h"
 #include <chrono>
 #include <libavutil/display.h>
+#include <video/sinkclient.h>
 #endif
 #include "jamidht/channeled_transport.h"
 
@@ -2338,6 +2339,41 @@ SIPCall::exitConference()
 #ifdef ENABLE_PLUGIN
     createCallAVStreams();
 #endif
+}
+
+void
+SIPCall::createSinks(const ConfInfo& infos)
+{
+    // create peers vsinks
+    for (const auto& participant : infos) {
+        if (!participant.sinkId.empty() && participant.w && participant.h) {
+            std::string sinkId = getConfId().empty() ? getCallId() : getConfId();
+            sinkId += participant.sinkId;
+            if (!Manager::instance().getSinkClient(participant.sinkId))
+                continue;
+            auto newSink = Manager::instance().createSinkClient(sinkId);
+            newSink->start();
+            newSink->setFrameSize(participant.w, participant.h);
+            callSinksMap_.emplace(sinkId, newSink);
+            sinkIdsList.emplace_back(sinkId);
+        } else {
+            JAMI_INFO() << "sinkexists!";
+        }
+    }
+
+    // remove any non used vsink
+    for (auto &it = callSinksMap_.begin(), it != callSinksMap_.end();) {
+        if (sinkIdsList.find(it->first) == sinkIdsList.end()) {
+            it = callSinksMap_.erase(it);
+            // should be removed from manager map too
+            continue;
+        } else {
+            it++;
+        }
+    }
+
+    // attach vsinks and received video, addressing the different frames position without creating
+    // buffers (use crop property of ffmpeg AVFrame)
 }
 
 std::shared_ptr<AudioRtpSession>

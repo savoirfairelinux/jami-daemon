@@ -159,7 +159,8 @@ public:
 
         return nullptr;
     }
-
+    void createSinks(const ConfInfo& infos) override;
+    std::map<std::string, std::shared_ptr<video::SinkClient>> callSinksMap_ {};
     bool hasVideo() const override;
     bool isAudioMuted() const override;
     bool isVideoMuted() const override;
