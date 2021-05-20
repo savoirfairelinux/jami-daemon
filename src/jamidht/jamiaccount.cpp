@@ -1193,6 +1193,11 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     return;
                 }
             }
+            emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(getAccountID(),
+                                                                         conversationId,
+                                                                         uri,
+                                                                         payload,
+                                                                         received);
             if (saveReq && !conversationId.empty()) {
                 ConversationRequest req;
                 req.from = uri;
@@ -1206,29 +1211,6 @@ JamiAccount::loadAccount(const std::string& archive_password,
                                                                                    conversationId,
                                                                                    req.toMap());
             }
-            emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(getAccountID(),
-                                                                         conversationId,
-                                                                         uri,
-                                                                         payload,
-                                                                         received);
-            if (!saveReq || conversationId.empty())
-                return;
-            dht::ThreadPool::io().run(
-                [w = weak(), uri, payload = std::move(payload), received, conversationId] {
-                    if (auto acc = w.lock()) {
-                        ConversationRequest req;
-                        req.from = uri;
-                        req.conversationId = conversationId;
-                        req.received = std::time(nullptr);
-                        auto details = vCard::utils::toMap(
-                            std::string_view(reinterpret_cast<const char*>(payload.data()),
-                                             payload.size()));
-                        req.metadatas = ConversationRepository::infosFromVCard(details);
-                        acc->accountManager_->addConversationRequest(conversationId, std::move(req));
-                        emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(
-                            acc->getAccountID(), conversationId, req.toMap());
-                    }
-                });
         },
         [this](const std::map<dht::InfoHash, KnownDevice>& devices) {
             std::map<std::string, std::string> ids;
