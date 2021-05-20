@@ -498,6 +498,20 @@ CoreLayer::getDeviceList(bool getCapture) const
     for (int i = 0; i < nDevices; ++i) {
         auto dev = AudioDevice {devids[i], getCapture};
         if (dev.channels_ > 0) { // Channels < 0 if inactive.
+            //There is additional stream under the built-in device - the raw streams enabled by AUVP.
+            if (dev.name_.find("VPAUAggregateAudioDevice") != std::string::npos) {
+                //ignore VPAUAggregateAudioDevice
+                continue;
+            }
+            //for input device check if it not speaker
+            //since the speaker device has input stream for echo cancellation.
+            if (getCapture) {
+                auto devOutput = AudioDevice {devids[i], !getCapture};
+                // it is output device
+                if (devOutput.channels_ > 0) {
+                    continue;
+                }
+            }
             ret.push_back(std::move(dev));
         }
     }
