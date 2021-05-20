@@ -211,7 +211,7 @@ public:
      * Add contact to the account contact list.
      * Set confirmed if we know the contact also added us.
      */
-    void addContact(const std::string& uri,
+    bool addContact(const std::string& uri,
                     bool confirmed = false,
                     const std::string& conversationId = "");
     void removeContact(const std::string& uri, bool banned = true);
