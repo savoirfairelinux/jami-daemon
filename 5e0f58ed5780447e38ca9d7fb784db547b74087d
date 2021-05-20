@@ -16,6 +16,52 @@
       "revId": "5e0f58ed5780447e38ca9d7fb784db547b74087d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c17d30a3_df4a3451",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 1507,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-20T19:21:40Z",
+      "side": 1,
+      "message": "To fix the SonarQube warning:\n\n   std::move(cb)",
+      "range": {
+        "startLine": 1507,
+        "startChar": 12,
+        "endLine": 1507,
+        "endChar": 14
+      },
+      "revId": "5e0f58ed5780447e38ca9d7fb784db547b74087d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "17517251_c5214ed0",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 1509,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-20T19:21:40Z",
+      "side": 1,
+      "message": "io.cb",
+      "range": {
+        "startLine": 1509,
+        "startChar": 8,
+        "endLine": 1509,
+        "endChar": 10
+      },
+      "revId": "5e0f58ed5780447e38ca9d7fb784db547b74087d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
