@@ -710,4 +710,22 @@ Account::removeDefaultModerator(const std::string& uri)
     defaultModerators_.erase(uri);
 }
 
+bool
+Account::meetMinimumRequiredVersion(std::vector<unsigned> jamiVersion,
+                                    std::vector<unsigned> minRequiredVersion)
+{
+    if (jamiVersion.size() != 3 or minRequiredVersion.size() != 3) {
+        JAMI_ERR("Unexpected vector sizes");
+        return false;
+    }
+
+    bool backwardCompatible = jamiVersion[0] > minRequiredVersion[0]
+                              || (jamiVersion[0] == minRequiredVersion[0]
+                                  and jamiVersion[1] > minRequiredVersion[1])
+                              || (jamiVersion[0] == minRequiredVersion[0]
+                                  and jamiVersion[1] == minRequiredVersion[1]
+                                  and jamiVersion[2] >= minRequiredVersion[2]);
+
+    return backwardCompatible;
+}
 } // namespace jami
