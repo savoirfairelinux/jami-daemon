@@ -2545,7 +2545,11 @@ JamiAccount::connectivityChanged()
         return;
     }
     dht_->connectivityChanged();
-    connectionManager_->connectivityChanged();
+    {
+        std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+        if (connectionManager_)
+            connectionManager_->connectivityChanged();
+    }
     // reset cache
     setPublishedAddress({});
 }
