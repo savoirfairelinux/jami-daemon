@@ -477,11 +477,14 @@ ArchiveAccountManager::startSync(const OnNewDeviceCb& cb)
 }
 
 void
-ArchiveAccountManager::onSyncData(DeviceSync&& sync)
+ArchiveAccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
 {
     auto sync_date = clock::time_point(clock::duration(sync.date));
-    if (not info_->contacts->syncDevice(sync.from, sync_date)) {
-        return;
+    if (checkDevice) {
+        // If the DHT is used, we need to check the device here
+        if (not info_->contacts->syncDevice(sync.from, sync_date)) {
+            return;
+        }
     }
 
     // Sync known devices
