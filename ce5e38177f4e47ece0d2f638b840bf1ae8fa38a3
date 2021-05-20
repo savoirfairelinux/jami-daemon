@@ -1,0 +1,211 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "76e2f334_307fcd48",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 228,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-20T14:34:31Z",
+      "side": 1,
+      "message": "constexpr auto USER_AGENT \u003d CONST_PJ_STR(\"User-Agent\");",
+      "range": {
+        "startLine": 228,
+        "startChar": 4,
+        "endLine": 228,
+        "endChar": 93
+      },
+      "revId": "ce5e38177f4e47ece0d2f638b840bf1ae8fa38a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ccb98efe_168c67aa",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1452,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-20T14:34:31Z",
+      "side": 1,
+      "message": "not used",
+      "range": {
+        "startLine": 1449,
+        "startChar": 0,
+        "endLine": 1452,
+        "endChar": 0
+      },
+      "revId": "ce5e38177f4e47ece0d2f638b840bf1ae8fa38a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1a16010e_9b7b22ca",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1477,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-20T14:34:31Z",
+      "side": 1,
+      "message": "use string_utils::split_string_to_unsigned",
+      "range": {
+        "startLine": 1457,
+        "startChar": 0,
+        "endLine": 1477,
+        "endChar": 6
+      },
+      "revId": "ce5e38177f4e47ece0d2f638b840bf1ae8fa38a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bc78136a_6bc0d77c",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1488,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-20T14:34:31Z",
+      "side": 1,
+      "message": "move is a noop since ua is a const ref.\nTake ua as a string_view to build the string directly from the header data, or take it as a string value to be able to move it.",
+      "range": {
+        "startLine": 1488,
+        "startChar": 21,
+        "endLine": 1488,
+        "endChar": 35
+      },
+      "revId": "ce5e38177f4e47ece0d2f638b840bf1ae8fa38a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b818477c_c76b9062",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1491,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-20T14:34:31Z",
+      "side": 1,
+      "message": "not needed",
+      "range": {
+        "startLine": 1491,
+        "startChar": 4,
+        "endLine": 1491,
+        "endChar": 18
+      },
+      "revId": "ce5e38177f4e47ece0d2f638b840bf1ae8fa38a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fa3212b8_dc7269d8",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1494,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-20T14:34:31Z",
+      "side": 1,
+      "message": "string_view",
+      "range": {
+        "startLine": 1494,
+        "startChar": 8,
+        "endLine": 1494,
+        "endChar": 12
+      },
+      "revId": "ce5e38177f4e47ece0d2f638b840bf1ae8fa38a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "98e67693_0832fc9e",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1495,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-20T14:34:31Z",
+      "side": 1,
+      "message": "string_view",
+      "range": {
+        "startLine": 1495,
+        "startChar": 8,
+        "endLine": 1495,
+        "endChar": 19
+      },
+      "revId": "ce5e38177f4e47ece0d2f638b840bf1ae8fa38a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a57a5b34_5081aebd",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1508,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-20T14:34:31Z",
+      "side": 1,
+      "message": "\u0027-\u0027",
+      "range": {
+        "startLine": 1508,
+        "startChar": 21,
+        "endLine": 1508,
+        "endChar": 27
+      },
+      "revId": "ce5e38177f4e47ece0d2f638b840bf1ae8fa38a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a2fff485_e88b0385",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1536,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-20T14:34:31Z",
+      "side": 1,
+      "message": "use string_utils::split_string_to_unsigned(version)",
+      "range": {
+        "startLine": 1536,
+        "startChar": 27,
+        "endLine": 1536,
+        "endChar": 39
+      },
+      "revId": "ce5e38177f4e47ece0d2f638b840bf1ae8fa38a3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
