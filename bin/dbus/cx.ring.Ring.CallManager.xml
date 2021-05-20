@@ -1026,7 +1026,15 @@
               <p>Report mediation negotation status.</p>
             </tp:docstring>
             <arg type="s" name="callID" />
-            <arg type="s" name="event" />
+            <arg type="s" name="event" >
+              <tp:docstring>
+                The acceptable states are:
+                <ul>
+                  <li>NEGOTIATION_SUCCESS: Medias are ready</li>
+                  <li>NEGOTIATION_FAIL: Medias negotion failed</li>
+                </ul>
+              </tp:docstring>
+            </arg>
         </signal>
     </interface>
 </node>
