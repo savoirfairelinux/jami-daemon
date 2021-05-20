@@ -3369,7 +3369,7 @@ ConversationTest::testAddContactDeleteAndReAdd()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
     conversationReady = false;
     memberMessageGenerated = false;
-    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    // NOTE: automatically accepted as Alice is still a contact!
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return conversationReady && memberMessageGenerated;
     }));
