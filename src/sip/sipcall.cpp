@@ -118,6 +118,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  Call::CallType type,
                  const std::vector<MediaAttribute>& mediaAttrList)
     : Call(account, callId, type)
+    , peerSupportMultiStream_(false)
     , sdp_(new Sdp(callId))
 {
     if (account->getUPnPActive())
@@ -1452,6 +1453,76 @@ SIPCall::sendKeyframe()
 }
 
 void
+SIPCall::setPeerUaVersion(const std::string& ua)
+{
+    if (peerUserAgent_ == ua or ua.empty()) {
+        // Silently ignore if it did not change or empty.
+        return;
+    }
+
+    if (peerUserAgent_.empty()) {
+        JAMI_DBG("[call:%s] Set peer's User-Agent to [%s]", getCallId().c_str(), ua.c_str());
+    } else if (not peerUserAgent_.empty()) {
+        // Unlikely, but should be handled since we dont have control over the peer.
+        // Even if it's unexpected, we still try to parse the UA version.
+        JAMI_WARN("[call:%s] Peer's User-Agent unexpectedely changed from [%s] to [%s]",
+                  getCallId().c_str(),
+                  peerUserAgent_.c_str(),
+                  ua.c_str());
+    }
+
+    peerUserAgent_ = ua;
+
+    // User-agent parsing
+    const std::string PACK_NAME(PACKAGE_NAME);
+    std::string_view s {peerUserAgent_};
+    std::string version;
+
+    auto pos = s.find(PACK_NAME);
+    if (pos == std::string::npos) {
+        // Must have the expected package name.
+        JAMI_WARN("Could not find the expected package name in peer's User-Agent");
+    }
+
+    s = s.substr(pos + PACK_NAME.length() + 1);
+
+    // Unstable (un-released) versions has a hiphen + commit Id after
+    // the version number. Find the commit Id if any, and ignore it.
+    pos = s.find("-");
+    if (pos != std::string::npos) {
+        // Get the version and ignore the commit ID.
+        version = s.substr(0, pos);
+    } else {
+        // Extract the version number.
+        pos = s.find(" ");
+        if (pos != std::string::npos) {
+            version = s.substr(0, pos);
+        }
+    }
+
+    if (version.empty()) {
+        JAMI_DBG("[call:%s] Could not parse peer's Jami version", getCallId().c_str());
+    }
+
+    auto peerJamiVersion = split_string_to_unsigned(version, '.');
+    if (peerJamiVersion.size() != 3) {
+        JAMI_WARN("Could not parse peer's Jami version");
+        return;
+    }
+
+    // Check if peer's version is at least 10.0.2 to enable multi-stream.
+    peerSupportMultiStream_ = Account::meetMinimumRequiredVersion(peerJamiVersion, {10, 0, 2});
+
+    if (not peerSupportMultiStream_) {
+        JAMI_DBG("Peer's version [%u.%u.%u] does not support multi-stream. Min required version: "
+                 "[10.0.2]",
+                 peerJamiVersion[0],
+                 peerJamiVersion[1],
+                 peerJamiVersion[2]);
+    }
+}
+
+void
 SIPCall::onPeerRinging()
 {
     setState(ConnectionState::RINGING);
@@ -1967,6 +2038,12 @@ SIPCall::isReinviteRequired(const std::vector<MediaAttribute>& mediaAttrList)
 bool
 SIPCall::requestMediaChange(const std::vector<MediaAttribute>& mediaAttrList)
 {
+    if (not peerSupportMultiStream_) {
+        JAMI_WARN("[call:%s] Peer does not support multi-stream. Media change request ignored",
+                  getCallId().c_str());
+        return false;
+    }
+
     JAMI_DBG("[call:%s] Requesting media change. List of new media:", getCallId().c_str());
 
     unsigned idx = 0;
@@ -2605,6 +2682,9 @@ SIPCall::merge(Call& call)
         mediaTransport_ = std::move(subcall.mediaTransport_);
         tmpMediaTransport_ = std::move(subcall.tmpMediaTransport_);
     }
+
+    peerUserAgent_ = subcall.peerUserAgent_;
+    peerSupportMultiStream_ = subcall.peerSupportMultiStream_;
 
     Call::merge(subcall);
     startIceMedia();
