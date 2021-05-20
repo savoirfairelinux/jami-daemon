@@ -106,6 +106,14 @@
 
 using namespace std::placeholders;
 
+struct SyncMsg
+{
+    jami::DeviceSync ds;
+    std::vector<jami::ConvInfo> c;
+    std::map<std::string, jami::ConversationRequest> cr;
+    MSGPACK_DEFINE(ds, c, cr)
+};
+
 namespace jami {
 
 constexpr pj_str_t STR_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR("Message-ID");
@@ -4935,88 +4943,85 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
         if (!buf)
             return len;
 
-        std::string err;
-        Json::Value value;
-        Json::CharReaderBuilder rbuilder;
-        Json::CharReaderBuilder::strictMode(&rbuilder.settings_);
-        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-        auto bufCstr = reinterpret_cast<const char*>(buf);
-        if (!reader->parse(bufCstr, bufCstr + len, &value, &err)) {
-            JAMI_ERR() << "Archive JSON parsing error: " << err;
+        SyncMsg msg;
+        try {
+            msgpack::unpacked result;
+            msgpack::object_handle oh = msgpack::unpack(reinterpret_cast<const char*>(buf), len);
+            oh.get().convert(msg);
+        } catch (const std::exception& e) {
+            JAMI_WARN("[convInfo] error on sync: %s", e.what());
             return len;
         }
 
-        if (value.isMember("conversations")) {
-            for (const auto& jsonConv : value["conversations"]) {
-                auto convId = jsonConv["id"].asString();
-                auto removed = jsonConv.isMember("removed");
-                accountManager_->rmConversationRequest(convId);
-                if (not removed) {
-                    // If multi devices, it can detect a conversation that was already
-                    // removed, so just check if the convinfo contains a removed conv
-                    auto wasRemoved = false;
-                    for (auto& info : convInfos_) {
-                        if (info.id == convId) {
-                            wasRemoved = info.removed;
-                            break;
-                        }
+        if (auto manager = dynamic_cast<ArchiveAccountManager*>(accountManager_.get())) {
+            manager->onSyncData(std::move(msg.ds), false);
+        }
+
+        for (const auto& convInfo : msg.c) {
+            auto convId = convInfo.id;
+            auto removed = convInfo.removed;
+            accountManager_->rmConversationRequest(convId);
+            if (not removed) {
+                // If multi devices, it can detect a conversation that was already
+                // removed, so just check if the convinfo contains a removed conv
+                auto wasRemoved = false;
+                for (auto& info : convInfos_) {
+                    if (info.id == convId) {
+                        wasRemoved = info.removed;
+                        break;
                     }
-                    if (!wasRemoved)
-                        cloneConversation(deviceId, peerId, convId);
-                } else {
-                    {
-                        std::lock_guard<std::mutex> lk(conversationsMtx_);
-                        auto itConv = conversations_.find(convId);
-                        if (itConv != conversations_.end() && !itConv->second->isRemoving()) {
-                            emitSignal<DRing::ConversationSignal::ConversationRemoved>(accountID_,
-                                                                                       convId);
-                            itConv->second->setRemovingFlag();
-                        }
-                    }
-                    auto infos = accountManager_->getInfo();
-                    if (!infos)
-                        return len;
-                    auto conversations = infos->conversations;
-                    for (auto& info : conversations) {
-                        if (info.id == convId) {
-                            info.removed = std::time(nullptr);
-                            if (jsonConv.isMember("erased")) {
-                                info.erased = std::time(nullptr);
-                                removeRepository(convId, false);
-                            }
-                            break;
-                        }
-                    }
-                    accountManager_->setConversations(std::move(conversations));
                 }
+                if (!wasRemoved)
+                    cloneConversation(deviceId, peerId, convId);
+            } else {
+                {
+                    std::lock_guard<std::mutex> lk(conversationsMtx_);
+                    auto itConv = conversations_.find(convId);
+                    if (itConv != conversations_.end() && !itConv->second->isRemoving()) {
+                        emitSignal<DRing::ConversationSignal::ConversationRemoved>(accountID_,
+                                                                                   convId);
+                        itConv->second->setRemovingFlag();
+                    }
+                }
+                auto infos = accountManager_->getInfo();
+                if (!infos)
+                    return len;
+                auto conversations = infos->conversations;
+                for (auto& info : conversations) {
+                    if (info.id == convId) {
+                        info.removed = std::time(nullptr);
+                        if (convInfo.erased) {
+                            info.erased = std::time(nullptr);
+                            removeRepository(convId, false);
+                        }
+                        break;
+                    }
+                }
+                accountManager_->setConversations(std::move(conversations));
             }
         }
 
-        if (value.isMember("conversationsRequests")) {
-            for (const auto& jsonReq : value["conversationsRequests"]) {
-                auto convId = jsonReq["conversationId"].asString();
-                if (isConversation(convId)) {
-                    // Already accepted request
-                    accountManager_->rmConversationRequest(convId);
-                    continue;
-                }
-
-                // New request
-                ConversationRequest req(jsonReq);
-                accountManager_->addConversationRequest(convId, req);
-
-                if (req.declined != 0)
-                    continue; // Request removed, do not emit signal
-
-                JAMI_INFO("[Account %s] New request detected for conversation %s (device %s)",
-                          getAccountID().c_str(),
-                          convId.c_str(),
-                          deviceId.c_str());
-
-                emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(getAccountID(),
-                                                                                   convId,
-                                                                                   req.toMap());
+        for (const auto& [convId, req] : msg.cr) {
+            if (isConversation(convId)) {
+                // Already accepted request
+                accountManager_->rmConversationRequest(convId);
+                continue;
             }
+
+            // New request
+            accountManager_->addConversationRequest(convId, req);
+
+            if (req.declined != 0)
+                continue; // Request removed, do not emit signal
+
+            JAMI_INFO("[Account %s] New request detected for conversation %s (device %s)",
+                      getAccountID().c_str(),
+                      convId.c_str(),
+                      deviceId.c_str());
+
+            emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(getAccountID(),
+                                                                               convId,
+                                                                               req.toMap());
         }
         saveConvInfos();
         return len;
@@ -5063,18 +5068,17 @@ JamiAccount::syncInfos(const std::shared_ptr<ChannelSocket>& socket)
         or (info->conversations.empty() and info->conversationsRequests.empty()))
         return;
     Json::Value syncValue;
-    for (const auto& info : info->conversations) {
-        syncValue["conversations"].append(info.toJson());
-    }
-    for (const auto& [_id, request] : info->conversationsRequests) {
-        syncValue["conversationsRequests"].append(request.toJson());
-    }
-
-    Json::StreamWriterBuilder builder;
-    const auto sync = Json::writeString(builder, syncValue);
-
     std::error_code ec;
-    socket->write(reinterpret_cast<const unsigned char*>(sync.c_str()), sync.size(), ec);
+    msgpack::sbuffer buffer(8192);
+    SyncMsg msg;
+    if (info->contacts)
+        msg.ds = info->contacts->getSyncData();
+    msg.c = info->conversations;
+    msg.cr = info->conversationsRequests;
+    msgpack::pack(buffer, msg);
+    socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+    if (ec)
+        return;
 }
 
 void
