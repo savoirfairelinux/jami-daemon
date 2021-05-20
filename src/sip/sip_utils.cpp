@@ -205,20 +205,48 @@ addUserAgentHeader(const std::string& userAgent, pjsip_tx_data* tdata)
         pjsip_user_agent_hdr_create(tdata->pool, &STR_USER_AGENT, &pjUserAgent));
 
     if (hdr != nullptr) {
-        JAMI_DBG("Add header to SIP message: \"%.*s: %.*s\"", (int) hdr->name.slen, hdr->name.ptr,
-           (int) pjUserAgent.slen, pjUserAgent.ptr);
+        JAMI_DBG("Add header to SIP message: \"%.*s: %.*s\"",
+                 (int) hdr->name.slen,
+                 hdr->name.ptr,
+                 (int) pjUserAgent.slen,
+                 pjUserAgent.ptr);
         pjsip_msg_add_hdr(tdata->msg, hdr);
     }
 }
 
-void logMessageHeaders(const pjsip_hdr* hdr_list)
+// TODO_MC. Use string_view
+std::string
+getPeerUserAgent(const pjsip_rx_data* rdata)
+{
+    if (rdata == nullptr or rdata->msg_info.msg == nullptr) {
+        JAMI_ERR("Unexpected null poiter!");
+        return {};
+    }
+
+    std::string peerUa {};
+    pjsip_generic_string_hdr* uaHdr {nullptr};
+    constexpr auto USER_AGENT_STR = CONST_PJ_STR("User-Agent");
+
+    uaHdr = (pjsip_generic_string_hdr*) pjsip_msg_find_hdr_by_name(rdata->msg_info.msg,
+                                                                   &USER_AGENT_STR,
+                                                                   nullptr);
+
+    if (uaHdr) {
+        peerUa = {uaHdr->hvalue.ptr, static_cast<size_t>(uaHdr->hvalue.slen)};
+    }
+
+    return peerUa;
+}
+
+void
+logMessageHeaders(const pjsip_hdr* hdr_list)
 {
     const pjsip_hdr* hdr = hdr_list->next;
     const pjsip_hdr* end = hdr_list;
     std::string msgHdrStr("Message headers:\n");
     for (; hdr != end; hdr = hdr->next) {
         char buf[1024];
-        int size = pjsip_hdr_print_on((void*)hdr, buf, sizeof(buf));
+        int size = pjsip_hdr_print_on((void*) hdr, buf, sizeof(buf));
         if (size > 0) {
             msgHdrStr.append(buf, size);
             msgHdrStr.push_back('\n');
@@ -233,7 +261,7 @@ sip_strerror(pj_status_t code)
 {
     char err_msg[PJ_ERR_MSG_SIZE];
     auto ret = pj_strerror(code, err_msg, sizeof err_msg);
-    return std::string {ret.ptr, ret.ptr+ret.slen};
+    return std::string {ret.ptr, ret.ptr + ret.slen};
 }
 
 void

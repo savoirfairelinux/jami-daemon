@@ -166,6 +166,11 @@ public:
     void monitor() const override;
 
     /**
+     * Set peer's User-Agent found in the message header
+     */
+    void setPeerUaVersion(const std::string& ua);
+
+    /**
      * Return the SDP's manager of this call
      */
     Sdp& getSDP() { return *sdp_; }
@@ -381,6 +386,11 @@ private:
         return std::weak_ptr<const SIPCall>(shared());
     }
     inline std::weak_ptr<SIPCall> weak() { return std::weak_ptr<SIPCall>(shared()); }
+
+    // Peer's User-Agent.
+    std::string peerUserAgent_ {};
+    // Peer's Daemon version. (major/minor/patch)
+    bool peerSupportMultiStream_ {false};
 
     // Vector holding the current RTP sessions.
     std::vector<RtpStream> rtpStreams_;
