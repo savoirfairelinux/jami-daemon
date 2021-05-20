@@ -3079,8 +3079,14 @@ bool
 JamiAccount::acceptTrustRequest(const std::string& from, bool includeConversation)
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
-    if (accountManager_)
-        return accountManager_->acceptTrustRequest(from, includeConversation);
+    if (accountManager_) {
+        if (!accountManager_->acceptTrustRequest(from, includeConversation)) {
+            // Note: unused for swarm
+            // Typically the case where the trust request doesn't exists, only incoming DHT messages
+            return accountManager_->addContact(from, true);
+        }
+        return true;
+    }
     JAMI_WARN("[Account %s] acceptTrustRequest: account not loaded", getAccountID().c_str());
     return false;
 }

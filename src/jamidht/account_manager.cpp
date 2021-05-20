@@ -365,22 +365,24 @@ AccountManager::onPeerCertificate(const std::shared_ptr<dht::crypto::Certificate
     return true;
 }
 
-void
+bool
 AccountManager::addContact(const std::string& uri, bool confirmed, const std::string& conversationId)
 {
     JAMI_WARN("AccountManager::addContact %d", confirmed);
     dht::InfoHash h(uri);
     if (not h) {
         JAMI_ERR("addContact: invalid contact URI");
-        return;
+        return false;
     }
     if (not info_) {
         JAMI_ERR("addContact(): account not loaded");
-        return;
+        return false;
     }
     if (info_->contacts->addContact(h, confirmed, conversationId)) {
         syncDevices();
+        return true;
     }
+    return false;
 }
 
 void
@@ -597,8 +599,9 @@ AccountManager::acceptTrustRequest(const std::string& from, bool includeConversa
                                         ? req[DRing::Account::TrustRequest::CONVERSATIONID]
                                         : "");
             syncDevices();
+            return true;
         }
-        return true;
+        return false;
     }
     return false;
 }
