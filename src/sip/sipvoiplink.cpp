@@ -370,6 +370,9 @@ transaction_request_cb(pjsip_rx_data* rdata)
     if (!call) {
         return PJ_FALSE;
     }
+
+    call->setPeerUserAgent(sip_utils::getPeerUserAgent(rdata));
+
     call->setTransport(transport);
 
     // JAMI_DBG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s
@@ -839,6 +842,10 @@ getCallFromInvite(pjsip_inv_session* inv)
 static void
 invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
 {
+    if (inv == nullptr or ev == nullptr) {
+        throw VoipLinkException("unexpected null pointer");
+    }
+
     auto call = getCallFromInvite(inv);
     if (not call)
         return;
@@ -878,6 +885,12 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
                  inv->state,
                  pjsip_inv_state_name(inv->state),
                  inv->cause);
+    }
+
+    if (ev->type == PJSIP_EVENT_RX_MSG) {
+        call->setPeerUserAgent(sip_utils::getPeerUserAgent(ev->body.rx_msg.rdata));
+    } else if (ev->type == PJSIP_EVENT_TSX_STATE and ev->body.tsx_state.type == PJSIP_EVENT_RX_MSG) {
+        call->setPeerUserAgent(sip_utils::getPeerUserAgent(ev->body.tsx_state.src.rdata));
     }
 
     switch (inv->state) {

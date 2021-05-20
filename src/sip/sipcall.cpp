@@ -116,6 +116,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  Call::CallType type,
                  const std::vector<MediaAttribute>& mediaAttrList)
     : Call(account, callId, type)
+    , peerSupportMultiStream_(false)
     , sdp_(new Sdp(callId))
 {
     if (account->getUPnPActive())
@@ -1443,6 +1444,118 @@ SIPCall::sendKeyframe()
 }
 
 void
+SIPCall::setPeerUserAgent(const std::string& ua)
+{
+    auto account = getAccount().lock();
+    if (not account)
+        return;
+
+    if (peerUserAgent_ == ua or ua.empty()) {
+        // Silently ignore if it did not change or empty.
+        return;
+    }
+
+    std::function<std::vector<int>(std::string & version)> parseVersion = [](auto& version) {
+        std::vector<int> jamiVer;
+        auto pos = version.find(".");
+        if (pos == std::string::npos)
+            return jamiVer;
+
+        auto major = version.substr(0, pos);
+        version = version.substr(pos + 1);
+        pos = version.find(".");
+        if (pos == std::string::npos)
+            return jamiVer;
+        auto minor = version.substr(0, pos);
+        auto patch = version.substr(pos + 1);
+
+        jamiVer.emplace_back(std::stoi(major));
+        jamiVer.emplace_back(std::stoi(minor));
+        jamiVer.emplace_back(std::stoi(patch));
+
+        return jamiVer;
+    };
+
+    if (peerUserAgent_.empty()) {
+        JAMI_DBG("[call:%s] Set peer's User-Agent to [%s]", getCallId().c_str(), ua.c_str());
+    } else if (not peerUserAgent_.empty()) {
+        JAMI_WARN("[call:%s] Peer's User-Agent unexpectedely changed from [%s] to [%s]",
+                  getCallId().c_str(),
+                  peerUserAgent_.c_str(),
+                  ua.c_str());
+    }
+
+    peerUserAgent_ = std::move(ua);
+
+    // User-agent parsing
+    while (true) {
+        const std::string PACK_NAME(PACKAGE_NAME);
+        const std::string HIPHEN("-");
+        auto s {peerUserAgent_};
+        std::string version;
+
+        auto pos = s.find(PACK_NAME);
+        if (pos == std::string::npos) {
+            // Must have the expected package name.
+            JAMI_WARN("Could not find the expected package name in peer's User-Agent");
+            break;
+        }
+
+        s = s.substr(pos + PACK_NAME.length() + 1);
+
+        // Unstable (un-released) versions has a hiphen + commit Id after
+        // the version number.
+        pos = s.find(HIPHEN);
+        if (pos != std::string::npos) {
+            // Use the hiphen as delimiter.
+            version = s.substr(0, pos);
+            s = s.substr(pos + 1);
+            // Remove the commit ID.
+            pos = s.find(" ");
+            if (pos != std::string::npos) {
+                s = s.substr(pos + 1);
+            }
+        } else {
+            // Use the space as delimiter.
+            pos = s.find(" ");
+            if (pos != std::string::npos) {
+                version = s.substr(0, pos);
+                s = s.substr(pos + 1);
+            }
+        }
+        if (version.empty()) {
+            JAMI_DBG("[call:%s] Could not parse peer's Jami version", getCallId().c_str());
+            break;
+        }
+
+        JAMI_DBG("[call:%s] Peer's Jami version [%s %s]",
+                 getCallId().c_str(),
+                 version.c_str(),
+                 s.c_str());
+
+        auto peerVersion = parseVersion(version);
+        if (peerVersion.size() != 3) {
+            JAMI_WARN("Could not parse peer's Jami version");
+            break;
+        }
+
+        // TODO_MC. Move this check to isMultiStream ....
+        // Check if peer's version is at least 10.0.2 to enable multi-stream.
+        peerSupportMultiStream_ = peerVersion[0] > 10
+                                  || (peerVersion[0] == 10 and peerVersion[1] > 0)
+                                  || (peerVersion[0] == 10 and peerVersion[1] == 0
+                                      and peerVersion[2] >= 2);
+
+        if (not peerSupportMultiStream_) {
+            JAMI_WARN("Peer's Daemon version does not support multi-stream. Media change request "
+                      "will be ignored.");
+        }
+
+        break;
+    }
+}
+
+void
 SIPCall::onPeerRinging()
 {
     setState(ConnectionState::RINGING);
@@ -1939,6 +2052,12 @@ SIPCall::isReinviteRequired(const std::vector<MediaAttribute>& mediaAttrList)
 bool
 SIPCall::requestMediaChange(const std::vector<MediaAttribute>& mediaAttrList)
 {
+    if (not peerSupportMultiStream_) {
+        JAMI_WARN("[call:%s] Peer does not support multi-stream. Media change request ignored",
+                  getCallId().c_str());
+        return false;
+    }
+
     JAMI_DBG("[call:%s] Requesting media change. List of new media:", getCallId().c_str());
 
     unsigned idx = 0;
