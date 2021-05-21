@@ -46,6 +46,10 @@ MediaAttribute::MediaAttribute(const DRing::MediaMap& mediaMap)
     pairString = getStringValue(mediaMap, MediaAttributeKey::LABEL);
     if (pairBool.first)
         label_ = pairString.second;
+
+    pairBool = getBoolValue(mediaMap, MediaAttributeKey::ON_HOLD);
+    if (pairBool.first)
+        onHold_ = pairBool.second;
 }
 
 std::vector<MediaAttribute>
@@ -151,10 +155,11 @@ MediaAttribute::toMediaMap(const MediaAttribute& mediaAttr)
     DRing::MediaMap mediaMap;
 
     mediaMap.emplace(MediaAttributeKey::MEDIA_TYPE, mediaTypeToString(mediaAttr.type_));
-    mediaMap.emplace(MediaAttributeKey::LABEL, mediaAttr.label_);
-    mediaMap.emplace(MediaAttributeKey::ENABLED, boolToString(mediaAttr.enabled_));
     mediaMap.emplace(MediaAttributeKey::MUTED, boolToString(mediaAttr.muted_));
+    mediaMap.emplace(MediaAttributeKey::ENABLED, boolToString(mediaAttr.enabled_));
     mediaMap.emplace(MediaAttributeKey::SOURCE, mediaAttr.sourceUri_);
+    mediaMap.emplace(MediaAttributeKey::LABEL, mediaAttr.label_);
+    mediaMap.emplace(MediaAttributeKey::ON_HOLD, boolToString(mediaAttr.onHold_));
 
     return mediaMap;
 }

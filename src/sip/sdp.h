@@ -283,7 +283,7 @@ private:
      * Build the sdp media section
      * Add rtpmap field if necessary
      */
-    pjmedia_sdp_media* addMediaDescription(const MediaAttribute& mediaAttr, bool onHold = false);
+    pjmedia_sdp_media* addMediaDescription(const MediaAttribute& mediaAttr);
 
     // Determine media direction
     char const* mediaDirection(MediaType type, bool onHold);
