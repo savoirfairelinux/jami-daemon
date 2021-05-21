@@ -55,6 +55,7 @@ constexpr static char ENABLED[] = "ENABLED";       // bool
 constexpr static char MUTED[] = "MUTED";           // bool
 constexpr static char SOURCE[] = "SOURCE";         // string
 constexpr static char LABEL[] = "LABEL";           // string
+constexpr static char ON_HOLD[] = "ON_HOLD";       // bool
 } // namespace MediaAttributeKey
 
 namespace MediaAttributeValue {

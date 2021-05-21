@@ -36,13 +36,16 @@ public:
                    bool secure = true,
                    bool enabled = false,
                    std::string_view source = {},
-                   std::string_view label = {})
+                   std::string_view label = {},
+                   bool onHold = false)
         : type_(type)
         , muted_(muted)
         , secure_(secure)
         , enabled_(enabled)
         , sourceUri_(source)
         , label_(label)
+        , onHold_(onHold)
+
     {}
 
     MediaAttribute(const DRing::MediaMap& mediaMap);
@@ -83,5 +86,20 @@ public:
     bool enabled_ {false};
     std::string sourceUri_ {};
     std::string label_ {};
+    bool onHold_ {false};
+
+    // NOTE: the hold and mute attributes are related but not
+    // tightly coupled. A hold/un-hold operation should always
+    // trigger a new re-invite to change the change the media
+    // attributes. For instance, on an active call, the hold
+    // action would change media direction from "sendrecv" to
+    // "sendonly".
+    // In contrast, the mute attribute describe the presence
+    // (or absence) of media signal in the stream. In other
+    // words, the mute action can be performed without requiring
+    // a media direction change. For instance, muting the audio
+    // can be done by disabling the audio input (capture) of the
+    // encoding session, resulting in sending an RTP stream without
+    // actual audio (silence).
 };
 } // namespace jami
