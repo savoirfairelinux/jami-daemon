@@ -580,7 +580,8 @@ Sdp::setReceivedOffer(const pjmedia_sdp_session* remote)
 bool
 Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
 {
-    assert(remoteSession_);
+    if (not remoteSession_)
+        return false;
 
     JAMI_DBG("Processing received offer for [%s] with %lu", sessionName_.c_str(), mediaList.size());
 
