@@ -497,15 +497,25 @@ Conference::bindParticipant(const std::string& participant_id)
     auto& rbPool = Manager::instance().getRingBufferPool();
 
     for (const auto& item : participants_) {
-        if (participant_id != item)
-            rbPool.bindCallID(participant_id, item);
+        if (participant_id != item) {
+            // Do not attach muted participants
+            if (auto call = Manager::instance().getCallFromCallID(item)) {
+                if (isMuted(string_remove_suffix(call->getPeerNumber(), '@')))
+                    rbPool.bindHalfDuplexOut(item, participant_id);
+                else
+                    rbPool.bindCallID(participant_id, item);
+            }
+        }
         rbPool.flush(item);
     }
 
     // Bind local participant to other participants only if the
     // local is attached to the conference.
     if (getState() == State::ACTIVE_ATTACHED) {
-        rbPool.bindCallID(participant_id, RingBufferPool::DEFAULT_ID);
+        if (isMuted("host"sv))
+            rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, participant_id);
+        else
+            rbPool.bindCallID(participant_id, RingBufferPool::DEFAULT_ID);
         rbPool.flush(RingBufferPool::DEFAULT_ID);
     }
 }
