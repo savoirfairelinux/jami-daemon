@@ -284,6 +284,7 @@ public:
 
     void setMute(bool state);
 
+    bool isMediaTypeEnabled(MediaType type) const;
     void setInviteSession(pjsip_inv_session* inviteSession = nullptr);
 
     std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;

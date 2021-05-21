@@ -414,12 +414,18 @@ transaction_request_cb(pjsip_rx_data* rdata)
         call->updateSDPFromSTUN();
 
     {
-        auto hasVideo = MediaAttribute::hasMediaType(remoteMediaList, MediaType::MEDIA_VIDEO);
+        // To add video media in the SDP offer, it must be enabled in the
+        // account and either:
+        // - the offer is not empty and the video is present in SDP
+        // - the offer is empty.
+        auto hasVideo = account->isVideoEnabled()
+                        and (MediaAttribute::hasMediaType(remoteMediaList, MediaType::MEDIA_VIDEO)
+                             or remoteMediaList.empty());
         // TODO.
         // This list should be built using all the medias in the incoming offer.
         // The local media should be set temporarily inactive (and possibly unconfigured) until
         // we receive accept(mediaList) from the client.
-        auto mediaList = account->createDefaultMediaList(account->isVideoEnabled() and hasVideo);
+        auto mediaList = account->createDefaultMediaList(hasVideo);
         call->getSDP().setReceivedOffer(r_sdp);
         call->getSDP().processIncomingOffer(mediaList);
     }
