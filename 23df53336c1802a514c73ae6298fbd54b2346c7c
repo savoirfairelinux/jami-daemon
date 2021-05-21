@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9a355e6d_d8af9c48",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 629,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-21T15:24:09Z",
+      "side": 1,
+      "message": "* duplicated logic",
+      "range": {
+        "startLine": 623,
+        "startChar": 8,
+        "endLine": 629,
+        "endChar": 38
+      },
+      "revId": "23df53336c1802a514c73ae6298fbd54b2346c7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "64609935_6b4e8b07",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 723,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-21T15:24:09Z",
+      "side": 1,
+      "message": "duplicated logic",
+      "range": {
+        "startLine": 718,
+        "startChar": 4,
+        "endLine": 723,
+        "endChar": 5
+      },
+      "revId": "23df53336c1802a514c73ae6298fbd54b2346c7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "94c4dcf3_f5c4fde0",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 1266,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-21T15:24:09Z",
+      "side": 1,
+      "message": "not a warning, this is a normal event.\nThe message could be\n\n    JAMI_DBG(\"Using server-provided registration refresh time of %u s\", param-\u003eexpiration);",
+      "range": {
+        "startLine": 1259,
+        "startChar": 0,
+        "endLine": 1266,
+        "endChar": 5
+      },
+      "revId": "23df53336c1802a514c73ae6298fbd54b2346c7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b78f9cd8_110ecb57",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 1787,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-21T15:24:09Z",
+      "side": 1,
+      "message": "This check is performed twice, once before calling this method and once in the method. Also the method does nothing if expire is lower than MIN_REGISTRATION_TIME which is unexpected.\n\nEither put all the logic in this function (and remove duplicated external checks), or remove the function and simply do registrationExpire_ \u003d ... instead.",
+      "range": {
+        "startLine": 1787,
+        "startChar": 4,
+        "endLine": 1787,
+        "endChar": 42
+      },
+      "revId": "23df53336c1802a514c73ae6298fbd54b2346c7c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
