@@ -1986,18 +1986,6 @@
            </arg>
        </signal>
 
-       <signal name="debugMessageReceived" tp:name-for-bindings="debugMessageReceived">
-           <tp:added version="5.2.0"/>
-           <tp:docstring>
-               Notify clients when debug is outputted.
-           </tp:docstring>
-           <arg type="s" name="message">
-               <tp:docstring>
-                   The formatted message to be output.
-               </tp:docstring>
-           </arg>
-       </signal>
-
        <method name="setDefaultModerator" tp:name-for-bindings="setDefaultModerator">
            <tp:added version="9.9.0"/>
            <arg type="s" name="accountID" direction="in"/>
@@ -2035,7 +2023,7 @@
            <arg type="b" name="allModerators" direction="out"/>
        </method>
 
-        <signal name="messageSend" tp:name-for-bindings="messageSend">
+        <signal name="debugLogged" tp:name-for-bindings="debugLogged">
            <arg type="s" name="message">
                <tp:docstring>
                    Message from daemon
