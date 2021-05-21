@@ -377,8 +377,6 @@ protected:
      */
     bool stunEnabled_ {false};
 
-    bool enableEmptyOffers_ {false};
-
     /**
      * The STUN server hostname (optional), used to provide the public IP address in case the
      * softphone stay behind a NAT.

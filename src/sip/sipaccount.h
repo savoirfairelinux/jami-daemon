@@ -303,16 +303,6 @@ public:
      */
     bool isStunEnabled() const override { return stunEnabled_; }
 
-#if 1
-    /**
-     * @brief Enable/Disable empty offers
-     *
-     * @param enable if true, the outgoing offers will have no SDP. If the
-     * peer answers the call, it will include the SDP offer in the 200 OK
-     * answer.
-     */
-    void enableEmptyOffers(bool enable);
-#endif
     /**
      * @return pj_str_t "From" uri based on account information.
      * From RFC3261: "The To header field first and foremost specifies the desired
@@ -492,6 +482,7 @@ public:
     IpAddr createBindingAddress();
 
     void setActiveCodecs(const std::vector<unsigned>& list) override;
+    bool isSrtpEnabled() const override { return srtpKeyExchange_ != KeyExchangeProtocol::NONE; }
 
 private:
     void doRegister1_();
@@ -523,8 +514,6 @@ private:
     bool userMatch(std::string_view username) const;
     bool hostnameMatch(std::string_view hostname) const;
     bool proxyMatch(std::string_view hostname) const;
-
-    bool isSrtpEnabled() const override { return srtpKeyExchange_ != KeyExchangeProtocol::NONE; }
 
     /**
      * Callback called by the transport layer when the registration

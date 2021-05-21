@@ -172,4 +172,10 @@ ut_ice_SOURCES = ice/ice.cpp common.cpp
 check_PROGRAMS += ut_ice_sdp_parser
 ut_ice_sdp_parser_SOURCES = ice/ice_sdp_parser.cpp common.cpp
 
+#
+# Calls using SIP accounts
+#
+check_PROGRAMS += ut_sip_empty_offer
+ut_sip_empty_offer_SOURCES = sip_empty_offer/sip_empty_offer.cpp
+
 TESTS = $(check_PROGRAMS)

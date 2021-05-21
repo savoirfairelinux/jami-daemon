@@ -249,12 +249,12 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr, bool onHold)
     switch (type) {
     case MediaType::MEDIA_AUDIO:
         med->desc.media = sip_utils::CONST_PJ_STR("audio");
-        med->desc.port = localAudioDataPort_;
+        med->desc.port = mediaAttr.enabled_ ? localAudioDataPort_ : 0;
         med->desc.fmt_count = audio_codec_list_.size();
         break;
     case MediaType::MEDIA_VIDEO:
         med->desc.media = sip_utils::CONST_PJ_STR("video");
-        med->desc.port = localVideoDataPort_;
+        med->desc.port = mediaAttr.enabled_ ? localVideoDataPort_ : 0;
         med->desc.fmt_count = video_codec_list_.size();
         break;
     default:
@@ -441,14 +441,10 @@ Sdp::setLocalMediaCapabilities(MediaType type,
 const char*
 Sdp::getSdpDirectionStr(SdpDirection direction)
 {
-    if (direction == SdpDirection::LOCAL_OFFER)
-        return "LOCAL_OFFER";
-    if (direction == SdpDirection::LOCAL_ANSWER)
-        return "LOCAL_ANSWER";
-    if (direction == SdpDirection::REMOTE_OFFER)
-        return "REMOTE_OFFER";
-    if (direction == SdpDirection::REMOTE_ANSWER)
-        return "REMOTE_ANSWER";
+    if (direction == SdpDirection::OFFER)
+        return "OFFER";
+    if (direction == SdpDirection::ANSWER)
+        return "ANSWER";
     return "NONE";
 }
 
@@ -536,9 +532,9 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList)
         throw SdpException("Media list size exceeds SDP media maximum size");
     }
 
-    JAMI_DBG("Creating SDP offer with %lu medias", mediaList.size());
+    JAMI_DBG("Creating SDP offer with %lu media", mediaList.size());
 
-    createLocalSession(SdpDirection::LOCAL_OFFER);
+    createLocalSession(SdpDirection::OFFER);
 
     if (validateSession() != PJ_SUCCESS) {
         JAMI_ERR("Failed to create initial offer");
@@ -548,7 +544,9 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList)
     localSession_->media_count = 0;
 
     for (auto const& media : mediaList) {
-        localSession_->media[localSession_->media_count++] = addMediaDescription(media);
+        if (media.enabled_) {
+            localSession_->media[localSession_->media_count++] = addMediaDescription(media);
+        }
     }
 
     if (validateSession() != PJ_SUCCESS) {
@@ -562,7 +560,7 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList)
         return false;
     }
 
-    Sdp::printSession(localSession_, "Local session (initial):", sdpDirection_);
+    printSession(localSession_, "Local session (initial):", sdpDirection_);
 
     return true;
 }
@@ -580,18 +578,19 @@ Sdp::setReceivedOffer(const pjmedia_sdp_session* remote)
 bool
 Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
 {
-    assert(remoteSession_);
+    if (not remoteSession_)
+        return false;
 
     JAMI_DBG("Processing received offer for [%s] with %lu media",
              sessionName_.c_str(),
              mediaList.size());
 
-    printSession(remoteSession_, "Remote session:", SdpDirection::REMOTE_OFFER);
+    printSession(remoteSession_, "Remote session:", SdpDirection::OFFER);
 
     if (not localSession_) {
-        createLocalSession(SdpDirection::LOCAL_ANSWER);
+        createLocalSession(SdpDirection::ANSWER);
         if (validateSession() != PJ_SUCCESS) {
-            JAMI_ERR("Failed to create initial offer");
+            JAMI_ERR("Failed to create local session");
             return false;
         }
     }
@@ -599,7 +598,9 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
     localSession_->media_count = 0;
 
     for (auto const& media : mediaList) {
-        localSession_->media[localSession_->media_count++] = addMediaDescription(media);
+        if (media.enabled_) {
+            localSession_->media[localSession_->media_count++] = addMediaDescription(media);
+        }
     }
 
     printSession(localSession_, "Local session:\n", sdpDirection_);
@@ -650,7 +651,7 @@ Sdp::startNegotiation()
     setActiveLocalSdpSession(active_local);
 
     if (active_local != nullptr) {
-        Sdp::printSession(active_local, "Local active session:", sdpDirection_);
+        printSession(active_local, "Local active session:", sdpDirection_);
     }
 
     if (pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote) != PJ_SUCCESS
@@ -661,7 +662,7 @@ Sdp::startNegotiation()
 
     setActiveRemoteSdpSession(active_remote);
 
-    Sdp::printSession(active_remote, "Remote active session:", sdpDirection_);
+    printSession(active_remote, "Remote active session:", sdpDirection_);
 
     return true;
 }

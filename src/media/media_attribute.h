@@ -34,7 +34,7 @@ public:
     MediaAttribute(MediaType type = MediaType::MEDIA_NONE,
                    bool muted = false,
                    bool secure = true,
-                   bool enabled = false,
+                   bool enabled = true,
                    std::string_view source = {},
                    std::string_view label = {})
         : type_(type)
@@ -80,7 +80,7 @@ public:
     MediaType type_ {MediaType::MEDIA_NONE};
     bool muted_ {false};
     bool secure_ {true};
-    bool enabled_ {false};
+    bool enabled_ {true};
     std::string sourceUri_ {};
     std::string label_ {};
 };

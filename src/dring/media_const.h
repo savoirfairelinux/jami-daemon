@@ -53,6 +53,7 @@ namespace MediaAttributeKey {
 constexpr static char MEDIA_TYPE[] = "MEDIA_TYPE"; // string
 constexpr static char ENABLED[] = "ENABLED";       // bool
 constexpr static char MUTED[] = "MUTED";           // bool
+constexpr static char SECURE[] = "SECURE";         // bool
 constexpr static char SOURCE[] = "SOURCE";         // string
 constexpr static char LABEL[] = "LABEL";           // string
 } // namespace MediaAttributeKey
