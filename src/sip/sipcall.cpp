@@ -131,7 +131,8 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
         mediaList = mediaAttrList;
     } else if (type_ == Call::CallType::INCOMING) {
         // Handle incoming call without media offer.
-        JAMI_WARN("[call:%s] No media offered in the incoming invite. Will answer with audio-only",
+        JAMI_WARN("[call:%s] No media offered in the incoming invite. An offer will be provided in "
+                  "the answer",
                   getCallId().c_str());
         mediaList = getSIPAccount()->createDefaultMediaList(getSIPAccount()->isVideoEnabled(),
                                                             getState() == CallState::HOLD);
@@ -1644,6 +1645,20 @@ SIPCall::isVideoMuted() const
 #endif
 }
 
+bool
+SIPCall::isMediaTypeEnabled(MediaType type) const
+{
+#ifdef ENABLE_VIDEO
+    std::function<bool(const RtpStream& stream)> enabledCheck = [&type](auto const& stream) {
+        return (stream.mediaAttribute_->type_ == type and stream.mediaAttribute_->enabled_);
+    };
+    const auto iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), enabledCheck);
+    return iter != rtpStreams_.end();
+#else
+    return false;
+#endif
+}
+
 void
 SIPCall::startAllMedia()
 {
@@ -1707,10 +1722,11 @@ SIPCall::startAllMedia()
             throw std::runtime_error("Missing media attribute");
         }
 
-        // Configure the media.
-        rtpStream.mediaAttribute_->enabled_ = true;
         if (rtpStream.mediaAttribute_->type_ == MEDIA_VIDEO)
             isVideoEnabled = true;
+        // To enable a media, it must be enabled on both sides.
+        rtpStream.mediaAttribute_->enabled_ = local.enabled;
+        // Configure the media.
         configureRtpSession(rtpStream.rtpSession_, rtpStream.mediaAttribute_, local, remote);
 
         // Not restarting media loop on hold as it's a huge waste of CPU ressources
@@ -2163,7 +2179,8 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
     JAMI_DBG("[call:%s] Received a new offer (re-invite)", getCallId().c_str());
 
     // This list should be provided by the client. Kept for backward compatibility.
-    auto mediaList = acc->createDefaultMediaList(acc->isVideoEnabled(),
+    auto mediaList = acc->createDefaultMediaList(acc->isVideoEnabled() and hasVideo()
+                                                     and isMediaTypeEnabled(MediaType::MEDIA_VIDEO),
                                                  getState() == CallState::HOLD);
 
     if (upnp_) {
