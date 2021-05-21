@@ -2163,7 +2163,7 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
     JAMI_DBG("[call:%s] Received a new offer (re-invite)", getCallId().c_str());
 
     // This list should be provided by the client. Kept for backward compatibility.
-    auto mediaList = acc->createDefaultMediaList(acc->isVideoEnabled(),
+    auto mediaList = acc->createDefaultMediaList(acc->isVideoEnabled() and hasVideo(),
                                                  getState() == CallState::HOLD);
 
     if (upnp_) {
