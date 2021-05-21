@@ -25,10 +25,10 @@
 
 #include "call_factory.h"
 #include "sipcall.h"
-#include "sipaccount.h" // for SIPAccount::ACCOUNT_TYPE
+#include "sipaccount.h"
 #include "sipaccountbase.h"
 #include "sipvoiplink.h"
-#include "logger.h" // for _debug
+#include "logger.h"
 #include "sdp.h"
 #include "manager.h"
 #include "string_utils.h"
@@ -139,14 +139,13 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
         mediaList = mediaAttrList;
     } else if (type_ == Call::CallType::INCOMING) {
         // Handle incoming call without media offer.
-        JAMI_WARN("[call:%s] No media offered in the incoming invite. Will provide an offer in the "
-                  "answer",
+        JAMI_WARN("[call:%s] No media offered in the incoming invite. An offer will be provided in "
+                  "the answer",
                   getCallId().c_str());
         mediaList = getSIPAccount()->createDefaultMediaList(getSIPAccount()->isVideoEnabled(),
                                                             getState() == CallState::HOLD);
     } else {
-        JAMI_ERR("[call:%s] Media list can not be empty for outgoing calls", getCallId().c_str());
-        return;
+        JAMI_WARN("[call:%s] Creating an outgoing call with empty offer", getCallId().c_str());
     }
 
     JAMI_DBG("[call:%s] Create a new [%s] SIP call with %lu media",
@@ -386,6 +385,9 @@ SIPCall::generateMediaPorts()
         return;
     }
 
+    // TODO. Setting specfic range for RTP ports is obsolete, in
+    // particular in the context of ICE.
+
     // Reference: http://www.cs.columbia.edu/~hgs/rtp/faq.html#ports
     // We only want to set ports to new values if they haven't been set
     const unsigned callLocalAudioPort = account->generateAudioPort();
@@ -416,7 +418,7 @@ void
 SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
 {
     if (isSecure() and t and not t->isSecure()) {
-        JAMI_ERR("Can't set unsecure transport to secure call.");
+        JAMI_ERR("Can't set un-secure transport to secure call.");
         return;
     }
 
@@ -656,12 +658,6 @@ SIPCall::setInviteSession(pjsip_inv_session* inviteSession)
 }
 
 void
-SIPCall::updateSDPFromSTUN()
-{
-    JAMI_WARN("[call:%s] SIPCall::updateSDPFromSTUN() not implemented", getCallId().c_str());
-}
-
-void
 SIPCall::terminateSipSession(int status)
 {
     JAMI_DBG("[call:%s] Terminate SIP session", getCallId().c_str());
@@ -718,11 +714,8 @@ SIPCall::answer()
     if (!inviteSession_->neg) {
         JAMI_WARN("[call:%s] Negotiator is NULL, we've received an INVITE without an SDP",
                   getCallId().c_str());
-        pjmedia_sdp_session* dummy = 0;
-        Manager::instance().sipVoIPLink().createSDPOffer(inviteSession_.get(), &dummy);
 
-        if (account->isStunEnabled())
-            updateSDPFromSTUN();
+        Manager::instance().sipVoIPLink().createSDPOffer(inviteSession_.get());
     }
 
     pj_str_t contact(account->getContactHeader(transport_ ? transport_->get() : nullptr));
@@ -770,11 +763,33 @@ SIPCall::answer(const std::vector<MediaAttribute>& mediaAttrList)
         JAMI_ERR("No account detected");
         return;
     }
+
+    if (mediaAttrList.empty()) {
+        JAMI_DBG("[call:%s] Media list must not be empty!", getCallId().c_str());
+        return;
+    }
+
+    if (not inviteSession_)
+        JAMI_DBG("[call:%s] No invite session for this call", getCallId().c_str());
+
+    JAMI_DBG("[call:%s] Answering incoming call with %lu media:",
+             getCallId().c_str(),
+             mediaAttrList.size());
+
     if (mediaAttrList.size() != rtpStreams_.size()) {
-        JAMI_ERR("Media list size %lu in answer does not match. Expected %lu",
+        JAMI_ERR("[call:%s] Media list size %lu in answer does not match. Expected %lu",
+                 getCallId().c_str(),
                  mediaAttrList.size(),
                  rtpStreams_.size());
         return;
+    }
+
+    for (size_t idx = 0; idx < mediaAttrList.size(); idx++) {
+        auto const& mediaAttr = mediaAttrList.at(idx);
+        JAMI_DBG("[call:%s] Media @%lu: %s",
+                 getCallId().c_str(),
+                 idx,
+                 mediaAttr.toString(true).c_str());
     }
 
     // Apply the media attributes provided by the user.
@@ -787,13 +802,53 @@ SIPCall::answer(const std::vector<MediaAttribute>& mediaAttrList)
                                 + "] answer: no invite session for this call");
 
     if (not inviteSession_->neg) {
-        JAMI_WARN("[call:%s] Negotiator is NULL, we've received an INVITE without an SDP",
-                  getCallId().c_str());
-        pjmedia_sdp_session* dummy = 0;
-        Manager::instance().sipVoIPLink().createSDPOffer(inviteSession_.get(), &dummy);
+        // We are answering to an INVITE that did not include a media offer (SDP).
+        // The SIP specification (RFCs 3261/6337) requires that if a UA wishes to
+        // proceed with the call, it must provide a media offer (SDP) if the initial
+        // INVITE did not offer one. In this case, the SDP offer will be included in
+        // the SIP OK (200) answer. The peer UA will then include its SDP answer in
+        // the SIP ACK message.
 
-        if (account->isStunEnabled())
-            updateSDPFromSTUN();
+        // TODO. This code should be unified with the code used by accounts to create
+        // SDP offers.
+
+        JAMI_WARN("[call:%s] No negotiator session, peer sent an empty INVITE (without SDP)",
+                  getCallId().c_str());
+
+        Manager::instance().sipVoIPLink().createSDPOffer(inviteSession_.get());
+
+        generateMediaPorts();
+
+        // Setup and create ICE offer
+        if (account->isIceForMediaEnabled()) {
+            sdp_->clearIce();
+
+            auto opts = account->getIceOptions();
+
+            auto publicAddr = account->getPublishedIpAddress();
+            if (not publicAddr) {
+                // If the published address is unknown, just use the local address. Not
+                // optimal, but may work just fine if both endpoints are in the same
+                // local network.
+                publicAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), pj_AF_INET());
+            }
+
+            if (publicAddr) {
+                opts.accountPublicAddr = publicAddr;
+                if (auto interfaceAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
+                                                                    publicAddr.getFamily())) {
+                    opts.accountLocalAddr = interfaceAddr;
+                    initIceMediaTransport(true, std::move(opts));
+                    addLocalIceAttributes();
+                } else {
+                    JAMI_WARN("[call:%s] Cant init ICE transport, missing local address",
+                              getCallId().c_str());
+                }
+            } else {
+                JAMI_WARN("[call:%s] Cant init ICE transport, missing public address",
+                          getCallId().c_str());
+            }
+        }
     }
 
     pj_str_t contact(account->getContactHeader(transport_ ? transport_->get() : nullptr));
@@ -802,14 +857,9 @@ SIPCall::answer(const std::vector<MediaAttribute>& mediaAttrList)
     if (!inviteSession_->last_answer)
         throw std::runtime_error("Should only be called for initial answer");
 
-    // TODO. We need a test for this scenario.
-    // How to Check if this use-case is not broken by the changes.
-
-    // Answer with an SDP offer if the initial invite was empty.
-    // SIP protocol allows a UA to send a call invite without SDP.
-    // In this case, if the callee wants to accept the call, it must
-    // provide an SDP offer in the answer. The caller will then send
-    // its SDP answer in the SIP OK (200) message.
+    // Answer with an SDP offer if the initial invite was empty,
+    // otherwise, set the local_sdp session to null to use the
+    // current SDP session.
     pjsip_tx_data* tdata;
     if (pjsip_inv_answer(inviteSession_.get(),
                          PJSIP_SC_OK,
@@ -891,7 +941,7 @@ SIPCall::answerMediaChangeRequest(const std::vector<MediaAttribute>& mediaAttrLi
     }
 
     if (account->isIceForMediaEnabled())
-        setupLocalIce();
+        setupIceResponse();
 
     if (not sdp_->startNegotiation()) {
         JAMI_ERR("[call:%s] Could not start media negotiation for a re-invite request",
@@ -1217,11 +1267,7 @@ SIPCall::unhold()
 
     bool success = false;
     try {
-        if (account->isStunEnabled())
-            success = internalOffHold([&] { updateSDPFromSTUN(); });
-        else
-            success = internalOffHold([] {});
-
+        success = internalOffHold([] {});
     } catch (const SdpException& e) {
         JAMI_ERR("[call:%s] %s", getCallId().c_str(), e.what());
         throw VoipLinkException("SDP issue in offhold");
@@ -1571,6 +1617,14 @@ SIPCall::addLocalIceAttributes()
     if (account->isIceCompIdRfc5245Compliant()) {
         unsigned streamIdx = 0;
         for (auto const& stream : rtpStreams_) {
+            if (not stream.mediaAttribute_->enabled_) {
+                // Dont add ICE candidates if the media is disabled
+                JAMI_DBG("[call:%s] media [%s] @ %u is disabled, dont add local candidates",
+                         getCallId().c_str(),
+                         stream.mediaAttribute_->toString().c_str(),
+                         streamIdx);
+                continue;
+            }
             JAMI_DBG("[call:%s] add ICE local candidates for media [%s] @ %u",
                      getCallId().c_str(),
                      stream.mediaAttribute_->toString().c_str(),
@@ -1588,6 +1642,15 @@ SIPCall::addLocalIceAttributes()
         unsigned idx = 0;
         unsigned compId = 1;
         for (auto const& stream : rtpStreams_) {
+            if (not stream.mediaAttribute_->enabled_) {
+                // Dont add ICE candidates if the media is disabled
+                JAMI_DBG("[call:%s] media [%s] @ %u is disabled, dont add local candidates",
+                         getCallId().c_str(),
+                         stream.mediaAttribute_->toString().c_str(),
+                         idx);
+
+                continue;
+            }
             JAMI_DBG("[call:%s] add ICE local candidates for media [%s] @ %u",
                      getCallId().c_str(),
                      stream.mediaAttribute_->toString().c_str(),
@@ -1734,6 +1797,20 @@ SIPCall::isVideoMuted() const
 #endif
 }
 
+bool
+SIPCall::isMediaTypeEnabled(MediaType type) const
+{
+#ifdef ENABLE_VIDEO
+    std::function<bool(const RtpStream& stream)> enabledCheck = [&type](auto const& stream) {
+        return (stream.mediaAttribute_->type_ == type and stream.mediaAttribute_->enabled_);
+    };
+    const auto iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), enabledCheck);
+    return iter != rtpStreams_.end();
+#else
+    return false;
+#endif
+}
+
 void
 SIPCall::updateNegotiatedMedia()
 {
@@ -1792,6 +1869,7 @@ SIPCall::updateNegotiatedMedia()
             JAMI_WARN("[call:%s] [SDP:slot#%u] Missing local codec", getCallId().c_str(), streamIdx);
             continue;
         }
+
         if (remote.enabled and not remote.codec) {
             JAMI_WARN("[call:%s] [SDP:slot#%u] Missing remote codec",
                       getCallId().c_str(),
@@ -1818,7 +1896,10 @@ SIPCall::updateNegotiatedMedia()
         // Aggregate holding info over all remote streams
         peer_holding &= remote.onHold;
 
+        // To enable a media, it must be enabled on both sides.
+        rtpStream.mediaAttribute_->enabled_ = local.enabled;
         // Configure the media.
+        rtpStream.mediaAttribute_->enabled_ = true;
         configureRtpSession(rtpStream.rtpSession_, rtpStream.mediaAttribute_, local, remote);
     }
 
@@ -2288,7 +2369,7 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
         return res;
     }
 
-    Sdp::printSession(offer, "Remote session (media change request)", SdpDirection::REMOTE_OFFER);
+    Sdp::printSession(offer, "Remote session (media change request)", SdpDirection::OFFER);
 
     sdp_->setReceivedOffer(offer);
 
@@ -2343,9 +2424,8 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
     // Use current media list.
     sdp_->processIncomingOffer(getMediaAttributeList());
 
-    if (acc->isIceForMediaEnabled()) {
-        if (offer)
-            setupLocalIce();
+    if (acc->isIceForMediaEnabled() and offer != nullptr) {
+        setupIceResponse();
     }
     sdp_->startNegotiation();
 
@@ -2385,6 +2465,68 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
     }
 
     return PJ_SUCCESS;
+}
+
+void
+SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata)
+{
+    if (not getMediaAttributeList().empty()) {
+        JAMI_ERR("[call:%s] Unexpected offer in '200 OK' answer", getCallId().c_str());
+        return;
+    }
+
+    auto acc = getSIPAccount();
+    if (not acc) {
+        JAMI_ERR("No account detected");
+        return;
+    }
+
+    if (not sdp_) {
+        JAMI_ERR("invalid SDP session");
+        return;
+    }
+
+    JAMI_DBG("[call:%s] Received an offer in '200 OK' answer", getCallId().c_str());
+
+    auto mediaList = Sdp::getMediaAttributeListFromSdp(offer);
+    // If this method is called, it means we are expecting an offer
+    // in the 200OK answer.
+    if (mediaList.empty()) {
+        JAMI_WARN("[call:%s] Remote media list is empty, ignoring", getCallId().c_str());
+        return;
+    }
+
+    Sdp::printSession(offer, "Remote session (offer in 200 OK answer)", SdpDirection::OFFER);
+    sdp_->clearIce();
+    sdp_->setReceivedOffer(offer);
+
+    // If we send an empty offer, video will be accepted only if locally
+    // enabled by the user.
+    for (auto& mediaAttr : mediaList) {
+        if (mediaAttr.type_ == MediaType::MEDIA_VIDEO and not acc->isVideoEnabled()) {
+            mediaAttr.enabled_ = false;
+        }
+    }
+
+    initMediaStreams(mediaList);
+
+    sdp_->processIncomingOffer(mediaList);
+
+    if (upnp_) {
+        openPortsUPnP();
+    }
+
+    if (acc->isIceForMediaEnabled()) {
+        setupIceResponse();
+    }
+
+    sdp_->startNegotiation();
+
+    pjsip_tx_data* tdata = nullptr;
+    if (pjsip_inv_set_sdp_answer(inviteSession_.get(), sdp_->getLocalSdpSession()) != PJ_SUCCESS) {
+        JAMI_ERR("[call:%s] Could not start media negotiation for a re-invite request",
+                 getCallId().c_str());
+    }
 }
 
 void
@@ -2791,16 +2933,29 @@ SIPCall::remoteHasValidIceAttributes()
     }
 
     auto rem_ice_attrs = sdp_->getIceAttributes();
-    return not rem_ice_attrs.ufrag.empty() and not rem_ice_attrs.pwd.empty();
+    if (rem_ice_attrs.ufrag.empty()) {
+        JAMI_WARN("[call:%s] Missing ICE username fragment attribute in remote SDP",
+                  getCallId().c_str());
+        return false;
+    }
+
+    if (rem_ice_attrs.pwd.empty()) {
+        JAMI_WARN("[call:%s] Missing ICE password attribute in remote SDP", getCallId().c_str());
+        return false;
+    }
+
+    return true;
 }
 
 void
-SIPCall::setupLocalIce()
+SIPCall::setupIceResponse()
 {
+    JAMI_DBG("[call:%s] Setup ICE response", getCallId().c_str());
+
     if (not remoteHasValidIceAttributes()) {
         // If ICE attributes are not present, skip the ICE initialization
         // step (most likely ICE is not used).
-        JAMI_WARN("[call:%s] no ICE data in remote SDP", getCallId().c_str());
+        JAMI_ERR("[call:%s] no ICE data in remote SDP", getCallId().c_str());
         return;
     }
 

@@ -130,6 +130,7 @@ Account::Account(const std::string& accountID)
 #endif
     , iceForMediaEnabled_(true)
     , iceCompIdRfc5245Compliant_(false)
+    , emptyOffersEnabled_(false)
 {
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();

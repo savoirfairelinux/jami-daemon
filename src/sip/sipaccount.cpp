@@ -323,7 +323,9 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<MediaAttri
     }
 
     auto toUri = getToUri(to);
-    if (isIceForMediaEnabled()) {
+    // Do not init ICE yet if the the media list is empty. This may occur
+    // if we are sending an invite with no SDP offer.
+    if (isIceForMediaEnabled() and not mediaAttrList.empty()) {
         call->initIceMediaTransport(true);
     }
     call->setPeerNumber(toUri);
@@ -468,7 +470,8 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
              from.c_str(),
              toUri.c_str());
 
-    auto local_sdp = call->getSDP().getLocalSdpSession();
+    auto local_sdp = isEmptyOffersEnabled() ? nullptr : call->getSDP().getLocalSdpSession();
+
     pjsip_dialog* dialog {nullptr};
     pjsip_inv_session* inv {nullptr};
     if (!CreateClientDialogAndInvite(&pjFrom, &pjContact, &pjTo, nullptr, local_sdp, &dialog, &inv))
