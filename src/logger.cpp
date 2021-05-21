@@ -245,7 +245,7 @@ Logger::log(int level, const char* file, int line, bool linefeed, const char* co
     if (monitorLog) {
         std::array<char, 4096> tmp;
         vsnprintf(tmp.data(), tmp.size(), format, cp);
-        jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(contextHeader(file, line)
+        jami::emitSignal<DRing::ConfigurationSignal::DebugLogged>(contextHeader(file, line)
                                                                   + tmp.data());
     }
     va_end(ap);
@@ -301,7 +301,7 @@ Logger::vlog(
 #ifdef _MSC_VER
         std::array<char, 4096> tmp;
         vsnprintf(tmp.data(), tmp.size(), format, ap);
-        jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(contextHeader(file, line)
+        jami::emitSignal<DRing::ConfigurationSignal::DebugLogged>(contextHeader(file, line)
                                                                   + tmp.data());
 #endif
 #ifndef _WIN32

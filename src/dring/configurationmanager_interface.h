@@ -534,9 +534,9 @@ struct DRING_PUBLIC ConfigurationSignal
         constexpr static const char* name = "HardwareEncodingChanged";
         using cb_type = void(bool /* state */);
     };
-    struct DRING_PUBLIC MessageSend
+    struct DRING_PUBLIC DebugLogged
     {
-        constexpr static const char* name = "MessageSend";
+        constexpr static const char* name = "DebugLogged";
         using cb_type = void(const std::string&);
     };
 };
