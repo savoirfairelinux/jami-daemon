@@ -237,7 +237,7 @@ Sdp::getCrypto(pjmedia_sdp_media* media)
 }
 
 pjmedia_sdp_media*
-Sdp::addMediaDescription(const MediaAttribute& mediaAttr, bool onHold)
+Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 {
     auto type = mediaAttr.type_;
     auto secure = mediaAttr.secure_;
@@ -338,7 +338,7 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr, bool onHold)
         addRTCPAttribute(med); // video has its own RTCP
     }
 
-    char const* direction = mediaDirection(type, onHold);
+    char const* direction = mediaDirection(type, mediaAttr.onHold_);
 
     med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), direction, NULL);
 
