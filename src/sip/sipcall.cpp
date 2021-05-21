@@ -1618,7 +1618,8 @@ SIPCall::hasVideo() const
 {
 #ifdef ENABLE_VIDEO
     std::function<bool(const RtpStream& stream)> videoCheck = [](auto const& stream) {
-        return stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO;
+        return stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO
+               and stream.mediaAttribute_->enabled_;
     };
 
     const auto iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), videoCheck);
@@ -1707,10 +1708,11 @@ SIPCall::startAllMedia()
             throw std::runtime_error("Missing media attribute");
         }
 
-        // Configure the media.
-        rtpStream.mediaAttribute_->enabled_ = true;
         if (rtpStream.mediaAttribute_->type_ == MEDIA_VIDEO)
             isVideoEnabled = true;
+        // To enable a media, it must be enabled on both sides.
+        rtpStream.mediaAttribute_->enabled_ = local.enabled;
+        // Configure the media.
         configureRtpSession(rtpStream.rtpSession_, rtpStream.mediaAttribute_, local, remote);
 
         // Not restarting media loop on hold as it's a huge waste of CPU ressources
@@ -2163,7 +2165,7 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
     JAMI_DBG("[call:%s] Received a new offer (re-invite)", getCallId().c_str());
 
     // This list should be provided by the client. Kept for backward compatibility.
-    auto mediaList = acc->createDefaultMediaList(acc->isVideoEnabled(),
+    auto mediaList = acc->createDefaultMediaList(acc->isVideoEnabled() and hasVideo(),
                                                  getState() == CallState::HOLD);
 
     if (upnp_) {
