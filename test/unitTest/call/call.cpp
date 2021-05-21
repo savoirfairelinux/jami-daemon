@@ -137,11 +137,10 @@ CallTest::tearDown()
     std::condition_variable cv;
     auto currentAccSize = Manager::instance().getAccountList().size();
     std::atomic_bool accountsRemoved {false};
+    auto wantedAccountNumber = currentAccSize - (bob2Id.empty() ? 2 : 3);
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
-            if (Manager::instance().getAccountList().size() <= currentAccSize - bob2Id.empty()
-                    ? 2
-                    : 3) {
+            if (Manager::instance().getAccountList().size() <= wantedAccountNumber) {
                 accountsRemoved = true;
                 cv.notify_one();
             }
