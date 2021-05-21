@@ -227,6 +227,7 @@ public:
 
     bool isUsable() const noexcept { return enabled_ and active_; }
 
+    void enableVideo(bool enable) { videoEnabled_ = enable; }
     bool isVideoEnabled() const noexcept { return videoEnabled_; }
 
     /**
@@ -356,6 +357,10 @@ public:
     // Enable/disable ICE for media
     bool isIceForMediaEnabled() const { return iceForMediaEnabled_; }
     void enableIceForMedia(bool enable) { iceForMediaEnabled_ = enable; }
+
+    // Enable/disable generation of empty offers
+    bool isEmptyOffersEnabled() const { return emptyOffersEnabled_; }
+    void enableEmptyOffers(bool enable) { emptyOffersEnabled_ = enable; }
 
     // Enable/disable multi-stream feature.
     // Multi-stream feature changes the callflow of the re-invite process. All
@@ -585,6 +590,7 @@ protected:
     bool multiStreamEnabled_ {false};
     bool iceCompIdRfc5245Compliant_ {false};
     bool iceForMediaEnabled_;
+    bool emptyOffersEnabled_;
 
     /**
      * private account codec searching functions

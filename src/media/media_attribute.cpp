@@ -44,6 +44,10 @@ MediaAttribute::MediaAttribute(const DRing::MediaMap& mediaMap)
     if (pairBool.first)
         sourceUri_ = pairString.second;
 
+    pairBool = getBoolValue(mediaMap, DRing::Media::MediaAttributeKey::SECURE);
+    if (pairBool.first)
+        secure_ = pairBool.second;
+
     pairString = getStringValue(mediaMap, DRing::Media::MediaAttributeKey::LABEL);
     if (pairBool.first)
         label_ = pairString.second;
@@ -160,6 +164,7 @@ MediaAttribute::toMediaMap(const MediaAttribute& mediaAttr)
     mediaMap.emplace(DRing::Media::MediaAttributeKey::LABEL, mediaAttr.label_);
     mediaMap.emplace(DRing::Media::MediaAttributeKey::ENABLED, boolToString(mediaAttr.enabled_));
     mediaMap.emplace(DRing::Media::MediaAttributeKey::MUTED, boolToString(mediaAttr.muted_));
+    mediaMap.emplace(DRing::Media::MediaAttributeKey::SECURE, boolToString(mediaAttr.secure_));
     mediaMap.emplace(DRing::Media::MediaAttributeKey::SOURCE, mediaAttr.sourceUri_);
     mediaMap.emplace(DRing::Media::MediaAttributeKey::ON_HOLD, boolToString(mediaAttr.onHold_));
 
@@ -184,6 +189,8 @@ MediaAttribute::toString(bool full) const
     std::ostringstream descr;
     descr << "[" << this << "] ";
     descr << "type " << (type_ == MediaType::MEDIA_AUDIO ? "[AUDIO]" : "[VIDEO]");
+    descr << " ";
+    descr << "enabled " << (enabled_ ? "[YES]" : "[NO]");
     descr << " ";
     descr << "muted " << (muted_ ? "[YES]" : "[NO]");
     descr << " ";

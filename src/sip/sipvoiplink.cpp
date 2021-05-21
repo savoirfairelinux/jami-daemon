@@ -79,16 +79,25 @@ using sip_utils::CONST_PJ_STR;
 static pjsip_endpoint* endpt_;
 static pjsip_module mod_ua_;
 
-static void sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status);
-static void sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer);
-static pj_status_t reinvite_received_cb(pjsip_inv_session* inv,
-                                        const pjmedia_sdp_session* offer,
-                                        pjsip_rx_data* rdata);
 static void invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* e);
 static void outgoing_request_forked_cb(pjsip_inv_session* inv, pjsip_event* e);
 static void transaction_state_changed_cb(pjsip_inv_session* inv,
                                          pjsip_transaction* tsx,
                                          pjsip_event* e);
+// Called when an SDP offer is found in answer. This will occur
+// when we send an empty invite (no SDP). In this case, we should
+// expect an offer in a the 200 OK message
+static void on_rx_offer2(pjsip_inv_session* inv, struct pjsip_inv_on_rx_offer_cb_param* param);
+// Called when a re-invite is received
+static pj_status_t reinvite_received_cb(pjsip_inv_session* inv,
+                                        const pjmedia_sdp_session* offer,
+                                        pjsip_rx_data* rdata);
+// Called to request an SDP offer if the peer sent an invite or
+// a re-invite with no SDP. In this, we must provide an offer in
+// the answer (200 OK) if we accept the call
+static void sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer);
+// Called to report media (SDP) negotiation result
+static void sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status);
 
 static std::shared_ptr<SIPCall> getCallFromInvite(pjsip_inv_session* inv);
 #ifdef DEBUG_SIP_REQUEST_MSG
@@ -440,22 +449,27 @@ transaction_request_cb(pjsip_rx_data* rdata)
     call->setState(Call::ConnectionState::PROGRESSING);
     call->getSDP().setPublishedIP(addrSdp);
 
-    if (account->isStunEnabled())
-        call->updateSDPFromSTUN();
-
     {
-        auto hasVideo = MediaAttribute::hasMediaType(remoteMediaList, MediaType::MEDIA_VIDEO);
+        // To add video media in the SDP offer, it must be enabled in the
+        // account and either:
+        // - the offer is not empty and the video is present in SDP
+        // - the offer is empty.
+        auto hasVideo = account->isVideoEnabled()
+                        and (MediaAttribute::hasMediaType(remoteMediaList, MediaType::MEDIA_VIDEO)
+                             or remoteMediaList.empty());
         // TODO.
         // This list should be built using all the medias in the incoming offer.
         // The local media should be set temporarily inactive (and possibly unconfigured) until
         // we receive accept(mediaList) from the client.
-        auto mediaList = account->createDefaultMediaList(account->isVideoEnabled() and hasVideo);
-        call->getSDP().setReceivedOffer(r_sdp);
-        call->getSDP().processIncomingOffer(mediaList);
+        if (r_sdp != nullptr) {
+            auto mediaList = account->createDefaultMediaList(hasVideo);
+            call->getSDP().setReceivedOffer(r_sdp);
+            call->getSDP().processIncomingOffer(mediaList);
+        }
     }
     if (account->isIceForMediaEnabled()) {
         if (r_sdp)
-            call->setupLocalIce();
+            call->setupIceResponse();
     }
 
     pjsip_dialog* dialog = nullptr;
@@ -707,7 +721,7 @@ SIPVoIPLink::SIPVoIPLink()
         outgoing_request_forked_cb,
         transaction_state_changed_cb,
         nullptr /* on_rx_offer */,
-        nullptr /* on_rx_offer2 */,
+        on_rx_offer2,
         reinvite_received_cb,
         sdp_create_offer_cb,
         sdp_media_update_cb,
@@ -879,7 +893,8 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
     if (not call)
         return;
 
-    if (ev->type != PJSIP_EVENT_TSX_STATE and ev->type != PJSIP_EVENT_TX_MSG) {
+    if (ev->type != PJSIP_EVENT_TSX_STATE and ev->type != PJSIP_EVENT_TX_MSG
+        and ev->type != PJSIP_EVENT_RX_MSG) {
         JAMI_WARN("[call:%s] INVITE@%p state changed to %d (%s): unexpected event type %d",
                   call->getCallId().c_str(),
                   inv,
@@ -891,7 +906,7 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
 
     decltype(pjsip_transaction::status_code) status_code;
 
-    if (ev->type != PJSIP_EVENT_TX_MSG) {
+    if (ev->type == PJSIP_EVENT_TSX_STATE) {
         const auto tsx = ev->body.tsx_state.tsx;
         status_code = tsx ? tsx->status_code : PJSIP_SC_NOT_FOUND;
         const pj_str_t* description = pjsip_get_status_text(status_code);
@@ -906,7 +921,7 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
                  status_code,
                  (int) description->slen,
                  description->ptr);
-    } else {
+    } else if (ev->type == PJSIP_EVENT_TX_MSG) {
         status_code = 0;
         JAMI_DBG("[call:%s] INVITE@%p state changed to %d (%s): cause=%d (TX_MSG)",
                  call->getCallId().c_str(),
@@ -968,6 +983,31 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
     }
 }
 
+static void
+on_rx_offer2(pjsip_inv_session* inv, struct pjsip_inv_on_rx_offer_cb_param* param)
+{
+    if (not param or not param->offer) {
+        JAMI_ERR("Invalid offer");
+        return;
+    }
+
+    auto call = getCallFromInvite(inv);
+    if (not call)
+        return;
+
+    const auto msg = param->rdata->msg_info.msg;
+    if (msg->type != PJSIP_RESPONSE_MSG) {
+        JAMI_ERR("===== [call:%s] Ignore offer in '200 OK' answer", call->getCallId().c_str());
+        return;
+    }
+
+    if (auto call = getCallFromInvite(inv)) {
+        if (auto const& account = call->getAccount().lock()) {
+            call->onReceiveOfferIn200OK(param->offer, const_cast<pjsip_rx_data*>(param->rdata));
+        }
+    }
+}
+
 static pj_status_t
 reinvite_received_cb(pjsip_inv_session* inv, const pjmedia_sdp_session* offer, pjsip_rx_data* rdata)
 {
@@ -1000,6 +1040,13 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
         JAMI_ERR("No account detected");
         return;
     }
+
+    if (account->isEmptyOffersEnabled()) {
+        // Skip if the client wants to send an empty offer.
+        JAMI_DBG("Client requested to send an empty offer (no SDP)");
+        return;
+    }
+
     auto family = pj_AF_INET();
     // FIXME : for now, use the same address family as the SIP transport
     if (auto dlg = inv->dlg) {
@@ -1030,11 +1077,19 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
     sdp.setPublishedIP(address);
 
     // This list should be provided by the client. Kept for backward compatibility.
-    auto mediaList = account->createDefaultMediaList(!call->isAudioOnly());
+    auto mediaList = call->getMediaAttributeList();
+    if (mediaList.empty()) {
+        throw VoipLinkException("Unexpected empty media attribute list");
+    }
+
+    JAMI_DBG("Creating and SDP offer using the following media:");
+    for (auto media : mediaList) {
+        JAMI_DBG("[call %s] Media %s", call->getCallId().c_str(), media.toString(true).c_str());
+    }
 
     const bool created = sdp.createOffer(mediaList);
 
-    if (created)
+    if (created and p_offer != nullptr)
         *p_offer = sdp.getLocalSdpSession();
 }
 
@@ -1373,10 +1428,12 @@ SIPVoIPLink::getModId()
 }
 
 void
-SIPVoIPLink::createSDPOffer(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
+SIPVoIPLink::createSDPOffer(pjsip_inv_session* inv)
 {
-    assert(inv and p_offer);
-    sdp_create_offer_cb(inv, p_offer);
+    if (inv == nullptr) {
+        throw VoipLinkException("Invite session can not be null");
+    }
+    sdp_create_offer_cb(inv, nullptr);
 }
 
 // Thread-safe DNS resolver callback mapping
