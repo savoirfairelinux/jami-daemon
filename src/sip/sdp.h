@@ -61,7 +61,7 @@ public:
     {}
 };
 
-enum class SdpDirection { LOCAL_OFFER, LOCAL_ANSWER, REMOTE_OFFER, REMOTE_ANSWER, NONE };
+enum class SdpDirection { OFFER, ANSWER, NONE };
 
 class Sdp
 {
