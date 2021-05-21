@@ -745,13 +745,13 @@ SIPAccountBase::createDefaultMediaList(bool addVideo, bool onHold)
     bool secure = isSrtpEnabled();
     // Add audio and DTMF events
     mediaList.emplace_back(
-        MediaAttribute(MediaType::MEDIA_AUDIO, false, secure, false, "", "main audio", onHold));
+        MediaAttribute(MediaType::MEDIA_AUDIO, false, secure, true, "", "audio_0", onHold));
 
 #ifdef ENABLE_VIDEO
     // Add video if allowed.
     if (isVideoEnabled() and addVideo) {
         mediaList.emplace_back(
-            MediaAttribute(MediaType::MEDIA_VIDEO, false, secure, false, "", "main video", onHold));
+            MediaAttribute(MediaType::MEDIA_VIDEO, false, secure, true, "", "video_0", onHold));
     }
 #endif
     return mediaList;

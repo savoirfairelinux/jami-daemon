@@ -3134,6 +3134,17 @@ Manager::getCallDetails(const std::string& callID) const
     }
 }
 
+std::vector<MediaAttribute>
+Manager::getMediaAttributeList(const std::string& callID) const
+{
+    if (auto call = getCallFromCallID(callID)) {
+        return call->getMediaAttributeList();
+    } else {
+        JAMI_ERR("Call is NULL");
+        return {};
+    }
+}
+
 std::vector<std::string>
 Manager::getCallList() const
 {
