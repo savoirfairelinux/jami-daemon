@@ -626,13 +626,17 @@ VideoPreferences::unserialize(const YAML::Node& in)
 #ifdef ENABLE_PLUGIN
 PluginPreferences::PluginPreferences()
     : pluginsEnabled_(false)
-{}
+{
+    JAMI_DBG() << "*** PluginPreferences init";
+}
 
 void
 PluginPreferences::serialize(YAML::Emitter& out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
     out << YAML::Key << JAMI_PLUGIN_KEY << YAML::Value << pluginsEnabled_;
+    auto enabled = pluginsEnabled_ ? "true" : "false";
+    JAMI_DBG() << "*** PluginPreferences::serialize plugins enabled: " << enabled;
     out << YAML::Key << JAMI_PLUGINS_INSTALLED_KEY << YAML::Value << installedPlugins_;
     out << YAML::Key << JAMI_PLUGINS_LOADED_KEY << YAML::Value << loadedPlugins_;
     out << YAML::EndMap;
@@ -645,8 +649,12 @@ PluginPreferences::unserialize(const YAML::Node& in)
     const auto& node = in[CONFIG_LABEL];
     try {
         parseValue(node, JAMI_PLUGIN_KEY, pluginsEnabled_);
+        auto enabled = pluginsEnabled_ ? "true" : "false";
+        JAMI_DBG() << "*** PluginPreferences::unserialize plugins enabled: " << enabled;
     } catch (...) {
         pluginsEnabled_ = false;
+        auto enabled = pluginsEnabled_ ? "true" : "false";
+        JAMI_DBG() << "*** PluginPreferences::unserialize exception, plugins enabled: " << enabled;
     }
 
     const auto& installedPluginsNode = node[JAMI_PLUGINS_INSTALLED_KEY];

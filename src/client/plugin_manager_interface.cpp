@@ -179,12 +179,17 @@ getChatHandlerStatus(const std::string& accountId, const std::string& peerId)
 bool
 getPluginsEnabled()
 {
-    return jami::Manager::instance().pluginPreferences.getPluginsEnabled();
+    auto enabled = jami::Manager::instance().pluginPreferences.getPluginsEnabled();
+    auto enabledStr = enabled ? "true" : "false";
+    JAMI_DBG() << "*** getPluginsEnabled: " << enabledStr;
+    return enabled;
 }
 
 void
 setPluginsEnabled(bool state)
 {
+    auto enabledStr = state ? "true" : "false";
+    JAMI_DBG() << "*** setPluginsEnabled: " << enabledStr;
     jami::Manager::instance().pluginPreferences.setPluginsEnabled(state);
     for (auto& item : jami::Manager::instance().pluginPreferences.getLoadedPlugins()) {
         if (state)

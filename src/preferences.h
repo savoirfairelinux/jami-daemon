@@ -377,9 +377,19 @@ public:
     void serialize(YAML::Emitter& out) const override;
     void unserialize(const YAML::Node& in) override;
 
-    bool getPluginsEnabled() const { return pluginsEnabled_; }
+    bool getPluginsEnabled() const
+    {
+        auto enabled = pluginsEnabled_ ? "true" : "false";
+        JAMI_DBG() << "*** PluginPreferences::getPluginsEnabled plugins enabled: " << enabled;
+        return pluginsEnabled_;
+    }
 
-    void setPluginsEnabled(bool pluginsEnabled) { pluginsEnabled_ = pluginsEnabled; }
+    void setPluginsEnabled(bool pluginsEnabled)
+    {
+        auto enabled = pluginsEnabled_ ? "true" : "false";
+        JAMI_DBG() << "*** PluginPreferences::setPluginsEnabled plugins enabled: " << enabled;
+        pluginsEnabled_ = pluginsEnabled;
+    }
 
     std::vector<std::string> getLoadedPlugins() const
     {
