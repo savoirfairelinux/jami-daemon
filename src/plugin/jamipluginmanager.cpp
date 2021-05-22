@@ -79,9 +79,11 @@ JamiPluginManager::getInstalledPlugins()
     std::for_each(pluginsPaths.begin(), pluginsPaths.end(), [&pluginsPath](std::string& x) {
         x = pluginsPath + DIR_SEPARATOR_CH + x;
     });
-    auto returnIterator = std::remove_if(pluginsPaths.begin(), pluginsPaths.end(), [](const std::string& path) {
-        return !PluginUtils::checkPluginValidity(path);
-    });
+    auto returnIterator = std::remove_if(pluginsPaths.begin(),
+                                         pluginsPaths.end(),
+                                         [](const std::string& path) {
+                                             return !PluginUtils::checkPluginValidity(path);
+                                         });
     pluginsPaths.erase(returnIterator, std::end(pluginsPaths));
 
     // Gets plugins installed in non standard path
@@ -99,6 +101,7 @@ int
 JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
 {
     int r {0};
+    JAMI_DBG() << "*** installPlugin: " << jplPath;
     if (fileutils::isFile(jplPath)) {
         try {
             auto manifestMap = PluginUtils::readPluginManifestFromArchive(jplPath);
@@ -106,8 +109,9 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
             if (name.empty())
                 return 0;
             const std::string& version = manifestMap["version"];
-            std::string destinationDir {fileutils::get_data_dir() + DIR_SEPARATOR_CH
-                                              + "plugins" + DIR_SEPARATOR_CH + name};
+            std::string destinationDir {fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins"
+                                        + DIR_SEPARATOR_CH + name};
+            JAMI_DBG() << "*** installPlugin: " << jplPath << " to destination: " << destinationDir;
             // Find if there is an existing version of this plugin
             const auto alreadyInstalledManifestMap = PluginUtils::parseManifestFile(
                 PluginUtils::manifestPath(destinationDir));
@@ -140,6 +144,7 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
                                             destinationDir,
                                             PluginUtils::uncompressJplFunction);
             }
+            JAMI_DBG() << "*** plugin installed: " << jplPath;
             DRing::loadPlugin(destinationDir);
         } catch (const std::exception& e) {
             JAMI_ERR() << e.what();
@@ -175,6 +180,7 @@ JamiPluginManager::uninstallPlugin(const std::string& rootPath)
 bool
 JamiPluginManager::loadPlugin(const std::string& rootPath)
 {
+    JAMI_DBG() << "loadPlugin: " << rootPath;
 #ifdef ENABLE_PLUGIN
     try {
         bool status = pm_.load(getPluginDetails(rootPath).at("soPath"));
