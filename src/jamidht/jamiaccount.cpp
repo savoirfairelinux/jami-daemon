@@ -641,14 +641,14 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             continue;
         auto& sipConn = value.back();
 
-        auto transport = sipConn.transport;
-
-        if (!sipConn.channel->underlyingICE()) {
+        if (!sipConn.channel) {
             JAMI_WARN("A SIP transport exists without Channel, this is a bug. Please report");
             continue;
         }
 
-        if (!transport)
+        auto transport = sipConn.transport;
+        auto ice = sipConn.channel->underlyingICE();
+        if (!transport or !ice)
             continue;
 
         sipConn.channel->sendBeacon();
@@ -681,8 +681,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 }
             });
 
-        auto remoted_address = sipConn.channel->underlyingICE()->getRemoteAddress(
-            ICE_COMP_ID_SIP_TRANSPORT);
+        auto remoted_address = ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT);
         try {
             onConnectedOutgoingCall(dev_call, toUri, remoted_address);
         } catch (const VoipLinkException&) {
@@ -4497,15 +4496,17 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
 {
     auto transport = conn.transport;
     auto channel = conn.channel;
-    if (!channel || !channel->underlyingICE())
+    if (!channel)
         throw std::runtime_error(
             "A SIP transport exists without Channel, this is a bug. Please report");
+    auto ice = channel->underlyingICE();
+    if (!ice)
+        return false;
 
     // Build SIP Message
     // "deviceID@IP"
-    auto toURI = getToUri(
-        to + "@"
-        + channel->underlyingICE()->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT).toString(true));
+    auto toURI = getToUri(to + "@"
+                          + ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT).toString(true));
     std::string from = getFromUri();
     pjsip_tx_data* tdata;
 
