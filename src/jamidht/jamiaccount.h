@@ -393,7 +393,7 @@ public:
     /// \return true if the given DHT message identifier has been treated
     /// \note if message has not been treated yet this method store this id and returns true at
     /// further calls
-    bool isMessageTreated(const std::string& id);
+    bool isMessageTreated(std::string_view id);
 
     std::shared_ptr<dht::DhtRunner> dht() { return dht_; }
 
@@ -730,7 +730,7 @@ private:
 
     mutable std::mutex messageMutex_ {};
     std::map<dht::Value::Id, PendingMessage> sentMessages_;
-    std::set<std::string> treatedMessages_ {};
+    std::set<std::string, std::less<>> treatedMessages_ {};
 
     std::string deviceName_ {};
     std::string idPath_ {};
