@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "80f37d16_b6434074",
+        "filename": "test/unitTest/call/call.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-25T18:03:55Z",
+      "side": 1,
+      "message": "subtracting unsigned can be very tricky. If \"currentAccSize\" \u003c (bob2Id.empty() ? 2 : 3) could be very large, and the condition in the callback, will always be true.\nMay be this is harmless as if this happens, it\u0027s most likely that the test has failed anyway.\nPersonally, I would add a check or an assert on the condition, such as:\nCPPUNIT_ASSERT(currentAccSize\" \u003e\u003d (bob2Id.empty() ? 2 : 3);",
+      "revId": "ce6745c2cc770f9f3bb164db642a7e5b8815ba62",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
