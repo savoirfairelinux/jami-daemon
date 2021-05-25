@@ -2595,10 +2595,10 @@ JamiAccount::getCertificatesByStatus(tls::TrustStore::PermissionStatus status)
 }
 
 template<typename ID = dht::Value::Id>
-std::set<ID>
+std::set<ID, std::less<>>
 loadIdList(const std::string& path)
 {
-    std::set<ID> ids;
+    std::set<ID, std::less<>> ids;
     std::ifstream file = fileutils::ifstream(path);
     if (!file.is_open()) {
         JAMI_DBG("Could not load %s", path.c_str());
@@ -2619,9 +2619,9 @@ loadIdList(const std::string& path)
     return ids;
 }
 
-template<typename ID = dht::Value::Id>
+template<typename List = std::set<dht::Value::Id>>
 void
-saveIdList(const std::string& path, const std::set<ID>& ids)
+saveIdList(const std::string& path, const List& ids)
 {
     std::ofstream file = fileutils::ofstream(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
@@ -2653,14 +2653,14 @@ JamiAccount::saveTreatedMessages() const
             auto& this_ = *sthis;
             std::lock_guard<std::mutex> lock(this_.messageMutex_);
             fileutils::check_dir(this_.cachePath_.c_str());
-            saveIdList<std::string>(this_.cachePath_ + DIR_SEPARATOR_STR "treatedMessages",
+            saveIdList<decltype(this_.treatedMessages_)>(this_.cachePath_ + DIR_SEPARATOR_STR "treatedMessages",
                                     this_.treatedMessages_);
         }
     });
 }
 
 bool
-JamiAccount::isMessageTreated(const std::string& id)
+JamiAccount::isMessageTreated(std::string_view id)
 {
     std::lock_guard<std::mutex> lock(messageMutex_);
     auto res = treatedMessages_.emplace(id);
