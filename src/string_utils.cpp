@@ -22,6 +22,7 @@
 #include "string_utils.h"
 
 #include <fmt/core.h>
+#include <fmt/ranges.h>
 
 #include <sstream>
 #include <cctype>
@@ -146,14 +147,9 @@ string_remove_suffix(std::string_view str, char separator)
 }
 
 std::string
-string_join(std::set<std::string> set, std::string_view separator)
+string_join(const std::set<std::string>& set, std::string_view separator)
 {
-    if (set.empty())
-        return "";
-    std::string output;
-    for (const auto &s : set)
-        output += s+separator;
-    return output;
+    return fmt::format("{}", fmt::join(set, separator));
 }
 
 std::set<std::string>
