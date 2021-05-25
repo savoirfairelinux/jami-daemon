@@ -226,7 +226,7 @@ DhtPeerConnector::requestConnection(
     }
 
     std::string channelName = "file://" + std::to_string(tid);
-    std::vector<DeviceId> devices;
+    std::vector<dht::InfoHash> peers;
     if (!info.conversationId.empty()) {
         // TODO remove preSwarmCompat
         // In a one_to_one conv with an old version, the contact here can be in an invited
@@ -239,7 +239,7 @@ DhtPeerConnector::requestConnection(
             preSwarmCompat = infos["mode"] == "0";
         }
         for (const auto& member : members) {
-            devices.emplace_back(DeviceId(member.at("uri")));
+            peers.emplace_back(dht::InfoHash(member.at("uri")));
         }
         if (!preSwarmCompat)
             channelName = "data-transfer://" + info.conversationId + "/" + acc->currentDeviceId()
@@ -250,10 +250,10 @@ DhtPeerConnector::requestConnection(
             return;
         }
     } else {
-        devices.emplace_back(DeviceId(info.peer));
+        peers.emplace_back(dht::InfoHash(info.peer));
     }
 
-    for (const auto& peer_h : devices) {
+    for (const auto& peer_h : peers) {
         acc->forEachDevice(
             peer_h,
             [this, channelName, tid, channelReadyCb = std::move(channelReadyCb)](
@@ -269,11 +269,9 @@ DhtPeerConnector::requestConnection(
                 acc->connectionManager().connectDevice(dev_h, channelName, channelReadyCb);
             },
 
-            [peer_h, onChanneledCancelled, accId = acc->getAccountID()](bool found) {
-                if (!found) {
+            [peer_h, accId = acc->getAccountID()](bool found) {
+                if (!found)
                     JAMI_WARN() << accId << "[CNX] aborted, no devices for " << peer_h;
-                    onChanneledCancelled(peer_h.toString());
-                }
             });
     }
 }
