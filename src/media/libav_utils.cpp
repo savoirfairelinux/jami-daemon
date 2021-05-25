@@ -107,7 +107,7 @@ setAvLogLevel()
 
         level = std::max(AV_LOG_QUIET, std::min(level, AV_LOG_DEBUG));
     }
-    av_log_set_level(level);
+    av_log_set_level(AV_LOG_DEBUG);
 #else
     av_log_set_level(0);
 #endif
