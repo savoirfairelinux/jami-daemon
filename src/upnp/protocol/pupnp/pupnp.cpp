@@ -236,8 +236,12 @@ PUPnP::terminate()
 
     UpnpUnRegisterClient(ctrlptHandle_);
 
-    if (UpnpFinish() != UPNP_E_SUCCESS) {
-        JAMI_ERR("PUPnP: Failed to properly close lib-upnp");
+    if (initialized_) {
+        if (UpnpFinish() != UPNP_E_SUCCESS) {
+            JAMI_ERR("PUPnP: Failed to properly close lib-upnp");
+        }
+
+        initialized_ = false;
     }
 
     // Clear all the lists.
