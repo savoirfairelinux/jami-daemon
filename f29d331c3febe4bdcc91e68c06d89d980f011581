@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "68548217_db28b20a",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 565,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-05-25T16:12:05Z",
+      "side": 1,
+      "message": "that is because on windows GetEnvironmentVariable -\u003e GetEnvironmentVariableW\n\nsince we enabled Unicode mode,\n\nbut we will not use XDG_XXXXX anymore on windows",
+      "parentUuid": "a49f378b_0ff19429",
+      "range": {
+        "startLine": 565,
+        "startChar": 15,
+        "endLine": 565,
+        "endChar": 22
+      },
+      "revId": "f29d331c3febe4bdcc91e68c06d89d980f011581",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "1fffcf77_7f01ae5f",
         "filename": "src/fileutils.cpp",
         "patchSetId": 3
