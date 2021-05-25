@@ -120,7 +120,7 @@ struct Contact
 
 struct TrustRequest
 {
-    dht::InfoHash device;
+    std::shared_ptr<dht::crypto::PublicKey> device;
     std::string conversationId;
     time_t received;
     std::vector<uint8_t> payload;
@@ -135,7 +135,8 @@ private:
 public:
     static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
     dht::InfoHash dev;
-    MSGPACK_DEFINE_MAP(dev);
+    std::shared_ptr<dht::crypto::PublicKey> pk;
+    MSGPACK_DEFINE_MAP(dev, pk)
 };
 
 struct DeviceSync : public dht::EncryptedValue<DeviceSync>

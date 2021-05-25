@@ -243,7 +243,7 @@ ContactList::loadTrustRequests()
 
 bool
 ContactList::onTrustRequest(const dht::InfoHash& peer_account,
-                            const dht::InfoHash& peer_device,
+                            const std::shared_ptr<dht::crypto::PublicKey>& peer_device,
                             time_t received,
                             bool confirm,
                             const std::string& conversationId,
@@ -395,7 +395,7 @@ ContactList::saveKnownDevices() const
     std::ofstream file(path_ + DIR_SEPARATOR_STR "knownDevicesNames",
                        std::ios::trunc | std::ios::binary);
 
-    std::map<dht::InfoHash, std::pair<std::string, uint64_t>> devices;
+    std::map<dht::PkId, std::pair<std::string, uint64_t>> devices;
     for (const auto& id : knownDevices_)
         devices.emplace(id.first,
                         std::make_pair(id.second.name, clock::to_time_t(id.second.last_sync)));
@@ -404,7 +404,7 @@ ContactList::saveKnownDevices() const
 }
 
 void
-ContactList::foundAccountDevice(const dht::InfoHash& device,
+ContactList::foundAccountDevice(const dht::PkId& device,
                                 const std::string& name,
                                 const time_point& updated)
 {
@@ -435,7 +435,7 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
     if (not crt)
         return false;
 
-    auto id = crt->getId();
+    auto id = crt->getLongId();
 
     // match certificate chain
     auto verifyResult = accountTrust_.verify(*crt);
@@ -455,18 +455,9 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
         tls::CertificateStore::instance().pinCertificate(crt);
         if (crt->ocspResponse) {
             unsigned int status = crt->ocspResponse->getCertificateStatus();
-            if (status == GNUTLS_OCSP_CERT_GOOD) {
-                JAMI_DBG("Certificate %s has good OCSP status", id.to_c_str());
-                trust_.setCertificateStatus(id.toString(),
-                                            tls::TrustStore::PermissionStatus::ALLOWED);
-            } else if (status == GNUTLS_OCSP_CERT_REVOKED) {
+            if (status == GNUTLS_OCSP_CERT_REVOKED) {
                 JAMI_ERR("Certificate %s has revoked OCSP status", id.to_c_str());
-                trust_.setCertificateStatus(id.toString(),
-                                            tls::TrustStore::PermissionStatus::BANNED);
-            } else {
-                JAMI_ERR("Certificate %s has unknown OCSP status", id.to_c_str());
-                trust_.setCertificateStatus(id.toString(),
-                                            tls::TrustStore::PermissionStatus::UNDEFINED);
+                trust_.setCertificateStatus(crt, tls::TrustStore::PermissionStatus::BANNED, false);
             }
         }
         saveKnownDevices();
@@ -486,7 +477,7 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
 }
 
 bool
-ContactList::removeAccountDevice(const dht::InfoHash& device)
+ContactList::removeAccountDevice(const dht::PkId& device)
 {
     if (knownDevices_.erase(device) > 0) {
         saveKnownDevices();
@@ -496,7 +487,7 @@ ContactList::removeAccountDevice(const dht::InfoHash& device)
 }
 
 void
-ContactList::setAccountDeviceName(const dht::InfoHash& device, const std::string& name)
+ContactList::setAccountDeviceName(const dht::PkId& device, const std::string& name)
 {
     auto dev = knownDevices_.find(device);
     if (dev != knownDevices_.end()) {
@@ -508,7 +499,7 @@ ContactList::setAccountDeviceName(const dht::InfoHash& device, const std::string
 }
 
 std::string
-ContactList::getAccountDeviceName(const dht::InfoHash& device) const
+ContactList::getAccountDeviceName(const dht::PkId& device) const
 {
     auto dev = knownDevices_.find(device);
     if (dev != knownDevices_.end()) {
@@ -549,13 +540,13 @@ ContactList::getSyncData() const
     }
 
     for (const auto& dev : knownDevices_) {
-        sync_data.devices_known.emplace(dev.first, dev.second.name);
+        sync_data.devices_known.emplace(dev.second.certificate->getId(), dev.second.name);
     }
     return sync_data;
 }
 
 bool
-ContactList::syncDevice(const dht::InfoHash& device, const time_point& syncDate)
+ContactList::syncDevice(const dht::PkId& device, const time_point& syncDate)
 {
     auto it = knownDevices_.find(device);
     if (it == knownDevices_.end()) {

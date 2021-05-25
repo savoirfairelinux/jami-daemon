@@ -40,6 +40,7 @@ class DhtRunner;
 
 namespace jami {
 
+using DeviceId = dht::PkId;
 struct AccountArchive;
 
 struct AccountInfo
@@ -50,6 +51,7 @@ struct AccountInfo
     std::map<std::string, ConversationRequest> conversationsRequests;
     std::string accountId;
     std::string deviceId;
+    std::shared_ptr<dht::crypto::PublicKey> devicePk;
     std::shared_ptr<dht::Value> announce;
     std::string ethAccount;
     std::string username;
@@ -165,7 +167,7 @@ public:
         return false;
     };
 
-    const std::map<dht::InfoHash, KnownDevice>& getKnownDevices() const;
+    const std::map<dht::PkId, KnownDevice>& getKnownDevices() const;
     bool foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt,
                             const std::string& name = {},
                             const time_point& last_sync = time_point::min());
@@ -174,12 +176,12 @@ public:
     std::string getAccountDeviceName() const;
 
     void forEachDevice(const dht::InfoHash& to,
-                       std::function<void(const dht::InfoHash&)>&& op,
+                       std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)>&& op,
                        std::function<void(bool)>&& end = {});
 
     using PeerCertificateCb = std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt,
                                                  const dht::InfoHash& peer_account)>;
-    void onPeerMessage(const dht::InfoHash& peer_device, bool allowPublic, PeerCertificateCb&& cb);
+    void onPeerMessage(const dht::crypto::PublicKey& peer_device, bool allowPublic, PeerCertificateCb&& cb);
     bool onPeerCertificate(const std::shared_ptr<dht::crypto::Certificate>& crt,
                            bool allowPublic,
                            dht::InfoHash& account_id);
@@ -234,6 +236,11 @@ public:
     virtual bool findCertificate(
         const dht::InfoHash& h,
         std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
+
+    virtual bool findCertificate(
+        const dht::PkId& h,
+        std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
+
     bool setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status);
     std::vector<std::string> getCertificatesByStatus(tls::TrustStore::PermissionStatus status);
     tls::TrustStore::PermissionStatus getCertificateStatus(const std::string& cert_id) const;

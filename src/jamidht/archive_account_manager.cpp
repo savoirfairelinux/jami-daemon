@@ -341,7 +341,8 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a)
     info->identity.first = ctx.key.get();
     info->identity.second = deviceCertificate;
     info->accountId = a.id.second->getId().toString();
-    info->deviceId = deviceCertificate->getPublicKey().getId().toString();
+    info->devicePk = std::make_shared<dht::crypto::PublicKey>(info->identity.first->getPublicKey());
+    info->deviceId = info->devicePk->getLongId().toString();
     if (ctx.deviceName.empty())
         ctx.deviceName = info->deviceId.substr(8);
 
@@ -397,12 +398,16 @@ ArchiveAccountManager::makeReceipt(const dht::crypto::Identity& id,
     auto devId = device.getId();
     DeviceAnnouncement announcement;
     announcement.dev = devId;
+    announcement.pk = std::make_shared<dht::crypto::PublicKey>(device.getPublicKey());
     dht::Value ann_val {announcement};
     ann_val.sign(*id.first);
 
+    auto packedAnnoucement = ann_val.getPacked();
+    JAMI_DBG("[Auth] device announcement size: %zu", packedAnnoucement.size());
+
     std::ostringstream is;
     is << "{\"id\":\"" << id.second->getId() << "\",\"dev\":\"" << devId << "\",\"eth\":\""
-       << ethAccount << "\",\"announce\":\"" << base64::encode(ann_val.getPacked()) << "\"}";
+       << ethAccount << "\",\"announce\":\"" << base64::encode(packedAnnoucement) << "\"}";
 
     // auto announce_ = ;
     return {is.str(), std::make_shared<dht::Value>(std::move(ann_val))};
@@ -478,7 +483,7 @@ void
 ArchiveAccountManager::onSyncData(DeviceSync&& sync)
 {
     auto sync_date = clock::time_point(clock::duration(sync.date));
-    if (not info_->contacts->syncDevice(sync.from, sync_date)) {
+    if (not info_->contacts->syncDevice(sync.fromId, sync_date)) {
         return;
     }
 
@@ -697,7 +702,7 @@ ArchiveAccountManager::revokeDevice(const std::string& password,
                             tls::CertificateStore::instance().loadRevocations(*a.id.second);
 
                             this_.saveArchive(a, password);
-                            this_.info_->contacts->removeAccountDevice(crt->getId());
+                            this_.info_->contacts->removeAccountDevice(crt->getLongId());
                             cb(RevokeDeviceResult::SUCCESS);
                             this_.syncDevices();
                         });
