@@ -236,9 +236,11 @@ PUPnP::terminate()
 
     UpnpUnRegisterClient(ctrlptHandle_);
 
-    if (UpnpFinish() != UPNP_E_SUCCESS) {
+    if (UpnpFinish() != UPNP_E_SUCCESS and initialized_) {
         JAMI_ERR("PUPnP: Failed to properly close lib-upnp");
     }
+
+    initialized_ = false;
 
     // Clear all the lists.
     discoveredIgdList_.clear();
