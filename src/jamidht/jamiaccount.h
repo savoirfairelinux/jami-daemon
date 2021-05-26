@@ -298,6 +298,9 @@ public:
     bool findCertificate(
         const dht::InfoHash& h,
         std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
+    bool findCertificate(
+        const dht::PkId& h,
+        std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
 
     /* contact requests */
     std::vector<std::map<std::string, std::string>> getTrustRequests() const;
@@ -397,7 +400,7 @@ public:
     const std::shared_future<tls::DhParams> dhParams() const { return dhParams_; }
 
     void forEachDevice(const dht::InfoHash& to,
-                       std::function<void(const dht::InfoHash&)>&& op,
+                       std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)>&& op,
                        std::function<void(bool)>&& end = {});
 
     /**
@@ -938,7 +941,7 @@ private:
 
     // Sync connections
     std::mutex syncConnectionsMtx_;
-    std::map<std::string /* deviceId */, std::vector<std::shared_ptr<ChannelSocket>>>
+    std::map<DeviceId /* deviceId */, std::vector<std::shared_ptr<ChannelSocket>>>
         syncConnections_;
 
     /**
@@ -1016,7 +1019,7 @@ private:
     void checkConversationsEvents();
     bool handlePendingConversations();
 
-    void syncWith(const std::string& deviceId, const std::shared_ptr<ChannelSocket>& socket);
+    void syncWith(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket);
     void syncInfos(const std::shared_ptr<ChannelSocket>& socket);
     void syncWithConnected();
 
