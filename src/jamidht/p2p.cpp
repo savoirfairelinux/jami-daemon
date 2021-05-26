@@ -226,7 +226,7 @@ DhtPeerConnector::requestConnection(
     }
 
     std::string channelName = "file://" + std::to_string(tid);
-    std::vector<DeviceId> devices;
+    std::vector<dht::InfoHash> contacts;
     if (!info.conversationId.empty()) {
         // TODO remove preSwarmCompat
         // In a one_to_one conv with an old version, the contact here can be in an invited
@@ -238,35 +238,35 @@ DhtPeerConnector::requestConnection(
             auto infos = acc->conversationInfos(info.conversationId);
             preSwarmCompat = infos["mode"] == "0";
         }
-        for (const auto& member : members) {
-            devices.emplace_back(DeviceId(member.at("uri")));
-        }
         if (!preSwarmCompat)
-            channelName = "data-transfer://" + info.conversationId + "/" + acc->currentDeviceId()
-                          + "/" + std::to_string(tid);
+            channelName = fmt::format("data-transfer://{}/{}/{}", info.conversationId, acc->currentDeviceId(), tid);
         // If peer is not empty this means that we want to send to one device only
         if (!info.peer.empty()) {
             acc->connectionManager().connectDevice(DeviceId(info.peer), channelName, channelReadyCb);
             return;
         }
+        for (const auto& member : members) {
+            contacts.emplace_back(dht::InfoHash(member.at("uri")));
+        }
     } else {
-        devices.emplace_back(DeviceId(info.peer));
+        contacts.emplace_back(dht::InfoHash(info.peer));
     }
 
-    for (const auto& peer_h : devices) {
+    for (const auto& peer_h : contacts) {
         acc->forEachDevice(
             peer_h,
             [this, channelName, tid, channelReadyCb = std::move(channelReadyCb)](
-                const dht::InfoHash& dev_h) {
+                const std::shared_ptr<dht::crypto::PublicKey>& dev) {
                 auto acc = pimpl_->account.lock();
                 if (!acc)
                     return;
-                if (dev_h == acc->dht()->getId()) {
+                auto deviceId = dev->getLongId();
+                if (deviceId == acc->dht()->getPublicKey()->getLongId()) {
                     // No connection to same device
                     return;
                 }
 
-                acc->connectionManager().connectDevice(dev_h, channelName, channelReadyCb);
+                acc->connectionManager().connectDevice(deviceId, channelName, channelReadyCb);
             },
 
             [peer_h, onChanneledCancelled, accId = acc->getAccountID()](bool found) {
