@@ -76,6 +76,8 @@ VideoScaler::scale_with_aspect(const VideoFrame& input, VideoFrame& output)
 {
     if (input.width() == output.width() && input.height() == output.height()) {
         if (input.format() != output.format()) {
+            JAMI_INFO() << "***VideoScaler::scale_with_aspec CONVERTING TO: " << output.format()
+                        << "from " << input.format();
             auto outPtr = convertFormat(input, (AVPixelFormat) output.format());
             output.copyFrom(*outPtr);
         } else {

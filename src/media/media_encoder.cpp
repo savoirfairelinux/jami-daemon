@@ -106,7 +106,8 @@ MediaEncoder::setOptions(const MediaStream& opts)
         if (!videoOpts_.frameRate)
             videoOpts_.frameRate = 30;
         if (!videoOpts_.bitrate)
-            videoOpts_.bitrate = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;;
+            videoOpts_.bitrate = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
+        ;
     } else {
         audioOpts_ = opts;
     }
@@ -363,7 +364,9 @@ MediaEncoder::startIO()
 
 #ifdef ENABLE_VIDEO
 int
-MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe, int64_t frame_number)
+MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input,
+                     bool is_keyframe,
+                     int64_t frame_number)
 {
     if (!initialized_) {
         initStream(videoCodec_, input->pointer()->hw_frames_ctx);
@@ -390,7 +393,7 @@ MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe,
     avframe->pts = frame_number;
     if (enc->framerate.num != enc->time_base.den || enc->framerate.den != enc->time_base.num)
         avframe->pts /= (rational<int64_t>(enc->framerate) * rational<int64_t>(enc->time_base))
-                          .real<int64_t>();
+                            .real<int64_t>();
 
     if (is_keyframe) {
         avframe->pict_type = AV_PICTURE_TYPE_I;
@@ -858,8 +861,7 @@ MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
     uint64_t maxBitrate = 1000 * br;
     // 200 Kbit/s    -> CRF40
     // 6 Mbit/s      -> CRF23
-    uint8_t crf = (uint8_t) std::round(
-        LOGREG_PARAM_A + LOGREG_PARAM_B*log(maxBitrate));
+    uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + LOGREG_PARAM_B * log(maxBitrate));
     // bufsize parameter impact the variation of the bitrate, reduce to half the maxrate to limit
     // peak and congestion
     // https://trac.ffmpeg.org/wiki/Limiting%20the%20output%20bitrate
@@ -895,8 +897,8 @@ MediaEncoder::initH265(AVCodecContext* encoderCtx, uint64_t br)
         // CRF) https://slhck.info/video/2017/02/24/crf-guide.html
         // 200 Kbit/s    -> CRF35
         // 6 Mbit/s      -> CRF18
-        uint8_t crf = (uint8_t) std::round(
-            LOGREG_PARAM_A_HEVC + LOGREG_PARAM_B_HEVC*log(maxBitrate));
+        uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A_HEVC
+                                           + LOGREG_PARAM_B_HEVC * log(maxBitrate));
         uint64_t bufSize = maxBitrate / 2;
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
@@ -938,8 +940,7 @@ MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
         uint64_t maxBitrate = 1000 * br;
         // 200 Kbit/s    -> CRF40
         // 6 Mbit/s      -> CRF23
-        uint8_t crf = (uint8_t) std::round(
-            LOGREG_PARAM_A + LOGREG_PARAM_B*log(maxBitrate));
+        uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + LOGREG_PARAM_B * log(maxBitrate));
         uint64_t bufSize = maxBitrate / 2;
 
         av_opt_set(encoderCtx, "quality", "realtime", AV_OPT_SEARCH_CHILDREN);
@@ -1194,14 +1195,17 @@ MediaEncoder::testH265Accel()
 }
 
 int
-MediaEncoder::getHWFrame(const std::shared_ptr<VideoFrame>& input, std::shared_ptr<VideoFrame>& output)
+MediaEncoder::getHWFrame(const std::shared_ptr<VideoFrame>& input,
+                         std::shared_ptr<VideoFrame>& output)
 {
     try {
 #if defined(TARGET_OS_IOS) && TARGET_OS_IOS
-// iOS
+        // iOS
         if (accel_) {
             auto pix = accel_->getSoftwareFormat();
             if (input->format() != pix) {
+                JAMI_INFO() << "***MediaEncoder::getHWFrame CONVERTING TO: " << pix << "from "
+                            << input->format();
                 output = scaler_.convertFormat(*input.get(), pix);
             } else {
                 // Fully accelerated pipeline, skip main memory
@@ -1211,7 +1215,7 @@ MediaEncoder::getHWFrame(const std::shared_ptr<VideoFrame>& input, std::shared_p
             output = getScaledSWFrame(*input.get());
         }
 #elif !defined(__APPLE__)
-// Other Platforms
+        // Other Platforms
         auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input->format()));
         bool isHardware = desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL);
         if (accel_ && accel_->isLinked() && isHardware) {
@@ -1229,7 +1233,7 @@ MediaEncoder::getHWFrame(const std::shared_ptr<VideoFrame>& input, std::shared_p
             output = getScaledSWFrame(*input.get());
         }
 #else
-// macOS
+        // macOS
         output = getScaledSWFrame(*input.get());
 #endif
     } catch (const std::runtime_error& e) {
@@ -1246,9 +1250,9 @@ MediaEncoder::getUnlinkedHWFrame(const VideoFrame& input)
     AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_NV12);
     std::shared_ptr<VideoFrame> framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
     if (!accel_) {
+        JAMI_INFO() << "***MediaEncoder::getUnlinkedHWFrame CONVERTING TO: " << AV_PIX_FMT_YUV420P;
         framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
-    }
-    else {
+    } else {
         framePtr = accel_->transfer(*framePtr);
     }
     return framePtr;
@@ -1260,6 +1264,8 @@ MediaEncoder::getHWFrameFromSWFrame(const VideoFrame& input)
     std::shared_ptr<VideoFrame> framePtr;
     auto pix = accel_->getSoftwareFormat();
     if (input.format() != pix) {
+        JAMI_INFO() << "***MediaEncoder::getHWFrameFromSWFrame CONVERTING TO: " << pix << "from "
+                    << input.format();
         framePtr = scaler_.convertFormat(input, pix);
         framePtr = accel_->transfer(*framePtr);
     } else {
