@@ -109,7 +109,7 @@ public:
      * Method to call to listen to incoming requests
      * @param deviceId      Account's device
      */
-    void onDhtConnected(const DeviceId& deviceId);
+    void onDhtConnected(const dht::crypto::PublicKey& devicePk);
 
     /**
      * Add a callback to decline or accept incoming ICE connections

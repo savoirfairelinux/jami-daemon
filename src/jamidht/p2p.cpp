@@ -261,25 +261,26 @@ DhtPeerConnector::requestConnection(
     };
 
     if (isVCard) {
-        acc->connectionManager().connectDevice(peer_h,
+        /*acc->connectionManager().connectDevice(peer_h,
                                                "vcard://" + std::to_string(tid),
-                                               channelReadyCb);
+                                               channelReadyCb);*/
         return;
     }
 
     acc->forEachDevice(
         peer_h,
         [this, tid, channelReadyCb = std::move(channelReadyCb)](
-            const dht::InfoHash& dev_h) {
+            const std::shared_ptr<dht::crypto::PublicKey>& dev) {
             auto acc = pimpl_->account.lock();
             if (!acc)
                 return;
-            if (dev_h == acc->dht()->getId()) {
+            auto deviceId = dev->getLongId();
+            if (deviceId == acc->dht()->getPublicKey()->getLongId()) {
                 JAMI_ERR() << acc->getAccountID() << "[CNX] no connection to yourself, bad person!";
                 return;
             }
 
-            acc->connectionManager().connectDevice(dev_h,
+            acc->connectionManager().connectDevice(deviceId,
                                                    "file://" + std::to_string(tid),
                                                    channelReadyCb);
         },

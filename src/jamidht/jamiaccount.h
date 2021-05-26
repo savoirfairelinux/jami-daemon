@@ -308,6 +308,9 @@ public:
     bool findCertificate(
         const dht::InfoHash& h,
         std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
+    bool findCertificate(
+        const dht::PkId& h,
+        std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
 
     /* contact requests */
     std::vector<std::map<std::string, std::string>> getTrustRequests() const;
@@ -399,7 +402,7 @@ public:
     const std::shared_future<tls::DhParams> dhParams() const { return dhParams_; }
 
     void forEachDevice(const dht::InfoHash& to,
-                       std::function<void(const dht::InfoHash&)>&& op,
+                       std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)>&& op,
                        std::function<void(bool)>&& end = {});
 
     /**
