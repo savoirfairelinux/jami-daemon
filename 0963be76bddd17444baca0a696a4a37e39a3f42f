@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5118c6de_b7f94d36",
+        "filename": "src/string_utils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-26T21:03:22Z",
+      "side": 1,
+      "message": "can be improved with a small test in daemon/test/unitTest/string_utils/testString_utils.cpp\n\n https://docs.jami.net/coverage/src/string_utils.cpp.gcov.html",
+      "range": {
+        "startLine": 150,
+        "startChar": 0,
+        "endLine": 150,
+        "endChar": 11
+      },
+      "revId": "0963be76bddd17444baca0a696a4a37e39a3f42f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
