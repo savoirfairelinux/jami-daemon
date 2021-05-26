@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0024cf59_00e1d877",
+        "filename": "src/upnp/protocol/pupnp/pupnp.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-26T13:38:49Z",
+      "side": 1,
+      "message": "may just skip the the finish if not initialized.",
+      "revId": "3a9ebe327594bdd2daa0f857448028cad2603d27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
