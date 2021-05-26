@@ -140,7 +140,7 @@ public:
 
     void addNewMultiplexedSocket(const DeviceId& deviceId, const dht::Value::Id& vid);
     void onPeerResponse(const PeerConnectionRequest& req);
-    void onDhtConnected(const DeviceId& deviceId);
+    void onDhtConnected(const dht::crypto::PublicKey& devicePk);
 
     /**
      * Triggered when a new TLS socket is ready to use
@@ -408,7 +408,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
 {
     // Avoid dht operation in a DHT callback to avoid deadlocks
     runOnMainThread([w = weak(), name = std::move(name), cert = std::move(cert), cb = std::move(cb)] {
-        auto deviceId = cert->getId();
+        auto deviceId = cert->getLongId();
         auto sthis = w.lock();
         if (!sthis || sthis->isDestroying_) {
             cb(nullptr, deviceId);
@@ -586,7 +586,7 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
 void
 ConnectionManager::Impl::onPeerResponse(const PeerConnectionRequest& req)
 {
-    auto device = req.from;
+    auto device = req.fromId;
     JAMI_INFO() << account << " New response received from " << device.to_c_str();
     auto info = getInfo(device, req.id);
     if (!info) {
@@ -599,12 +599,12 @@ ConnectionManager::Impl::onPeerResponse(const PeerConnectionRequest& req)
 }
 
 void
-ConnectionManager::Impl::onDhtConnected(const DeviceId& deviceId)
+ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
 {
     if (!account.dht())
         return;
     account.dht()->listen<PeerConnectionRequest>(
-        dht::InfoHash::get(PeerConnectionRequest::key_prefix + deviceId.toString()),
+        dht::InfoHash::get(PeerConnectionRequest::key_prefix + devicePk.getId().toString()),
         [w = weak()](PeerConnectionRequest&& req) {
             auto shared = w.lock();
             if (!shared)
@@ -614,9 +614,9 @@ ConnectionManager::Impl::onDhtConnected(const DeviceId& deviceId)
                 return true;
             }
             if (req.isAnswer) {
-                JAMI_DBG() << "Received request answer from " << req.from;
+                JAMI_DBG() << "Received request answer from " << req.fromId;
             } else {
-                JAMI_DBG() << "Received request from " << req.from;
+                JAMI_DBG() << "Received request from " << req.fromId;
             }
             // Hack:
             // Note: This reschedule on the io pool should not be necessary
@@ -645,7 +645,7 @@ ConnectionManager::Impl::onDhtConnected(const DeviceId& deviceId)
                             } else {
                                 JAMI_WARN()
                                     << shared->account
-                                    << "Rejected untrusted connection request from " << req.from;
+                                    << "Rejected untrusted connection request from " << req.fromId;
                             }
                         });
                 }
@@ -741,7 +741,7 @@ ConnectionManager::Impl::answerTo(IceTransport& ice, const dht::Value::Id& id, c
 void
 ConnectionManager::Impl::onRequestStartIce(const PeerConnectionRequest& req)
 {
-    auto info = getInfo(req.from, req.id);
+    auto info = getInfo(req.fromId, req.id);
     if (!info)
         return;
 
@@ -750,17 +750,17 @@ ConnectionManager::Impl::onRequestStartIce(const PeerConnectionRequest& req)
     if (!ice) {
         JAMI_ERR("No ICE detected");
         if (connReadyCb_)
-            connReadyCb_(req.from, "", nullptr);
+            connReadyCb_(req.fromId, "", nullptr);
         return;
     }
 
     auto sdp = ice->parseIceCandidates(req.ice_msg);
-    answerTo(*ice, req.id, req.from);
+    answerTo(*ice, req.id, req.fromId);
     if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates))) {
         JAMI_ERR("[Account:%s] start ICE failed - fallback to TURN", account.getAccountID().c_str());
         ice = nullptr;
         if (connReadyCb_)
-            connReadyCb_(req.from, "", nullptr);
+            connReadyCb_(req.fromId, "", nullptr);
         return;
     }
 }
@@ -768,7 +768,7 @@ ConnectionManager::Impl::onRequestStartIce(const PeerConnectionRequest& req)
 void
 ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
 {
-    auto info = getInfo(req.from, req.id);
+    auto info = getInfo(req.fromId, req.id);
     if (!info)
         return;
 
@@ -777,7 +777,7 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
     if (!ice) {
         JAMI_ERR("No ICE detected");
         if (connReadyCb_)
-            connReadyCb_(req.from, "", nullptr);
+            connReadyCb_(req.fromId, "", nullptr);
         return;
     }
 
@@ -803,7 +803,7 @@ ConnectionManager::Impl::onRequestOnNegoDone(const PeerConnectionRequest& req)
         });
 
     info->tls_->setOnReady(
-        [w = weak(), deviceId = std::move(req.from), vid = std::move(req.id)](bool ok) {
+        [w = weak(), deviceId = std::move(req.fromId), vid = std::move(req.id)](bool ok) {
             if (auto shared = w.lock())
                 shared->onTlsNegotiationDone(ok, deviceId, vid);
         });
@@ -815,7 +815,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
 {
     auto deviceId = req.from.toString();
     JAMI_INFO() << account << "New connection requested by " << deviceId.c_str();
-    if (!iceReqCb_ || !iceReqCb_(req.from)) {
+    if (!iceReqCb_ || !iceReqCb_(req.fromId)) {
         JAMI_INFO("[Account:%s] refuse connection from %s",
                   account.getAccountID().c_str(),
                   deviceId.c_str());
@@ -830,7 +830,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
             return;
         // Note: used when the ice negotiation fails to erase
         // all stored structures.
-        auto eraseInfo = [w, id = req.id, from = req.from] {
+        auto eraseInfo = [w, id = req.id, from = req.fromId] {
             if (auto shared = w.lock()) {
                 std::lock_guard<std::mutex> lk(shared->infosMtx_);
                 shared->infos_.erase({from, id});
@@ -845,7 +845,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
             if (!ok) {
                 JAMI_ERR("Cannot initialize ICE session.");
                 if (shared->connReadyCb_)
-                    shared->connReadyCb_(req.from, "", nullptr);
+                    shared->connReadyCb_(req.fromId, "", nullptr);
                 runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
                 return;
             }
@@ -865,7 +865,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
             if (!ok) {
                 JAMI_ERR("ICE negotiation failed");
                 if (shared->connReadyCb_)
-                    shared->connReadyCb_(req.from, "", nullptr);
+                    shared->connReadyCb_(req.fromId, "", nullptr);
                 runOnMainThread([eraseInfo = std::move(eraseInfo)] { eraseInfo(); });
                 return;
             }
@@ -880,7 +880,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         auto info = std::make_shared<ConnectionInfo>();
         {
             std::lock_guard<std::mutex> lk(shared->infosMtx_);
-            shared->infos_[{req.from, req.id}] = info;
+            shared->infos_[{req.fromId, req.id}] = info;
         }
         JAMI_INFO("[Account:%s] accepting connection from %s",
                   shared->account.getAccountID().c_str(),
@@ -895,7 +895,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req,
         if (not info->ice_) {
             JAMI_ERR("Cannot initialize ICE session.");
             if (shared->connReadyCb_)
-                shared->connReadyCb_(req.from, "", nullptr);
+                shared->connReadyCb_(req.fromId, "", nullptr);
             eraseInfo();
         }
     });
@@ -923,7 +923,7 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const
         });
     info->socket_->onShutdown([w = weak(), deviceId, vid]() {
         // Cancel current outgoing connections
-        dht::ThreadPool::io().run([w, deviceId = dht::InfoHash(deviceId), vid] {
+        dht::ThreadPool::io().run([w, deviceId, vid] {
             auto sthis = w.lock();
             if (!sthis)
                 return;
@@ -1020,9 +1020,9 @@ ConnectionManager::closeConnectionsWith(const DeviceId& deviceId)
 }
 
 void
-ConnectionManager::onDhtConnected(const DeviceId& deviceId)
+ConnectionManager::onDhtConnected(const dht::crypto::PublicKey& devicePk)
 {
-    pimpl_->onDhtConnected(deviceId);
+    pimpl_->onDhtConnected(devicePk);
 }
 
 void

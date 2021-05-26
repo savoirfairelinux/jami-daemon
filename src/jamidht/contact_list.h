@@ -43,7 +43,7 @@ public:
     using OnIncomingTrustRequest = std::function<
         void(const std::string&, const std::string&, const std::vector<uint8_t>&, time_t)>;
     using OnAcceptConversation = std::function<void(const std::string&)>;
-    using OnDevicesChanged = std::function<void(const std::map<dht::InfoHash, KnownDevice>&)>;
+    using OnDevicesChanged = std::function<void(const std::map<dht::PkId, KnownDevice>&)>;
 
     struct OnChangeCallback
     {
@@ -69,6 +69,7 @@ public:
 
     bool setCertificateStatus(const std::string& cert_id,
                               const tls::TrustStore::PermissionStatus status);
+
     bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
                               tls::TrustStore::PermissionStatus status,
                               bool local = true);
@@ -105,7 +106,7 @@ public:
     /** Inform of a new contact request. Returns true if the request should be immediatly accepted
      * (already a contact) */
     bool onTrustRequest(const dht::InfoHash& peer_account,
-                        const dht::InfoHash& peer_device,
+                        const std::shared_ptr<dht::crypto::PublicKey>& peer_device,
                         time_t received,
                         bool confirm,
                         const std::string& conversationId,
@@ -120,26 +121,28 @@ public:
     void saveTrustRequests() const;
 
     /* Devices */
-    const std::map<dht::InfoHash, KnownDevice>& getKnownDevices() const { return knownDevices_; }
-    void foundAccountDevice(const dht::InfoHash& device,
+    const std::map<dht::PkId, KnownDevice>& getKnownDevices() const { return knownDevices_; }
+    void foundAccountDevice(const dht::PkId& device,
                             const std::string& name = {},
                             const time_point& last_sync = time_point::min());
     bool foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt,
                             const std::string& name = {},
                             const time_point& last_sync = time_point::min());
-    bool removeAccountDevice(const dht::InfoHash& device);
-    void setAccountDeviceName(const dht::InfoHash& device, const std::string& name);
-    std::string getAccountDeviceName(const dht::InfoHash& device) const;
+    bool removeAccountDevice(const dht::PkId& device);
+    void setAccountDeviceName(const dht::PkId& device, const std::string& name);
+    std::string getAccountDeviceName(const dht::PkId& device) const;
 
     DeviceSync getSyncData() const;
-    bool syncDevice(const dht::InfoHash& device, const time_point& syncDate);
+    bool syncDevice(const dht::PkId& device, const time_point& syncDate);
     // void onSyncData(DeviceSync&& device);
 
 private:
     mutable std::mutex lock;
     std::map<dht::InfoHash, Contact> contacts_;
     std::map<dht::InfoHash, TrustRequest> trustRequests_;
-    std::map<dht::InfoHash, KnownDevice> knownDevices_;
+    std::map<dht::InfoHash, KnownDevice> knownDevicesLegacy_;
+
+    std::map<dht::PkId, KnownDevice> knownDevices_;
 
     // Trust store with account main certificate as the only CA
     dht::crypto::TrustList accountTrust_;
