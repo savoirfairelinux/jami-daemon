@@ -72,8 +72,8 @@ CertificateStore::loadLocalCertificates()
             if (id != f)
                 throw std::logic_error({});
             while (crt) {
-                auto id_str = crt->getId().toString();
-                certs_.emplace(id_str, crt);
+                certs_.emplace(crt->getId().toString(), crt);
+                certs_.emplace(crt->getLongId().toString(), crt);
                 loadRevocations(*crt);
                 crt = crt->issuer;
                 ++n;
@@ -252,6 +252,8 @@ CertificateStore::pinCertificatePath(const std::string& path,
                 scerts.emplace_back(shared);
                 auto e = certs_.emplace(shared->getId().toString(), shared);
                 ids.emplace_back(e.first->first);
+                e = certs_.emplace(shared->getLongId().toString(), shared);
+                ids.emplace_back(e.first->first);
             }
             paths_.emplace(path, std::move(scerts));
         }
@@ -308,14 +310,19 @@ CertificateStore::pinCertificate(const std::shared_ptr<crypto::Certificate>& cer
         while (c) {
             bool inserted;
             auto id = c->getId().toString();
+            auto longId = c->getLongId().toString();
             decltype(certs_)::iterator it;
             std::tie(it, inserted) = certs_.emplace(id, c);
+            if (not inserted)
+                it->second = c;
+            std::tie(it, inserted) = certs_.emplace(longId, c);
             if (not inserted)
                 it->second = c;
             if (local) {
                 for (const auto& crl : c->getRevocationLists())
                     pinRevocationList(id, *crl);
             }
+            ids.emplace_back(longId);
             ids.emplace_back(id);
             c = c->issuer;
             sig |= inserted;

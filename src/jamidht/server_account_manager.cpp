@@ -146,7 +146,8 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                     auto info = std::make_unique<AccountInfo>();
                                     info->identity.first = ctx->key.get();
                                     info->identity.second = cert;
-                                    info->deviceId = cert->getPublicKey().getId().toString();
+                                    info->devicePk = std::make_shared<dht::crypto::PublicKey>(cert->getPublicKey());
+                                    info->deviceId = info->devicePk->getLongId().toString();
                                     info->accountId = accountCert->getId().toString();
                                     info->contacts = std::make_unique<ContactList>(accountCert,
                                                                                    this_.path_,
@@ -430,7 +431,7 @@ ServerAccountManager::syncDevices()
                         } else {
                             for (unsigned i = 0, n = json.size(); i < n; i++) {
                                 const auto& e = json[i];
-                                dht::InfoHash deviceId(e["deviceId"].asString());
+                                dht::PkId deviceId(e["deviceId"].asString());
                                 if (deviceId) {
                                     this_.info_->contacts->foundAccountDevice(deviceId,
                                                                               e["alias"].asString(),
