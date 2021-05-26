@@ -177,7 +177,8 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
     info->contacts = std::move(contactList);
     info->contacts->load();
     info->accountId = id;
-    info->deviceId = identity.first->getPublicKey().getId().toString();
+    info->devicePk = identity.first->getSharedPublicKey();
+    info->deviceId = info->devicePk->getLongId().toString();
     info->announce = std::move(announce);
     info->ethAccount = root["eth"].asString();
     info->username = username;
@@ -200,6 +201,7 @@ AccountManager::startSync(const OnNewDeviceCb& cb)
         for (const auto& crl : info_->identity.second->issuer->getRevocationLists())
             dht_->put(h, crl, dht::DoneCallback {}, {}, true);
         dht_->listen<DeviceAnnouncement>(h, [this, cb = std::move(cb)](DeviceAnnouncement&& dev) {
+            //dev.from
             findCertificate(dev.dev,
                             [this, cb](const std::shared_ptr<dht::crypto::Certificate>& crt) {
                                 if (cb)
@@ -229,7 +231,7 @@ AccountManager::startSync(const OnNewDeviceCb& cb)
             return true;
 
         // allowPublic always true for trust requests (only forbidden if banned)
-        onPeerMessage(v.from,
+        onPeerMessage(*v.owner,
                       true,
                       [this, v](const std::shared_ptr<dht::crypto::Certificate>&,
                                 dht::InfoHash peer_account) mutable {
@@ -239,7 +241,7 @@ AccountManager::startSync(const OnNewDeviceCb& cb)
                                     v.conversationId.c_str());
                           if (info_)
                               if (info_->contacts->onTrustRequest(peer_account,
-                                                                  v.from,
+                                                                  v.owner,
                                                                   time(nullptr),
                                                                   v.confirm,
                                                                   v.conversationId,
@@ -252,7 +254,7 @@ AccountManager::startSync(const OnNewDeviceCb& cb)
     });
 }
 
-const std::map<dht::InfoHash, KnownDevice>&
+const std::map<dht::PkId, KnownDevice>&
 AccountManager::getKnownDevices() const
 {
     return info_->contacts->getKnownDevices();
@@ -270,14 +272,14 @@ void
 AccountManager::setAccountDeviceName(const std::string& name)
 {
     if (info_)
-        info_->contacts->setAccountDeviceName(dht::InfoHash(info_->deviceId), name);
+        info_->contacts->setAccountDeviceName(DeviceId(info_->deviceId), name);
 }
 
 std::string
 AccountManager::getAccountDeviceName() const
 {
     if (info_)
-        return info_->contacts->getAccountDeviceName(dht::InfoHash(info_->deviceId));
+        return info_->contacts->getAccountDeviceName(DeviceId(info_->deviceId));
     return {};
 }
 
@@ -322,7 +324,7 @@ AccountManager::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>&
 }
 
 void
-AccountManager::onPeerMessage(const dht::InfoHash& peer_device,
+AccountManager::onPeerMessage(const dht::crypto::PublicKey& peer_device,
                               bool allowPublic,
                               std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt,
                                                  const dht::InfoHash& peer_account)>&& cb)
@@ -334,8 +336,8 @@ AccountManager::onPeerMessage(const dht::InfoHash& peer_device,
         return;
     }
 
-    findCertificate(peer_device,
-                    [this, peer_device, cb = std::move(cb), allowPublic](
+    findCertificate(peer_device.getId(),
+                    [this, cb = std::move(cb), allowPublic](
                         const std::shared_ptr<dht::crypto::Certificate>& cert) {
                         dht::InfoHash peer_account_id;
                         if (onPeerCertificate(cert, allowPublic, peer_account_id)) {
@@ -452,6 +454,28 @@ AccountManager::findCertificate(
     return true;
 }
 
+
+bool
+AccountManager::findCertificate(
+    const dht::PkId& id,
+    std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
+{
+    if (auto cert = tls::CertificateStore::instance().getCertificate(id.toString())) {
+        if (cb)
+            cb(cert);
+    } else {
+        /*dht_->findCertificate(id, [cb](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+            if (crt)
+                tls::CertificateStore::instance().pinCertificate(crt);
+            if (cb)
+                cb(crt);
+        });*/
+        if (cb)
+            cb(nullptr);
+    }
+    return true;
+}
+
 bool
 AccountManager::setCertificateStatus(const std::string& cert_id,
                                      tls::TrustStore::PermissionStatus status)
@@ -528,11 +552,11 @@ AccountManager::sendTrustRequest(const std::string& to,
     if (info_->contacts->addContact(toH)) {
         syncDevices();
     }
-    forEachDevice(toH, [this, toH, convId, payload](const dht::InfoHash& dev) {
+    forEachDevice(toH, [this, toH, convId, payload](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
         JAMI_WARN("sending trust request to: %s / %s",
                   toH.toString().c_str(),
-                  dev.toString().c_str());
-        dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev.toString()),
+                  dev->getLongId().toString().c_str());
+        dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev->getId().toString()),
                            dev,
                            dht::TrustRequest(DHT_TYPE_NS, convId, payload));
     });
@@ -550,17 +574,17 @@ AccountManager::sendTrustRequestConfirm(const dht::InfoHash& toH, const std::str
     ///////if (!convId.empty() && info_)
     ///////    info_->contacts->acceptConversation(convId);
 
-    forEachDevice(toH, [this, toH, answer](const dht::InfoHash& dev) {
+    forEachDevice(toH, [this, toH, answer](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
         JAMI_WARN("sending trust request reply: %s / %s",
                   toH.toString().c_str(),
-                  dev.toString().c_str());
-        dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev.toString()), dev, answer);
+                  dev->getLongId().toString().c_str());
+        dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev->getId().toString()), dev, answer);
     });
 }
 
 void
 AccountManager::forEachDevice(const dht::InfoHash& to,
-                              std::function<void(const dht::InfoHash&)>&& op,
+                              std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)>&& op,
                               std::function<void(bool)>&& end)
 {
     if (not dht_) {
@@ -569,25 +593,58 @@ AccountManager::forEachDevice(const dht::InfoHash& to,
             end(false);
         return;
     }
-    auto treatedDevices = std::make_shared<std::set<dht::InfoHash>>();
     dht_->get<dht::crypto::RevocationList>(to, [to](dht::crypto::RevocationList&& crl) {
         tls::CertificateStore::instance().pinRevocationList(to.toString(), std::move(crl));
         return true;
     });
+
+    struct State {
+        unsigned remaining {0};
+        std::set<dht::PkId> treatedDevices {};
+        std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)> onDevice;
+        std::function<void(bool)> onEnd;
+
+        void found(std::shared_ptr<dht::crypto::PublicKey> pk) {
+            remaining--;
+            if (pk && *pk) {
+                auto longId = pk->getLongId();
+                if (treatedDevices.emplace(longId).second) {
+                    onDevice(pk);
+                }
+            }
+            ended();
+        }
+
+        void ended() {
+            if (remaining == 0 && onEnd) {
+                JAMI_DBG("Found %lu devices", treatedDevices.size());
+                onEnd(not treatedDevices.empty());
+                onDevice = {};
+                onEnd = {};
+            }
+        }
+    };
+    auto state = std::make_shared<State>();
+    state->onDevice = std::move(op);
+    state->onEnd = std::move(end);
+
     dht_->get<DeviceAnnouncement>(
         to,
-        [to, treatedDevices, op = std::move(op)](DeviceAnnouncement&& dev) {
+        [this, to, state](DeviceAnnouncement&& dev) {
             if (dev.from != to)
                 return true;
-            if (treatedDevices->emplace(dev.dev).second) {
-                op(dev.dev);
+            if (dev.pk) {
+                state->found(std::move(dev.pk));
+            } else {
+                state->remaining++;
+                findCertificate(dev.dev, [state](const std::shared_ptr<dht::crypto::Certificate>& cert){
+                    state->found(cert ? std::make_shared<dht::crypto::PublicKey>(cert->getPublicKey()) : std::shared_ptr<dht::crypto::PublicKey> {});
+                });
             }
             return true;
         },
-        [=, end = std::move(end)](bool /*ok*/) {
-            JAMI_DBG("Found %lu devices for %s", treatedDevices->size(), to.to_c_str());
-            if (end)
-                end(not treatedDevices->empty());
+        [state](bool /*ok*/) {
+            state->ended();
         });
 }
 

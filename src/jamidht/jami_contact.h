@@ -120,7 +120,7 @@ struct Contact
 
 struct TrustRequest
 {
-    dht::InfoHash device;
+    std::shared_ptr<dht::crypto::PublicKey> device;
     std::string conversationId;
     time_t received;
     std::vector<uint8_t> payload;
@@ -135,7 +135,14 @@ private:
 public:
     static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
     dht::InfoHash dev;
-    MSGPACK_DEFINE_MAP(dev);
+    std::shared_ptr<dht::crypto::PublicKey> pk;
+    MSGPACK_DEFINE_MAP(dev, pk)
+};
+
+struct KnownDeviceSync {
+    std::string name;
+    dht::InfoHash sha1;
+    MSGPACK_DEFINE_MAP(name, sha1)
 };
 
 struct DeviceSync : public dht::EncryptedValue<DeviceSync>
@@ -143,10 +150,11 @@ struct DeviceSync : public dht::EncryptedValue<DeviceSync>
     static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
     uint64_t date;
     std::string device_name;
-    std::map<dht::InfoHash, std::string> devices_known;
+    std::map<dht::InfoHash, std::string> devices_known; // Legacy
+    std::map<dht::PkId, KnownDeviceSync> devices;
     std::map<dht::InfoHash, Contact> peers;
     std::map<dht::InfoHash, TrustRequest> trust_requests;
-    MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers, trust_requests)
+    MSGPACK_DEFINE_MAP(date, device_name, devices_known, devices, peers, trust_requests)
 };
 
 struct KnownDevice

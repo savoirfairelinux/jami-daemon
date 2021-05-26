@@ -341,7 +341,8 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a)
     info->identity.first = ctx.key.get();
     info->identity.second = deviceCertificate;
     info->accountId = a.id.second->getId().toString();
-    info->deviceId = deviceCertificate->getPublicKey().getId().toString();
+    info->devicePk = info->identity.first->getSharedPublicKey();
+    info->deviceId = info->devicePk->getLongId().toString();
     if (ctx.deviceName.empty())
         ctx.deviceName = info->deviceId.substr(8);
 
@@ -397,12 +398,16 @@ ArchiveAccountManager::makeReceipt(const dht::crypto::Identity& id,
     auto devId = device.getId();
     DeviceAnnouncement announcement;
     announcement.dev = devId;
+    announcement.pk = std::make_shared<dht::crypto::PublicKey>(device.getPublicKey());
     dht::Value ann_val {announcement};
     ann_val.sign(*id.first);
 
+    auto packedAnnoucement = ann_val.getPacked();
+    JAMI_DBG("[Auth] device announcement size: %zu", packedAnnoucement.size());
+
     std::ostringstream is;
     is << "{\"id\":\"" << id.second->getId() << "\",\"dev\":\"" << devId << "\",\"eth\":\""
-       << ethAccount << "\",\"announce\":\"" << base64::encode(ann_val.getPacked()) << "\"}";
+       << ethAccount << "\",\"announce\":\"" << base64::encode(packedAnnoucement) << "\"}";
 
     // auto announce_ = ;
     return {is.str(), std::make_shared<dht::Value>(std::move(ann_val))};
@@ -442,11 +447,12 @@ ArchiveAccountManager::syncDevices()
         // don't send sync data to ourself
         if (dev.first.toString() == info_->deviceId)
             continue;
+        auto pk = std::make_shared<dht::crypto::PublicKey>(dev.second.certificate->getPublicKey());
         JAMI_DBG("sending device sync to %s %s",
                  dev.second.name.c_str(),
                  dev.first.toString().c_str());
-        auto syncDeviceKey = dht::InfoHash::get("inbox:" + dev.first.toString());
-        dht_->putEncrypted(syncDeviceKey, dev.first, sync_data);
+        auto syncDeviceKey = dht::InfoHash::get("inbox:" + pk->getId().toString());
+        dht_->putEncrypted(syncDeviceKey, pk, sync_data);
     }
 }
 
@@ -478,13 +484,13 @@ void
 ArchiveAccountManager::onSyncData(DeviceSync&& sync)
 {
     auto sync_date = clock::time_point(clock::duration(sync.date));
-    if (not info_->contacts->syncDevice(sync.from, sync_date)) {
+    if (not info_->contacts->syncDevice(sync.owner->getLongId(), sync_date)) {
         return;
     }
 
     // Sync known devices
     JAMI_DBG("[Contacts] received device sync data (%lu devices, %lu contacts)",
-             sync.devices_known.size(),
+             sync.devices_known.size() + sync.devices.size(),
              sync.peers.size());
     for (const auto& d : sync.devices_known) {
         findCertificate(d.first, [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
@@ -492,6 +498,14 @@ ArchiveAccountManager::onSyncData(DeviceSync&& sync)
                 return;
             // std::lock_guard<std::mutex> lock(deviceListMutex_);
             foundAccountDevice(crt, d.second);
+        });
+    }
+    for (const auto& d : sync.devices) {
+        findCertificate(d.second.sha1, [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+            if (not crt || crt->getLongId() != d.first)
+                return;
+            // std::lock_guard<std::mutex> lock(deviceListMutex_);
+            foundAccountDevice(crt, d.second.name);
         });
     }
     // saveKnownDevices();
@@ -697,7 +711,7 @@ ArchiveAccountManager::revokeDevice(const std::string& password,
                             tls::CertificateStore::instance().loadRevocations(*a.id.second);
 
                             this_.saveArchive(a, password);
-                            this_.info_->contacts->removeAccountDevice(crt->getId());
+                            this_.info_->contacts->removeAccountDevice(crt->getLongId());
                             cb(RevokeDeviceResult::SUCCESS);
                             this_.syncDevices();
                         });
@@ -758,9 +772,9 @@ ArchiveAccountManager::registerName(const std::string& password,
     try {
         auto archive = readArchive(password);
         auto privateKey = archive.id.first;
-        auto pk = privateKey->getPublicKey();
-        publickey = pk.toString();
-        accountId = pk.getId().toString();
+        auto pk = privateKey->getSharedPublicKey();
+        publickey = pk->toString();
+        accountId = pk->getId().toString();
         signedName = base64::encode(
             privateKey->sign(std::vector<uint8_t>(nameLowercase.begin(), nameLowercase.end())));
         ethAccount = dev::KeyPair(dev::Secret(archive.eth_key)).address().hex();
