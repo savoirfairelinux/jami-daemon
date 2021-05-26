@@ -27,7 +27,7 @@ class IceTransport;
 class ChannelSocket;
 class TlsSocketEndpoint;
 
-using DeviceId = dht::InfoHash;
+using DeviceId = dht::PkId;
 using OnConnectionRequestCb = std::function<
     bool(const DeviceId& /* device id */, const uint16_t& /* id */, const std::string& /* name */)>;
 using OnConnectionReadyCb
