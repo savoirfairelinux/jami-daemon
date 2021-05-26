@@ -175,12 +175,19 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
                                                  &size,
                                                  &playbackDeviceID);
     }
+
     // add listener for detecting when devices are removed
     const AudioObjectPropertyAddress aliveAddress = {kAudioDevicePropertyDeviceIsAlive,
                                                      kAudioObjectPropertyScopeGlobal,
                                                      kAudioObjectPropertyElementMaster};
     AudioObjectAddPropertyListener(playbackDeviceID, &aliveAddress, &deviceIsAliveCallback, this);
     AudioObjectAddPropertyListener(inputDeviceID, &aliveAddress, &deviceIsAliveCallback, this);
+
+    // add listener to detect when devices changed
+    const AudioObjectPropertyAddress changedAddress = {kAudioHardwarePropertyDevices,
+                                                     kAudioObjectPropertyScopeGlobal,
+                                                     kAudioObjectPropertyElementMaster};
+    AudioObjectAddPropertyListener(kAudioObjectSystemObject, &changedAddress, &devicesChangedCallback, this);
 
     // Set stream format
     AudioStreamBasicDescription info;
@@ -357,6 +364,18 @@ CoreLayer::deviceIsAliveCallback(AudioObjectID inObjectID,
         return kAudioServicesNoError;
     static_cast<CoreLayer*>(inRefCon)->stopStream();
     static_cast<CoreLayer*>(inRefCon)->startStream();
+    return kAudioServicesNoError;
+}
+
+OSStatus
+CoreLayer::devicesChangedCallback(AudioObjectID inObjectID,
+                                 UInt32 inNumberAddresses,
+                                 const AudioObjectPropertyAddress inAddresses[],
+                                 void* inRefCon)
+{
+    if (static_cast<CoreLayer*>(inRefCon)->status_ != Status::Started)
+        return kAudioServicesNoError;
+    static_cast<CoreLayer*>(inRefCon)->devicesChanged();
     return kAudioServicesNoError;
 }
 
