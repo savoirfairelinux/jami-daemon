@@ -118,6 +118,12 @@ check_PROGRAMS += ut_call
 ut_call_SOURCES = call/call.cpp
 
 #
+# conference
+#
+check_PROGRAMS += ut_conference
+ut_conference_SOURCES = call/conference.cpp
+
+#
 # connectionManager
 #
 check_PROGRAMS += ut_connectionManager
