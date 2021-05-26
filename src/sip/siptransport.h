@@ -113,8 +113,8 @@ public:
     /** Only makes sense for connection-oriented transports */
     bool isConnected() const noexcept { return connected_; }
 
-    void setIsIceTransport() { isIceTransport_ = true; }
-    void setIsChanneledTransport() { isChanneledTransport_ = true; }
+    inline void setDeviceId(const std::string& deviceId) { deviceId_ = deviceId; }
+    inline std::string_view deviceId() const { return deviceId_; }
     inline void setAccount(const std::shared_ptr<SIPAccountBase>& account) { account_ = account; }
     inline const std::weak_ptr<SIPAccountBase>& getAccount() const { return account_; }
 
@@ -132,8 +132,7 @@ private:
     std::weak_ptr<SIPAccountBase> account_ {};
 
     bool connected_ {false};
-    bool isIceTransport_ {false};
-    bool isChanneledTransport_ {false};
+    std::string deviceId_ {};
     TlsInfos tlsInfos_;
 };
 
