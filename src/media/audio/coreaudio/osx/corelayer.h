@@ -125,6 +125,10 @@ private:
                                           UInt32 inNumberAddresses,
                                           const AudioObjectPropertyAddress inAddresses[],
                                           void* inRefCon);
+    static OSStatus devicesChangedCallback(AudioObjectID inObjectID,
+                                           UInt32 inNumberAddresses,
+                                           const AudioObjectPropertyAddress inAddresses[],
+                                           void* inRefCon);
 
     void read(AudioUnitRenderActionFlags* ioActionFlags,
               const AudioTimeStamp* inTimeStamp,
