@@ -355,7 +355,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
                     } catch (...) {
                     }
                 }
-                account->onTextMessage(id, peerNumber, payloads);
+                account->onTextMessage(id, peerNumber, std::string(transport->deviceId()), payloads);
             }
             return PJ_FALSE;
         }
