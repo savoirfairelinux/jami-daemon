@@ -107,11 +107,11 @@ CallTest::setUp()
             [&](const std::string&, const std::map<std::string, std::string>&) {
                 bool ready = false;
                 auto details = aliceAccount->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready = (daemonStatus == "REGISTERED");
+                auto daemonStatus = details[DRing::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                ready = (daemonStatus == "true");
                 details = bobAccount->getVolatileAccountDetails();
-                daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready &= (daemonStatus == "REGISTERED");
+                daemonStatus = details[DRing::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                ready &= (daemonStatus == "true");
                 if (ready) {
                     accountsReady = true;
                     cv.notify_one();
@@ -161,10 +161,6 @@ CallTest::tearDown()
 void
 CallTest::testCall()
 {
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
-    std::this_thread::sleep_for(std::chrono::seconds(10));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -206,10 +202,6 @@ CallTest::testCall()
 void
 CallTest::testCachedCall()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -264,10 +256,6 @@ CallTest::testCachedCall()
 void
 CallTest::testStopSearching()
 {
-    JAMI_INFO("Waiting....");
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    std::this_thread::sleep_for(std::chrono::seconds(5));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -333,8 +321,8 @@ CallTest::testDeclineMultiDevice()
                 if (!bob2Account)
                     return;
                 auto details = bob2Account->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                if (daemonStatus == "REGISTERED") {
+                auto daemonStatus = details[DRing::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                if (daemonStatus == "true") {
                     ready = true;
                     cv.notify_one();
                 }
@@ -343,11 +331,6 @@ CallTest::testDeclineMultiDevice()
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(20), [&] { return ready; }));
     DRing::unregisterSignalHandlers();
-
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
-    std::this_thread::sleep_for(std::chrono::seconds(5));
 
     std::atomic<int> callReceived {0};
     std::atomic<int> callStopped {0};
