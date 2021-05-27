@@ -129,7 +129,7 @@ SIPFmt::swap(std::vector<uint8_t>& with)
         push_CRLN();
     }
 
-    setFieldValue("content-length", std::to_string(body_.size() + 100));
+    setFieldValue("content-length", std::to_string(body_.size()));
 
     for (auto it = fields_.cbegin(); it != fields_.cend(); ++it) {
         push_str(it->first);
