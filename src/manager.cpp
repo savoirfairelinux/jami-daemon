@@ -1251,6 +1251,8 @@ Manager::hangupCall(const std::string& callId)
     } catch (const VoipLinkException& e) {
         JAMI_ERR("%s", e.what());
         return false;
+    } catch (const std::runtime_error& e) {
+        JAMI_ERR("%s", e.what());
     }
 
     return true;
