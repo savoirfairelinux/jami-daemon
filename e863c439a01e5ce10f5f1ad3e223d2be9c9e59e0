@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "df78c909_b49ac09b",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2159,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-27T16:57:06Z",
+      "side": 1,
+      "message": "This must be after that the presence in startSync() is done else it doesn\u0027t solve the problem.\n\nAccountManager::startSync is the one that put the presence of the Device on the DHT.\n\n(JAMI_DBG(\"announcing device at %s\", h.toString().c_str());\n        dht_-\u003eput(h, info_-\u003eannounce, dht::DoneCallback {}, {}, true);)\n\nThe device is fully announced in DoneCallback",
+      "range": {
+        "startLine": 2150,
+        "startChar": 13,
+        "endLine": 2159,
+        "endChar": 13
+      },
+      "revId": "e863c439a01e5ce10f5f1ad3e223d2be9c9e59e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
