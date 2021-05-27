@@ -27,8 +27,10 @@
  * Example that will try to overflow the SDP parser.
  */
 bool
-mutate_gnutls_record_recv(ChanneledMessage& msg)
+mutate_gnutls_record_send(ChanneledMessage& msg)
 {
+    static size_t body_repeat = 1;
+
     SIPFmt sip(msg.data);
 
     /* Only SIP request */
@@ -37,13 +39,24 @@ mutate_gnutls_record_recv(ChanneledMessage& msg)
     }
 
     /* Skip none SDP Content-Type */
-    if (std::string::npos == sip.getField("content-type").find("application/sdp")) {
+    if (std::string::npos == sip.getField("content-type").find("text/plain")) {
          return false;
     }
 
-    char payload[] = "@";
+    auto body = sip.getBody();
+    std::vector<uint8_t> newBody;
 
-    sip.pushBody(payload, 1);
+    newBody.reserve(body_repeat * body.size());
+
+    for (size_t i=0; i<body_repeat; ++i) {
+            for (auto it=body.cbegin(); it!=body.cend(); ++it) {
+                    newBody.emplace_back(*it);
+            }
+    }
+
+    sip.swapBody(newBody);
+
+    body_repeat *= 2;
 
     /* Commit changes! */
     sip.swap(msg.data);
