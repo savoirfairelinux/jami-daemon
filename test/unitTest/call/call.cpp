@@ -95,31 +95,39 @@ CallTest::setUp()
     bobId = Manager::instance().addAccount(details);
 
     JAMI_INFO("Initialize account...");
+
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    std::atomic_bool accountsReady {false};
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                bool ready = false;
-                auto details = aliceAccount->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready = (daemonStatus == "REGISTERED");
-                details = bobAccount->getVolatileAccountDetails();
-                daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready &= (daemonStatus == "REGISTERED");
-                if (ready) {
-                    accountsReady = true;
-                    cv.notify_one();
-                }
-            }));
-    DRing::registerSignalHandlers(confHandlers);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsReady.load(); }));
-    DRing::unregisterSignalHandlers();
+    std::atomic_bool aliceReady {false}, bobReady {false};
+
+    aliceAccount->addIdentityAnnouncedHook([&](bool ok) {
+        if (ok) {
+            JAMI_INFO("Alice announced on DHT!");
+            aliceReady = true;
+            cv.notify_one();
+        }
+
+        return not ok;
+    });
+
+    bobAccount->addIdentityAnnouncedHook([&](bool ok) {
+        if (ok) {
+            JAMI_INFO("Bob announced on DHT!");
+            bobReady = true;
+            cv.notify_one();
+        }
+
+        return not ok;
+    });
+
+    JAMI_INFO("Waiting for identities to be announced on DHT...");
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
+        return aliceReady.load() and bobReady.load();
+    }));
 }
 
 void
@@ -161,10 +169,6 @@ CallTest::tearDown()
 void
 CallTest::testCall()
 {
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
-    std::this_thread::sleep_for(std::chrono::seconds(10));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -206,10 +210,6 @@ CallTest::testCall()
 void
 CallTest::testCachedCall()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -264,10 +264,6 @@ CallTest::testCachedCall()
 void
 CallTest::testStopSearching()
 {
-    JAMI_INFO("Waiting....");
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    std::this_thread::sleep_for(std::chrono::seconds(5));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -343,11 +339,6 @@ CallTest::testDeclineMultiDevice()
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(20), [&] { return ready; }));
     DRing::unregisterSignalHandlers();
-
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
-    std::this_thread::sleep_for(std::chrono::seconds(5));
 
     std::atomic<int> callReceived {0};
     std::atomic<int> callStopped {0};
