@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0b17a2c0_5ea53366",
+        "filename": "test/unitTest/call/conference.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 296,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-05-27T12:25:48Z",
+      "side": 1,
+      "message": "IMHO, it would be better if we factorize and generalize the common code to support the scenarios we would like to test. Then provide test scenarios as a date structure for each scenario. It would be easier to add more scenarios. See ut_media_nego for instance.",
+      "range": {
+        "startLine": 247,
+        "startChar": 0,
+        "endLine": 296,
+        "endChar": 48
+      },
+      "revId": "0b40e344e231f58f9323ad229e313c97872e61a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
