@@ -189,6 +189,14 @@ public:
     void setActiveCodecs(const std::vector<unsigned>& list) override;
 
     /**
+     * Add a hook to be called when the account's identity is announced on
+     * the DHT.  The hook accepts a boolean telling the account's
+     * identity was successfully broadcast on the DHT and returns a boolean
+     * telling if the hook should be kept in the list of hooks.
+     */
+    void addIdentityAnnouncedHook(std::function<bool(bool)>&& hook);
+
+    /**
      * Connect to the DHT.
      */
     void doRegister() override;
@@ -739,6 +747,10 @@ private:
 
     std::string receipt_ {};
     std::vector<uint8_t> receiptSignature_ {};
+
+    /* Event hooks */
+    std::mutex identityAnnounceHooksMtx_ {};
+    std::vector<std::function<bool(bool)>> identityAnnouncedHooks_ {};
 
     /* tracked buddies presence */
     mutable std::mutex buddyInfoMtx;

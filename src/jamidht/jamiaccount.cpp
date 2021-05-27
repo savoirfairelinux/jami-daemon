@@ -1987,6 +1987,13 @@ JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
 }
 
 void
+JamiAccount::addIdentityAnnouncedHook(std::function<bool(bool)>&& hook)
+{
+    std::unique_lock<std::mutex> lk(identityAnnounceHooksMtx_);
+    identityAnnouncedHooks_.emplace_back(std::move(hook));
+}
+
+void
 JamiAccount::doRegister_()
 {
     if (registrationState_ != RegistrationState::TRYING) {
@@ -2140,6 +2147,16 @@ JamiAccount::doRegister_()
             setRegistrationState(state);
         };
         context.identityAnnouncedCb = [this](bool ok) {
+            {
+                std::unique_lock<std::mutex> lk(identityAnnounceHooksMtx_);
+                auto hooks = std::move(identityAnnouncedHooks_);
+                lk.unlock();
+                for (auto& hook : hooks) {
+                    if (hook(ok)) {
+                        addIdentityAnnouncedHook(std::move(hook));
+                    }
+                }
+            }
             if (!ok)
                 return;
             accountManager_->startSync({});
