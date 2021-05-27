@@ -22,6 +22,29 @@
       "revId": "e863c439a01e5ce10f5f1ad3e223d2be9c9e59e0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "be912397_a438ea56",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 197,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-27T21:40:16Z",
+      "side": 1,
+      "message": "remove hook and use VolatileDetails (cf https://review.jami.net/c/ring-daemon/+/18150)",
+      "range": {
+        "startLine": 192,
+        "startChar": 10,
+        "endLine": 197,
+        "endChar": 13
+      },
+      "revId": "e863c439a01e5ce10f5f1ad3e223d2be9c9e59e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
