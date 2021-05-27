@@ -190,13 +190,23 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
 }
 
 void
-AccountManager::startSync(const OnNewDeviceCb& cb)
+AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb)
 {
     // Put device announcement
     if (info_->announce) {
         auto h = dht::InfoHash(info_->accountId);
         JAMI_DBG("announcing device at %s", h.toString().c_str());
-        dht_->put(h, info_->announce, dht::DoneCallback {}, {}, true);
+        dht_->put(
+            h,
+            info_->announce,
+            [dcb = std::move(dcb)](auto) {
+                // We do not care about the status, it's a permanent put, if this fail,
+                // this means the DHT is disconnected but the put will be retried when connected.
+                if (dcb)
+                    dcb();
+            },
+            {},
+            true);
         for (const auto& crl : info_->identity.second->issuer->getRevocationLists())
             dht_->put(h, crl, dht::DoneCallback {}, {}, true);
         dht_->listen<DeviceAnnouncement>(h, [this, cb = std::move(cb)](DeviceAnnouncement&& dev) {

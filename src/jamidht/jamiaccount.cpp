@@ -1535,6 +1535,9 @@ JamiAccount::getVolatileAccountDetails() const
     if (not registeredName_.empty())
         a.emplace(DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
 #endif
+    a.emplace(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED,
+              deviceAnnounced_ ? TRUE_STR : FALSE_STR);
+
     return a;
 }
 
@@ -1987,13 +1990,6 @@ JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
 }
 
 void
-JamiAccount::addIdentityAnnouncedHook(std::function<bool(bool)>&& hook)
-{
-    std::unique_lock<std::mutex> lk(identityAnnounceHooksMtx_);
-    identityAnnouncedHooks_.emplace_back(std::move(hook));
-}
-
-void
 JamiAccount::doRegister_()
 {
     if (registrationState_ != RegistrationState::TRYING) {
@@ -2147,19 +2143,13 @@ JamiAccount::doRegister_()
             setRegistrationState(state);
         };
         context.identityAnnouncedCb = [this](bool ok) {
-            {
-                std::unique_lock<std::mutex> lk(identityAnnounceHooksMtx_);
-                auto hooks = std::move(identityAnnouncedHooks_);
-                lk.unlock();
-                for (auto& hook : hooks) {
-                    if (hook(ok)) {
-                        addIdentityAnnouncedHook(std::move(hook));
-                    }
-                }
-            }
             if (!ok)
                 return;
-            accountManager_->startSync({});
+            accountManager_->startSync({}, [this] {
+                deviceAnnounced_ = true;
+                emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+                    accountID_, getVolatileAccountDetails());
+            });
             /*[this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
                 if (!crt)
                     return;
