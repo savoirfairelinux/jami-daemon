@@ -2147,19 +2147,18 @@ JamiAccount::doRegister_()
             setRegistrationState(state);
         };
         context.identityAnnouncedCb = [this](bool ok) {
-            {
+            if (!ok)
+                return;
+            accountManager_->startSync({}, [this] {
                 std::unique_lock<std::mutex> lk(identityAnnounceHooksMtx_);
                 auto hooks = std::move(identityAnnouncedHooks_);
                 lk.unlock();
                 for (auto& hook : hooks) {
-                    if (hook(ok)) {
+                    if (hook(true)) {
                         addIdentityAnnouncedHook(std::move(hook));
                     }
                 }
-            }
-            if (!ok)
-                return;
-            accountManager_->startSync({});
+            });
             /*[this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
                 if (!crt)
                     return;

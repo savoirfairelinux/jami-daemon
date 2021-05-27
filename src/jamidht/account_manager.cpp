@@ -190,13 +190,21 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
 }
 
 void
-AccountManager::startSync(const OnNewDeviceCb& cb)
+AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb)
 {
     // Put device announcement
     if (info_->announce) {
         auto h = dht::InfoHash(info_->accountId);
         JAMI_DBG("announcing device at %s", h.toString().c_str());
-        dht_->put(h, info_->announce, dht::DoneCallback {}, {}, true);
+        dht_->put(
+            h,
+            info_->announce,
+            [dcb = std::move(dcb)](auto) {
+                if (dcb)
+                    dcb();
+            },
+            {},
+            true);
         for (const auto& crl : info_->identity.second->issuer->getRevocationLists())
             dht_->put(h, crl, dht::DoneCallback {}, {}, true);
         dht_->listen<DeviceAnnouncement>(h, [this, cb = std::move(cb)](DeviceAnnouncement&& dev) {
