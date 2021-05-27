@@ -198,13 +198,13 @@ MediaNegotiationTest::setUp()
             bool ready = false;
             if (auto acc = aliceAccW.lock()) {
                 auto details = acc->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready = (daemonStatus == "REGISTERED");
+                auto daemonStatus = details[DRing::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                ready = (daemonStatus == "true");
             }
             if (auto acc = aliceAccW.lock()) {
                 auto details = acc->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready &= (daemonStatus == "REGISTERED");
+                auto daemonStatus = details[DRing::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                ready &= (daemonStatus == "true");
             }
             if (ready) {
                 accountsReady = true;
@@ -731,11 +731,6 @@ MediaNegotiationTest::audio_and_video_then_mute_video()
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
-    JAMI_INFO("Waiting for accounts setup ...");
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-
     configureScenario(aliceData_, bobData_);
 
     MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
@@ -779,11 +774,6 @@ MediaNegotiationTest::audio_only_then_add_video()
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
-    JAMI_INFO("Waiting for accounts setup ...");
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-
     configureScenario(aliceData_, bobData_);
 
     MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
@@ -821,11 +811,6 @@ void
 MediaNegotiationTest::audio_and_video_then_mute_audio()
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
-
-    JAMI_INFO("Waiting for accounts setup ...");
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    std::this_thread::sleep_for(std::chrono::seconds(10));
 
     configureScenario(aliceData_, bobData_);
 

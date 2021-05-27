@@ -199,7 +199,9 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
         dht_->put(
             h,
             info_->announce,
-            [dcb = std::move(dcb)](auto) {
+            [dcb = std::move(dcb), h](bool ok) {
+                if (ok)
+                    JAMI_DBG("device announced at %s", h.toString().c_str());
                 // We do not care about the status, it's a permanent put, if this fail,
                 // this means the DHT is disconnected but the put will be retried when connected.
                 if (dcb)
