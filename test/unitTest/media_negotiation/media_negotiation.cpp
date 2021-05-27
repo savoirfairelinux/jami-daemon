@@ -198,13 +198,13 @@ MediaNegotiationTest::setUp()
             bool ready = false;
             if (auto acc = aliceAccW.lock()) {
                 auto details = acc->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready = (daemonStatus == "REGISTERED");
+                auto daemonStatus = details[DRing::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                ready = (daemonStatus == "true");
             }
             if (auto acc = aliceAccW.lock()) {
                 auto details = acc->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready &= (daemonStatus == "REGISTERED");
+                auto daemonStatus = details[DRing::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                ready &= (daemonStatus == "true");
             }
             if (ready) {
                 accountsReady = true;
