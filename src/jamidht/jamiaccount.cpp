@@ -1535,6 +1535,9 @@ JamiAccount::getVolatileAccountDetails() const
     if (not registeredName_.empty())
         a.emplace(DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
 #endif
+    a.emplace(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED,
+              deviceAnnounced_ ? TRUE_STR : FALSE_STR);
+
     return a;
 }
 
@@ -2142,7 +2145,11 @@ JamiAccount::doRegister_()
         context.identityAnnouncedCb = [this](bool ok) {
             if (!ok)
                 return;
-            accountManager_->startSync({});
+            accountManager_->startSync({}, [this] {
+                deviceAnnounced_ = true;
+                emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+                    accountID_, getVolatileAccountDetails());
+            });
             /*[this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
                 if (!crt)
                     return;
