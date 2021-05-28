@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2d3b4bc8_148d0345",
+        "filename": "test/unitTest/common.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-28T19:26:52Z",
+      "side": 1,
+      "message": "accountId not accountIDs",
+      "range": {
+        "startLine": 75,
+        "startChar": 44,
+        "endLine": 75,
+        "endChar": 54
+      },
+      "revId": "e3e91611aa374a2fd15565772b51e75b5c989bde",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
