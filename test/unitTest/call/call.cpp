@@ -31,6 +31,8 @@
 #include "dring.h"
 #include "account_const.h"
 
+#include "common.h"
+
 using namespace DRing::Account;
 
 namespace jami {
@@ -97,29 +99,8 @@ CallTest::setUp()
     JAMI_INFO("Initialize account...");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::atomic_bool accountsReady {false};
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                bool ready = false;
-                auto details = aliceAccount->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready = (daemonStatus == "REGISTERED");
-                details = bobAccount->getVolatileAccountDetails();
-                daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready &= (daemonStatus == "REGISTERED");
-                if (ready) {
-                    accountsReady = true;
-                    cv.notify_one();
-                }
-            }));
-    DRing::registerSignalHandlers(confHandlers);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsReady.load(); }));
-    DRing::unregisterSignalHandlers();
+
+    WAIT_FOR_ANNOUNCEMENT_OF({aliceId, bobId});
 }
 
 void
@@ -161,10 +142,6 @@ CallTest::tearDown()
 void
 CallTest::testCall()
 {
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
-    std::this_thread::sleep_for(std::chrono::seconds(10));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -206,10 +183,6 @@ CallTest::testCall()
 void
 CallTest::testCachedCall()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -264,10 +237,6 @@ CallTest::testCachedCall()
 void
 CallTest::testStopSearching()
 {
-    JAMI_INFO("Waiting....");
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    std::this_thread::sleep_for(std::chrono::seconds(5));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -325,29 +294,7 @@ CallTest::testDeclineMultiDevice()
     details[ConfProperties::ARCHIVE_PATH] = bobArchive;
     bob2Id = Manager::instance().addAccount(details);
 
-    bool ready = false;
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
-                if (!bob2Account)
-                    return;
-                auto details = bob2Account->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                if (daemonStatus == "REGISTERED") {
-                    ready = true;
-                    cv.notify_one();
-                }
-            }));
-    DRing::registerSignalHandlers(confHandlers);
-
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(20), [&] { return ready; }));
-    DRing::unregisterSignalHandlers();
-
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    WAIT_FOR_ANNOUNCEMENT_OF(bob2Id);
 
     std::atomic<int> callReceived {0};
     std::atomic<int> callStopped {0};

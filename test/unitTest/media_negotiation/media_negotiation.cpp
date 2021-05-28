@@ -34,6 +34,8 @@
 #include "sip/sipcall.h"
 #include "sip/sdp.h"
 
+#include "common.h"
+
 using namespace DRing::Account;
 using namespace DRing::Call;
 
@@ -184,36 +186,7 @@ MediaNegotiationTest::setUp()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobData_.accountId_);
     bobAccount->enableMultiStream(true);
 
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::atomic_bool accountsReady {false};
-    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-        [&cv,
-         &accountsReady,
-         aliceAccW = aliceAccount->weak(),
-         bobAccW = bobAccount->weak()](const std::string&,
-                                       const std::map<std::string, std::string>&) {
-            bool ready = false;
-            if (auto acc = aliceAccW.lock()) {
-                auto details = acc->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready = (daemonStatus == "REGISTERED");
-            }
-            if (auto acc = aliceAccW.lock()) {
-                auto details = acc->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready &= (daemonStatus == "REGISTERED");
-            }
-            if (ready) {
-                accountsReady = true;
-                cv.notify_one();
-            }
-        }));
-    DRing::registerSignalHandlers(confHandlers);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsReady.load(); }));
-    DRing::unregisterSignalHandlers();
+    WAIT_FOR_ANNOUNCEMENT_OF({aliceAccount->getAccountID(), bobAccount->getAccountID()});
 }
 
 void
@@ -731,11 +704,6 @@ MediaNegotiationTest::audio_and_video_then_mute_video()
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
-    JAMI_INFO("Waiting for accounts setup ...");
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-
     configureScenario(aliceData_, bobData_);
 
     MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
@@ -779,11 +747,6 @@ MediaNegotiationTest::audio_only_then_add_video()
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
-    JAMI_INFO("Waiting for accounts setup ...");
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-
     configureScenario(aliceData_, bobData_);
 
     MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
@@ -821,11 +784,6 @@ void
 MediaNegotiationTest::audio_and_video_then_mute_audio()
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
-
-    JAMI_INFO("Waiting for accounts setup ...");
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    std::this_thread::sleep_for(std::chrono::seconds(10));
 
     configureScenario(aliceData_, bobData_);
 
