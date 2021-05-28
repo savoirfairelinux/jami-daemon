@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "78c20d5f_eb41f8ad",
+        "filename": "test/unitTest/call/call.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 297,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-05-28T16:25:01Z",
+      "side": 1,
+      "message": "an overload can be done with a single string to be able to write WAIT_FOR_ANNOUNCEMENT_OF(bob2Id)",
+      "range": {
+        "startLine": 297,
+        "startChar": 28,
+        "endLine": 297,
+        "endChar": 37
+      },
+      "revId": "42ca18e170583c46f1abe0cf462a620f2c147307",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
