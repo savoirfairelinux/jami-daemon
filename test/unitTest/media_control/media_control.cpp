@@ -32,6 +32,8 @@
 #include <condition_variable>
 #include <string>
 
+#include "common.h"
+
 using namespace DRing::Account;
 using namespace DRing::Call;
 
@@ -142,31 +144,8 @@ MediaControlTest::setUp()
     bobAccountId_ = Manager::instance().addAccount(details);
 
     JAMI_INFO("Initialize account...");
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceAccountId_);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobAccountId_);
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::atomic_bool accountsReady {false};
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                bool ready = false;
-                auto details = aliceAccount->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready = (daemonStatus == "REGISTERED");
-                details = bobAccount->getVolatileAccountDetails();
-                daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready &= (daemonStatus == "REGISTERED");
-                if (ready) {
-                    accountsReady = true;
-                    cv.notify_one();
-                }
-            }));
-    DRing::registerSignalHandlers(confHandlers);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsReady.load(); }));
-    DRing::unregisterSignalHandlers();
+
+    wait_for_announcement_of({aliceAccountId_, bobAccountId_});
 }
 
 void
@@ -378,11 +357,6 @@ MediaControlTest::testWithScenario(CallData& aliceData,
 void
 MediaControlTest::testCallWithMediaList()
 {
-    JAMI_INFO("Waiting....");
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> signalHandlers;
 
     CallData aliceData;
