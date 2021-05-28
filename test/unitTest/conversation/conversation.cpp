@@ -37,6 +37,7 @@
 #include "base64.h"
 #include "fileutils.h"
 #include "account_const.h"
+#include "common.h"
 
 using namespace std::string_literals;
 using namespace DRing::Account;
@@ -245,28 +246,8 @@ ConversationTest::setUp()
     carlaId = Manager::instance().addAccount(details);
 
     JAMI_INFO("Initialize account...");
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     Manager::instance().sendRegister(carlaId, false);
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                bool ready = false;
-                auto details = aliceAccount->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready = (daemonStatus == "REGISTERED");
-                details = bobAccount->getVolatileAccountDetails();
-                daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready &= (daemonStatus == "REGISTERED");
-            }));
-    DRing::registerSignalHandlers(confHandlers);
-    cv.wait_for(lk, std::chrono::seconds(30));
-    DRing::unregisterSignalHandlers();
+    wait_for_announcement_of({aliceId, bobId});
 }
 
 void
