@@ -441,12 +441,16 @@ VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source,
             cellH_off = 0;
         }
     } else {
-        cellW_off = (index % zoom) * cell_width;
-        if (currentLayout_ == Layout::GRID && n % zoom != 0 && index >= (zoom * ((n - 1) / zoom))) {
+        cellW_off = (index / zoom) * cell_width;
+        if (currentLayout_ == Layout::GRID && n % zoom != 0 && (index % zoom) == zoom - 1) {
             // Last line, center participants if not full
             cellW_off += (width_ - (n % zoom) * cell_width) / 2;
         }
-        cellH_off = (index / zoom) * cell_height;
+        // Centerize in width
+        if (zoom != 0)
+            cellW_off += (width_ - (std::ceil((double)n / (double)zoom) * cell_width)) / 2;
+        // y
+        cellH_off = (index % zoom) * cell_height;
     }
 
     // Compute frame size/position
