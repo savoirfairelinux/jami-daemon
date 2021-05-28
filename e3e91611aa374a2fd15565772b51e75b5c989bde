@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "debcfb49_b19504f8",
+        "filename": "test/unitTest/common.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-05-28T19:38:31Z",
+      "side": 1,
+      "message": "capital letters for macros only",
+      "range": {
+        "startLine": 24,
+        "startChar": 0,
+        "endLine": 24,
+        "endChar": 24
+      },
+      "revId": "e3e91611aa374a2fd15565772b51e75b5c989bde",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "2d3b4bc8_148d0345",
         "filename": "test/unitTest/common.h",
         "patchSetId": 2
