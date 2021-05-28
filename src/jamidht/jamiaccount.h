@@ -980,6 +980,8 @@ private:
      * @return the conversation id if found else empty
      */
     std::string getOneToOneConversation(const std::string& uri) const;
+
+    std::atomic_bool deviceAnnounced_ {false};
 };
 
 static inline std::ostream&

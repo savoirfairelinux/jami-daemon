@@ -77,6 +77,7 @@ public:
     using clock = std::chrono::system_clock;
     using time_point = clock::time_point;
     using OnNewDeviceCb = std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>;
+    using OnDeviceAnnouncedCb = std::function<void()>;
 
     AccountManager(const std::string& path, OnAsync&& onAsync, const std::string& nameServer)
         : path_(path)
@@ -137,7 +138,7 @@ public:
 
     void setDht(const std::shared_ptr<dht::DhtRunner>& dht) { dht_ = dht; }
 
-    virtual void startSync(const OnNewDeviceCb& cb);
+    virtual void startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb);
 
     const AccountInfo* getInfo() const { return info_.get(); }
 

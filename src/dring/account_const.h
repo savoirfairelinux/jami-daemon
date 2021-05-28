@@ -74,6 +74,7 @@ enum class MessageStates : int {
 namespace VolatileProperties {
 
 constexpr static const char ACTIVE[] = "Account.active";
+constexpr static const char DEVICE_ANNOUNCED[] = "Account.deviceAnnounced";
 constexpr static const char REGISTERED_NAME[] = "Account.registeredName";
 
 // Volatile parameters
