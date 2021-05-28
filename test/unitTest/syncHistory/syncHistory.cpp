@@ -31,6 +31,7 @@
 #include "../../test_runner.h"
 #include "dring.h"
 #include "account_const.h"
+#include "common.h"
 
 using namespace DRing::Account;
 
@@ -106,28 +107,7 @@ SyncHistoryTest::setUp()
     bobId = Manager::instance().addAccount(details);
 
     JAMI_INFO("Initialize account...");
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                bool ready = false;
-                auto details = aliceAccount->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready = (daemonStatus == "REGISTERED");
-                details = bobAccount->getVolatileAccountDetails();
-                daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready &= (daemonStatus == "REGISTERED");
-                if (ready)
-                    cv.notify_one();
-            }));
-    DRing::registerSignalHandlers(confHandlers);
-    cv.wait_for(lk, std::chrono::seconds(30));
-    DRing::unregisterSignalHandlers();
+    wait_for_announcement_of({aliceId, bobId});
     alice2Id = "";
 }
 
@@ -183,25 +163,12 @@ SyncHistoryTest::testCreateConversationThenSync()
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
 
+    wait_for_announcement_of(alice2Id);
+
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto alice2Account = Manager::instance().getAccount<JamiAccount>(alice2Id);
-                auto details = alice2Account->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                if (daemonStatus == "REGISTERED")
-                    cv.notify_one();
-            }));
-    DRing::registerSignalHandlers(confHandlers);
-
-    cv.wait_for(lk, std::chrono::seconds(30));
-    DRing::unregisterSignalHandlers();
-    confHandlers.clear();
-
     auto conversationReady = false;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
@@ -232,25 +199,12 @@ SyncHistoryTest::testCreateConversationWithOnlineDevice()
     details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
+    wait_for_announcement_of(alice2Id);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto alice2Account = Manager::instance().getAccount<JamiAccount>(alice2Id);
-                auto details = alice2Account->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                if (daemonStatus == "REGISTERED")
-                    cv.notify_one();
-            }));
-    DRing::registerSignalHandlers(confHandlers);
-
-    cv.wait_for(lk, std::chrono::seconds(30));
-    DRing::unregisterSignalHandlers();
-    confHandlers.clear();
 
     // Start conversation now
     auto convId = aliceAccount->startConversation();
@@ -498,25 +452,12 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
     details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
+    wait_for_announcement_of(alice2Id);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto alice2Account = Manager::instance().getAccount<JamiAccount>(alice2Id);
-                auto details = alice2Account->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                if (daemonStatus == "REGISTERED")
-                    cv.notify_one();
-            }));
-    DRing::registerSignalHandlers(confHandlers);
-
-    cv.wait_for(lk, std::chrono::seconds(30));
-    DRing::unregisterSignalHandlers();
-    confHandlers.clear();
 
     // Start conversation now
     auto convId = aliceAccount->startConversation();

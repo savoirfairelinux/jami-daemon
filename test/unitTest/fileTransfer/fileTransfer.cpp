@@ -31,6 +31,7 @@
 #include "data_transfer.h"
 #include "dring/datatransfer_interface.h"
 #include "account_const.h"
+#include "common.h"
 
 using namespace DRing::Account;
 
@@ -109,26 +110,7 @@ FileTransferTest::setUp()
     bobId = Manager::instance().addAccount(details);
 
     JAMI_INFO("Initialize account...");
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                bool ready = false;
-                auto details = aliceAccount->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready = (daemonStatus == "REGISTERED");
-                details = bobAccount->getVolatileAccountDetails();
-                daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                ready &= (daemonStatus == "REGISTERED");
-            }));
-    DRing::registerSignalHandlers(confHandlers);
-    cv.wait_for(lk, std::chrono::seconds(30));
-    DRing::unregisterSignalHandlers();
+    wait_for_announcement_of({aliceId, bobId});
 }
 
 void
@@ -160,10 +142,6 @@ FileTransferTest::tearDown()
 void
 FileTransferTest::testCachedFileTransfer()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
@@ -233,10 +211,6 @@ FileTransferTest::testCachedFileTransfer()
 void
 FileTransferTest::testMultipleFileTransfer()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    // TODO remove. This sleeps is because it take some time for the DHT to be connected
-    // and account announced
-    JAMI_INFO("Waiting....");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
