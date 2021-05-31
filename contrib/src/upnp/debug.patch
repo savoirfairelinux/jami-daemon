@@ -1,0 +1,46 @@
+ upnp/inc/UpnpSubscriptionRequest.h | 15 +++++++++------
+ 1 file changed, 9 insertions(+), 6 deletions(-)
+
+diff --git a/upnp/inc/UpnpSubscriptionRequest.h b/upnp/inc/UpnpSubscriptionRequest.h
+index 9959080e..8ccf58d0 100644
+--- a/upnp/inc/UpnpSubscriptionRequest.h
++++ b/upnp/inc/UpnpSubscriptionRequest.h
+@@ -45,9 +45,9 @@ EXPORT_SPEC const char *UpnpSubscriptionRequest_get_ServiceId_cstr(const UpnpSub
+ /*! UpnpSubscriptionRequest_strcpy_ServiceId */
+ EXPORT_SPEC int UpnpSubscriptionRequest_strcpy_ServiceId(UpnpSubscriptionRequest *p, const char *s);
+ /*! UpnpSubscriptionRequest_strncpy_ServiceId */
+-EXPORT_SPEC int UpnpSubscriptionRequest_strncpy_ServiceId(UpnpSubscriptionRequest *p, const char *s, size_t n);
++EXPORT_SPEC int UpnpSubscriptionRequest_strncpy_ServiceId(UpnpSubscriptionRequest *p, const char *s, size_t n);
+ /*! UpnpSubscriptionRequest_clear_ServiceId */
+-EXPORT_SPEC void UpnpSubscriptionRequest_clear_ServiceId(UpnpSubscriptionRequest *p);
++EXPORT_SPEC void UpnpSubscriptionRequest_clear_ServiceId(UpnpSubscriptionRequest *p);
+
+ /*! UpnpSubscriptionRequest_get_UDN */
+ EXPORT_SPEC const UpnpString *UpnpSubscriptionRequest_get_UDN(const UpnpSubscriptionRequest *p);
+@@ -60,9 +60,9 @@ EXPORT_SPEC const char *UpnpSubscriptionRequest_get_UDN_cstr(const UpnpSubscript
+ /*! UpnpSubscriptionRequest_strcpy_UDN */
+ EXPORT_SPEC int UpnpSubscriptionRequest_strcpy_UDN(UpnpSubscriptionRequest *p, const char *s);
+ /*! UpnpSubscriptionRequest_strncpy_UDN */
+-EXPORT_SPEC int UpnpSubscriptionRequest_strncpy_UDN(UpnpSubscriptionRequest *p, const char *s, size_t n);
++EXPORT_SPEC int UpnpSubscriptionRequest_strncpy_UDN(UpnpSubscriptionRequest *p, const char *s, size_t n);
+ /*! UpnpSubscriptionRequest_clear_UDN */
+-EXPORT_SPEC void UpnpSubscriptionRequest_clear_UDN(UpnpSubscriptionRequest *p);
++EXPORT_SPEC void UpnpSubscriptionRequest_clear_UDN(UpnpSubscriptionRequest *p);
+
+ /*! UpnpSubscriptionRequest_get_SID */
+ EXPORT_SPEC const UpnpString *UpnpSubscriptionRequest_get_SID(const UpnpSubscriptionRequest *p);
+@@ -75,9 +75,12 @@ EXPORT_SPEC const char *UpnpSubscriptionRequest_get_SID_cstr(const UpnpSubscript
+ /*! UpnpSubscriptionRequest_strcpy_SID */
+ EXPORT_SPEC int UpnpSubscriptionRequest_strcpy_SID(UpnpSubscriptionRequest *p, const char *s);
+ /*! UpnpSubscriptionRequest_strncpy_SID */
+-EXPORT_SPEC int UpnpSubscriptionRequest_strncpy_SID(UpnpSubscriptionRequest *p, const char *s, size_t n);
++EXPORT_SPEC int UpnpSubscriptionRequest_strncpy_SID(UpnpSubscriptionRequest *p, const char *s, size_t n);
+ /*! UpnpSubscriptionRequest_clear_SID */
+-EXPORT_SPEC void UpnpSubscriptionRequest_clear_SID(UpnpSubscriptionRequest *p);
++EXPORT_SPEC void UpnpSubscriptionRequest_clear_SID(UpnpSubscriptionRequest *p);
+
+ #endif /* UPNPSUBSCRIPTIONREQUEST_H */
+
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
