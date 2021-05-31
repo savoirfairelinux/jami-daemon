@@ -3391,9 +3391,11 @@ std::shared_ptr<video::SinkClient>
 Manager::getSinkClient(const std::string& id)
 {
     const auto& iter = pimpl_->sinkMap_.find(id);
-    if (iter != std::end(pimpl_->sinkMap_))
+    if (iter != std::end(pimpl_->sinkMap_)) {
         if (auto sink = iter->second.lock())
             return sink;
+        pimpl_->sinkMap_.erase(id);
+    }
     return nullptr;
 }
 #endif // ENABLE_VIDEO

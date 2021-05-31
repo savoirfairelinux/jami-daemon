@@ -74,6 +74,7 @@ public:
     bool stop() noexcept;
 
     void setFrameSize(int width, int height);
+    void setFramePosition(int x, int y);
 
     void registerTarget(const DRing::SinkTarget& target) noexcept { target_ = target; }
     void registerAVTarget(const DRing::AVSinkTarget& target) noexcept { avTarget_ = target; }
@@ -83,6 +84,8 @@ private:
     const bool mixer_;
     int width_ {0};
     int height_ {0};
+    int x_ {0};
+    int y_ {0};
     bool started_ {false}; // used to arbitrate client's stop signal.
     int rotation_ {0};
     DRing::SinkTarget target_;

@@ -71,6 +71,7 @@ Conference::Conference()
             // Handle participants showing their video
             std::unique_lock<std::mutex> lk(shared->videoToCallMtx_);
             for (const auto& info : infos) {
+                auto deviceId = "";
                 std::string uri = "";
                 auto it = shared->videoToCall_.find(info.source);
                 if (it == shared->videoToCall_.end())
@@ -97,8 +98,10 @@ Conference::Conference()
                 if (uri.empty())
                     peerID = "host"sv;
                 auto isModeratorMuted = shared->isMuted(peerID);
+                auto sinkId = uri + deviceId;
                 newInfo.emplace_back(ParticipantInfo {std::move(uri),
-                                                      "",
+                                                      std::move(deviceId),
+                                                      std::move(sinkId),
                                                       active,
                                                       info.x,
                                                       info.y,
@@ -116,17 +119,29 @@ Conference::Conference()
             lk.unlock();
             // Handle participants not present in the video mixer
             for (const auto& subCall : subCalls) {
+                auto deviceId = "";
                 std::string uri = "";
                 if (auto call = getCall(subCall))
                     uri = call->getPeerNumber();
                 auto isModerator = shared->isModerator(uri);
-                newInfo.emplace_back(ParticipantInfo {
-                    std::move(uri), "", false, 0, 0, 0, 0, true, false, false, isModerator});
+                auto sinkId = uri + deviceId;
+                newInfo.emplace_back(ParticipantInfo {std::move(uri),
+                                                      std::move(deviceId),
+                                                      std::move(sinkId),
+                                                      false,
+                                                      0,
+                                                      0,
+                                                      0,
+                                                      0,
+                                                      true,
+                                                      false,
+                                                      false,
+                                                      isModerator});
             }
             // Add host in confInfo with audio and video muted if detached
             if (shared->getState() == State::ACTIVE_DETACHED)
                 newInfo.emplace_back(
-                    ParticipantInfo {"", "", false, 0, 0, 0, 0, true, true, false, true});
+                    ParticipantInfo {"", "", "", false, 0, 0, 0, 0, true, true, false, true});
 
             shared->updateConferenceInfo(std::move(newInfo));
         });
