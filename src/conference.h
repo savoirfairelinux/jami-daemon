@@ -56,6 +56,7 @@ struct ParticipantInfo
 {
     std::string uri;
     std::string device;
+    std::string sinkId;
     bool active {false};
     int x {0};
     int y {0};
@@ -70,6 +71,7 @@ struct ParticipantInfo
     {
         uri = v["uri"].asString();
         device = v["device"].asString();
+        sinkId = v["sinkId"].asString();
         active = v["active"].asBool();
         x = v["x"].asInt();
         y = v["y"].asInt();
@@ -86,6 +88,7 @@ struct ParticipantInfo
         Json::Value val;
         val["uri"] = uri;
         val["device"] = device;
+        val["sinkId"] = sinkId;
         val["active"] = active;
         val["x"] = x;
         val["y"] = y;
@@ -102,6 +105,7 @@ struct ParticipantInfo
     {
         return {{"uri", uri},
                 {"device", device},
+                {"sinkId", sinkId},
                 {"active", active ? "true" : "false"},
                 {"x", std::to_string(x)},
                 {"y", std::to_string(y)},
@@ -115,9 +119,10 @@ struct ParticipantInfo
 
     friend bool operator==(const ParticipantInfo& p1, const ParticipantInfo& p2)
     {
-        return p1.uri == p2.uri and p1.device == p2.device and p1.active == p2.active
-               and p1.x == p2.x and p1.y == p2.y and p1.w == p2.w and p1.h == p2.h
-               and p1.videoMuted == p2.videoMuted and p1.audioLocalMuted == p2.audioLocalMuted
+        return p1.uri == p2.uri and p1.device == p2.device and p1.sinkId == p2.sinkId
+               and p1.active == p2.active and p1.x == p2.x and p1.y == p2.y and p1.w == p2.w
+               and p1.h == p2.h and p1.videoMuted == p2.videoMuted
+               and p1.audioLocalMuted == p2.audioLocalMuted
                and p1.audioModeratorMuted == p2.audioModeratorMuted
                and p1.isModerator == p2.isModerator;
     }
