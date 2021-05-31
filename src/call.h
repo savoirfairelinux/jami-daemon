@@ -381,6 +381,7 @@ public: // media management
     virtual void exitConference() = 0;
     virtual std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>>
     getReceiveVideoFrameActiveWriter() = 0;
+    virtual void createSinks(const ConfInfo& infos) = 0;
 
     std::vector<std::map<std::string, std::string>> getConferenceInfos() const
     {
