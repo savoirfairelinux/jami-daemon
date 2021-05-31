@@ -2487,11 +2487,17 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
         return;
     }
 
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool shutdown_complete {false};
+
     JAMI_WARN("[Account %s] unregistering account %p", getAccountID().c_str(), this);
-    dht_->shutdown([this] {
+    dht_->shutdown([&] {
         JAMI_WARN("[Account %s] dht shutdown complete", getAccountID().c_str());
-        setRegistrationState(RegistrationState::UNREGISTERED);
-    });
+        std::lock_guard<std::mutex> lock(mtx);
+        shutdown_complete = true;
+        cv.notify_all();
+    }, false);
 
     {
         std::lock_guard<std::mutex> lk(pendingCallsMutex_);
@@ -2505,12 +2511,17 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
         shutdownConnections();
     }
 
-    dht_->join();
-
     // Release current upnp mapping if any.
     if (upnpCtrl_ and dhtUpnpMapping_.isValid()) {
         upnpCtrl_->releaseMapping(dhtUpnpMapping_);
     }
+
+    {
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock, [&]{ return shutdown_complete; });
+    }
+    dht_->join();
+    setRegistrationState(RegistrationState::UNREGISTERED);
 
     lock.unlock();
 
