@@ -1,0 +1,201 @@
+diff --git a/upnp/generator/TestClass.h b/upnp/generator/TestClass.h
+index 2ce1965f..b6bbf425 100644
+--- a/upnp/generator/TestClass.h
++++ b/upnp/generator/TestClass.h
+@@ -94,5 +94,9 @@ EXPORT_SPEC int TestClass_set_TheDomString(TestClass *p, const DOMString s);
+ /*! TestClass_get_TheDomString_cstr */
+ EXPORT_SPEC const char *TestClass_get_TheDomString_cstr(const TestClass *p);
+
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* TESTCLASS_H */
+
+diff --git a/upnp/generator/generator.c b/upnp/generator/generator.c
+index ff8e18b7..27dc3802 100644
+--- a/upnp/generator/generator.c
++++ b/upnp/generator/generator.c
+@@ -460,7 +460,13 @@ static int write_header(FILE *fp, struct s_Class *c)
+ 	for (i = 0; i < (int)c->n_members; ++i) {
+ 		ok = ok && write_prototype(fp, c->name, c->members + i);
+ 	}
+-	fprintf(fp, "#endif /* %s_H */\n\n", class_name_upr);
++	fprintf(fp,
++		"#ifdef __cplusplus\n"
++		"}\n"
++		"#endif /* __cplusplus */\n"
++		"\n"
++		"#endif /* %s_H */\n\n",
++		class_name_upr);
+ 	free(included_headers);
+ 	free(class_name_upr);
+
+diff --git a/upnp/inc/UpnpActionComplete.h b/upnp/inc/UpnpActionComplete.h
+index 071ce4d5..97018aab 100644
+--- a/upnp/inc/UpnpActionComplete.h
++++ b/upnp/inc/UpnpActionComplete.h
+@@ -65,5 +65,9 @@ EXPORT_SPEC IXML_Document * UpnpActionComplete_get_ActionResult(const UpnpAction
+ /*! UpnpActionComplete_set_ActionResult */
+ EXPORT_SPEC int UpnpActionComplete_set_ActionResult(UpnpActionComplete *p, IXML_Document * n);
+
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* UPNPACTIONCOMPLETE_H */
+
+diff --git a/upnp/inc/UpnpActionRequest.h b/upnp/inc/UpnpActionRequest.h
+index 873e08bd..55baa05b 100644
+--- a/upnp/inc/UpnpActionRequest.h
++++ b/upnp/inc/UpnpActionRequest.h
+@@ -143,5 +143,9 @@ EXPORT_SPEC int UpnpActionRequest_strncpy_Os(UpnpActionRequest *p, const char *s
+ /*! UpnpActionRequest_clear_Os */
+ EXPORT_SPEC void UpnpActionRequest_clear_Os(UpnpActionRequest *p);
+
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* UPNPACTIONREQUEST_H */
+
+diff --git a/upnp/inc/UpnpDiscovery.h b/upnp/inc/UpnpDiscovery.h
+index 10997e3b..5c2f7b1a 100644
+--- a/upnp/inc/UpnpDiscovery.h
++++ b/upnp/inc/UpnpDiscovery.h
+@@ -172,5 +172,9 @@ EXPORT_SPEC int UpnpDiscovery_set_DestAddr(UpnpDiscovery *p, const struct sockad
+ /*! UpnpDiscovery_get_DestAddr */
+ EXPORT_SPEC void UpnpDiscovery_clear_DestAddr(UpnpDiscovery *p);
+
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* UPNPDISCOVERY_H */
+
+diff --git a/upnp/inc/UpnpEvent.h b/upnp/inc/UpnpEvent.h
+index 719fd7e9..55638112 100644
+--- a/upnp/inc/UpnpEvent.h
++++ b/upnp/inc/UpnpEvent.h
+@@ -60,5 +60,9 @@ EXPORT_SPEC int UpnpEvent_strncpy_SID(UpnpEvent *p, const char *s, size_t n);
+ /*! UpnpEvent_clear_SID */
+ EXPORT_SPEC void UpnpEvent_clear_SID(UpnpEvent *p);
+
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* UPNPEVENT_H */
+
+diff --git a/upnp/inc/UpnpEventSubscribe.h b/upnp/inc/UpnpEventSubscribe.h
+index d572a7ab..506a1c1f 100644
+--- a/upnp/inc/UpnpEventSubscribe.h
++++ b/upnp/inc/UpnpEventSubscribe.h
+@@ -74,5 +74,9 @@ EXPORT_SPEC int UpnpEventSubscribe_strncpy_PublisherUrl(UpnpEventSubscribe *p, c
+ /*! UpnpEventSubscribe_clear_PublisherUrl */
+ EXPORT_SPEC void UpnpEventSubscribe_clear_PublisherUrl(UpnpEventSubscribe *p);
+
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* UPNPEVENTSUBSCRIBE_H */
+
+diff --git a/upnp/inc/UpnpExtraHeaders.h b/upnp/inc/UpnpExtraHeaders.h
+index 9cf1e951..9001b7d2 100644
+--- a/upnp/inc/UpnpExtraHeaders.h
++++ b/upnp/inc/UpnpExtraHeaders.h
+@@ -80,5 +80,9 @@ EXPORT_SPEC int UpnpExtraHeaders_set_resp(UpnpExtraHeaders *p, const DOMString s
+ /*! UpnpExtraHeaders_get_resp_cstr */
+ EXPORT_SPEC const char *UpnpExtraHeaders_get_resp_cstr(const UpnpExtraHeaders *p);
+
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* UPNPEXTRAHEADERS_H */
+
+diff --git a/upnp/inc/UpnpFileInfo.h b/upnp/inc/UpnpFileInfo.h
+index f33b4577..f9c24613 100644
+--- a/upnp/inc/UpnpFileInfo.h
++++ b/upnp/inc/UpnpFileInfo.h
+@@ -95,5 +95,9 @@ EXPORT_SPEC int UpnpFileInfo_strncpy_Os(UpnpFileInfo *p, const char *s, size_t n
+ /*! UpnpFileInfo_clear_Os */
+ EXPORT_SPEC void UpnpFileInfo_clear_Os(UpnpFileInfo *p);
+
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* UPNPFILEINFO_H */
+
+diff --git a/upnp/inc/UpnpStateVarComplete.h b/upnp/inc/UpnpStateVarComplete.h
+index 5a9ceb49..1d76224d 100644
+--- a/upnp/inc/UpnpStateVarComplete.h
++++ b/upnp/inc/UpnpStateVarComplete.h
+@@ -77,5 +77,9 @@ EXPORT_SPEC int UpnpStateVarComplete_set_CurrentVal(UpnpStateVarComplete *p, con
+ /*! UpnpStateVarComplete_get_CurrentVal_cstr */
+ EXPORT_SPEC const char *UpnpStateVarComplete_get_CurrentVal_cstr(const UpnpStateVarComplete *p);
+
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* UPNPSTATEVARCOMPLETE_H */
+
+diff --git a/upnp/inc/UpnpStateVarRequest.h b/upnp/inc/UpnpStateVarRequest.h
+index 282186bd..6486caf3 100644
+--- a/upnp/inc/UpnpStateVarRequest.h
++++ b/upnp/inc/UpnpStateVarRequest.h
+@@ -120,5 +120,9 @@ EXPORT_SPEC int UpnpStateVarRequest_set_CurrentVal(UpnpStateVarRequest *p, const
+ /*! UpnpStateVarRequest_get_CurrentVal_cstr */
+ EXPORT_SPEC const char *UpnpStateVarRequest_get_CurrentVal_cstr(const UpnpStateVarRequest *p);
+
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* UPNPSTATEVARREQUEST_H */
+
+diff --git a/upnp/inc/UpnpSubscriptionRequest.h b/upnp/inc/UpnpSubscriptionRequest.h
+index 9959080e..3f9b62ad 100644
+--- a/upnp/inc/UpnpSubscriptionRequest.h
++++ b/upnp/inc/UpnpSubscriptionRequest.h
+@@ -79,5 +79,9 @@ EXPORT_SPEC int UpnpSubscriptionRequest_strncpy_SID(UpnpSubscriptionRequest *p,
+ /*! UpnpSubscriptionRequest_clear_SID */
+ EXPORT_SPEC void UpnpSubscriptionRequest_clear_SID(UpnpSubscriptionRequest *p);
+
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* UPNPSUBSCRIPTIONREQUEST_H */
+
+diff --git a/upnp/src/inc/GenlibClientSubscription.h b/upnp/src/inc/GenlibClientSubscription.h
+index 878822a5..5e0fc615 100644
+--- a/upnp/src/inc/GenlibClientSubscription.h
++++ b/upnp/src/inc/GenlibClientSubscription.h
+@@ -89,5 +89,9 @@ EXPORT_SPEC GenlibClientSubscription * GenlibClientSubscription_get_Next(const G
+ /*! GenlibClientSubscription_set_Next */
+ EXPORT_SPEC int GenlibClientSubscription_set_Next(GenlibClientSubscription *p, GenlibClientSubscription * n);
+
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* GENLIBCLIENTSUBSCRIPTION_H */
+
+diff --git a/upnp/src/ssdp/SSDPResultData.h b/upnp/src/ssdp/SSDPResultData.h
+index 88982256..bb2c497d 100644
+--- a/upnp/src/ssdp/SSDPResultData.h
++++ b/upnp/src/ssdp/SSDPResultData.h
+@@ -50,5 +50,9 @@ EXPORT_SPEC Upnp_FunPtr SSDPResultData_get_CtrlptCallback(const SSDPResultData *
+ /*! SSDPResultData_set_CtrlptCallback */
+ EXPORT_SPEC int SSDPResultData_set_CtrlptCallback(SSDPResultData *p, Upnp_FunPtr n);
+
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* SSDPRESULTDATA_H */
+
