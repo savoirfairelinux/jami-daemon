@@ -1,0 +1,165 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "15006c37_05b42f05",
+        "filename": "src/account.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 359,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-01T16:08:36Z",
+      "side": 1,
+      "message": "const std::vector\u003cunsigned\u003e\u0026 to avoid unneeded copy",
+      "range": {
+        "startLine": 359,
+        "startChar": 43,
+        "endLine": 359,
+        "endChar": 65
+      },
+      "revId": "249e9acfeb07da59986cc49e713f044ed0be9b2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "aa074f30_7c356be3",
+        "filename": "src/account.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 360,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-01T16:08:36Z",
+      "side": 1,
+      "message": "const std::vector\u003cunsigned\u003e\u0026 to avoid unneeded copy",
+      "range": {
+        "startLine": 360,
+        "startChar": 43,
+        "endLine": 360,
+        "endChar": 64
+      },
+      "revId": "249e9acfeb07da59986cc49e713f044ed0be9b2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "db3abab0_2aecc7ef",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-01T16:08:36Z",
+      "side": 1,
+      "message": "std::string_view",
+      "range": {
+        "startLine": 217,
+        "startChar": 0,
+        "endLine": 217,
+        "endChar": 11
+      },
+      "revId": "249e9acfeb07da59986cc49e713f044ed0be9b2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "007ac415_fe04d054",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1456,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-01T16:08:36Z",
+      "side": 1,
+      "message": "std::string_view",
+      "range": {
+        "startLine": 1456,
+        "startChar": 26,
+        "endLine": 1456,
+        "endChar": 44
+      },
+      "revId": "249e9acfeb07da59986cc49e713f044ed0be9b2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0dca5c4e_221e7f48",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1477,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-01T16:08:36Z",
+      "side": 1,
+      "message": "constexpr std::string_view PKG_NAME(PACKAGE_NAME);",
+      "range": {
+        "startLine": 1477,
+        "startChar": 4,
+        "endLine": 1477,
+        "endChar": 46
+      },
+      "revId": "249e9acfeb07da59986cc49e713f044ed0be9b2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e029e405_a12be51b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1479,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-01T16:08:36Z",
+      "side": 1,
+      "message": "string_view",
+      "range": {
+        "startLine": 1479,
+        "startChar": 4,
+        "endLine": 1479,
+        "endChar": 15
+      },
+      "revId": "249e9acfeb07da59986cc49e713f044ed0be9b2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5f3c78fe_d37feb22",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1487,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-01T16:08:36Z",
+      "side": 1,
+      "message": "might throw std::out_of_range",
+      "range": {
+        "startLine": 1487,
+        "startChar": 4,
+        "endLine": 1487,
+        "endChar": 47
+      },
+      "revId": "249e9acfeb07da59986cc49e713f044ed0be9b2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
