@@ -177,30 +177,7 @@ MediaNegotiationTest::setUp()
 void
 MediaNegotiationTest::tearDown()
 {
-    JAMI_INFO("Remove created accounts...");
-
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    auto currentAccSize = Manager::instance().getAccountList().size();
-    std::atomic_bool accountsRemoved {false};
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
-            if (Manager::instance().getAccountList().size() <= currentAccSize - 2) {
-                accountsRemoved = true;
-                cv.notify_one();
-            }
-        }));
-    DRing::registerSignalHandlers(confHandlers);
-
-    Manager::instance().removeAccount(aliceData_.accountId_, true);
-    Manager::instance().removeAccount(bobData_.accountId_, true);
-    // Because cppunit is not linked with dbus, just poll if removed
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsRemoved.load(); }));
-
-    DRing::unregisterSignalHandlers();
+    wait_for_removal_of({aliceData_.accountId_, bobData_.accountId_});
 }
 
 std::string
