@@ -97,27 +97,7 @@ FileTransferTest::setUp()
 void
 FileTransferTest::tearDown()
 {
-    JAMI_INFO("Remove created accounts...");
-
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    auto currentAccSize = Manager::instance().getAccountList().size();
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
-            if (Manager::instance().getAccountList().size() <= currentAccSize - 2) {
-                cv.notify_one();
-            }
-        }));
-    DRing::registerSignalHandlers(confHandlers);
-
-    Manager::instance().removeAccount(aliceId, true);
-    Manager::instance().removeAccount(bobId, true);
-    // Because cppunit is not linked with dbus, just poll if removed
-    cv.wait_for(lk, std::chrono::seconds(30));
-
-    DRing::unregisterSignalHandlers();
+    wait_for_removal_of(std::vector<std::string> {aliceId, bobId});
 }
 
 void
