@@ -95,32 +95,11 @@ SyncHistoryTest::setUp()
 void
 SyncHistoryTest::tearDown()
 {
-    JAMI_INFO("Remove created accounts...");
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
-    std::remove(aliceArchive.c_str());
-
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    auto currentAccSize = Manager::instance().getAccountList().size();
-    auto toRemove = alice2Id.empty() ? 2 : 3;
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
-            if (Manager::instance().getAccountList().size() <= currentAccSize - toRemove) {
-                cv.notify_one();
-            }
-        }));
-    DRing::registerSignalHandlers(confHandlers);
-
-    Manager::instance().removeAccount(aliceId, true);
-    if (!alice2Id.empty())
-        Manager::instance().removeAccount(alice2Id, true);
-    Manager::instance().removeAccount(bobId, true);
-    // Because cppunit is not linked with dbus, just poll if removed
-    cv.wait_for(lk, std::chrono::seconds(30));
-
-    DRing::unregisterSignalHandlers();
+    if (alice2Id.empty()) {
+        wait_for_removal_of({aliceId, bobId});
+    } else {
+        wait_for_removal_of({aliceId, bobId, alice2Id});
+    }
 }
 
 void

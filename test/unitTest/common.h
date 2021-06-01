@@ -84,6 +84,52 @@ wait_for_announcement_of(const std::string& accountId,
     wait_for_announcement_of(std::vector<std::string> {accountId}, timeout);
 }
 
+static void
+wait_for_removal_of(const std::vector<std::string> accounts,
+                    std::chrono::seconds timeout = std::chrono::seconds(30))
+{
+    JAMI_INFO("Removing %zu accounts...", accounts.size());
+
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::atomic_bool accountsRemoved {false};
+
+    size_t current = jami::Manager::instance().getAccountList().size();
+
+    /* Prevent overflow */
+    CPPUNIT_ASSERT(current >= accounts.size());
+
+    size_t target = current - accounts.size();
+
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
+            if (jami::Manager::instance().getAccountList().size() <= target) {
+                accountsRemoved = true;
+                cv.notify_one();
+            }
+        }));
+
+    DRing::unregisterSignalHandlers();
+    DRing::registerSignalHandlers(confHandlers);
+
+    for (const auto& account : accounts) {
+        jami::Manager::instance().removeAccount(account, true);
+    }
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, timeout, [&] { return accountsRemoved.load(); }));
+
+    DRing::unregisterSignalHandlers();
+}
+
+static void
+wait_for_removal_of(const std::string& account,
+                    std::chrono::seconds timeout = std::chrono::seconds(30))
+{
+    wait_for_removal_of(std::vector<std::string>{account}, timeout);
+}
+
 static std::map<std::string, std::string>
 load_actors(const std::string& from_yaml)
 {

@@ -227,22 +227,13 @@ ConversationTest::setUp()
 void
 ConversationTest::tearDown()
 {
-    DRing::unregisterSignalHandlers();
-    auto currentAccSize = Manager::instance().getAccountList().size();
-    Manager::instance().removeAccount(aliceId, true);
-    Manager::instance().removeAccount(bobId, true);
-    Manager::instance().removeAccount(carlaId, true);
-    if (!bob2Id.empty())
-        Manager::instance().removeAccount(bob2Id, true);
-
     auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
     std::remove(bobArchive.c_str());
 
-    // Because cppunit is not linked with dbus, just poll if removed
-    for (int i = 0; i < 40; ++i) {
-        if (Manager::instance().getAccountList().size() <= currentAccSize - bob2Id.empty() ? 3 : 4)
-            break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    if (bob2Id.empty()) {
+        wait_for_removal_of({aliceId, bobId, carlaId});
+    } else {
+        wait_for_removal_of({aliceId, bobId, carlaId, bob2Id});
     }
 }
 
