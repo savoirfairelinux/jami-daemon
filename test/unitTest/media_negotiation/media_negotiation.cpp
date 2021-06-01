@@ -160,25 +160,10 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaNegotiationTest, MediaNegotiationTest
 void
 MediaNegotiationTest::setUp()
 {
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "ALICE";
-    details[ConfProperties::ALIAS] = "ALICE";
-    details[ConfProperties::UPNP_ENABLED] = "false";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
-    details[ConfProperties::ARCHIVE_PATH] = "";
-    aliceData_.accountId_ = Manager::instance().addAccount(details);
+    auto actors = load_actors("media_negotiation/actors.yml");
 
-    details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "BOB";
-    details[ConfProperties::ALIAS] = "BOB";
-    details[ConfProperties::UPNP_ENABLED] = "false";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
-    details[ConfProperties::ARCHIVE_PATH] = "";
-    bobData_.accountId_ = Manager::instance().addAccount(details);
+    aliceData_.accountId_ = actors["alice"];
+    bobData_.accountId_ = actors["bob"];
 
     JAMI_INFO("Initialize account...");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceData_.accountId_);

@@ -123,29 +123,9 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaControlTest, MediaControlTest::name()
 void
 MediaControlTest::setUp()
 {
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "ALICE";
-    details[ConfProperties::ALIAS] = "ALICE";
-    details[ConfProperties::UPNP_ENABLED] = "false";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
-    details[ConfProperties::ARCHIVE_PATH] = "";
-    aliceAccountId_ = Manager::instance().addAccount(details);
-
-    details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "BOB";
-    details[ConfProperties::ALIAS] = "BOB";
-    details[ConfProperties::UPNP_ENABLED] = "false";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
-    details[ConfProperties::ARCHIVE_PATH] = "";
-    bobAccountId_ = Manager::instance().addAccount(details);
-
-    JAMI_INFO("Initialize account...");
-
-    wait_for_announcement_of({aliceAccountId_, bobAccountId_});
+    auto actors = load_actors_and_wait_for_announcement("media_control/actors.yml");
+    aliceAccountId_ = actors["alice"];
+    bobAccountId_ = actors["bob"];
 }
 
 void

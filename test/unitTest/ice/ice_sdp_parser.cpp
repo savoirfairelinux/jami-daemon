@@ -178,19 +178,9 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(IceSdpParsingTest, IceSdpParsingTest::name
 void
 IceSdpParsingTest::setUp()
 {
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "ALICE";
-    details[ConfProperties::ALIAS] = "ALICE";
-    details[ConfProperties::UPNP_ENABLED] = "false";
-    aliceData_.accountId_ = Manager::instance().addAccount(details);
-
-    details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "BOB";
-    details[ConfProperties::ALIAS] = "BOB";
-    details[ConfProperties::UPNP_ENABLED] = "false";
-    bobData_.accountId_ = Manager::instance().addAccount(details);
+    auto actors = load_actors("ice/sdp-actors.yml");
+    aliceData_.accountId_ = actors["alice"];
+    bobData_.accountId_ = actors["bob"];
 
     JAMI_INFO("Initializing accounts ...");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceData_.accountId_);
