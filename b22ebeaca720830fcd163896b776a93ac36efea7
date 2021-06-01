@@ -22,6 +22,30 @@
       "revId": "b22ebeaca720830fcd163896b776a93ac36efea7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c4bae43f_a15cb1af",
+        "filename": "src/account.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-06-01T18:13:20Z",
+      "side": 1,
+      "message": "MS enabling moved to https://review.jami.net/c/ring-daemon/+/17979",
+      "parentUuid": "f6cf2c15_58fae2bb",
+      "range": {
+        "startLine": 131,
+        "startChar": 0,
+        "endLine": 135,
+        "endChar": 5
+      },
+      "revId": "b22ebeaca720830fcd163896b776a93ac36efea7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
