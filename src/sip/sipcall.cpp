@@ -915,6 +915,7 @@ void
 SIPCall::hangup(int reason)
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    pendingRecord_ = false;
     if (inviteSession_ and inviteSession_->dlg) {
         pjsip_route_hdr* route = inviteSession_->dlg->route_set.next;
         while (route and route != &inviteSession_->dlg->route_set) {
@@ -1270,6 +1271,7 @@ SIPCall::switchInput(const std::string& source)
 void
 SIPCall::peerHungup()
 {
+    pendingRecord_ = false;
     // Stop all RTP streams
     stopAllMedia();
 
