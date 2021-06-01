@@ -72,8 +72,8 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
 }
 
 static void
-wait_for_announcement_of(const std::string& accountID,
+wait_for_announcement_of(const std::string& accountId,
                          std::chrono::seconds timeout = std::chrono::seconds(30))
 {
-        wait_for_announcement_of({accountID}, timeout);
+    wait_for_announcement_of(std::vector<std::string> {accountId}, timeout);
 }
