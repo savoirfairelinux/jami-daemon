@@ -26,6 +26,10 @@
 #include "fileutils.h"
 #include "manager.h"
 
+/* Make GCC quiet about unused functions */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+
 static void
 wait_for_announcement_of(const std::vector<std::string> accountIDs,
                          std::chrono::seconds timeout = std::chrono::seconds(30))
@@ -188,3 +192,5 @@ load_actors_and_wait_for_announcement(const std::string& from_yaml)
 
     return actors;
 }
+
+#pragma GCC diagnostic pop
