@@ -758,7 +758,7 @@ ArchiveAccountManager::registerName(const std::string& password,
     try {
         auto archive = readArchive(password);
         auto privateKey = archive.id.first;
-        auto pk = privateKey->getPublicKey();
+        const auto& pk = privateKey->getPublicKey();
         publickey = pk.toString();
         accountId = pk.getId().toString();
         signedName = base64::encode(
