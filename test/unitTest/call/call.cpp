@@ -309,11 +309,9 @@ CallTest::testDeclineMultiDevice()
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
         [&](const std::string&, const std::string& state, signed) {
-            if (state == "OVER") {
+            if (state == "OVER")
                 callStopped += 1;
-                if (callStopped == 2)
-                    cv.notify_one();
-            }
+            cv.notify_one();
         }));
     DRing::registerSignalHandlers(confHandlers);
 
@@ -327,7 +325,9 @@ CallTest::testDeclineMultiDevice()
     JAMI_INFO("Stop call between alice and Bob");
     callStopped = 0;
     Manager::instance().hangupCall(callIdBob);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callStopped == 3; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
+        return callStopped >= 3; /* >= because there is subcalls */
+    }));
 }
 
 } // namespace test
