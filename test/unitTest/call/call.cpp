@@ -84,37 +84,14 @@ CallTest::setUp()
 void
 CallTest::tearDown()
 {
-    DRing::unregisterSignalHandlers();
-    JAMI_INFO("Remove created accounts...");
-
     auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
     std::remove(bobArchive.c_str());
 
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    auto currentAccSize = Manager::instance().getAccountList().size();
-    std::atomic_bool accountsRemoved {false};
-    auto wantedAccountNumber = currentAccSize - (bob2Id.empty() ? 2 : 3);
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
-            if (Manager::instance().getAccountList().size() <= wantedAccountNumber) {
-                accountsRemoved = true;
-                cv.notify_one();
-            }
-        }));
-    DRing::registerSignalHandlers(confHandlers);
-
-    Manager::instance().removeAccount(aliceId, true);
-    Manager::instance().removeAccount(bobId, true);
-    if (!bob2Id.empty())
-        Manager::instance().removeAccount(bob2Id, true);
-    // Because cppunit is not linked with dbus, just poll if removed
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsRemoved.load(); }));
-
-    DRing::unregisterSignalHandlers();
+    if (!bob2Id.empty()) {
+        wait_for_removal_of(std::vector<std::string> {aliceId, bobId});
+    } else {
+        wait_for_removal_of(std::vector<std::string> {aliceId, bobId, bob2Id});
+    }
 }
 
 void

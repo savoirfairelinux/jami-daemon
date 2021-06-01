@@ -117,15 +117,7 @@ ConversationRepositoryTest::setUp()
 void
 ConversationRepositoryTest::tearDown()
 {
-    auto currentAccSize = Manager::instance().getAccountList().size();
-    Manager::instance().removeAccount(aliceId, true);
-    Manager::instance().removeAccount(bobId, true);
-    // Because cppunit is not linked with dbus, just poll if removed
-    for (int i = 0; i < 40; ++i) {
-        if (Manager::instance().getAccountList().size() <= currentAccSize - 2)
-            break;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+    wait_for_removal_of(std::vector<std::string> {aliceId, bobId});
 }
 
 void
