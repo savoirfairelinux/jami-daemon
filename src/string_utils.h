@@ -172,7 +172,7 @@ std::vector<std::string_view> split_string(std::string_view str, std::string_vie
     return output;
 }
 
-std::vector<unsigned> split_string_to_unsigned(const std::string& s, char sep);
+std::vector<unsigned> split_string_to_unsigned(std::string_view s, char sep);
 
 void string_replace(std::string& str, const std::string& from, const std::string& to);
 

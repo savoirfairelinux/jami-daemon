@@ -112,7 +112,7 @@ trim(std::string_view s)
 }
 
 std::vector<unsigned>
-split_string_to_unsigned(const std::string& str, char delim)
+split_string_to_unsigned(std::string_view str, char delim)
 {
     std::vector<unsigned> output;
     for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last; first = second + 1) {
