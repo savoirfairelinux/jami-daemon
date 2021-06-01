@@ -215,39 +215,13 @@ ConversationTest::setUp()
     if (not Manager::instance().initialized)
         CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
 
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "ALICE";
-    details[ConfProperties::ALIAS] = "ALICE";
-    details[ConfProperties::UPNP_ENABLED] = "true";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
-    details[ConfProperties::ARCHIVE_PATH] = "";
-    aliceId = Manager::instance().addAccount(details);
+    auto actors = load_actors("conversation/actors.yml");
+    aliceId = actors["alice"];
+    bobId = actors["bob"];
+    carlaId = actors["carla"];
 
-    details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "BOB";
-    details[ConfProperties::ALIAS] = "BOB";
-    details[ConfProperties::UPNP_ENABLED] = "true";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
-    details[ConfProperties::ARCHIVE_PATH] = "";
-    bobId = Manager::instance().addAccount(details);
-
-    details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "CARLA";
-    details[ConfProperties::ALIAS] = "CARLA";
-    details[ConfProperties::UPNP_ENABLED] = "true";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
-    details[ConfProperties::ARCHIVE_PATH] = "";
-    carlaId = Manager::instance().addAccount(details);
-
-    JAMI_INFO("Initialize account...");
     Manager::instance().sendRegister(carlaId, false);
-    wait_for_announcement_of({aliceId, bobId});
+    wait_for_announcement_of({aliceId, bobId, carlaId});
 }
 
 void

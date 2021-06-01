@@ -103,28 +103,9 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConnectionManagerTest, ConnectionManagerTe
 void
 ConnectionManagerTest::setUp()
 {
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "ALICE";
-    details[ConfProperties::ALIAS] = "ALICE";
-    details[ConfProperties::UPNP_ENABLED] = "true";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
-    details[ConfProperties::ARCHIVE_PATH] = "";
-    aliceId = Manager::instance().addAccount(details);
-
-    details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "BOB";
-    details[ConfProperties::ALIAS] = "BOB";
-    details[ConfProperties::UPNP_ENABLED] = "true";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
-    details[ConfProperties::ARCHIVE_PATH] = "";
-    bobId = Manager::instance().addAccount(details);
-
-    JAMI_INFO("Initialize account...");
-    wait_for_announcement_of({aliceId, bobId});
+    auto actors = load_actors_and_wait_for_announcement("connectionManager/actors.yml");
+    aliceId = actors["alice"];
+    bobId = actors["bob"];
 }
 
 void

@@ -20,6 +20,12 @@
 
 #pragma once
 
+#include <yaml-cpp/yaml.h>
+
+/* Jami */
+#include "fileutils.h"
+#include "manager.h"
+
 static void
 wait_for_announcement_of(const std::vector<std::string> accountIDs,
                          std::chrono::seconds timeout = std::chrono::seconds(30))
@@ -75,5 +81,64 @@ static void
 wait_for_announcement_of(const std::string& accountID,
                          std::chrono::seconds timeout = std::chrono::seconds(30))
 {
-        wait_for_announcement_of({accountID}, timeout);
+    wait_for_announcement_of({accountID}, timeout);
+}
+
+static std::map<std::string, std::string>
+load_actors(const std::string& from_yaml)
+{
+    std::map<std::string, std::string> actors {};
+    std::map<std::string, std::string> default_details = DRing::getAccountTemplate("RING");
+
+    std::ifstream file = jami::fileutils::ifstream(from_yaml);
+
+    CPPUNIT_ASSERT(file.is_open());
+
+    YAML::Node node = YAML::Load(file);
+
+    CPPUNIT_ASSERT(node.IsMap());
+
+    auto default_account = node["default-account"];
+
+    if (default_account.IsMap()) {
+        for (const auto& kv : default_account) {
+            default_details["Account." + kv.first.as<std::string>()] = kv.second.as<std::string>();
+        }
+    }
+
+    auto accounts = node["accounts"];
+
+    CPPUNIT_ASSERT(accounts.IsMap());
+
+    for (const auto& kv : accounts) {
+        auto account_name = kv.first.as<std::string>();
+        auto account = kv.second.as<YAML::Node>();
+        auto details = std::map<std::string, std::string>(default_details);
+
+        for (const auto& detail : account) {
+            details["Account." + detail.first.as<std::string>()] = detail.second.as<std::string>();
+        }
+
+        actors[account_name] = jami::Manager::instance().addAccount(details);
+    }
+
+    return actors;
+}
+
+static std::map<std::string, std::string>
+load_actors_and_wait_for_announcement(const std::string& from_yaml)
+{
+    auto actors = load_actors(from_yaml);
+
+    std::vector<std::string> wait_for;
+
+    wait_for.reserve(actors.size());
+
+    for (auto it = actors.cbegin(); it != actors.cend(); ++it) {
+        wait_for.emplace_back(it->second);
+    }
+
+    wait_for_announcement_of(wait_for);
+
+    return actors;
 }

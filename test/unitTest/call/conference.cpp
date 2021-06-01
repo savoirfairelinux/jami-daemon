@@ -96,41 +96,10 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConferenceTest, ConferenceTest::name());
 void
 ConferenceTest::setUp()
 {
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "ALICE";
-    details[ConfProperties::ALIAS] = "ALICE";
-    details[ConfProperties::UPNP_ENABLED] = "true";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
-    details[ConfProperties::ARCHIVE_PATH] = "";
-    aliceId = Manager::instance().addAccount(details);
-
-    details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "BOB";
-    details[ConfProperties::ALIAS] = "BOB";
-    details[ConfProperties::UPNP_ENABLED] = "true";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
-    details[ConfProperties::ARCHIVE_PATH] = "";
-    bobId = Manager::instance().addAccount(details);
-
-    details = DRing::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "CARLA";
-    details[ConfProperties::ALIAS] = "CARLA";
-    details[ConfProperties::UPNP_ENABLED] = "true";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
-    details[ConfProperties::ARCHIVE_PATH] = "";
-    carlaId = Manager::instance().addAccount(details);
-
-    JAMI_INFO("Initialize account...");
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
-    wait_for_announcement_of({aliceId, bobId, carlaId}, std::chrono::seconds(60));
+    auto actors = load_actors_and_wait_for_announcement("call/conference-actors.yml");
+    aliceId = actors["alice"];
+    bobId = actors["bob"];
+    carlaId = actors["carla"];
 
     bobCall.reset();
     carlaCall.reset();
