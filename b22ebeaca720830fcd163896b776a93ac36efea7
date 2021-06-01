@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f6cf2c15_58fae2bb",
+        "filename": "src/account.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-01T15:47:26Z",
+      "side": 1,
+      "message": "* use compile-time checks\n* maybe should be in another patchset ?",
+      "range": {
+        "startLine": 131,
+        "startChar": 0,
+        "endLine": 135,
+        "endChar": 5
+      },
+      "revId": "b22ebeaca720830fcd163896b776a93ac36efea7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
