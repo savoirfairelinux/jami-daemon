@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e66b4029_3f9144f1",
+        "filename": "test/unitTest/common.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-02T13:11:33Z",
+      "side": 0,
+      "message": "It\u0027s better to use a const variable and document:\n\n// whatever ....\nconstexpr int WAIT_FOR_ANNOUNCEMENT_TIMEOUT\u003d30",
+      "range": {
+        "startLine": 25,
+        "startChar": 77,
+        "endLine": 25,
+        "endChar": 79
+      },
+      "revId": "e4eb13038f5725d5ee92505991ee8282446c337a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "99475d95_af35b33c",
+        "filename": "test/unitTest/common.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-02T13:11:33Z",
+      "side": 0,
+      "message": "same",
+      "range": {
+        "startLine": 76,
+        "startChar": 77,
+        "endLine": 76,
+        "endChar": 80
+      },
+      "revId": "e4eb13038f5725d5ee92505991ee8282446c337a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ee682b63_e8a11995",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-02T13:11:33Z",
+      "side": 0,
+      "message": "I prefer to disable UPNP for this test.",
+      "range": {
+        "startLine": 167,
+        "startChar": 4,
+        "endLine": 167,
+        "endChar": 52
+      },
+      "revId": "e4eb13038f5725d5ee92505991ee8282446c337a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6b4e220d_105d1aed",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-02T13:11:33Z",
+      "side": 0,
+      "message": "same",
+      "range": {
+        "startLine": 177,
+        "startChar": 4,
+        "endLine": 177,
+        "endChar": 52
+      },
+      "revId": "e4eb13038f5725d5ee92505991ee8282446c337a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
