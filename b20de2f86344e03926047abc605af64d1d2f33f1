@@ -16,6 +16,24 @@
       "revId": "b20de2f86344e03926047abc605af64d1d2f33f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "26c09652_77e5cf7d",
+        "filename": "test/unitTest/call/actors.yml",
+        "patchSetId": 3
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-02T13:43:20Z",
+      "side": 1,
+      "message": "I wanted it to be shared across tests too.  But there\u0027s subtle differences (UpnP, third account, etc.) that makes it difficult.  We could have a directory call actors/ and put common scenario with a meaningful name there.\n\ne.g.\n\n- actors/alice-and-bob-with-upnp.yml\n- actors/alice-and-bob-without-upnp.yml\n- actors/alice-bob-and-carla-with-upnp.yml\n\nIf a test needs special cases, they can make their own actor.yml",
+      "parentUuid": "0025c0e9_ac6471c3",
+      "revId": "b20de2f86344e03926047abc605af64d1d2f33f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
