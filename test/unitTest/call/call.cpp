@@ -324,7 +324,7 @@ CallTest::testDeclineMultiDevice()
 
     JAMI_INFO("Stop call between alice and Bob");
     callStopped = 0;
-    Manager::instance().hangupCall(callIdBob);
+    Manager::instance().refuseCall(callIdBob);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
         return callStopped.load() >= 3; /* >= because there is subcalls */
     }));
