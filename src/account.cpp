@@ -120,7 +120,11 @@ Account::Account(const std::string& accountID)
     , customUserAgent_("")
     , hasCustomUserAgent_(false)
     , mailBox_()
+#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+    , upnpEnabled_(false)
+#else
     , upnpEnabled_(true)
+#endif
     , localModeratorsEnabled_(true)
     , allModeratorsEnabled_(true)
     , multiStreamEnabled_(false)
@@ -291,8 +295,10 @@ Account::unserialize(const YAML::Node& node)
     if (ringtonePath_.empty()) {
         ringtonePath_ = DEFAULT_RINGTONE_PATH;
     }
-
+#if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     parseValue(node, UPNP_ENABLED_KEY, upnpEnabled_);
+#else
+#endif
     updateUpnpController();
 
     std::string defMod;
@@ -322,7 +328,10 @@ Account::setAccountDetails(const std::map<std::string, std::string>& details)
     parseBool(details, Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_);
     if (hasCustomUserAgent_)
         parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent_);
-
+#if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+    parseBool(details, Conf::CONFIG_UPNP_ENABLED, upnpEnabled_);
+#else
+#endif
     parseBool(details, Conf::CONFIG_UPNP_ENABLED, upnpEnabled_);
     updateUpnpController();
 
