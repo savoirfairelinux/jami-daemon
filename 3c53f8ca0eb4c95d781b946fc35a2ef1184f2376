@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "70a3d7be_fe5e4f22",
+        "filename": "test/unitTest/actors/alice-bob-carla-with-upnp.yml",
+        "patchSetId": 4
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-02T15:35:45Z",
+      "side": 1,
+      "message": "in fact, -with-upnp can be removed imho, upnpEnabled is true by default :)",
+      "range": {
+        "startLine": 3,
+        "startChar": 5,
+        "endLine": 3,
+        "endChar": 25
+      },
+      "revId": "3c53f8ca0eb4c95d781b946fc35a2ef1184f2376",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
