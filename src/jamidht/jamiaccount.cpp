@@ -1946,16 +1946,24 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
                       ++buddy->second.devices_cnt;
                   isConnected = buddy->second.devices_cnt > 0;
               }
-              if (not expired) {
-                  // Retry messages every time a new device announce its presence
-                  messageEngine_.onPeerOnline(h.toString());
-                  requestSIPConnection(h.toString(), dev.dev);
-              }
-              if (isConnected and not wasConnected) {
-                  onTrackedBuddyOnline(h);
-              } else if (not isConnected and wasConnected) {
-                  onTrackedBuddyOffline(h);
-              }
+
+              // NOTE: the rest can use configurationMtx_, that can be locked during unregister so
+              // do not retrigger on dht
+              runOnMainThread([w = weak(), h, dev, expired, isConnected, wasConnected]() {
+                  auto sthis = w.lock();
+                  if (!sthis)
+                      return;
+                  if (not expired) {
+                      // Retry messages every time a new device announce its presence
+                      sthis->messageEngine_.onPeerOnline(h.toString());
+                      sthis->requestSIPConnection(h.toString(), dev.dev);
+                  }
+                  if (isConnected and not wasConnected) {
+                      sthis->onTrackedBuddyOnline(h);
+                  } else if (not isConnected and wasConnected) {
+                      sthis->onTrackedBuddyOffline(h);
+                  }
+              });
 
               return true;
           });
@@ -2175,35 +2183,37 @@ JamiAccount::doRegister_()
         context.identityAnnouncedCb = [this](bool ok) {
             if (!ok)
                 return;
-            accountManager_->startSync([this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-                if (!crt)
-                    return;
-                auto deviceId = crt->getId().toString();
-                if (accountManager_->getInfo()->deviceId == deviceId)
-                    return;
+            accountManager_->startSync(
+                [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                    if (!crt)
+                        return;
+                    auto deviceId = crt->getId().toString();
+                    if (accountManager_->getInfo()->deviceId == deviceId)
+                        return;
 
-                std::lock_guard<std::mutex> lk(connManagerMtx_);
-                if (!connectionManager_)
-                    connectionManager_ = std::make_unique<ConnectionManager>(*this);
-                auto channelName = "sync://" + deviceId;
-                if (connectionManager_->isConnecting(crt->getId(), channelName)) {
-                    JAMI_INFO("[Account %s] Already connecting to %s",
-                              getAccountID().c_str(),
-                              deviceId.c_str());
-                    return;
-                }
-                connectionManager_->connectDevice(crt,
-                                                  channelName,
-                                                  [this](std::shared_ptr<ChannelSocket> socket,
-                                                         const DeviceId& deviceId) {
-                                                      if (socket)
-                                                          syncWith(deviceId.toString(), socket);
-                                                  });
-            }, [this] {
-                deviceAnnounced_ = true;
-                emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-                    accountID_, getVolatileAccountDetails());
-            });
+                    std::lock_guard<std::mutex> lk(connManagerMtx_);
+                    if (!connectionManager_)
+                        connectionManager_ = std::make_unique<ConnectionManager>(*this);
+                    auto channelName = "sync://" + deviceId;
+                    if (connectionManager_->isConnecting(crt->getId(), channelName)) {
+                        JAMI_INFO("[Account %s] Already connecting to %s",
+                                  getAccountID().c_str(),
+                                  deviceId.c_str());
+                        return;
+                    }
+                    connectionManager_->connectDevice(crt,
+                                                      channelName,
+                                                      [this](std::shared_ptr<ChannelSocket> socket,
+                                                             const DeviceId& deviceId) {
+                                                          if (socket)
+                                                              syncWith(deviceId.toString(), socket);
+                                                      });
+                },
+                [this] {
+                    deviceAnnounced_ = true;
+                    emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+                        accountID_, getVolatileAccountDetails());
+                });
         };
 
         setRegistrationState(RegistrationState::TRYING);
@@ -2566,12 +2576,14 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     bool shutdown_complete {false};
 
     JAMI_WARN("[Account %s] unregistering account %p", getAccountID().c_str(), this);
-    dht_->shutdown([&] {
-        JAMI_WARN("[Account %s] dht shutdown complete", getAccountID().c_str());
-        std::lock_guard<std::mutex> lock(mtx);
-        shutdown_complete = true;
-        cv.notify_all();
-    }, false);
+    dht_->shutdown(
+        [&] {
+            JAMI_WARN("[Account %s] dht shutdown complete", getAccountID().c_str());
+            std::lock_guard<std::mutex> lock(mtx);
+            shutdown_complete = true;
+            cv.notify_all();
+        },
+        false);
 
     {
         std::lock_guard<std::mutex> lk(pendingCallsMutex_);
@@ -2592,7 +2604,7 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
 
     {
         std::unique_lock<std::mutex> lock(mtx);
-        cv.wait(lock, [&]{ return shutdown_complete; });
+        cv.wait(lock, [&] { return shutdown_complete; });
     }
     dht_->join();
     setRegistrationState(RegistrationState::UNREGISTERED);
@@ -2745,8 +2757,9 @@ JamiAccount::saveTreatedMessages() const
             auto& this_ = *sthis;
             std::lock_guard<std::mutex> lock(this_.messageMutex_);
             fileutils::check_dir(this_.cachePath_.c_str());
-            saveIdList<decltype(this_.treatedMessages_)>(this_.cachePath_ + DIR_SEPARATOR_STR "treatedMessages",
-                                    this_.treatedMessages_);
+            saveIdList<decltype(this_.treatedMessages_)>(this_.cachePath_
+                                                             + DIR_SEPARATOR_STR "treatedMessages",
+                                                         this_.treatedMessages_);
         }
     });
 }
