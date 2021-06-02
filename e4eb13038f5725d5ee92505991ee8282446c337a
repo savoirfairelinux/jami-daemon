@@ -49,6 +49,30 @@
     },
     {
       "key": {
+        "uuid": "5bcfed1e_c9f0a711",
+        "filename": "test/unitTest/common.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-02T15:59:07Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "8909650b_3460a65d",
+      "range": {
+        "startLine": 25,
+        "startChar": 77,
+        "endLine": 25,
+        "endChar": 79
+      },
+      "revId": "e4eb13038f5725d5ee92505991ee8282446c337a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "99475d95_af35b33c",
         "filename": "test/unitTest/common.h",
         "patchSetId": 3
@@ -84,6 +108,30 @@
       "side": 0,
       "message": "Ack",
       "parentUuid": "99475d95_af35b33c",
+      "range": {
+        "startLine": 76,
+        "startChar": 77,
+        "endLine": 76,
+        "endChar": 80
+      },
+      "revId": "e4eb13038f5725d5ee92505991ee8282446c337a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2377db61_b96d350a",
+        "filename": "test/unitTest/common.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-02T15:59:07Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "77d3e934_8278bbd0",
       "range": {
         "startLine": 76,
         "startChar": 77,
