@@ -39,6 +39,28 @@ public:
 
 %feature("director") DataTransferCallback;
 
+%typemap(jstype) std::string& OUTPUT "String[]"
+%typemap(jtype) std::string& OUTPUT "String[]"
+%typemap(jni) std::string& OUTPUT "jobjectArray"
+%typemap(javain)  std::string& OUTPUT "$javainput"
+%typemap(in) std::string& OUTPUT (std::string temp) {
+  if (!$input) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "array null");
+    return $null;
+  }
+  if (JCALL1(GetArrayLength, jenv, $input) == 0) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "Array must contain at least 1 element");
+  }
+  $1 = &temp;
+}
+%typemap(argout) std::string& OUTPUT {
+  jstring jvalue = JCALL1(NewStringUTF, jenv, temp$argnum.c_str()); 
+  JCALL3(SetObjectArrayElement, jenv, $input, 0, jvalue);
+}
+%apply std::string& OUTPUT { std::string& path_out }
+%apply int64_t& OUTPUT { int64_t& total_out }
+%apply int64_t& OUTPUT { int64_t& progress_out }
+
 namespace DRing {
 
   struct DataTransferInfo
@@ -63,7 +85,7 @@ namespace DRing {
   uint64_t downloadFile(const std::string& accountId, const std::string& conversationUri, const std::string& interactionId, const std::string& path);
   DRing::DataTransferError cancelDataTransfer(const std::string& accountId, const std::string& conversationId, const std::string& fileId);
   DRing::DataTransferError dataTransferInfo(const std::string& accountId, const std::string& fileId, DRing::DataTransferInfo &info);
-  DRing::DataTransferError fileTransferInfo(const std::string& accountId, const std::string& conversationId, const std::string& fileId, std::string &path, int64_t &total, int64_t &progress);
+  DRing::DataTransferError fileTransferInfo(const std::string& accountId, const std::string& conversationId, const std::string& fileId, std::string &path_out, int64_t &total_out, int64_t &progress_out);
 
 }
 
