@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "948f4470_d7ab1263",
+        "filename": "test/unitTest/call/call.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-02T13:10:59Z",
+      "side": 1,
+      "message": "the condition is reverted. This breaks ut_call",
+      "range": {
+        "startLine": 90,
+        "startChar": 7,
+        "endLine": 94,
+        "endChar": 5
+      },
+      "revId": "fdcbc8c1bd881c37e72cf0013974f485f2fea8a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7fb33848_889dc384",
+        "filename": "test/unitTest/ice/ice_sdp_parser.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 197,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-02T13:10:59Z",
+      "side": 1,
+      "message": "no need there, {a,b} will be a vector",
+      "range": {
+        "startLine": 197,
+        "startChar": 22,
+        "endLine": 197,
+        "endChar": 48
+      },
+      "revId": "fdcbc8c1bd881c37e72cf0013974f485f2fea8a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "77b59c8f_c8176bb4",
+        "filename": "test/unitTest/media_control/media_control.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 134,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-02T13:10:59Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 134,
+        "startChar": 24,
+        "endLine": 134,
+        "endChar": 49
+      },
+      "revId": "fdcbc8c1bd881c37e72cf0013974f485f2fea8a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "27d43f37_2b1c1043",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 180,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-02T13:10:59Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 180,
+        "startChar": 25,
+        "endLine": 180,
+        "endChar": 48
+      },
+      "revId": "fdcbc8c1bd881c37e72cf0013974f485f2fea8a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
