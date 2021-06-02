@@ -1941,16 +1941,24 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
                       ++buddy->second.devices_cnt;
                   isConnected = buddy->second.devices_cnt > 0;
               }
-              if (not expired) {
-                  // Retry messages every time a new device announce its presence
-                  messageEngine_.onPeerOnline(h.toString());
-                  requestSIPConnection(h.toString(), dev.dev);
-              }
-              if (isConnected and not wasConnected) {
-                  onTrackedBuddyOnline(h);
-              } else if (not isConnected and wasConnected) {
-                  onTrackedBuddyOffline(h);
-              }
+
+              // NOTE: the rest can use configurationMtx_, that can be locked during unregister so
+              // do not retrigger on dht
+              runOnMainThread([w = weak(), h, dev, expired, isConnected, wasConnected]() {
+                  auto sthis = w.lock();
+                  if (!sthis)
+                      return;
+                  if (not expired) {
+                      // Retry messages every time a new device announce its presence
+                      sthis->messageEngine_.onPeerOnline(h.toString());
+                      sthis->requestSIPConnection(h.toString(), dev.dev);
+                  }
+                  if (isConnected and not wasConnected) {
+                      sthis->onTrackedBuddyOnline(h);
+                  } else if (not isConnected and wasConnected) {
+                      sthis->onTrackedBuddyOffline(h);
+                  }
+              });
 
               return true;
           });
