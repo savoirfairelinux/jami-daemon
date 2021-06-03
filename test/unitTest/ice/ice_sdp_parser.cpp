@@ -194,7 +194,7 @@ IceSdpParsingTest::setUp()
 void
 IceSdpParsingTest::tearDown()
 {
-    wait_for_remove_of({aliceData_.accountId_, bobData_.accountId_});
+    wait_for_removal_of({aliceData_.accountId_, bobData_.accountId_});
 }
 
 std::string
