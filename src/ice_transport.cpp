@@ -1074,6 +1074,7 @@ IceTransport::isInitiator() const
 bool
 IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& rem_candidates)
 {
+    sip_utils::register_thread();
     if (not isInitialized()) {
         JAMI_ERR("[ice:%p] not initialized transport", pimpl_.get());
         pimpl_->is_stopped_ = true;
