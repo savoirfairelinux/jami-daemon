@@ -949,30 +949,32 @@ Conversation::downloadFile(const std::string& fileId,
     auto size_str = commit->at("totalSize");
     std::size_t totalSize;
     std::from_chars(size_str.data(), size_str.data() + size_str.size(), totalSize);
-    dataTransfer()->waitForTransfer(fileId, interactionId, sha3sum, path, totalSize);
 
-    if (auto account = pimpl_->account_.lock()) {
-        Json::Value askTransferValue;
-        askTransferValue["conversation"] = id();
-        askTransferValue["fileId"] = fileId;
-        askTransferValue["interactionId"] = interactionId;
-        askTransferValue["deviceId"] = std::string(account->currentDeviceId());
-        askTransferValue["start"] = std::to_string(start);
-        askTransferValue["end"] = std::to_string(end);
-        Json::StreamWriterBuilder builder;
-        std::map<std::string, std::string> data = {
-            {MIME_TYPE_ASK_TRANSFER, Json::writeString(builder, askTransferValue)}};
-        // Be sure to not lock conversation
-        dht::ThreadPool().io().run(
-            [w = pimpl_->account_, conversationId = id(), data = std::move(data), member, deviceId] {
-                if (auto shared = w.lock()) {
-                    if (!member.empty() && !deviceId.empty())
-                        shared->sendSIPMessageToDevice(member, DeviceId(deviceId), data);
-                    else
-                        shared->sendInstantMessage(conversationId, data);
-                }
-            });
-    }
+    // Be sure to not lock conversation
+    dht::ThreadPool().io().run(
+        [w = weak(), member, deviceId, fileId, interactionId, sha3sum, path, totalSize, start, end] {
+
+            if (auto shared = w.lock()) {
+                auto acc = shared->pimpl_->account_.lock();
+                if (!acc)
+                    return;
+                Json::Value askTransferValue;
+                askTransferValue["conversation"] = shared->id();
+                askTransferValue["fileId"] = fileId;
+                askTransferValue["interactionId"] = interactionId;
+                askTransferValue["deviceId"] = std::string(acc->currentDeviceId());
+                askTransferValue["start"] = std::to_string(start);
+                askTransferValue["end"] = std::to_string(end);
+                Json::StreamWriterBuilder builder;
+                std::map<std::string, std::string> data = {
+                    {MIME_TYPE_ASK_TRANSFER, Json::writeString(builder, askTransferValue)}};
+                shared->dataTransfer()->waitForTransfer(fileId, interactionId, sha3sum, path, totalSize);
+                if (!member.empty() && !deviceId.empty())
+                    acc->sendSIPMessageToDevice(member, DeviceId(deviceId), data);
+                else
+                    acc->sendInstantMessage(shared->id(), data);
+            }
+        });
     return true;
 }
 

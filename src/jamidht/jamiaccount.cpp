@@ -5468,7 +5468,7 @@ JamiAccount::transferFile(const std::string& conversationId,
                                                        socket = std::move(socket),
                                                        conversationId = std::move(conversationId),
                                                        fileId,
-                         interactionId,
+                                                       interactionId,
                                                        start,
                                                        end] {
                                 if (auto shared = w.lock())

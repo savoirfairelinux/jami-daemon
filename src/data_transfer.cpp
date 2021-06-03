@@ -1159,20 +1159,21 @@ TransferManager::waitForTransfer(const std::string& fileId,
                                  const std::string& path,
                                  std::size_t total)
 {
-    std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
+    std::unique_lock<std::mutex> lk(pimpl_->mapMutex_);
     auto itW = pimpl_->waitingIds_.find(fileId);
     if (itW != pimpl_->waitingIds_.end())
         return;
     pimpl_->waitingIds_[fileId] = {fileId, interactionId, sha3sum, path, total};
     JAMI_DBG() << "Wait for " << fileId;
+    if (!pimpl_->to_.empty())
+        pimpl_->saveWaiting();
+    lk.unlock();
     emitSignal<DRing::DataTransferSignal::DataTransferEvent>(
         pimpl_->accountId_,
         pimpl_->to_,
         interactionId,
         fileId,
         uint32_t(DRing::DataTransferEventCode::wait_peer_acceptance));
-    if (!pimpl_->to_.empty())
-        pimpl_->saveWaiting();
 }
 
 bool
