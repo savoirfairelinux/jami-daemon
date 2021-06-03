@@ -2497,7 +2497,7 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
         std::lock_guard<std::mutex> lock(mtx);
         shutdown_complete = true;
         cv.notify_all();
-    }, false);
+    }, true);
 
     {
         std::lock_guard<std::mutex> lk(pendingCallsMutex_);
