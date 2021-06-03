@@ -572,24 +572,6 @@ public:
                         const std::string& deviceId,
                         const std::string& conversationId,
                         const std::string& commitId) override;
-
-    /**
-     * When a new transfer is asked by a peer
-     * @param peer              account's uri of the peer
-     * @param deviceId          peer device
-     * @param conversationId    related conversation
-     * @param fileId
-     * @param interactionId
-     * @param start             First byte we need to send
-     * @param lastByte          we need to send
-     */
-    virtual void onAskForTransfer(const std::string& peer,
-                                  const std::string& deviceId,
-                                  const std::string& conversationId,
-                                  const std::string& fileId,
-                                  const std::string& interactionId,
-                                  size_t start,
-                                  size_t end) override;
     /**
      * Pull remote device (do not do it if commitId is already in the current repo)
      * @param peer              Contact URI
@@ -648,6 +630,12 @@ public:
                       const std::string& path,
                       size_t start = 0,
                       size_t end = 0);
+
+    void askForFileChannel(const std::string& conversationId,
+                           const std::string& deviceId,
+                           const std::string& fileId,
+                           size_t start = 0,
+                           size_t end = 0);
 
     void loadConversations();
 

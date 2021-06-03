@@ -783,9 +783,9 @@ void
 OutgoingFile::cancel()
 {
     // Remove link, not original file
-    auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR
-                + info_.accountId + DIR_SEPARATOR_STR + info_.conversationId + DIR_SEPARATOR_STR
-                + fileId_;
+    auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + "conversation_data"
+                + DIR_SEPARATOR_STR + info_.accountId + DIR_SEPARATOR_STR + info_.conversationId
+                + DIR_SEPARATOR_STR + fileId_;
     if (fileutils::isSymLink(path))
         fileutils::remove(path);
     isUserCancelled_ = true;
@@ -1159,31 +1159,21 @@ TransferManager::waitForTransfer(const std::string& fileId,
                                  const std::string& path,
                                  std::size_t total)
 {
-    std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
+    std::unique_lock<std::mutex> lk(pimpl_->mapMutex_);
     auto itW = pimpl_->waitingIds_.find(fileId);
     if (itW != pimpl_->waitingIds_.end())
         return;
     pimpl_->waitingIds_[fileId] = {fileId, interactionId, sha3sum, path, total};
     JAMI_DBG() << "Wait for " << fileId;
+    if (!pimpl_->to_.empty())
+        pimpl_->saveWaiting();
+    lk.unlock();
     emitSignal<DRing::DataTransferSignal::DataTransferEvent>(
         pimpl_->accountId_,
         pimpl_->to_,
         interactionId,
         fileId,
         uint32_t(DRing::DataTransferEventCode::wait_peer_acceptance));
-    if (!pimpl_->to_.empty())
-        pimpl_->saveWaiting();
-}
-
-bool
-TransferManager::onFileChannelRequest(const std::string& fileId) const
-{
-    std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
-    auto itW = pimpl_->waitingIds_.find(fileId);
-    if (itW == pimpl_->waitingIds_.end())
-        return false;
-    auto itC = pimpl_->incomings_.find(fileId);
-    return itC == pimpl_->incomings_.end();
 }
 
 void
@@ -1221,6 +1211,7 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
     auto ifile = std::make_shared<IncomingFile>(std::move(channel),
                                                 info,
                                                 fileId,
+                                                itW->second.interactionId,
                                                 itW->second.sha3sum);
     auto res = pimpl_->incomings_.emplace(fileId, std::move(ifile));
     if (res.second) {

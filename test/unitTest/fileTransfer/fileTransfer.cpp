@@ -137,7 +137,11 @@ FileTransferTest::testFileTransfer()
     std::string finalId;
     // Watch signals
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
-        [&](const std::string& accountId, const std::string&, const std::string&, const std::string& fileId, int code) {
+        [&](const std::string& accountId,
+            const std::string&,
+            const std::string&,
+            const std::string& fileId,
+            int code) {
             if (accountId == bobId
                 && code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
                 transferWaiting = true;
@@ -211,7 +215,11 @@ FileTransferTest::testDataTransferInfo()
     std::string finalId;
     // Watch signals
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
-        [&](const std::string& accountId, const std::string&, const std::string&, const std::string& fileId, int code) {
+        [&](const std::string& accountId,
+            const std::string&,
+            const std::string&,
+            const std::string& fileId,
+            int code) {
             if (accountId == bobId
                 && code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
                 transferWaiting = true;
@@ -302,7 +310,11 @@ FileTransferTest::testMultipleFileTransfer()
     std::string finalId;
     // Watch signals
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
-        [&](const std::string& accountId, const std::string&, const std::string&, const std::string& fileId, int code) {
+        [&](const std::string& accountId,
+            const std::string&,
+            const std::string&,
+            const std::string& fileId,
+            int code) {
             if (accountId == bobId
                 && code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
                 transferWaiting = true;
@@ -454,7 +466,11 @@ FileTransferTest::testConversationFileTransfer()
                 cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
-        [&](const std::string& accountId, const std::string&, const std::string&, const std::string& fileId, int code) {
+        [&](const std::string& accountId,
+            const std::string&,
+            const std::string&,
+            const std::string& fileId,
+            int code) {
             if (code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
                 if (accountId == bobId)
                     hostAcceptanceBob = fileId;
@@ -565,6 +581,7 @@ FileTransferTest::testFileTransferInConversation()
         [&](const std::string& accountId,
             const std::string& conversationId,
             const std::string&,
+            const std::string&,
             int code) {
             if (code == static_cast<int>(DRing::DataTransferEventCode::finished)
                 && conversationId == convId) {
@@ -660,6 +677,7 @@ FileTransferTest::testBadSha3sumOut()
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
+            const std::string&,
             const std::string&,
             int code) {
             if (conversationId == convId
@@ -776,6 +794,7 @@ FileTransferTest::testBadSha3sumIn()
         [&](const std::string& accountId,
             const std::string& conversationId,
             const std::string&,
+            const std::string&,
             int code) {
             if (conversationId == convId
                 && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
@@ -822,8 +841,7 @@ FileTransferTest::testBadSha3sumIn()
     sendFile = std::ofstream("SEND");
     CPPUNIT_ASSERT(sendFile.is_open());
     // Avoid ASAN error on big alloc   sendFile << std::string("B", 64000);
-    for (int i = 0; i < 64000; ++i)
-        sendFile << "B";
+    sendFile << std::string(64000, 'B');
     sendFile.close();
 
     transferAFinished = false;
@@ -894,6 +912,7 @@ FileTransferTest::testAskToMultipleParticipants()
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
+            const std::string&,
             const std::string&,
             int code) {
             if (conversationId == convId
@@ -1017,11 +1036,12 @@ FileTransferTest::testCancelInTransfer()
                 cv.notify_one();
             }
         }));
-    bool transferAFinished = false, transferBOngoing = false, transferBFinished = false;
+    bool transferBOngoing = false, transferBFinished = false;
     // Watch signals
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
+            const std::string&,
             const std::string&,
             int code) {
             if (code == static_cast<int>(DRing::DataTransferEventCode::ongoing)
@@ -1030,9 +1050,7 @@ FileTransferTest::testCancelInTransfer()
                     transferBOngoing = true;
             } else if (code >= static_cast<int>(DRing::DataTransferEventCode::finished)
                        && conversationId == convId) {
-                if (accountId == aliceId)
-                    transferAFinished = true;
-                else if (accountId == bobId)
+                if (accountId == bobId)
                     transferBFinished = true;
             }
             cv.notify_one();
@@ -1050,9 +1068,7 @@ FileTransferTest::testCancelInTransfer()
     // Create file to send
     std::ofstream sendFile("SEND");
     CPPUNIT_ASSERT(sendFile.is_open());
-    // Avoid ASAN error on big alloc   sendFile << std::string("A", 64000);
-    for (int i = 0; i < 1000000; ++i)
-        sendFile << "A";
+    sendFile << std::string(64000, 'A');
     sendFile.close();
 
     DRing::sendFile(aliceId, convId, "SEND", "SEND", "");
@@ -1062,12 +1078,9 @@ FileTransferTest::testCancelInTransfer()
     transferBOngoing = false;
     CPPUNIT_ASSERT(DRing::downloadFile(bobId, convId, tidBob, "RECV"));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBOngoing; }));
-    transferAFinished = false;
     transferBFinished = false;
     DRing::cancelDataTransfer(bobId, convId, tidBob);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
-        return transferAFinished && transferBFinished;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBFinished; }));
     CPPUNIT_ASSERT(!fileutils::isFile("RECV"));
 
     std::remove("SEND");
@@ -1129,6 +1142,7 @@ FileTransferTest::testTransferInfo()
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
             const std::string& conversationId,
+            const std::string&,
             const std::string&,
             int code) {
             if (code == static_cast<int>(DRing::DataTransferEventCode::finished)

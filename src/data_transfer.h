@@ -48,7 +48,7 @@ struct WaitingRequest
     std::string sha3sum;
     std::string path;
     std::size_t totalSize;
-    MSGPACK_DEFINE(fileId, sha3sum, path, totalSize)
+    MSGPACK_DEFINE(fileId, interactionId, sha3sum, path, totalSize)
 };
 
 typedef std::function<void(const std::string&)> InternalCompletionCb;
@@ -173,8 +173,8 @@ public:
                       const std::string& fileId,
                       const std::string& interactionId,
                       const std::string& path,
-                      size_t start,
-                      size_t end);
+                      size_t start = 0,
+                      size_t end = 0);
 
     /**
      * Refuse a transfer
@@ -208,13 +208,6 @@ public:
                          const std::string& sha3sum,
                          const std::string& path,
                          std::size_t total);
-
-    /**
-     * When a new channel request come for a transfer id
-     * @param id        id of the transfer
-     * @return if we can accept this transfer
-     */
-    bool onFileChannelRequest(const std::string& fileId) const;
 
     /**
      * Handle incoming transfer

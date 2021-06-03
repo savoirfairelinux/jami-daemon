@@ -264,11 +264,14 @@ public:
 
     /**
      * Choose if we can accept channel request
-     * @param member    member to check
-     * @param fileId    file transfer to check (needs to be waiting)
+     * @param member        member to check
+     * @param fileId        file transfer to check (needs to be waiting)
+     * @param verifyShaSum  for debug only
      * @return if we accept the channel request
      */
-    bool onFileChannelRequest(const std::string& member, const std::string& fileId) const;
+    bool onFileChannelRequest(const std::string& member,
+                              const std::string& fileId,
+                              bool verifyShaSum = true) const;
     /**
      * Adds a file to the waiting list and ask members
      * @param fileID            Related id

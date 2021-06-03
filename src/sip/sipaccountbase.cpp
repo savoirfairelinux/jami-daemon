@@ -649,23 +649,6 @@ SIPAccountBase::onTextMessage(const std::string& id,
             // check if we have a swarm created. It can be the case
             // when the trust request confirm was not received.
             checkIfRemoveForCompat(from);
-        } else if (m.first == MIME_TYPE_ASK_TRANSFER) {
-            Json::Value json;
-            std::string err;
-            Json::CharReaderBuilder rbuilder;
-            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-            if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
-                JAMI_ERR("Can't parse server response: %s", err.c_str());
-                return;
-            }
-            onAskForTransfer(from,
-                             json["deviceId"].asString(),
-                             json["conversation"].asString(),
-                             json["fileId"].asString(),
-                             json["interactionId"].asString(),
-                             std::stoi(json["start"].asString()),
-                             std::stoi(json["end"].asString()));
-            return;
         }
     }
 

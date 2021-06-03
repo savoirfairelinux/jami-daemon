@@ -915,22 +915,62 @@ Conversation::dataTransfer() const
 }
 
 bool
-Conversation::onFileChannelRequest(const std::string& member, const std::string& fileId) const
+Conversation::onFileChannelRequest(const std::string& member,
+                                   const std::string& fileId,
+                                   bool verifyShaSum) const
 {
     if (!isMember(member))
         return false;
-    return dataTransfer()->onFileChannelRequest(fileId);
+
+    auto account = pimpl_->account_.lock();
+    if (!account)
+        return false;
+
+    auto sep = fileId.find('_');
+    if (sep == std::string::npos)
+        return false;
+
+    auto interactionId = fileId.substr(0, sep);
+    auto commit = getCommit(interactionId);
+    if (commit == std::nullopt || commit->find("type") == commit->end()
+        || commit->find("tid") == commit->end() || commit->find("sha3sum") == commit->end()
+        || commit->at("type") != "application/data-transfer+json")
+        return false;
+
+    auto path = dataTransfer()->path(fileId);
+
+    if (!fileutils::isFile(path)) {
+        // Check if dangling symlink
+        if (fileutils::isSymLink(path)) {
+            fileutils::remove(path, true);
+        }
+        JAMI_DBG("[Account %s] %s asked for non existing file %s in %s",
+                 account->getAccountID().c_str(),
+                 member.c_str(),
+                 fileId.c_str(),
+                 id().c_str());
+        return false;
+    }
+    // Check that our file is correct before sending
+    if (verifyShaSum && commit->at("sha3sum") != fileutils::sha3File(path)) {
+        JAMI_DBG("[Account %s] %s asked for file %s in %s, but our version is not complete",
+                 account->getAccountID().c_str(),
+                 member.c_str(),
+                 fileId.c_str(),
+                 id().c_str());
+        return false;
+    }
+    return true;
 }
 
 bool
 Conversation::downloadFile(const std::string& fileId,
                            const std::string& path,
-                           const std::string& member,
+                           const std::string&,
                            const std::string& deviceId,
                            std::size_t start,
                            std::size_t end)
 {
-
     auto sep = fileId.find('_');
     if (sep == std::string::npos) {
         JAMI_ERR() << "Cannot download file with incorrect id " << fileId;
@@ -949,30 +989,22 @@ Conversation::downloadFile(const std::string& fileId,
     auto size_str = commit->at("totalSize");
     std::size_t totalSize;
     std::from_chars(size_str.data(), size_str.data() + size_str.size(), totalSize);
-    dataTransfer()->waitForTransfer(fileId, interactionId, sha3sum, path, totalSize);
 
-    if (auto account = pimpl_->account_.lock()) {
-        Json::Value askTransferValue;
-        askTransferValue["conversation"] = id();
-        askTransferValue["fileId"] = fileId;
-        askTransferValue["interactionId"] = interactionId;
-        askTransferValue["deviceId"] = std::string(account->currentDeviceId());
-        askTransferValue["start"] = std::to_string(start);
-        askTransferValue["end"] = std::to_string(end);
-        Json::StreamWriterBuilder builder;
-        std::map<std::string, std::string> data = {
-            {MIME_TYPE_ASK_TRANSFER, Json::writeString(builder, askTransferValue)}};
-        // Be sure to not lock conversation
-        dht::ThreadPool().io().run(
-            [w = pimpl_->account_, conversationId = id(), data = std::move(data), member, deviceId] {
-                if (auto shared = w.lock()) {
-                    if (!member.empty() && !deviceId.empty())
-                        shared->sendSIPMessageToDevice(member, DeviceId(deviceId), data);
-                    else
-                        shared->sendInstantMessage(conversationId, data);
-                }
-            });
-    }
+    // Be sure to not lock conversation
+    dht::ThreadPool().io().run(
+        [w = weak(), deviceId, fileId, interactionId, sha3sum, path, totalSize, start, end] {
+            if (auto shared = w.lock()) {
+                auto acc = shared->pimpl_->account_.lock();
+                if (!acc)
+                    return;
+                shared->dataTransfer()->waitForTransfer(fileId,
+                                                        interactionId,
+                                                        sha3sum,
+                                                        path,
+                                                        totalSize);
+                acc->askForFileChannel(shared->id(), deviceId, fileId, start, end);
+            }
+        });
     return true;
 }
 

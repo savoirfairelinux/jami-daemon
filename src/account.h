@@ -318,14 +318,6 @@ public:
                                 const std::string& /*conversationId*/,
                                 const std::string& /*commitId*/) {};
 
-    virtual void onAskForTransfer(const std::string& /*peer*/,
-                                  const std::string& /*deviceId*/,
-                                  const std::string& /*conversationId*/,
-                                  const std::string& /*fileId*/,
-                                  const std::string& /*interactionId*/,
-                                  size_t /*start*/,
-                                  size_t /*end*/) {};
-
     // Invites
     virtual void onConversationRequest(const std::string& /*from*/, const Json::Value&) {};
     virtual void onNeedConversationRequest(const std::string& /*from*/,
