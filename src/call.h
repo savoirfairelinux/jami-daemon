@@ -459,7 +459,7 @@ protected:
     ConnectionState connectionState_ {ConnectionState::DISCONNECTED};
 
     /** Inactive/Active/Hold/Busy/Error */
-    CallState callState_ {CallState::INACTIVE};
+    std::atomic<CallState> callState_ {CallState::INACTIVE};
 
     /** Direct IP-to-IP or classic call */
     bool isIPToIP_ {false};
