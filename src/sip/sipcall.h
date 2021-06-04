@@ -335,7 +335,7 @@ private:
     void setCallMediaLocal();
     void startIceMedia();
     void onIceNegoSucceed();
-
+    void updateNegotiatedMedia();
     void startAllMedia();
     void stopAllMedia();
 

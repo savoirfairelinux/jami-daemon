@@ -203,7 +203,7 @@ DBusClient::initLibrary(int flags)
            exportable_callback<CallSignal::RemoteRecordingChanged>(
                bind(&DBusCallManager::remoteRecordingChanged, callM, _1, _2, _3)),
            exportable_callback<CallSignal::MediaNegotiationStatus>(
-               bind(&DBusCallManager::mediaNegotiationStatus, callM, _1, _2))};
+               bind(&DBusCallManager::mediaNegotiationStatus, callM, _1, _2, _3))};
 
     // Configuration event handlers
     const std::map<std::string, SharedCallback> configEvHandlers = {

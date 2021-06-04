@@ -500,7 +500,9 @@ MediaNegotiationTest::configureScenario(CallData& aliceData, CallData& bobData)
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaNegotiationStatus>(
-        [&](const std::string& callId, const std::string& event) {
+        [&](const std::string& callId,
+            const std::string& event,
+            const std::vector<std::map<std::string, std::string>>& mediaList) {
             auto user = getUserAlias(callId);
             if (not user.empty())
                 onMediaNegotiationStatus(callId,
