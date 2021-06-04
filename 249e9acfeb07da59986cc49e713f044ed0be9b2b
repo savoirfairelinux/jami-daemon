@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "d81042e1_1b7e0d3a",
+        "filename": "src/account.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 359,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-04T14:59:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "15006c37_05b42f05",
+      "range": {
+        "startLine": 359,
+        "startChar": 43,
+        "endLine": 359,
+        "endChar": 65
+      },
+      "revId": "249e9acfeb07da59986cc49e713f044ed0be9b2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "aa074f30_7c356be3",
         "filename": "src/account.h",
         "patchSetId": 8
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "87edea5e_c02205fe",
+        "filename": "src/account.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 360,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-04T14:59:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aa074f30_7c356be3",
+      "range": {
+        "startLine": 360,
+        "startChar": 43,
+        "endLine": 360,
+        "endChar": 64
+      },
+      "revId": "249e9acfeb07da59986cc49e713f044ed0be9b2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "db3abab0_2aecc7ef",
         "filename": "src/sip/sip_utils.cpp",
         "patchSetId": 8
@@ -59,6 +107,30 @@
       "writtenOn": "2021-06-01T16:08:36Z",
       "side": 1,
       "message": "std::string_view",
+      "range": {
+        "startLine": 217,
+        "startChar": 0,
+        "endLine": 217,
+        "endChar": 11
+      },
+      "revId": "249e9acfeb07da59986cc49e713f044ed0be9b2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4e80c532_5e112776",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-04T14:59:26Z",
+      "side": 1,
+      "message": "Why?\nIMHO, we need to go easy with the string_view.\nYou are suggesting to return as string_view for a string that was created on the stack. The view will point to invalid memory as soon as we return.\nIn addition, the copy elision and RVO will optimize peerUa (optional in c++11 and mandatory since c++17).",
+      "parentUuid": "db3abab0_2aecc7ef",
       "range": {
         "startLine": 217,
         "startChar": 0,
@@ -117,6 +189,30 @@
     },
     {
       "key": {
+        "uuid": "800c93ea_d009e9db",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1477,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-04T14:59:26Z",
+      "side": 1,
+      "message": "I really doubt it optimize anything... but anyway it does not harm neither.\nDone",
+      "parentUuid": "0dca5c4e_221e7f48",
+      "range": {
+        "startLine": 1477,
+        "startChar": 4,
+        "endLine": 1477,
+        "endChar": 46
+      },
+      "revId": "249e9acfeb07da59986cc49e713f044ed0be9b2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "e029e405_a12be51b",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 8
@@ -128,6 +224,30 @@
       "writtenOn": "2021-06-01T16:08:36Z",
       "side": 1,
       "message": "string_view",
+      "range": {
+        "startLine": 1479,
+        "startChar": 4,
+        "endLine": 1479,
+        "endChar": 15
+      },
+      "revId": "249e9acfeb07da59986cc49e713f044ed0be9b2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d2ada18f_3a18afd2",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1479,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-04T14:59:26Z",
+      "side": 1,
+      "message": "we need it as string in line 1507",
+      "parentUuid": "e029e405_a12be51b",
       "range": {
         "startLine": 1479,
         "startChar": 4,
@@ -160,6 +280,30 @@
       "revId": "249e9acfeb07da59986cc49e713f044ed0be9b2b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "be1fc500_c54686c6",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1487,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-04T14:59:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5f3c78fe_d37feb22",
+      "range": {
+        "startLine": 1487,
+        "startChar": 4,
+        "endLine": 1487,
+        "endChar": 47
+      },
+      "revId": "249e9acfeb07da59986cc49e713f044ed0be9b2b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
