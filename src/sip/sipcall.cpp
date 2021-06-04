@@ -1727,6 +1727,177 @@ SIPCall::isVideoMuted() const
 #endif
 }
 
+#if 1
+
+void
+SIPCall::updateNegotiatedMedia()
+{
+    JAMI_DBG("[call:%s] updating negotiated media", getCallId().c_str());
+
+    if (not transport_ or not sdp_) {
+        JAMI_ERR("[call:%s] the call is in invalid state", getCallId().c_str());
+        return;
+    }
+
+    auto slots = sdp_->getMediaSlots();
+    bool peer_holding {true};
+    int streamIdx = -1;
+
+    for (const auto& slot : slots) {
+        streamIdx++;
+        const auto& local = slot.first;
+        const auto& remote = slot.second;
+
+        auto const& rtpStream = rtpStreams_[streamIdx];
+        if (not rtpStream.mediaAttribute_) {
+            throw std::runtime_error("Missing media attribute");
+        }
+
+        rtpStream.mediaAttribute_->enabled_ = local.enabled and remote.enabled;
+
+        if (local.type != MEDIA_AUDIO && local.type != MEDIA_VIDEO) {
+            JAMI_ERR("[call:%s] Unexpected media type %u", getCallId().c_str(), local.type);
+            throw std::runtime_error("Invalid media attribute");
+        }
+
+        if (local.type != remote.type) {
+            JAMI_ERR("[call:%s] [SDP:slot#%u] Inconsistent media type between local and remote",
+                     getCallId().c_str(),
+                     streamIdx);
+            continue;
+        }
+
+        if (local.enabled and not local.codec) {
+            JAMI_WARN("[call:%s] [SDP:slot#%u] Missing local codec", getCallId().c_str(), streamIdx);
+            continue;
+        }
+        if (remote.enabled and not remote.codec) {
+            JAMI_WARN("[call:%s] [SDP:slot#%u] Missing remote codec",
+                      getCallId().c_str(),
+                      streamIdx);
+            continue;
+        }
+
+        if (isSecure() and local.enabled and not local.crypto) {
+            JAMI_WARN("[call:%s] [SDP:slot#%u] Secure mode but no local crypto attributes. "
+                      "Ignoring the media",
+                      getCallId().c_str(),
+                      streamIdx);
+            continue;
+        }
+
+        if (isSecure() and remote.enabled and not remote.crypto) {
+            JAMI_WARN("[call:%s] [SDP:slot#%u] Secure mode but no crypto remote attributes. "
+                      "Ignoring the media",
+                      getCallId().c_str(),
+                      streamIdx);
+            continue;
+        }
+
+        // Aggregate holding info over all remote streams
+        peer_holding &= remote.onHold;
+
+        // Configure the media.
+        configureRtpSession(rtpStream.rtpSession_, rtpStream.mediaAttribute_, local, remote);
+    }
+
+    if (not isSubcall() and peerHolding_ != peer_holding) {
+        peerHolding_ = peer_holding;
+        emitSignal<DRing::CallSignal::PeerHold>(getCallId(), peerHolding_);
+    }
+}
+
+void
+SIPCall::startAllMedia()
+{
+    JAMI_DBG("[call:%s] starting the media", getCallId().c_str());
+
+    if (not transport_ or not sdp_) {
+        JAMI_ERR("[call:%s] the call is in invalid state", getCallId().c_str());
+        return;
+    }
+
+    if (isSecure() && not transport_->isSecure()) {
+        JAMI_ERR("[call:%s] Can't perform secure call over insecure SIP transport",
+                 getCallId().c_str());
+        onFailure(EPROTONOSUPPORT);
+        return;
+    }
+
+    // reset
+    readyToRecord_ = false;
+    resetMediaReady();
+#ifdef ENABLE_VIDEO
+    bool isVideoEnabled = false;
+#endif
+
+    for (auto iter = rtpStreams_.begin(); iter != rtpStreams_.end(); iter++) {
+        if (not iter->mediaAttribute_) {
+            throw std::runtime_error("Missing media attribute");
+        }
+
+#ifdef ENABLE_VIDEO
+        if (iter->mediaAttribute_->type_ == MEDIA_VIDEO)
+            isVideoEnabled = true;
+#endif
+
+        // Not restarting media loop on hold as it's a huge waste of CPU ressources
+        // because of the audio loop
+        if (getState() != CallState::HOLD) {
+            if (isIceRunning()) {
+                // Create sockets for RTP and RTCP, and start the session.
+                auto streamIdx = std::distance(rtpStreams_.begin(), iter);
+                auto compId = ICE_COMP_ID_RTP + streamIdx * ICE_COMP_COUNT_PER_STREAM;
+                iter->rtpSession_->start(newIceSocket(compId), newIceSocket(compId + 1));
+            } else {
+                iter->rtpSession_->start(nullptr, nullptr);
+            }
+        }
+    }
+
+#ifdef ENABLE_VIDEO
+    // TODO. Move this elsewhere (when adding participant to conf?)
+    if (!isVideoEnabled && !getConfId().empty()) {
+        auto conference = Manager::instance().getConferenceFromID(getConfId());
+        conference->attachVideo(getReceiveVideoFrameActiveWriter().get(), getCallId());
+    }
+#endif
+
+    // Media is restarted, we can process the last holding request.
+    isWaitingForIceAndMedia_ = false;
+    if (remainingRequest_ != Request::NoRequest) {
+        bool result = true;
+        switch (remainingRequest_) {
+        case Request::HoldingOn:
+            result = hold();
+            if (holdCb_) {
+                holdCb_(result);
+                holdCb_ = nullptr;
+            }
+            break;
+        case Request::HoldingOff:
+            result = unhold();
+            if (offHoldCb_) {
+                offHoldCb_(result);
+                offHoldCb_ = nullptr;
+            }
+            break;
+        case Request::SwitchInput:
+            SIPSessionReinvite();
+            break;
+        default:
+            break;
+        }
+        remainingRequest_ = Request::NoRequest;
+    }
+
+#ifdef ENABLE_PLUGIN
+    // Create AVStreams associated with the call
+    createCallAVStreams();
+#endif
+}
+#else
+
 void
 SIPCall::startAllMedia()
 {
@@ -1856,6 +2027,7 @@ SIPCall::startAllMedia()
     createCallAVStreams();
 #endif
 }
+#endif
 
 void
 SIPCall::restartMediaSender()
@@ -2100,11 +2272,6 @@ SIPCall::onMediaNegotiationComplete()
     // to a negotiated transport.
     runOnMainThread([w = weak()] {
         if (auto this_ = w.lock()) {
-            // Notify using the parent Id if it's a subcall.
-            auto callId = this_->isSubcall() ? this_->parent_->getCallId() : this_->getCallId();
-            emitSignal<DRing::CallSignal::MediaNegotiationStatus>(
-                callId, MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS);
-
             std::lock_guard<std::recursive_mutex> lk {this_->callMutex_};
             JAMI_WARN("[call:%s] media changed", this_->getCallId().c_str());
             // The call is already ended, so we don't need to restart medias
@@ -2114,7 +2281,17 @@ SIPCall::onMediaNegotiationComplete()
             // If ICE is not used, start medias now
             auto rem_ice_attrs = this_->sdp_->getIceAttributes();
             if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
-                JAMI_WARN("[call:%s] no remote ICE for media", this_->getCallId().c_str());
+                JAMI_DBG("[call:%s] No ICE, starting media using default ",
+                         this_->getCallId().c_str());
+                // First, update the negotiated media.
+                this_->updateNegotiatedMedia();
+                // Notify using the parent Id if it's a subcall.
+                auto callId = this_->isSubcall() ? this_->parent_->getCallId() : this_->getCallId();
+                emitSignal<DRing::CallSignal::MediaNegotiationStatus>(
+                    callId,
+                    MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS,
+                    MediaAttribute::mediaAttributesToMediaMaps(this_->getMediaAttributeList()));
+
                 this_->stopAllMedia();
                 this_->startAllMedia();
                 return;
@@ -2172,6 +2349,15 @@ SIPCall::onIceNegoSucceed()
     // can stop a call. So do not start medias
     if (not inviteSession_ or inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not sdp_)
         return;
+    // First, update the negotiated media.
+    updateNegotiatedMedia();
+    // Notify using the parent Id if it's a subcall.
+    auto callId = isSubcall() ? parent_->getCallId() : getCallId();
+    emitSignal<DRing::CallSignal::MediaNegotiationStatus>(
+        callId,
+        MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS,
+        MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList()));
+
     // Nego succeed: move to the new media transport
     stopAllMedia();
     {
