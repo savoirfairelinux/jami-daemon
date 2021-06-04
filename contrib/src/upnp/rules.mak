@@ -1,5 +1,9 @@
 # UPNP
+ifdef HAVE_IOS
+UPNP_VERSION := 1.12.1
+else
 UPNP_VERSION := 1.14.0
+endif
 UPNP_URL := https://github.com/pupnp/pupnp/archive/release-$(UPNP_VERSION).tar.gz
 
 PKGS += upnp
@@ -21,13 +25,6 @@ endif
 	$(MOVE)
 
 PUPNP_OPTIONS=--disable-largefile --disable-samples --disable-device --disable-webserver --without-documentation
-ifdef HAVE_IOS
-PUPNP_OPTIONS+= --disable-reuseaddr
-else
-ifdef HAVE_MACOSX
-PUPNP_OPTIONS+= --disable-reuseaddr
-endif
-endif
 
 .upnp: upnp
 ifdef HAVE_WIN32
