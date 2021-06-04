@@ -1004,6 +1004,9 @@ Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession)
 
     std::vector<MediaAttribute> mediaList;
     for (unsigned idx = 0; idx < sdpSession->media_count; idx++) {
+        unsigned audioIdx = 0;
+        unsigned videoIdx = 0;
+
         mediaList.emplace_back(MediaAttribute {});
         auto& mediaAttr = mediaList.back();
 
@@ -1035,8 +1038,11 @@ Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession)
         // and the crypto materials are present.
         mediaAttr.secure_ = transp == MediaTransport::RTP_SAVP and not getCrypto(media).empty();
 
-        mediaAttr.label_ = mediaAttr.type_ == MediaType::MEDIA_AUDIO ? "audio_" : "video_";
-        mediaAttr.label_ += std::to_string(idx);
+        if (mediaAttr.type_ == MediaType::MEDIA_AUDIO) {
+            mediaAttr.label_ = "audio_" + std::to_string(audioIdx++);
+        } else if (mediaAttr.type_ == MediaType::MEDIA_VIDEO) {
+            mediaAttr.label_ = "video_" + std::to_string(videoIdx++);
+        }
     }
 
     return mediaList;

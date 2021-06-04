@@ -704,11 +704,14 @@
         <signal name="mediaChangeRequested" tp:name-for-bindings="mediaChangeRequested">
             <tp:added version="9.10.0"/>
             <tp:docstring>
-              <p>Notify a media update on the current call.</p>
-              <p>This signal is emitted when a media update is received from the peer. The list
-              of media included in the request is reported. The client can control the media status
-              of the answer through the media attributes when when accepting the request.</p>
-              <tp:rationale>The client must subscribe to this signal to handle incoming calls.</tp:rationale>
+              <p>Report a incoming media change request.</p>
+              <p>This signal is emitted when a media change request is received from 
+              the peer. The list of media included in the request is reported. The client 
+              can control the attributes of the media to used in the answer when accepting 
+              the request.</p>
+              <tp:rationale>The client must subscribe to this signal to handle the media 
+              change requests.
+              </tp:rationale>
             </tp:docstring>
             <arg type="s" name="accountID">
               <tp:docstring>
@@ -1021,18 +1024,24 @@
         </signal>
 
         <signal name="mediaNegotiationStatus" tp:name-for-bindings="mediaNegotiationStatus">
-            <tp:added version="9.10.0"/>
+            <tp:added version="10.1.0"/>
             <tp:docstring>
-              <p>Report mediation negotation status.</p>
+              <p>Report mediation negotiation status.</p>
             </tp:docstring>
             <arg type="s" name="callID" />
             <arg type="s" name="event" >
               <tp:docstring>
                 The acceptable states are:
                 <ul>
-                  <li>NEGOTIATION_SUCCESS: Medias are ready</li>
-                  <li>NEGOTIATION_FAIL: Medias negotion failed</li>
+                  <li>NEGOTIATION_SUCCESS: Media negitiation succeded</li>
+                  <li>NEGOTIATION_FAIL: Media negotiation failed</li>
                 </ul>
+              </tp:docstring>
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="mediaList">
+              <tp:docstring>
+                The updated attribute list of the negotiated media.
               </tp:docstring>
             </arg>
         </signal>
