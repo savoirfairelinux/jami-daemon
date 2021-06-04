@@ -82,6 +82,7 @@ struct CallData
     std::string userName_ {};
     std::string alias_ {};
     std::string callId_ {};
+    bool enableMultiStream_ {true};
     std::vector<Signal> signals_;
     std::condition_variable cv_ {};
     std::mutex mtx_;
@@ -111,11 +112,13 @@ private:
     void audio_and_video_then_mute_video();
     void audio_only_then_add_video();
     void audio_and_video_then_mute_audio();
+    void audio_only_then_add_video_but_peer_disabled_multistream();
 
     CPPUNIT_TEST_SUITE(MediaNegotiationTest);
     CPPUNIT_TEST(audio_and_video_then_mute_video);
     CPPUNIT_TEST(audio_only_then_add_video);
     CPPUNIT_TEST(audio_and_video_then_mute_audio);
+    CPPUNIT_TEST(audio_only_then_add_video_but_peer_disabled_multistream);
     CPPUNIT_TEST_SUITE_END();
 
     // Event/Signal handlers
@@ -126,6 +129,10 @@ private:
                                         const std::string& callId,
                                         const std::vector<DRing::MediaMap> mediaList,
                                         CallData& callData);
+    // For backward compatibility test cases
+    static void onIncomingCall(const std::string& accountId,
+                               const std::string& callId,
+                               CallData& callData);
     static void onMediaChangeRequested(const std::string& accountId,
                                        const std::string& callId,
                                        const std::vector<DRing::MediaMap> mediaList,
@@ -249,6 +256,36 @@ MediaNegotiationTest::onIncomingCallWithMedia(const std::string& accountId,
     std::unique_lock<std::mutex> lock {callData.mtx_};
     callData.callId_ = callId;
     callData.signals_.emplace_back(CallData::Signal(DRing::CallSignal::IncomingCallWithMedia::name));
+
+    callData.cv_.notify_one();
+}
+
+void
+MediaNegotiationTest::onIncomingCall(const std::string& accountId,
+                                     const std::string& callId,
+                                     CallData& callData)
+{
+    CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
+
+    JAMI_INFO("Signal [%s] - user [%s] - call [%s]",
+              DRing::CallSignal::IncomingCall::name,
+              callData.alias_.c_str(),
+              callId.c_str());
+
+    // NOTE.
+    // We shouldn't access shared_ptr<Call> as this event is supposed to mimic
+    // the client, and the client have no access to this type. But here, we only
+    // needed to check if the call exists. This is the most straightforward and
+    // reliable way to do it until we add a new API (like hasCall(id)).
+    if (not Manager::instance().getCallFromCallID(callId)) {
+        JAMI_WARN("Call with ID [%s] does not exist!", callId.c_str());
+        callData.callId_ = {};
+        return;
+    }
+
+    std::unique_lock<std::mutex> lock {callData.mtx_};
+    callData.callId_ = callId;
+    callData.signals_.emplace_back(CallData::Signal(DRing::CallSignal::IncomingCall::name));
 
     callData.cv_.notify_one();
 }
@@ -448,6 +485,7 @@ MediaNegotiationTest::configureScenario(CallData& aliceData, CallData& bobData)
         auto const& account = Manager::instance().getAccount<JamiAccount>(aliceData.accountId_);
         aliceData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         aliceData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
+        account->enableMultiStream(aliceData.enableMultiStream_);
     }
 
     {
@@ -455,6 +493,7 @@ MediaNegotiationTest::configureScenario(CallData& aliceData, CallData& bobData)
         auto const& account = Manager::instance().getAccount<JamiAccount>(bobData.accountId_);
         bobData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         bobData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
+        account->enableMultiStream(bobData.enableMultiStream_);
     }
 
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> signalHandlers;
@@ -471,6 +510,14 @@ MediaNegotiationTest::configureScenario(CallData& aliceData, CallData& bobData)
                                         callId,
                                         mediaList,
                                         user == aliceData.alias_ ? aliceData : bobData);
+        }));
+
+    signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCall>(
+        [&](const std::string& accountId, const std::string& callId, const std::string&) {
+            auto user = getUserAlias(callId);
+            if (not user.empty()) {
+                onIncomingCall(accountId, callId, user == aliceData.alias_ ? aliceData : bobData);
+            }
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaChangeRequested>(
@@ -500,7 +547,9 @@ MediaNegotiationTest::configureScenario(CallData& aliceData, CallData& bobData)
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaNegotiationStatus>(
-        [&](const std::string& callId, const std::string& event) {
+        [&](const std::string& callId,
+            const std::string& event,
+            const std::vector<std::map<std::string, std::string>>& mediaList) {
             auto user = getUserAlias(callId);
             if (not user.empty())
                 onMediaNegotiationStatus(callId,
@@ -533,8 +582,12 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
               bobData.accountId_.c_str());
 
     // Wait for incoming call signal.
-    CPPUNIT_ASSERT_EQUAL(true,
-                         waitForSignal(bobData, DRing::CallSignal::IncomingCallWithMedia::name));
+    if (bobData.enableMultiStream_) {
+        CPPUNIT_ASSERT(waitForSignal(bobData, DRing::CallSignal::IncomingCallWithMedia::name));
+    } else {
+        CPPUNIT_ASSERT(waitForSignal(bobData, DRing::CallSignal::IncomingCall::name));
+    }
+
     // Answer the call.
     {
         auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(scenario.answer_);
@@ -775,6 +828,47 @@ MediaNegotiationTest::audio_and_video_then_mute_audio()
         scenario.answerUpdate_.emplace_back(audio);
         scenario.answerUpdate_.emplace_back(video);
 
+        scenario.expectMediaRenegotiation_ = false;
+        scenario.expectMediaChangeRequest_ = false;
+
+        testWithScenario(aliceData_, bobData_, scenario);
+    }
+
+    DRing::unregisterSignalHandlers();
+
+    JAMI_INFO("=== End test %s ===", __FUNCTION__);
+}
+
+void
+MediaNegotiationTest::audio_only_then_add_video_but_peer_disabled_multistream()
+{
+    JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
+
+    // Disable multi-stream on Bob's side
+    bobData_.enableMultiStream_ = false;
+
+    configureScenario(aliceData_, bobData_);
+
+    MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
+    defaultAudio.label_ = "main audio";
+
+    MediaAttribute defaultVideo(MediaType::MEDIA_VIDEO);
+    defaultVideo.label_ = "main video";
+
+    {
+        MediaAttribute audio(defaultAudio);
+        MediaAttribute video(defaultVideo);
+
+        TestScenario scenario;
+        // First offer/answer
+        scenario.offer_.emplace_back(audio);
+        scenario.answer_.emplace_back(audio);
+
+        // Updated offer/answer
+        scenario.offerUpdate_.emplace_back(audio);
+        scenario.offerUpdate_.emplace_back(video);
+        scenario.answerUpdate_.emplace_back(audio);
+        scenario.answerUpdate_.emplace_back(video);
         scenario.expectMediaRenegotiation_ = false;
         scenario.expectMediaChangeRequest_ = false;
 

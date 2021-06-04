@@ -268,7 +268,9 @@ struct DRING_PUBLIC CallSignal
     struct DRING_PUBLIC MediaNegotiationStatus
     {
         constexpr static const char* name = "MediaNegotiationStatus";
-        using cb_type = void(const std::string&, const std::string&);
+        using cb_type = void(const std::string&,
+                             const std::string&,
+                             const std::vector<std::map<std::string, std::string>>&);
     };
 };
 
