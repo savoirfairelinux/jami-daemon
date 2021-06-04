@@ -543,7 +543,7 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
 
     auto encoderName = outputCodec->name; // guaranteed to be non null if AVCodec is not null
 
-    encoderCtx->thread_count = std::min(std::thread::hardware_concurrency(), is_video ? 16u : 4u);
+    encoderCtx->thread_count = std::min(std::thread::hardware_concurrency(), is_video ? 4u : 1u);
     JAMI_DBG("[%s] Using %d threads", encoderName, encoderCtx->thread_count);
 
     if (is_video) {
