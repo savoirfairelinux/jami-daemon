@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "15a4e085_8f8bf3be",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1073,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-04T12:59:20Z",
+      "side": 1,
+      "message": "just to remind that this method called on dht::ThreadPool.io() threads (through connectDeviceStartIce), meaning, potentially all the pool thread will be registered.",
+      "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c8b594f1_07d35443",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1138,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-04T12:59:20Z",
+      "side": 1,
+      "message": "Shouldn\u0027t this method also register the calling thread?",
+      "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
