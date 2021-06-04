@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "88b0a1f6_9b45e07f",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 546,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-04T17:38:49Z",
+      "side": 1,
+      "message": "Better use a constexpr and document.\nIn the other hand, setting a constant number of thread is not optimal. We should set according to the resolution. When encoding in multihread, the frame is split in slices or tiles. For high resolution it\u0027s ok, but in low resolution and low bit-rate, single thread will perform much better.",
+      "range": {
+        "startLine": 546,
+        "startChar": 88,
+        "endLine": 546,
+        "endChar": 95
+      },
+      "revId": "4ee182e285d9683fe8651d478ec2b25b72baac0f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
