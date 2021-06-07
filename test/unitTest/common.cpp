@@ -24,6 +24,8 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include "common.h"
+
 /* Jami */
 #include "account_const.h"
 #include "dring.h"
@@ -36,7 +38,7 @@
 
 void
 wait_for_announcement_of(const std::vector<std::string> accountIDs,
-                         std::chrono::seconds timeout = std::chrono::seconds(30))
+                         std::chrono::seconds timeout)
 {
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
@@ -91,14 +93,14 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
 
 void
 wait_for_announcement_of(const std::string& accountId,
-                         std::chrono::seconds timeout = std::chrono::seconds(30))
+                         std::chrono::seconds timeout)
 {
     wait_for_announcement_of(std::vector<std::string> {accountId}, timeout);
 }
 
 void
 wait_for_removal_of(const std::vector<std::string> accounts,
-                    std::chrono::seconds timeout = std::chrono::seconds(30))
+                    std::chrono::seconds timeout)
 {
     JAMI_INFO("Removing %zu accounts...", accounts.size());
 
@@ -137,7 +139,7 @@ wait_for_removal_of(const std::vector<std::string> accounts,
 
 void
 wait_for_removal_of(const std::string& account,
-                    std::chrono::seconds timeout = std::chrono::seconds(30))
+                    std::chrono::seconds timeout)
 {
     wait_for_removal_of(std::vector<std::string>{account}, timeout);
 }

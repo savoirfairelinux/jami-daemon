@@ -20,6 +20,11 @@
 
 #pragma once
 
+#include <chrono>
+#include <cstdint>
+#include <map>
+#include <string>
+
 constexpr size_t WAIT_FOR_ANNOUNCEMENT_TIMEOUT = 30;
 constexpr size_t WAIT_FOR_REMOVAL_TIMEOUT = 30;
 
