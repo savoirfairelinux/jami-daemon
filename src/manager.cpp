@@ -3109,10 +3109,8 @@ Manager::loadAccountMap(const YAML::Node& node)
                     JAMI_ERR("Can't import account %s: %s", dir.c_str(), e.what());
                 }
             }
-            {
-                std::lock_guard<std::mutex> l(lock);
-                remaining--;
-            }
+            std::lock_guard<std::mutex> l(lock);
+            remaining--;
             cv.notify_one();
         });
     }
