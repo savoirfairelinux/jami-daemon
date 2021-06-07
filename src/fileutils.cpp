@@ -76,7 +76,7 @@
 
 #include <sstream>
 #include <fstream>
-#include <filesystem>
+//#include <filesystem>
 #include <iostream>
 #include <stdexcept>
 #include <limits>
@@ -301,11 +301,39 @@ writeTime(const std::string& path)
 }
 
 void
-createSymLink(const std::string& src, const std::string& dest)
+createSymLink(const std::string& linkFile, const std::string& target)
 {
-    check_dir(std::string(std::filesystem::path(src).parent_path()).c_str());
-    auto absolute_dest = std::string(std::filesystem::absolute(std::filesystem::path(dest)));
-    std::filesystem::create_symlink(absolute_dest, src);
+    // C++ 17 with filesystem
+    //check_dir(std::string(std::filesystem::path(src).parent_path()).c_str());
+    //auto absolute_dest = std::string(std::filesystem::absolute(std::filesystem::path(dest)));
+    //std::filesystem::create_symlink(absolute_dest, src);
+
+    auto sep = target.find_last_of('/');
+    if (sep != std::string::npos)
+        check_dir(target.substr(0, sep).c_str());
+#ifndef _WIN32
+    char buf[PATH_MAX]; /* PATH_MAX incudes the \0 so +1 is not required */
+    char *res = realpath(target.c_str(), buf);
+    if (res)
+        symlink(buf, linkFile.c_str());
+#else
+    char *filename;
+    char full[256];
+    GetFullPathName(argv[0], 256, full, &filename);
+    CreateSymbolicLinkA(linkFile, full, 0);
+#endif
+}
+
+std::string
+getFileExtension(const std::string& filename)
+{
+    std::string result = "";
+    auto sep = filename.find_last_of('.');
+    if (sep != std::string::npos && sep != filename.size() - 1)
+        result = filename.substr(sep + 1);
+    if (result.size() >= 8)
+        return {};
+    return result;
 }
 
 bool
