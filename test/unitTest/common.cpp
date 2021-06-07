@@ -41,12 +41,17 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::vector<std::atomic_bool> accountsReady(accountIDs.size());
+
+    auto cv = std::make_shared<std::condition_variable>();
+    auto accountsReady = std::make_shared<std::vector<std::atomic_bool>>(accountIDs.size());
+
+    size_t to_be_announced = accountIDs.size();
 
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string& accountID, const std::map<std::string, std::string>& details) {
+            [=,
+             accountIDs = std::move(accountIDs)](const std::string& accountID,
+                                                 const std::map<std::string, std::string>& details) {
                 for (size_t i = 0; i < accountIDs.size(); ++i) {
                     if (accountIDs[i] != accountID) {
                         continue;
@@ -61,17 +66,17 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
                         continue;
                     }
 
-                    accountsReady[i] = true;
-                    cv.notify_one();
+                    accountsReady->at(i) = true;
+                    cv->notify_one();
                 }
             }));
 
-    JAMI_DBG("Waiting for %zu account to be announced...", accountIDs.size());
+    JAMI_DBG("Waiting for %zu account to be announced...", to_be_announced);
 
     DRing::registerSignalHandlers(confHandlers);
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, timeout, [&] {
-        for (const auto& rdy : accountsReady) {
+    CPPUNIT_ASSERT(cv->wait_for(lk, timeout, [&] {
+        for (const auto& rdy : *accountsReady) {
             if (not rdy) {
                 return false;
             }
@@ -82,7 +87,7 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
 
     DRing::unregisterSignalHandlers();
 
-    JAMI_DBG("%zu account announced!", accountIDs.size());
+    JAMI_DBG("%zu account announced!", to_be_announced);
 }
 
 void
@@ -96,13 +101,14 @@ void
 wait_for_removal_of(const std::vector<std::string> accounts,
                     std::chrono::seconds timeout = std::chrono::seconds(30))
 {
-    JAMI_INFO("Removing %zu accounts...", accounts.size());
-
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::atomic_bool accountsRemoved {false};
+
+    auto cv = std::make_shared<std::condition_variable>();
+    auto accountsRemoved = std::make_shared<std::atomic_bool>(false);
+
+    JAMI_INFO("Removing %zu accounts...", accounts.size());
 
     size_t current = jami::Manager::instance().getAccountList().size();
 
@@ -111,11 +117,11 @@ wait_for_removal_of(const std::vector<std::string> accounts,
 
     size_t target = current - accounts.size();
 
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>(
+        [=, accounts = std::move(accounts)]() {
             if (jami::Manager::instance().getAccountList().size() <= target) {
-                accountsRemoved = true;
-                cv.notify_one();
+                *accountsRemoved = true;
+                cv->notify_one();
             }
         }));
 
@@ -126,7 +132,7 @@ wait_for_removal_of(const std::vector<std::string> accounts,
         jami::Manager::instance().removeAccount(account, true);
     }
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, timeout, [&] { return accountsRemoved.load(); }));
+    CPPUNIT_ASSERT(cv->wait_for(lk, timeout, [&] { return accountsRemoved->load(); }));
 
     DRing::unregisterSignalHandlers();
 }
@@ -135,7 +141,7 @@ void
 wait_for_removal_of(const std::string& account,
                     std::chrono::seconds timeout = std::chrono::seconds(30))
 {
-    wait_for_removal_of(std::vector<std::string>{account}, timeout);
+    wait_for_removal_of(std::vector<std::string> {account}, timeout);
 }
 
 std::map<std::string, std::string>
