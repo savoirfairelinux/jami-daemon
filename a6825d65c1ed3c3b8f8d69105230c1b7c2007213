@@ -22,6 +22,30 @@
       "revId": "a6825d65c1ed3c3b8f8d69105230c1b7c2007213",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "79896901_3aa84cda",
+        "filename": "test/unitTest/common.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-07T18:42:44Z",
+      "side": 1,
+      "message": "I had a case where the destructor of accountIDs was called after wait_for_annoucement_of(), but the conf handlers callback was called again, using the vector after it has been freed.  Thus, the move semantic for the vector.\n\nThe same can apply in theory to other variables on the stack, thus using shared pointers.\n\nLine 88 only removes the handlers, but doesn\u0027t wait for the handlers if they are already executing.",
+      "parentUuid": "f9c34d89_e17ffff4",
+      "range": {
+        "startLine": 46,
+        "startChar": 38,
+        "endLine": 46,
+        "endChar": 46
+      },
+      "revId": "a6825d65c1ed3c3b8f8d69105230c1b7c2007213",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
