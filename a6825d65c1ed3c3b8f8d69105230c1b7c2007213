@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f9c34d89_e17ffff4",
+        "filename": "test/unitTest/common.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-07T17:51:04Z",
+      "side": 1,
+      "message": "not sure to understand what\u0027s your point there.\nVolatileDetailsChanged\u0027s callback will not be called after line 88 here, so cv and accountsReady will be valid.",
+      "range": {
+        "startLine": 46,
+        "startChar": 38,
+        "endLine": 46,
+        "endChar": 46
+      },
+      "revId": "a6825d65c1ed3c3b8f8d69105230c1b7c2007213",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
