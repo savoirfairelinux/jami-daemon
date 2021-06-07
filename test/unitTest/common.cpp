@@ -44,9 +44,13 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
     std::condition_variable cv;
     std::vector<std::atomic_bool> accountsReady(accountIDs.size());
 
+    size_t to_be_announced = accountIDs.size();
+
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string& accountID, const std::map<std::string, std::string>& details) {
+            [&,
+             accountIDs = std::move(accountIDs)](const std::string& accountID,
+                                                 const std::map<std::string, std::string>& details) {
                 for (size_t i = 0; i < accountIDs.size(); ++i) {
                     if (accountIDs[i] != accountID) {
                         continue;
@@ -66,7 +70,7 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
                 }
             }));
 
-    JAMI_DBG("Waiting for %zu account to be announced...", accountIDs.size());
+    JAMI_DBG("Waiting for %zu account to be announced...", to_be_announced);
 
     DRing::registerSignalHandlers(confHandlers);
 
@@ -82,7 +86,7 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
 
     DRing::unregisterSignalHandlers();
 
-    JAMI_DBG("%zu account announced!", accountIDs.size());
+    JAMI_DBG("%zu account announced!", to_be_announced);
 }
 
 void
