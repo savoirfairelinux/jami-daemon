@@ -385,10 +385,7 @@ JamiAccount::flush()
     SIPAccountBase::flush();
 
     fileutils::removeAll(cachePath_);
-    auto conversationDataPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + "conversation_data"
-                                + DIR_SEPARATOR_STR + getAccountID();
-    fileutils::removeAll(conversationDataPath);
-    fileutils::removeAll(dataPath_, true);
+    fileutils::removeAll(dataPath_);
     fileutils::removeAll(idPath_, true);
 }
 
@@ -5394,10 +5391,13 @@ JamiAccount::sendFile(const std::string& conversationId,
                                  path](bool, const std::string& commitId) {
                                     // Create a symlink to answer to re-ask
                                     auto symlinkPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR
-                                                       + "conversation_data" + DIR_SEPARATOR_STR
-                                                       + accId + DIR_SEPARATOR_STR + conversationId
+                                                       + accId + DIR_SEPARATOR_STR
+                                                       + "conversation_data" + DIR_SEPARATOR_STR + conversationId
                                                        + DIR_SEPARATOR_STR + commitId + "_"
                                                        + std::to_string(tid);
+                                    auto extension = fileutils::getFileExtension(path);
+                                    if (!extension.empty())
+                                        symlinkPath += "." + extension;
                                     if (path != symlinkPath && !fileutils::isSymLink(symlinkPath))
                                         fileutils::createSymLink(symlinkPath, path);
                                 });

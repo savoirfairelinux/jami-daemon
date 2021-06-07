@@ -868,8 +868,8 @@ public:
         , to_(to)
     {
         if (!to_.empty()) {
-            auto waitingDir = fileutils::get_data_dir() + DIR_SEPARATOR_STR + "conversation_data"
-                              + DIR_SEPARATOR_STR + accountId_ + DIR_SEPARATOR_STR + to_;
+            auto waitingDir = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_
+                              + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + to_;
             fileutils::check_dir(waitingDir.c_str());
             waitingPath_ = waitingDir + DIR_SEPARATOR_STR + "waiting";
         }
@@ -1243,8 +1243,8 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
 std::string
 TransferManager::path(const std::string& fileId) const
 {
-    return fileutils::get_data_dir() + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR
-           + pimpl_->accountId_ + DIR_SEPARATOR_STR + pimpl_->to_ + DIR_SEPARATOR_STR + fileId;
+    return fileutils::get_data_dir() + DIR_SEPARATOR_STR + pimpl_->accountId_ + DIR_SEPARATOR_STR
+           + "conversation_data" + DIR_SEPARATOR_STR + pimpl_->to_ + DIR_SEPARATOR_STR + fileId;
 }
 
 void
