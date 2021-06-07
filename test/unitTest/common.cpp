@@ -44,9 +44,13 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
     std::condition_variable cv;
     std::vector<std::atomic_bool> accountsReady(accountIDs.size());
 
+    size_t to_be_announced = accountIDs.size();
+
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string& accountID, const std::map<std::string, std::string>& details) {
+            [&,
+             accountIDs = std::move(accountIDs)](const std::string& accountID,
+                                                 const std::map<std::string, std::string>& details) {
                 for (size_t i = 0; i < accountIDs.size(); ++i) {
                     if (accountIDs[i] != accountID) {
                         continue;
@@ -66,7 +70,7 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
                 }
             }));
 
-    JAMI_DBG("Waiting for %zu account to be announced...", accountIDs.size());
+    JAMI_DBG("Waiting for %zu account to be announced...", to_be_announced);
 
     DRing::registerSignalHandlers(confHandlers);
 
@@ -82,7 +86,7 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
 
     DRing::unregisterSignalHandlers();
 
-    JAMI_DBG("%zu account announced!", accountIDs.size());
+    JAMI_DBG("%zu account announced!", to_be_announced);
 }
 
 void
@@ -111,8 +115,8 @@ wait_for_removal_of(const std::vector<std::string> accounts,
 
     size_t target = current - accounts.size();
 
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>(
+        [&, accounts = accounts]() {
             if (jami::Manager::instance().getAccountList().size() <= target) {
                 accountsRemoved = true;
                 cv.notify_one();
@@ -135,7 +139,7 @@ void
 wait_for_removal_of(const std::string& account,
                     std::chrono::seconds timeout = std::chrono::seconds(30))
 {
-    wait_for_removal_of(std::vector<std::string>{account}, timeout);
+    wait_for_removal_of(std::vector<std::string> {account}, timeout);
 }
 
 std::map<std::string, std::string>
