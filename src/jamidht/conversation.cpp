@@ -334,6 +334,9 @@ Conversation::Impl::convCommitToMap(const ConversationCommit& commit) const
     if (type == "application/data-transfer+json") {
         // Avoid the client to do the concatenation
         message["fileId"] = commit.id + "_" + message["tid"];
+        auto extension = fileutils::getFileExtension(message["displayName"]);
+        if (!extension.empty())
+            message["fileId"] += "." + extension;
     }
     auto linearizedParent = repository_->linearizedParent(commit.id);
     message["id"] = commit.id;
