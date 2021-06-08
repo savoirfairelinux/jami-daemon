@@ -239,6 +239,7 @@ public:
                                 const std::string& file_path);
     bool downloadFile(const std::string& accountId,
                       const std::string& conversationId,
+                      const std::string& interactionId,
                       const std::string& fileId,
                       const std::string& path);
     uint32_t cancelDataTransfer(const std::string& accountId,

@@ -823,9 +823,10 @@ bool
 DBusConfigurationManager::downloadFile(const std::string& accountId,
                                        const std::string& conversationUri,
                                        const std::string& interactionId,
+                                       const std::string& fileId,
                                        const std::string& path)
 {
-    return DRing::downloadFile(accountId, conversationUri, interactionId, path);
+    return DRing::downloadFile(accountId, conversationUri, interactionId, fileId, path);
 }
 
 uint32_t

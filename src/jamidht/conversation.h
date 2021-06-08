@@ -274,7 +274,8 @@ public:
                               bool verifyShaSum = true) const;
     /**
      * Adds a file to the waiting list and ask members
-     * @param fileID            Related id
+     * @param interactionId     Related interaction id
+     * @param fileId            Related id
      * @param path              Destination
      * @param member            Member if we know from who to pull file
      * @param deviceId          Device if we know from who to pull file
@@ -282,7 +283,8 @@ public:
      * @param end               Offset (unused)
      * @return id of the file
      */
-    bool downloadFile(const std::string& fileId,
+    bool downloadFile(const std::string& interactionId,
+                      const std::string& fileId,
                       const std::string& path,
                       const std::string& member = "",
                       const std::string& deviceId = "",

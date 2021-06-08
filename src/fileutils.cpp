@@ -313,9 +313,9 @@ createSymLink(const std::string& linkFile, const std::string& target)
         symlink(buf, linkFile.c_str());
 #else
     // C++ 17 with filesystem
-    check_dir(std::string(std::filesystem::path(src).parent_path()).c_str());
-    auto absolute_dest = std::string(std::filesystem::absolute(std::filesystem::path(dest)));
-    std::filesystem::create_symlink(absolute_dest, src);
+    check_dir(std::string(std::filesystem::path(linkFile).parent_path().u8string()).c_str());
+    auto absolute_dest = std::filesystem::absolute(std::filesystem::path(target));
+    std::filesystem::create_symlink(absolute_dest, linkFile);
 #endif
 }
 
