@@ -868,10 +868,11 @@ public:
         , to_(to)
     {
         if (!to_.empty()) {
-            auto waitingDir = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_
-                              + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + to_;
-            fileutils::check_dir(waitingDir.c_str());
-            waitingPath_ = waitingDir + DIR_SEPARATOR_STR + "waiting";
+            conversationDataPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_
+                                    + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR
+                                    + to_;
+            fileutils::check_dir(conversationDataPath_.c_str());
+            waitingPath_ = conversationDataPath_ + DIR_SEPARATOR_STR + "waiting";
         }
         loadWaiting();
     }
@@ -909,6 +910,7 @@ public:
     std::string accountId_ {};
     std::string to_ {};
     std::string waitingPath_ {};
+    std::string conversationDataPath_ {};
 
     // Pre swarm
     std::map<DRing::DataTransferId, std::shared_ptr<OutgoingFileTransfer>> oMap_ {};
@@ -1243,8 +1245,7 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
 std::string
 TransferManager::path(const std::string& fileId) const
 {
-    return fileutils::get_data_dir() + DIR_SEPARATOR_STR + pimpl_->accountId_ + DIR_SEPARATOR_STR
-           + "conversation_data" + DIR_SEPARATOR_STR + pimpl_->to_ + DIR_SEPARATOR_STR + fileId;
+    return pimpl_->conversationDataPath_ + DIR_SEPARATOR_STR + fileId;
 }
 
 void
