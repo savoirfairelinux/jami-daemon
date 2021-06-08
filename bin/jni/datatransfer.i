@@ -54,7 +54,7 @@ public:
   $1 = &temp;
 }
 %typemap(argout) std::string& OUTPUT {
-  jstring jvalue = JCALL1(NewStringUTF, jenv, temp$argnum.c_str()); 
+  jstring jvalue = JCALL1(NewStringUTF, jenv, temp$argnum.c_str());
   JCALL3(SetObjectArrayElement, jenv, $input, 0, jvalue);
 }
 %apply std::string& OUTPUT { std::string& path_out }
@@ -82,7 +82,7 @@ namespace DRing {
 
   DRing::DataTransferError sendFileLegacy(const DRing::DataTransferInfo info, DRing::DataTransferId& id);
   DRing::DataTransferError acceptFileTransfer(const std::string& accountId, const std::string& fileId, const std::string& file_path);
-  uint64_t downloadFile(const std::string& accountId, const std::string& conversationUri, const std::string& interactionId, const std::string& path);
+  uint64_t downloadFile(const std::string& accountId, const std::string& conversationId, const std::string& interactionId,const std::string& fileId, const std::string& path);
   DRing::DataTransferError cancelDataTransfer(const std::string& accountId, const std::string& conversationId, const std::string& fileId);
   DRing::DataTransferError dataTransferInfo(const std::string& accountId, const std::string& fileId, DRing::DataTransferInfo &info);
   DRing::DataTransferError fileTransferInfo(const std::string& accountId, const std::string& conversationId, const std::string& fileId, std::string &path_out, int64_t &total_out, int64_t &progress_out);
