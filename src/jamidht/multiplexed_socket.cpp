@@ -658,6 +658,8 @@ MultiplexedSocket::write(const uint16_t& channel,
                          std::size_t len,
                          std::error_code& ec)
 {
+    assert(nullptr != buf);
+
     if (pimpl_->isShutdown_) {
         ec = std::make_error_code(std::errc::broken_pipe);
         return -1;
@@ -942,7 +944,8 @@ ChannelSocket::shutdown()
     stop();
     if (auto ep = pimpl_->endpoint.lock()) {
         std::error_code ec;
-        ep->write(pimpl_->channel, nullptr, 0, ec);
+        const uint8_t dummy = '\0';
+        ep->write(pimpl_->channel, &dummy, 0, ec);
     }
 }
 
