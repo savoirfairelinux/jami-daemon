@@ -5455,6 +5455,7 @@ JamiAccount::transferFile(const std::string& conversationId,
 
 bool
 JamiAccount::downloadFile(const std::string& conversationId,
+                          const std::string& interactionId,
                           const std::string& fileId,
                           const std::string& path,
                           size_t start,
@@ -5466,7 +5467,7 @@ JamiAccount::downloadFile(const std::string& conversationId,
     if (conversation == conversations_.end() || !conversation->second)
         return false;
 
-    return conversation->second->downloadFile(fileId, path, "", "", start, end);
+    return conversation->second->downloadFile(interactionId, fileId, path, "", "", start, end);
 }
 
 void

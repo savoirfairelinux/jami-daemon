@@ -1632,8 +1632,9 @@
            <tp:added version="10.1.0"/>
            <arg type="b" name="result" direction="out"/>
            <arg type="s" name="accountId" direction="in"/>
-           <arg type="s" name="conversationUri" direction="in"/>
+           <arg type="s" name="conversationId" direction="in"/>
            <arg type="s" name="interactionId" direction="in"/>
+           <arg type="s" name="fileId" direction="in"/>
            <arg type="s" name="path" direction="in"/>
        </method>
 

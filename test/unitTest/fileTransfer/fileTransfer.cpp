@@ -431,7 +431,7 @@ FileTransferTest::testConversationFileTransfer()
     auto requestReceived = 0;
     auto conversationReady = 0;
     auto memberJoined = 0;
-    std::string tidBob, tidCarla;
+    std::string tidBob, tidCarla, iidBob, iidCarla;
     std::string hostAcceptanceBob = {}, hostAcceptanceCarla = {};
     std::vector<std::string> peerAcceptance = {}, finished = {};
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
@@ -441,8 +441,10 @@ FileTransferTest::testConversationFileTransfer()
             if (message["type"] == "application/data-transfer+json") {
                 if (accountId == bobId) {
                     tidBob = message["fileId"];
+                    iidBob = message["id"];
                 } else if (accountId == carlaId) {
                     tidCarla = message["fileId"];
+                    iidCarla = message["id"];
                 }
             } else if (accountId == aliceId && message["type"] == "member"
                        && message["action"] == "join") {
@@ -512,8 +514,8 @@ FileTransferTest::testConversationFileTransfer()
         return !tidBob.empty() && !tidCarla.empty();
     }));
 
-    DRing::downloadFile(bobId, convId, tidBob, "RCV");
-    DRing::downloadFile(carlaId, convId, tidCarla, "RCV2");
+    DRing::downloadFile(bobId, convId, iidBob, tidBob, "RCV");
+    DRing::downloadFile(carlaId, convId, iidCarla, tidCarla, "RCV2");
 
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(45), [&]() { return finished.size() == 3; }));
@@ -545,7 +547,7 @@ FileTransferTest::testFileTransferInConversation()
     bool requestReceived = false;
     bool conversationReady = false;
     bool bobJoined = false;
-    std::string tidBob;
+    std::string tidBob, iidBob;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
@@ -553,6 +555,7 @@ FileTransferTest::testFileTransferInConversation()
             if (message["type"] == "application/data-transfer+json") {
                 if (accountId == bobId) {
                     tidBob = message["fileId"];
+                    iidBob = message["id"];
                 }
             }
             if (accountId == aliceId && message["type"] == "member" && message["action"] == "join") {
@@ -614,7 +617,7 @@ FileTransferTest::testFileTransferInConversation()
 
     transferAFinished = false;
     transferBFinished = false;
-    DRing::downloadFile(bobId, convId, tidBob, "RECV");
+    DRing::downloadFile(bobId, convId, iidBob, tidBob, "RECV");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return transferAFinished && transferBFinished;
     }));
@@ -645,7 +648,7 @@ FileTransferTest::testBadSha3sumOut()
     bool requestReceived = false;
     bool conversationReady = false;
     bool memberJoin = false;
-    std::string mid = {};
+    std::string mid = {}, iid;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
@@ -653,6 +656,7 @@ FileTransferTest::testBadSha3sumOut()
             if (accountId == bobId) {
                 if (message["type"] == "application/data-transfer+json") {
                     mid = message["fileId"];
+                    iid = message["id"];
                 }
             }
             cv.notify_one();
@@ -731,7 +735,7 @@ FileTransferTest::testBadSha3sumOut()
 
     transferAFinished = false;
     transferBFinished = false;
-    DRing::downloadFile(bobId, convId, mid, "RECV");
+    DRing::downloadFile(bobId, convId, iid, mid, "RECV");
 
     // The file transfer will not be sent as modified
     CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferAFinished; }));
@@ -761,7 +765,7 @@ FileTransferTest::testBadSha3sumIn()
     bool requestReceived = false;
     bool conversationReady = false;
     bool memberJoin = false;
-    std::string mid = {};
+    std::string mid = {}, iid;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
@@ -769,6 +773,7 @@ FileTransferTest::testBadSha3sumIn()
             if (accountId == bobId) {
                 if (message["type"] == "application/data-transfer+json") {
                     mid = message["fileId"];
+                    iid = message["id"];
                 }
             }
             cv.notify_one();
@@ -846,7 +851,7 @@ FileTransferTest::testBadSha3sumIn()
 
     transferAFinished = false;
     transferBFinished = false;
-    DRing::downloadFile(bobId, convId, mid, "RECV");
+    DRing::downloadFile(bobId, convId, iid, mid, "RECV");
 
     // The file transfer will be sent but refused by bob
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferAFinished; }));
@@ -878,7 +883,7 @@ FileTransferTest::testAskToMultipleParticipants()
     bool requestReceived = false;
     bool conversationReady = false;
     bool memberJoin = false;
-    std::string bobTid, carlaTid;
+    std::string bobTid, carlaTid, iidBob, iidCarla;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
@@ -886,8 +891,10 @@ FileTransferTest::testAskToMultipleParticipants()
             if (message["type"] == "application/data-transfer+json") {
                 if (accountId == bobId) {
                     bobTid = message["fileId"];
+                    iidBob = message["id"];
                 } else if (accountId == carlaId) {
                     carlaTid = message["fileId"];
+                    iidCarla = message["id"];
                 }
             }
             cv.notify_one();
@@ -971,12 +978,12 @@ FileTransferTest::testAskToMultipleParticipants()
     }));
 
     transferCFinished = false;
-    DRing::downloadFile(carlaId, convId, carlaTid, "RECV2");
+    DRing::downloadFile(carlaId, convId, iidCarla, carlaTid, "RECV2");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferCFinished; }));
     CPPUNIT_ASSERT(fileutils::isFile("RECV2"));
 
     transferBFinished = false;
-    DRing::downloadFile(bobId, convId, bobTid, "RECV");
+    DRing::downloadFile(bobId, convId, iidBob, bobTid, "RECV");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBFinished; }));
     CPPUNIT_ASSERT(fileutils::isFile("RECV"));
 
@@ -1006,13 +1013,14 @@ FileTransferTest::testCancelInTransfer()
     bool requestReceived = false;
     bool conversationReady = false;
     bool bobJoined = false;
-    std::string tidBob;
+    std::string tidBob, iidBob;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
             if (message["type"] == "application/data-transfer+json") {
                 if (accountId == bobId) {
+                    iidBob = message["id"];
                     tidBob = message["fileId"];
                 }
             }
@@ -1076,7 +1084,7 @@ FileTransferTest::testCancelInTransfer()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !tidBob.empty(); }));
 
     transferBOngoing = false;
-    CPPUNIT_ASSERT(DRing::downloadFile(bobId, convId, tidBob, "RECV"));
+    CPPUNIT_ASSERT(DRing::downloadFile(bobId, convId, iidBob, tidBob, "RECV"));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBOngoing; }));
     transferBFinished = false;
     DRing::cancelDataTransfer(bobId, convId, tidBob);
@@ -1107,7 +1115,7 @@ FileTransferTest::testTransferInfo()
     bool requestReceived = false;
     bool conversationReady = false;
     bool bobJoined = false;
-    std::string tidBob;
+    std::string tidBob, iidBob;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
@@ -1115,6 +1123,7 @@ FileTransferTest::testTransferInfo()
             if (message["type"] == "application/data-transfer+json") {
                 if (accountId == bobId) {
                     tidBob = message["fileId"];
+                    iidBob = message["id"];
                 }
             }
             if (accountId == aliceId && message["type"] == "member" && message["action"] == "join") {
@@ -1183,7 +1192,7 @@ FileTransferTest::testTransferInfo()
 
     transferAFinished = false;
     transferBFinished = false;
-    DRing::downloadFile(bobId, convId, tidBob, "RECV");
+    DRing::downloadFile(bobId, convId, iidBob, tidBob, "RECV");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return transferAFinished && transferBFinished;
     }));

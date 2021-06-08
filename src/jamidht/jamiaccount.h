@@ -621,11 +621,13 @@ public:
                       size_t end = 0);
     /**
      * Ask conversation's members to send back a previous transfer to this deviec
-     * @param conversationUri   Related conversation
-     * @param fileId            Related interaction
+     * @param conversationId    Related conversation
+     * @param interactionId     Related interaction
+     * @param fileId            Related fileId
      * @param path              where to download the file
      */
-    bool downloadFile(const std::string& conversationUri,
+    bool downloadFile(const std::string& conversationId,
+                      const std::string& interactionId,
                       const std::string& fileId,
                       const std::string& path,
                       size_t start = 0,
