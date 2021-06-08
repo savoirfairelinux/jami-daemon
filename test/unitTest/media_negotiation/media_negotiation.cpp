@@ -595,10 +595,11 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
     }
 
     // Wait for media negotiation complete signal.
-    CPPUNIT_ASSERT_EQUAL(true,
-                         waitForSignal(bobData,
-                                       DRing::CallSignal::MediaNegotiationStatus::name,
-                                       MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+    CPPUNIT_ASSERT_EQUAL(
+        true,
+        waitForSignal(bobData,
+                      DRing::CallSignal::MediaNegotiationStatus::name,
+                      DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
     // Wait for the StateChange signal.
     CPPUNIT_ASSERT_EQUAL(true,
                          waitForSignal(bobData,
@@ -608,10 +609,11 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
     JAMI_INFO("BOB answered the call [%s]", bobData.callId_.c_str());
 
     // Wait for media negotiation complete signal.
-    CPPUNIT_ASSERT_EQUAL(true,
-                         waitForSignal(aliceData,
-                                       DRing::CallSignal::MediaNegotiationStatus::name,
-                                       MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+    CPPUNIT_ASSERT_EQUAL(
+        true,
+        waitForSignal(aliceData,
+                      DRing::CallSignal::MediaNegotiationStatus::name,
+                      DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
     // Validate Alice's media
     {
@@ -658,10 +660,11 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
 
     if (scenario.expectMediaRenegotiation_) {
         // Wait for media negotiation complete signal.
-        CPPUNIT_ASSERT_EQUAL(true,
-                             waitForSignal(aliceData,
-                                           DRing::CallSignal::MediaNegotiationStatus::name,
-                                           MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+        CPPUNIT_ASSERT_EQUAL(
+            true,
+            waitForSignal(aliceData,
+                          DRing::CallSignal::MediaNegotiationStatus::name,
+                          DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
         // Validate Alice's media
         {
