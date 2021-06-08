@@ -240,6 +240,9 @@ VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceS
         } else
             socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort()));
 
+        last_REMB_inc_ = clock::now();
+        last_REMB_dec_ = clock::now();
+
         socketPair_->setRtpDelayCallback(
             [&](int gradient, int deltaT) { delayMonitor(gradient, deltaT); });
 
