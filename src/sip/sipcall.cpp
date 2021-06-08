@@ -1825,7 +1825,7 @@ SIPCall::updateNegotiatedMedia()
     auto callId = isSubcall() ? parent_->getCallId() : getCallId();
     emitSignal<DRing::CallSignal::MediaNegotiationStatus>(
         callId,
-        MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS,
+        DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS,
         MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList()));
 }
 
