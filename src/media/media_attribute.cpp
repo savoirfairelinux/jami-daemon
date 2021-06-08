@@ -19,6 +19,7 @@
  */
 
 #include "media/media_attribute.h"
+#include "dring/media_const.h"
 
 namespace jami {
 
@@ -30,20 +31,20 @@ MediaAttribute::MediaAttribute(const DRing::MediaMap& mediaMap)
 
     std::pair<bool, bool> pairBool;
 
-    pairBool = getBoolValue(mediaMap, MediaAttributeKey::MUTED);
+    pairBool = getBoolValue(mediaMap, DRing::Media::MediaAttributeKey::MUTED);
     if (pairBool.first)
         muted_ = pairBool.second;
 
-    pairBool = getBoolValue(mediaMap, MediaAttributeKey::ENABLED);
+    pairBool = getBoolValue(mediaMap, DRing::Media::MediaAttributeKey::ENABLED);
     if (pairBool.first)
         enabled_ = pairBool.second;
 
     std::pair<bool, std::string> pairString;
-    pairString = getStringValue(mediaMap, MediaAttributeKey::SOURCE);
+    pairString = getStringValue(mediaMap, DRing::Media::MediaAttributeKey::SOURCE);
     if (pairBool.first)
         sourceUri_ = pairString.second;
 
-    pairString = getStringValue(mediaMap, MediaAttributeKey::LABEL);
+    pairString = getStringValue(mediaMap, DRing::Media::MediaAttributeKey::LABEL);
     if (pairBool.first)
         label_ = pairString.second;
 }
@@ -64,9 +65,9 @@ MediaAttribute::parseMediaList(const std::vector<DRing::MediaMap>& mediaList)
 MediaType
 MediaAttribute::stringToMediaType(const std::string& mediaType)
 {
-    if (mediaType.compare(MediaAttributeValue::AUDIO) == 0)
+    if (mediaType.compare(DRing::Media::MediaAttributeValue::AUDIO) == 0)
         return MediaType::MEDIA_AUDIO;
-    if (mediaType.compare(MediaAttributeValue::VIDEO) == 0)
+    if (mediaType.compare(DRing::Media::MediaAttributeValue::VIDEO) == 0)
         return MediaType::MEDIA_VIDEO;
     return MediaType::MEDIA_NONE;
 }
@@ -74,7 +75,7 @@ MediaAttribute::stringToMediaType(const std::string& mediaType)
 std::pair<bool, MediaType>
 MediaAttribute::getMediaType(const DRing::MediaMap& map)
 {
-    const auto& iter = map.find(MediaAttributeKey::MEDIA_TYPE);
+    const auto& iter = map.find(DRing::Media::MediaAttributeKey::MEDIA_TYPE);
     if (iter == map.end()) {
         JAMI_WARN("[MEDIA_TYPE] key not found in media map");
         return {false, MediaType::MEDIA_NONE};
@@ -130,9 +131,9 @@ char const*
 MediaAttribute::mediaTypeToString(MediaType type)
 {
     if (type == MediaType::MEDIA_AUDIO)
-        return MediaAttributeValue::AUDIO;
+        return DRing::Media::MediaAttributeValue::AUDIO;
     if (type == MediaType::MEDIA_VIDEO)
-        return MediaAttributeValue::VIDEO;
+        return DRing::Media::MediaAttributeValue::VIDEO;
     return nullptr;
 }
 
@@ -150,11 +151,12 @@ MediaAttribute::toMediaMap(const MediaAttribute& mediaAttr)
 {
     DRing::MediaMap mediaMap;
 
-    mediaMap.emplace(MediaAttributeKey::MEDIA_TYPE, mediaTypeToString(mediaAttr.type_));
-    mediaMap.emplace(MediaAttributeKey::LABEL, mediaAttr.label_);
-    mediaMap.emplace(MediaAttributeKey::ENABLED, boolToString(mediaAttr.enabled_));
-    mediaMap.emplace(MediaAttributeKey::MUTED, boolToString(mediaAttr.muted_));
-    mediaMap.emplace(MediaAttributeKey::SOURCE, mediaAttr.sourceUri_);
+    mediaMap.emplace(DRing::Media::MediaAttributeKey::MEDIA_TYPE,
+                     mediaTypeToString(mediaAttr.type_));
+    mediaMap.emplace(DRing::Media::MediaAttributeKey::LABEL, mediaAttr.label_);
+    mediaMap.emplace(DRing::Media::MediaAttributeKey::ENABLED, boolToString(mediaAttr.enabled_));
+    mediaMap.emplace(DRing::Media::MediaAttributeKey::MUTED, boolToString(mediaAttr.muted_));
+    mediaMap.emplace(DRing::Media::MediaAttributeKey::SOURCE, mediaAttr.sourceUri_);
 
     return mediaMap;
 }
