@@ -515,7 +515,7 @@ IceSdpParsingTest::audio_video_call()
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(bobData_,
                                  DRing::CallSignal::MediaNegotiationStatus::name,
-                                 MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+                                 DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
     // Wait for the StateChange signal.
     CPPUNIT_ASSERT(
         waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::CURRENT));
@@ -525,7 +525,7 @@ IceSdpParsingTest::audio_video_call()
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(aliceData_,
                                  DRing::CallSignal::MediaNegotiationStatus::name,
-                                 MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+                                 DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
     // Give some time to media to start.
     std::this_thread::sleep_for(std::chrono::seconds(2));
