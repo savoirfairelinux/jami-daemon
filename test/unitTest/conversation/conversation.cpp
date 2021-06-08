@@ -221,7 +221,7 @@ ConversationTest::setUp()
     carlaId = actors["carla"];
 
     Manager::instance().sendRegister(carlaId, false);
-    wait_for_announcement_of({aliceId, bobId, carlaId});
+    wait_for_announcement_of({aliceId, bobId});
 }
 
 void
