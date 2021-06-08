@@ -124,7 +124,7 @@ Account::Account(const std::string& accountID)
     , localModeratorsEnabled_(true)
     , allModeratorsEnabled_(true)
     , multiStreamEnabled_(false)
-    , iceCompIdRfc5245Compliant_(false)
+    , iceCompIdRfc5245Compliant_(true)
 {
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
