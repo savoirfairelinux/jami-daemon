@@ -77,12 +77,13 @@ acceptFileTransfer(const std::string& accountId,
 
 bool
 downloadFile(const std::string& accountId,
-             const std::string& conversationUri,
+             const std::string& conversationId,
+             const std::string& interactionId,
              const std::string& fileId,
              const std::string& path) noexcept
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        return acc->downloadFile(conversationUri, fileId, path);
+        return acc->downloadFile(conversationId, interactionId, fileId, path);
     return {};
 }
 

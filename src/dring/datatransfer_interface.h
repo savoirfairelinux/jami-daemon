@@ -143,7 +143,8 @@ DRING_PUBLIC DataTransferError acceptFileTransfer(const std::string& accountId,
 /// \param path
 ///
 DRING_PUBLIC bool downloadFile(const std::string& accountId,
-                               const std::string& conversationUri,
+                               const std::string& conversationId,
+                               const std::string& interactionId,
                                const std::string& fileId,
                                const std::string& path) noexcept;
 

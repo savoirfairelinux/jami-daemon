@@ -803,7 +803,7 @@ Conversation::sync(const std::string& member,
     pull(deviceId, std::move(cb), commitId);
     // For waiting request, downloadFile
     for (const auto& wr : dataTransfer()->waitingRequests())
-        downloadFile(wr.fileId, wr.path, member, deviceId);
+        downloadFile(wr.interactionId, wr.fileId, wr.path, member, deviceId);
     // VCard sync for member
     if (auto account = pimpl_->account_.lock()) {
         if (not account->needToSendProfile(deviceId)) {
@@ -967,20 +967,14 @@ Conversation::onFileChannelRequest(const std::string& member,
 }
 
 bool
-Conversation::downloadFile(const std::string& fileId,
+Conversation::downloadFile(const std::string& interactionId,
+                           const std::string& fileId,
                            const std::string& path,
                            const std::string&,
                            const std::string& deviceId,
                            std::size_t start,
                            std::size_t end)
 {
-    auto sep = fileId.find('_');
-    if (sep == std::string::npos) {
-        JAMI_ERR() << "Cannot download file with incorrect id " << fileId;
-        return false;
-    }
-
-    auto interactionId = fileId.substr(0, sep);
     auto commit = getCommit(interactionId);
     if (commit == std::nullopt || commit->find("type") == commit->end()
         || commit->find("sha3sum") == commit->end() || commit->find("tid") == commit->end()
