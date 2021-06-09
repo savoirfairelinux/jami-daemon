@@ -34,7 +34,7 @@
 #include "logger.h"
 #include "noncopyable.h"
 #include "client/ring_signal.h"
-#include "dring/videomanager_interface.h"
+#include "jamid/videomanager_interface.h"
 #include "libav_utils.h"
 #include "video_scaler.h"
 #include "smartools.h"

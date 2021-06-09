@@ -30,7 +30,7 @@
 #include "security/tls_session.h"
 #include "security/diffie-hellman.h"
 #include "sip/sipaccountbase.h"
-#include "dring/datatransfer_interface.h"
+#include "jamid/datatransfer_interface.h"
 #include "jamidht/conversation.h"
 #include "multiplexed_socket.h"
 

@@ -211,7 +211,7 @@ namespace std {
 %include "plugin_manager_interface.i"
 %include "conversation.i"
 
-#include "dring/callmanager_interface.h"
+#include "jamid/callmanager_interface.h"
 
 %inline %{
 /* some functions that need to be declared in *_wrap.cpp

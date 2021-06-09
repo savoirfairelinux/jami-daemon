@@ -26,8 +26,8 @@
 #include <mutex>
 #include <utility>
 
-#include "dring/dring.h"
-#include "dring/videomanager_interface.h"
+#include "jamid/jamid.h"
+#include "jamid/videomanager_interface.h"
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
 #include <android/log.h>

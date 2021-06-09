@@ -828,7 +828,7 @@ public:
     bool isCurrentCall(const Call& call) const;
 
     /**
-     * Load the accounts order set by the user from the dringrc config file
+     * Load the accounts order set by the user from the jamidrc config file
      * @return std::vector<std::string> A vector containing the account ID's
      */
     std::vector<std::string_view> loadAccountOrder() const;

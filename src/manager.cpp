@@ -81,8 +81,8 @@ using random_device = dht::crypto::random_device;
 #include "ice_transport.h"
 
 #include "client/ring_signal.h"
-#include "dring/call_const.h"
-#include "dring/account_const.h"
+#include "jamid/call_const.h"
+#include "jamid/account_const.h"
 
 #include "libav_utils.h"
 #include "video/sinkclient.h"
@@ -90,7 +90,7 @@ using random_device = dht::crypto::random_device;
 #include "audio/tonecontrol.h"
 
 #include "data_transfer.h"
-#include "dring/media_const.h"
+#include "jamid/media_const.h"
 
 #include "upnp/upnp_context.h"
 

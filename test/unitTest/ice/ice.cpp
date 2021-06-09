@@ -27,7 +27,7 @@
 #include "opendht/thread_pool.h"
 #include "src/ice_transport.h"
 #include "../../test_runner.h"
-#include "dring.h"
+#include "jamid.h"
 #include "account_const.h"
 
 using namespace DRing::Account;
@@ -43,7 +43,7 @@ public:
         // Init daemon
         DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
+            CPPUNIT_ASSERT(DRing::start("jamid-sample.yml"));
     }
     ~IceTest() { DRing::fini(); }
     static std::string name() { return "Ice"; }

@@ -12,7 +12,7 @@ nodejs_makefile_target = custom_target('nodejs.makefile',
 
 nodejs_node_target = custom_target('nodejs.node',
     command: [prognodegyp, 'build'],
-    output: 'build/Release/obj.target/dring.node',
+    output: 'build/Release/obj.target/jamid.node',
     depends: nodejs_makefile_target,
     build_by_default: true
 )

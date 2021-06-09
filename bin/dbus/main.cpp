@@ -22,7 +22,7 @@
  */
 
 #include "dbusclient.h"
-#include "dring/dring.h"
+#include "jamid/jamid.h"
 
 #include <signal.h>
 #include <getopt.h>

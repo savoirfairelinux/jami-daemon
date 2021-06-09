@@ -29,7 +29,7 @@
 #include "plugin/streamdata.h"
 #endif
 #include "audio/ringbufferpool.h"
-#include "dring/call_const.h"
+#include "jamid/call_const.h"
 #include "client/ring_signal.h"
 #include "sip/sip_utils.h"
 #include "ip_utils.h"

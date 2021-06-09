@@ -28,7 +28,7 @@
 #include <string>
 #include <memory>
 
-#include "dring.h"
+#include "jamid.h"
 #include "presence_const.h"
 
 namespace DRing {

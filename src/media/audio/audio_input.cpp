@@ -21,7 +21,7 @@
 
 #include "audio_frame_resizer.h"
 #include "audio_input.h"
-#include "dring/media_const.h"
+#include "jamid/media_const.h"
 #include "fileutils.h" // access
 #include "manager.h"
 #include "media_decoder.h"

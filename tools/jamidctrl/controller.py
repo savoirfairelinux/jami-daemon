@@ -89,7 +89,7 @@ class DRingCtrl(Thread):
 
         if not bus.name_has_owner(DBUS_DEAMON_OBJECT) :
             raise DRingCtrlDBusError(("Unable to find %s in DBUS." % DBUS_DEAMON_OBJECT)
-                                     + " Check if dring is running")
+                                     + " Check if jamid is running")
 
         try:
             proxy_instance = bus.get_object(DBUS_DEAMON_OBJECT,
@@ -112,7 +112,7 @@ class DRingCtrl(Thread):
                     DBUS_DEAMON_OBJECT+'.VideoManager')
 
         except dbus.DBusException as e:
-            raise DRingCtrlDBusError("Unable to bind to dring DBus API")
+            raise DRingCtrlDBusError("Unable to bind to jamid DBus API")
 
         try:
             self.instance.Register(os.getpid(), self.name)
@@ -132,7 +132,7 @@ class DRingCtrl(Thread):
             proxy_confmgr.connect_to_signal('messageReceived', self.onMessageReceived)
 
         except dbus.DBusException as e:
-            raise DRingCtrlDBusError("Unable to connect to dring DBus signals")
+            raise DRingCtrlDBusError("Unable to connect to jamid DBus signals")
 
 
     def unregister(self):

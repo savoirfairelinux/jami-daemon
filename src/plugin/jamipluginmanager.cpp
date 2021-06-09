@@ -30,7 +30,7 @@
 #include <msgpack.hpp>
 #include "manager.h"
 #include "preferences.h"
-#include "dring/plugin_manager_interface.h"
+#include "jamid/plugin_manager_interface.h"
 
 #define PLUGIN_ALREADY_INSTALLED 100 /* Plugin already installed with the same version */
 #define PLUGIN_OLD_VERSION       200 /* Plugin already installed with a newer version */

@@ -60,7 +60,7 @@ endif
 
 libclient_dbus_la_CXXFLAGS = -I../ \
             -I$(top_srcdir)/src \
-            -I$(top_srcdir)/src/dring \
+            -I$(top_srcdir)/src/jamid \
             -DPREFIX=\"$(prefix)\" \
             -DPROGSHAREDIR=\"${datadir}/ring\" \
             $(DBUSCPP_CFLAGS)

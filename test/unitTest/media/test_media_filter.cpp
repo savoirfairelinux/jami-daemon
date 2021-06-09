@@ -22,7 +22,7 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "dring.h"
+#include "jamid.h"
 #include "libav_deps.h"
 #include "media_buffer.h"
 #include "media_filter.h"

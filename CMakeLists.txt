@@ -14,7 +14,7 @@ add_subdirectory("src")
 source_group("Source Files" FILES ${Source_Files})
 source_group("Source Files\\client" FILES ${Source_Files__client})
 source_group("Source Files\\config" FILES ${Source_Files__config})
-source_group("Source Files\\dring" FILES ${Source_Files__dring})
+source_group("Source Files\\jamid" FILES ${Source_Files__jamid})
 source_group("Source Files\\hooks" FILES ${Source_Files__hooks})
 source_group("Source Files\\im" FILES ${Source_Files__im})
 source_group("Source Files\\jamidht" FILES ${Source_Files__jamidht})
@@ -46,7 +46,7 @@ list (APPEND ALL_FILES
       ${Source_Files}
       ${Source_Files__client}
       ${Source_Files__config}
-      ${Source_Files__dring}
+      ${Source_Files__jamid}
       ${Source_Files__hooks}
       ${Source_Files__im}
       ${Source_Files__jamidht}
@@ -101,7 +101,7 @@ if(MSVC)
    ################################################################################
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
        set_target_properties(${PROJECT_NAME} PROPERTIES
-           TARGET_NAME_RELEASELIB_WIN32 "dring"
+           TARGET_NAME_RELEASELIB_WIN32 "jamid"
        )
    endif()
    ################################################################################
@@ -126,7 +126,7 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/src;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/client;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/config;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/src/dring;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/src/jamid;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/hooks;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/im;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/media;"

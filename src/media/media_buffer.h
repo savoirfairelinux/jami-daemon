@@ -32,7 +32,7 @@ struct AVFrame;
 }
 
 namespace DRing {
-struct FrameBuffer; //  from dring/videomanager_interface.h
+struct FrameBuffer; //  from jamid/videomanager_interface.h
 }
 
 namespace jami {

@@ -19,8 +19,8 @@
  */
 
 %header %{
-#include "dring/dring.h"
-#include "dring/conversation_interface.h"
+#include "jamid/jamid.h"
+#include "jamid/conversation_interface.h"
 
 class ConversationCallback {
 public:

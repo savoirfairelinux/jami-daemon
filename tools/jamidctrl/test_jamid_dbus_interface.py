@@ -25,7 +25,7 @@ import logging
 import multiprocessing
 from sippwrap import SippWrapper
 from sippwrap import SippScreenStatParser
-from dringctrl import DRingCtrl as SflPhoneCtrl
+from jamidctrl import DRingCtrl as SflPhoneCtrl
 
 from nose.tools import nottest
 

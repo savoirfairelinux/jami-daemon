@@ -17,12 +17,12 @@ EXTRA_DIST = m4/libtool.m4 \
 			 contrib/src
 
 coverage-html:
-	$(AM_V_at)lcov --no-external --capture --initial --directory $(top_builddir) --output-file dring-coverage-base.info
-	$(AM_V_at)lcov --no-external --capture --directory $(top_builddir) --output-file dring-coverage-tests.info
-	$(AM_V_at)lcov --add-tracefile dring-coverage-base.info --add-tracefile dring-coverage-tests.info --output-file dring-coverage.info
-	$(AM_V_at)lcov --remove dring-coverage.info "$(abs_top_builddir)/contrib/*"  --output-file dring-coverage-filtered.info
+	$(AM_V_at)lcov --no-external --capture --initial --directory $(top_builddir) --output-file jamid-coverage-base.info
+	$(AM_V_at)lcov --no-external --capture --directory $(top_builddir) --output-file jamid-coverage-tests.info
+	$(AM_V_at)lcov --add-tracefile jamid-coverage-base.info --add-tracefile jamid-coverage-tests.info --output-file jamid-coverage.info
+	$(AM_V_at)lcov --remove jamid-coverage.info "$(abs_top_builddir)/contrib/*"  --output-file jamid-coverage-filtered.info
 	$(MKDIR_P) html-coverage-output
-	genhtml -o html-coverage-output dring-coverage-filtered.info
+	genhtml -o html-coverage-output jamid-coverage-filtered.info
 
 coverage-%:
 	gcovr --filter src --filter test --$*-pretty --$* --output $*-coverage-output.$*

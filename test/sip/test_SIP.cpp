@@ -180,7 +180,7 @@ test_SIP::testSimpleIncomingIpCall()
     // command to be executed by the thread, user agent client which initiate a call and hangup
     sippThread("sipp -sn uac 127.0.0.1 -i 127.0.0.1 -p 5062 -m 1 -bg");
 
-    // sleep a while to make sure that sipp insdtance is initialized and dring received
+    // sleep a while to make sure that sipp insdtance is initialized and jamid received
     // the incoming invite.
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -209,7 +209,7 @@ test_SIP::testMultipleIncomingIpCall(){
         // start a user agent server waiting for a call
         sippThread("sipp -sf sippxml/test_2.xml 127.0.0.1 -i 127.0.0.1 -p 506"+std::to_string(i+1)+" -m 1 -bg");
 
-        // sleep a while to make sure that sipp insdtance is initialized and dring received
+        // sleep a while to make sure that sipp insdtance is initialized and jamid received
         // the incoming invite.
         std::this_thread::sleep_for(std::chrono::seconds(3));
 

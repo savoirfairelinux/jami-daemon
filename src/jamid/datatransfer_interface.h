@@ -23,7 +23,7 @@
 
 #include "def.h"
 
-#include "dring.h"
+#include "jamid.h"
 
 #include <string>
 #include <map>

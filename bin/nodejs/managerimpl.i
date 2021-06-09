@@ -21,7 +21,7 @@
 /* %nodefaultctor ManagerImpl;
 %nodefaultdtor ManagerImpl; */
 %header %{
-#include "dring/dring.h"
+#include "jamid/jamid.h"
 %}
 
 namespace DRing {

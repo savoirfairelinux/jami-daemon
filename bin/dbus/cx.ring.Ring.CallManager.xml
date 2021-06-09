@@ -930,7 +930,7 @@
               <p>Transfer has been successfully
               processed. Client should remove transferred
               call from call list as it is no longer
-              accessible in daemon (dring).</p>
+              accessible in daemon (jamid).</p>
             </tp:docstring>
         </signal>
 
@@ -938,7 +938,7 @@
             <tp:docstring>
               <p>Transfer operation failed. Corresponding
               call is no longer accessible in
-              daemon (dring).</p>
+              daemon (jamid).</p>
             </tp:docstring>
         </signal>
 

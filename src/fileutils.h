@@ -28,7 +28,7 @@
 #include <cstdio>
 #include <ios>
 
-#include "dring/def.h"
+#include "jamid/def.h"
 
 #ifndef _WIN32
 #include <sys/stat.h>               // mode_t

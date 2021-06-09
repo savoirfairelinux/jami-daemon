@@ -18,7 +18,7 @@
  */
 #include "server_account_manager.h"
 #include "base64.h"
-#include "dring/account_const.h"
+#include "jamid/account_const.h"
 
 #include <opendht/http.h>
 #include <opendht/log.h>

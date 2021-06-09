@@ -196,12 +196,12 @@ AC_COMPILE_IFELSE(
 AC_MSG_RESULT([$CLANG])
 
 dnl define DRING_BUILD because we are building libring, not using it
-dnl if building shared library, define dring_EXPORTS
+dnl if building shared library, define jamid_EXPORTS
 AC_MSG_CHECKING([if compiling shared library])
 DAEMONCPPFLAGS+=" -fvisibility=hidden -DDRING_BUILD"
 AS_IF([test "x$enable_shared" == "xyes"],
   [RING_SHARED=yes
-   DAEMONCPPFLAGS+=" -Ddring_EXPORTS"],
+   DAEMONCPPFLAGS+=" -Djamid_EXPORTS"],
   [RING_SHARED=no])
 AC_MSG_RESULT([$RING_SHARED])
 

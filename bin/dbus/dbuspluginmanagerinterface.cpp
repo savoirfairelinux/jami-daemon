@@ -19,7 +19,7 @@
  */
 
 #include "dbuspluginmanagerinterface.h"
-#include "dring/plugin_manager_interface.h"
+#include "jamid/plugin_manager_interface.h"
 
 DBusPluginManagerInterface::DBusPluginManagerInterface(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/PluginManagerInterface")

@@ -22,7 +22,7 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "dring.h"
+#include "jamid.h"
 #include "videomanager_interface.h"
 #include "video/video_scaler.h"
 

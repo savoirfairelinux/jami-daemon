@@ -29,7 +29,7 @@
 #include "jamidht/multiplexed_socket.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
-#include "dring.h"
+#include "jamid.h"
 #include "account_const.h"
 #include "common.h"
 
@@ -46,7 +46,7 @@ public:
         // Init daemon
         DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
+            CPPUNIT_ASSERT(DRing::start("jamid-sample.yml"));
     }
     ~SyncHistoryTest() { DRing::fini(); }
     static std::string name() { return "SyncHistory"; }

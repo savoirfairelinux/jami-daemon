@@ -21,7 +21,7 @@
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "libav_utils.h"
 #include "media_buffer.h"
-#include "dring/videomanager_interface.h"
+#include "jamid/videomanager_interface.h"
 
 #include <new> // std::bad_alloc
 #include <cstdlib>

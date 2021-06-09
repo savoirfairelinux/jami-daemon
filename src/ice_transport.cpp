@@ -25,7 +25,7 @@
 #include "manager.h"
 #include "upnp/upnp_control.h"
 #include "transport/peer_channel.h"
-#include "dring/callmanager_interface.h"
+#include "jamid/callmanager_interface.h"
 
 #include <pjlib.h>
 

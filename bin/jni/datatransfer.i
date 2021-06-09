@@ -26,8 +26,8 @@
 %apply uint64_t { const DRing::DataTransferId };
 
 %header %{
-#include "dring/dring.h"
-#include "dring/datatransfer_interface.h"
+#include "jamid/jamid.h"
+#include "jamid/datatransfer_interface.h"
 
 class DataTransferCallback {
 public:

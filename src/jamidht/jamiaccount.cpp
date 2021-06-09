@@ -50,8 +50,8 @@
 #include "p2p.h"
 
 #include "client/ring_signal.h"
-#include "dring/call_const.h"
-#include "dring/account_const.h"
+#include "jamid/call_const.h"
+#include "jamid/account_const.h"
 
 #include "upnp/upnp_control.h"
 #include "system_codec_container.h"

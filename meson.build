@@ -161,8 +161,8 @@ add_project_arguments('-DHAVE_CONFIG_H', language: 'c')
 add_project_arguments('-DRING_BUILD', language: 'cpp')
 add_project_arguments('-DRING_BUILD', language: 'c')
 if get_option('default_library') != 'static'
-    add_project_arguments('-Ddring_EXPORTS', language: 'cpp')
-    add_project_arguments('-Ddring_EXPORTS', language: 'c')
+    add_project_arguments('-Djamid_EXPORTS', language: 'cpp')
+    add_project_arguments('-Djamid_EXPORTS', language: 'c')
 endif
 
 add_project_arguments('-DASIO_STANDALONE', language: 'cpp')

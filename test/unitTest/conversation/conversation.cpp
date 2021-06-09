@@ -33,7 +33,7 @@
 #include "jamidht/conversationrepository.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
-#include "dring.h"
+#include "jamid.h"
 #include "base64.h"
 #include "fileutils.h"
 #include "account_const.h"
@@ -213,7 +213,7 @@ ConversationTest::setUp()
     // Init daemon
     DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
     if (not Manager::instance().initialized)
-        CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
+        CPPUNIT_ASSERT(DRing::start("jamid-sample.yml"));
 
     auto actors = load_actors("actors/alice-bob-carla.yml");
     aliceId = actors["alice"];

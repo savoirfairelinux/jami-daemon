@@ -48,7 +48,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "client/ring_signal.h"
-#include "dring/account_const.h"
+#include "jamid/account_const.h"
 
 #ifdef ENABLE_VIDEO
 #include "libav_utils.h"

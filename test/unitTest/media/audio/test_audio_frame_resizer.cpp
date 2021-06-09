@@ -24,7 +24,7 @@
 
 #include "audio/audio_frame_resizer.h"
 #include "audio/audiobuffer.h"
-#include "dring.h"
+#include "jamid.h"
 #include "libav_deps.h"
 #include "media_buffer.h"
 

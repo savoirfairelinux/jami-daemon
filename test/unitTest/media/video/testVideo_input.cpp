@@ -27,7 +27,7 @@
 
 #include "media/video/video_input.h"
 #include "media_const.h"
-#include "dring.h"
+#include "jamid.h"
 
 #include <map>
 #include <string>
@@ -41,7 +41,7 @@ public:
     VideoInputTest()
     {
         DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-        DRing::start("dring-sample.yml");
+        DRing::start("jamid-sample.yml");
     }
 
     ~VideoInputTest() { DRing::fini(); }

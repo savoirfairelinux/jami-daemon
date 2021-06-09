@@ -25,7 +25,7 @@
 #include "config.h"
 #endif // HAVE_CONFIG_H
 
-#include "dring/def.h"
+#include "jamid/def.h"
 #include <memory>
 
 class DBusConfigurationManager;

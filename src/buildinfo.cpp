@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include "dring.h"
+#include "jamid.h"
 #include <string>
 
 #include <ciso646> // fix windows compiler bug

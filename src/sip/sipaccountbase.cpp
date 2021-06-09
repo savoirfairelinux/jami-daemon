@@ -32,7 +32,7 @@
 #include "config/yamlparser.h"
 
 #include "client/ring_signal.h"
-#include "dring/account_const.h"
+#include "jamid/account_const.h"
 #include "string_utils.h"
 #include "fileutils.h"
 #include "sip_utils.h"

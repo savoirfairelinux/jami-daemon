@@ -42,7 +42,7 @@
 #include "call_factory.h"
 
 #include "logger.h"
-#include "dring/media_const.h"
+#include "jamid/media_const.h"
 #include "audio/ringbufferpool.h"
 #include "sip/sipcall.h"
 

@@ -23,8 +23,8 @@
 class JamiDaemon {
     constructor(callbackMap) {
         if (callbackMap){
-            this.dring = require("./build/Release/dring.node");
-            this.dring.init(callbackMap);
+            this.jamid = require("./build/Release/jamid.node");
+            this.jamid.init(callbackMap);
         }
     }
 
@@ -33,7 +33,7 @@ class JamiDaemon {
     }
 
     addAccount(account) {
-        const params = new this.dring.StringMap();
+        const params = new this.jamid.StringMap();
         params.set("Account.type", "RING");
         if (account.managerUri)
             params.set("Account.managerUri", account.managerUri);
@@ -86,7 +86,7 @@ class JamiDaemon {
         if (account.upnpEnabled)
             params.set("Account.upnpEnabled", this.boolToStr(account.upnpEnabled));
 
-        this.dring.addAccount(params);
+        this.jamid.addAccount(params);
     }
     stringVectToArr(stringvect) {
         const outputArr = [];
@@ -101,24 +101,24 @@ class JamiDaemon {
         return outputObj;
     }
     getAccountList() {
-        return this.stringVectToArr(this.dring.getAccountList());
+        return this.stringVectToArr(this.jamid.getAccountList());
     }
     getAccountDetails(accountId) {
-        return this.mapToJs(this.dring.getAccountDetails(accountId));
+        return this.mapToJs(this.jamid.getAccountDetails(accountId));
     }
     getAudioOutputDeviceList() {
-        return this.stringVectToArr(this.dring.getAudioOutputDeviceList());
+        return this.stringVectToArr(this.jamid.getAudioOutputDeviceList());
     }
     getVolume(deviceName) {
-        return this.dring.getVolume(deviceName);
+        return this.jamid.getVolume(deviceName);
     }
 
     setVolume(deviceName, volume) {
-        return this.dring.setVolume(deviceName, volume);
+        return this.jamid.setVolume(deviceName, volume);
     }
 
     stop() {
-        this.dring.fini();
+        this.jamid.fini();
     }
 }
 

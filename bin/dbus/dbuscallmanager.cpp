@@ -19,7 +19,7 @@
  */
 
 #include "dbuscallmanager.h"
-#include "dring/callmanager_interface.h"
+#include "jamid/callmanager_interface.h"
 
 DBusCallManager::DBusCallManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/CallManager")

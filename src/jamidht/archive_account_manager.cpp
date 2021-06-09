@@ -21,7 +21,7 @@
 #include "libdevcrypto/Common.h"
 #include "archiver.h"
 #include "base64.h"
-#include "dring/account_const.h"
+#include "jamid/account_const.h"
 #include "account_schema.h"
 
 #include <opendht/dhtrunner.h>

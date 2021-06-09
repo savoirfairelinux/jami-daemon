@@ -25,7 +25,7 @@
 
 #include "dbusclient.h"
 #include "dbus_cpp.h"
-#include "dring.h"
+#include "jamid.h"
 
 #include "dbusinstance.h"
 

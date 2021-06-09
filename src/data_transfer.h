@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "dring/datatransfer_interface.h"
+#include "jamid/datatransfer_interface.h"
 
 #include <memory>
 #include <string>

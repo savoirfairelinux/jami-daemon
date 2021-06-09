@@ -28,7 +28,7 @@ extern "C" {
 }
 
 #include "audio/audiobuffer.h"
-#include "dring.h"
+#include "jamid.h"
 #include "videomanager_interface.h"
 
 #include "../../test_runner.h"

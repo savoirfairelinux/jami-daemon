@@ -23,7 +23,7 @@
 #include "fileutils.h"
 
 #include "client/ring_signal.h"
-#include "dring/account_const.h"
+#include "jamid/account_const.h"
 
 #include <opendht/thread_pool.h>
 #include <json/json.h>

@@ -41,7 +41,7 @@ CoreLayer::CoreLayer(const AudioPreference &pref)
     : AudioLayer(pref)
     , indexIn_(pref.getAlsaCardin())
     , indexOut_(pref.getAlsaCardout())
-    , indexRing_(pref.getAlsaCardring())
+    , indexRing_(pref.getAlsaCarjamid())
     , playbackBuff_(0, audioFormat_)
 {
      audioConfigurationQueue = dispatch_queue_create("com.savoirfairelinux.audioConfigurationQueueIOS", DISPATCH_QUEUE_SERIAL);
@@ -470,7 +470,7 @@ void CoreLayer::updatePreference(AudioPreference &preference, int index, AudioDe
             break;
 
         case AudioDeviceType::RINGTONE:
-            preference.setAlsaCardring(index);
+            preference.setAlsaCarjamid(index);
             break;
 
         default:

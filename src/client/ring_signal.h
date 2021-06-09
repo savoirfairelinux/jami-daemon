@@ -34,7 +34,7 @@
 #include "videomanager_interface.h"
 #endif
 
-#include "dring.h"
+#include "jamid.h"
 #include "logger.h"
 
 #ifdef __APPLE__

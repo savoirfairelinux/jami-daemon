@@ -25,7 +25,7 @@
 #include <getopt.h>
 #include <string>
 
-#include "dring.h"
+#include "jamid.h"
 #include "callmanager_interface.h"
 #include "configurationmanager_interface.h"
 #include "presencemanager_interface.h"

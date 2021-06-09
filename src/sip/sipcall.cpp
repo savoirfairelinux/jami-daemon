@@ -37,8 +37,8 @@
 #include "audio/audio_rtp_session.h"
 #include "system_codec_container.h"
 #include "im/instant_messaging.h"
-#include "dring/call_const.h"
-#include "dring/media_const.h"
+#include "jamid/call_const.h"
+#include "jamid/media_const.h"
 #include "client/ring_signal.h"
 #include "ice_transport.h"
 #include "pjsip-ua/sip_inv.h"
@@ -50,7 +50,7 @@
 #ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
 #include "video/video_rtp_session.h"
-#include "dring/videomanager_interface.h"
+#include "jamid/videomanager_interface.h"
 #include <chrono>
 #include <libavutil/display.h>
 #endif

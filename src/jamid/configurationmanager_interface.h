@@ -34,7 +34,7 @@
 #include <string>
 #include <cstdint>
 
-#include "dring.h"
+#include "jamid.h"
 #include "security_const.h"
 
 #ifdef __APPLE__

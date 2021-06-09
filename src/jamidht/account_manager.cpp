@@ -19,7 +19,7 @@
 #include "accountarchive.h"
 #include "jamiaccount.h"
 #include "base64.h"
-#include "dring/account_const.h"
+#include "jamid/account_const.h"
 #include "account_schema.h"
 #include "archiver.h"
 

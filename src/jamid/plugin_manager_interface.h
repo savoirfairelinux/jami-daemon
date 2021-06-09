@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "dring.h"
+#include "jamid.h"
 
 #include "def.h"
 

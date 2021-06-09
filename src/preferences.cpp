@@ -282,7 +282,7 @@ AudioPreference::AudioPreference()
     : audioApi_(PULSEAUDIO_API_STR)
     , alsaCardin_(atoi(ALSA_DFT_CARD))
     , alsaCardout_(atoi(ALSA_DFT_CARD))
-    , alsaCardring_(atoi(ALSA_DFT_CARD))
+    , alsaCarjamid_(atoi(ALSA_DFT_CARD))
     , alsaPlugin_("default")
     , alsaSmplrate_(44100)
     , pulseDevicePlayback_("")
@@ -360,7 +360,7 @@ AudioPreference::createAudioLayer()
     audioApi_ = ALSA_API_STR;
     checkSoundCard(alsaCardin_, AudioDeviceType::CAPTURE);
     checkSoundCard(alsaCardout_, AudioDeviceType::PLAYBACK);
-    checkSoundCard(alsaCardring_, AudioDeviceType::RINGTONE);
+    checkSoundCard(alsaCarjamid_, AudioDeviceType::RINGTONE);
 
     return new AlsaLayer(*this);
 #endif
@@ -424,7 +424,7 @@ AudioPreference::serialize(YAML::Emitter& out) const
     out << YAML::Key << ALSAMAP_KEY << YAML::Value << YAML::BeginMap;
     out << YAML::Key << CARDIN_KEY << YAML::Value << alsaCardin_;
     out << YAML::Key << CARDOUT_KEY << YAML::Value << alsaCardout_;
-    out << YAML::Key << CARDRING_KEY << YAML::Value << alsaCardring_;
+    out << YAML::Key << CARDRING_KEY << YAML::Value << alsaCarjamid_;
     out << YAML::Key << PLUGIN_KEY << YAML::Value << alsaPlugin_;
     out << YAML::Key << SMPLRATE_KEY << YAML::Value << alsaSmplrate_;
     out << YAML::EndMap;
@@ -482,7 +482,7 @@ AudioPreference::unserialize(const YAML::Node& in)
 
     parseValue(alsa, CARDIN_KEY, alsaCardin_);
     parseValue(alsa, CARDOUT_KEY, alsaCardout_);
-    parseValue(alsa, CARDRING_KEY, alsaCardring_);
+    parseValue(alsa, CARDRING_KEY, alsaCarjamid_);
     parseValue(alsa, PLUGIN_KEY, alsaPlugin_);
     parseValue(alsa, SMPLRATE_KEY, alsaSmplrate_);
 

@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "dring/security_const.h"
+#include "jamid/security_const.h"
 #include "noncopyable.h"
 
 #include <opendht/crypto.h>
