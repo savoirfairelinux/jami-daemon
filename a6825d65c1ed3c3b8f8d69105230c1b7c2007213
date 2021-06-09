@@ -70,6 +70,23 @@
       "revId": "a6825d65c1ed3c3b8f8d69105230c1b7c2007213",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5e6373a9_a0f76d1b",
+        "filename": "test/unitTest/common.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-09T13:44:53Z",
+      "side": 1,
+      "message": "This should also copy accounts not move it since it\u0027s used a line 131",
+      "revId": "a6825d65c1ed3c3b8f8d69105230c1b7c2007213",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
