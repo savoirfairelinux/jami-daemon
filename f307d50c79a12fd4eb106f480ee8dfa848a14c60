@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "d2b5fb38_fa3d0790",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1073,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-09T20:42:33Z",
+      "side": 1,
+      "message": "This is fine, because checking if a thread is registered for PJSIP is a trivial operation, and there is no limit of thread number in PJSIP. PJSIP internally uses thread_local variables to store thread-specific data.",
+      "parentUuid": "15a4e085_8f8bf3be",
+      "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "c8b594f1_07d35443",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 2
