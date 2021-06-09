@@ -1,2 +1,3 @@
 *.yml
 *.yml.bak
+*_with_sipaccount*
