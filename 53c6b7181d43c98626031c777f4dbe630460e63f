@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "134143ae_a056bb79",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1042,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-06-09T16:12:56Z",
+      "side": 1,
+      "message": "I wonder if we can have like a place to sotre the string\n\nlike Media::MainAudioLabel\n\nnot sure if we want to support many streams, or just a fixed number of streams\n\nJust a thought",
+      "range": {
+        "startLine": 1042,
+        "startChar": 32,
+        "endLine": 1042,
+        "endChar": 38
+      },
+      "revId": "53c6b7181d43c98626031c777f4dbe630460e63f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
