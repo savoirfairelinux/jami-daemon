@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "922da489_e78bd2f2",
+        "filename": "test/unitTest/common.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-09T15:42:26Z",
+      "side": 1,
+      "message": "unused",
+      "range": {
+        "startLine": 119,
+        "startChar": 12,
+        "endLine": 119,
+        "endChar": 20
+      },
+      "revId": "446c9d8551b995916efc1c549a877425fddb4625",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
