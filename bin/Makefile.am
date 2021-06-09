@@ -1,21 +1,21 @@
 if HAVE_WIN32
-libexec_PROGRAMS = ringcli
-ringcli_SOURCES = winmain.cpp
-ringcli_CXXFLAGS = -I$(top_srcdir)/src \
+libexec_PROGRAMS = jamid
+jamid_SOURCES = winmain.cpp
+jamid_CXXFLAGS = -I$(top_srcdir)/src \
                    -I$(top_srcdir)/src/dring \
                    -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\" \
 		   $(AM_CXXFLAGS)
-ringcli_LDADD = $(top_builddir)/src/libring.la
+jamid_LDADD = $(top_builddir)/src/libring.la
 endif
 
 if HAVE_OSX
-libexec_PROGRAMS = ringcli
-ringcli_SOURCES = osxmain.cpp
-ringcli_CXXFLAGS = -I$(top_srcdir)/src \
+libexec_PROGRAMS = jamid
+jamid_SOURCES = osxmain.cpp
+jamid_CXXFLAGS = -I$(top_srcdir)/src \
                    -I$(top_srcdir)/src/dring \
                    -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\" \
 		   $(AM_CXXFLAGS)
-ringcli_LDADD = $(top_builddir)/src/libring.la
+jamid_LDADD = $(top_builddir)/src/libring.la
 endif
 
 SUBDIRS=
@@ -23,15 +23,15 @@ SUBDIRS=
 if RING_DBUS
 SUBDIRS+=dbus
 
-libexec_PROGRAMS = dring
+libexec_PROGRAMS = jamid
 
-dring_SOURCES = main.cpp
+jamid_SOURCES = main.cpp
 
-dring_CXXFLAGS= -I$(top_srcdir)/src ${DBUSCPP_CFLAGS} \
+jamid_CXXFLAGS= -I$(top_srcdir)/src ${DBUSCPP_CFLAGS} \
                 -I$(top_srcdir)/src/dring \
                 -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
 
-dring_LDADD = dbus/libclient_dbus.la ${DBUSCPP_LIBS} $(top_builddir)/src/libring.la -ldl
+jamid_LDADD = dbus/libclient_dbus.la ${DBUSCPP_LIBS} $(top_builddir)/src/libring.la -ldl
 endif
 
 if ENABLE_NODEJS

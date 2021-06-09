@@ -580,8 +580,7 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
 std::string
 Manager::ManagerPimpl::retrieveConfigPath() const
 {
-    static const char* const PROGNAME = "dring";
-    return fileutils::get_config_dir() + DIR_SEPARATOR_STR + PROGNAME + ".yml";
+    return fileutils::get_config_dir() + DIR_SEPARATOR_STR + "dring.yml";
 }
 
 void
