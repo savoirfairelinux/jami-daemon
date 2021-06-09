@@ -118,8 +118,7 @@ build-aux/
 configure
 bin/dbus/*.adaptor.h
 bin/dbus/cx.ring.Ring.service
-bin/dring
-bin/ringcli
+bin/jamid
 doltcompile
 doltlibtool
 __pycache__
