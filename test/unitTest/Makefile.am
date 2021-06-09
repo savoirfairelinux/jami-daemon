@@ -1,6 +1,9 @@
 # Rules for the test code (use `make check` to execute)
 include $(top_srcdir)/globals.mk
 
+%_with_sipaccount.cpp: %.cpp
+	sed -e 's|JamiAccount|SIPAccount|g' -e 's|jamidht/jamiaccount.h|sip/sipaccount.h|g' -e 's|ProtocolNames::RING|ProtocolNames::SIP|g' $^ > $@
+
 AM_CXXFLAGS += -I$(top_srcdir)/src
 AM_LDFLAGS += $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
 check_PROGRAMS =
@@ -150,6 +153,9 @@ ut_conversation_SOURCES = conversation/conversation.cpp common.cpp
 #
 check_PROGRAMS += ut_media_negotiation
 ut_media_negotiation_SOURCES = media_negotiation/media_negotiation.cpp common.cpp
+
+check_PROGRAMS += ut_media_negotiation_with_sipaccount
+ut_media_negotiation_with_sipaccount_SOURCES = media_negotiation/media_negotiation_with_sipaccount.cpp common_with_sipaccount.cpp
 
 #
 # syncHistory

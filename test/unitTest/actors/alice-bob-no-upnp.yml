@@ -1,5 +1,4 @@
 default-account:
-      type: RING
       upnpEnabled: "false"
       archivePassword: ""
       archivePIN: ""

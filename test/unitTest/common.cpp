@@ -142,7 +142,7 @@ std::map<std::string, std::string>
 load_actors(const std::string& from_yaml)
 {
     std::map<std::string, std::string> actors {};
-    std::map<std::string, std::string> default_details = DRing::getAccountTemplate("RING");
+    std::map<std::string, std::string> default_details = DRing::getAccountTemplate(DRing::Account::ProtocolNames::RING);
 
     std::ifstream file = jami::fileutils::ifstream(from_yaml);
 
