@@ -281,7 +281,6 @@ public:
 
 private:
     pj_caching_pool cp_;
-    std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> pool_;
     pj_ice_strans_cfg ice_cfg_;
 };
 

@@ -1680,19 +1680,10 @@ IceTransport::link() const
 
 IceTransportFactory::IceTransportFactory()
     : cp_()
-    , pool_(nullptr,
-            [](pj_pool_t* pool) {
-                sip_utils::register_thread();
-                pj_pool_release(pool);
-            })
     , ice_cfg_()
 {
     sip_utils::register_thread();
     pj_caching_pool_init(&cp_, NULL, 0);
-    pool_.reset(pj_pool_create(&cp_.factory, "IceTransportFactory.pool", 512, 512, NULL));
-    if (not pool_)
-        throw std::runtime_error("pj_pool_create() failed");
-
     pj_ice_strans_cfg_default(&ice_cfg_);
     ice_cfg_.stun_cfg.pf = &cp_.factory;
 
@@ -1707,7 +1698,6 @@ IceTransportFactory::IceTransportFactory()
 
 IceTransportFactory::~IceTransportFactory()
 {
-    pool_.reset();
     pj_caching_pool_destroy(&cp_);
 }
 
