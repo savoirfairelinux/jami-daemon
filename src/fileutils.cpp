@@ -326,6 +326,7 @@ createSymLink(const std::string& linkFile, const std::string& target)
     symlink(target.c_str(), linkFile.c_str());
 #else
     std::filesystem::create_symlink(target, linkFile);
+    JAMI_ERR() << "@@@ CREATE " << target << " - " << linkFile;
 #endif
 }
 
