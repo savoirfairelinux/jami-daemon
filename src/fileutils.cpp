@@ -326,6 +326,7 @@ createSymLink(const std::string& linkFile, const std::string& target)
     symlink(target.c_str(), linkFile.c_str());
 #else
     std::filesystem::create_symlink(target, linkFile);
+    JAMI_ERR() << "@@@ CREATE " << target << " - " << linkFile;
 #endif
 }
 
@@ -1019,6 +1020,7 @@ sha3File(const std::string& path)
     for (int i = 0; i < SHA3_512_DIGEST_SIZE; ++i)
         pj_val_to_hex_digit(digest[i], &hash[2 * i]);
 
+    JAMI_ERR() << "@@@ sha3: " << std::string({hash, SHA3_512_DIGEST_SIZE * 2});
     return {hash, SHA3_512_DIGEST_SIZE * 2};
 }
 
