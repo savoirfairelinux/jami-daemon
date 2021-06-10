@@ -41,6 +41,7 @@
 #include <atomic>
 #include <charconv> // std::from_chars
 #include <cstdlib>  // mkstemp
+#include <filesystem>
 
 #include <opendht/rng.h>
 #include <opendht/thread_pool.h>
@@ -755,6 +756,8 @@ OutgoingFile::process()
 {
     if (!channel_ or !stream_)
         return;
+    JAMI_ERR() << "@@@ START SEND, size: " << fileutils::size(info_.path)
+               << " - is open: " << stream_.is_open() << " --- " << info_.path;
     auto correct = false;
     try {
         std::vector<char> buffer(UINT16_MAX, 0);
@@ -765,6 +768,7 @@ OutgoingFile::process()
                          end_ > start_ ? std::min(end_ - pos, buffer.size()) : buffer.size());
             auto gcount = stream_.gcount();
             pos += gcount;
+            JAMI_ERR() << "@@@ SEND " << gcount;
             channel_->write(reinterpret_cast<const uint8_t*>(buffer.data()), gcount, ec);
             if (ec)
                 break;
@@ -832,6 +836,7 @@ void
 IncomingFile::process()
 {
     channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
+        JAMI_ERR() << "@@@ RECV " << len;
         if (stream_.is_open())
             stream_ << std::string_view((const char*) buf, len);
         info_.bytesProgress = stream_.tellp();
@@ -1025,7 +1030,11 @@ TransferManager::transferFile(const std::shared_ptr<ChannelSocket>& channel,
     DRing::DataTransferInfo info;
     info.accountId = pimpl_->accountId_;
     info.conversationId = pimpl_->to_;
-    info.path = path;
+    if (std::filesystem::is_symlink(path)) {
+        info.path = std::filesystem::read_symlink(path);
+    } else {
+        info.path = path;
+    }
     auto f = std::make_shared<OutgoingFile>(channel, fileId, interactionId, info, start, end);
     f->onFinished([w = weak(), channel](uint32_t) {
         // schedule destroy outgoing transfer as not needed
