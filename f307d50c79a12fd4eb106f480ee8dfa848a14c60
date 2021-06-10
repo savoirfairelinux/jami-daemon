@@ -127,6 +127,24 @@
     },
     {
       "key": {
+        "uuid": "c1f4c4c9_90f8be6b",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1073,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-10T19:48:30Z",
+      "side": 1,
+      "message": "\" one thread to access PJSIP, at least when probing pj_ioqueue for socket events\" \u003d\u003e Isn\u0027t that already the case ? pj_ioqueue_pool is always called by its own thread (in handleEvents)\"\n\nNo, it\u0027s not the case. For ICE sockets, each ICE transp instance will have its own thread (scheduler) and ioqueue.\n\nIf we have blocking operations, we have to identify them and handle them accordingly. Otherwise, we can end-up with out-of-order sequences. For SIP in particular, SIP events should be handled with respect to their order. Example:\nINVITE,\nTRYING,\nRINGING,\nOK,\n\nSo it does not make sense to process INVITE, OK, RINGING, TRYING.",
+      "parentUuid": "82cdbe8f_e184dc29",
+      "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "c8b594f1_07d35443",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 2
