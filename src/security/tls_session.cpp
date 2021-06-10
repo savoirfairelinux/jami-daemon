@@ -1158,7 +1158,7 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
              and state_.load() != TlsSessionState::SHUTDOWN);
 
     // Stop on fatal error
-    if (gnutls_error_is_fatal(ret)) {
+    if (gnutls_error_is_fatal(ret) || state_.load() == TlsSessionState::SHUTDOWN) {
         JAMI_ERR("[TLS] handshake failed: %s", gnutls_strerror(ret));
         return TlsSessionState::SHUTDOWN;
     }
