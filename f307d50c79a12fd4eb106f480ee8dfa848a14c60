@@ -145,6 +145,24 @@
     },
     {
       "key": {
+        "uuid": "c64ff4cf_4694a509",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1073,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-10T20:37:36Z",
+      "side": 1,
+      "message": "There is one pj_ioqueue per ice transport, so a given transport will always use the same pj_ioqueue.",
+      "parentUuid": "c1f4c4c9_90f8be6b",
+      "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "c8b594f1_07d35443",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 2
