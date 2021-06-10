@@ -91,6 +91,24 @@
     },
     {
       "key": {
+        "uuid": "35062653_7b6ec9b9",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1073,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-10T18:45:36Z",
+      "side": 1,
+      "message": "I think you missed Olivier\u0027s point. \nThe idea is to use one thread to access PJSIP, at least when probing pj_ioqueue for socket events. There will be one scheduler instance for all ICE TCP instances, and can be also be reused for non-ICE socket (used by sipvoiplink). \nHowever, regarding ICE UDP (media RTP), we might want to keep a separate ioqueue/scheduler (to be evaluated).",
+      "parentUuid": "48ec26d8_3a960886",
+      "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "c8b594f1_07d35443",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 2
