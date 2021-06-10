@@ -73,6 +73,24 @@
     },
     {
       "key": {
+        "uuid": "48ec26d8_3a960886",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1073,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-10T18:08:25Z",
+      "side": 1,
+      "message": "ScheduledExecutor would end up creating a new thread for every ICE transport (VS reusing available threads from the pool).\n\nThis would actually end-up creating and registering many more threads than with the pool. Also, on some systems (like Windows) creating a thread is a heavy operation.\n\nThe point of the thread-pool is precisely to avoid creating hundreds of threads and to allow thread-reuse, leading to less total threads and less threads registered by pjsip compared to creating a new thread every time.\n\npjsip already has internal mutexes to play well with multithread code so there is no need to force all the code using pjsip to be on a single thread.",
+      "parentUuid": "e92776b5_1710757c",
+      "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "c8b594f1_07d35443",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 2
