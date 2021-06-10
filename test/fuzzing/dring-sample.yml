@@ -1,0 +1,63 @@
+accounts:
+  []
+preferences:
+  historyLimit: 0
+  ringingTimeout: 30
+  historyMaxCalls: 20
+  md5Hash: false
+  order: 4e5fe64cdc8326ea/a1af65efb1d322f4/aa9521db862f3433/13b52b4791ac353a/6a8d502d3af16070/c5c130190b007866/b639227cf05b305b/87c100d1f5dd3052/adcfaf9afb85ebe4/e3a8698cf37f3c4c/c289c563de4f3b3f/a22fa6009218c196/e22b4e69b0865626/dce6ee82862927d6/e21139f0a10f857d/0e8b8760fd4eefd8/3f8520a0115a406e/7854aabff463b9ad/662313ea8add499e/52886a6667564f12/1a4e6e6f7a36f060/6ef85d53218774a6/fe11269b610c1b7e/1ba091b76bd99bfa/9d70f90e9f88b33f/f982b2191e31b9d8/bf33ac21b759003a/aca69607f63e1b5a/630d875447a6bc1e/9ee4079bc01d1bc0/d5c7458650e8433c/ff26f41eb1f75ee3/4ece812065412881/0db689685e75953e/7f97cf637de40515/831f8200dd251baf/6830be25eba56576/82455c136472b215/310ea321151487f1/a175392a38b96ca3/29c8aba818948de5/80d96a528be5fe83/c9ffcf8c3f8dfc92/fe6b44393cb4c8ba/bfe2ea6d0c2f1f19/cb3b1d0a962912dc/
+  portNum: 5060
+  searchBarDisplay: true
+  zoneToneChoice: North America
+voipPreferences:
+  disableSecureDlgCheck: false
+  playDtmf: true
+  playTones: true
+  pulseLength: 250
+  symmetric: true
+  zidFile: ""
+audio:
+  alsa:
+    cardIn: 0
+    cardOut: 0
+    cardRing: 0
+    plugin: default
+    smplRate: 44100
+  alwaysRecording: false
+  audioApi: alsa
+  automaticGainControl: false
+  captureMuted: false
+  noiseReduce: false
+  playbackMuted: false
+  pulse:
+    devicePlayback: ""
+    deviceRecord: ""
+    deviceRingtone: ""
+  portaudio:
+    devicePlayback: ""
+    deviceRecord: ""
+    deviceRingtone: ""
+  recordPath: ""
+  volumeMic: 1
+  volumeSpkr: 1
+  echoCanceller: system
+video:
+  recordPreview: true
+  recordQuality: 0
+  decodingAccelerated: true
+  encodingAccelerated: false
+  conferenceResolution: 1280x720
+  devices:
+    []
+plugins:
+  pluginsEnabled: false
+  installedPlugins:
+    []
+  loadedPlugins:
+    []
+shortcuts:
+  hangUp: ""
+  pickUp: ""
+  popupWindow: ""
+  toggleHold: ""
+  togglePickupHangup: ""
