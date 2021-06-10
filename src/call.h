@@ -283,6 +283,7 @@ public:
 
     void addStateListener(StateListenerCb&& listener)
     {
+        std::lock_guard<std::recursive_mutex> lk {callMutex_};
         stateChangedListeners_.emplace_back(std::move(listener));
     }
 
