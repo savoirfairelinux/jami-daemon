@@ -245,8 +245,8 @@ MultiplexedSocket::Impl::eventLoop()
                     handleProtocolPacket(std::move(msg.data));
                 else
                     handleChannelPacket(msg.channel, std::move(msg.data));
-                continue;
-            } catch (...) {
+            } catch (const msgpack::type_error& E) {
+                JAMI_ERR("Failed to unpacked message of %d bytes: %s", size, E.what());
             }
         }
     }
