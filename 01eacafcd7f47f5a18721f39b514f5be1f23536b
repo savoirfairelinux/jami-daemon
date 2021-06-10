@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "527efe88_52560fec",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1207,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-06-10T15:05:42Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027req\u0027 used after it was moved\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-use-after-move",
+      "revId": "01eacafcd7f47f5a18721f39b514f5be1f23536b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
