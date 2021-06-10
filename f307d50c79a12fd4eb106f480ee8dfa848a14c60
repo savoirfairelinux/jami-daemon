@@ -55,6 +55,24 @@
     },
     {
       "key": {
+        "uuid": "e92776b5_1710757c",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1073,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-10T13:37:09Z",
+      "side": 1,
+      "message": "furthermore, the thread registration check might be broken as per PJSIP comment (to be honest, I did not check if this comment still holds or applies to us):\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n   /* If a thread descriptor has been registered before, just return it. */\n    if (pj_thread_local_get (thread_tls_id) !\u003d 0) {\n\t// 2006-02-26 bennylp:\n\t//  This wouldn\u0027t work in all cases!.\n\t//  If thread is created by external module (e.g. sound thread),\n\t//  thread may be reused while the pool used for the thread descriptor\n\t//  has been deleted by application.\n\t//*thread_ptr \u003d (pj_thread_t*)pj_thread_local_get (thread_tls_id);\n        //return PJ_SUCCESS;\n    }\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d",
+      "parentUuid": "8a34cbcb_2ae2d4cf",
+      "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "c8b594f1_07d35443",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 2
