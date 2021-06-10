@@ -1,0 +1,21 @@
+default-account:
+      type: RING
+      upnpEnabled: "true"
+      archivePassword: ""
+      archivePIN: ""
+      archivePath: ""
+
+accounts:
+
+  rdv:
+    displayName: RDV
+    alias: RDV
+    rendezVous: true
+
+  alice:
+    displayName: ALICE
+    alias: ALICE
+
+  bob:
+    displayName: BOB
+    alias: BOB
