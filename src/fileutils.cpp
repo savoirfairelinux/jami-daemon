@@ -325,8 +325,11 @@ createSymLink(const std::string& linkFile, const std::string& target)
 #ifndef _WIN32
     symlink(target.c_str(), linkFile.c_str());
 #else
-    std::error_code ec;
-    std::filesystem::create_symlink(target, linkFile, ec);
+    // std::error_code ec;
+    // std::filesystem::create_symlink(target, linkFile, ec);
+    int test = CreateSymbolicLinkA(linkFile.c_str(), target.c_str(), 0);
+    DWORD err = GetLastError();
+    JAMI_ERR() << "@@@ CREATE SYMLINK " << target << " -> " << linkFile;
 #endif
 }
 
@@ -998,6 +1001,7 @@ sha3File(const std::string& path)
     try {
         if (!fileutils::isFile(path))
             return {};
+        JAMI_ERR() << "@@@ SIZE: " << size(path);
         openStream(file, path);
         if (!file)
             return {};
