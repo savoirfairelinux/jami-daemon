@@ -998,7 +998,7 @@ sha3File(const std::string& path)
     try {
         if (!fileutils::isFile(path))
             return {};
-        openStream(file, path);
+        openStream(file, path, std::ios::binary | std::ios::in);
         if (!file)
             return {};
         std::vector<char> buffer(8192, 0);
