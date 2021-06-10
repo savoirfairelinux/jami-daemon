@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "8a34cbcb_2ae2d4cf",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1073,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-10T12:58:29Z",
+      "side": 1,
+      "message": "I think that this solves the symptom, but not the underlying problem.  There\u0027s an overall problem with registration of threads with PJ.  Do we really need to allow infinite thread to access the PJ ice transport?  Why not have a ScheduledExecutor that does the jobs and other threads wait for it. After all, the ScheduledExecutor acts as a mutex just like now, but now only _one_ thread has to register to PJ per ice transport.  This can even be transformed into an async operation if the caller doesn\u0027t need the result immediately.",
+      "parentUuid": "d2b5fb38_fa3d0790",
+      "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "c8b594f1_07d35443",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 2
