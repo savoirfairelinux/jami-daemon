@@ -22,13 +22,9 @@
 #include <set>
 #include <atomic>
 #include <mutex>
-#include <condition_variable>
+#include <thread>
 
-#include "manager.h"
 #include "jamidht/connectionmanager.h"
-#include "jamidht/jamiaccount.h"
-#include "dring.h"
-#include "account_const.h"
 
 #include "lib/gnutls.h"
 #include "lib/utils.h"
@@ -99,48 +95,4 @@ void pre_gnutls_deinit_hook(gnutls_session_t session)
 }
 
 
-int main(void)
-{
-        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-
-        if (not jami::Manager::instance().initialized) {
-            assert(DRing::start("dring-sample.yml"));
-        }
-
-        auto actors = load_actors_and_wait_for_announcement("actors/alice-bob.yml");
-
-        auto alice = actors["alice"];
-        auto bob   = actors["bob"];
-
-        auto aliceAccount = jami::Manager::instance().getAccount<jami::JamiAccount>(alice);
-        auto bobAccount   = jami::Manager::instance().getAccount<jami::JamiAccount>(bob);
-
-        auto aliceUri = aliceAccount->getUsername();
-        auto bobUri   = bobAccount->getUsername();
-
-        std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-        std::atomic_bool callReceived {false};
-        std::mutex mtx;
-        std::unique_lock<std::mutex> lk {mtx};
-        std::condition_variable cv;
-
-        confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCall>(
-                                    [&](const std::string&, const std::string&, const std::string&) {
-                                            callReceived = true;
-                                            cv.notify_one();
-                                    }));
-
-        DRing::registerSignalHandlers(confHandlers);
-
-        auto call = aliceAccount->newOutgoingCall(bobUri);
-
-        assert(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callReceived.load(); }));
-
-        std::this_thread::sleep_for(std::chrono::seconds(60));
-
-        wait_for_removal_of({alice, bob});
-
-        DRing::fini();
-
-        return 0;
-}
+#include "scenarios/classic-alice-and-bob.h"
