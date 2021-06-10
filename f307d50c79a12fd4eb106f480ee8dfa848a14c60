@@ -109,6 +109,24 @@
     },
     {
       "key": {
+        "uuid": "82cdbe8f_e184dc29",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1073,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-10T19:26:26Z",
+      "side": 1,
+      "message": "Ideally, the daemon could just use a single thread and use async operations à-la asio/libuv/nodejs, but we\u0027re stuck with some constrains related to the pjsip design.\n\n\"one thread to access PJSIP, at least when probing pj_ioqueue for socket events\" \u003d\u003e Isn\u0027t that already the case ? pj_ioqueue_pool is always called by its own thread (in handleEvents)\n\n\"one scheduler instance for all ICE TCP instances\" \u003d\u003e If some operations are blocking (eg to send stuff on the network), it\u0027s gonna block other unrelated stuff for other sockets/peers (that\u0027s the point of the io pool)",
+      "parentUuid": "35062653_7b6ec9b9",
+      "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "c8b594f1_07d35443",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 2
