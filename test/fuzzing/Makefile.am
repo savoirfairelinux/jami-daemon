@@ -6,4 +6,4 @@ check_PROGRAMS =
 
 lib_LTLIBRARIES = libfuzz.la
 
-libfuzz_la_SOURCES = lib/utils.cpp lib/supervisor.cpp lib/gnutls.cpp
+libfuzz_la_SOURCES = lib/utils.cpp lib/supervisor.cpp lib/gnutls.cpp lib/rand.cpp lib/syslog.cpp
