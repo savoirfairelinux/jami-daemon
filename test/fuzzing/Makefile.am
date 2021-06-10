@@ -7,5 +7,5 @@ check_PROGRAMS =
 
 lib_LTLIBRARIES = libfuzz.la
 
-libfuzz_la_SOURCES = lib/utils.cpp lib/supervisor.cpp
+libfuzz_la_SOURCES = lib/utils.cpp lib/supervisor.cpp lib/gnutls.cpp
 endif
