@@ -755,6 +755,8 @@ OutgoingFile::process()
 {
     if (!channel_ or !stream_)
         return;
+    JAMI_ERR() << "@@@ START SEND, size: " << fileutils::size(info_.path)
+               << " - is open: " << stream_.is_open();
     auto correct = false;
     try {
         std::vector<char> buffer(UINT16_MAX, 0);
@@ -765,6 +767,7 @@ OutgoingFile::process()
                          end_ > start_ ? std::min(end_ - pos, buffer.size()) : buffer.size());
             auto gcount = stream_.gcount();
             pos += gcount;
+            JAMI_ERR() << "@@@ SEND " << gcount;
             channel_->write(reinterpret_cast<const uint8_t*>(buffer.data()), gcount, ec);
             if (ec)
                 break;
@@ -832,6 +835,7 @@ void
 IncomingFile::process()
 {
     channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
+        JAMI_ERR() << "@@@ RECV " << len;
         if (stream_.is_open())
             stream_ << std::string_view((const char*) buf, len);
         info_.bytesProgress = stream_.tellp();
