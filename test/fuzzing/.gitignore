@@ -1,0 +1,4 @@
+*.d
+*.so
+*.o
+sip-parser.cpp
