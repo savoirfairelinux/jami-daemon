@@ -41,6 +41,7 @@
 #include <atomic>
 #include <charconv> // std::from_chars
 #include <cstdlib>  // mkstemp
+#include <filesystem>
 
 #include <opendht/rng.h>
 #include <opendht/thread_pool.h>
@@ -382,7 +383,7 @@ SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
     , peerUri_(peerUri)
 {
     info_ = metaInfo_->info();
-    fileutils::openStream(input_, info_.path, std::ios::binary);
+    fileutils::openStream(input_, info_.path, std::ios::in | std::ios::binary);
     if (!input_)
         throw std::runtime_error("input file open failed");
     metaInfo_->addLinkedTransfer(this);
@@ -734,12 +735,11 @@ OutgoingFile::OutgoingFile(const std::shared_ptr<ChannelSocket>& channel,
         channel_->shutdown();
         return;
     }
-    fileutils::openStream(stream_, info_.path);
-    if (!stream_) {
+    fileutils::openStream(stream_, info_.path, std::ios::binary | std::ios::in);
+    if (!stream_ || !stream_.is_open()) {
         channel_->shutdown();
         return;
     }
-    stream_.seekg(start, std::ios::beg);
 }
 
 OutgoingFile::~OutgoingFile()
@@ -753,9 +753,10 @@ OutgoingFile::~OutgoingFile()
 void
 OutgoingFile::process()
 {
-    if (!channel_ or !stream_)
+    if (!channel_ or !stream_ or !stream_.is_open())
         return;
     auto correct = false;
+    stream_.seekg(start_, std::ios::beg);
     try {
         std::vector<char> buffer(UINT16_MAX, 0);
         std::error_code ec;
@@ -802,7 +803,7 @@ IncomingFile::IncomingFile(const std::shared_ptr<ChannelSocket>& channel,
     : FileInfo(channel, fileId, interactionId, info)
     , sha3Sum_(sha3Sum)
 {
-    fileutils::openStream(stream_, info_.path);
+    fileutils::openStream(stream_, info_.path, std::ios::binary | std::ios::out);
     if (!stream_)
         return;
 

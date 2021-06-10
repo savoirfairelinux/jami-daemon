@@ -326,7 +326,7 @@ createSymLink(const std::string& linkFile, const std::string& target)
     symlink(target.c_str(), linkFile.c_str());
 #else
     std::error_code ec;
-    std::filesystem::create_symlink(target, linkFile, ec);
+    std::filesystem::create_symlink(linkFile, target, ec);
 #endif
 }
 
@@ -998,7 +998,7 @@ sha3File(const std::string& path)
     try {
         if (!fileutils::isFile(path))
             return {};
-        openStream(file, path);
+        openStream(file, path, std::ios::binary | std::ios::in);
         if (!file)
             return {};
         std::vector<char> buffer(8192, 0);

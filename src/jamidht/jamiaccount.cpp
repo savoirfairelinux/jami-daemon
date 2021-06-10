@@ -1199,12 +1199,12 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 req.conversationId = conversationId;
                 req.received = std::time(nullptr);
                 auto details = vCard::utils::toMap(
-                    std::string_view(reinterpret_cast<const char*>(payload.data()),
-                                        payload.size()));
+                    std::string_view(reinterpret_cast<const char*>(payload.data()), payload.size()));
                 req.metadatas = ConversationRepository::infosFromVCard(details);
                 accountManager_->addConversationRequest(conversationId, std::move(req));
-                emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(
-                    getAccountID(), conversationId, req.toMap());
+                emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(getAccountID(),
+                                                                                   conversationId,
+                                                                                   req.toMap());
             }
             emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(getAccountID(),
                                                                          conversationId,
