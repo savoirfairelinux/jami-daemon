@@ -326,7 +326,10 @@ createSymLink(const std::string& linkFile, const std::string& target)
     symlink(target.c_str(), linkFile.c_str());
 #else
     std::error_code ec;
-    std::filesystem::create_symlink(target, linkFile, ec);
+    std::filesystem::create_symlink(linkFile, target, ec);
+    // int test = CreateSymbolicLinkA(target.c_str(), linkFile.c_str(), 0);
+    // DWORD err = GetLastError();
+    JAMI_ERR() << "@@@ CREATE SYMLINK " << target << " -> " << linkFile;
 #endif
 }
 
@@ -386,6 +389,7 @@ loadFile(const std::string& path, const std::string& default_dir)
     file.seekg(0, std::ios::beg);
     if (!file.read((char*) buffer.data(), size))
         throw std::runtime_error("Can't load file: " + path);
+    JAMI_ERR() << "@@@ LOAD FILE GCOUNT: " << file.gcount();
     return buffer;
 }
 
@@ -998,6 +1002,7 @@ sha3File(const std::string& path)
     try {
         if (!fileutils::isFile(path))
             return {};
+        JAMI_ERR() << "@@@ SIZE: " << size(path);
         openStream(file, path);
         if (!file)
             return {};

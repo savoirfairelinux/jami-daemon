@@ -41,6 +41,7 @@
 #include <atomic>
 #include <charconv> // std::from_chars
 #include <cstdlib>  // mkstemp
+#include <filesystem>
 
 #include <opendht/rng.h>
 #include <opendht/thread_pool.h>
@@ -382,7 +383,7 @@ SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
     , peerUri_(peerUri)
 {
     info_ = metaInfo_->info();
-    fileutils::openStream(input_, info_.path, std::ios::binary);
+    fileutils::openStream(input_, info_.path, std::ios::in | std::ios::binary);
     if (!input_)
         throw std::runtime_error("input file open failed");
     metaInfo_->addLinkedTransfer(this);
@@ -734,12 +735,13 @@ OutgoingFile::OutgoingFile(const std::shared_ptr<ChannelSocket>& channel,
         channel_->shutdown();
         return;
     }
-    fileutils::openStream(stream_, info_.path);
-    if (!stream_) {
+    JAMI_ERR() << "@@@ LOAD FILE " << info_.path << "!!!! "
+               << fileutils::loadFile(info_.path).size();
+    fileutils::openStream(stream_, info_.path, std::ios::binary | std::ios::in);
+    if (!stream_ || !stream_.is_open()) {
         channel_->shutdown();
         return;
     }
-    stream_.seekg(start, std::ios::beg);
 }
 
 OutgoingFile::~OutgoingFile()
@@ -753,18 +755,21 @@ OutgoingFile::~OutgoingFile()
 void
 OutgoingFile::process()
 {
-    if (!channel_ or !stream_)
+    JAMI_ERR() << "@@@ START SEND, size: " << fileutils::size(info_.path)
+               << " - is open: " << stream_.is_open() << " --- " << info_.path;
+    if (!channel_ or !stream_ or !stream_.is_open())
         return;
     auto correct = false;
+    stream_.seekg(start_, std::ios::beg);
     try {
         std::vector<char> buffer(UINT16_MAX, 0);
         std::error_code ec;
         auto pos = start_;
         while (!stream_.eof()) {
-            stream_.read(buffer.data(),
-                         end_ > start_ ? std::min(end_ - pos, buffer.size()) : buffer.size());
+            stream_.read(buffer.data(), UINT16_MAX);
             auto gcount = stream_.gcount();
             pos += gcount;
+            JAMI_ERR() << "@@@ SEND " << gcount;
             channel_->write(reinterpret_cast<const uint8_t*>(buffer.data()), gcount, ec);
             if (ec)
                 break;
@@ -802,7 +807,7 @@ IncomingFile::IncomingFile(const std::shared_ptr<ChannelSocket>& channel,
     : FileInfo(channel, fileId, interactionId, info)
     , sha3Sum_(sha3Sum)
 {
-    fileutils::openStream(stream_, info_.path);
+    fileutils::openStream(stream_, info_.path, std::ios::binary | std::ios::out);
     if (!stream_)
         return;
 
@@ -832,6 +837,7 @@ void
 IncomingFile::process()
 {
     channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
+        JAMI_ERR() << "@@@ RECV " << len;
         if (stream_.is_open())
             stream_ << std::string_view((const char*) buf, len);
         info_.bytesProgress = stream_.tellp();
@@ -952,7 +958,8 @@ TransferManager::sendFile(const std::string& path,
     info.accountId = pimpl_->accountId_;
     info.author = account->getUsername();
     info.peer = peer;
-    info.path = path;
+    info.path = std::filesystem::canonical(path).u8string();
+    JAMI_ERR() << "@@@ sendFile() " << info.path;
     info.displayName = filename;
     info.bytesProgress = 0;
 
@@ -1025,7 +1032,17 @@ TransferManager::transferFile(const std::shared_ptr<ChannelSocket>& channel,
     DRing::DataTransferInfo info;
     info.accountId = pimpl_->accountId_;
     info.conversationId = pimpl_->to_;
-    info.path = path;
+    //  if (std::filesystem::is_symlink(path)) {
+    //      info.path = std::filesystem::read_symlink(path).u8string();
+    //      JAMI_ERR() << "@@@ " << path << " ---> " << info.path;
+    //  } else {
+    JAMI_ERR() << "@@@ transfer file " << path;
+    if (fileutils::isSymLink(path)) {
+        JAMI_ERR() << "@@@ SYMLINK!" << std::filesystem::read_symlink(path).u8string();
+    }
+    info.path = std::filesystem::canonical(path).u8string();
+    JAMI_ERR() << "@@@ sendFile() " << info.path;
+    //}
     auto f = std::make_shared<OutgoingFile>(channel, fileId, interactionId, info, start, end);
     f->onFinished([w = weak(), channel](uint32_t) {
         // schedule destroy outgoing transfer as not needed
