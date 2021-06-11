@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "65eda153_493ff04a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1863,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-06-11T20:18:37Z",
+      "side": 1,
+      "message": "I think \u003d  is fine since isVideoEnabled is always false in this function",
+      "range": {
+        "startLine": 1863,
+        "startChar": 27,
+        "endLine": 1863,
+        "endChar": 29
+      },
+      "revId": "566c6409b064a8d21dd4b8e7d6ab8377cba88dc7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
