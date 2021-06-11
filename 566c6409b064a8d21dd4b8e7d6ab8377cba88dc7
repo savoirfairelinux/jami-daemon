@@ -22,6 +22,30 @@
       "revId": "566c6409b064a8d21dd4b8e7d6ab8377cba88dc7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "30995420_266042a8",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1863,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-06-11T20:38:18Z",
+      "side": 1,
+      "message": "it may not be.\nwith multiple video streams we can have some enabled and others don\u0027t. thus the ||.\nWe will only add the dummy video to the conference if we have no enabled videos.",
+      "parentUuid": "65eda153_493ff04a",
+      "range": {
+        "startLine": 1863,
+        "startChar": 27,
+        "endLine": 1863,
+        "endChar": 29
+      },
+      "revId": "566c6409b064a8d21dd4b8e7d6ab8377cba88dc7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
