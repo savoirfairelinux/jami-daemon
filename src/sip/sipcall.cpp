@@ -1,4 +1,4 @@
-﻿/*
+/*
  *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -1860,7 +1860,7 @@ SIPCall::startAllMedia()
 
 #ifdef ENABLE_VIDEO
         if (iter->mediaAttribute_->type_ == MEDIA_VIDEO)
-            isVideoEnabled = true;
+            isVideoEnabled |= iter->mediaAttribute_->enabled_;
 #endif
 
         // Not restarting media loop on hold as it's a huge waste of CPU ressources
