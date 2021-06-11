@@ -22,6 +22,30 @@
       "revId": "53c6b7181d43c98626031c777f4dbe630460e63f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "37d007bb_56b2fa34",
+        "filename": "src/sip/sdp.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1042,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-06-11T15:53:41Z",
+      "side": 1,
+      "message": "As discussed, the media labeling in lrc is, for now, expecting \"audio_0\" and \"video_0\" and those string are the main ones. However, with multistream, we may be able to have a \"video_0\" that will not be the peer main video.\nMohamed is aware that MediaAttributes should be improved to flag which media is the main one. Also that the media labeling should be restricted.\nThese changes will come with file and screen sharing in ms.",
+      "parentUuid": "134143ae_a056bb79",
+      "range": {
+        "startLine": 1042,
+        "startChar": 32,
+        "endLine": 1042,
+        "endChar": 38
+      },
+      "revId": "53c6b7181d43c98626031c777f4dbe630460e63f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
