@@ -22,6 +22,7 @@
 
 #include <condition_variable>
 #include <string>
+#include <filesystem>
 
 #include "fileutils.h"
 #include "manager.h"
@@ -157,7 +158,8 @@ FileTransferTest::testFileTransfer()
     DRing::registerSignalHandlers(confHandlers);
 
     // Create file to send
-    std::ofstream sendFile("SEND");
+    auto sendPath = std::filesystem::current_path().u8string() + DIR_SEPARATOR_CH + "SEND";
+    std::ofstream sendFile(sendPath);
     CPPUNIT_ASSERT(sendFile.is_open());
     sendFile << std::string(64000, 'A');
     sendFile.close();
@@ -167,7 +169,7 @@ FileTransferTest::testFileTransfer()
     uint64_t id;
     info.accountId = aliceAccount->getAccountID();
     info.peer = bobUri;
-    info.path = "SEND";
+    info.path = sendPath;
     info.displayName = "SEND";
     info.bytesProgress = 0;
     CPPUNIT_ASSERT(DRing::sendFileLegacy(info, id) == DRing::DataTransferError::success);
@@ -188,7 +190,7 @@ FileTransferTest::testFileTransfer()
 
     // TODO FIX ME. The ICE take some time to stop and it doesn't seems to like
     // when stopping the daemon and removing the accounts to soon.
-    std::remove("SEND");
+    std::remove(sendPath.c_str());
     std::remove("RECV");
     JAMI_INFO("Waiting....");
     std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -235,7 +237,8 @@ FileTransferTest::testDataTransferInfo()
     DRing::registerSignalHandlers(confHandlers);
 
     // Create file to send
-    std::ofstream sendFile("SEND");
+    auto sendPath = std::filesystem::current_path().u8string() + DIR_SEPARATOR_CH + "SEND";
+    std::ofstream sendFile(sendPath);
     CPPUNIT_ASSERT(sendFile.is_open());
     sendFile << std::string(64000, 'A');
     sendFile.close();
@@ -245,7 +248,7 @@ FileTransferTest::testDataTransferInfo()
     uint64_t id;
     info.accountId = aliceAccount->getAccountID();
     info.peer = bobUri;
-    info.path = "SEND";
+    info.path = sendPath;
     info.displayName = "SEND";
     info.bytesProgress = 0;
     CPPUNIT_ASSERT(DRing::sendFileLegacy(info, id) == DRing::DataTransferError::success);
@@ -287,7 +290,7 @@ FileTransferTest::testDataTransferInfo()
 
     // TODO FIX ME. The ICE take some time to stop and it doesn't seems to like
     // when stopping the daemon and removing the accounts to soon.
-    std::remove("SEND");
+    std::remove(sendPath.c_str());
     std::remove("RECV");
     JAMI_INFO("Waiting....");
     std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -330,11 +333,13 @@ FileTransferTest::testMultipleFileTransfer()
     DRing::registerSignalHandlers(confHandlers);
 
     // Create file to send
-    std::ofstream sendFile("SEND");
+    auto sendPath = std::filesystem::current_path().u8string() + DIR_SEPARATOR_CH + "SEND";
+    std::ofstream sendFile(sendPath);
     CPPUNIT_ASSERT(sendFile.is_open());
     sendFile << std::string(64000, 'A');
     sendFile.close();
-    std::ofstream sendFile2("SEND2");
+    auto sendPath2 = std::filesystem::current_path().u8string() + DIR_SEPARATOR_CH + "SEND2";
+    std::ofstream sendFile2(sendPath2);
     CPPUNIT_ASSERT(sendFile2.is_open());
     sendFile2 << std::string(64000, 'B');
     sendFile2.close();
@@ -344,7 +349,7 @@ FileTransferTest::testMultipleFileTransfer()
     uint64_t id;
     info.accountId = aliceAccount->getAccountID();
     info.peer = bobUri;
-    info.path = "SEND";
+    info.path = sendPath;
     info.displayName = "SEND";
     info.bytesProgress = 0;
     CPPUNIT_ASSERT(DRing::sendFileLegacy(info, id) == DRing::DataTransferError::success);
@@ -368,7 +373,7 @@ FileTransferTest::testMultipleFileTransfer()
     DRing::DataTransferInfo info2;
     info2.accountId = aliceAccount->getAccountID();
     info2.peer = bobUri;
-    info2.path = "SEND2";
+    info2.path = sendPath2;
     info2.displayName = "SEND2";
     info2.bytesProgress = 0;
     CPPUNIT_ASSERT(DRing::sendFileLegacy(info2, id) == DRing::DataTransferError::success);
@@ -389,8 +394,8 @@ FileTransferTest::testMultipleFileTransfer()
 
     // TODO FIX ME. The ICE take some time to stop and it doesn't seems to like
     // when stopping the daemon and removing the accounts to soon.
-    std::remove("SEND");
-    std::remove("SEND2");
+    std::remove(sendPath.c_str());
+    std::remove(sendPath2.c_str());
     std::remove("RECV");
     std::remove("RECV2");
     JAMI_INFO("Waiting....");
@@ -408,26 +413,13 @@ FileTransferTest::testConversationFileTransfer()
     aliceAccount->trackBuddyPresence(carlaUri, true);
 
     // Enable carla
+    Manager::instance().sendRegister(carlaId, true);
+    wait_for_announcement_of(carlaId);
+
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto details = carlaAccount->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                if (daemonStatus == "REGISTERED") {
-                    cv.notify_one();
-                }
-            }));
-    DRing::registerSignalHandlers(confHandlers);
-
-    Manager::instance().sendRegister(carlaId, true);
-    cv.wait_for(lk, std::chrono::seconds(30));
-    confHandlers.clear();
-    DRing::unregisterSignalHandlers();
-
     auto requestReceived = 0;
     auto conversationReady = 0;
     auto memberJoined = 0;
@@ -469,10 +461,12 @@ FileTransferTest::testConversationFileTransfer()
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::DataTransferSignal::DataTransferEvent>(
         [&](const std::string& accountId,
-            const std::string&,
+            const std::string& conversationId,
             const std::string&,
             const std::string& fileId,
             int code) {
+            if (conversationId.empty())
+                return;
             if (code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
                 if (accountId == bobId)
                     hostAcceptanceBob = fileId;
@@ -503,12 +497,13 @@ FileTransferTest::testConversationFileTransfer()
     });
 
     // Send file
-    std::ofstream sendFile("SEND");
+    auto sendPath = std::filesystem::current_path().u8string() + DIR_SEPARATOR_CH + "SEND";
+    std::ofstream sendFile(sendPath);
     CPPUNIT_ASSERT(sendFile.is_open());
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
-    DRing::sendFile(aliceId, convId, "SEND", "SEND", "");
+    DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(45), [&]() {
         return !tidBob.empty() && !tidCarla.empty();
@@ -520,7 +515,7 @@ FileTransferTest::testConversationFileTransfer()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(45), [&]() { return finished.size() == 3; }));
 
-    std::remove("SEND");
+    std::remove(sendPath.c_str());
     std::remove("RCV");
     std::remove("RCV2");
 
@@ -606,12 +601,13 @@ FileTransferTest::testFileTransferInConversation()
     }));
 
     // Create file to send
-    std::ofstream sendFile("SEND");
+    auto sendPath = std::filesystem::current_path().u8string() + DIR_SEPARATOR_CH + "SEND";
+    std::ofstream sendFile(sendPath);
     CPPUNIT_ASSERT(sendFile.is_open());
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
-    DRing::sendFile(aliceId, convId, "SEND", "SEND", "");
+    DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !tidBob.empty(); }));
 
@@ -622,7 +618,7 @@ FileTransferTest::testFileTransferInConversation()
         return transferAFinished && transferBFinished;
     }));
 
-    std::remove("SEND");
+    std::remove(sendPath.c_str());
     std::remove("RECV");
     DRing::unregisterSignalHandlers();
     std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -833,17 +829,18 @@ FileTransferTest::testBadSha3sumIn()
     }));
 
     // Create file to send
-    std::ofstream sendFile("SEND");
+    auto sendPath = std::filesystem::current_path().u8string() + DIR_SEPARATOR_CH + "SEND";
+    std::ofstream sendFile(sendPath);
     CPPUNIT_ASSERT(sendFile.is_open());
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
     aliceAccount->noSha3sumVerification(true);
-    DRing::sendFile(aliceId, convId, "SEND", "SEND", "");
+    DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !mid.empty(); }));
 
     // modifiy file
-    sendFile = std::ofstream("SEND");
+    sendFile = std::ofstream(sendPath);
     CPPUNIT_ASSERT(sendFile.is_open());
     // Avoid ASAN error on big alloc   sendFile << std::string("B", 64000);
     sendFile << std::string(64000, 'B');
@@ -857,7 +854,7 @@ FileTransferTest::testBadSha3sumIn()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferAFinished; }));
     CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBFinished; }));
 
-    std::remove("SEND");
+    std::remove(sendPath.c_str());
     DRing::unregisterSignalHandlers();
 }
 
@@ -966,12 +963,13 @@ FileTransferTest::testAskToMultipleParticipants()
     }));
 
     // Create file to send
-    std::ofstream sendFile("SEND");
+    auto sendPath = std::filesystem::current_path().u8string() + DIR_SEPARATOR_CH + "SEND";
+    std::ofstream sendFile(sendPath);
     CPPUNIT_ASSERT(sendFile.is_open());
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
-    DRing::sendFile(aliceId, convId, "SEND", "SEND", "");
+    DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return !bobTid.empty() && !carlaTid.empty();
@@ -987,7 +985,7 @@ FileTransferTest::testAskToMultipleParticipants()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBFinished; }));
     CPPUNIT_ASSERT(fileutils::isFile("RECV"));
 
-    std::remove("SEND");
+    std::remove(sendPath.c_str());
     std::remove("RECV");
     std::remove("RECV2");
     DRing::unregisterSignalHandlers();
@@ -1074,12 +1072,13 @@ FileTransferTest::testCancelInTransfer()
     }));
 
     // Create file to send
-    std::ofstream sendFile("SEND");
+    auto sendPath = std::filesystem::current_path().u8string() + DIR_SEPARATOR_CH + "SEND";
+    std::ofstream sendFile(sendPath);
     CPPUNIT_ASSERT(sendFile.is_open());
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
-    DRing::sendFile(aliceId, convId, "SEND", "SEND", "");
+    DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !tidBob.empty(); }));
 
@@ -1091,7 +1090,7 @@ FileTransferTest::testCancelInTransfer()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return transferBFinished; }));
     CPPUNIT_ASSERT(!fileutils::isFile("RECV"));
 
-    std::remove("SEND");
+    std::remove(sendPath.c_str());
     DRing::unregisterSignalHandlers();
 }
 
@@ -1174,12 +1173,13 @@ FileTransferTest::testTransferInfo()
     }));
 
     // Create file to send
-    std::ofstream sendFile("SEND");
+    auto sendPath = std::filesystem::current_path().u8string() + DIR_SEPARATOR_CH + "SEND";
+    std::ofstream sendFile(sendPath);
     CPPUNIT_ASSERT(sendFile.is_open());
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
-    DRing::sendFile(aliceId, convId, "SEND", "SEND", "");
+    DRing::sendFile(aliceId, convId, sendPath, "SEND", "");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !tidBob.empty(); }));
 
     int64_t totalSize, bytesProgress;
@@ -1203,7 +1203,7 @@ FileTransferTest::testTransferInfo()
     CPPUNIT_ASSERT(totalSize == 64000);
     CPPUNIT_ASSERT(fileutils::isFile(path));
 
-    std::remove("SEND");
+    std::remove(sendPath.c_str());
     std::remove("RECV");
     DRing::unregisterSignalHandlers();
     std::this_thread::sleep_for(std::chrono::seconds(5));

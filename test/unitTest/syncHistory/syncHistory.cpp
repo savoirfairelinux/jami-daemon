@@ -210,15 +210,6 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     auto conversationReady = false;
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto alice2Account = Manager::instance().getAccount<JamiAccount>(alice2Id);
-                auto details = alice2Account->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                if (daemonStatus == "REGISTERED")
-                    cv.notify_one();
-            }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == alice2Id && conversationId == convId) {
@@ -300,19 +291,8 @@ SyncHistoryTest::testCreateMultipleConversationThenAddDevice()
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::atomic_int conversationReady = 0;
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto alice2Account = Manager::instance().getAccount<JamiAccount>(alice2Id);
-                if (!alice2Account)
-                    return;
-                auto details = alice2Account->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                if (daemonStatus == "REGISTERED")
-                    cv.notify_one();
-            }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
+        [&](const std::string& accountId, const std::string&) {
             if (accountId == alice2Id) {
                 conversationReady += 1;
                 cv.notify_one();
@@ -478,7 +458,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
     bool conversationReady = false;
-    bool aliceReady = false;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
@@ -510,19 +489,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
                 cv.notify_one();
             }
         }));
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto alice2Account = Manager::instance().getAccount<JamiAccount>(alice2Id);
-                if (!alice2Account)
-                    return;
-                auto details = alice2Account->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                if (daemonStatus == "REGISTERED") {
-                    aliceReady = true;
-                    cv.notify_one();
-                }
-            }));
     DRing::registerSignalHandlers(confHandlers);
 
     aliceAccount->addConversationMember(convId, bobUri);
@@ -549,8 +515,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     requestReceived = false;
     conversationReady = false;
     alice2Id = Manager::instance().addAccount(details);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return aliceReady; }));
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    wait_for_announcement_of(alice2Id);
     aliceAccount = Manager::instance().getAccount<JamiAccount>(alice2Id);
 
     // This will trigger a conversation request. Cause alice2 can't know first conversation
@@ -583,7 +548,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
     bool conversationReady = false;
-    bool aliceReady = false;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
@@ -615,19 +579,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
                 cv.notify_one();
             }
         }));
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto alice2Account = Manager::instance().getAccount<JamiAccount>(alice2Id);
-                if (!alice2Account)
-                    return;
-                auto details = alice2Account->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                if (daemonStatus == "REGISTERED") {
-                    aliceReady = true;
-                    cv.notify_one();
-                }
-            }));
     DRing::registerSignalHandlers(confHandlers);
 
     aliceAccount->addConversationMember(convId, bobUri);
@@ -659,8 +610,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
     requestReceived = false;
     conversationReady = false;
     alice2Id = Manager::instance().addAccount(details);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return aliceReady; }));
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    wait_for_announcement_of(alice2Id);
     aliceAccount = Manager::instance().getAccount<JamiAccount>(alice2Id);
 
     // Should retrieve conversation, no need for action as the convInfos is in the archive
@@ -690,7 +640,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
     bool conversationReady = false;
-    bool aliceReady = false;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
@@ -722,19 +671,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
                 cv.notify_one();
             }
         }));
-    confHandlers.insert(
-        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto alice2Account = Manager::instance().getAccount<JamiAccount>(alice2Id);
-                if (!alice2Account)
-                    return;
-                auto details = alice2Account->getVolatileAccountDetails();
-                auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
-                if (daemonStatus == "REGISTERED") {
-                    aliceReady = true;
-                    cv.notify_one();
-                }
-            }));
     DRing::registerSignalHandlers(confHandlers);
 
     bobAccount->addConversationMember(convId, aliceUri);
@@ -759,8 +695,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     conversationReady = false;
     alice2Id = Manager::instance().addAccount(details);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return aliceReady; }));
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    wait_for_announcement_of(alice2Id);
     aliceAccount = Manager::instance().getAccount<JamiAccount>(alice2Id);
 
     // Should get the same request as before.

@@ -323,7 +323,9 @@ createSymLink(const std::string& linkFile, const std::string& target)
     if (sep != std::string::npos)
         check_dir(target.substr(0, sep).c_str());
 #ifndef _WIN32
+    JAMI_ERR() << "@@@ TARGET" << target << " - " << linkFile;
     symlink(target.c_str(), linkFile.c_str());
+    JAMI_ERR() << "@@@ isFile: " << isFile(linkFile);
 #else
     std::error_code ec;
     std::filesystem::create_symlink(target, linkFile, ec);
