@@ -109,8 +109,11 @@ CallTest::testCall()
     std::atomic_bool callReceived {false};
     std::atomic<int> callStopped {0};
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCall>(
-        [&](const std::string&, const std::string&, const std::string&) {
+    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+        [&](const std::string&,
+            const std::string&,
+            const std::string&,
+            const std::vector<std::map<std::string, std::string>>&) {
             callReceived = true;
             cv.notify_one();
         }));
@@ -151,8 +154,11 @@ CallTest::testCachedCall()
     std::atomic_bool callReceived {false}, successfullyConnected {false};
     std::atomic<int> callStopped {0};
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCall>(
-        [&](const std::string&, const std::string&, const std::string&) {
+    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+        [&](const std::string&,
+            const std::string&,
+            const std::string&,
+            const std::vector<std::map<std::string, std::string>>&) {
             callReceived = true;
             cv.notify_one();
         }));
@@ -257,8 +263,11 @@ CallTest::testDeclineMultiDevice()
     std::atomic<int> callStopped {0};
     std::string callIdBob;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCall>(
-        [&](const std::string& accountId, const std::string& callId, const std::string&) {
+    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+        [&](const std::string& accountId,
+            const std::string& callId,
+            const std::string&,
+            const std::vector<std::map<std::string, std::string>>&) {
             if (accountId == bobId)
                 callIdBob = callId;
             callReceived += 1;
