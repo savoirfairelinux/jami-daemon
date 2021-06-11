@@ -186,13 +186,8 @@ Development website / Bug Tracker:
 
 Repositories are hosted on Gerrit, which we use for code review. It also
 contains the client subprojects:
- - https://gerrit-ring.savoirfairelinux.com/#/admin/projects/
+ - https://review.jami.net/#/admin/projects/
 
 Do not hesitate to join us and post comments, suggestions, questions
 and general feedback on the GNU Jami mailing-list:
-https://lists.gnu.org/mailman/listinfo/ring
-
-IRC (on #freenode):
- - #ring
-
-  -- The GNU Jami Team
+https://lists.gnu.org/mailman/listinfo/jami
