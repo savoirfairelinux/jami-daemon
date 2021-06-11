@@ -340,9 +340,6 @@ public:
                              const std::map<std::string, std::string>& payloads) override;
     void sendInstantMessage(const std::string& convId,
                             const std::map<std::string, std::string>& msg) override;
-    void sendSIPMessageToDevice(const std::string& to,
-                                const DeviceId& deviceId,
-                                const std::map<std::string, std::string>& payloads);
     void onIsComposing(const std::string& conversationId,
                        const std::string& peer,
                        bool isWriting) override;
@@ -1032,7 +1029,6 @@ private:
     void syncWith(const std::string& deviceId, const std::shared_ptr<ChannelSocket>& socket);
     void syncInfos(const std::shared_ptr<ChannelSocket>& socket);
     void syncWithConnected();
-    std::atomic_bool needsConvSync_ {true};
 
     /**
      * Remove a repository and all files

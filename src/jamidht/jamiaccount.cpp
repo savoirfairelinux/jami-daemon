@@ -1951,7 +1951,20 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
                   if (not expired) {
                       // Retry messages every time a new device announce its presence
                       sthis->messageEngine_.onPeerOnline(h.toString());
-                      sthis->requestSIPConnection(h.toString(), dev.dev);
+                      auto deviceId = dev.dev.toString();
+                      auto needsSync = false;
+                      {
+                          std::unique_lock<std::mutex> lk(sthis->conversationsMtx_);
+                          for (const auto& [_, conv] : sthis->conversations_) {
+                              if (conv->isMember(deviceId, false) && conv->needsFetch(deviceId)) {
+                                  needsSync = true;
+                                  break;
+                              }
+                          }
+                      }
+                      if (needsSync)
+                          sthis->requestSIPConnection(h.toString(),
+                                                      dev.dev); // Both sides will sync conversations
                   }
                   if (isConnected and not wasConnected) {
                       sthis->onTrackedBuddyOnline(h);
@@ -2416,11 +2429,21 @@ JamiAccount::doRegister_()
                               deviceId.to_c_str(),
                               channel->channel());
                     auto gs = std::make_unique<GitServer>(accountId, conversationId, channel);
-                    gs->setOnFetched([w = weak(), conversationId](const std::string&) {
+                    gs->setOnFetched([w = weak(), conversationId, deviceId](const std::string&) {
                         auto shared = w.lock();
                         if (!shared)
                             return;
-                        shared->removeRepository(conversationId, true);
+                        auto remove = false;
+                        {
+                            std::unique_lock<std::mutex> lk(shared->conversationsMtx_);
+                            auto it = shared->conversations_.find(conversationId);
+                            if (it != shared->conversations_.end() && it->second) {
+                                remove = it->second->isRemoving();
+                                it->second->hasFetched(deviceId.toString());
+                            }
+                        }
+                        if (remove)
+                            shared->removeRepository(conversationId, true);
                     });
                     const dht::Value::Id serverId = ValueIdDist()(rand);
                     {
@@ -2523,56 +2546,10 @@ JamiAccount::doRegister_()
         if (!dhtPeerConnector_)
             dhtPeerConnector_ = std::make_unique<DhtPeerConnector>(*this);
 
-        {
-            std::lock_guard<std::mutex> lock(buddyInfoMtx);
-            for (auto& buddy : trackedBuddies_) {
-                buddy.second.devices_cnt = 0;
-                trackPresence(buddy.first, buddy.second);
-            }
-        }
-
-        if (needsConvSync_.exchange(false)) {
-            // Clone malformed conversations if needed
-            // (no-sync with others as onPeerOnline will do the job)
-            auto info = accountManager_->getInfo();
-            if (!info)
-                return;
-            std::lock_guard<std::mutex> lk(conversationsMtx_);
-            for (const auto& c : info->conversations) {
-                if (!c.removed) {
-                    auto it = conversations_.find(c.id);
-                    if (it == conversations_.end()) {
-                        std::shared_ptr<std::atomic_bool> willClone
-                            = std::make_shared<std::atomic_bool>(false);
-                        for (const auto& member : c.members) {
-                            if (member != getUsername()) {
-                                // Try to clone from first other members device found
-                                // NOTE: rescehdule this in a few seconds, to let the time
-                                // to the peers to discover the device if it's the first time
-                                // we create the device
-                                Manager::instance().scheduleTaskIn(
-                                    [w = weak(), member, convId = c.id, willClone]() {
-                                        if (auto shared = w.lock())
-                                            shared->accountManager_->forEachDevice(
-                                                dht::InfoHash(member),
-                                                [w, convId, member, willClone](
-                                                    const dht::InfoHash& dev) {
-                                                    if (willClone->exchange(true))
-                                                        return;
-                                                    auto shared = w.lock();
-                                                    if (!shared)
-                                                        return;
-                                                    shared->cloneConversation(dev.toString(),
-                                                                              member,
-                                                                              convId);
-                                                });
-                                    },
-                                    std::chrono::seconds(5));
-                            }
-                        }
-                    }
-                }
-            }
+        std::lock_guard<std::mutex> lock(buddyInfoMtx);
+        for (auto& buddy : trackedBuddies_) {
+            buddy.second.devices_cnt = 0;
+            trackPresence(buddy.first, buddy.second);
         }
     } catch (const std::exception& e) {
         JAMI_ERR("Error registering DHT account: %s", e.what());
@@ -2626,10 +2603,8 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
 
     // Stop all current p2p connections if account is disabled
     // Else, we let the system managing if the co is down or not
-    if (not isEnabled()) {
-        needsConvSync_ = true;
+    if (not isEnabled())
         shutdownConnections();
-    }
 
     // Release current upnp mapping if any.
     if (upnpCtrl_ and dhtUpnpMapping_.isValid()) {
@@ -3461,67 +3436,6 @@ JamiAccount::sendTextMessage(const std::string& to,
             }
         },
         std::chrono::minutes(1));
-}
-
-void
-JamiAccount::sendSIPMessageToDevice(const std::string& to,
-                                    const DeviceId& deviceId,
-                                    const std::map<std::string, std::string>& payloads)
-{
-    std::lock_guard<std::mutex> lk(sipConnsMtx_);
-    sip_utils::register_thread();
-
-    for (auto it = sipConns_.begin(); it != sipConns_.end();) {
-        auto& [key, value] = *it;
-        if (key.first == to && key.second != deviceId) {
-            ++it;
-            continue;
-        }
-        auto& conn = value.back();
-        auto& channel = conn.channel;
-
-        // Set input token into callback
-        std::unique_ptr<TextMessageCtx> ctx {std::make_unique<TextMessageCtx>()};
-        ctx->acc = weak();
-        ctx->to = to;
-        ctx->deviceId = key.second;
-        ctx->channel = channel;
-
-        try {
-            auto res = sendSIPMessage(
-                conn, to, ctx.release(), {}, payloads, [](void* token, pjsip_event* event) {
-                    std::unique_ptr<TextMessageCtx> c {(TextMessageCtx*) token};
-                    auto code = event->body.tsx_state.tsx->status_code;
-                    auto acc = c->acc.lock();
-                    if (not acc)
-                        return;
-
-                    if (code == PJSIP_SC_OK) {
-                        std::unique_lock<std::mutex> l(c->confirmation->lock);
-                        c->confirmation->replied = true;
-                        l.unlock();
-                        if (!c->onlyConnected)
-                            acc->messageEngine_.onMessageSent(c->to, c->id, true);
-                    } else {
-                        JAMI_WARN("Timeout when send a message, close current connection");
-                        acc->shutdownSIPConnection(c->channel, c->to, c->deviceId);
-                    }
-                });
-            if (!res) {
-                ++it;
-                continue;
-            }
-            break;
-        } catch (const std::runtime_error& ex) {
-            JAMI_WARN("%s", ex.what());
-            ++it;
-            // Remove connection in incorrect state
-            shutdownSIPConnection(channel, to, key.second);
-            continue;
-        }
-
-        ++it;
-    }
 }
 
 void

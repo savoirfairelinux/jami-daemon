@@ -119,9 +119,7 @@ public:
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
-        if (auto shared = account_.lock())
-            transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
-                                                                 repository_->id());
+        init();
     }
 
     Impl(const std::weak_ptr<JamiAccount>& account, const std::string& conversationId)
@@ -131,9 +129,7 @@ public:
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
-        if (auto shared = account_.lock())
-            transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
-                                                                 repository_->id());
+        init();
     }
 
     Impl(const std::weak_ptr<JamiAccount>& account,
@@ -151,10 +147,22 @@ public:
             }
             throw std::logic_error("Couldn't clone repository");
         }
-        if (auto shared = account_.lock())
+        init();
+    }
+
+    void init()
+    {
+        if (auto shared = account_.lock()) {
             transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
                                                                  repository_->id());
+            conversationDataPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR
+                                    + shared->getAccountID() + DIR_SEPARATOR_STR
+                                    + "conversation_data" + DIR_SEPARATOR_STR + repository_->id();
+            fetchedPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + "fetched";
+            loadFetched();
+        }
     }
+
     ~Impl() = default;
 
     bool isAdmin() const;
@@ -233,6 +241,25 @@ public:
         }
     }
 
+    void loadFetched()
+    {
+        try {
+            // read file
+            auto file = fileutils::loadFile(fetchedPath_);
+            // load values
+            msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
+            std::lock_guard<std::mutex> lk {fetchedDevicesMtx_};
+            oh.get().convert(fetchedDevices_);
+        } catch (const std::exception& e) {
+            return;
+        }
+    }
+    void saveFetched()
+    {
+        std::ofstream file(fetchedPath_, std::ios::trunc | std::ios::binary);
+        msgpack::pack(file, fetchedDevices_);
+    }
+
     std::unique_ptr<ConversationRepository> repository_;
     std::weak_ptr<JamiAccount> account_;
     std::atomic_bool isRemoving_ {false};
@@ -248,6 +275,10 @@ public:
     std::set<std::string> fetchingRemotes_ {}; // store current remote in fetch
     std::deque<std::tuple<std::string, std::string, OnPullCb>> pullcbs_ {};
     std::shared_ptr<TransferManager> transferManager_ {};
+    std::string conversationDataPath_ {};
+    std::string fetchedPath_ {};
+    std::mutex fetchedDevicesMtx_ {};
+    std::set<std::string> fetchedDevices_ {};
 };
 
 bool
@@ -610,6 +641,7 @@ Conversation::sendMessage(const Json::Value& value,
             std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
             auto commit = sthis->pimpl_->repository_->commitMessage(
                 Json::writeString(wbuilder, value));
+            sthis->clearFetched();
             sthis->pimpl_->announce(commit);
             lk.unlock();
             if (cb)
@@ -1003,6 +1035,29 @@ Conversation::downloadFile(const std::string& interactionId,
             }
         });
     return true;
+}
+
+void
+Conversation::clearFetched()
+{
+    std::lock_guard<std::mutex> lk(pimpl_->fetchedDevicesMtx_);
+    pimpl_->fetchedDevices_.clear();
+    pimpl_->saveFetched();
+}
+
+bool
+Conversation::needsFetch(const std::string& deviceId) const
+{
+    std::lock_guard<std::mutex> lk(pimpl_->fetchedDevicesMtx_);
+    return pimpl_->fetchedDevices_.find(deviceId) != pimpl_->fetchedDevices_.end();
+}
+
+void
+Conversation::hasFetched(const std::string& deviceId)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->fetchedDevicesMtx_);
+    pimpl_->fetchedDevices_.emplace(deviceId);
+    pimpl_->saveFetched();
 }
 
 } // namespace jami
