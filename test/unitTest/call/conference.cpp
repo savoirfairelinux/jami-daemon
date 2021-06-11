@@ -124,8 +124,11 @@ ConferenceTest::registerSignalHandlers()
 
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     // Watch signals
-    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCall>(
-        [=](const std::string& accountId, const std::string& callId, const std::string&) {
+    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+        [=](const std::string& accountId,
+            const std::string& callId,
+            const std::string&,
+            const std::vector<std::map<std::string, std::string>>&) {
             if (accountId == bobId) {
                 bobCall.callId = callId;
             } else if (accountId == carlaId) {
