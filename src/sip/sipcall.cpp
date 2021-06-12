@@ -60,6 +60,7 @@
 
 #include <opendht/crypto.h>
 #include <opendht/thread_pool.h>
+#include <fmt/ranges.h>
 
 namespace jami {
 
@@ -80,6 +81,7 @@ static constexpr std::chrono::seconds DEFAULT_ICE_NEGO_TIMEOUT {60}; // seconds
 static constexpr std::chrono::milliseconds MS_BETWEEN_2_KEYFRAME_REQUEST {1000};
 static constexpr int ICE_COMP_ID_RTP {1};
 static constexpr int ICE_COMP_COUNT_PER_STREAM {2};
+static const std::vector<unsigned> MULTISTREAM_REQUIRED_VERSION {10, 0, 2};
 
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& callId,
@@ -1457,7 +1459,7 @@ SIPCall::sendKeyframe()
 }
 
 void
-SIPCall::setPeerUaVersion(const std::string& ua)
+SIPCall::setPeerUaVersion(std::string_view ua)
 {
     if (peerUserAgent_ == ua or ua.empty()) {
         // Silently ignore if it did not change or empty.
@@ -1465,65 +1467,60 @@ SIPCall::setPeerUaVersion(const std::string& ua)
     }
 
     if (peerUserAgent_.empty()) {
-        JAMI_DBG("[call:%s] Set peer's User-Agent to [%s]", getCallId().c_str(), ua.c_str());
+        JAMI_DBG("[call:%s] Set peer's User-Agent to [%.*s]", getCallId().c_str(), (int)ua.size(), ua.data());
     } else if (not peerUserAgent_.empty()) {
         // Unlikely, but should be handled since we dont have control over the peer.
         // Even if it's unexpected, we still try to parse the UA version.
-        JAMI_WARN("[call:%s] Peer's User-Agent unexpectedely changed from [%s] to [%s]",
+        JAMI_WARN("[call:%s] Peer's User-Agent unexpectedly changed from [%s] to [%.*s]",
                   getCallId().c_str(),
                   peerUserAgent_.c_str(),
-                  ua.c_str());
+                  (int)ua.size(), ua.data());
     }
 
     peerUserAgent_ = ua;
 
     // User-agent parsing
     constexpr std::string_view PACK_NAME(PACKAGE_NAME " ");
-    std::string_view s {peerUserAgent_};
-    std::string version;
-
-    auto pos = s.find(PACK_NAME);
-    if (pos == std::string::npos) {
+    auto pos = ua.find(PACK_NAME);
+    if (pos == std::string_view::npos) {
         // Must have the expected package name.
         JAMI_WARN("Could not find the expected package name in peer's User-Agent");
         return;
     }
 
-    s = s.substr(pos + PACK_NAME.length());
+    ua = ua.substr(pos + PACK_NAME.length());
 
+    std::string_view version;
     // Unstable (un-released) versions has a hiphen + commit Id after
     // the version number. Find the commit Id if any, and ignore it.
-    pos = s.find("-");
-    if (pos != std::string::npos) {
+    pos = ua.find('-');
+    if (pos != std::string_view::npos) {
         // Get the version and ignore the commit ID.
-        version = s.substr(0, pos);
+        version = ua.substr(0, pos);
     } else {
         // Extract the version number.
-        pos = s.find(" ");
-        if (pos != std::string::npos) {
-            version = s.substr(0, pos);
+        pos = ua.find(' ');
+        if (pos != std::string_view::npos) {
+            version = ua.substr(0, pos);
         }
     }
 
     if (version.empty()) {
-        JAMI_DBG("[call:%s] Could not parse peer's Jami version", getCallId().c_str());
+        JAMI_DBG("[call:%s] Could not parse peer's version", getCallId().c_str());
+        return;
     }
 
-    auto peerJamiVersion = split_string_to_unsigned(version, '.');
-    if (peerJamiVersion.size() != 3) {
-        JAMI_WARN("Could not parse peer's Jami version");
+    auto peerVersion = split_string_to_unsigned(version, '.');
+    if (peerVersion.size() > 4u) {
+        JAMI_WARN("[call:%s] Could not parse peer's version", getCallId().c_str());
         return;
     }
 
     // Check if peer's version is at least 10.0.2 to enable multi-stream.
-    peerSupportMultiStream_ = Account::meetMinimumRequiredVersion(peerJamiVersion, {10, 0, 2});
-
+    peerSupportMultiStream_ = Account::meetMinimumRequiredVersion(peerVersion, MULTISTREAM_REQUIRED_VERSION);
     if (not peerSupportMultiStream_) {
-        JAMI_DBG("Peer's version [%u.%u.%u] does not support multi-stream. Min required version: "
-                 "[10.0.2]",
-                 peerJamiVersion[0],
-                 peerJamiVersion[1],
-                 peerJamiVersion[2]);
+        JAMI_DBG("%s", fmt::format("Peer's version [{}] does not support multi-stream. Min required version: [{}]",
+            fmt::join(peerVersion, "."sv), fmt::join(MULTISTREAM_REQUIRED_VERSION, "."sv)).c_str());
     }
 }
 

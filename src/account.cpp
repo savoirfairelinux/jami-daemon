@@ -711,17 +711,16 @@ Account::removeDefaultModerator(const std::string& uri)
 }
 
 bool
-Account::meetMinimumRequiredVersion(const std::vector<unsigned>& jamiVersion,
+Account::meetMinimumRequiredVersion(const std::vector<unsigned>& version,
                                     const std::vector<unsigned>& minRequiredVersion)
 {
-    if (jamiVersion.size() != 3 or minRequiredVersion.size() != 3) {
-        JAMI_ERR("Unexpected vector size");
-        return false;
+    for (size_t i=0; i<minRequiredVersion.size(); i++) {
+        if (i == version.size() or
+            version[i] < minRequiredVersion[i])
+            return false;
+        if (version[i] > minRequiredVersion[i])
+            return true;
     }
-
-    return jamiVersion[0] > minRequiredVersion[0]
-           or (jamiVersion[0] == minRequiredVersion[0] and jamiVersion[1] > minRequiredVersion[1])
-           or (jamiVersion[0] == minRequiredVersion[0] and jamiVersion[1] == minRequiredVersion[1]
-               and jamiVersion[2] >= minRequiredVersion[2]);
+    return true;
 }
 } // namespace jami
