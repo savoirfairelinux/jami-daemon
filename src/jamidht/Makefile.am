@@ -6,8 +6,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/jamidht/eth
 
 noinst_LTLIBRARIES = libringacc.la
 
-libringacc_la_LIBADD = $(DHT_LIBS) \
-    ./eth/libdevcore/libdevcore.la \
+libringacc_la_LIBADD = ./eth/libdevcore/libdevcore.la \
     ./eth/libdevcrypto/libdevcrypto.la
 
 libringacc_la_SOURCES = \

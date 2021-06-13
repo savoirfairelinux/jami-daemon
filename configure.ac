@@ -428,10 +428,7 @@ AS_IF([test "x$enable_ringns" != "xno"],
   [PKG_CHECK_MODULES(LIBCRYPTO, libcrypto,,
      AC_MSG_ERROR([Missing libcrypto development files]))
    PKG_CHECK_MODULES(LIBSSL, libssl,,
-     AC_MSG_ERROR([Missing libssl development files]))
-   LIBS="${LIBS} -lssl -lcrypto"
-   AS_IF([test "${HAVE_WIN32}" = "1"],
-     [LIBS="${LIBS} -lssleay32 -leay32"])],
+     AC_MSG_ERROR([Missing libssl development files]))],
   []);
 
 dnl Check for libav
@@ -503,7 +500,8 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"],
 AM_CONDITIONAL([RING_ACCEL], [test "x${ring_accel}" = "xyes"])
 
 dnl check for GnuTLS
-PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.6.7], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])
+PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.6.7], [], AC_MSG_ERROR([gnutls not found]))
+PKG_CHECK_MODULES([NETTLE], [nettle >= 3.0.0], [], AC_MSG_ERROR([nettle not found]))
 
 # PTHREAD
 # required dependency: libxpat
@@ -668,7 +666,6 @@ AC_CONFIG_FILES([Makefile \
                  test/Makefile\
                  test/sip/Makefile
                  test/unitTest/Makefile \
-
                  man/Makefile \
                  doc/Makefile \
                  doc/doxygen/Makefile])
