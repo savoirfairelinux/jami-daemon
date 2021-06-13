@@ -2,7 +2,8 @@
 include $(top_srcdir)/globals.mk
 
 AM_CXXFLAGS += -I$(top_srcdir)/src
-AM_LDFLAGS += $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
+AM_LDFLAGS += $(CPPUNIT_LIBS)
+LDADD = $(top_builddir)/src/libring.la
 check_PROGRAMS =
 
 ####### Unit Test ########
@@ -18,14 +19,12 @@ ut_account_factory_SOURCES = account_factory/testAccount_factory.cpp common.cpp
 #
 check_PROGRAMS += ut_certstore
 ut_certstore_SOURCES = certstore.cpp common.cpp
-ut_certstore_LDADD = @OPENDHT_LIBS@
 
 #
 # scheduler
 #
 check_PROGRAMS += ut_scheduler
 ut_scheduler_SOURCES = scheduler.cpp common.cpp
-ut_scheduler_LDADD = @OPENDHT_LIBS@
 
 #
 # base64
