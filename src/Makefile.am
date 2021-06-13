@@ -53,82 +53,56 @@ libring_la_LIBADD = \
 	./jamidht/libringacc.la \
 	./im/libim.la \
 	$(ENABLE_PLUGIN_LIBS) \
-	$(ENABLE_VIDEO_LIBS)
-
-libring_la_LDFLAGS = \
-		@PJPROJECT_LIBS@ \
-		@ALSA_LIBS@ \
-		@PULSEAUDIO_LIBS@ \
-		@YAMLCPP_LIBS@ \
-		@JSONCPP_LIBS@ \
-		@SPEEXDSP_LIBS@ \
-		@LIBUPNP_LIBS@ \
-		@PORTAUDIO_LIBS@ \
-		@GNUTLS_LIBS@ \
-		@OPENDHT_LIBS@ \
-		@SECP256K1_LIBS@ \
-		@ZLIB_LIBS@ \
-		@LIBSSL_LIBS@ \
-		@LIBCRYPTO_LIBS@ \
-		@LIBAVCODEC_LIBS@ \
-		@LIBAVFORMAT_LIBS@ \
-		@LIBAVDEVICE_LIBS@ \
-		@LIBAVFILTER_LIBS@ \
-		@LIBSWRESAMPLE_LIBS@ \
-		@LIBSWSCALE_LIBS@ \
-		@LIBAVUTIL_LIBS@ \
-		@LIBGIT2_LIBS@ \
-		@FMT_LIBS@ \
-		@LIBS@ \
-		@WEBRTC_LIBS@ \
-		$(AM_LDFLAGS)
+	$(ENABLE_VIDEO_LIBS) \
+	$(ALSA_LIBS) \
+	$(PULSEAUDIO_LIBS) \
+	$(PORTAUDIO_LIBS) \
+	$(SPEEXDSP_LIBS) \
+	$(PJPROJECT_LIBS) \
+	$(OPENDHT_LIBS) \
+	$(LIBUPNP_LIBS) \
+	$(LIBGIT2_LIBS) \
+	$(LIBAVCODEC_LIBS) \
+	$(LIBAVFORMAT_LIBS) \
+	$(LIBAVDEVICE_LIBS) \
+	$(LIBAVFILTER_LIBS) \
+	$(LIBSWRESAMPLE_LIBS) \
+	$(LIBSWSCALE_LIBS) \
+	$(LIBAVUTIL_LIBS) \
+	$(WEBRTC_LIBS) \
+	$(YAMLCPP_LIBS) \
+	$(JSONCPP_LIBS) \
+	$(NETTLE_LIBS) \
+	$(SECP256K1_LIBS) \
+	$(FMT_LIBS) \
+	$(LIBSSL_LIBS) \
+	$(LIBCRYPTO_LIBS) \
+	$(ARCHIVE_LIBS) \
+	$(ZLIB_LIBS)
 
 if ENABLE_PLUGIN
 if HAVE_OSX
-libring_la_LDFLAGS += \
-		@MINIZIP_LIBS@
+libring_la_LIBADD += \
+		$(MINIZIP_LIBS)
 else
-libring_la_LDFLAGS += \
-		@ARCHIVE_LIBS@
+libring_la_LIBADD += \
+		$(ARCHIVE_LIBS)
 endif
 endif
 
 
 if HAVE_WIN32
-libring_la_LDFLAGS += -no-undefined -avoid-version
+libring_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined -avoid-version
 endif
 
 if HAVE_OSX
 #FIXME necessary for -lintl
-libring_la_LDFLAGS += -L/usr/local/opt/gettext/lib
+libring_la_LDFLAGS = $(AM_LDFLAGS) -L/usr/local/opt/gettext/lib
 endif
-
-libring_la_CFLAGS = \
-		@PJPROJECT_CFLAGS@ \
-		@ALSA_CFLAGS@ \
-		@PULSEAUDIO_CFLAGS@ \
-		@LIBUPNP_CFLAGS@ \
-		@SPEEXDSP_CFLAGS@ \
-		@PORTAUDIO_CFLAGS@ \
-		@GNUTLS_CFLAGS@ \
-		@OPENDHT_CFLAGS@ \
-		@FMT_CFLAGS@ \
-		@LIBAVCODEC_CFLAGS@ \
-		@LIBAVFORMAT_CFLAGS@ \
-		@LIBAVUTIL_CFLAGS@ \
-		@LIBAVDEVICE_CFLAGS@ \
-		@LIBAVFILTER_CFLAGS@ \
-		@LIBSWRESAMPLE_CFLAGS@ \
-		@LIBSWSCALE_CFLAGS@ \
-		@LIBGIT2_CFLAGS@ \
-		@WEBRTC_CFLAGS@ \
-		$(AM_CFLAGS)
-
-libring_la_CXXFLAGS = $(AM_CXXFLAGS)
 
 if HAVE_LINUX
 #needed to compile the .so
-libring_la_CXXFLAGS += -fPIC
+libring_la_CXXFLAGS = $(AM_CXXFLAGS) -fPIC
 endif
 
 libring_la_SOURCES = \
