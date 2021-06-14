@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "db973dc9_24af3a2f",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 250,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-14T21:59:50Z",
+      "side": 1,
+      "message": "note that if another except come it should be handled. Else it will cut the event looop",
+      "range": {
+        "startLine": 250,
+        "startChar": 12,
+        "endLine": 250,
+        "endChar": 13
+      },
+      "revId": "8ae35bfe26611ccf9da59e290eda55c1e5f2a06f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
