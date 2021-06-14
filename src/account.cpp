@@ -123,7 +123,7 @@ Account::Account(const std::string& accountID)
     , upnpEnabled_(true)
     , localModeratorsEnabled_(true)
     , allModeratorsEnabled_(true)
-#if (defined(__linux__) and not defined(__ANDROID__)) || defined(WIN32)
+#if (defined(__linux__) and not defined(__ANDROID__)) || defined(WIN32) || (defined(__APPLE__) && TARGET_OS_MAC)
     , multiStreamEnabled_(true)
 #else
     , multiStreamEnabled_(false)
