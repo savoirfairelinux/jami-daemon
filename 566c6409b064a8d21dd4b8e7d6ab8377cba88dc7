@@ -46,6 +46,30 @@
       "revId": "566c6409b064a8d21dd4b8e7d6ab8377cba88dc7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "84b05932_8b95352b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1863,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-14T14:06:08Z",
+      "side": 1,
+      "message": "I agree with Aline, the check is correct.\nHowever, I think attaching the fake video should not be done here. But this will check in another patch",
+      "parentUuid": "30995420_266042a8",
+      "range": {
+        "startLine": 1863,
+        "startChar": 27,
+        "endLine": 1863,
+        "endChar": 29
+      },
+      "revId": "566c6409b064a8d21dd4b8e7d6ab8377cba88dc7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
