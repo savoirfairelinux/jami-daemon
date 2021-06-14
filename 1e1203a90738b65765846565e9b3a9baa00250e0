@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "fd8bb8c8_5a61a8f4",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-14T16:03:45Z",
+      "side": 1,
+      "message": "std::string_view is \"dangerous\" indeed, because it\u0027s a non-owning pointer (unlike usual C++ standard classes). However it\u0027s a perfect tool to interoperate with C APIs like pjsip (allows to have views directly to pjsip data) and to parse incoming data without unneeded copies/allocations - not just there but through the code, C++ used to \"force\" to copy the input in cascade like Russian dolls, like rdata \u003d\u003e ua \u003d\u003e version \u003d\u003e version components, while we can now parse directly from the input like rdata \u003d\u003e version components.\n\nIn this case, the use of string_view is ok, because we return a pointer to data in the input argument (just like string_view::substr() for instance). So the user has the same constrains on the result that he would have with the input he provided.\n\nIn cases where setPeerUAVersion is a no-op, using string_view allows to do the whole UA processing without any allocation, just like what an efficient C parser would do.",
+      "parentUuid": "1f24f9a8_a22acb0b",
+      "revId": "1e1203a90738b65765846565e9b3a9baa00250e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "70dc61a0_c4198639",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 1
@@ -30,6 +48,24 @@
       "writtenOn": "2021-06-14T13:49:06Z",
       "side": 1,
       "message": "since the version is no more restricted to 3 digits, we must check min size as well (1 I guess?)",
+      "revId": "1e1203a90738b65765846565e9b3a9baa00250e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3e300301_5b118f95",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1514,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-14T16:03:45Z",
+      "side": 1,
+      "message": "This would be handled by the meetMinimumRequiredVersion algorithm (the behavior with 0 or 1 components is tested). It would work fine with any number of components, but we have to set an upper limit when parsing.",
+      "parentUuid": "70dc61a0_c4198639",
       "revId": "1e1203a90738b65765846565e9b3a9baa00250e0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
