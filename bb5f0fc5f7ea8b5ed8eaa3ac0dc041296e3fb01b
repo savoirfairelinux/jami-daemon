@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "52190fba_ae6806b3",
+        "filename": "test/unitTest/fileTransfer/fileTransfer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 161,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-14T16:16:23Z",
+      "side": 1,
+      "message": "auto sendPath \u003d std::filesystem::current_path() / \"SEND\";\nauto recvPath \u003d std::filesystem::current_path() / \"RECV\";",
+      "range": {
+        "startLine": 161,
+        "startChar": 0,
+        "endLine": 161,
+        "endChar": 91
+      },
+      "revId": "bb5f0fc5f7ea8b5ed8eaa3ac0dc041296e3fb01b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ccdec06a_0498494f",
+        "filename": "test/unitTest/fileTransfer/fileTransfer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-14T16:16:23Z",
+      "side": 1,
+      "message": "std::remove(sendPath);\nstd::remove(recvPath);",
+      "range": {
+        "startLine": 193,
+        "startChar": 0,
+        "endLine": 195,
+        "endChar": 0
+      },
+      "revId": "bb5f0fc5f7ea8b5ed8eaa3ac0dc041296e3fb01b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
