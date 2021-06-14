@@ -200,6 +200,7 @@ public:
         auto ok = !commits.empty();
         auto lastId = ok ? commits.rbegin()->at("id") : "";
         if (ok) {
+            bool announceMember = false;
             for (const auto& c : commits) {
                 // Announce member events
                 if (c.at("type") == "member") {
@@ -215,9 +216,11 @@ public:
                             action = 2;
                         else if (actionStr == "ban")
                             action = 3;
-                        if (action != -1)
+                        if (action != -1) {
+                            announceMember = true;
                             emitSignal<DRing::ConversationSignal::ConversationMemberEvent>(
                                 shared->getAccountID(), convId, uri, action);
+                        }
                     }
                 }
 #ifdef ENABLE_PLUGIN
@@ -237,6 +240,13 @@ public:
                 emitSignal<DRing::ConversationSignal::MessageReceived>(shared->getAccountID(),
                                                                        convId,
                                                                        c);
+            }
+
+            if (announceMember) {
+                std::vector<std::string> members;
+                for (const auto& m: repository_->members())
+                    members.emplace_back(m.uri);
+                shared->saveMembers(convId, members);
             }
         }
     }
@@ -1049,7 +1059,7 @@ bool
 Conversation::needsFetch(const std::string& deviceId) const
 {
     std::lock_guard<std::mutex> lk(pimpl_->fetchedDevicesMtx_);
-    return pimpl_->fetchedDevices_.find(deviceId) != pimpl_->fetchedDevices_.end();
+    return pimpl_->fetchedDevices_.find(deviceId) == pimpl_->fetchedDevices_.end();
 }
 
 void

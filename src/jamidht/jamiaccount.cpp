@@ -1941,7 +1941,6 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
                       ++buddy->second.devices_cnt;
                   isConnected = buddy->second.devices_cnt > 0;
               }
-
               // NOTE: the rest can use configurationMtx_, that can be locked during unregister so
               // do not retrigger on dht
               runOnMainThread([w = weak(), h, dev, expired, isConnected, wasConnected]() {
@@ -1956,7 +1955,8 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
                       {
                           std::unique_lock<std::mutex> lk(sthis->conversationsMtx_);
                           for (const auto& [_, conv] : sthis->conversations_) {
-                              if (conv->isMember(deviceId, false) && conv->needsFetch(deviceId)) {
+                              if (conv->isMember(h.toString(), false)
+                                  && conv->needsFetch(deviceId)) {
                                   needsSync = true;
                                   break;
                               }
@@ -2023,16 +2023,27 @@ void
 JamiAccount::syncConversations(const std::string& peer, const std::string& deviceId)
 {
     // Sync conversations where peer is member
-    std::set<std::string> convIds;
+    std::set<std::string> toFetch;
+    std::set<std::string> toClone;
     {
-        std::unique_lock<std::mutex> lk(conversationsMtx_);
-        for (const auto& [cid, conv] : conversations_) {
-            if (conv->isMember(peer, false))
-                convIds.emplace(cid);
+        if (auto infos = accountManager_->getInfo()) {
+            for (const auto& ci : infos->conversations) {
+                auto it = conversations_.find(ci.id);
+                if (it != conversations_.end() && it->second) {
+                    if (it->second->isMember(peer, false))
+                        toFetch.emplace(ci.id);
+                } else if (std::find(ci.members.begin(), ci.members.end(), peer)
+                           != ci.members.end()) {
+                    // In this case the conversation was never cloned (can be after an import)
+                    toClone.emplace(ci.id);
+                }
+            }
         }
     }
-    for (const auto& cid : convIds)
+    for (const auto& cid : toFetch)
         fetchNewCommits(peer, deviceId, cid);
+    for (const auto& cid : toClone)
+        cloneConversation(deviceId, peer, cid);
 }
 
 void
@@ -3665,6 +3676,9 @@ JamiAccount::startConversation(ConversationMode mode, const std::string& otherMe
     ConvInfo info;
     info.id = convId;
     info.created = std::time(nullptr);
+    info.members.emplace_back(getUsername());
+    if (!otherMember.empty())
+        info.members.emplace_back(otherMember);
     accountManager_->addConversation(info);
     saveConvInfos();
 
@@ -3784,6 +3798,9 @@ JamiAccount::handlePendingConversations()
                             ConvInfo info;
                             info.id = conversationId;
                             info.created = std::time(nullptr);
+                            for (const auto& member : conversation->getMembers()) {
+                                info.members.emplace_back(member.at("uri"));
+                            }
                             shared->accountManager_->addConversation(info);
                         }
                         {
@@ -3985,6 +4002,15 @@ JamiAccount::conversationVCard(const std::string& conversationId) const
 }
 
 // Member management
+void
+JamiAccount::saveMembers(const std::string& convId, const std::vector<std::string>& members)
+{
+    auto infos = accountManager_->getInfo();
+    if (!infos)
+        return;
+    accountManager_->setConversationMembers(convId, members);
+}
+
 void
 JamiAccount::addConversationMember(const std::string& conversationId,
                                    const std::string& contactUri,
@@ -4315,13 +4341,16 @@ JamiAccount::fetchNewCommits(const std::string& peer,
         }
     } else {
         lk.unlock();
+
         if (accountManager_->getRequest(conversationId) != std::nullopt)
             return;
         {
             // Check if the conversation is cloning
             std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-            if (pendingConversationsFetch_.find(conversationId) != pendingConversationsFetch_.end())
+            if (pendingConversationsFetch_.find(conversationId)
+                != pendingConversationsFetch_.end()) {
                 return;
+            }
         }
         auto infos = accountManager_->getInfo();
         if (!infos)
@@ -5175,6 +5204,8 @@ JamiAccount::getOneToOneConversation(const std::string& uri) const
     for (const auto& [key, conv] : conversations_) {
         // Note it's important to check getUsername(), else
         // removing self can remove all conversations
+        if (!conv)
+            continue;
         if (conv->mode() == ConversationMode::ONE_TO_ONE) {
             auto initMembers = conv->getInitialMembers();
             if (isSelf && initMembers.size() == 1)
