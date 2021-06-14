@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "ede51f26_2a6a4a80",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-14T17:37:54Z",
+      "side": 1,
+      "message": "I understand the motivation behind using string_view, but it\u0027s not always necessary. Some of the copy your are referring to do not happen because of the RVO and copy elision rules.\nMy point is this kink of micro-optimization is not worth considering the risk we introduce, and I really doubt the gain is measurable at all.\nSo, my big concern is what happen if the caller decides to process the returned string asynchronously?",
+      "parentUuid": "fd8bb8c8_5a61a8f4",
+      "revId": "1e1203a90738b65765846565e9b3a9baa00250e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "70dc61a0_c4198639",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 1
