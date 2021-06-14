@@ -533,6 +533,7 @@ public:
     std::vector<uint8_t> conversationVCard(const std::string& conversationId) const;
 
     // Member management
+    void saveMembers(const std::string& convId); // Save confInfos
     void addConversationMember(const std::string& conversationId,
                                const std::string& contactUri,
                                bool sendRequest = true);

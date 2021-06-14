@@ -215,9 +215,11 @@ public:
                             action = 2;
                         else if (actionStr == "ban")
                             action = 3;
-                        if (action != -1)
+                        if (action != -1) {
+                            shared->saveMembers(convId);
                             emitSignal<DRing::ConversationSignal::ConversationMemberEvent>(
                                 shared->getAccountID(), convId, uri, action);
+                        }
                     }
                 }
 #ifdef ENABLE_PLUGIN
@@ -1049,7 +1051,7 @@ bool
 Conversation::needsFetch(const std::string& deviceId) const
 {
     std::lock_guard<std::mutex> lk(pimpl_->fetchedDevicesMtx_);
-    return pimpl_->fetchedDevices_.find(deviceId) != pimpl_->fetchedDevices_.end();
+    return pimpl_->fetchedDevices_.find(deviceId) == pimpl_->fetchedDevices_.end();
 }
 
 void

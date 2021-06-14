@@ -223,6 +223,7 @@ public:
     void saveConvInfos() const;
     void saveConvRequests() const;
     void setConversations(const std::vector<ConvInfo>& newConv);
+    void setConversationMembers(const std::string& convId, const std::vector<std::string>& members);
     void addConversation(const ConvInfo& info);
     void setConversationsRequests(const std::map<std::string, ConversationRequest>& newConvReq);
     std::optional<ConversationRequest> getRequest(const std::string& id) const;
