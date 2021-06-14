@@ -5142,11 +5142,15 @@ JamiAccount::removeRepository(const std::string& conversationId, bool sync, bool
     std::unique_lock<std::mutex> lk(conversationsMtx_);
     auto it = conversations_.find(conversationId);
     if (it != conversations_.end() && it->second && (force || it->second->isRemoving())) {
-        if (it->second->mode() == ConversationMode::ONE_TO_ONE) {
-            for (const auto& member : it->second->getInitialMembers()) {
-                if (member != getUsername())
-                    accountManager_->removeContactConversation(member);
+        try {
+            if (it->second->mode() == ConversationMode::ONE_TO_ONE) {
+                for (const auto& member : it->second->getInitialMembers()) {
+                    if (member != getUsername())
+                        accountManager_->removeContactConversation(member);
+                }
             }
+        } catch (const std::exception& e) {
+            JAMI_ERR() << e.what();
         }
         JAMI_DBG() << "Remove conversation: " << conversationId;
         it->second->erase();
@@ -5206,12 +5210,16 @@ JamiAccount::getOneToOneConversation(const std::string& uri) const
         // removing self can remove all conversations
         if (!conv)
             continue;
-        if (conv->mode() == ConversationMode::ONE_TO_ONE) {
-            auto initMembers = conv->getInitialMembers();
-            if (isSelf && initMembers.size() == 1)
-                return key;
-            if (std::find(initMembers.begin(), initMembers.end(), uri) != initMembers.end())
-                return key;
+        try {
+            if (conv->mode() == ConversationMode::ONE_TO_ONE) {
+                auto initMembers = conv->getInitialMembers();
+                if (isSelf && initMembers.size() == 1)
+                    return key;
+                if (std::find(initMembers.begin(), initMembers.end(), uri) != initMembers.end())
+                    return key;
+            }
+        } catch (const std::exception& e) {
+            JAMI_ERR() << e.what();
         }
     }
     return {};
