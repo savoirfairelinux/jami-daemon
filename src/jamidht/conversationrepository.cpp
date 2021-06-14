@@ -246,8 +246,8 @@ add_initial_files(GitRepository& repo, const std::shared_ptr<JamiAccount>& accou
     for (const auto& crl : account->identity().second->getRevocationLists()) {
         if (!crl)
             continue;
-        std::string crlPath = crlsPath + DIR_SEPARATOR_STR + deviceId + DIR_SEPARATOR_STR + dht::toHex(crl->getNumber())
-                              + ".crl";
+        std::string crlPath = crlsPath + DIR_SEPARATOR_STR + deviceId + DIR_SEPARATOR_STR
+                              + dht::toHex(crl->getNumber()) + ".crl";
         file = fileutils::ofstream(crlPath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             JAMI_ERR("Could not write data to %s", crlPath.c_str());
@@ -1280,13 +1280,13 @@ ConversationRepository::Impl::mode() const
 
     auto lastMsg = log(id_, "", 1);
     if (lastMsg.size() == 0) {
-        throw std::logic_error("Can't retrieve first commit");
         if (auto shared = account_.lock()) {
             emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
                                                                        id_,
                                                                        EINVALIDMODE,
                                                                        "No initial commit");
         }
+        throw std::logic_error("Can't retrieve first commit");
     }
     auto commitMsg = lastMsg[0].commit_msg;
 
@@ -1295,22 +1295,22 @@ ConversationRepository::Impl::mode() const
     Json::CharReaderBuilder rbuilder;
     auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
     if (!reader->parse(commitMsg.data(), commitMsg.data() + commitMsg.size(), &root, &err)) {
-        throw std::logic_error("Can't retrieve first commit");
         if (auto shared = account_.lock()) {
             emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
                                                                        id_,
                                                                        EINVALIDMODE,
                                                                        "No initial commit");
         }
+        throw std::logic_error("Can't retrieve first commit");
     }
     if (!root.isMember("mode")) {
-        throw std::logic_error("No mode detected for initial commit");
         if (auto shared = account_.lock()) {
             emitSignal<DRing::ConversationSignal::OnConversationError>(shared->getAccountID(),
                                                                        id_,
                                                                        EINVALIDMODE,
                                                                        "No mode detected");
         }
+        throw std::logic_error("No mode detected for initial commit");
     }
     int mode = root["mode"].asInt();
 
@@ -1335,7 +1335,6 @@ ConversationRepository::Impl::mode() const
                                                                        "Incorrect mode detected");
         }
         throw std::logic_error("Incorrect mode detected");
-        break;
     }
     return *mode_;
 }
