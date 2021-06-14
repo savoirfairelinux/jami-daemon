@@ -55,6 +55,24 @@
     },
     {
       "key": {
+        "uuid": "37dca027_ba12d661",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-14T18:34:54Z",
+      "side": 1,
+      "message": "If the caller decides to process the returned string asynchronously, he would have to copy the string to the async context anyway. The type (string or string_view) then carries the necessary information to handle it the appropriate way.\n\nI agree this is a minor optimisation, but these can add up if all the parsing code copies the input over and over. There is no reason to copy if we can read the input directly in a clean way. RVO doesn\u0027t prevent the copy of rdata to peerUa, or from peerUa to version, it just prevents a third copy when returning from this function (C++11 mandates that \u0027return x\u0027 calls the move operator on x anyway, so I\u0027m not concerned about this even without RVO).",
+      "parentUuid": "ede51f26_2a6a4a80",
+      "revId": "1e1203a90738b65765846565e9b3a9baa00250e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "70dc61a0_c4198639",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 1
