@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1f24f9a8_a22acb0b",
+        "filename": "src/sip/sip_utils.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-14T13:49:06Z",
+      "side": 1,
+      "message": "This is very dangerous. The memory pointe by string_view will be valid as long as all the processing is synchronous. Even if this is the case for the current usage of this utility method, we can not guarantee it in the future. Furthermore, this assumption (synchronous) is not documented anywhere.\nAlso, setPeerUAVersion (the only method that uses this method for now) is called three times during a call, and two of them are a no-op since the UA version is unlikely to change. Plus the fact that the version string is a short string, makes the gain of using string_view insignificant.",
+      "revId": "1e1203a90738b65765846565e9b3a9baa00250e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "70dc61a0_c4198639",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1514,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-14T13:49:06Z",
+      "side": 1,
+      "message": "since the version is no more restricted to 3 digits, we must check min size as well (1 I guess?)",
+      "revId": "1e1203a90738b65765846565e9b3a9baa00250e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "51c689aa_dd222b6a",
+        "filename": "test/unitTest/string_utils/testString_utils.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 145,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-14T13:49:06Z",
+      "side": 1,
+      "message": "We might also need to test when the number of digits \u003e 4, and add the check in meetMinimumRequiredVersion.",
+      "revId": "1e1203a90738b65765846565e9b3a9baa00250e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
