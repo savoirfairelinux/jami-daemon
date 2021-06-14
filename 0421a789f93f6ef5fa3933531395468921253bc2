@@ -2,6 +2,23 @@
   "comments": [
     {
       "key": {
+        "uuid": "e65aafe4_8d195039",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 932,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-14T21:36:09Z",
+      "side": 1,
+      "message": "else ?",
+      "revId": "0421a789f93f6ef5fa3933531395468921253bc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "6f482dc8_81cd7712",
         "filename": "src/sip/sipvoiplink.cpp",
         "patchSetId": 13
@@ -13,6 +30,24 @@
       "writtenOn": "2021-06-14T21:19:14Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nloop variable is copied but only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "0421a789f93f6ef5fa3933531395468921253bc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "27e0c064_9a0419ae",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1086,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-14T21:36:09Z",
+      "side": 1,
+      "message": "Remove log or take SonarQube advice",
+      "parentUuid": "6f482dc8_81cd7712",
       "revId": "0421a789f93f6ef5fa3933531395468921253bc2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false

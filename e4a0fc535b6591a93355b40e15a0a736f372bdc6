@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "50c6053a_d621deb4",
+        "filename": "src/account.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-14T21:36:09Z",
+      "side": 1,
+      "message": "initialize in header",
+      "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "444c50ed_6c06b375",
+        "filename": "src/account.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 593,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-14T21:36:09Z",
+      "side": 1,
+      "message": "initialize to false here, add comment to specify that it\u0027s only for testing.",
+      "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "15445fc6_a2021e4b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1647,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-14T21:36:09Z",
+      "side": 1,
+      "message": "not adding local candidates (it\u0027s not an instruction for the reader)",
+      "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c87d0b19_598b1e03",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1808,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-14T21:36:09Z",
+      "side": 1,
+      "message": "Can be simplified:\n\n    return std::find_if(rtpStreams_.begin(), rtpStreams_.end(), [\u0026type](auto const\u0026 stream) {\n        return stream.mediaAttribute_-\u003etype_ \u003d\u003d type and stream.mediaAttribute_-\u003eenabled_;\n    }) !\u003d rtpStreams_.end();",
+      "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "19d81a76_0f7b64e8",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1902,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-14T21:36:09Z",
+      "side": 1,
+      "message": "?",
+      "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cb93039b_6e5ed2f1",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 2473,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-14T21:36:09Z",
+      "side": 1,
+      "message": "Heavy operation and result not used, prefer:\n\n    if (not rtpStreams_.empty()) {",
+      "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
