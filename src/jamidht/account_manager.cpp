@@ -462,6 +462,20 @@ AccountManager::setConversations(const std::vector<ConvInfo>& newConv)
 }
 
 void
+AccountManager::setConversationMembers(const std::string& convId,
+                                       const std::vector<std::string>& members)
+{
+    if (info_) {
+        for (auto& ci : info_->conversations) {
+            if (ci.id == convId) {
+                ci.members = members;
+                saveConvInfos();
+            }
+        }
+    }
+}
+
+void
 AccountManager::saveConvInfos() const
 {
     if (!info_)
