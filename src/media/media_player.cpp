@@ -21,7 +21,7 @@
 #include "media_player.h"
 #include "client/videomanager.h"
 #include "client/ring_signal.h"
-#include "dring/media_const.h"
+#include "jami/media_const.h"
 #include "manager.h"
 #include <string>
 namespace jami {
