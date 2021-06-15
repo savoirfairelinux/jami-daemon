@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "dring/datatransfer_interface.h"
+#include "jami/datatransfer_interface.h"
 #include "data_transfer.h"
 #include "channeled_transfers.h"
 

@@ -24,7 +24,7 @@
 #include "../../test_runner.h"
 #include "fileutils.h"
 
-#include "dring.h"
+#include "jami.h"
 
 #include <string>
 #include <iostream>
