@@ -27,8 +27,8 @@
 %apply int64_t& INOUT { DRing::DataTransferId& id };
 
 %header %{
-#include "dring/dring.h"
-#include "dring/datatransfer_interface.h"
+#include "jami/jami.h"
+#include "jami/datatransfer_interface.h"
 
 class DataTransferCallback {
 public:

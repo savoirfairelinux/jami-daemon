@@ -175,24 +175,24 @@ libring_la_SOURCES += \
 endif
 
 nobase_include_HEADERS = \
-	dring/account_const.h \
-	dring/call_const.h \
-	dring/callmanager_interface.h \
-	dring/configurationmanager_interface.h \
-	dring/conversation_interface.h \
-	dring/datatransfer_interface.h \
-	dring/def.h \
-	dring/dring.h \
-	dring/media_const.h \
-	dring/presence_const.h \
-	dring/presencemanager_interface.h \
-	dring/security_const.h
+	jami/account_const.h \
+	jami/call_const.h \
+	jami/callmanager_interface.h \
+	jami/configurationmanager_interface.h \
+	jami/conversation_interface.h \
+	jami/datatransfer_interface.h \
+	jami/def.h \
+	jami/jami.h \
+	jami/media_const.h \
+	jami/presence_const.h \
+	jami/presencemanager_interface.h \
+	jami/security_const.h
 
 if ENABLE_PLUGIN
 nobase_include_HEADERS+= \
-		dring/plugin_manager_interface.h
+		jami/plugin_manager_interface.h
 endif
 if ENABLE_VIDEO
 nobase_include_HEADERS+= \
-		dring/videomanager_interface.h
+		jami/videomanager_interface.h
 endif
