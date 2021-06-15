@@ -51,8 +51,8 @@
 #include "uri.h"
 
 #include "client/ring_signal.h"
-#include "dring/call_const.h"
-#include "dring/account_const.h"
+#include "jami/call_const.h"
+#include "jami/account_const.h"
 
 #include "upnp/upnp_control.h"
 #include "system_codec_container.h"

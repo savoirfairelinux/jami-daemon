@@ -28,7 +28,7 @@
 
 /* Jami */
 #include "account_const.h"
-#include "dring.h"
+#include "jami.h"
 #include "fileutils.h"
 #include "manager.h"
 

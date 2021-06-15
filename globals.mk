@@ -14,7 +14,7 @@ AM_CPPFLAGS += \
 	-I$(src)/src/config \
 	-I$(src)/src/media \
 	-I$(src)/test \
-	-I$(src)/src/dring \
+	-I$(src)/src/jami \
 	$(SIP_CFLAGS) \
 	-DPREFIX=\"$(prefix)\" \
 	-DPROGSHAREDIR=\"$(datadir)/jami\" \

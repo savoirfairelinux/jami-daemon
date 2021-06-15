@@ -26,10 +26,10 @@
 #include <vector>
 
 /* DRing */
-#include "dring.h"
-#include "dring/account_const.h"
-#include "dring/configurationmanager_interface.h"
-#include "dring/call_const.h"
+#include "jami.h"
+#include "jami/account_const.h"
+#include "jami/configurationmanager_interface.h"
+#include "jami/call_const.h"
 
 /* agent */
 #include "agent/utils.h"

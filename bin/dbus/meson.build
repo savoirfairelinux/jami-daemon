@@ -1,7 +1,7 @@
 jamid_includedirs = include_directories(
     '../..',
     '../../src',
-    '../../src/dring'
+    '../../src/jami'
 )
 
 jamid_sources = files(
@@ -64,11 +64,11 @@ endif
 
 if progpod2man.found()
     jamid_targets += custom_target('jamid.man',
-        command: [progpod2man, '--section=8', '--release='+meson.project_version(), '--center', '""', '@INPUT@', '@OUTPUT@'],
-        input: 'jamid.pod',
-        output: 'jamid.8',
+        command: [progpod2man, '--section=1', '--release='+meson.project_version(), '--center', '""', '@INPUT@', '@OUTPUT@'],
+        input: '../../man/jamid.pod',
+        output: 'jamid.1',
         install: true,
-        install_dir: get_option('mandir') / 'man8'
+        install_dir: get_option('mandir') / 'man1'
     )
 endif
 

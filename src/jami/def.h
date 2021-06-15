@@ -36,8 +36,8 @@
 // DRING_PUBLIC is used for the public API symbols. It is either DLL imports or DLL exports (or does
 // nothing for static build) DRING_LOCAL is used for non-api symbols.
 
-#ifdef dring_EXPORTS // defined if DRing is compiled as a shared library
-#ifdef DRING_BUILD   // defined if we are building the DRing shared library (instead of using it)
+#ifdef jami_EXPORTS // defined if DRing is compiled as a shared library
+#ifdef DRING_BUILD  // defined if we are building the DRing shared library (instead of using it)
 #define DRING_PUBLIC DRING_EXPORT
 #else
 #define DRING_PUBLIC DRING_IMPORT
@@ -46,7 +46,7 @@
 #else // dring_EXPORTS is not defined: this means DRing is a static lib.
 #define DRING_PUBLIC
 #define DRING_LOCAL
-#endif // dring_EXPORTS
+#endif // jami_EXPORTS
 
 #ifdef DEBUG
 #define DRING_TESTABLE DRING_EXPORT

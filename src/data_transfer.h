@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "dring/datatransfer_interface.h"
+#include "jami/datatransfer_interface.h"
 #include "jamidht/multiplexed_socket.h"
 #include "noncopyable.h"
 

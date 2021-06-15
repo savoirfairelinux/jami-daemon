@@ -19,7 +19,7 @@
  */
 
 #include "media/media_attribute.h"
-#include "dring/media_const.h"
+#include "jami/media_const.h"
 
 namespace jami {
 
