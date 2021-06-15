@@ -23,7 +23,7 @@
 #include "manager.h"
 #include "jamidht/connectionmanager.h"
 #include "jamidht/jamiaccount.h"
-#include "dring.h"
+#include "jami.h"
 #include "account_const.h"
 
 #include "lib/utils.h"

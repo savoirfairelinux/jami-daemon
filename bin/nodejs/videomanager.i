@@ -24,8 +24,8 @@
 #include <list>
 #include <mutex>
 
-#include "dring/dring.h"
-#include "dring/videomanager_interface.h"
+#include "jami/jami.h"
+#include "jami/videomanager_interface.h"
 
 class VideoCallback {
 public:

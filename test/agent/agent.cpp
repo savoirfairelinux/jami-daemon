@@ -32,10 +32,10 @@
 
 /* DRing */
 #include "account_const.h"
-#include "dring/presencemanager_interface.h"
-#include "dring/callmanager_interface.h"
-#include "dring/configurationmanager_interface.h"
-#include "dring/conversation_interface.h"
+#include "jami/presencemanager_interface.h"
+#include "jami/callmanager_interface.h"
+#include "jami/configurationmanager_interface.h"
+#include "jami/conversation_interface.h"
 
 /* agent */
 #include "agent/agent.h"

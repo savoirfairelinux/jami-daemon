@@ -1,7 +1,7 @@
 {
   "targets": [
     {
-      "target_name": "dring",
+      "target_name": "jamid",
       "sources": [ "jami_wrapper.cpp" ],
       'include_dirs': ['../../src/'],
       'libraries': ['-L<(module_root_dir)/../../src/.libs', '-lring'],
