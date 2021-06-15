@@ -167,9 +167,9 @@ public:
 
     void setAlsaCardout(int c) { alsaCardout_ = c; }
 
-    int getAlsaCardring() const { return alsaCardring_; }
+    int getAlsaCarjami() const { return alsaCarjami_; }
 
-    void setAlsaCardring(int c) { alsaCardring_ = c; }
+    void setAlsaCarjami(int c) { alsaCarjami_ = c; }
 
     const std::string& getAlsaPlugin() const { return alsaPlugin_; }
 
@@ -246,7 +246,7 @@ private:
     // alsa preference
     int alsaCardin_;
     int alsaCardout_;
-    int alsaCardring_;
+    int alsaCarjami_;
     std::string alsaPlugin_;
     int alsaSmplrate_;
 

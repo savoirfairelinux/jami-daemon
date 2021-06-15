@@ -21,7 +21,7 @@
 #ifndef DENABLE_VIDEOMANAGERI_H
 #define DENABLE_VIDEOMANAGERI_H
 
-#include "dring.h"
+#include "jami.h"
 
 extern "C" {
 struct AVFrame;

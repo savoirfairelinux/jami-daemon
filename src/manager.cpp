@@ -81,8 +81,8 @@ using random_device = dht::crypto::random_device;
 #include "ice_transport.h"
 
 #include "client/ring_signal.h"
-#include "dring/call_const.h"
-#include "dring/account_const.h"
+#include "jami/call_const.h"
+#include "jami/account_const.h"
 
 #include "libav_utils.h"
 #include "video/sinkclient.h"
@@ -90,7 +90,7 @@ using random_device = dht::crypto::random_device;
 #include "audio/tonecontrol.h"
 
 #include "data_transfer.h"
-#include "dring/media_const.h"
+#include "jami/media_const.h"
 
 #include "upnp/upnp_context.h"
 
@@ -583,6 +583,7 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
 std::string
 Manager::ManagerPimpl::retrieveConfigPath() const
 {
+    // TODO: Migrate config file name from dring.yml to jami.yml.
     return fileutils::get_config_dir() + DIR_SEPARATOR_STR + "dring.yml";
 }
 

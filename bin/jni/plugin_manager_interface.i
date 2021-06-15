@@ -19,8 +19,8 @@
 
 %header %{
 
-#include "dring/dring.h"
-#include "dring/plugin_manager_interface.h"
+#include "jami/jami.h"
+#include "jami/plugin_manager_interface.h"
 %}
 
 namespace DRing {
