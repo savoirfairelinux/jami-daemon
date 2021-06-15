@@ -655,6 +655,12 @@ public:
 
     std::string profilePath() const;
 
+    /**
+     * This will cache the turn server resolution each time we launch
+     * Jami, or for each connectivityChange()
+     */
+    void cacheTurnServers();
+
 private:
     NON_COPYABLE(JamiAccount);
 
@@ -911,11 +917,6 @@ private:
      * Avoid to refresh the cache multiple times
      */
     std::atomic_bool isRefreshing_ {false};
-    /**
-     * This will cache the turn server resolution each time we launch
-     * Jami, or for each connectivityChange()
-     */
-    void cacheTurnServers();
 
     std::chrono::duration<int> turnRefreshDelay_ {std::chrono::seconds(10)};
 

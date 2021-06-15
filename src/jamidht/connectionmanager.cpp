@@ -259,6 +259,14 @@ public:
     }
 
     std::atomic_bool isDestroying_ {false};
+
+    /**
+     * This method is useful to detect if a relayed candidate should be present but is not.
+     * In this case, this can mean that the IP of the TURN is blocked, too much packet loss, or
+     * anything causing a connection failure and an allocation failed.
+     * It can be interesting to reset the cache and re-resolve the TURN here
+     */
+    void checkRelayedCandidate(std::string_view icemsg);
 };
 
 void
@@ -294,6 +302,7 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
         JAMI_DBG() << "Added local ICE candidate " << addr;
     }
 
+
     // Prepare connection request as a DHT message
     PeerConnectionRequest val;
 
@@ -301,6 +310,7 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
     val.ice_msg = icemsg.str();
     auto value = std::make_shared<dht::Value>(std::move(val));
     value->user_type = "peer_request";
+    checkRelayedCandidate(std::string_view {val.ice_msg});
 
     // Send connection request through DHT
     JAMI_DBG() << account << "Request connection to " << deviceId;
@@ -744,6 +754,7 @@ ConnectionManager::Impl::answerTo(IceTransport& ice, const dht::Value::Id& id, c
     val.isAnswer = true;
     auto value = std::make_shared<dht::Value>(std::move(val));
     value->user_type = "peer_request";
+    checkRelayedCandidate(std::string_view {val.ice_msg});
 
     JAMI_DBG() << account << "[CNX] connection accepted, DHT reply to " << from;
     account.dht()->putEncrypted(
@@ -968,6 +979,21 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const DeviceId& deviceId, const
         });
     });
 }
+
+void
+ConnectionManager::Impl::checkRelayedCandidate(std::string_view icemsg)
+{
+    // Check that relayed candidate is here
+    auto turnCache = account.turnCache();
+    if (turnCache.size() == 2 && (turnCache[0] or turnCache[1])) {
+        bool gotRelay = icemsg.find(" relay ") != std::string::npos;
+        if (not gotRelay) {
+            JAMI_ERR() << "Jami is using a relay, but no relay added. Reset the cache and hope it's not a network limitation";
+            account.cacheTurnServers();
+        }
+    }
+}
+
 
 ConnectionManager::ConnectionManager(JamiAccount& account)
     : pimpl_ {std::make_shared<Impl>(account)}
