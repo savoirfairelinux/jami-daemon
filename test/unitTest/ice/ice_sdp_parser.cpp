@@ -28,7 +28,7 @@
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
 
-#include "dring.h"
+#include "jami.h"
 #include "media_const.h"
 #include "call_const.h"
 #include "account_const.h"
@@ -124,7 +124,7 @@ public:
         // Init daemon
         DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
+            CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
 
         // We must have valid media receiver.
         CPPUNIT_ASSERT(audioReceiver_);
@@ -466,7 +466,9 @@ IceSdpParsingTest::configureTest(CallData& aliceData, CallData& bobData)
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaNegotiationStatus>(
-        [&](const std::string& callId, const std::string& event, const std::vector<std::map<std::string, std::string>>& media) {
+        [&](const std::string& callId,
+            const std::string& event,
+            const std::vector<std::map<std::string, std::string>>& media) {
             auto user = getUserAlias(callId);
             if (not user.empty())
                 onMediaNegotiationStatus(callId,
