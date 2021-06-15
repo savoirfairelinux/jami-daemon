@@ -298,12 +298,6 @@ Logger::vlog(
         SetConsoleTextAttribute(hConsole, color_header);
 #endif
         fputs(contextHeader(file, line).c_str(), stderr);
-#ifdef _MSC_VER
-        std::array<char, 4096> tmp;
-        vsnprintf(tmp.data(), tmp.size(), format, ap);
-        jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(contextHeader(file, line)
-                                                                  + tmp.data());
-#endif
 #ifndef _WIN32
         fputs(END_COLOR, stderr);
         fputs(color_prefix, stderr);
