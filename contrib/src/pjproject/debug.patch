@@ -1,0 +1,35 @@
+ pjnath/src/pjnath/ice_session.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index f27c2bab3..a716bde0e 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -2098,6 +2098,8 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+     /* Set timer ID to FALSE first */
+     te->id = PJ_FALSE;
+ 
++	pj_bool_t is_retrying = PJ_TRUE;
++
+     /* Set checklist state to Running */
+     clist_set_state(ice, clist, PJ_ICE_SESS_CHECKLIST_ST_RUNNING);
+ 
+@@ -2149,6 +2151,8 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 	}
+     }
+ 
++	is_retrying = (start_count == 0);
++
+     /* Send STUN Binding request for check with highest priority on
+      * Waiting state.
+      */
+@@ -2205,6 +2209,9 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+     if (start_count!=0) {
+ 	/* Schedule for next timer */
+ 	pj_time_val timeout = {0, PJ_ICE_TA_VAL};
++	if (is_retrying) {
++		timeout.msec = 500; // No candidate waiting, we can just slow down
++	}
+ 
+ 	pj_time_val_normalize(&timeout);
+ 	pj_timer_heap_schedule_w_grp_lock(th, te, &timeout, PJ_TRUE,

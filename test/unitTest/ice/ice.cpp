@@ -59,12 +59,14 @@ private:
     void testTurnMasterIceConnection();
     void testTurnSlaveIceConnection();
     void testReceiveTooManyCandidates();
+    void testFail();
 
     CPPUNIT_TEST_SUITE(IceTest);
-    CPPUNIT_TEST(testRawIceConnection);
-    CPPUNIT_TEST(testTurnMasterIceConnection);
-    CPPUNIT_TEST(testTurnSlaveIceConnection);
-    CPPUNIT_TEST(testReceiveTooManyCandidates);
+    // CPPUNIT_TEST(testRawIceConnection);
+    // CPPUNIT_TEST(testTurnMasterIceConnection);
+    // CPPUNIT_TEST(testTurnSlaveIceConnection);
+    // CPPUNIT_TEST(testReceiveTooManyCandidates);
+    CPPUNIT_TEST(testFail);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -506,10 +508,124 @@ IceTest::testReceiveTooManyCandidates()
     ice_config.compCountPerStream = 1;
 
     ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
-                                                                              ice_config);
+                                                                             ice_config);
     cv_create.notify_all();
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(10), [&] { return iceMasterReady && iceSlaveReady; }));
+}
+
+void
+IceTest::testFail()
+{
+    const auto& addr4 = dht_->getPublicAddress(AF_INET);
+    CPPUNIT_ASSERT(addr4.size() != 0);
+    CPPUNIT_ASSERT(turnV4_);
+    IceTransportOptions ice_config;
+    ice_config.upnpEnable = true;
+    ice_config.tcpEnable = true;
+    std::shared_ptr<IceTransport> ice_master, ice_slave;
+    std::mutex mtx, mtx_create, mtx_resp, mtx_init;
+    std::unique_lock<std::mutex> lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
+        lk_init {mtx_init};
+    std::condition_variable cv, cv_create, cv_resp, cv_init;
+    std::string init = {};
+    std::string response = {};
+    bool iceMasterNotReady = false, iceSlaveNotReady = false;
+    ice_config.onInitDone = [&](bool ok) {
+        CPPUNIT_ASSERT(ok);
+        dht::ThreadPool::io().run([&] {
+            CPPUNIT_ASSERT(cv_create.wait_for(lk_create, std::chrono::seconds(10), [&] {
+                return ice_master != nullptr;
+            }));
+            auto iceAttributes = ice_master->getLocalAttributes();
+            std::stringstream icemsg;
+            icemsg << iceAttributes.ufrag << "\n";
+            icemsg << iceAttributes.pwd << "\n";
+            for (const auto& addr : ice_master->getLocalCandidates(1)) {
+                if (addr.find("relay") != std::string::npos) {
+                    // We only want to add relayed + public ip
+                    icemsg << addr << "\n";
+                    JAMI_DBG() << "Added local ICE candidate " << addr;
+                } else {
+                    // Replace host by non existing IP (we still need host to not fail the start)
+                    std::regex e("((?:[0-9]{1,3}\\.){3}[0-9]{1,3})");
+                    auto newaddr = std::regex_replace(addr, e, "100.100.100.100");
+                    if (newaddr != addr)
+                        icemsg << newaddr << "\n";
+                }
+            }
+            init = icemsg.str();
+            cv_init.notify_one();
+            CPPUNIT_ASSERT(cv_resp.wait_for(lk_resp, std::chrono::seconds(10), [&] {
+                return !response.empty();
+            }));
+            auto sdp = ice_master->parseIceCandidates(response);
+            CPPUNIT_ASSERT(
+                ice_master->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates)));
+        });
+    };
+    ice_config.onNegoDone = [&](bool ok) {
+        iceMasterNotReady = !ok;
+        cv.notify_one();
+    };
+    ice_config.accountPublicAddr = IpAddr(*addr4[0].get());
+    ice_config.accountLocalAddr = ip_utils::getLocalAddr(AF_INET);
+    ice_config.master = true;
+    ice_config.streamsCount = 1;
+    ice_config.compCountPerStream = 1;
+    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE",
+                                                                              ice_config);
+    cv_create.notify_all();
+    ice_config.onInitDone = [&](bool ok) {
+        CPPUNIT_ASSERT(ok);
+        dht::ThreadPool::io().run([&] {
+            CPPUNIT_ASSERT(cv_create.wait_for(lk_create, std::chrono::seconds(10), [&] {
+                return ice_slave != nullptr;
+            }));
+            auto iceAttributes = ice_slave->getLocalAttributes();
+            std::stringstream icemsg;
+            icemsg << iceAttributes.ufrag << "\n";
+            icemsg << iceAttributes.pwd << "\n";
+            for (const auto& addr : ice_slave->getLocalCandidates(1)) {
+                if (addr.find("relay") != std::string::npos) {
+                    // We only want to add relayed + public ip
+                    icemsg << addr << "\n";
+                    JAMI_DBG() << "Added local ICE candidate " << addr;
+                } else {
+                    // Replace host by non existing IP (we still need host to not fail the start)
+                    std::regex e("((?:[0-9]{1,3}\\.){3}[0-9]{1,3})");
+                    auto newaddr = std::regex_replace(addr, e, "100.100.100.100");
+                    if (newaddr != addr)
+                        icemsg << newaddr << "\n";
+                }
+            }
+            response = icemsg.str();
+            cv_resp.notify_one();
+            CPPUNIT_ASSERT(
+                cv_init.wait_for(lk_resp, std::chrono::seconds(10), [&] { return !init.empty(); }));
+            auto sdp = ice_slave->parseIceCandidates(init);
+            CPPUNIT_ASSERT(
+                ice_slave->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates)));
+        });
+    };
+    ice_config.onNegoDone = [&](bool ok) {
+        iceSlaveNotReady = !ok;
+        cv.notify_one();
+    };
+    ice_config.turnServers.emplace_back(TurnServerInfo()
+                                            .setUri(turnV4_->toString(true))
+                                            .setUsername("ring")
+                                            .setPassword("ring")
+                                            .setRealm("ring"));
+    ice_config.master = false;
+    ice_config.streamsCount = 1;
+    ice_config.compCountPerStream = 1;
+    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
+                                                                             ice_config);
+    cv_create.notify_all();
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(120), [&] {
+        return iceMasterNotReady && iceSlaveNotReady;
+    }));
 }
 
 } // namespace test
