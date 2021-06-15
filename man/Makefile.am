@@ -1,14 +1,14 @@
 SECTION="1"
 
-TEMPLATES=dring.pod
+TEMPLATES=jamid.pod
 
-man_MANS=dring.1
+man_MANS=jamid.1
 
 POD2MAN=pod2man
 
 EXTRA_DIST=$(man_MANS) $(TEMPLATES)
 
-all: $(MANPAGES)
+all: $(man_MANS)
 
 SUFFIXES=.pod .1
 

@@ -2,7 +2,7 @@
 # Source groups - src
 ################################################################################
 
-# client|config|dring|hooks|im|jamidht|media|security|sip|transport|upnp
+# client|config|jami.hooks|im|jamidht|media|security|sip|transport|upnp
 
 list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/account.cpp"
@@ -79,7 +79,7 @@ set (Source_Files ${Source_Files} PARENT_SCOPE)
 
 add_subdirectory(client)
 add_subdirectory(config)
-add_subdirectory(dring)
+add_subdirectory(jami)
 add_subdirectory(im)
 add_subdirectory(jamidht)
 add_subdirectory(media)
@@ -90,7 +90,7 @@ add_subdirectory(plugin)
 
 set (Source_Files__client ${Source_Files__client} PARENT_SCOPE)
 set (Source_Files__config ${Source_Files__config} PARENT_SCOPE)
-set (Source_Files__dring ${Source_Files__dring} PARENT_SCOPE)
+set (Source_Files__jami ${Source_Files__jami} PARENT_SCOPE)
 set (Source_Files__hooks ${Source_Files__hooks} PARENT_SCOPE)
 set (Source_Files__im ${Source_Files__im} PARENT_SCOPE)
 set (Source_Files__jamidht ${Source_Files__jamidht} PARENT_SCOPE)
