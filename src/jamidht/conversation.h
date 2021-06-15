@@ -27,7 +27,7 @@
 #include <json/json.h>
 #include <msgpack.hpp>
 
-#include "dring/datatransfer_interface.h"
+#include "jami/datatransfer_interface.h"
 
 namespace jami {
 

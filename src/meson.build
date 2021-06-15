@@ -1,6 +1,6 @@
 libjami_includedirs = include_directories(
     '..',
-    'dring',
+    'jami',
     'media',
     'jamidht/eth'
 )
@@ -298,7 +298,7 @@ libjami = library('jami',
 )
 
 libjami_dep = declare_dependency(
-    include_directories: 'dring',
+    include_directories: 'jami',
     link_with: libjami,
     variables: {
         'video': conf.get('ENABLE_VIDEO')? 'true' : 'false',
@@ -308,30 +308,30 @@ libjami_dep = declare_dependency(
 
 if get_option('interfaces').contains('library')
     install_headers(
-        'dring/account_const.h',
-        'dring/call_const.h',
-        'dring/callmanager_interface.h',
-        'dring/configurationmanager_interface.h',
-        'dring/conversation_interface.h',
-        'dring/datatransfer_interface.h',
-        'dring/def.h',
-        'dring/dring.h',
-        'dring/media_const.h',
-        'dring/presence_const.h',
-        'dring/presencemanager_interface.h',
-        'dring/security_const.h',
-        subdir: 'dring'
+        'jami/account_const.h',
+        'jami/call_const.h',
+        'jami/callmanager_interface.h',
+        'jami/configurationmanager_interface.h',
+        'jami/conversation_interface.h',
+        'jami/datatransfer_interface.h',
+        'jami/def.h',
+        'jami/jami.h',
+        'jami/media_const.h',
+        'jami/presence_const.h',
+        'jami/presencemanager_interface.h',
+        'jami/security_const.h',
+        subdir: 'jami'
     )
     if conf.get('ENABLE_VIDEO')
         install_headers(
-            'dring/videomanager_interface.h',
-            subdir: 'dring'
+            'jami/videomanager_interface.h',
+            subdir: 'jami'
         )
     endif
     if conf.get('ENABLE_PLUGIN')
         install_headers(
-            'dring/plugin_manager_interface.h',
-            subdir: 'dring'
+            'jami/plugin_manager_interface.h',
+            subdir: 'jami'
         )
     endif
 
@@ -341,7 +341,7 @@ if get_option('interfaces').contains('library')
         version: meson.project_version(),
         description: 'The Jami core library',
         url: 'https://jami.net/',
-        subdirs: 'dring',
+        subdirs: 'jami',
         filebase: 'jami',
         variables: [
             'video=' + (conf.get('ENABLE_VIDEO')? 'true' : 'false'),
