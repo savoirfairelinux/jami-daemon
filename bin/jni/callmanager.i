@@ -22,8 +22,8 @@
 
 %header %{
 
-#include "dring/dring.h"
-#include "dring/callmanager_interface.h"
+#include "jami/jami.h"
+#include "jami/callmanager_interface.h"
 
 class Callback {
 public:

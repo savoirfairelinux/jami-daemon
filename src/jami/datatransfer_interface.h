@@ -23,7 +23,7 @@
 
 #include "def.h"
 
-#include "dring.h"
+#include "jami.h"
 
 #include <string>
 #include <map>

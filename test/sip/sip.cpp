@@ -21,14 +21,14 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/CompilerOutputter.h>
 
-#include "dring.h"
+#include "jami.h"
 
 #include <stdexcept>
 
 void init_daemon()
 {
     DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-    DRing::start("test/unitTest/dring-sample.yml");
+    DRing::start("test/unitTest/jami-sample.yml");
 }
 
 int main()

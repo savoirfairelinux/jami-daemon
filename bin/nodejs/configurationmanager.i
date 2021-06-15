@@ -20,8 +20,8 @@
  */
 
 %header %{
-#include "dring/dring.h"
-#include "dring/configurationmanager_interface.h"
+#include "jami/jami.h"
+#include "jami/configurationmanager_interface.h"
 
 class ConfigurationCallback {
 public:

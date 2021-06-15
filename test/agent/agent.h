@@ -25,7 +25,7 @@
 #include "agent/log.h"
 
 /* Dring */
-#include "dring/dring.h"
+#include "jami/jami.h"
 
 /* std */
 #include <memory>

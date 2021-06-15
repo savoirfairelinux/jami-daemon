@@ -29,7 +29,7 @@
 
 #include "manager.h"
 #include "logger.h"
-#include "dring.h"
+#include "jami.h"
 #include "callmanager_interface.h"
 #include "configurationmanager_interface.h"
 #include "presencemanager_interface.h"

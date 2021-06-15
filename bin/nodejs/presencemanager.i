@@ -19,8 +19,8 @@
 
 %header %{
 
-#include "dring/dring.h"
-#include "dring/presencemanager_interface.h"
+#include "jami/jami.h"
+#include "jami/presencemanager_interface.h"
 
 class PresenceCallback {
 public:

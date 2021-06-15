@@ -27,7 +27,7 @@
 #include <map>
 #include <string>
 
-#include "dring.h"
+#include "jami.h"
 
 namespace DRing {
 

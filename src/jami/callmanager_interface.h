@@ -31,7 +31,7 @@
 #include <string>
 #include <cstdint>
 
-#include "dring.h"
+#include "jami.h"
 
 namespace DRing {
 

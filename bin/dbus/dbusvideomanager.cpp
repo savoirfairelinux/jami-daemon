@@ -19,7 +19,7 @@
  */
 
 #include "dbusvideomanager.h"
-#include "dring/videomanager_interface.h"
+#include "jami/videomanager_interface.h"
 
 DBusVideoManager::DBusVideoManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/VideoManager")

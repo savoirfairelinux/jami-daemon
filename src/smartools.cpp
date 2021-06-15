@@ -19,7 +19,7 @@
  */
 #include "smartools.h"
 #include "manager.h"
-#include "dring/callmanager_interface.h"
+#include "jami/callmanager_interface.h"
 #include "client/ring_signal.h"
 
 namespace jami {

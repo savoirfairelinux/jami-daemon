@@ -21,7 +21,7 @@
 #include "agent/agent.h"
 
 /* Jami */
-#include "dring.h"
+#include "jami.h"
 
 int
 main(void)
