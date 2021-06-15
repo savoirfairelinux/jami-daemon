@@ -1,0 +1,7 @@
+Code-Review+2: Maxim Cournoyer <maxim.cournoyer@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
+Submitted-at: Tue, 15 Jun 2021 14:34:34 -0400
+Reviewed-on: https://review.jami.net/c/ring-daemon/+/18433
+Project: ring-daemon
+Branch: refs/heads/master
