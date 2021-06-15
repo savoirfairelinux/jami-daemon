@@ -65,6 +65,7 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0018-CVE-2021-21375.patch
 	$(APPLY) $(SRC)/pjproject/0019-ignore-down-interfaces.patch
 	$(APPLY) $(SRC)/pjproject/0020-ignore-addresses-for-RFC7335.patch
+	$(APPLY) $(SRC)/pjproject/debug.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch
 endif
