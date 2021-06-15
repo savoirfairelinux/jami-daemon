@@ -1,7 +1,7 @@
 jamid_includedirs = include_directories(
     '../..',
     '../../src',
-    '../../src/dring'
+    '../../src/jami'
 )
 
 jamid_sources = files(
