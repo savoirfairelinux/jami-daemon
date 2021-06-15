@@ -1,8 +1,8 @@
 SECTION="1"
 
-TEMPLATES=dring.pod
+TEMPLATES=jami.pod
 
-man_MANS=dring.1
+man_MANS=jami.1
 
 POD2MAN=pod2man
 

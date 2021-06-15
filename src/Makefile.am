@@ -199,23 +199,23 @@ libring_la_SOURCES += \
 		winsyslog.c
 endif
 
-nobase_include_HEADERS= dring/dring.h \
-		dring/security_const.h \
-		dring/callmanager_interface.h \
-		dring/configurationmanager_interface.h \
-		dring/presencemanager_interface.h \
-		dring/datatransfer_interface.h \
-		dring/account_const.h \
-		dring/call_const.h \
-		dring/presence_const.h \
-		dring/media_const.h \
-		dring/def.h
+nobase_include_HEADERS= jami/jami.h \
+		jami/security_const.h \
+		jami/callmanager_interface.h \
+		jami/configurationmanager_interface.h \
+		jami/presencemanager_interface.h \
+		jami/datatransfer_interface.h \
+		jami/account_const.h \
+		jami/call_const.h \
+		jami/presence_const.h \
+		jami/media_const.h \
+		jami/def.h
 
 if ENABLE_PLUGIN
 nobase_include_HEADERS+= \
-		dring/plugin_manager_interface.h
+		jami/plugin_manager_interface.h
 endif
 if ENABLE_VIDEO
 nobase_include_HEADERS+= \
-		dring/videomanager_interface.h
+		jami/videomanager_interface.h
 endif

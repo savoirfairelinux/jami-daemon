@@ -51,7 +51,7 @@
 
 #ifdef __ANDROID__
 #ifndef APP_NAME
-#define APP_NAME "libdring"
+#define APP_NAME "libjami"
 #endif /* APP_NAME */
 #endif
 
@@ -82,7 +82,7 @@
 #define LIGHT_GREEN      FOREGROUND_GREEN + 0x0008
 #endif // _WIN32
 
-#define LOGFILE "dring"
+#define LOGFILE "jami"
 
 #ifdef RING_UWP
 static constexpr auto ENDL = "";
