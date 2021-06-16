@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3df52e05_3a64fa52",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-16T19:55:10Z",
+      "side": 1,
+      "message": "unpack ...",
+      "range": {
+        "startLine": 249,
+        "startChar": 37,
+        "endLine": 249,
+        "endChar": 45
+      },
+      "revId": "9a7dc458181508bc70c7f20d183eff422e4513d6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "49256533_97e00073",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 251,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-16T19:55:10Z",
+      "side": 1,
+      "message": "caught ...",
+      "range": {
+        "startLine": 251,
+        "startChar": 44,
+        "endLine": 251,
+        "endChar": 51
+      },
+      "revId": "9a7dc458181508bc70c7f20d183eff422e4513d6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
