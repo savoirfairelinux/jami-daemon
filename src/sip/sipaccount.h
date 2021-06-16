@@ -489,6 +489,8 @@ private:
 
     void setUpTransmissionData(pjsip_tx_data* tdata, long transportKeyType);
 
+    void flush() override;
+
     /**
      * Set the internal state for this account, mainly used to manage account details from the
      * client application.
