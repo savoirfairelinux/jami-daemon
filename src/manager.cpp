@@ -1079,8 +1079,15 @@ Manager::requestMediaChange(const std::string& callID, const std::vector<DRing::
         return false;
     }
 
-    auto const& mediaAttrList = MediaAttribute::parseMediaList(mediaList);
+    auto acc = call->getAccount().lock();
+    if (not acc) {
+        JAMI_ERR("Invalid account for call %s", callID.c_str());
+        return false;
+    }
+    auto sipBaseAcc = std::dynamic_pointer_cast<SIPAccountBase>(acc);
 
+    auto const& mediaAttrList
+        = MediaAttribute::buildMediaAtrributesList(mediaList, sipBaseAcc->isSrtpEnabled());
     return call->requestMediaChange(mediaAttrList);
 }
 
@@ -1159,8 +1166,16 @@ Manager::answerCallWithMedia(const std::string& callId,
     // If ringing
     stopTone();
 
+    auto acc = call->getAccount().lock();
+    if (not acc) {
+        JAMI_ERR("Invalid account for call %s", callId.c_str());
+        return false;
+    }
+    auto sipBaseAcc = std::dynamic_pointer_cast<SIPAccountBase>(acc);
+
     try {
-        auto mediaAttrList = MediaAttribute::parseMediaList(mediaList);
+        auto mediaAttrList = MediaAttribute::buildMediaAtrributesList(mediaList,
+                                                                      sipBaseAcc->isSrtpEnabled());
         call->answer(mediaAttrList);
     } catch (const std::runtime_error& e) {
         JAMI_ERR("%s", e.what());
@@ -1205,8 +1220,16 @@ Manager::answerMediaChangeRequest(const std::string& callId,
         return false;
     }
 
+    auto acc = call->getAccount().lock();
+    if (not acc) {
+        JAMI_ERR("Invalid account for call %s", callId.c_str());
+        return false;
+    }
+    auto sipBaseAcc = std::dynamic_pointer_cast<SIPAccountBase>(acc);
+    auto mediaAttrList = MediaAttribute::buildMediaAtrributesList(mediaList,
+                                                                  sipBaseAcc->isSrtpEnabled());
+
     try {
-        auto mediaAttrList = MediaAttribute::parseMediaList(mediaList);
         call->answerMediaChangeRequest(mediaAttrList);
     } catch (const std::runtime_error& e) {
         JAMI_ERR("%s", e.what());
@@ -3369,7 +3392,12 @@ Manager::newOutgoingCall(std::string_view toUrl,
         return {};
     }
 
-    return account->newOutgoingCall(toUrl, MediaAttribute::parseMediaList(mediaList));
+    auto sipBaseAcc = std::dynamic_pointer_cast<SIPAccountBase>(account);
+
+    return account
+        ->newOutgoingCall(toUrl,
+                          MediaAttribute::buildMediaAtrributesList(mediaList,
+                                                                   sipBaseAcc->isSrtpEnabled()));
 }
 
 #ifdef ENABLE_VIDEO

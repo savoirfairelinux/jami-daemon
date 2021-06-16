@@ -45,9 +45,10 @@ public:
         , label_(label)
     {}
 
-    MediaAttribute(const DRing::MediaMap& mediaMap);
+    MediaAttribute(const DRing::MediaMap& mediaMap, bool secure);
 
-    static std::vector<MediaAttribute> parseMediaList(const std::vector<DRing::MediaMap>& mediaList);
+    static std::vector<MediaAttribute> buildMediaAtrributesList(
+        const std::vector<DRing::MediaMap>& mediaList, bool secure);
 
     static MediaType stringToMediaType(const std::string& mediaType);
 
