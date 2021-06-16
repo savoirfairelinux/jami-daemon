@@ -1200,20 +1200,20 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
         return;
     }
 
-    auto symlinkPath = path(fileId);
+    auto filelinkPath = path(fileId);
 
     DRing::DataTransferInfo info;
     info.accountId = pimpl_->accountId_;
     info.conversationId = pimpl_->to_;
     info.path = itW->second.path;
     if (info.path.empty())
-        info.path = symlinkPath;
+        info.path = filelinkPath;
     info.totalSize = itW->second.totalSize;
     info.bytesProgress = 0;
 
     // Create symlink for future transfers
-    if (info.path != symlinkPath && !fileutils::isSymLink(symlinkPath))
-        fileutils::createSymLink(symlinkPath, info.path);
+    if (info.path != filelinkPath && !fileutils::isSymLink(filelinkPath))
+        fileutils::createFileLink(filelinkPath, info.path);
 
     auto ifile = std::make_shared<IncomingFile>(std::move(channel),
                                                 info,
