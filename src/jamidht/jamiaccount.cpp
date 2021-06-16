@@ -492,8 +492,6 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::st
     auto suffix = stripPrefix(toUri);
     JAMI_DBG() << *this << "Calling DHT peer " << suffix;
 
-    call->setSecure(isTlsEnabled());
-
     try {
         const std::string uri {parseJamiUri(suffix)};
         startOutgoingCall(call, uri);
@@ -607,7 +605,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     // cached connection is failing with ICE (close event still not detected).
     auto dummyCall = createSubCall(call);
 
-    dummyCall->setSecure(isTlsEnabled());
     call->addSubCall(*dummyCall);
     auto sendRequest =
         [this, wCall, toUri, dummyCall = std::move(dummyCall)](const DeviceId& deviceId,
@@ -628,7 +625,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
             auto dev_call = createSubCall(call);
             dev_call->setIPToIP(true);
-            dev_call->setSecure(isTlsEnabled());
             dev_call->setState(Call::ConnectionState::TRYING);
             call->addStateListener(
                 [w = weak(), deviceId](Call::CallState, Call::ConnectionState state, int) {
@@ -674,7 +670,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         auto dev_call = createSubCall(call);
 
-        dev_call->setSecure(isTlsEnabled());
         dev_call->setTransport(transport);
         call->addSubCall(*dev_call);
         // Set the call in PROGRESSING State because the ICE session
