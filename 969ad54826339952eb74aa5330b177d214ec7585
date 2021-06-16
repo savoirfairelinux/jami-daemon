@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "cfa74c18_16b993ca",
+        "filename": "src/media/media_attribute.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 189,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-06-16T15:39:29Z",
+      "side": 1,
+      "message": "should log secured too?",
+      "range": {
+        "startLine": 188,
+        "startChar": 4,
+        "endLine": 189,
+        "endChar": 17
+      },
+      "revId": "969ad54826339952eb74aa5330b177d214ec7585",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
