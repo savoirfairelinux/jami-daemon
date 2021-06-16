@@ -706,9 +706,6 @@ SIPAccount::setAccountDetails(const std::map<std::string, std::string>& details)
     parseString(details, Conf::CONFIG_BIND_ADDRESS, bindAddress_);
     parseString(details, Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
     parseBool(details, Conf::CONFIG_ACCOUNT_IP_AUTO_REWRITE, allowIPAutoRewrite_);
-    if (allowIPAutoRewrite_) {
-        publishedIpAddress_.clear();
-    }
 
     unsigned expire = 0;
     parseInt(details, Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, expire);
