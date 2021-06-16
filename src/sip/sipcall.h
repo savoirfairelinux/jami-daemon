@@ -126,8 +126,8 @@ private:
 
 public:
     void answer() override;
-    void answer(const std::vector<MediaAttribute>& mediaList) override;
-    void answerMediaChangeRequest(const std::vector<MediaAttribute>& mediaList) override;
+    void answer(const std::vector<DRing::MediaMap>& mediaList) override;
+    void answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList) override;
     void hangup(int reason) override;
     void refuse() override;
     void transfer(const std::string& to) override;
@@ -137,7 +137,7 @@ public:
     void switchInput(const std::string& resource = {}) override;
     void peerHungup() override;
     void carryingDTMFdigits(char code) override;
-    bool requestMediaChange(const std::vector<MediaAttribute>& mediaList) override;
+    bool requestMediaChange(const std::vector<DRing::MediaMap>& mediaList) override;
     void sendTextMessage(const std::map<std::string, std::string>& messages,
                          const std::string& from) override;
     void removeCall() override;
@@ -256,9 +256,7 @@ public:
     std::shared_ptr<video::VideoRtpSession> addDummyVideoRtpSession();
 #endif
 
-    void setSecure(bool sec);
-
-    bool isSecure() const { return srtpEnabled_; }
+    bool isSrtpEnabled() const { return srtpEnabled_; }
 
     void generateMediaPorts();
 
