@@ -85,7 +85,7 @@ bool isSymLink(const std::string& path);
 
 std::chrono::system_clock::time_point writeTime(const std::string& path);
 
-void createSymLink(const std::string& src, const std::string& dest);
+void createFileLink(const std::string& src, const std::string& dest, bool hard = false);
 
 std::string getFileExtension(const std::string& filename);
 
