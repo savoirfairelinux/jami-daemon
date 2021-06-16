@@ -204,8 +204,6 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
     auto call = manager.callFactory.newSipCall(shared(),
                                                Call::CallType::OUTGOING,
                                                volatileCallDetails);
-    call->setSecure(isTlsEnabled());
-
     if (isIP2IP()) {
         bool ipv6 = IpAddr::isIpv6(toUrl);
         to = ipv6 ? IpAddr(toUrl).toString(false, true) : toUrl;
@@ -294,9 +292,6 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<MediaAttri
     auto call = manager.callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaAttrList);
     if (not call)
         throw std::runtime_error("Failed to create the call");
-    ;
-
-    call->setSecure(isTlsEnabled());
 
     if (isIP2IP()) {
         bool ipv6 = IpAddr::isIpv6(toUrl);
