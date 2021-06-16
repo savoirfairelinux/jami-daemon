@@ -989,6 +989,7 @@ Sdp::clearIce(pjmedia_sdp_session* session)
         return;
     pjmedia_sdp_attr_remove_all(&session->attr_count, session->attr, "ice-ufrag");
     pjmedia_sdp_attr_remove_all(&session->attr_count, session->attr, "ice-pwd");
+    // TODO. Why this? we should not have "candidate" attribute at session level.
     pjmedia_sdp_attr_remove_all(&session->attr_count, session->attr, "candidate");
     for (unsigned i = 0; i < session->media_count; i++) {
         auto media = session->media[i];
