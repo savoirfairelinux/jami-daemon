@@ -173,21 +173,10 @@ SIPAccount::~SIPAccount() noexcept
 
 std::shared_ptr<SIPCall>
 SIPAccount::newIncomingCall(const std::string& from UNUSED,
-                            const std::map<std::string, std::string>& details,
+                            const std::vector<DRing::MediaMap>& mediaList,
                             const std::shared_ptr<SipTransport>&)
 {
-    auto& manager = Manager::instance();
-    return manager.callFactory.newSipCall(shared(), Call::CallType::INCOMING, details);
-}
-
-std::shared_ptr<SIPCall>
-SIPAccount::newIncomingCall(const std::string& from UNUSED,
-                            const std::vector<MediaAttribute>& mediaAttrList,
-                            const std::shared_ptr<SipTransport>&)
-{
-    return Manager::instance().callFactory.newSipCall(shared(),
-                                                      Call::CallType::INCOMING,
-                                                      mediaAttrList);
+    return Manager::instance().callFactory.newSipCall(shared(), Call::CallType::INCOMING, mediaList);
 }
 
 template<>
@@ -204,8 +193,6 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
     auto call = manager.callFactory.newSipCall(shared(),
                                                Call::CallType::OUTGOING,
                                                volatileCallDetails);
-    call->setSecure(isTlsEnabled());
-
     if (isIP2IP()) {
         bool ipv6 = IpAddr::isIpv6(toUrl);
         to = ipv6 ? IpAddr(toUrl).toString(false, true) : toUrl;
@@ -282,7 +269,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
 }
 
 std::shared_ptr<Call>
-SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<MediaAttribute>& mediaAttrList)
+SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::MediaMap>& mediaList)
 {
     std::string to;
     int family;
@@ -291,12 +278,9 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<MediaAttri
 
     auto& manager = Manager::instance();
 
-    auto call = manager.callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaAttrList);
+    auto call = manager.callFactory.newSipCall(shared(), Call::CallType::OUTGOING, mediaList);
     if (not call)
         throw std::runtime_error("Failed to create the call");
-    ;
-
-    call->setSecure(isTlsEnabled());
 
     if (isIP2IP()) {
         bool ipv6 = IpAddr::isIpv6(toUrl);
@@ -323,9 +307,10 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<MediaAttri
     }
 
     auto toUri = getToUri(to);
+
     // Do not init ICE yet if the the media list is empty. This may occur
     // if we are sending an invite with no SDP offer.
-    if (isIceForMediaEnabled() and not mediaAttrList.empty()) {
+    if (isIceForMediaEnabled() and not mediaList.empty()) {
         call->initIceMediaTransport(true);
     }
     call->setPeerNumber(toUri);
@@ -354,7 +339,9 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<MediaAttri
     else
         sdp.setPublishedIP(getPublishedAddress());
 
-    const bool created = sdp.createOffer(mediaAttrList);
+    // TODO. We should not dot his here. Move it to SIPCall.
+    const bool created = sdp.createOffer(
+        MediaAttribute::buildMediaAtrributesList(mediaList, isSrtpEnabled()));
 
     if (created) {
         std::weak_ptr<SIPCall> weak_call = call;

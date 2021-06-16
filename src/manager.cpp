@@ -1079,9 +1079,7 @@ Manager::requestMediaChange(const std::string& callID, const std::vector<DRing::
         return false;
     }
 
-    auto const& mediaAttrList = MediaAttribute::parseMediaList(mediaList);
-
-    return call->requestMediaChange(mediaAttrList);
+    return call->requestMediaChange(mediaList);
 }
 
 // THREAD=Main : for outgoing Call
@@ -1160,8 +1158,7 @@ Manager::answerCallWithMedia(const std::string& callId,
     stopTone();
 
     try {
-        auto mediaAttrList = MediaAttribute::parseMediaList(mediaList);
-        call->answer(mediaAttrList);
+        call->answer(mediaList);
     } catch (const std::runtime_error& e) {
         JAMI_ERR("%s", e.what());
         result = false;
@@ -1206,8 +1203,7 @@ Manager::answerMediaChangeRequest(const std::string& callId,
     }
 
     try {
-        auto mediaAttrList = MediaAttribute::parseMediaList(mediaList);
-        call->answerMediaChangeRequest(mediaAttrList);
+        call->answerMediaChangeRequest(mediaList);
     } catch (const std::runtime_error& e) {
         JAMI_ERR("%s", e.what());
         result = false;
@@ -3380,7 +3376,7 @@ Manager::newOutgoingCall(std::string_view toUrl,
         return {};
     }
 
-    return account->newOutgoingCall(toUrl, MediaAttribute::parseMediaList(mediaList));
+    return account->newOutgoingCall(toUrl, mediaList);
 }
 
 #ifdef ENABLE_VIDEO
