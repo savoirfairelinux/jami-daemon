@@ -5340,16 +5340,17 @@ JamiAccount::sendFile(const std::string& conversationId,
                                  tid,
                                  path](bool, const std::string& commitId) {
                                     // Create a symlink to answer to re-ask
-                                    auto symlinkPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR
-                                                       + accId + DIR_SEPARATOR_STR
-                                                       + "conversation_data" + DIR_SEPARATOR_STR
-                                                       + conversationId + DIR_SEPARATOR_STR
-                                                       + commitId + "_" + std::to_string(tid);
+                                    auto filelinkPath = fileutils::get_data_dir()
+                                                        + DIR_SEPARATOR_STR + accId
+                                                        + DIR_SEPARATOR_STR + "conversation_data"
+                                                        + DIR_SEPARATOR_STR + conversationId
+                                                        + DIR_SEPARATOR_STR + commitId + "_"
+                                                        + std::to_string(tid);
                                     auto extension = fileutils::getFileExtension(path);
                                     if (!extension.empty())
-                                        symlinkPath += "." + extension;
-                                    if (path != symlinkPath && !fileutils::isSymLink(symlinkPath))
-                                        fileutils::createSymLink(symlinkPath, path);
+                                        filelinkPath += "." + extension;
+                                    if (path != filelinkPath && !fileutils::isSymLink(filelinkPath))
+                                        fileutils::createFileLink(filelinkPath, path, true);
                                 });
         }
     });
