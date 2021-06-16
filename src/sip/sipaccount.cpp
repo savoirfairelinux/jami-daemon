@@ -59,6 +59,7 @@
 #include "upnp/upnp_control.h"
 #include "ip_utils.h"
 #include "string_utils.h"
+#include "fileutils.h"
 
 #include "im/instant_messaging.h"
 
@@ -1164,6 +1165,15 @@ SIPAccount::setUpTransmissionData(pjsip_tx_data* tdata, long transportKeyType)
         ai->addr.entry[0].addr_len = hostIp_.getLength();
         ai->cur_addr = 0;
     }
+}
+
+void
+SIPAccount::flush()
+{
+    SIPAccountBase::flush();
+
+    fileutils::removeAll(fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID());
+    fileutils::removeAll(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID());
 }
 
 void
