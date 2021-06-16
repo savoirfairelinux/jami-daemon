@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "59f8dffe_f8617da3",
+        "filename": "src/manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1091,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-16T20:28:07Z",
+      "side": 1,
+      "message": "this logic should be (is already?) in sipcall. SipCall already has an srtpEnabled_ option that should be used for that purpose.",
+      "range": {
+        "startLine": 1082,
+        "startChar": 0,
+        "endLine": 1091,
+        "endChar": 0
+      },
+      "revId": "bc3048f19e9f450fb643729ec29a4b5c93c4dfba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6c3832f6_398b6fd0",
+        "filename": "src/manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1178,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-16T20:28:07Z",
+      "side": 1,
+      "message": "idem",
+      "range": {
+        "startLine": 1169,
+        "startChar": 4,
+        "endLine": 1178,
+        "endChar": 99
+      },
+      "revId": "bc3048f19e9f450fb643729ec29a4b5c93c4dfba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2c8330cc_26f7f1ee",
+        "filename": "src/manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1230,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-16T20:28:07Z",
+      "side": 1,
+      "message": "idem",
+      "range": {
+        "startLine": 1222,
+        "startChar": 0,
+        "endLine": 1230,
+        "endChar": 95
+      },
+      "revId": "bc3048f19e9f450fb643729ec29a4b5c93c4dfba",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
