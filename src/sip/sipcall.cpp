@@ -120,6 +120,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     : Call(account, callId, type)
     , peerSupportMultiStream_(false)
     , sdp_(new Sdp(callId))
+    , srtpEnabled_(account->isSrtpEnabled())
 {
     if (account->getUPnPActive())
         upnp_.reset(new upnp::Controller());
@@ -417,37 +418,39 @@ SIPCall::setContactHeader(pj_str_t* contact)
 void
 SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
 {
-    if (isSecure() and t and not t->isSecure()) {
-        JAMI_ERR("Can't set un-secure transport to secure call.");
+    transport_ = t;
+    if (not transport_) {
+        JAMI_WARN("[call:%s] Transport was set to null", getCallId().c_str());
         return;
     }
 
-    const auto list_id = reinterpret_cast<uintptr_t>(this);
-    if (transport_)
-        transport_->removeStateListener(list_id);
-    transport_ = t;
-
-    if (transport_) {
-        setSecure(transport_->isSecure());
-
-        // listen for transport destruction
-        transport_->addStateListener(
-            list_id,
-            [wthis_ = weak()](pjsip_transport_state state, const pjsip_transport_state_info*) {
-                if (auto this_ = wthis_.lock()) {
-                    // end the call if the SIP transport is shut down
-                    auto isAlive = SipTransport::isAlive(state);
-                    if (not isAlive
-                        and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
-                        JAMI_WARN(
-                            "[call:%s] Ending call because underlying SIP transport was closed",
-                            this_->getCallId().c_str());
-                        this_->stopAllMedia();
-                        this_->onFailure(ECONNRESET);
-                    }
-                }
-            });
+    if (isSrtpEnabled() and not transport_->isSecure()) {
+        JAMI_WARN("[call:%s] Crypto (SRTP) is negotiated over an un-encrypted signaling channel",
+                  getCallId().c_str());
     }
+
+    if (not isSrtpEnabled() and transport_->isSecure()) {
+        JAMI_WARN("[call:%s] The signaling channel is encrypted but the media is not encrypted",
+                  getCallId().c_str());
+    }
+
+    const auto list_id = reinterpret_cast<uintptr_t>(this);
+    transport_->removeStateListener(list_id);
+
+    // listen for transport destruction
+    transport_->addStateListener(
+        list_id, [wthis_ = weak()](pjsip_transport_state state, const pjsip_transport_state_info*) {
+            if (auto this_ = wthis_.lock()) {
+                // end the call if the SIP transport is shut down
+                auto isAlive = SipTransport::isAlive(state);
+                if (not isAlive and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
+                    JAMI_WARN("[call:%s] Ending call because underlying SIP transport was closed",
+                              this_->getCallId().c_str());
+                    this_->stopAllMedia();
+                    this_->onFailure(ECONNRESET);
+                }
+            }
+        });
 }
 
 void
@@ -755,7 +758,7 @@ SIPCall::answer()
 }
 
 void
-SIPCall::answer(const std::vector<MediaAttribute>& mediaAttrList)
+SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     auto account = getSIPAccount();
@@ -763,6 +766,8 @@ SIPCall::answer(const std::vector<MediaAttribute>& mediaAttrList)
         JAMI_ERR("No account detected");
         return;
     }
+
+    auto mediaAttrList = MediaAttribute::buildMediaAtrributesList(mediaList, isSrtpEnabled());
 
     if (mediaAttrList.empty()) {
         JAMI_DBG("[call:%s] Media list must not be empty!", getCallId().c_str());
@@ -889,7 +894,7 @@ SIPCall::answer(const std::vector<MediaAttribute>& mediaAttrList)
 }
 
 void
-SIPCall::answerMediaChangeRequest(const std::vector<MediaAttribute>& mediaAttrList)
+SIPCall::answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList)
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
 
@@ -898,6 +903,8 @@ SIPCall::answerMediaChangeRequest(const std::vector<MediaAttribute>& mediaAttrLi
         JAMI_ERR("[call:%s] No account detected", getCallId().c_str());
         return;
     }
+
+    auto mediaAttrList = MediaAttribute::buildMediaAtrributesList(mediaList, isSrtpEnabled());
 
     if (mediaAttrList.empty()) {
         JAMI_DBG("[call:%s] Media list size is empty. Ignoring the media change request",
@@ -1872,7 +1879,7 @@ SIPCall::updateNegotiatedMedia()
             continue;
         }
 
-        if (isSecure() and local.enabled and not local.crypto) {
+        if (isSrtpEnabled() and local.enabled and not local.crypto) {
             JAMI_WARN("[call:%s] [SDP:slot#%u] Secure mode but no local crypto attributes. "
                       "Ignoring the media",
                       getCallId().c_str(),
@@ -1880,7 +1887,7 @@ SIPCall::updateNegotiatedMedia()
             continue;
         }
 
-        if (isSecure() and remote.enabled and not remote.crypto) {
+        if (isSrtpEnabled() and remote.enabled and not remote.crypto) {
             JAMI_WARN("[call:%s] [SDP:slot#%u] Secure mode but no crypto remote attributes. "
                       "Ignoring the media",
                       getCallId().c_str(),
@@ -1921,11 +1928,9 @@ SIPCall::startAllMedia()
         return;
     }
 
-    if (isSecure() && not transport_->isSecure()) {
-        JAMI_ERR("[call:%s] Can't perform secure call over insecure SIP transport",
-                 getCallId().c_str());
-        onFailure(EPROTONOSUPPORT);
-        return;
+    if (isSrtpEnabled() && not transport_->isSecure()) {
+        JAMI_WARN("[call:%s] Crypto (SRTP) is negotiated over an insecure signaling transport",
+                  getCallId().c_str());
     }
 
     // reset
@@ -2075,7 +2080,7 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
     }
 
     // Apply
-    requestMediaChange(mediaList);
+    requestMediaChange(MediaAttribute::mediaAttributesToMediaMaps(mediaList));
 }
 
 void
@@ -2184,8 +2189,10 @@ SIPCall::isReinviteRequired(const std::vector<MediaAttribute>& mediaAttrList)
 }
 
 bool
-SIPCall::requestMediaChange(const std::vector<MediaAttribute>& mediaAttrList)
+SIPCall::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
 {
+    auto mediaAttrList = MediaAttribute::buildMediaAtrributesList(mediaList, isSrtpEnabled());
+
     // If the peer does not support multi-stream and the size of the new
     // media list is different from the current media list, the media
     // change request will be ignored.
@@ -2393,7 +2400,7 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
     if (acc->isMultiStreamEnabled() and remoteMediaList.size() != rtpStreams_.size()) {
         Manager::instance().mediaChangeRequested(getCallId(), getAccountId(), remoteMediaList);
     } else {
-        auto localMediaList = getMediaAttributeList();
+        auto localMediaList = MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList());
         answerMediaChangeRequest(localMediaList);
     }
 
@@ -2792,17 +2799,6 @@ SIPCall::deinitRecorder()
         }
 #endif
     }
-}
-
-void
-SIPCall::setSecure(bool sec)
-{
-    if (srtpEnabled_)
-        return;
-    if (sec && getConnectionState() != ConnectionState::DISCONNECTED) {
-        throw std::runtime_error("Can't enable security since call is already connected");
-    }
-    srtpEnabled_ = sec;
 }
 
 void
