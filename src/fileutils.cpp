@@ -317,16 +317,25 @@ writeTime(const std::string& path)
 }
 
 void
-createSymLink(const std::string& linkFile, const std::string& target)
+createFileLink(const std::string& linkFile, const std::string& target, bool hard)
 {
-    auto sep = target.find_last_of('/');
-    if (sep != std::string::npos)
-        check_dir(target.substr(0, sep).c_str());
 #ifndef _WIN32
-    symlink(target.c_str(), linkFile.c_str());
+    int status;
+    if (hard)
+        status = link(target.c_str(), linkFile.c_str());
+    else
+        status = symlink(target.c_str(), linkFile.c_str());
+    if (status != 0)
+        JAMI_ERR("Couldn't create %s link: ", (hard ? "hard" : "soft"), strerror(errno));
 #else
-    std::error_code ec;
-    std::filesystem::create_symlink(target, linkFile, ec);
+    try {
+        if (hard)
+            std::filesystem::create_hard_link(target, linkFile);
+        else
+            std::filesystem::create_symlink(target, linkFile);
+    } catch (const std::exception& e) {
+        JAMI_ERR("Couldn't create %s link: ", (hard ? "hard" : "soft"), e.what());
+    }
 #endif
 }
 
@@ -458,7 +467,7 @@ dirent_buf_size(UNUSED DIR* dirp)
 #if defined(NAME_MAX)
         name_max = (NAME_MAX > 255) ? NAME_MAX : 255;
 #else
-        return (size_t)(-1);
+        return (size_t) (-1);
 #endif
 #else
 #if defined(NAME_MAX)
@@ -479,7 +488,7 @@ readDirectory(const std::string& dir)
         return {};
 
     size_t size = dirent_buf_size(dp);
-    if (size == (size_t)(-1))
+    if (size == (size_t) (-1))
         return {};
     std::vector<uint8_t> buf(size);
     dirent* entry;
