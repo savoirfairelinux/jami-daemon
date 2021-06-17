@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fbbd5082_4aaa116e",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 1085,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-06-17T20:36:22Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nloop variable is copied but only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "05a9a530c14dd154206b117602994a9ba27264e8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
