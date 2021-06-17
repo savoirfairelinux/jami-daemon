@@ -616,8 +616,8 @@ IceTransport::Impl::link() const
     std::ostringstream out;
     for (unsigned strm = 0; strm < streamsCount_; strm++) {
         for (unsigned i = 1; i <= compCountPerStream_; i++) {
-            auto laddr = getLocalAddress(i);
-            auto raddr = getRemoteAddress(i);
+            auto laddr = getLocalAddress(strm * streamsCount_ + i);
+            auto raddr = getRemoteAddress(strm * streamsCount_ + i);
 
             if (laddr and raddr) {
                 out << " [" << i << "] " << laddr.toString(true, true) << " ["
