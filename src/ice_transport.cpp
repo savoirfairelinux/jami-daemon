@@ -1681,6 +1681,14 @@ IceTransport::link() const
     return pimpl_->link();
 }
 
+const pj_ice_sess_check*
+IceTransport::getValidPair(unsigned comp_id) const
+{
+        ASSERT_COMP_ID(comp_id, pimpl_->compCount_);
+
+        return pj_ice_strans_get_valid_pair(pimpl_->icest_.get(), comp_id);
+}
+
 //==============================================================================
 
 IceTransportFactory::IceTransportFactory()
