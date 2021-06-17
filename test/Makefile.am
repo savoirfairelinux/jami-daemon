@@ -1,2 +1,2 @@
-SUBDIRS = unitTest fuzzing
+SUBDIRS = unitTest fuzzing agent
 SUBDIRS += sip
