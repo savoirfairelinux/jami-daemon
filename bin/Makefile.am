@@ -20,7 +20,7 @@ ringcli_CXXFLAGS = -I$(top_srcdir)/src \
 ringcli_LDADD = $(top_builddir)/src/libring.la
 endif
 
-SUBDIRS=
+SUBDIRS=agent
 
 if RING_DBUS
 SUBDIRS+=dbus

@@ -632,6 +632,7 @@ BB_ENABLE_DOXYGEN
 
 AC_CONFIG_FILES([Makefile \
                  bin/Makefile \
+                 bin/agent/Makefile \
                  src/Makefile \
                  src/sip/Makefile \
                  src/im/Makefile \
