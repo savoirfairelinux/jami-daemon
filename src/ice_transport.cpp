@@ -1681,6 +1681,22 @@ IceTransport::link() const
     return pimpl_->link();
 }
 
+#ifdef DRING_TESTABLE
+std::pair<std::string, std::string>
+IceTransport::getValidPair(unsigned comp_id) const
+{
+    ASSERT_COMP_ID(comp_id, pimpl_->compCount_);
+
+    const pj_ice_sess_check* pair = pj_ice_strans_get_valid_pair(pimpl_->icest_.get(), comp_id);
+
+    if (nullptr == pair) {
+        return {"?", "?"};
+    }
+
+    return {pimpl_->getCandidateType(pair->lcand), pimpl_->getCandidateType(pair->rcand)};
+}
+#endif
+
 //==============================================================================
 
 IceTransportFactory::IceTransportFactory()
