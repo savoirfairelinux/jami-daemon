@@ -62,8 +62,13 @@ public:
         auto path = fileutils::get_data_dir() + "/" + shared->getAccountID() + "/" + "conversations"
                     + "/" + id_;
         git_repository* repo = nullptr;
-        if (git_repository_open(&repo, path.c_str()) != 0)
+        auto err = git_repository_open(&repo, path.c_str());
+        if (err < 0) {
+            JAMI_ERR("Couldn't open git repository: %s (%s)",
+                     path.c_str(),
+                     git_error_last()->message);
             return {nullptr, git_repository_free};
+        }
         return {std::move(repo), git_repository_free};
     }
 
@@ -2631,11 +2636,11 @@ void
 ConversationRepository::erase()
 {
     // First, we need to add the member file to the repository if not present
-    auto repo = pimpl_->repository();
-    std::string repoPath = git_repository_workdir(repo.get());
-
-    JAMI_DBG() << "Erasing " << repoPath;
-    fileutils::removeAll(repoPath, true);
+    if (auto repo = pimpl_->repository()) {
+        std::string repoPath = git_repository_workdir(repo.get());
+        JAMI_DBG() << "Erasing " << repoPath;
+        fileutils::removeAll(repoPath, true);
+    }
 }
 
 ConversationMode
