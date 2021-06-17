@@ -168,7 +168,7 @@ public:
     /**
      * Set peer's User-Agent found in the message header
      */
-    void setPeerUaVersion(const std::string& ua);
+    void setPeerUaVersion(std::string_view ua);
 
     /**
      * Return the SDP's manager of this call
