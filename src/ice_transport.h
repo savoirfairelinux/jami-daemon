@@ -256,6 +256,10 @@ public:
 
     std::string link() const;
 
+#ifdef DRING_TESTABLE
+    const pj_ice_sess_check* getValidPair(unsigned comp_id) const;
+#endif
+
 private:
     class Impl;
     bool isStopped_ {false};
