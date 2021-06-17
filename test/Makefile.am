@@ -1,2 +1,2 @@
-SUBDIRS = unitTest
+SUBDIRS = unitTest agent
 SUBDIRS += sip
