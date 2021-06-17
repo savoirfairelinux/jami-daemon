@@ -1,0 +1,8 @@
+behavior:
+  - search-peer
+  - ping-pong
+  - : [make-call, ping-pong]
+  - wait
+
+peers:
+  - "00d300ad2f4a8b79e14795217bd2b2d3925a408a"

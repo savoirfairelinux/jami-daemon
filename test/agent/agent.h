@@ -37,35 +37,36 @@ class Agent
     {
         std::mutex mutex_;
         std::vector<std::function<bool(Args...)>> callbacks_;
+
     public:
-            void emplace_back(std::function<bool(Args...)>&& cb) {
-                    std::unique_lock<std::mutex> lck(mutex_);
+        void emplace_back(std::function<bool(Args...)>&& cb)
+        {
+            std::unique_lock<std::mutex> lck(mutex_);
+            callbacks_.emplace_back(std::move(cb));
+        }
+
+        void execute(Args... args)
+        {
+            std::vector<std::function<bool(Args...)>> todo, to_keep;
+
+            {
+                std::unique_lock<std::mutex> lck(mutex_);
+                todo.swap(callbacks_);
+            }
+
+            for (auto& cb : todo) {
+                if (cb(args...)) {
+                    to_keep.emplace_back(std::move(cb));
+                }
+            }
+
+            {
+                std::unique_lock<std::mutex> lck(mutex_);
+                for (const auto& cb : to_keep) {
                     callbacks_.emplace_back(std::move(cb));
-            }
-
-            void execute(Args... args) {
-
-
-                std::vector<std::function<bool(Args...)>> todo, to_keep;
-
-                {
-                    std::unique_lock<std::mutex> lck(mutex_);
-                    todo.swap(callbacks_);
-                }
-
-                for (auto& cb : todo) {
-                    if (cb(args...)) {
-                        to_keep.emplace_back(std::move(cb));
-                    }
-                }
-
-                {
-                    std::unique_lock<std::mutex> lck(mutex_);
-                    for (const auto& cb : to_keep) {
-                        callbacks_.emplace_back(std::move(cb));
-                    }
                 }
             }
+        }
     };
 
     std::string accountId_;
@@ -81,16 +82,15 @@ class Agent
         incomingAccountMessage_;
 
     Handler<const std::string&, const std::string&, const std::string&, const std::vector<uint8_t>&, time_t>
-    incomingTrustRequest_;
+        incomingTrustRequest_;
 
-    Handler<const std::string&, const std::string&, signed>
-    callStateChanged_;
+    Handler<const std::string&, const std::string&, signed> callStateChanged_;
 
     Handler<const std::string&,
             const std::string&,
             const std::string&,
             const std::vector<DRing::MediaMap>>
-    incomingCall_;
+        incomingCall_;
 
     void onIncomingAccountMessage(std::function<bool(const std::string&,
                                                      const std::string&,

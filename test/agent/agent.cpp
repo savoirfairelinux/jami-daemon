@@ -123,32 +123,48 @@ Agent::run(const std::string& yaml_config)
 
         std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> handlers;
 
-
         handlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
-                                bind(&Agent::Handler<const std::string&,
-                                     const std::string&,
-                                     const std::string&,
-                                     const std::vector<DRing::MediaMap>>::execute,
-                                     &agent.incomingCall_, _1, _2, _3, _4)));
+            bind(&Agent::Handler<const std::string&,
+                                 const std::string&,
+                                 const std::string&,
+                                 const std::vector<DRing::MediaMap>>::execute,
+                 &agent.incomingCall_,
+                 _1,
+                 _2,
+                 _3,
+                 _4)));
 
         handlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
-                                bind(&Agent::Handler<const std::string&, const std::string&, signed>::execute,
-                                     &agent.callStateChanged_, _1, _2, _3)));
+            bind(&Agent::Handler<const std::string&, const std::string&, signed>::execute,
+                 &agent.callStateChanged_,
+                 _1,
+                 _2,
+                 _3)));
 
-        handlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingAccountMessage>(
-                                bind(&Agent::Handler<const std::string&,
+        handlers.insert(
+            DRing::exportable_callback<DRing::ConfigurationSignal::IncomingAccountMessage>(
+                bind(&Agent::Handler<const std::string&,
                                      const std::string&,
                                      const std::string&,
                                      const std::map<std::string, std::string>&>::execute,
-                                     &agent.incomingAccountMessage_, _1, _2, _3, _4)));
+                     &agent.incomingAccountMessage_,
+                     _1,
+                     _2,
+                     _3,
+                     _4)));
 
         handlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
-                                bind(&Agent::Handler<const std::string&,
-                                     const std::string&,
-                                     const std::string&,
-                                     const std::vector<uint8_t>&,
-                                     time_t>::execute,
-                                     &agent.incomingTrustRequest_, _1, _2, _3, _4, _5)));
+            bind(&Agent::Handler<const std::string&,
+                                 const std::string&,
+                                 const std::string&,
+                                 const std::vector<uint8_t>&,
+                                 time_t>::execute,
+                 &agent.incomingTrustRequest_,
+                 _1,
+                 _2,
+                 _3,
+                 _4,
+                 _5)));
 
         DRing::registerSignalHandlers(handlers);
     }
