@@ -1,0 +1,63 @@
+accounts:
+  []
+preferences:
+  historyLimit: 0
+  ringingTimeout: 30
+  historyMaxCalls: 20
+  md5Hash: false
+  order: 1479408070c09163/
+  portNum: 5060
+  searchBarDisplay: true
+  zoneToneChoice: North America
+voipPreferences:
+  disableSecureDlgCheck: false
+  playDtmf: true
+  playTones: true
+  pulseLength: 250
+  symmetric: true
+  zidFile: ""
+audio:
+  alsa:
+    cardIn: 0
+    cardOut: 0
+    cardRing: 0
+    plugin: default
+    smplRate: 44100
+  alwaysRecording: false
+  audioApi: pulseaudio
+  automaticGainControl: false
+  captureMuted: false
+  noiseReduce: false
+  playbackMuted: false
+  pulse:
+    devicePlayback: ""
+    deviceRecord: ""
+    deviceRingtone: ""
+  portaudio:
+    devicePlayback: ""
+    deviceRecord: ""
+    deviceRingtone: ""
+  recordPath: ""
+  volumeMic: 1
+  volumeSpkr: 1
+  echoCanceller: system
+video:
+  recordPreview: true
+  recordQuality: 0
+  decodingAccelerated: true
+  encodingAccelerated: false
+  conferenceResolution: 1280x720
+  devices:
+    []
+plugins:
+  pluginsEnabled: false
+  installedPlugins:
+    []
+  loadedPlugins:
+    []
+shortcuts:
+  hangUp: ""
+  pickUp: ""
+  popupWindow: ""
+  toggleHold: ""
+  togglePickupHangup: ""
