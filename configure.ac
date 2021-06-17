@@ -666,6 +666,7 @@ AC_CONFIG_FILES([Makefile \
                  test/Makefile\
                  test/sip/Makefile
                  test/unitTest/Makefile \
+                 test/agent/Makefile \
                  man/Makefile \
                  doc/Makefile \
                  doc/doxygen/Makefile])
