@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "4d8cac7e_ae806208",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 932,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-17T20:12:44Z",
+      "side": 1,
+      "message": "We dont care I guess. But yes, we still need to set the status_code. So I initialized status_code in line 907. I dont think we need to log other event types for now.",
+      "parentUuid": "e65aafe4_8d195039",
+      "revId": "0421a789f93f6ef5fa3933531395468921253bc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "6f482dc8_81cd7712",
         "filename": "src/sip/sipvoiplink.cpp",
         "patchSetId": 13
@@ -48,6 +66,24 @@
       "side": 1,
       "message": "Remove log or take SonarQube advice",
       "parentUuid": "6f482dc8_81cd7712",
+      "revId": "0421a789f93f6ef5fa3933531395468921253bc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "adafd5ad_a6cc563b",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 1086,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-17T20:12:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "27e0c064_9a0419ae",
       "revId": "0421a789f93f6ef5fa3933531395468921253bc2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false

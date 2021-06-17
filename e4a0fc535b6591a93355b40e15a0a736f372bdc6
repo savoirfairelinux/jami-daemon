@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "63a9f86b_d43c6683",
+        "filename": "src/account.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-17T20:12:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "50c6053a_d621deb4",
+      "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "444c50ed_6c06b375",
         "filename": "src/account.h",
         "patchSetId": 14
@@ -33,6 +51,24 @@
       "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b403d9a8_a5ea9d14",
+        "filename": "src/account.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 593,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-17T20:12:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "444c50ed_6c06b375",
+      "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -53,6 +89,24 @@
     },
     {
       "key": {
+        "uuid": "1fd282a8_c157e46f",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1647,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-17T20:12:44Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "15445fc6_a2021e4b",
+      "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "c87d0b19_598b1e03",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 14
@@ -67,6 +121,24 @@
       "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ac06001d_686ceed4",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1808,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-17T20:12:44Z",
+      "side": 1,
+      "message": "Ack\nnot sure it will be needed anyway.",
+      "parentUuid": "c87d0b19_598b1e03",
+      "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -87,6 +159,24 @@
     },
     {
       "key": {
+        "uuid": "5618e867_23a3e6a5",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1902,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-17T20:12:44Z",
+      "side": 1,
+      "message": "rebase glitches ...",
+      "parentUuid": "19d81a76_0f7b64e8",
+      "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "cb93039b_6e5ed2f1",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 14
@@ -101,6 +191,24 @@
       "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b6c32b00_ffcbaaf1",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 2473,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-17T20:12:44Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cb93039b_6e5ed2f1",
+      "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
