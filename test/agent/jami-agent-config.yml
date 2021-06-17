@@ -1,0 +1,14 @@
+behavior:
+#  - search-peer
+#  - : [ echo, true ]
+  - : [ make-call, true ]
+  - wait
+
+peers:
+  - "c5ccf4affa049e0279dad0ba0f397859a9edf2a7"
+
+params:
+  - [ upnpEnabled: "true", turnEnabled: "true" ]
+  - [ upnpEnabled: "true", turnEnabled: "false" ]
+  - [ upnpEnabled: "false", turnEnabled: "true" ]
+  - [ upnpEnabled: "false", turnEnabled: "false" ]
