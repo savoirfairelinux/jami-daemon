@@ -22,6 +22,7 @@
 
 #include "ice_socket.h"
 #include "ip_utils.h"
+#include "dring/def.h"
 
 #include <pjnath.h>
 #include <pjlib.h>
@@ -30,6 +31,7 @@
 #include <functional>
 #include <memory>
 #include <msgpack.hpp>
+#include <tuple>
 #include <vector>
 
 namespace jami {
@@ -255,6 +257,10 @@ public:
     void setDefaultRemoteAddress(unsigned comp_id, const IpAddr& addr);
 
     std::string link() const;
+
+#ifdef DRING_TESTABLE
+    std::pair<std::string, std::string> getValidPair(unsigned comp_id) const;
+#endif
 
 private:
     class Impl;
