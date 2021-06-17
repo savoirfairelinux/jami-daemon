@@ -1,0 +1,16 @@
+behavior:
+  - search-peer
+#  - : [ echo, true ]
+#  - : [ make-call, true ]
+  - wait
+
+peers:
+  - "your-peer-id"
+
+account-id: "d65ebb0f1170ae44"
+
+params:
+  - [ upnpEnabled: "true", turnEnabled: "true" ]
+  # - [ upnpEnabled: "true", turnEnabled: "false" ]
+  # - [ upnpEnabled: "false", turnEnabled: "true" ]
+  # - [ upnpEnabled: "false", turnEnabled: "false" ]
