@@ -22,6 +22,8 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include "string_utils.h"
+#include "account.h"
+
 #include <string>
 #include <string_view>
 
@@ -42,12 +44,14 @@ private:
     void to_string_test();
     void to_number_test();
     void split_string_test();
+    void version_test();
 
     CPPUNIT_TEST_SUITE(StringUtilsTest);
     CPPUNIT_TEST(bool_to_str_test);
     CPPUNIT_TEST(to_string_test);
     CPPUNIT_TEST(to_number_test);
     CPPUNIT_TEST(split_string_test);
+    CPPUNIT_TEST(version_test);
     CPPUNIT_TEST_SUITE_END();
 
     const double DOUBLE = 3.14159265359;
@@ -117,6 +121,27 @@ StringUtilsTest::split_string_test()
     CPPUNIT_ASSERT(split_string_result.size() == 2);
     CPPUNIT_ASSERT(split_string_result.at(0) == "fdg454()"sv
                    && split_string_result.at(1) == "{&xcx"sv);
+}
+
+void
+StringUtilsTest::version_test()
+{
+    CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion({}, {}));
+    CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion({1, 2, 3}, {}));
+    CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion({1, 2, 3}, {1, 2, 3}));
+    CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion({1, 2, 3, 4}, {1, 2, 3}));
+    CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion({2}, {1, 2, 3}));
+    CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion(
+        split_string_to_unsigned("1.2.3.5", '.'),
+        split_string_to_unsigned("1.2.3.4", '.')));
+
+    CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion({}, {1, 2, 3}));
+    CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion({1, 2, 2}, {1, 2, 3}));
+    CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion({1, 2, 3}, {1, 2, 3, 4}));
+    CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion({1, 2, 3}, {2}));
+    CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion(
+        split_string_to_unsigned("1.2.3.4", '.'),
+        split_string_to_unsigned("1.2.3.5", '.')));
 }
 
 } // namespace test

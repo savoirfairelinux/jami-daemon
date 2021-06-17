@@ -214,7 +214,7 @@ addUserAgentHeader(const std::string& userAgent, pjsip_tx_data* tdata)
     }
 }
 
-std::string
+std::string_view
 getPeerUserAgent(const pjsip_rx_data* rdata)
 {
     if (rdata == nullptr or rdata->msg_info.msg == nullptr) {
@@ -222,19 +222,13 @@ getPeerUserAgent(const pjsip_rx_data* rdata)
         return {};
     }
 
-    std::string peerUa {};
-    pjsip_generic_string_hdr* uaHdr {nullptr};
     constexpr auto USER_AGENT_STR = CONST_PJ_STR("User-Agent");
-
-    uaHdr = (pjsip_generic_string_hdr*) pjsip_msg_find_hdr_by_name(rdata->msg_info.msg,
+    if (auto uaHdr = (pjsip_generic_string_hdr*) pjsip_msg_find_hdr_by_name(rdata->msg_info.msg,
                                                                    &USER_AGENT_STR,
-                                                                   nullptr);
-
-    if (uaHdr) {
-        peerUa = {uaHdr->hvalue.ptr, static_cast<size_t>(uaHdr->hvalue.slen)};
+                                                                   nullptr)) {
+        return as_view(uaHdr->hvalue);
     }
-
-    return peerUa;
+    return {};
 }
 
 void
