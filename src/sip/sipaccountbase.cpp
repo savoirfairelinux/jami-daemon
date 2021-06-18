@@ -293,9 +293,8 @@ SIPAccountBase::unserialize(const YAML::Node& node)
 
     parseValue(node, Conf::INTERFACE_KEY, interface_);
     parseValue(node, Conf::SAME_AS_LOCAL_KEY, publishedSameasLocal_);
-    std::string publishedIpAddress;
-    parseValue(node, Conf::PUBLISH_ADDR_KEY, publishedIpAddress);
-    IpAddr publishedIp {publishedIpAddress};
+    parseValue(node, Conf::PUBLISH_ADDR_KEY, publishedIpAddress_);
+    IpAddr publishedIp {publishedIpAddress_};
     if (publishedIp and not publishedSameasLocal_)
         setPublishedAddress(publishedIp);
 
@@ -332,6 +331,9 @@ SIPAccountBase::setAccountDetails(const std::map<std::string, std::string>& deta
     parseBool(details, Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_);
     parseString(details, Conf::CONFIG_PUBLISHED_ADDRESS, publishedIpAddress_);
     parseInt(details, Conf::CONFIG_PUBLISHED_PORT, publishedPort_);
+    IpAddr publishedIp {publishedIpAddress_};
+    if (publishedIp and not publishedSameasLocal_)
+        setPublishedAddress(publishedIp);
 
     parseString(details, Conf::CONFIG_ACCOUNT_DTMF_TYPE, dtmfType_);
 
