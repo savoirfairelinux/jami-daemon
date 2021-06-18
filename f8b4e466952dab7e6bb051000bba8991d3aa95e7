@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e5597e1d_96131ff4",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 268,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-18T13:10:55Z",
+      "side": 1,
+      "message": "All handlers should be moved to init/setup section",
+      "revId": "f8b4e466952dab7e6bb051000bba8991d3aa95e7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
