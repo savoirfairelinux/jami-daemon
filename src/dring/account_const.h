@@ -150,6 +150,7 @@ constexpr static const char DHT_PROXY_LIST_URL[] = "Account.dhtProxyListUrl";
 constexpr static const char DEFAULT_MODERATORS[] = "Account.defaultModerators";
 constexpr static const char LOCAL_MODERATORS_ENABLED[] = "Account.localModeratorsEnabled";
 constexpr static const char ALL_MODERATORS_ENABLED[] = "Account.allModeratorsEnabled";
+constexpr static const char ACCOUNT_IP_AUTO_REWRITE[] = "Account.allowIPAutoRewrite";
 
 namespace Audio {
 
