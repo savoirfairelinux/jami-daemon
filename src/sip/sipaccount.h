@@ -107,6 +107,13 @@ public:
     void updateDialogViaSentBy(pjsip_dialog* dlg);
 
     void resetAutoRegistration();
+
+    /**
+     * Update NAT address, Via and Contact header from the REGISTER response
+     * @param param pjsip reg cbparam
+     * @param pool
+     * @return update status
+     */
     bool checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool);
 
     /**
@@ -735,9 +742,8 @@ private:
     char contactBuffer_[PJSIP_MAX_URL_SIZE];
     pj_str_t contact_;
     int contactRewriteMethod_;
-    bool allowViaRewrite_;
+    bool allowIPAutoRewrite_;
     /* Undocumented feature in pjsip, this can == 2 */
-    int allowContactRewrite_;
     bool contactOverwritten_;
     pjsip_transport* via_tp_;
 
