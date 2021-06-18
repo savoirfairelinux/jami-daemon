@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "51ca656b_46621e87",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1690,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-18T13:06:08Z",
+      "side": 1,
+      "message": "use getSelectedCandidate instead. See IceTransport::Impl::link().",
+      "revId": "d5176a83b84f4269ec6e0e9d29c94eee7ab09da0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "21dda38f_4624e397",
+        "filename": "src/ice_transport.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 259,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-18T13:06:08Z",
+      "side": 1,
+      "message": "Did not compile, I had to add \n\n#include \"dring/def.h\"",
+      "revId": "d5176a83b84f4269ec6e0e9d29c94eee7ab09da0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
