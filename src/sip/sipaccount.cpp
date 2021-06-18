@@ -150,8 +150,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , contactBuffer_()
     , contact_ {contactBuffer_, 0}
     , contactRewriteMethod_(2)
-    , allowViaRewrite_(false)
-    , allowContactRewrite_(1)
+    , allowIPAutoRewrite_(false)
     , contactOverwritten_(false)
     , via_tp_(nullptr)
     , presence_(presenceEnabled ? new SIPPresence(this) : nullptr)
@@ -536,7 +535,7 @@ SIPAccount::serialize(YAML::Emitter& out) const
     out << YAML::Key << Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE << YAML::Value
         << registrationExpire_;
     out << YAML::Key << Conf::SERVICE_ROUTE_KEY << YAML::Value << serviceRoute_;
-    out << YAML::Key << Conf::ALLOW_VIA_REWRITE << YAML::Value << allowViaRewrite_;
+    out << YAML::Key << Conf::ALLOW_IP_AUTO_REWRITE << YAML::Value << allowIPAutoRewrite_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -600,9 +599,6 @@ SIPAccount::unserialize(const YAML::Node& node)
     SIPAccountBase::unserialize(node);
     parseValue(node, USERNAME_KEY, username_);
 
-    if (not publishedSameasLocal_)
-        usePublishedAddressPortInVIA();
-
     parseValue(node, Conf::BIND_ADDRESS_KEY, bindAddress_);
 
     int port = sip_utils::DEFAULT_SIP_PORT;
@@ -619,7 +615,7 @@ SIPAccount::unserialize(const YAML::Node& node)
 
         parseValue(node, Conf::KEEP_ALIVE_ENABLED, registrationRefreshEnabled_);
         parseValue(node, Conf::SERVICE_ROUTE_KEY, serviceRoute_);
-        parseValueOptional(node, Conf::ALLOW_VIA_REWRITE, allowViaRewrite_);
+        parseValueOptional(node, Conf::ALLOW_IP_AUTO_REWRITE, allowIPAutoRewrite_);
 
         const auto& credsNode = node[Conf::CRED_KEY];
         setCredentials(parseVectorMap(credsNode,
@@ -697,10 +693,7 @@ SIPAccount::setAccountDetails(const std::map<std::string, std::string>& details)
     // SIP specific account settings
     parseString(details, Conf::CONFIG_BIND_ADDRESS, bindAddress_);
     parseString(details, Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
-    parseBool(details, Conf::CONFIG_ACCOUNT_IP_REWRITE, allowViaRewrite_);
-
-    if (not publishedSameasLocal_)
-        usePublishedAddressPortInVIA();
+    parseBool(details, Conf::CONFIG_ACCOUNT_IP_AUTO_REWRITE, allowIPAutoRewrite_);
 
     unsigned expire = 0;
     parseInt(details, Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, expire);
@@ -774,7 +767,7 @@ SIPAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_BIND_ADDRESS, bindAddress_);
     a.emplace(Conf::CONFIG_LOCAL_PORT, std::to_string(localPort_));
     a.emplace(Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
-    a.emplace(Conf::CONFIG_ACCOUNT_IP_REWRITE, allowViaRewrite_ ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_ACCOUNT_IP_AUTO_REWRITE, allowIPAutoRewrite_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, std::to_string(registrationExpire_));
     a.emplace(Conf::CONFIG_KEEP_ALIVE_ENABLED, registrationRefreshEnabled_ ? TRUE_STR : FALSE_STR);
 
@@ -1907,10 +1900,13 @@ SIPAccount::resetAutoRegistration()
     }
 }
 
-/* Update NAT address from the REGISTER response */
 bool
 SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
 {
+    /* Only update if account is configured to auto-update */
+    if (not allowIPAutoRewrite_)
+        return false;
+
     pjsip_transport* tp = param->rdata->tp_info.transport;
 
     /* Get the received and rport info */
@@ -1929,22 +1925,25 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
     }
 
     const pj_str_t* via_addr = via->recvd_param.slen != 0 ? &via->recvd_param : &via->sent_by.host;
+    auto via_addrstr = sip_utils::as_view(*via_addr);
+    /* Enclose IPv6 address in square brackets */
+    if (IpAddr::isIpv6(via_addrstr))
+        via_addrstr = IpAddr(via_addrstr).toString(false, true);
 
-    /* If allowViaRewrite_ is enabled, we save the Via "received" address
-     * from the response.
-     */
-    if (allowViaRewrite_ and (via_addr_.host.slen == 0 or via_tp_ != tp)) {
+    if (via_addr_.host.slen == 0 or via_tp_ != tp) {
         if (pj_strcmp(&via_addr_.host, via_addr))
             pj_strdup(pool, &via_addr_.host, via_addr);
 
+        // Update Via header
         via_addr_.port = rport;
         via_tp_ = tp;
         pjsip_regc_set_via_sent_by(regc_, &via_addr_, via_tp_);
-    }
 
-    /* Only update if account is configured to auto-update */
-    if (not allowContactRewrite_)
-        return false;
+        // Set published Ip address
+        publishedSameasLocal_ = false;
+        publishedIpAddress_ = via_addrstr;
+        setPublishedAddress(IpAddr(via_addrstr));
+    }
 
     /* Compare received and rport with the URI in our registration */
     const pj_str_t STR_CONTACT = {(char*) "Contact", 7};
@@ -1984,7 +1983,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
     }
 
     /* Get server IP */
-    IpAddr srv_ip = {std::string(param->rdata->pkt_info.src_name)};
+    IpAddr srv_ip = {std::string_view(param->rdata->pkt_info.src_name)};
 
     /* At this point we've detected that the address as seen by registrar.
      * has changed.
@@ -1999,8 +1998,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
      * to 2. In this case, the switch will always be done whenever there
      * is difference in the IP address in the response.
      */
-    if (allowContactRewrite_ != 2 and not contact_addr.isPrivate() and not srv_ip.isPrivate()
-        and recv_addr.isPrivate()) {
+    if (not contact_addr.isPrivate() and not srv_ip.isPrivate() and recv_addr.isPrivate()) {
         /* Don't switch */
         return false;
     }
@@ -2009,15 +2007,10 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
      * the Via received address is private.
      * See http://trac.pjsip.org/repos/ticket/864
      */
-    if (allowContactRewrite_ != 2 and contact_addr == recv_addr and recv_addr.isPrivate()) {
+    if (contact_addr == recv_addr and recv_addr.isPrivate()) {
         /* Don't switch */
         return false;
     }
-
-    std::string via_addrstr(via_addr->ptr, via_addr->slen);
-    /* Enclose IPv6 address in square brackets */
-    if (IpAddr::isIpv6(via_addrstr))
-        via_addrstr = IpAddr(via_addrstr).toString(false, true);
 
     JAMI_WARN("IP address change detected for account %s "
               "(%.*s:%d --> %s:%d). Updating registration "
@@ -2026,7 +2019,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
               (int) uri->host.slen,
               uri->host.ptr,
               uri->port,
-              via_addrstr.c_str(),
+              via_addrstr.data(),
               rport,
               contactRewriteMethod_);
 
@@ -2059,7 +2052,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
                                    scheme,
                                    username_.c_str(),
                                    (not username_.empty() ? "@" : ""),
-                                   via_addrstr.c_str(),
+                                   via_addrstr.data(),
                                    rport,
                                    transport_param);
         if (len < 1) {
@@ -2154,7 +2147,7 @@ SIPAccount::scheduleReregistration()
 void
 SIPAccount::updateDialogViaSentBy(pjsip_dialog* dlg)
 {
-    if (allowViaRewrite_ && via_addr_.host.slen > 0)
+    if (allowIPAutoRewrite_ && via_addr_.host.slen > 0)
         pjsip_dlg_set_via_sent_by(dlg, &via_addr_, via_tp_);
 }
 
