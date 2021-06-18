@@ -293,9 +293,8 @@ SIPAccountBase::unserialize(const YAML::Node& node)
 
     parseValue(node, Conf::INTERFACE_KEY, interface_);
     parseValue(node, Conf::SAME_AS_LOCAL_KEY, publishedSameasLocal_);
-    std::string publishedIpAddress;
-    parseValue(node, Conf::PUBLISH_ADDR_KEY, publishedIpAddress);
-    IpAddr publishedIp {publishedIpAddress};
+    parseValue(node, Conf::PUBLISH_ADDR_KEY, publishedIpAddress_);
+    IpAddr publishedIp {publishedIpAddress_};
     if (publishedIp and not publishedSameasLocal_)
         setPublishedAddress(publishedIp);
 
