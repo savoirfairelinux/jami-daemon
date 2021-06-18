@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "97c693d8_f375dc8c",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 327,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-18T14:00:07Z",
+      "side": 0,
+      "message": "keep fallback on non-std::filesystem API for non-Windows systems (currently needed for macOS and old GNU/Linux)",
+      "range": {
+        "startLine": 326,
+        "startChar": 4,
+        "endLine": 327,
+        "endChar": 5
+      },
+      "revId": "aca5de93b03995ae03f293f5caa3ccc2e2016afb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
