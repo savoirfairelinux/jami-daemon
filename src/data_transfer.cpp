@@ -1200,20 +1200,24 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
         return;
     }
 
-    auto filelinkPath = path(fileId);
-
     DRing::DataTransferInfo info;
     info.accountId = pimpl_->accountId_;
     info.conversationId = pimpl_->to_;
     info.path = itW->second.path;
-    if (info.path.empty())
-        info.path = filelinkPath;
     info.totalSize = itW->second.totalSize;
     info.bytesProgress = 0;
 
-    // Create symlink for future transfers
-    if (info.path != filelinkPath && !fileutils::isSymLink(filelinkPath))
-        fileutils::createFileLink(filelinkPath, info.path);
+    // Generate the file path within the conversation data directory
+    // using the file id if no path has been specified, otherwise create
+    // a symlink(Note: this will not work on Windows).
+    auto filePath = path(fileId);
+    if (info.path.empty()) {
+        info.path = filePath;
+    } else {
+        // We don't need to check if this is an existing symlink here, as
+        // the attempt to create one should report the error string correctly.
+        fileutils::createFileLink(filePath, info.path);
+    }
 
     auto ifile = std::make_shared<IncomingFile>(std::move(channel),
                                                 info,
