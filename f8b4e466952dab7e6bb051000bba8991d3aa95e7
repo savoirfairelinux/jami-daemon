@@ -16,6 +16,24 @@
       "revId": "f8b4e466952dab7e6bb051000bba8991d3aa95e7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "49d05104_b4eb5371",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 268,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-21T18:24:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e5597e1d_96131ff4",
+      "revId": "f8b4e466952dab7e6bb051000bba8991d3aa95e7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
