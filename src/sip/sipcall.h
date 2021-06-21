@@ -214,7 +214,7 @@ public:
     void onMediaNegotiationComplete();
     // End fo SiPVoipLink events
 
-    void setContactHeader(pj_str_t* contact);
+    void setContactHeader(pj_str_t contact);
 
     void setTransport(const std::shared_ptr<SipTransport>& t);
 
