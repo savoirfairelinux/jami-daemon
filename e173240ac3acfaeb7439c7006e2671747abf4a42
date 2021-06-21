@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b65c93b4_4161f466",
+        "filename": "src/account.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-21T17:30:25Z",
+      "side": 1,
+      "message": "to remove",
+      "range": {
+        "startLine": 133,
+        "startChar": 0,
+        "endLine": 133,
+        "endChar": 32
+      },
+      "revId": "e173240ac3acfaeb7439c7006e2671747abf4a42",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "28317329_321a5f39",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 1003,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-21T17:30:25Z",
+      "side": 1,
+      "message": "duplicate variable from line 993",
+      "range": {
+        "startLine": 1003,
+        "startChar": 4,
+        "endLine": 1003,
+        "endChar": 45
+      },
+      "revId": "e173240ac3acfaeb7439c7006e2671747abf4a42",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
