@@ -25,10 +25,3 @@ libclient_la_SOURCES = \
 	$(PLUGIN_SRC) \
 	$(PRESENCE_SRC) \
 	$(VIDEO_SRC)
-
-libclient_la_CXXFLAGS = \
-	-I./ \
-	-I../ \
-	-DPREFIX=\"$(prefix)\" \
-	-DPROGSHAREDIR=\"${datadir}/ring\" \
-	$(AM_CXXFLAGS)
