@@ -10,5 +10,5 @@ install_data(
     '09_ElectroCloud.opus',
     '10_UrbanTrap.opus',
     'default.opus',
-    install_dir: get_option('datadir') / 'ring' / 'ringtones'
+    install_dir: get_option('datadir') / 'jami' / 'ringtones'
 )

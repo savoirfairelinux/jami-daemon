@@ -17,7 +17,7 @@ AM_CPPFLAGS += \
 	-I$(src)/src/dring \
 	$(SIP_CFLAGS) \
 	-DPREFIX=\"$(prefix)\" \
-	-DPROGSHAREDIR=\"${datadir}/ring\" \
+	-DPROGSHAREDIR=\"$(datadir)/jami\" \
 	-DENABLE_TRACE \
 	-DRING_REVISION=\"$(RING_REVISION)\" \
 	-DRING_DIRTY_REPO=\"$(RING_DIRTY_REPO)\" \

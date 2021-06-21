@@ -1,5 +1,5 @@
-ringringtonesdir = $(datadir)/ring/ringtones
-dist_ringringtones_DATA = \
+jamiringtonesdir = $(datadir)/jami/ringtones
+dist_jamiringtones_DATA = \
 	01_AfroNigeria.opus \
 	02_AfroNigeria.opus \
 	03_AcousticGuitar.opus \
