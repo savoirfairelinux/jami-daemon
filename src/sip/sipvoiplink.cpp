@@ -566,10 +566,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
         return PJ_FALSE;
     }
 
-    // contactStr must stay in scope as long as tdata
-    const pj_str_t contactStr(account->getContactHeader(transport->get()));
-    sip_utils::addContactHeader(&contactStr, tdata);
-
+    sip_utils::addContactHeader(account->getContactHeader(transport->get()), tdata);
     if (pjsip_inv_send_msg(call->inviteSession_.get(), tdata) != PJ_SUCCESS) {
         JAMI_ERR("Could not send msg RINGING");
         return PJ_FALSE;
