@@ -174,12 +174,12 @@ getHostFromUri(std::string_view uri)
 }
 
 void
-addContactHeader(const pj_str_t* contact_str, pjsip_tx_data* tdata)
+addContactHeader(pj_str_t contact_str, pjsip_tx_data* tdata)
 {
     pjsip_contact_hdr* contact = pjsip_contact_hdr_create(tdata->pool);
     contact->uri = pjsip_parse_uri(tdata->pool,
-                                   contact_str->ptr,
-                                   contact_str->slen,
+                                   contact_str.ptr,
+                                   contact_str.slen,
                                    PJSIP_PARSE_URI_AS_NAMEADDR);
     // remove old contact header (if present)
     pjsip_msg_find_remove_hdr(tdata->msg, PJSIP_H_CONTACT, NULL);

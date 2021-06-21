@@ -1,4 +1,4 @@
-/*
+﻿/*
  *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -187,7 +187,7 @@ SIPCall::findRtpStreamIndex(const std::string& label) const
     const auto iter = std::find_if(rtpStreams_.begin(),
                                    rtpStreams_.end(),
                                    [&label](const RtpStream& rtp) {
-                                       return (label.compare(rtp.mediaAttribute_->label_) == 0);
+                                       return label == rtp.mediaAttribute_->label_;
                                    });
 
     // Return the index if there is a match.
@@ -419,9 +419,9 @@ SIPCall::generateMediaPorts()
 }
 
 void
-SIPCall::setContactHeader(pj_str_t* contact)
+SIPCall::setContactHeader(pj_str_t contact)
 {
-    pj_strcpy(&contactHeader_, contact);
+    pj_strcpy(&contactHeader_, &contact);
 }
 
 void
@@ -681,9 +681,8 @@ SIPCall::terminateSipSession(int status)
             if (tdata) {
                 auto account = getSIPAccount();
                 if (account) {
-                    auto contact = account->getContactHeader(transport_ ? transport_->get()
-                                                                        : nullptr);
-                    sip_utils::addContactHeader(&contact, tdata);
+                    sip_utils::addContactHeader(account->getContactHeader(transport_ ? transport_->get()
+                                                                        : nullptr), tdata);
                     // Add user-agent header
                     sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
                 } else {
@@ -730,8 +729,7 @@ SIPCall::answer()
         Manager::instance().sipVoIPLink().createSDPOffer(inviteSession_.get());
     }
 
-    pj_str_t contact(account->getContactHeader(transport_ ? transport_->get() : nullptr));
-    setContactHeader(&contact);
+    setContactHeader(account->getContactHeader(transport_ ? transport_->get() : nullptr));
 
     pjsip_tx_data* tdata;
     if (!inviteSession_->last_answer)
@@ -752,7 +750,7 @@ SIPCall::answer()
                  getCallId().c_str(),
                  (int) contactHeader_.slen,
                  contactHeader_.ptr);
-        sip_utils::addContactHeader(&contactHeader_, tdata);
+        sip_utils::addContactHeader(contactHeader_, tdata);
     }
 
     // Add user-agent header
@@ -865,8 +863,7 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
         }
     }
 
-    pj_str_t contact(account->getContactHeader(transport_ ? transport_->get() : nullptr));
-    setContactHeader(&contact);
+    setContactHeader(account->getContactHeader(transport_ ? transport_->get() : nullptr));
 
     if (!inviteSession_->last_answer)
         throw std::runtime_error("Should only be called for initial answer");
@@ -888,7 +885,7 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
                  getCallId().c_str(),
                  (int) contactHeader_.slen,
                  contactHeader_.ptr);
-        sip_utils::addContactHeader(&contactHeader_, tdata);
+        sip_utils::addContactHeader(contactHeader_, tdata);
     }
 
     // Add user-agent header
@@ -978,7 +975,7 @@ SIPCall::answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList)
     }
 
     if (contactHeader_.slen) {
-        sip_utils::addContactHeader(&contactHeader_, tdata);
+        sip_utils::addContactHeader(contactHeader_, tdata);
     }
 
     // Add user-agent header
@@ -2471,8 +2468,7 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
     }
 
     // ContactStr must stay in scope as long as tdata
-    const pj_str_t contactStr(getSIPAccount()->getContactHeader(getTransport()->get()));
-    sip_utils::addContactHeader(&contactStr, tdata);
+    sip_utils::addContactHeader(getSIPAccount()->getContactHeader(getTransport()->get()), tdata);
 
     if (pjsip_inv_send_msg(inviteSession_.get(), tdata) != PJ_SUCCESS) {
         JAMI_ERR("Could not send msg OK");
@@ -2751,8 +2747,8 @@ SIPCall::monitor() const
     }
     JAMI_DBG("- Call %s with %s:", getCallId().c_str(), getPeerNumber().c_str());
     JAMI_DBG("\t- Duration: %s", dht::print_duration(getCallDuration()).c_str());
-    for (auto& mediaAttr : getMediaAttributeList())
-        JAMI_DBG("\t- Media: %s", mediaAttr.toString(true).c_str());
+    for (const auto& mediaAttr : rtpStreams_)
+        JAMI_DBG("\t- Media: %s", mediaAttr.mediaAttribute_->toString(true).c_str());
 #ifdef ENABLE_VIDEO
     if (auto codec = getVideoCodec())
         JAMI_DBG("\t- Video codec: %s", codec->systemCodecInfo.name.c_str());
