@@ -23,10 +23,3 @@ libplugin_la_SOURCES = \
 	pluginsutils.cpp \
 	chatservicesmanager.cpp \
 	callservicesmanager.cpp
-
-libplugin_la_CXXFLAGS = \
-	-I./ \
-	-I../ \
-	-DPREFIX=\"$(prefix)\" \
-	-DPROGSHAREDIR=\"${datadir}/ring\" \
-	$(AM_CXXFLAGS)
