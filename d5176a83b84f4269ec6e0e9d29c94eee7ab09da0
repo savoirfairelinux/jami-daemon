@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "4da82c5e_993451b4",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1690,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-21T17:46:16Z",
+      "side": 1,
+      "message": "The problem is you are adding direct dependency from the agent (application) to a third-party lib (pjnath), throught the pj_ice_sess_check struct.\nInstead, build a vector of connection pairs using IpAddr type, similar to what IceTransport::Impl::link() does, but the output would more structured than a string.",
+      "parentUuid": "2e69d5e8_ea25caa7",
+      "revId": "d5176a83b84f4269ec6e0e9d29c94eee7ab09da0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "21dda38f_4624e397",
         "filename": "src/ice_transport.h",
         "patchSetId": 4
@@ -48,6 +66,24 @@
       "writtenOn": "2021-06-18T13:06:08Z",
       "side": 1,
       "message": "Did not compile, I had to add \n\n#include \"dring/def.h\"",
+      "revId": "d5176a83b84f4269ec6e0e9d29c94eee7ab09da0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "610c111f_1e79c2e7",
+        "filename": "src/ice_transport.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 259,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-21T17:46:16Z",
+      "side": 1,
+      "message": "still does not compile without def.h",
+      "parentUuid": "21dda38f_4624e397",
       "revId": "d5176a83b84f4269ec6e0e9d29c94eee7ab09da0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
