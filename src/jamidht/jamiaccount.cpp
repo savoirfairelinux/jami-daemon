@@ -3979,7 +3979,7 @@ JamiAccount::conversationInfos(const std::string& conversationId) const
     std::lock_guard<std::mutex> lk(conversationsMtx_);
     // Add a new member in the conversation
     auto it = conversations_.find(conversationId);
-    if (it == conversations_.end()) {
+    if (it == conversations_.end() || it->second) {
         JAMI_ERR("Conversation %s doesn't exist", conversationId.c_str());
         return {};
     }
