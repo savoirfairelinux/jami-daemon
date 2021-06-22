@@ -174,17 +174,19 @@ libring_la_SOURCES += \
 		winsyslog.c
 endif
 
-nobase_include_HEADERS= dring/dring.h \
-		dring/security_const.h \
-		dring/callmanager_interface.h \
-		dring/configurationmanager_interface.h \
-		dring/presencemanager_interface.h \
-		dring/datatransfer_interface.h \
-		dring/account_const.h \
-		dring/call_const.h \
-		dring/presence_const.h \
-		dring/media_const.h \
-		dring/def.h
+nobase_include_HEADERS = \
+	dring/account_const.h \
+	dring/call_const.h \
+	dring/callmanager_interface.h \
+	dring/configurationmanager_interface.h \
+	dring/conversation_interface.h \
+	dring/datatransfer_interface.h \
+	dring/def.h \
+	dring/dring.h \
+	dring/media_const.h \
+	dring/presence_const.h \
+	dring/presencemanager_interface.h \
+	dring/security_const.h
 
 if ENABLE_PLUGIN
 nobase_include_HEADERS+= \
