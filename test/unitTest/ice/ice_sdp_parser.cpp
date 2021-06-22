@@ -27,7 +27,9 @@
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
+
 #include "dring.h"
+#include "media_const.h"
 #include "call_const.h"
 #include "account_const.h"
 #include "sip/sipcall.h"
@@ -464,7 +466,7 @@ IceSdpParsingTest::configureTest(CallData& aliceData, CallData& bobData)
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaNegotiationStatus>(
-        [&](const std::string& callId, const std::string& event) {
+        [&](const std::string& callId, const std::string& event, const std::vector<std::map<std::string, std::string>>& media) {
             auto user = getUserAlias(callId);
             if (not user.empty())
                 onMediaNegotiationStatus(callId,
