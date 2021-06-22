@@ -216,6 +216,7 @@ ConversationRepositoryTest::testCloneViaChannelSocket()
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
             receiverConnected = socket && (name == "git://*");
+            std::lock_guard<std::mutex> lkm {mtx};
             channelSocket = socket;
             rcv.notify_one();
         });
@@ -224,6 +225,7 @@ ConversationRepositoryTest::testCloneViaChannelSocket()
                                                     "git://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lkm {mtx};
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                             sendSocket = socket;
@@ -386,6 +388,7 @@ ConversationRepositoryTest::testFetch()
     std::shared_ptr<ChannelSocket> sendSocket = nullptr;
 
     bobAccount->connectionManager().onChannelRequest([&](const DeviceId&, const std::string& name) {
+        std::lock_guard<std::mutex> lkm {mtx};
         successfullyReceive = name == "git://*";
         ccv.notify_one();
         return true;
@@ -396,6 +399,7 @@ ConversationRepositoryTest::testFetch()
 
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+            std::lock_guard<std::mutex> lkm {mtx};
             receiverConnected = socket && (name == "git://*");
             channelSocket = socket;
             rcv.notify_one();
@@ -405,6 +409,7 @@ ConversationRepositoryTest::testFetch()
                                                     "git://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lkm {mtx};
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                             sendSocket = socket;
@@ -439,6 +444,7 @@ ConversationRepositoryTest::testFetch()
                                                     "git://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lkm {mtx};
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                             sendSocket = socket;

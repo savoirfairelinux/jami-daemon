@@ -129,6 +129,7 @@ ConferenceTest::registerSignalHandlers()
             const std::string& callId,
             const std::string&,
             const std::vector<std::map<std::string, std::string>>&) {
+            std::lock_guard<std::mutex> lkm {mtx};
             if (accountId == bobId) {
                 bobCall.callId = callId;
             } else if (accountId == carlaId) {
@@ -138,6 +139,7 @@ ConferenceTest::registerSignalHandlers()
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
         [=](const std::string& callId, const std::string& state, signed) {
+            std::lock_guard<std::mutex> lkm {mtx};
             if (bobCall.callId == callId)
                 bobCall.state = state;
             else if (carlaCall.callId == callId)
@@ -146,11 +148,13 @@ ConferenceTest::registerSignalHandlers()
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::ConferenceCreated>(
         [=](const std::string& conferenceId) {
+            std::lock_guard<std::mutex> lkm {mtx};
             confId = conferenceId;
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::ConferenceRemoved>(
         [=](const std::string& conferenceId) {
+            std::lock_guard<std::mutex> lkm {mtx};
             if (confId == conferenceId)
                 confId = "";
             cv.notify_one();
@@ -158,6 +162,7 @@ ConferenceTest::registerSignalHandlers()
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::OnConferenceInfosUpdated>(
         [=](const std::string&,
             const std::vector<std::map<std::string, std::string>> participantsInfos) {
+            std::lock_guard<std::mutex> lkm {mtx};
             for (const auto& infos : participantsInfos) {
                 if (infos.at("uri").find(bobUri) != std::string::npos) {
                     bobCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
