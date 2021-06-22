@@ -1,0 +1,165 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "72f7f049_be0c37d4",
+        "filename": "test/unitTest/conversation/conversation.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3101,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-22T18:36:02Z",
+      "side": 1,
+      "message": "mutex must be locked",
+      "range": {
+        "startLine": 3100,
+        "startChar": 0,
+        "endLine": 3101,
+        "endChar": 32
+      },
+      "revId": "cecf752367c432c09ca241fcf725177ea9f388f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "927eb35e_cfe48603",
+        "filename": "test/unitTest/conversation/conversation.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3110,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-22T18:36:02Z",
+      "side": 1,
+      "message": "mutex must be locked",
+      "range": {
+        "startLine": 3109,
+        "startChar": 16,
+        "endLine": 3110,
+        "endChar": 19
+      },
+      "revId": "cecf752367c432c09ca241fcf725177ea9f388f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0c909ef7_5d9b4bfd",
+        "filename": "test/unitTest/conversation/conversation.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3120,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-22T18:36:02Z",
+      "side": 1,
+      "message": "mutex must be locked",
+      "range": {
+        "startLine": 3119,
+        "startChar": 0,
+        "endLine": 3120,
+        "endChar": 36
+      },
+      "revId": "cecf752367c432c09ca241fcf725177ea9f388f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c5667354_8439ec6a",
+        "filename": "test/unitTest/conversation/conversation.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3130,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-22T18:36:02Z",
+      "side": 1,
+      "message": "mutex must be locked",
+      "range": {
+        "startLine": 3128,
+        "startChar": 0,
+        "endLine": 3130,
+        "endChar": 28
+      },
+      "revId": "cecf752367c432c09ca241fcf725177ea9f388f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "660e6276_160fbe1e",
+        "filename": "test/unitTest/conversation/conversation.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3204,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-22T18:36:02Z",
+      "side": 1,
+      "message": "mutex must be locked",
+      "range": {
+        "startLine": 3203,
+        "startChar": 0,
+        "endLine": 3204,
+        "endChar": 32
+      },
+      "revId": "cecf752367c432c09ca241fcf725177ea9f388f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ce82022b_ad4bfb41",
+        "filename": "test/unitTest/conversation/conversation.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3214,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-22T18:36:02Z",
+      "side": 1,
+      "message": "mutex must be locked",
+      "range": {
+        "startLine": 3213,
+        "startChar": 0,
+        "endLine": 3214,
+        "endChar": 36
+      },
+      "revId": "cecf752367c432c09ca241fcf725177ea9f388f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a433e4cb_304efc91",
+        "filename": "test/unitTest/conversation/conversation.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3224,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-22T18:36:02Z",
+      "side": 1,
+      "message": "mutex must be locked",
+      "range": {
+        "startLine": 3222,
+        "startChar": 0,
+        "endLine": 3224,
+        "endChar": 28
+      },
+      "revId": "cecf752367c432c09ca241fcf725177ea9f388f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
