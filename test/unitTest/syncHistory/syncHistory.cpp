@@ -130,6 +130,7 @@ SyncHistoryTest::testCreateConversationThenSync()
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == alice2Id && conversationId == convId) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 conversationReady = true;
                 cv.notify_one();
             }
@@ -137,6 +138,7 @@ SyncHistoryTest::testCreateConversationThenSync()
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 if (alice2Id != accountId) {
                     return;
                 }
@@ -180,6 +182,7 @@ SyncHistoryTest::testCreateConversationWithOnlineDevice()
     auto conversationReady = false, alice2Ready = false;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
+            std::lock_guard<std::mutex> lkm {mtx};
             if (accountId == alice2Id && conversationId == convId) {
                 conversationReady = true;
                 cv.notify_one();
@@ -188,6 +191,7 @@ SyncHistoryTest::testCreateConversationWithOnlineDevice()
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 if (alice2Id != accountId) {
                     return;
                 }
@@ -226,6 +230,7 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == alice2Id && conversationId == convId) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 conversationReady = true;
                 cv.notify_one();
             }
@@ -265,6 +270,7 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
             const std::string& accountId,
             const std::string& conversationId,
             std::vector<std::map<std::string, std::string>> msg) {
+            std::lock_guard<std::mutex> lkm {mtx};
             if (accountId == alice2Id && conversationId == convId) {
                 messages = msg;
                 cv.notify_one();
@@ -331,6 +337,7 @@ SyncHistoryTest::testCreateMultipleConversationThenAddDevice()
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string&) {
             if (accountId == alice2Id) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 conversationReady += 1;
                 cv.notify_one();
             }
@@ -373,6 +380,7 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
                 const std::string& conversationId,
                 std::map<std::string, std::string> /*metadatas*/) {
                 if (accountId == aliceId && conversationId == convId) {
+                    std::lock_guard<std::mutex> lkm {mtx};
                     requestReceived = true;
                     cv.notify_one();
                 }
@@ -383,6 +391,7 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
                 const std::string& /*conversationId*/,
                 const std::string& /*memberUri*/,
                 int /*event*/) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 memberEvent = true;
                 cv.notify_one();
             }));
@@ -413,6 +422,7 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
                 const std::string& conversationId,
                 std::map<std::string, std::string> /*metadatas*/) {
                 if (accountId == alice2Id && conversationId == convId) {
+                    std::lock_guard<std::mutex> lkm {mtx};
                     requestReceived = true;
                     cv.notify_one();
                 }
@@ -454,6 +464,7 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == alice2Id && conversationId == convId) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 conversationReady = true;
                 cv.notify_one();
             }
@@ -461,6 +472,7 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == alice2Id && conversationId == convId) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 conversationRemoved = true;
                 cv.notify_one();
             }
@@ -468,6 +480,7 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 if (alice2Id != accountId) {
                     return;
                 }
@@ -516,6 +529,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> /*message*/) {
+            std::lock_guard<std::mutex> lkm {mtx};
             if (accountId == bobId) {
                 messageBobReceived += 1;
             } else {
@@ -533,6 +547,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
             }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
+            std::lock_guard<std::mutex> lkm {mtx};
             if (accountId == bobId) {
                 conversationReady = true;
                 cv.notify_one();
@@ -546,6 +561,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 if (alice2Id != accountId) {
                     return;
                 }
@@ -620,6 +636,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> /*message*/) {
+            std::lock_guard<std::mutex> lkm {mtx};
             if (accountId == bobId) {
                 messageBobReceived += 1;
             }
@@ -631,6 +648,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
                 const std::string& conversationId,
                 const std::string& uri,
                 int event) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 if (accountId == aliceId && conversationId == convId && uri == bobUri
                     && event == 0) {
                     memberAddGenerated = true;
@@ -642,11 +660,13 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 requestReceived = true;
                 cv.notify_one();
             }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
+            std::lock_guard<std::mutex> lkm {mtx};
             if (conversationId != convId)
                 return;
             if (accountId == bobId || accountId == alice2Id)
@@ -656,6 +676,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 if (alice2Id != accountId) {
                     return;
                 }
@@ -732,6 +753,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> /*message*/) {
+            std::lock_guard<std::mutex> lkm {mtx};
             if (accountId == bobId) {
                 messageBobReceived += 1;
             } else {
@@ -744,17 +766,20 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 requestReceived = true;
                 cv.notify_one();
             }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == bobId) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 conversationReady = true;
                 cv.notify_one();
             }
 
             if (accountId == alice2Id && conversationId == convId) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 conversationReady = true;
                 cv.notify_one();
             }
@@ -762,6 +787,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
             [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+                std::lock_guard<std::mutex> lkm {mtx};
                 if (alice2Id != accountId) {
                     return;
                 }
