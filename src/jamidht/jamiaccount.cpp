@@ -4795,6 +4795,10 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
         shared->callConnectionClosed(key.second, false);
     };
     auto sip_tr = link_.sipTransportBroker->getChanneledTransport(socket, std::move(onShutdown));
+    if (!sip_tr) {
+        JAMI_ERR() << "No channeled transport found";
+        return;
+    }
     sip_tr->setAccount(shared());
     // Store the connection
     connections.emplace_back(SipConnection {sip_tr, socket});
