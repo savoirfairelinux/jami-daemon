@@ -208,11 +208,39 @@ void
 SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    // Start conversation
     auto convId = aliceAccount->startConversation();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto conversationReady = false;
+    auto messageReceived = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*message*/) {
+            messageReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == alice2Id && conversationId == convId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    confHandlers.clear();
+
+    // Start conversation
+    messageReceived = false;
     aliceAccount->sendMessage(convId, std::string("Message 1"));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return messageReceived; }));
     aliceAccount->sendMessage(convId, std::string("Message 2"));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return messageReceived; }));
     aliceAccount->sendMessage(convId, std::string("Message 3"));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return messageReceived; }));
 
     // Now create alice2
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
@@ -227,21 +255,6 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
-
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
-    auto conversationReady = false;
-    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == alice2Id && conversationId == convId) {
-                conversationReady = true;
-                cv.notify_one();
-            }
-        }));
-    DRing::registerSignalHandlers(confHandlers);
-    confHandlers.clear();
 
     // Check if conversation is ready
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() { return conversationReady; }));
