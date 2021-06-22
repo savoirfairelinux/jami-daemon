@@ -413,8 +413,8 @@ void JackLayer::stopStream(AudioDeviceType)
         if (status_ != Status::Started)
             return;
         status_ = Status::Idle;
+        data_ready_.notify_one();
     }
-    data_ready_.notify_one();
 
     if (jack_deactivate(playbackClient_) or jack_deactivate(captureClient_)) {
         JAMI_ERR("JACK client could not deactivate");
