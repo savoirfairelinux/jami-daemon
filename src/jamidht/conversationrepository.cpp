@@ -403,7 +403,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     // The merge will occur between current HEAD and wanted_ref
     git_reference* head_ref_ptr = nullptr;
     auto repo = repository();
-    if (git_repository_head(&head_ref_ptr, repo.get()) < 0) {
+    if (!repo || git_repository_head(&head_ref_ptr, repo.get()) < 0) {
         JAMI_ERR("Could not get HEAD reference");
         return {};
     }
@@ -537,6 +537,10 @@ ConversationRepository::Impl::mergeFastforward(const git_oid* target_oid, int is
     // Initialize target
     git_reference* target_ref_ptr = nullptr;
     auto repo = repository();
+    if (!repo) {
+        JAMI_ERR() << "No repository found";
+        return false;
+    }
     if (is_unborn) {
         git_reference* head_ref_ptr = nullptr;
         // HEAD reference is unborn, lookup manually so we don't try to resolve it
@@ -633,6 +637,8 @@ ConversationRepository::Impl::checkOnlyDeviceCertificate(const std::string& user
 
     // Retrieve tree for recent commit
     auto repo = repository();
+    if (!repo)
+        return false;
     auto treeNew = treeAtCommit(repo.get(), commitId);
     auto treeOld = treeAtCommit(repo.get(), parentId);
     if (not treeNew or not treeOld)
@@ -679,6 +685,8 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
     }
 
     auto repo = repository();
+    if (!repo)
+        return false;
     auto treeNew = treeAtCommit(repo.get(), commitId);
     auto treeOld = treeAtCommit(repo.get(), parentId);
     if (not treeNew or not treeOld)
@@ -778,11 +786,11 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
                                             const std::string& parentId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
-    if (!cert)
+    auto repo = repository();
+    if (not cert or not repo)
         return false;
     auto userUri = cert->getIssuerUID();
 
-    auto repo = repository();
     std::string repoPath = git_repository_workdir(repo.get());
     if (mode() == ConversationMode::ONE_TO_ONE) {
         auto initialMembers = getInitialMembers();
@@ -881,6 +889,8 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
 
     // Retrieve tree for commits
     auto repo = repository();
+    if (!repo)
+        return false;
     auto treeNew = treeAtCommit(repo.get(), commitId);
     auto treeOld = treeAtCommit(repo.get(), parentId);
     if (not treeNew or not treeOld)
@@ -935,6 +945,8 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
 
     // Retrieve tree for recent commit
     auto repo = repository();
+    if (!repo)
+        return false;
     auto treeNew = treeAtCommit(repo.get(), commitId);
     auto treeOld = treeAtCommit(repo.get(), parentId);
     if (not treeNew or not treeOld)
@@ -1063,6 +1075,8 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
 
     // Retrieve tree for recent commit
     auto repo = repository();
+    if (!repo)
+        return false;
     auto treeNew = treeAtCommit(repo.get(), commitId);
     auto treeOld = treeAtCommit(repo.get(), parentId);
     if (not treeNew or not treeOld)
@@ -1089,11 +1103,11 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
     auto userUri = cert->getIssuerUID();
     auto parentCrt = tls::CertificateStore::instance().getCertificate(userUri);
-    if (!cert || !parentCrt)
+    auto repo = repository();
+    if (!cert || !parentCrt || !repo)
         return false;
 
     // Retrieve tree for commit
-    auto repo = repository();
     auto tree = treeAtCommit(repo.get(), commitId);
     if (not tree)
         return false;
@@ -1197,6 +1211,8 @@ ConversationRepository::Impl::commit(const std::string& msg)
     // Retrieve current index
     git_index* index_ptr = nullptr;
     auto repo = repository();
+    if (!repo)
+        return {};
     if (git_repository_index(&index_ptr, repo.get()) < 0) {
         JAMI_ERR("Could not open repository index");
         return {};
@@ -1348,6 +1364,8 @@ std::string
 ConversationRepository::Impl::diffStats(const std::string& newId, const std::string& oldId) const
 {
     auto repo = repository();
+    if (!repo)
+        return {};
     if (auto d = diff(repo.get(), newId, oldId))
         return diffStats(d);
     return {};
@@ -1430,6 +1448,8 @@ ConversationRepository::Impl::behind(const std::string& from) const
 {
     git_oid oid_local, oid_head, oid_remote;
     auto repo = repository();
+    if (!repo)
+        return {};
     if (git_reference_name_to_id(&oid_local, repo.get(), "HEAD") < 0) {
         JAMI_ERR("Cannot get reference for HEAD");
         return {};
@@ -1677,7 +1697,7 @@ ConversationRepository::Impl::resolveConflicts(git_index* index, const std::stri
 
     git_oid head_commit_id;
     auto repo = repository();
-    if (git_reference_name_to_id(&head_commit_id, repo.get(), "HEAD") < 0) {
+    if (!repo || git_reference_name_to_id(&head_commit_id, repo.get(), "HEAD") < 0) {
         JAMI_ERR("Cannot get reference for HEAD");
         return false;
     }
@@ -2113,7 +2133,8 @@ std::string
 ConversationRepository::addMember(const std::string& uri)
 {
     auto account = pimpl_->account_.lock();
-    if (!account)
+    auto repo = pimpl_->repository();
+    if (!account or not repo)
         return {};
     auto deviceId = account->currentDeviceId();
     auto name = account->getUsername();
@@ -2121,7 +2142,6 @@ ConversationRepository::addMember(const std::string& uri)
         name = deviceId;
 
     // First, we need to add the member file to the repository if not present
-    auto repo = pimpl_->repository();
     std::string repoPath = git_repository_workdir(repo.get());
 
     std::string invitedPath = repoPath + "invited";
@@ -2182,7 +2202,7 @@ ConversationRepository::amend(const std::string& id, const std::string& msg)
 
     git_commit* commit_ptr = nullptr;
     auto repo = pimpl_->repository();
-    if (git_oid_fromstr(&tree_id, id.c_str()) < 0
+    if (!repo || git_oid_fromstr(&tree_id, id.c_str()) < 0
         || git_commit_lookup(&commit_ptr, repo.get(), &tree_id) < 0) {
         GitCommit commit {commit_ptr, git_commit_free};
         JAMI_WARN("Failed to look up commit %s", id.c_str());
@@ -2222,13 +2242,14 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     git_fetch_options_init(&fetch_opts, GIT_FETCH_OPTIONS_VERSION);
 
     auto lastMsg = logN("", 1);
-    if (lastMsg.size() == 0) {
+    if (lastMsg.size() == 0)
         return false;
-    }
     auto lastCommit = lastMsg[0].id;
 
     // Assert that repository exists
     auto repo = pimpl_->repository();
+    if (!repo)
+        return false;
     std::string channelName = "git://" + remoteDeviceId + '/' + pimpl_->id_;
     auto res = git_remote_lookup(&remote_ptr, repo.get(), remoteDeviceId.c_str());
     if (res != 0) {
@@ -2282,7 +2303,7 @@ ConversationRepository::remoteHead(const std::string& remoteDeviceId,
 {
     git_remote* remote_ptr = nullptr;
     auto repo = pimpl_->repository();
-    if (git_remote_lookup(&remote_ptr, repo.get(), remoteDeviceId.c_str()) < 0) {
+    if (!repo || git_remote_lookup(&remote_ptr, repo.get(), remoteDeviceId.c_str()) < 0) {
         JAMI_WARN("No remote found with id: %s", remoteDeviceId.c_str());
         return {};
     }
@@ -2315,6 +2336,8 @@ ConversationRepository::commitMessage(const std::string& msg)
 
     // First, we need to add device file to the repository if not present
     auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
     std::string repoPath = git_repository_workdir(repo.get());
     // NOTE: libgit2 uses / for files
     std::string path = std::string("devices") + "/" + deviceId + ".crt";
@@ -2363,6 +2386,10 @@ ConversationRepository::merge(const std::string& merge_id)
 {
     // First, the repository must be in a clean state
     auto repo = pimpl_->repository();
+    if (!repo) {
+        JAMI_ERR() << "Can't merge without repo";
+        return {false, ""};
+    }
     int state = git_repository_state(repo.get());
     if (state != GIT_REPOSITORY_STATE_NONE) {
         JAMI_ERR("Merge operation aborted: repository is in unexpected state %d", state);
@@ -2490,6 +2517,8 @@ ConversationRepository::join()
 {
     // Check that not already member
     auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
     std::string repoPath = git_repository_workdir(repo.get());
     auto account = pimpl_->account_.lock();
     if (!account)
@@ -2558,7 +2587,8 @@ ConversationRepository::leave()
 {
     // TODO simplify
     auto account = pimpl_->account_.lock();
-    if (!account)
+    auto repo = pimpl_->repository();
+    if (!account || !repo)
         return {};
     auto details = account->getAccountDetails();
     auto deviceId = details[DRing::Account::ConfProperties::DEVICE_ID];
@@ -2571,7 +2601,6 @@ ConversationRepository::leave()
         name = deviceId;
 
     // Remove related files
-    auto repo = pimpl_->repository();
     std::string repoPath = git_repository_workdir(repo.get());
 
     std::string adminFile = repoPath + "admins" + "/" + uri + ".crt";
@@ -2655,10 +2684,10 @@ ConversationRepository::voteKick(const std::string& uri, bool isDevice)
     // Add vote + commit
     // TODO simplify
     auto repo = pimpl_->repository();
-    std::string repoPath = git_repository_workdir(repo.get());
     auto account = pimpl_->account_.lock();
-    if (!account)
+    if (!account || !repo)
         return {};
+    std::string repoPath = git_repository_workdir(repo.get());
     auto cert = account->identity().second;
     auto adminUri = cert->getIssuerUID();
     if (adminUri == uri) {
@@ -2702,6 +2731,8 @@ ConversationRepository::resolveVote(const std::string& uri, bool isDevice)
     auto nbAdmins = 0, nbVotes = 0;
     // For each admin, check if voted
     auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
     std::string repoPath = git_repository_workdir(repo.get());
     std::string adminsPath = repoPath + "admins";
     std::string membersPath = repoPath + "members";
@@ -2834,7 +2865,7 @@ ConversationRepository::removeBranchWith(const std::string& remoteDevice)
 {
     git_remote* remote_ptr = nullptr;
     auto repo = pimpl_->repository();
-    if (git_remote_lookup(&remote_ptr, repo.get(), remoteDevice.c_str()) < 0) {
+    if (!repo || git_remote_lookup(&remote_ptr, repo.get(), remoteDevice.c_str()) < 0) {
         JAMI_WARN("No remote found with id: %s", remoteDevice.c_str());
         return;
     }
@@ -2919,6 +2950,8 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
         infosMap[k] = v;
     }
     auto repo = pimpl_->repository();
+    if (!repo)
+        return {};
     std::string repoPath = git_repository_workdir(repo.get());
     auto profilePath = repoPath + "profile.vcf";
     auto file = fileutils::ofstream(profilePath, std::ios::trunc | std::ios::binary);
@@ -2972,18 +3005,19 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
 std::map<std::string, std::string>
 ConversationRepository::infos() const
 {
-    try {
-        auto repo = pimpl_->repository();
-        std::string repoPath = git_repository_workdir(repo.get());
-        auto profilePath = repoPath + "profile.vcf";
-        std::map<std::string, std::string> result;
-        if (fileutils::isFile(profilePath)) {
-            auto content = fileutils::loadTextFile(profilePath);
-            result = ConversationRepository::infosFromVCard(vCard::utils::toMap(content));
+    if (auto repo = pimpl_->repository()) {
+        try {
+            std::string repoPath = git_repository_workdir(repo.get());
+            auto profilePath = repoPath + "profile.vcf";
+            std::map<std::string, std::string> result;
+            if (fileutils::isFile(profilePath)) {
+                auto content = fileutils::loadTextFile(profilePath);
+                result = ConversationRepository::infosFromVCard(vCard::utils::toMap(content));
+            }
+            result["mode"] = std::to_string(static_cast<int>(mode()));
+            return result;
+        } catch (...) {
         }
-        result["mode"] = std::to_string(static_cast<int>(mode()));
-        return result;
-    } catch (...) {
     }
     return {};
 }
