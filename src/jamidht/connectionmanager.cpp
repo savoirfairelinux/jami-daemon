@@ -612,6 +612,7 @@ ConnectionManager::Impl::onPeerResponse(const PeerConnectionRequest& req)
         JAMI_WARN() << account << " respond received, but cannot find request";
         return;
     }
+    std::unique_lock<std::mutex> lk(info->mutex_);
     info->responseReceived_ = true;
     info->response_ = std::move(req);
     info->responseCv_.notify_one();
@@ -1031,9 +1032,9 @@ ConnectionManager::closeConnectionsWith(const DeviceId& deviceId)
         }
         if (info->socket_)
             info->socket_->shutdown();
+        std::unique_lock<std::mutex> lk(info->mutex_);
         info->responseCv_.notify_all();
         if (info->ice_) {
-            std::unique_lock<std::mutex> lk {info->mutex_};
             dht::ThreadPool::io().run(
                 [ice = std::shared_ptr<IceTransport>(std::move(info->ice_))] {});
         }
