@@ -103,6 +103,7 @@ endif
 if HAVE_LINUX
 #needed to compile the .so
 libring_la_CXXFLAGS = $(AM_CXXFLAGS) -fPIC
+libring_la_LDFLAGS = $(AM_LDFLAGS)
 endif
 
 libring_la_SOURCES = \
