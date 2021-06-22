@@ -90,19 +90,18 @@ libring_la_LIBADD += \
 endif
 endif
 
+# XXX: It seems this should be the default value when otherwise left
+# unspecified, but for some reason this is required otherwise the
+# shared object fails to link against ffmpeg's libswscale.a.
+libring_la_LDFLAGS = $(AM_LDFLAGS)
 
 if HAVE_WIN32
-libring_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined -avoid-version
+libring_la_LDFLAGS += -no-undefined -avoid-version
 endif
 
 if HAVE_OSX
 #FIXME necessary for -lintl
-libring_la_LDFLAGS = $(AM_LDFLAGS) -L/usr/local/opt/gettext/lib
-endif
-
-if HAVE_LINUX
-#needed to compile the .so
-libring_la_CXXFLAGS = $(AM_CXXFLAGS) -fPIC
+libring_la_LDFLAGS += -L/usr/local/opt/gettext/lib
 endif
 
 libring_la_SOURCES = \
