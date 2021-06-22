@@ -5,16 +5,16 @@
 
         <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
             <p>The CallManager interface is used to manage call and conference related actions.</p>
-            <p>Since daemon supports multiple incoming/outgoing calls, any actions involving a specific call must address the method by the means of a unique callID.
-            Daemon will generate a unique callID for outgoing and incoming calls.</p>
+            <p>Since daemon supports multiple incoming/outgoing calls, any actions involving a specific call must address the method by the means of a unique callId.
+            Daemon will generate a unique callId for outgoing and incoming calls.</p>
         </tp:docstring>
         <method name="placeCall" tp:name-for-bindings="placeCall">
             <tp:docstring>
               <p>This is the main method in order to place a new call. The call is registered with the daemon using this method.</p>
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
               <tp:docstring>
-                The ID of the account with which you want to make a call. If the call is to be placed without any account by means of a SIP URI (i.e. sip:num@server), the "IP2IP_PROFILE" is passed as the accountID. For more details on accounts see the configuration manager interface.
+                The ID of the account with which you want to make a call. If the call is to be placed without any account by means of a SIP URI (i.e. sip:num@server), the "IP2IP_PROFILE" is passed as the accountId. For more details on accounts see the configuration manager interface.
               </tp:docstring>
             </arg>
             <arg type="s" name="to" direction="in">
@@ -22,7 +22,7 @@
                 If bound to a VoIP account, then the argument is the phone number. In case of calls involving "IP2IP_PROFILE", a complete SIP URI must be specified.
               </tp:docstring>
             </arg>
-            <arg type="s" name="callID" direction="out"/>
+            <arg type="s" name="callId" direction="out"/>
         </method>
 
         <method name="placeCallWithDetails" tp:name-for-bindings="placeCallWithDetails">
@@ -30,9 +30,9 @@
             <tp:docstring>
               <p>This is a method in order to place a new call. This version allows to pass some call details. The call is registered with the daemon using this method.</p>
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
               <tp:docstring>
-                The ID of the account with which you want to make a call. If the call is to be placed without any account by means of a SIP URI (i.e. sip:num@server), the "IP2IP_PROFILE" is passed as the accountID. For more details on accounts see the configuration manager interface.
+                The ID of the account with which you want to make a call. If the call is to be placed without any account by means of a SIP URI (i.e. sip:num@server), the "IP2IP_PROFILE" is passed as the accountId. For more details on accounts see the configuration manager interface.
               </tp:docstring>
             </arg>
             <arg type="s" name="to" direction="in">
@@ -46,7 +46,7 @@
                 TBD.
               </tp:docstring>
             </arg>
-            <arg type="s" name="callID" direction="out"/>
+            <arg type="s" name="callId" direction="out"/>
         </method>
 
         <method name="placeCallWithMedia" tp:name-for-bindings="placeCallWithMedia">
@@ -70,7 +70,7 @@
                 A list of medias to offer in the call.
               </tp:docstring>
             </arg>
-            <arg type="s" name="callID" direction="out"/>
+            <arg type="s" name="callId" direction="out"/>
         </method>
 
         <method name="requestMediaChange" tp:name-for-bindings="requestMediaChange">
@@ -78,7 +78,8 @@
             <tp:docstring>
               <p>Request changes in the media of the specified call.</p>
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
                 The ID of the call.
               </tp:docstring>
@@ -96,9 +97,10 @@
             <tp:docstring>
               Refuse an incoming call.
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
-                The callID.
+                The callId.
               </tp:docstring>
             </arg>
             <arg type="b" name="refuseSucceeded" direction="out"/>
@@ -116,9 +118,10 @@
             <tp:docstring>
               Answer an incoming call. Automatically puts the current call on HOLD.
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
-                The callID.
+                The callId.
               </tp:docstring>
             </arg>
             <arg type="b" name="acceptSucceeded" direction="out"/>
@@ -130,9 +133,10 @@
               Answer an incoming call with the list of media. This version to control
               attributes for each media (accepted, muted, ...)
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
-                The callID.
+                The callId.
               </tp:docstring>
             </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
@@ -149,9 +153,10 @@
             <tp:docstring>
               Answer to a media update request.
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
-                The callID.
+                The callId.
               </tp:docstring>
             </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
@@ -169,9 +174,10 @@
             <tp:docstring>
               Hangup a call in state "CURRENT" or "HOLD".
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
-                The callID.
+                The callId.
               </tp:docstring>
             </arg>
             <arg type="b" name="hangupSucceeded" direction="out"/>
@@ -194,9 +200,10 @@
             <tp:docstring>
               Place a call on hold.
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
-                The callID.
+                The callId.
               </tp:docstring>
             </arg>
             <arg type="b" name="holdSucceeded" direction="out"/>
@@ -206,15 +213,17 @@
             <tp:docstring>
               Take a call off hold, and place this call in state CURRENT.
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
-                The callID.
+                The callId.
               </tp:docstring>
             </arg>
             <arg type="b" name="unHoldSucceeded" direction="out"/>
         </method>
 
         <method name="muteLocalMedia" tp:name-for-bindings="muteLocalMedia">
+            <arg type="s" name="accountId" direction="in" />
            <arg type="s" name="callid" direction="in">
              <tp:docstring>
                The callid to mute
@@ -241,9 +250,10 @@
             <tp:docstring>
               Transfer a call to the given phone number.
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
-                The callID.
+                The callId.
               </tp:docstring>
             </arg>
             <arg type="s" name="to" direction="in">
@@ -258,14 +268,15 @@
             <tp:docstring>
               Perform an attended transfer on two calls.
             </tp:docstring>
+            <arg type="s" name="accountId" direction="in" />
             <arg type="s" name="transferID" direction="in">
               <tp:docstring>
-                The callID of the call to be transferred.
+                The callId of the call to be transferred.
               </tp:docstring>
             </arg>
             <arg type="s" name="targetID" direction="in">
               <tp:docstring>
-                The callID of the target call.
+                The callId of the target call.
               </tp:docstring>
             </arg>
             <arg type="b" name="transferSucceeded" direction="out"/>
@@ -296,8 +307,8 @@
               <p>Join two participants together to create a 3-way conference including the current client.</p>
               <tp:rationale>The signal <tp:member-ref>conferenceCreated</tp:member-ref> is emitted on success.</tp:rationale>
             </tp:docstring>
-            <arg type="s" name="sel_callID" direction="in"/>
-            <arg type="s" name="drag_callID" direction="in"/>
+            <arg type="s" name="sel_callId" direction="in"/>
+            <arg type="s" name="drag_callId" direction="in"/>
             <arg type="b" name="joinSucceeded" direction="out"/>
         </method>
 
@@ -348,7 +359,8 @@
         </method>
 
         <method name="isConferenceParticipant" tp:name-for-bindings="isConferenceParticipant">
-            <arg type="s" name="callID" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="callId" direction="in"/>
             <arg type="b" name="isParticipant" direction="out"/>
         </method>
 
@@ -364,7 +376,7 @@
               <p>Join a new particiant to an existing conference.</p>
               <tp:rationale>The signal <tp:member-ref>conferenceChanged</tp:member-ref> is emitted on success.</tp:rationale>
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
                 The ID of the call to add to the conference
               </tp:docstring>
@@ -406,7 +418,7 @@
             <tp:docstring>
               Detach the given call from the conference. If only one participant is left, the conference is deleted and the signal <tp:member-ref>conferenceRemoved</tp:member-ref> is emitted.
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
                 The call ID
               </tp:docstring>
@@ -429,7 +441,7 @@
             <tp:docstring>
               Returns a hashtable containing conference details.
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
                 The conference ID
               </tp:docstring>
@@ -470,7 +482,8 @@
                 If this call participate to a conference, return the conference id.
                 Return an empty string elsewhere.
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
                 The call id.
               </tp:docstring>
@@ -486,7 +499,8 @@
             <tp:docstring>
               Toggle recording for a call.
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
                 The ID of the call to start/stop recording.
               </tp:docstring>
@@ -519,7 +533,8 @@
             <tp:docstring>
               Tells whether or not a call is being recorded.
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
                 The call ID.
               </tp:docstring>
@@ -543,7 +558,7 @@
               Once after starting recording for the first time, this signal is emitted to
               provide the recorded file path to client application.
             </tp:docstring>
-            <arg type="s" name="callID" />
+            <arg type="s" name="callId" />
             <arg type="s" name="filepath"/>
         </signal>
 
@@ -563,7 +578,8 @@
             <tp:docstring>
               Get all the details about a specific call.
             </tp:docstring>
-            <arg type="s" name="callID" direction="in">
+            <arg type="s" name="accountId" direction="in" />
+            <arg type="s" name="callId" direction="in">
               <tp:docstring>
                 The call ID.
               </tp:docstring>
@@ -590,6 +606,7 @@
               Get the list of active calls.
               <tp:rationale>To get the call details, iterate on the return value and call <tp:member-ref>getCallDetails</tp:member-ref> method.</tp:rationale>
             </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
             <arg type="as" name="list" direction="out">
               <tp:docstring>
                 A list of call IDs.
@@ -601,7 +618,8 @@
             <tp:docstring>
                 Switch input for the specified call
             </tp:docstring>
-            <arg type="s" name="callID" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="callId" direction="in"/>
             <arg type="s" name="input" direction="in"/>
             <arg type="b" direction="out" />
         </method>
@@ -619,7 +637,8 @@
             <tp:docstring>
                 Send a text message to the specified call
             </tp:docstring>
-            <arg type="s" name="callID" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="callId" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
             <arg type="a{ss}" name="payloads" direction="in"/>
             <arg type="b" name="isMixed" direction="in"/>
@@ -648,16 +667,16 @@
         <signal name="incomingCall" tp:name-for-bindings="incomingCall">
             <tp:docstring>
               <p>Notify an incoming call.</p>
-              <p>The callID generated by the daemon must be stored by the clients in order to address other action for
+              <p>The callId generated by the daemon must be stored by the clients in order to address other action for
                 this call. This signal is emitted when we receive a call from a remote peer</p>
               <tp:rationale>The client must subscribe to this signal to handle incoming calls.</tp:rationale>
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
               <tp:docstring>
                 The account ID of the callee. Clients must notify the right account when receiving this signal.
               </tp:docstring>
             </arg>
-            <arg type="s" name="callID">
+            <arg type="s" name="callId">
               <tp:docstring>
                 A new call ID.
               </tp:docstring>
@@ -678,12 +697,12 @@
               of the answer through the media attributes when when accepting the call.</p>
               <tp:rationale>The client must subscribe to this signal to handle incoming calls.</tp:rationale>
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
               <tp:docstring>
                 The account ID of the callee.
               </tp:docstring>
             </arg>
-            <arg type="s" name="callID">
+            <arg type="s" name="callId">
               <tp:docstring>
                 Call ID of the incoming call.
               </tp:docstring>
@@ -713,12 +732,12 @@
               change requests.
               </tp:rationale>
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
               <tp:docstring>
                 The account ID of the callee.
               </tp:docstring>
             </arg>
-            <arg type="s" name="callID">
+            <arg type="s" name="callId">
               <tp:docstring>
                 Call ID of the incoming call.
               </tp:docstring>
@@ -736,7 +755,7 @@
                 Notify clients that new messages have been received. The key is
                 the mime type and the value the mime payload.
             </tp:docstring>
-            <arg type="s" name="callID" />
+            <arg type="s" name="callId" />
             <arg type="s" name="from" />
             <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
             <arg type="a{ss}" name="messages" />
@@ -747,7 +766,7 @@
               <p>Notify of a change in a call state.</p>
               <p>The client must subscribe to this signal.</p>
             </tp:docstring>
-            <arg type="s" name="callID">
+            <arg type="s" name="callId">
               <tp:docstring>
                 The call ID.
               </tp:docstring>
@@ -906,7 +925,7 @@
             <tp:docstring>
               Notify the clients of the voicemail number for a specific account, if applicable.
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
               <tp:docstring>
                 The account ID.
               </tp:docstring>
@@ -953,7 +972,7 @@
               <p>A conference can be considered to be secured if and only if each
               participant is secured.</p>
             </tp:docstring>
-            <arg type="s" name="callID"/>
+            <arg type="s" name="callId"/>
         </signal>
 
         <signal name="secureSdesOff" tp:name-for-bindings="secureSdesOff">
@@ -962,12 +981,12 @@
               <p>Signal sent to notify that SDES session failed.</p>
               <p>Media transmission is not encrypted.</p>
             </tp:docstring>
-            <arg type="s" name="callID" />
+            <arg type="s" name="callId" />
         </signal>
 
         <signal name="recordingStateChanged" tp:name-for-bindings="recordingStateChange">
            <tp:added version="1.3.0"/>
-           <arg type="s" name="callID" />
+           <arg type="s" name="callId" />
            <arg type="b" name="recordingState"/>
         </signal>
 
@@ -976,7 +995,7 @@
             <tp:docstring>
                 <p>Signal sent adter a RTCP report has been received and computed.</p>
             </tp:docstring>
-            <arg type="s" name="callID" />
+            <arg type="s" name="callId" />
             <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringInt"/>
             <arg type="a{si}" name="report" direction="out" tp:type="String_Integer_Map">
               <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
@@ -993,19 +1012,19 @@
 
         <signal name="peerHold" tp:name-for-bindings="peerHold">
             <tp:added version="2.0.0"/>
-            <arg type="s" name="callID" />
+            <arg type="s" name="callId" />
             <arg type="b" name="peerHolding" />
         </signal>
 
         <signal name="audioMuted" tp:name-for-bindings="audioMuted">
             <tp:added version="2.1.0"/>
-            <arg type="s" name="callID" />
+            <arg type="s" name="callId" />
             <arg type="b" name="audioMuted" />
         </signal>
 
         <signal name="videoMuted" tp:name-for-bindings="videoMuted">
             <tp:added version="2.1.0"/>
-            <arg type="s" name="callID" />
+            <arg type="s" name="callId" />
             <arg type="b" name="videoMuted" />
         </signal>
 
@@ -1018,7 +1037,7 @@
 
         <signal name="remoteRecordingChanged" tp:name-for-bindings="remoteRecordingChanged">
             <tp:added version="1.0.0"/>
-            <arg type="s" name="callID" />
+            <arg type="s" name="callId" />
             <arg type="s" name="peerNumber" />
             <arg type="b" name="remoteRecordingState" />
         </signal>
@@ -1028,7 +1047,7 @@
             <tp:docstring>
               <p>Report mediation negotiation status.</p>
             </tp:docstring>
-            <arg type="s" name="callID" />
+            <arg type="s" name="callId" />
             <arg type="s" name="event" >
               <tp:docstring>
                 The acceptable states are:
