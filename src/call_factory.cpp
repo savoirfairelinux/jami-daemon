@@ -70,7 +70,7 @@ CallFactory::newSipCall(const std::shared_ptr<SIPAccountBase>& account,
     auto id = getNewCallID();
     auto call = std::make_shared<SIPCall>(account, id, type, mediaList);
     callMaps_[call->getLinkType()].emplace(id, call);
-
+    account->attachCall(call);
     return call;
 }
 
