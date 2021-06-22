@@ -308,7 +308,6 @@ void
 OpenSLLayer::engineServiceRec()
 {
     recCv.notify_one();
-    return;
 }
 
 void

@@ -43,10 +43,10 @@ namespace jami {
 
 struct ConnectionInfo
 {
-    std::condition_variable responseCv_ {};
-    std::atomic_bool responseReceived_ {false};
-    PeerConnectionRequest response_ {};
     std::mutex mutex_ {};
+    std::condition_variable responseCv_ {};
+    bool responseReceived_ {false};
+    PeerConnectionRequest response_ {};
     std::unique_ptr<IceTransport> ice_ {nullptr};
     // Used to store currently non ready TLS Socket
     std::unique_ptr<TlsSocketEndpoint> tls_ {nullptr};
@@ -325,11 +325,10 @@ ConnectionManager::Impl::connectDeviceStartIce(const DeviceId& deviceId, const d
         return;
     }
 
-    auto& response = info->response_;
     if (!ice)
         return;
 
-    auto sdp = ice->parseIceCandidates(response.ice_msg);
+    auto sdp = ice->parseIceCandidates(info->response_.ice_msg);
 
     if (not ice->startIce({sdp.rem_ufrag, sdp.rem_pwd}, std::move(sdp.rem_candidates))) {
         JAMI_WARN("[Account:%s] start ICE failed", account.getAccountID().c_str());
@@ -607,14 +606,14 @@ ConnectionManager::Impl::onPeerResponse(const PeerConnectionRequest& req)
 {
     auto device = req.from;
     JAMI_INFO() << account << " New response received from " << device.to_c_str();
-    auto info = getInfo(device, req.id);
-    if (!info) {
+    if (auto info = getInfo(device, req.id)) {
+        std::lock_guard<std::mutex> lk {info->mutex_};
+        info->responseReceived_ = true;
+        info->response_ = std::move(req);
+        info->responseCv_.notify_one();
+    } else {
         JAMI_WARN() << account << " respond received, but cannot find request";
-        return;
     }
-    info->responseReceived_ = true;
-    info->response_ = std::move(req);
-    info->responseCv_.notify_one();
 }
 
 void
