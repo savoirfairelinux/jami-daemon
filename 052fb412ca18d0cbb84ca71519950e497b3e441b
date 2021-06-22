@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f7e1b841_f567eb15",
+        "filename": "src/account.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 102,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-22T01:31:31Z",
+      "side": 1,
+      "message": "simply\n\n    const char* const DEFAULT_RINGTONE_PATH \u003d PROGSHAREDIR \"/ringtones/default.opus\";",
+      "range": {
+        "startLine": 101,
+        "startChar": 42,
+        "endLine": 102,
+        "endChar": 55
+      },
+      "revId": "052fb412ca18d0cbb84ca71519950e497b3e441b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
