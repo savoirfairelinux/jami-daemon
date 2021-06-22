@@ -114,6 +114,7 @@ CallTest::testCall()
             const std::string&,
             const std::string&,
             const std::vector<std::map<std::string, std::string>>&) {
+            std::lock_guard<std::mutex> lkm {mtx};
             callReceived = true;
             cv.notify_one();
         }));
@@ -159,6 +160,7 @@ CallTest::testCachedCall()
             const std::string&,
             const std::string&,
             const std::vector<std::map<std::string, std::string>>&) {
+            std::lock_guard<std::mutex> lkm {mtx};
             callReceived = true;
             cv.notify_one();
         }));
@@ -173,15 +175,15 @@ CallTest::testCachedCall()
     DRing::registerSignalHandlers(confHandlers);
 
     JAMI_INFO("Connect Alice's device and Bob's device");
-    aliceAccount->connectionManager()
-        .connectDevice(bobDeviceId,
-                       "sip",
-                       [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
-                                                     const DeviceId&) {
-                           if (socket)
-                               successfullyConnected = true;
-                           cv.notify_one();
-                       });
+    aliceAccount->connectionManager().connectDevice(bobDeviceId,
+                                                    "sip",
+                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                        const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lkm {mtx};
+                                                        if (socket)
+                                                            successfullyConnected = true;
+                                                        cv.notify_one();
+                                                    });
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(30), [&] { return successfullyConnected.load(); }));
 
@@ -268,6 +270,7 @@ CallTest::testDeclineMultiDevice()
             const std::string& callId,
             const std::string&,
             const std::vector<std::map<std::string, std::string>>&) {
+            std::lock_guard<std::mutex> lkm {mtx};
             if (accountId == bobId)
                 callIdBob = callId;
             callReceived += 1;

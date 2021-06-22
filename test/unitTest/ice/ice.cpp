@@ -129,6 +129,7 @@ IceTest::testRawIceConnection()
         });
     };
     ice_config.onNegoDone = [&](bool ok) {
+        std::lock_guard<std::mutex> lkm {mtx};
         iceMasterReady = ok;
         cv.notify_one();
     };
@@ -163,6 +164,7 @@ IceTest::testRawIceConnection()
         });
     };
     ice_config.onNegoDone = [&](bool ok) {
+        std::lock_guard<std::mutex> lkm {mtx};
         iceSlaveReady = ok;
         cv.notify_one();
     };
@@ -229,6 +231,7 @@ IceTest::testTurnMasterIceConnection()
         });
     };
     ice_config.onNegoDone = [&](bool ok) {
+        std::lock_guard<std::mutex> lkm {mtx};
         iceMasterReady = ok;
         cv.notify_one();
     };
@@ -279,6 +282,7 @@ IceTest::testTurnMasterIceConnection()
         });
     };
     ice_config.onNegoDone = [&](bool ok) {
+        std::lock_guard<std::mutex> lkm {mtx};
         iceSlaveReady = ok;
         cv.notify_one();
     };
@@ -344,6 +348,7 @@ IceTest::testTurnSlaveIceConnection()
         });
     };
     ice_config.onNegoDone = [&](bool ok) {
+        std::lock_guard<std::mutex> lkm {mtx};
         iceMasterReady = ok;
         cv.notify_one();
     };
@@ -388,6 +393,7 @@ IceTest::testTurnSlaveIceConnection()
         });
     };
     ice_config.onNegoDone = [&](bool ok) {
+        std::lock_guard<std::mutex> lkm {mtx};
         iceSlaveReady = ok;
         cv.notify_one();
     };
@@ -449,6 +455,7 @@ IceTest::testReceiveTooManyCandidates()
         });
     };
     ice_config.onNegoDone = [&](bool ok) {
+        std::lock_guard<std::mutex> lkm {mtx};
         iceMasterReady = ok;
         cv.notify_one();
     };
@@ -498,6 +505,7 @@ IceTest::testReceiveTooManyCandidates()
         });
     };
     ice_config.onNegoDone = [&](bool ok) {
+        std::lock_guard<std::mutex> lkm {mtx};
         iceSlaveReady = ok;
         cv.notify_one();
     };
@@ -506,7 +514,7 @@ IceTest::testReceiveTooManyCandidates()
     ice_config.compCountPerStream = 1;
 
     ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE",
-                                                                              ice_config);
+                                                                             ice_config);
     cv_create.notify_all();
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(10), [&] { return iceMasterReady && iceSlaveReady; }));
