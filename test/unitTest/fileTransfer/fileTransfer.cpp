@@ -147,6 +147,7 @@ FileTransferTest::testFileTransfer()
             const std::string&,
             const std::string& fileId,
             int code) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (accountId == bobId
                 && code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
                 transferWaiting = true;
@@ -224,6 +225,7 @@ FileTransferTest::testDataTransferInfo()
             const std::string&,
             const std::string& fileId,
             int code) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (accountId == bobId
                 && code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
                 transferWaiting = true;
@@ -318,6 +320,7 @@ FileTransferTest::testMultipleFileTransfer()
             const std::string&,
             const std::string& fileId,
             int code) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (accountId == bobId
                 && code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
                 transferWaiting = true;
@@ -427,6 +430,7 @@ FileTransferTest::testConversationFileTransfer()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (message["type"] == "application/data-transfer+json") {
                 if (accountId == bobId) {
                     tidBob = message["fileId"];
@@ -446,12 +450,14 @@ FileTransferTest::testConversationFileTransfer()
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
+                std::unique_lock<std::mutex> lk {mtx};
                 requestReceived += 1;
                 if (requestReceived >= 2)
                     cv.notify_one();
             }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
+            std::unique_lock<std::mutex> lk {mtx};
             conversationReady += 1;
             if (conversationReady >= 3)
                 cv.notify_one();
@@ -462,6 +468,7 @@ FileTransferTest::testConversationFileTransfer()
             const std::string&,
             const std::string& fileId,
             int code) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (conversationId.empty())
                 return;
             if (code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
@@ -469,15 +476,13 @@ FileTransferTest::testConversationFileTransfer()
                     hostAcceptanceBob = fileId;
                 else if (accountId == carlaId)
                     hostAcceptanceCarla = fileId;
-                cv.notify_one();
             } else if (code
                        == static_cast<int>(DRing::DataTransferEventCode::wait_peer_acceptance)) {
                 peerAcceptance.emplace_back(fileId);
-                cv.notify_one();
             } else if (code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
                 finished.emplace_back(fileId);
-                cv.notify_one();
             }
+            cv.notify_one();
         }));
     DRing::registerSignalHandlers(confHandlers);
 
@@ -543,6 +548,7 @@ FileTransferTest::testFileTransferInConversation()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (message["type"] == "application/data-transfer+json") {
                 if (accountId == bobId) {
                     tidBob = message["fileId"];
@@ -559,11 +565,13 @@ FileTransferTest::testFileTransferInConversation()
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
+                std::unique_lock<std::mutex> lk {mtx};
                 requestReceived = true;
                 cv.notify_one();
             }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (accountId == bobId) {
                 conversationReady = true;
                 cv.notify_one();
@@ -577,6 +585,7 @@ FileTransferTest::testFileTransferInConversation()
             const std::string&,
             const std::string&,
             int code) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (code == static_cast<int>(DRing::DataTransferEventCode::finished)
                 && conversationId == convId) {
                 if (accountId == aliceId)
@@ -644,6 +653,7 @@ FileTransferTest::testBadSha3sumOut()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (accountId == bobId) {
                 if (message["type"] == "application/data-transfer+json") {
                     mid = message["fileId"];
@@ -657,12 +667,14 @@ FileTransferTest::testBadSha3sumOut()
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
+                std::unique_lock<std::mutex> lk {mtx};
                 requestReceived = true;
                 cv.notify_one();
             }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobId) {
+                std::unique_lock<std::mutex> lk {mtx};
                 conversationReady = true;
                 cv.notify_one();
             }
@@ -675,6 +687,7 @@ FileTransferTest::testBadSha3sumOut()
             const std::string&,
             const std::string&,
             int code) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (conversationId == convId
                 && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
                 if (accountId == aliceId)
@@ -690,6 +703,7 @@ FileTransferTest::testBadSha3sumOut()
                 const std::string& conversationId,
                 const std::string& uri,
                 int event) {
+                std::unique_lock<std::mutex> lk {mtx};
                 if (accountId == aliceId && conversationId == convId && uri == bobUri
                     && event == 1) {
                     memberJoin = true;
@@ -760,6 +774,7 @@ FileTransferTest::testBadSha3sumIn()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (accountId == bobId) {
                 if (message["type"] == "application/data-transfer+json") {
                     mid = message["fileId"];
@@ -773,12 +788,14 @@ FileTransferTest::testBadSha3sumIn()
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
+                std::unique_lock<std::mutex> lk {mtx};
                 requestReceived = true;
                 cv.notify_one();
             }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobId) {
+                std::unique_lock<std::mutex> lk {mtx};
                 conversationReady = true;
                 cv.notify_one();
             }
@@ -791,6 +808,7 @@ FileTransferTest::testBadSha3sumIn()
             const std::string&,
             const std::string&,
             int code) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (conversationId == convId
                 && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
                 if (accountId == aliceId)
@@ -806,6 +824,7 @@ FileTransferTest::testBadSha3sumIn()
                 const std::string& conversationId,
                 const std::string& uri,
                 int event) {
+                std::unique_lock<std::mutex> lk {mtx};
                 if (accountId == aliceId && conversationId == convId && uri == bobUri
                     && event == 1) {
                     memberJoin = true;
@@ -878,6 +897,7 @@ FileTransferTest::testAskToMultipleParticipants()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (message["type"] == "application/data-transfer+json") {
                 if (accountId == bobId) {
                     bobTid = message["fileId"];
@@ -894,12 +914,14 @@ FileTransferTest::testAskToMultipleParticipants()
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
+                std::unique_lock<std::mutex> lk {mtx};
                 requestReceived = true;
                 cv.notify_one();
             }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobId || accountId == carlaId) {
+                std::unique_lock<std::mutex> lk {mtx};
                 conversationReady = true;
                 cv.notify_one();
             }
@@ -912,6 +934,7 @@ FileTransferTest::testAskToMultipleParticipants()
             const std::string&,
             const std::string&,
             int code) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (conversationId == convId
                 && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
                 if (accountId == carlaId)
@@ -927,6 +950,7 @@ FileTransferTest::testAskToMultipleParticipants()
                 const std::string& conversationId,
                 const std::string& uri,
                 int event) {
+                std::unique_lock<std::mutex> lk {mtx};
                 if (accountId == aliceId && conversationId == convId
                     && (uri == bobUri || uri == carlaUri) && event == 1) {
                     memberJoin = true;
@@ -1008,6 +1032,7 @@ FileTransferTest::testCancelInTransfer()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (message["type"] == "application/data-transfer+json") {
                 if (accountId == bobId) {
                     iidBob = message["id"];
@@ -1024,12 +1049,14 @@ FileTransferTest::testCancelInTransfer()
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
+                std::unique_lock<std::mutex> lk {mtx};
                 requestReceived = true;
                 cv.notify_one();
             }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobId) {
+                std::unique_lock<std::mutex> lk {mtx};
                 conversationReady = true;
                 cv.notify_one();
             }
@@ -1042,6 +1069,7 @@ FileTransferTest::testCancelInTransfer()
             const std::string&,
             const std::string&,
             int code) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (code == static_cast<int>(DRing::DataTransferEventCode::ongoing)
                 && conversationId == convId) {
                 if (accountId == bobId)
@@ -1110,6 +1138,7 @@ FileTransferTest::testTransferInfo()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (message["type"] == "application/data-transfer+json") {
                 if (accountId == bobId) {
                     tidBob = message["fileId"];
@@ -1126,12 +1155,14 @@ FileTransferTest::testTransferInfo()
             [&](const std::string& /*accountId*/,
                 const std::string& /* conversationId */,
                 std::map<std::string, std::string> /*metadatas*/) {
+                std::unique_lock<std::mutex> lk {mtx};
                 requestReceived = true;
                 cv.notify_one();
             }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobId) {
+                std::unique_lock<std::mutex> lk {mtx};
                 conversationReady = true;
                 cv.notify_one();
             }
@@ -1144,6 +1175,7 @@ FileTransferTest::testTransferInfo()
             const std::string&,
             const std::string&,
             int code) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (code == static_cast<int>(DRing::DataTransferEventCode::finished)
                 && conversationId == convId) {
                 if (accountId == aliceId)

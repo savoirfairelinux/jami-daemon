@@ -141,6 +141,7 @@ ConnectionManagerTest::testConnectDevice()
                                                     "git://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                         }
@@ -185,6 +186,7 @@ ConnectionManagerTest::testAcceptConnection()
                                                     "git://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                         }
@@ -228,6 +230,7 @@ ConnectionManagerTest::testMultipleChannels()
                                                     "git://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                         }
@@ -238,6 +241,7 @@ ConnectionManagerTest::testMultipleChannels()
                                                     "sip://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             successfullyConnected2 = true;
                                                         }
@@ -282,6 +286,7 @@ ConnectionManagerTest::testMultipleChannelsSameName()
                                                     "git://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                         }
@@ -293,6 +298,7 @@ ConnectionManagerTest::testMultipleChannelsSameName()
                                                     "git://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             successfullyConnected2 = true;
                                                         }
@@ -332,6 +338,7 @@ ConnectionManagerTest::testSendReceiveData()
 
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (socket && (name == "test" || name == "other")) {
                 receiverConnected = true;
                 std::error_code ec;
@@ -353,6 +360,7 @@ ConnectionManagerTest::testSendReceiveData()
                                                     "test",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                             std::error_code ec;
@@ -366,6 +374,7 @@ ConnectionManagerTest::testSendReceiveData()
                                                     "other",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             successfullyConnected2 = true;
                                                             std::error_code ec;
@@ -416,6 +425,7 @@ ConnectionManagerTest::testDeclineConnection()
                                                     "git://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                         }
@@ -461,6 +471,7 @@ ConnectionManagerTest::testAcceptsICERequest()
                                                     "git://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                         }
@@ -506,6 +517,7 @@ ConnectionManagerTest::testDeclineICERequest()
                                                     "git://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                         }
@@ -544,6 +556,7 @@ ConnectionManagerTest::testChannelRcvShutdown()
 
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+            std::lock_guard<std::mutex> lk {mtx};
             receiverConnected = socket && (name == "git://*");
             rcv.notify_one();
             socket->shutdown();
@@ -553,6 +566,7 @@ ConnectionManagerTest::testChannelRcvShutdown()
                                                     "git://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             socket->onShutdown([&] {
                                                                 shutdownReceived = true;
@@ -596,6 +610,7 @@ ConnectionManagerTest::testChannelSenderShutdown()
 
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (socket) {
                 socket->onShutdown([&] {
                     shutdownReceived = true;
@@ -609,6 +624,7 @@ ConnectionManagerTest::testChannelSenderShutdown()
                                                     "git://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                             rcv.notify_one();
@@ -650,6 +666,7 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
 
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (socket) {
                 socket->onShutdown([&] {
                     events += 1;
@@ -663,6 +680,7 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
                                                     "git://*",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             socket->onShutdown([&] {
                                                                 events += 1;
@@ -701,6 +719,7 @@ ConnectionManagerTest::testShutdownCallbacks()
 
     bobAccount->connectionManager().onChannelRequest(
         [&successfullyReceive, &chan2cv](const DeviceId&, const std::string& name) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (name == "1") {
                 successfullyReceive = true;
             } else {
@@ -720,6 +739,7 @@ ConnectionManagerTest::testShutdownCallbacks()
                                                     "1",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                             rcv.notify_one();
@@ -736,6 +756,7 @@ ConnectionManagerTest::testShutdownCallbacks()
                                                     "2",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         channel2NotConnected = !socket;
                                                         rcv.notify_one();
                                                     });
@@ -780,6 +801,7 @@ ConnectionManagerTest::testFloodSocket()
                                                     "1",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             sendSock = socket;
                                                             successfullyConnected = true;
@@ -796,6 +818,7 @@ ConnectionManagerTest::testFloodSocket()
                                                     "2",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             sendSock2 = socket;
                                                             successfullyConnected = true;
@@ -811,6 +834,7 @@ ConnectionManagerTest::testFloodSocket()
                                                     "3",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             sendSock3 = socket;
                                                             successfullyConnected = true;
@@ -886,6 +910,7 @@ ConnectionManagerTest::testDestroyWhileSending()
                                                     "1",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             sendSock = socket;
                                                             successfullyConnected = true;
@@ -901,6 +926,7 @@ ConnectionManagerTest::testDestroyWhileSending()
                                                     "2",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             sendSock2 = socket;
                                                             successfullyConnected = true;
@@ -916,6 +942,7 @@ ConnectionManagerTest::testDestroyWhileSending()
                                                     "3",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             sendSock3 = socket;
                                                             successfullyConnected = true;
@@ -960,6 +987,7 @@ ConnectionManagerTest::testIsConnecting()
     bool successfullyConnected = false, successfullyReceive = false;
 
     bobAccount->connectionManager().onChannelRequest([&](const DeviceId&, const std::string&) {
+        std::lock_guard<std::mutex> lk {mtx};
         successfullyReceive = true;
         cv.notify_one();
         std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -971,6 +999,7 @@ ConnectionManagerTest::testIsConnecting()
                                                     "sip",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             successfullyConnected = true;
                                                         }
@@ -1005,6 +1034,7 @@ ConnectionManagerTest::testCanSendBeacon()
         [&](const DeviceId&, const std::string&) { return true; });
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (socket && socket->name() == "sip")
                 bobSocket = socket->underlyingSocket();
             cv.notify_one();
@@ -1014,6 +1044,7 @@ ConnectionManagerTest::testCanSendBeacon()
                                                     "sip",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             aliceSocket = socket->underlyingSocket();
                                                             successfullyConnected = true;
@@ -1047,6 +1078,7 @@ ConnectionManagerTest::testCannotSendBeacon()
         [&](const DeviceId&, const std::string&) { return true; });
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (socket && socket->name() == "sip")
                 bobSocket = socket->underlyingSocket();
             cv.notify_one();
@@ -1056,6 +1088,7 @@ ConnectionManagerTest::testCannotSendBeacon()
                                                     "sip",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             aliceSocket = socket->underlyingSocket();
                                                             successfullyConnected = true;
@@ -1068,6 +1101,7 @@ ConnectionManagerTest::testCannotSendBeacon()
 
     int version = 1412;
     bobSocket->setOnVersionCb([&](auto v) {
+        std::lock_guard<std::mutex> lk {mtx};
         version = v;
         cv.notify_one();
     });
@@ -1097,6 +1131,7 @@ ConnectionManagerTest::testConnectivityChangeTriggerBeacon()
         [&](const DeviceId&, const std::string&) { return true; });
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (socket && socket->name() == "sip")
                 bobSocket = socket->underlyingSocket();
             cv.notify_one();
@@ -1106,6 +1141,7 @@ ConnectionManagerTest::testConnectivityChangeTriggerBeacon()
                                                     "sip",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             aliceSocket = socket->underlyingSocket();
                                                             successfullyConnected = true;
@@ -1118,6 +1154,7 @@ ConnectionManagerTest::testConnectivityChangeTriggerBeacon()
 
     bool hasRequest = false;
     bobSocket->setOnBeaconCb([&](auto p) {
+        std::lock_guard<std::mutex> lk {mtx};
         if (p)
             hasRequest = true;
         cv.notify_one();
@@ -1146,6 +1183,7 @@ ConnectionManagerTest::testOnNoBeaconTriggersShutdown()
         [&](const DeviceId&, const std::string&) { return true; });
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (socket && socket->name() == "sip")
                 bobSocket = socket->underlyingSocket();
             cv.notify_one();
@@ -1155,6 +1193,7 @@ ConnectionManagerTest::testOnNoBeaconTriggersShutdown()
                                                     "sip",
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
+                                                        std::lock_guard<std::mutex> lk {mtx};
                                                         if (socket) {
                                                             aliceSocket = socket->underlyingSocket();
                                                             successfullyConnected = true;
@@ -1167,6 +1206,7 @@ ConnectionManagerTest::testOnNoBeaconTriggersShutdown()
 
     bool isClosed = false;
     aliceSocket->onShutdown([&] {
+        std::lock_guard<std::mutex> lk {mtx};
         isClosed = true;
         cv.notify_one();
     });

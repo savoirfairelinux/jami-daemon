@@ -37,8 +37,7 @@
 #pragma GCC diagnostic ignored "-Wunused-function"
 
 void
-wait_for_announcement_of(const std::vector<std::string> accountIDs,
-                         std::chrono::seconds timeout)
+wait_for_announcement_of(const std::vector<std::string> accountIDs, std::chrono::seconds timeout)
 {
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
@@ -53,6 +52,7 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
             [&,
              accountIDs = std::move(accountIDs)](const std::string& accountID,
                                                  const std::map<std::string, std::string>& details) {
+                std::lock_guard<std::mutex> lk {mtx};
                 for (size_t i = 0; i < accountIDs.size(); ++i) {
                     if (accountIDs[i] != accountID) {
                         continue;
@@ -92,15 +92,13 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
 }
 
 void
-wait_for_announcement_of(const std::string& accountId,
-                         std::chrono::seconds timeout)
+wait_for_announcement_of(const std::string& accountId, std::chrono::seconds timeout)
 {
     wait_for_announcement_of(std::vector<std::string> {accountId}, timeout);
 }
 
 void
-wait_for_removal_of(const std::vector<std::string> accounts,
-                    std::chrono::seconds timeout)
+wait_for_removal_of(const std::vector<std::string> accounts, std::chrono::seconds timeout)
 {
     JAMI_INFO("Removing %zu accounts...", accounts.size());
 
@@ -120,6 +118,7 @@ wait_for_removal_of(const std::vector<std::string> accounts,
     confHandlers.insert(
         DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
             if (jami::Manager::instance().getAccountList().size() <= target) {
+                std::lock_guard<std::mutex> lk {mtx};
                 accountsRemoved = true;
                 cv.notify_one();
             }
@@ -138,10 +137,9 @@ wait_for_removal_of(const std::vector<std::string> accounts,
 }
 
 void
-wait_for_removal_of(const std::string& account,
-                    std::chrono::seconds timeout)
+wait_for_removal_of(const std::string& account, std::chrono::seconds timeout)
 {
-    wait_for_removal_of(std::vector<std::string>{account}, timeout);
+    wait_for_removal_of(std::vector<std::string> {account}, timeout);
 }
 
 std::map<std::string, std::string>

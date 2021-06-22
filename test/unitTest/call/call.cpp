@@ -114,11 +114,13 @@ CallTest::testCall()
             const std::string&,
             const std::string&,
             const std::vector<std::map<std::string, std::string>>&) {
+            std::lock_guard<std::mutex> lk {mtx};
             callReceived = true;
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
         [&](const std::string&, const std::string& state, signed) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (state == "OVER") {
                 callStopped += 1;
                 if (callStopped == 2)
@@ -159,11 +161,13 @@ CallTest::testCachedCall()
             const std::string&,
             const std::string&,
             const std::vector<std::map<std::string, std::string>>&) {
+            std::lock_guard<std::mutex> lk {mtx};
             callReceived = true;
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
         [&](const std::string&, const std::string& state, signed) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (state == "OVER") {
                 callStopped += 1;
                 if (callStopped == 2)
@@ -178,6 +182,7 @@ CallTest::testCachedCall()
                        "sip",
                        [&cv, &successfullyConnected](std::shared_ptr<ChannelSocket> socket,
                                                      const DeviceId&) {
+                           std::lock_guard<std::mutex> lk {mtx};
                            if (socket)
                                successfullyConnected = true;
                            cv.notify_one();
@@ -214,6 +219,7 @@ CallTest::testStopSearching()
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
         [&](const std::string&, const std::string& state, signed) {
             if (state == "OVER") {
+                std::lock_guard<std::mutex> lk {mtx};
                 callStopped = true;
                 cv.notify_one();
             }
@@ -268,6 +274,7 @@ CallTest::testDeclineMultiDevice()
             const std::string& callId,
             const std::string&,
             const std::vector<std::map<std::string, std::string>>&) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (accountId == bobId)
                 callIdBob = callId;
             callReceived += 1;
@@ -275,6 +282,7 @@ CallTest::testDeclineMultiDevice()
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
         [&](const std::string&, const std::string& state, signed) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (state == "OVER")
                 callStopped++;
             cv.notify_one();

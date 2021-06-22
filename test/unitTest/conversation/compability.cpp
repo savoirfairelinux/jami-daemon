@@ -162,12 +162,14 @@ CompabilityTest::testIsComposing()
             const std::string& /*conversationId*/,
             const std::vector<uint8_t>& /*payload*/,
             time_t /*received*/) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (account_id == bobId)
                 requestReceived = true;
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (accountId == aliceId) {
                 convId = conversationId;
             }
@@ -175,6 +177,7 @@ CompabilityTest::testIsComposing()
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
         [&](const std::string& accountId, const std::string&) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (accountId == aliceId) {
                 conversationRemoved = true;
             }
@@ -186,6 +189,7 @@ CompabilityTest::testIsComposing()
                 const std::string& conversationId,
                 const std::string& peer,
                 bool state) {
+                std::lock_guard<std::mutex> lk {mtx};
                 if (accountId == bobId && conversationId == "" && peer == aliceUri) {
                     aliceComposing = state;
                     cv.notify_one();
@@ -228,12 +232,14 @@ CompabilityTest::testRemoveConvOnOldTrustRequestConfirm()
             const std::string& /*conversationId*/,
             const std::vector<uint8_t>& /*payload*/,
             time_t /*received*/) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (account_id == bobId)
                 requestReceived = true;
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (accountId == aliceId) {
                 convId = conversationId;
             }
@@ -241,6 +247,7 @@ CompabilityTest::testRemoveConvOnOldTrustRequestConfirm()
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
         [&](const std::string& accountId, const std::string&) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (accountId == aliceId) {
                 conversationRemoved = true;
             }
@@ -280,12 +287,14 @@ CompabilityTest::testRemoveConvOnDhtTextMessage()
             const std::string& /*conversationId*/,
             const std::vector<uint8_t>& /*payload*/,
             time_t /*received*/) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (account_id == bobId)
                 requestReceived = true;
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (accountId == aliceId) {
                 convId = conversationId;
             }
@@ -293,6 +302,7 @@ CompabilityTest::testRemoveConvOnDhtTextMessage()
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRemoved>(
         [&](const std::string& accountId, const std::string&) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (accountId == aliceId) {
                 conversationRemoved = true;
             }
@@ -332,18 +342,21 @@ CompabilityTest::testSendFileCompatibility()
             const std::string& /*conversationId*/,
             const std::vector<uint8_t>& /*payload*/,
             time_t /*received*/) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (account_id == bobId)
                 requestReceived = true;
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
+            std::lock_guard<std::mutex> lk {mtx};
             if (accountId == aliceId) {
                 convId = conversationId;
             }
             cv.notify_one();
         }));
     bobAccount->connectionManager().onChannelRequest([&](const DeviceId&, const std::string& name) {
+        std::lock_guard<std::mutex> lk {mtx};
         successfullyReceive = name.find("file://") == 0;
         cv.notify_one();
         return true;
