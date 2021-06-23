@@ -1,0 +1,159 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "92ca27bc_46a925ee",
+        "filename": "src/conference.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 433,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-23T18:47:52Z",
+      "side": 1,
+      "message": "typos",
+      "range": {
+        "startLine": 433,
+        "startChar": 20,
+        "endLine": 433,
+        "endChar": 26
+      },
+      "revId": "4bb4e82a433832fafa8a47b99b1b0f43227662e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "478d31c9_dfc54ff2",
+        "filename": "src/conference.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 463,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-23T18:47:52Z",
+      "side": 1,
+      "message": "typo",
+      "range": {
+        "startLine": 463,
+        "startChar": 27,
+        "endLine": 463,
+        "endChar": 32
+      },
+      "revId": "4bb4e82a433832fafa8a47b99b1b0f43227662e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e40bee81_01c6fcba",
+        "filename": "src/conference.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 469,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-23T18:47:52Z",
+      "side": 1,
+      "message": "much duplication with SIPCall::createSinks(const ConfInfo\u0026 infos)",
+      "range": {
+        "startLine": 465,
+        "startChar": 19,
+        "endLine": 469,
+        "endChar": 17
+      },
+      "revId": "4bb4e82a433832fafa8a47b99b1b0f43227662e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3121104f_40f6cec3",
+        "filename": "src/conference.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 469,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-23T18:47:52Z",
+      "side": 1,
+      "message": "unnecessary",
+      "revId": "4bb4e82a433832fafa8a47b99b1b0f43227662e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "554f21a6_f6b4cf93",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1963,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-23T18:47:52Z",
+      "side": 1,
+      "message": "format hook",
+      "range": {
+        "startLine": 1963,
+        "startChar": 0,
+        "endLine": 1963,
+        "endChar": 8
+      },
+      "revId": "4bb4e82a433832fafa8a47b99b1b0f43227662e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ae385766_9ea25e4a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 2598,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-23T18:47:52Z",
+      "side": 1,
+      "message": "not necessary",
+      "range": {
+        "startLine": 2598,
+        "startChar": 13,
+        "endLine": 2598,
+        "endChar": 21
+      },
+      "revId": "4bb4e82a433832fafa8a47b99b1b0f43227662e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7dee889d_3e0f225a",
+        "filename": "test/unitTest/call/conference.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 287,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-23T18:47:52Z",
+      "side": 1,
+      "message": "use ParticipantInfo.sinkId, else the test will break as soon as we change the id format",
+      "range": {
+        "startLine": 287,
+        "startChar": 52,
+        "endLine": 287,
+        "endChar": 70
+      },
+      "revId": "4bb4e82a433832fafa8a47b99b1b0f43227662e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
