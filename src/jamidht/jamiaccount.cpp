@@ -1206,10 +1206,11 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 auto details = vCard::utils::toMap(
                     std::string_view(reinterpret_cast<const char*>(payload.data()), payload.size()));
                 req.metadatas = ConversationRepository::infosFromVCard(details);
+                auto reqMap = req.toMap();
                 accountManager_->addConversationRequest(conversationId, std::move(req));
                 emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(getAccountID(),
                                                                                    conversationId,
-                                                                                   req.toMap());
+                                                                                   reqMap);
             }
         },
         [this](const std::map<dht::InfoHash, KnownDevice>& devices) {
@@ -4386,13 +4387,12 @@ JamiAccount::onConversationRequest(const std::string& from, const Json::Value& v
         return;
     }
     req.received = std::time(nullptr);
+    auto reqMap = req.toMap();
     accountManager_->addConversationRequest(convId, std::move(req));
     // Note: no need to sync here because over connected devices should receives
     // the same conversation request. Will sync when the conversation will be added
 
-    emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(accountID_,
-                                                                       convId,
-                                                                       req.toMap());
+    emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(accountID_, convId, reqMap);
 }
 
 void
