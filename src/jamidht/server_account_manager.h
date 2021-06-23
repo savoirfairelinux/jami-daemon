@@ -45,7 +45,7 @@ public:
                             std::unique_ptr<AccountCredentials> credentials,
                             AuthSuccessCallback onSuccess,
                             AuthFailureCallback onFailure,
-                            OnChangeCallback onChange) override;
+                            const OnChangeCallback& onChange) override;
 
     bool changePassword(const std::string& /*password_old*/,
                         const std::string& /*password_new*/) override

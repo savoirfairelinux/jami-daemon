@@ -1232,7 +1232,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                                                      receipt_,
                                                      receiptSignature_,
                                                      managerUsername_,
-                                                     std::move(callbacks))) {
+                                                     callbacks)) {
             // normal loading path
             id_ = std::move(id);
             username_ = info->accountId;
@@ -1369,7 +1369,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                         });
                     }
                 },
-                std::move(callbacks));
+                callbacks);
         }
     } catch (const std::exception& e) {
         JAMI_WARN("[Account %s] error loading account: %s", getAccountID().c_str(), e.what());
