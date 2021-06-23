@@ -47,7 +47,7 @@ public:
                             std::unique_ptr<AccountCredentials> credentials,
                             AuthSuccessCallback onSuccess,
                             AuthFailureCallback onFailure,
-                            OnChangeCallback onChange) override;
+                            const OnChangeCallback& onChange) override;
 
     void startSync(const OnNewDeviceCb&, const OnDeviceAnnouncedCb& dcb = {}) override;
 

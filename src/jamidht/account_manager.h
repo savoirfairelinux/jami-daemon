@@ -119,7 +119,7 @@ public:
                                     std::unique_ptr<AccountCredentials> credentials,
                                     AuthSuccessCallback onSuccess,
                                     AuthFailureCallback onFailure,
-                                    OnChangeCallback onChange)
+                                    const OnChangeCallback& onChange)
         = 0;
 
     virtual bool changePassword(const std::string& password_old, const std::string& password_new) = 0;
@@ -136,7 +136,7 @@ public:
                                    const std::string& receipt,
                                    const std::vector<uint8_t>& receiptSignature,
                                    const std::string& username,
-                                   OnChangeCallback&& onChange);
+                                   const OnChangeCallback& onChange);
 
     void setDht(const std::shared_ptr<dht::DhtRunner>& dht) { dht_ = dht; }
 

@@ -67,7 +67,7 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                          std::unique_ptr<AccountCredentials> credentials,
                                          AuthSuccessCallback onSuccess,
                                          AuthFailureCallback onFailure,
-                                         OnChangeCallback onChange)
+                                         const OnChangeCallback& onChange)
 {
     auto ctx = std::make_shared<AuthContext>();
     ctx->key = key;
