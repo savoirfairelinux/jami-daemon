@@ -114,7 +114,7 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
                             const std::string& receipt,
                             const std::vector<uint8_t>& receiptSignature,
                             const std::string& username,
-                            OnChangeCallback&& onChange)
+                            const OnChangeCallback& onChange)
 {
     if (receipt.empty() or receiptSignature.empty())
         return nullptr;
