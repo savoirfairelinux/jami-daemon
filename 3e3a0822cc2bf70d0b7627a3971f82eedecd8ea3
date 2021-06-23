@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "648a1040_abbcb915",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1177,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-23T13:59:33Z",
+      "side": 1,
+      "message": "SIP accounts are not really managed by the deamon but the clients, so the daemon will not use these directories for a SIP account, and the client can choose to use other directories for storing contacts + history.\n\nSo, a cleaner way to do that is in LRC. Because it\u0027s LRC that manages history + contacts for SIP accounts.",
+      "range": {
+        "startLine": 1171,
+        "startChar": 1,
+        "endLine": 1177,
+        "endChar": 1
+      },
+      "revId": "3e3a0822cc2bf70d0b7627a3971f82eedecd8ea3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
