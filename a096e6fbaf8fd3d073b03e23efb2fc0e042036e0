@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "37c44d11_417a2e50",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 1940,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-23T15:11:08Z",
+      "side": 1,
+      "message": "auto via_addrstr \u003d string_utils::as_view(via-\u003erecvd_param.slen !\u003d 0 ? via-\u003erecvd_param : via-\u003esent_by.host);",
+      "range": {
+        "startLine": 1939,
+        "startChar": 4,
+        "endLine": 1940,
+        "endChar": 59
+      },
+      "revId": "a096e6fbaf8fd3d073b03e23efb2fc0e042036e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
