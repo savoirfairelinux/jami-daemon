@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "8089f376_99b5e086",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-25T15:49:46Z",
+      "side": 1,
+      "message": "Behavior of the agent.  The behavior true and false are only a way to enforce logic, just like you would do a `cmd || true` in bash to avoid failure in a Makefile.",
+      "parentUuid": "00643fc5_e4c63752",
+      "range": {
+        "startLine": 60,
+        "startChar": 36,
+        "endLine": 61,
+        "endChar": 62
+      },
+      "revId": "a264b222ecb656bb778ff38b01b393d6d962691d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "f9d303c6_0898bb21",
         "filename": "test/agent/agent.cpp",
         "patchSetId": 7
@@ -36,6 +60,30 @@
       "writtenOn": "2021-06-25T14:53:27Z",
       "side": 1,
       "message": "we may want to store the account chosen somewhere, we probably don\u0027t want to use the account of the user to do the test and ensure it\u0027s the agent we created",
+      "range": {
+        "startLine": 124,
+        "startChar": 12,
+        "endLine": 127,
+        "endChar": 5
+      },
+      "revId": "a264b222ecb656bb778ff38b01b393d6d962691d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "04e8fe8f_2f71dd04",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-25T15:49:46Z",
+      "side": 1,
+      "message": "I currently change XDG_* to /tmp/jami and the assertion make sure we\u0027re picking the right account.\n\nDo you think we should load account from archive instead?",
+      "parentUuid": "f9d303c6_0898bb21",
       "range": {
         "startLine": 124,
         "startChar": 12,
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "33adfd9b_14214268",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-25T15:49:46Z",
+      "side": 1,
+      "message": "I know.  It\u0027s an habit.",
+      "parentUuid": "f75fae57_70eb5da0",
+      "range": {
+        "startLine": 133,
+        "startChar": 22,
+        "endLine": 133,
+        "endChar": 26
+      },
+      "revId": "a264b222ecb656bb778ff38b01b393d6d962691d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "2279fa2b_082f9307",
         "filename": "test/agent/agent.cpp",
         "patchSetId": 7
@@ -94,6 +166,30 @@
     },
     {
       "key": {
+        "uuid": "7ec1eb9b_22db7242",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 196,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-25T15:49:46Z",
+      "side": 1,
+      "message": "Will need to test then.  This work for now for making friends",
+      "parentUuid": "2279fa2b_082f9307",
+      "range": {
+        "startLine": 196,
+        "startChar": 75,
+        "endLine": 196,
+        "endChar": 95
+      },
+      "revId": "a264b222ecb656bb778ff38b01b393d6d962691d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "9d427507_ac26ca5c",
         "filename": "test/agent/agent.cpp",
         "patchSetId": 7
@@ -105,6 +201,30 @@
       "writtenOn": "2021-06-25T14:53:27Z",
       "side": 1,
       "message": "CallManager",
+      "range": {
+        "startLine": 493,
+        "startChar": 18,
+        "endLine": 493,
+        "endChar": 34
+      },
+      "revId": "a264b222ecb656bb778ff38b01b393d6d962691d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e4e5b533_b252ed44",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 493,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-25T15:49:46Z",
+      "side": 1,
+      "message": "What?",
+      "parentUuid": "9d427507_ac26ca5c",
       "range": {
         "startLine": 493,
         "startChar": 18,
