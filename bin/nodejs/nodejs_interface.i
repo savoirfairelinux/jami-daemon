@@ -124,7 +124,7 @@ void init(const SWIGV8_VALUE& funcMap){
         exportable_callback<CallSignal::IncomingMessage>(bind(&incomingMessage, _1, _2, _3)),
         exportable_callback<CallSignal::IncomingCall>(bind(&incomingCall, _1, _2, _3)),
         exportable_callback<CallSignal::IncomingCallWithMedia>(bind(&incomingCallWithMedia, _1, _2, _3, _4)),
-        exportable_callback<CallSignal::MediaChangeRequested>(bind(&mediaChangeRequested, _1, _2, _3)
+        exportable_callback<CallSignal::MediaChangeRequested>(bind(&mediaChangeRequested, _1, _2, _3))
     };
 
     const std::map<std::string, SharedCallback> configEvHandlers = {
@@ -140,8 +140,8 @@ void init(const SWIGV8_VALUE& funcMap){
         exportable_callback<ConfigurationSignal::KnownDevicesChanged>(bind(&knownDevicesChanged, _1, _2 )),
         exportable_callback<ConfigurationSignal::IncomingAccountMessage>(bind(&incomingAccountMessage, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::AccountMessageStatusChanged>(bind(&accountMessageStatusChanged, _1, _2, _3, _4, _5 )),
-        exportable_callback<ConfigurationSignal::ProfileReceived>(bind(&profileReceived, _1, _2, _3, _4 )),
-        exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4, _5 )),
+        //exportable_callback<ConfigurationSignal::ProfileReceived>(bind(&profileReceived, _1, _2, _3, _4 )),
+        //exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4, _5 )),
     };
 
     const std::map<std::string, SharedCallback> conversationHandlers = {
