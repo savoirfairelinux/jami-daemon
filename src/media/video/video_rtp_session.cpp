@@ -324,7 +324,7 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
 {
     JAMI_DBG("[call:%s] Setup video pipeline on conference %s",
              callID_.c_str(),
-             conference.getConfID().c_str());
+             conference.getConfId().c_str());
     videoMixer_ = conference.getVideoMixer();
     if (sender_) {
         // Swap sender from local video to conference video mixer
@@ -344,20 +344,20 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
 }
 
 void
-VideoRtpSession::enterConference(Conference* conference)
+VideoRtpSession::enterConference(Conference& conference)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     exitConference();
 
-    conference_ = conference;
+    conference_ = &conference;
     JAMI_DBG("[call:%s] enterConference (conf: %s)",
              callID_.c_str(),
-             conference->getConfID().c_str());
+             conference.getConfId().c_str());
 
     // TODO is this correct? The video Mixer should be enabled for a detached conference even if we
     // are not sending values
-    videoMixer_ = conference->getVideoMixer();
+    videoMixer_ = conference.getVideoMixer();
     auto conf_res = split_string_to_unsigned(jami::Manager::instance()
                                                  .videoPreferences.getConferenceResolution(),
                                              'x');
@@ -371,7 +371,7 @@ VideoRtpSession::enterConference(Conference* conference)
     videoMixer_->setParameters(conf_res[0], conf_res[1]);
 #endif
     if (send_.enabled or receiveThread_) {
-        setupConferenceVideoPipeline(*conference_);
+        setupConferenceVideoPipeline(conference);
 
         // Restart encoder with conference parameter ON in order to unlink HW encoder
         // from HW decoder.
@@ -389,7 +389,7 @@ VideoRtpSession::exitConference()
 
     JAMI_DBG("[call:%s] exitConference (conf: %s)",
              callID_.c_str(),
-             conference_->getConfID().c_str());
+             conference_->getConfId().c_str());
 
     if (videoMixer_) {
         if (sender_)

@@ -1,4 +1,4 @@
-/*
+﻿/*
  *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -410,9 +410,9 @@ SIPCall::generateMediaPorts()
 }
 
 void
-SIPCall::setContactHeader(pj_str_t* contact)
+SIPCall::setContactHeader(pj_str_t contact)
 {
-    pj_strcpy(&contactHeader_, contact);
+    pj_strcpy(&contactHeader_, &contact);
 }
 
 void
@@ -726,8 +726,7 @@ SIPCall::answer()
             updateSDPFromSTUN();
     }
 
-    pj_str_t contact(account->getContactHeader(transport_ ? transport_->get() : nullptr));
-    setContactHeader(&contact);
+    setContactHeader(account->getContactHeader(transport_ ? transport_->get() : nullptr));
 
     pjsip_tx_data* tdata;
     if (!inviteSession_->last_answer)
@@ -797,8 +796,7 @@ SIPCall::answer(const std::vector<MediaAttribute>& mediaAttrList)
             updateSDPFromSTUN();
     }
 
-    pj_str_t contact(account->getContactHeader(transport_ ? transport_->get() : nullptr));
-    setContactHeader(&contact);
+    setContactHeader(account->getContactHeader(transport_ ? transport_->get() : nullptr));
 
     if (!inviteSession_->last_answer)
         throw std::runtime_error("Should only be called for initial answer");
@@ -1877,9 +1875,9 @@ SIPCall::startAllMedia()
 
 #ifdef ENABLE_VIDEO
     // TODO. Move this elsewhere (when adding participant to conf?)
-    if (!isVideoEnabled && !getConfId().empty()) {
-        auto conference = Manager::instance().getConferenceFromID(getConfId());
-        conference->attachVideo(getReceiveVideoFrameActiveWriter().get(), getCallId());
+    if (not isVideoEnabled) {
+        if (auto conference = conf_.lock())
+            conference->attachVideo(getReceiveVideoFrameActiveWriter().get(), getCallId());
     }
 #endif
 
@@ -2463,15 +2461,9 @@ SIPCall::getDetails() const
 }
 
 void
-SIPCall::enterConference(const std::string& confId)
+SIPCall::enterConference(Conference& conference)
 {
 #ifdef ENABLE_VIDEO
-    auto conf = Manager::instance().getConferenceFromID(confId);
-    if (conf == nullptr) {
-        JAMI_ERR("Unknown conference [%s]", confId.c_str());
-        return;
-    }
-
     auto videoRtp = getVideoRtp();
     if (not videoRtp) {
         // In conference, we need to have a video RTP session even
@@ -2482,7 +2474,7 @@ SIPCall::enterConference(const std::string& confId)
         }
     }
 
-    videoRtp->enterConference(conf.get());
+    videoRtp->enterConference(conference);
 #endif
 
 #ifdef ENABLE_PLUGIN
@@ -2838,7 +2830,8 @@ SIPCall::rtpSetupSuccess(MediaType type, bool isRemote)
 void
 SIPCall::peerRecording(bool state)
 {
-    const std::string& id = getConfId().empty() ? getCallId() : getConfId();
+    auto conference = conf_.lock();
+    const std::string& id = conference ? conference->getConfId() : getCallId();
     if (state) {
         JAMI_WARN("Peer is recording");
         emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), true);
@@ -2858,9 +2851,8 @@ SIPCall::peerMuted(bool muted)
         JAMI_WARN("Peer un-muted");
     }
     peerMuted_ = muted;
-    if (auto conf = Manager::instance().getConferenceFromID(getConfId())) {
+    if (auto conf = conf_.lock())
         conf->updateMuted();
-    }
 }
 
 void

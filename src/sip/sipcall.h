@@ -148,7 +148,7 @@ public:
     std::shared_ptr<AccountCodecInfo> getVideoCodec() const override;
     void sendKeyframe() override;
     std::map<std::string, std::string> getDetails() const override;
-    void enterConference(const std::string& confId) override;
+    void enterConference(Conference& conference) override;
     void exitConference() override;
     std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>> getReceiveVideoFrameActiveWriter()
         override;
@@ -212,7 +212,7 @@ public:
     void onMediaNegotiationComplete();
     // End fo SiPVoipLink events
 
-    void setContactHeader(pj_str_t* contact);
+    void setContactHeader(pj_str_t contact);
 
     void setTransport(const std::shared_ptr<SipTransport>& t);
 
