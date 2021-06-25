@@ -732,8 +732,8 @@ MultiplexedSocket::setOnRecv(const uint16_t& channel, GenericSocket<uint8_t>::Re
 
         auto dataIt = pimpl_->channelDatas_.find(channel);
         if (dataIt != pimpl_->channelDatas_.end() && dataIt->second) {
-            auto& channelData = dataIt->second;
-            recv = std::move(channelData->buf);
+            std::lock_guard<std::mutex> lk(dataIt->second->mutex);
+            recv = std::move(dataIt->second->buf);
         }
     }
     if (!recv.empty() && cb) {
