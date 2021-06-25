@@ -71,6 +71,7 @@ Conference::Conference()
             // Handle participants showing their video
             std::unique_lock<std::mutex> lk(shared->videoToCallMtx_);
             for (const auto& info : infos) {
+                auto deviceId = "";
                 std::string uri = "";
                 auto it = shared->videoToCall_.find(info.source);
                 if (it == shared->videoToCall_.end())
@@ -97,8 +98,10 @@ Conference::Conference()
                 if (uri.empty())
                     peerID = "host"sv;
                 auto isModeratorMuted = shared->isMuted(peerID);
+                auto sinkId = shared->getConfID() + peerID + deviceId;
                 newInfo.emplace_back(ParticipantInfo {std::move(uri),
-                                                      "",
+                                                      std::move(deviceId),
+                                                      std::move(sinkId),
                                                       active,
                                                       info.x,
                                                       info.y,
@@ -116,17 +119,29 @@ Conference::Conference()
             lk.unlock();
             // Handle participants not present in the video mixer
             for (const auto& subCall : subCalls) {
+                auto deviceId = "";
                 std::string uri = "";
                 if (auto call = getCall(subCall))
                     uri = call->getPeerNumber();
                 auto isModerator = shared->isModerator(uri);
-                newInfo.emplace_back(ParticipantInfo {
-                    std::move(uri), "", false, 0, 0, 0, 0, true, false, false, isModerator});
+                auto sinkId = shared->getConfID() + string_remove_suffix(uri, '@') + deviceId;
+                newInfo.emplace_back(ParticipantInfo {std::move(uri),
+                                                      std::move(deviceId),
+                                                      std::move(sinkId),
+                                                      false,
+                                                      0,
+                                                      0,
+                                                      0,
+                                                      0,
+                                                      true,
+                                                      false,
+                                                      false,
+                                                      isModerator});
             }
             // Add host in confInfo with audio and video muted if detached
             if (shared->getState() == State::ACTIVE_DETACHED)
                 newInfo.emplace_back(
-                    ParticipantInfo {"", "", false, 0, 0, 0, 0, true, true, false, true});
+                    ParticipantInfo {"", "", "", false, 0, 0, 0, 0, true, true, false, true});
 
             shared->updateConferenceInfo(std::move(newInfo));
         });
@@ -396,10 +411,70 @@ Conference::sendConferenceInfos()
         }
     }
 
+
+    auto confInfo = getConfInfoHostUri("", "");
+    createSinks(confInfo);
+
     // Inform client that layout has changed
     jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_,
-                                                                  getConfInfoHostUri("", "")
-                                                                      .toVectorMapStringString());
+                                                                  confInfo.toVectorMapStringString());
+}
+
+void
+Conference::createSinks(const ConfInfo& infos)
+{
+
+#ifdef ENABLE_VIDEO
+    std::lock_guard<std::mutex> lk(sinksMtx_);
+    if (!videoMixer_)
+        return;
+    std::set<std::string> sinkIdsList {};
+
+    // create peers vsinks
+    for (const auto& participant : infos) {
+        std::string sinkId = participant.sinkId;
+        if (sinkId.empty()) {
+            sinkId = getConfID();
+            sinkId += string_remove_suffix(participant.uri, '@') + participant.device;
+        }
+        if (participant.w && participant.h) {
+            auto currentSink = Manager::instance().getSinkClient(sinkId);
+            if (currentSink) {
+                videoMixer_->detach(currentSink.get());
+                currentSink->stop();
+                currentSink->start();
+                currentSink->setFramePosition(participant.x, participant.y);
+                currentSink->setFrameSize(participant.w, participant.h);
+                videoMixer_->attach(currentSink.get());
+                sinkIdsList.emplace(sinkId);
+                continue;
+            }
+            auto newSink = Manager::instance().createSinkClient(sinkId);
+            newSink->start();
+            newSink->setFramePosition(participant.x, participant.y);
+            newSink->setFrameSize(participant.w, participant.h);
+
+            videoMixer_->attach(newSink.get());
+
+            callSinksMap_.emplace(sinkId, newSink);
+            sinkIdsList.emplace(sinkId);
+        } else {
+            sinkIdsList.erase(sinkId);
+        }
+    }
+
+    // remove any non used vsink
+    for (auto it = callSinksMap_.begin(); it != callSinksMap_.end();) {
+        if (sinkIdsList.find(it->first) == sinkIdsList.end()) {
+            videoMixer_->detach(it->second.get());
+            it->second->stop();
+            it = callSinksMap_.erase(it);
+            continue;
+        } else {
+            it++;
+        }
+    }
+#endif
 }
 
 void

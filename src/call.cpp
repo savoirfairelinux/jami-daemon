@@ -690,6 +690,8 @@ Call::setConferenceInfo(const std::string& msg)
         if (confID_.empty()) {
             // confID_ empty -> participant set confInfo with the received one
             confInfo_ = std::move(newInfo);
+            // Create sink for each participant
+            createSinks(confInfo_);
             // Inform client that layout has changed
             jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(
                 id_, confInfo_.toVectorMapStringString());
