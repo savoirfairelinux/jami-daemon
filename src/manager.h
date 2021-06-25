@@ -169,15 +169,6 @@ public:
                              const std::string& confId = "");
 
     /**
-     * Request a media change of an ongoing call
-     * @param callID the call ID.
-     * @param mediaList a list of the new media
-     * @return true on success
-     */
-    bool requestMediaChange(const std::string& callId,
-                            const std::vector<DRing::MediaMap>& mediaList);
-
-    /**
      * Functions which occur with a user's action
      * Answer the call
      * @param callId
@@ -193,18 +184,6 @@ public:
      */
     bool answerCallWithMedia(const std::string& callId,
                              const std::vector<DRing::MediaMap>& mediaList);
-
-    /**
-     * Answer a media change request
-     * @param callId
-     * @param mediaList the list of media attributes. The client can
-     * control the media through the attributes. The list should have
-     * the same size as the list reported in the media change request.
-     * The client can ignore the media update request by not calling this
-     * method, or calling it with an empty media list.
-     */
-    bool answerMediaChangeRequest(const std::string& callId,
-                                  const std::vector<DRing::MediaMap>& mediaList = {});
 
     /**
      * Handle incoming call and notify user
@@ -252,27 +231,11 @@ public:
 
     /**
      * Functions which occur with a user's action
-     * Put the media of a call on mute or unmute
-     * @param callID  The call identifier
-     * @param mediaType The media type; eg : AUDIO or VIDEO
-     * @param is_muted true to mute, false to unmute
-     */
-    bool muteMediaCall(const std::string& callId, const std::string& mediaType, bool is_muted);
-
-    /**
-     * Functions which occur with a user's action
      * Transfer the call
      * @param id  The call identifier
      * @param to  The recipient of the transfer
      */
-    bool transferCall(const std::string& id, const std::string& to);
-
-    /**
-     * Attended transfer
-     * @param The call id to be transferred
-     * @param The target
-     */
-    bool attendedTransfer(const std::string& transferID, const std::string& targetID);
+    bool transferCall(const std::string& accountId, const std::string& id, const std::string& to);
 
     /**
      * Notify the client the transfer is successful
@@ -295,46 +258,35 @@ public:
      * Delete this conference
      * @param the conference ID
      */
-    void removeConference(const std::string& conference_id);
+    void removeConference(const std::string& accountId, const std::string& confId);
 
     /**
      * Return the conference id for which this call is attached
      * @ param the call id
      */
-    std::shared_ptr<Conference> getConferenceFromCallID(const std::string& call_id) const;
+    std::shared_ptr<Conference> getConferenceFromCallID(const std::string& callId) const;
 
-    std::shared_ptr<Conference> getConferenceFromID(const std::string& confID) const;
+    std::shared_ptr<Conference> getConferenceFromID(const std::string& confId) const;
 
     /**
      * Hold every participant to a conference
      * @param the conference id
      */
-    bool holdConference(const std::string& conference_id);
+    bool holdConference(const std::string& accountId, const std::string& conference_id);
 
     /**
      * Unhold all conference participants
      * @param the conference id
      */
-    bool unHoldConference(const std::string& conference_id);
-
-    /**
-     * Test if this id is a conference (useful to test current call)
-     * @param the call id
-     */
-    bool isConference(const std::string& call_id) const;
-
-    /**
-     * Test if a call id corresponds to a conference participant
-     * @param the call id
-     */
-    bool isConferenceParticipant(const std::string& call_id);
+    bool unHoldConference(const std::string& accountId, const std::string& conference_id);
 
     /**
      * Add a participant to a conference
      * @param the call id
      * @param the conference id
      */
-    bool addParticipant(const std::string& call_id, const std::string& conference_id);
+    bool addParticipant(const std::string& accountId, const std::string& callId, const std::string& conference_id);
+    bool addParticipant(Call& call, Conference& conference);
 
     /**
      * Bind the main participant to a conference (mainly called on a double click action)
@@ -347,15 +299,16 @@ public:
      * @param the fist call id
      * @param the second call id
      */
-    bool joinParticipant(const std::string& call_id1,
-                         const std::string& call_id2,
+    bool joinParticipant(const std::string& accountId,
+                         const std::string& callId1,
+                         const std::string& callId2,
                          bool attached = true);
 
     /**
      * Create a conference from a list of participant
      * @param A vector containing the list of participant
      */
-    void createConfFromParticipantList(const std::vector<std::string>&);
+    void createConfFromParticipantList(const std::string& accountId, const std::vector<std::string>&);
 
     /**
      * Change the conference layout
@@ -376,24 +329,24 @@ public:
      * @param call id
      * @param the current call id
      */
-    bool detachParticipant(const std::string& call_id);
+    bool detachParticipant(const std::string& callId);
 
     /**
      * Detach the local participant from curent conference.
      * Remote participants are placed in hold.
      */
-    bool detachLocalParticipant(const std::string& conf_id = {});
+    bool detachLocalParticipant(const std::string& confId = {});
 
     /**
      * Remove the conference participant from a conference
      * @param call id
      */
-    void removeParticipant(const std::string& call_id);
+    void removeParticipant(Call& call);
 
     /**
      * Join two conference together into one unique conference
      */
-    bool joinConference(const std::string& conf_id1, const std::string& conf_id2);
+    bool joinConference(const std::string& accountId, const std::string& confId1, const std::string& confId2);
 
     void addAudio(Call& call);
 
@@ -455,7 +408,8 @@ public:
      * @param message       A list of pair of mime types and payloads
      * @param from           The sender of this message (could be another participant of a conference)
      */
-    void sendCallTextMessage(const std::string& callID,
+    void sendCallTextMessage(const std::string& accountId,
+                            const std::string& callID,
                              const std::map<std::string, std::string>& messages,
                              const std::string& from,
                              bool isMixed);
@@ -505,50 +459,16 @@ public:
     std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountID) const;
 
     /**
-     * Retrieve details about a given call
-     * @param callID      The account identifier
-     * @return std::map< std::string, std::string > The call details
-     */
-    std::map<std::string, std::string> getCallDetails(const std::string& callID) const;
-
-    /**
      * Get list of calls (internal subcalls are filter-out)
      * @return std::vector<std::string> A list of call IDs (without subcalls)
      */
     std::vector<std::string> getCallList() const;
 
     /**
-     * Get conferences informations (participant list + rendered positions in the frame)
-     * @param confId
-     * @return {{"uri":"xxx", "x":"0", "y":"0", "w":"0", "h":"0"}...}
-     */
-    std::vector<std::map<std::string, std::string>> getConferenceInfos(
-        const std::string& confId) const;
-
-    /**
-     * Retrieve details about a given call
-     * @param callID      The account identifier
-     * @return std::map< std::string, std::string > The call details
-     */
-    std::map<std::string, std::string> getConferenceDetails(const std::string& callID) const;
-
-    /**
-     * Get call list
-     * @return std::vector<std::string> A list of call IDs
-     */
-    std::vector<std::string> getConferenceList() const;
-
-    /**
      * Get a list of participant to a conference
      * @return std::vector<std::string> A list of call IDs
      */
-    std::vector<std::string> getParticipantList(const std::string& confID) const;
-
-    /**
-     * Get a list of the display names for everyone in a conference
-     * @return std::vector<std::string> A list of display names
-     */
-    std::vector<std::string> getDisplayNames(const std::string& confID) const;
+    std::vector<std::string> getParticipantList(const std::string& confId) const;
 
     std::string getConferenceId(const std::string& callID);
 
@@ -651,22 +571,6 @@ public:
     bool isAGCEnabled() const;
     void setAGCState(bool enabled);
 
-    bool switchInput(const std::string& callid, const std::string& res);
-
-    /**
-     * Ringtone option.
-     * If ringtone is enabled, ringtone on incoming call use custom choice. If not, only standart tone.
-     * @return int  1 if enabled
-     *          0 otherwise
-     */
-    int isRingtoneEnabled(const std::string& id);
-
-    /**
-     * Set the ringtone option
-     * Inverse current value
-     */
-    void ringtoneEnabled(const std::string& id);
-
     /**
      * Get is always recording functionality
      */
@@ -685,11 +589,6 @@ public:
      * Returns true if the call was set to record
      */
     bool toggleRecordingCall(const std::string& id);
-
-    /**
-     * Return true if the call is currently recorded
-     */
-    bool isRecording(const std::string& id);
 
     /**
      * Start playback fo a recorded file if and only if audio layer is not already started.

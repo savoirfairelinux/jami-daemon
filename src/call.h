@@ -134,6 +134,7 @@ public:
      * @return call id
      */
     const std::string& getConfId() const { return confID_; }
+    bool isConferenceParticipant() const { return not getConfId().empty(); }
 
     void setConfId(const std::string& id) { confID_ = id; }
 
