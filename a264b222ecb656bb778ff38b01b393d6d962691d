@@ -238,6 +238,30 @@
     },
     {
       "key": {
+        "uuid": "17f149a7_a69e40f9",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 196,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-25T16:01:53Z",
+      "side": 1,
+      "message": "should work too (and use \nDRING_PUBLIC void acceptConversationRequest(const std::string\u0026 accountId,\n                                            const std::string\u0026 conversationId);\nDRING_PUBLIC void declineConversationRequest(const std::string\u0026 accountId,\n                                             const std::string\u0026 conversationId);\n\nfor accepting/declining)",
+      "parentUuid": "82888ac8_4c6fe76e",
+      "range": {
+        "startLine": 196,
+        "startChar": 75,
+        "endLine": 196,
+        "endChar": 95
+      },
+      "revId": "a264b222ecb656bb778ff38b01b393d6d962691d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "9d427507_ac26ca5c",
         "filename": "test/agent/agent.cpp",
         "patchSetId": 7
@@ -273,6 +297,30 @@
       "side": 1,
       "message": "What?",
       "parentUuid": "9d427507_ac26ca5c",
+      "range": {
+        "startLine": 493,
+        "startChar": 18,
+        "endLine": 493,
+        "endChar": 34
+      },
+      "revId": "a264b222ecb656bb778ff38b01b393d6d962691d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "df35e1c5_9e8edcba",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 493,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-25T16:01:53Z",
+      "side": 1,
+      "message": "DRing is not exposed to client, but the placeCall is exposed in CallManager",
+      "parentUuid": "e4e5b533_b252ed44",
       "range": {
         "startLine": 493,
         "startChar": 18,
