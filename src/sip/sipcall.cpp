@@ -1,4 +1,4 @@
-/*
+﻿/*
  *  Copyright (C) 2004-2021 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -2018,9 +2018,9 @@ SIPCall::startAllMedia()
 
 #ifdef ENABLE_VIDEO
     // TODO. Move this elsewhere (when adding participant to conf?)
-    if (!isVideoEnabled && !getConfId().empty()) {
-        auto conference = Manager::instance().getConferenceFromID(getConfId());
-        conference->attachVideo(getReceiveVideoFrameActiveWriter().get(), getCallId());
+    if (not isVideoEnabled) {
+        if (auto conference = conf_.lock())
+            conference->attachVideo(getReceiveVideoFrameActiveWriter().get(), getCallId());
     }
 #endif
 
@@ -2698,15 +2698,9 @@ SIPCall::getDetails() const
 }
 
 void
-SIPCall::enterConference(const std::string& confId)
+SIPCall::enterConference(Conference& conference)
 {
 #ifdef ENABLE_VIDEO
-    auto conf = Manager::instance().getConferenceFromID(confId);
-    if (conf == nullptr) {
-        JAMI_ERR("Unknown conference [%s]", confId.c_str());
-        return;
-    }
-
     auto videoRtp = getVideoRtp();
     if (not videoRtp) {
         // In conference, we need to have a video RTP session even
@@ -2717,7 +2711,7 @@ SIPCall::enterConference(const std::string& confId)
         }
     }
 
-    videoRtp->enterConference(conf.get());
+    videoRtp->enterConference(conference);
 #endif
 
 #ifdef ENABLE_PLUGIN
@@ -2784,7 +2778,8 @@ SIPCall::createSinks(const ConfInfo& infos)
     auto& videoReceive = videoRtp->getVideoReceive();
     if (!videoReceive)
         return;
-    auto id = getConfId().empty() ? getCallId() : getConfId();
+    auto conf = conf_.lock();
+    const auto& id = conf ? conf->getConfId() : getCallId();
     Manager::instance().createSinkClients(id,
                                           infos,
                                           std::static_pointer_cast<video::VideoGenerator>(
@@ -3179,7 +3174,8 @@ SIPCall::rtpSetupSuccess(MediaType type, bool isRemote)
 void
 SIPCall::peerRecording(bool state)
 {
-    const std::string& id = getConfId().empty() ? getCallId() : getConfId();
+    auto conference = conf_.lock();
+    const std::string& id = conference ? conference->getConfId() : getCallId();
     if (state) {
         JAMI_WARN("Peer is recording");
         emitSignal<DRing::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), true);
@@ -3199,9 +3195,8 @@ SIPCall::peerMuted(bool muted)
         JAMI_WARN("Peer un-muted");
     }
     peerMuted_ = muted;
-    if (auto conf = Manager::instance().getConferenceFromID(getConfId())) {
+    if (auto conf = conf_.lock())
         conf->updateMuted();
-    }
 }
 
 void

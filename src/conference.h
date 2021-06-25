@@ -49,6 +49,7 @@
 namespace jami {
 
 class Call;
+class Account;
 
 #ifdef ENABLE_VIDEO
 namespace video {
@@ -183,7 +184,7 @@ public:
     /**
      * Constructor for this class, increment static counter
      */
-    Conference();
+    Conference(const std::shared_ptr<Account>&);
 
     /**
      * Destructor for this class, decrement static counter
@@ -193,7 +194,9 @@ public:
     /**
      * Return the conference id
      */
-    const std::string& getConfID() const;
+    const std::string& getConfId() const;
+
+    std::shared_ptr<Account> getAccount() const { return account_.lock(); }
 
     /**
      * Return the current conference state
@@ -336,6 +339,7 @@ private:
     void updateModerators();
 
     std::string id_;
+    std::weak_ptr<Account> account_;
     State confState_ {State::ACTIVE_ATTACHED};
     ParticipantSet participants_;
 
