@@ -89,26 +89,23 @@ Call::Call(const std::shared_ptr<Account>& account,
 {
     updateDetails(details);
 
-    addStateListener([this](Call::CallState call_state,
-                            Call::ConnectionState cnx_state,
-                            UNUSED int code) {
-        checkPendingIM();
-        std::weak_ptr<Call> callWkPtr = shared_from_this();
-        runOnMainThread([callWkPtr] {
-            if (auto call = callWkPtr.lock())
-                call->checkAudio();
-        });
+    addStateListener(
+        [this](Call::CallState call_state, Call::ConnectionState cnx_state, UNUSED int code) {
+            checkPendingIM();
+            runOnMainThread([callWkPtr = weak()] {
+                if (auto call = callWkPtr.lock())
+                    call->checkAudio();
+            });
 
-        // if call just started ringing, schedule call timeout
-        if (type_ == CallType::INCOMING and cnx_state == ConnectionState::RINGING) {
-            auto timeout = Manager::instance().getRingingTimeout();
-            JAMI_DBG("Scheduling call timeout in %d seconds", timeout);
+            // if call just started ringing, schedule call timeout
+            if (type_ == CallType::INCOMING and cnx_state == ConnectionState::RINGING) {
+                auto timeout = Manager::instance().getRingingTimeout();
+                JAMI_DBG("Scheduling call timeout in %d seconds", timeout);
 
-            std::weak_ptr<Call> callWkPtr = shared_from_this();
-            Manager::instance().scheduler().scheduleIn(
-                [callWkPtr] {
-                    if (auto callShPtr = callWkPtr.lock()) {
-                        if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
+                Manager::instance().scheduler().scheduleIn(
+                    [callWkPtr = weak()] {
+                        if (auto callShPtr = callWkPtr.lock()) {
+                            if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
                             JAMI_DBG(
                                 "Call %s is still ringing after timeout, setting state to BUSY",
                                 callShPtr->getCallId().c_str());
@@ -138,15 +135,10 @@ Call::Call(const std::shared_ptr<Account>& account,
     });
 
     time(&timestamp_start_);
-    if (auto shared = account_.lock())
-        shared->attachCall(id_);
 }
 
 Call::~Call()
-{
-    if (auto shared = account_.lock())
-        shared->detachCall(id_);
-}
+{}
 
 void
 Call::removeCall()
@@ -156,6 +148,8 @@ Call::removeCall()
     setState(CallState::OVER);
     if (Recordable::isRecording())
         Recordable::stopRecording();
+    if (auto account = account_.lock())
+        account->detach(this_);
 }
 
 std::string
@@ -371,34 +365,18 @@ Call::updateDetails(const std::map<std::string, std::string>& details)
 std::map<std::string, std::string>
 Call::getDetails() const
 {
+    auto conference = conf_.lock();
     return {
-
         {DRing::Call::Details::CALL_TYPE, std::to_string((unsigned) type_)},
         {DRing::Call::Details::PEER_NUMBER, peerNumber_},
         {DRing::Call::Details::DISPLAY_NAME, peerDisplayName_},
         {DRing::Call::Details::CALL_STATE, getStateStr()},
-        {DRing::Call::Details::CONF_ID, confID_},
+        {DRing::Call::Details::CONF_ID, conference ? conference->getConfId() : ""},
         {DRing::Call::Details::TIMESTAMP_START, std::to_string(timestamp_start_)},
         {DRing::Call::Details::ACCOUNTID, getAccountId()},
         {DRing::Call::Details::AUDIO_MUTED, std::string(bool_to_str(isAudioMuted()))},
         {DRing::Call::Details::VIDEO_MUTED, std::string(bool_to_str(isVideoMuted()))},
         {DRing::Call::Details::AUDIO_ONLY, std::string(bool_to_str(not hasVideo()))},
-    };
-}
-
-std::map<std::string, std::string>
-Call::getNullDetails()
-{
-    return {
-        {DRing::Call::Details::CALL_TYPE, "0"},
-        {DRing::Call::Details::PEER_NUMBER, ""},
-        {DRing::Call::Details::DISPLAY_NAME, ""},
-        {DRing::Call::Details::CALL_STATE, "UNKNOWN"},
-        {DRing::Call::Details::CONF_ID, ""},
-        {DRing::Call::Details::TIMESTAMP_START, ""},
-        {DRing::Call::Details::ACCOUNTID, ""},
-        {DRing::Call::Details::VIDEO_SOURCE, "UNKNOWN"},
-        {DRing::Call::Details::AUDIO_ONLY, ""},
     };
 }
 
@@ -413,7 +391,7 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
 
     it = messages.find("application/confOrder+json");
     if (it != messages.end()) {
-        if (auto conf = Manager::instance().getConferenceFromID(confID_))
+        if (auto conf = conf_.lock())
             conf->onConfOrder(getCallId(), it->second);
         return;
     }
@@ -687,13 +665,13 @@ Call::setConferenceInfo(const std::string& msg)
 
     {
         std::lock_guard<std::mutex> lk(confInfoMutex_);
-        if (confID_.empty()) {
+        if (not isConferenceParticipant()) {
             // confID_ empty -> participant set confInfo with the received one
             confInfo_ = std::move(newInfo);
             // Inform client that layout has changed
             jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(
                 id_, confInfo_.toVectorMapStringString());
-        } else if (auto conf = Manager::instance().getConferenceFromID(confID_)) {
+        } else if (auto conf = conf_.lock()) {
             conf->mergeConfInfo(newInfo, getPeerNumber());
         }
     }

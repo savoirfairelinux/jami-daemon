@@ -511,7 +511,7 @@ IceSdpParsingTest::audio_video_call()
     // Answer the call.
     {
         auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(answer);
-        Manager::instance().answerCallWithMedia(bobData_.callId_, mediaList);
+        Manager::instance().answerCall(bobData_.callId_, mediaList);
     }
 
     // Wait for media negotiation complete signal.

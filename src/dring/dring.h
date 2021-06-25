@@ -112,7 +112,7 @@ public:
     CallbackWrapper() noexcept {}
 
     // Create and initialize a wrapper to given callback.
-    CallbackWrapper(TFunc&& func) noexcept { cb_ = std::forward<TFunc>(func); }
+    CallbackWrapper(TFunc&& func) noexcept : cb_(std::forward<TFunc>(func)) {}
 
     // Create and initialize a wrapper from a generic CallbackWrapperBase
     // shared pointer.

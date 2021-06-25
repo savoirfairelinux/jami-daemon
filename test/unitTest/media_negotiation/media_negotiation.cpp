@@ -592,7 +592,7 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
     // Answer the call.
     {
         auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(scenario.answer_);
-        Manager::instance().answerCallWithMedia(bobData.callId_, mediaList);
+        Manager::instance().answerCall(bobData.callId_, mediaList);
     }
 
     // Wait for media negotiation complete signal.

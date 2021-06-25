@@ -208,9 +208,9 @@ VideoReceiveThread::configureVideoOutput()
         return false;
     }
 
-    auto conf = Manager::instance().getConferenceFromCallID(id_);
+    /*auto conf = Manager::instance().getConferenceFromCallID(id_);
     if (!conf)
-        exitConference();
+        exitConference();*/
 
     // Send remote video codec in SmartInfo
     Smartools::getInstance().setRemoteVideoCodec(videoDecoder_->getDecoderName(), id_);
