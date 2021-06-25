@@ -143,6 +143,30 @@
     },
     {
       "key": {
+        "uuid": "29f72482_15087a80",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-25T15:55:10Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "33adfd9b_14214268",
+      "range": {
+        "startLine": 133,
+        "startChar": 22,
+        "endLine": 133,
+        "endChar": 26
+      },
+      "revId": "a264b222ecb656bb778ff38b01b393d6d962691d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "2279fa2b_082f9307",
         "filename": "test/agent/agent.cpp",
         "patchSetId": 7
@@ -178,6 +202,30 @@
       "side": 1,
       "message": "Will need to test then.  This work for now for making friends",
       "parentUuid": "2279fa2b_082f9307",
+      "range": {
+        "startLine": 196,
+        "startChar": 75,
+        "endLine": 196,
+        "endChar": 95
+      },
+      "revId": "a264b222ecb656bb778ff38b01b393d6d962691d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "82888ac8_4c6fe76e",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 196,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-25T15:55:10Z",
+      "side": 1,
+      "message": "I would rather change this in another patch since I know that this behavior work correctly for now",
+      "parentUuid": "7ec1eb9b_22db7242",
       "range": {
         "startLine": 196,
         "startChar": 75,
