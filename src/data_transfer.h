@@ -79,7 +79,7 @@ protected:
     std::function<void(uint32_t)> finishedCb_ {};
 };
 
-class IncomingFile : public FileInfo
+class IncomingFile : public FileInfo, public std::enable_shared_from_this<IncomingFile>
 {
 public:
     IncomingFile(const std::shared_ptr<ChannelSocket>& channel,
@@ -92,6 +92,10 @@ public:
     void cancel() override;
 
 private:
+    std::weak_ptr<IncomingFile> weak()
+    {
+        return std::static_pointer_cast<IncomingFile>(shared_from_this());
+    }
     std::ofstream stream_;
     std::string sha3Sum_ {};
 };
