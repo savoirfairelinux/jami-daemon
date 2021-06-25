@@ -42,6 +42,10 @@
 #include "plugin/streamdata.h"
 #endif
 
+#ifdef ENABLE_VIDEO
+#include <video/sinkclient.h>
+#endif
+
 namespace jami {
 
 class Call;
@@ -56,6 +60,7 @@ struct ParticipantInfo
 {
     std::string uri;
     std::string device;
+    std::string sinkId;
     bool active {false};
     int x {0};
     int y {0};
@@ -70,6 +75,7 @@ struct ParticipantInfo
     {
         uri = v["uri"].asString();
         device = v["device"].asString();
+        sinkId = v["sinkId"].asString();
         active = v["active"].asBool();
         x = v["x"].asInt();
         y = v["y"].asInt();
@@ -86,6 +92,7 @@ struct ParticipantInfo
         Json::Value val;
         val["uri"] = uri;
         val["device"] = device;
+        val["sinkId"] = sinkId;
         val["active"] = active;
         val["x"] = x;
         val["y"] = y;
@@ -102,6 +109,7 @@ struct ParticipantInfo
     {
         return {{"uri", uri},
                 {"device", device},
+                {"sinkId", sinkId},
                 {"active", active ? "true" : "false"},
                 {"x", std::to_string(x)},
                 {"y", std::to_string(y)},
@@ -115,9 +123,10 @@ struct ParticipantInfo
 
     friend bool operator==(const ParticipantInfo& p1, const ParticipantInfo& p2)
     {
-        return p1.uri == p2.uri and p1.device == p2.device and p1.active == p2.active
-               and p1.x == p2.x and p1.y == p2.y and p1.w == p2.w and p1.h == p2.h
-               and p1.videoMuted == p2.videoMuted and p1.audioLocalMuted == p2.audioLocalMuted
+        return p1.uri == p2.uri and p1.device == p2.device and p1.sinkId == p2.sinkId
+               and p1.active == p2.active and p1.x == p2.x and p1.y == p2.y and p1.w == p2.w
+               and p1.h == p2.h and p1.videoMuted == p2.videoMuted
+               and p1.audioLocalMuted == p2.audioLocalMuted
                and p1.audioModeratorMuted == p2.audioModeratorMuted
                and p1.isModerator == p2.isModerator;
     }
@@ -287,7 +296,7 @@ public:
     }
 
     void updateConferenceInfo(ConfInfo confInfo);
-
+    void createSinks(const ConfInfo& infos);
     void setModerator(const std::string& uri, const bool& state);
     void muteParticipant(const std::string& uri, const bool& state);
     void hangupParticipant(const std::string& participant_id);
@@ -323,6 +332,7 @@ private:
     std::string mediaInput_ {};
     std::string mediaSecondaryInput_ {};
     std::shared_ptr<video::VideoMixer> videoMixer_;
+    std::map<std::string, std::shared_ptr<video::SinkClient>> confSinksMap_ {};
 #endif
 
     std::shared_ptr<jami::AudioInput> audioMixer_;
@@ -345,6 +355,8 @@ private:
     void resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerURI);
     std::string_view findHostforRemoteParticipant(std::string_view uri);
     std::shared_ptr<Call> getCallFromPeerID(std::string_view peerID);
+
+    std::mutex sinksMtx_ {};
 
 #ifdef ENABLE_PLUGIN
     /**

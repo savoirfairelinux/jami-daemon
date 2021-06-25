@@ -53,6 +53,7 @@
 #include "dring/videomanager_interface.h"
 #include <chrono>
 #include <libavutil/display.h>
+#include <video/sinkclient.h>
 #endif
 #include "jamidht/channeled_transport.h"
 
@@ -2052,6 +2053,17 @@ SIPCall::stopAllMedia()
         audioRtp->stop();
 #ifdef ENABLE_VIDEO
     auto const& videoRtp = getVideoRtp();
+
+    for (auto it = callSinksMap_.begin(); it != callSinksMap_.end();) {
+        auto& videoReceive = videoRtp->getVideoReceive();
+        if (videoReceive) {
+            videoReceive->detach(it->second.get());
+        }
+
+        it->second->stop();
+        it = callSinksMap_.erase(it);
+    }
+
     if (videoRtp)
         videoRtp->stop();
 #endif
@@ -2709,6 +2721,66 @@ SIPCall::addDummyVideoRtpSession()
 #endif
 
     return {};
+}
+
+void
+SIPCall::createSinks(const ConfInfo& infos)
+{
+#ifdef ENABLE_VIDEO
+    if (!hasVideo())
+        return;
+
+    std::lock_guard<std::mutex> lk(sinksMtx_);
+    auto videoRtp = getVideoRtp();
+    auto& videoReceive = videoRtp->getVideoReceive();
+    if (!videoReceive)
+        return;
+    std::set<std::string> sinkIdsList {};
+
+    // create peers vsinks
+    for (const auto& participant : infos) {
+        std::string sinkId = participant.sinkId;
+        if (sinkId.empty()) {
+            sinkId = getConfId().empty() ? getCallId() : getConfId();
+            sinkId += string_remove_suffix(participant.uri, '@') + participant.device;
+        }
+        if (participant.w && participant.h) {
+            auto currentSink = Manager::instance().getSinkClient(sinkId);
+            if (currentSink) {
+                videoReceive->detach(currentSink.get());
+                currentSink->stop();
+                currentSink->start();
+                currentSink->setFramePosition(participant.x, participant.y);
+                currentSink->setFrameSize(participant.w, participant.h);
+                videoReceive->attach(currentSink.get());
+                sinkIdsList.emplace(sinkId);
+                continue;
+            }
+            auto newSink = Manager::instance().createSinkClient(sinkId);
+            newSink->start();
+            newSink->setFramePosition(participant.x, participant.y);
+            newSink->setFrameSize(participant.w, participant.h);
+
+            videoReceive->attach(newSink.get());
+
+            callSinksMap_.emplace(sinkId, newSink);
+            sinkIdsList.emplace(sinkId);
+        } else {
+            sinkIdsList.erase(sinkId);
+        }
+    }
+
+    // remove any non used vsink
+    for (auto it = callSinksMap_.begin(); it != callSinksMap_.end();) {
+        if (sinkIdsList.find(it->first) == sinkIdsList.end()) {
+            videoReceive->detach(it->second.get());
+            it->second->stop();
+            it = callSinksMap_.erase(it);
+        } else {
+            it++;
+        }
+    }
+#endif
 }
 
 std::shared_ptr<AudioRtpSession>
