@@ -832,32 +832,37 @@ IncomingFile::cancel()
 void
 IncomingFile::process()
 {
-    channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
-        if (stream_.is_open())
-            stream_ << std::string_view((const char*) buf, len);
-        info_.bytesProgress = stream_.tellp();
+    channel_->setOnRecv([w=weak()](const uint8_t* buf, size_t len) {
+        if (auto shared = w.lock()) {
+            if (shared->stream_.is_open())
+                shared->stream_ << std::string_view((const char*) buf, len);
+            shared->info_.bytesProgress = shared->stream_.tellp();
+        }
         return len;
     });
-    channel_->onShutdown([this] {
-        auto correct = sha3Sum_.empty();
+    channel_->onShutdown([w=weak()] {
+        auto shared = w.lock();
+        if (!shared)
+            return;
+        auto correct = shared->sha3Sum_.empty();
         if (!correct) {
-            if (stream_ && stream_.is_open())
-                stream_.close();
+            if (shared->stream_ && shared->stream_.is_open())
+                shared->stream_.close();
             // Verify shaSum
-            auto sha3Sum = fileutils::sha3File(info_.path);
-            if (sha3Sum_ == sha3Sum) {
-                JAMI_INFO() << "New file received: " << info_.path;
+            auto sha3Sum = fileutils::sha3File(shared->info_.path);
+            if (shared->sha3Sum_ == sha3Sum) {
+                JAMI_INFO() << "New file received: " << shared->info_.path;
                 correct = true;
             } else {
-                JAMI_WARN() << "Remove file, invalid sha3sum detected for " << info_.path;
-                fileutils::remove(info_.path, true);
+                JAMI_WARN() << "Remove file, invalid sha3sum detected for " << shared->info_.path;
+                fileutils::remove(shared->info_.path, true);
             }
         }
-        if (isUserCancelled_)
+        if (shared->isUserCancelled_)
             return;
         auto code = correct ? DRing::DataTransferEventCode::finished
                             : DRing::DataTransferEventCode::closed_by_host;
-        emit(code);
+        shared->emit(code);
     });
 }
 
