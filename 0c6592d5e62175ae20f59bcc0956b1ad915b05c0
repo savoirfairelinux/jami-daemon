@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "940b4a5b_23e7a1f1",
+        "filename": "bin/nodejs/nodejs_interface.i",
+        "patchSetId": 1
+      },
+      "lineNbr": 143,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-25T15:34:22Z",
+      "side": 1,
+      "message": "not needed?",
+      "range": {
+        "startLine": 143,
+        "startChar": 13,
+        "endLine": 143,
+        "endChar": 109
+      },
+      "revId": "0c6592d5e62175ae20f59bcc0956b1ad915b05c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
