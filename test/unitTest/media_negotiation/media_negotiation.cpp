@@ -574,7 +574,8 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
 
     auto const& aliceCall = std::dynamic_pointer_cast<SIPCall>(
         (Manager::instance().getAccount<JamiAccount>(aliceData.accountId_))
-            ->newOutgoingCall(bobData.userName_, scenario.offer_));
+            ->newOutgoingCall(bobData.userName_,
+                              MediaAttribute::mediaAttributesToMediaMaps(scenario.offer_)));
     CPPUNIT_ASSERT(aliceCall);
     aliceData.callId_ = aliceCall->getCallId();
 

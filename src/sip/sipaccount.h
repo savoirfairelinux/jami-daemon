@@ -437,19 +437,7 @@ public:
      * @return a shared pointer on the created call.
      */
     std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
-                                          const std::vector<MediaAttribute>& mediaList) override;
-
-    /**
-     * Create incoming SIPCall.
-     * @param[in] from The origin uri of the call
-     * @param details use to set some specific details
-     * @return std::shared_ptr<T> A shared pointer on the created call.
-     *      The type of this instance is given in template argument.
-     *      This type can be any base class of SIPCall class (included).
-     */
-    std::shared_ptr<SIPCall> newIncomingCall(const std::string& from,
-                                             const std::map<std::string, std::string>& details = {},
-                                             const std::shared_ptr<SipTransport>& = nullptr) override;
+                                          const std::vector<DRing::MediaMap>& mediaList) override;
 
     /**
      * Create incoming SIPCall.
@@ -460,7 +448,7 @@ public:
      */
     std::shared_ptr<SIPCall> newIncomingCall(
         const std::string& from,
-        const std::vector<MediaAttribute>& mediaList,
+        const std::vector<DRing::MediaMap>& mediaList,
         const std::shared_ptr<SipTransport>& sipTr = {}) override;
 
     void onRegister(pjsip_regc_cbparam* param);

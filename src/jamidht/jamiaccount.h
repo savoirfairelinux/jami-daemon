@@ -266,19 +266,7 @@ public:
      * @return A shared pointer on the created call.
      */
     std::shared_ptr<Call> newOutgoingCall(std::string_view toUrl,
-                                          const std::vector<MediaAttribute>& mediaList) override;
-
-    /**
-     * Create incoming SIPCall.
-     * @param[in] from The origin of the call
-     * @param details Call details
-     * @param sipTr: SIP Transport
-     * @return A shared pointer on the created call.
-     */
-    std::shared_ptr<SIPCall> newIncomingCall(
-        const std::string& from,
-        const std::map<std::string, std::string>& details = {},
-        const std::shared_ptr<SipTransport>& sipTr = nullptr) override;
+                                          const std::vector<DRing::MediaMap>& mediaList) override;
 
     /**
      * Create incoming SIPCall.
@@ -289,7 +277,7 @@ public:
      */
     std::shared_ptr<SIPCall> newIncomingCall(
         const std::string& from,
-        const std::vector<MediaAttribute>& mediaList,
+        const std::vector<DRing::MediaMap>& mediaList,
         const std::shared_ptr<SipTransport>& sipTr = {}) override;
 
     void onTextMessage(const std::string& id,
@@ -533,7 +521,8 @@ public:
     std::vector<uint8_t> conversationVCard(const std::string& conversationId) const;
 
     // Member management
-    void saveMembers(const std::string& convId, const std::vector<std::string>& members); // Save confInfos
+    void saveMembers(const std::string& convId,
+                     const std::vector<std::string>& members); // Save confInfos
     void addConversationMember(const std::string& conversationId,
                                const std::string& contactUri,
                                bool sendRequest = true);
