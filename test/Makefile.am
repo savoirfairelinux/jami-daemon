@@ -1,2 +1,5 @@
-SUBDIRS = unitTest fuzzing
+SUBDIRS = unitTest
 SUBDIRS += sip
+if ENABLE_FUZZING
+SUBDIRS += fuzzing
+endif

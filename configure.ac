@@ -40,6 +40,12 @@ AS_IF([test "x$enable_debug" = "xyes"],
   [DAEMONCFLAGS+=" -DNDEBUG=1 -O3"
    DAEMONCXXFLAGS+=" -DNDEBUG=1 -O3"])
 
+AC_ARG_ENABLE([fuzzing],
+  AS_HELP_STRING([--enable-fuzzing],
+    [Build fuzzing tools]))
+AM_CONDITIONAL([ENABLE_FUZZING], [test "x$enable_fuzzing" = "xyes"])
+AM_COND_IF([ENABLE_FUZZING], [AC_CONFIG_FILES([test/fuzzing/Makefile])])
+
 dnl Check for programs
 AC_PROG_CC
 AC_PROG_CXX
@@ -655,7 +661,6 @@ AC_CONFIG_FILES([Makefile \
                  test/Makefile\
                  test/sip/Makefile
                  test/unitTest/Makefile \
-                 test/fuzzing/Makefile \
                  man/Makefile \
                  doc/Makefile \
                  doc/doxygen/Makefile])
