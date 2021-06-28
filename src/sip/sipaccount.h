@@ -482,6 +482,7 @@ public:
     IpAddr createBindingAddress();
 
     void setActiveCodecs(const std::vector<unsigned>& list) override;
+    bool isSrtpEnabled() const override { return srtpKeyExchange_ != KeyExchangeProtocol::NONE; }
 
 private:
     void doRegister1_();
@@ -513,8 +514,6 @@ private:
     bool userMatch(std::string_view username) const;
     bool hostnameMatch(std::string_view hostname) const;
     bool proxyMatch(std::string_view hostname) const;
-
-    bool isSrtpEnabled() const override { return srtpKeyExchange_ != KeyExchangeProtocol::NONE; }
 
     /**
      * Callback called by the transport layer when the registration

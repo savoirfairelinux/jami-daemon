@@ -185,6 +185,8 @@ MediaAttribute::toString(bool full) const
     descr << "[" << this << "] ";
     descr << "type " << (type_ == MediaType::MEDIA_AUDIO ? "[AUDIO]" : "[VIDEO]");
     descr << " ";
+    descr << "enabled " << (enabled_ ? "[YES]" : "[NO]");
+    descr << " ";
     descr << "muted " << (muted_ ? "[YES]" : "[NO]");
     descr << " ";
     descr << "label [" << label_ << "]";

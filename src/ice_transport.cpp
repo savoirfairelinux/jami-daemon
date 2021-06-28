@@ -878,6 +878,16 @@ IceTransport::Impl::addServerReflexiveCandidates(
 std::vector<std::pair<IpAddr, IpAddr>>
 IceTransport::Impl::setupGenericReflexiveCandidates()
 {
+    if (not accountLocalAddr_) {
+        JAMI_WARN("[ice:%p]: Local address needed for reflexive candidates!", this);
+        return {};
+    }
+
+    if (not accountPublicAddr_) {
+        JAMI_WARN("[ice:%p]: Public address needed for reflexive candidates!", this);
+        return {};
+    }
+
     std::vector<std::pair<IpAddr, IpAddr>> addrList;
     auto isTcp = isTcpEnabled();
 
@@ -887,25 +897,23 @@ IceTransport::Impl::setupGenericReflexiveCandidates()
     // For TCP transport, the connection type is set to passive for UPNP
     // candidates and set to active otherwise.
 
-    if (accountLocalAddr_ and accountPublicAddr_) {
-        addrList.reserve(compCount_);
-        for (unsigned id = 1; id <= compCount_; id++) {
-            // For TCP, the type is set to active, because most likely the incoming
-            // connection will be blocked by the NAT.
-            // For UDP use random port number.
-            uint16_t port = isTcp ? 9
-                                  : upnp::Controller::generateRandomPort(isTcp ? PortType::TCP
-                                                                               : PortType::UDP);
+    addrList.reserve(compCount_);
+    for (unsigned id = 1; id <= compCount_; id++) {
+        // For TCP, the type is set to active, because most likely the incoming
+        // connection will be blocked by the NAT.
+        // For UDP use random port number.
+        uint16_t port = isTcp ? 9
+                              : upnp::Controller::generateRandomPort(isTcp ? PortType::TCP
+                                                                           : PortType::UDP);
 
-            accountLocalAddr_.setPort(port);
-            accountPublicAddr_.setPort(port);
-            addrList.emplace_back(accountLocalAddr_, accountPublicAddr_);
+        accountLocalAddr_.setPort(port);
+        accountPublicAddr_.setPort(port);
+        addrList.emplace_back(accountLocalAddr_, accountPublicAddr_);
 
-            JAMI_DBG("[ice:%p]: Add generic local reflexive candidates [%s : %s]",
-                     this,
-                     accountLocalAddr_.toString(true).c_str(),
-                     accountPublicAddr_.toString(true).c_str());
-        }
+        JAMI_DBG("[ice:%p]: Add generic local reflexive candidates [%s : %s]",
+                 this,
+                 accountLocalAddr_.toString(true).c_str(),
+                 accountPublicAddr_.toString(true).c_str());
     }
 
     return addrList;
