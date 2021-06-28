@@ -135,27 +135,13 @@ public:
 
     /**
      * Create incoming SIPCall.
-     * @param[in] id The ID of the call
-     * @param details use to set some specific details
-     * @return std::shared_ptr<T> A shared pointer on the created call.
-     *      The type of this instance is given in template argument.
-     *      This type can be any base class of SIPCall class (included).
-     */
-    virtual std::shared_ptr<SIPCall> newIncomingCall(
-        const std::string& from,
-        const std::map<std::string, std::string>& details = {},
-        const std::shared_ptr<SipTransport>& = nullptr)
-        = 0;
-
-    /**
-     * Create incoming SIPCall.
      * @param[in] from The origin of the call
      * @param mediaList A list of media
      * @param sipTr: SIP Transport
      * @return A shared pointer on the created call.
      */
     virtual std::shared_ptr<SIPCall> newIncomingCall(const std::string& from,
-                                                     const std::vector<MediaAttribute>& mediaList,
+                                                     const std::vector<DRing::MediaMap>& mediaList,
                                                      const std::shared_ptr<SipTransport>& sipTr = {})
         = 0;
 
