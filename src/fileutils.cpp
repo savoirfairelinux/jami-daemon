@@ -65,7 +65,6 @@
 #ifndef _WIN32
 #include <pwd.h>
 #else
-#include <filesystem>
 #include <shlobj.h>
 #define NAME_MAX 255
 #endif
@@ -89,6 +88,11 @@
 
 #include <pj/ctype.h>
 #include <pjlib-util/md5.h>
+
+#define USE_STD_FILESYSTEM (defined __ANDROID__ || defined _WIN32)
+#if USE_STD_FILESYSTEM
+#include <filesystem>
+#endif
 
 #ifndef _MSC_VER
 #define PROTECTED_GETENV(str) \
@@ -316,27 +320,45 @@ writeTime(const std::string& path)
 #endif
 }
 
+bool createSymlink(const std::string& linkFile, const std::string& target) {
+#if !USE_STD_FILESYSTEM
+    if (symlink(target.c_str(), linkFile.c_str())) {
+        JAMI_ERR("Couldn't create soft link: %s", strerror(errno));
+        return false;
+    }
+#else
+    try {
+        std::filesystem::create_symlink(target, linkFile);
+    } catch (const std::exception& e) {
+        JAMI_ERR("Couldn't create soft link: %s", e.what());
+        return false;
+    }
+#endif
+    return true;
+}
+
+bool createHardlink(const std::string& linkFile, const std::string& target) {
+#if !USE_STD_FILESYSTEM
+    if (link(target.c_str(), linkFile.c_str())) {
+        JAMI_ERR("Couldn't create hard link: %s", strerror(errno));
+        return false;
+    }
+#else
+    try {
+        std::filesystem::create_hard_link(target, linkFile);
+    } catch (const std::exception& e) {
+        JAMI_ERR("Couldn't create hard link: %s", e.what());
+        return false;
+    }
+#endif
+    return true;
+}
+
 void
 createFileLink(const std::string& linkFile, const std::string& target, bool hard)
 {
-#ifndef _WIN32
-    int status;
-    if (hard)
-        status = link(target.c_str(), linkFile.c_str());
-    else
-        status = symlink(target.c_str(), linkFile.c_str());
-    if (status != 0)
-        JAMI_ERR("Couldn't create %s link: ", (hard ? "hard" : "soft"), strerror(errno));
-#else
-    try {
-        if (hard)
-            std::filesystem::create_hard_link(target, linkFile);
-        else
-            std::filesystem::create_symlink(target, linkFile);
-    } catch (const std::exception& e) {
-        JAMI_ERR("Couldn't create %s link: ", (hard ? "hard" : "soft"), e.what());
-    }
-#endif
+    if (not hard or not createHardlink(linkFile, target))
+        createSymlink(linkFile, target);
 }
 
 std::string
