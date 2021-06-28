@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "d10719f4_f95e1c7e",
+        "filename": "src/account.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-28T17:44:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "63a9f86b_d43c6683",
+      "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "444c50ed_6c06b375",
         "filename": "src/account.h",
         "patchSetId": 14
@@ -174,6 +192,24 @@
       "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1864b87b_f2dadbd3",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1902,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-28T17:44:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5618e867_23a3e6a5",
+      "revId": "e4a0fc535b6591a93355b40e15a0a736f372bdc6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
