@@ -64,7 +64,7 @@ public:
      */
     std::shared_ptr<SIPCall> newSipCall(const std::shared_ptr<SIPAccountBase>& account,
                                         Call::CallType type,
-                                        const std::vector<MediaAttribute>& mediaList);
+                                        const std::vector<DRing::MediaMap>& mediaList);
 
     /**
      * Forbid creation of new calls.

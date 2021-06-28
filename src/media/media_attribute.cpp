@@ -23,7 +23,7 @@
 
 namespace jami {
 
-MediaAttribute::MediaAttribute(const DRing::MediaMap& mediaMap)
+MediaAttribute::MediaAttribute(const DRing::MediaMap& mediaMap, bool secure)
 {
     std::pair<bool, MediaType> pairType = getMediaType(mediaMap);
     if (pairType.first)
@@ -51,16 +51,18 @@ MediaAttribute::MediaAttribute(const DRing::MediaMap& mediaMap)
     pairBool = getBoolValue(mediaMap, DRing::Media::MediaAttributeKey::ON_HOLD);
     if (pairBool.first)
         onHold_ = pairBool.second;
+
+    secure_ = secure;
 }
 
 std::vector<MediaAttribute>
-MediaAttribute::parseMediaList(const std::vector<DRing::MediaMap>& mediaList)
+MediaAttribute::buildMediaAtrributesList(const std::vector<DRing::MediaMap>& mediaList, bool secure)
 {
     std::vector<MediaAttribute> mediaAttrList;
     mediaAttrList.reserve(mediaList.size());
 
     for (auto const& mediaMap : mediaList) {
-        mediaAttrList.emplace_back(MediaAttribute(mediaMap));
+        mediaAttrList.emplace_back(MediaAttribute(mediaMap, secure));
     }
 
     return mediaAttrList;

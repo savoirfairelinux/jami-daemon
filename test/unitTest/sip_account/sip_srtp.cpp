@@ -65,37 +65,29 @@ struct CallData
 /**
  * Call tests for SIP accounts.
  */
-class SipBasicCallTest : public CppUnit::TestFixture
+class SipSrtpTest : public CppUnit::TestFixture
 {
 public:
-    SipBasicCallTest()
+    SipSrtpTest()
     {
         // Init daemon
         DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
             CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
     }
-    ~SipBasicCallTest() { DRing::fini(); }
+    ~SipSrtpTest() { DRing::fini(); }
 
-    static std::string name() { return "SipBasicCallTest"; }
+    static std::string name() { return "SipSrtpTest"; }
     void setUp();
     void tearDown();
 
 private:
     // Test cases.
-    void audio_only_test();
-    void audio_video_test();
-    void peer_disable_media();
+    void audio_video_srtp_enabled_test();
 
-    CPPUNIT_TEST_SUITE(SipBasicCallTest);
-    CPPUNIT_TEST(audio_only_test);
-    CPPUNIT_TEST(audio_video_test);
-#if 0 
-    // Test when the peer answers will all media disabled (RTP port = 0)
-    // For now, this test will cause a crash. Must be enabled once the
-    // crash is fixed
-    CPPUNIT_TEST(peer_disable_media);
-#endif
+    CPPUNIT_TEST_SUITE(SipSrtpTest);
+    CPPUNIT_TEST(audio_video_srtp_enabled_test);
+
     CPPUNIT_TEST_SUITE_END();
 
     // Event/Signal handlers
@@ -127,10 +119,10 @@ private:
     CallData bobData_;
 };
 
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SipBasicCallTest, SipBasicCallTest::name());
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SipSrtpTest, SipSrtpTest::name());
 
 void
-SipBasicCallTest::setUp()
+SipSrtpTest::setUp()
 {
     aliceData_.listeningPort_ = 5080;
     std::map<std::string, std::string> details = DRing::getAccountTemplate("SIP");
@@ -139,6 +131,7 @@ SipBasicCallTest::setUp()
     details[ConfProperties::ALIAS] = "ALICE";
     details[ConfProperties::LOCAL_PORT] = std::to_string(aliceData_.listeningPort_);
     details[ConfProperties::UPNP_ENABLED] = "false";
+    details[ConfProperties::SRTP::KEY_EXCHANGE] = "sdes";
     aliceData_.accountId_ = Manager::instance().addAccount(details);
 
     bobData_.listeningPort_ = 5082;
@@ -148,6 +141,7 @@ SipBasicCallTest::setUp()
     details[ConfProperties::ALIAS] = "BOB";
     details[ConfProperties::LOCAL_PORT] = std::to_string(bobData_.listeningPort_);
     details[ConfProperties::UPNP_ENABLED] = "false";
+    details[ConfProperties::SRTP::KEY_EXCHANGE] = "sdes";
     bobData_.accountId_ = Manager::instance().addAccount(details);
 
     JAMI_INFO("Initialize accounts ...");
@@ -158,7 +152,7 @@ SipBasicCallTest::setUp()
 }
 
 void
-SipBasicCallTest::tearDown()
+SipSrtpTest::tearDown()
 {
     JAMI_INFO("Remove created accounts...");
 
@@ -187,7 +181,7 @@ SipBasicCallTest::tearDown()
 }
 
 std::string
-SipBasicCallTest::getUserAlias(const std::string& callId)
+SipSrtpTest::getUserAlias(const std::string& callId)
 {
     auto call = Manager::instance().getCallFromCallID(callId);
 
@@ -205,10 +199,10 @@ SipBasicCallTest::getUserAlias(const std::string& callId)
 }
 
 void
-SipBasicCallTest::onIncomingCallWithMedia(const std::string& accountId,
-                                          const std::string& callId,
-                                          const std::vector<DRing::MediaMap> mediaList,
-                                          CallData& callData)
+SipSrtpTest::onIncomingCallWithMedia(const std::string& accountId,
+                                     const std::string& callId,
+                                     const std::vector<DRing::MediaMap> mediaList,
+                                     CallData& callData)
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
@@ -237,9 +231,9 @@ SipBasicCallTest::onIncomingCallWithMedia(const std::string& accountId,
 }
 
 void
-SipBasicCallTest::onCallStateChange(const std::string& callId,
-                                    const std::string& state,
-                                    CallData& callData)
+SipSrtpTest::onCallStateChange(const std::string& callId,
+                               const std::string& state,
+                               CallData& callData)
 {
     auto call = Manager::instance().getCallFromCallID(callId);
     if (not call) {
@@ -275,9 +269,9 @@ SipBasicCallTest::onCallStateChange(const std::string& callId,
 }
 
 void
-SipBasicCallTest::onMediaNegotiationStatus(const std::string& callId,
-                                           const std::string& event,
-                                           CallData& callData)
+SipSrtpTest::onMediaNegotiationStatus(const std::string& callId,
+                                      const std::string& event,
+                                      CallData& callData)
 {
     auto call = Manager::instance().getCallFromCallID(callId);
     if (not call) {
@@ -310,9 +304,9 @@ SipBasicCallTest::onMediaNegotiationStatus(const std::string& callId,
 }
 
 bool
-SipBasicCallTest::waitForSignal(CallData& callData,
-                                const std::string& expectedSignal,
-                                const std::string& expectedEvent)
+SipSrtpTest::waitForSignal(CallData& callData,
+                           const std::string& expectedSignal,
+                           const std::string& expectedEvent)
 {
     const std::chrono::seconds TIME_OUT {30};
     std::unique_lock<std::mutex> lock {callData.mtx_};
@@ -359,7 +353,7 @@ SipBasicCallTest::waitForSignal(CallData& callData,
 }
 
 void
-SipBasicCallTest::configureTest(CallData& aliceData, CallData& bobData)
+SipSrtpTest::configureTest(CallData& aliceData, CallData& bobData)
 {
     {
         CPPUNIT_ASSERT(not aliceData.accountId_.empty());
@@ -416,9 +410,9 @@ SipBasicCallTest::configureTest(CallData& aliceData, CallData& bobData)
 }
 
 void
-SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
-                                   std::vector<MediaAttribute> answer,
-                                   bool validateMedia)
+SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer,
+                              std::vector<MediaAttribute> answer,
+                              bool validateMedia)
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
@@ -512,13 +506,16 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
 }
 
 void
-SipBasicCallTest::audio_only_test()
+SipSrtpTest::audio_video_srtp_enabled_test()
 {
     // Test with video enabled on Alice's side and disabled
     // on Bob's side.
 
     auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
+    CPPUNIT_ASSERT(aliceAcc->isSrtpEnabled());
+
     auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
+    CPPUNIT_ASSERT(bobAcc->isSrtpEnabled());
 
     std::vector<MediaAttribute> offer;
     std::vector<MediaAttribute> answer;
@@ -548,72 +545,9 @@ SipBasicCallTest::audio_only_test()
 
     // Run the scenario
     audio_video_call(offer, answer);
-}
-
-void
-SipBasicCallTest::audio_video_test()
-{
-    auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
-    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
-
-    std::vector<MediaAttribute> offer;
-    std::vector<MediaAttribute> answer;
-
-    MediaAttribute audio(MediaType::MEDIA_AUDIO);
-    MediaAttribute video(MediaType::MEDIA_VIDEO);
-
-    // Configure Alice
-    audio.enabled_ = true;
-    audio.label_ = "audio_0";
-    offer.emplace_back(audio);
-
-    video.enabled_ = true;
-    video.label_ = "video_0";
-    aliceAcc->enableVideo(true);
-    offer.emplace_back(video);
-
-    // Configure Bob
-    audio.enabled_ = true;
-    audio.label_ = "audio_0";
-    answer.emplace_back(audio);
-
-    video.enabled_ = true;
-    video.label_ = "video_0";
-    bobAcc->enableVideo(true);
-    answer.emplace_back(video);
-
-    // Run the scenario
-    audio_video_call(offer, answer);
-}
-
-void
-SipBasicCallTest::peer_disable_media()
-{
-    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
-
-    std::vector<MediaAttribute> offer;
-    std::vector<MediaAttribute> answer;
-
-    MediaAttribute video(MediaType::MEDIA_VIDEO);
-
-    // Configure Alice
-    video.enabled_ = true;
-    video.label_ = "video_0";
-    video.secure_ = false;
-    offer.emplace_back(video);
-
-    // Configure Bob
-    video.enabled_ = false;
-    video.label_ = "video_0";
-    video.secure_ = false;
-    bobAcc->enableVideo(false);
-    answer.emplace_back(video);
-
-    // Run the scenario
-    audio_video_call(offer, answer, false);
 }
 
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::SipBasicCallTest::name())
+RING_TEST_RUNNER(jami::test::SipSrtpTest::name())
