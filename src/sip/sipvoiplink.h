@@ -98,7 +98,7 @@ public:
     void createDefaultSipUdpTransport();
 
 public:
-    static void createSDPOffer(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer);
+    static void createSDPOffer(pjsip_inv_session* inv);
 
     /**
      * Instance that maintain and manage transport (UDP, TLS)

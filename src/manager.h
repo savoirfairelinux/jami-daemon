@@ -506,10 +506,17 @@ public:
 
     /**
      * Retrieve details about a given call
-     * @param callID      The account identifier
+     * @param callID The call identifier
      * @return std::map< std::string, std::string > The call details
      */
     std::map<std::string, std::string> getCallDetails(const std::string& callID) const;
+
+    /**
+     * Get the attribute list of current media
+     * @param callID The call identifier
+     * @return A vector of media attributes
+     */
+    std::vector<MediaAttribute> getMediaAttributeList(const std::string& callID) const;
 
     /**
      * Get list of calls (internal subcalls are filter-out)
