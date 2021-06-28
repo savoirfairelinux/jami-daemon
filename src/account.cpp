@@ -96,10 +96,9 @@ const char* const Account::LOCAL_MODERATORS_ENABLED_KEY = "localModeratorsEnable
 const char* const Account::ALL_MODERATORS_ENABLED_KEY = "allModeratorsEnabled";
 
 #ifdef __ANDROID__
-const char* const DEFAULT_RINGTONE_PATH = "/data/data/cx.ring/files/ringtones/default.opus";
+constexpr const char* const DEFAULT_RINGTONE_PATH = "/data/data/cx.ring/files/ringtones/default.opus";
 #else
-const char* const DEFAULT_RINGTONE_PATH = (std::string() + PROGSHAREDIR + "/ringtones/default.opus")
-                                              .c_str();
+constexpr const char* const DEFAULT_RINGTONE_PATH =  PROGSHAREDIR "/ringtones/default.opus";
 #endif
 
 Account::Account(const std::string& accountID)
