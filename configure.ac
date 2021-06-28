@@ -400,33 +400,25 @@ AS_IF([test "x$with_dbus" = "xyes"],
 dnl name service is default-enabled
 AC_ARG_ENABLE([ringns], AS_HELP_STRING([--disable-ringns],
   [Enable Name Service]))
-AM_CONDITIONAL([RINGNS], test "x$enable_ringns" != "xno",
-  [Define if you use the Name Service])
+AM_CONDITIONAL([RINGNS], test "x$enable_ringns" != "xno")
 AC_DEFINE_UNQUOTED([HAVE_RINGNS],
   `if test "x$enable_ringns" != "xno"; then echo 1; else echo 0; fi`,
   [Define if you use the Name Service])
-
-dnl nodejs module
-AC_ARG_WITH([nodejs], AS_HELP_STRING([--with-nodejs], [Enable NodeJS module]))
-AM_CONDITIONAL([ENABLE_NODEJS], test "x$enable_nodejs" != "xno",
-  [Define if you use the NodeJS module])
-AC_DEFINE_UNQUOTED([HAVE_NODEJS],
-  `if test "x$enable_ringns" != "xno"; then echo 1; else echo 0; fi`,
-  [Define if you use the NodeJS module])
-AS_IF([test "x$with_nodejs" = "xyes"],
-  [AC_PATH_PROG(SWIG, swig, "")
-   AS_AC_EXPAND(SBINDIR, $sbindir)
-   AC_SUBST(SBINDIR)
-   AC_CONFIG_FILES([bin/nodejs/Makefile])
-   AM_CONDITIONAL(ENABLE_NODEJS, true)],
-  [AM_CONDITIONAL(ENABLE_NODEJS, false)]);
-
-AS_IF([test "x$enable_ringns" != "xno"],
+AM_COND_IF([RINGNS],
   [PKG_CHECK_MODULES(LIBCRYPTO, libcrypto,,
      AC_MSG_ERROR([Missing libcrypto development files]))
    PKG_CHECK_MODULES(LIBSSL, libssl,,
      AC_MSG_ERROR([Missing libssl development files]))],
   []);
+
+dnl nodejs module
+AC_ARG_WITH([nodejs], AS_HELP_STRING([--with-nodejs], [Enable NodeJS module]))
+AM_CONDITIONAL(ENABLE_NODEJS, [test "x$with_nodejs" = "xyes"])
+AM_COND_IF([ENABLE_NODEJS],
+  [AC_PATH_PROG(SWIG, swig, "")
+   AS_AC_EXPAND(SBINDIR, $sbindir)
+   AC_SUBST(SBINDIR)
+   AC_CONFIG_FILES([bin/nodejs/Makefile])])
 
 dnl Check for libav
 PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 54.31.100,,
