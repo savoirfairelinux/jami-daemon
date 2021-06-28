@@ -727,9 +727,11 @@ MediaNegotiationTest::audio_and_video_then_mute_video()
 
     MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
     defaultAudio.label_ = "main audio";
+    defaultAudio.enabled_ = true;
 
     MediaAttribute defaultVideo(MediaType::MEDIA_VIDEO);
     defaultVideo.label_ = "main video";
+    defaultVideo.enabled_ = true;
 
     {
         MediaAttribute audio(defaultAudio);
@@ -770,9 +772,11 @@ MediaNegotiationTest::audio_only_then_add_video()
 
     MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
     defaultAudio.label_ = "main audio";
+    defaultAudio.enabled_ = true;
 
     MediaAttribute defaultVideo(MediaType::MEDIA_VIDEO);
     defaultVideo.label_ = "main video";
+    defaultVideo.enabled_ = true;
 
     {
         MediaAttribute audio(defaultAudio);
@@ -808,9 +812,11 @@ MediaNegotiationTest::audio_and_video_then_mute_audio()
 
     MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
     defaultAudio.label_ = "main audio";
+    defaultAudio.enabled_ = true;
 
     MediaAttribute defaultVideo(MediaType::MEDIA_VIDEO);
     defaultVideo.label_ = "main video";
+    defaultVideo.enabled_ = true;
 
     {
         MediaAttribute audio(defaultAudio);
@@ -855,9 +861,11 @@ MediaNegotiationTest::audio_only_then_add_video_but_peer_disabled_multistream()
 
     MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
     defaultAudio.label_ = "main audio";
+    defaultAudio.enabled_ = true;
 
     MediaAttribute defaultVideo(MediaType::MEDIA_VIDEO);
     defaultVideo.label_ = "main video";
+    defaultVideo.enabled_ = true;
 
     {
         MediaAttribute audio(defaultAudio);

@@ -45,7 +45,6 @@ public:
         , sourceUri_(source)
         , label_(label)
         , onHold_(onHold)
-
     {}
 
     MediaAttribute(const DRing::MediaMap& mediaMap);
@@ -90,16 +89,17 @@ public:
 
     // NOTE: the hold and mute attributes are related but not
     // tightly coupled. A hold/un-hold operation should always
-    // trigger a new re-invite to change the change the media
-    // attributes. For instance, on an active call, the hold
-    // action would change media direction from "sendrecv" to
-    // "sendonly".
-    // In contrast, the mute attribute describe the presence
-    // (or absence) of media signal in the stream. In other
-    // words, the mute action can be performed without requiring
-    // a media direction change. For instance, muting the audio
-    // can be done by disabling the audio input (capture) of the
-    // encoding session, resulting in sending an RTP stream without
-    // actual audio (silence).
+    // trigger a new re-invite to notify the change in media
+    // direction.For instance, on an active call, the hold action
+    // would change the media direction attribute from "sendrecv"
+    // to "sendonly". A new SDP with the new media direction will
+    // be generated and sent to the peer in the re-invite.
+    // In contrast, the mute attribute is a local attribute, and
+    // describes the presence (or absence) of the media signal in
+    // the stream. In other words, the mute action can be performed
+    // with or without a media direction change (no re-invite).
+    // For instance, muting the audio can be done by disabling the
+    // audio input (capture) of the encoding session, resulting in
+    // sending an RTP packets without actual audio (silence).
 };
 } // namespace jami

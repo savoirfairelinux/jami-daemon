@@ -206,6 +206,7 @@ public:
         const pjmedia_sdp_session* offer, const pjsip_rx_data* rdata);
 
     pj_status_t onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata);
+    void onReceiveOfferIn200OK(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata);
     /**
      * Called when the media negotiation (SDP offer/answer) has
      * completed.
@@ -227,16 +228,14 @@ public:
 
     std::shared_ptr<SIPAccountBase> getSIPAccount() const;
 
-    void updateSDPFromSTUN();
-
     bool remoteHasValidIceAttributes();
     void addLocalIceAttributes();
 
     /**
-     * Give peer SDP to the call for handling
-     * @param sdp pointer on PJSIP sdp structure, could be nullptr (acts as no-op in such case)
+     * Setup ICE locally to answer to an ICE offer. The ICE session has
+     * the controlled role (slave)
      */
-    void setupLocalIce();
+    void setupIceResponse();
 
     void terminateSipSession(int status);
 
@@ -283,6 +282,7 @@ public:
 
     void setMute(bool state);
 
+    bool isMediaTypeEnabled(MediaType type) const;
     void setInviteSession(pjsip_inv_session* inviteSession = nullptr);
 
     std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
