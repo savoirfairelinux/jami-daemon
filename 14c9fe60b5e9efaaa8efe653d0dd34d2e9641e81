@@ -22,6 +22,30 @@
       "revId": "14c9fe60b5e9efaaa8efe653d0dd34d2e9641e81",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8c7c6cda_c97a9ab8",
+        "filename": "src/Makefile.am",
+        "patchSetId": 1
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-06-28T14:56:07Z",
+      "side": 1,
+      "message": "I\u0027m still not sure why this should be necessary at all;  it seems to me that AM_LDFLAGS should be the default libtool\u0027s LDFLAGS unless otherwise specified (overridden).  But indeed, since it appears to be necessary, it should be applied everywhere.",
+      "parentUuid": "6abdb649_d971f10b",
+      "range": {
+        "startLine": 106,
+        "startChar": 0,
+        "endLine": 106,
+        "endChar": 1
+      },
+      "revId": "14c9fe60b5e9efaaa8efe653d0dd34d2e9641e81",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
