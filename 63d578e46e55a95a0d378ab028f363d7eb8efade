@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "0ef76594_1c80b6f1",
+        "filename": "src/account.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 131,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-28T17:41:32Z",
+      "side": 1,
+      "message": "Ack\n\nWe will move all initialization to header in another patch if required. For now, it\u0027s better to keep consistency.",
+      "parentUuid": "a25a833e_6ac14a43",
+      "range": {
+        "startLine": 131,
+        "startChar": 0,
+        "endLine": 131,
+        "endChar": 31
+      },
+      "revId": "63d578e46e55a95a0d378ab028f363d7eb8efade",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "a7d85be6_ce3447b2",
         "filename": "src/account.h",
         "patchSetId": 2
@@ -45,6 +69,30 @@
       "revId": "63d578e46e55a95a0d378ab028f363d7eb8efade",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "075bb10f_680bbec2",
+        "filename": "src/account.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 587,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-28T17:41:32Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "a7d85be6_ce3447b2",
+      "range": {
+        "startLine": 587,
+        "startChar": 0,
+        "endLine": 587,
+        "endChar": 29
+      },
+      "revId": "63d578e46e55a95a0d378ab028f363d7eb8efade",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "f939e9f8_269630dd",
+        "filename": "src/sip/sipaccount.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 315,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-28T17:41:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "20c40478_c3345c33",
+      "range": {
+        "startLine": 305,
+        "startChar": 0,
+        "endLine": 315,
+        "endChar": 6
+      },
+      "revId": "63d578e46e55a95a0d378ab028f363d7eb8efade",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "aaac6231_5b38e0d9",
         "filename": "src/sip/sipaccountbase.h",
         "patchSetId": 2
@@ -94,6 +166,30 @@
     },
     {
       "key": {
+        "uuid": "ec0d763d_94b95b7e",
+        "filename": "src/sip/sipaccountbase.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 382,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-28T17:41:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aaac6231_5b38e0d9",
+      "range": {
+        "startLine": 379,
+        "startChar": 0,
+        "endLine": 382,
+        "endChar": 0
+      },
+      "revId": "63d578e46e55a95a0d378ab028f363d7eb8efade",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "27153310_cb9e6baa",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 2
@@ -105,6 +201,30 @@
       "writtenOn": "2021-06-21T17:29:15Z",
       "side": 1,
       "message": "This could change anytime. Either a given call supports ICE or it doesn\u0027t. Changing this in account after a call started could lead to various bugs/race conditions.\n\nIf we really want to support this, I suggest to add a boolean flag similar to enableSrtp_.",
+      "range": {
+        "startLine": 2180,
+        "startChar": 0,
+        "endLine": 2180,
+        "endChar": 73
+      },
+      "revId": "63d578e46e55a95a0d378ab028f363d7eb8efade",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4a3a8c95_38981aba",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2180,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-28T17:41:32Z",
+      "side": 1,
+      "message": "Agree,we should set it when the created and never change it.",
+      "parentUuid": "27153310_cb9e6baa",
       "range": {
         "startLine": 2180,
         "startChar": 0,
@@ -137,6 +257,30 @@
       "revId": "63d578e46e55a95a0d378ab028f363d7eb8efade",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e1804181_4f588631",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 456,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-28T17:41:32Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "8a7b69c6_3bfdd3fb",
+      "range": {
+        "startLine": 456,
+        "startChar": 8,
+        "endLine": 456,
+        "endChar": 39
+      },
+      "revId": "63d578e46e55a95a0d378ab028f363d7eb8efade",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
