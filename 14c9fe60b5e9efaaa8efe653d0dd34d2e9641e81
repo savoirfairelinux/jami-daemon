@@ -46,6 +46,30 @@
       "revId": "14c9fe60b5e9efaaa8efe653d0dd34d2e9641e81",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c9076ad3_f47b1f9c",
+        "filename": "src/Makefile.am",
+        "patchSetId": 1
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-06-28T20:55:04Z",
+      "side": 1,
+      "message": "Still not sure why it is needed, but I validated that it fails without it.  Now set globally.",
+      "parentUuid": "8c7c6cda_c97a9ab8",
+      "range": {
+        "startLine": 106,
+        "startChar": 0,
+        "endLine": 106,
+        "endChar": 1
+      },
+      "revId": "14c9fe60b5e9efaaa8efe653d0dd34d2e9641e81",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
