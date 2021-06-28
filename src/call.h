@@ -216,7 +216,7 @@ public:
      * determine the response sent to the peer and the configuration
      * of the local media.
      */
-    virtual void answer(const std::vector<MediaAttribute>& mediaList) = 0;
+    virtual void answer(const std::vector<DRing::MediaMap>& mediaList) = 0;
 
     /**
      * Answer to a media update request. The media attributes set by the
@@ -227,7 +227,7 @@ public:
      * call continue with the current media. It's up to the implementation
      * to determine wether an answer will be sent to the peer.
      */
-    virtual void answerMediaChangeRequest(const std::vector<MediaAttribute>& mediaList) = 0;
+    virtual void answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList) = 0;
     /**
      * Hang up the call
      * @param reason
@@ -343,7 +343,7 @@ public: // media management
      * @param mediaList the new media list
      * @return true on success
      */
-    virtual bool requestMediaChange(const std::vector<MediaAttribute>& mediaList) = 0;
+    virtual bool requestMediaChange(const std::vector<DRing::MediaMap>& mediaList) = 0;
 
     /**
      * Send a message to a call identified by its callid
