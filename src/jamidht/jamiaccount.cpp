@@ -755,15 +755,17 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
             // So, we need to run the call creation in the main thread
             // Also, we do not directly call SIPStartCall before receiving onInitDone, because
             // there is an inside waitForInitialization that can block the thread.
-            runOnMainThread([w = std::move(w), target = std::move(target), call = std::move(call)] {
-                auto shared = w.lock();
-                if (!shared)
-                    return;
+            // Note: avoid runMainThread as SIPStartCall use transportMutex
+            dht::ThreadPool::io().run(
+                [w = std::move(w), target = std::move(target), call = std::move(call)] {
+                    auto shared = w.lock();
+                    if (!shared)
+                        return;
 
-                if (not shared->SIPStartCall(*call, target)) {
-                    JAMI_ERR("Could not send outgoing INVITE request for new call");
-                }
-            });
+                    if (not shared->SIPStartCall(*call, target)) {
+                        JAMI_ERR("Could not send outgoing INVITE request for new call");
+                    }
+                });
         };
         call->setIPToIP(true);
         call->setPeerNumber(to_id);
