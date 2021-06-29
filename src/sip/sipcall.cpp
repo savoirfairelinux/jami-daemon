@@ -82,7 +82,8 @@ static constexpr std::chrono::milliseconds MS_BETWEEN_2_KEYFRAME_REQUEST {1000};
 static constexpr int ICE_COMP_ID_RTP {1};
 static constexpr int ICE_COMP_COUNT_PER_STREAM {2};
 static constexpr auto MULTISTREAM_REQUIRED_VERSION_STR = "10.0.2"sv;
-static const std::vector<unsigned> MULTISTREAM_REQUIRED_VERSION = split_string_to_unsigned(MULTISTREAM_REQUIRED_VERSION_STR, '.');
+static const std::vector<unsigned> MULTISTREAM_REQUIRED_VERSION
+    = split_string_to_unsigned(MULTISTREAM_REQUIRED_VERSION_STR, '.');
 
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& callId,
@@ -1535,14 +1536,18 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     }
 
     if (peerUserAgent_.empty()) {
-        JAMI_DBG("[call:%s] Set peer's User-Agent to [%.*s]", getCallId().c_str(), (int)ua.size(), ua.data());
+        JAMI_DBG("[call:%s] Set peer's User-Agent to [%.*s]",
+                 getCallId().c_str(),
+                 (int) ua.size(),
+                 ua.data());
     } else if (not peerUserAgent_.empty()) {
         // Unlikely, but should be handled since we dont have control over the peer.
         // Even if it's unexpected, we still try to parse the UA version.
         JAMI_WARN("[call:%s] Peer's User-Agent unexpectedly changed from [%s] to [%.*s]",
                   getCallId().c_str(),
                   peerUserAgent_.c_str(),
-                  (int)ua.size(), ua.data());
+                  (int) ua.size(),
+                  ua.data());
     }
 
     peerUserAgent_ = ua;
@@ -1585,10 +1590,15 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     }
 
     // Check if peer's version is at least 10.0.2 to enable multi-stream.
-    peerSupportMultiStream_ = Account::meetMinimumRequiredVersion(peerVersion, MULTISTREAM_REQUIRED_VERSION);
+    peerSupportMultiStream_ = Account::meetMinimumRequiredVersion(peerVersion,
+                                                                  MULTISTREAM_REQUIRED_VERSION);
     if (not peerSupportMultiStream_) {
-        JAMI_DBG("Peer's version [%.*s] does not support multi-stream. Min required version: [%.*s]",
-            (int)version.size(), version.data(), (int)MULTISTREAM_REQUIRED_VERSION_STR.size(), MULTISTREAM_REQUIRED_VERSION_STR.data());
+        JAMI_DBG(
+            "Peer's version [%.*s] does not support multi-stream. Min required version: [%.*s]",
+            (int) version.size(),
+            version.data(),
+            (int) MULTISTREAM_REQUIRED_VERSION_STR.size(),
+            MULTISTREAM_REQUIRED_VERSION_STR.data());
     }
 }
 
@@ -2873,8 +2883,8 @@ SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> o
     // Each RTP stream requires a pair of ICE components (RTP + RTCP).
     iceOptions.compCountPerStream = ICE_COMP_COUNT_PER_STREAM;
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    auto transport = iceTransportFactory.createUTransport(getCallId().c_str(), iceOptions);
     std::lock_guard<std::mutex> lk(transportMtx_);
+    auto transport = iceTransportFactory.createUTransport(getCallId().c_str(), iceOptions);
     // Destroy old ice on a separate io pool
     if (tmpMediaTransport_)
         dht::ThreadPool::io().run([ice = std::make_shared<decltype(tmpMediaTransport_)>(
