@@ -965,8 +965,6 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
         return;
     } else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
 #ifdef ENABLE_VIDEO
-        if (is_muted == videoMuted_)
-            return;
         if (is_muted) {
             if (auto mixer = getVideoMixer()) {
                 mixer->stopInput();
