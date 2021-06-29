@@ -61,7 +61,7 @@ endif
 libclient_dbus_la_CXXFLAGS = $(AM_CXXFLAGS) $(DBUSCPP_CFLAGS)
 
 do_subst = $(SED) \
-	-e 's,[@]bindir[@],$(bindir),g'
+	-e 's,[@]libexecdir[@],$(libexecdir),g'
 
 cx.ring.Ring.service: cx.ring.Ring.service.in Makefile
 	$(do_subst) < $< > $@
