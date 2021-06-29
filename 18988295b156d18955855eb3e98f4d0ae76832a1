@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5c3fe053_fc19e8ea",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 729,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-29T21:38:43Z",
+      "side": 1,
+      "message": "This might end up being called after the next packet is received, so we break the ordering guarantee.",
+      "revId": "18988295b156d18955855eb3e98f4d0ae76832a1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
