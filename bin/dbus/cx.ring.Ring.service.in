@@ -1,3 +1,3 @@
 [D-BUS Service]
 Name=cx.ring.Ring
-Exec=@libexec@/jamid
+Exec=@libexecdir@/jamid
