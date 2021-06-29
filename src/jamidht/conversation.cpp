@@ -244,7 +244,7 @@ public:
 
             if (announceMember) {
                 std::vector<std::string> members;
-                for (const auto& m: repository_->members())
+                for (const auto& m : repository_->members())
                     members.emplace_back(m.uri);
                 shared->saveMembers(convId, members);
             }
@@ -652,10 +652,10 @@ Conversation::sendMessage(const Json::Value& value,
             auto commit = sthis->pimpl_->repository_->commitMessage(
                 Json::writeString(wbuilder, value));
             sthis->clearFetched();
-            sthis->pimpl_->announce(commit);
             lk.unlock();
             if (cb)
                 cb(!commit.empty(), commit);
+            sthis->pimpl_->announce(commit);
         }
     });
 }
