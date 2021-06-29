@@ -295,6 +295,7 @@ public:
     void muteLocalHost(bool is_muted, const std::string& mediaType);
     bool isRemoteParticipant(const std::string& uri);
     void mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI);
+    void setHostMuted(bool muted);
 
 private:
     std::weak_ptr<Conference> weak()

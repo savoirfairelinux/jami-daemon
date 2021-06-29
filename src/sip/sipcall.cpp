@@ -1806,9 +1806,12 @@ SIPCall::hasVideo() const
 bool
 SIPCall::isVideoMuted() const
 {
+    //verifies if main video stream is muted
 #ifdef ENABLE_VIDEO
     std::function<bool(const RtpStream& stream)> mutedCheck = [](auto const& stream) {
         return (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO
+                and stream.mediaAttribute_->enabled_
+                and stream.mediaAttribute_->label_ == "video_0"
                 and not stream.mediaAttribute_->muted_);
     };
     const auto iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), mutedCheck);
@@ -2660,7 +2663,7 @@ SIPCall::enterConference(const std::string& confId)
             throw std::runtime_error("Failed to create dummy RTP video session");
         }
     }
-
+    conf->setHostMuted(isVideoMuted());
     videoRtp->enterConference(conf.get());
 #endif
 

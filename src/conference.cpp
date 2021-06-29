@@ -946,6 +946,12 @@ Conference::hangupParticipant(const std::string& participant_id)
 }
 
 void
+Conference::setHostMuted(bool muted)
+{
+    videoMuted_ |= muted;
+}
+
+void
 Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
 {
     if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
