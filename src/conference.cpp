@@ -285,6 +285,7 @@ Conference::add(const std::string& participant_id)
         }
 #ifdef ENABLE_VIDEO
         if (auto call = getCall(participant_id)) {
+            videoMuted_ |= call->isVideoMuted();
             call->enterConference(getConfID());
             // Continue the recording for the conference if one participant was recording
             if (call->isRecording()) {
