@@ -33,6 +33,40 @@
       "revId": "72728018b7e1c6ecfa3b00ce9759d6e3d64f04ef",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "abb2b88f_b2891aee",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1928,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-29T21:24:21Z",
+      "side": 1,
+      "message": "auto via_addrstr \u003d sip_utils::as_view(*via_addr);",
+      "revId": "72728018b7e1c6ecfa3b00ce9759d6e3d64f04ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5221b7b9_b078d21a",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1986,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-06-29T21:24:21Z",
+      "side": 1,
+      "message": "IpAddr srv_ip \u003d {std::string_view(param-\u003erdata-\u003epkt_info.src_name)};",
+      "revId": "72728018b7e1c6ecfa3b00ce9759d6e3d64f04ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
