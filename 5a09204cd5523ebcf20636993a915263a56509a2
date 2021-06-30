@@ -261,6 +261,30 @@
     },
     {
       "key": {
+        "uuid": "08848f43_d474d714",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 322,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-30T17:23:13Z",
+      "side": 1,
+      "message": "There\u0027s no point on doing anything if we don\u0027t have a contact.",
+      "parentUuid": "999313c6_1506e5f0",
+      "range": {
+        "startLine": 317,
+        "startChar": 2,
+        "endLine": 322,
+        "endChar": 5
+      },
+      "revId": "5a09204cd5523ebcf20636993a915263a56509a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b2b7326d_f8b3b9fb",
         "filename": "test/agent/agent.h",
         "patchSetId": 13
