@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7eba5b17_4c26bef7",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-30T13:48:09Z",
+      "side": 0,
+      "message": "~o~",
+      "range": {
+        "startLine": 186,
+        "startChar": 59,
+        "endLine": 188,
+        "endChar": 59
+      },
+      "revId": "c633d3b3a0685088c003eb7afd15535446a97f67",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
