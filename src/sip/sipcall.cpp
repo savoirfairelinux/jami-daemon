@@ -150,7 +150,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                 "[call:%s] No media offered in the incoming invite. An offer will be provided in "
                 "the answer",
                 getCallId().c_str());
-            mediaAttrList = getSIPAccount()->createDefaultMediaList(getSIPAccount()->isVideoEnabled(),
+            mediaAttrList = getSIPAccount()->createDefaultMediaList(false,
                                                                     getState() == CallState::HOLD);
         } else {
             JAMI_WARN("[call:%s] Creating an outgoing call with empty offer", getCallId().c_str());
