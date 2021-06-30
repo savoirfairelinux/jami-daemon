@@ -103,15 +103,10 @@ public:
      */
     void setOnChannelReady(uint16_t channel, onChannelReadyCb&& cb);
 
-    std::size_t read(const uint16_t& channel, uint8_t* buf, std::size_t len, std::error_code& ec);
     std::size_t write(const uint16_t& channel,
                       const uint8_t* buf,
                       std::size_t len,
                       std::error_code& ec);
-    int waitForData(const uint16_t& channel,
-                    std::chrono::milliseconds timeout,
-                    std::error_code&) const;
-    void setOnRecv(const uint16_t& channel, GenericSocket<uint8_t>::RecvCb&& cb);
 
     /**
      * This will close all channels and send a TLS EOF on the main socket.
@@ -220,6 +215,8 @@ public:
      * but you can move it in a thread
      */
     void setOnRecv(RecvCb&&) override;
+
+    void onRecv(std::vector<uint8_t>&& pkt);
 
     std::shared_ptr<IceTransport> underlyingICE() const;
 
