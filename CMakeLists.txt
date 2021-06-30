@@ -101,7 +101,7 @@ if(MSVC)
    ################################################################################
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
        set_target_properties(${PROJECT_NAME} PROPERTIES
-           TARGET_NAME_RELEASELIB_WIN32 "dring"
+           TARGET_NAME_RELEASELIB_WIN32 "jami"
        )
    endif()
    ################################################################################
