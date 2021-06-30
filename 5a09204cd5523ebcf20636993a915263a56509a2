@@ -96,6 +96,30 @@
     },
     {
       "key": {
+        "uuid": "7802b9e1_17864790",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-30T16:07:20Z",
+      "side": 1,
+      "message": "Yeah, it sure that in the config file, we should be able to pass parameters to function. (under behavior:)\n\nmake-call is good but it\u0027s static and not really generic",
+      "parentUuid": "e0809022_1def3e66",
+      "range": {
+        "startLine": 57,
+        "startChar": 60,
+        "endLine": 59,
+        "endChar": 69
+      },
+      "revId": "5a09204cd5523ebcf20636993a915263a56509a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0b9eab50_e5dc1251",
         "filename": "test/agent/agent.cpp",
         "patchSetId": 13
