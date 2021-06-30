@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f0c91d46_7ca62a94",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 424,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-30T13:42:18Z",
+      "side": 1,
+      "message": "you are right with this patch. However this breaks testChannelRcvShutdown\n\nI will check and fix, I just think that stop must also do something else. Maybe a cv is not awoken. here ConnectionManagerTest::testChannelRcvShutdown is now failing cause the shutdown is not received one side.",
+      "range": {
+        "startLine": 424,
+        "startChar": 17,
+        "endLine": 424,
+        "endChar": 35
+      },
+      "revId": "440f8b0a308cb52b86e5049a2d4834fc3a37e0b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
