@@ -82,7 +82,8 @@ static constexpr std::chrono::milliseconds MS_BETWEEN_2_KEYFRAME_REQUEST {1000};
 static constexpr int ICE_COMP_ID_RTP {1};
 static constexpr int ICE_COMP_COUNT_PER_STREAM {2};
 static constexpr auto MULTISTREAM_REQUIRED_VERSION_STR = "10.0.2"sv;
-static const std::vector<unsigned> MULTISTREAM_REQUIRED_VERSION = split_string_to_unsigned(MULTISTREAM_REQUIRED_VERSION_STR, '.');
+static const std::vector<unsigned> MULTISTREAM_REQUIRED_VERSION
+    = split_string_to_unsigned(MULTISTREAM_REQUIRED_VERSION_STR, '.');
 
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& callId,
@@ -150,7 +151,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                 "[call:%s] No media offered in the incoming invite. An offer will be provided in "
                 "the answer",
                 getCallId().c_str());
-            mediaAttrList = getSIPAccount()->createDefaultMediaList(getSIPAccount()->isVideoEnabled(),
+            mediaAttrList = getSIPAccount()->createDefaultMediaList(false,
                                                                     getState() == CallState::HOLD);
         } else {
             JAMI_WARN("[call:%s] Creating an outgoing call with empty offer", getCallId().c_str());
@@ -1535,14 +1536,18 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     }
 
     if (peerUserAgent_.empty()) {
-        JAMI_DBG("[call:%s] Set peer's User-Agent to [%.*s]", getCallId().c_str(), (int)ua.size(), ua.data());
+        JAMI_DBG("[call:%s] Set peer's User-Agent to [%.*s]",
+                 getCallId().c_str(),
+                 (int) ua.size(),
+                 ua.data());
     } else if (not peerUserAgent_.empty()) {
         // Unlikely, but should be handled since we dont have control over the peer.
         // Even if it's unexpected, we still try to parse the UA version.
         JAMI_WARN("[call:%s] Peer's User-Agent unexpectedly changed from [%s] to [%.*s]",
                   getCallId().c_str(),
                   peerUserAgent_.c_str(),
-                  (int)ua.size(), ua.data());
+                  (int) ua.size(),
+                  ua.data());
     }
 
     peerUserAgent_ = ua;
@@ -1585,10 +1590,15 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     }
 
     // Check if peer's version is at least 10.0.2 to enable multi-stream.
-    peerSupportMultiStream_ = Account::meetMinimumRequiredVersion(peerVersion, MULTISTREAM_REQUIRED_VERSION);
+    peerSupportMultiStream_ = Account::meetMinimumRequiredVersion(peerVersion,
+                                                                  MULTISTREAM_REQUIRED_VERSION);
     if (not peerSupportMultiStream_) {
-        JAMI_DBG("Peer's version [%.*s] does not support multi-stream. Min required version: [%.*s]",
-            (int)version.size(), version.data(), (int)MULTISTREAM_REQUIRED_VERSION_STR.size(), MULTISTREAM_REQUIRED_VERSION_STR.data());
+        JAMI_DBG(
+            "Peer's version [%.*s] does not support multi-stream. Min required version: [%.*s]",
+            (int) version.size(),
+            version.data(),
+            (int) MULTISTREAM_REQUIRED_VERSION_STR.size(),
+            MULTISTREAM_REQUIRED_VERSION_STR.data());
     }
 }
 
@@ -2477,7 +2487,7 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
 }
 
 void
-SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata)
+SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer)
 {
     if (not rtpStreams_.empty()) {
         JAMI_ERR("[call:%s] Unexpected offer in '200 OK' answer", getCallId().c_str());
@@ -2531,7 +2541,6 @@ SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer, pjsip_rx_data* 
 
     sdp_->startNegotiation();
 
-    pjsip_tx_data* tdata = nullptr;
     if (pjsip_inv_set_sdp_answer(inviteSession_.get(), sdp_->getLocalSdpSession()) != PJ_SUCCESS) {
         JAMI_ERR("[call:%s] Could not start media negotiation for a re-invite request",
                  getCallId().c_str());
