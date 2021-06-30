@@ -1468,13 +1468,16 @@ ConversationRepository::Impl::behind(const std::string& from) const
     }
     for (std::size_t i = 0; i < bases.count; ++i) {
         std::string oid = git_oid_tostr_s(&bases.ids[i]);
-        if (oid != from && oid != head) {
+        if (oid != head) {
             oid_local = bases.ids[i];
             break;
         }
     }
     git_oidarray_free(&bases);
-    return log(from, git_oid_tostr_s(&oid_local), 0);
+    std::string to = git_oid_tostr_s(&oid_local);
+    if (to == from)
+        return {};
+    return log(from, to, 0);
 }
 
 std::vector<ConversationCommit>
