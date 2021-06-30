@@ -151,7 +151,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                 "[call:%s] No media offered in the incoming invite. An offer will be provided in "
                 "the answer",
                 getCallId().c_str());
-            mediaAttrList = getSIPAccount()->createDefaultMediaList(getSIPAccount()->isVideoEnabled(),
+            mediaAttrList = getSIPAccount()->createDefaultMediaList(false,
                                                                     getState() == CallState::HOLD);
         } else {
             JAMI_WARN("[call:%s] Creating an outgoing call with empty offer", getCallId().c_str());
@@ -2487,7 +2487,7 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer, const pjsip_rx_data* r
 }
 
 void
-SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata)
+SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer)
 {
     if (not rtpStreams_.empty()) {
         JAMI_ERR("[call:%s] Unexpected offer in '200 OK' answer", getCallId().c_str());
@@ -2541,7 +2541,6 @@ SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer, pjsip_rx_data* 
 
     sdp_->startNegotiation();
 
-    pjsip_tx_data* tdata = nullptr;
     if (pjsip_inv_set_sdp_answer(inviteSession_.get(), sdp_->getLocalSdpSession()) != PJ_SUCCESS) {
         JAMI_ERR("[call:%s] Could not start media negotiation for a re-invite request",
                  getCallId().c_str());

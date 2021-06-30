@@ -83,12 +83,10 @@ public:
 
 private:
     // Test cases.
-    void audio_only_test();
-    void audio_video_test();
+    void send_and_handle_empty_offer();
 
     CPPUNIT_TEST_SUITE(SipEmptyOfferTest);
-    CPPUNIT_TEST(audio_only_test);
-    CPPUNIT_TEST(audio_video_test);
+    CPPUNIT_TEST(send_and_handle_empty_offer);
     CPPUNIT_TEST_SUITE_END();
 
     // Event/Signal handlers
@@ -466,24 +464,18 @@ SipEmptyOfferTest::audio_video_call(std::vector<MediaAttribute> offer,
     {
         auto activeMediaList = Manager::instance().getMediaAttributeList(aliceData_.callId_);
         CPPUNIT_ASSERT_EQUAL(answer.size(), activeMediaList.size());
-        // Audio
+
         CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_AUDIO, activeMediaList[0].type_);
         CPPUNIT_ASSERT_EQUAL(answer[0].enabled_, activeMediaList[0].enabled_);
-        // Video
-        CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_VIDEO, activeMediaList[1].type_);
-        CPPUNIT_ASSERT_EQUAL(answer[1].enabled_, activeMediaList[1].enabled_);
     }
 
     // Validate Bob's media
     {
         auto activeMediaList = Manager::instance().getMediaAttributeList(bobData_.callId_);
         CPPUNIT_ASSERT_EQUAL(offer.size(), activeMediaList.size());
-        // Audio
+
         CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_AUDIO, activeMediaList[0].type_);
         CPPUNIT_ASSERT_EQUAL(offer[0].enabled_, activeMediaList[0].enabled_);
-        // Video
-        CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_VIDEO, activeMediaList[1].type_);
-        CPPUNIT_ASSERT_EQUAL(offer[1].enabled_, activeMediaList[1].enabled_);
     }
 
     // Give some time to media to start and flow
@@ -500,10 +492,12 @@ SipEmptyOfferTest::audio_video_call(std::vector<MediaAttribute> offer,
 }
 
 void
-SipEmptyOfferTest::audio_only_test()
+SipEmptyOfferTest::send_and_handle_empty_offer()
 {
-    // Test with video enabled on Bob's side and disabled
-    // on Alice's side.
+    // Current implementation, when an empty offer is received, the
+    // local UA will provide a media offer (SDP) in "200 OK" answer
+    // that includes audio media only. Each call participant can add
+    // the video is he/she wishes.
 
     auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
     auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
@@ -516,60 +510,11 @@ SipEmptyOfferTest::audio_only_test()
     audio.secure_ = bobAcc->isSrtpEnabled();
     offer.emplace_back(audio);
 
-    MediaAttribute video(MediaType::MEDIA_VIDEO);
-    video.enabled_ = true;
-    video.label_ = "video_0";
-    video.secure_ = bobAcc->isSrtpEnabled();
-    bobAcc->enableVideo(true);
-    offer.emplace_back(video);
-
     std::vector<MediaAttribute> answer;
     audio.enabled_ = true;
     audio.label_ = "audio_0";
     audio.secure_ = bobAcc->isSrtpEnabled();
     answer.emplace_back(audio);
-
-    video.enabled_ = false;
-    video.label_ = "video_0";
-    video.secure_ = aliceAcc->isSrtpEnabled();
-    aliceAcc->enableVideo(false);
-    answer.emplace_back(video);
-
-    audio_video_call(offer, answer);
-}
-
-void
-SipEmptyOfferTest::audio_video_test()
-{
-    auto const aliceAcc = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
-    auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
-
-    std::vector<MediaAttribute> offer;
-
-    MediaAttribute audio(MediaType::MEDIA_AUDIO);
-    audio.enabled_ = true;
-    audio.label_ = "audio_0";
-    audio.secure_ = bobAcc->isSrtpEnabled();
-    offer.emplace_back(audio);
-
-    MediaAttribute video(MediaType::MEDIA_VIDEO);
-    video.enabled_ = true;
-    video.label_ = "video_0";
-    video.secure_ = bobAcc->isSrtpEnabled();
-    bobAcc->enableVideo(true);
-    offer.emplace_back(video);
-
-    std::vector<MediaAttribute> answer;
-    audio.enabled_ = true;
-    audio.label_ = "audio_0";
-    audio.secure_ = bobAcc->isSrtpEnabled();
-    answer.emplace_back(audio);
-
-    video.enabled_ = true;
-    video.label_ = "video_0";
-    video.secure_ = aliceAcc->isSrtpEnabled();
-    aliceAcc->enableVideo(true);
-    answer.emplace_back(video);
 
     audio_video_call(offer, answer);
 }
