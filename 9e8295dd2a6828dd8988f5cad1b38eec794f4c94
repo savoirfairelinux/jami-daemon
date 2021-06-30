@@ -22,6 +22,29 @@
       "revId": "9e8295dd2a6828dd8988f5cad1b38eec794f4c94",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4c54259c_971d147d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 4228,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-06-30T19:55:45Z",
+      "side": 1,
+      "message": "here deviceId can be a short id,\n\nSo\n            connectionManager_-\u003econnectDevice(\n                DeviceId(deviceId),\n                \"git://\" + deviceId + \"/\" + conversationId,\n\nwill try with \"0000000000000000000000000000000000000000000000000000000000000000\"\n\n(and same when we send, the other peer cut)",
+      "range": {
+        "startLine": 4228,
+        "startChar": 26,
+        "endLine": 4228,
+        "endChar": 34
+      },
+      "revId": "9e8295dd2a6828dd8988f5cad1b38eec794f4c94",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
