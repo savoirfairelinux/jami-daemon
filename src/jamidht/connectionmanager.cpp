@@ -578,6 +578,14 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
                                             const dht::Value::Id& vid)
 {
     auto channelSock = sock->addChannel(name);
+    channelSock->onReady([wSock = std::weak_ptr<ChannelSocket>(channelSock), name, deviceId, vid, w = weak()]() {
+        auto shared = w.lock();
+        auto channelSock = wSock.lock();
+        if (shared and channelSock)
+            for (const auto& pending : shared->extractPendingCallbacks(deviceId, vid))
+                pending.cb(channelSock, deviceId);
+    });
+
     ChannelRequest val;
     val.name = channelSock->name();
     val.state = ChannelRequestState::REQUEST;
@@ -585,11 +593,6 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
     msgpack::sbuffer buffer(256);
     msgpack::pack(buffer, val);
 
-    sock->setOnChannelReady(channelSock->channel(), [channelSock, name, deviceId, vid, w = weak()]() {
-        if (auto shared = w.lock())
-            for (const auto& pending : shared->extractPendingCallbacks(deviceId, vid))
-                pending.cb(channelSock, deviceId);
-    });
     std::error_code ec;
     int res = sock->write(CONTROL_CHANNEL,
                           reinterpret_cast<const uint8_t*>(buffer.data()),
