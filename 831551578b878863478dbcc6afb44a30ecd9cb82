@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9954cade_943f09bc",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-06-30T15:05:29Z",
+      "side": 1,
+      "message": "This is the actual change. The rest is just clean-up",
+      "revId": "831551578b878863478dbcc6afb44a30ecd9cb82",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
