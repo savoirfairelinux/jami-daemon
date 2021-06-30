@@ -832,15 +832,15 @@ IncomingFile::cancel()
 void
 IncomingFile::process()
 {
-    channel_->setOnRecv([w=weak()](const uint8_t* buf, size_t len) {
+    channel_->setOnRecv([w = weak()](const uint8_t* buf, size_t len) {
         if (auto shared = w.lock()) {
             if (shared->stream_.is_open())
-                shared->stream_ << std::string_view((const char*) buf, len);
+                shared->stream_.write(reinterpret_cast<const char*>(buf), len);
             shared->info_.bytesProgress = shared->stream_.tellp();
         }
         return len;
     });
-    channel_->onShutdown([w=weak()] {
+    channel_->onShutdown([w = weak()] {
         auto shared = w.lock();
         if (!shared)
             return;
