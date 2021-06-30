@@ -32,7 +32,7 @@ using OnConnectionRequestCb = std::function<
     bool(const DeviceId& /* device id */, const uint16_t& /* id */, const std::string& /* name */)>;
 using OnConnectionReadyCb
     = std::function<void(const DeviceId& /* device id */, const std::shared_ptr<ChannelSocket>&)>;
-using onChannelReadyCb = std::function<void(void)>;
+using ChannelReadyCb = std::function<void(void)>;
 using OnShutdownCb = std::function<void(void)>;
 
 static constexpr auto SEND_BEACON_TIMEOUT = std::chrono::milliseconds(3000);
@@ -97,11 +97,6 @@ public:
      * Will be triggered when the peer asks for a new channel
      */
     void setOnRequest(OnConnectionRequestCb&& cb);
-    /**
-     * Triggered when a specific channel is ready
-     * Used by ConnectionManager::connectDevice()
-     */
-    void setOnChannelReady(uint16_t channel, onChannelReadyCb&& cb);
 
     std::size_t write(const uint16_t& channel,
                       const uint8_t* buf,
@@ -197,6 +192,10 @@ public:
      * Will trigger onShutdown's callback
      */
     void shutdown() override;
+
+    void ready();
+
+    void onReady(ChannelReadyCb&& cb);
     /**
      * Will trigger that callback when shutdown() is called
      */
