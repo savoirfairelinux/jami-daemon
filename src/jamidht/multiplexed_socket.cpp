@@ -118,13 +118,14 @@ public:
         clearSockets();
     }
 
-    std::shared_ptr<ChannelSocket> makeSocket(const std::string& name, uint16_t channel) {
+    std::shared_ptr<ChannelSocket> makeSocket(const std::string& name, uint16_t channel)
+    {
         auto& channelSocket = sockets[channel];
         if (not channelSocket)
             channelSocket = std::make_shared<ChannelSocket>(parent_.weak(), name, channel);
         else {
             JAMI_WARN("A channel is already present on that socket, accepting "
-                        "the request will close the previous one");
+                      "the request will close the previous one");
         }
         return channelSocket;
     }
@@ -503,7 +504,8 @@ MultiplexedSocket::addChannel(const std::string& name)
     std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
     for (int i = 1; i < UINT16_MAX; ++i) {
         auto c = (offset + i) % UINT16_MAX;
-        if (c == CONTROL_CHANNEL || c == PROTOCOL_CHANNEL || pimpl_->sockets.find(c) != pimpl_->sockets.end())
+        if (c == CONTROL_CHANNEL || c == PROTOCOL_CHANNEL
+            || pimpl_->sockets.find(c) != pimpl_->sockets.end())
             continue;
         return pimpl_->makeSocket(name, c);
     }
@@ -703,7 +705,7 @@ public:
     uint16_t channel {};
     std::weak_ptr<MultiplexedSocket> endpoint {};
 
-    std::deque<uint8_t> buf {};
+    std::vector<uint8_t> buf {};
     std::mutex mutex {};
     std::condition_variable cv {};
     GenericSocket<uint8_t>::RecvCb cb {};
@@ -771,21 +773,22 @@ ChannelSocket::setOnRecv(RecvCb&& cb)
     std::lock_guard<std::mutex> lkSockets(pimpl_->mutex);
     pimpl_->cb = std::move(cb);
     if (!pimpl_->buf.empty() && pimpl_->cb) {
-        pimpl_->cb(&pimpl_->buf[0], pimpl_->buf.size());
-        pimpl_->buf = {};
+        pimpl_->cb(pimpl_->buf.data(), pimpl_->buf.size());
+        pimpl_->buf.clear();
     }
 }
 
 void
-ChannelSocket::onRecv(std::vector<uint8_t>&& pkt) {
+ChannelSocket::onRecv(std::vector<uint8_t>&& pkt)
+{
     std::lock_guard<std::mutex> lkSockets(pimpl_->mutex);
     if (pimpl_->cb) {
         pimpl_->cb(&pkt[0], pkt.size());
         return;
     }
     pimpl_->buf.insert(pimpl_->buf.end(),
-        std::make_move_iterator(pkt.begin()),
-        std::make_move_iterator(pkt.end()));
+                       std::make_move_iterator(pkt.begin()),
+                       std::make_move_iterator(pkt.end()));
     pimpl_->cv.notify_all();
 }
 
@@ -879,9 +882,7 @@ int
 ChannelSocket::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
 {
     std::unique_lock<std::mutex> lk {pimpl_->mutex};
-    pimpl_->cv.wait_for(lk, timeout, [&] {
-        return !pimpl_->buf.empty() or pimpl_->isShutdown_;
-    });
+    pimpl_->cv.wait_for(lk, timeout, [&] { return !pimpl_->buf.empty() or pimpl_->isShutdown_; });
     return pimpl_->buf.size();
 }
 
@@ -895,7 +896,8 @@ ChannelSocket::onShutdown(OnShutdownCb&& cb)
 }
 
 void
-ChannelSocket::onReady(ChannelReadyCb&& cb){
+ChannelSocket::onReady(ChannelReadyCb&& cb)
+{
     pimpl_->readyCb_ = std::move(cb);
 }
 
