@@ -514,8 +514,8 @@ ConnectionManagerTest::testDeclineICERequest()
 
     cv.wait_for(lk, std::chrono::seconds(30));
     CPPUNIT_ASSERT(successfullyReceive);
-    CPPUNIT_ASSERT(!successfullyConnected);
     CPPUNIT_ASSERT(!receiverConnected);
+    CPPUNIT_ASSERT(!successfullyConnected);
 }
 
 void
@@ -530,23 +530,21 @@ ConnectionManagerTest::testChannelRcvShutdown()
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
-    std::condition_variable rcv, scv;
+    std::condition_variable cv;
     bool successfullyConnected = false;
-    bool successfullyReceive = false;
-    bool receiverConnected = false;
     bool shutdownReceived = false;
 
+    std::shared_ptr<ChannelSocket> bobSock;
+
     bobAccount->connectionManager().onChannelRequest(
-        [&successfullyReceive](const DeviceId&, const std::string& name) {
-            successfullyReceive = name == "git://*";
-            return true;
-        });
+        [](const DeviceId&, const std::string&) { return true; });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
-            receiverConnected = socket && (name == "git://*");
-            rcv.notify_one();
-            socket->shutdown();
+        [&](const DeviceId& did, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+            if (socket && name == "git://*" && did != bobDeviceId) {
+                bobSock = socket;
+                cv.notify_one();
+            }
         });
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
@@ -556,18 +554,18 @@ ConnectionManagerTest::testChannelRcvShutdown()
                                                         if (socket) {
                                                             socket->onShutdown([&] {
                                                                 shutdownReceived = true;
-                                                                scv.notify_one();
+                                                                cv.notify_one();
                                                             });
                                                             successfullyConnected = true;
+                                                            cv.notify_one();
                                                         }
                                                     });
 
-    rcv.wait_for(lk, std::chrono::seconds(30));
-    scv.wait_for(lk, std::chrono::seconds(30));
-    CPPUNIT_ASSERT(shutdownReceived);
-    CPPUNIT_ASSERT(successfullyReceive);
-    CPPUNIT_ASSERT(successfullyConnected);
-    CPPUNIT_ASSERT(receiverConnected);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return bobSock && successfullyConnected; }));
+    bobSock->shutdown();
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
+        return shutdownReceived;
+    }));
 }
 
 void
