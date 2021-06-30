@@ -131,6 +131,10 @@ public:
         auto& channelSocket = sockets[channel];
         if (not channelSocket)
             channelSocket = std::make_shared<ChannelSocket>(parent_.weak(), name, channel);
+        else {
+            JAMI_WARN("A channel is already present on that socket, accepting "
+                        "the request will close the previous one");
+        }
         return channelSocket;
     }
 
@@ -176,9 +180,6 @@ public:
 
     std::mutex socketsMutex {};
     std::map<uint16_t, std::shared_ptr<ChannelSocket>> sockets {};
-    // Contains callback triggered when a channel is ready
-    std::mutex channelCbsMutex {};
-    std::map<uint16_t, onChannelReadyCb> channelCbs {};
 
     // Main loop to parse incoming packets
     std::atomic_bool stop {false};
@@ -256,12 +257,9 @@ void
 MultiplexedSocket::Impl::onAccept(const std::string& name, uint16_t channel)
 {
     std::lock_guard<std::mutex> lkSockets(socketsMutex);
-    onChannelReady_(deviceId, makeSocket(name, channel));
-    std::lock_guard<std::mutex> lk(channelCbsMutex);
-    auto channelCbsIt = channelCbs.find(channel);
-    if (channelCbsIt != channelCbs.end()) {
-        (channelCbsIt->second)();
-    }
+    auto socket = makeSocket(name, channel);
+    onChannelReady_(deviceId, socket);
+    socket->ready();
 }
 
 void
@@ -384,11 +382,7 @@ MultiplexedSocket::Impl::onRequest(const std::string& name, uint16_t channel)
 
     if (accept) {
         onChannelReady_(deviceId, channelSocket);
-        std::lock_guard<std::mutex> lk(channelCbsMutex);
-        auto channelCbsIt = channelCbs.find(channel);
-        if (channelCbsIt != channelCbs.end()) {
-            channelCbsIt->second();
-        }
+        channelSocket->ready();
     }
 }
 
@@ -541,12 +535,6 @@ void
 MultiplexedSocket::setOnRequest(OnConnectionRequestCb&& cb)
 {
     pimpl_->onRequest_ = std::move(cb);
-}
-
-void
-MultiplexedSocket::setOnChannelReady(uint16_t channel, onChannelReadyCb&& cb)
-{
-    pimpl_->channelCbs[channel] = std::move(cb);
 }
 
 bool
@@ -717,6 +705,7 @@ public:
 
     ~Impl() {}
 
+    ChannelReadyCb readyCb_ {};
     OnShutdownCb shutdownCb_ {};
     std::atomic_bool isShutdown_ {false};
     std::string name {};
@@ -829,6 +818,13 @@ ChannelSocket::underlyingSocket() const
 #endif
 
 void
+ChannelSocket::ready()
+{
+    if (pimpl_->readyCb_)
+        pimpl_->readyCb_();
+}
+
+void
 ChannelSocket::stop()
 {
     if (pimpl_->isShutdown_)
@@ -906,6 +902,11 @@ ChannelSocket::onShutdown(OnShutdownCb&& cb)
     if (pimpl_->isShutdown_) {
         pimpl_->shutdownCb_();
     }
+}
+
+void
+ChannelSocket::onReady(ChannelReadyCb&& cb){
+    pimpl_->readyCb_ = std::move(cb);
 }
 
 void
