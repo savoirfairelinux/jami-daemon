@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "38e71702_d6a89541",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-30T15:31:48Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "d25cf491_6403a629",
+      "range": {
+        "startLine": 3,
+        "startChar": 0,
+        "endLine": 3,
+        "endChar": 2
+      },
+      "revId": "5a09204cd5523ebcf20636993a915263a56509a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "06427242_eb711af8",
         "filename": "test/agent/agent.cpp",
         "patchSetId": 13
@@ -45,6 +69,30 @@
       "revId": "5a09204cd5523ebcf20636993a915263a56509a2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e0809022_1def3e66",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-30T15:31:48Z",
+      "side": 1,
+      "message": "Indeed. I would like to add a lot more to the behavior using the full DRing API if possible.  The problem is that these methods are call with parameters, which means I have to use scripting language to handle the call logic, YALM being too much simple.\n\nFor now, you can change the details using the `params` key in the YAML configuration.  This will call some callback to change the account details.",
+      "parentUuid": "06427242_eb711af8",
+      "range": {
+        "startLine": 57,
+        "startChar": 60,
+        "endLine": 59,
+        "endChar": 69
+      },
+      "revId": "5a09204cd5523ebcf20636993a915263a56509a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "5be8685f_41a7c06b",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-30T15:31:48Z",
+      "side": 1,
+      "message": "Okay. Let\u0027s add a field `account-id` in the agent configuration.",
+      "parentUuid": "0b9eab50_e5dc1251",
+      "range": {
+        "startLine": 124,
+        "startChar": 12,
+        "endLine": 125,
+        "endChar": 33
+      },
+      "revId": "5a09204cd5523ebcf20636993a915263a56509a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4721ea56_85dd08b5",
         "filename": "test/agent/agent.cpp",
         "patchSetId": 13
@@ -91,6 +163,30 @@
       "revId": "5a09204cd5523ebcf20636993a915263a56509a2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0e2d0442_0421c93a",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-30T15:31:48Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "4721ea56_85dd08b5",
+      "range": {
+        "startLine": 237,
+        "startChar": 0,
+        "endLine": 242,
+        "endChar": 9
+      },
+      "revId": "5a09204cd5523ebcf20636993a915263a56509a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "999313c6_1506e5f0",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 322,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-30T15:31:48Z",
+      "side": 1,
+      "message": "Was not sure about the locking scope.",
+      "parentUuid": "dedfd7fb_27bc6ace",
+      "range": {
+        "startLine": 317,
+        "startChar": 2,
+        "endLine": 322,
+        "endChar": 5
+      },
+      "revId": "5a09204cd5523ebcf20636993a915263a56509a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b2b7326d_f8b3b9fb",
         "filename": "test/agent/agent.h",
         "patchSetId": 13
@@ -140,6 +260,30 @@
     },
     {
       "key": {
+        "uuid": "5c2a9f95_f2d8c96e",
+        "filename": "test/agent/agent.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-30T15:31:48Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "b2b7326d_f8b3b9fb",
+      "range": {
+        "startLine": 27,
+        "startChar": 1,
+        "endLine": 27,
+        "endChar": 14
+      },
+      "revId": "5a09204cd5523ebcf20636993a915263a56509a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "89907c66_6db8cbd2",
         "filename": "test/agent/agent.h",
         "patchSetId": 13
@@ -160,6 +304,30 @@
       "revId": "5a09204cd5523ebcf20636993a915263a56509a2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e494cfcb_76c0533e",
+        "filename": "test/agent/agent.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-06-30T15:31:48Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "89907c66_6db8cbd2",
+      "range": {
+        "startLine": 32,
+        "startChar": 26,
+        "endLine": 36,
+        "endChar": 41
+      },
+      "revId": "5a09204cd5523ebcf20636993a915263a56509a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
