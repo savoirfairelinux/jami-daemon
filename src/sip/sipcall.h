@@ -206,7 +206,7 @@ public:
         const pjmedia_sdp_session* offer, const pjsip_rx_data* rdata);
 
     pj_status_t onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata);
-    void onReceiveOfferIn200OK(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata);
+    void onReceiveOfferIn200OK(const pjmedia_sdp_session* offer);
     /**
      * Called when the media negotiation (SDP offer/answer) has
      * completed.
@@ -394,8 +394,6 @@ private:
     // Vector holding the current RTP sessions.
     std::vector<RtpStream> rtpStreams_;
 
-    bool srtpEnabled_ {false};
-
     /**
      * Hold the transport used for SIP communication.
      * Will be different from the account registration transport for
@@ -426,6 +424,7 @@ private:
     unsigned int localVideoPort_ {0};
 
     bool enableIce_ {true};
+    bool srtpEnabled_ {false};
 
     ///< Transport used for media streams
     std::shared_ptr<IceTransport> mediaTransport_;

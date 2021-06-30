@@ -1001,7 +1001,7 @@ on_rx_offer2(pjsip_inv_session* inv, struct pjsip_inv_on_rx_offer_cb_param* para
 
     if (auto call = getCallFromInvite(inv)) {
         if (auto const& account = call->getAccount().lock()) {
-            call->onReceiveOfferIn200OK(param->offer, const_cast<pjsip_rx_data*>(param->rdata));
+            call->onReceiveOfferIn200OK(param->offer);
         }
     }
 }
