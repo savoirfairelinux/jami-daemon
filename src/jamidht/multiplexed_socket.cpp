@@ -421,7 +421,7 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, std::vector<uint8
     auto sockIt = sockets.find(channel);
     if (channel > 0 && sockIt->second) {
         if (pkt.size() == 0) {
-            sockIt->second->shutdown();
+            sockIt->second->stop();
             sockets.erase(sockIt);
         } else {
             sockIt->second->onRecv(std::move(pkt));
@@ -788,7 +788,6 @@ ChannelSocket::onRecv(std::vector<uint8_t>&& pkt) {
         std::make_move_iterator(pkt.end()));
     pimpl_->cv.notify_all();
 }
-
 
 std::shared_ptr<IceTransport>
 ChannelSocket::underlyingICE() const
