@@ -57,6 +57,7 @@ std::vector<uint8_t> decompress(const std::vector<uint8_t>& dat);
  * Compress string to a Gzip file
  */
 void compressGzip(const std::string& str, const std::string& path);
+void compressGzip(const std::vector<uint8_t>& dat, const std::string& path);
 
 /**
  * Decompress Gzip file to bytes

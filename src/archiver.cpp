@@ -144,6 +144,14 @@ compressGzip(const std::string& str, const std::string& path)
     gzclose(fi);
 }
 
+void
+compressGzip(const std::vector<uint8_t>& dat, const std::string& path)
+{
+    auto fi = openGzip(path, "wb");
+    gzwrite(fi, dat.data(), dat.size());
+    gzclose(fi);
+}
+
 std::vector<uint8_t>
 decompressGzip(const std::string& path)
 {
@@ -169,7 +177,7 @@ decompress(const std::vector<uint8_t>& str)
     z_stream zs; // z_stream is zlib's control structure
     memset(&zs, 0, sizeof(zs));
 
-    if (inflateInit(&zs) != Z_OK)
+    if (inflateInit2(&zs, 32+MAX_WBITS) != Z_OK)
         throw std::runtime_error("inflateInit failed while decompressing.");
 
     zs.next_in = (Bytef*) str.data();

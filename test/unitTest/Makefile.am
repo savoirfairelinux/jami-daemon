@@ -15,6 +15,12 @@ check_PROGRAMS += ut_account_factory
 ut_account_factory_SOURCES = account_factory/testAccount_factory.cpp common.cpp
 
 #
+# account_archive
+#
+check_PROGRAMS += ut_account_archive
+ut_account_archive_SOURCES = account_archive/account_archive.cpp common.cpp
+
+#
 # certstore
 #
 check_PROGRAMS += ut_certstore

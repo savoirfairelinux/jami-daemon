@@ -535,24 +535,53 @@ readArchive(const std::string& path, const std::string& pwd)
 {
     JAMI_DBG("Reading archive from %s", path.c_str());
 
-    std::vector<uint8_t> data;
-    if (pwd.empty()) {
-        data = archiver::decompressGzip(path);
-    } else {
-        // Read file
+    auto isUnencryptedGzip = [](const std::vector<uint8_t>& data) {
+        // NOTE: some webserver modify gzip files and this can end with a gunzip in a gunzip
+        // file. So, to make the readArchive more robust, we can support this case by detecting
+        // gzip header via 1f8b 08
+        // We don't need to support more than 2 level, else somebody may be able to send
+        // gunzip in loops and abuse.
+        return data.size() > 3 && data[0] == 0x1f && data[1] == 0x8b && data[2] == 0x08;
+    };
+
+    auto decompress = [](std::vector<uint8_t>& data) {
         try {
-            data = loadFile(path);
-        } catch (const std::exception& e) {
-            JAMI_ERR("Error loading archive: %s", e.what());
-            throw e;
-        }
-        // Decrypt
-        try {
-            data = archiver::decompress(dht::crypto::aesDecrypt(data, pwd));
+            data = archiver::decompress(data);
         } catch (const std::exception& e) {
             JAMI_ERR("Error decrypting archive: %s", e.what());
             throw e;
         }
+    };
+
+    std::vector<uint8_t> data;
+    // Read file
+    try {
+        data = loadFile(path);
+    } catch (const std::exception& e) {
+        JAMI_ERR("Error loading archive: %s", e.what());
+        throw e;
+    }
+
+
+    if (isUnencryptedGzip(data)) {
+        if (!pwd.empty())
+            JAMI_WARN() << "A gunzip in a gunzip is detected. A webserver may have a bad config";
+
+        decompress(data);
+    }
+
+    if (!pwd.empty()) {
+        // Decrypt
+        try {
+            data = dht::crypto::aesDecrypt(data, pwd);
+        } catch (const std::exception& e) {
+            JAMI_ERR("Error decrypting archive: %s", e.what());
+            throw e;
+        }
+        decompress(data);
+    } else if (isUnencryptedGzip(data)) {
+        JAMI_WARN() << "A gunzip in a gunzip is detected. A webserver may have a bad config";
+        decompress(data);
     }
     return data;
 }
