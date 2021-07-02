@@ -1,6 +1,7 @@
 {
   "comments": [
     {
+      "unresolved": true,
       "key": {
         "uuid": "5cfe9bfc_d5429fe1",
         "filename": "test/agent/agent.cpp",
@@ -14,10 +15,28 @@
       "side": 1,
       "message": "IMOH, all the setup, config, account settings should moved to helpers and keep the run() method as small and scoped as possible.",
       "revId": "425d84f666809e38b14016a44082d2f7293b475d",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "48fd4284_643feab7",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-02T13:36:11Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "5cfe9bfc_d5429fe1",
+      "revId": "425d84f666809e38b14016a44082d2f7293b475d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
       "key": {
         "uuid": "1f22c831_dd7d2a25",
         "filename": "test/agent/agent.cpp",
@@ -31,8 +50,25 @@
       "side": 1,
       "message": "dont use goto please ...",
       "revId": "425d84f666809e38b14016a44082d2f7293b475d",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ffedbe64_7a9f2360",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 172,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-02T13:36:11Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "1f22c831_dd7d2a25",
+      "revId": "425d84f666809e38b14016a44082d2f7293b475d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
