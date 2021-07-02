@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f06b53b6_17e3f86e",
+        "filename": "src/manager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 3404,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-02T18:24:01Z",
+      "side": 1,
+      "message": "really necessary? The erase cannot be done elsewhere? in what case this can be called? Looks like a design issue",
+      "range": {
+        "startLine": 3403,
+        "startChar": 24,
+        "endLine": 3404,
+        "endChar": 37
+      },
+      "revId": "2589fc2e0ae18c989e1ee3a45a23a9dd73ce9427",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "43d34125_9cad2c87",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 2760,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-02T18:24:01Z",
+      "side": 1,
+      "message": "lot of duplicates with Conference::createSinks",
+      "range": {
+        "startLine": 2751,
+        "startChar": 27,
+        "endLine": 2760,
+        "endChar": 29
+      },
+      "revId": "2589fc2e0ae18c989e1ee3a45a23a9dd73ce9427",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
