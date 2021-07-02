@@ -1,6 +1,7 @@
 {
   "comments": [
     {
+      "unresolved": true,
       "key": {
         "uuid": "e6d57a20_ffccec0b",
         "filename": "src/account_schema.h",
@@ -14,10 +15,28 @@
       "side": 1,
       "message": "don\u0027t change the key to preserve backward-compatibility",
       "revId": "72728018b7e1c6ecfa3b00ce9759d6e3d64f04ef",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "f5af2443_a3a79f27",
+        "filename": "src/account_schema.h",
+        "patchSetId": 9
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-07-02T13:32:43Z",
+      "side": 1,
+      "message": "I think this is fine, cause the key was never exposed to the client side",
+      "parentUuid": "e6d57a20_ffccec0b",
+      "revId": "72728018b7e1c6ecfa3b00ce9759d6e3d64f04ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
       "key": {
         "uuid": "d999aa42_527fe784",
         "filename": "src/sip/sipaccount.cpp",
@@ -31,10 +50,28 @@
       "side": 1,
       "message": "do you think it should be true by default?",
       "revId": "72728018b7e1c6ecfa3b00ce9759d6e3d64f04ef",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "58430ac5_220b0649",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 153,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-07-02T13:32:43Z",
+      "side": 1,
+      "message": "I think we should not, cause many of the cases do not requrie it",
+      "parentUuid": "d999aa42_527fe784",
+      "revId": "72728018b7e1c6ecfa3b00ce9759d6e3d64f04ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
       "key": {
         "uuid": "abb2b88f_b2891aee",
         "filename": "src/sip/sipaccount.cpp",
@@ -48,10 +85,28 @@
       "side": 1,
       "message": "auto via_addrstr \u003d sip_utils::as_view(*via_addr);",
       "revId": "72728018b7e1c6ecfa3b00ce9759d6e3d64f04ef",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6052dbea_354d679e",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1928,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-07-02T13:32:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "abb2b88f_b2891aee",
+      "revId": "72728018b7e1c6ecfa3b00ce9759d6e3d64f04ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
       "key": {
         "uuid": "5221b7b9_b078d21a",
         "filename": "src/sip/sipaccount.cpp",
@@ -65,8 +120,25 @@
       "side": 1,
       "message": "IpAddr srv_ip \u003d {std::string_view(param-\u003erdata-\u003epkt_info.src_name)};",
       "revId": "72728018b7e1c6ecfa3b00ce9759d6e3d64f04ef",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ac6e95be_54147553",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1986,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-07-02T13:32:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5221b7b9_b078d21a",
+      "revId": "72728018b7e1c6ecfa3b00ce9759d6e3d64f04ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
