@@ -1,6 +1,7 @@
 {
   "comments": [
     {
+      "unresolved": true,
       "key": {
         "uuid": "15a4e085_8f8bf3be",
         "filename": "src/ice_transport.cpp",
@@ -14,10 +15,10 @@
       "side": 1,
       "message": "just to remind that this method called on dht::ThreadPool.io() threads (through connectDeviceStartIce), meaning, potentially all the pool thread will be registered.",
       "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
       "key": {
         "uuid": "d2b5fb38_fa3d0790",
         "filename": "src/ice_transport.cpp",
@@ -32,10 +33,10 @@
       "message": "This is fine, because checking if a thread is registered for PJSIP is a trivial operation, and there is no limit of thread number in PJSIP. PJSIP internally uses thread_local variables to store thread-specific data.",
       "parentUuid": "15a4e085_8f8bf3be",
       "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
       "key": {
         "uuid": "8a34cbcb_2ae2d4cf",
         "filename": "src/ice_transport.cpp",
@@ -50,10 +51,10 @@
       "message": "I think that this solves the symptom, but not the underlying problem.  There\u0027s an overall problem with registration of threads with PJ.  Do we really need to allow infinite thread to access the PJ ice transport?  Why not have a ScheduledExecutor that does the jobs and other threads wait for it. After all, the ScheduledExecutor acts as a mutex just like now, but now only _one_ thread has to register to PJ per ice transport.  This can even be transformed into an async operation if the caller doesn\u0027t need the result immediately.",
       "parentUuid": "d2b5fb38_fa3d0790",
       "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
       "key": {
         "uuid": "e92776b5_1710757c",
         "filename": "src/ice_transport.cpp",
@@ -68,10 +69,10 @@
       "message": "furthermore, the thread registration check might be broken as per PJSIP comment (to be honest, I did not check if this comment still holds or applies to us):\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n   /* If a thread descriptor has been registered before, just return it. */\n    if (pj_thread_local_get (thread_tls_id) !\u003d 0) {\n\t// 2006-02-26 bennylp:\n\t//  This wouldn\u0027t work in all cases!.\n\t//  If thread is created by external module (e.g. sound thread),\n\t//  thread may be reused while the pool used for the thread descriptor\n\t//  has been deleted by application.\n\t//*thread_ptr \u003d (pj_thread_t*)pj_thread_local_get (thread_tls_id);\n        //return PJ_SUCCESS;\n    }\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d",
       "parentUuid": "8a34cbcb_2ae2d4cf",
       "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
       "key": {
         "uuid": "48ec26d8_3a960886",
         "filename": "src/ice_transport.cpp",
@@ -86,10 +87,10 @@
       "message": "ScheduledExecutor would end up creating a new thread for every ICE transport (VS reusing available threads from the pool).\n\nThis would actually end-up creating and registering many more threads than with the pool. Also, on some systems (like Windows) creating a thread is a heavy operation.\n\nThe point of the thread-pool is precisely to avoid creating hundreds of threads and to allow thread-reuse, leading to less total threads and less threads registered by pjsip compared to creating a new thread every time.\n\npjsip already has internal mutexes to play well with multithread code so there is no need to force all the code using pjsip to be on a single thread.",
       "parentUuid": "e92776b5_1710757c",
       "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
       "key": {
         "uuid": "35062653_7b6ec9b9",
         "filename": "src/ice_transport.cpp",
@@ -104,10 +105,10 @@
       "message": "I think you missed Olivier\u0027s point. \nThe idea is to use one thread to access PJSIP, at least when probing pj_ioqueue for socket events. There will be one scheduler instance for all ICE TCP instances, and can be also be reused for non-ICE socket (used by sipvoiplink). \nHowever, regarding ICE UDP (media RTP), we might want to keep a separate ioqueue/scheduler (to be evaluated).",
       "parentUuid": "48ec26d8_3a960886",
       "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
       "key": {
         "uuid": "82cdbe8f_e184dc29",
         "filename": "src/ice_transport.cpp",
@@ -122,10 +123,10 @@
       "message": "Ideally, the daemon could just use a single thread and use async operations à-la asio/libuv/nodejs, but we\u0027re stuck with some constrains related to the pjsip design.\n\n\"one thread to access PJSIP, at least when probing pj_ioqueue for socket events\" \u003d\u003e Isn\u0027t that already the case ? pj_ioqueue_pool is always called by its own thread (in handleEvents)\n\n\"one scheduler instance for all ICE TCP instances\" \u003d\u003e If some operations are blocking (eg to send stuff on the network), it\u0027s gonna block other unrelated stuff for other sockets/peers (that\u0027s the point of the io pool)",
       "parentUuid": "35062653_7b6ec9b9",
       "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
       "key": {
         "uuid": "c1f4c4c9_90f8be6b",
         "filename": "src/ice_transport.cpp",
@@ -140,10 +141,10 @@
       "message": "\" one thread to access PJSIP, at least when probing pj_ioqueue for socket events\" \u003d\u003e Isn\u0027t that already the case ? pj_ioqueue_pool is always called by its own thread (in handleEvents)\"\n\nNo, it\u0027s not the case. For ICE sockets, each ICE transp instance will have its own thread (scheduler) and ioqueue.\n\nIf we have blocking operations, we have to identify them and handle them accordingly. Otherwise, we can end-up with out-of-order sequences. For SIP in particular, SIP events should be handled with respect to their order. Example:\nINVITE,\nTRYING,\nRINGING,\nOK,\n\nSo it does not make sense to process INVITE, OK, RINGING, TRYING.",
       "parentUuid": "82cdbe8f_e184dc29",
       "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
       "key": {
         "uuid": "c64ff4cf_4694a509",
         "filename": "src/ice_transport.cpp",
@@ -158,10 +159,28 @@
       "message": "There is one pj_ioqueue per ice transport, so a given transport will always use the same pj_ioqueue.",
       "parentUuid": "c1f4c4c9_90f8be6b",
       "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "70e3893f_9ec2e380",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1073,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-07-05T20:27:39Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "c64ff4cf_4694a509",
+      "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
       "key": {
         "uuid": "c8b594f1_07d35443",
         "filename": "src/ice_transport.cpp",
@@ -175,10 +194,10 @@
       "side": 1,
       "message": "Shouldn\u0027t this method also register the calling thread?",
       "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
       "key": {
         "uuid": "40df3b84_30a9b910",
         "filename": "src/ice_transport.cpp",
@@ -193,8 +212,25 @@
       "message": "indeed",
       "parentUuid": "c8b594f1_07d35443",
       "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c35c06e0_f8f3a215",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1138,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-07-05T20:27:39Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "40df3b84_30a9b910",
+      "revId": "f307d50c79a12fd4eb106f480ee8dfa848a14c60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
