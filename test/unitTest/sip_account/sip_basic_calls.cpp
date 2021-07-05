@@ -90,7 +90,7 @@ private:
     CPPUNIT_TEST_SUITE(SipBasicCallTest);
     CPPUNIT_TEST(audio_only_test);
     CPPUNIT_TEST(audio_video_test);
-#if 0 
+#if 0
     // Test when the peer answers will all media disabled (RTP port = 0)
     // For now, this test will cause a crash. Must be enabled once the
     // crash is fixed
