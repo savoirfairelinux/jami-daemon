@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0630ea30_9c31a85e",
+        "filename": "src/manager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 3404,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-07-05T19:36:01Z",
+      "side": 1,
+      "message": "not really necessary",
+      "parentUuid": "f06b53b6_17e3f86e",
+      "range": {
+        "startLine": 3403,
+        "startChar": 24,
+        "endLine": 3404,
+        "endChar": 37
+      },
+      "revId": "2589fc2e0ae18c989e1ee3a45a23a9dd73ce9427",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "43d34125_9cad2c87",
