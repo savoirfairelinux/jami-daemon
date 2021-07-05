@@ -255,9 +255,6 @@ public:
     ssize_t recvRaw(void*, size_t);
     int waitForRawData(std::chrono::milliseconds);
 
-    void handleDataPacket(std::vector<ValueType>&&, uint64_t);
-    void flushRxQueue();
-
     // Statistics
     std::atomic<std::size_t> stRxRawPacketCnt_ {0};
     std::atomic<std::size_t> stRxRawBytesCnt_ {0};
@@ -1016,106 +1013,6 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
     }
 
     return TlsSessionState::ESTABLISHED;
-}
-
-void
-TlsSession::TlsSessionImpl::handleDataPacket(std::vector<ValueType>&& buf, uint64_t pkt_seq)
-{
-    // Check for a valid seq. num. delta
-    int64_t seq_delta = pkt_seq - lastRxSeq_;
-    if (seq_delta > 0) {
-        lastRxSeq_ = pkt_seq;
-    } else {
-        // too old?
-        if (seq_delta <= -MISS_ORDERING_LIMIT) {
-            JAMI_WARN("[TLS] drop old pkt: 0x%lx", pkt_seq);
-            return;
-        }
-
-        // No duplicate check as DTLS prevents that for us (replay protection)
-
-        // accept Out-Of-Order pkt - will be reordered by queue flush operation
-        JAMI_WARN("[TLS] OOO pkt: 0x%lx", pkt_seq);
-    }
-
-    {
-        std::lock_guard<std::mutex> lk {reorderBufMutex_};
-        if (reorderBuffer_.empty())
-            lastReadTime_ = clock::now();
-        reorderBuffer_.emplace(pkt_seq, std::move(buf));
-    }
-
-    // Try to flush right now as a new packet is available
-    flushRxQueue();
-    scheduler_.scheduleIn([this] { flushRxQueue(); }, RX_OOO_TIMEOUT);
-}
-
-///
-/// Reorder and push received packet to upper layer
-///
-/// \note This method must be called continuously, faster than RX_OOO_TIMEOUT
-///
-void
-TlsSession::TlsSessionImpl::flushRxQueue()
-{
-    // RAII bool swap
-    class GuardedBoolSwap
-    {
-    public:
-        explicit GuardedBoolSwap(bool& var)
-            : var_ {var}
-        {
-            var_ = !var_;
-        }
-        ~GuardedBoolSwap() { var_ = !var_; }
-
-    private:
-        bool& var_;
-    };
-
-    std::unique_lock<std::mutex> lk {reorderBufMutex_};
-    if (reorderBuffer_.empty())
-        return;
-
-    // Prevent re-entrant access as the callbacks_.onRxData() is called in unprotected region
-    if (flushProcessing_)
-        return;
-
-    GuardedBoolSwap swap_flush_processing {flushProcessing_};
-
-    auto now = clock::now();
-
-    auto item = std::begin(reorderBuffer_);
-    auto next_offset = item->first;
-
-    // Wait for next continuous packet until timeout
-    if ((now - lastReadTime_) >= RX_OOO_TIMEOUT) {
-        // OOO packet timeout - consider waited packets as lost
-        if (auto lost = next_offset - gapOffset_)
-            JAMI_WARN("[TLS] %lu lost since 0x%lx", lost, gapOffset_);
-        else
-            JAMI_WARN("[TLS] slow flush");
-    } else if (next_offset != gapOffset_)
-        return;
-
-    // Loop on offset-ordered received packet until a discontinuity in sequence number
-    while (item != std::end(reorderBuffer_) and item->first <= next_offset) {
-        auto pkt_offset = item->first;
-        auto pkt = std::move(item->second);
-
-        // Remove item before unlocking to not trash the item' relationship
-        next_offset = pkt_offset + 1;
-        item = reorderBuffer_.erase(item);
-
-        if (callbacks_.onRxData) {
-            lk.unlock();
-            callbacks_.onRxData(std::move(pkt));
-            lk.lock();
-        }
-    }
-
-    gapOffset_ = std::max(gapOffset_, next_offset);
-    lastReadTime_ = now;
 }
 
 TlsSessionState TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState)
