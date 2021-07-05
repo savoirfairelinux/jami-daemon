@@ -2715,8 +2715,8 @@ SIPCall::addDummyVideoRtpSession()
 std::shared_ptr<AudioRtpSession>
 SIPCall::getAudioRtp() const
 {
-    // For the moment, we support only one audio stream.
-
+    // For the moment, the clients support only one audio stream, so we
+    // return the first audio stream.
     for (auto const& stream : rtpStreams_) {
         auto rtp = stream.rtpSession_;
         if (rtp->getMediaType() == MediaType::MEDIA_AUDIO) {
@@ -2740,6 +2740,17 @@ SIPCall::getVideoRtp() const
     return nullptr;
 }
 #endif
+
+std::vector<std::shared_ptr<RtpSession>>
+SIPCall::getRtpSessionList() const
+{
+    std::vector<std::shared_ptr<RtpSession>> rtpList;
+    rtpList.reserve(rtpStreams_.size());
+    for (auto const& stream : rtpStreams_) {
+        rtpList.emplace_back(stream.rtpSession_);
+    }
+    return rtpList;
+}
 
 void
 SIPCall::monitor() const
