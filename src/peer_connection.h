@@ -82,7 +82,6 @@ public:
     ~IceSocketEndpoint();
 
     void shutdown() override;
-    bool isReliable() const override { return ice_ ? ice_->isRunning() : false; }
     bool isInitiator() const override { return ice_ ? ice_->isInitiator() : true; }
     int maxPayload() const override
     {
@@ -129,7 +128,6 @@ public:
                       std::function<bool(const dht::crypto::Certificate&)>&& cert_check);
     ~TlsSocketEndpoint();
 
-    bool isReliable() const override { return true; }
     bool isInitiator() const override;
     int maxPayload() const override;
     void shutdown() override;

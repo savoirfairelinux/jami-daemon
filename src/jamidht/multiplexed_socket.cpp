@@ -531,12 +531,6 @@ MultiplexedSocket::setOnRequest(OnConnectionRequestCb&& cb)
 }
 
 bool
-MultiplexedSocket::isReliable() const
-{
-    return true;
-}
-
-bool
 MultiplexedSocket::isInitiator() const
 {
     if (!pimpl_->endpoint) {
@@ -738,15 +732,6 @@ uint16_t
 ChannelSocket::channel() const
 {
     return pimpl_->channel;
-}
-
-bool
-ChannelSocket::isReliable() const
-{
-    if (auto ep = pimpl_->endpoint.lock()) {
-        return ep->isReliable();
-    }
-    return false;
 }
 
 bool

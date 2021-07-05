@@ -73,10 +73,7 @@ public:
     IceSocketTransport(std::shared_ptr<IceTransport>& ice, int comp_id, bool reliable = false)
         : compId_ {comp_id}
         , ice_ {ice}
-        , reliable_ {reliable}
     {}
-
-    bool isReliable() const override { return reliable_; }
 
     void shutdown() override;
 
@@ -99,7 +96,6 @@ public:
 private:
     const int compId_;
     std::shared_ptr<IceTransport> ice_;
-    bool reliable_;
 };
 
 }; // namespace jami

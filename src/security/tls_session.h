@@ -133,8 +133,6 @@ public:
     /// Return true if the TLS session type is a server.
     bool isInitiator() const override;
 
-    bool isReliable() const override;
-
     int maxPayload() const override;
 
     void waitForReady(const duration& timeout = {});
