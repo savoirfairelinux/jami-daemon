@@ -25,7 +25,7 @@
 #include <string>
 
 #include "manager.h"
-#include "jamidht/jamiaccount.h"
+#include "sip/sipaccount.h"
 #include "../../test_runner.h"
 
 #include "dring.h"
@@ -35,6 +35,7 @@
 #include "sip/sipcall.h"
 #include "media/audio/audio_rtp_session.h"
 #include "media/audio/audio_receive_thread.h"
+#include "media/video/video_rtp_session.h"
 
 #include "common.h"
 
@@ -58,6 +59,7 @@ struct CallData
 
     std::string accountId_ {};
     std::string userName_ {};
+    uint16_t listeningPort_ {0};
     std::string alias_ {};
     std::string callId_ {};
     std::vector<Signal> signals_;
@@ -119,15 +121,15 @@ class IceSdpParsingTest : public CppUnit::TestFixture
 {
 public:
     IceSdpParsingTest()
-        : audioReceiver_(std::make_shared<MediaReceiver>(MediaType::MEDIA_AUDIO))
     {
         // Init daemon
         DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
             CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
 
-        // We must have valid media receiver.
-        CPPUNIT_ASSERT(audioReceiver_);
+        for (size_t idx = 0; idx < MEDIA_COUNT; idx++) {
+            mediaReceivers_.emplace_back(std::make_shared<MediaReceiver>(MediaType::MEDIA_AUDIO));
+        }
     }
     ~IceSdpParsingTest() { DRing::fini(); }
 
@@ -158,7 +160,7 @@ private:
                                          CallData& callData);
 
     // Helpers
-    void audio_video_call();
+    void test_call();
     static void configureTest(CallData& bob, CallData& alice);
     static std::string getUserAlias(const std::string& callId);
     // Wait for a signal from the callbacks. Some signals also report the event that
@@ -166,13 +168,16 @@ private:
     static bool waitForSignal(CallData& callData,
                               const std::string& signal,
                               const std::string& expectedEvent = {});
-    static bool attachReceiver(const std::string& callId, std::shared_ptr<MediaReceiver> receiver);
-    static bool detachReceiver(const std::string& callId, std::shared_ptr<MediaReceiver> receiver);
+    static bool attachReceiver(std::shared_ptr<MediaReceiver> receiver,
+                               std::shared_ptr<RtpSession> rtpStream);
+    static bool detachReceiver(std::shared_ptr<MediaReceiver> receiver,
+                               std::shared_ptr<RtpSession> rtpStream);
 
 private:
     CallData aliceData_;
     CallData bobData_;
-    std::shared_ptr<MediaReceiver> audioReceiver_;
+    const size_t MEDIA_COUNT {2};
+    std::vector<std::shared_ptr<MediaReceiver>> mediaReceivers_;
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(IceSdpParsingTest, IceSdpParsingTest::name());
@@ -180,23 +185,58 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(IceSdpParsingTest, IceSdpParsingTest::name
 void
 IceSdpParsingTest::setUp()
 {
-    auto actors = load_actors("actors/alice-bob-no-upnp.yml");
-    aliceData_.accountId_ = actors["alice"];
-    bobData_.accountId_ = actors["bob"];
+    aliceData_.listeningPort_ = 15080;
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("SIP");
+    details[ConfProperties::TYPE] = "SIP";
+    details[ConfProperties::DISPLAYNAME] = "ALICE";
+    details[ConfProperties::ALIAS] = "ALICE";
+    details[ConfProperties::LOCAL_PORT] = std::to_string(aliceData_.listeningPort_);
+    details[ConfProperties::UPNP_ENABLED] = "false";
+    aliceData_.accountId_ = Manager::instance().addAccount(details);
 
-    JAMI_INFO("Initializing accounts ...");
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceData_.accountId_);
+    bobData_.listeningPort_ = 15082;
+    details = DRing::getAccountTemplate("SIP");
+    details[ConfProperties::TYPE] = "SIP";
+    details[ConfProperties::DISPLAYNAME] = "BOB";
+    details[ConfProperties::ALIAS] = "BOB";
+    details[ConfProperties::LOCAL_PORT] = std::to_string(bobData_.listeningPort_);
+    details[ConfProperties::UPNP_ENABLED] = "false";
+    bobData_.accountId_ = Manager::instance().addAccount(details);
+
+    JAMI_INFO("Initialize accounts ...");
+    auto aliceAccount = Manager::instance().getAccount<SIPAccount>(aliceData_.accountId_);
     aliceAccount->enableMultiStream(true);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobData_.accountId_);
+    auto bobAccount = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
     bobAccount->enableMultiStream(true);
-
-    wait_for_announcement_of({aliceAccount->getAccountID(), bobAccount->getAccountID()});
 }
 
 void
 IceSdpParsingTest::tearDown()
 {
-    wait_for_removal_of({aliceData_.accountId_, bobData_.accountId_});
+    JAMI_INFO("Remove created accounts...");
+
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    auto currentAccSize = Manager::instance().getAccountList().size();
+    std::atomic_bool accountsRemoved {false};
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::AccountsChanged>([&]() {
+            if (Manager::instance().getAccountList().size() <= currentAccSize - 2) {
+                accountsRemoved = true;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    Manager::instance().removeAccount(aliceData_.accountId_, true);
+    Manager::instance().removeAccount(bobData_.accountId_, true);
+    // Because cppunit is not linked with dbus, just poll if removed
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsRemoved.load(); }));
+
+    DRing::unregisterSignalHandlers();
 }
 
 std::string
@@ -369,21 +409,15 @@ IceSdpParsingTest::waitForSignal(CallData& callData,
 }
 
 bool
-IceSdpParsingTest::attachReceiver(const std::string& callId,
-                                  std::shared_ptr<MediaReceiver> mediaReceiver)
+IceSdpParsingTest::attachReceiver(std::shared_ptr<MediaReceiver> mediaReceiver,
+                                  std::shared_ptr<RtpSession> rtpSession)
 {
     CPPUNIT_ASSERT(mediaReceiver);
-    auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(callId));
-    if (not call) {
-        JAMI_ERR("Call [%s] does not exist!", callId.c_str());
-    }
-    CPPUNIT_ASSERT(call);
-
     CPPUNIT_ASSERT(mediaReceiver->mediaType_ == MediaType::MEDIA_AUDIO
                    or mediaReceiver->mediaType_ == MediaType::MEDIA_VIDEO);
 
     if (mediaReceiver->mediaType_ == MediaType::MEDIA_AUDIO) {
-        auto audioRtp = call->getAudioRtp();
+        auto audioRtp = std::dynamic_pointer_cast<AudioRtpSession>(rtpSession);
         auto receiver = audioRtp->getAudioReceive().get();
         CPPUNIT_ASSERT(receiver != nullptr);
         if (receiver == nullptr)
@@ -391,31 +425,28 @@ IceSdpParsingTest::attachReceiver(const std::string& callId,
         return receiver->attach(mediaReceiver.get());
     }
 
-    auto videoRtp = call->getVideoRtp();
+    auto videoRtp = std::dynamic_pointer_cast<video::VideoRtpSession>(rtpSession);
     auto receiver = videoRtp->getVideoReceive().get();
     CPPUNIT_ASSERT(receiver != nullptr);
     return receiver->attach(mediaReceiver.get());
 }
 
 bool
-IceSdpParsingTest::detachReceiver(const std::string& callId,
-                                  std::shared_ptr<MediaReceiver> mediaReceiver)
+IceSdpParsingTest::detachReceiver(std::shared_ptr<MediaReceiver> mediaReceiver,
+                                  std::shared_ptr<RtpSession> rtpSession)
 {
-    auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(callId));
-    CPPUNIT_ASSERT(call);
-
     CPPUNIT_ASSERT(mediaReceiver);
     CPPUNIT_ASSERT(mediaReceiver->mediaType_ == MediaType::MEDIA_AUDIO
                    or mediaReceiver->mediaType_ == MediaType::MEDIA_VIDEO);
 
     if (mediaReceiver->mediaType_ == MediaType::MEDIA_AUDIO) {
-        auto audioRtp = call->getAudioRtp();
+        auto audioRtp = std::dynamic_pointer_cast<AudioRtpSession>(rtpSession);
         auto receiver = audioRtp->getAudioReceive().get();
         CPPUNIT_ASSERT(receiver != nullptr);
         return receiver->detach(mediaReceiver.get());
     }
 
-    auto videoRtp = call->getVideoRtp();
+    auto videoRtp = std::dynamic_pointer_cast<video::VideoRtpSession>(rtpSession);
     auto receiver = videoRtp->getVideoReceive().get();
     CPPUNIT_ASSERT(receiver != nullptr);
     return receiver->detach(mediaReceiver.get());
@@ -426,19 +457,20 @@ IceSdpParsingTest::configureTest(CallData& aliceData, CallData& bobData)
 {
     {
         CPPUNIT_ASSERT(not aliceData.accountId_.empty());
-        auto const& account = Manager::instance().getAccount<JamiAccount>(aliceData.accountId_);
+        auto const& account = Manager::instance().getAccount<SIPAccount>(aliceData.accountId_);
         aliceData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         aliceData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
-
+        account->setLocalPort(aliceData.listeningPort_);
+        account->enableIceForMedia(true);
         account->enableIceCompIdRfc5245Compliance(aliceData.compliancyEnabled_);
     }
 
     {
         CPPUNIT_ASSERT(not bobData.accountId_.empty());
-        auto const& account = Manager::instance().getAccount<JamiAccount>(bobData.accountId_);
+        auto const& account = Manager::instance().getAccount<SIPAccount>(bobData.accountId_);
         bobData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         bobData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
-
+        account->setLocalPort(bobData.listeningPort_);
         account->enableIceCompIdRfc5245Compliance(bobData.compliancyEnabled_);
     }
 
@@ -466,7 +498,9 @@ IceSdpParsingTest::configureTest(CallData& aliceData, CallData& bobData)
         }));
 
     signalHandlers.insert(DRing::exportable_callback<DRing::CallSignal::MediaNegotiationStatus>(
-        [&](const std::string& callId, const std::string& event, const std::vector<std::map<std::string, std::string>>& media) {
+        [&](const std::string& callId,
+            const std::string& event,
+            const std::vector<std::map<std::string, std::string>>& /* mediaList */) {
             auto user = getUserAlias(callId);
             if (not user.empty())
                 onMediaNegotiationStatus(callId,
@@ -478,46 +512,68 @@ IceSdpParsingTest::configureTest(CallData& aliceData, CallData& bobData)
 }
 
 void
-IceSdpParsingTest::audio_video_call()
+IceSdpParsingTest::test_call()
 {
     configureTest(aliceData_, bobData_);
 
     JAMI_INFO("=== Start a call and validate ===");
 
-    MediaAttribute audio(MediaType::MEDIA_AUDIO);
-    audio.label_ = "main audio";
-    MediaAttribute video(MediaType::MEDIA_VIDEO);
-    video.label_ = "main video";
+    // NOTE:
+    // We use two audio media instead of one audio and one video media
+    // to be able to run the test on machines that do not have access to
+    // camera.
+    // For this specific UT, testing with two audio media is valid, because
+    // the main goal is to validate that the media sockets negotiated
+    // through ICE can correctly exchange media (RTP packets).
+
+    MediaAttribute media_0(MediaType::MEDIA_AUDIO);
+    media_0.label_ = "audio_0";
+    media_0.enabled_ = true;
+    MediaAttribute media_1(MediaType::MEDIA_AUDIO);
+    media_1.label_ = "audio_1";
+    media_1.enabled_ = true;
 
     std::vector<MediaAttribute> offer;
-    offer.emplace_back(audio);
-    offer.emplace_back(video);
-    std::vector<MediaAttribute> answer;
-    answer.emplace_back(audio);
-    answer.emplace_back(video);
+    offer.emplace_back(media_0);
+    offer.emplace_back(media_1);
 
-    auto const& aliceCall = std::dynamic_pointer_cast<SIPCall>(
-        (Manager::instance().getAccount<JamiAccount>(aliceData_.accountId_))
-            ->newOutgoingCall(bobData_.userName_, offer));
-    CPPUNIT_ASSERT(aliceCall);
-    aliceData_.callId_ = aliceCall->getCallId();
+    std::vector<MediaAttribute> answer;
+    answer.emplace_back(media_0);
+    answer.emplace_back(media_1);
+
+    CPPUNIT_ASSERT_EQUAL(MEDIA_COUNT, offer.size());
+    CPPUNIT_ASSERT_EQUAL(MEDIA_COUNT, answer.size());
+    auto bobAddr = ip_utils::getLocalAddr(AF_INET);
+    bobAddr.setPort(bobData_.listeningPort_);
+
+    aliceData_.callId_ = DRing::placeCallWithMedia(aliceData_.accountId_,
+                                                   bobAddr.toString(true),
+                                                   MediaAttribute::mediaAttributesToMediaMaps(
+                                                       offer));
+    CPPUNIT_ASSERT(not aliceData_.callId_.empty());
 
     JAMI_INFO("ALICE [%s] started a call with BOB [%s] and wait for answer",
               aliceData_.accountId_.c_str(),
               bobData_.accountId_.c_str());
 
+    // Give it some time to ring
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
+    // Wait for call to be processed.
+    CPPUNIT_ASSERT(
+        waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::RINGING));
+
     // Wait for incoming call signal.
     CPPUNIT_ASSERT(waitForSignal(bobData_, DRing::CallSignal::IncomingCallWithMedia::name));
+
     // Answer the call.
-    {
-        auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(answer);
-        Manager::instance().answerCallWithMedia(bobData_.callId_, mediaList);
-    }
+    DRing::acceptWithMedia(bobData_.callId_, MediaAttribute::mediaAttributesToMediaMaps(answer));
 
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(bobData_,
                                  DRing::CallSignal::MediaNegotiationStatus::name,
                                  DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+
     // Wait for the StateChange signal.
     CPPUNIT_ASSERT(
         waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::CURRENT));
@@ -533,12 +589,29 @@ IceSdpParsingTest::audio_video_call()
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
     // Register the media observer to validate media flow.
-    // NOTE: For now, only audio is validated.
-    CPPUNIT_ASSERT(attachReceiver(aliceData_.callId_, audioReceiver_));
+    CPPUNIT_ASSERT_EQUAL(MEDIA_COUNT, mediaReceivers_.size());
+    auto call = std::dynamic_pointer_cast<SIPCall>(
+        Manager::instance().getCallFromCallID(aliceData_.callId_));
+    CPPUNIT_ASSERT(call);
 
-    JAMI_INFO("Waiting for media fot flow ...");
-    CPPUNIT_ASSERT(audioReceiver_->waitForMediaFlow());
-    CPPUNIT_ASSERT(detachReceiver(aliceData_.callId_, audioReceiver_));
+    auto rtpList = call->getRtpSessionList();
+    CPPUNIT_ASSERT(rtpList.size() == offer.size());
+
+    for (size_t i = 0; i < MEDIA_COUNT; i++) {
+        CPPUNIT_ASSERT(rtpList[i]);
+        CPPUNIT_ASSERT(rtpList[i]->getMediaType() == offer[i].type_);
+        CPPUNIT_ASSERT(attachReceiver(mediaReceivers_[i], rtpList[i]));
+    }
+
+    JAMI_INFO("Waiting for media to flow ...");
+    for (size_t i = 0; i < MEDIA_COUNT; i++) {
+        CPPUNIT_ASSERT(mediaReceivers_[i]->waitForMediaFlow());
+    }
+
+    // Detach the observers.
+    for (size_t i = 0; i < MEDIA_COUNT; i++) {
+        CPPUNIT_ASSERT(detachReceiver(mediaReceivers_[i], rtpList[i]));
+    }
 
     // Bob hang-up.
     JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
@@ -546,6 +619,11 @@ IceSdpParsingTest::audio_video_call()
 
     CPPUNIT_ASSERT_EQUAL(true,
                          waitForSignal(aliceData_,
+                                       DRing::CallSignal::StateChange::name,
+                                       StateEvent::HUNGUP));
+
+    CPPUNIT_ASSERT_EQUAL(true,
+                         waitForSignal(bobData_,
                                        DRing::CallSignal::StateChange::name,
                                        StateEvent::HUNGUP));
 
@@ -558,7 +636,7 @@ IceSdpParsingTest::call_with_rfc5245_compliancy_disabled()
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
     aliceData_.compliancyEnabled_ = bobData_.compliancyEnabled_ = false;
-    audio_video_call();
+    test_call();
 }
 
 void
@@ -567,7 +645,7 @@ IceSdpParsingTest::call_with_rfc5245_compliancy_enabled()
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
 
     aliceData_.compliancyEnabled_ = bobData_.compliancyEnabled_ = true;
-    audio_video_call();
+    test_call();
 }
 
 } // namespace test
