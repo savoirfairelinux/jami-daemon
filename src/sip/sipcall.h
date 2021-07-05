@@ -247,7 +247,6 @@ public:
         void operator()(pjsip_inv_session*) const noexcept;
     };
 
-    // NOT SIP RELATED (good candidates to be moved elsewhere)
     std::shared_ptr<AudioRtpSession> getAudioRtp() const;
 #ifdef ENABLE_VIDEO
     /**
@@ -256,6 +255,8 @@ public:
     std::shared_ptr<video::VideoRtpSession> getVideoRtp() const;
     std::shared_ptr<video::VideoRtpSession> addDummyVideoRtpSession();
 #endif
+    // Get the list of current RTP sessions
+    std::vector<std::shared_ptr<RtpSession>> getRtpSessionList() const;
 
     bool isSrtpEnabled() const { return srtpEnabled_; }
 
