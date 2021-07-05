@@ -85,7 +85,6 @@ public:
     }
 
     DeviceId deviceId() const;
-    bool isReliable() const;
     bool isInitiator() const;
     int maxPayload() const;
 
@@ -178,7 +177,6 @@ public:
     DeviceId deviceId() const;
     std::string name() const;
     uint16_t channel() const;
-    bool isReliable() const override;
     bool isInitiator() const override;
     int maxPayload() const override;
     /**

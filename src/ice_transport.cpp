@@ -559,9 +559,9 @@ IceTransport::Impl::handleEvents(unsigned max_msec)
 void
 IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_status_t status)
 {
-    const char* opname = op == PJ_ICE_STRANS_OP_INIT
-                             ? "initialization"
-                             : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
+    const char* opname = op == PJ_ICE_STRANS_OP_INIT          ? "initialization"
+                         : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation"
+                                                              : "unknown_op";
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
@@ -1791,8 +1791,7 @@ IceSocketTransport::read(ValueType* buf, std::size_t len, std::error_code& ec)
     if (!ice_->isRunning())
         return 0;
     try {
-        auto res = reliable_ ? ice_->recvfrom(compId_, reinterpret_cast<char*>(buf), len, ec)
-                             : ice_->recv(compId_, buf, len, ec);
+        auto res = ice_->recvfrom(compId_, reinterpret_cast<char*>(buf), len, ec);
         return (res < 0) ? 0 : res;
     } catch (const std::exception& e) {
         JAMI_ERR("IceSocketTransport::read exception: %s", e.what());

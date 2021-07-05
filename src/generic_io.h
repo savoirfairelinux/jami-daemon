@@ -54,8 +54,6 @@ public:
     /// and because async IO are not implemented yet.
     virtual void setOnRecv(RecvCb&& cb) = 0;
 
-    virtual bool isReliable() const = 0;
-
     virtual bool isInitiator() const = 0;
 
     /// Return maximum application payload size.
