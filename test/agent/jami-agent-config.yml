@@ -1,8 +1,13 @@
 behavior:
   - search-peer
+  - start-log-recording
 #  - : [ echo, true ]
 #  - : [ make-call, true ]
+  - stop-log-recording
   - wait
+
+record-context: "My context: "
+record-to: "out.txt"
 
 peers:
   - "your-peer-id"
