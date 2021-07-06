@@ -5,6 +5,6 @@ AM_CXXFLAGS += -I$(top_srcdir)/src -I.. \
 
 check_PROGRAMS = agent
 
-agent_SOURCES = agent.cpp agent.h utils.cpp utils.h bt.cpp bt.h main.cpp
+agent_SOURCES = agent.cpp agent.h utils.cpp utils.h bt.cpp bt.h main.cpp log.h
 
 agent_LDADD = $(top_builddir)/src/libring.la -ldl
