@@ -80,6 +80,22 @@ class Agent
         onIncomingCall_;
 
     Handler<const std::string&, const std::string&, bool> onContactAdded_;
+
+    class Logger
+    {
+    protected:
+        std::string context_;
+
+    public:
+        Logger(const std::string& context)
+            : context_(context)
+        {}
+        virtual ~Logger() = default;
+
+        virtual void pushMessage(const std::string& message) = 0;
+        virtual void flush() = 0;
+    };
+
     /*  Initialize agent */
     void configure(const std::string& yaml_config);
     void getConversations();
@@ -89,17 +105,25 @@ class Agent
     void registerStaticCallbacks();
 
     /* Bookkeeping */
+    std::string context_;
+    std::string recordTo_;
     std::string peerID_;
     std::string accountID_;
     std::vector<std::string> peers_;
     std::vector<std::string> conversations_;
     std::unique_ptr<BT::Node> root_;
     std::vector<std::function<void(void)>> params_;
+    std::map<std::string, std::unique_ptr<Logger>> loggers_;
+
+    /* Event */
+    void onLogging(const std::string& message);
 
     /* Helper */
     void sendMessage(const std::string& to, const std::string& msg);
 
     /* Behavior */
+    bool startRecording();
+    bool stopRecording();
     bool searchPeer();
     bool wait();
     bool echo();
