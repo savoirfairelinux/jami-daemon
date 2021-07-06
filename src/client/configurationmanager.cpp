@@ -430,9 +430,9 @@ getAccountTemplate(const std::string& accountType)
 }
 
 std::string
-addAccount(const std::map<std::string, std::string>& details)
+addAccount(const std::map<std::string, std::string>& details, const std::string& accountID)
 {
-    return jami::Manager::instance().addAccount(details);
+    return jami::Manager::instance().addAccount(details, accountID);
 }
 
 void
