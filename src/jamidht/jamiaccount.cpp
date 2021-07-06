@@ -4945,6 +4945,7 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
         saveConvInfos();
         return len;
     });
+    sendProfile(device.toString());
 }
 
 void
