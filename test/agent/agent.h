@@ -100,6 +100,8 @@ class Agent
     void sendMessage(const std::string& to, const std::string& msg);
 
     /* Behavior */
+    bool startRecording();
+    bool stopRecording();
     bool searchPeer();
     bool wait();
     bool echo();
