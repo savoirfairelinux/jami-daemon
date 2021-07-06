@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d44125cf_effe9790",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-06T20:52:27Z",
+      "side": 1,
+      "message": "Cause a regression while sharing screen (the coordinates are incorrect)",
+      "revId": "4b73c6df2e5b131d2ddd1660c512d7f666f839a9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
