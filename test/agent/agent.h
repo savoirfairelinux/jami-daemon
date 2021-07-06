@@ -22,6 +22,7 @@
 
 /* agent */
 #include "agent/bt.h"
+#include "agent/log.h"
 
 /* Dring */
 #include "dring/dring.h"
@@ -80,6 +81,7 @@ class Agent
         onIncomingCall_;
 
     Handler<const std::string&, const std::string&, bool> onContactAdded_;
+
     /*  Initialize agent */
     void configure(const std::string& yaml_config);
     void getConversations();
@@ -89,17 +91,25 @@ class Agent
     void registerStaticCallbacks();
 
     /* Bookkeeping */
+    std::string context_;
+    std::string recordTo_;
     std::string peerID_;
     std::string accountID_;
     std::vector<std::string> peers_;
     std::vector<std::string> conversations_;
     std::unique_ptr<BT::Node> root_;
     std::vector<std::function<void(void)>> params_;
+    std::map<std::string, std::unique_ptr<LogHandler>> loggers_;
+
+    /* Event */
+    void onLogging(const std::string& message);
 
     /* Helper */
     void sendMessage(const std::string& to, const std::string& msg);
 
     /* Behavior */
+    bool startLogRecording();
+    bool stopLogRecording();
     bool searchPeer();
     bool wait();
     bool echo();

@@ -66,6 +66,8 @@ Agent::initBehavior()
     BT::register_behavior("make-call", bind(&Agent::makeCall, this));
     BT::register_behavior("true", bind(&Agent::True, this));
     BT::register_behavior("false", bind(&Agent::False, this));
+    BT::register_behavior("start-log-recording", bind(&Agent::startLogRecording, this));
+    BT::register_behavior("stop-log-recording", bind(&Agent::stopLogRecording, this));
 }
 
 void
@@ -76,6 +78,18 @@ Agent::configure(const std::string& yaml_config)
     AGENT_ASSERT(file.is_open(), "Failed to open configuration file `%s`", yaml_config.c_str());
 
     YAML::Node node = YAML::Load(file);
+
+    auto context = node["record-context"];
+
+    if (context.IsScalar()) {
+        context_ = context.as<std::string>();
+    }
+
+    auto to = node["record-to"];
+
+    if (to.IsScalar()) {
+        recordTo_ = to.as<std::string>();
+    }
 
     auto peers = node["peers"];
 
@@ -204,6 +218,9 @@ Agent::installSignalHandlers()
              _2,
              _3)));
 
+    handlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::MessageSend>(
+        bind(&Agent::onLogging, this, _1)));
+
     DRing::registerSignalHandlers(handlers);
 }
 
@@ -278,6 +295,14 @@ Agent::registerStaticCallbacks()
         }
         return true;
     });
+}
+
+void
+Agent::onLogging(const std::string& message)
+{
+    for (const auto& [context, logger] : loggers_) {
+        logger->pushMessage(message);
+    }
 }
 
 bool
@@ -364,6 +389,50 @@ Agent::sendMessage(const std::string& to, const std::string& msg)
 }
 
 /* Behavior start here */
+
+bool
+Agent::startLogRecording()
+{
+    class FileHandler : public LogHandler
+    {
+        std::ofstream out;
+
+    public:
+        FileHandler(const std::string& context, const std::string& to)
+            : LogHandler(context)
+            , out(to)
+        {}
+
+        virtual void pushMessage(const std::string& message) override
+        {
+            out << context_ << message << std::endl;
+        }
+
+        virtual void flush() override { out.flush(); }
+    };
+
+    loggers_[context_] = std::make_unique<FileHandler>(context_, recordTo_);
+
+    setMonitorLog(true);
+
+    return true;
+}
+
+bool
+Agent::stopLogRecording()
+{
+    LOG_AGENT_STATE();
+
+    if (not loggers_.empty()) {
+        loggers_.erase(context_);
+    }
+
+    if (loggers_.empty()) {
+        setMonitorLog(false);
+    }
+
+    return true;
+}
 
 bool
 Agent::echo()
