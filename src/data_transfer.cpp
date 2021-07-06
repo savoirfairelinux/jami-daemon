@@ -1302,8 +1302,10 @@ TransferManager::onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel
                     if (code == uint32_t(DRing::DataTransferEventCode::finished)) {
                         auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
                         if (!cert)
-                            return emitSignal<DRing::ConfigurationSignal::ProfileReceived>(
-                                accountId, cert->getIssuerUID(), path);
+                            return;
+                        emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId,
+                                                                                cert->getIssuerUID(),
+                                                                                path);
                     }
                 }
             });
