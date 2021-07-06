@@ -107,8 +107,6 @@ static constexpr auto RX_OOO_TIMEOUT = std::chrono::milliseconds(1500);
 static constexpr int ASYMETRIC_TRANSPORT_MTU_OFFSET
     = 20; // when client, if your local IP is IPV4 and server is IPV6; you must reduce your MTU to
           // avoid packet too big error on server side. the offset is the difference in size of IP headers
-static constexpr auto OCSP_VERIFICATION_TIMEOUT = std::chrono::seconds(
-    2); // Time to wait for an OCSP verification
 static constexpr auto OCSP_REQUEST_TIMEOUT = std::chrono::seconds(
     2); // Time to wait for an ocsp-request
 
@@ -685,16 +683,15 @@ TlsSession::TlsSessionImpl::verifyCertificateWrapper(gnutls_session_t session)
     }
 
     // OCSP (Online Certificate Service Protocol) {
-    bool ocsp_done = false;
-    std::mutex cv_m;
-    std::condition_variable cv;
-    std::unique_lock<std::mutex> cv_lk(cv_m);
+    std::promise<int> v;
+    std::future<int> f = v.get_future();
 
     gnutls_x509_crt_t issuer_crt = cert.issuer ? cert.issuer->cert : nullptr;
     verifyOcsp(ocspUrl, cert, issuer_crt, [&](const int status) {
         if (status == GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE) {
             // OCSP URI is absent, don't fail the verification by overwritting the user-set one.
             JAMI_WARN("Skipping OCSP verification %s: request failed", cert.getUID().c_str());
+            v.set_value(verified);
         } else {
             if (status != GNUTLS_E_SUCCESS) {
                 JAMI_ERR("OCSP verification failed for %s: %s (%i)",
@@ -702,18 +699,12 @@ TlsSession::TlsSessionImpl::verifyCertificateWrapper(gnutls_session_t session)
                          gnutls_strerror(status),
                          status);
             }
-            verified = status;
+            v.set_value(status);
         }
-        std::lock_guard<std::mutex> cv_lk(cv_m);
-        ocsp_done = true;
-        cv.notify_all();
     });
-    cv.wait_for(cv_lk, std::chrono::seconds(OCSP_VERIFICATION_TIMEOUT), [&ocsp_done] {
-        return ocsp_done;
-    });
-    // } OCSP
+    f.wait();
 
-    return verified;
+    return f.get();
 }
 
 void
