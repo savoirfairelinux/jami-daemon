@@ -90,7 +90,7 @@ class Agent
 
     /* Bookkeeping */
     std::string peerID_;
-    std::string accountID_;
+    const std::string accountID_{"afafafafafafafaf"};
     std::vector<std::string> peers_;
     std::vector<std::string> conversations_;
     std::unique_ptr<BT::Node> root_;

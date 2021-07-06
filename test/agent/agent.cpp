@@ -77,12 +77,6 @@ Agent::configure(const std::string& yaml_config)
 
     YAML::Node node = YAML::Load(file);
 
-    auto account = node["account-id"];
-
-    AGENT_ASSERT(account.IsScalar(), "Bad or missing field `account-id`");
-
-    accountID_ = account.as<std::string>();
-
     auto peers = node["peers"];
 
     AGENT_ASSERT(peers.IsSequence(), "Configuration node `peers` must be a sequence");
@@ -131,12 +125,15 @@ Agent::ensureAccount()
         details[DRing::Account::ConfProperties::ARCHIVE_PIN] = "";
         details[DRing::Account::ConfProperties::ARCHIVE_PATH] = "";
 
-        accountID_ = DRing::addAccount(details);
+        AGENT_ASSERT(accountID_ == DRing::addAccount(details, accountID_), "Bad accountID");
 
         wait_for_announcement_of(accountID_);
 
         details = DRing::getAccountDetails(accountID_);
     }
+
+    AGENT_ASSERT("AGENT" == details.at(DRing::Account::ConfProperties::DISPLAYNAME),
+                 "Bad display name");
 
     peerID_ = details.at(DRing::Account::ConfProperties::USERNAME);
 }
@@ -335,8 +332,8 @@ Agent::run(const std::string& yaml_config)
     static Agent agent;
 
     agent.initBehavior();
-    agent.configure(yaml_config);
     agent.ensureAccount();
+    agent.configure(yaml_config);
     agent.getConversations();
     agent.installSignalHandlers();
     agent.registerStaticCallbacks();

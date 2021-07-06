@@ -7,8 +7,6 @@ behavior:
 peers:
   - "your-peer-id"
 
-account-id: "d65ebb0f1170ae44"
-
 params:
   - [ upnpEnabled: "true", turnEnabled: "true" ]
   # - [ upnpEnabled: "true", turnEnabled: "false" ]
