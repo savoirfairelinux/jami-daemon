@@ -6,10 +6,10 @@
  5 files changed, 28 insertions(+)
 
 diff --git a/pjlib/include/pj/sock.h b/pjlib/include/pj/sock.h
-index 095a38335..e1349c52c 100644
+index 7542045b1..3a3154db4 100644
 --- a/pjlib/include/pj/sock.h
 +++ b/pjlib/include/pj/sock.h
-@@ -317,6 +317,7 @@ extern const pj_uint16_t PJ_SO_KEEPALIVE;
+@@ -318,6 +318,7 @@ extern const pj_uint16_t PJ_SO_KEEPALIVE;
  extern const pj_uint16_t PJ_TCP_KEEPIDLE;
  extern const pj_uint16_t PJ_TCP_KEEPINTVL;
  extern const pj_uint16_t PJ_TCP_KEEPCNT;
@@ -17,7 +17,7 @@ index 095a38335..e1349c52c 100644
  
  /** Set the protocol-defined priority for all packets to be sent on socket.
   */
-@@ -360,6 +361,9 @@ extern const pj_uint16_t PJ_IP_DROP_MEMBERSHIP;
+@@ -361,6 +362,9 @@ extern const pj_uint16_t PJ_IP_DROP_MEMBERSHIP;
      /** Get #PJ_TCP_KEEPINTVL constant */
  #   define pj_TCP_KEEPINTVL() PJ_TCP_KEEPINTVL(void);
  
@@ -27,7 +27,7 @@ index 095a38335..e1349c52c 100644
      /** Get #PJ_TCP_KEEPCNT constant */
  #   define pj_TCP_KEEPCNT() PJ_TCP_KEEPCNT(void);
  
-@@ -405,6 +409,9 @@ extern const pj_uint16_t PJ_IP_DROP_MEMBERSHIP;
+@@ -406,6 +410,9 @@ extern const pj_uint16_t PJ_IP_DROP_MEMBERSHIP;
      /** Get #PJ_TCP_KEEPIDLE constant */
  #   define pj_TCP_KEEPIDLE() PJ_TCP_KEEPIDLE
  
@@ -38,7 +38,7 @@ index 095a38335..e1349c52c 100644
  #   define pj_TCP_KEEPINTVL() PJ_TCP_KEEPINTVL
  
 diff --git a/pjlib/src/pj/sock_bsd.c b/pjlib/src/pj/sock_bsd.c
-index 0e9bfdbe9..e8bd94bee 100644
+index f9e8ffa82..a27fce775 100644
 --- a/pjlib/src/pj/sock_bsd.c
 +++ b/pjlib/src/pj/sock_bsd.c
 @@ -162,6 +162,11 @@ const pj_uint16_t PJ_TCP_KEEPIDLE = TCP_KEEPIDLE;
@@ -66,7 +66,7 @@ index 0e9bfdbe9..e8bd94bee 100644
  #if defined(PJ_SOCK_HAS_IPV6_V6ONLY) && PJ_SOCK_HAS_IPV6_V6ONLY != 0
  	if (af == PJ_AF_INET6) {
 diff --git a/pjlib/src/pj/sock_common.c b/pjlib/src/pj/sock_common.c
-index 6beb28590..1a0a38aee 100644
+index 671d63f4a..3cdfc8503 100644
 --- a/pjlib/src/pj/sock_common.c
 +++ b/pjlib/src/pj/sock_common.c
 @@ -1351,6 +1351,11 @@ PJ_DEF(pj_uint16_t) pj_SO_KEEPALIVE(void)
@@ -82,7 +82,7 @@ index 6beb28590..1a0a38aee 100644
  {
      return PJ_TCP_NODELAY;
 diff --git a/pjlib/src/pj/sock_uwp.cpp b/pjlib/src/pj/sock_uwp.cpp
-index 34baebcee..4ba61cfd1 100644
+index 148571aa8..f1d92d093 100644
 --- a/pjlib/src/pj/sock_uwp.cpp
 +++ b/pjlib/src/pj/sock_uwp.cpp
 @@ -97,6 +97,12 @@ const pj_uint16_t PJ_SOL_TCP	= IPPROTO_TCP;

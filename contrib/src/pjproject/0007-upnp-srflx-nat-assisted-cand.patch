@@ -1,10 +1,10 @@
- pjnath/include/pjnath/stun_sock.h |  21 ++++
- pjnath/src/pjnath/ice_strans.c    | 158 +++++++++++++++++++++++++++---
+ pjnath/include/pjnath/stun_sock.h |  22 +++++
+ pjnath/src/pjnath/ice_strans.c    | 156 +++++++++++++++++++++++++++---
  pjnath/src/pjnath/stun_sock.c     |   1 +
- 3 files changed, 166 insertions(+), 14 deletions(-)
+ 3 files changed, 165 insertions(+), 14 deletions(-)
 
 diff --git a/pjnath/include/pjnath/stun_sock.h b/pjnath/include/pjnath/stun_sock.h
-index bfc9c14..21f3ec5 100644
+index 51f60cc03..ba74cc6a5 100644
 --- a/pjnath/include/pjnath/stun_sock.h
 +++ b/pjnath/include/pjnath/stun_sock.h
 @@ -276,6 +276,28 @@ typedef struct pj_stun_sock_cfg
@@ -37,10 +37,10 @@ index bfc9c14..21f3ec5 100644
       * Specify the port range for STUN socket binding, relative to the start
       * port number specified in \a bound_addr. Note that this setting is only
 diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
-index a1e9fde..5c686a1 100644
+index b935811aa..bf001b74f 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
-@@ -542,6 +542,121 @@ static pj_bool_t ice_cand_equals(pj_ice_sess_cand *lcand,
+@@ -551,6 +551,121 @@ static pj_bool_t ice_cand_equals(pj_ice_sess_cand *lcand,
      return PJ_TRUE;
  }
  
@@ -162,7 +162,7 @@ index a1e9fde..5c686a1 100644
  static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
  				     pj_ice_strans_comp *comp,
  				     unsigned idx,
-@@ -865,20 +982,33 @@ static pj_status_t create_comp(pj_ice_strans *ice_st, unsigned comp_id)
+@@ -876,20 +991,33 @@ static pj_status_t create_comp(pj_ice_strans *ice_st, unsigned comp_id)
  
      /* Create STUN transport if configured */
      for (i=0; i<ice_st->cfg.stun_tp_cnt; ++i) {
@@ -211,7 +211,7 @@ index a1e9fde..5c686a1 100644
  
      /* Create TURN relay if configured. */
 diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
-index e5b91dd..7b5e7c8 100644
+index 6dbd296f2..17959efd0 100644
 --- a/pjnath/src/pjnath/stun_sock.c
 +++ b/pjnath/src/pjnath/stun_sock.c
 @@ -217,6 +217,7 @@ PJ_DEF(void) pj_stun_sock_cfg_default(pj_stun_sock_cfg *cfg)
@@ -223,5 +223,4 @@ index e5b91dd..7b5e7c8 100644
  
  
 -- 
-2.25.1
-
+2.30.2
