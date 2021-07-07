@@ -463,23 +463,26 @@ ArchiveAccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnounce
 {
     AccountManager::startSync(std::move(cb), std::move(dcb));
 
-    dht_->listen<DeviceSync>(dht::InfoHash::get("inbox:" + info_->deviceId), [this](DeviceSync&& sync) {
-        // Received device sync data.
-        // check device certificate
-        findCertificate(sync.from,
-                        [this, sync](const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
-                            if (!cert or cert->getId() != sync.from) {
-                                JAMI_WARN("Can't find certificate for device %s",
-                                          sync.from.toString().c_str());
-                                return;
-                            }
-                            if (not foundAccountDevice(cert))
-                                return;
-                            onSyncData(std::move(sync));
-                        });
+    dht_->listen<DeviceSync>(
+        dht::InfoHash::get("inbox:" + info_->devicePk->getId().toString()),
+        [this](DeviceSync&& sync) {
+            // Received device sync data.
+            // check device certificate
+            findCertificate(sync.from,
+                            [this,
+                             sync](const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
+                                if (!cert or cert->getId() != sync.from) {
+                                    JAMI_WARN("Can't find certificate for device %s",
+                                              sync.from.toString().c_str());
+                                    return;
+                                }
+                                if (not foundAccountDevice(cert))
+                                    return;
+                                onSyncData(std::move(sync));
+                            });
 
-        return true;
-    });
+            return true;
+        });
 }
 
 void
@@ -506,12 +509,13 @@ ArchiveAccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
         });
     }
     for (const auto& d : sync.devices) {
-        findCertificate(d.second.sha1, [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-            if (not crt || crt->getLongId() != d.first)
-                return;
-            // std::lock_guard<std::mutex> lock(deviceListMutex_);
-            foundAccountDevice(crt, d.second.name);
-        });
+        findCertificate(d.second.sha1,
+                        [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                            if (not crt || crt->getLongId() != d.first)
+                                return;
+                            // std::lock_guard<std::mutex> lock(deviceListMutex_);
+                            foundAccountDevice(crt, d.second.name);
+                        });
     }
     // saveKnownDevices();
 

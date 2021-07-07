@@ -89,7 +89,7 @@ class SipTransport;
 class ChanneledOutgoingTransfer;
 
 using SipConnectionKey = std::pair<std::string /* accountId */, DeviceId>;
-using GitSocketList = std::map<std::string,                            /* device Id */
+using GitSocketList = std::map<DeviceId,                               /* device Id */
                                std::map<std::string,                   /* conversation */
                                         std::shared_ptr<ChannelSocket> /* related socket */
                                         >>;
@@ -282,6 +282,7 @@ public:
 
     void onTextMessage(const std::string& id,
                        const std::string& from,
+                       const std::string& deviceId,
                        const std::map<std::string, std::string>& payloads) override;
 
     virtual bool isTlsEnabled() const override { return true; }
@@ -468,7 +469,7 @@ public:
      * ConnectionManager needs the account to exists
      */
     void shutdownConnections();
-    std::optional<std::weak_ptr<ChannelSocket>> gitSocket(const std::string& deviceId,
+    std::optional<std::weak_ptr<ChannelSocket>> gitSocket(const DeviceId& deviceId,
                                                           const std::string& conversationId) const
     {
         auto deviceSockets = gitSocketList_.find(deviceId);
@@ -481,12 +482,12 @@ public:
         }
         return socketIt->second;
     }
-    bool hasGitSocket(const std::string& deviceId, const std::string& conversationId) const
+    bool hasGitSocket(const DeviceId& deviceId, const std::string& conversationId) const
     {
         return gitSocket(deviceId, conversationId) != std::nullopt;
     }
 
-    void addGitSocket(const std::string& deviceId,
+    void addGitSocket(const DeviceId& deviceId,
                       const std::string& conversationId,
                       const std::shared_ptr<ChannelSocket>& socket)
     {
@@ -494,7 +495,7 @@ public:
         deviceSockets[conversationId] = socket;
     }
 
-    void removeGitSocket(const std::string& deviceId, const std::string& conversationId)
+    void removeGitSocket(const DeviceId& deviceId, const std::string& conversationId)
     {
         auto deviceSockets = gitSocketList_.find(deviceId);
         if (deviceSockets == gitSocketList_.end()) {
@@ -570,7 +571,7 @@ public:
      * @param commitId (optional)
      */
     void fetchNewCommits(const std::string& peer,
-                         const std::string& deviceId,
+                         const DeviceId& deviceId,
                          const std::string& conversationId,
                          const std::string& commitId = "");
 
@@ -587,7 +588,7 @@ public:
      * @param deviceId
      * @param convId
      */
-    void cloneConversation(const std::string& deviceId,
+    void cloneConversation(const DeviceId& deviceId,
                            const std::string& peer,
                            const std::string& convId);
 
@@ -719,7 +720,7 @@ private:
     /**
      * Sync conversations with detected peer
      */
-    void syncConversations(const std::string& peer, const std::string& deviceId);
+    void syncConversations(const std::string& peer, const DeviceId& deviceId);
 
     /**
      * Maps require port via UPnP and other async ops
@@ -941,8 +942,7 @@ private:
 
     // Sync connections
     std::mutex syncConnectionsMtx_;
-    std::map<DeviceId /* deviceId */, std::vector<std::shared_ptr<ChannelSocket>>>
-        syncConnections_;
+    std::map<DeviceId /* deviceId */, std::vector<std::shared_ptr<ChannelSocket>>> syncConnections_;
 
     /**
      * Ask a device to open a channeled SIP socket
