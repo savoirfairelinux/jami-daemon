@@ -509,11 +509,6 @@ transaction_request_cb(pjsip_rx_data* rdata)
     pjsip_dlg_dec_lock(dialog);
 
     inv->mod_data[mod_ua_.id] = call.get();
-    // NOTE: The invitation counter is managed by pjsip. If that counter goes down to zero
-    // the invite will be destroyed, and the unique_ptr will point freed datas.
-    // To avoid this, we increment the ref counter and let our unique_ptr manage
-    // when the invite will be freed
-    pjsip_inv_add_ref(inv);
     call->setInviteSession(inv);
 
     // Check whether Replaces header is present in the request and process accordingly.
