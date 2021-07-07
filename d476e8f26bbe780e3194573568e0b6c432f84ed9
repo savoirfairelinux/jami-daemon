@@ -16,6 +16,24 @@
       "message": "Related to https://review.jami.net/c/ring-daemon/+/18297\n\nI didn\u0027t followed the discussion much, for me it\u0027S ok to merge this. Just to know if mohamed \u0026 adrien agrees",
       "revId": "d476e8f26bbe780e3194573568e0b6c432f84ed9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3f75a8cc_be7ba273",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-07-07T18:57:52Z",
+      "side": 1,
+      "message": "I dont have objection, I already approved 18297. \nThis patch seems more complete, so 18297 will be redundant",
+      "parentUuid": "6f259bc9_6a05a422",
+      "revId": "d476e8f26bbe780e3194573568e0b6c432f84ed9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
