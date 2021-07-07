@@ -19,9 +19,6 @@
  */
 
 #include "ip_utils.h"
-#ifdef s_addr
-#undef s_addr
-#endif
 #include "logger.h"
 
 #include "sip/sip_utils.h"

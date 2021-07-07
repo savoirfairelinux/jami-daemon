@@ -875,7 +875,7 @@ IceTransport::Impl::addServerReflexiveCandidates(
     }
 
     stun.cfg.user_mapping_cnt = compCount_;
-    assert(stun.cfg.user_mapping_cnt < PJ_ICE_MAX_COMP);
+    assert(stun.cfg.user_mapping_cnt <= PJ_ICE_MAX_COMP);
 }
 
 std::vector<std::pair<IpAddr, IpAddr>>
