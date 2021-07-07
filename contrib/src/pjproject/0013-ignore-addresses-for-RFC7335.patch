@@ -1,8 +1,8 @@
 diff --git a/pjlib/src/pj/ip_helper_generic.c b/pjlib/src/pj/ip_helper_generic.c
-index d7bbf725e..3d64146df 100644
+index 2a392d16b..c1e49c3d3 100644
 --- a/pjlib/src/pj/ip_helper_generic.c
 +++ b/pjlib/src/pj/ip_helper_generic.c
-@@ -116,6 +116,16 @@ static pj_status_t if_enum_by_af(int af,
+@@ -121,6 +121,16 @@ static pj_status_t if_enum_by_af(int af,
  	    continue; /* Skip when interface is down */
  	}
  
@@ -19,7 +19,7 @@ index d7bbf725e..3d64146df 100644
  	/* Ignore 0.0.0.0/8 address. This is a special address
  	 * which doesn't seem to have practical use.
  	 */
-@@ -215,6 +225,16 @@ static pj_status_t if_enum_by_af(int af,
+@@ -225,6 +235,16 @@ static pj_status_t if_enum_by_af(int af,
  	}
  #endif
  
@@ -36,7 +36,7 @@ index d7bbf725e..3d64146df 100644
  	/* Ignore 0.0.0.0/8 address. This is a special address
  	 * which doesn't seem to have practical use.
  	 */
-@@ -309,6 +329,16 @@ static pj_status_t if_enum_by_af(int af, unsigned *p_cnt, pj_sockaddr ifs[])
+@@ -324,6 +344,16 @@ static pj_status_t if_enum_by_af(int af, unsigned *p_cnt, pj_sockaddr ifs[])
  	    continue;	/* Not address family that we want, continue */
  	}
  

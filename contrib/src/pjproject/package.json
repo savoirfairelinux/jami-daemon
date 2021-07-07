@@ -1,6 +1,6 @@
 {
     "name": "pjproject",
-    "version": "3e7b75cb2e482baee58c1991bd2fa4fb06774e0d",
+    "version": "2.12",
     "url": "https://github.com/pjsip/pjproject/archive/__VERSION__.tar.gz",
     "deps": ["gnutls"],
     "patches": [
@@ -13,16 +13,10 @@
         "0007-upnp-srflx-nat-assisted-cand.patch",
         "0008-fix_ioqueue_ipv6_sendto.patch",
         "0009-add-config-site.patch",
-        "0011-fix-tcp-death-detection.patch",
-        "0012-fix-turn-shutdown-crash.patch",
-        "0013-Assign-unique-local-preferences-for-candidates-with-.patch",
-        "0014-Add-new-compile-time-setting-PJ_ICE_ST_USE_TURN_PERM.patch",
-        "0015-update-local-preference-for-peer-reflexive-candidate.patch",
-        "0016-use-addrinfo-instead-CFHOST.patch",
-        "0017-CVE-2020-15260.patch",
-        "0018-CVE-2021-21375.patch",
-        "0019-ignore-down-interfaces.patch",
-        "0020-ignore-addresses-for-RFC7335.patch",
+        "0010-fix-tcp-death-detection.patch",
+        "0011-fix-turn-shutdown-crash.patch",
+        "0012-ignore-down-interfaces.patch",
+        "0013-ignore-addresses-for-RFC7335.patch",
         "0001-win-config.patch",
         "0002-win-vs-gnutls.patch",
         "0003-win-vs2017-props.patch"
