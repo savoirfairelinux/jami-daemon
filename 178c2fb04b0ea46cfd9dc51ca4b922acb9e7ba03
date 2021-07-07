@@ -22,6 +22,30 @@
       },
       "revId": "178c2fb04b0ea46cfd9dc51ca4b922acb9e7ba03",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3f46ba59_7a54bb39",
+        "filename": "src/dring/configurationmanager_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-07T01:09:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "3515e288_3d0077e1",
+      "range": {
+        "startLine": 63,
+        "startChar": 116,
+        "endLine": 63,
+        "endChar": 118
+      },
+      "revId": "178c2fb04b0ea46cfd9dc51ca4b922acb9e7ba03",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
