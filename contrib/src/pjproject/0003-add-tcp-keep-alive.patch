@@ -12,14 +12,14 @@ Subject: [PATCH 3/9] add tcp keep alive
  pjnath/include/pjnath/ice_session.h |  5 ++++
  pjnath/include/pjnath/ice_strans.h  |  7 +++++
  pjnath/src/pjnath/ice_session.c     |  6 ++++
- pjnath/src/pjnath/ice_strans.c      | 10 +++++++
- 9 files changed, 149 insertions(+)
+ pjnath/src/pjnath/ice_strans.c      | 11 +++++++
+ 9 files changed, 150 insertions(+)
 
 diff --git a/pjlib/include/pj/sock.h b/pjlib/include/pj/sock.h
-index 4daf298c5..095a38335 100644
+index 292b364e7..7542045b1 100644
 --- a/pjlib/include/pj/sock.h
 +++ b/pjlib/include/pj/sock.h
-@@ -313,6 +313,11 @@ extern const pj_uint16_t PJ_SO_REUSEADDR;
+@@ -314,6 +314,11 @@ extern const pj_uint16_t PJ_SO_REUSEADDR;
  /** Do not generate SIGPIPE. @see pj_SO_NOSIGPIPE */
  extern const pj_uint16_t PJ_SO_NOSIGPIPE;
  
@@ -31,7 +31,7 @@ index 4daf298c5..095a38335 100644
  /** Set the protocol-defined priority for all packets to be sent on socket.
   */
  extern const pj_uint16_t PJ_SO_PRIORITY;
-@@ -343,9 +348,21 @@ extern const pj_uint16_t PJ_IP_DROP_MEMBERSHIP;
+@@ -344,9 +349,21 @@ extern const pj_uint16_t PJ_IP_DROP_MEMBERSHIP;
      /** Get #PJ_SO_SNDBUF constant */
      PJ_DECL(pj_uint16_t) pj_SO_SNDBUF(void);
  
@@ -53,7 +53,7 @@ index 4daf298c5..095a38335 100644
      /** Get #PJ_SO_REUSEADDR constant */
      PJ_DECL(pj_uint16_t) pj_SO_REUSEADDR(void);
  
-@@ -379,9 +396,21 @@ extern const pj_uint16_t PJ_IP_DROP_MEMBERSHIP;
+@@ -380,9 +397,21 @@ extern const pj_uint16_t PJ_IP_DROP_MEMBERSHIP;
      /** Get #PJ_SO_SNDBUF constant */
  #   define pj_SO_SNDBUF()   PJ_SO_SNDBUF
  
@@ -76,7 +76,7 @@ index 4daf298c5..095a38335 100644
  #   define pj_SO_REUSEADDR() PJ_SO_REUSEADDR
  
 diff --git a/pjlib/src/pj/sock_bsd.c b/pjlib/src/pj/sock_bsd.c
-index e416991de..0e9bfdbe9 100644
+index ce23101c4..f9e8ffa82 100644
 --- a/pjlib/src/pj/sock_bsd.c
 +++ b/pjlib/src/pj/sock_bsd.c
 @@ -28,6 +28,15 @@
@@ -154,7 +154,7 @@ index e416991de..0e9bfdbe9 100644
  #if defined(PJ_SOCK_HAS_IPV6_V6ONLY) && PJ_SOCK_HAS_IPV6_V6ONLY != 0
  	if (af == PJ_AF_INET6) {
 diff --git a/pjlib/src/pj/sock_common.c b/pjlib/src/pj/sock_common.c
-index 693f3af62..6beb28590 100644
+index 96cd6b540..671d63f4a 100644
 --- a/pjlib/src/pj/sock_common.c
 +++ b/pjlib/src/pj/sock_common.c
 @@ -1346,11 +1346,31 @@ PJ_DEF(pj_uint16_t) pj_SO_SNDBUF(void)
@@ -190,7 +190,7 @@ index 693f3af62..6beb28590 100644
  {
      return PJ_SO_REUSEADDR;
 diff --git a/pjlib/src/pj/sock_uwp.cpp b/pjlib/src/pj/sock_uwp.cpp
-index 876c3287a..34baebcee 100644
+index 40250bf8d..148571aa8 100644
 --- a/pjlib/src/pj/sock_uwp.cpp
 +++ b/pjlib/src/pj/sock_uwp.cpp
 @@ -69,6 +69,24 @@ const pj_uint16_t PJ_SOL_IP	= IPPROTO_IP;
@@ -246,10 +246,10 @@ index ab83af956..966a9fc43 100644
  PJ_EXPORT_SYMBOL(PJ_SOL_UDP)
  PJ_EXPORT_SYMBOL(PJ_SOL_IPV6)
 diff --git a/pjnath/include/pjnath/ice_session.h b/pjnath/include/pjnath/ice_session.h
-index 4cccd7c64..9f29b828e 100644
+index 5362c72e9..97069ed9e 100644
 --- a/pjnath/include/pjnath/ice_session.h
 +++ b/pjnath/include/pjnath/ice_session.h
-@@ -628,6 +628,11 @@ typedef struct pj_ice_sess_cb
+@@ -648,6 +648,11 @@ typedef struct pj_ice_sess_cb
                                          pj_ice_sess_checklist *clist,
                                          unsigned check_id);
  
@@ -262,12 +262,12 @@ index 4cccd7c64..9f29b828e 100644
  
  
 diff --git a/pjnath/include/pjnath/ice_strans.h b/pjnath/include/pjnath/ice_strans.h
-index 9eb74b35f..1269442cd 100644
+index 1c20729e8..1fed15f6f 100644
 --- a/pjnath/include/pjnath/ice_strans.h
 +++ b/pjnath/include/pjnath/ice_strans.h
-@@ -192,6 +192,13 @@ typedef struct pj_ice_strans_cb
- 			       pj_ice_strans_op op,
- 			       pj_status_t status);
+@@ -219,6 +219,13 @@ typedef struct pj_ice_strans_cb
+ 				const pj_ice_sess_cand *cand,
+ 				pj_bool_t end_of_cand);
  
 +    /**
 +     * This callback is called if an internal operation fails
@@ -280,10 +280,10 @@ index 9eb74b35f..1269442cd 100644
  
  
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index 20ba47a48..f1094932b 100644
+index 9df0bc08a..f6a34e62d 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
-@@ -1435,6 +1435,12 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
+@@ -1533,6 +1533,12 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
  					  PJ_FALSE, PJ_FALSE, 
  					  &the_check->rcand->addr, 
  					  addr_len, tdata);
@@ -297,18 +297,18 @@ index 20ba47a48..f1094932b 100644
  	/* Restore FINGERPRINT usage */
  	pj_stun_session_use_fingerprint(comp->stun_sess, saved);
 diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
-index 82175e9e8..c1647bebf 100644
+index 025724520..b935811aa 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
-@@ -98,6 +98,7 @@ static pj_uint16_t GETVAL16H(const pj_uint8_t *buf1, const pj_uint8_t *buf2)
- //////////////////////////////////////////////////////////////////////////////
+@@ -99,6 +99,7 @@ static pj_uint16_t GETVAL16H(const pj_uint8_t *buf1, const pj_uint8_t *buf2)
  
  /* ICE callbacks */
+ static void	   on_valid_pair(pj_ice_sess *ice);
 +static void	   on_ice_destroy(pj_ice_sess *ice);
  static void	   on_ice_complete(pj_ice_sess *ice, pj_status_t status);
  static pj_status_t ice_tx_pkt(pj_ice_sess *ice,
  			      unsigned comp_id,
-@@ -1313,6 +1314,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
+@@ -1383,6 +1384,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
      ice_cb.wait_tcp_connection      = &ice_wait_tcp_connection;
      ice_cb.reconnect_tcp_connection = &ice_reconnect_tcp_connection;
      ice_cb.close_tcp_connection     = &ice_close_tcp_connection;
@@ -316,8 +316,8 @@ index 82175e9e8..c1647bebf 100644
  #endif
  
      /* Create! */
-@@ -1935,6 +1937,14 @@ PJ_DEF(pj_status_t) pj_ice_strans_sendto2(pj_ice_strans *ice_st,
-     		     dst_addr_len, PJ_TRUE, PJ_FALSE);
+@@ -2190,6 +2192,15 @@ static void on_valid_pair(pj_ice_sess *ice)
+     pj_grp_lock_dec_ref(ice_st->grp_lock);
  }
  
 +static void on_ice_destroy(pj_ice_sess *ice)
@@ -328,8 +328,9 @@ index 82175e9e8..c1647bebf 100644
 +	(*ice_st->cb.on_destroy)(ice_st);
 +    }
 +}
- 
++
  /*
   * Callback called by ICE session when ICE processing is complete, either
+  * successfully or with failure.
 -- 
-2.26.2
+2.30.2
