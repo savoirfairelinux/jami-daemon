@@ -2,10 +2,10 @@
  1 file changed, 3 deletions(-)
 
 diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
-index a6e192e9f..3fc65aa75 100644
+index 88f61b7e2..be17f860c 100644
 --- a/pjnath/src/pjnath/turn_sock.c
 +++ b/pjnath/src/pjnath/turn_sock.c
-@@ -1396,9 +1396,6 @@ static void turn_on_state(pj_turn_session *sess,
+@@ -1492,9 +1492,6 @@ static void turn_on_state(pj_turn_session *sess,
      if (new_state >= PJ_TURN_STATE_DESTROYING && turn_sock->sess) {
  	pj_time_val delay = {0, 0};
  
