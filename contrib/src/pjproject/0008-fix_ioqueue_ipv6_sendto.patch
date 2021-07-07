@@ -1,7 +1,7 @@
 From 52f0c422e41ace1f2b682adbbaf67c4ddb0d17ed Mon Sep 17 00:00:00 2001
 From: jrun <darwinskernel@gmail.com>
 Date: Thu, 20 Feb 2020 12:39:23 -0500
-Subject: [PATCH 8/9] fix_ioqueue_ipv6_sendto
+Subject: [PATCH] fix_ioqueue_ipv6_sendto
 
 ---
  pjlib/src/pj/ioqueue_common_abs.c |  5 ++++-
@@ -9,7 +9,7 @@ Subject: [PATCH 8/9] fix_ioqueue_ipv6_sendto
  2 files changed, 12 insertions(+), 10 deletions(-)
 
 diff --git a/pjlib/src/pj/ioqueue_common_abs.c b/pjlib/src/pj/ioqueue_common_abs.c
-index aaefc80e8..e8b929e7a 100644
+index 0b0abedea..87afabc31 100644
 --- a/pjlib/src/pj/ioqueue_common_abs.c
 +++ b/pjlib/src/pj/ioqueue_common_abs.c
 @@ -1053,7 +1053,10 @@ retry_on_restart:
@@ -81,5 +81,4 @@ index d5e36b4d6..b1e9b2083 100644
                                       enum ioqueue_event_type event_type);
 -
 -- 
-2.24.1
-
+2.30.2
