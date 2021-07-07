@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "91066003_b0f4ce2b",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-07-07T15:19:35Z",
+      "side": 1,
+      "message": "if the agent is supposed to have only one account, better do it in the initilization, or make accountID_ a const.",
+      "revId": "d5543f8ea9c77141105693c484f2cef25908b5c9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
