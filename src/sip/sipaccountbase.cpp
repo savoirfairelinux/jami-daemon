@@ -526,6 +526,7 @@ SIPAccountBase::getIceOptions() const noexcept
 void
 SIPAccountBase::onTextMessage(const std::string& id,
                               const std::string& from,
+                              const std::string& deviceId,
                               const std::map<std::string, std::string>& payloads)
 {
     JAMI_DBG("Text message received from %s, %zu part(s)", from.c_str(), payloads.size());
@@ -626,10 +627,12 @@ SIPAccountBase::onTextMessage(const std::string& id,
             JAMI_WARN("Received indication for new commit available in conversation %s",
                       json["id"].asString().c_str());
 
-            onNewGitCommit(from,
-                           json["deviceId"].asString(),
-                           json["id"].asString(),
-                           json["commit"].asString());
+            if (deviceId.empty()) {
+                JAMI_ERR() << "Incorrect deviceId. Can't retrieve history";
+                return;
+            }
+
+            onNewGitCommit(from, deviceId, json["id"].asString(), json["commit"].asString());
             return;
         } else if (m.first == MIME_TYPE_INVITE_JSON) {
             Json::Value json;

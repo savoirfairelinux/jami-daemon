@@ -414,7 +414,7 @@ SipTransportBroker::getChanneledTransport(const std::shared_ptr<ChannelSocket>& 
                                                                 std::move(cb));
     auto tr = sips_tr->getTransportBase();
     auto sip_tr = std::make_shared<SipTransport>(tr);
-    sip_tr->setIsChanneledTransport();
+    sip_tr->setDeviceId(socket->deviceId().toString());
     sips_tr.release(); // managed by PJSIP now
 
     {
