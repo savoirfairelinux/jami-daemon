@@ -3459,7 +3459,7 @@ Manager::gitSocket(const std::string& accountId,
                    const std::string& conversationId)
 {
     if (const auto acc = getAccount<JamiAccount>(accountId))
-        return acc->gitSocket(deviceId, conversationId);
+        return acc->gitSocket(DeviceId(deviceId), conversationId);
     return std::nullopt;
 }
 

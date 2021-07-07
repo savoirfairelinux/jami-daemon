@@ -233,7 +233,7 @@ add_initial_files(GitRepository& repo, const std::shared_ptr<JamiAccount>& accou
     }
 
     // /devices
-    std::string devicePath = devicesPath + "/" + cert->getId().toString() + ".crt";
+    std::string devicePath = devicesPath + "/" + deviceId + ".crt";
     file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not write data to %s", devicePath.c_str());
