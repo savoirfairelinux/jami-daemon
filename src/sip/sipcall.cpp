@@ -660,6 +660,11 @@ SIPCall::setInviteSession(pjsip_inv_session* inviteSession)
     if (inviteSession == nullptr and inviteSession_) {
         JAMI_DBG("[call:%s] Delete current invite session", getCallId().c_str());
     } else if (inviteSession != nullptr) {
+        // NOTE: The invitation counter is managed by pjsip. If that counter goes down to zero
+        // the invite will be destroyed, and the unique_ptr will point freed datas.
+        // To avoid this, we increment the ref counter and let our unique_ptr manage
+        // when the invite will be freed
+        pjsip_inv_add_ref(inviteSession);
         JAMI_DBG("[call:%s] Set new invite session [%p]", getCallId().c_str(), inviteSession);
     } else {
         // Nothing to do.
