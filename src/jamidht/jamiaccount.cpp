@@ -1913,33 +1913,42 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
               // NOTE: the rest can use configurationMtx_, that can be locked during unregister so
               // do not retrigger on dht
               runOnMainThread([w = weak(), h, dev, expired, isConnected, wasConnected]() {
-                  auto sthis = w.lock();
-                  if (!sthis)
-                      return;
-                  if (not expired) {
-                      // Retry messages every time a new device announce its presence
-                      sthis->messageEngine_.onPeerOnline(h.toString());
-                      auto deviceId = dev.dev.toString();
-                      auto needsSync = false;
-                      {
-                          std::unique_lock<std::mutex> lk(sthis->conversationsMtx_);
-                          for (const auto& [_, conv] : sthis->conversations_) {
-                              if (conv->isMember(h.toString(), false)
-                                  && conv->needsFetch(deviceId)) {
-                                  needsSync = true;
-                                  break;
-                              }
-                          }
-                      }
-                      if (needsSync)
-                          sthis->requestSIPConnection(h.toString(),
-                                                      dev.pk->getLongId()); // Both sides will sync conversations
-                  }
-                  if (isConnected and not wasConnected) {
-                      sthis->onTrackedBuddyOnline(h);
-                  } else if (not isConnected and wasConnected) {
-                      sthis->onTrackedBuddyOffline(h);
-                  }
+                    auto sthis = w.lock();
+                    if (!sthis)
+                        return;
+                    if (not expired) {
+                        // Retry messages every time a new device announce its presence
+                        sthis->messageEngine_.onPeerOnline(h.toString());
+                        auto deviceId = dev.dev.toString();
+                        auto needsSync = false;
+                        {
+                            std::unique_lock<std::mutex> lk(sthis->conversationsMtx_);
+                            for (const auto& [_, conv] : sthis->conversations_) {
+                                if (conv->isMember(h.toString(), false)
+                                    && conv->needsFetch(deviceId)) {
+                                    needsSync = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (needsSync) {
+                            if (dev.pk) {
+                                sthis->requestSIPConnection(h.toString(), dev.pk->getLongId());
+                            } else {
+                                sthis->findCertificate(dev.dev, [sthis, h](const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                                    if (cert) {
+                                        auto pk = std::make_shared<dht::crypto::PublicKey>(cert->getPublicKey());
+                                        sthis->requestSIPConnection(h.toString(), pk->getLongId());
+                                    }
+                                });
+                            }
+                        }
+                    }
+                    if (isConnected and not wasConnected) {
+                        sthis->onTrackedBuddyOnline(h);
+                    } else if (not isConnected and wasConnected) {
+                        sthis->onTrackedBuddyOffline(h);
+                    }
               });
 
               return true;
