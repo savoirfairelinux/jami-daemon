@@ -86,6 +86,8 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
                                             pjsip_dialog** dlg,
                                             pjsip_inv_session** inv)
 {
+    sip_utils::register_thread();
+
     if (pjsip_dlg_create_uac(pjsip_ua_instance(), from, contact, to, target, dlg) != PJ_SUCCESS) {
         JAMI_ERR("Unable to create SIP dialogs for user agent client when calling %s", to->ptr);
         return false;

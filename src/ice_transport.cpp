@@ -1082,6 +1082,8 @@ IceTransport::isInitiator() const
 bool
 IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& rem_candidates)
 {
+    sip_utils::register_thread();
+
     if (not isInitialized()) {
         JAMI_ERR("[ice:%p] not initialized transport", pimpl_.get());
         pimpl_->is_stopped_ = true;
@@ -1148,6 +1150,8 @@ IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& r
 bool
 IceTransport::startIce(const SDP& sdp)
 {
+    sip_utils::register_thread();
+
     if (pimpl_->streamsCount_ != 1) {
         JAMI_ERR("Expected exactly one stream per SDP (found %u streams)", pimpl_->streamsCount_);
         return false;
