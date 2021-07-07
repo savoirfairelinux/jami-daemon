@@ -337,7 +337,7 @@ private:
     ConfInfo getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI);
     bool isHost(std::string_view uri) const;
     bool audioMuted_ {false};
-    bool videoMuted_ {false};
+    bool videoMuted_ {true};
 
     bool localModAdded_ {false};
 

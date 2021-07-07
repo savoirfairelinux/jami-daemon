@@ -45,6 +45,7 @@
 #include "dring/media_const.h"
 #include "audio/ringbufferpool.h"
 #include "sip/sipcall.h"
+#include "media/media_attribute.h"
 
 #include <opendht/thread_pool.h>
 
@@ -258,6 +259,18 @@ Conference::add(const std::string& participant_id)
             if (call->isPeerMuted()) {
                 participantsMuted_.emplace(string_remove_suffix(call->getPeerNumber(), '@'));
             }
+            auto mediaList = call->getMediaAttributeList();
+            videoMuted_ &= call->isVideoMuted();
+            for (auto& media : mediaList) {
+                if (media.muted_ && media.enabled_) {
+                    if (media.label_ == "audio_0")
+                        media.muted_ = false;
+                    if (media.label_ == "video_0")
+                        media.muted_ = false;
+                }
+            }
+            call->requestMediaChange(MediaAttribute::mediaAttributesToMediaMaps(mediaList));
+            emitSignal<DRing::CallSignal::VideoMuted>(id_, videoMuted_);
         }
         if (auto call = getCall(participant_id)) {
             auto w = call->getAccount();
