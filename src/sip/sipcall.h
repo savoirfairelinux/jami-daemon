@@ -155,6 +155,9 @@ public:
     void exitConference() override;
     std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>> getReceiveVideoFrameActiveWriter()
         override;
+    std::mutex sinksMtx_;
+    void createSinks(const ConfInfo& infos) override;
+    std::map<std::string, std::shared_ptr<video::SinkClient>> callSinksMap_ {};
     bool hasVideo() const override;
     bool isCaptureDeviceMuted(const MediaType& mediaType) const override;
     bool isSrtpEnabled() const { return srtpEnabled_; }
