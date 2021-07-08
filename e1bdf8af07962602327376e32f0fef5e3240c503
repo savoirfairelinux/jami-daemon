@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a9189734_dfb8877e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 15
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-08T20:49:36Z",
+      "side": 1,
+      "message": "screen sharing for android is ok, just the comment for the code duplication",
+      "revId": "e1bdf8af07962602327376e32f0fef5e3240c503",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
