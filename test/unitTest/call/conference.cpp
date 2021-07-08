@@ -30,6 +30,7 @@
 #include "dring.h"
 #include "account_const.h"
 #include "common.h"
+#include "video/sinkclient.h"
 
 using namespace DRing::Account;
 
@@ -68,10 +69,12 @@ public:
 private:
     void testGetConference();
     void testModeratorMuteUpdateParticipantsInfos();
+    void testCreateParticipantsSinks();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
     CPPUNIT_TEST(testModeratorMuteUpdateParticipantsInfos);
+    CPPUNIT_TEST(testCreateParticipantsSinks);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -227,15 +230,18 @@ ConferenceTest::testGetConference()
     hangupConference();
 
     CPPUNIT_ASSERT(Manager::instance().getConferenceList().size() == 0);
+
+    DRing::unregisterSignalHandlers();
 }
 
 void
 ConferenceTest::testModeratorMuteUpdateParticipantsInfos()
 {
+    registerSignalHandlers();
+
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    registerSignalHandlers();
     startConference();
 
     JAMI_INFO("Play with mute from the moderator");
@@ -248,8 +254,41 @@ ConferenceTest::testModeratorMuteUpdateParticipantsInfos()
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return !bobCall.moderatorMuted.load(); }));
 
     hangupConference();
+
+    DRing::unregisterSignalHandlers();
 }
 
+void
+ConferenceTest::testCreateParticipantsSinks()
+{
+    registerSignalHandlers();
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto bobUri = bobAccount->getUsername();
+    auto carlaUri = carlaAccount->getUsername();
+
+    startConference();
+
+    auto infos = Manager::instance().getConferenceInfos(confId);
+
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(5), [&] {
+            bool sinksStatus = true;
+            for (auto& info : infos) {
+                if (info["uri"] == bobUri) {
+                    sinksStatus &= (Manager::instance().getSinkClient(info["sinkId"]) != nullptr);
+                } else if (info["uri"] == carlaUri) {
+                    sinksStatus &= (Manager::instance().getSinkClient(info["sinkId"]) != nullptr);
+                }
+            }
+            return sinksStatus;
+        }));
+
+    hangupConference();
+
+    DRing::unregisterSignalHandlers();
+}
 } // namespace test
 } // namespace jami
 
