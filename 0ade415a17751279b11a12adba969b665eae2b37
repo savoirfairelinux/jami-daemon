@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "123b1297_361a6635",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-08T14:31:55Z",
+      "side": 1,
+      "message": "Break registration (when relaunching the daemon)\n\nBreak calls from SFL accounts",
+      "revId": "0ade415a17751279b11a12adba969b665eae2b37",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
