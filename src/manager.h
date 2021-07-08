@@ -54,6 +54,7 @@ class io_context;
 namespace jami {
 namespace video {
 class SinkClient;
+class VideoGenerator;
 }
 class ChannelSocket;
 class RingBufferPool;
@@ -979,6 +980,19 @@ public:
      */
     std::shared_ptr<video::SinkClient> createSinkClient(const std::string& id = "",
                                                         bool mixer = false);
+
+    /**
+     * Create a SinkClient instance for each participant in a conference, store it in an internal
+     * cache as a weak_ptr and populates sinksMap with sink ids and shared_ptrs.
+     * @param callId
+     * @param infos ConferenceInfos that will create the sinks
+     * @param videoStream the the VideoGenerator to with the sinks should be attached
+     * @param sinksMap A map between sink ids and the respective shared pointer.
+     */
+    void createSinkClients(const std::string& callId,
+                           const ConfInfo& infos,
+                           const std::shared_ptr<video::VideoGenerator>& videoStream,
+                           std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap);
 
     /**
      * Return an existing SinkClient instance as a shared_ptr associated to the given identifier.
