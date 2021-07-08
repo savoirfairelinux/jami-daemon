@@ -1101,10 +1101,12 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
                                                   const std::string& commitId) const
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
+    if (not cert)
+        return false;
     auto userUri = cert->getIssuerUID();
     auto parentCrt = tls::CertificateStore::instance().getCertificate(userUri);
     auto repo = repository();
-    if (!cert || !parentCrt || !repo)
+    if (not parentCrt or not repo)
         return false;
 
     // Retrieve tree for commit
