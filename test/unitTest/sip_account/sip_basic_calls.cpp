@@ -85,17 +85,14 @@ private:
     // Test cases.
     void audio_only_test();
     void audio_video_test();
-    void peer_disable_media();
+    void peer_answer_with_all_media_disabled();
 
     CPPUNIT_TEST_SUITE(SipBasicCallTest);
     CPPUNIT_TEST(audio_only_test);
     CPPUNIT_TEST(audio_video_test);
-#if 0 
-    // Test when the peer answers will all media disabled (RTP port = 0)
-    // For now, this test will cause a crash. Must be enabled once the
-    // crash is fixed
-    CPPUNIT_TEST(peer_disable_media);
-#endif
+    // Test when the peer answers with all the media disabled (RTP port = 0)
+    CPPUNIT_TEST(peer_answer_with_all_media_disabled);
+
     CPPUNIT_TEST_SUITE_END();
 
     // Event/Signal handlers
@@ -113,6 +110,7 @@ private:
     // Helpers
     void audio_video_call(std::vector<MediaAttribute> offer,
                           std::vector<MediaAttribute> answer,
+                          bool expectedToSucceed = true,
                           bool validateMedia = true);
     static void configureTest(CallData& bob, CallData& alice);
     static std::string getUserAlias(const std::string& callId);
@@ -314,7 +312,7 @@ SipBasicCallTest::waitForSignal(CallData& callData,
                                 const std::string& expectedSignal,
                                 const std::string& expectedEvent)
 {
-    const std::chrono::seconds TIME_OUT {30};
+    const std::chrono::seconds TIME_OUT {10};
     std::unique_lock<std::mutex> lock {callData.mtx_};
 
     // Combined signal + event (if any).
@@ -418,6 +416,7 @@ SipBasicCallTest::configureTest(CallData& aliceData, CallData& bobData)
 void
 SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
                                    std::vector<MediaAttribute> answer,
+                                   bool expectedToSucceed,
                                    bool validateMedia)
 {
     JAMI_INFO("=== Begin test %s ===", __FUNCTION__);
@@ -452,58 +451,69 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
     // Answer the call.
     DRing::acceptWithMedia(bobData_.callId_, MediaAttribute::mediaAttributesToMediaMaps(answer));
 
-    // Wait for media negotiation complete signal.
-    CPPUNIT_ASSERT(waitForSignal(bobData_,
-                                 DRing::CallSignal::MediaNegotiationStatus::name,
-                                 DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+    if (expectedToSucceed) {
+        // Wait for media negotiation complete signal.
+        CPPUNIT_ASSERT(
+            waitForSignal(bobData_,
+                          DRing::CallSignal::MediaNegotiationStatus::name,
+                          DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
-    // Wait for the StateChange signal.
-    CPPUNIT_ASSERT(
-        waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::CURRENT));
+        // Wait for the StateChange signal.
+        CPPUNIT_ASSERT(
+            waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::CURRENT));
 
-    JAMI_INFO("BOB answered the call [%s]", bobData_.callId_.c_str());
+        JAMI_INFO("BOB answered the call [%s]", bobData_.callId_.c_str());
 
-    // Wait for media negotiation complete signal.
-    CPPUNIT_ASSERT(waitForSignal(aliceData_,
-                                 DRing::CallSignal::MediaNegotiationStatus::name,
-                                 DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+        // Wait for media negotiation complete signal.
+        CPPUNIT_ASSERT(
+            waitForSignal(aliceData_,
+                          DRing::CallSignal::MediaNegotiationStatus::name,
+                          DRing::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+        // Validate Alice's media
+        if (validateMedia) {
+            auto activeMediaList = Manager::instance().getMediaAttributeList(aliceData_.callId_);
+            CPPUNIT_ASSERT_EQUAL(offer.size(), activeMediaList.size());
+            // Audio
+            CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_AUDIO, activeMediaList[0].type_);
+            CPPUNIT_ASSERT_EQUAL(offer[0].enabled_, activeMediaList[0].enabled_);
 
-    // Validate Alice's media
-    if (validateMedia) {
-        auto activeMediaList = Manager::instance().getMediaAttributeList(aliceData_.callId_);
-        CPPUNIT_ASSERT_EQUAL(offer.size(), activeMediaList.size());
-        // Audio
-        CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_AUDIO, activeMediaList[0].type_);
-        CPPUNIT_ASSERT_EQUAL(offer[0].enabled_, activeMediaList[0].enabled_);
-
-        // Video
-        if (offer.size() > 1) {
-            CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_VIDEO, activeMediaList[1].type_);
-            CPPUNIT_ASSERT_EQUAL(offer[1].enabled_, activeMediaList[1].enabled_);
+            // Video
+            if (offer.size() > 1) {
+                CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_VIDEO, activeMediaList[1].type_);
+                CPPUNIT_ASSERT_EQUAL(offer[1].enabled_, activeMediaList[1].enabled_);
+            }
         }
+
+        // Validate Bob's media
+        if (validateMedia) {
+            auto activeMediaList = Manager::instance().getMediaAttributeList(bobData_.callId_);
+            CPPUNIT_ASSERT_EQUAL(answer.size(), activeMediaList.size());
+            // Audio
+            CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_AUDIO, activeMediaList[0].type_);
+            CPPUNIT_ASSERT_EQUAL(answer[0].enabled_, activeMediaList[0].enabled_);
+
+            // Video
+            if (offer.size() > 1) {
+                CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_VIDEO, activeMediaList[1].type_);
+                CPPUNIT_ASSERT_EQUAL(answer[1].enabled_, activeMediaList[1].enabled_);
+            }
+        }
+
+        // Give some time to media to start and flow
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+
+        // Bob hang-up.
+        JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
+        DRing::hangUp(bobData_.callId_);
+    } else {
+        // The media negotiation for the call is expected to fail, so we
+        // should receive the signal.
+        CPPUNIT_ASSERT(
+            waitForSignal(bobData_, DRing::CallSignal::StateChange::name, StateEvent::FAILURE));
     }
 
-    // Validate Bob's media
-    if (validateMedia) {
-        auto activeMediaList = Manager::instance().getMediaAttributeList(bobData_.callId_);
-        CPPUNIT_ASSERT_EQUAL(answer.size(), activeMediaList.size());
-        // Audio
-        CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_AUDIO, activeMediaList[0].type_);
-        CPPUNIT_ASSERT_EQUAL(answer[0].enabled_, activeMediaList[0].enabled_);
-
-        // Video
-        if (offer.size() > 1) {
-            CPPUNIT_ASSERT_EQUAL(MediaType::MEDIA_VIDEO, activeMediaList[1].type_);
-            CPPUNIT_ASSERT_EQUAL(answer[1].enabled_, activeMediaList[1].enabled_);
-        }
-    }
-
-    // Give some time to media to start and flow
-    std::this_thread::sleep_for(std::chrono::seconds(3));
-
-    // Bob hang-up.
-    JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-    DRing::hangUp(bobData_.callId_);
+    // The hang-up signal will be emitted on caller's side (Alice) in both
+    // success failure scenarios.
 
     CPPUNIT_ASSERT(
         waitForSignal(aliceData_, DRing::CallSignal::StateChange::name, StateEvent::HUNGUP));
@@ -587,7 +597,7 @@ SipBasicCallTest::audio_video_test()
 }
 
 void
-SipBasicCallTest::peer_disable_media()
+SipBasicCallTest::peer_answer_with_all_media_disabled()
 {
     auto const bobAcc = Manager::instance().getAccount<SIPAccount>(bobData_.accountId_);
 
@@ -610,7 +620,7 @@ SipBasicCallTest::peer_disable_media()
     answer.emplace_back(video);
 
     // Run the scenario
-    audio_video_call(offer, answer, false);
+    audio_video_call(offer, answer, false, false);
 }
 
 } // namespace test
