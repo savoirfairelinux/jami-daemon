@@ -156,6 +156,8 @@ public:
     bool hasVideo() const override;
     bool isAudioMuted() const override;
     bool isVideoMuted() const override;
+    bool isCaptureDeviceMuted(const MediaType& mediaType) const override;
+    bool isSrtpEnabled() const { return srtpEnabled_; }
     // End of override of Call class
 
     // Override of Recordable class
@@ -256,8 +258,6 @@ public:
     std::shared_ptr<video::VideoRtpSession> getVideoRtp() const;
     std::shared_ptr<video::VideoRtpSession> addDummyVideoRtpSession();
 #endif
-
-    bool isSrtpEnabled() const { return srtpEnabled_; }
 
     void generateMediaPorts();
 

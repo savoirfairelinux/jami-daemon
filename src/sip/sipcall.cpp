@@ -1748,6 +1748,10 @@ SIPCall::addMediaStream(const MediaAttribute& mediaAttr)
     }
 #endif
 
+    if (stream.mediaAttribute_->sourceType_ == MediaSourceType::NONE) {
+        stream.mediaAttribute_->sourceType_ = MediaSourceType::CAPTURE_DEVICE;
+    }
+
     rtpStreams_.emplace_back(std::move(stream));
 }
 
@@ -1779,6 +1783,7 @@ SIPCall::initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
 bool
 SIPCall::isAudioMuted() const
 {
+    // Return true only if all audio media are muted
     std::function<bool(const RtpStream& stream)> mutedCheck = [](auto const& stream) {
         return (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO
                 and not stream.mediaAttribute_->muted_);
@@ -1809,6 +1814,7 @@ bool
 SIPCall::isVideoMuted() const
 {
 #ifdef ENABLE_VIDEO
+    // Return true only if all video media are muted
     std::function<bool(const RtpStream& stream)> mutedCheck = [](auto const& stream) {
         return (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO
                 and not stream.mediaAttribute_->muted_);
@@ -1821,17 +1827,27 @@ SIPCall::isVideoMuted() const
 }
 
 bool
+SIPCall::isCaptureDeviceMuted(const MediaType& mediaType) const
+{
+    // Return true only if all media of type 'mediaType' that use capture devices
+    // source, are muted.
+    std::function<bool(const RtpStream& stream)> mutedCheck = [&mediaType](auto const& stream) {
+        return (stream.mediaAttribute_->type_ == mediaType
+                and stream.mediaAttribute_->sourceType_ == MediaSourceType::CAPTURE_DEVICE
+                and not stream.mediaAttribute_->muted_);
+    };
+    const auto iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), mutedCheck);
+    return iter == rtpStreams_.end();
+}
+
+bool
 SIPCall::isMediaTypeEnabled(MediaType type) const
 {
-#ifdef ENABLE_VIDEO
     std::function<bool(const RtpStream& stream)> enabledCheck = [&type](auto const& stream) {
         return (stream.mediaAttribute_->type_ == type and stream.mediaAttribute_->enabled_);
     };
     const auto iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), enabledCheck);
     return iter != rtpStreams_.end();
-#else
-    return false;
-#endif
 }
 
 void

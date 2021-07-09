@@ -403,7 +403,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     // Build the initial media using the remote offer.
     auto localMediaList = Sdp::getMediaAttributeListFromSdp(r_sdp);
 
-    // To enable video, it must enabled in the remote and locally (i.e. in the account)
+    // To enable video, it must be enabled in the remote and locally (i.e. in the account)
     for (auto& media : localMediaList) {
         if (media.type_ == MediaType::MEDIA_VIDEO) {
             media.enabled_ &= account->isVideoEnabled();
