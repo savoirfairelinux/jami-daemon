@@ -3431,6 +3431,19 @@ JamiAccount::onIsComposing(const std::string& conversationId,
 }
 
 void
+JamiAccount::onIsAnswering(const std::string& conversationId,
+                           const std::string& peer,
+                           bool isAnswering)
+{
+    try {
+        const std::string fromUri {parseJamiUri(peer)};
+        Account::onIsAnswering(conversationId, fromUri, isAnswering);
+    } catch (...) {
+        JAMI_ERR("[Account %s] Can't parse URI: %s", getAccountID().c_str(), peer.c_str());
+    }
+}
+
+void
 JamiAccount::getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept
 {
     storeActiveIpAddress([this, cb = std::move(cb)] {
