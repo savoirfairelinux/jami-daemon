@@ -154,8 +154,8 @@ public:
     std::shared_ptr<Observable<std::shared_ptr<MediaFrame>>> getReceiveVideoFrameActiveWriter()
         override;
     bool hasVideo() const override;
-    bool isAudioMuted() const override;
-    bool isVideoMuted() const override;
+    bool isCaptureDeviceMuted(const MediaType& mediaType) const override;
+    bool isSrtpEnabled() const { return srtpEnabled_; }
     // End of override of Call class
 
     // Override of Recordable class
@@ -258,8 +258,6 @@ public:
     // Get the list of current RTP sessions
     std::vector<std::shared_ptr<RtpSession>> getRtpSessionList() const;
 
-    bool isSrtpEnabled() const { return srtpEnabled_; }
-
     void generateMediaPorts();
 
     void openPortsUPnP();
@@ -281,7 +279,6 @@ public:
 
     void setMute(bool state);
 
-    bool isMediaTypeEnabled(MediaType type) const;
     void setInviteSession(pjsip_inv_session* inviteSession = nullptr);
 
     std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
