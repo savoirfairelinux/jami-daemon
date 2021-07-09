@@ -56,6 +56,10 @@ public:
 
     static std::pair<bool, MediaType> getMediaType(const DRing::MediaMap& map);
 
+    static MediaSourceType stringToMediaSourceType(const std::string& mediaSourceType);
+
+    static std::pair<bool, MediaSourceType> getMediaSourceType(const DRing::MediaMap& map);
+
     static std::pair<bool, bool> getBoolValue(const DRing::MediaMap& mediaMap,
                                               const std::string& key);
 
@@ -71,6 +75,9 @@ public:
     // Return a string of the media type
     static char const* mediaTypeToString(MediaType type);
 
+    // Return a string of the media source type
+    static char const* mediaSourceTypeToString(MediaSourceType type);
+
     // Convert MediaAttribute to MediaMap
     static DRing::MediaMap toMediaMap(const MediaAttribute& mediaAttr);
 
@@ -85,6 +92,7 @@ public:
     bool secure_ {true};
     bool enabled_ {false};
     std::string sourceUri_ {};
+    MediaSourceType sourceType_ {MediaSourceType::NONE};
     std::string label_ {};
     bool onHold_ {false};
 
@@ -101,6 +109,6 @@ public:
     // with or without a media direction change (no re-invite).
     // For instance, muting the audio can be done by disabling the
     // audio input (capture) of the encoding session, resulting in
-    // sending an RTP packets without actual audio (silence).
+    // sending RTP packets without actual audio (silence).
 };
 } // namespace jami

@@ -50,17 +50,22 @@ constexpr static char HEIGHT[] = "HEIGHT";
 } // namespace Details
 
 namespace MediaAttributeKey {
-constexpr static char MEDIA_TYPE[] = "MEDIA_TYPE"; // string
-constexpr static char ENABLED[] = "ENABLED";       // bool
-constexpr static char MUTED[] = "MUTED";           // bool
-constexpr static char SOURCE[] = "SOURCE";         // string
-constexpr static char LABEL[] = "LABEL";           // string
-constexpr static char ON_HOLD[] = "ON_HOLD";       // bool
+constexpr static char MEDIA_TYPE[] = "MEDIA_TYPE";   // string
+constexpr static char ENABLED[] = "ENABLED";         // bool
+constexpr static char MUTED[] = "MUTED";             // bool
+constexpr static char SOURCE[] = "SOURCE";           // string
+constexpr static char SOURCE_TYPE[] = "SOURCE_TYPE"; // string
+constexpr static char LABEL[] = "LABEL";             // string
+constexpr static char ON_HOLD[] = "ON_HOLD";         // bool
 } // namespace MediaAttributeKey
 
 namespace MediaAttributeValue {
 constexpr static auto AUDIO = "MEDIA_TYPE_AUDIO";
 constexpr static auto VIDEO = "MEDIA_TYPE_VIDEO";
+constexpr static auto SRC_TYPE_NONE = "NONE";
+constexpr static auto SRC_TYPE_CAPTURE_DEVICE = "CAPTURE_DEVICE";
+constexpr static auto SRC_TYPE_DISPLAY = "DISPLAY";
+constexpr static auto SRC_TYPE_FILE = "FILE";
 } // namespace MediaAttributeValue
 
 namespace MediaNegotiationStatusEvents {
