@@ -53,6 +53,13 @@ enum MediaType : unsigned {
     MEDIA_ALL = MEDIA_AUDIO | MEDIA_VIDEO
 };
 
+enum MediaSourceType : unsigned {
+    NONE = 0,
+    CAPTURE_DEVICE, // Camera or microphone
+    DISPLAY,        // Screen sharing
+    FILE            // File streaming
+};
+
 enum class RateMode : unsigned { CRF_CONSTRAINED, CQ, CBR };
 
 /*
