@@ -54,6 +54,7 @@
 #include <chrono>
 #include <libavutil/display.h>
 #endif
+#include "audio/ringbufferpool.h"
 #include "jamidht/channeled_transport.h"
 
 #include "errno.h"
@@ -667,7 +668,8 @@ SIPCall::setInviteSession(pjsip_inv_session* inviteSession)
         // with pjsip.
         if (PJ_SUCCESS != pjsip_inv_add_ref(inviteSession)) {
             JAMI_WARN("[call:%s] trying to set invalid invite session [%p]",
-                      getCallId().c_str(), inviteSession);
+                      getCallId().c_str(),
+                      inviteSession);
             inviteSession_.reset(nullptr);
             return;
         }
@@ -1759,6 +1761,10 @@ SIPCall::addMediaStream(const MediaAttribute& mediaAttr)
     }
 #endif
 
+    if (stream.mediaAttribute_->sourceType_ == MediaSourceType::NONE) {
+        stream.mediaAttribute_->sourceType_ = MediaSourceType::CAPTURE_DEVICE;
+    }
+
     rtpStreams_.emplace_back(std::move(stream));
 }
 
@@ -1788,19 +1794,6 @@ SIPCall::initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
 }
 
 bool
-SIPCall::isAudioMuted() const
-{
-    std::function<bool(const RtpStream& stream)> mutedCheck = [](auto const& stream) {
-        return (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO
-                and not stream.mediaAttribute_->muted_);
-    };
-
-    const auto iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), mutedCheck);
-
-    return iter == rtpStreams_.end();
-}
-
-bool
 SIPCall::hasVideo() const
 {
 #ifdef ENABLE_VIDEO
@@ -1817,32 +1810,17 @@ SIPCall::hasVideo() const
 }
 
 bool
-SIPCall::isVideoMuted() const
+SIPCall::isCaptureDeviceMuted(const MediaType& mediaType) const
 {
-#ifdef ENABLE_VIDEO
-    std::function<bool(const RtpStream& stream)> mutedCheck = [](auto const& stream) {
-        return (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO
+    // Return true only if all media of type 'mediaType' that use capture devices
+    // source, are muted.
+    std::function<bool(const RtpStream& stream)> mutedCheck = [&mediaType](auto const& stream) {
+        return (stream.mediaAttribute_->type_ == mediaType
+                and stream.mediaAttribute_->sourceType_ == MediaSourceType::CAPTURE_DEVICE
                 and not stream.mediaAttribute_->muted_);
     };
     const auto iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), mutedCheck);
     return iter == rtpStreams_.end();
-#else
-    return true;
-#endif
-}
-
-bool
-SIPCall::isMediaTypeEnabled(MediaType type) const
-{
-#ifdef ENABLE_VIDEO
-    std::function<bool(const RtpStream& stream)> enabledCheck = [&type](auto const& stream) {
-        return (stream.mediaAttribute_->type_ == type and stream.mediaAttribute_->enabled_);
-    };
-    const auto iter = std::find_if(rtpStreams_.begin(), rtpStreams_.end(), enabledCheck);
-    return iter != rtpStreams_.end();
-#else
-    return false;
-#endif
 }
 
 void
@@ -2685,6 +2663,12 @@ SIPCall::enterConference(const std::string& confId)
 void
 SIPCall::exitConference()
 {
+    auto const& audioRtp = getAudioRtp();
+    if (audioRtp && !isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)) {
+        auto& rbPool = Manager::instance().getRingBufferPool();
+        rbPool.bindCallID(getCallId(), RingBufferPool::DEFAULT_ID);
+        rbPool.flush(RingBufferPool::DEFAULT_ID);
+    }
 #ifdef ENABLE_VIDEO
     auto const& videoRtp = getVideoRtp();
     if (videoRtp)

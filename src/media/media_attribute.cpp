@@ -44,6 +44,10 @@ MediaAttribute::MediaAttribute(const DRing::MediaMap& mediaMap, bool secure)
     if (pairBool.first)
         sourceUri_ = pairString.second;
 
+    std::pair<bool, MediaSourceType> pairSrcType = getMediaSourceType(mediaMap);
+    if (pairSrcType.first)
+        sourceType_ = pairSrcType.second;
+
     pairString = getStringValue(mediaMap, DRing::Media::MediaAttributeKey::LABEL);
     if (pairBool.first)
         label_ = pairString.second;
@@ -96,6 +100,30 @@ MediaAttribute::getMediaType(const DRing::MediaMap& map)
     return {true, type};
 }
 
+MediaSourceType
+MediaAttribute::stringToMediaSourceType(const std::string& srcType)
+{
+    if (srcType.compare(DRing::Media::MediaAttributeValue::SRC_TYPE_CAPTURE_DEVICE) == 0)
+        return MediaSourceType::CAPTURE_DEVICE;
+    if (srcType.compare(DRing::Media::MediaAttributeValue::SRC_TYPE_DISPLAY) == 0)
+        return MediaSourceType::DISPLAY;
+    if (srcType.compare(DRing::Media::MediaAttributeValue::SRC_TYPE_FILE) == 0)
+        return MediaSourceType::FILE;
+    return MediaSourceType::NONE;
+}
+
+std::pair<bool, MediaSourceType>
+MediaAttribute::getMediaSourceType(const DRing::MediaMap& map)
+{
+    const auto& iter = map.find(DRing::Media::MediaAttributeKey::SOURCE_TYPE);
+    if (iter == map.end()) {
+        JAMI_WARN("[MEDIA_TYPE] key not found in media map");
+        return {false, MediaSourceType::NONE};
+    }
+
+    return {true, stringToMediaSourceType(iter->second)};
+}
+
 std::pair<bool, bool>
 MediaAttribute::getBoolValue(const DRing::MediaMap& map, const std::string& key)
 {
@@ -143,6 +171,20 @@ MediaAttribute::mediaTypeToString(MediaType type)
     return nullptr;
 }
 
+char const*
+MediaAttribute::mediaSourceTypeToString(MediaSourceType type)
+{
+    if (type == MediaSourceType::NONE)
+        return DRing::Media::MediaAttributeValue::SRC_TYPE_NONE;
+    if (type == MediaSourceType::CAPTURE_DEVICE)
+        return DRing::Media::MediaAttributeValue::SRC_TYPE_CAPTURE_DEVICE;
+    if (type == MediaSourceType::DISPLAY)
+        return DRing::Media::MediaAttributeValue::SRC_TYPE_DISPLAY;
+    if (type == MediaSourceType::FILE)
+        return DRing::Media::MediaAttributeValue::SRC_TYPE_FILE;
+    return nullptr;
+}
+
 bool
 MediaAttribute::hasMediaType(const std::vector<MediaAttribute>& mediaList, MediaType type)
 {
@@ -163,6 +205,8 @@ MediaAttribute::toMediaMap(const MediaAttribute& mediaAttr)
     mediaMap.emplace(DRing::Media::MediaAttributeKey::ENABLED, boolToString(mediaAttr.enabled_));
     mediaMap.emplace(DRing::Media::MediaAttributeKey::MUTED, boolToString(mediaAttr.muted_));
     mediaMap.emplace(DRing::Media::MediaAttributeKey::SOURCE, mediaAttr.sourceUri_);
+    mediaMap.emplace(DRing::Media::MediaAttributeKey::SOURCE_TYPE,
+                     mediaSourceTypeToString(mediaAttr.sourceType_));
     mediaMap.emplace(DRing::Media::MediaAttributeKey::ON_HOLD, boolToString(mediaAttr.onHold_));
 
     return mediaMap;
@@ -196,6 +240,8 @@ MediaAttribute::toString(bool full) const
     if (full) {
         descr << " ";
         descr << "source [" << sourceUri_ << "]";
+        descr << " ";
+        descr << "src type [" << mediaSourceTypeToString(sourceType_) << "]";
         descr << " ";
         descr << "secure " << (secure_ ? "[YES]" : "[NO]");
     }
