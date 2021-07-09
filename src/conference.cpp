@@ -250,15 +250,130 @@ Conference::createConfAVStream(const StreamData& StreamData,
 #endif // ENABLE_PLUGIN
 
 void
+Conference::setMediaSourceState(MediaType type, bool muted)
+{
+    if (type == MediaType::MEDIA_AUDIO) {
+        audioSourceMuted_ = muted ? MediaSourceState::MUTED : MediaSourceState::UN_MUTED;
+    } else if (type == MediaType::MEDIA_VIDEO) {
+        videoSourceMuted_ = muted ? MediaSourceState::MUTED : MediaSourceState::UN_MUTED;
+    } else {
+        JAMI_ERR("Unsupported media type");
+    }
+}
+
+MediaSourceState
+Conference::getMediaSourceState(MediaType type) const
+{
+    if (type == MediaType::MEDIA_AUDIO) {
+        return audioSourceMuted_;
+    } else if (type == MediaType::MEDIA_VIDEO) {
+        return videoSourceMuted_;
+    } else {
+        JAMI_ERR("Unsupported media type");
+        return MediaSourceState::NONE;
+    }
+}
+
+bool
+Conference::isMediaSourceMuted(MediaType type) const
+{
+    if (type == MediaType::MEDIA_AUDIO) {
+        return audioSourceMuted_ == MediaSourceState::MUTED;
+    } else if (type == MediaType::MEDIA_VIDEO) {
+        return videoSourceMuted_ == MediaSourceState::MUTED;
+    } else {
+        JAMI_ERR("Unsupported media type");
+        return false;
+    }
+}
+
+void
+Conference::takeOverMediaSourceControl(const std::string& callId)
+{
+    auto call = getCall(callId);
+    if (not call) {
+        JAMI_ERR("No call matches participant %s", callId.c_str());
+        return;
+    }
+
+    auto mediaList = call->getMediaAttributeList();
+
+    std::vector<MediaType> mediaTypeList {MediaType::MEDIA_AUDIO, MediaType::MEDIA_VIDEO};
+
+    for (auto mediaType : mediaTypeList) {
+        // Try to find a media with a valid source type
+        std::function<bool(const MediaAttribute& mediaAttr)> check = [mediaType](
+                                                                         auto const& mediaAttr) {
+            return (mediaAttr.type_ == mediaType and mediaAttr.sourceType_ != MediaSourceType::NONE);
+        };
+
+        auto iter = std::find_if(mediaList.begin(), mediaList.end(), check);
+
+        if (iter == mediaList.end()) {
+            // Nothing to do if the call does not have a media that uses with
+            // a valid source type.
+            JAMI_DBG("[Call: %s] Does not have an active [%s] media source",
+                     callId.c_str(),
+                     MediaAttribute::mediaTypeToString(mediaType));
+            return;
+        }
+
+        if (getMediaSourceState(iter->type_) == MediaSourceState::NONE) {
+            // If the source state for the specified media type is not set
+            // yet, the state will initialized using the state of the first
+            // participant with a valid media source.
+            setMediaSourceState(iter->type_, iter->muted_);
+        } else {
+            // To mute the local source, all the sources of the participating
+            // calls must be muted.
+            setMediaSourceState(iter->type_, iter->muted_ && isMediaSourceMuted(iter->type_));
+        }
+
+        // Un-mute media in the call. The mute/un-mute state will be handled
+        // by the conference/mixer from now on.
+        // TODO. should done once for both (audio + video)
+        iter->muted_ = false;
+    }
+
+    // Update the media states in the newly added call.
+    call->requestMediaChange(MediaAttribute::mediaAttributesToMediaMaps(mediaList));
+
+    // Notify the client
+    for (auto mediaType : mediaTypeList) {
+        if (mediaType == MediaType::MEDIA_AUDIO) {
+            bool muted = isMediaSourceMuted(MediaType::MEDIA_AUDIO);
+            JAMI_WARN("Take over [AUDIO] control from call %s - current local source state [%s]",
+                      callId.c_str(),
+                      muted ? "muted" : "un-muted");
+            emitSignal<DRing::CallSignal::AudioMuted>(id_, muted);
+        } else {
+            bool muted = isMediaSourceMuted(MediaType::MEDIA_VIDEO);
+            JAMI_WARN("Take over [VIDEO] control from call %s - current local source state [%s]",
+                      callId.c_str(),
+                      muted ? "muted" : "un-muted");
+            emitSignal<DRing::CallSignal::VideoMuted>(id_, muted);
+        }
+    }
+}
+
+void
 Conference::add(const std::string& participant_id)
 {
+    JAMI_DBG("Adding call %s to conference %s", participant_id.c_str(), id_.c_str());
+
     if (participants_.insert(participant_id).second) {
         // Check if participant was muted before conference
         if (auto call = getCall(participant_id)) {
             if (call->isPeerMuted()) {
                 participantsMuted_.emplace(string_remove_suffix(call->getPeerNumber(), '@'));
             }
+
+            // When a call joins a conference, the control if the media
+            // source sates (mainly mute/un-mute states) will be handled
+            // by the conference.
+            takeOverMediaSourceControl(participant_id);
         }
+
         if (auto call = getCall(participant_id)) {
             auto w = call->getAccount();
             auto account = w.lock();
@@ -802,13 +917,13 @@ Conference::muteParticipant(const std::string& participant_id, const bool& state
         auto isHostMuted = isMuted("host"sv);
         if (state and not isHostMuted) {
             participantsMuted_.emplace("host"sv);
-            if (not audioMuted_) {
+            if (not isMediaSourceMuted(MediaType::MEDIA_AUDIO)) {
                 JAMI_DBG("Mute host");
                 unbindHost();
             }
         } else if (not state and isHostMuted) {
             participantsMuted_.erase("host");
-            if (not audioMuted_) {
+            if (not isMediaSourceMuted(MediaType::MEDIA_AUDIO)) {
                 JAMI_DBG("Unmute host");
                 bindHost();
             }
@@ -844,7 +959,7 @@ Conference::updateMuted()
         if (peerID.empty()) {
             peerID = "host"sv;
             info.audioModeratorMuted = isMuted(peerID);
-            info.audioLocalMuted = audioMuted_;
+            info.audioLocalMuted = isMediaSourceMuted(MediaType::MEDIA_AUDIO);
         } else {
             info.audioModeratorMuted = isMuted(peerID);
             if (auto call = getCallFromPeerID(peerID))
@@ -949,30 +1064,37 @@ void
 Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
 {
     if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
-        if (is_muted == audioMuted_)
+        if (is_muted == isMediaSourceMuted(MediaType::MEDIA_AUDIO)) {
+            JAMI_DBG("Local audio source already in [%s] state", is_muted ? "muted" : "un-muted");
             return;
+        }
+
         auto isHostMuted = isMuted("host"sv);
-        if (is_muted and not audioMuted_ and not isHostMuted) {
-            JAMI_DBG("Local audio mute host");
+        if (is_muted and not isMediaSourceMuted(MediaType::MEDIA_AUDIO) and not isHostMuted) {
+            JAMI_DBG("Muting local audio source");
             unbindHost();
-        } else if (not is_muted and audioMuted_ and not isHostMuted) {
-            JAMI_DBG("Local audio unmute host");
+        } else if (not is_muted and isMediaSourceMuted(MediaType::MEDIA_AUDIO) and not isHostMuted) {
+            JAMI_DBG("Un-muting local audio source");
             bindHost();
         }
-        audioMuted_ = is_muted;
+        setMediaSourceState(MediaType::MEDIA_AUDIO, is_muted);
         updateMuted();
         emitSignal<DRing::CallSignal::AudioMuted>(id_, is_muted);
         return;
     } else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
 #ifdef ENABLE_VIDEO
-        if (is_muted == videoMuted_)
+        if (is_muted == (isMediaSourceMuted(MediaType::MEDIA_VIDEO))) {
+            JAMI_DBG("Local video source already in [%s] state", is_muted ? "muted" : "un-muted");
             return;
+        }
         if (is_muted) {
             if (auto mixer = getVideoMixer()) {
+                JAMI_DBG("Muting local video source");
                 mixer->stopInput();
             }
         } else {
             if (auto mixer = getVideoMixer()) {
+                JAMI_DBG("Un-muting local video source");
                 mixer->switchInput(mediaInput_);
 #ifdef ENABLE_PLUGIN
                 // Preview
@@ -987,7 +1109,7 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
 #endif
             }
         }
-        videoMuted_ = is_muted;
+        setMediaSourceState(MediaType::MEDIA_VIDEO, is_muted);
         emitSignal<DRing::CallSignal::VideoMuted>(id_, is_muted);
         return;
 #endif

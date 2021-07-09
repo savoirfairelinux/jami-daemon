@@ -380,8 +380,10 @@ Call::getDetails() const
         {DRing::Call::Details::CONF_ID, confID_},
         {DRing::Call::Details::TIMESTAMP_START, std::to_string(timestamp_start_)},
         {DRing::Call::Details::ACCOUNTID, getAccountId()},
-        {DRing::Call::Details::AUDIO_MUTED, std::string(bool_to_str(isAudioMuted()))},
-        {DRing::Call::Details::VIDEO_MUTED, std::string(bool_to_str(isVideoMuted()))},
+        {DRing::Call::Details::AUDIO_MUTED,
+         std::string(bool_to_str(isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)))},
+        {DRing::Call::Details::VIDEO_MUTED,
+         std::string(bool_to_str(isCaptureDeviceMuted(MediaType::MEDIA_VIDEO)))},
         {DRing::Call::Details::AUDIO_ONLY, std::string(bool_to_str(not hasVideo()))},
     };
 }
