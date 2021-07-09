@@ -33,6 +33,7 @@
 #include <sys/time.h>
 #endif
 
+#include <atomic>
 #include <string>
 #include <sstream>
 #include <iomanip>
@@ -91,7 +92,7 @@ static constexpr auto ENDL = "\n";
 #endif
 
 static int consoleLog;
-static bool monitorLog;
+static std::atomic_bool monitorLog;
 static int debugMode;
 static std::mutex logMutex;
 
@@ -172,7 +173,7 @@ setDebugMode(int d)
 void
 setMonitorLog(bool m)
 {
-    monitorLog = m;
+    monitorLog.store(m);
 }
 
 int
@@ -184,7 +185,7 @@ getDebugMode(void)
 bool
 getMonitorLog(void)
 {
-    return monitorLog;
+    return monitorLog.load();
 }
 
 static const char*
@@ -225,16 +226,19 @@ void
 Logger::log(int level, const char* file, int line, bool linefeed, const char* const format, ...)
 {
 #if defined(TARGET_OS_IOS) && TARGET_OS_IOS
-    if (!debugMode && !monitorLog)
+    if (!debugMode && !monitorLog.load())
         return;
 #endif
-    if (!debugMode && !monitorLog && level == LOG_DEBUG)
+    if (!debugMode && !monitorLog.load() && level == LOG_DEBUG)
         return;
 
     va_list ap;
     va_start(ap, format);
     va_list cp;
-    if (monitorLog)
+
+    bool withMonitor = monitorLog.load();
+
+    if (withMonitor)
         va_copy(cp, ap);
 #ifdef __ANDROID__
     __android_log_vprint(level, APP_NAME, format, ap);
@@ -242,7 +246,7 @@ Logger::log(int level, const char* file, int line, bool linefeed, const char* co
     Logger::vlog(level, file, line, linefeed, format, ap);
 #endif
 
-    if (monitorLog) {
+    if (withMonitor) {
         std::array<char, 4096> tmp;
         vsnprintf(tmp.data(), tmp.size(), format, cp);
         jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(contextHeader(file, line)
@@ -266,7 +270,7 @@ Logger::vlog(
     // follow strictly POSIX rules... so we lock our mutex in any cases.
     std::lock_guard<std::mutex> lk {logMutex};
 
-    if (consoleLog or monitorLog) {
+    if (consoleLog or monitorLog.load()) {
 #ifndef _WIN32
         const char* color_header = CYAN;
         const char* color_prefix = "";
