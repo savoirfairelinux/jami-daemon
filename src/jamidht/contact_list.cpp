@@ -232,6 +232,8 @@ ContactList::saveTrustRequests() const
 void
 ContactList::loadTrustRequests()
 {
+    if (!fileutils::isFile(fileutils::getFullPath(path_, "incomingTrustRequests")))
+        return;
     std::map<dht::InfoHash, TrustRequest> requests;
     try {
         // read file
