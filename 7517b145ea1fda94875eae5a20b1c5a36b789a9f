@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e2213e17_69768d8c",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 663,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-07-09T12:48:48Z",
+      "side": 1,
+      "message": "Please, update the comment to stress that the first ref is owned by the lib",
+      "revId": "7517b145ea1fda94875eae5a20b1c5a36b789a9f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
