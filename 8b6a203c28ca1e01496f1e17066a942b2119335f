@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bd0a9a0e_c4901c3b",
+        "filename": "test/unitTest/ice/ice_sdp_parser.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 240,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-09T12:58:30Z",
+      "side": 1,
+      "message": "wait_for_removal_of already removes the accounts. No need for this",
+      "range": {
+        "startLine": 219,
+        "startChar": 40,
+        "endLine": 240,
+        "endChar": 38
+      },
+      "revId": "8b6a203c28ca1e01496f1e17066a942b2119335f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
