@@ -33,6 +33,7 @@
 #include "manager.h"
 
 #include "smartools.h"
+#include "sipaccount.h"
 
 namespace DRing {
 
@@ -78,6 +79,13 @@ placeCallWithMedia(const std::string& accountID,
         JAMI_DBG("No number entered - Call aborted");
         return {};
     } else {
+        {
+            auto acc = jami::Manager::instance().getAccount<SIPAccount>(accountID);
+            acc.setIsComposing();
+            // request peer infos, call
+            // if peer is merchant, check local client plugin
+            // if both valid, allow outgoing call
+        }
         return jami::Manager::instance().outgoingCall(accountID, to, mediaList);
     }
 }
