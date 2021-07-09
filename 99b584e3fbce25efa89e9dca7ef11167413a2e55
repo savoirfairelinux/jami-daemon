@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "433f30c6_c9fd8962",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 240,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-09T14:24:11Z",
+      "side": 1,
+      "message": "I think this is broken too. deviceId is !\u003d accountManager_-\u003egetInfo()-\u003edevicePk-\u003egetId().toString(), causing hashes to changes (there is some others in the code)",
+      "range": {
+        "startLine": 240,
+        "startChar": 26,
+        "endLine": 240,
+        "endChar": 67
+      },
+      "revId": "99b584e3fbce25efa89e9dca7ef11167413a2e55",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
