@@ -30,6 +30,7 @@
 #include "jami.h"
 #include "account_const.h"
 #include "common.h"
+#include "media_const.h"
 
 using namespace DRing::Account;
 
@@ -68,10 +69,12 @@ public:
 private:
     void testGetConference();
     void testModeratorMuteUpdateParticipantsInfos();
+    void testAudioVideoMutedStates();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
     CPPUNIT_TEST(testModeratorMuteUpdateParticipantsInfos);
+    CPPUNIT_TEST(testAudioVideoMutedStates);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -246,6 +249,54 @@ ConferenceTest::testModeratorMuteUpdateParticipantsInfos()
     Manager::instance().muteParticipant(confId, bobUri, false);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(5), [&] { return !bobCall.moderatorMuted.load(); }));
+
+    hangupConference();
+}
+
+void
+ConferenceTest::testAudioVideoMutedStates()
+{
+    registerSignalHandlers();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto bobUri = bobAccount->getUsername();
+    auto carlaUri = carlaAccount->getUsername();
+
+    JAMI_INFO("Start call between Alice and Bob");
+    auto call1 = aliceAccount->newOutgoingCall(bobUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return !bobCall.callId.empty(); }));
+    Manager::instance().answerCall(bobCall.callId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return bobCall.state == "CURRENT"; }));
+
+    call1->muteMedia(DRing::Media::MediaAttributeValue::AUDIO, true);
+    call1->muteMedia(DRing::Media::MediaAttributeValue::VIDEO, true);
+
+    JAMI_INFO("Start call between Alice and Carla");
+    auto call2 = aliceAccount->newOutgoingCall(carlaUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return !carlaCall.callId.empty(); }));
+    Manager::instance().answerCall(carlaCall.callId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return carlaCall.state == "CURRENT"; }));
+
+    call2->muteMedia(DRing::Media::MediaAttributeValue::AUDIO, true);
+    call2->muteMedia(DRing::Media::MediaAttributeValue::VIDEO, true);
+
+    JAMI_INFO("Start conference");
+    Manager::instance().joinParticipant(call1->getCallId(), call2->getCallId());
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(20), [&] { return !confId.empty(); }));
+
+    auto conf = Manager::instance().getConferenceFromID(confId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&] {
+        return conf->isMediaSourceMuted(jami::MediaType::MEDIA_AUDIO);
+    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&] {
+        return conf->isMediaSourceMuted(jami::MediaType::MEDIA_VIDEO);
+    }));
 
     hangupConference();
 }

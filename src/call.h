@@ -373,8 +373,7 @@ public: // media management
 
     // Media status methods
     virtual bool hasVideo() const = 0;
-    virtual bool isAudioMuted() const = 0;
-    virtual bool isVideoMuted() const = 0;
+    virtual bool isCaptureDeviceMuted(const MediaType& mediaType) const = 0;
 
     /**
      * A Call can be in a conference. If this is the case, the other side

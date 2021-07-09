@@ -158,6 +158,12 @@ struct ConfInfo : public std::vector<ParticipantInfo>
     std::string toString() const;
 };
 
+enum class MediaSourceState : unsigned {
+    NONE = 0, // Not set yet
+    MUTED,
+    UNMUTED
+};
+
 using ParticipantSet = std::set<std::string>;
 
 class Conference : public Recordable, public std::enable_shared_from_this<Conference>
@@ -208,6 +214,25 @@ public:
     }
 
     const char* getStateStr() const { return getStateStr(confState_); }
+
+    /**
+     * Set the mute state of the local host
+     */
+    void setMediaSourceState(MediaType type, bool muted);
+
+    /**
+     * Get the mute state of the local host
+     */
+    MediaSourceState getMediaSourceState(MediaType type) const;
+    bool isMediaSourceMuted(MediaType type) const;
+
+    /**
+     * Take over media control from the call.
+     * When a call joins a conference, the media control (mainly mute/un-mute
+     * state of the local media source) will be handled by the conference and
+     * the mixer.
+     */
+    void takeOverMediaSourceControl(const std::string& callId);
 
     /**
      * Add a new participant to the conference
@@ -336,8 +361,21 @@ private:
 
     ConfInfo getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI);
     bool isHost(std::string_view uri) const;
-    bool audioMuted_ {false};
-    bool videoMuted_ {false};
+
+    /**
+     * If the local host is participating in the conference (attached
+     * mode ), these two  variables will hold the media source states
+     * of the local host.
+     *
+     * NOTE:
+     * Currently, the conference and the client support only one stream
+     * per media type, even if the call supports an arbitrary number of
+     * streams per media type. Thus, these two variables will hold the
+     * media source states regardless of the media type (capture device,
+     * display, ...)
+     */
+    MediaSourceState audioSourceMuted_ {MediaSourceState::NONE};
+    MediaSourceState videoSourceMuted_ {MediaSourceState::NONE};
 
     bool localModAdded_ {false};
 
