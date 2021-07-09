@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "13437c95_e0db5961",
+        "filename": "contrib/src/pjproject/0007-upnp-srflx-nat-assisted-cand.patch",
+        "patchSetId": 3
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-09T13:05:04Z",
+      "side": 1,
+      "message": "chane comp_bits instead",
+      "range": {
+        "startLine": 16,
+        "startChar": 31,
+        "endLine": 16,
+        "endChar": 38
+      },
+      "revId": "856e22bfb2a696064985ebfde5144f2448f59e31",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
