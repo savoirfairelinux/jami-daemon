@@ -158,6 +158,12 @@ struct ConfInfo : public std::vector<ParticipantInfo>
     std::string toString() const;
 };
 
+enum class CaptureDeviceState : unsigned {
+    NONE = 0, // Not set yet
+    MUTED,
+    UN_MUTED
+};
+
 using ParticipantSet = std::set<std::string>;
 
 class Conference : public Recordable, public std::enable_shared_from_this<Conference>
@@ -208,6 +214,24 @@ public:
     }
 
     const char* getStateStr() const { return getStateStr(confState_); }
+
+    /**
+     * Set the mute state of the local host
+     */
+    void setCaptureDeviceState(MediaType type, bool muted);
+
+    /**
+     * Get the mute state of the local host
+     */
+    CaptureDeviceState getCaptureDeviceState(MediaType type) const;
+    bool isCaptureDeviceMuted(MediaType type) const;
+
+    /**
+     * Take over media control from call.
+     * When call joins conference, the media control (mainly mute/un-mute
+     * state) will be handled by the conference and the mixer.
+     */
+    void takeOverCaptureDeviceControl(const std::string& callId, MediaType mediaType);
 
     /**
      * Add a new participant to the conference
@@ -336,8 +360,8 @@ private:
 
     ConfInfo getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI);
     bool isHost(std::string_view uri) const;
-    bool audioMuted_ {false};
-    bool videoMuted_ {false};
+    CaptureDeviceState audioCaptureMuted_ {CaptureDeviceState::NONE};
+    CaptureDeviceState videoCaptureMuted_ {CaptureDeviceState::NONE};
 
     bool localModAdded_ {false};
 
