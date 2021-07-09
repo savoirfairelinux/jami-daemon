@@ -331,6 +331,9 @@ public:
     void onIsComposing(const std::string& conversationId,
                        const std::string& peer,
                        bool isWriting) override;
+    void onIsAnswering(const std::string& conversationId,
+                       const std::string& peer,
+                       bool isAnswering) override;
 
     /* Devices */
     void addDevice(const std::string& password);

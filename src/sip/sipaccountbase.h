@@ -260,6 +260,8 @@ public:
 
     void setIsComposing(const std::string& conversationUri, bool isWriting) override;
 
+    void sendPaymentVerificationMessage(const std::string& conversationUri, bool isRequiring) override;
+
     bool setMessageDisplayed(const std::string& conversationUri,
                              const std::string& messageId,
                              int status) override;

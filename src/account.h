@@ -181,9 +181,15 @@ public:
 
     virtual void setIsComposing(const std::string& /*conversationUri*/, bool /*isWriting*/) {};
 
+    virtual void sendPaymentVerificationMessage(const std::string& conversationUri, bool isRequiring) {};
+
     virtual void onIsComposing(const std::string& /*conversationId*/,
                                const std::string& /*peer*/,
                                bool /*isWriting*/);
+    
+    virtual void onIsAnswering(const std::string& /*conversationId*/,
+                               const std::string& /*peer*/,
+                               bool /*isAnswering*/) {};
 
     virtual bool setMessageDisplayed(const std::string& /*conversationUri*/,
                                      const std::string& /*messageId*/,

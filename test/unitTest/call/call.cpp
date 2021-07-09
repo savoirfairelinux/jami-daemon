@@ -64,10 +64,11 @@ private:
     void testDeclineMultiDevice();
 
     CPPUNIT_TEST_SUITE(CallTest);
-    CPPUNIT_TEST(testCall);
-    CPPUNIT_TEST(testCachedCall);
-    CPPUNIT_TEST(testStopSearching);
-    CPPUNIT_TEST(testDeclineMultiDevice);
+    //CPPUNIT_TEST(testCall);
+    //CPPUNIT_TEST(testCachedCall);
+    //CPPUNIT_TEST(testStopSearching);
+    //CPPUNIT_TEST(testDeclineMultiDevice);
+    CPPUNIT_TEST(testPaymentRequest);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -296,6 +297,50 @@ CallTest::testDeclineMultiDevice()
     }));
 }
 
+// void
+// CallTest::testPaymentRequest()
+// {
+//     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+//     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+//     auto bobUri = bobAccount->getUsername();
+//     auto aliceUri = aliceAccount->getUsername();
+
+//     std::mutex mtx;
+//     std::unique_lock<std::mutex> lk {mtx};
+//     std::condition_variable cv;
+//     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+//     std::atomic_bool callReceived {false};
+//     std::atomic<int> callStopped {0};
+//     // Watch signals
+//     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCallWithMedia>(
+//         [&](const std::string&,
+//             const std::string&,
+//             const std::string&,
+//             const std::vector<std::map<std::string, std::string>>&) {
+//             callReceived = true;
+//             cv.notify_one();
+//         }));
+//     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
+//         [&](const std::string&, const std::string& state, signed) {
+//             if (state == "OVER") {
+//                 callStopped += 1;
+//                 if (callStopped == 2)
+//                     cv.notify_one();
+//             }
+//         }));
+//     DRing::registerSignalHandlers(confHandlers);
+
+//     JAMI_INFO("Start call between alice and Bob");
+//     auto call = aliceAccount->newOutgoingCall(bobUri);
+
+//     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callReceived.load(); }));
+
+//     JAMI_INFO("Stop call between alice and Bob");
+//     callStopped = 0;
+//     Manager::instance().hangupCall(call->getCallId());
+//     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callStopped == 2; }));
+
+// }
 } // namespace test
 } // namespace jami
 

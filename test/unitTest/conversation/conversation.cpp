@@ -109,6 +109,7 @@ private:
     void testSendMessageToMultipleParticipants();
     void testPingPongMessages();
     void testIsComposing();
+    void testIsPayment();
     void testSetMessageDisplayed();
     void testRemoveMember();
     void testMemberBanNoBadFile();
@@ -154,58 +155,59 @@ private:
     void testFetchProfileUnauthorized();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
-    CPPUNIT_TEST(testCreateConversation);
-    CPPUNIT_TEST(testGetConversation);
-    CPPUNIT_TEST(testGetConversationsAfterRm);
-    CPPUNIT_TEST(testRemoveInvalidConversation);
-    CPPUNIT_TEST(testRemoveConversationNoMember);
-    CPPUNIT_TEST(testRemoveConversationWithMember);
-    CPPUNIT_TEST(testAddMember);
-    CPPUNIT_TEST(testMemberAddedNoBadFile);
-    CPPUNIT_TEST(testAddOfflineMemberThenConnects);
-    CPPUNIT_TEST(testGetMembers);
-    CPPUNIT_TEST(testSendMessage);
-    CPPUNIT_TEST(testSendMessageTriggerMessageReceived);
-    CPPUNIT_TEST(testGetRequests);
-    CPPUNIT_TEST(testDeclineRequest);
-    CPPUNIT_TEST(testSendMessageToMultipleParticipants);
-    CPPUNIT_TEST(testPingPongMessages);
-    CPPUNIT_TEST(testIsComposing);
-    CPPUNIT_TEST(testSetMessageDisplayed);
-    CPPUNIT_TEST(testRemoveMember);
-    CPPUNIT_TEST(testMemberBanNoBadFile);
-    CPPUNIT_TEST(testMemberTryToRemoveAdmin);
-    CPPUNIT_TEST(testBannedMemberCannotSendMessage);
-    CPPUNIT_TEST(testAddBannedMember);
-    CPPUNIT_TEST(testMemberCannotBanOther);
-    CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
-    CPPUNIT_TEST(testVoteNonEmpty);
-    CPPUNIT_TEST(testAdminCannotKickTheirself);
-    CPPUNIT_TEST(testCommitUnauthorizedUser);
-    CPPUNIT_TEST(testNoBadFileInInitialCommit);
-    CPPUNIT_TEST(testPlainTextNoBadFile);
-    CPPUNIT_TEST(testVoteNoBadFile);
-    CPPUNIT_TEST(testETooBigClone);
-    CPPUNIT_TEST(testETooBigFetch);
-    CPPUNIT_TEST(testMemberJoinsNoBadFile);
-    CPPUNIT_TEST(testMemberAddedNoCertificate);
-    CPPUNIT_TEST(testMemberJoinsInviteRemoved);
-    CPPUNIT_TEST(testAddContact);
-    CPPUNIT_TEST(testAddContactDeleteAndReAdd);
-    CPPUNIT_TEST(testFailAddMemberInOneToOne);
-    CPPUNIT_TEST(testUnknownModeDetected);
-    CPPUNIT_TEST(testRemoveContact);
-    CPPUNIT_TEST(testBanContact);
-    CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
-    CPPUNIT_TEST(testAddOfflineContactThenConnect);
-    CPPUNIT_TEST(testDeclineTrustRequestDoNotGenerateAnother);
-    CPPUNIT_TEST(testConversationMemberEvent);
-    CPPUNIT_TEST(testUpdateProfile);
-    CPPUNIT_TEST(testCheckProfileInConversationRequest);
-    CPPUNIT_TEST(testCheckProfileInTrustRequest);
-    CPPUNIT_TEST(testMemberCannotUpdateProfile);
-    CPPUNIT_TEST(testUpdateProfileWithBadFile);
-    CPPUNIT_TEST(testFetchProfileUnauthorized);
+    // CPPUNIT_TEST(testCreateConversation);
+    // CPPUNIT_TEST(testGetConversation);
+    // CPPUNIT_TEST(testGetConversationsAfterRm);
+    // CPPUNIT_TEST(testRemoveInvalidConversation);
+    // CPPUNIT_TEST(testRemoveConversationNoMember);
+    // CPPUNIT_TEST(testRemoveConversationWithMember);
+    // CPPUNIT_TEST(testAddMember);
+    // CPPUNIT_TEST(testMemberAddedNoBadFile);
+    // CPPUNIT_TEST(testAddOfflineMemberThenConnects);
+    // CPPUNIT_TEST(testGetMembers);
+    // CPPUNIT_TEST(testSendMessage);
+    // CPPUNIT_TEST(testSendMessageTriggerMessageReceived);
+    // CPPUNIT_TEST(testGetRequests);
+    // CPPUNIT_TEST(testDeclineRequest);
+    // CPPUNIT_TEST(testSendMessageToMultipleParticipants);
+    // CPPUNIT_TEST(testPingPongMessages);
+    // CPPUNIT_TEST(testIsComposing);
+    CPPUNIT_TEST(testIsPayment);
+    // CPPUNIT_TEST(testSetMessageDisplayed);
+    // CPPUNIT_TEST(testRemoveMember);
+    // CPPUNIT_TEST(testMemberBanNoBadFile);
+    // CPPUNIT_TEST(testMemberTryToRemoveAdmin);
+    // CPPUNIT_TEST(testBannedMemberCannotSendMessage);
+    // CPPUNIT_TEST(testAddBannedMember);
+    // CPPUNIT_TEST(testMemberCannotBanOther);
+    // CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
+    // CPPUNIT_TEST(testVoteNonEmpty);
+    // CPPUNIT_TEST(testAdminCannotKickTheirself);
+    // CPPUNIT_TEST(testCommitUnauthorizedUser);
+    // CPPUNIT_TEST(testNoBadFileInInitialCommit);
+    // CPPUNIT_TEST(testPlainTextNoBadFile);
+    // CPPUNIT_TEST(testVoteNoBadFile);
+    // CPPUNIT_TEST(testETooBigClone);
+    // CPPUNIT_TEST(testETooBigFetch);
+    // CPPUNIT_TEST(testMemberJoinsNoBadFile);
+    // CPPUNIT_TEST(testMemberAddedNoCertificate);
+    // CPPUNIT_TEST(testMemberJoinsInviteRemoved);
+    // CPPUNIT_TEST(testAddContact);
+    // CPPUNIT_TEST(testAddContactDeleteAndReAdd);
+    // CPPUNIT_TEST(testFailAddMemberInOneToOne);
+    // CPPUNIT_TEST(testUnknownModeDetected);
+    // CPPUNIT_TEST(testRemoveContact);
+    // CPPUNIT_TEST(testBanContact);
+    // CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
+    // CPPUNIT_TEST(testAddOfflineContactThenConnect);
+    // CPPUNIT_TEST(testDeclineTrustRequestDoNotGenerateAnother);
+    // CPPUNIT_TEST(testConversationMemberEvent);
+    // CPPUNIT_TEST(testUpdateProfile);
+    // CPPUNIT_TEST(testCheckProfileInConversationRequest);
+    // CPPUNIT_TEST(testCheckProfileInTrustRequest);
+    // CPPUNIT_TEST(testMemberCannotUpdateProfile);
+    // CPPUNIT_TEST(testUpdateProfileWithBadFile);
+    // CPPUNIT_TEST(testFetchProfileUnauthorized);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1174,6 +1176,78 @@ ConversationTest::testIsComposing()
 
     aliceAccount->setIsComposing("swarm:" + convId, false);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return !aliceComposing; }));
+}
+
+void
+ConversationTest::testIsPayment()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+    auto convId = aliceAccount->startConversation();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
+         aliceComposing = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == bobId && conversationId == convId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
+                memberMessageGenerated = true;
+                cv.notify_one();
+            }
+        }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::ComposingStatusChanged>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                const std::string& peer,
+                bool state) {
+                if (accountId == bobId && conversationId == convId && peer == aliceUri) {
+                    aliceComposing = state;
+                    cv.notify_one();
+                }
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->addConversationMember(convId, bobUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberMessageGenerated; }));
+    // Assert that repository exists
+    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    // Check created files
+    auto bobInvited = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
+    CPPUNIT_ASSERT(fileutils::isFile(bobInvited));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    memberMessageGenerated = false;
+    bobAccount->acceptConversationRequest(convId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberMessageGenerated; }));
+
+    aliceAccount->sendPaymentVerificationMessage("swarm:" + convId, true);
+    std::this_thread::sleep_for(std::chrono::seconds(30));
+
+    DRing::unregisterSignalHandlers();
 }
 
 void
