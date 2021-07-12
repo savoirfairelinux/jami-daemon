@@ -1006,11 +1006,17 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void* pkt, pj_size_t size)
 //==============================================================================
 
 IceTransport::IceTransport(const char* name, const IceTransportOptions& options)
-    : pimpl_ {std::make_unique<Impl>(name, options)}
-{}
+    : pimpl_{}
+{
+    sip_utils::register_thread();
+
+    pimpl_ = std::make_unique<Impl>(name, options);
+}
 
 IceTransport::~IceTransport()
 {
+    sip_utils::register_thread();
+
     isStopped_ = true;
     cancelOperations();
 }
