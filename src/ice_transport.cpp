@@ -213,6 +213,8 @@ public:
 
     std::atomic_bool destroying_ {false};
     onShutdownCb scb {};
+
+    std::shared_ptr<pj_caching_pool> cp_;
 };
 
 //==============================================================================
@@ -331,6 +333,7 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
         upnp_.reset(new upnp::Controller());
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
+    cp_ = iceTransportFactory.getPoolCaching();
     config_ = iceTransportFactory.getIceCfg(); // config copy
     if (options.tcpEnable) {
         config_.protocol = PJ_ICE_TP_TCP;
@@ -1696,13 +1699,18 @@ IceTransport::link() const
 //==============================================================================
 
 IceTransportFactory::IceTransportFactory()
-    : cp_()
+    : cp_(new pj_caching_pool(), [](pj_caching_pool* p){
+        pj_caching_pool_destroy(p);
+        delete p;
+    })
     , ice_cfg_()
 {
     sip_utils::register_thread();
-    pj_caching_pool_init(&cp_, NULL, 0);
+
+    pj_caching_pool_init(cp_.get(), NULL, 0);
+
     pj_ice_strans_cfg_default(&ice_cfg_);
-    ice_cfg_.stun_cfg.pf = &cp_.factory;
+    ice_cfg_.stun_cfg.pf = &cp_->factory;
 
     // v2.4.5 of PJNATH has a default of 100ms but RFC 5389 since version 14 requires
     // a minimum of 500ms on fixed-line links. Our usual case is wireless links.
@@ -1715,7 +1723,7 @@ IceTransportFactory::IceTransportFactory()
 
 IceTransportFactory::~IceTransportFactory()
 {
-    pj_caching_pool_destroy(&cp_);
+
 }
 
 std::shared_ptr<IceTransport>
