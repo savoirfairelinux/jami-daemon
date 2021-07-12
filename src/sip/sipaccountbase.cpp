@@ -86,6 +86,8 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
                                             pjsip_dialog** dlg,
                                             pjsip_inv_session** inv)
 {
+    sip_utils::register_thread();
+
     JAMI_DBG("Creating SIP dialog: \n"
              "from: %s\n"
              "contact: %s\n"

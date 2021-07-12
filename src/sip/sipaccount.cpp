@@ -434,6 +434,8 @@ SIPAccount::newOutgoingCall(std::string_view toUrl,
 bool
 SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 {
+    sip_utils::register_thread();
+
     // Add Ice headers to local SDP if ice transport exist
     if (call->isIceEnabled())
         call->addLocalIceAttributes();
