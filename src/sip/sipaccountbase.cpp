@@ -200,10 +200,7 @@ SIPAccountBase::sendPaymentVerificationMessage(const std::string& conversationUr
 
     bool isClient = true;   // checkIsClient();
     bool isService = true;  // checkIsService();
-    bool allowCall = false; // checkAllowCall();
 
-    // getPayment(const std::string& conversationId, bool isRequiring, bool isClient, bool
-    // isService, bool allowCall)
     JAMI_INFO() << "SENDING PAYMENT VERIFICATION MESSAGE!!!";
     sendInstantMessage(uid, {{MIME_TYPE_IM_PAYMENT, getPayment(conversationId, isRequiring, isClient, isService, false)}});
 }
