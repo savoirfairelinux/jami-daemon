@@ -72,6 +72,8 @@ SipTransport::deleteTransport(pjsip_transport* t)
 SipTransport::SipTransport(pjsip_transport* t)
     : transport_(nullptr, deleteTransport)
 {
+    sip_utils::register_thread();
+
     if (not t or pjsip_transport_add_ref(t) != PJ_SUCCESS)
         throw std::runtime_error("invalid transport");
 
@@ -92,6 +94,8 @@ SipTransport::SipTransport(pjsip_transport* t, const std::shared_ptr<TlsListener
 
 SipTransport::~SipTransport()
 {
+    sip_utils::register_thread();
+
     JAMI_DBG("~SipTransport@%p {tr=%p {rc=%ld}}",
              this,
              transport_.get(),
