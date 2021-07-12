@@ -279,10 +279,11 @@ public:
      * PJSIP specifics
      */
     pj_ice_strans_cfg getIceCfg() const { return ice_cfg_; }
-    pj_pool_factory* getPoolFactory() { return &cp_.factory; }
+    pj_pool_factory* getPoolFactory() { return &cp_->factory; }
+    std::shared_ptr<pj_caching_pool> getPoolCaching() { return cp_; }
 
 private:
-    pj_caching_pool cp_;
+    std::shared_ptr<pj_caching_pool> cp_;
     pj_ice_strans_cfg ice_cfg_;
 };
 
