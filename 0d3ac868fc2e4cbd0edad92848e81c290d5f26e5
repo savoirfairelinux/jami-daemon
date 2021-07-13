@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "425c7101_2ac0ecac",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "1f10428e_06b3202f",
+      "range": {
+        "startLine": 5,
+        "startChar": 14,
+        "endLine": 5,
+        "endChar": 20
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a13dd893_46470301",
@@ -70,6 +94,54 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ac9111e1_115d2a6c",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "1e53fc05_90d22db1",
+      "range": {
+        "startLine": 12,
+        "startChar": 10,
+        "endLine": 12,
+        "endChar": 16
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b9f92bd8_a7f0e3f8",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "a13dd893_46470301",
+      "range": {
+        "startLine": 12,
+        "startChar": 19,
+        "endLine": 12,
+        "endChar": 25
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9693cd02_23bca234",
@@ -93,6 +165,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "bc91ef61_70759818",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "9693cd02_23bca234",
+      "range": {
+        "startLine": 21,
+        "startChar": 50,
+        "endLine": 21,
+        "endChar": 53
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "08e677e9_0b7cd2b7",
@@ -106,6 +202,30 @@
       "writtenOn": "2021-07-13T17:38:30Z",
       "side": 1,
       "message": "being",
+      "range": {
+        "startLine": 22,
+        "startChar": 44,
+        "endLine": 22,
+        "endChar": 48
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "66c66b07_6691b9f6",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "08e677e9_0b7cd2b7",
       "range": {
         "startLine": 22,
         "startChar": 44,
@@ -162,6 +282,54 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7797c1b6_680539fa",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "10ae10eb_dbcbd573",
+      "range": {
+        "startLine": 27,
+        "startChar": 41,
+        "endLine": 27,
+        "endChar": 49
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d9956a0f_4728b7ed",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "70504d4b_9ea1a12b",
+      "range": {
+        "startLine": 27,
+        "startChar": 68,
+        "endLine": 27,
+        "endChar": 74
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b01d1813_53ecc8ff",
@@ -175,6 +343,30 @@
       "writtenOn": "2021-07-13T17:38:30Z",
       "side": 1,
       "message": "what the underlying type needed by the primitive procedure is",
+      "range": {
+        "startLine": 29,
+        "startChar": 4,
+        "endLine": 29,
+        "endChar": 6
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2f0a47f2_9055fc50",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "b01d1813_53ecc8ff",
       "range": {
         "startLine": 29,
         "startChar": 4,
@@ -208,6 +400,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "35d76d7b_9d57795c",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "924dbe19_472ac32c",
+      "range": {
+        "startLine": 32,
+        "startChar": 40,
+        "endLine": 32,
+        "endChar": 46
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "91ad72a1_fd2f335d",
@@ -221,6 +437,30 @@
       "writtenOn": "2021-07-13T17:38:30Z",
       "side": 1,
       "message": "enforced",
+      "range": {
+        "startLine": 33,
+        "startChar": 35,
+        "endLine": 33,
+        "endChar": 42
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "911a8ad0_20ba0087",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "91ad72a1_fd2f335d",
       "range": {
         "startLine": 33,
         "startChar": 35,
@@ -277,6 +517,54 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a06f1dce_04fbcbb7",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "0b109d1b_84ee7549",
+      "range": {
+        "startLine": 42,
+        "startChar": 46,
+        "endLine": 42,
+        "endChar": 52
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c655e773_a3369024",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "d47b9b29_7d49754a",
+      "range": {
+        "startLine": 42,
+        "startChar": 0,
+        "endLine": 42,
+        "endChar": 7
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "96ba577a_52449961",
@@ -294,6 +582,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e4cc818f_1ef9787e",
+        "filename": "test/agent/agent.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "I too think it would be nice to have a portable API in Scheme for the daemon.  The more I write the agent, the more I realize that I\u0027m writing a thin wrapper of the daemon in Scheme. Going further, we could even write Jami plugins in Scheme, drive the client GUI, etc.  But this is for another topic ;-).\n\nThe goal of the agent is to have a way to write scenarios in order to test the connectivity between peers on various networks.  I started writing things with YAML syntax and a behavior tree to describe the behavior of an agent.  This was the poor man\u0027s way of doing logic arithmetic.  Using a turing complete language was the next logical step.\n\nNote that the agent is more than just a binding to DRing API.  It also install signal handlers (for Jami\u0027s signals) and capture Jami\u0027s logs.  Of course, all of this can be done in Scheme instead.",
+      "parentUuid": "96ba577a_52449961",
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "93d35509_106e79c3",
@@ -307,6 +613,30 @@
       "writtenOn": "2021-07-13T17:38:30Z",
       "side": 1,
       "message": "at",
+      "range": {
+        "startLine": 4,
+        "startChar": 15,
+        "endLine": 4,
+        "endChar": 17
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "69646e32_dcc99cae",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "93d35509_106e79c3",
       "range": {
         "startLine": 4,
         "startChar": 15,
@@ -363,6 +693,54 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0fd752aa_2f83c7f9",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "d37b57c0_aa366ccb",
+      "range": {
+        "startLine": 7,
+        "startChar": 67,
+        "endLine": 7,
+        "endChar": 73
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3f298509_ba80cae1",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "94208385_28c856f0",
+      "range": {
+        "startLine": 7,
+        "startChar": 55,
+        "endLine": 7,
+        "endChar": 64
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "cdc58294_42e6707f",
@@ -376,6 +754,30 @@
       "writtenOn": "2021-07-13T17:38:30Z",
       "side": 1,
       "message": "another",
+      "range": {
+        "startLine": 9,
+        "startChar": 45,
+        "endLine": 9,
+        "endChar": 53
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ce3991bc_b79f1e13",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "cdc58294_42e6707f",
       "range": {
         "startLine": 9,
         "startChar": 45,
@@ -409,6 +811,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c58fa034_6b2077a7",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "29dfdfdf_5a629d00",
+      "range": {
+        "startLine": 10,
+        "startChar": 4,
+        "endLine": 10,
+        "endChar": 11
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "679d77ee_e6cf1c9b",
@@ -422,6 +848,30 @@
       "writtenOn": "2021-07-13T17:38:30Z",
       "side": 1,
       "message": "references",
+      "range": {
+        "startLine": 13,
+        "startChar": 58,
+        "endLine": 13,
+        "endChar": 67
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "48bb3dcf_93bde673",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "679d77ee_e6cf1c9b",
       "range": {
         "startLine": 13,
         "startChar": 58,
@@ -478,6 +928,54 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6e7c6a0e_ca2dc760",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "yes",
+      "parentUuid": "9f8a1e8a_ae277343",
+      "range": {
+        "startLine": 27,
+        "startChar": 4,
+        "endLine": 27,
+        "endChar": 7
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e9009da9_9b6c2f40",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "f37528b3_84392504",
+      "range": {
+        "startLine": 27,
+        "startChar": 9,
+        "endLine": 27,
+        "endChar": 18
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e735d70d_fab3ac88",
@@ -491,6 +989,30 @@
       "writtenOn": "2021-07-13T17:38:30Z",
       "side": 1,
       "message": "You can move these explanations as part of the docstring for procedures, e.g.\n\n(define (some-proc arg1 arg2)\n  \"Do X with ARG1 and ARG2.\"\n  [...])",
+      "range": {
+        "startLine": 30,
+        "startChar": 0,
+        "endLine": 39,
+        "endChar": 44
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f38c0f74_7ddaba40",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "e735d70d_fab3ac88",
       "range": {
         "startLine": 30,
         "startChar": 0,
@@ -526,6 +1048,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "afc8b1fe_564ee1a4",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Yeah I put a lots of verbose comment just to explain clearly how things work.  Scheme can be a little off putting for the outsider at first.  So this is intend only to make things easier for everyone.",
+      "parentUuid": "3c4ac1de_8ff3c3c0",
+      "range": {
+        "startLine": 55,
+        "startChar": 0,
+        "endLine": 56,
+        "endChar": 55
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "3f708be0_d56dba96",
         "filename": "test/agent/examples/active-agent.scm",
         "patchSetId": 4
@@ -537,6 +1083,30 @@
       "writtenOn": "2021-07-13T17:38:30Z",
       "side": 1,
       "message": "references",
+      "range": {
+        "startLine": 70,
+        "startChar": 36,
+        "endLine": 70,
+        "endChar": 45
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f1b242a7_681d14cb",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "3f708be0_d56dba96",
       "range": {
         "startLine": 70,
         "startChar": 36,
@@ -570,6 +1140,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3609e481_47318e19",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "1988322d_438c4daa",
+      "range": {
+        "startLine": 74,
+        "startChar": 60,
+        "endLine": 74,
+        "endChar": 66
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6626de4c_7319b1da",
@@ -583,6 +1177,30 @@
       "writtenOn": "2021-07-13T17:38:30Z",
       "side": 1,
       "message": "You can try",
+      "range": {
+        "startLine": 84,
+        "startChar": 4,
+        "endLine": 84,
+        "endChar": 12
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b56353ce_c841e755",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "6626de4c_7319b1da",
       "range": {
         "startLine": 84,
         "startChar": 4,
@@ -618,6 +1236,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4e461923_cf464fbb",
+        "filename": "test/agent/jami-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Obsolete.  I changed the syntax-rule for a lambda that accept a context and a thunnk in the new patch set.  I think I would still like to use the dynamic-wind to ensure removal of the log handler tho.",
+      "parentUuid": "3ffe254b_c3b441fc",
+      "range": {
+        "startLine": 4,
+        "startChar": 0,
+        "endLine": 10,
+        "endChar": 23
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "7df08412_08eea4a4",
         "filename": "test/agent/jami-agent.scm",
         "patchSetId": 4
@@ -629,6 +1271,30 @@
       "writtenOn": "2021-07-13T17:38:30Z",
       "side": 1,
       "message": "Likewise.  The install-net-logger can go in the \"in guard\".",
+      "range": {
+        "startLine": 15,
+        "startChar": 0,
+        "endLine": 21,
+        "endChar": 23
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e6705c74_2aaf89f1",
+        "filename": "test/agent/jami-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "7df08412_08eea4a4",
       "range": {
         "startLine": 15,
         "startChar": 0,
@@ -652,6 +1318,30 @@
       "writtenOn": "2021-07-13T17:38:30Z",
       "side": 1,
       "message": "attempts placing a call to SOMEONE.",
+      "range": {
+        "startLine": 37,
+        "startChar": 13,
+        "endLine": 37,
+        "endChar": 40
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "05f54f19_18d6d85f",
+        "filename": "test/agent/jami-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "c45f31bf_eb8abe7a",
       "range": {
         "startLine": 37,
         "startChar": 13,
@@ -687,6 +1377,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "232f2982_13205e05",
+        "filename": "test/agent/jami-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "See new `make-logger`",
+      "parentUuid": "61ee5311_d23ae809",
+      "range": {
+        "startLine": 40,
+        "startChar": 28,
+        "endLine": 40,
+        "endChar": 65
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "9d975dd8_c64af322",
         "filename": "test/agent/jami-agent.scm",
         "patchSetId": 4
@@ -698,6 +1412,30 @@
       "writtenOn": "2021-07-13T17:38:30Z",
       "side": 1,
       "message": "agent periodically attempts to ping.",
+      "range": {
+        "startLine": 46,
+        "startChar": 7,
+        "endLine": 46,
+        "endChar": 41
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6f2866cd_cddcf096",
+        "filename": "test/agent/jami-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "9d975dd8_c64af322",
       "range": {
         "startLine": 46,
         "startChar": 7,
@@ -721,6 +1459,24 @@
       "writtenOn": "2021-07-13T17:38:30Z",
       "side": 1,
       "message": "I wonder if it wouldn\u0027t make more sense to have Scheme bindings to libjami, e.g., to have generic bindings to control Jami from a Scheme API, instead of having agent-specific bindings, which seem much less general(ly useful).\n\nThen the agent or any other script could use these.",
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c9048d74_d77d0958",
+        "filename": "test/agent/main.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T18:47:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "0c4f11a0_395081fb",
       "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
