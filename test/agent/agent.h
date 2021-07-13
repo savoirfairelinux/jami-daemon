@@ -21,17 +21,28 @@
 #pragma once
 
 /* agent */
-#include "agent/bt.h"
 #include "agent/log.h"
 
 /* Dring */
+#include "logger.h"
 #include "dring/dring.h"
 
 /* std */
+#include <chrono>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
+
+#define AGENT_ERR(FMT, ARGS...)  JAMI_ERR("AGENT: " FMT, ##ARGS)
+#define AGENT_INFO(FMT, ARGS...) JAMI_INFO("AGENT: " FMT, ##ARGS)
+#define AGENT_DBG(FMT, ARGS...)  JAMI_DBG("AGENT: " FMT, ##ARGS)
+#define AGENT_ASSERT(COND, MSG, ARGS...) \
+    if (not(COND)) { \
+        AGENT_ERR(MSG, ##ARGS); \
+        exit(1); \
+    }
 
 class Agent
 {
@@ -82,41 +93,40 @@ class Agent
 
     Handler<const std::string&, const std::string&, bool> onContactAdded_;
 
+    Handler<const std::string&, const std::string&, int, const std::string&>
+        onRegistrationStateChanged_;
+
     /*  Initialize agent */
-    void configure(const std::string& yaml_config);
-    void getConversations();
     void ensureAccount();
-    void initBehavior();
     void installSignalHandlers();
     void registerStaticCallbacks();
 
-    /* Bookkeeping */
-    std::string context_;
-    std::string recordTo_;
-    std::string peerID_;
-    const std::string accountID_{"afafafafafafafaf"};
-    std::vector<std::string> peers_;
-    std::vector<std::string> conversations_;
-    std::unique_ptr<BT::Node> root_;
-    std::vector<std::function<void(void)>> params_;
-    std::map<std::string, std::unique_ptr<LogHandler>> loggers_;
-
-    /* Event */
+    /* Events */
     void onLogging(const std::string& message);
 
-    /* Helper */
-    void sendMessage(const std::string& to, const std::string& msg);
-
-    /* Behavior */
-    bool startLogRecording();
-    bool stopLogRecording();
-    bool searchPeer();
-    bool wait();
-    bool echo();
-    bool makeCall();
-    bool False() { return false; }
-    bool True() { return true; }
+    /* Bookkeeping */
+    std::string peerID_;
+    const std::string accountID_ {"afafafafafafafaf"};
+    std::vector<std::string> conversations_;
+    std::mutex loggersMutex_;
+    std::unique_ptr<LogHandler> logger_;
 
 public:
-    static void run(const std::string& yaml_config);
+    /* Behavior */
+    bool ping(const std::string& conversation);
+    bool placeCall(const std::string& contact);
+    std::string someContact() const;
+    std::string someConversation() const;
+    void installLogHandler(std::unique_ptr<LogHandler> logHandler);
+    void removeLogHandler();
+    void setDetails(const std::map<std::string, std::string>& details);
+    void stopRecording(const std::string& context);
+    void startRecording(const std::string& context, const std::string& to);
+    void searchForPeers(std::vector<std::string>& peers);
+    void wait(std::chrono::seconds period);
+
+    void init();
+    void fini();
+
+    static Agent& instance();
 };
