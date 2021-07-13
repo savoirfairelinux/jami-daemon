@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "90730d27_54ba31c2",
+        "filename": "contrib/src/guile/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:34:18Z",
+      "side": 1,
+      "message": "was there a problem with building with JIT enabled?  I think it\u0027s supposed to fall-back transparently to no jit on platforms where it is not supported. Not a big deal though.\n\nEDIT: Just asked on #guile (libera.chat), and unless the arch is x86 or ARM, JIT_AVAILABLE defaults to \"no\".  So I\u0027d not explicitly provide this option.",
+      "range": {
+        "startLine": 24,
+        "startChar": 1,
+        "endLine": 24,
+        "endChar": 16
+      },
+      "revId": "e0237841fdb8b3d3c237f3f5821e01a511b250b5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ddac05e5_cb03042d",
+        "filename": "contrib/src/guile/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:34:18Z",
+      "side": 1,
+      "message": "Is there something to gain from building statically?",
+      "range": {
+        "startLine": 25,
+        "startChar": 1,
+        "endLine": 26,
+        "endChar": 19
+      },
+      "revId": "e0237841fdb8b3d3c237f3f5821e01a511b250b5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
