@@ -600,6 +600,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f491fae1_bd543a65",
+        "filename": "test/agent/agent.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T18:55:05Z",
+      "side": 1,
+      "message": "OK, good.  Then we can think of future improvements where the Scheme bindings would be moved outside of the agent and made against libjami directly.  The key here is future ;-).  Good to know it makes sense to you as well.",
+      "parentUuid": "e4cc818f_1ef9787e",
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "93d35509_106e79c3",
@@ -1070,6 +1088,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cf587074_0074badc",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T18:55:05Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "afc8b1fe_564ee1a4",
+      "range": {
+        "startLine": 55,
+        "startChar": 0,
+        "endLine": 56,
+        "endChar": 55
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3f708be0_d56dba96",
@@ -1258,6 +1300,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e206ef63_4ee3597d",
+        "filename": "test/agent/jami-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T18:55:05Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "4e461923_cf464fbb",
+      "range": {
+        "startLine": 4,
+        "startChar": 0,
+        "endLine": 10,
+        "endChar": 23
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7df08412_08eea4a4",
@@ -1389,6 +1455,30 @@
       "side": 1,
       "message": "See new `make-logger`",
       "parentUuid": "61ee5311_d23ae809",
+      "range": {
+        "startLine": 40,
+        "startChar": 28,
+        "endLine": 40,
+        "endChar": 65
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "023213ba_83e0935b",
+        "filename": "test/agent/jami-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T18:55:05Z",
+      "side": 1,
+      "message": "Looks much cleaner.",
+      "parentUuid": "232f2982_13205e05",
       "range": {
         "startLine": 40,
         "startChar": 28,
