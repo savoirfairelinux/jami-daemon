@@ -1,3 +1,6 @@
 agent
-
+*.yml
+*.txt
+*.log
+.gdbinit
 
