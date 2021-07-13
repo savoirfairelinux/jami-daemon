@@ -1,0 +1,728 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1f10428e_06b3202f",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "--enable-agent",
+      "range": {
+        "startLine": 5,
+        "startChar": 14,
+        "endLine": 5,
+        "endChar": 20
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a13dd893_46470301",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "Scheme\nAlso search for other occurrences.",
+      "range": {
+        "startLine": 12,
+        "startChar": 19,
+        "endLine": 12,
+        "endChar": 25
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e53fc05_90d22db1",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "expects",
+      "range": {
+        "startLine": 12,
+        "startChar": 10,
+        "endLine": 12,
+        "endChar": 16
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9693cd02_23bca234",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "have",
+      "range": {
+        "startLine": 21,
+        "startChar": 50,
+        "endLine": 21,
+        "endChar": 53
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "08e677e9_0b7cd2b7",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "being",
+      "range": {
+        "startLine": 22,
+        "startChar": 44,
+        "endLine": 22,
+        "endChar": 48
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "70504d4b_9ea1a12b",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "objects",
+      "range": {
+        "startLine": 27,
+        "startChar": 68,
+        "endLine": 27,
+        "endChar": 74
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "10ae10eb_dbcbd573",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "arguments",
+      "range": {
+        "startLine": 27,
+        "startChar": 41,
+        "endLine": 27,
+        "endChar": 49
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b01d1813_53ecc8ff",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 29,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "what the underlying type needed by the primitive procedure is",
+      "range": {
+        "startLine": 29,
+        "startChar": 4,
+        "endLine": 29,
+        "endChar": 6
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "924dbe19_472ac32c",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "expects",
+      "range": {
+        "startLine": 32,
+        "startChar": 40,
+        "endLine": 32,
+        "endChar": 46
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "91ad72a1_fd2f335d",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "enforced",
+      "range": {
+        "startLine": 33,
+        "startChar": 35,
+        "endLine": 33,
+        "endChar": 42
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d47b9b29_7d49754a",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "Here is another",
+      "range": {
+        "startLine": 42,
+        "startChar": 0,
+        "endLine": 42,
+        "endChar": 7
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0b109d1b_84ee7549",
+        "filename": "test/agent/README.md",
+        "patchSetId": 4
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "expects",
+      "range": {
+        "startLine": 42,
+        "startChar": 46,
+        "endLine": 42,
+        "endChar": 52
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "96ba577a_52449961",
+        "filename": "test/agent/agent.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "Forgive my lack of context, but could you remind me why there is a need for an \"agent\"?  What does it do more than just a Jami \"client\", which is already an agent of sorts to the core functionality (libjami/daemon).\n\nI like the idea of a Scheme API to script Jami, but it seems it\u0027d make more sense to have bindings to libjami rather than bindings to a middle-ware component (here the agent).",
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "93d35509_106e79c3",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "at",
+      "range": {
+        "startLine": 4,
+        "startChar": 15,
+        "endLine": 4,
+        "endChar": 17
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "94208385_28c856f0",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "references",
+      "range": {
+        "startLine": 7,
+        "startChar": 55,
+        "endLine": 7,
+        "endChar": 64
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d37b57c0_aa366ccb",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "string.\n      ^",
+      "range": {
+        "startLine": 7,
+        "startChar": 67,
+        "endLine": 7,
+        "endChar": 73
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cdc58294_42e6707f",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "another",
+      "range": {
+        "startLine": 9,
+        "startChar": 45,
+        "endLine": 9,
+        "endChar": 53
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "29dfdfdf_5a629d00",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "Please end all complete sentences with a period (\u0027.\u0027).",
+      "range": {
+        "startLine": 10,
+        "startChar": 4,
+        "endLine": 10,
+        "endChar": 11
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "679d77ee_e6cf1c9b",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "references",
+      "range": {
+        "startLine": 13,
+        "startChar": 58,
+        "endLine": 13,
+        "endChar": 67
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f37528b3_84392504",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "typically in Scheme we capitalize the variable referenced in docstrings, such as SOMEONE.",
+      "range": {
+        "startLine": 27,
+        "startChar": 9,
+        "endLine": 27,
+        "endChar": 18
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9f8a1e8a_ae277343",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "\u0027Pre\u0027 is for pre-conditions?",
+      "range": {
+        "startLine": 27,
+        "startChar": 4,
+        "endLine": 27,
+        "endChar": 7
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e735d70d_fab3ac88",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "You can move these explanations as part of the docstring for procedures, e.g.\n\n(define (some-proc arg1 arg2)\n  \"Do X with ARG1 and ARG2.\"\n  [...])",
+      "range": {
+        "startLine": 30,
+        "startChar": 0,
+        "endLine": 39,
+        "endChar": 44
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3c4ac1de_8ff3c3c0",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "It\u0027s nice to have everything explained for newcomers to the Scheme language, but I don\u0027t think it\u0027s the place to do so :-). There is a good reference as the Guile Reference manual (https://www.gnu.org/software/guile/manual/html_node/index.html). The docs here should focus on explanation what the procedures do, IMHO. It\u0027d be neater also to use the imperative tense, such as \"Do this\", which is more concise and common than \"It works like X\" or \"Here we do this\".\n\nEDIT: Or perhaps it\u0027s OK, I just noticed this is meant as an example (given the directory it\u0027s in).",
+      "range": {
+        "startLine": 55,
+        "startChar": 0,
+        "endLine": 56,
+        "endChar": 55
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3f708be0_d56dba96",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "references",
+      "range": {
+        "startLine": 70,
+        "startChar": 36,
+        "endLine": 70,
+        "endChar": 45
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1988322d_438c4daa",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "Scheme",
+      "range": {
+        "startLine": 74,
+        "startChar": 60,
+        "endLine": 74,
+        "endChar": 66
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6626de4c_7319b1da",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "You can try",
+      "range": {
+        "startLine": 84,
+        "startChar": 4,
+        "endLine": 84,
+        "endChar": 12
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3ffe254b_c3b441fc",
+        "filename": "test/agent/jami-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "looks like what you want to achieve here is a cleanup, which would be better implemented via\n(dynamic-wind\n (lambda ())                 ;in guard\n (lambda ()\n   (begin expr ...))         ;thunk\n (lambda ()\n   (agent:remove-logger)))   ;out guard",
+      "range": {
+        "startLine": 4,
+        "startChar": 0,
+        "endLine": 10,
+        "endChar": 23
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7df08412_08eea4a4",
+        "filename": "test/agent/jami-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "Likewise.  The install-net-logger can go in the \"in guard\".",
+      "range": {
+        "startLine": 15,
+        "startChar": 0,
+        "endLine": 21,
+        "endChar": 23
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c45f31bf_eb8abe7a",
+        "filename": "test/agent/jami-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "attempts placing a call to SOMEONE.",
+      "range": {
+        "startLine": 37,
+        "startChar": 13,
+        "endLine": 37,
+        "endChar": 40
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "61ee5311_d23ae809",
+        "filename": "test/agent/jami-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "perhaps the API of such procedure could be adjusted so as to not have to use format every time it\u0027s used.  Keyword arguments would also better communicate what the arguments are used for, e.g. #:host \"127.0.0.1\" #:port 8080, etc.",
+      "range": {
+        "startLine": 40,
+        "startChar": 28,
+        "endLine": 40,
+        "endChar": 65
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9d975dd8_c64af322",
+        "filename": "test/agent/jami-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "agent periodically attempts to ping.",
+      "range": {
+        "startLine": 46,
+        "startChar": 7,
+        "endLine": 46,
+        "endChar": 41
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0c4f11a0_395081fb",
+        "filename": "test/agent/main.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "I wonder if it wouldn\u0027t make more sense to have Scheme bindings to libjami, e.g., to have generic bindings to control Jami from a Scheme API, instead of having agent-specific bindings, which seem much less general(ly useful).\n\nThen the agent or any other script could use these.",
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

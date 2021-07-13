@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5a15613b_72293f0e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T17:38:30Z",
+      "side": 1,
+      "message": "I like this initiative.  After all, GNU Guile is the extension/scripting tool of choice for GNU, and it\u0027s a clean and powerful language to work with.\n\nApart from my grammar nazi spam (sorry!), I\u0027d like the bindings to the agent vs bindings to libjami approach to be discussed, as I feel like the later would be more general/valuable.\n\nThanks!",
+      "revId": "fa85f953e8944335745f5d6d66fab17f8197b4ef",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
