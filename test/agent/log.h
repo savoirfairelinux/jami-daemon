@@ -20,7 +20,10 @@
 
 #pragma once
 
+#include <fstream>
+#include <memory>
 #include <string>
+#include <vector>
 
 class LogHandler
 {
@@ -36,3 +39,40 @@ public:
     virtual void pushMessage(const std::string& message) = 0;
     virtual void flush() = 0;
 };
+
+class FileHandler : public LogHandler
+{
+    std::ofstream out_;
+    std::vector<std::string> messages_;
+
+public:
+    FileHandler(const std::string& context, const std::string& to);
+
+    virtual ~FileHandler();
+
+    virtual void pushMessage(const std::string& message) override;
+
+    virtual void flush() override;
+};
+
+class NetHandler : public LogHandler
+{
+    int sockfd_;
+    std::vector<std::string> messages_;
+
+public:
+    NetHandler(const std::string& context, const std::string& to, uint16_t port);
+
+    virtual ~NetHandler();
+
+    virtual void pushMessage(const std::string& message) override;
+
+    virtual void flush() override;
+};
+
+template<typename T, typename... Args>
+std::unique_ptr<LogHandler>
+makeLogHandler(Args... args)
+{
+    return std::make_unique<T>(args...);
+}
