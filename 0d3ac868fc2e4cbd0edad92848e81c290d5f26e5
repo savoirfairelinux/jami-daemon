@@ -1112,6 +1112,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a74496cd_d84ddc67",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 4
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-13T19:02:11Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "afc8b1fe_564ee1a4",
+      "range": {
+        "startLine": 55,
+        "startChar": 0,
+        "endLine": 56,
+        "endChar": 55
+      },
+      "revId": "0d3ac868fc2e4cbd0edad92848e81c290d5f26e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3f708be0_d56dba96",
