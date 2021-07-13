@@ -16,6 +16,29 @@
       "message": "break builds, needs libunistring which is not here by default.",
       "revId": "5a769207313dea21be587b3138300efc39ccd2f5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "84350c15_3243bcc3",
+        "filename": "configure.ac",
+        "patchSetId": 2
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T21:18:04Z",
+      "side": 1,
+      "message": "maybe good to check for guile here, and if not found print a useful message (will attempt to build Guile from contribs).",
+      "range": {
+        "startLine": 50,
+        "startChar": 0,
+        "endLine": 50,
+        "endChar": 34
+      },
+      "revId": "5a769207313dea21be587b3138300efc39ccd2f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
