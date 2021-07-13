@@ -46,6 +46,12 @@ AC_ARG_ENABLE([fuzzing],
 AM_CONDITIONAL([ENABLE_FUZZING], [test "x$enable_fuzzing" = "xyes"])
 AM_COND_IF([ENABLE_FUZZING], [AC_CONFIG_FILES([test/fuzzing/Makefile])])
 
+AC_ARG_ENABLE([agent],
+  AS_HELP_STRING([--enable-agent],
+    [Build agent]))
+AM_CONDITIONAL([ENABLE_AGENT], [test "x$enable_agent" = "xyes"])
+AM_COND_IF([ENABLE_AGENT], [AC_CONFIG_FILES([test/agent/Makefile])])
+
 dnl Check for programs
 AC_PROG_CC
 AC_PROG_CXX
@@ -279,6 +285,10 @@ PKG_CHECK_MODULES(LIBGIT2, [libgit2 >= 1.1.0],, AC_MSG_ERROR([Missing libgit2 fi
 dnl Check for pjproject
 PKG_CHECK_MODULES(PJPROJECT, libpjproject,,
   AC_MSG_ERROR([Missing pjproject files]))
+
+dnl Guile
+AM_COND_IF([ENABLE_AGENT],
+  [PKG_CHECK_MODULES(GUILE, [guile-3.0 >= 3.0.7],, AC_MSG_ERROR([Missing guile files]))],)
 
 PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp >= 0.5.1],,
   AC_MSG_ERROR([yaml-cpp not found]))
@@ -659,7 +669,6 @@ AC_CONFIG_FILES([Makefile \
                  test/Makefile\
                  test/sip/Makefile
                  test/unitTest/Makefile \
-                 test/agent/Makefile \
                  man/Makefile \
                  doc/Makefile \
                  doc/doxygen/Makefile])
