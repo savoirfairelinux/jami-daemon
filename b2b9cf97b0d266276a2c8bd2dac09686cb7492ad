@@ -1,6 +1,7 @@
 {
   "comments": [
     {
+      "unresolved": true,
       "key": {
         "uuid": "02e162b9_3278f7e9",
         "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
@@ -20,10 +21,34 @@
         "endChar": 43
       },
       "revId": "b2b9cf97b0d266276a2c8bd2dac09686cb7492ad",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2d8ee1fa_ef6d6089",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 936,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T20:06:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "02e162b9_3278f7e9",
+      "range": {
+        "startLine": 936,
+        "startChar": 37,
+        "endLine": 936,
+        "endChar": 43
+      },
+      "revId": "b2b9cf97b0d266276a2c8bd2dac09686cb7492ad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
       "key": {
         "uuid": "6b1d19f1_846138ba",
         "filename": "bin/nodejs/binding.gyp",
@@ -43,8 +68,31 @@
         "endChar": 28
       },
       "revId": "b2b9cf97b0d266276a2c8bd2dac09686cb7492ad",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "13ff4bce_6f2d2cc0",
+        "filename": "bin/nodejs/binding.gyp",
+        "patchSetId": 11
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-13T20:06:10Z",
+      "side": 1,
+      "message": "Not sure, I\u0027ve changed it, Adrien can adjust if it\u0027s wrong.",
+      "parentUuid": "6b1d19f1_846138ba",
+      "range": {
+        "startLine": 3,
+        "startChar": 5,
+        "endLine": 4,
+        "endChar": 28
+      },
+      "revId": "b2b9cf97b0d266276a2c8bd2dac09686cb7492ad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
