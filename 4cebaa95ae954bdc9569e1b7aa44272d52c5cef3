@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "315cec60_9ec803bf",
+        "filename": "src/call.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 377,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-07-14T16:01:31Z",
+      "side": 1,
+      "message": "ok, removed.",
+      "parentUuid": "dbb38777_3f104e60",
+      "range": {
+        "startLine": 375,
+        "startChar": 38,
+        "endLine": 377,
+        "endChar": 42
+      },
+      "revId": "4cebaa95ae954bdc9569e1b7aa44272d52c5cef3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fe704925_da04ee24",
@@ -94,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2062b79d_30c3b526",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 305,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-07-14T16:01:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "db5ab05f_1536b731",
+      "range": {
+        "startLine": 305,
+        "startChar": 8,
+        "endLine": 305,
+        "endChar": 60
+      },
+      "revId": "4cebaa95ae954bdc9569e1b7aa44272d52c5cef3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f5608ce7_843e01a0",
@@ -107,6 +155,30 @@
       "writtenOn": "2021-07-14T13:49:54Z",
       "side": 1,
       "message": "UNMUTED",
+      "range": {
+        "startLine": 164,
+        "startChar": 4,
+        "endLine": 164,
+        "endChar": 12
+      },
+      "revId": "4cebaa95ae954bdc9569e1b7aa44272d52c5cef3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "92ab2e17_73c4d37c",
+        "filename": "src/conference.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-07-14T16:01:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f5608ce7_843e01a0",
       "range": {
         "startLine": 164,
         "startChar": 4,
