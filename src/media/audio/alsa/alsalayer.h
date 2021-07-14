@@ -207,6 +207,8 @@ private:
 
     virtual void updatePreference(AudioPreference& pref, int index, AudioDeviceType type);
 
+    void setAudioThread(AlsaThread* thread=nullptr);
+
     /**
      * Handles to manipulate playback stream
      * ALSA Library API
@@ -241,6 +243,7 @@ private:
     bool is_capture_open_;
 
     std::unique_ptr<AlsaThread> audioThread_;
+    std::mutex audioThreadMutex_;
 };
 
 } // namespace jami
