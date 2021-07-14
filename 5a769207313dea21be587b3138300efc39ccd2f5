@@ -63,6 +63,30 @@
       },
       "revId": "5a769207313dea21be587b3138300efc39ccd2f5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "23bcd8d0_e4392152",
+        "filename": "configure.ac",
+        "patchSetId": 2
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-14T16:43:10Z",
+      "side": 1,
+      "message": "I reviewed how the contribs system works, and currently there\u0027s no input from configure to the contribs system, it\u0027s the other way around.  I remove my comment.",
+      "parentUuid": "abefc0e7_7b960501",
+      "range": {
+        "startLine": 50,
+        "startChar": 0,
+        "endLine": 50,
+        "endChar": 34
+      },
+      "revId": "5a769207313dea21be587b3138300efc39ccd2f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
