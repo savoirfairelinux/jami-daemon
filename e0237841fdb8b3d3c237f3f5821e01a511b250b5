@@ -141,6 +141,30 @@
       },
       "revId": "e0237841fdb8b3d3c237f3f5821e01a511b250b5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ee9d655a_38ced331",
+        "filename": "contrib/src/guile/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-14T16:44:42Z",
+      "side": 1,
+      "message": "Now that I grasp that we\u0027re using libguile as the interpreter to run the Scheme files, it probably makes sense to have it static to make it easier to embed on all platforms.",
+      "parentUuid": "64faa92f_3ab56636",
+      "range": {
+        "startLine": 25,
+        "startChar": 1,
+        "endLine": 26,
+        "endChar": 19
+      },
+      "revId": "e0237841fdb8b3d3c237f3f5821e01a511b250b5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
