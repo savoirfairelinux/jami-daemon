@@ -47,6 +47,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1c99a332_49f0cb38",
+        "filename": "src/call.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 383,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-14T13:52:38Z",
+      "side": 1,
+      "message": "nvm https://review.jami.net/c/ring-lrc/+/18460",
+      "parentUuid": "fe704925_da04ee24",
+      "range": {
+        "startLine": 381,
+        "startChar": 32,
+        "endLine": 383,
+        "endChar": 34
+      },
+      "revId": "4cebaa95ae954bdc9569e1b7aa44272d52c5cef3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "db5ab05f_1536b731",
