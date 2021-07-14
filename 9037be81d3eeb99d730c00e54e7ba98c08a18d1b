@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "ecdcd2ca_a57d4bc0",
+        "filename": "bin/dbus/meson.build",
+        "patchSetId": 13
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-14T19:05:23Z",
+      "side": 1,
+      "message": "man man output here:\n       The table below shows the section numbers of the manual followed by the types of pages they con‐\n       tain.\n\n       1   Executable programs or shell commands\n       2   System calls (functions provided by the kernel)\n       3   Library calls (functions within program libraries)\n       4   Special files (usually found in /dev)\n       5   File formats and conventions, e.g. /etc/passwd\n       6   Games\n       7   Miscellaneous (including macro packages and conventions), e.g. man(7), groff(7)\n       8   System administration commands (usually only for root)\n       9   Kernel routines [Non standard]\n\n1. seems more appropriate based on this",
+      "parentUuid": "512365d5_ded86575",
+      "range": {
+        "startLine": 67,
+        "startChar": 125,
+        "endLine": 68,
+        "endChar": 37
+      },
+      "revId": "9037be81d3eeb99d730c00e54e7ba98c08a18d1b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "a0f52bde_abc6192f",
         "filename": "src/preferences.cpp",
         "patchSetId": 13
