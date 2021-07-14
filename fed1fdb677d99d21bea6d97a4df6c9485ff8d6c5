@@ -16,6 +16,29 @@
       "message": "we might need to do similar things when leaving the conference !?",
       "revId": "fed1fdb677d99d21bea6d97a4df6c9485ff8d6c5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6c7d8c05_83882f18",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1795,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-07-14T16:36:18Z",
+      "side": 1,
+      "message": "cant we squash isaudiomuted and isvideomuted?",
+      "range": {
+        "startLine": 1793,
+        "startChar": 0,
+        "endLine": 1795,
+        "endChar": 29
+      },
+      "revId": "fed1fdb677d99d21bea6d97a4df6c9485ff8d6c5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
