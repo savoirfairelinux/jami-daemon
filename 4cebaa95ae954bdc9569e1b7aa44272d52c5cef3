@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dbb38777_3f104e60",
+        "filename": "src/call.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 377,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-14T13:49:54Z",
+      "side": 1,
+      "message": "it\u0027S now unused",
+      "range": {
+        "startLine": 375,
+        "startChar": 38,
+        "endLine": 377,
+        "endChar": 42
+      },
+      "revId": "4cebaa95ae954bdc9569e1b7aa44272d52c5cef3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fe704925_da04ee24",
+        "filename": "src/call.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 383,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-14T13:49:54Z",
+      "side": 1,
+      "message": "More like a question. Actually, client-qt still show an incorrect state when merging a call with video/audio muted. Is there a patch for this?\n\ncc @aline.\n\nSame for conference infos",
+      "range": {
+        "startLine": 381,
+        "startChar": 32,
+        "endLine": 383,
+        "endChar": 34
+      },
+      "revId": "4cebaa95ae954bdc9569e1b7aa44272d52c5cef3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "db5ab05f_1536b731",
+        "filename": "src/conference.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 305,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-14T13:49:54Z",
+      "side": 1,
+      "message": "auto",
+      "range": {
+        "startLine": 305,
+        "startChar": 8,
+        "endLine": 305,
+        "endChar": 60
+      },
+      "revId": "4cebaa95ae954bdc9569e1b7aa44272d52c5cef3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f5608ce7_843e01a0",
+        "filename": "src/conference.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-14T13:49:54Z",
+      "side": 1,
+      "message": "UNMUTED",
+      "range": {
+        "startLine": 164,
+        "startChar": 4,
+        "endLine": 164,
+        "endChar": 12
+      },
+      "revId": "4cebaa95ae954bdc9569e1b7aa44272d52c5cef3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
