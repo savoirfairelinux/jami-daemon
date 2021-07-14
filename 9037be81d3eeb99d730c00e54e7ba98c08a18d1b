@@ -71,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "14d7ab89_86f766b3",
+        "filename": "src/preferences.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 485,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-14T19:06:15Z",
+      "side": 1,
+      "message": "Renamed this one and the others to alsaCarRingtone_ as suggested, via:\n\ngit grep -l -i AlsaCarjami | xargs sed -i -E \u0027s/([Aa])lsaCarjami/\\1lsaCardRingtone/g\u0027",
+      "parentUuid": "a0f52bde_abc6192f",
+      "range": {
+        "startLine": 485,
+        "startChar": 35,
+        "endLine": 485,
+        "endChar": 47
+      },
+      "revId": "9037be81d3eeb99d730c00e54e7ba98c08a18d1b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "260aa86a_984bd0d7",
@@ -84,6 +108,30 @@
       "writtenOn": "2021-07-14T18:28:27Z",
       "side": 1,
       "message": "fail. should not be replaced",
+      "range": {
+        "startLine": 170,
+        "startChar": 8,
+        "endLine": 170,
+        "endChar": 22
+      },
+      "revId": "9037be81d3eeb99d730c00e54e7ba98c08a18d1b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "78a9012b_dd7e05c6",
+        "filename": "src/preferences.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 170,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-14T19:06:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "260aa86a_984bd0d7",
       "range": {
         "startLine": 170,
         "startChar": 8,
