@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5d55ea3d_ea53d09c",
+        "filename": "contrib/src/guile/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-14T13:59:30Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "cd642708_3f9f397d",
+      "range": {
+        "startLine": 24,
+        "startChar": 1,
+        "endLine": 24,
+        "endChar": 16
+      },
+      "revId": "e0237841fdb8b3d3c237f3f5821e01a511b250b5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ddac05e5_cb03042d",
@@ -85,6 +109,30 @@
       "side": 1,
       "message": "I don\u0027t how things work in the Android/iOS worlds.\n\nI know that for Android we need to ship an APK.  I don\u0027t know if the executable has to be static or if it can linked to shared libraries.  I figured that I would make Guile static to avoid issues in the future.",
       "parentUuid": "ddac05e5_cb03042d",
+      "range": {
+        "startLine": 25,
+        "startChar": 1,
+        "endLine": 26,
+        "endChar": 19
+      },
+      "revId": "e0237841fdb8b3d3c237f3f5821e01a511b250b5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "64faa92f_3ab56636",
+        "filename": "contrib/src/guile/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-14T13:59:30Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "5082dd0f_9fdf035d",
       "range": {
         "startLine": 25,
         "startChar": 1,

@@ -39,6 +39,30 @@
       },
       "revId": "5a769207313dea21be587b3138300efc39ccd2f5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "abefc0e7_7b960501",
+        "filename": "configure.ac",
+        "patchSetId": 2
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-14T13:59:30Z",
+      "side": 1,
+      "message": "Not sure how to do this.  I\u0027m not very familiar with the wizardry of autotools.\n\nWe\u0027re not sure if we\u0027re going to keep Guile as contrib since it\u0027s only used for the Agent as for now.  We might just want to check for the package when --enable-agent",
+      "parentUuid": "84350c15_3243bcc3",
+      "range": {
+        "startLine": 50,
+        "startChar": 0,
+        "endLine": 50,
+        "endChar": 34
+      },
+      "revId": "5a769207313dea21be587b3138300efc39ccd2f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
