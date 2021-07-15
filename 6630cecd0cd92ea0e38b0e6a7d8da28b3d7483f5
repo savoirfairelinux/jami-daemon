@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b1ad3b55_92241a05",
+        "filename": "src/jami/def.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-15T14:57:34Z",
+      "side": 1,
+      "message": "If you mean the CPP macros, I was planning to not touch them as it seems a bit riskier.  We can make another change focused on changing these in a future patch.",
+      "parentUuid": "d3b2e3d1_3e0d1758",
+      "range": {
+        "startLine": 35,
+        "startChar": 61,
+        "endLine": 37,
+        "endChar": 69
+      },
+      "revId": "6630cecd0cd92ea0e38b0e6a7d8da28b3d7483f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c89580ff_175fae50",
         "filename": "src/jami/def.h",
         "patchSetId": 14
@@ -37,6 +61,30 @@
       "writtenOn": "2021-07-15T13:49:35Z",
       "side": 1,
       "message": "missing DRing",
+      "range": {
+        "startLine": 39,
+        "startChar": 34,
+        "endLine": 39,
+        "endChar": 39
+      },
+      "revId": "6630cecd0cd92ea0e38b0e6a7d8da28b3d7483f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8e64968a_5e671803",
+        "filename": "src/jami/def.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-15T14:57:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c89580ff_175fae50",
       "range": {
         "startLine": 39,
         "startChar": 34,
@@ -60,6 +108,30 @@
       "writtenOn": "2021-07-15T13:49:35Z",
       "side": 1,
       "message": "same",
+      "range": {
+        "startLine": 40,
+        "startChar": 30,
+        "endLine": 40,
+        "endChar": 78
+      },
+      "revId": "6630cecd0cd92ea0e38b0e6a7d8da28b3d7483f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4a59b97b_1b063276",
+        "filename": "src/jami/def.h",
+        "patchSetId": 14
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-07-15T14:57:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aa56fa00_ae3d425b",
       "range": {
         "startLine": 40,
         "startChar": 30,
