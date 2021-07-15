@@ -152,6 +152,7 @@ private:
     void testMemberCannotUpdateProfile();
     void testUpdateProfileWithBadFile();
     void testFetchProfileUnauthorized();
+    void testDoNotLoadIncorrectConversation();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -206,6 +207,7 @@ private:
     CPPUNIT_TEST(testMemberCannotUpdateProfile);
     CPPUNIT_TEST(testUpdateProfileWithBadFile);
     CPPUNIT_TEST(testFetchProfileUnauthorized);
+    CPPUNIT_TEST(testDoNotLoadIncorrectConversation);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -4319,6 +4321,30 @@ END:VCARD";
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return errorDetected; }));
 
     DRing::unregisterSignalHandlers();
+}
+
+void
+ConversationTest::testDoNotLoadIncorrectConversation()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto uri = aliceAccount->getUsername();
+    auto convId = aliceAccount->startConversation();
+
+    auto conversations = aliceAccount->getConversations();
+    CPPUNIT_ASSERT(conversations.size() == 1);
+    CPPUNIT_ASSERT(conversations.front() == convId);
+
+    Manager::instance().sendRegister(aliceId, false);
+    auto repoGitPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
+                       + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId
+                       + DIR_SEPARATOR_STR + ".git";
+    fileutils::removeAll(repoGitPath, true); // This make the repository not usable
+
+    aliceAccount->loadConversations(); // Refresh. This should detect the incorrect conversations.
+
+    // the conv should be detected as invalid and not added
+    conversations = aliceAccount->getConversations();
+    CPPUNIT_ASSERT(conversations.size() == 0);
 }
 
 } // namespace test

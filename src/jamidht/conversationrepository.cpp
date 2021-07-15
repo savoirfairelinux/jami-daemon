@@ -49,6 +49,8 @@ public:
         : account_(account)
         , id_(id)
     {
+        if (!repository())
+            throw std::logic_error("Invalid git repository");
         initMembers();
     }
 
