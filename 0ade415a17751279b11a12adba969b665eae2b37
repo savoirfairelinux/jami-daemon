@@ -16,6 +16,24 @@
       "message": "Break registration (when relaunching the daemon)\n\nBreak calls from SFL accounts",
       "revId": "0ade415a17751279b11a12adba969b665eae2b37",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b3716ebd_f1598ea2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-07-15T19:18:48Z",
+      "side": 1,
+      "message": "As discussed",
+      "parentUuid": "123b1297_361a6635",
+      "revId": "0ade415a17751279b11a12adba969b665eae2b37",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
