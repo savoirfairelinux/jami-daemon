@@ -39,71 +39,14 @@
 
 namespace jami {
 
-class AlsaThread
-{
-public:
-    AlsaThread(AlsaLayer* alsa);
-    ~AlsaThread();
-    void start();
-    bool isRunning() const;
-
-private:
-    NON_COPYABLE(AlsaThread);
-    void run();
-    AlsaLayer* alsa_;
-    std::atomic<bool> running_;
-    std::thread thread_;
-};
-
-AlsaThread::AlsaThread(AlsaLayer* alsa)
-    : alsa_(alsa)
-    , running_(false)
-    , thread_()
-{}
-
-bool
-AlsaThread::isRunning() const
-{
-    return running_;
-}
-
-AlsaThread::~AlsaThread()
-{
-    running_ = false;
-    if (thread_.joinable())
-        thread_.join();
-}
-
-void
-AlsaThread::start()
-{
-    running_ = true;
-    thread_ = std::thread(&AlsaThread::run, this);
-}
-
-void
-AlsaThread::run()
-{
-    alsa_->run(running_);
-}
-
 AlsaLayer::AlsaLayer(const AudioPreference& pref)
     : AudioLayer(pref)
     , indexIn_(pref.getAlsaCardin())
     , indexOut_(pref.getAlsaCardout())
     , indexRing_(pref.getAlsaCardring())
-    , playbackHandle_(nullptr)
-    , ringtoneHandle_(nullptr)
-    , captureHandle_(nullptr)
     , audioPlugin_(pref.getAlsaPlugin())
     , playbackBuff_(0, audioFormat_)
     , captureBuff_(0, audioFormat_)
-    , is_capture_prepared_(false)
-    , is_playback_running_(false)
-    , is_capture_running_(false)
-    , is_playback_open_(false)
-    , is_capture_open_(false)
-    , audioThread_(nullptr)
 {
     setHasNativeAEC(false);
 }
@@ -111,7 +54,7 @@ AlsaLayer::AlsaLayer(const AudioPreference& pref)
 AlsaLayer::~AlsaLayer()
 {
     status_ = Status::Idle;
-    audioThread_.reset();
+    stopThread();
 
     /* Then close the audio devices */
     closeCaptureStream();
@@ -123,14 +66,14 @@ AlsaLayer::~AlsaLayer()
  * Reimplementation of run()
  */
 void
-AlsaLayer::run(const std::atomic<bool>& isRunning)
+AlsaLayer::run()
 {
     if (playbackHandle_)
         playbackChanged(true);
     if (captureHandle_)
         recordChanged(true);
 
-    while (status_ == Status::Started and isRunning) {
+    while (status_ == Status::Started and running_) {
         playback();
         ringtone();
         capture();
@@ -183,8 +126,9 @@ AlsaLayer::openDevice(snd_pcm_t** pcm,
 
 void AlsaLayer::startStream(AudioDeviceType type)
 {
+    std::unique_lock<std::mutex> lk(mutex_);
     status_ = Status::Starting;
-    audioThread_.reset();
+    stopThread();
 
     bool dsnop = audioPlugin_ == PCM_DMIX_DSNOOP;
 
@@ -221,14 +165,14 @@ void AlsaLayer::startStream(AudioDeviceType type)
     }
 
     status_ = Status::Started;
-    audioThread_.reset(new AlsaThread(this));
-    audioThread_->start();
+    startThread();
 }
 
 void
 AlsaLayer::stopStream(AudioDeviceType stream)
 {
-    audioThread_.reset();
+    std::unique_lock<std::mutex> lk(mutex_);
+    stopThread();
 
     if (stream == AudioDeviceType::CAPTURE && is_capture_open_) {
         closeCaptureStream();
@@ -245,11 +189,25 @@ AlsaLayer::stopStream(AudioDeviceType stream)
     }
 
     if (is_capture_open_ or is_playback_open_ or ringtoneHandle_) {
-        audioThread_.reset(new AlsaThread(this));
-        audioThread_->start();
+        startThread();
     } else {
         status_ = Status::Idle;
     }
+}
+
+void
+AlsaLayer::startThread()
+{
+    running_ = true;
+    audioThread_ = std::thread(&AlsaLayer::run, this);
+}
+
+void
+AlsaLayer::stopThread()
+{
+    running_ = false;
+    if (audioThread_.joinable())
+        audioThread_.join();
 }
 
 /*
