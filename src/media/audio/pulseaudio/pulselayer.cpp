@@ -409,6 +409,7 @@ PulseLayer::disconnectAudioStream()
 
 void PulseLayer::startStream(AudioDeviceType type)
 {
+    std::lock_guard<std::mutex> lk(mutex_);
     waitForDevices();
     PulseMainLoopLock lock(mainloop_.get());
 
@@ -427,7 +428,6 @@ void PulseLayer::startStream(AudioDeviceType type)
     }
     pa_threaded_mainloop_signal(mainloop_.get(), 0);
 
-    std::lock_guard<std::mutex> lk(mutex_);
     status_ = Status::Started;
     startedCv_.notify_all();
 }
@@ -435,6 +435,7 @@ void PulseLayer::startStream(AudioDeviceType type)
 void
 PulseLayer::stopStream(AudioDeviceType type)
 {
+    std::lock_guard<std::mutex> lk(mutex_);
     waitForDevices();
     PulseMainLoopLock lock(mainloop_.get());
     auto& stream(getStream(type));
@@ -446,7 +447,6 @@ PulseLayer::stopStream(AudioDeviceType type)
     stream->stop();
     stream.reset();
 
-    std::unique_lock<std::mutex> lk(mutex_);
     if (not playback_ and not ringtone_ and not record_) {
         pendingStreams = 0;
         status_ = Status::Idle;
@@ -661,7 +661,10 @@ PulseLayer::server_info_callback(pa_context*, const pa_server_info* i, void* use
     context->defaultSink_ = {};
     context->defaultSource_ = {};
     context->defaultAudioFormat_ = {i->sample_spec.rate, i->sample_spec.channels};
-    context->hardwareFormatAvailable(context->defaultAudioFormat_);
+    {
+        std::lock_guard<std::mutex> lk(context->mutex_);
+        context->hardwareFormatAvailable(context->defaultAudioFormat_);
+    }
     if (not context->sinkList_.empty())
         context->sinkList_.front().channel_map.channels = std::min(i->sample_spec.channels,
                                                                    (uint8_t) 2);

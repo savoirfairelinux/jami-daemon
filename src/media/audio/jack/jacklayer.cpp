@@ -379,12 +379,10 @@ JackLayer::process_playback(jack_nframes_t frames, void* arg)
  */
 void JackLayer::startStream(AudioDeviceType)
 {
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Idle)
-            return;
-        status_ = Status::Started;
-    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (status_ != Status::Idle)
+        return;
+    status_ = Status::Started;
 
     dcblocker_.reset();
     if (jack_activate(playbackClient_) or jack_activate(captureClient_)) {
@@ -408,13 +406,11 @@ JackLayer::onShutdown(void* /* data */)
  */
 void JackLayer::stopStream(AudioDeviceType)
 {
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Started)
-            return;
-        status_ = Status::Idle;
-        data_ready_.notify_one();
-    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (status_ != Status::Started)
+        return;
+    status_ = Status::Idle;
+    data_ready_.notify_one();
 
     if (jack_deactivate(playbackClient_) or jack_deactivate(captureClient_)) {
         JAMI_ERR("JACK client could not deactivate");

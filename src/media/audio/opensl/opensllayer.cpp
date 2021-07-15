@@ -56,10 +56,11 @@ void
 OpenSLLayer::startStream(AudioDeviceType stream)
 {
     using namespace std::placeholders;
+
+    std::lock_guard<std::mutex> lock(mutex_);
     if (!engineObject_)
         initAudioEngine();
 
-    std::lock_guard<std::mutex> lock(mutex_);
     JAMI_WARN("Start OpenSL audio layer");
 
     if (stream == AudioDeviceType::PLAYBACK) {
@@ -163,7 +164,6 @@ OpenSLLayer::initAudioEngine()
     hardwareBuffSize_ = hw_infos[1];
     hardwareFormatAvailable(hardwareFormat_, hardwareBuffSize_);
 
-    std::lock_guard<std::mutex> lock(mutex_);
     SLASSERT(slCreateEngine(&engineObject_, 0, nullptr, 0, nullptr, nullptr));
     SLASSERT((*engineObject_)->Realize(engineObject_, SL_BOOLEAN_FALSE));
     SLASSERT((*engineObject_)->GetInterface(engineObject_, SL_IID_ENGINE, &engineInterface_));

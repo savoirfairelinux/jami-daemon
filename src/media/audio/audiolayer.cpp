@@ -62,7 +62,6 @@ void
 AudioLayer::hardwareFormatAvailable(AudioFormat playback, size_t bufSize)
 {
     JAMI_DBG("Hardware audio format available : %s %zu", playback.toString().c_str(), bufSize);
-    std::unique_lock<std::mutex> lk(mutex_);
     audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
     urgentRingBuffer_.setFormat(audioFormat_);
     nativeFrameSize_ = bufSize;
@@ -89,7 +88,6 @@ AudioLayer::flushMain()
 void
 AudioLayer::flushUrgent()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     urgentRingBuffer_.flushAll();
 }
 
