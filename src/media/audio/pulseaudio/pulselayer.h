@@ -54,7 +54,7 @@ struct PaDeviceInfos
     pa_channel_map channel_map {};
     uint32_t monitor_of {PA_INVALID_INDEX};
 
-    PaDeviceInfos() {};
+    PaDeviceInfos() {}
 
     PaDeviceInfos(const pa_source_info& source)
         : index(source.index)
