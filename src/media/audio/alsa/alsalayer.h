@@ -28,6 +28,7 @@
 #include <alsa/asoundlib.h>
 
 #include <memory>
+#include <thread>
 
 #define PCM_DMIX "plug:dmix" /** Alsa plugin for software mixing */
 
@@ -137,7 +138,7 @@ public:
      */
     virtual int getIndexRingtone() const { return indexRing_; }
 
-    void run(const std::atomic<bool>& isRunning);
+    void run();
 
 private:
     /**
@@ -188,6 +189,9 @@ private:
 
     bool alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format);
 
+    void startThread();
+    void stopThread();
+
     /**
      * Copy a data buffer in the internal ring buffer
      * ALSA Library API
@@ -211,19 +215,19 @@ private:
      * Handles to manipulate playback stream
      * ALSA Library API
      */
-    snd_pcm_t* playbackHandle_;
+    snd_pcm_t* playbackHandle_ {nullptr};
 
     /**
      * Handles to manipulate ringtone stream
      *
      */
-    snd_pcm_t* ringtoneHandle_;
+    snd_pcm_t* ringtoneHandle_ {nullptr};
 
     /**
      * Handles to manipulate capture stream
      * ALSA Library API
      */
-    snd_pcm_t* captureHandle_;
+    snd_pcm_t* captureHandle_ {nullptr};
 
     /**
      * name of the alsa audio plugin used
@@ -234,13 +238,14 @@ private:
     AudioBuffer playbackBuff_;
     AudioBuffer captureBuff_;
 
-    bool is_capture_prepared_;
-    bool is_playback_running_;
-    bool is_capture_running_;
-    bool is_playback_open_;
-    bool is_capture_open_;
+    bool is_capture_prepared_ {false};
+    bool is_playback_running_ {false};
+    bool is_capture_running_ {false};
+    bool is_playback_open_ {false};
+    bool is_capture_open_ {false};
 
-    std::unique_ptr<AlsaThread> audioThread_;
+    std::atomic_bool running_ {false};
+    std::thread audioThread_;
 };
 
 } // namespace jami

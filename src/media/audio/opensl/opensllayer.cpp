@@ -43,8 +43,7 @@ namespace jami {
 // Constructor
 OpenSLLayer::OpenSLLayer(const AudioPreference& pref)
     : AudioLayer(pref)
-{
-}
+{}
 
 // Destructor
 OpenSLLayer::~OpenSLLayer()
@@ -56,10 +55,11 @@ void
 OpenSLLayer::startStream(AudioDeviceType stream)
 {
     using namespace std::placeholders;
+
+    std::lock_guard<std::mutex> lock(mutex_);
     if (!engineObject_)
         initAudioEngine();
 
-    std::lock_guard<std::mutex> lock(mutex_);
     JAMI_WARN("Start OpenSL audio layer");
 
     if (stream == AudioDeviceType::PLAYBACK) {
@@ -97,7 +97,8 @@ OpenSLLayer::startStream(AudioDeviceType stream)
         if (not recorder_) {
             std::lock_guard<std::mutex> lck(recMtx);
             try {
-                recorder_.reset(new opensl::AudioRecorder(hardwareFormat_, hardwareBuffSize_, engineInterface_));
+                recorder_.reset(
+                    new opensl::AudioRecorder(hardwareFormat_, hardwareBuffSize_, engineInterface_));
                 recorder_->setBufQueues(&freeRecBufQueue_, &recBufQueue_);
                 recorder_->registerCallback(std::bind(&OpenSLLayer::engineServiceRec, this));
                 setHasNativeAEC(recorder_->hasNativeAEC());
@@ -163,7 +164,6 @@ OpenSLLayer::initAudioEngine()
     hardwareBuffSize_ = hw_infos[1];
     hardwareFormatAvailable(hardwareFormat_, hardwareBuffSize_);
 
-    std::lock_guard<std::mutex> lock(mutex_);
     SLASSERT(slCreateEngine(&engineObject_, 0, nullptr, 0, nullptr, nullptr));
     SLASSERT((*engineObject_)->Realize(engineObject_, SL_BOOLEAN_FALSE));
     SLASSERT((*engineObject_)->GetInterface(engineObject_, SL_IID_ENGINE, &engineInterface_));
@@ -254,10 +254,14 @@ OpenSLLayer::engineServicePlay()
                 break;
             }
             if (not dat->pointer()->data[0] or not buf->buf_) {
-                JAMI_ERR("null bufer %p -> %p %d", dat->pointer()->data[0], buf->buf_, dat->pointer()->nb_samples);
+                JAMI_ERR("null bufer %p -> %p %d",
+                         dat->pointer()->data[0],
+                         buf->buf_,
+                         dat->pointer()->nb_samples);
                 break;
             }
-            //JAMI_ERR("std::copy_n %p -> %p %zu", dat->pointer()->data[0], buf->buf_, dat->pointer()->nb_samples);
+            // JAMI_ERR("std::copy_n %p -> %p %zu", dat->pointer()->data[0], buf->buf_,
+            // dat->pointer()->nb_samples);
             std::copy_n((const AudioSample*) dat->pointer()->data[0],
                         dat->pointer()->nb_samples,
                         (AudioSample*) buf->buf_);
@@ -286,7 +290,10 @@ OpenSLLayer::engineServiceRing()
                 break;
             }
             if (not dat->pointer()->data[0] or not buf->buf_) {
-                JAMI_ERR("null bufer %p -> %p %d", dat->pointer()->data[0], buf->buf_, dat->pointer()->nb_samples);
+                JAMI_ERR("null bufer %p -> %p %d",
+                         dat->pointer()->data[0],
+                         buf->buf_,
+                         dat->pointer()->nb_samples);
                 break;
             }
             std::copy_n((const AudioSample*) dat->pointer()->data[0],
