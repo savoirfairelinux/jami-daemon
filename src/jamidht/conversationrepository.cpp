@@ -1761,7 +1761,7 @@ ConversationRepository::Impl::initMembers()
 {
     auto repo = repository();
     if (!repo)
-        return;
+        throw std::logic_error("Invalid git repository");
 
     std::vector<std::string> uris;
     std::lock_guard<std::mutex> lk(membersMtx_);
@@ -2894,7 +2894,10 @@ ConversationRepository::members() const
 void
 ConversationRepository::refreshMembers() const
 {
-    return pimpl_->initMembers();
+    try {
+        pimpl_->initMembers();
+    } catch (...) {
+    }
 }
 
 void

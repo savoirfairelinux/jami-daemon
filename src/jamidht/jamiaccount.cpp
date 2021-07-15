@@ -5079,6 +5079,7 @@ JamiAccount::loadConversations()
     JAMI_INFO("[Account %s] Start loading conversations…", getAccountID().c_str());
     auto conversationsRepositories = fileutils::readDirectory(idPath_ + DIR_SEPARATOR_STR
                                                               + "conversations");
+    conversations_.clear();
     for (const auto& repository : conversationsRepositories) {
         try {
             auto conv = std::make_shared<Conversation>(weak(), repository);
