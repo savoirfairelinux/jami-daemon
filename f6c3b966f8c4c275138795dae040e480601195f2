@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "816e334b_65b54315",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-07-15T18:34:05Z",
+      "side": 1,
+      "message": "yay works!",
+      "revId": "f6c3b966f8c4c275138795dae040e480601195f2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eded48ed_52d86a14",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-07-15T18:34:05Z",
+      "side": 1,
+      "message": "the first lines of initMembers are:\n\nauto repo \u003d repository();\nif (!repo)\n    return;\n\nwhat about just throwing the exception there and catching with some logging at\nconversationrepository.cpp:2900 ?",
+      "range": {
+        "startLine": 52,
+        "startChar": 7,
+        "endLine": 53,
+        "endChar": 61
+      },
+      "revId": "f6c3b966f8c4c275138795dae040e480601195f2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
