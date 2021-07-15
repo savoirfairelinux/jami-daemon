@@ -19,6 +19,7 @@
  */
 #pragma once
 #include <string>
+#include <vector>
 #include <map>
 
 enum class StreamType { audio, video };
@@ -64,7 +65,7 @@ struct JamiMessage
 {
     /**
      * @param accId AccountId
-     * @param pId peerId
+     * @param pId PeerId
      * @param isReceived False if local audio/video streams
      * @param dataMap Message contents
      * @param pPlugin True if message is created/modified by plugin code
@@ -90,4 +91,29 @@ struct JamiMessage
     bool fromPlugin;
     bool isSwarm {false};
     bool fromHistory {false};
+};
+
+/**
+ * @struct JamiCallInfos
+ * @brief Contains information about a call to be placed.
+ * It's used by ChatServicesManager.
+ */
+struct JamiCallInfos
+{
+    /**
+     * @param accId AccountId
+     * @param pId PeerId
+     * @param pMediaList Call media list
+     */
+    JamiCallInfos(const std::string& accId,
+                const std::string& pId,
+                std::vector<std::map<std::string, std::string>>& pMediaList)
+        : accountId {accId}
+        , peerId {pId}
+        , mediaList {pMediaList}
+    {}
+
+    std::string accountId;
+    std::string peerId;
+    std::vector<std::map<std::string, std::string>> mediaList;
 };

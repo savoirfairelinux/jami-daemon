@@ -109,6 +109,14 @@ public:
                        const std::string& value,
                        const std::string& rootPath);
 
+    bool checkPaymentClient() {
+        return !TradeClients.empty();
+    }
+
+    bool checkPaymentSeller() {
+        return !TradeSellers.empty();
+    }
+
 private:
     /**
      * @brief Exposes ChatHandlers' life cycle managers services to the main API.
@@ -149,5 +157,8 @@ private:
     // accountId, peerId pair.
     // A map of accountId, peerId pairs and ChatHandler-status pairs.
     ChatHandlerList allowDenyList_ {};
+
+    std::list<std::string> TradeClients {};
+    std::list<std::string> TradeSellers {};
 };
 } // namespace jami

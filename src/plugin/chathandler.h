@@ -28,6 +28,7 @@
 namespace jami {
 
 using pluginMessagePtr = std::shared_ptr<JamiMessage>;
+using pluginCallInfosPtr = std::shared_ptr<JamiCallInfos>;
 using chatSubjectPtr = std::shared_ptr<PublishObservable<pluginMessagePtr>>;
 
 /**

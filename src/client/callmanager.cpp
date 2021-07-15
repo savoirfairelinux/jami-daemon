@@ -34,6 +34,7 @@
 
 #include "smartools.h"
 #include "sip/sipaccount.h"
+#include "jamidht/jamiaccount.h"
 
 namespace DRing {
 
@@ -80,8 +81,10 @@ placeCallWithMedia(const std::string& accountID,
         return {};
     } else {
         {
-            auto acc = jami::Manager::instance().getAccount<jami::SIPAccount>(accountID);
-            acc->sendPaymentVerificationMessage(to, true);
+            auto acc1 = jami::Manager::instance().getAccount<jami::JamiAccount>(accountID);
+            if (acc1)
+                acc1->sendPaymentVerificationMessage(to, true);
+
             // request peer infos, call
             // if peer is merchant, check local client plugin
             // if both valid, allow outgoing call

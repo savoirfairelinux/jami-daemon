@@ -110,6 +110,67 @@ ChatServicesManager::registerChatService(PluginManager& pluginManager)
 
     // Services are registered to the PluginManager.
     pluginManager.registerService("sendTextMessage", sendTextMessage);
+
+    // placeOutgoingCall is a service that allows plugins to start a call.
+    auto placeOutgoingCall = [](const DLPlugin*, void* data) {
+        auto ci = static_cast<JamiCallInfos*>(data);
+        if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(
+                ci->accountId)) {
+            try {
+                jami::Manager::instance().newOutgoingCall(ci->peerId, ci->accountId, ci->mediaList);
+            } catch (const std::exception& e) {
+                JAMI_ERR("Exception during outgoing call creation: %s", e.what());
+            }
+        }
+        return 0;
+    };
+
+    // Services are registered to the PluginManager.
+    pluginManager.registerService("placeOutgoingCall", placeOutgoingCall);
+
+    // registerTradeClient is a service that register a trader client plugin.
+    auto registerTradeClient = [this](const DLPlugin*, void* data) {
+        const auto& trader = static_cast<std::string*>(data);
+        TradeClients.push_back(*trader);
+        JAMI_INFO() << "registerTradeClient";
+        return 0;
+    };
+
+    // Services are registered to the PluginManager.
+    pluginManager.registerService("registerTradeClient", registerTradeClient);
+
+    // unregisterTradeClient is a service that register a trader client plugin.
+    auto unregisterTradeClient = [this](const DLPlugin*, void* data) {
+        const auto& trader = static_cast<std::string*>(data);
+        TradeClients.remove(*trader);
+        JAMI_INFO() << "unregisterTradeClient";
+        return 0;
+    };
+
+    // Services are registered to the PluginManager.
+    pluginManager.registerService("unregisterTradeClient", unregisterTradeClient);
+
+    // registerTradeSeller is a service that register a trader client plugin.
+    auto registerTradeSeller = [this](const DLPlugin*, void* data) {
+        const auto& trader = static_cast<std::string*>(data);
+        TradeSellers.push_back(*trader);
+        JAMI_INFO() << "registerTradeSeller";
+        return 0;
+    };
+
+    // Services are registered to the PluginManager.
+    pluginManager.registerService("registerTradeSeller", registerTradeSeller);
+
+    // unregisterTradeSeller is a service that register a trader client plugin.
+    auto unregisterTradeSeller = [this](const DLPlugin*, void* data) {
+        const auto& trader = static_cast<std::string*>(data);
+        TradeSellers.remove(*trader);
+        JAMI_INFO() << "unregisterTradeSeller";
+        return 0;
+    };
+
+    // Services are registered to the PluginManager.
+    pluginManager.registerService("unregisterTradeSeller", unregisterTradeSeller);
 }
 
 std::vector<std::string>

@@ -198,8 +198,8 @@ SIPAccountBase::sendPaymentVerificationMessage(const std::string& conversationUr
         conversationId = uri.authority();
     auto uid = uri.authority();
 
-    bool isClient = true;   // checkIsClient();
-    bool isService = true;  // checkIsService();
+    bool isClient = jami::Manager::instance().getJamiPluginManager().getChatServicesManager().checkPaymentClient();
+    bool isService = jami::Manager::instance().getJamiPluginManager().getChatServicesManager().checkPaymentSeller();
 
     JAMI_INFO() << "SENDING PAYMENT VERIFICATION MESSAGE!!!";
     sendInstantMessage(uid, {{MIME_TYPE_IM_PAYMENT, getPayment(conversationId, isRequiring, isClient, isService, false)}});
@@ -640,7 +640,6 @@ SIPAccountBase::onTextMessage(const std::string& id,
                     }
 
                     Uri uri(from);
-                    //std::string conversationId = {};
                     if (uri.scheme() == Uri::Scheme::SWARM)
                         conversationId = uri.authority();
                     auto uid = uri.authority();
@@ -657,10 +656,23 @@ SIPAccountBase::onTextMessage(const std::string& id,
                             isClient = matched_pattern[1] == "true";
                         }
 
-                        bool isService = true; // checkIsService();
+                        bool isService = jami::Manager::instance().getJamiPluginManager().getChatServicesManager().checkPaymentSeller();
                         bool allowCall = true;
                         if (!isClient && isService)
                             allowCall = false;
+                        
+                        std::map<std::string, std::string> mess;
+                        mess[m.first] = m.second;
+                        auto& pluginChatManager
+                            = jami::Manager::instance().getJamiPluginManager().getChatServicesManager();
+                        std::shared_ptr<JamiMessage> cm
+                            = std::make_shared<JamiMessage>(accountID_,
+                                                            from,
+                                                            true,
+                                                            mess,
+                                                            false);
+                        pluginChatManager.publishMessage(cm);
+
                         sendInstantMessage(uid, {{MIME_TYPE_IM_PAYMENT, getPayment(conversationId, false, isClient, isService, allowCall)}});
                     } else {
                         JAMI_INFO() << "CALL ANSWERED!";

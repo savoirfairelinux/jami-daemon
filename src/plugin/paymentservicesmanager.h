@@ -1,3 +1,4 @@
+
 /*
  *  Copyright (C) 2021 Savoir-faire Linux Inc.
  *
@@ -66,13 +67,13 @@ public:
 
     /**
      * @brief Activates or deactivate a given PaymentHandler to a given accountId.
-     * @param PaymentHandlerId
+     * @param paymentHandlerId
      * @param accountId
      * @param toggle Notify with new subjects if true, detach if false.
      */
-    void togglePaymentHandler(const std::string& chatHandlerId,
-                           const std::string& accountId,
-                           const bool toggle);
+    void togglePaymentHandler(const std::string& paymentHandlerId,
+                              const std::string& accountId,
+                              const bool toggle);
 
     /**
      * @brief Returns a list of active PaymentHandlers for a given accountId.
