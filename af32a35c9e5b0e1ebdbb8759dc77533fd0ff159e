@@ -81,6 +81,24 @@
       "parentUuid": "cbab6109_d4302b01",
       "revId": "af32a35c9e5b0e1ebdbb8759dc77533fd0ff159e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fdd02893_3138b16b",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1018,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-16T16:12:19Z",
+      "side": 1,
+      "message": "So it might be because of cancelOperations since it\u0027s the only thing executed before ~Impl ?\n\nHowever, cancelOperations doesn\u0027t call any pjsip API by itself, so maybe for better understanding of the code it should be moved to the method calling the pjsip api ?",
+      "parentUuid": "f53b05a5_4f8cd69e",
+      "revId": "af32a35c9e5b0e1ebdbb8759dc77533fd0ff159e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
