@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f1452b18_7e122118",
+        "filename": "src/conference.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 335,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-16T15:28:29Z",
+      "side": 1,
+      "message": "ideally avoid todo, add a ticket if you want to do this in another patch",
+      "range": {
+        "startLine": 335,
+        "startChar": 9,
+        "endLine": 335,
+        "endChar": 58
+      },
+      "revId": "3f3e8e440154e86e6880f8a3e65efc311a4fc64d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
