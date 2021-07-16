@@ -1,6 +1,7 @@
 {
   "comments": [
     {
+      "unresolved": true,
       "key": {
         "uuid": "37c44d11_417a2e50",
         "filename": "src/sip/sipaccount.cpp",
@@ -20,8 +21,31 @@
         "endChar": 59
       },
       "revId": "a096e6fbaf8fd3d073b03e23efb2fc0e042036e0",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "12610d1b_2870f6a1",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 1940,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-07-16T15:03:21Z",
+      "side": 1,
+      "message": "we still need via_addr below",
+      "parentUuid": "37c44d11_417a2e50",
+      "range": {
+        "startLine": 1939,
+        "startChar": 4,
+        "endLine": 1940,
+        "endChar": 59
+      },
+      "revId": "a096e6fbaf8fd3d073b03e23efb2fc0e042036e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
