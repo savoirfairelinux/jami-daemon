@@ -2800,7 +2800,7 @@ Manager::ManagerPimpl::processIncomingCall(Call& incomCall, const std::string& a
         });
     } else if (autoAnswer_) {
         dht::ThreadPool::io().run([incomCallId] { Manager::instance().answerCall(incomCallId); });
-    } else if (currentCall) {
+    } else if (currentCall && currentCall->getCallId != incomCallId) {
         // Test if already calling this person
         if (currentCall->getAccountId() == account->getAccountID()
             && currentCall->getPeerNumber() == incomCall.getPeerNumber()) {
