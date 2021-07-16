@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b7c1aa71_5b179315",
+        "filename": "contrib/src/pjproject/rules.mak",
+        "patchSetId": 7
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2021-07-16T10:31:47Z",
+      "side": 1,
+      "message": "You can also remove this line. Pjproject releases have it updated.",
+      "revId": "a4220b73121cba3978391fbc312d9f0f1177d43d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
