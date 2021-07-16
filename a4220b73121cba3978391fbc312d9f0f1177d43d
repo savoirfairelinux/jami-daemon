@@ -16,6 +16,24 @@
       "message": "You can also remove this line. Pjproject releases have it updated.",
       "revId": "a4220b73121cba3978391fbc312d9f0f1177d43d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "44b4101b_e2712ca3",
+        "filename": "contrib/src/pjproject/rules.mak",
+        "patchSetId": 7
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-16T15:10:30Z",
+      "side": 1,
+      "message": "you\u0027re right. Thx",
+      "parentUuid": "b7c1aa71_5b179315",
+      "revId": "a4220b73121cba3978391fbc312d9f0f1177d43d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
