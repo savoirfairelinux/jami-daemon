@@ -33,6 +33,42 @@
       "message": "just the tests to update (ideally add a test for this too) and for me it solves the mute/unmute",
       "revId": "d1bdd4ffc01cc2bee8289ab4b3f0f83aa35dc0ee",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a302714d_d8fe1304",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-07-16T13:23:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d9638d10_6a80702f",
+      "revId": "d1bdd4ffc01cc2bee8289ab4b3f0f83aa35dc0ee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0579d58d_4e4c1872",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2021-07-16T13:23:39Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "27b4444c_79d3bb3b",
+      "revId": "d1bdd4ffc01cc2bee8289ab4b3f0f83aa35dc0ee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
