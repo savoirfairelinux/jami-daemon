@@ -109,7 +109,7 @@ SyncHistoryTest::testCreateConversationThenSync()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     // Start conversation
-    auto convId = aliceAccount->startConversation();
+    auto convId = DRing::startConversation(aliceId);
 
     // Now create alice2
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
@@ -178,7 +178,7 @@ SyncHistoryTest::testCreateConversationWithOnlineDevice()
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
 
     // Start conversation now
-    auto convId = aliceAccount->startConversation();
+    auto convId = DRing::startConversation(aliceId);
     auto conversationReady = false, alice2Ready = false;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
@@ -210,7 +210,7 @@ void
 SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto convId = aliceAccount->startConversation();
+    auto convId = DRing::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -219,7 +219,7 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     auto conversationReady = false;
     auto messageReceived = false;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
+        [&](const std::string& /* accountId */,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> /*message*/) {
             messageReceived = true;
@@ -237,11 +237,11 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
 
     // Start conversation
     messageReceived = false;
-    aliceAccount->sendMessage(convId, std::string("Message 1"));
+    DRing::sendMessage(aliceId, convId, std::string("Message 1"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return messageReceived; }));
-    aliceAccount->sendMessage(convId, std::string("Message 2"));
+    DRing::sendMessage(aliceId, convId, std::string("Message 2"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return messageReceived; }));
-    aliceAccount->sendMessage(convId, std::string("Message 3"));
+    DRing::sendMessage(aliceId, convId, std::string("Message 3"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return messageReceived; }));
 
     // Now create alice2
@@ -273,7 +273,7 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
             }
         }));
     DRing::registerSignalHandlers(confHandlers);
-    alice2Account->loadConversationMessages(convId);
+    DRing::loadConversationMessages(alice2Id, convId, "", 0);
     cv.wait_for(lk, std::chrono::seconds(30));
     DRing::unregisterSignalHandlers();
     confHandlers.clear();
@@ -291,25 +291,25 @@ SyncHistoryTest::testCreateMultipleConversationThenAddDevice()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     // Start conversation
-    auto convId = aliceAccount->startConversation();
-    aliceAccount->sendMessage(convId, std::string("Message 1"));
-    aliceAccount->sendMessage(convId, std::string("Message 2"));
-    aliceAccount->sendMessage(convId, std::string("Message 3"));
+    auto convId = DRing::startConversation(aliceId);
+    DRing::sendMessage(aliceId, convId, std::string("Message 1"), "");
+    DRing::sendMessage(aliceId, convId, std::string("Message 2"), "");
+    DRing::sendMessage(aliceId, convId, std::string("Message 3"), "");
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    auto convId2 = aliceAccount->startConversation();
-    aliceAccount->sendMessage(convId2, std::string("Message 1"));
-    aliceAccount->sendMessage(convId2, std::string("Message 2"));
-    aliceAccount->sendMessage(convId2, std::string("Message 3"));
+    auto convId2 = DRing::startConversation(aliceId);
+    DRing::sendMessage(aliceId, convId2, std::string("Message 1"), "");
+    DRing::sendMessage(aliceId, convId2, std::string("Message 2"), "");
+    DRing::sendMessage(aliceId, convId2, std::string("Message 3"), "");
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    auto convId3 = aliceAccount->startConversation();
-    aliceAccount->sendMessage(convId3, std::string("Message 1"));
-    aliceAccount->sendMessage(convId3, std::string("Message 2"));
-    aliceAccount->sendMessage(convId3, std::string("Message 3"));
+    auto convId3 = DRing::startConversation(aliceId);
+    DRing::sendMessage(aliceId, convId3, std::string("Message 1"), "");
+    DRing::sendMessage(aliceId, convId3, std::string("Message 2"), "");
+    DRing::sendMessage(aliceId, convId3, std::string("Message 3"), "");
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    auto convId4 = aliceAccount->startConversation();
-    aliceAccount->sendMessage(convId4, std::string("Message 1"));
-    aliceAccount->sendMessage(convId4, std::string("Message 2"));
-    aliceAccount->sendMessage(convId4, std::string("Message 3"));
+    auto convId4 = DRing::startConversation(aliceId);
+    DRing::sendMessage(aliceId, convId4, std::string("Message 1"), "");
+    DRing::sendMessage(aliceId, convId4, std::string("Message 2"), "");
+    DRing::sendMessage(aliceId, convId4, std::string("Message 3"), "");
 
     // Now create alice2
     auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
@@ -361,7 +361,7 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
     auto uri = aliceAccount->getUsername();
 
     // Start conversation for Alice
-    auto convId = bobAccount->startConversation();
+    auto convId = DRing::startConversation(bobId);
 
     // Check that alice receives the request
     std::mutex mtx;
@@ -391,7 +391,7 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
     DRing::registerSignalHandlers(confHandlers);
 
     memberEvent = false;
-    bobAccount->addConversationMember(convId, uri);
+    DRing::addConversationMember(bobId, convId, uri);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(30), [&] { return memberEvent && requestReceived; }));
     DRing::unregisterSignalHandlers();
@@ -450,7 +450,7 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
 
     // Start conversation now
-    auto convId = aliceAccount->startConversation();
+    auto convId = DRing::startConversation(aliceId);
     bool alice2Ready = false;
     auto conversationReady = false, conversationRemoved = false;
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
@@ -483,7 +483,7 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] {
         return alice2Ready && conversationReady;
     }));
-    aliceAccount->removeConversation(convId);
+    DRing::removeConversation(aliceId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return conversationRemoved; }));
 
     DRing::unregisterSignalHandlers();
@@ -504,7 +504,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     aliceAccount->exportArchive(aliceArchive);
 
     // Start conversation
-    auto convId = aliceAccount->startConversation();
+    auto convId = DRing::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -557,10 +557,10 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
             }));
     DRing::registerSignalHandlers(confHandlers);
 
-    aliceAccount->addConversationMember(convId, bobUri);
+    DRing::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    bobAccount->acceptConversationRequest(convId);
+    DRing::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
 
     // Wait that alice sees Bob
@@ -585,14 +585,14 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     aliceAccount = Manager::instance().getAccount<JamiAccount>(alice2Id);
 
     // This will trigger a conversation request. Cause alice2 can't know first conversation
-    bobAccount->sendMessage(convId, std::string("hi"));
+    DRing::sendMessage(aliceId, convId, std::string("hi"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return requestReceived; }));
 
-    aliceAccount->acceptConversationRequest(convId);
+    DRing::acceptConversationRequest(aliceId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return conversationReady; }));
 
     messageBobReceived = 0;
-    aliceAccount->sendMessage(convId, std::string("hi"));
+    DRing::sendMessage(aliceId, convId, std::string("hi"), "");
     cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageBobReceived == 1; });
     std::remove(aliceArchive.c_str());
 }
@@ -607,7 +607,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
     auto bobUri = bobAccount->getUsername();
 
     // Start conversation
-    auto convId = aliceAccount->startConversation();
+    auto convId = DRing::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -667,10 +667,10 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
             }));
     DRing::registerSignalHandlers(confHandlers);
 
-    aliceAccount->addConversationMember(convId, bobUri);
+    DRing::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    bobAccount->acceptConversationRequest(convId);
+    DRing::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
 
     // We need to track presence to know when to sync
@@ -705,7 +705,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
 
     messageBobReceived = 0;
     aliceAccount = Manager::instance().getAccount<JamiAccount>(alice2Id);
-    aliceAccount->sendMessage(convId, std::string("hi"));
+    DRing::sendMessage(aliceId, convId, std::string("hi"), "");
     cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageBobReceived == 1; });
     std::remove(aliceArchive.c_str());
 }
@@ -720,7 +720,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
     auto aliceUri = aliceAccount->getUsername();
 
     // Start conversation
-    auto convId = bobAccount->startConversation();
+    auto convId = DRing::startConversation(bobId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -773,7 +773,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
             }));
     DRing::registerSignalHandlers(confHandlers);
 
-    bobAccount->addConversationMember(convId, aliceUri);
+    DRing::addConversationMember(bobId, convId, aliceUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
     // Backup alice after startConversation with member
@@ -799,7 +799,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
     aliceAccount = Manager::instance().getAccount<JamiAccount>(alice2Id);
 
     // Should get the same request as before.
-    aliceAccount->acceptConversationRequest(convId);
+    DRing::acceptConversationRequest(aliceId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return conversationReady && messageBobReceived == 1;
     }));
