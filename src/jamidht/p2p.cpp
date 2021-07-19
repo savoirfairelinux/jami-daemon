@@ -232,14 +232,17 @@ DhtPeerConnector::requestConnection(
         // In a one_to_one conv with an old version, the contact here can be in an invited
         // state and will not support data-transfer. So if one_to_oe with non accepted, just
         // force to file:// for now.
-        auto members = acc->getConversationMembers(info.conversationId);
+        auto members = acc->convModule()->getConversationMembers(info.conversationId);
         auto preSwarmCompat = members.size() == 2 && members[1]["role"] == "invited";
         if (preSwarmCompat) {
-            auto infos = acc->conversationInfos(info.conversationId);
+            auto infos = acc->convModule()->conversationInfos(info.conversationId);
             preSwarmCompat = infos["mode"] == "0";
         }
         if (!preSwarmCompat)
-            channelName = fmt::format("data-transfer://{}/{}/{}", info.conversationId, acc->currentDeviceId(), tid);
+            channelName = fmt::format("data-transfer://{}/{}/{}",
+                                      info.conversationId,
+                                      acc->currentDeviceId(),
+                                      tid);
         // If peer is not empty this means that we want to send to one device only
         if (!info.peer.empty()) {
             acc->connectionManager().connectDevice(DeviceId(info.peer), channelName, channelReadyCb);

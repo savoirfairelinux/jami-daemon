@@ -461,107 +461,6 @@ AccountManager::getContacts() const
     return ret;
 }
 
-void
-AccountManager::setConversations(const std::map<std::string, ConvInfo>& newConv)
-{
-    if (info_) {
-        info_->conversations = newConv;
-        saveConvInfos();
-    }
-}
-
-void
-AccountManager::setConversationMembers(const std::string& convId,
-                                       const std::vector<std::string>& members)
-{
-    if (info_) {
-        auto convIt = info_->conversations.find(convId);
-        if (convIt != info_->conversations.end()) {
-            convIt->second.members = members;
-            saveConvInfos();
-        }
-    }
-}
-
-void
-AccountManager::saveConvInfos() const
-{
-    if (!info_)
-        return;
-    std::ofstream file(info_->contacts->path() + DIR_SEPARATOR_STR "convInfo",
-                       std::ios::trunc | std::ios::binary);
-    msgpack::pack(file, info_->conversations);
-}
-
-void
-AccountManager::addConversation(const ConvInfo& info)
-{
-    if (info_) {
-        info_->conversations[info.id] = info;
-        saveConvInfos();
-    }
-}
-
-void
-AccountManager::setConversationsRequests(const std::map<std::string, ConversationRequest>& newConvReq)
-{
-    if (info_) {
-        std::lock_guard<std::mutex> lk(conversationsRequestsMtx);
-        info_->conversationsRequests = newConvReq;
-        saveConvRequests();
-    }
-}
-
-void
-AccountManager::saveConvRequests() const
-{
-    if (!info_)
-        return;
-    std::ofstream file(info_->contacts->path() + DIR_SEPARATOR_STR "convRequests",
-                       std::ios::trunc | std::ios::binary);
-    msgpack::pack(file, info_->conversationsRequests);
-}
-
-std::optional<ConversationRequest>
-AccountManager::getRequest(const std::string& id) const
-{
-    if (info_) {
-        std::lock_guard<std::mutex> lk(conversationsRequestsMtx);
-        auto it = info_->conversationsRequests.find(id);
-        if (it != info_->conversationsRequests.end())
-            return it->second;
-    }
-    return std::nullopt;
-}
-
-bool
-AccountManager::addConversationRequest(const std::string& id, const ConversationRequest& req)
-{
-    if (info_) {
-        std::lock_guard<std::mutex> lk(conversationsRequestsMtx);
-        auto it = info_->conversationsRequests.find(id);
-        if (it != info_->conversationsRequests.end()) {
-            // Check if updated
-            if (req == it->second)
-                return false;
-        }
-        info_->conversationsRequests[id] = req;
-        saveConvRequests();
-        return true;
-    }
-    return false;
-}
-
-void
-AccountManager::rmConversationRequest(const std::string& id)
-{
-    if (info_) {
-        std::lock_guard<std::mutex> lk(conversationsRequestsMtx);
-        info_->conversationsRequests.erase(id);
-        saveConvRequests();
-    }
-}
-
 /** Obtain details about one account contact in serializable form. */
 std::map<std::string, std::string>
 AccountManager::getContactDetails(const std::string& uri) const
@@ -583,12 +482,14 @@ AccountManager::findCertificate(
         if (cb)
             cb(cert);
     } else {
-        dht_->findCertificate(h, [cb = std::move(cb)](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-            if (crt)
-                tls::CertificateStore::instance().pinCertificate(crt);
-            if (cb)
-                cb(crt);
-        });
+        dht_->findCertificate(h,
+                              [cb = std::move(cb)](
+                                  const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                                  if (crt)
+                                      tls::CertificateStore::instance().pinCertificate(crt);
+                                  if (cb)
+                                      cb(crt);
+                              });
     }
     return true;
 }
