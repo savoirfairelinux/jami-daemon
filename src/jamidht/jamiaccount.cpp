@@ -313,7 +313,7 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
     , dhtPeerConnector_ {}
     , connectionManager_ {}
-    , convModule_ {std::make_unique<ConversationModule>()}
+    , convModule_ {std::make_unique<ConversationModule>(weak())}
 {
     // Force the SFL turn server if none provided yet
     turnServer_ = DEFAULT_TURN_SERVER;
@@ -1152,7 +1152,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     return;
                 }
                 saveReq = true;
-                if (accountManager_->getRequest(conversationId) != std::nullopt) {
+                if (convModule_->getRequest(conversationId) != std::nullopt) {
                     JAMI_INFO("[Account %s] Received a request for a conversation "
                               "already existing. Ignore",
                               getAccountID().c_str());
@@ -3016,7 +3016,7 @@ JamiAccount::addContact(const std::string& uri, bool confirmed)
 {
     auto conversation = getOneToOneConversation(uri);
     if (!confirmed && conversation.empty())
-        conversation = startConversation(ConversationMode::ONE_TO_ONE, uri);
+        conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, uri);
     std::lock_guard<std::mutex> lock(configurationMutex_);
     if (accountManager_)
         accountManager_->addContact(uri, confirmed, conversation);
@@ -3144,7 +3144,7 @@ JamiAccount::acceptTrustRequest(const std::string& from, bool includeConversatio
             info.created = std::time(nullptr);
             info.members.emplace_back(getUsername());
             info.members.emplace_back(from);
-            addNewConversation(info);
+            convModule_->addConversation(info);
         }
         return true;
     }
@@ -3176,7 +3176,7 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
 {
     auto conversation = getOneToOneConversation(to);
     if (conversation.empty())
-        conversation = startConversation(ConversationMode::ONE_TO_ONE, to);
+        conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, to);
     if (not conversation.empty()) {
         std::lock_guard<std::mutex> lock(configurationMutex_);
         if (accountManager_)
@@ -3660,40 +3660,6 @@ JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
     }
 }
 
-std::string
-JamiAccount::startConversation(ConversationMode mode, const std::string& otherMember)
-{
-    // Create the conversation object
-    auto conversation = std::make_shared<Conversation>(weak(), mode, otherMember);
-    auto convId = conversation->id();
-    {
-        std::lock_guard<std::mutex> lk(conversationsMtx_);
-        conversations_[convId] = std::move(conversation);
-    }
-
-    // Update convInfo
-    ConvInfo info;
-    info.id = convId;
-    info.created = std::time(nullptr);
-    info.members.emplace_back(getUsername());
-    if (!otherMember.empty())
-        info.members.emplace_back(otherMember);
-    addNewConversation(info);
-
-    runOnMainThread([w = weak()]() {
-        // Invite connected devices for the same user
-        auto shared = w.lock();
-        if (!shared or !shared->accountManager_)
-            return;
-
-        // Send to connected devices
-        shared->syncWithConnected();
-    });
-
-    emitSignal<DRing::ConversationSignal::ConversationReady>(accountID_, convId);
-    return convId;
-}
-
 void
 JamiAccount::acceptConversationRequest(const std::string& conversationId)
 {
@@ -3745,7 +3711,7 @@ JamiAccount::acceptConversationRequest(const std::string& conversationId)
     info.members.emplace_back(request->from);
     runOnMainThread([w = weak(), info = std::move(info)] {
         if (auto shared = w.lock())
-            shared->addNewConversation(info);
+            shared->convModule_->addConversation(info);
     });
     syncWithConnected();
     checkConversationsEvents();
@@ -5223,14 +5189,6 @@ JamiAccount::getOneToOneConversation(const std::string& uri) const
         }
     }
     return {};
-}
-
-void
-JamiAccount::addNewConversation(const ConvInfo& convInfo)
-{
-    std::lock_guard<std::mutex> lk(configurationMutex_);
-    if (accountManager_)
-        accountManager_->addConversation(convInfo);
 }
 
 void
