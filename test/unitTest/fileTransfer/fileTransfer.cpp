@@ -481,14 +481,14 @@ FileTransferTest::testConversationFileTransfer()
         }));
     DRing::registerSignalHandlers(confHandlers);
 
-    auto convId = aliceAccount->startConversation();
+    auto convId = DRing::startConversation(aliceId);
 
-    aliceAccount->addConversationMember(convId, bobUri);
-    aliceAccount->addConversationMember(convId, carlaUri);
+    DRing::addConversationMember(aliceId, convId, bobUri);
+    DRing::addConversationMember(aliceId, convId, carlaUri);
     cv.wait_for(lk, std::chrono::seconds(60), [&]() { return requestReceived == 2; });
 
-    bobAccount->acceptConversationRequest(convId);
-    carlaAccount->acceptConversationRequest(convId);
+    DRing::acceptConversationRequest(bobId, convId);
+    DRing::acceptConversationRequest(carlaId, convId);
     cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return conversationReady == 3 && memberJoined == 2;
     });
@@ -529,7 +529,7 @@ FileTransferTest::testFileTransferInConversation()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    auto convId = aliceAccount->startConversation();
+    auto convId = DRing::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -588,10 +588,10 @@ FileTransferTest::testFileTransferInConversation()
         }));
     DRing::registerSignalHandlers(confHandlers);
 
-    aliceAccount->addConversationMember(convId, bobUri);
+    DRing::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    bobAccount->acceptConversationRequest(convId);
+    DRing::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return conversationReady && bobJoined;
     }));
@@ -630,7 +630,7 @@ FileTransferTest::testBadSha3sumOut()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    auto convId = aliceAccount->startConversation();
+    auto convId = DRing::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -698,10 +698,10 @@ FileTransferTest::testBadSha3sumOut()
             }));
     DRing::registerSignalHandlers(confHandlers);
 
-    aliceAccount->addConversationMember(convId, bobUri);
+    DRing::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    bobAccount->acceptConversationRequest(convId);
+    DRing::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return conversationReady && memberJoin;
     }));
@@ -746,7 +746,7 @@ FileTransferTest::testBadSha3sumIn()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    auto convId = aliceAccount->startConversation();
+    auto convId = DRing::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -814,10 +814,10 @@ FileTransferTest::testBadSha3sumIn()
             }));
     DRing::registerSignalHandlers(confHandlers);
 
-    aliceAccount->addConversationMember(convId, bobUri);
+    DRing::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    bobAccount->acceptConversationRequest(convId);
+    DRing::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() {
         return conversationReady && memberJoin;
     }));
@@ -864,7 +864,7 @@ FileTransferTest::testAskToMultipleParticipants()
     auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
     auto carlaUri = carlaAccount->getUsername();
-    auto convId = aliceAccount->startConversation();
+    auto convId = DRing::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -935,10 +935,10 @@ FileTransferTest::testAskToMultipleParticipants()
             }));
     DRing::registerSignalHandlers(confHandlers);
 
-    aliceAccount->addConversationMember(convId, bobUri);
+    DRing::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    bobAccount->acceptConversationRequest(convId);
+    DRing::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() {
         return conversationReady && memberJoin;
     }));
@@ -947,10 +947,10 @@ FileTransferTest::testAskToMultipleParticipants()
     conversationReady = false;
     memberJoin = false;
 
-    aliceAccount->addConversationMember(convId, carlaUri);
+    DRing::addConversationMember(aliceId, convId, carlaUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    carlaAccount->acceptConversationRequest(convId);
+    DRing::acceptConversationRequest(carlaId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&]() {
         return conversationReady && memberJoin;
     }));
@@ -994,7 +994,7 @@ FileTransferTest::testCancelInTransfer()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    auto convId = aliceAccount->startConversation();
+    auto convId = DRing::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -1055,10 +1055,10 @@ FileTransferTest::testCancelInTransfer()
         }));
     DRing::registerSignalHandlers(confHandlers);
 
-    aliceAccount->addConversationMember(convId, bobUri);
+    DRing::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    bobAccount->acceptConversationRequest(convId);
+    DRing::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return conversationReady && bobJoined;
     }));
@@ -1096,7 +1096,7 @@ FileTransferTest::testTransferInfo()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    auto convId = aliceAccount->startConversation();
+    auto convId = DRing::startConversation(aliceId);
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -1155,10 +1155,10 @@ FileTransferTest::testTransferInfo()
         }));
     DRing::registerSignalHandlers(confHandlers);
 
-    aliceAccount->addConversationMember(convId, bobUri);
+    DRing::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
 
-    bobAccount->acceptConversationRequest(convId);
+    DRing::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return conversationReady && bobJoined;
     }));
