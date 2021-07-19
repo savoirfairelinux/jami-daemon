@@ -34,6 +34,7 @@
 #include "jamidht/conversation.h"
 #include "multiplexed_socket.h"
 #include "data_transfer.h"
+#include "uri.h"
 
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -42,6 +43,7 @@
 #include "scheduled_executor.h"
 #include "connectionmanager.h"
 #include "gitserver.h"
+#include "channel_handler.h"
 #include "conversationrepository.h"
 
 #include <opendht/dhtrunner.h>
@@ -1053,6 +1055,8 @@ private:
     std::map<std::string, std::shared_ptr<TransferManager>> transferManagers_ {};
 
     bool noSha3sumVerification_ {false};
+
+    std::map<Uri::Scheme, std::unique_ptr<ChannelHandler>> channelHandlers_ {};
 };
 
 static inline std::ostream&
