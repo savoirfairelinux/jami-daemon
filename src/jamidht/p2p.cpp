@@ -232,10 +232,10 @@ DhtPeerConnector::requestConnection(
         // In a one_to_one conv with an old version, the contact here can be in an invited
         // state and will not support data-transfer. So if one_to_oe with non accepted, just
         // force to file:// for now.
-        auto members = acc->getConversationMembers(info.conversationId);
+        auto members = acc->convModule()->getConversationMembers(info.conversationId);
         auto preSwarmCompat = members.size() == 2 && members[1]["role"] == "invited";
         if (preSwarmCompat) {
-            auto infos = acc->conversationInfos(info.conversationId);
+            auto infos = acc->convModule()->conversationInfos(info.conversationId);
             preSwarmCompat = infos["mode"] == "0";
         }
         if (!preSwarmCompat)
