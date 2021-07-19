@@ -124,6 +124,8 @@ public:
 private:
     void merge(Call& call) override; // not public - only called by Call
 
+    void resetTransport(std::shared_ptr<IceTransport>&& transport);
+
 public:
     void answer() override;
     void answer(const std::vector<DRing::MediaMap>& mediaList) override;
