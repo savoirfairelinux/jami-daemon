@@ -125,8 +125,8 @@ Call::Call(const std::shared_ptr<Account>& account,
                 duration_start_ = clock::now();
             else if (cnx_state == ConnectionState::DISCONNECTED && call_state == CallState::OVER) {
                 if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(getAccount().lock())) {
-                    jamiAccount->addCallHistoryMessage(getPeerNumber(), getCallDuration().count());
-
+                    jamiAccount->convModule()->addCallHistoryMessage(getPeerNumber(),
+                                                                     getCallDuration().count());
                     monitor();
                 }
             }

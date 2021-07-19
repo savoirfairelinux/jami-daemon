@@ -258,12 +258,6 @@ public:
         return messageEngine_.sendMessage(to, payloads);
     }
 
-    void setIsComposing(const std::string& conversationUri, bool isWriting) override;
-
-    bool setMessageDisplayed(const std::string& conversationUri,
-                             const std::string& messageId,
-                             int status) override;
-
     im::MessageStatus getMessageStatus(uint64_t id) const override
     {
         return messageEngine_.getStatus(id);
