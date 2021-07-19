@@ -508,19 +508,8 @@ public:
 
     std::string_view currentDeviceId() const;
     // Conversation management
-    std::string startConversation(ConversationMode mode = ConversationMode::INVITES_ONLY,
-                                  const std::string& otherMember = "");
     void acceptConversationRequest(const std::string& conversationId);
-    void declineConversationRequest(const std::string& conversationId);
-    std::vector<std::string> getConversations();
-    bool removeConversation(const std::string& conversationId);
-    std::vector<std::map<std::string, std::string>> getConversationRequests();
 
-    // Conversation's infos management
-    void updateConversationInfos(const std::string& conversationId,
-                                 const std::map<std::string, std::string>& infos,
-                                 bool sync = true);
-    std::map<std::string, std::string> conversationInfos(const std::string& conversationId) const;
     std::vector<uint8_t> conversationVCard(const std::string& conversationId) const;
 
     // Member management
@@ -529,11 +518,6 @@ public:
     void addConversationMember(const std::string& conversationId,
                                const std::string& contactUri,
                                bool sendRequest = true);
-    void removeConversationMember(const std::string& conversationId,
-                                  const std::string& contactUri,
-                                  bool isDevice = false);
-    std::vector<std::map<std::string, std::string>> getConversationMembers(
-        const std::string& conversationId) const;
 
     // Message send/load
     void sendMessage(const std::string& conversationId,
@@ -553,9 +537,6 @@ public:
      * @param duration_ms   The call duration in ms
      */
     void addCallHistoryMessage(const std::string& uri, uint64_t duration_ms);
-    uint32_t loadConversationMessages(const std::string& conversationId,
-                                      const std::string& fromMessage = "",
-                                      size_t n = 0);
 
     /**
      * Retrieve how many interactions there is from HEAD to interactionId
@@ -564,8 +545,8 @@ public:
      * @return number of interactions since interactionId
      */
     uint32_t countInteractions(const std::string& convId,
-                                const std::string& toId,
-                                const std::string& fromId) const;
+                               const std::string& toId,
+                               const std::string& fromId) const;
 
     // Received a new commit notification
     void onNewGitCommit(const std::string& peer,
@@ -652,7 +633,7 @@ public:
      */
     std::shared_ptr<TransferManager> dataTransfer(const std::string& id = "") const;
 
-    const ConversationModule* convModule() { return convModule_.get(); }
+    ConversationModule* convModule() { return convModule_.get(); }
 
     /**
      * Send Profile via cached SIP connection
@@ -662,6 +643,8 @@ public:
     bool needToSendProfile(const std::string& deviceId);
 
     std::string profilePath() const;
+
+    AccountManager* accountManager() { return accountManager_.get(); } // TODO better way?
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -836,15 +819,6 @@ private:
     /* tracked buddies presence */
     mutable std::mutex buddyInfoMtx;
     std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
-
-    /** Conversations */
-    mutable std::mutex conversationsMtx_ {};
-    std::map<std::string, std::shared_ptr<Conversation>> conversations_;
-    bool isConversation(const std::string& convId) const
-    {
-        std::lock_guard<std::mutex> lk(conversationsMtx_);
-        return conversations_.find(convId) != conversations_.end();
-    }
 
     mutable std::mutex dhtValuesMtx_;
     bool dhtPublicInCalls_ {true};
@@ -1038,35 +1012,11 @@ private:
     void syncWithConnected();
 
     /**
-     * Remove a repository and all files
-     * @param convId
-     * @param sync      If we send an update to other account's devices
-     * @param force     True if ignore the removing flag
-     */
-    void removeRepository(const std::string& convId, bool sync, bool force = false);
-
-    /**
-     * Send a message notification to all members
-     * @param conversation
-     * @param commit
-     * @param sync      If we send an update to other account's devices
-     */
-    void sendMessageNotification(const Conversation& conversation,
-                                 const std::string& commitId,
-                                 bool sync);
-
-    /**
      * Get related conversation with member
      * @param uri       The member to search for
      * @return the conversation id if found else empty
      */
     std::string getOneToOneConversation(const std::string& uri) const;
-
-    /**
-     * Add a new ConvInfo
-     * @param id of the conversation
-     */
-    void addNewConversation(const ConvInfo& convInfo);
 
     std::atomic_bool deviceAnnounced_ {false};
 
