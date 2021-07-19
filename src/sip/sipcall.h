@@ -124,6 +124,9 @@ public:
 private:
     void merge(Call& call) override; // not public - only called by Call
 
+    void resetTransport(std::unique_ptr<IceTransport>& transport, IceTransport* with=nullptr);
+    void resetTransport(std::shared_ptr<IceTransport>& transport, IceTransport* with=nullptr);
+
 public:
     void answer() override;
     void answer(const std::vector<DRing::MediaMap>& mediaList) override;
@@ -293,10 +296,10 @@ private:
      */
     void setVideoOrientation(int rotation);
 
-    mutable std::mutex transportMtx_ {};
+    mutable std::recursive_mutex transportMtx_ {};
     IceTransport* getIceMediaTransport() const
     {
-        std::lock_guard<std::mutex> lk(transportMtx_);
+        std::lock_guard<std::recursive_mutex> lk(transportMtx_);
         return tmpMediaTransport_ ? tmpMediaTransport_.get() : mediaTransport_.get();
     }
 
