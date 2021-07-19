@@ -46,6 +46,30 @@
       },
       "revId": "6ebba3b233d677f5c34de0957d61caf20b01b028",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9238aef5_33efd182",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 299,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-19T18:10:02Z",
+      "side": 1,
+      "message": "yeah, only if you do a double lock. This should not happen",
+      "parentUuid": "74b6e526_cffb5364",
+      "range": {
+        "startLine": 299,
+        "startChar": 17,
+        "endLine": 299,
+        "endChar": 32
+      },
+      "revId": "6ebba3b233d677f5c34de0957d61caf20b01b028",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
