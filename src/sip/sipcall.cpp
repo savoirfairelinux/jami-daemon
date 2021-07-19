@@ -174,9 +174,7 @@ SIPCall::~SIPCall()
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     {
         std::lock_guard<std::mutex> lk(transportMtx_);
-        if (tmpMediaTransport_)
-            dht::ThreadPool::io().run([ice = std::make_shared<decltype(tmpMediaTransport_)>(
-                                           std::move(tmpMediaTransport_))] {});
+        resetTransport(std::move(tmpMediaTransport_));
     }
     setTransport({});
     setInviteSession(); // prevents callback usage
@@ -1453,11 +1451,13 @@ SIPCall::removeCall()
         sdp_->setActiveRemoteSdpSession(nullptr);
     }
     Call::removeCall();
-    if (mediaTransport_)
-        dht::ThreadPool::io().run([ice = std::move(mediaTransport_)] {});
-    if (tmpMediaTransport_)
-        dht::ThreadPool::io().run([ice = std::make_shared<decltype(tmpMediaTransport_)>(
-                                       std::move(tmpMediaTransport_))] {});
+
+    {
+        std::lock_guard<std::mutex> lk(transportMtx_);
+        resetTransport(std::move(mediaTransport_));
+        resetTransport(std::move(tmpMediaTransport_));
+    }
+
     setInviteSession();
     setTransport({});
 }
@@ -2347,12 +2347,9 @@ SIPCall::onIceNegoSucceed()
     // Nego succeed: move to the new media transport
     stopAllMedia();
     {
-        std::lock_guard<std::mutex> lk(transportMtx_);
+        std::unique_lock<std::mutex> lk(transportMtx_);
         if (tmpMediaTransport_) {
-            // Destroy the ICE media transport on another thread. This can take
-            // quite some time.
-            if (mediaTransport_)
-                dht::ThreadPool::io().run([ice = std::move(mediaTransport_)] {});
+            resetTransport(std::move(mediaTransport_));
             mediaTransport_ = std::move(tmpMediaTransport_);
         }
     }
@@ -2890,19 +2887,56 @@ SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> o
     // Each RTP stream requires a pair of ICE components (RTP + RTCP).
     iceOptions.compCountPerStream = ICE_COMP_COUNT_PER_STREAM;
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    std::lock_guard<std::mutex> lk(transportMtx_);
+
     auto transport = iceTransportFactory.createUTransport(getCallId().c_str(), iceOptions);
+
     // Destroy old ice on a separate io pool
-    if (tmpMediaTransport_)
-        dht::ThreadPool::io().run([ice = std::make_shared<decltype(tmpMediaTransport_)>(
-                                       std::move(tmpMediaTransport_))] {});
-    tmpMediaTransport_ = std::move(transport);
+    {
+        std::lock_guard<std::mutex> lk(transportMtx_);
+        resetTransport(std::move(tmpMediaTransport_));
+        tmpMediaTransport_ = std::move(transport);
+    }
+
     if (tmpMediaTransport_) {
-        JAMI_DBG("[call:%s] Successfully created media ICE transport", getCallId().c_str());
+        JAMI_DBG("[call:%s] Successfully created media ICE transport [ice:%p]", getCallId().c_str(), tmpMediaTransport_.get());
     } else {
         JAMI_ERR("[call:%s] Failed to create media ICE transport", getCallId().c_str());
     }
+
     return static_cast<bool>(tmpMediaTransport_);
+}
+
+void
+SIPCall::resetTransport(std::unique_ptr<IceTransport>&& transport)
+{
+    if (transport) {
+        dht::ThreadPool::io().run([transport = transport.release()] {
+            JAMI_DBG("Deleting ice transport [ice:%p]", transport);
+            delete transport;
+        });
+    }
+}
+
+void
+SIPCall::resetTransport(std::shared_ptr<IceTransport>&& transport)
+{
+    if (transport) {
+        dht::ThreadPool::io().run([transport = std::move(transport)]() mutable {
+
+            auto cnt = transport.use_count();
+
+            if (cnt > 1) {
+                JAMI_DBG("Decrement ref count ice transport [ice:%p] -> count left=%ld",
+                         transport.get(), cnt - 1);
+            } else if (1 == cnt) {
+                JAMI_DBG("Deleting ice transport [ice:%p]", transport.get());
+            } else {
+                JAMI_ERR("Incoherence detected with ice transport [ice:%p]. THIS IS A BUG.", transport.get());
+            }
+
+            transport.reset();
+        });
+    }
 }
 
 void
