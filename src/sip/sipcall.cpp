@@ -227,7 +227,10 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
                              const MediaDescription& localMedia,
                              const MediaDescription& remoteMedia)
 {
-    assert(rtpSession);
+    JAMI_DBG("[call:%s] Configuring [%s] rtp session",
+             getCallId().c_str(),
+             MediaAttribute::mediaTypeToString(mediaAttr->type_));
+
     if (not rtpSession)
         throw std::runtime_error("Must have a valid RTP Session");
 
@@ -403,7 +406,8 @@ SIPCall::generateMediaPorts()
     if (localAudioPort_ != 0)
         account->releasePort(localAudioPort_);
     localAudioPort_ = callLocalAudioPort;
-    sdp_->setLocalPublishedAudioPort(callLocalAudioPort);
+    sdp_->setLocalPublishedAudioPorts(callLocalAudioPort,
+                                      rtcpMuxEnabled_ ? 0 : callLocalAudioPort + 1);
 
 #ifdef ENABLE_VIDEO
     // https://projects.savoirfairelinux.com/issues/17498
@@ -413,7 +417,8 @@ SIPCall::generateMediaPorts()
     // this should already be guaranteed by SIPAccount
     assert(localAudioPort_ != callLocalVideoPort);
     localVideoPort_ = callLocalVideoPort;
-    sdp_->setLocalPublishedVideoPort(callLocalVideoPort);
+    sdp_->setLocalPublishedVideoPorts(callLocalVideoPort,
+                                      rtcpMuxEnabled_ ? 0 : callLocalVideoPort + 1);
 #endif
 }
 
@@ -430,6 +435,8 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
     if (not transport_) {
         JAMI_WARN("[call:%s] Transport was set to null", getCallId().c_str());
         return;
+    } else {
+        JAMI_DBG("[call:%s] Transport was set to [%p]", getCallId().c_str(), transport_.get());
     }
 
     if (isSrtpEnabled() and not transport_->isSecure()) {
@@ -449,7 +456,12 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
     transport_->addStateListener(
         list_id, [wthis_ = weak()](pjsip_transport_state state, const pjsip_transport_state_info*) {
             if (auto this_ = wthis_.lock()) {
-                // end the call if the SIP transport is shut down
+                JAMI_DBG("[call:%s] SIP transport state [%i] - connection state [%u]",
+                         this_->getCallId().c_str(),
+                         state,
+                         static_cast<unsigned>(this_->getConnectionState()));
+
+                // End the call if the SIP transport was shut down
                 auto isAlive = SipTransport::isAlive(state);
                 if (not isAlive and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
                     JAMI_WARN("[call:%s] Ending call because underlying SIP transport was closed",
@@ -694,8 +706,9 @@ SIPCall::terminateSipSession(int status)
             if (tdata) {
                 auto account = getSIPAccount();
                 if (account) {
-                    sip_utils::addContactHeader(account->getContactHeader(transport_ ? transport_->get()
-                                                                        : nullptr), tdata);
+                    sip_utils::addContactHeader(account->getContactHeader(
+                                                    transport_ ? transport_->get() : nullptr),
+                                                tdata);
                     // Add user-agent header
                     sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
                 } else {
@@ -1670,9 +1683,11 @@ SIPCall::addLocalIceAttributes()
             // RTP
             sdp_->addIceCandidates(streamIdx,
                                    media_tr->getLocalCandidates(streamIdx, ICE_COMP_ID_RTP));
-            // RTCP
-            sdp_->addIceCandidates(streamIdx,
-                                   media_tr->getLocalCandidates(streamIdx, ICE_COMP_ID_RTP + 1));
+            // RTCP if it has its own port
+            if (not rtcpMuxEnabled_) {
+                sdp_->addIceCandidates(streamIdx,
+                                       media_tr->getLocalCandidates(streamIdx, ICE_COMP_ID_RTP + 1));
+            }
 
             streamIdx++;
         }
@@ -1690,11 +1705,15 @@ SIPCall::addLocalIceAttributes()
                      idx);
             // RTP
             sdp_->addIceCandidates(idx, media_tr->getLocalCandidates(compId));
-            // RTCP
-            sdp_->addIceCandidates(idx, media_tr->getLocalCandidates(compId + 1));
+            compId++;
+
+            // RTCP if it has its own port
+            if (not rtcpMuxEnabled_) {
+                sdp_->addIceCandidates(idx, media_tr->getLocalCandidates(compId));
+                compId++;
+            }
 
             idx++;
-            compId += 2;
         }
     }
 }
@@ -1944,6 +1963,8 @@ SIPCall::startAllMedia()
     bool isVideoEnabled = false;
 #endif
 
+    int currentCompId = 1;
+
     for (auto iter = rtpStreams_.begin(); iter != rtpStreams_.end(); iter++) {
         if (not iter->mediaAttribute_) {
             throw std::runtime_error("Missing media attribute");
@@ -1959,9 +1980,13 @@ SIPCall::startAllMedia()
         if (getState() != CallState::HOLD) {
             if (isIceRunning()) {
                 // Create sockets for RTP and RTCP, and start the session.
-                auto streamIdx = std::distance(rtpStreams_.begin(), iter);
-                auto compId = ICE_COMP_ID_RTP + streamIdx * ICE_COMP_COUNT_PER_STREAM;
-                iter->rtpSession_->start(newIceSocket(compId), newIceSocket(compId + 1));
+                auto iceRtpSocket = newIceSocket(currentCompId++);
+
+                std::unique_ptr<IceSocket> iceRtcpSocket;
+                if (not rtcpMuxEnabled_) {
+                    iceRtcpSocket = newIceSocket(currentCompId++);
+                }
+                iter->rtpSession_->start(std::move(iceRtpSocket), std::move(iceRtcpSocket));
             } else {
                 iter->rtpSession_->start(nullptr, nullptr);
             }
@@ -2299,6 +2324,8 @@ SIPCall::onMediaNegotiationComplete()
 void
 SIPCall::startIceMedia()
 {
+    JAMI_DBG("[call:%s] Starting ICE", getCallId().c_str());
+
     auto ice = getIceMediaTransport();
 
     if (not ice or ice->isFailed()) {
@@ -2338,11 +2365,16 @@ SIPCall::startIceMedia()
 void
 SIPCall::onIceNegoSucceed()
 {
+    JAMI_DBG("[call:%s] ICE negotiation succeeded", getCallId().c_str());
+
     // Check if the call is already ended, so we don't need to restart medias
     // This is typically the case in a multi-device context where one device
     // can stop a call. So do not start medias
-    if (not inviteSession_ or inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not sdp_)
+    if (not inviteSession_ or inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not sdp_) {
+        JAMI_ERR("[call:%s] ICE negotiation succeeded, but call is in invalid state",
+                 getCallId().c_str());
         return;
+    }
 
     // Update the negotiated media.
     updateNegotiatedMedia();
@@ -2900,7 +2932,9 @@ SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> o
     }
 
     if (tmpMediaTransport_) {
-        JAMI_DBG("[call:%s] Successfully created media ICE transport [ice:%p]", getCallId().c_str(), tmpMediaTransport_.get());
+        JAMI_DBG("[call:%s] Successfully created media ICE transport [ice:%p]",
+                 getCallId().c_str(),
+                 tmpMediaTransport_.get());
     } else {
         JAMI_ERR("[call:%s] Failed to create media ICE transport", getCallId().c_str());
     }
@@ -2913,9 +2947,8 @@ SIPCall::resetTransport(std::shared_ptr<IceTransport>&& transport)
 {
     // Move the transport to another thread and destroy it there if possible
     if (transport) {
-        dht::ThreadPool::io().run([transport = std::move(transport)]() mutable {
-            transport.reset();
-        });
+        dht::ThreadPool::io().run(
+            [transport = std::move(transport)]() mutable { transport.reset(); });
     }
 }
 
