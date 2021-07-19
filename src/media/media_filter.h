@@ -73,12 +73,12 @@ public:
      * @brief Initializes the filter graph with one or more inputs and one output. Returns a
      * negative code on error.
      */
-    int initialize(const std::string& filterDesc, std::vector<MediaStream> msps);
+    int initialize(const std::string& filterDesc, const std::vector<MediaStream>& msps);
 
     /**
      * @brief Returns a MediaStream object describing the input specified by @inputName.
      */
-    MediaStream getInputParams(const std::string& inputName) const;
+    const MediaStream& getInputParams(const std::string& inputName) const;
 
     /**
      * @brief Returns a MediaStream struct describing the frames that will be output.
@@ -121,7 +121,7 @@ private:
     /**
      * @brief Initializes an input of filter graph.
      */
-    int initInputFilter(AVFilterInOut* in, MediaStream msp);
+    int initInputFilter(AVFilterInOut* in, const MediaStream& msp);
 
     /**
      * @brief Reinitializes the filter graph.
@@ -135,7 +135,7 @@ private:
      *
      * NOTE @msg should not be null.
      */
-    int fail(std::string msg, int err) const;
+    int fail(std::string_view msg, int err) const;
 
     /**
      * @brief Frees resources used by MediaFilter.
