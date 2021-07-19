@@ -376,15 +376,6 @@ Account::getVolatileAccountDetails() const
             {DRing::Account::VolatileProperties::ACTIVE, active_ ? TRUE_STR : FALSE_STR}};
 }
 
-void
-Account::onIsComposing(const std::string& conversationId, const std::string& peer, bool isComposing)
-{
-    emitSignal<DRing::ConfigurationSignal::ComposingStatusChanged>(accountID_,
-                                                                   conversationId,
-                                                                   peer,
-                                                                   isComposing ? 1 : 0);
-}
-
 bool
 Account::hasActiveCodec(MediaType mediaType) const
 {
