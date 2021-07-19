@@ -31,6 +31,7 @@ public:
         JAMI,        // Start with "jami:" and 45 ASCII chars OR 40 ASCII chars
         SIP,         // Start with "sip:"
         SWARM,       // Start with "swarm:" and 40 ASCII chars
+        GIT,         // Start with "git:"
         UNRECOGNIZED // Anything that doesn't fit in other categories
     };
 
