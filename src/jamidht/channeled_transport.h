@@ -75,7 +75,7 @@ private:
     std::unique_ptr<pj_pool_t, decltype(pj_pool_release)*> rxPool_;
 
     std::mutex rxMtx_ {};
-    std::list<std::vector<uint8_t>> rxPending_ {};
+    std::vector<uint8_t> rxPending_ {};
     pjsip_rx_data rdata_ {};
 
     std::mutex txMutex_ {};
@@ -85,7 +85,7 @@ private:
     ScheduledExecutor scheduler_ {};
 
     pj_status_t send(pjsip_tx_data*, const pj_sockaddr_t*, int, void*, pjsip_transport_callback);
-    void handleEvents();
+    //void handleEvents();
 
     // Handle disconnected event
     std::atomic_bool disconnected_ {false};

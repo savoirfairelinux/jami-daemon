@@ -144,15 +144,43 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
 
     // Link to Channel Socket
     socket->setOnRecv([this](const uint8_t* buf, size_t len) {
+        sip_utils::register_thread();
+        pj_pool_reset(rdata_.tp_info.pool);
+        pj_gettimeofday(&rdata_.pkt_info.timestamp);
+
         std::lock_guard<std::mutex> l(rxMtx_);
-        std::vector<uint8_t> rx {buf, buf + len};
-        rxPending_.emplace_back(std::move(rx));
-        scheduler_.run([this] { handleEvents(); });
+        if (rxPending_.empty()) {
+            // No pending data, consume directly
+            rdata_.pkt_info.len = std::min(len, (size_t) PJSIP_MAX_PKT_LEN);
+            std::copy_n(buf, rdata_.pkt_info.len, rdata_.pkt_info.packet);
+            auto eaten = pjsip_tpmgr_receive_packet(trData_.base.tpmgr, &rdata_);
+            if (eaten != len) {
+                // Partially consumed, store remaining for later
+                rxPending_.insert(rxPending_.end(), buf + eaten, buf + len);
+            }
+        } else {
+            // Append to buffer and consume
+            rxPending_.insert(rxPending_.end(), buf, buf + len);
+            rdata_.pkt_info.len = std::min(rxPending_.size(), (size_t) PJSIP_MAX_PKT_LEN);
+            std::copy_n(rxPending_.data(), rdata_.pkt_info.len, rdata_.pkt_info.packet);
+            auto eaten = pjsip_tpmgr_receive_packet(trData_.base.tpmgr, &rdata_);
+            if (eaten == rxPending_.size()) {
+                rxPending_.clear();
+            } else {
+                rxPending_.erase(rxPending_.begin(), rxPending_.begin() + eaten);
+            }
+        }
         return len;
     });
     socket->onShutdown([cb = std::move(cb), this] {
         disconnected_ = true;
-        scheduler_.run([this] { handleEvents(); });
+        if (auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr)) {
+            JAMI_WARN("[SIPS] process disconnect event");
+            pjsip_transport_state_info state_info;
+            std::memset(&state_info, 0, sizeof(state_info));
+            state_info.status = PJ_SUCCESS;
+            (*state_cb)(&trData_.base, PJSIP_TP_STATE_DISCONNECTED, &state_info);
+        }
         cb();
     });
 }
@@ -160,15 +188,6 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
 ChanneledSIPTransport::~ChanneledSIPTransport()
 {
     JAMI_DBG("~ChanneledSIPTransport@%p {tr=%p}", this, &trData_.base);
-    // Flush send queue with ENOTCONN error
-    for (auto tdata : txQueue_) {
-        tdata->op_key.tdata = nullptr;
-        if (tdata->op_key.callback)
-            tdata->op_key.callback(&trData_.base,
-                                   tdata->op_key.token,
-                                   -PJ_RETURN_OS_ERROR(OSERR_ENOTCONN));
-    }
-
     auto base = getTransportBase();
 
     // Here, we reset callbacks in ChannelSocket to avoid to call it after destruction
@@ -188,94 +207,12 @@ ChanneledSIPTransport::~ChanneledSIPTransport()
     JAMI_DBG("~ChanneledSIPTransport@%p {tr=%p} bye", this, &trData_.base);
 }
 
-void
-ChanneledSIPTransport::handleEvents()
-{
-    // Handle SIP transport -> TLS
-    decltype(txQueue_) tx_queue;
-    {
-        std::lock_guard<std::mutex> l(txMutex_);
-        tx_queue = std::move(txQueue_);
-        txQueue_.clear();
-    }
-
-    bool fatal = false;
-    for (auto tdata : tx_queue) {
-        pj_status_t status;
-        if (!fatal) {
-            const std::size_t size = tdata->buf.cur - tdata->buf.start;
-            std::error_code ec;
-            status = socket_->write(reinterpret_cast<const uint8_t*>(tdata->buf.start), size, ec);
-            if (ec) {
-                fatal = true;
-                socket_->shutdown();
-            }
-        } else {
-            status = -PJ_RETURN_OS_ERROR(OSERR_ENOTCONN);
-        }
-
-        tdata->op_key.tdata = nullptr;
-        if (tdata->op_key.callback)
-            tdata->op_key.callback(&trData_.base, tdata->op_key.token, status);
-    }
-
-    // Handle TLS -> SIP transport
-    decltype(rxPending_) rx;
-    {
-        std::lock_guard<std::mutex> l(rxMtx_);
-        rx = std::move(rxPending_);
-        rxPending_.clear();
-    }
-
-    sip_utils::register_thread();
-    for (auto it = rx.begin(); it != rx.end(); ++it) {
-        auto& pck = *it;
-        pj_pool_reset(rdata_.tp_info.pool);
-        pj_gettimeofday(&rdata_.pkt_info.timestamp);
-        rdata_.pkt_info.len = std::min(pck.size(), (size_t) PJSIP_MAX_PKT_LEN);
-        std::copy_n(pck.data(), rdata_.pkt_info.len, rdata_.pkt_info.packet);
-        auto eaten = pjsip_tpmgr_receive_packet(trData_.base.tpmgr, &rdata_);
-
-        // Uncomplet parsing? (may be a partial sip packet received)
-        if (eaten != (pj_ssize_t) pck.size()) {
-            auto npck_it = std::next(it);
-            if (npck_it != rx.end()) {
-                // drop current packet, merge reminder with next one
-                auto& npck = *npck_it;
-                npck.insert(npck.begin(), pck.begin() + eaten, pck.end());
-            } else {
-                // erase eaten part, keep remainder
-                pck.erase(pck.begin(), pck.begin() + eaten);
-                {
-                    std::lock_guard<std::mutex> l(rxMtx_);
-                    rxPending_.splice(rxPending_.begin(), rx, it);
-                }
-                break;
-            }
-        }
-    }
-
-    // Notify transport manager about state changes first
-    // Note: stop when disconnected event is encountered
-    // and differ its notification AFTER pending rx msg to let
-    // them a chance to be delivered to application before closing
-    // the transport.
-    auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr);
-    if (disconnected_ and state_cb) {
-        JAMI_WARN("[SIPS] process disconnect event");
-        pjsip_transport_state_info state_info;
-        std::memset(&state_info, 0, sizeof(state_info));
-        state_info.status = PJ_SUCCESS;
-        (*state_cb)(&trData_.base, PJSIP_TP_STATE_DISCONNECTED, &state_info);
-    }
-}
-
 pj_status_t
 ChanneledSIPTransport::send(pjsip_tx_data* tdata,
                             const pj_sockaddr_t* rem_addr,
                             int addr_len,
-                            void* token,
-                            pjsip_transport_callback callback)
+                            void*,
+                            pjsip_transport_callback)
 {
     // Sanity check
     PJ_ASSERT_RETURN(tdata, PJ_EINVAL);
@@ -290,25 +227,14 @@ ChanneledSIPTransport::send(pjsip_tx_data* tdata,
                      PJ_EINVAL);
 
     // Check in we are able to send it in synchronous way first
-    const std::size_t size = tdata->buf.cur - tdata->buf.start;
-    std::unique_lock<std::mutex> lk {txMutex_};
-    if (txQueue_.empty()) {
-        if (socket_) {
-            std::error_code ec;
-            socket_->write(reinterpret_cast<const uint8_t*>(tdata->buf.start), size, ec);
-            if (!ec)
-                return PJ_SUCCESS;
-        }
-        return PJ_EINVAL;
+    std::size_t size = tdata->buf.cur - tdata->buf.start;
+    if (socket_) {
+        std::error_code ec;
+        socket_->write(reinterpret_cast<const uint8_t*>(tdata->buf.start), size, ec);
+        if (!ec)
+            return PJ_SUCCESS;
     }
-
-    // Asynchronous sending
-    tdata->op_key.tdata = tdata;
-    tdata->op_key.token = token;
-    tdata->op_key.callback = callback;
-    txQueue_.push_back(tdata);
-    scheduler_.run([this] { handleEvents(); });
-    return PJ_EPENDING;
+    return PJ_EINVAL;
 }
 
 } // namespace tls
