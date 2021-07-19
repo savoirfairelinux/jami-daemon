@@ -628,44 +628,8 @@ SIPAccountBase::onTextMessage(const std::string& id,
             } catch (const std::exception& e) {
                 JAMI_WARN("Error parsing display notification: %s", e.what());
             }
-        } else if (m.first == MIME_TYPE_GIT) {
-            Json::Value json;
-            std::string err;
-            Json::CharReaderBuilder rbuilder;
-            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-            if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
-                JAMI_ERR("Can't parse server response: %s", err.c_str());
-                return;
-            }
-
-            JAMI_WARN("Received indication for new commit available in conversation %s",
-                      json["id"].asString().c_str());
-
-            onNewGitCommit(from,
-                           json["deviceId"].asString(),
-                           json["id"].asString(),
-                           json["commit"].asString());
+        } else if (handleMessage(from, m)) {
             return;
-        } else if (m.first == MIME_TYPE_INVITE_JSON) {
-            Json::Value json;
-            std::string err;
-            Json::CharReaderBuilder rbuilder;
-            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-            if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
-                JAMI_ERR("Can't parse server response: %s", err.c_str());
-                return;
-            }
-            onConversationRequest(from, json);
-            return;
-        } else if (m.first == MIME_TYPE_INVITE) {
-            onNeedConversationRequest(from, m.second);
-            return;
-        } else if (m.first == MIME_TYPE_TEXT_PLAIN) {
-            // This means that a text is received, so that
-            // the conversation is not a swarm. For compatibility,
-            // check if we have a swarm created. It can be the case
-            // when the trust request confirm was not received.
-            checkIfRemoveForCompat(from);
         }
     }
 
