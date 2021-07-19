@@ -22,6 +22,30 @@
       },
       "revId": "6ebba3b233d677f5c34de0957d61caf20b01b028",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "74b6e526_cffb5364",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 299,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-19T15:29:05Z",
+      "side": 1,
+      "message": "It deadlocks otherwise.",
+      "parentUuid": "a0b4ed26_f89dd948",
+      "range": {
+        "startLine": 299,
+        "startChar": 17,
+        "endLine": 299,
+        "endChar": 32
+      },
+      "revId": "6ebba3b233d677f5c34de0957d61caf20b01b028",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
