@@ -3016,7 +3016,7 @@ JamiAccount::addContact(const std::string& uri, bool confirmed)
 {
     auto conversation = getOneToOneConversation(uri);
     if (!confirmed && conversation.empty())
-        conversation = startConversation(ConversationMode::ONE_TO_ONE, uri);
+        conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, uri);
     std::lock_guard<std::mutex> lock(configurationMutex_);
     if (accountManager_)
         accountManager_->addContact(uri, confirmed, conversation);
@@ -3176,7 +3176,7 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
 {
     auto conversation = getOneToOneConversation(to);
     if (conversation.empty())
-        conversation = startConversation(ConversationMode::ONE_TO_ONE, to);
+        conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, to);
     if (not conversation.empty()) {
         std::lock_guard<std::mutex> lock(configurationMutex_);
         if (accountManager_)
@@ -3658,40 +3658,6 @@ JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
         setCodecActive(AV_CODEC_ID_H264);
         setCodecActive(AV_CODEC_ID_VP8);
     }
-}
-
-std::string
-JamiAccount::startConversation(ConversationMode mode, const std::string& otherMember)
-{
-    // Create the conversation object
-    auto conversation = std::make_shared<Conversation>(weak(), mode, otherMember);
-    auto convId = conversation->id();
-    {
-        std::lock_guard<std::mutex> lk(conversationsMtx_);
-        conversations_[convId] = std::move(conversation);
-    }
-
-    // Update convInfo
-    ConvInfo info;
-    info.id = convId;
-    info.created = std::time(nullptr);
-    info.members.emplace_back(getUsername());
-    if (!otherMember.empty())
-        info.members.emplace_back(otherMember);
-    addNewConversation(info);
-
-    runOnMainThread([w = weak()]() {
-        // Invite connected devices for the same user
-        auto shared = w.lock();
-        if (!shared or !shared->accountManager_)
-            return;
-
-        // Send to connected devices
-        shared->syncWithConnected();
-    });
-
-    emitSignal<DRing::ConversationSignal::ConversationReady>(accountID_, convId);
-    return convId;
 }
 
 void
