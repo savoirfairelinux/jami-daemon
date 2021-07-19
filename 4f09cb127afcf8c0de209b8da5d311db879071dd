@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7f076c68_3b42c4d4",
+        "filename": "contrib/src/guile/rules.mak",
+        "patchSetId": 5
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-19T17:33:04Z",
+      "side": 1,
+      "message": "remove this line so it isn\u0027t built by default",
+      "revId": "4f09cb127afcf8c0de209b8da5d311db879071dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
