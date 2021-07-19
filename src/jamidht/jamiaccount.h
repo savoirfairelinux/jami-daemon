@@ -508,13 +508,8 @@ public:
 
     std::string_view currentDeviceId() const;
     // Conversation management
-    std::string startConversation(ConversationMode mode = ConversationMode::INVITES_ONLY,
-                                  const std::string& otherMember = "");
     void acceptConversationRequest(const std::string& conversationId);
-    void declineConversationRequest(const std::string& conversationId);
-    std::vector<std::string> getConversations();
     bool removeConversation(const std::string& conversationId);
-    std::vector<std::map<std::string, std::string>> getConversationRequests();
 
     // Conversation's infos management
     void updateConversationInfos(const std::string& conversationId,
@@ -564,8 +559,8 @@ public:
      * @return number of interactions since interactionId
      */
     uint32_t countInteractions(const std::string& convId,
-                                const std::string& toId,
-                                const std::string& fromId) const;
+                               const std::string& toId,
+                               const std::string& fromId) const;
 
     // Received a new commit notification
     void onNewGitCommit(const std::string& peer,
@@ -652,7 +647,7 @@ public:
      */
     std::shared_ptr<TransferManager> dataTransfer(const std::string& id = "") const;
 
-    const ConversationModule* convModule() { return convModule_.get(); }
+    ConversationModule* convModule() { return convModule_.get(); }
 
     /**
      * Send Profile via cached SIP connection
@@ -836,15 +831,6 @@ private:
     /* tracked buddies presence */
     mutable std::mutex buddyInfoMtx;
     std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
-
-    /** Conversations */
-    mutable std::mutex conversationsMtx_ {};
-    std::map<std::string, std::shared_ptr<Conversation>> conversations_;
-    bool isConversation(const std::string& convId) const
-    {
-        std::lock_guard<std::mutex> lk(conversationsMtx_);
-        return conversations_.find(convId) != conversations_.end();
-    }
 
     mutable std::mutex dhtValuesMtx_;
     bool dhtPublicInCalls_ {true};
@@ -1061,12 +1047,6 @@ private:
      * @return the conversation id if found else empty
      */
     std::string getOneToOneConversation(const std::string& uri) const;
-
-    /**
-     * Add a new ConvInfo
-     * @param id of the conversation
-     */
-    void addNewConversation(const ConvInfo& convInfo);
 
     std::atomic_bool deviceAnnounced_ {false};
 
