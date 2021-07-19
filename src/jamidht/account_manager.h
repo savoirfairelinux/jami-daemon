@@ -47,8 +47,6 @@ struct AccountInfo
 {
     dht::crypto::Identity identity;
     std::unique_ptr<ContactList> contacts;
-    std::map<std::string, ConvInfo> conversations;
-    std::map<std::string, ConversationRequest> conversationsRequests;
     std::string accountId;
     std::string deviceId;
     std::shared_ptr<dht::crypto::PublicKey> devicePk;
@@ -222,18 +220,6 @@ public:
     void removeContact(const std::string& uri, bool banned = true);
     void removeContactConversation(const std::string& uri); // for non swarm contacts
     std::vector<std::map<std::string, std::string>> getContacts() const;
-
-    // Conversations
-    void saveConvInfos() const;
-    void saveConvRequests() const;
-    void setConversations(const std::map<std::string, ConvInfo>& newConv);
-    void setConversationMembers(const std::string& convId, const std::vector<std::string>& members);
-    void addConversation(const ConvInfo& info);
-    void setConversationsRequests(const std::map<std::string, ConversationRequest>& newConvReq);
-    std::optional<ConversationRequest> getRequest(const std::string& id) const;
-    bool addConversationRequest(const std::string& id, const ConversationRequest& req);
-    void rmConversationRequest(const std::string& id);
-    mutable std::mutex conversationsRequestsMtx;
 
     /** Obtain details about one account contact in serializable form. */
     std::map<std::string, std::string> getContactDetails(const std::string& uri) const;
