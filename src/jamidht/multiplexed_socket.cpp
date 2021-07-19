@@ -350,6 +350,7 @@ void
 MultiplexedSocket::Impl::onRequest(const std::string& name, uint16_t channel)
 {
     auto accept = onRequest_(deviceId, channel, name);
+    JAMI_ERR() << "@@@ ACCEPT: " << accept;
     std::shared_ptr<ChannelSocket> channelSocket;
     if (accept) {
         std::lock_guard<std::mutex> lkSockets(socketsMutex);
@@ -364,6 +365,7 @@ MultiplexedSocket::Impl::onRequest(const std::string& name, uint16_t channel)
     msgpack::sbuffer buffer(512);
     msgpack::pack(buffer, val);
     std::error_code ec;
+    JAMI_ERR() << "@@@ GO";
     int wr = parent_.write(CONTROL_CHANNEL,
                            reinterpret_cast<const uint8_t*>(buffer.data()),
                            buffer.size(),
