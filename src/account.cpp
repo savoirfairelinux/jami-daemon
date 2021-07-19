@@ -96,9 +96,10 @@ const char* const Account::LOCAL_MODERATORS_ENABLED_KEY = "localModeratorsEnable
 const char* const Account::ALL_MODERATORS_ENABLED_KEY = "allModeratorsEnabled";
 
 #ifdef __ANDROID__
-constexpr const char* const DEFAULT_RINGTONE_PATH = "/data/data/cx.ring/files/ringtones/default.opus";
+constexpr const char* const DEFAULT_RINGTONE_PATH
+    = "/data/data/cx.ring/files/ringtones/default.opus";
 #else
-constexpr const char* const DEFAULT_RINGTONE_PATH =  PROGSHAREDIR "/ringtones/default.opus";
+constexpr const char* const DEFAULT_RINGTONE_PATH = PROGSHAREDIR "/ringtones/default.opus";
 #endif
 
 Account::Account(const std::string& accountID)
@@ -122,7 +123,8 @@ Account::Account(const std::string& accountID)
     , upnpEnabled_(true)
     , localModeratorsEnabled_(true)
     , allModeratorsEnabled_(true)
-#if (defined(__linux__) and not defined(__ANDROID__)) || defined(WIN32) || (defined(__APPLE__) && TARGET_OS_MAC)
+#if (defined(__linux__) and not defined(__ANDROID__)) || defined(WIN32) \
+    || (defined(__APPLE__) && TARGET_OS_MAC)
     , multiStreamEnabled_(true)
 #else
     , multiStreamEnabled_(false)
@@ -363,15 +365,6 @@ Account::getVolatileAccountDetails() const
 {
     return {{Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS, mapStateNumberToString(registrationState_)},
             {DRing::Account::VolatileProperties::ACTIVE, active_ ? TRUE_STR : FALSE_STR}};
-}
-
-void
-Account::onIsComposing(const std::string& conversationId, const std::string& peer, bool isComposing)
-{
-    emitSignal<DRing::ConfigurationSignal::ComposingStatusChanged>(accountID_,
-                                                                   conversationId,
-                                                                   peer,
-                                                                   isComposing ? 1 : 0);
 }
 
 bool
@@ -712,9 +705,8 @@ bool
 Account::meetMinimumRequiredVersion(const std::vector<unsigned>& version,
                                     const std::vector<unsigned>& minRequiredVersion)
 {
-    for (size_t i=0; i<minRequiredVersion.size(); i++) {
-        if (i == version.size() or
-            version[i] < minRequiredVersion[i])
+    for (size_t i = 0; i < minRequiredVersion.size(); i++) {
+        if (i == version.size() or version[i] < minRequiredVersion[i])
             return false;
         if (version[i] > minRequiredVersion[i])
             return true;

@@ -83,7 +83,8 @@ downloadFile(const std::string& accountId,
              const std::string& path) noexcept
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        return acc->downloadFile(conversationId, interactionId, fileId, path);
+        if (auto convModule = acc->convModule())
+            return convModule->downloadFile(conversationId, interactionId, fileId, path);
     return {};
 }
 
