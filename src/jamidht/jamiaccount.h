@@ -34,6 +34,7 @@
 #include "jamidht/conversation.h"
 #include "multiplexed_socket.h"
 #include "data_transfer.h"
+#include "uri.h"
 
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -42,6 +43,8 @@
 #include "scheduled_executor.h"
 #include "connectionmanager.h"
 #include "gitserver.h"
+#include "channel_handler.h"
+#include "conversation_module.h"
 #include "conversationrepository.h"
 
 #include <opendht/dhtrunner.h>
@@ -649,6 +652,8 @@ public:
      */
     std::shared_ptr<TransferManager> dataTransfer(const std::string& id = "") const;
 
+    const ConversationModule* convModule() { return convModule_.get(); }
+
     /**
      * Send Profile via cached SIP connection
      * @param deviceId      Device that will receive the profile
@@ -1071,6 +1076,12 @@ private:
     std::map<std::string, std::shared_ptr<TransferManager>> transferManagers_ {};
 
     bool noSha3sumVerification_ {false};
+
+    std::map<Uri::Scheme, std::unique_ptr<ChannelHandler>> channelHandlers_ {};
+
+    // TODO std::vector<Module>
+
+    std::unique_ptr<ConversationModule> convModule_;
 };
 
 static inline std::ostream&
