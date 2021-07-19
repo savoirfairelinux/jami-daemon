@@ -690,7 +690,7 @@ private:
      * @param call  The current call
      * @return true if all is correct
      */
-    bool SIPStartCall(SIPCall& call, IpAddr target);
+    bool SIPStartCall(SIPCall& call, const IpAddr& target);
 
     /**
      * For a call with (from_device, from_account), check the peer certificate chain (cert_list,

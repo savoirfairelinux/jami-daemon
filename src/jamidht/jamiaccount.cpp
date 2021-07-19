@@ -774,7 +774,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
 }
 
 bool
-JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
+JamiAccount::SIPStartCall(SIPCall& call, const IpAddr& target)
 {
     if (call.isIceEnabled())
         call.addLocalIceAttributes();
@@ -788,7 +788,7 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
     std::string from(getFromUri());
     pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
 
-    std::string targetStr = getToUri(target.toString(true) /*+";transport=ICE"*/);
+    std::string targetStr = getToUri(target.toString(true));
     pj_str_t pjTarget = sip_utils::CONST_PJ_STR(targetStr);
 
     pj_str_t pjContact;
@@ -2974,7 +2974,7 @@ JamiAccount::getFromUri() const
 std::string
 JamiAccount::getToUri(const std::string& to) const
 {
-    return "<sips:" + to + ";transport=tls>";
+    return fmt::format("<sips:{};transport=tls>", to);
 }
 
 pj_str_t
