@@ -22,6 +22,30 @@
       },
       "revId": "3f3e8e440154e86e6880f8a3e65efc311a4fc64d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "60b321a9_ea99d606",
+        "filename": "src/conference.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 335,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-07-19T14:09:31Z",
+      "side": 1,
+      "message": "In fact, the TODO was resolved, just forget to update the comment.",
+      "parentUuid": "f1452b18_7e122118",
+      "range": {
+        "startLine": 335,
+        "startChar": 9,
+        "endLine": 335,
+        "endChar": 58
+      },
+      "revId": "3f3e8e440154e86e6880f8a3e65efc311a4fc64d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
