@@ -79,9 +79,9 @@ Sdp::Sdp(const std::string& id)
 
 Sdp::~Sdp()
 {
-    SIPAccount::releasePort(localAudioDataPort_);
+    SIPAccount::releasePort(localAudioRtpPort_);
 #ifdef ENABLE_VIDEO
-    SIPAccount::releasePort(localVideoDataPort_);
+    SIPAccount::releasePort(localVideoRtpPort_);
 #endif
 }
 
@@ -249,12 +249,12 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     switch (type) {
     case MediaType::MEDIA_AUDIO:
         med->desc.media = sip_utils::CONST_PJ_STR("audio");
-        med->desc.port = mediaAttr.enabled_ ? localAudioDataPort_ : 0;
+        med->desc.port = mediaAttr.enabled_ ? localAudioRtpPort_ : 0;
         med->desc.fmt_count = audio_codec_list_.size();
         break;
     case MediaType::MEDIA_VIDEO:
         med->desc.media = sip_utils::CONST_PJ_STR("video");
-        med->desc.port = mediaAttr.enabled_ ? localVideoDataPort_ : 0;
+        med->desc.port = mediaAttr.enabled_ ? localVideoRtpPort_ : 0;
         med->desc.fmt_count = video_codec_list_.size();
         break;
     default:
@@ -335,7 +335,11 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 
     if (type == MediaType::MEDIA_AUDIO) {
         setTelephoneEventRtpmap(med);
-        addRTCPAttribute(med); // video has its own RTCP
+        if (localAudioRtcpPort_) {
+            addRTCPAttribute(med, localAudioRtcpPort_);
+        }
+    } else if (type == MediaType::MEDIA_VIDEO and localVideoRtcpPort_) {
+        addRTCPAttribute(med, localVideoRtcpPort_);
     }
 
     char const* direction = mediaDirection(type, mediaAttr.onHold_);
@@ -351,11 +355,11 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 }
 
 void
-Sdp::addRTCPAttribute(pjmedia_sdp_media* med)
+Sdp::addRTCPAttribute(pjmedia_sdp_media* med, uint16_t port)
 {
-    IpAddr outputAddr {publishedIpAddr_};
-    outputAddr.setPort(localAudioControlPort_);
-    pjmedia_sdp_attr* attr = pjmedia_sdp_attr_create_rtcp(memPool_.get(), outputAddr.pjPtr());
+    IpAddr addr {publishedIpAddr_};
+    addr.setPort(port);
+    pjmedia_sdp_attr* attr = pjmedia_sdp_attr_create_rtcp(memPool_.get(), addr.pjPtr());
     if (attr)
         pjmedia_sdp_attr_add(&med->attr_count, med->attr, attr);
 }
