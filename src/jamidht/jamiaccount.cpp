@@ -38,6 +38,7 @@
 #include "server_account_manager.h"
 #include "jamidht/channeled_transport.h"
 #include "multiplexed_socket.h"
+#include "conversation_channel_handler.h"
 
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
@@ -312,6 +313,7 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
     , dhtPeerConnector_ {}
     , connectionManager_ {}
+    , convModule_ {std::make_unique<ConversationModule>()}
 {
     // Force the SFL turn server if none provided yet
     turnServer_ = DEFAULT_TURN_SERVER;
@@ -2214,6 +2216,8 @@ JamiAccount::doRegister_()
         std::unique_lock<std::mutex> lkCM(connManagerMtx_);
         if (!connectionManager_)
             connectionManager_ = std::make_unique<ConnectionManager>(*this);
+        channelHandlers_[Uri::Scheme::GIT] = std::make_unique<ConversationChannelHandler>(
+            *connectionManager_.get());
         connectionManager_->onDhtConnected(DeviceId(accountManager_->getInfo()->deviceId));
         connectionManager_->onICERequest([this](const DeviceId& deviceId) {
             std::promise<bool> accept;
@@ -2238,13 +2242,16 @@ JamiAccount::doRegister_()
         });
         connectionManager_->onChannelRequest([this](const DeviceId& deviceId,
                                                     const std::string& name) {
+            auto uri = Uri(name);
+            auto itHandler = channelHandlers_.find(uri.scheme());
+            if (itHandler != channelHandlers_.end() && itHandler->second) {
+                return itHandler->second->onRequest(deviceId, name);
+            }
+            // TODO replace
             auto isFile = name.substr(0, 7) == "file://";
             auto isVCard = name.substr(0, 8) == "vcard://";
             auto isDataTransfer = name.substr(0, 16) == "data-transfer://";
-            if (name.find("git://") == 0) {
-                // TODO
-                return true;
-            } else if (name == "sip") {
+            if (name == "sip") {
                 return true;
             } else if (name.find("sync://") == 0) {
                 // Check if sync request is from same account
