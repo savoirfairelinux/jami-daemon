@@ -430,7 +430,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         dht::Value::Id vid;
         auto tentatives = 0;
         do {
-            vid = ValueIdDist(1, DRING_ID_MAX_VAL)(sthis->account.rand);
+            vid = ValueIdDist(1, JAMI_ID_MAX_VAL)(sthis->account.rand);
             --tentatives;
         } while (sthis->getPendingCallbacks(deviceId, vid).size() != 0
                  && tentatives != MAX_TENTATIVES);
@@ -582,13 +582,14 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
                                             const dht::Value::Id& vid)
 {
     auto channelSock = sock->addChannel(name);
-    channelSock->onReady([wSock = std::weak_ptr<ChannelSocket>(channelSock), name, deviceId, vid, w = weak()]() {
-        auto shared = w.lock();
-        auto channelSock = wSock.lock();
-        if (shared and channelSock)
-            for (const auto& pending : shared->extractPendingCallbacks(deviceId, vid))
-                pending.cb(channelSock, deviceId);
-    });
+    channelSock->onReady(
+        [wSock = std::weak_ptr<ChannelSocket>(channelSock), name, deviceId, vid, w = weak()]() {
+            auto shared = w.lock();
+            auto channelSock = wSock.lock();
+            if (shared and channelSock)
+                for (const auto& pending : shared->extractPendingCallbacks(deviceId, vid))
+                    pending.cb(channelSock, deviceId);
+        });
 
     ChannelRequest val;
     val.name = channelSock->name();
