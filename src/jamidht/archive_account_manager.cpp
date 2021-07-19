@@ -348,11 +348,12 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a)
     info->contacts = std::make_unique<ContactList>(a.id.second, path_, onChange_);
     info->contacts->setContacts(a.contacts);
     info->contacts->foundAccountDevice(deviceCertificate, ctx.deviceName, clock::now());
-    info->conversations = a.conversations;
-    info->conversationsRequests = a.conversationsRequests;
     info->ethAccount = ethAccount;
     info->announce = std::move(receipt.second);
     info_ = std::move(info);
+    // CTX srt infos/request
+    info->conversations = a.conversations;
+    info->conversationsRequests = a.conversationsRequests;
     saveConvInfos();
     saveConvRequests();
 
