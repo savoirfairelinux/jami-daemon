@@ -233,12 +233,18 @@ VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceS
 
     try {
         if (rtp_sock and rtcp_sock) {
-            rtp_sock->setDefaultRemoteAddress(send_.addr);
-            rtcp_sock->setDefaultRemoteAddress(send_.rtcp_addr);
+            if (send_.addr) {
+                rtp_sock->setDefaultRemoteAddress(send_.addr);
+            }
 
+            auto& rtcpAddr = send_.rtcp_addr ? send_.rtcp_addr : send_.addr;
+            if (rtcpAddr) {
+                rtcp_sock->setDefaultRemoteAddress(rtcpAddr);
+            }
             socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));
-        } else
+        } else {
             socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort()));
+        }
 
         last_REMB_inc_ = clock::now();
         last_REMB_dec_ = clock::now();
