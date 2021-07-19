@@ -440,7 +440,7 @@ ConnectionManager::Impl::connectDevice(const std::shared_ptr<dht::crypto::Certif
         dht::Value::Id vid;
         auto tentatives = 0;
         do {
-            vid = ValueIdDist(1, DRING_ID_MAX_VAL)(sthis->account.rand);
+            vid = ValueIdDist(1, JAMI_ID_MAX_VAL)(sthis->account.rand);
             --tentatives;
         } while (sthis->getPendingCallbacks(deviceId, vid).size() != 0
                  && tentatives != MAX_TENTATIVES);

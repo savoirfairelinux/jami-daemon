@@ -60,13 +60,6 @@ using namespace std::literals;
 
 namespace jami {
 
-static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
-static constexpr const char MIME_TYPE_GIT[] {"application/im-gitmessage-id"};
-static constexpr const char MIME_TYPE_INVITE_JSON[] {"application/invite+json"};
-static constexpr const char MIME_TYPE_INVITE[] {"application/invite"};
-static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
-static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT {std::chrono::seconds(12)};
-
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
     : Account(accountID)
     , messageEngine_(*this,
@@ -138,82 +131,6 @@ SIPAccountBase::flush()
 
     fileutils::remove(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID()
                       + DIR_SEPARATOR_STR "messages");
-}
-
-std::string
-getIsComposing(const std::string& conversationId, bool isWriting)
-{
-    // implementing https://tools.ietf.org/rfc/rfc3994.txt
-    return fmt::format("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
-                       "<isComposing><state>{}</state>{}</isComposing>",
-                       isWriting ? "active"sv : "idle"sv,
-                       conversationId.empty()
-                           ? ""
-                           : "<conversation>" + conversationId + "</conversation>");
-}
-
-std::string
-getDisplayed(const std::string& conversationId, const std::string& messageId)
-{
-    // implementing https://tools.ietf.org/rfc/rfc5438.txt
-    return fmt::format(
-        "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
-        "<imdn><message-id>{}</message-id>\n"
-        "{}"
-        "<display-notification><status><displayed/></status></display-notification>\n"
-        "</imdn>",
-        messageId,
-        conversationId.empty() ? "" : "<conversation>" + conversationId + "</conversation>");
-}
-
-void
-SIPAccountBase::setIsComposing(const std::string& conversationUri, bool isWriting)
-{
-    Uri uri(conversationUri);
-    std::string conversationId = {};
-    if (uri.scheme() == Uri::Scheme::SWARM)
-        conversationId = uri.authority();
-    auto uid = uri.authority();
-
-    if (not isWriting and conversationUri != composingUri_)
-        return;
-
-    if (composingTimeout_) {
-        composingTimeout_->cancel();
-        composingTimeout_.reset();
-    }
-    if (isWriting) {
-        if (not composingUri_.empty() and composingUri_ != conversationUri) {
-            sendInstantMessage(uid,
-                               {{MIME_TYPE_IM_COMPOSING, getIsComposing(conversationId, false)}});
-            composingTime_ = std::chrono::steady_clock::time_point::min();
-        }
-        composingUri_.clear();
-        composingUri_.insert(composingUri_.end(), conversationUri.begin(), conversationUri.end());
-        auto now = std::chrono::steady_clock::now();
-        if (now >= composingTime_ + COMPOSING_TIMEOUT) {
-            sendInstantMessage(uid,
-                               {{MIME_TYPE_IM_COMPOSING, getIsComposing(conversationId, true)}});
-            composingTime_ = now;
-        }
-        std::weak_ptr<SIPAccountBase> weak = std::static_pointer_cast<SIPAccountBase>(
-            shared_from_this());
-        composingTimeout_ = Manager::instance().scheduleTask(
-            [weak, uid, conversationId]() {
-                if (auto sthis = weak.lock()) {
-                    sthis->sendInstantMessage(uid,
-                                              {{MIME_TYPE_IM_COMPOSING,
-                                                getIsComposing(conversationId, false)}});
-                    sthis->composingUri_.clear();
-                    sthis->composingTime_ = std::chrono::steady_clock::time_point::min();
-                }
-            },
-            now + COMPOSING_TIMEOUT);
-    } else {
-        sendInstantMessage(uid, {{MIME_TYPE_IM_COMPOSING, getIsComposing(conversationId, false)}});
-        composingUri_.clear();
-        composingTime_ = std::chrono::steady_clock::time_point::min();
-    }
 }
 
 template<typename T>
@@ -552,127 +469,8 @@ SIPAccountBase::onTextMessage(const std::string& id,
             JAMI_WARN("Dropping invalid message with MIME type %s", m.first.c_str());
             return;
         }
-        if (m.first == MIME_TYPE_IM_COMPOSING) {
-            try {
-                static const std::regex COMPOSING_REGEX("<state>\\s*(\\w+)\\s*<\\/state>");
-                std::smatch matched_pattern;
-                std::regex_search(m.second, matched_pattern, COMPOSING_REGEX);
-                bool isComposing {false};
-                if (matched_pattern.ready() && !matched_pattern.empty()
-                    && matched_pattern[1].matched) {
-                    isComposing = matched_pattern[1] == "active";
-                }
-                static const std::regex CONVID_REGEX(
-                    "<conversation>\\s*(\\w+)\\s*<\\/conversation>");
-                std::regex_search(m.second, matched_pattern, CONVID_REGEX);
-                std::string conversationId = "";
-                if (matched_pattern.ready() && !matched_pattern.empty()
-                    && matched_pattern[1].matched) {
-                    conversationId = matched_pattern[1];
-                }
-                onIsComposing(conversationId, from, isComposing);
-                if (payloads.size() == 1)
-                    return;
-            } catch (const std::exception& e) {
-                JAMI_WARN("Error parsing composing state: %s", e.what());
-            }
-        } else if (m.first == MIME_TYPE_IMDN) {
-            try {
-                static const std::regex IMDN_MSG_ID_REGEX(
-                    "<message-id>\\s*(\\w+)\\s*<\\/message-id>");
-                static const std::regex IMDN_STATUS_REGEX("<status>\\s*<(\\w+)\\/>\\s*<\\/status>");
-                std::smatch matched_pattern;
-
-                std::regex_search(m.second, matched_pattern, IMDN_MSG_ID_REGEX);
-                std::string messageId;
-                if (matched_pattern.ready() && !matched_pattern.empty()
-                    && matched_pattern[1].matched) {
-                    messageId = matched_pattern[1];
-                } else {
-                    JAMI_WARN("Message displayed: can't parse message ID");
-                    continue;
-                }
-
-                std::regex_search(m.second, matched_pattern, IMDN_STATUS_REGEX);
-                bool isDisplayed {false};
-                if (matched_pattern.ready() && !matched_pattern.empty()
-                    && matched_pattern[1].matched) {
-                    isDisplayed = matched_pattern[1] == "displayed";
-                } else {
-                    JAMI_WARN("Message displayed: can't parse status");
-                    continue;
-                }
-
-                static const std::regex CONVID_REGEX(
-                    "<conversation>\\s*(\\w+)\\s*<\\/conversation>");
-                std::regex_search(m.second, matched_pattern, CONVID_REGEX);
-                std::string conversationId = "";
-                if (matched_pattern.ready() && !matched_pattern.empty()
-                    && matched_pattern[1].matched) {
-                    conversationId = matched_pattern[1];
-                }
-
-                if (!isReadReceiptEnabled())
-                    return;
-                if (conversationId.empty()) // Old method
-                    messageEngine_.onMessageDisplayed(from, from_hex_string(messageId), isDisplayed);
-                else if (isDisplayed) {
-                    onMessageDisplayed(from, conversationId, messageId);
-                    JAMI_DBG() << "[message " << messageId << "] Displayed by peer";
-                    emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
-                        accountID_,
-                        conversationId,
-                        from,
-                        messageId,
-                        static_cast<int>(DRing::Account::MessageStates::DISPLAYED));
-                    return;
-                }
-                if (payloads.size() == 1)
-                    return;
-            } catch (const std::exception& e) {
-                JAMI_WARN("Error parsing display notification: %s", e.what());
-            }
-        } else if (m.first == MIME_TYPE_GIT) {
-            Json::Value json;
-            std::string err;
-            Json::CharReaderBuilder rbuilder;
-            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-            if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
-                JAMI_ERR("Can't parse server response: %s", err.c_str());
-                return;
-            }
-
-            JAMI_WARN("Received indication for new commit available in conversation %s",
-                      json["id"].asString().c_str());
-
-            if (deviceId.empty()) {
-                JAMI_ERR() << "Incorrect deviceId. Can't retrieve history";
-                return;
-            }
-
-            onNewGitCommit(from, deviceId, json["id"].asString(), json["commit"].asString());
+        if (handleMessage(from, m))
             return;
-        } else if (m.first == MIME_TYPE_INVITE_JSON) {
-            Json::Value json;
-            std::string err;
-            Json::CharReaderBuilder rbuilder;
-            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-            if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
-                JAMI_ERR("Can't parse server response: %s", err.c_str());
-                return;
-            }
-            onConversationRequest(from, json);
-            return;
-        } else if (m.first == MIME_TYPE_INVITE) {
-            onNeedConversationRequest(from, m.second);
-            return;
-        } else if (m.first == MIME_TYPE_TEXT_PLAIN) {
-            // This means that a text is received, so that
-            // the conversation is not a swarm. For compatibility,
-            // check if we have a swarm created. It can be the case
-            // when the trust request confirm was not received.
-            checkIfRemoveForCompat(from);
-        }
     }
 
 #ifdef ENABLE_PLUGIN
@@ -700,23 +498,6 @@ SIPAccountBase::onTextMessage(const std::string& id,
     while (lastMessages_.size() > MAX_WAITING_MESSAGES_SIZE) {
         lastMessages_.pop_front();
     }
-}
-
-bool
-SIPAccountBase::setMessageDisplayed(const std::string& conversationUri,
-                                    const std::string& messageId,
-                                    int status)
-{
-    Uri uri(conversationUri);
-    std::string conversationId = {};
-    if (uri.scheme() == Uri::Scheme::SWARM)
-        conversationId = uri.authority();
-    if (!conversationId.empty())
-        onMessageDisplayed(getUsername(), conversationId, messageId);
-    if (status == (int) DRing::Account::MessageStates::DISPLAYED && isReadReceiptEnabled())
-        sendInstantMessage(uri.authority(),
-                           {{MIME_TYPE_IMDN, getDisplayed(conversationId, messageId)}});
-    return true;
 }
 
 IpAddr
