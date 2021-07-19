@@ -508,8 +508,6 @@ public:
 
     std::string_view currentDeviceId() const;
     // Conversation management
-    std::string startConversation(ConversationMode mode = ConversationMode::INVITES_ONLY,
-                                  const std::string& otherMember = "");
     void acceptConversationRequest(const std::string& conversationId);
     void declineConversationRequest(const std::string& conversationId);
     std::vector<std::string> getConversations();
@@ -638,7 +636,7 @@ public:
      */
     std::shared_ptr<TransferManager> dataTransfer(const std::string& id = "") const;
 
-    const ConversationModule* convModule() { return convModule_.get(); }
+    ConversationModule* convModule() { return convModule_.get(); }
 
     /**
      * Send Profile via cached SIP connection

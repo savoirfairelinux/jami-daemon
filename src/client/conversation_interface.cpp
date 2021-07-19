@@ -31,6 +31,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/conversation_module.h"
 
 namespace DRing {
 
@@ -38,7 +39,8 @@ std::string
 startConversation(const std::string& accountId)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        return acc->startConversation();
+        if (auto convModule = acc->convModule())
+            return convModule->startConversation();
     return {};
 }
 
