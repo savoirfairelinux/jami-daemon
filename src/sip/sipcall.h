@@ -423,6 +423,7 @@ private:
 
     bool enableIce_ {true};
     bool srtpEnabled_ {false};
+    bool rtcpMuxEnabled_ {false};
 
     ///< Transport used for media streams
     std::shared_ptr<IceTransport> mediaTransport_;

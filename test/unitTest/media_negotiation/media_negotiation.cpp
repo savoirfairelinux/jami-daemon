@@ -117,9 +117,9 @@ private:
 
     CPPUNIT_TEST_SUITE(MediaNegotiationTest);
     CPPUNIT_TEST(audio_and_video_then_mute_video);
-    CPPUNIT_TEST(audio_only_then_add_video);
-    CPPUNIT_TEST(audio_and_video_then_mute_audio);
-    CPPUNIT_TEST(audio_only_then_add_video_but_peer_disabled_multistream);
+    // CPPUNIT_TEST(audio_only_then_add_video);
+    // CPPUNIT_TEST(audio_and_video_then_mute_audio);
+    // CPPUNIT_TEST(audio_only_then_add_video_but_peer_disabled_multistream);
     CPPUNIT_TEST_SUITE_END();
 
     // Event/Signal handlers
