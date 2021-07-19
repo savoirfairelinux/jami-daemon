@@ -153,29 +153,25 @@ public:
 
     std::string_view getPublishedIP() const { return publishedIpAddr_; }
 
-    void setLocalPublishedAudioPort(uint16_t port) { setLocalPublishedAudioPorts(port, port + 1); }
-
     void setLocalPublishedAudioPorts(uint16_t audio_port, uint16_t control_port)
     {
-        localAudioDataPort_ = audio_port;
-        localAudioControlPort_ = control_port;
+        localAudioRtpPort_ = audio_port;
+        localAudioRtcpPort_ = control_port;
     }
-
-    void setLocalPublishedVideoPort(uint16_t port) { setLocalPublishedVideoPorts(port, port + 1); }
 
     void setLocalPublishedVideoPorts(uint16_t video_port, uint16_t control_port)
     {
-        localVideoDataPort_ = video_port;
-        localVideoControlPort_ = control_port;
+        localVideoRtpPort_ = video_port;
+        localVideoRtcpPort_ = control_port;
     }
 
-    uint16_t getLocalVideoPort() const { return localVideoDataPort_; }
+    uint16_t getLocalVideoPort() const { return localVideoRtpPort_; }
 
-    uint16_t getLocalVideoControlPort() const { return localVideoControlPort_; }
+    uint16_t getLocalVideoControlPort() const { return localVideoRtcpPort_; }
 
-    uint16_t getLocalAudioPort() const { return localAudioDataPort_; }
+    uint16_t getLocalAudioPort() const { return localAudioRtpPort_; }
 
-    uint16_t getLocalAudioControlPort() const { return localAudioControlPort_; }
+    uint16_t getLocalAudioControlPort() const { return localAudioRtcpPort_; }
 
     std::vector<MediaDescription> getActiveMediaDescription(bool remote) const;
 
@@ -266,10 +262,10 @@ private:
     std::string publishedIpAddr_;
     pj_uint16_t publishedIpAddrType_;
 
-    uint16_t localAudioDataPort_ {0};
-    uint16_t localAudioControlPort_ {0};
-    uint16_t localVideoDataPort_ {0};
-    uint16_t localVideoControlPort_ {0};
+    uint16_t localAudioRtpPort_ {0};
+    uint16_t localAudioRtcpPort_ {0};
+    uint16_t localVideoRtpPort_ {0};
+    uint16_t localVideoRtcpPort_ {0};
 
     unsigned int telephoneEventPayload_;
 
@@ -320,7 +316,7 @@ private:
      */
     void addSdesAttribute(const std::vector<std::string>& crypto);
 
-    void addRTCPAttribute(pjmedia_sdp_media* med);
+    void addRTCPAttribute(pjmedia_sdp_media* med, uint16_t port);
 
     std::shared_ptr<AccountCodecInfo> findCodecByPayload(const unsigned payloadType);
     std::shared_ptr<AccountCodecInfo> findCodecBySpec(const std::string& codecName,
