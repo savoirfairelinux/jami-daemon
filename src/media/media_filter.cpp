@@ -49,7 +49,7 @@ MediaFilter::getFilterDesc() const
 }
 
 int
-MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> msps)
+MediaFilter::initialize(const std::string& filterDesc, const std::vector<MediaStream>& msps)
 {
     int ret = 0;
     desc_ = filterDesc;
@@ -88,18 +88,16 @@ MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> 
     for (AVFilterInOut* current = inputs.get(); current; current = current->next) {
         if (!current->name)
             return fail("Filters require non empty names", AVERROR(EINVAL));
-        std::string name = current->name;
-        const auto& it = std::find_if(msps.begin(), msps.end(), [name](const MediaStream& msp) {
+        std::string_view name = current->name;
+        auto it = std::find_if(msps.begin(), msps.end(), [name](const MediaStream& msp) {
             return msp.name == name;
         });
         if (it != msps.end()) {
             if ((ret = initInputFilter(current, *it)) < 0) {
-                std::string msg = "Failed to initialize input: " + name;
-                return fail(msg, ret);
+                return fail(fmt::format("Failed to initialize input: {}", name), ret);
             }
         } else {
-            std::string msg = "Failed to find matching parameters for: " + name;
-            return fail(msg, ret);
+            return fail(fmt::format("Failed to find matching parameters for: {}", name), ret);
         }
     }
 
@@ -111,10 +109,10 @@ MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> 
     return 0;
 }
 
-MediaStream
+const MediaStream&
 MediaFilter::getInputParams(const std::string& inputName) const
 {
-    for (auto ms : inputParams_)
+    for (const auto& ms : inputParams_)
         if (ms.name == inputName)
             return ms;
     return {};
@@ -265,7 +263,7 @@ MediaFilter::initOutputFilter(AVFilterInOut* out)
 }
 
 int
-MediaFilter::initInputFilter(AVFilterInOut* in, MediaStream msp)
+MediaFilter::initInputFilter(AVFilterInOut* in, const MediaStream& msp)
 {
     int ret = 0;
     AVBufferSrcParameters* params = av_buffersrc_parameters_alloc();
@@ -309,8 +307,8 @@ MediaFilter::initInputFilter(AVFilterInOut* in, MediaStream msp)
         return fail("Failed to link buffer source to graph", ret);
 
     inputs_.push_back(buffersrcCtx);
-    msp.name = in->name;
-    inputParams_.push_back(msp);
+    inputParams_.emplace_back(msp);
+    inputParams_.back().name = in->name;
     return ret;
 }
 
@@ -328,7 +326,7 @@ MediaFilter::reinitialize()
 }
 
 int
-MediaFilter::fail(std::string msg, int err) const
+MediaFilter::fail(std::string_view msg, int err) const
 {
     if (!msg.empty())
         JAMI_ERR() << msg << ": " << libav_utils::getError(err);
