@@ -1010,18 +1010,20 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void* pkt, pj_size_t size)
     if (size == 0)
         return;
 
-    auto idx = comp_id - 1;
-    auto& io = compIO_[idx];
+    {
+        auto& io = compIO_[comp_id - 1];
+        std::lock_guard<std::mutex> lk(io.mutex);
 
-    std::unique_lock<std::mutex> lk(io.mutex);
-    if (io.cb) {
-        io.cb((uint8_t*) pkt, size);
-    } else {
-        std::error_code ec;
-        auto err = peerChannels_.at(idx).write((const char*) pkt, size, ec);
-        if (err < 0) {
-            JAMI_ERR("[ice:%p] rx: channel is closed", this);
+        if (io.cb) {
+            io.cb((uint8_t*) pkt, size);
+            return;
         }
+    }
+
+    std::error_code ec;
+    auto err = peerChannels_.at(comp_id - 1).write((const char*) pkt, size, ec);
+    if (err < 0) {
+        JAMI_ERR("[ice:%p] rx: channel is closed", this);
     }
 }
 
@@ -1558,7 +1560,10 @@ IceTransport::recvfrom(unsigned compId, char* buf, size_t len, std::error_code& 
 void
 IceTransport::setOnRecv(unsigned compId, IceRecvCb cb)
 {
+    JAMI_DBG("Setting 'on recv' callback for comp %i", compId);
+
     ASSERT_COMP_ID(compId, getComponentCount());
+
     auto& io = pimpl_->compIO_[compId - 1];
     std::lock_guard<std::mutex> lk(io.mutex);
     io.cb = std::move(cb);
@@ -1721,7 +1726,10 @@ IceTransport::parseIceCandidates(std::string_view sdp_msg)
         } else {
             IceCandidate cand;
             if (parseIceAttributeLine(0, std::string(line), cand)) {
-                JAMI_DBG("Add remote ICE candidate: %.*s", (int) line.size(), line.data());
+                JAMI_DBG("[ice:%p] Add remote candidate: %.*s",
+                         pimpl_.get(),
+                         (int) line.size(),
+                         line.data());
                 res.rem_candidates.emplace_back(cand);
             }
         }
@@ -1744,10 +1752,11 @@ IceTransport::link() const
 //==============================================================================
 
 IceTransportFactory::IceTransportFactory()
-    : cp_(new pj_caching_pool(), [](pj_caching_pool* p){
-        pj_caching_pool_destroy(p);
-        delete p;
-    })
+    : cp_(new pj_caching_pool(),
+          [](pj_caching_pool* p) {
+              pj_caching_pool_destroy(p);
+              delete p;
+          })
     , ice_cfg_()
 {
     sip_utils::register_thread();
@@ -1766,10 +1775,7 @@ IceTransportFactory::IceTransportFactory()
     ice_cfg_.opt.aggressive = PJ_TRUE;
 }
 
-IceTransportFactory::~IceTransportFactory()
-{
-
-}
+IceTransportFactory::~IceTransportFactory() {}
 
 std::shared_ptr<IceTransport>
 IceTransportFactory::createTransport(const char* name, const IceTransportOptions& options)
@@ -1880,7 +1886,7 @@ IceSocket::close()
 ssize_t
 IceSocket::send(const unsigned char* buf, size_t len)
 {
-    if (!ice_transport_.get())
+    if (not ice_transport_)
         return -1;
     return ice_transport_->send(compId_, buf, len);
 }
@@ -1888,7 +1894,7 @@ IceSocket::send(const unsigned char* buf, size_t len)
 ssize_t
 IceSocket::waitForData(std::chrono::milliseconds timeout)
 {
-    if (!ice_transport_.get())
+    if (not ice_transport_)
         return -1;
 
     std::error_code ec;
@@ -1905,6 +1911,9 @@ IceSocket::setOnRecv(IceRecvCb cb)
 uint16_t
 IceSocket::getTransportOverhead()
 {
+    if (not ice_transport_)
+        return 0;
+
     return (ice_transport_->getRemoteAddress(compId_).getFamily() == AF_INET) ? IPV4_HEADER_SIZE
                                                                               : IPV6_HEADER_SIZE;
 }
