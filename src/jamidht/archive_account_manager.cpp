@@ -23,6 +23,7 @@
 #include "base64.h"
 #include "jami/account_const.h"
 #include "account_schema.h"
+#include "jamidht/conversation_module.h"
 
 #include <opendht/dhtrunner.h>
 #include <opendht/thread_pool.h>
@@ -349,13 +350,11 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a)
     info->contacts = std::make_unique<ContactList>(a.id.second, path_, onChange_);
     info->contacts->setContacts(a.contacts);
     info->contacts->foundAccountDevice(deviceCertificate, ctx.deviceName, clock::now());
-    info->conversations = a.conversations;
-    info->conversationsRequests = a.conversationsRequests;
     info->ethAccount = ethAccount;
     info->announce = std::move(receipt.second);
+    ConversationModule::saveConvInfosToPath(path_, a.conversations);
+    ConversationModule::saveConvRequestsToPath(path_, a.conversationsRequests);
     info_ = std::move(info);
-    saveConvInfos();
-    saveConvRequests();
 
     JAMI_WARN("[Auth] created new device: %s", info_->deviceId.c_str());
     ctx.onSuccess(*info_,
@@ -584,8 +583,9 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
             archive.config[it.first] = it.second;
     }
     archive.contacts = info_->contacts->getContacts();
-    archive.conversations = info_->conversations;
-    archive.conversationsRequests = info_->conversationsRequests;
+    // Note we do not know accountID_ here, use path
+    archive.conversations = ConversationModule::convInfosFromPath(path_);
+    archive.conversationsRequests = ConversationModule::convRequestsFromPath(path_);
 }
 
 void
