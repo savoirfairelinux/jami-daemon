@@ -60,7 +60,7 @@ class Value;
 }
 
 namespace jami {
-static constexpr uint64_t DRING_ID_MAX_VAL = 9007199254740992;
+static constexpr uint64_t JAMI_ID_MAX_VAL = 9007199254740992;
 
 namespace upnp {
 class Controller;
@@ -175,15 +175,7 @@ public:
         return 0;
     }
 
-    virtual void sendInstantMessage(const std::string& /*convId*/,
-                                    const std::map<std::string, std::string>& /*msg*/)
-    {}
-
     virtual void setIsComposing(const std::string& /*conversationUri*/, bool /*isWriting*/) {};
-
-    virtual void onIsComposing(const std::string& /*conversationId*/,
-                               const std::string& /*peer*/,
-                               bool /*isWriting*/);
 
     virtual bool setMessageDisplayed(const std::string& /*conversationUri*/,
                                      const std::string& /*messageId*/,
@@ -323,20 +315,11 @@ public:
      */
     virtual void connectivityChanged() {};
 
-    virtual void onNewGitCommit(const std::string& /*peer*/,
-                                const std::string& /*deviceId*/,
-                                const std::string& /*conversationId*/,
-                                const std::string& /*commitId*/) {};
-
-    virtual void onMessageDisplayed(const std::string& /*peer*/,
-                                    const std::string& /*conversationId*/,
-                                    const std::string& /*interactionId*/) {};
-
-    // Invites
-    virtual void onConversationRequest(const std::string& /*from*/, const Json::Value&) {};
-    virtual void onNeedConversationRequest(const std::string& /*from*/,
-                                           const std::string& /*conversationId*/) {};
-    virtual void checkIfRemoveForCompat(const std::string& /*peerUri*/) {};
+    virtual bool handleMessage(const std::string& /*from*/,
+                               const std::pair<std::string, std::string>& /*message*/)
+    {
+        return false;
+    };
 
     /**
      * Helper function used to load the default codec order from the codec factory
