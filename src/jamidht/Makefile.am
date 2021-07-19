@@ -25,6 +25,11 @@ libringacc_la_SOURCES = \
         conversationrepository.cpp \
         gitserver.h \
         gitserver.cpp \
+        channel_handler.h \
+        conversation_channel_handler.h \
+        conversation_channel_handler.cpp \
+        conversation_module.h \
+        conversation_module.cpp \
         multiplexed_socket.h \
         multiplexed_socket.cpp \
         accountarchive.cpp \
