@@ -52,7 +52,7 @@ DRing::DataTransferId
 generateUID()
 {
     thread_local dht::crypto::random_device rd;
-    return std::uniform_int_distribution<DRing::DataTransferId> {1, DRING_ID_MAX_VAL}(rd);
+    return std::uniform_int_distribution<DRing::DataTransferId> {1, JAMI_ID_MAX_VAL}(rd);
 }
 
 constexpr const uint32_t MAX_BUFFER_SIZE {65534}; /* Channeled max packet size */
