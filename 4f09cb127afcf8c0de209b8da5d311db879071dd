@@ -16,6 +16,24 @@
       "message": "remove this line so it isn\u0027t built by default",
       "revId": "4f09cb127afcf8c0de209b8da5d311db879071dd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e560ced5_cf65ac50",
+        "filename": "contrib/src/guile/rules.mak",
+        "patchSetId": 5
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-20T15:44:47Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "7f076c68_3b42c4d4",
+      "revId": "4f09cb127afcf8c0de209b8da5d311db879071dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
