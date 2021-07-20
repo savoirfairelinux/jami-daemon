@@ -1925,7 +1925,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
     }
 
     const pj_str_t* via_addr = via->recvd_param.slen != 0 ? &via->recvd_param : &via->sent_by.host;
-    auto via_addrstr = sip_utils::as_view(*via_addr);
+    std::string via_addrstr(sip_utils::as_view(*via_addr));
     /* Enclose IPv6 address in square brackets */
     if (IpAddr::isIpv6(via_addrstr))
         via_addrstr = IpAddr(via_addrstr).toString(false, true);
