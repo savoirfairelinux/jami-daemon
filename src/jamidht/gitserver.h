@@ -45,7 +45,8 @@ public:
      */
     GitServer(const std::string& accountId,
               const std::string& conversationId,
-              const std::shared_ptr<ChannelSocket>& client);
+              const std::shared_ptr<ChannelSocket>& client,
+              std::function<void()>&& shutdownCb);
     ~GitServer();
 
     /**

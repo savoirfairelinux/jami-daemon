@@ -143,17 +143,17 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
         throw std::runtime_error("Can't register PJSIP transport.");
 
     // Link to Channel Socket
-    socket->setOnRecv([this](const uint8_t* buf, size_t len) {
+    socket->setOnRecv([cb = std::move(cb), this](const uint8_t* buf, size_t len) {
+        if (len == 0) {
+            disconnected_ = true;
+            scheduler_.run([this] { handleEvents(); });
+            cb();
+        }
         std::lock_guard<std::mutex> l(rxMtx_);
         std::vector<uint8_t> rx {buf, buf + len};
         rxPending_.emplace_back(std::move(rx));
         scheduler_.run([this] { handleEvents(); });
         return len;
-    });
-    socket->onShutdown([cb = std::move(cb), this] {
-        disconnected_ = true;
-        scheduler_.run([this] { handleEvents(); });
-        cb();
     });
 }
 
@@ -174,7 +174,6 @@ ChanneledSIPTransport::~ChanneledSIPTransport()
     // Here, we reset callbacks in ChannelSocket to avoid to call it after destruction
     // ChanneledSIPTransport is managed by pjsip, so we don't have any weak_ptr available
     socket_->setOnRecv([](const uint8_t*, size_t len) { return len; });
-    socket_->onShutdown([]() {});
     // Stop low-level transport first
     socket_->shutdown();
     socket_.reset();

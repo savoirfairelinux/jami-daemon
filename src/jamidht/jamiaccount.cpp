@@ -2407,7 +2407,19 @@ JamiAccount::doRegister_()
                               conversationId.c_str(),
                               deviceId.to_c_str(),
                               channel->channel());
-                    auto gs = std::make_unique<GitServer>(accountId, conversationId, channel);
+                    const dht::Value::Id serverId = ValueIdDist()(rand);
+                    std::lock_guard<std::mutex> lk(gitServersMtx_);
+                    auto gs = std::make_unique<GitServer>(accountId, conversationId, channel,
+                    [w = weak(), serverId]() {
+                        // Run on main thread to avoid to be in mxSock's eventLoop
+                        dht::ThreadPool::io().run([serverId, w]() {
+                            auto shared = w.lock();
+                            if (!shared)
+                                return;
+                            std::lock_guard<std::mutex> lk(shared->gitServersMtx_);
+                            shared->gitServers_.erase(serverId);
+                        });
+                    });
                     gs->setOnFetched([w = weak(), conversationId, deviceId](const std::string&) {
                         auto shared = w.lock();
                         if (!shared)
@@ -2424,21 +2436,7 @@ JamiAccount::doRegister_()
                         if (remove)
                             shared->removeRepository(conversationId, true);
                     });
-                    const dht::Value::Id serverId = ValueIdDist()(rand);
-                    {
-                        std::lock_guard<std::mutex> lk(gitServersMtx_);
-                        gitServers_[serverId] = std::move(gs);
-                    }
-                    channel->onShutdown([w = weak(), serverId]() {
-                        // Run on main thread to avoid to be in mxSock's eventLoop
-                        runOnMainThread([serverId, w]() {
-                            auto shared = w.lock();
-                            if (!shared)
-                                return;
-                            std::lock_guard<std::mutex> lk(shared->gitServersMtx_);
-                            shared->gitServers_.erase(serverId);
-                        });
-                    });
+                    gitServers_[serverId] = std::move(gs);
                 } else if (name.find("data-transfer://") == 0) {
                     auto idstr = name.substr(16);
                     auto sep = idstr.find('/');
@@ -4843,24 +4841,15 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
     std::unique_lock<std::mutex> lk(syncConnectionsMtx_);
     syncConnections_[deviceId].emplace_back(socket);
 
-    socket->onShutdown([w = weak(), peerId, deviceId, socket]() {
-        auto shared = w.lock();
-        if (!shared)
-            return;
-        std::lock_guard<std::mutex> lk(shared->syncConnectionsMtx_);
-        auto& connections = shared->syncConnections_[deviceId];
-        auto conn = connections.begin();
-        while (conn != connections.end()) {
-            if (*conn == socket)
-                conn = connections.erase(conn);
-            else
-                conn++;
-        }
-    });
-
-    socket->setOnRecv([this, deviceId, peerId](const uint8_t* buf, size_t len) {
-        if (!buf)
+    socket->setOnRecv([this, deviceId, peerId, socket](const uint8_t* buf, size_t len) {
+        if (len == 0) {
+            std::lock_guard<std::mutex> lk(syncConnectionsMtx_);
+            auto& connections = syncConnections_[deviceId];
+            std::remove_if(connections.begin(), connections.end(), [&](auto conn) {
+                return conn == socket;
+            });
             return len;
+        }
 
         SyncMsg msg;
         try {
@@ -4954,11 +4943,13 @@ JamiAccount::syncWith(const std::string& deviceId, const std::shared_ptr<Channel
         return;
     {
         std::lock_guard<std::mutex> lk(syncConnectionsMtx_);
-        socket->onShutdown([w = weak(), socket, deviceId]() {
+        socket->setOnRecv([w = weak(), socket, deviceId](auto*, auto len) {
+            if (len != 0)
+                return len; // Only check when shutdown
             // When sock is shutdown update syncConnections_ to be able to resync asap
             auto shared = w.lock();
             if (!shared)
-                return;
+                return len;
             std::lock_guard<std::mutex> lk(shared->syncConnectionsMtx_);
             auto& connections = shared->syncConnections_[deviceId];
             auto conn = connections.begin();
@@ -4971,6 +4962,7 @@ JamiAccount::syncWith(const std::string& deviceId, const std::shared_ptr<Channel
             if (connections.empty()) {
                 shared->syncConnections_.erase(deviceId);
             }
+            return len;
         });
         syncConnections_[deviceId].emplace_back(socket);
     }

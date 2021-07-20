@@ -35,13 +35,14 @@ class FtpServer;
 class ChanneledOutgoingTransfer
 {
 public:
-    ChanneledOutgoingTransfer(const std::shared_ptr<ChannelSocket>& channel, OnStateChangedCb&& cb);
+    ChanneledOutgoingTransfer(const std::shared_ptr<ChannelSocket>& channel, OnStateChangedCb&& cb, std::function<void()>&& shutdownCb);
     ~ChanneledOutgoingTransfer();
     void linkTransfer(const std::shared_ptr<Stream>& file);
     std::string peer() const;
 
 private:
     OnStateChangedCb stateChangedCb_ {};
+    std::function<void()> shutdownCb_ {};
     std::shared_ptr<ChannelSocket> channel_ {};
     std::shared_ptr<Stream> file_;
 };
@@ -51,7 +52,8 @@ class ChanneledIncomingTransfer
 public:
     ChanneledIncomingTransfer(const std::shared_ptr<ChannelSocket>& channel,
                               const std::shared_ptr<FtpServer>& ftp,
-                              OnStateChangedCb&& cb);
+                              OnStateChangedCb&& cb,
+                              std::function<void()>&& shutdownCb);
     ~ChanneledIncomingTransfer();
     std::string peer() const;
 
