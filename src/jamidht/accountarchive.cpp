@@ -75,7 +75,8 @@ AccountArchive::deserialize(const std::vector<uint8_t>& dat)
                     }
                 } else if (key.compare(Conf::CONVERSATIONS_KEY) == 0) {
                     for (Json::ValueIterator citr = itr->begin(); citr != itr->end(); citr++) {
-                        conversations.emplace_back(ConvInfo(*citr));
+                        auto ci = ConvInfo(*citr);
+                        conversations[ci.id] = std::move(ci);
                     }
                 } else if (key.compare(Conf::CONVERSATIONS_REQUESTS_KEY) == 0) {
                     for (Json::ValueIterator citr = itr->begin(); citr != itr->end(); citr++) {
@@ -131,8 +132,8 @@ AccountArchive::serialize() const
 
     if (not conversations.empty()) {
         Json::Value& jsonConversations = root[Conf::CONVERSATIONS_KEY];
-        for (const auto& c : conversations) {
-            jsonConversations.append(c.toJson());
+        for (const auto& [key, c] : conversations) {
+            jsonConversations[key] = c.toJson();
         }
     }
 
