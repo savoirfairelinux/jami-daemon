@@ -46,12 +46,19 @@ class GitServer::Impl
 public:
     Impl(const std::string& repositoryId,
          const std::string& repository,
-         const std::shared_ptr<ChannelSocket>& socket)
+         const std::shared_ptr<ChannelSocket>& socket,
+         std::function<void()>&& shutdownCb)
         : repositoryId_(repositoryId)
         , repository_(repository)
         , socket_(socket)
+        , shutdownCb_(shutdownCb)
     {
-        socket_->setOnRecv([this](const uint8_t* buf, std::size_t len) {
+        socket_->setOnRecv([&](const uint8_t* buf, std::size_t len) {
+            if (len == 0) {
+                if (shutdownCb_)
+                    shutdownCb_();
+                return len;
+            }
             std::lock_guard<std::mutex> lk(destroyMtx_);
             if (isDestroying_)
                 return len;
@@ -92,6 +99,8 @@ public:
     std::mutex destroyMtx_ {};
     std::atomic_bool isDestroying_ {false};
     onFetchedCb onFetchedCb_ {};
+
+    std::function<void()> shutdownCb_ {};
 };
 
 bool
@@ -464,11 +473,12 @@ GitServer::Impl::getParameters(const std::string& pkt_line)
 
 GitServer::GitServer(const std::string& accountId,
                      const std::string& conversationId,
-                     const std::shared_ptr<ChannelSocket>& client)
+                     const std::shared_ptr<ChannelSocket>& client,
+                     std::function<void()>&& shutdownCb)
 {
     auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId + DIR_SEPARATOR_STR
                 + "conversations" + DIR_SEPARATOR_STR + conversationId;
-    pimpl_ = std::make_unique<GitServer::Impl>(conversationId, path, client);
+    pimpl_ = std::make_unique<GitServer::Impl>(conversationId, path, client, std::move(shutdownCb));
 }
 
 GitServer::~GitServer()
