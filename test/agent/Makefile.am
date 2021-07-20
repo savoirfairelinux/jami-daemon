@@ -1,10 +1,13 @@
 include $(top_srcdir)/globals.mk
 
-AM_CXXFLAGS += -I$(top_srcdir)/src -I.. \
-                -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
+AM_CXXFLAGS += -I$(top_srcdir)/src -I.. $(GUILE_CFLAGS)
+AM_LDFLAGS  += $(GUILE_LIBS)
 
 check_PROGRAMS = agent
 
-agent_SOURCES = agent.cpp agent.h utils.cpp utils.h bt.cpp bt.h main.cpp log.h
+agent_SOURCES =   \
+	agent.cpp \
+	agent.h   \
+	main.cpp
 
-agent_LDADD = $(top_builddir)/src/libring.la -ldl
+agent_LDADD = $(top_builddir)/src/libring.la

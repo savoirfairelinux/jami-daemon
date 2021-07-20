@@ -27,9 +27,6 @@
 #include <mutex>
 #include <thread>
 
-/* Third parties */
-#include <yaml-cpp/yaml.h>
-
 /* DRing */
 #include "account_const.h"
 #include "jami/presencemanager_interface.h"
@@ -39,89 +36,241 @@
 
 /* agent */
 #include "agent/agent.h"
-#include "agent/bt.h"
-#include "agent/utils.h"
 
 using usize = size_t;
-using u32 = uint32_t;
 
-#define LOG_AGENT_STATE()        JAMI_INFO("AGENT: In state %s", __FUNCTION__)
-#define AGENT_ERR(FMT, ARGS...)  JAMI_ERR("AGENT: " FMT, ##ARGS)
-#define AGENT_INFO(FMT, ARGS...) JAMI_INFO("AGENT: " FMT, ##ARGS)
-#define AGENT_DBG(FMT, ARGS...)  JAMI_DBG("AGENT: " FMT, ##ARGS)
-#define AGENT_ASSERT(COND, MSG, ARGS...) \
-    if (not(COND)) { \
-        AGENT_ERR(MSG, ##ARGS); \
-        exit(1); \
-    }
+#define LOG_AGENT_STATE() AGENT_DBG("In state %s", __FUNCTION__)
 
 void
-Agent::initBehavior()
+Agent::searchForPeers(std::vector<std::string>& peers)
 {
-    using std::bind;
+    LOG_AGENT_STATE();
 
-    BT::register_behavior("search-peer", bind(&Agent::searchPeer, this));
-    BT::register_behavior("wait", bind(&Agent::wait, this));
-    BT::register_behavior("echo", bind(&Agent::echo, this));
-    BT::register_behavior("make-call", bind(&Agent::makeCall, this));
-    BT::register_behavior("true", bind(&Agent::True, this));
-    BT::register_behavior("false", bind(&Agent::False, this));
-    BT::register_behavior("start-log-recording", bind(&Agent::startLogRecording, this));
-    BT::register_behavior("stop-log-recording", bind(&Agent::stopLogRecording, this));
+    for (auto it = peers.begin(); it != peers.end(); ++it) {
+        DRing::sendTrustRequest(accountID_, it->c_str());
+        DRing::subscribeBuddy(accountID_, it->c_str(), true);
+    }
+}
+
+bool
+Agent::ping(const std::string& conversation)
+{
+    LOG_AGENT_STATE();
+
+    auto cv = std::make_shared<std::condition_variable>();
+    auto pongReceived = std::make_shared<std::atomic_bool>(false);
+
+    std::string alphabet = "0123456789ABCDEF";
+    std::string messageSent;
+
+    for (usize i = 0; i < 16; ++i) {
+        messageSent.push_back(alphabet[rand() % alphabet.size()]);
+    }
+
+    onMessageReceived_.add([=](const std::string& accountID,
+                               const std::string& conversationID,
+                               std::map<std::string, std::string> message) {
+        (void) accountID;
+        (void) conversationID;
+        (void) message;
+
+        if ("text/plain" != message.at("type")) {
+            return true;
+        }
+
+        auto msg = message.at("body");
+
+        if (pongReceived->load()) {
+            return false;
+        }
+
+        if (conversationID == conversation and message.at("author") != peerID_
+            and msg == "PONG:" + messageSent) {
+            *pongReceived = true;
+            cv->notify_one();
+            return false;
+        }
+
+        return true;
+    });
+
+    AGENT_INFO("Sending ping `%s` to `%s`", messageSent.c_str(), conversation.c_str());
+
+    DRing::sendMessage(accountID_, conversation, messageSent, "");
+
+    /* Waiting for echo */
+
+    std::mutex mutex;
+    std::unique_lock<std::mutex> lck(mutex);
+
+    bool ret = std::cv_status::no_timeout == cv->wait_for(lck, std::chrono::seconds(30))
+               and pongReceived->load();
+
+    AGENT_INFO("Pong %s", ret ? "received" : "missing");
+
+    return ret;
+}
+
+std::string
+Agent::someContact() const
+{
+    auto members = DRing::getConversationMembers(accountID_, someConversation());
+
+    std::string uri("?");
+
+    for (const auto& member : members) {
+        if (member.at("uri") != peerID_) {
+            uri = member.at("uri");
+            break;
+        }
+    }
+
+    return uri;
+}
+
+std::string
+Agent::someConversation() const
+{
+    if (conversations_.empty()) {
+        return "?";
+    }
+
+    auto it = conversations_.begin();
+
+    std::advance(it, rand() % conversations_.size());
+
+    return *it;
+}
+
+bool
+Agent::placeCall(const std::string& contact)
+{
+    LOG_AGENT_STATE();
+
+    auto cv = std::make_shared<std::condition_variable>();
+
+    auto callID = DRing::placeCall(accountID_, contact);
+    auto success = std::make_shared<std::atomic<bool>>(false);
+    auto over = std::make_shared<std::atomic<bool>>(false);
+
+    if (callID.empty()) {
+        return false;
+    }
+
+    onCallStateChanged_.add([=](const std::string& call_id, const std::string& state, signed code) {
+
+        AGENT_INFO("[call:%s] In state %s : %d", callID.c_str(), state.c_str(), code);
+
+        if (call_id != callID) {
+            return true;
+        }
+
+        if ("CURRENT" == state) {
+            success->store(true);
+            cv->notify_one();
+        }
+
+        if ("FAILURE" == state) {
+            cv->notify_one();
+        }
+
+        if ("OVER" == state) {
+            over->store(true);
+            cv->notify_one();
+            return false;
+        }
+
+        return true;
+    });
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lck {mtx};
+
+    AGENT_INFO("Waiting for call %s", callID.c_str());
+
+    /* TODO - Parametize me */
+    cv->wait_for(lck, std::chrono::seconds(30));
+
+    if (success->load()) {
+        AGENT_INFO("[call:%s] to %s: SUCCESS", callID.c_str(), contact.c_str());
+        DRing::hangUp(callID);
+    } else {
+        AGENT_INFO("[call:%s] to %s: FAIL", callID.c_str(), contact.c_str());
+    }
+
+    if (not over->load()) {
+        cv->wait_for(lck, std::chrono::seconds(30), [=] { return over->load(); });
+    }
+
+    return success->load();
 }
 
 void
-Agent::configure(const std::string& yaml_config)
+Agent::wait(std::chrono::seconds period)
 {
-    std::ifstream file = std::ifstream(yaml_config);
+    LOG_AGENT_STATE();
 
-    AGENT_ASSERT(file.is_open(), "Failed to open configuration file `%s`", yaml_config.c_str());
+    std::this_thread::sleep_for(period);
+}
 
-    YAML::Node node = YAML::Load(file);
+void
+Agent::setDetails(const std::map<std::string, std::string>& details)
+{
+    LOG_AGENT_STATE();
 
-    auto context = node["record-context"];
+    DRing::setAccountActive(accountID_, false);
 
-    if (context.IsScalar()) {
-        context_ = context.as<std::string>();
+    auto cv = std::make_shared<std::condition_variable>();
+    auto cont = std::make_shared<std::atomic<bool>>(true);
+
+    std::string info("Setting details:\n");
+
+    for (const auto& [key, value] : details) {
+        info += key + " = " + value + "\n";
     }
 
-    auto to = node["record-to"];
+    AGENT_INFO("%s", info.c_str());
 
-    if (to.IsScalar()) {
-        recordTo_ = to.as<std::string>();
-    }
+    DRing::setAccountDetails(accountID_, details);
 
-    auto peers = node["peers"];
+    DRing::setAccountActive(accountID_, true);
 
-    AGENT_ASSERT(peers.IsSequence(), "Configuration node `peers` must be a sequence");
+    waitForAnnouncement();
+}
 
-    for (const auto& peer : peers) {
-        peers_.emplace_back(peer.as<std::string>());
-    }
+void
+Agent::exportToArchive(const std::string& path)
+{
+    AGENT_ASSERT(DRing::exportToFile(accountID_,
+                                     path),
+                 "Failed to export account to `%s`", path.c_str());
+}
 
-    root_ = BT::from_yaml(node["behavior"]);
+void
+Agent::importFromArchive(const std::string& path)
+{
+    std::map<std::string, std::string> details;
 
-    /* params */
-    auto params = node["params"];
+    details[DRing::Account::ConfProperties::TYPE] = "RING";
+    details[DRing::Account::ConfProperties::DISPLAYNAME] = "AGENT";
+    details[DRing::Account::ConfProperties::ALIAS] = "AGENT";
+    details[DRing::Account::ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[DRing::Account::ConfProperties::ARCHIVE_PIN] = "";
+    details[DRing::Account::ConfProperties::ARCHIVE_PATH] = path;
 
-    if (params) {
-        auto accountID_details = DRing::getAccountDetails(accountID_);
-        assert(params.IsSequence());
-        for (const auto& param : params) {
-            assert(param.IsSequence());
-            for (const auto& details : param) {
-                assert(details.IsMap());
-                for (const auto& detail : details) {
-                    auto first = detail.first.as<std::string>();
-                    auto second = detail.second.as<std::string>();
-                    accountID_details["Account." + first] = second;
-                }
-            }
-            params_.emplace_back([this, accountID_details = std::move(accountID_details)] {
-                DRing::setAccountDetails(accountID_, accountID_details);
-            });
-        }
-    }
+    AGENT_ASSERT(accountID_ == DRing::addAccount(details, accountID_), "Bad accountID");
+
+    details = DRing::getAccountDetails(accountID_);
+
+    waitForAnnouncement();
+
+    AGENT_ASSERT("AGENT" == details.at(DRing::Account::ConfProperties::DISPLAYNAME),
+                 "Bad display name");
+
+    peerID_ = details.at(DRing::Account::ConfProperties::USERNAME);
+    conversations_ = DRing::getConversations(accountID_);
+
+    AGENT_INFO("Using account %s - %s", accountID_.c_str(), peerID_.c_str());
 }
 
 void
@@ -140,22 +289,28 @@ Agent::ensureAccount()
         details[DRing::Account::ConfProperties::ARCHIVE_PATH] = "";
 
         AGENT_ASSERT(accountID_ == DRing::addAccount(details, accountID_), "Bad accountID");
-
-        wait_for_announcement_of(accountID_);
-
-        details = DRing::getAccountDetails(accountID_);
     }
+
+    waitForAnnouncement();
+
+    details = DRing::getAccountDetails(accountID_);
 
     AGENT_ASSERT("AGENT" == details.at(DRing::Account::ConfProperties::DISPLAYNAME),
                  "Bad display name");
 
     peerID_ = details.at(DRing::Account::ConfProperties::USERNAME);
+    conversations_ = DRing::getConversations(accountID_);
+
+    AGENT_INFO("Using account %s - %s", accountID_.c_str(), peerID_.c_str());
 }
 
-void
-Agent::getConversations()
+
+Agent&
+Agent::instance()
 {
-    conversations_ = DRing::getConversations(accountID_);
+    static Agent agent;
+
+    return agent;
 }
 
 void
@@ -216,8 +371,19 @@ Agent::installSignalHandlers()
              _2,
              _3)));
 
-    handlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::MessageSend>(
-        bind(&Agent::onLogging, this, _1)));
+    handlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::RegistrationStateChanged>(
+        bind(&Agent::Handler<const std::string&, const std::string&, int, const std::string&>::execute,
+             &onRegistrationStateChanged_,
+             _1,
+             _2,
+             _3,
+             _4)));
+
+    handlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+                        bind(&Agent::Handler<const std::string&, const std::map<std::string, std::string>&>::execute,
+                             &onVolatileDetailsChanged_,
+                             _1,
+                             _2)));
 
     DRing::registerSignalHandlers(handlers);
 }
@@ -232,7 +398,18 @@ Agent::registerStaticCallbacks()
         (void) accountID;
         (void) peerDisplayName;
 
-        AGENT_INFO("Incoming call from `%s`", peerDisplayName.c_str());
+        std::string medias("");
+
+        for (const auto& media : mediaList) {
+            for (const auto& [key, value] : media) {
+                medias += key + "=" + value + "\n";
+            }
+        }
+
+        AGENT_INFO("Incoming call `%s` from `%s` with medias:\n`%s`",
+                   callID.c_str(),
+                   peerDisplayName.c_str(),
+                   medias.c_str());
 
         AGENT_ASSERT(DRing::acceptWithMedia(callID, mediaList),
                      "Failed to accept call `%s`",
@@ -263,7 +440,10 @@ Agent::registerStaticCallbacks()
         AGENT_INFO("Incomming message `%s` from %s", msg.c_str(), author.c_str());
 
         /* Echo back */
-        DRing::sendMessage(accountID_, conversationID, msg, "");
+        const char* pong = "PONG:";
+        if (0 != strncmp(msg.c_str(), pong, strlen(pong))) {
+            DRing::sendMessage(accountID_, conversationID, "PONG:" + msg, "");
+        }
 
         return true;
     });
@@ -296,272 +476,51 @@ Agent::registerStaticCallbacks()
 }
 
 void
-Agent::onLogging(const std::string& message)
+Agent::waitForAnnouncement(std::chrono::seconds timeout)
 {
-    for (const auto& [context, logger] : loggers_) {
-        logger->pushMessage(message);
-    }
-}
-
-bool
-Agent::searchPeer()
-{
-    LOG_AGENT_STATE();
-
-    std::set<std::string> peers;
-
-    /* Prune contacts already friend with */
-    for (auto it = peers_.begin(); it != peers_.end(); ++it) {
-        bool prune = false;
-        for (const auto& conv : conversations_) {
-            if (conv == *it) {
-                prune = true;
-                break;
-            }
-        }
-        if (not prune) {
-            peers.emplace(*it);
-        }
-    }
-
     auto cv = std::make_shared<std::condition_variable>();
 
-    for (auto it = peers.begin(); it != peers.end(); ++it) {
-        DRing::sendTrustRequest(accountID_, it->c_str());
-        DRing::subscribeBuddy(accountID_, it->c_str(), true);
-    }
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
 
-    if (conversations_.size()) {
-        return true;
-    }
+    onVolatileDetailsChanged_.add([=](const std::string& accountID,
+                                      const std::map<std::string, std::string>& details) {
 
-    onContactAdded_.add([=](const std::string&, const std::string&, bool) {
-        if (conversations_.size()) {
-            cv->notify_one();
-            return false;
-        }
-        return true;
+                    if (accountID_ != accountID) {
+                        return true;
+                    }
+
+                    try {
+                        if ("true"
+                            != details.at(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED)) {
+                            return true;
+                        }
+                    } catch (const std::out_of_range&) {
+                        return true;
+                    }
+
+                    cv->notify_one();
+
+                    return false;
     });
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lck(mtx);
-
-    cv->wait(lck);
-
-    return true;
+    AGENT_ASSERT(std::cv_status::no_timeout == cv->wait_for(lk, timeout),
+                 "Timeout while waiting for account announcement on DHT");
 }
 
 void
-Agent::run(const std::string& yaml_config)
+Agent::init()
 {
-    static Agent agent;
+    LOG_AGENT_STATE();
 
-    agent.initBehavior();
-    agent.ensureAccount();
-    agent.configure(yaml_config);
-    agent.getConversations();
-    agent.installSignalHandlers();
-    agent.registerStaticCallbacks();
-
-    if (agent.params_.size()) {
-        while (true) {
-            for (auto& cb : agent.params_) {
-                cb();
-                (*agent.root_)();
-            }
-        }
-    } else {
-        while ((*agent.root_) ()) {
-            /* Until root fails */
-        }
-    }
+    installSignalHandlers();
+    registerStaticCallbacks();
 }
 
-/* Helper start here */
 void
-Agent::sendMessage(const std::string& to, const std::string& msg)
-{
-    auto parent = "";
-
-    DRing::sendMessage(accountID_, to, msg, parent);
-}
-
-/* Behavior start here */
-
-bool
-Agent::startLogRecording()
-{
-    class FileHandler : public LogHandler
-    {
-        std::ofstream out;
-
-    public:
-        FileHandler(const std::string& context, const std::string& to)
-            : LogHandler(context)
-            , out(to)
-        {}
-
-        virtual void pushMessage(const std::string& message) override
-        {
-            out << context_ << message << std::endl;
-        }
-
-        virtual void flush() override { out.flush(); }
-    };
-
-    loggers_[context_] = std::make_unique<FileHandler>(context_, recordTo_);
-
-    setMonitorLog(true);
-
-    return true;
-}
-
-bool
-Agent::stopLogRecording()
+Agent::fini()
 {
     LOG_AGENT_STATE();
 
-    if (not loggers_.empty()) {
-        loggers_.erase(context_);
-    }
-
-    if (loggers_.empty()) {
-        setMonitorLog(false);
-    }
-
-    return true;
-}
-
-bool
-Agent::echo()
-{
-    LOG_AGENT_STATE();
-
-    if (conversations_.empty()) {
-        return false;
-    }
-
-    auto it = conversations_.begin();
-
-    std::advance(it, rand() % conversations_.size());
-
-    auto cv = std::make_shared<std::condition_variable>();
-    auto pongReceived = std::make_shared<std::atomic_bool>(false);
-    auto to = *it;
-
-    std::string alphabet = "0123456789ABCDEF";
-    std::string messageSent;
-
-    onMessageReceived_.add([=](const std::string& accountID,
-                               const std::string& conversationID,
-                               std::map<std::string, std::string> message) {
-        (void) accountID;
-        (void) conversationID;
-        (void) message;
-        (void) conversationID;
-
-        if ("text/plain" != message.at("type")) {
-            return true;
-        }
-
-        auto msg = message.at("body");
-
-        if (pongReceived->load()) {
-            return false;
-        }
-
-        if (to == message.at("author") and msg == messageSent) {
-            *pongReceived = true;
-            cv->notify_one();
-            return false;
-        }
-
-        return true;
-    });
-
-    /* Sending msg */
-    for (usize i = 0; i < 16; ++i) {
-        messageSent.push_back(alphabet[rand() % alphabet.size()]);
-    }
-
-    sendMessage(*it, messageSent);
-
-    /* Waiting for echo */
-
-    std::mutex mutex;
-    std::unique_lock<std::mutex> lck(mutex);
-
-    bool ret = std::cv_status::no_timeout == cv->wait_for(lck, std::chrono::seconds(30))
-               and pongReceived->load();
-
-    return ret;
-}
-
-bool
-Agent::makeCall()
-{
-    LOG_AGENT_STATE();
-
-    if (conversations_.empty()) {
-        return false;
-    }
-
-    auto it = conversations_.begin();
-
-    std::advance(it, rand() % conversations_.size());
-
-    auto cv = std::make_shared<std::condition_variable>();
-
-    onCallStateChanged_.add([=](const std::string&, const std::string& state, signed) {
-        if ("CURRENT" == state) {
-            cv->notify_one();
-            return false;
-        }
-
-        if ("OVER" == state) {
-            return false;
-        }
-
-        return true;
-    });
-
-    auto members = DRing::getConversationMembers(accountID_, *it);
-
-    std::string uri;
-
-    for (const auto& member : members) {
-        if (member.at("uri") != peerID_) {
-            uri = member.at("uri");
-            break;
-        }
-    }
-
-    if (uri.empty()) {
-        return false;
-    }
-
-    auto callID = DRing::placeCall(accountID_, uri);
-
-    bool ret = true;
-
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lck {mtx};
-
-    if (std::cv_status::timeout == cv->wait_for(lck, std::chrono::seconds(30))) {
-        ret = false;
-    }
-
-    DRing::hangUp(callID);
-
-    return ret;
-}
-
-bool
-Agent::wait()
-{
-    LOG_AGENT_STATE();
-
-    std::this_thread::sleep_for(std::chrono::seconds(30));
-
-    return true;
+    DRing::unregisterSignalHandlers();
 }
