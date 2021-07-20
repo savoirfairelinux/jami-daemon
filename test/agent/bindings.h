@@ -20,19 +20,8 @@
 
 #pragma once
 
-#include <string>
+#include <libguile.h>
 
-class LogHandler
-{
-protected:
-    std::string context_;
+#define scm_to_cxx_string(VAR) (scm_to_cxx_string)(VAR, #VAR)
 
-public:
-    LogHandler(const std::string& context)
-        : context_(context)
-    {}
-    virtual ~LogHandler() = default;
-
-    virtual void pushMessage(const std::string& message) = 0;
-    virtual void flush() = 0;
-};
+extern void install_scheme_primitives();
