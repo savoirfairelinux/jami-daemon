@@ -153,6 +153,8 @@ private:
     void testUpdateProfileWithBadFile();
     void testFetchProfileUnauthorized();
     void testDoNotLoadIncorrectConversation();
+    void testSyncingWhileAccepting();
+    void testGetConversationsMembersWhileSyncing();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -208,6 +210,8 @@ private:
     CPPUNIT_TEST(testUpdateProfileWithBadFile);
     CPPUNIT_TEST(testFetchProfileUnauthorized);
     CPPUNIT_TEST(testDoNotLoadIncorrectConversation);
+    CPPUNIT_TEST(testSyncingWhileAccepting);
+    CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -4330,9 +4334,9 @@ ConversationTest::testDoNotLoadIncorrectConversation()
     auto uri = aliceAccount->getUsername();
     auto convId = aliceAccount->startConversation();
 
-    auto conversations = aliceAccount->getConversations();
-    CPPUNIT_ASSERT(conversations.size() == 1);
-    CPPUNIT_ASSERT(conversations.front() == convId);
+    auto convInfos = aliceAccount->conversationInfos(convId);
+    CPPUNIT_ASSERT(convInfos.find("mode") != convInfos.end());
+    CPPUNIT_ASSERT(convInfos.find("syncing") == convInfos.end());
 
     Manager::instance().sendRegister(aliceId, false);
     auto repoGitPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
@@ -4342,9 +4346,111 @@ ConversationTest::testDoNotLoadIncorrectConversation()
 
     aliceAccount->loadConversations(); // Refresh. This should detect the incorrect conversations.
 
-    // the conv should be detected as invalid and not added
-    conversations = aliceAccount->getConversations();
-    CPPUNIT_ASSERT(conversations.size() == 0);
+    // the conv should be detected as invalid and added as syncing
+    convInfos = aliceAccount->conversationInfos(convId);
+    CPPUNIT_ASSERT(convInfos.find("mode") == convInfos.end());
+    CPPUNIT_ASSERT(convInfos["syncing"] == "true");
+}
+
+void
+ConversationTest::testSyncingWhileAccepting()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false;
+    std::string convId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::string& /*conversationId*/,
+            const std::vector<uint8_t>& /*payload*/,
+            time_t /*received*/) {
+            if (account_id == bobId)
+                requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            } else if (accountId == bobId) {
+                conversationReady = true;
+            }
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+
+    Manager::instance().sendRegister(aliceId, false); // This avoid to sync immediately
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+
+    auto convInfos = bobAccount->conversationInfos(convId);
+    CPPUNIT_ASSERT(convInfos["syncing"] == "true");
+
+    Manager::instance().sendRegister(aliceId, true); // This avoid to sync immediately
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; }));
+
+    convInfos = bobAccount->conversationInfos(convId);
+    CPPUNIT_ASSERT(convInfos.find("syncing") == convInfos.end());
+}
+
+void
+ConversationTest::testGetConversationsMembersWhileSyncing()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false;
+    std::string convId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::string& /*conversationId*/,
+            const std::vector<uint8_t>& /*payload*/,
+            time_t /*received*/) {
+            if (account_id == bobId)
+                requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            } else if (accountId == bobId) {
+                conversationReady = true;
+            }
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+
+    Manager::instance().sendRegister(aliceId, false); // This avoid to sync immediately
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+
+    auto members = bobAccount->getConversationMembers(convId);
+    CPPUNIT_ASSERT(std::find_if(members.begin(),
+                                members.end(),
+                                [&](auto memberInfo) { return memberInfo["uri"] == aliceUri; })
+                   != members.end());
+    CPPUNIT_ASSERT(std::find_if(members.begin(),
+                                members.end(),
+                                [&](auto memberInfo) { return memberInfo["uri"] == bobUri; })
+                   != members.end());
 }
 
 } // namespace test
