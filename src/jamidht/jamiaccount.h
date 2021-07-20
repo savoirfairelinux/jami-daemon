@@ -827,7 +827,6 @@ private:
         std::lock_guard<std::mutex> lk(conversationsMtx_);
         return conversations_.find(convId) != conversations_.end();
     }
-    mutable std::vector<ConvInfo> convInfos_;
 
     mutable std::mutex dhtValuesMtx_;
     bool dhtPublicInCalls_ {true};
