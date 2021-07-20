@@ -1,0 +1,14 @@
+#!/bin/sh
+
+tmp=$(mktemp)
+
+export XDG_CONFIG_HOME=$tmp
+export XDG_CACHE_HOME=$tmp
+export XDG_DATA_HOME=$tmp
+
+archive=$1
+
+./agent - <<EOF
+(agent:ensure-account)
+(agent->archive "${archive}")
+EOF
