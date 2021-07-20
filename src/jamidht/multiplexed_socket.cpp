@@ -699,7 +699,6 @@ public:
     ~Impl() {}
 
     ChannelReadyCb readyCb_ {};
-    OnShutdownCb shutdownCb_ {};
     std::atomic_bool isShutdown_ {false};
     std::string name {};
     uint16_t channel {};
@@ -776,6 +775,10 @@ ChannelSocket::setOnRecv(RecvCb&& cb)
         pimpl_->cb(pimpl_->buf.data(), pimpl_->buf.size());
         pimpl_->buf.clear();
     }
+
+    if (pimpl_->isShutdown_ && pimpl_->cb) {
+        pimpl_->cb({}, 0);
+    }
 }
 
 void
@@ -823,8 +826,8 @@ ChannelSocket::stop()
     if (pimpl_->isShutdown_)
         return;
     pimpl_->isShutdown_ = true;
-    if (pimpl_->shutdownCb_)
-        pimpl_->shutdownCb_();
+    if (pimpl_->cb)
+        pimpl_->cb({}, 0);
     pimpl_->cv.notify_all();
 }
 
@@ -884,15 +887,6 @@ ChannelSocket::waitForData(std::chrono::milliseconds timeout, std::error_code& e
     std::unique_lock<std::mutex> lk {pimpl_->mutex};
     pimpl_->cv.wait_for(lk, timeout, [&] { return !pimpl_->buf.empty() or pimpl_->isShutdown_; });
     return pimpl_->buf.size();
-}
-
-void
-ChannelSocket::onShutdown(OnShutdownCb&& cb)
-{
-    pimpl_->shutdownCb_ = std::move(cb);
-    if (pimpl_->isShutdown_) {
-        pimpl_->shutdownCb_();
-    }
 }
 
 void

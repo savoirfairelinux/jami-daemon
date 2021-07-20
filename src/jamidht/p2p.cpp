@@ -199,6 +199,14 @@ DhtPeerConnector::requestConnection(
             [this, deviceId](const DRing::DataTransferId& id,
                              const DRing::DataTransferEventCode& code) {
                 pimpl_->stateChanged(id, code, deviceId.toString());
+            },
+            [this, tid, onChanneledCancelled, peer = channel->deviceId().toString()] {
+                JAMI_INFO("Channel down for outgoing transfer with id(%lu)", tid);
+                onChanneledCancelled(peer);
+                dht::ThreadPool::io().run([w = pimpl_->weak(), tid, peer] {
+                    if (auto shared = w.lock())
+                        shared->removeOutgoing(tid, peer);
+                });
             });
         if (!outgoingFile)
             return;
@@ -207,14 +215,6 @@ DhtPeerConnector::requestConnection(
             pimpl_->channeledOutgoing_[tid].emplace_back(outgoingFile);
         }
 
-        channel->onShutdown([this, tid, onChanneledCancelled, peer = outgoingFile->peer()]() {
-            JAMI_INFO("Channel down for outgoing transfer with id(%lu)", tid);
-            onChanneledCancelled(peer);
-            dht::ThreadPool::io().run([w = pimpl_->weak(), tid, peer] {
-                if (auto shared = w.lock())
-                    shared->removeOutgoing(tid, peer);
-            });
-        });
         channeledConnectedCb(outgoingFile);
     };
 
@@ -293,23 +293,21 @@ DhtPeerConnector::onIncomingConnection(const DRing::DataTransferInfo& info,
     if (!channel)
         return;
     auto peer_id = info.peer;
-    auto incomingFile = std::make_unique<ChanneledIncomingTransfer>(
-        channel,
-        std::make_shared<FtpServer>(info, id, std::move(cb)),
-        [this, peer_id](const DRing::DataTransferId& id, const DRing::DataTransferEventCode& code) {
-            pimpl_->stateChanged(id, code, peer_id);
-        });
-    {
-        std::lock_guard<std::mutex> lk(pimpl_->channeledIncomingMtx_);
-        pimpl_->channeledIncoming_[id].emplace_back(std::move(incomingFile));
-    }
-    channel->onShutdown([this, id, peer_id]() {
-        JAMI_INFO("Channel down for incoming transfer with id(%lu)", id);
-        dht::ThreadPool::io().run([w = pimpl_->weak(), id, peer_id] {
-            if (auto shared = w.lock())
-                shared->removeIncoming(id, peer_id);
-        });
-    });
+    std::lock_guard<std::mutex> lk(pimpl_->channeledIncomingMtx_);
+    pimpl_->channeledIncoming_[id].emplace_back(
+        std::make_unique<ChanneledIncomingTransfer>(
+            channel,
+            std::make_shared<FtpServer>(info, id, std::move(cb)),
+            [this, peer_id](const DRing::DataTransferId& id, const DRing::DataTransferEventCode& code) {
+                pimpl_->stateChanged(id, code, peer_id);
+            },
+            [this, id, peer_id]() {
+                JAMI_INFO("Channel down for incoming transfer with id(%lu)", id);
+                dht::ThreadPool::io().run([w = pimpl_->weak(), id, peer_id] {
+                    if (auto shared = w.lock())
+                        shared->removeIncoming(id, peer_id);
+                });
+            }));
 }
 
 } // namespace jami

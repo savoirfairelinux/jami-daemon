@@ -151,13 +151,12 @@ FileTransferTest::testFileTransfer()
                 && code == static_cast<int>(DRing::DataTransferEventCode::wait_host_acceptance)) {
                 transferWaiting = true;
                 finalId = fileId;
-                cv.notify_one();
             } else if (accountId == aliceId
                        && code == static_cast<int>(DRing::DataTransferEventCode::finished)) {
                 transferFinished = true;
                 finalId = fileId;
-                cv.notify_one();
             }
+            cv.notify_one();
         }));
     DRing::registerSignalHandlers(confHandlers);
 
@@ -177,16 +176,12 @@ FileTransferTest::testFileTransfer()
     info.bytesProgress = 0;
     CPPUNIT_ASSERT(DRing::sendFileLegacy(info, id) == DRing::DataTransferError::success);
 
-    cv.wait_for(lk, std::chrono::seconds(30));
-    CPPUNIT_ASSERT(transferWaiting);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return transferWaiting; }));
 
     CPPUNIT_ASSERT(DRing::acceptFileTransfer(bobId, finalId, recvPath)
                    == DRing::DataTransferError::success);
 
-    // Wait 2 times, both sides will got a finished status
-    cv.wait_for(lk, std::chrono::seconds(30));
-    cv.wait_for(lk, std::chrono::seconds(30));
-    CPPUNIT_ASSERT(transferFinished);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return transferFinished; }));
 
     CPPUNIT_ASSERT(compare(info.path, recvPath));
 
@@ -194,8 +189,7 @@ FileTransferTest::testFileTransfer()
     // when stopping the daemon and removing the accounts to soon.
     std::remove(sendPath.c_str());
     std::remove(recvPath.c_str());
-    JAMI_INFO("Waiting....");
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    DRing::unregisterSignalHandlers();
 }
 
 void
@@ -292,8 +286,7 @@ FileTransferTest::testDataTransferInfo()
     // when stopping the daemon and removing the accounts to soon.
     std::remove(sendPath.c_str());
     std::remove(recvPath.c_str());
-    JAMI_INFO("Waiting....");
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    DRing::unregisterSignalHandlers();
 }
 
 void
@@ -395,8 +388,7 @@ FileTransferTest::testMultipleFileTransfer()
     std::remove(sendPath2.c_str());
     std::remove(recvPath.c_str());
     std::remove(recv2Path.c_str());
-    JAMI_INFO("Waiting....");
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    DRing::unregisterSignalHandlers();
 }
 
 void
@@ -1196,7 +1188,6 @@ FileTransferTest::testTransferInfo()
     std::remove(sendPath.c_str());
     std::remove(recvPath.c_str());
     DRing::unregisterSignalHandlers();
-    std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
 } // namespace test
