@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d906d873_68336560",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 4848,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-07-20T16:42:43Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nthe value returned by this function should be used\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-unused-return-value",
+      "revId": "2fe37b50b2813adf1d87589ae11019016f740206",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
