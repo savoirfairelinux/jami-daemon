@@ -552,7 +552,9 @@ ConnectionManagerTest::testChannelRcvShutdown()
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
-                                                            socket->onShutdown([&] {
+                                                            socket->setOnRecv([&](auto* buf, auto len) {
+                                                                if (len != 0)
+                                                                    return;
                                                                 shutdownReceived = true;
                                                                 cv.notify_one();
                                                             });
@@ -595,7 +597,9 @@ ConnectionManagerTest::testChannelSenderShutdown()
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
             if (socket) {
-                socket->onShutdown([&] {
+                socket->setOnRecv([&](auto* buf, auto len) {
+                    if (len != 0)
+                        return;
                     shutdownReceived = true;
                     scv.notify_one();
                 });
@@ -649,7 +653,9 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
     bobAccount->connectionManager().onConnectionReady(
         [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
             if (socket) {
-                socket->onShutdown([&] {
+                socket->setOnRecv([&](auto* buf, auto len) {
+                    if (len != 0)
+                        return;
                     events += 1;
                     scv.notify_one();
                 });
@@ -662,7 +668,9 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
                                                     [&](std::shared_ptr<ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
-                                                            socket->onShutdown([&] {
+                                                            socket->setOnRecv([&](auto* buf, auto len) {
+                                                                if (len != 0)
+                                                                    return;
                                                                 events += 1;
                                                                 scv.notify_one();
                                                             });
@@ -1164,7 +1172,9 @@ ConnectionManagerTest::testOnNoBeaconTriggersShutdown()
         cv.wait_for(lk, std::chrono::seconds(30), [&] { return aliceSocket && bobSocket; }));
 
     bool isClosed = false;
-    aliceSocket->onShutdown([&] {
+    aliceSocket->setOnRecv([&](auto* buf, auto len) {
+        if (len != 0)
+            return;
         isClosed = true;
         cv.notify_one();
     });

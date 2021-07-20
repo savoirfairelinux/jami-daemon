@@ -834,35 +834,33 @@ IncomingFile::process()
 {
     channel_->setOnRecv([w = weak()](const uint8_t* buf, size_t len) {
         if (auto shared = w.lock()) {
+            if (len == 0) {
+                auto correct = shared->sha3Sum_.empty();
+                if (!correct) {
+                    if (shared->stream_ && shared->stream_.is_open())
+                        shared->stream_.close();
+                    // Verify shaSum
+                    auto sha3Sum = fileutils::sha3File(shared->info_.path);
+                    if (shared->sha3Sum_ == sha3Sum) {
+                        JAMI_INFO() << "New file received: " << shared->info_.path;
+                        correct = true;
+                    } else {
+                        JAMI_WARN() << "Remove file, invalid sha3sum detected for " << shared->info_.path;
+                        fileutils::remove(shared->info_.path, true);
+                    }
+                }
+                if (shared->isUserCancelled_)
+                    return len;
+                auto code = correct ? DRing::DataTransferEventCode::finished
+                                    : DRing::DataTransferEventCode::closed_by_host;
+                shared->emit(code);
+                return len;
+            }
             if (shared->stream_.is_open())
                 shared->stream_.write(reinterpret_cast<const char*>(buf), len);
             shared->info_.bytesProgress = shared->stream_.tellp();
         }
         return len;
-    });
-    channel_->onShutdown([w = weak()] {
-        auto shared = w.lock();
-        if (!shared)
-            return;
-        auto correct = shared->sha3Sum_.empty();
-        if (!correct) {
-            if (shared->stream_ && shared->stream_.is_open())
-                shared->stream_.close();
-            // Verify shaSum
-            auto sha3Sum = fileutils::sha3File(shared->info_.path);
-            if (shared->sha3Sum_ == sha3Sum) {
-                JAMI_INFO() << "New file received: " << shared->info_.path;
-                correct = true;
-            } else {
-                JAMI_WARN() << "Remove file, invalid sha3sum detected for " << shared->info_.path;
-                fileutils::remove(shared->info_.path, true);
-            }
-        }
-        if (shared->isUserCancelled_)
-            return;
-        auto code = correct ? DRing::DataTransferEventCode::finished
-                            : DRing::DataTransferEventCode::closed_by_host;
-        shared->emit(code);
     });
 }
 

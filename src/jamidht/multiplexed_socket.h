@@ -199,10 +199,6 @@ public:
      * Used by ConnectionManager::connectDevice()
      */
     void onReady(ChannelReadyCb&& cb);
-    /**
-     * Will trigger that callback when shutdown() is called
-     */
-    void onShutdown(OnShutdownCb&& cb);
 
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     /**

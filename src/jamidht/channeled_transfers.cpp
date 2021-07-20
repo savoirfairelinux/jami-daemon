@@ -30,8 +30,10 @@
 namespace jami {
 
 ChanneledOutgoingTransfer::ChanneledOutgoingTransfer(const std::shared_ptr<ChannelSocket>& channel,
-                                                     OnStateChangedCb&& cb)
+                                                     OnStateChangedCb&& cb,
+                                                     std::function<void()>&& shutdownCb)
     : stateChangedCb_(cb)
+    , shutdownCb_(shutdownCb)
     , channel_(channel)
 {}
 
@@ -58,7 +60,13 @@ ChanneledOutgoingTransfer::linkTransfer(const std::shared_ptr<Stream>& file)
         return;
     file_ = file;
     channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
-        file_->write(std::string_view((const char*) buf, len));
+        if (len == 0) {
+            if (shutdownCb_) {
+                shutdownCb_();
+            }
+        } else {
+            file_->write(std::string_view((const char*) buf, len));
+        }
         return len;
     });
     file_->setOnRecv([channel = std::weak_ptr<ChannelSocket>(channel_)](std::string_view data) {
@@ -72,12 +80,19 @@ ChanneledOutgoingTransfer::linkTransfer(const std::shared_ptr<Stream>& file)
 
 ChanneledIncomingTransfer::ChanneledIncomingTransfer(const std::shared_ptr<ChannelSocket>& channel,
                                                      const std::shared_ptr<FtpServer>& ftp,
-                                                     OnStateChangedCb&& cb)
+                                                     OnStateChangedCb&& cb,
+                                                     std::function<void()>&& shutdownCb)
     : ftp_(ftp)
     , channel_(channel)
 {
-    channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
-        ftp_->write(std::string_view((const char*) buf, len));
+    channel_->setOnRecv([&](const uint8_t* buf, size_t len) {
+        if (len == 0) {
+            if (shutdownCb) {
+                shutdownCb();
+            }
+        } else {
+            ftp_->write(std::string_view((const char*) buf, len));
+        }
         return len;
     });
     ftp_->setOnRecv([channel = std::weak_ptr<ChannelSocket>(channel_)](std::string_view data) {
