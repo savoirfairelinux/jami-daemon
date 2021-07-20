@@ -781,7 +781,6 @@ private:
     void generateDhParams();
 
     void loadConvInfos();
-    void saveConvInfos() const;
 
     void loadConvRequests();
 
@@ -827,7 +826,6 @@ private:
         std::lock_guard<std::mutex> lk(conversationsMtx_);
         return conversations_.find(convId) != conversations_.end();
     }
-    mutable std::vector<ConvInfo> convInfos_;
 
     mutable std::mutex dhtValuesMtx_;
     bool dhtPublicInCalls_ {true};
@@ -1044,6 +1042,12 @@ private:
      * @return the conversation id if found else empty
      */
     std::string getOneToOneConversation(const std::string& uri) const;
+
+    /**
+     * Add a new ConvInfo
+     * @param id of the conversation
+     */
+    void addNewConversation(const ConvInfo& convInfo);
 
     std::atomic_bool deviceAnnounced_ {false};
 

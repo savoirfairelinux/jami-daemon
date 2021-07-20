@@ -46,7 +46,7 @@ struct AccountInfo
 {
     dht::crypto::Identity identity;
     std::unique_ptr<ContactList> contacts;
-    std::vector<ConvInfo> conversations;
+    std::map<std::string, ConvInfo> conversations;
     std::map<std::string, ConversationRequest> conversationsRequests;
     std::string accountId;
     std::string deviceId;
@@ -222,7 +222,7 @@ public:
     // Conversations
     void saveConvInfos() const;
     void saveConvRequests() const;
-    void setConversations(const std::vector<ConvInfo>& newConv);
+    void setConversations(const std::map<std::string, ConvInfo>& newConv);
     void setConversationMembers(const std::string& convId, const std::vector<std::string>& members);
     void addConversation(const ConvInfo& info);
     void setConversationsRequests(const std::map<std::string, ConversationRequest>& newConvReq);

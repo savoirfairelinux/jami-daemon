@@ -453,7 +453,7 @@ AccountManager::getContacts() const
 }
 
 void
-AccountManager::setConversations(const std::vector<ConvInfo>& newConv)
+AccountManager::setConversations(const std::map<std::string, ConvInfo>& newConv)
 {
     if (info_) {
         info_->conversations = newConv;
@@ -466,11 +466,10 @@ AccountManager::setConversationMembers(const std::string& convId,
                                        const std::vector<std::string>& members)
 {
     if (info_) {
-        for (auto& ci : info_->conversations) {
-            if (ci.id == convId) {
-                ci.members = members;
-                saveConvInfos();
-            }
+        auto convIt = info_->conversations.find(convId);
+        if (convIt != info_->conversations.end()) {
+            convIt->second.members = members;
+            saveConvInfos();
         }
     }
 }
@@ -489,7 +488,7 @@ void
 AccountManager::addConversation(const ConvInfo& info)
 {
     if (info_) {
-        info_->conversations.emplace_back(info);
+        info_->conversations[info.id] = info;
         saveConvInfos();
     }
 }
