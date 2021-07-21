@@ -155,6 +155,7 @@ private:
     void testDoNotLoadIncorrectConversation();
     void testSyncingWhileAccepting();
     void testGetConversationsMembersWhileSyncing();
+    void testRemoveContactRemoveSyncing();
     void testCountInteractionsSince();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
@@ -213,6 +214,7 @@ private:
     CPPUNIT_TEST(testDoNotLoadIncorrectConversation);
     CPPUNIT_TEST(testSyncingWhileAccepting);
     CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
+    CPPUNIT_TEST(testRemoveContactRemoveSyncing);
     CPPUNIT_TEST(testCountInteractionsSince);
     CPPUNIT_TEST_SUITE_END();
 };
@@ -4499,6 +4501,52 @@ ConversationTest::testGetConversationsMembersWhileSyncing()
                                 members.end(),
                                 [&](auto memberInfo) { return memberInfo["uri"] == bobUri; })
                    != members.end());
+}
+
+void
+ConversationTest::testRemoveContactRemoveSyncing()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false;
+    std::string convId = "";
+    confHandlers.insert(DRing::exportable_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(
+        [&](const std::string& account_id,
+            const std::string& /*from*/,
+            const std::string& convId,
+            const std::vector<uint8_t>& /*payload*/,
+            time_t /*received*/) {
+            if (account_id == bobId && !convId.empty())
+                requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            } else if (accountId == bobId) {
+                conversationReady = true;
+            }
+            cv.notify_one();
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+
+    Manager::instance().sendRegister(aliceId, false); // This avoid to sync immediately
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+
+    CPPUNIT_ASSERT(bobAccount->getConversations().size() == 1);
+    bobAccount->removeContact(aliceUri, false);
+
+    CPPUNIT_ASSERT(bobAccount->getConversations().size() == 0);
 }
 
 void
