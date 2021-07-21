@@ -71,17 +71,21 @@ void closelog(void)
     free(loghdr);
 }
 
-/* Emulator for GNU vsyslog() routine
+/* Emulator for GNU syslog() routine
  * Accepts: priority
  *      format
  *      arglist
  */
 // TODO: use a real EventIdentifier with a Message Text file ?
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa363679%28v=vs.85%29.aspx
- void vsyslog(int level, const char* format, va_list arglist)
+void syslog(int level, const char* format, ...)
  {
     CONST CHAR *arr[1];
     char tmp[1024];
+
+    va_list arglist;
+
+    va_start(arglist, format);
 
     vsnprintf(tmp, 1024, format, arglist);
 
@@ -96,6 +100,8 @@ void closelog(void)
         puts(getLastErrorText(errText, 1024));
     }
 #endif
+
+    va_end(arglist);
 }
 
 /* Emulator for BSD openlog() routine
