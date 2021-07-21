@@ -68,6 +68,13 @@ DRING_PUBLIC bool start(const std::string& config_file = {}) noexcept;
  */
 DRING_PUBLIC void fini() noexcept;
 
+/**
+ * Multiplex logging to file.
+ *
+ * @param to  Path of the file to write to or %nullptr for stop logging to file.
+ */
+DRING_PUBLIC void logging(const char* to) noexcept;
+
 /* External Callback Dynamic Utilities
  *
  * The library provides to users a way to be acknowledged

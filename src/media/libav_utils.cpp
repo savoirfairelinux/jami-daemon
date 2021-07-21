@@ -188,8 +188,7 @@ init_once()
     av_lockmgr_register(avcodecManageMutex);
 #endif
 
-    if (getDebugMode())
-        setAvLogLevel();
+    setAvLogLevel();
 
 #ifdef __ANDROID__
     // android doesn't like stdout and stderr :(
