@@ -4176,6 +4176,18 @@ JamiAccount::loadConversationMessages(const std::string& conversationId,
     return id;
 }
 
+uint32_t
+JamiAccount::countInteractionsSince(const std::string& convId,
+                                    const std::string& interactionId) const
+{
+    std::lock_guard<std::mutex> lk(conversationsMtx_);
+    auto conversation = conversations_.find(convId);
+    if (conversation != conversations_.end() && conversation->second) {
+        return conversation->second->countInteractionsSince(interactionId);
+    }
+    return 0;
+}
+
 void
 JamiAccount::onNewGitCommit(const std::string& peer,
                             const std::string& deviceId,
@@ -4194,6 +4206,18 @@ JamiAccount::onNewGitCommit(const std::string& peer,
              conversationId.c_str(),
              commitId.c_str());
     fetchNewCommits(peer, deviceId, conversationId, commitId);
+}
+
+void
+JamiAccount::onMessageDisplayed(const std::string& peer,
+                                const std::string& conversationId,
+                                const std::string& interactionId)
+{
+    std::unique_lock<std::mutex> lk(conversationsMtx_);
+    auto conversation = conversations_.find(conversationId);
+    if (conversation != conversations_.end() && conversation->second) {
+        conversation->second->setMessageDisplayed(peer, interactionId);
+    }
 }
 
 void

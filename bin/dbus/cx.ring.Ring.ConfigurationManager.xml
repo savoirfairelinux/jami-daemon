@@ -1787,6 +1787,17 @@
            <arg type="u" name="id" direction="out"/>
        </method>
 
+       <method name="countInteractionsSince" tp:name-for-bindings="countInteractionsSince">
+           <tp:added version="10.0.0"/>
+           <tp:docstring>
+               Get how many messages there is since an interaction ("" for initial commit)
+           </tp:docstring>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="conversationId" direction="in"/>
+           <arg type="s" name="interactionId" direction="in"/>
+           <arg type="u" name="count" direction="out"/>
+       </method>
+
        <signal name="mediaParametersChanged" tp:name-for-bindings="mediaParametersChanged">
            <tp:added version="2.3.0"/>
            <tp:docstring>
