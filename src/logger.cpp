@@ -34,18 +34,23 @@
 #endif
 
 #include <atomic>
+#include <functional>
 #include <string>
 #include <sstream>
 #include <iomanip>
 #include <ios>
 #include <mutex>
+#include <shared_mutex>
 #include <thread>
 #include <array>
 
+#include <opendht/thread_pool.h>
+
 #include "logger.h"
 
-#ifdef __linux__
 #include <syslog.h>
+
+#ifdef __linux__
 #include <unistd.h>
 #include <sys/syscall.h>
 #endif // __linux__
@@ -86,25 +91,24 @@
 #define LOGFILE "jami"
 
 #ifdef RING_UWP
-static constexpr auto ENDL = "";
+static constexpr auto ENDL = '\0';
 #else
-static constexpr auto ENDL = "\n";
+static constexpr auto ENDL = '\n';
 #endif
-
-static int consoleLog;
-static std::atomic_bool monitorLog;
-static int debugMode;
-static std::mutex logMutex;
 
 // extract the last component of a pathname (extract a filename from its dirname)
 static const char*
 stripDirName(const char* path)
 {
 #ifdef _MSC_VER
-    return strrchr(path, '\\') ? strrchr(path, '\\') + 1 : path;
+    static constexpr auto path_separator = '\\';
 #else
-    return strrchr(path, '/') ? strrchr(path, '/') + 1 : path;
+    static constexpr auto path_separator = '/';
 #endif
+
+    const char* occur = strrchr(path, path_separator);
+
+    return  occur ? occur + 1 : path;
 }
 
 static std::string
@@ -148,46 +152,6 @@ contextHeader(const char* const file, int line)
     return out.str();
 }
 
-void
-setConsoleLog(int c)
-{
-    if (c)
-        ::closelog();
-    else {
-#ifdef _WIN32
-        ::openlog(LOGFILE, WINLOG_PID, WINLOG_MAIL);
-#else
-        ::openlog(LOGFILE, LOG_NDELAY, LOG_USER);
-#endif /* _WIN32 */
-    }
-
-    consoleLog = c;
-}
-
-void
-setDebugMode(int d)
-{
-    debugMode = d;
-}
-
-void
-setMonitorLog(bool m)
-{
-    monitorLog.store(m);
-}
-
-int
-getDebugMode(void)
-{
-    return debugMode;
-}
-
-bool
-getMonitorLog(void)
-{
-    return monitorLog.load();
-}
-
 static const char*
 check_error(int result, char* buffer)
 {
@@ -222,106 +186,396 @@ strErr(void)
 
 namespace jami {
 
-void
-Logger::log(int level, const char* file, int line, bool linefeed, const char* const format, ...)
-{
-#if defined(TARGET_OS_IOS) && TARGET_OS_IOS
-    if (!debugMode && !monitorLog.load())
-        return;
-#endif
-    if (!debugMode && !monitorLog.load() && level == LOG_DEBUG)
-        return;
-
-    va_list ap;
-    va_start(ap, format);
-    va_list cp;
-
-    bool withMonitor = monitorLog.load();
-
-    if (withMonitor)
-        va_copy(cp, ap);
-#ifdef __ANDROID__
-    __android_log_vprint(level, APP_NAME, format, ap);
-#else
-    Logger::vlog(level, file, line, linefeed, format, ap);
-#endif
-
-    if (withMonitor) {
-        std::array<char, 4096> tmp;
-        vsnprintf(tmp.data(), tmp.size(), format, cp);
-        jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(contextHeader(file, line)
-                                                                  + tmp.data());
+struct BufDeleter {
+    void operator()(char *ptr) {
+        if (ptr) {
+            free(ptr);
+        }
     }
-    va_end(ap);
+};
+
+struct Logger::Msg
+{
+    Msg() = delete;
+
+    Msg(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
+        : header_(contextHeader(file, line)),
+          level_(level),
+          linefeed_(linefeed)
+        {
+            /* A good guess of what we might encounter. */
+            static constexpr size_t default_buf_size = 80;
+
+            char* buf = (char*) malloc(default_buf_size);
+            int buf_size = default_buf_size;
+            va_list cp;
+
+            /* Necessary if we don't have enough space in buf. */
+            va_copy(cp, ap);
+
+            int size = vsnprintf(buf, buf_size, fmt, ap);
+
+            /* Not enough space?  Well try again. */
+            if (size >= buf_size) {
+                buf_size = size + 1;
+                buf = (char*) realloc(buf, buf_size);
+                vsnprintf(buf, buf_size, fmt, cp);
+            }
+
+            payload_.reset(buf);
+
+            va_end(cp);
+        }
+
+    Msg(Msg&& other) {
+        payload_.reset(other.payload_.release());
+        header_ = std::move(other.header_);
+        level_ = other.level_;
+        linefeed_ = other.linefeed_;
+    }
+
+    std::unique_ptr<char, BufDeleter> payload_;
+    std::string header_;
+    int level_;
+    bool linefeed_;
+};
+
+class Logger::Handler
+{
+public:
+    virtual ~Handler() = default;
+
+    virtual void consume(Msg& msg) = 0;
+
+    void enable(bool en) { enabled_.store(en); }
+    bool enable() { return enabled_.load(); }
+
+private:
+    std::atomic<bool> enabled_;
+};
+
+static std::shared_ptr<Logger::Handler> consoleHandler;
+static std::shared_ptr<Logger::Handler> syslogHandler;
+static std::shared_ptr<Logger::Handler> monitorHandler;
+static std::shared_ptr<Logger::Handler> fileHandler;
+
+void
+Logger::setConsoleLog(bool en)
+{
+    class ConsoleLog : public jami::Logger::Handler
+    {
+    public:
+        virtual void consume(jami::Logger::Msg& msg) override
+        {
+            /* TODO - This is ugly.  Refactor with portable wrappers. */
+#ifndef _WIN32
+            const char* color_header = CYAN;
+            const char* color_prefix = "";
+#else
+            WORD color_prefix = LIGHT_GREEN;
+            WORD color_header = CYAN;
+#endif
+#if defined(_WIN32) && !defined(RING_UWP)
+            HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+            CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+            WORD saved_attributes;
+#endif
+
+            switch (msg.level_) {
+            case LOG_ERR:
+                color_prefix = RED;
+                break;
+
+            case LOG_WARNING:
+                color_prefix = YELLOW;
+                break;
+            }
+
+#ifndef _WIN32
+            fputs(color_header, stderr);
+#elif !defined(RING_UWP)
+            GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
+            saved_attributes = consoleInfo.wAttributes;
+            SetConsoleTextAttribute(hConsole, color_header);
+#endif
+            fputs(msg.header_.c_str(), stderr);
+#ifndef _WIN32
+            fputs(END_COLOR, stderr);
+            fputs(color_prefix, stderr);
+#elif !defined(RING_UWP)
+            SetConsoleTextAttribute(hConsole, saved_attributes);
+            SetConsoleTextAttribute(hConsole, color_prefix);
+#endif
+
+            fputs(msg.payload_.get(), stderr);
+
+            if (msg.linefeed_) {
+                putc(ENDL, stderr);
+            }
+
+#ifndef _WIN32
+            fputs(END_COLOR, stderr);
+#elif !defined(RING_UWP)
+            SetConsoleTextAttribute(hConsole, saved_attributes);
+#endif
+        }
+    };
+
+    if (not consoleHandler) {
+        consoleHandler = std::make_shared<ConsoleLog>();
+    }
+
+    consoleHandler->enable(en);
 }
 
 void
-Logger::vlog(
-    const int level, const char* file, int line, bool linefeed, const char* format, va_list ap)
+Logger::setSysLog(bool en)
 {
-#if defined(TARGET_OS_IOS) && TARGET_OS_IOS
-    if (!debugMode)
-        return;
-#endif
-    if (!debugMode && level == LOG_DEBUG)
-        return;
-
-    // syslog is supposed to thread-safe, but not all implementations (Android?)
-    // follow strictly POSIX rules... so we lock our mutex in any cases.
-    std::lock_guard<std::mutex> lk {logMutex};
-
-    if (consoleLog or monitorLog.load()) {
-#ifndef _WIN32
-        const char* color_header = CYAN;
-        const char* color_prefix = "";
+    class SysLog : public jami::Logger::Handler
+    {
+    public:
+        SysLog()
+        {
+#ifdef _WIN32
+            ::openlog(LOGFILE, WINLOG_PID, WINLOG_MAIL);
 #else
-        WORD color_prefix = LIGHT_GREEN;
-        WORD color_header = CYAN;
-#endif
-#if defined(_WIN32) && !defined(RING_UWP)
-        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-        CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
-        WORD saved_attributes;
-#endif
-
-        switch (level) {
-        case LOG_ERR:
-            color_prefix = RED;
-            break;
-
-        case LOG_WARNING:
-            color_prefix = YELLOW;
-            break;
+            ::openlog(LOGFILE, LOG_NDELAY, LOG_USER);
+#endif /* _WIN32 */
         }
 
-#ifndef _WIN32
-        fputs(color_header, stderr);
-#elif !defined(RING_UWP)
-        GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
-        saved_attributes = consoleInfo.wAttributes;
-        SetConsoleTextAttribute(hConsole, color_header);
+        virtual void consume(jami::Logger::Msg& msg) override
+        {
+            // syslog is supposed to thread-safe, but not all implementations (Android?)
+            // follow strictly POSIX rules... so we lock our mutex in any cases.
+            std::lock_guard<std::mutex> lk {mtx_};
+#ifdef __ANDROID__
+            __android_log_buf_print(msg.level_, APP_NAME, "%s%s", msg_.header, msg_.payload);
+#else
+            ::syslog(msg.level_, "%s", msg.payload_.get());
 #endif
-        fputs(contextHeader(file, line).c_str(), stderr);
-#ifndef _WIN32
-        fputs(END_COLOR, stderr);
-        fputs(color_prefix, stderr);
-#elif !defined(RING_UWP)
-        SetConsoleTextAttribute(hConsole, saved_attributes);
-        SetConsoleTextAttribute(hConsole, color_prefix);
-#endif
-        vfprintf(stderr, format, ap);
+        }
 
-        if (linefeed)
-            fputs(ENDL, stderr);
+    private:
+        std::mutex mtx_;
+    };
 
-#ifndef _WIN32
-        fputs(END_COLOR, stderr);
-#elif !defined(RING_UWP)
-        SetConsoleTextAttribute(hConsole, saved_attributes);
-#endif
-    } else {
-        ::vsyslog(level, format, ap);
+    if (not syslogHandler) {
+        syslogHandler = std::make_shared<SysLog>();
     }
+
+    syslogHandler->enable(en);
+}
+
+void
+Logger::setMonitorLog(bool en)
+{
+    class MonitorLog : public jami::Logger::Handler
+    {
+    public:
+        virtual void consume(jami::Logger::Msg& msg) override
+        {
+            /*
+             * TODO - Maybe change the MessageSend sigature to avoid copying
+             * of message payload?
+             */
+            auto tmp = msg.header_ + std::string(msg.payload_.get());
+
+            if (msg.linefeed_) {
+                tmp += ENDL;
+            }
+
+            jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(tmp);
+        }
+    };
+
+    if (not monitorHandler) {
+        monitorHandler = std::make_shared<MonitorLog>();
+    }
+
+    monitorHandler->enable(en);
+}
+
+void
+Logger::setFileLog(const char* path)
+{
+    class FileLog : public jami::Logger::Handler
+    {
+    public:
+
+        void setFile(const char* path)
+        {
+
+            if (thread_.joinable()) {
+                enable(false);
+                cv_.notify_one();
+                thread_.join();
+            }
+
+            if (file_) {
+                fclose(file_);
+                file_ = nullptr;
+            }
+
+            if (not path) {
+                enable(false);
+                return;
+            }
+
+            file_ = fopen(path, "a");
+
+            enable(true);
+
+            thread_ = std::thread([this]{
+
+                while (enable()) {
+
+                    std::mutex dummy;
+                    std::unique_lock lk(dummy);
+
+                    cv_.wait(lk);
+
+                    /* Atomic swap of queues */
+                    with_messages_queues([this] {
+                        std::swap(currentQ_, pendingQ_);
+                    });
+
+                    do_consume(*pendingQ_);
+                    pendingQ_->clear();
+                }
+            });
+        }
+
+        ~FileLog()
+        {
+            enable(false);
+            cv_.notify_one();
+
+            if (thread_.joinable()) {
+                thread_.join();
+            }
+
+            if (file_) {
+                fclose(file_);
+            }
+        }
+
+        virtual void consume(jami::Logger::Msg& msg) override
+        {
+            /*
+             * We want to avoid mutex contingency here since there can be multiple
+             * writers at the same time.  The queue's sizes will amortized over
+             * time, thus the push into the queue is essentially a memcpy + increment
+             * of index, which can be done under a spinlock.
+             *
+             * The only problem with this method is that the timestamps might be a
+             * little out of order.  But we don't want to make a system call inside this
+             * region, so it's okay.
+             *
+             * We also move the message to avoid double free of payload.
+             */
+            with_messages_queues([&] {
+                currentQ_->push_back(std::move(msg));
+            });
+
+            cv_.notify_one();
+        }
+
+    private:
+
+        void do_consume(const std::vector<jami::Logger::Msg>& messages) {
+
+            for (const auto& msg : messages) {
+                fputs(msg.header_.c_str(), file_);
+                fputs(msg.payload_.get(), file_);
+
+                if (msg.linefeed_) {
+                    fputc(ENDL, file_);
+                }
+            }
+            fflush(file_);
+        }
+
+        /**
+         * Execute @func with exclusivity of @current_queue and @pending_queue.
+         */
+        inline void
+        with_messages_queues(std::function<void(void)>&& func) {
+            while (spinlock_.test_and_set(std::memory_order_acquire)) {
+                /* BURN CPU */
+            }
+            func();
+            spinlock_.clear(std::memory_order_release);
+        }
+
+        /**
+         * We're using two vectors here.  One used by the producers to push new
+         * messages, one used by the only consumer to print the messages.
+         *
+         * When the consumer has finished to consume all message in its @pending_queue,
+         * it swaps it with @current_queue.
+         */
+        std::vector<jami::Logger::Msg> messagesA_;
+        std::vector<jami::Logger::Msg> messagesB_;
+
+        std::vector<jami::Logger::Msg>* currentQ_ = &messagesA_;
+        std::vector<jami::Logger::Msg>* pendingQ_ = &messagesB_;
+
+        std::atomic_flag spinlock_ = ATOMIC_FLAG_INIT;
+
+        std::condition_variable cv_;
+
+        FILE* file_;
+        std::thread thread_;
+    };
+
+    if (not fileHandler) {
+        fileHandler = std::make_shared<FileLog>();
+    }
+
+    std::dynamic_pointer_cast<FileLog>(fileHandler)->setFile(path);
+}
+
+void
+Logger::log(int level, const char* file, int line, bool linefeed, const char* fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+
+    vlog(level, file, line, linefeed, fmt, ap);
+
+    va_end(ap);
+}
+
+static bool
+canLog()
+{
+    return ((consoleHandler and consoleHandler->enable()) or
+            (syslogHandler and syslogHandler->enable())  or
+            (monitorHandler and monitorHandler->enable()) or
+            (fileHandler and fileHandler->enable()));
+}
+
+void
+Logger::vlog(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
+{
+    if (not canLog()) {
+        return;
+    }
+
+    /* Timestamp is generated here. */
+    Msg msg(level, file, line, linefeed, fmt, ap);
+
+    auto log_to_if_enable = [&](std::shared_ptr<Handler> handler) {
+        if (handler and handler->enable()) {
+            handler->consume(msg);
+        }
+    };
+
+    log_to_if_enable(consoleHandler);
+    log_to_if_enable(syslogHandler);
+    log_to_if_enable(monitorHandler);
+    log_to_if_enable(fileHandler); // Takes ownership of msg if enabled
 }
 
 } // namespace jami
