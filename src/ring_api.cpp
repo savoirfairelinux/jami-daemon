@@ -44,8 +44,16 @@ namespace DRing {
 bool
 init(enum InitFlag flags) noexcept
 {
-    ::setDebugMode(flags & DRING_FLAG_DEBUG);
-    ::setConsoleLog(flags & DRING_FLAG_CONSOLE_LOG);
+    jami::Logger::setDebugMode(DRING_FLAG_DEBUG == (flags & DRING_FLAG_DEBUG));
+
+    jami::Logger::setSysLog(true);
+    jami::Logger::setConsoleLog(DRING_FLAG_CONSOLE_LOG == (flags & DRING_FLAG_CONSOLE_LOG));
+
+    const char* log_file = getenv("JAMI_LOG_FILE");
+
+    if (log_file) {
+        jami::Logger::setFileLog(log_file);
+    }
 
     // Following function create a local static variable inside
     // This var must have the same live as Manager.
@@ -77,6 +85,23 @@ void
 fini() noexcept
 {
     jami::Manager::instance().finish();
+    jami::Logger::fini();
 }
 
 } // namespace DRing
+
+void
+logging(const std::string& whom, const std::string& action) noexcept
+{
+    if ("syslog" == whom) {
+        jami::Logger::setSysLog(not action.empty());
+    } else if ("console" == whom) {
+        jami::Logger::setConsoleLog(not action.empty());
+    } else if ("monitor" == whom) {
+        jami::Logger::setMonitorLog(not action.empty());
+    } else if ("file" == whom) {
+        jami::Logger::setFileLog(action);
+    } else {
+        JAMI_ERR("Bad log handler %s", whom.c_str());
+    }
+}

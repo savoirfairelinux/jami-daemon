@@ -68,6 +68,13 @@ DRING_PUBLIC bool start(const std::string& config_file = {}) noexcept;
  */
 DRING_PUBLIC void fini() noexcept;
 
+/**
+ * Control log handlers.
+ *
+ * @param whom  Log handler to control
+ */
+DRING_PUBLIC void logging(const char* whom, const char* action) noexcept;
+
 /* External Callback Dynamic Utilities
  *
  * The library provides to users a way to be acknowledged

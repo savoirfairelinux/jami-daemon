@@ -25,6 +25,7 @@
 #include <cinttypes> // for PRIx64
 #include <cstdarg>
 
+#include <atomic>
 #include <sstream>
 #include <string>
 #include "string_utils.h" // to_string
@@ -32,24 +33,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * Allow writing on the console
- */
-void setConsoleLog(int c);
-
-/**
- * When debug mode is not set, logging will not print anything
- */
-void setDebugMode(int d);
-
-/**
- * Return the current mode
- */
-int getDebugMode(void);
-
-void setMonitorLog(bool m);
-bool getMonitorLog(void);
 
 /**
  * Thread-safe function to print the stringified contents of errno
@@ -98,6 +81,10 @@ namespace jami {
 class Logger
 {
 public:
+
+    class Handler;
+    struct Msg;
+
     Logger(int level, const char* file, int line, bool linefeed)
         : level_ {level}
         , file_ {file}
@@ -129,8 +116,16 @@ public:
     ///
     /// Printf fashion logging (using va_list parameters)
     ///
-    static void vlog(
-        const int level, const char* file, int line, bool linefeed, const char* format, va_list);
+    static void vlog(int level, const char* file, int line, bool linefeed, const char* fmt, va_list);
+
+    static void setConsoleLog(bool enable);
+    static void setSysLog(bool enable);
+    static void setMonitorLog(bool enable);
+    static void setFileLog(const std::string& path);
+
+    static void setDebugMode(bool enable);
+
+    static void fini();
 
     ///
     /// Stream fashion logging.
@@ -143,6 +138,7 @@ public:
     }
 
 private:
+
     int level_;              ///< LOG_XXXX values
     const char* const file_; ///< contextual filename (printed as header)
     const int line_;         ///< contextual line number (printed as header)
