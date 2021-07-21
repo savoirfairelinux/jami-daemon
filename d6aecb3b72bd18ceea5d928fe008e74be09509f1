@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d7abf26b_18ef8749",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T19:34:03Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "9a5ccc41_bc21b6d5",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "03d53c83_82061d3b",
@@ -31,6 +49,24 @@
       "writtenOn": "2021-07-21T19:00:57Z",
       "side": 1,
       "message": "why shared_ptr for this ?",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e3160fe2_f152e118",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T19:34:03Z",
+      "side": 1,
+      "message": "To avoid the problem we have with Scheduler and DHT threads that reference a deallocated static object.  Using a shared object, we\u0027re the thread can be sure aboutt he lifetime of its handlers.",
+      "parentUuid": "03d53c83_82061d3b",
       "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -54,6 +90,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "bbd905f6_b4c575fe",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 373,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T19:34:03Z",
+      "side": 1,
+      "message": "It\u0027s easier to just disable it then to lock the vector of handlers and remove it.  Both could work,  but the boolean solution is simpler and faster.",
+      "parentUuid": "ee9726fa_cd73efe2",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "737248c6_29c6b6b5",
         "filename": "src/logger.cpp",
         "patchSetId": 3
@@ -65,6 +119,24 @@
       "writtenOn": "2021-07-21T19:00:57Z",
       "side": 1,
       "message": "define these at top of file with Jami prefix, no need to undef",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "073d752d_77574ff9",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T19:34:03Z",
+      "side": 1,
+      "message": "I removed them.  Android define _GNU_SOURCE but doesn\u0027t have some of the unlocked.",
+      "parentUuid": "737248c6_29c6b6b5",
       "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -106,6 +178,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3fca310f_a66f99e5",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 458,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T19:34:03Z",
+      "side": 1,
+      "message": "See MonitorLog.  Since the logging thread can run until the very end of the program, even at the destructor of static variable level.  Thus using shared pointers to avoid ASAN panic.",
+      "parentUuid": "3a9d1161_b0bb3517",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "3d16e628_92ebd7ff",
         "filename": "src/logger.cpp",
         "patchSetId": 3
@@ -117,6 +207,24 @@
       "writtenOn": "2021-07-21T19:00:57Z",
       "side": 1,
       "message": "* don\u0027t use macro (prefer function in this case)\n* unneeded, it\u0027s faster to dispatch directly to handler while iterating",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c11dac4b_7845ab1a",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 478,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T19:34:03Z",
+      "side": 1,
+      "message": "Can\u0027t use function here because of return statement at the end.",
+      "parentUuid": "3d16e628_92ebd7ff",
       "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -138,6 +246,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4223fa2b_639c3a74",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 492,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T19:34:03Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "83eaac9e_73ca7981",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5b0ed72e_285c1d0b",
@@ -155,6 +281,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "724e02fe_1432aea4",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 511,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T19:34:03Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "5b0ed72e_285c1d0b",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "35d71a2f_65489cd9",
@@ -168,6 +312,24 @@
       "writtenOn": "2021-07-21T19:00:57Z",
       "side": 1,
       "message": "* only use the thread pool for writing to file. Normal logging must be synced/blocking\n* this use of the thread pool is the same as creating a new thread since this thread will be blocked forever. Maybe just have an std::thread in the FileLog",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d130d2f8_5e183c3b",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 565,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T19:34:03Z",
+      "side": 1,
+      "message": "Why normal logging must be synced/blocking? I think it\u0027s fine to offload the actual writting of the message to another thread.  The only problem it has is that there\u0027s a delay between the formating and registration of message, thus a small probability of out of order of timestamps.  This also have the benifit that all threads run faster while only one is busy doing the I/O.\n\nYes could use a simple std::thread instead.",
+      "parentUuid": "35d71a2f_65489cd9",
       "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -202,6 +364,24 @@
       "writtenOn": "2021-07-21T19:00:57Z",
       "side": 1,
       "message": "use c++ automatic memory management",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "22da4a25_7a67a864",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 589,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T19:34:03Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "4d578314_1a5fdf5b",
       "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
