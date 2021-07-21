@@ -57,7 +57,7 @@ namespace DRing {
   // Message send/load
   void sendMessage(const std::string& accountId, const std::string& conversationId, const std::string& message, const std::string& parent);
   uint32_t loadConversationMessages(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, size_t n);
-
+  uint32_t countInteractionsSince(const std::string& accountId, const std::string& conversationId, const std::string& interactionId);
 }
 
 class ConversationCallback {
