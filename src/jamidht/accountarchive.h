@@ -51,7 +51,7 @@ struct AccountArchive
     std::map<dht::InfoHash, Contact> contacts;
 
     // Conversations
-    std::vector<ConvInfo> conversations;
+    std::map<std::string, ConvInfo> conversations;
     std::map<std::string, ConversationRequest> conversationsRequests;
 
     /** Account configuration */
