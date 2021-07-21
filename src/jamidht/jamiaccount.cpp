@@ -4197,6 +4197,18 @@ JamiAccount::onNewGitCommit(const std::string& peer,
 }
 
 void
+JamiAccount::onMessageDisplayed(const std::string& peer,
+                                const std::string& conversationId,
+                                const std::string& interactionId)
+{
+    std::unique_lock<std::mutex> lk(conversationsMtx_);
+    auto conversation = conversations_.find(conversationId);
+    if (conversation != conversations_.end() && conversation->second) {
+        conversation->second->setMessageDisplayed(peer, interactionId);
+    }
+}
+
+void
 JamiAccount::fetchNewCommits(const std::string& peer,
                              const std::string& deviceId,
                              const std::string& conversationId,

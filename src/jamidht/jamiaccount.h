@@ -559,6 +559,10 @@ public:
                         const std::string& deviceId,
                         const std::string& conversationId,
                         const std::string& commitId) override;
+    // Received that a peer displayed a message
+    void onMessageDisplayed(const std::string& peer,
+                            const std::string& conversationId,
+                            const std::string& interactionId) override;
     /**
      * Pull remote device (do not do it if commitId is already in the current repo)
      * @param peer              Contact URI
