@@ -1,0 +1,191 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9a5ccc41_bc21b6d5",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T19:00:57Z",
+      "side": 1,
+      "message": "refactor to call strrchr only once per call",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "03d53c83_82061d3b",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T19:00:57Z",
+      "side": 1,
+      "message": "why shared_ptr for this ?",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ee9726fa_cd73efe2",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 373,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T19:00:57Z",
+      "side": 1,
+      "message": "why creating the MonitorLog and attaching it even if disabled ?",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "737248c6_29c6b6b5",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T19:00:57Z",
+      "side": 1,
+      "message": "define these at top of file with Jami prefix, no need to undef",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "99f1736c_f69e7c11",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 458,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T19:00:57Z",
+      "side": 1,
+      "message": "* shared_ptr seems unneeded\n* shared_mutex is unneeded",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d16e628_92ebd7ff",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 478,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T19:00:57Z",
+      "side": 1,
+      "message": "* don\u0027t use macro (prefer function in this case)\n* unneeded, it\u0027s faster to dispatch directly to handler while iterating",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "83eaac9e_73ca7981",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 492,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T19:00:57Z",
+      "side": 1,
+      "message": "already called in vlog",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5b0ed72e_285c1d0b",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 511,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T19:00:57Z",
+      "side": 1,
+      "message": "non-file logging doesn\u0027t need allocating. this should be in FileLog",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "35d71a2f_65489cd9",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 565,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T19:00:57Z",
+      "side": 1,
+      "message": "* only use the thread pool for writing to file. Normal logging must be synced/blocking\n* this use of the thread pool is the same as creating a new thread since this thread will be blocked forever. Maybe just have an std::thread in the FileLog",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "46a915d2_3af5060a",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 570,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T19:00:57Z",
+      "side": 1,
+      "message": "use proper mechanisms (ie condition variable) to wait for a message",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d578314_1a5fdf5b",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 589,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T19:00:57Z",
+      "side": 1,
+      "message": "use c++ automatic memory management",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
