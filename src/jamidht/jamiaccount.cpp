@@ -3019,35 +3019,50 @@ JamiAccount::addContact(const std::string& uri, bool confirmed)
 void
 JamiAccount::removeContact(const std::string& uri, bool ban)
 {
+    std::map<std::string, ConvInfo> convInfos;
     {
         std::lock_guard<std::mutex> lock(configurationMutex_);
-        if (accountManager_)
+        if (accountManager_) {
             accountManager_->removeContact(uri, ban);
-        else
+            convInfos = accountManager_->getInfo()->conversations;
+        } else {
             JAMI_WARN("[Account %s] removeContact: account not loaded", getAccountID().c_str());
+            return;
+        }
     }
 
     // Remove related conversation
     auto isSelf = uri == getUsername();
+    bool updateConvInfos = false;
     std::vector<std::string> toRm;
     {
         std::lock_guard<std::mutex> lk(conversationsMtx_);
-        for (const auto& [key, conv] : conversations_) {
-            try {
-                // Note it's important to check getUsername(), else
-                // removing self can remove all conversations
-                if (conv->mode() == ConversationMode::ONE_TO_ONE) {
-                    auto initMembers = conv->getInitialMembers();
-                    if ((isSelf && initMembers.size() == 1)
-                        || std::find(initMembers.begin(), initMembers.end(), uri)
-                               != initMembers.end())
-                        toRm.emplace_back(key);
+        for (auto& [convId, conv] : convInfos) {
+            auto itConv = conversations_.find(convId);
+            if (itConv != conversations_.end() && itConv->second) {
+                try {
+                    // Note it's important to check getUsername(), else
+                    // removing self can remove all conversations
+                    if (itConv->second->mode() == ConversationMode::ONE_TO_ONE) {
+                        auto initMembers = itConv->second->getInitialMembers();
+                        if ((isSelf && initMembers.size() == 1)
+                            || std::find(initMembers.begin(), initMembers.end(), uri)
+                                   != initMembers.end())
+                            toRm.emplace_back(convId);
+                    }
+                } catch (const std::exception& e) {
+                    JAMI_WARN("%s", e.what());
                 }
-            } catch (const std::exception& e) {
-                JAMI_WARN("%s", e.what());
+            } else if (std::find(conv.members.begin(), conv.members.end(), uri)
+                       != conv.members.end()) {
+                // It's syncing with uri, mark as removed!
+                conv.removed = std::time(nullptr);
+                updateConvInfos = true;
             }
         }
     }
+    if (updateConvInfos)
+        accountManager_->setConversations(convInfos);
     for (const auto& id : toRm) {
         // Note, if we ban the device, we don't send the leave cause the other peer will just
         // never got the notifications, so just erase the datas
@@ -3132,6 +3147,7 @@ JamiAccount::acceptTrustRequest(const std::string& from, bool includeConversatio
 bool
 JamiAccount::discardTrustRequest(const std::string& from)
 {
+    JAMI_ERR() << " @@@";
     // Remove 1:1 generated conv requests
     auto requests = getTrustRequests();
     for (const auto& req : requests) {
@@ -3142,8 +3158,12 @@ JamiAccount::discardTrustRequest(const std::string& from)
 
     // Remove trust request
     std::lock_guard<std::mutex> lock(configurationMutex_);
-    if (accountManager_)
-        return accountManager_->discardTrustRequest(from);
+    if (accountManager_) {
+        JAMI_ERR() << " @@@";
+        auto res = accountManager_->discardTrustRequest(from);
+        JAMI_ERR() << " @@@";
+        return res;
+    }
     JAMI_WARN("[Account %s] discardTrustRequest: account not loaded", getAccountID().c_str());
     return false;
 }
