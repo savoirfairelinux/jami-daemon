@@ -34,6 +34,9 @@
 #endif
 
 #include <atomic>
+#include <condition_variable>
+#include <functional>
+#include <fstream>
 #include <string>
 #include <sstream>
 #include <iomanip>
@@ -42,11 +45,12 @@
 #include <thread>
 #include <array>
 
+#include "fileutils.h"
 #include "logger.h"
 
 #ifdef __linux__
-#include <syslog.h>
 #include <unistd.h>
+#include <syslog.h>
 #include <sys/syscall.h>
 #endif // __linux__
 
@@ -85,26 +89,15 @@
 
 #define LOGFILE "jami"
 
-#ifdef RING_UWP
-static constexpr auto ENDL = "";
-#else
-static constexpr auto ENDL = "\n";
-#endif
-
-static int consoleLog;
-static std::atomic_bool monitorLog;
-static int debugMode;
-static std::mutex logMutex;
+static constexpr auto ENDL = '\n';
 
 // extract the last component of a pathname (extract a filename from its dirname)
 static const char*
 stripDirName(const char* path)
 {
-#ifdef _MSC_VER
-    return strrchr(path, '\\') ? strrchr(path, '\\') + 1 : path;
-#else
-    return strrchr(path, '/') ? strrchr(path, '/') + 1 : path;
-#endif
+    const char* occur = strrchr(path, DIR_SEPARATOR_CH);
+
+    return occur ? occur + 1 : path;
 }
 
 static std::string
@@ -148,46 +141,6 @@ contextHeader(const char* const file, int line)
     return out.str();
 }
 
-void
-setConsoleLog(int c)
-{
-    if (c)
-        ::closelog();
-    else {
-#ifdef _WIN32
-        ::openlog(LOGFILE, WINLOG_PID, WINLOG_MAIL);
-#else
-        ::openlog(LOGFILE, LOG_NDELAY, LOG_USER);
-#endif /* _WIN32 */
-    }
-
-    consoleLog = c;
-}
-
-void
-setDebugMode(int d)
-{
-    debugMode = d;
-}
-
-void
-setMonitorLog(bool m)
-{
-    monitorLog.store(m);
-}
-
-int
-getDebugMode(void)
-{
-    return debugMode;
-}
-
-bool
-getMonitorLog(void)
-{
-    return monitorLog.load();
-}
-
 static const char*
 check_error(int result, char* buffer)
 {
@@ -222,55 +175,94 @@ strErr(void)
 
 namespace jami {
 
-void
-Logger::log(int level, const char* file, int line, bool linefeed, const char* const format, ...)
+struct BufDeleter
 {
-#if defined(TARGET_OS_IOS) && TARGET_OS_IOS
-    if (!debugMode && !monitorLog.load())
-        return;
-#endif
-    if (!debugMode && !monitorLog.load() && level == LOG_DEBUG)
-        return;
-
-    va_list ap;
-    va_start(ap, format);
-    va_list cp;
-
-    bool withMonitor = monitorLog.load();
-
-    if (withMonitor)
-        va_copy(cp, ap);
-#ifdef __ANDROID__
-    __android_log_vprint(level, APP_NAME, format, ap);
-#else
-    Logger::vlog(level, file, line, linefeed, format, ap);
-#endif
-
-    if (withMonitor) {
-        std::array<char, 4096> tmp;
-        vsnprintf(tmp.data(), tmp.size(), format, cp);
-        jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(contextHeader(file, line)
-                                                                  + tmp.data());
+    void operator()(char* ptr)
+    {
+        if (ptr) {
+            free(ptr);
+        }
     }
-    va_end(ap);
-}
+};
 
-void
-Logger::vlog(
-    const int level, const char* file, int line, bool linefeed, const char* format, va_list ap)
+struct Logger::Msg
 {
-#if defined(TARGET_OS_IOS) && TARGET_OS_IOS
-    if (!debugMode)
-        return;
-#endif
-    if (!debugMode && level == LOG_DEBUG)
-        return;
+    Msg() = delete;
 
-    // syslog is supposed to thread-safe, but not all implementations (Android?)
-    // follow strictly POSIX rules... so we lock our mutex in any cases.
-    std::lock_guard<std::mutex> lk {logMutex};
+    Msg(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
+        : header_(contextHeader(file, line))
+        , level_(level)
+        , linefeed_(linefeed)
+    {
+        /* A good guess of what we might encounter. */
+        static constexpr size_t default_buf_size = 80;
 
-    if (consoleLog or monitorLog.load()) {
+        char* buf = (char*) malloc(default_buf_size);
+        int buf_size = default_buf_size;
+        va_list cp;
+
+        /* Necessary if we don't have enough space in buf. */
+        va_copy(cp, ap);
+
+        int size = vsnprintf(buf, buf_size, fmt, ap);
+
+        /* Not enough space?  Well try again. */
+        if (size >= buf_size) {
+            buf_size = size + 1;
+            buf = (char*) realloc(buf, buf_size);
+            vsnprintf(buf, buf_size, fmt, cp);
+        }
+
+        payload_.reset(buf);
+
+        va_end(cp);
+    }
+
+    Msg(Msg&& other)
+    {
+        payload_ = std::move(other.payload_);
+        header_ = std::move(other.header_);
+        level_ = other.level_;
+        linefeed_ = other.linefeed_;
+    }
+
+    std::unique_ptr<char, BufDeleter> payload_;
+    std::string header_;
+    int level_;
+    bool linefeed_;
+};
+
+class Logger::Handler
+{
+public:
+    virtual ~Handler() = default;
+
+    virtual void consume(Msg& msg) = 0;
+
+    void enable(bool en) { enabled_.store(en); }
+    bool isEnable() { return enabled_.load(); }
+
+private:
+    std::atomic<bool> enabled_;
+};
+
+class ConsoleLog : public jami::Logger::Handler
+{
+public:
+    static ConsoleLog& instance()
+    {
+        // This is an intentional memory leak!!!
+        //
+        // Some thread can still be logging after DRing::fini and even
+        // during the static destructors called by libstdc++.  Thus, we
+        // allocate the logger on the heap and never free it.
+        static ConsoleLog* self = new ConsoleLog();
+
+        return *self;
+    }
+
+    virtual void consume(jami::Logger::Msg& msg) override
+    {
 #ifndef _WIN32
         const char* color_header = CYAN;
         const char* color_prefix = "";
@@ -284,7 +276,7 @@ Logger::vlog(
         WORD saved_attributes;
 #endif
 
-        switch (level) {
+        switch (msg.level_) {
         case LOG_ERR:
             color_prefix = RED;
             break;
@@ -301,7 +293,7 @@ Logger::vlog(
         saved_attributes = consoleInfo.wAttributes;
         SetConsoleTextAttribute(hConsole, color_header);
 #endif
-        fputs(contextHeader(file, line).c_str(), stderr);
+        fputs(msg.header_.c_str(), stderr);
 #ifndef _WIN32
         fputs(END_COLOR, stderr);
         fputs(color_prefix, stderr);
@@ -309,19 +301,269 @@ Logger::vlog(
         SetConsoleTextAttribute(hConsole, saved_attributes);
         SetConsoleTextAttribute(hConsole, color_prefix);
 #endif
-        vfprintf(stderr, format, ap);
 
-        if (linefeed)
-            fputs(ENDL, stderr);
+        fputs(msg.payload_.get(), stderr);
+
+        if (msg.linefeed_) {
+            putc(ENDL, stderr);
+        }
 
 #ifndef _WIN32
         fputs(END_COLOR, stderr);
 #elif !defined(RING_UWP)
         SetConsoleTextAttribute(hConsole, saved_attributes);
 #endif
-    } else {
-        ::vsyslog(level, format, ap);
     }
+};
+
+void
+Logger::setConsoleLog(bool en)
+{
+    ConsoleLog::instance().enable(en);
+}
+
+class SysLog : public jami::Logger::Handler
+{
+public:
+    static SysLog& instance()
+    {
+        // This is an intentional memory leak!!!
+        //
+        // Some thread can still be logging after DRing::fini and even
+        // during the static destructors called by libstdc++.  Thus, we
+        // allocate the logger on the heap and never free it.
+        static SysLog* self = new SysLog();
+
+        return *self;
+    }
+
+    SysLog()
+    {
+#ifdef _WIN32
+        ::openlog(LOGFILE, WINLOG_PID, WINLOG_MAIL);
+#else
+        ::openlog(LOGFILE, LOG_NDELAY, LOG_USER);
+#endif /* _WIN32 */
+    }
+
+    virtual void consume(jami::Logger::Msg& msg) override
+    {
+        // syslog is supposed to thread-safe, but not all implementations (Android?)
+        // follow strictly POSIX rules... so we lock our mutex in any cases.
+        std::lock_guard<std::mutex> lk {mtx_};
+#ifdef __ANDROID__
+        __android_log_print(msg.level_, APP_NAME, "%s%s", msg.header_.c_str(), msg.payload_.get());
+#else
+        ::syslog(msg.level_, "%s", msg.payload_.get());
+#endif
+    }
+
+private:
+    std::mutex mtx_;
+};
+
+void
+Logger::setSysLog(bool en)
+{
+    SysLog::instance().enable(en);
+}
+
+class MonitorLog : public jami::Logger::Handler
+{
+public:
+    static MonitorLog& instance()
+    {
+        // This is an intentional memory leak!!!
+        //
+        // Some thread can still be logging after DRing::fini and even
+        // during the static destructors called by libstdc++.  Thus, we
+        // allocate the logger on the heap and never free it.
+        static MonitorLog* self = new MonitorLog();
+
+        return *self;
+    }
+
+    virtual void consume(jami::Logger::Msg& msg) override
+    {
+        /*
+         * TODO - Maybe change the MessageSend sigature to avoid copying
+         * of message payload?
+         */
+        auto tmp = msg.header_ + std::string(msg.payload_.get());
+
+        jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(tmp);
+    }
+};
+
+void
+Logger::setMonitorLog(bool en)
+{
+    MonitorLog::instance().enable(en);
+}
+
+class FileLog : public jami::Logger::Handler
+{
+public:
+    static FileLog& instance()
+    {
+        // This is an intentional memory leak!!!
+        //
+        // Some thread can still be logging after DRing::fini and even
+        // during the static destructors called by libstdc++.  Thus, we
+        // allocate the logger on the heap and never free it.
+        static FileLog* self = new FileLog();
+
+        return *self;
+    }
+
+    void setFile(const std::string& path)
+    {
+        if (thread_.joinable()) {
+            notify([this] { enable(false); });
+            thread_.join();
+        }
+
+        if (file_.is_open()) {
+            file_.close();
+        }
+
+        if (not path.empty()) {
+            file_.open(path, std::ofstream::out | std::ofstream::app);
+            enable(true);
+        } else {
+            enable(false);
+            return;
+        }
+
+        thread_ = std::thread([this] {
+            while (isEnable()) {
+
+                {
+                    std::unique_lock lk(mtx_);
+
+                    cv_.wait(lk, [&] { return not isEnable() or not currentQ_.empty(); });
+
+                    if (not isEnable()) {
+                        break;
+                    }
+
+                    std::swap(currentQ_, pendingQ_);
+                }
+
+                do_consume(pendingQ_);
+                pendingQ_.clear();
+            }
+        });
+    }
+
+    ~FileLog()
+    {
+        notify([=] { enable(false); });
+
+        if (thread_.joinable()) {
+            thread_.join();
+        }
+    }
+
+    virtual void consume(jami::Logger::Msg& msg) override
+    {
+        notify([&, this] { currentQ_.push_back(std::move(msg)); });
+    }
+
+private:
+    template<typename T>
+    void notify(T func)
+    {
+        std::unique_lock lk(mtx_);
+        func();
+        cv_.notify_one();
+    }
+
+    void do_consume(const std::vector<jami::Logger::Msg>& messages)
+    {
+        for (const auto& msg : messages) {
+            file_ << msg.header_ << msg.payload_.get();
+
+            if (msg.linefeed_) {
+                file_ << ENDL;
+            }
+        }
+
+        file_.flush();
+    }
+
+    std::vector<jami::Logger::Msg> currentQ_;
+    std::vector<jami::Logger::Msg> pendingQ_;
+    std::mutex mtx_;
+    std::condition_variable cv_;
+
+    std::ofstream file_;
+    std::thread thread_;
+};
+
+void
+Logger::setFileLog(const std::string& path)
+{
+    FileLog::instance().setFile(path);
+}
+
+void
+Logger::log(int level, const char* file, int line, bool linefeed, const char* fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+
+    vlog(level, file, line, linefeed, fmt, ap);
+
+    va_end(ap);
+}
+
+template<typename T>
+void log_to_if_enabled(T& handler, Logger::Msg& msg)
+{
+    if (handler.isEnable()) {
+        handler.consume(msg);
+    }
+}
+
+static std::atomic_bool debugEnabled{false};
+
+void
+Logger::setDebugMode(bool enable)
+{
+    debugEnabled.store(enable);
+}
+
+void
+Logger::vlog(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
+{
+    if (not debugEnabled.load() and
+        level < LOG_WARNING) {
+        return;
+    }
+
+    if (not(ConsoleLog::instance().isEnable() or
+            SysLog::instance().isEnable() or
+            MonitorLog::instance().isEnable() or
+            FileLog::instance().isEnable())) {
+        return;
+    }
+
+    /* Timestamp is generated here. */
+    Msg msg(level, file, line, linefeed, fmt, ap);
+
+    log_to_if_enabled(ConsoleLog::instance(), msg);
+    log_to_if_enabled(SysLog::instance(), msg);
+    log_to_if_enabled(MonitorLog::instance(), msg);
+    log_to_if_enabled(FileLog::instance(), msg); // Takes ownership of msg if enabled
+}
+
+void
+Logger::fini()
+{
+    // Force close on file and join thread
+    FileLog::instance().setFile(nullptr);
 }
 
 } // namespace jami
