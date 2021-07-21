@@ -1,0 +1,123 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d8741d34_b1f5e27b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 175,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T13:37:39Z",
+      "side": 1,
+      "message": "resetTransport(std::move(tmpMediaTransport_));",
+      "revId": "220f223e91fd3f788215e65b89b4214780d777fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5176c2fe_478c9dc7",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2354,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T13:37:39Z",
+      "side": 1,
+      "message": "simplified:\n\n    if (tmpMediaTransport_) {\n        resetTransport(std::move(mediaTransport_));\n        mediaTransport_ \u003d std::move(tmpMediaTransport_);\n    }",
+      "revId": "220f223e91fd3f788215e65b89b4214780d777fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f024802e_19d2bfa0",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2909,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T13:37:39Z",
+      "side": 1,
+      "message": "to be locked by caller",
+      "revId": "220f223e91fd3f788215e65b89b4214780d777fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e3cf096d_0d0d2919",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2925,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T13:37:39Z",
+      "side": 1,
+      "message": "to be locked by caller",
+      "revId": "220f223e91fd3f788215e65b89b4214780d777fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9fb6922e_50a0af63",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2931,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T13:37:39Z",
+      "side": 1,
+      "message": "not needed (inc. logs)",
+      "revId": "220f223e91fd3f788215e65b89b4214780d777fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "81d6ff0f_32e35c7e",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T13:37:39Z",
+      "side": 1,
+      "message": "keep it simple:\n\n    void resetTransport(std::unique_ptr\u003cIceTransport\u003e\u0026\u0026);",
+      "revId": "220f223e91fd3f788215e65b89b4214780d777fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f4636011_1ece72cb",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T13:37:39Z",
+      "side": 1,
+      "message": "same:\n\n    void resetTransport(std::shared_ptr\u003cIceTransport\u003e\u0026\u0026);",
+      "revId": "220f223e91fd3f788215e65b89b4214780d777fe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
