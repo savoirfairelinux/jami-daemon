@@ -146,4 +146,15 @@ loadConversationMessages(const std::string& accountId,
     return 0;
 }
 
+uint32_t
+countInteractions(const std::string& accountId,
+                       const std::string& conversationId,
+                       const std::string& toId,
+                       const std::string& fromId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        return acc->countInteractions(conversationId, toId, fromId);
+    return 0;
+}
+
 } // namespace DRing

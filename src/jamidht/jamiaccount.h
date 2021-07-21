@@ -554,11 +554,25 @@ public:
                                       const std::string& fromMessage = "",
                                       size_t n = 0);
 
+    /**
+     * Retrieve how many interactions there is from HEAD to interactionId
+     * @param convId
+     * @param interactionId     "" for getting the whole history
+     * @return number of interactions since interactionId
+     */
+    uint32_t countInteractions(const std::string& convId,
+                                const std::string& toId,
+                                const std::string& fromId) const;
+
     // Received a new commit notification
     void onNewGitCommit(const std::string& peer,
                         const std::string& deviceId,
                         const std::string& conversationId,
                         const std::string& commitId) override;
+    // Received that a peer displayed a message
+    void onMessageDisplayed(const std::string& peer,
+                            const std::string& conversationId,
+                            const std::string& interactionId) override;
     /**
      * Pull remote device (do not do it if commitId is already in the current repo)
      * @param peer              Contact URI
