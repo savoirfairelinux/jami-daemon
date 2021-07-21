@@ -196,6 +196,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "8b0d027c_09e0c675",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 458,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T19:57:12Z",
+      "side": 1,
+      "message": "the logging thread doesn\u0027t even copy the shared_ptr anyway (so the refcount doesn\u0027t change), so it\u0027s really unused in this code.",
+      "parentUuid": "3fca310f_a66f99e5",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "3d16e628_92ebd7ff",
         "filename": "src/logger.cpp",
         "patchSetId": 3
@@ -225,6 +243,24 @@
       "side": 1,
       "message": "Can\u0027t use function here because of return statement at the end.",
       "parentUuid": "3d16e628_92ebd7ff",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3f55dc91_f6c26e2c",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 478,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T19:57:12Z",
+      "side": 1,
+      "message": "then return a bool from the function and return from parent.\nOr better, iterate only once and let the handlers dispatch messages to IO threads only if necessary.",
+      "parentUuid": "c11dac4b_7845ab1a",
       "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -330,6 +366,24 @@
       "side": 1,
       "message": "Why normal logging must be synced/blocking? I think it\u0027s fine to offload the actual writting of the message to another thread.  The only problem it has is that there\u0027s a delay between the formating and registration of message, thus a small probability of out of order of timestamps.  This also have the benifit that all threads run faster while only one is busy doing the I/O.\n\nYes could use a simple std::thread instead.",
       "parentUuid": "35d71a2f_65489cd9",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "93f3b0ad_832a3d7d",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 565,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T19:57:12Z",
+      "side": 1,
+      "message": "the main point of logging is debugging, especially after a crash.\nPutting log items to a queue to be displayed later by another thread prevents this efficient debugging.\nThe only type of logging that would be non-virtually-instant (actual IO) is when writing to a file, which is uncommon, so only that case should be queued.",
+      "parentUuid": "d130d2f8_5e183c3b",
       "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
