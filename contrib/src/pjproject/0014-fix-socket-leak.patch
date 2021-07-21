@@ -1,0 +1,34 @@
+From a9b3b09128d1e96cfa4a8ccc74d406c5bf1895db Mon Sep 17 00:00:00 2001
+From: Olivier Dion <olivier.dion@savoirfairelinux.com>
+Date: Mon, 19 Jul 2021 16:49:28 -0400
+Subject: [PATCH] pjnath/turn_sock: Fix leak of socket
+
+Opened socket is not closed on binding and quality of service error.  The socket
+is owned by the active sock only if everything went well.
+---
+ pjnath/src/pjnath/turn_sock.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
+index dc6304d9f..b41e32220 100644
+--- a/pjnath/src/pjnath/turn_sock.c
++++ b/pjnath/src/pjnath/turn_sock.c
+@@ -1195,6 +1195,7 @@ static void turn_on_state(pj_turn_session *sess,
+ 					 turn_sock->setting.port_range,
+ 					 max_bind_retry);
+ 	    if (status != PJ_SUCCESS) {
++		pj_sock_close(sock);
+ 		pj_turn_sock_destroy(turn_sock);
+ 		return;
+ 	    }
+@@ -1205,6 +1206,7 @@ static void turn_on_state(pj_turn_session *sess,
+ 				    turn_sock->pool->obj_name, NULL);
+ 	    if (status != PJ_SUCCESS && !turn_sock->setting.qos_ignore_error) 
+ 	    {
++		pj_sock_close(sock);
+ 		pj_turn_sock_destroy(turn_sock);
+ 		return;
+ 	    }
+-- 
+2.32.0
+
