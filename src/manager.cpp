@@ -749,6 +749,8 @@ Manager::setAutoAnswer(bool enable)
 void
 Manager::init(const std::string& config_file)
 {
+    Logger::init();
+
     // FIXME: this is no good
     initialized = true;
 
@@ -933,7 +935,7 @@ Manager::finish() noexcept
 void
 Manager::monitor(bool continuous)
 {
-    setMonitorLog(true);
+    Logger::setMonitorLog(true);
     JAMI_DBG("############## START MONITORING ##############");
     JAMI_DBG("Using PJSIP version %s for %s", pj_get_version(), PJ_OS_NAME);
     JAMI_DBG("Using GnuTLS version %s", gnutls_check_version(nullptr));
@@ -953,7 +955,7 @@ Manager::monitor(bool continuous)
         if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account))
             acc->monitor();
     JAMI_DBG("############## END MONITORING ##############");
-    setMonitorLog(continuous);
+    Logger::setMonitorLog(continuous);
 }
 
 bool
