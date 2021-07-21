@@ -5045,7 +5045,6 @@ void
 JamiAccount::loadConvInfos()
 {
     std::map<std::string, ConvInfo> convInfos;
-    std::vector<ConvInfo> oldCi; // TODO remove when public beta, just to avoid to break
     try {
         // read file
         auto file = fileutils::loadFile("convInfo", idPath_);
@@ -5053,20 +5052,8 @@ JamiAccount::loadConvInfos()
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
         oh.get().convert(convInfos);
     } catch (const std::exception& e) {
-        // TODO remove when public beta, just to avoid to break
-        try {
-            // read file
-            auto file = fileutils::loadFile("convInfo", idPath_);
-            // load values
-            msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
-            oh.get().convert(oldCi);
-            for (auto ci : oldCi) {
-                convInfos[ci.id] = ci;
-            }
-        } catch (const std::exception& e) {
-            JAMI_WARN("[convInfo] error loading convInfo: %s", e.what());
-            return;
-        }
+        JAMI_WARN("[convInfo] error loading convInfo: %s", e.what());
+        return;
     }
 
     for (auto& [key, info] : convInfos) {
