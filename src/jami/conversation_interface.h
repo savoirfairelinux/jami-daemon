@@ -69,6 +69,9 @@ DRING_PUBLIC uint32_t loadConversationMessages(const std::string& accountId,
                                                const std::string& conversationId,
                                                const std::string& fromMessage,
                                                size_t n);
+DRING_PUBLIC uint32_t countInteractionsSince(const std::string& accountId,
+                                             const std::string& conversationId,
+                                             const std::string& interactionId);
 
 struct DRING_PUBLIC ConversationSignal
 {

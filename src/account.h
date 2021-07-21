@@ -319,6 +319,10 @@ public:
                                 const std::string& /*conversationId*/,
                                 const std::string& /*commitId*/) {};
 
+    virtual void onMessageDisplayed(const std::string& /*peer*/,
+                                    const std::string& /*conversationId*/,
+                                    const std::string& /*interactionId*/) {};
+
     // Invites
     virtual void onConversationRequest(const std::string& /*from*/, const Json::Value&) {};
     virtual void onNeedConversationRequest(const std::string& /*from*/,

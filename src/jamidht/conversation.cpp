@@ -159,7 +159,9 @@ public:
                                     + shared->getAccountID() + DIR_SEPARATOR_STR
                                     + "conversation_data" + DIR_SEPARATOR_STR + repository_->id();
             fetchedPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + "fetched";
+            lastDisplayedPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + "lastDisplayed";
             loadFetched();
+            loadLastDisplayed();
         }
     }
 
@@ -270,6 +272,26 @@ public:
         msgpack::pack(file, fetchedDevices_);
     }
 
+    void loadLastDisplayed()
+    {
+        try {
+            // read file
+            auto file = fileutils::loadFile(lastDisplayedPath_);
+            // load values
+            msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
+            std::lock_guard<std::mutex> lk {lastDisplayedMtx_};
+            oh.get().convert(lastDisplayed_);
+        } catch (const std::exception& e) {
+            return;
+        }
+    }
+
+    void saveLastDisplayed()
+    {
+        std::ofstream file(lastDisplayedPath_, std::ios::trunc | std::ios::binary);
+        msgpack::pack(file, lastDisplayed_);
+    }
+
     std::unique_ptr<ConversationRepository> repository_;
     std::weak_ptr<JamiAccount> account_;
     std::atomic_bool isRemoving_ {false};
@@ -289,6 +311,9 @@ public:
     std::string fetchedPath_ {};
     std::mutex fetchedDevicesMtx_ {};
     std::set<std::string> fetchedDevices_ {};
+    std::string lastDisplayedPath_ {};
+    std::mutex lastDisplayedMtx_ {};
+    std::map<std::string, std::string> lastDisplayed_ {};
 };
 
 bool
@@ -554,12 +579,20 @@ Conversation::getMembers(bool includeInvited) const
     if (!shared)
         return result;
     auto members = pimpl_->repository_->members();
+    std::lock_guard<std::mutex> lk(pimpl_->lastDisplayedMtx_);
     for (const auto& member : members) {
         if (member.role == MemberRole::BANNED)
             continue;
         if (member.role == MemberRole::INVITED && !includeInvited)
             continue;
-        result.emplace_back(member.map());
+        auto mm = member.map();
+        std::string lastDisplayed;
+        auto itDisplayed = pimpl_->lastDisplayed_.find(member.uri);
+        if (itDisplayed != pimpl_->lastDisplayed_.end()) {
+            lastDisplayed = itDisplayed->second;
+        }
+        mm["lastDisplayed"] = lastDisplayed;
+        result.emplace_back(std::move(mm));
     }
     return result;
 }
@@ -1068,6 +1101,21 @@ Conversation::hasFetched(const std::string& deviceId)
     std::lock_guard<std::mutex> lk(pimpl_->fetchedDevicesMtx_);
     pimpl_->fetchedDevices_.emplace(deviceId);
     pimpl_->saveFetched();
+}
+
+void
+Conversation::setMessageDisplayed(const std::string& uri, const std::string& interactionId)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->lastDisplayedMtx_);
+    pimpl_->lastDisplayed_[uri] = interactionId;
+    pimpl_->saveLastDisplayed();
+}
+
+uint32_t
+Conversation::countInteractionsSince(const std::string& interactionId) const
+{
+    // Log but without content to avoid costly convertions.
+    return pimpl_->repository_->log("", interactionId, false, true).size();
 }
 
 } // namespace jami
