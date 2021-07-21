@@ -71,6 +71,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "68d0d29f_e5b9b7c4",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T20:58:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e3160fe2_f152e118",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ee9726fa_cd73efe2",
@@ -106,6 +124,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "247009c2_b0b75570",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 373,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T20:58:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bbd905f6_b4c575fe",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "737248c6_29c6b6b5",
@@ -137,6 +173,24 @@
       "side": 1,
       "message": "I removed them.  Android define _GNU_SOURCE but doesn\u0027t have some of the unlocked.",
       "parentUuid": "737248c6_29c6b6b5",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "df284783_2e59e8a2",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 403,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T20:58:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "073d752d_77574ff9",
       "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -212,6 +266,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5511c25b_c899939e",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 458,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T20:58:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8b0d027c_09e0c675",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3d16e628_92ebd7ff",
@@ -261,6 +333,24 @@
       "side": 1,
       "message": "then return a bool from the function and return from parent.\nOr better, iterate only once and let the handlers dispatch messages to IO threads only if necessary.",
       "parentUuid": "c11dac4b_7845ab1a",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "717feb94_fbb05a1b",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 478,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T20:58:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3f55dc91_f6c26e2c",
       "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -388,6 +478,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ff070f07_a5786277",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 565,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T20:58:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "93f3b0ad_832a3d7d",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "46a915d2_3af5060a",
@@ -401,6 +509,24 @@
       "writtenOn": "2021-07-21T19:00:57Z",
       "side": 1,
       "message": "use proper mechanisms (ie condition variable) to wait for a message",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "723b24f6_475947d7",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 570,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T20:58:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "46a915d2_3af5060a",
       "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -436,6 +562,24 @@
       "side": 1,
       "message": "Ack",
       "parentUuid": "4d578314_1a5fdf5b",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3bfbfba2_aafd5f68",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 589,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-21T20:58:48Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "22da4a25_7a67a864",
       "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
