@@ -613,6 +613,7 @@ SIPAccountBase::onTextMessage(const std::string& id,
                 if (conversationId.empty()) // Old method
                     messageEngine_.onMessageDisplayed(from, from_hex_string(messageId), isDisplayed);
                 else if (isDisplayed) {
+                    onMessageDisplayed(from, conversationId, messageId);
                     JAMI_DBG() << "[message " << messageId << "] Displayed by peer";
                     emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
                         accountID_,
@@ -704,6 +705,8 @@ SIPAccountBase::setMessageDisplayed(const std::string& conversationUri,
     std::string conversationId = {};
     if (uri.scheme() == Uri::Scheme::SWARM)
         conversationId = uri.authority();
+    if (!conversationId.empty())
+        onMessageDisplayed(getUsername(), conversationId, messageId);
     if (status == (int) DRing::Account::MessageStates::DISPLAYED)
         sendInstantMessage(uri.authority(),
                            {{MIME_TYPE_IMDN, getDisplayed(conversationId, messageId)}});
