@@ -36,6 +36,7 @@
 #include "jami/callmanager_interface.h"
 #include "jami/configurationmanager_interface.h"
 #include "jami/conversation_interface.h"
+#include "logger.h"
 
 /* agent */
 #include "agent/agent.h"
@@ -411,7 +412,7 @@ Agent::startLogRecording()
 
     loggers_[context_] = std::make_unique<FileHandler>(context_, recordTo_);
 
-    setMonitorLog(true);
+    jami::Logger::setMonitorLog(true);
 
     return true;
 }
@@ -426,7 +427,7 @@ Agent::stopLogRecording()
     }
 
     if (loggers_.empty()) {
-        setMonitorLog(false);
+        jami::Logger::setMonitorLog(false);
     }
 
     return true;
