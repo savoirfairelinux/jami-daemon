@@ -88,6 +88,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3a9d1161_b0bb3517",
+        "filename": "src/logger.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 458,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-21T19:02:39Z",
+      "side": 1,
+      "message": "shared_mutex is actually ok. shared_ptr for Handler unneeded",
+      "parentUuid": "99f1736c_f69e7c11",
+      "revId": "d6aecb3b72bd18ceea5d928fe008e74be09509f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "3d16e628_92ebd7ff",
         "filename": "src/logger.cpp",
         "patchSetId": 3
