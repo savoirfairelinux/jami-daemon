@@ -70,7 +70,7 @@ extern "C" {
 
 extern void closelog(void);
 extern void openlog(const char*, int, int);
-extern void vsyslog(int, const char*, va_list);
+extern void syslog(int, const char*, ...);
 
 #ifdef __cplusplus
 }
