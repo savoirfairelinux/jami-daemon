@@ -307,6 +307,21 @@ public:
      */
     void hasFetched(const std::string& deviceId);
 
+    /**
+     * Store last read commit (returned in getMembers)
+     * @param uri               Of the member
+     * @param interactionId     Last interaction displayed
+     */
+    void setMessageDisplayed(const std::string& uri, const std::string& interactionId);
+
+    /**
+     * Retrieve how many interactions there is from HEAD to interactionId
+     * @param toId     "" for getting the whole history
+     * @param fromId   "" => HEAD
+     * @return number of interactions since interactionId
+     */
+    uint32_t countInteractions(const std::string& toId, const std::string& fromId = "") const;
+
 private:
     std::shared_ptr<Conversation> shared()
     {

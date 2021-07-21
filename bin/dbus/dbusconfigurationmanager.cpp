@@ -932,6 +932,15 @@ DBusConfigurationManager::loadConversationMessages(const std::string& accountId,
     return DRing::loadConversationMessages(accountId, conversationId, fromMessage, n);
 }
 
+uint32_t
+DBusConfigurationManager::countInteractions(const std::string& accountId,
+                                                 const std::string& conversationId,
+                                                 const std::string& toId,
+                                                 const std::string& fromId)
+{
+    return DRing::countInteractions(accountId, conversationId, toId, fromId);
+}
+
 bool
 DBusConfigurationManager::isAudioMeterActive(const std::string& id)
 {

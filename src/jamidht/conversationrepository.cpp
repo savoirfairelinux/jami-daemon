@@ -114,7 +114,8 @@ public:
     std::vector<ConversationCommit> log(const std::string& from,
                                         const std::string& to,
                                         unsigned n,
-                                        bool logIfNotFound = false) const;
+                                        bool logIfNotFound = false,
+                                        bool fastLog = false) const;
     std::optional<std::string> linearizedParent(const std::string& commitId) const;
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
@@ -1486,7 +1487,8 @@ std::vector<ConversationCommit>
 ConversationRepository::Impl::log(const std::string& from,
                                   const std::string& to,
                                   unsigned n,
-                                  bool logIfNotFound) const
+                                  bool logIfNotFound,
+                                  bool fastLog) const
 {
     std::vector<ConversationCommit> commits {};
 
@@ -1531,6 +1533,12 @@ ConversationRepository::Impl::log(const std::string& from,
         GitCommit commit {commit_ptr, git_commit_free};
         if (id == to) {
             break;
+        }
+
+        if (fastLog) {
+            // Used to only count commit
+            commits.emplace(commits.end(), ConversationCommit {});
+            continue;
         }
 
         const git_signature* sig = git_commit_author(commit.get());
@@ -2372,9 +2380,12 @@ ConversationRepository::logN(const std::string& last, unsigned n, bool logIfNotF
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::log(const std::string& from, const std::string& to, bool logIfNotFound) const
+ConversationRepository::log(const std::string& from,
+                            const std::string& to,
+                            bool logIfNotFound,
+                            bool fastLog) const
 {
-    return pimpl_->log(from, to, 0, logIfNotFound);
+    return pimpl_->log(from, to, 0, logIfNotFound, fastLog);
 }
 
 std::optional<ConversationCommit>
