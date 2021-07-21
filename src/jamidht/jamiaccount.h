@@ -781,7 +781,6 @@ private:
     void generateDhParams();
 
     void loadConvInfos();
-    void saveConvInfos() const;
 
     void loadConvRequests();
 
@@ -1043,6 +1042,12 @@ private:
      * @return the conversation id if found else empty
      */
     std::string getOneToOneConversation(const std::string& uri) const;
+
+    /**
+     * Add a new ConvInfo
+     * @param id of the conversation
+     */
+    void addNewConversation(const ConvInfo& convInfo);
 
     std::atomic_bool deviceAnnounced_ {false};
 
