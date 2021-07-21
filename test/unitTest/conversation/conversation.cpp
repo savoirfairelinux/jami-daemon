@@ -155,6 +155,7 @@ private:
     void testDoNotLoadIncorrectConversation();
     void testSyncingWhileAccepting();
     void testGetConversationsMembersWhileSyncing();
+    void testCountInteractionsSince();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -212,6 +213,7 @@ private:
     CPPUNIT_TEST(testDoNotLoadIncorrectConversation);
     CPPUNIT_TEST(testSyncingWhileAccepting);
     CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
+    CPPUNIT_TEST(testCountInteractionsSince);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1250,8 +1252,43 @@ ConversationTest::testSetMessageDisplayed()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberMessageGenerated; }));
 
+    // Last displayed messages should not be set yet
+    auto membersInfos = bobAccount->getConversationMembers(convId);
+    CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
+                                membersInfos.end(),
+                                [&](auto infos) {
+                                    return infos["uri"] == aliceUri && infos["lastDisplayed"] == "";
+                                })
+                   != membersInfos.end());
+    membersInfos = aliceAccount->getConversationMembers(convId);
+    CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
+                                membersInfos.end(),
+                                [&](auto infos) {
+                                    return infos["uri"] == aliceUri && infos["lastDisplayed"] == "";
+                                })
+                   != membersInfos.end());
+
     aliceAccount->setMessageDisplayed("swarm:" + convId, convId, 3);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return msgDisplayed; }));
+
+    // Now, the last displayed message should be updated in member's infos (both sides)
+    membersInfos = bobAccount->getConversationMembers(convId);
+    CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
+                                membersInfos.end(),
+                                [&](auto infos) {
+                                    return infos["uri"] == aliceUri
+                                           && infos["lastDisplayed"] == convId;
+                                })
+                   != membersInfos.end());
+    membersInfos = aliceAccount->getConversationMembers(convId);
+    CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
+                                membersInfos.end(),
+                                [&](auto infos) {
+                                    return infos["uri"] == aliceUri
+                                           && infos["lastDisplayed"] == convId;
+                                })
+                   != membersInfos.end());
+
     DRing::unregisterSignalHandlers();
 }
 
@@ -4451,6 +4488,37 @@ ConversationTest::testGetConversationsMembersWhileSyncing()
                                 members.end(),
                                 [&](auto memberInfo) { return memberInfo["uri"] == bobUri; })
                    != members.end());
+}
+
+void
+ConversationTest::testCountInteractionsSince()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto convId = aliceAccount->startConversation();
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+
+    std::string msgId1 = "", msgId2 = "", msgId3 = "";
+    aliceAccount->sendMessage(convId, "1"s, "", "text/plain", true, [&](bool, std::string commitId) {
+        msgId1 = commitId;
+        cv.notify_one();
+    });
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return !msgId1.empty(); }));
+    aliceAccount->sendMessage(convId, "2"s, "", "text/plain", true, [&](bool, std::string commitId) {
+        msgId2 = commitId;
+        cv.notify_one();
+    });
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return !msgId2.empty(); }));
+    aliceAccount->sendMessage(convId, "3"s, "", "text/plain", true, [&](bool, std::string commitId) {
+        msgId3 = commitId;
+        cv.notify_one();
+    });
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return !msgId3.empty(); }));
+
+    CPPUNIT_ASSERT(DRing::countInteractionsSince(aliceId, convId, "") == 4 /* 3 + initial */);
+    CPPUNIT_ASSERT(DRing::countInteractionsSince(aliceId, convId, msgId3) == 0);
+    CPPUNIT_ASSERT(DRing::countInteractionsSince(aliceId, convId, msgId2) == 1);
 }
 
 } // namespace test
