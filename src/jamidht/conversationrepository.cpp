@@ -197,12 +197,16 @@ git_add_all(git_repository* repo)
  * @return if files were added successfully
  */
 bool
-add_initial_files(GitRepository& repo, const std::shared_ptr<JamiAccount>& account)
+add_initial_files(GitRepository& repo,
+                  const std::shared_ptr<JamiAccount>& account,
+                  ConversationMode mode,
+                  const std::string& otherMember = "")
 {
     auto deviceId = account->currentDeviceId();
     std::string repoPath = git_repository_workdir(repo.get());
     std::string adminsPath = repoPath + "admins";
     std::string devicesPath = repoPath + "devices";
+    std::string invitedPath = repoPath + "invited";
     std::string crlsPath = repoPath + "CRLs" + DIR_SEPARATOR_STR + deviceId;
 
     if (!fileutils::recursive_mkdir(adminsPath, 0700)) {
@@ -261,6 +265,25 @@ add_initial_files(GitRepository& repo, const std::shared_ptr<JamiAccount>& accou
         }
         file << crl->toString();
         file.close();
+    }
+
+    // /invited for one to one
+    if (mode == ConversationMode::ONE_TO_ONE) {
+        if (!fileutils::recursive_mkdir(invitedPath, 0700)) {
+            JAMI_ERR("Error when creating %s.", invitedPath.c_str());
+            return false;
+        }
+        std::string invitedMemberPath = invitedPath + "/" + otherMember;
+        if (fileutils::isFile(invitedMemberPath)) {
+            JAMI_WARN("Member %s already present!", otherMember.c_str());
+            return false;
+        }
+
+        auto file = fileutils::ofstream(invitedMemberPath, std::ios::trunc | std::ios::binary);
+        if (!file.is_open()) {
+            JAMI_ERR("Could not write data to %s", invitedMemberPath.c_str());
+            return false;
+        }
     }
 
     if (!git_add_all(repo.get())) {
@@ -878,11 +901,9 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
     auto userUri = cert->getIssuerUID();
     // Check no other files changed
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
-    auto oneone = mode() == ConversationMode::ONE_TO_ONE;
-    std::size_t wantedChanged = oneone ? 2 : 3;
-    if (changedFiles.size() != wantedChanged) {
+    std::size_t wantedChanged = 3;
+    if (changedFiles.size() != wantedChanged)
         return false;
-    }
 
     auto invitedFile = std::string("invited") + "/" + uriMember;
     auto membersFile = std::string("members") + "/" + uriMember + ".crt";
@@ -897,16 +918,14 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
     if (not treeNew or not treeOld)
         return false;
 
-    // Check /invited removed
-    if (!oneone) {
-        if (fileAtTree(invitedFile, treeNew)) {
-            JAMI_ERR("%s invited not removed", userUri.c_str());
-            return false;
-        }
-        if (!fileAtTree(invitedFile, treeOld)) {
-            JAMI_ERR("%s invited not found", userUri.c_str());
-            return false;
-        }
+    // Check /invited
+    if (fileAtTree(invitedFile, treeNew)) {
+        JAMI_ERR("%s invited not removed", userUri.c_str());
+        return false;
+    }
+    if (!fileAtTree(invitedFile, treeOld)) {
+        JAMI_ERR("%s invited not found", userUri.c_str());
+        return false;
     }
 
     // Check /members added
@@ -1151,6 +1170,9 @@ bool
 ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
                                                  const std::string& commitId) const
 {
+    auto account = account_.lock();
+    if (!account)
+        return false;
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
     if (!cert) {
         JAMI_ERR("Cannot find certificate for %s", userDevice.c_str());
@@ -1170,17 +1192,21 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
     auto hasDevice = false, hasAdmin = false;
     std::string adminsFile = std::string("admins") + "/" + userUri + ".crt";
     std::string deviceFile = std::string("devices") + "/" + userDevice + ".crt";
+    std::string invitedFile = std::string("invited") + "/" + account->getUsername();
     std::string crlFile = std::string("CRLs") + "/" + userUri;
     // Check that admin cert is added
     // Check that device cert is added
     // Check CRLs added
     // Check that no other file is added
+    // Check if invited file present for one to one.
     for (const auto& changedFile : changedFiles) {
         if (changedFile == adminsFile) {
             hasAdmin = true;
         } else if (changedFile == deviceFile) {
             hasDevice = true;
         } else if (changedFile == crlFile) {
+            // Nothing to do
+        } else if (changedFile == invitedFile && mode_ == ConversationMode::ONE_TO_ONE) {
             // Nothing to do
         } else {
             // Invalid file detected
@@ -1801,7 +1827,8 @@ ConversationRepository::Impl::initMembers()
         for (const auto& member : getInitialMembers()) {
             auto it = std::find(uris.begin(), uris.end(), member);
             if (it == uris.end()) {
-                members_.emplace_back(ConversationMember {member, MemberRole::INVITED});
+                // If member is in initial commit, but not in invited, this means that user left.
+                members_.emplace_back(ConversationMember {member, MemberRole::LEFT});
             }
         }
     }
@@ -1860,7 +1887,7 @@ ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& acc
     }
 
     // Add initial files
-    if (!add_initial_files(repo, shared)) {
+    if (!add_initial_files(repo, shared, mode, otherMember)) {
         JAMI_ERR("Error when adding initial files");
         fileutils::removeAll(tmpPath, true);
         return {};
