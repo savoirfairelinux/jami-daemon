@@ -676,7 +676,8 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
                 CPPUNIT_ASSERT_EQUAL(scenario.offerUpdate_[idx].muted_, mediaAttr[idx].muted_);
 
                 // Check isCaptureDeviceMuted API
-                CPPUNIT_ASSERT_EQUAL(mediaAttr[idx].muted_, aliceCall->isCaptureDeviceMuted(mediaAttr[idx].type_));
+                CPPUNIT_ASSERT_EQUAL(mediaAttr[idx].muted_,
+                                     aliceCall->isCaptureDeviceMuted(mediaAttr[idx].type_));
             }
         }
 
@@ -690,7 +691,8 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData,
                 CPPUNIT_ASSERT_EQUAL(scenario.answerUpdate_[idx].muted_, mediaAttr[idx].muted_);
 
                 // Check isCaptureDeviceMuted API
-                CPPUNIT_ASSERT_EQUAL(mediaAttr[idx].muted_, bobCall->isCaptureDeviceMuted(mediaAttr[idx].type_));
+                CPPUNIT_ASSERT_EQUAL(mediaAttr[idx].muted_,
+                                     bobCall->isCaptureDeviceMuted(mediaAttr[idx].type_));
             }
         }
     }
@@ -717,11 +719,11 @@ MediaNegotiationTest::audio_and_video_then_mute_video()
     configureScenario(aliceData_, bobData_);
 
     MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
-    defaultAudio.label_ = "main audio";
+    defaultAudio.label_ = "audio_0";
     defaultAudio.enabled_ = true;
 
     MediaAttribute defaultVideo(MediaType::MEDIA_VIDEO);
-    defaultVideo.label_ = "main video";
+    defaultVideo.label_ = "video_0";
     defaultVideo.enabled_ = true;
 
     {
@@ -762,11 +764,11 @@ MediaNegotiationTest::audio_only_then_add_video()
     configureScenario(aliceData_, bobData_);
 
     MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
-    defaultAudio.label_ = "main audio";
+    defaultAudio.label_ = "audio_0";
     defaultAudio.enabled_ = true;
 
     MediaAttribute defaultVideo(MediaType::MEDIA_VIDEO);
-    defaultVideo.label_ = "main video";
+    defaultVideo.label_ = "video_0";
     defaultVideo.enabled_ = true;
 
     {
@@ -802,11 +804,11 @@ MediaNegotiationTest::audio_and_video_then_mute_audio()
     configureScenario(aliceData_, bobData_);
 
     MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
-    defaultAudio.label_ = "main audio";
+    defaultAudio.label_ = "audio_0";
     defaultAudio.enabled_ = true;
 
     MediaAttribute defaultVideo(MediaType::MEDIA_VIDEO);
-    defaultVideo.label_ = "main video";
+    defaultVideo.label_ = "video_0";
     defaultVideo.enabled_ = true;
 
     {
@@ -851,11 +853,11 @@ MediaNegotiationTest::audio_only_then_add_video_but_peer_disabled_multistream()
     configureScenario(aliceData_, bobData_);
 
     MediaAttribute defaultAudio(MediaType::MEDIA_AUDIO);
-    defaultAudio.label_ = "main audio";
+    defaultAudio.label_ = "audio_0";
     defaultAudio.enabled_ = true;
 
     MediaAttribute defaultVideo(MediaType::MEDIA_VIDEO);
-    defaultVideo.label_ = "main video";
+    defaultVideo.label_ = "video_0";
     defaultVideo.enabled_ = true;
 
     {

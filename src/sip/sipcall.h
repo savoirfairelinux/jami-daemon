@@ -346,6 +346,7 @@ private:
     bool hold();
 
     bool unhold();
+
     // Update the attributes of a media stream
     void updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx);
     void updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList);
