@@ -4064,7 +4064,7 @@ JamiAccount::getConversationMembers(const std::string& conversationId) const
     std::unique_lock<std::mutex> lk(conversationsMtx_);
     auto conversation = conversations_.find(conversationId);
     if (conversation != conversations_.end() && conversation->second)
-        return conversation->second->getMembers(true);
+        return conversation->second->getMembers(true, true);
 
     lk.unlock();
     if (auto info = accountManager_->getInfo()) {

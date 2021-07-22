@@ -571,7 +571,7 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
 }
 
 std::vector<std::map<std::string, std::string>>
-Conversation::getMembers(bool includeInvited) const
+Conversation::getMembers(bool includeInvited, bool includeLeft) const
 {
     std::vector<std::map<std::string, std::string>> result;
 
@@ -584,6 +584,8 @@ Conversation::getMembers(bool includeInvited) const
         if (member.role == MemberRole::BANNED)
             continue;
         if (member.role == MemberRole::INVITED && !includeInvited)
+            continue;
+        if (member.role == MemberRole::LEFT && !includeLeft)
             continue;
         auto mm = member.map();
         std::string lastDisplayed;
