@@ -22,6 +22,30 @@
       },
       "revId": "a8d3e27a7aeaf6c3db1752e9970b1a9699b5d3d6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7755f9cf_e6bd436b",
+        "filename": "src/logger.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 258,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-22T18:22:32Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "e053aa14_7b7a7547",
+      "range": {
+        "startLine": 253,
+        "startChar": 0,
+        "endLine": 258,
+        "endChar": 0
+      },
+      "revId": "a8d3e27a7aeaf6c3db1752e9970b1a9699b5d3d6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
