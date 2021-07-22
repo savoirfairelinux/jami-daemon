@@ -3607,9 +3607,10 @@ ConversationTest::testRemoveContact()
     DRing::registerSignalHandlers(confHandlers);
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&]() { return !convId.empty(); }));
     // Check created files
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return !convId.empty() && requestReceived;
+    }));
     memberMessageGenerated = false;
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
@@ -3620,6 +3621,16 @@ ConversationTest::testRemoveContact()
     bobAccount->removeContact(aliceUri, false);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberMessageGenerated; }));
+
+    // Check that getConversationMembers return "role":"left"
+    auto members = aliceAccount->getConversationMembers(convId);
+    CPPUNIT_ASSERT(std::find_if(members.begin(),
+                                members.end(),
+                                [&](auto member) {
+                                    return member["uri"] == bobUri && member["role"] == "left";
+                                })
+                   != members.end());
+
     aliceAccount->removeContact(bobUri, false);
     cv.wait_for(lk, std::chrono::seconds(20));
 
