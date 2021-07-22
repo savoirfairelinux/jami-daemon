@@ -106,6 +106,7 @@ public:
     void removeMember(const std::string& contactUri, bool isDevice, const OnDoneCb& cb = {});
     /**
      * @param includeInvited        If we want invited members
+     * @param includeLeft           If we want left members
      * @return a vector of member details:
      * {
      *  "uri":"xxx",
@@ -114,7 +115,8 @@ public:
      *  ...
      * }
      */
-    std::vector<std::map<std::string, std::string>> getMembers(bool includeInvited = false) const;
+    std::vector<std::map<std::string, std::string>> getMembers(bool includeInvited = false,
+                                                               bool includeLeft = false) const;
 
     /**
      * Join a conversation
