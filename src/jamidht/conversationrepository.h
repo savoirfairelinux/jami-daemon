@@ -72,7 +72,7 @@ struct ConversationCommit
     int64_t timestamp {0};
 };
 
-enum class MemberRole { ADMIN = 0, MEMBER, INVITED, BANNED };
+enum class MemberRole { ADMIN = 0, MEMBER, INVITED, BANNED, LEFT };
 
 struct ConversationMember
 {
@@ -90,6 +90,8 @@ struct ConversationMember
             rolestr = "invited";
         } else if (role == MemberRole::BANNED) {
             rolestr = "banned";
+        } else if (role == MemberRole::LEFT) {
+            rolestr = "left"; // For one to one
         }
 
         return {{"uri", uri}, {"role", rolestr}};
