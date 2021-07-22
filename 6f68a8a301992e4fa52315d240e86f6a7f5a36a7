@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "627719c8_e4ab96d1",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-07-22T19:58:48Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "26213998_a46b0cda",
+      "range": {
+        "startLine": 171,
+        "startChar": 0,
+        "endLine": 174,
+        "endChar": 22
+      },
+      "revId": "6f68a8a301992e4fa52315d240e86f6a7f5a36a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9cc2cffd_b45136d0",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-07-22T16:56:35Z",
       "side": 1,
       "message": "unneeded: check already done in reset()",
+      "range": {
+        "startLine": 1838,
+        "startChar": 0,
+        "endLine": 1839,
+        "endChar": 31
+      },
+      "revId": "6f68a8a301992e4fa52315d240e86f6a7f5a36a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c6744bd6_07d16bb6",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1839,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-07-22T19:58:48Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "9cc2cffd_b45136d0",
       "range": {
         "startLine": 1838,
         "startChar": 0,
