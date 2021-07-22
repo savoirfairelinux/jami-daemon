@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "14005549_6d352b25",
+        "filename": "src/logger.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-22T18:22:20Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "01d8f33d_4dfdea27",
+      "range": {
+        "startLine": 248,
+        "startChar": 9,
+        "endLine": 248,
+        "endChar": 17
+      },
+      "revId": "a5e2a7f23dfafc4220487ef4a70ca4e7c225b804",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d422b7ba_00261a68",
@@ -54,6 +78,30 @@
       "writtenOn": "2021-07-22T16:33:45Z",
       "side": 1,
       "message": "Could be called after enable() and before wait() in std::thread, causing deadlock on thread_.join().\n\nAlso, it\u0027s recommended to use cv with a real mutex that should be locked when calling notify() (because the mutex protects the cv itself), and when changing the condition (enabled or queue not empty).\n\nUse cv with predicate, like:\n\n    std::vector\u003cjami::Logger::Msg\u003e pendingQ_;\n    while (enable()) {\n       {\n           std::unique_lock lk(mtx);\n           cv_.wait(lk, [\u0026]{ return not enable() or not currentQ_.empty(); });\n           if (not enable()) break;\n           std::swap(pendingQ_, currentQ_);\n       }\n       // consume unlocked so the mutex is actually almost never locked.\n       do_consume(pendingQ_);\n       pendingQ.clear();\n    }",
+      "range": {
+        "startLine": 448,
+        "startChar": 11,
+        "endLine": 448,
+        "endChar": 29
+      },
+      "revId": "a5e2a7f23dfafc4220487ef4a70ca4e7c225b804",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8780e248_3d9925dd",
+        "filename": "src/logger.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 448,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-22T18:22:20Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "d422b7ba_00261a68",
       "range": {
         "startLine": 448,
         "startChar": 11,
@@ -87,6 +135,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d988fc49_16d5b0b3",
+        "filename": "src/logger.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 455,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-22T18:22:20Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "376bbe61_8a30461c",
+      "range": {
+        "startLine": 455,
+        "startChar": 16,
+        "endLine": 455,
+        "endChar": 22
+      },
+      "revId": "a5e2a7f23dfafc4220487ef4a70ca4e7c225b804",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f0d9253f_aa546ef0",
@@ -100,6 +172,30 @@
       "writtenOn": "2021-07-22T16:33:45Z",
       "side": 1,
       "message": "Could be called after a previous log message have been processed but before the next wait() in std::thread, causing log processing to be delayed.\n\nUnfortunately the clean way is to lock the mutex here.\nBut if implemented clean, the overhead would be minimal because the mutex would almost never be locked.",
+      "range": {
+        "startLine": 477,
+        "startChar": 12,
+        "endLine": 477,
+        "endChar": 29
+      },
+      "revId": "a5e2a7f23dfafc4220487ef4a70ca4e7c225b804",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7bb628fc_2b4f25e6",
+        "filename": "src/logger.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 477,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-22T18:22:20Z",
+      "side": 1,
+      "message": "Locking a mutex would defy the usage of a spinlock, so I\u0027m just going to go with the mutex instead.",
+      "parentUuid": "f0d9253f_aa546ef0",
       "range": {
         "startLine": 477,
         "startChar": 12,
