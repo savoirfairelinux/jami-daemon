@@ -821,7 +821,7 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
 
     // Apply the media attributes provided by the user.
     for (size_t idx = 0; idx < mediaAttrList.size(); idx++) {
-        rtpStreams_[idx].mediaAttribute_ = std::make_shared<MediaAttribute>(mediaAttrList[idx]);
+        updateMediaStream(mediaAttrList[idx], idx);
     }
 
     if (not inviteSession_)
@@ -2098,6 +2098,8 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
     auto const& mediaAttr = rtpStream.mediaAttribute_;
     assert(mediaAttr);
 
+    bool notify = false;
+
     if (newMediaAttr.muted_ == mediaAttr->muted_) {
         // Nothing to do. Already in the desired state.
         JAMI_DBG("[call:%s] [%s] already %s",
@@ -2105,30 +2107,34 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
                  mediaAttr->label_.c_str(),
                  mediaAttr->muted_ ? "muted " : "un-muted ");
 
-        return;
+    } else {
+        notify = true;
     }
 
     // Update
     mediaAttr->muted_ = newMediaAttr.muted_;
-    mediaAttr->sourceUri_ = newMediaAttr.sourceUri_;
+    // Only update source and type if actually set.
+    if (not newMediaAttr.sourceUri_.empty())
+        mediaAttr->sourceUri_ = newMediaAttr.sourceUri_;
+    if (newMediaAttr.sourceType_ != MediaSourceType::NONE)
+        mediaAttr->sourceType_ = newMediaAttr.sourceType_;
 
     JAMI_DBG("[call:%s] %s [%s]",
              getCallId().c_str(),
              mediaAttr->muted_ ? "muting" : "un-muting",
              mediaAttr->label_.c_str());
 
-    if (mediaAttr->type_ == MediaType::MEDIA_AUDIO) {
+    if (notify and mediaAttr->type_ == MediaType::MEDIA_AUDIO) {
         rtpStream.rtpSession_->setMuted(mediaAttr->muted_);
+        setMute(mediaAttr->muted_);
         if (not isSubcall())
             emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), mediaAttr->muted_);
-        setMute(mediaAttr->muted_);
         return;
     }
 
 #ifdef ENABLE_VIDEO
-    if (mediaAttr->type_ == MediaType::MEDIA_VIDEO) {
-        if (not isSubcall())
-            emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), mediaAttr->muted_);
+    if (notify and mediaAttr->type_ == MediaType::MEDIA_VIDEO and not isSubcall()) {
+        emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), mediaAttr->muted_);
     }
 #endif
 }
