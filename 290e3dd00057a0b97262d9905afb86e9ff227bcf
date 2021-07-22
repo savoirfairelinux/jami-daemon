@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "378ae291_1915c435",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 9
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-22T19:40:41Z",
+      "side": 1,
+      "message": "If we want Guile (cf next patch), for me this patch is ok.",
+      "revId": "290e3dd00057a0b97262d9905afb86e9ff227bcf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
