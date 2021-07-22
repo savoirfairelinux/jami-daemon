@@ -66,6 +66,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "5dc61be8_7dffa27c",
+        "filename": "src/logger.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 470,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-22T21:20:33Z",
+      "side": 1,
+      "message": "not isEnable() (exit condition), otherwise would always be true and busy-loop",
+      "range": {
+        "startLine": 470,
+        "startChar": 46,
+        "endLine": 470,
+        "endChar": 56
+      },
+      "revId": "19144ff35573d40cd7ef2d6eae8f67cbf9cdc70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "2bc1c5eb_1f2650b9",
         "filename": "src/ring_api.cpp",
         "patchSetId": 14
