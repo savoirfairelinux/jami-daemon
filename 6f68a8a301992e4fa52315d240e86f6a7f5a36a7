@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "26213998_a46b0cda",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-22T16:56:35Z",
+      "side": 1,
+      "message": "* trailing _ not needed because ComponentIO is a struct with no methods.\n* name of the struct is ComponentIO so no need to add \"io\" to member names since all members are I/O-related.\n* even if io was added to member names, it should be camelCase, like \"ioMutex\", \"ioQueue\", \"ioCb\" etc.",
+      "range": {
+        "startLine": 171,
+        "startChar": 0,
+        "endLine": 174,
+        "endChar": 22
+      },
+      "revId": "6f68a8a301992e4fa52315d240e86f6a7f5a36a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9cc2cffd_b45136d0",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1839,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-22T16:56:35Z",
+      "side": 1,
+      "message": "unneeded: check already done in reset()",
+      "range": {
+        "startLine": 1838,
+        "startChar": 0,
+        "endLine": 1839,
+        "endChar": 31
+      },
+      "revId": "6f68a8a301992e4fa52315d240e86f6a7f5a36a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
