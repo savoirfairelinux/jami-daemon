@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ed9880d5_382cdf32",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2915,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-22T19:18:55Z",
+      "side": 1,
+      "message": "no need, can be automatically done when destroying the up, anyway check previous comment",
+      "range": {
+        "startLine": 2915,
+        "startChar": 14,
+        "endLine": 2915,
+        "endChar": 29
+      },
+      "revId": "b313ccbe2e03be017ab62654e9baf4960334944e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c19c7f2d_7016c7dd",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2935,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-22T19:18:55Z",
+      "side": 1,
+      "message": "seems overkill and not necessary as we should not care about count here.",
+      "range": {
+        "startLine": 2926,
+        "startChar": 11,
+        "endLine": 2935,
+        "endChar": 13
+      },
+      "revId": "b313ccbe2e03be017ab62654e9baf4960334944e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9393bd35_78f384cc",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2937,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-22T19:18:55Z",
+      "side": 1,
+      "message": "no need. The only thing we do is to move the destruction of the transport in a io pool to let time for the handleEvents()",
+      "range": {
+        "startLine": 2937,
+        "startChar": 12,
+        "endLine": 2937,
+        "endChar": 30
+      },
+      "revId": "b313ccbe2e03be017ab62654e9baf4960334944e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "65d15169_f8d378e1",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-22T19:18:55Z",
+      "side": 1,
+      "message": "unneeded, a UP can be converted without issue to a shared_ptr, and as it\u0027s moved it will be destroyed",
+      "range": {
+        "startLine": 127,
+        "startChar": 3,
+        "endLine": 127,
+        "endChar": 67
+      },
+      "revId": "b313ccbe2e03be017ab62654e9baf4960334944e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
