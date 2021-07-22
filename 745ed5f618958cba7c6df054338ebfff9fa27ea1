@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "387c1e14_5561883d",
+        "filename": "src/logger.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 245,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-22T16:33:45Z",
+      "side": 1,
+      "message": "could consume() take a va_list, and let handlers convert to Msg internally if necessary ?",
+      "range": {
+        "startLine": 245,
+        "startChar": 17,
+        "endLine": 245,
+        "endChar": 24
+      },
+      "revId": "745ed5f618958cba7c6df054338ebfff9fa27ea1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
