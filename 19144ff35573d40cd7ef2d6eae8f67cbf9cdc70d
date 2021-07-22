@@ -1,6 +1,52 @@
 {
   "comments": [
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "4fe51097_d117b510",
+        "filename": "src/logger.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-22T20:12:15Z",
+      "side": 1,
+      "message": "note. In fileutls, DIR_SEPARATOR_STR can be used for that",
+      "range": {
+        "startLine": 99,
+        "startChar": 1,
+        "endLine": 104,
+        "endChar": 6
+      },
+      "revId": "19144ff35573d40cd7ef2d6eae8f67cbf9cdc70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ba1aeb7a_2c0ac437",
+        "filename": "src/logger.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 186,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-22T20:12:15Z",
+      "side": 1,
+      "message": "Regression\n\nwhen using monitor(), a lot of \\n are added to the log",
+      "range": {
+        "startLine": 185,
+        "startChar": 0,
+        "endLine": 186,
+        "endChar": 17
+      },
+      "revId": "19144ff35573d40cd7ef2d6eae8f67cbf9cdc70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "b7726cd2_5bf77f36",
@@ -14,6 +60,29 @@
       "writtenOn": "2021-07-22T19:27:58Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nprefer ptr1 \u003d std::move(ptr2) over ptr1.reset(ptr2.release())\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Amisc-uniqueptr-reset-release",
+      "revId": "19144ff35573d40cd7ef2d6eae8f67cbf9cdc70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2bc1c5eb_1f2650b9",
+        "filename": "src/ring_api.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-22T20:12:15Z",
+      "side": 1,
+      "message": "imho, this should be available through\n\nmonitor(bool continuous) (we should be able to set a path)\n\nmonitor() can be used by several client, and the interface/client should be able to change the destination while the daemon is running.",
+      "range": {
+        "startLine": 50,
+        "startChar": 0,
+        "endLine": 50,
+        "endChar": 51
+      },
       "revId": "19144ff35573d40cd7ef2d6eae8f67cbf9cdc70d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
