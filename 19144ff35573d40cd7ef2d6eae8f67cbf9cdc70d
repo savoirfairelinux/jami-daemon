@@ -95,6 +95,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": true,
+      "key": {
+        "uuid": "a6439b01_8e2d34b7",
+        "filename": "src/logger.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 186,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-23T13:57:12Z",
+      "side": 1,
+      "message": "None in particular. It was just to inform you this patch was causing a regression.",
+      "parentUuid": "74adb924_aefef7c5",
+      "range": {
+        "startLine": 185,
+        "startChar": 0,
+        "endLine": 186,
+        "endChar": 17
+      },
+      "revId": "19144ff35573d40cd7ef2d6eae8f67cbf9cdc70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": false,
       "key": {
         "uuid": "b7726cd2_5bf77f36",
@@ -196,6 +220,30 @@
       "side": 1,
       "message": "in an another patch yes",
       "parentUuid": "2bc1c5eb_1f2650b9",
+      "range": {
+        "startLine": 50,
+        "startChar": 0,
+        "endLine": 50,
+        "endChar": 51
+      },
+      "revId": "19144ff35573d40cd7ef2d6eae8f67cbf9cdc70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6a0d9cd5_aebf481d",
+        "filename": "src/ring_api.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-23T13:57:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ff81f887_49ad7973",
       "range": {
         "startLine": 50,
         "startChar": 0,
