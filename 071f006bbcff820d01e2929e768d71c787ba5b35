@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7e6c2fde_0ea9777c",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:37:28Z",
+      "side": 1,
+      "message": "I don\u0027t use an IDE with some fancy intellisense.  Although Emacs is perfectly capable of such a thing, I prefer the old school way of GTAGS + Grep.\n\nThus I don\u0027t want to grep again in the future to determine what is the parameters passed to this signal.  This save me time, because I know just by looking at the function, *locally* that the third parameter is a message and not some other thing.\n\nTL;DR.  I don\u0027t want to grep `struct MessageReceived` again to determine what\u0027s the parameters.",
+      "parentUuid": "5098c81f_366c0ba5",
+      "range": {
+        "startLine": 75,
+        "startChar": 9,
+        "endLine": 75,
+        "endChar": 20
+      },
+      "revId": "071f006bbcff820d01e2929e768d71c787ba5b35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e13b65fa_afb3078d",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-07-22T19:39:35Z",
       "side": 1,
       "message": "an empty id seems a better return",
+      "range": {
+        "startLine": 135,
+        "startChar": 16,
+        "endLine": 135,
+        "endChar": 19
+      },
+      "revId": "071f006bbcff820d01e2929e768d71c787ba5b35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "69c9b64f_a08e39d3",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:37:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "e13b65fa_afb3078d",
       "range": {
         "startLine": 135,
         "startChar": 16,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "92bad3e0_8031045b",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:37:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "5014a9eb_46a6bf6d",
+      "range": {
+        "startLine": 168,
+        "startChar": 0,
+        "endLine": 183,
+        "endChar": 19
+      },
+      "revId": "071f006bbcff820d01e2929e768d71c787ba5b35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "aeccbb0d_b790c391",
@@ -83,6 +155,30 @@
       "writtenOn": "2021-07-22T19:39:35Z",
       "side": 1,
       "message": "imho restarting the account to cut the connections is unrelated to account details. If wanted, I think a parameter like \"restartAccount\" should be added",
+      "range": {
+        "startLine": 217,
+        "startChar": 64,
+        "endLine": 217,
+        "endChar": 68
+      },
+      "revId": "071f006bbcff820d01e2929e768d71c787ba5b35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2661540b_1af0bb85",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:37:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "aeccbb0d_b790c391",
       "range": {
         "startLine": 217,
         "startChar": 64,
@@ -118,6 +214,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "8063678c_0873f207",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 444,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:37:28Z",
+      "side": 1,
+      "message": "Not for prefix.  This is equivalent of msg.startWith(pong) which sadly is not in the C++ standard.",
+      "parentUuid": "32e59cda_9b2694c9",
+      "range": {
+        "startLine": 444,
+        "startChar": 12,
+        "endLine": 444,
+        "endChar": 57
+      },
+      "revId": "071f006bbcff820d01e2929e768d71c787ba5b35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "fa15e7d7_5c056d38",
         "filename": "test/agent/examples/active-agent.scm",
         "patchSetId": 20
@@ -129,6 +249,30 @@
       "writtenOn": "2021-07-22T19:39:35Z",
       "side": 1,
       "message": "here If I remember well, if the call fails we stop the agent, right?\nMaybe a wanted things can be to do 50 calls and report how many call failed at the end. This would need a way to continue on failure if wanted",
+      "range": {
+        "startLine": 93,
+        "startChar": 32,
+        "endLine": 94,
+        "endChar": 29
+      },
+      "revId": "071f006bbcff820d01e2929e768d71c787ba5b35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cc611599_d07b4922",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 20
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:37:28Z",
+      "side": 1,
+      "message": "Nah this simpy call the other 50 times.  Check the definition of scenario/call:nth",
+      "parentUuid": "fa15e7d7_5c056d38",
       "range": {
         "startLine": 93,
         "startChar": 32,
@@ -152,6 +296,30 @@
       "writtenOn": "2021-07-22T19:39:35Z",
       "side": 1,
       "message": "seems a bit ugly. agent-wait should be able to take no parameter, and just wait.",
+      "range": {
+        "startLine": 95,
+        "startChar": 12,
+        "endLine": 95,
+        "endChar": 19
+      },
+      "revId": "071f006bbcff820d01e2929e768d71c787ba5b35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f679acca_bbc30c55",
+        "filename": "test/agent/examples/active-agent.scm",
+        "patchSetId": 20
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:37:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "ae47f5e8_9d6bf805",
       "range": {
         "startLine": 95,
         "startChar": 12,
@@ -187,6 +355,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "6b384109_cb923127",
+        "filename": "test/agent/main.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:37:28Z",
+      "side": 1,
+      "message": "I would not have found all the bugs that I have found if I was using YAML.  The iteration process of writing new scenarios is much faster with Guile than some hack I have made with YAML.\n\nYAML just does not scale well enough. Just check all the bindings and manual parsing (if/else spaghetti) I had to do just to add some fields.  What about the matrix of details?  I had to do some hack with callback for that!  This is ugly and I removed it before it get out of control.\n\nGuile has none of these problems.",
+      "parentUuid": "6b06b82f_0f987868",
+      "range": {
+        "startLine": 52,
+        "startChar": 9,
+        "endLine": 52,
+        "endChar": 22
+      },
+      "revId": "071f006bbcff820d01e2929e768d71c787ba5b35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8493ffa0_d8c9c10b",
         "filename": "test/agent/main.cpp",
         "patchSetId": 20
@@ -198,6 +390,30 @@
       "writtenOn": "2021-07-22T19:39:35Z",
       "side": 1,
       "message": "also the bindings should be separated from the main",
+      "range": {
+        "startLine": 70,
+        "startChar": 11,
+        "endLine": 71,
+        "endChar": 1
+      },
+      "revId": "071f006bbcff820d01e2929e768d71c787ba5b35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4ac8c19c_b8a41cce",
+        "filename": "test/agent/main.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:37:28Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "8493ffa0_d8c9c10b",
       "range": {
         "startLine": 70,
         "startChar": 11,
