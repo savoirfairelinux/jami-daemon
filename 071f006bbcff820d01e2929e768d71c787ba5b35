@@ -72,6 +72,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f764e271_8cb8ab38",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T14:22:38Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "b5977c7c_632b2283",
+      "range": {
+        "startLine": 75,
+        "startChar": 9,
+        "endLine": 75,
+        "endChar": 20
+      },
+      "revId": "071f006bbcff820d01e2929e768d71c787ba5b35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e13b65fa_afb3078d",
@@ -274,6 +298,30 @@
       "side": 1,
       "message": "string.rfind(\"PONG\", 0) \u003d\u003d 0 should work",
       "parentUuid": "8063678c_0873f207",
+      "range": {
+        "startLine": 444,
+        "startChar": 12,
+        "endLine": 444,
+        "endChar": 57
+      },
+      "revId": "071f006bbcff820d01e2929e768d71c787ba5b35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "23a95ead_61d56b4d",
+        "filename": "test/agent/agent.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 444,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T14:22:38Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "04193649_1cc4e26c",
       "range": {
         "startLine": 444,
         "startChar": 12,
