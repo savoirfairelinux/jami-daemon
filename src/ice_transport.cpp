@@ -457,17 +457,40 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
 IceTransport::Impl::~Impl()
 {
     JAMI_DBG("[ice:%p] destroying", this);
+
     sip_utils::register_thread();
+
+    /*
+     * This must be done before stopping the I/O thread.  This is because the
+     * deletion of the ice transport will call `pj_turn_sock_destroy()` on the
+     * underlying TURN socket of each component and reseting them to NULL.
+     *
+     * Since there's a TURN session with the socket, the session has to be
+     * shutdown first by caling `pj_turn_session_shutdown()`.  Most of the time,
+     * the session will be in the `PJ_TURN_STATE_READY` and thus a refresh
+     * allocation with a lifetime of zero
+     * (https://datatracker.ietf.org/doc/html/rfc5766#section-7.1) will be send
+     * to the server.  This puts the session in the `PJ_TURN_STATE_DEALLOCATING`
+     * state.
+     *
+     * But in order for the underyling OS socket to be actually closed, the
+     * session has to be in the state `PJ_TURN_STATE_{DEALLOCATED|DESTROYING}`.
+     * For this to happen, we need to let run the I/O thread for it to handle
+     * the incoming responses from the TURN server.
+     *
+     * NOTE!  Currently, the I/O has a grace period of 3 seconds after setting
+     * the termination flag.  Thus, there's still a risk of a leak here.
+     */
+    {
+        std::lock_guard<std::mutex> lk {iceMutex_};
+        icest_.reset();
+    }
+
     threadTerminateFlags_ = true;
     iceCV_.notify_all();
 
     if (thread_.joinable())
         thread_.join();
-
-    {
-        std::lock_guard<std::mutex> lk {iceMutex_};
-        icest_.reset(); // must be done before ioqueue/timer destruction
-    }
 
     if (config_.stun_cfg.ioqueue)
         pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
