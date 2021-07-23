@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "48699c9b_c070ded8",
+        "filename": "src/logger.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 226,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-07-23T14:20:15Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nprefer ptr1 \u003d std::move(ptr2) over ptr1.reset(ptr2.release())\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Amisc-uniqueptr-reset-release",
+      "revId": "ac6b5ecc678275a1381c5bff532674f421732744",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
