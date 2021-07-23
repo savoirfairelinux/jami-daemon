@@ -121,6 +121,30 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "af5b9952_6f510124",
+        "filename": "src/logger.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 186,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T14:23:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a6439b01_8e2d34b7",
+      "range": {
+        "startLine": 185,
+        "startChar": 0,
+        "endLine": 186,
+        "endChar": 17
+      },
+      "revId": "19144ff35573d40cd7ef2d6eae8f67cbf9cdc70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "b7726cd2_5bf77f36",
         "filename": "src/logger.cpp",
         "patchSetId": 14
