@@ -16,6 +16,92 @@
       "message": "MINOR SonarQube violation:\n\n\nprefer ptr1 \u003d std::move(ptr2) over ptr1.reset(ptr2.release())\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Amisc-uniqueptr-reset-release",
       "revId": "ac6b5ecc678275a1381c5bff532674f421732744",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1b961c34_8a828f24",
+        "filename": "src/logger.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 226,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-23T15:14:24Z",
+      "side": 1,
+      "message": "^ use std::move",
+      "parentUuid": "48699c9b_c070ded8",
+      "revId": "ac6b5ecc678275a1381c5bff532674f421732744",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2ffa3579_69246136",
+        "filename": "src/logger.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 421,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-23T15:14:24Z",
+      "side": 1,
+      "message": "FileLog\u0026",
+      "revId": "ac6b5ecc678275a1381c5bff532674f421732744",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "09701189_aac0abaf",
+        "filename": "src/logger.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 430,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-23T15:14:24Z",
+      "side": 1,
+      "message": "*self",
+      "revId": "ac6b5ecc678275a1381c5bff532674f421732744",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9788fb6f_258fb217",
+        "filename": "src/logger.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 490,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-23T15:14:24Z",
+      "side": 1,
+      "message": "use template instead of std::function:\ntemplate \u003ctypename T\u003e void notify(T func)",
+      "revId": "ac6b5ecc678275a1381c5bff532674f421732744",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a8a94fe4_7e6d2dc5",
+        "filename": "src/logger.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 521,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-23T15:14:24Z",
+      "side": 1,
+      "message": "FileLog::instance().setFile(path);",
+      "revId": "ac6b5ecc678275a1381c5bff532674f421732744",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
