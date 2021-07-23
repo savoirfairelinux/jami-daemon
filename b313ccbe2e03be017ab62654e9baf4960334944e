@@ -95,6 +95,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9c464ecb_0b29a627",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2935,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-23T15:08:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8c76e292_94ca3ab0",
+      "range": {
+        "startLine": 2926,
+        "startChar": 11,
+        "endLine": 2935,
+        "endChar": 13
+      },
+      "revId": "b313ccbe2e03be017ab62654e9baf4960334944e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9393bd35_78f384cc",
@@ -132,6 +156,30 @@
       "side": 1,
       "message": "I know it is not needed.  But it makes it clear on the intention.",
       "parentUuid": "9393bd35_78f384cc",
+      "range": {
+        "startLine": 2937,
+        "startChar": 12,
+        "endLine": 2937,
+        "endChar": 30
+      },
+      "revId": "b313ccbe2e03be017ab62654e9baf4960334944e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "66d97d94_113b3b81",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2937,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-23T15:08:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a94a8703_fae396f2",
       "range": {
         "startLine": 2937,
         "startChar": 12,
