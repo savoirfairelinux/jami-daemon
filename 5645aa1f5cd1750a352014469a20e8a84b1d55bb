@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ccd2815e_f53a8686",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-23T18:05:02Z",
+      "side": 1,
+      "message": "To verify, but imho this will lead to multiple crash. icest_ can be used by a lot of method while the thread is still running and this is the revert of the patch done by Adrien: https://review.jami.net/c/ring-daemon/+/13711",
+      "revId": "5645aa1f5cd1750a352014469a20e8a84b1d55bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
