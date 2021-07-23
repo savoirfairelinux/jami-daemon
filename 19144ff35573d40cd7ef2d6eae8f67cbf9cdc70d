@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2792bcba_beb9b889",
+        "filename": "src/logger.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:55:17Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "4fe51097_d117b510",
+      "range": {
+        "startLine": 99,
+        "startChar": 1,
+        "endLine": 104,
+        "endChar": 6
+      },
+      "revId": "19144ff35573d40cd7ef2d6eae8f67cbf9cdc70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ba1aeb7a_2c0ac437",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-07-22T20:12:15Z",
       "side": 1,
       "message": "Regression\n\nwhen using monitor(), a lot of \\n are added to the log",
+      "range": {
+        "startLine": 185,
+        "startChar": 0,
+        "endLine": 186,
+        "endChar": 17
+      },
+      "revId": "19144ff35573d40cd7ef2d6eae8f67cbf9cdc70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "74adb924_aefef7c5",
+        "filename": "src/logger.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 186,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:55:17Z",
+      "side": 1,
+      "message": "What\u0027s the relation to `struct BufDeleter`?  I removed the end of line for monitor log.",
+      "parentUuid": "ba1aeb7a_2c0ac437",
       "range": {
         "startLine": 185,
         "startChar": 0,
@@ -87,6 +135,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c0c8cad4_e44abd68",
+        "filename": "src/logger.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 470,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:55:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5dc61be8_7dffa27c",
+      "range": {
+        "startLine": 470,
+        "startChar": 46,
+        "endLine": 470,
+        "endChar": 56
+      },
+      "revId": "19144ff35573d40cd7ef2d6eae8f67cbf9cdc70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2bc1c5eb_1f2650b9",
@@ -100,6 +172,30 @@
       "writtenOn": "2021-07-22T20:12:15Z",
       "side": 1,
       "message": "imho, this should be available through\n\nmonitor(bool continuous) (we should be able to set a path)\n\nmonitor() can be used by several client, and the interface/client should be able to change the destination while the daemon is running.",
+      "range": {
+        "startLine": 50,
+        "startChar": 0,
+        "endLine": 50,
+        "endChar": 51
+      },
+      "revId": "19144ff35573d40cd7ef2d6eae8f67cbf9cdc70d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ff81f887_49ad7973",
+        "filename": "src/ring_api.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:55:17Z",
+      "side": 1,
+      "message": "in an another patch yes",
+      "parentUuid": "2bc1c5eb_1f2650b9",
       "range": {
         "startLine": 50,
         "startChar": 0,
