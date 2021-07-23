@@ -204,8 +204,15 @@ public:
     bool onlyIPv4Private_ {true};
 
     // IO/Timer events are handled by following thread
+
+    enum ThreadState {
+        FINISH  = 0,
+        RUNNING = 1,
+        SHUTTING_DOWN = 2,
+    };
+
     std::thread thread_ {};
-    std::atomic_bool threadTerminateFlags_ {false};
+    std::atomic<ThreadState> threadState_ {ThreadState::FINISH};
 
     // Wait data on components
     pj_size_t lastSentLen_ {};
@@ -430,8 +437,12 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
 
     // Must be created after any potential failure
     thread_ = std::thread([this] {
+
         sip_utils::register_thread();
-        while (not threadTerminateFlags_) {
+
+        threadState_.store(ThreadState::RUNNING);
+
+        while (ThreadState::FINISH != threadState_.load()) {
             // NOTE: handleEvents can return false in this case
             // but here we don't care if there is event or not.
             handleEvents(500); // limit polling to 500ms
@@ -457,17 +468,43 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
 IceTransport::Impl::~Impl()
 {
     JAMI_DBG("[ice:%p] destroying", this);
+
     sip_utils::register_thread();
-    threadTerminateFlags_ = true;
+
+
+    threadState_.store(ThreadState::SHUTTING_DOWN);
     iceCV_.notify_all();
+
+    /*
+     * This must be done before stopping the I/O thread.  This is because the
+     * deletion of the ice transport will call `pj_turn_sock_destroy()` on the
+     * underlying TURN socket of each component and reseting them to NULL.
+     *
+     * Since there's a TURN session with the socket, the session has to be
+     * shutdown first by caling `pj_turn_session_shutdown()`.  Most of the time,
+     * the session will be in the `PJ_TURN_STATE_READY` and thus a refresh
+     * allocation with a lifetime of zero
+     * (https://datatracker.ietf.org/doc/html/rfc5766#section-7.1) will be send
+     * to the server.  This puts the session in the `PJ_TURN_STATE_DEALLOCATING`
+     * state.
+     *
+     * But in order for the underyling OS socket to be actually closed, the
+     * session has to be in the state `PJ_TURN_STATE_{DEALLOCATED|DESTROYING}`.
+     * For this to happen, we need to let run the I/O thread for it to handle
+     * the incoming responses from the TURN server.
+     *
+     * NOTE!  Currently, the I/O has a grace period of 3 seconds after setting
+     * the termination flag.  Thus, there's still a risk of a leak here.
+     */
+    {
+        std::lock_guard<std::mutex> lk {iceMutex_};
+        icest_.reset();
+    }
+
+    threadState_.store(ThreadState::FINISH);
 
     if (thread_.joinable())
         thread_.join();
-
-    {
-        std::lock_guard<std::mutex> lk {iceMutex_};
-        icest_.reset(); // must be done before ioqueue/timer destruction
-    }
 
     if (config_.stun_cfg.ioqueue)
         pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
@@ -1587,12 +1624,12 @@ IceTransport::waitForInitialization(std::chrono::milliseconds timeout)
 {
     std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
     if (!pimpl_->iceCV_.wait_for(lk, timeout, [this] {
-            return pimpl_->threadTerminateFlags_ or pimpl_->_isInitialized() or pimpl_->_isFailed();
+        return Impl::ThreadState::RUNNING != pimpl_->threadState_.load() or pimpl_->_isInitialized() or pimpl_->_isFailed();
         })) {
         JAMI_WARN("[ice:%p] waitForInitialization: timeout", pimpl_.get());
         return -1;
     }
-    return not(pimpl_->threadTerminateFlags_ or pimpl_->_isFailed());
+    return not(Impl::ThreadState::RUNNING != pimpl_->threadState_.load() or pimpl_->_isFailed());
 }
 
 int
@@ -1600,12 +1637,12 @@ IceTransport::waitForNegotiation(std::chrono::milliseconds timeout)
 {
     std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
     if (!pimpl_->iceCV_.wait_for(lk, timeout, [this] {
-            return pimpl_->threadTerminateFlags_ or pimpl_->_isRunning() or pimpl_->_isFailed();
+            return Impl::ThreadState::RUNNING != pimpl_->threadState_.load() or pimpl_->_isRunning() or pimpl_->_isFailed();
         })) {
         JAMI_WARN("[ice:%p] waitForIceNegotiation: timeout", pimpl_.get());
         return -1;
     }
-    return not(pimpl_->threadTerminateFlags_ or pimpl_->_isFailed());
+    return not(Impl::ThreadState::RUNNING != pimpl_->threadState_.load() or pimpl_->_isFailed());
 }
 
 ssize_t
