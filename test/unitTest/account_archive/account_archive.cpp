@@ -33,7 +33,7 @@
 #include "../../test_runner.h"
 #include "archiver.h"
 #include "base64.h"
-#include "dring.h"
+#include "jami.h"
 #include "fileutils.h"
 #include "account_const.h"
 #include "common.h"
@@ -79,8 +79,7 @@ private:
     CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AccountArchiveTest,
-                                      AccountArchiveTest::name());
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AccountArchiveTest, AccountArchiveTest::name());
 
 void
 AccountArchiveTest::setUp()
