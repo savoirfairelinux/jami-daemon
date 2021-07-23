@@ -71,6 +71,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "856e380d_8d00938b",
+        "filename": "src/logger.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 421,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T19:59:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d71867e7_9b9409d8",
+      "revId": "ac6b5ecc678275a1381c5bff532674f421732744",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "09701189_aac0abaf",
@@ -84,6 +102,24 @@
       "writtenOn": "2021-07-23T15:14:24Z",
       "side": 1,
       "message": "*self",
+      "revId": "ac6b5ecc678275a1381c5bff532674f421732744",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "762f0ccf_b9f163b4",
+        "filename": "src/logger.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 430,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T19:59:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "09701189_aac0abaf",
       "revId": "ac6b5ecc678275a1381c5bff532674f421732744",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -105,6 +141,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "817195f6_12efd181",
+        "filename": "src/logger.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 490,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T19:59:52Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "9788fb6f_258fb217",
+      "revId": "ac6b5ecc678275a1381c5bff532674f421732744",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a8a94fe4_7e6d2dc5",
@@ -118,6 +172,24 @@
       "writtenOn": "2021-07-23T15:14:24Z",
       "side": 1,
       "message": "FileLog::instance().setFile(path);",
+      "revId": "ac6b5ecc678275a1381c5bff532674f421732744",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2c35e440_765ee5b9",
+        "filename": "src/logger.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 521,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T19:59:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a8a94fe4_7e6d2dc5",
       "revId": "ac6b5ecc678275a1381c5bff532674f421732744",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
