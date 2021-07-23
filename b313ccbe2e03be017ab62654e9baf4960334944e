@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ad7cc2b1_ae9c1cab",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2915,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:47:40Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "ed9880d5_382cdf32",
+      "range": {
+        "startLine": 2915,
+        "startChar": 14,
+        "endLine": 2915,
+        "endChar": 29
+      },
+      "revId": "b313ccbe2e03be017ab62654e9baf4960334944e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c19c7f2d_7016c7dd",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-07-22T19:18:55Z",
       "side": 1,
       "message": "seems overkill and not necessary as we should not care about count here.",
+      "range": {
+        "startLine": 2926,
+        "startChar": 11,
+        "endLine": 2935,
+        "endChar": 13
+      },
+      "revId": "b313ccbe2e03be017ab62654e9baf4960334944e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8c76e292_94ca3ab0",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2935,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:47:40Z",
+      "side": 1,
+      "message": "That was used by me to ensure that the UDP leak was not on our hand.  It can be removed.",
+      "parentUuid": "c19c7f2d_7016c7dd",
       "range": {
         "startLine": 2926,
         "startChar": 11,
@@ -72,6 +120,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "a94a8703_fae396f2",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2937,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:47:40Z",
+      "side": 1,
+      "message": "I know it is not needed.  But it makes it clear on the intention.",
+      "parentUuid": "9393bd35_78f384cc",
+      "range": {
+        "startLine": 2937,
+        "startChar": 12,
+        "endLine": 2937,
+        "endChar": 30
+      },
+      "revId": "b313ccbe2e03be017ab62654e9baf4960334944e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "65d15169_f8d378e1",
         "filename": "src/sip/sipcall.h",
         "patchSetId": 3
@@ -83,6 +155,30 @@
       "writtenOn": "2021-07-22T19:18:55Z",
       "side": 1,
       "message": "unneeded, a UP can be converted without issue to a shared_ptr, and as it\u0027s moved it will be destroyed",
+      "range": {
+        "startLine": 127,
+        "startChar": 3,
+        "endLine": 127,
+        "endChar": 67
+      },
+      "revId": "b313ccbe2e03be017ab62654e9baf4960334944e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fc68394a_96948bdb",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-23T13:47:40Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "65d15169_f8d378e1",
       "range": {
         "startLine": 127,
         "startChar": 3,
