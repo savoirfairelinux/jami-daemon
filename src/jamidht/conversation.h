@@ -26,6 +26,8 @@
 #include <memory>
 #include <json/json.h>
 #include <msgpack.hpp>
+#include <set>
+#include <tuple>
 
 #include "jami/datatransfer_interface.h"
 
@@ -306,6 +308,10 @@ public:
      * @param deviceId
      */
     void hasFetched(const std::string& deviceId);
+
+    void hostConference(const Json::Value& message, const OnDoneCb& cb = {});
+    bool isHosting(const std::string& confID) const;
+    std::set<std::tuple<std::string, std::string, std::string>> currentCalls() const;
 
 private:
     std::shared_ptr<Conversation> shared()

@@ -66,14 +66,14 @@ struct Property
     constexpr static const char* TELEPHONE = "TEL";
     constexpr static const char* TIME_ZONE = "TZ";
     constexpr static const char* TITLE = "TITLE";
+    constexpr static const char* RDV_ACCOUNT = "RDV_ACCOUNT";
+    constexpr static const char* RDV_DEVICE = "RDV_DEVICE";
     constexpr static const char* URL = "URL";
     constexpr static const char* BASE64 = "ENCODING=BASE64";
     constexpr static const char* TYPE_PNG = "TYPE=PNG";
     constexpr static const char* TYPE_JPEG = "TYPE=JPEG";
     constexpr static const char* PHOTO_PNG = "PHOTO;ENCODING=BASE64;TYPE=PNG";
     constexpr static const char* PHOTO_JPEG = "PHOTO;ENCODING=BASE64;TYPE=JPEG";
-
-    constexpr static const char* X_RINGACCOUNT = "X-RINGACCOUNTID";
 };
 
 namespace utils {

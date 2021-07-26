@@ -174,7 +174,7 @@ public:
     /**
      * Constructor for this class, increment static counter
      */
-    Conference();
+    Conference(const std::string& confId = "");
 
     /**
      * Destructor for this class, decrement static counter
