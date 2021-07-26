@@ -227,6 +227,8 @@ DBusClient::initLibrary(int flags)
             bind(&DBusConfigurationManager::accountMessageStatusChanged, confM, _1, _2, _3, _4, _5)),
         exportable_callback<ConfigurationSignal::ProfileReceived>(
             bind(&DBusConfigurationManager::profileReceived, confM, _1, _2, _3)),
+        exportable_callback<ConfigurationSignal::ActiveCallsChanged>(
+            bind(&DBusConfigurationManager::activeCallsChanged, confM, _1, _2, _3)),
         exportable_callback<ConfigurationSignal::ComposingStatusChanged>(
             bind(&DBusConfigurationManager::composingStatusChanged, confM, _1, _2, _3, _4)),
         exportable_callback<ConfigurationSignal::IncomingTrustRequest>(

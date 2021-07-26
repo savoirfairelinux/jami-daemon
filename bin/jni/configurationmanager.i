@@ -35,6 +35,8 @@ public:
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
     virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*message_id*/, const std::map<std::string, std::string>& /*payload*/){}
     virtual void accountMessageStatusChanged(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*peer*/, const std::string& /*message_id*/, int /*state*/){}
+    virtual void needsHost(const std::string& /*account_id*/, const std::string& /*conversationId*/){}
+    virtual void activeCallsChanged(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::vector<std::map<std::string, std::string>>& /*activeCalls*/ ){}
     virtual void profileReceived(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*path*/){}
     virtual void composingStatusChanged(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*from*/, int /*state*/){}
     virtual void knownDevicesChanged(const std::string& /*account_id*/, const std::map<std::string, std::string>& /*devices*/){}
@@ -120,6 +122,7 @@ std::map<std::string, std::string> getKnownRingDevices(const std::string& accoun
 bool revokeDevice(const std::string& accountID, const std::string& password, const std::string& deviceID);
 
 void setActiveCodecList(const std::string& accountID, const std::vector<unsigned>& list);
+std::vector<std::map<std::string, std::string>> getActiveCalls(const std::string& accountId, const std::string& convId);
 
 std::vector<std::string> getAudioPluginList();
 void setAudioPlugin(const std::string& audioPlugin);
@@ -248,6 +251,8 @@ public:
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
     virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*message_id*/, const std::map<std::string, std::string>& /*payload*/){}
     virtual void accountMessageStatusChanged(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*peer*/, const std::string& /*message_id*/, int /*state*/){}
+    virtual void needsHost(const std::string& /*account_id*/, const std::string& /*conversationId*/){}
+    virtual void activeCallsChanged(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::vector<std::map<std::string, std::string>>& /*activeCalls*/ ){}
     virtual void composingStatusChanged(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*from*/, int /*state*/){}
     virtual void knownDevicesChanged(const std::string& /*account_id*/, const std::map<std::string, std::string>& /*devices*/){}
     virtual void exportOnRingEnded(const std::string& /*account_id*/, int /*state*/, const std::string& /*pin*/){}

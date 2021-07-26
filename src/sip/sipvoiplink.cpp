@@ -318,9 +318,9 @@ transaction_request_cb(pjsip_rx_data* rdata)
                     // urgent messages are optional
                     if (ret >= 2)
                         emitSignal<libjami::CallSignal::VoiceMailNotify>(account->getAccountID(),
-                                                                       newCount,
-                                                                       oldCount,
-                                                                       urgentCount);
+                                                                         newCount,
+                                                                         oldCount,
+                                                                         urgentCount);
                 }
             }
         } else if (request.find(sip_utils::SIP_METHODS::MESSAGE) != std::string_view::npos) {
@@ -393,7 +393,6 @@ transaction_request_cb(pjsip_rx_data* rdata)
     unsigned options = 0;
 
     if (pjsip_inv_verify_request(rdata, &options, NULL, NULL, endpt_, NULL) != PJ_SUCCESS) {
-
         JAMI_ERR("Couldn't verify INVITE request in secure dialog.");
         try_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
         return PJ_FALSE;
@@ -418,6 +417,8 @@ transaction_request_cb(pjsip_rx_data* rdata)
     }
 
     call->setPeerUaVersion(sip_utils::getPeerUserAgent(rdata));
+    // The username can be used to join specific calls in conversations
+    call->toUsername(std::string(toUsername));
 
     // FIXME : for now, use the same address family as the SIP transport
     auto family = pjsip_transport_type_get_af(

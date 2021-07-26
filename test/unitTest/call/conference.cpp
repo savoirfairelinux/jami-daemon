@@ -74,7 +74,8 @@ public:
     ConferenceTest()
     {
         // Init daemon
-        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+        libjami::init(
+            libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
             CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
@@ -104,6 +105,7 @@ private:
     void testPropagateRecording();
     void testBrokenParticipantAudioAndVideo();
     void testBrokenParticipantAudioOnly();
+    void testRemoveConferenceInOneOne();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
@@ -126,6 +128,7 @@ private:
     CPPUNIT_TEST(testPropagateRecording);
     CPPUNIT_TEST(testBrokenParticipantAudioAndVideo);
     CPPUNIT_TEST(testBrokenParticipantAudioOnly);
+    CPPUNIT_TEST(testRemoveConferenceInOneOne);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -204,11 +207,11 @@ ConferenceTest::registerSignalHandlers()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::CallSignal::StateChange>([=](const std::string& accountId,
-                                                                       const std::string& callId,
-                                                                       const std::string& state,
-                                                                       signed) {
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
+        [=](const std::string& accountId,
+            const std::string& callId,
+            const std::string& state,
+            signed) {
             if (accountId == aliceId) {
                 auto details = libjami::getCallDetails(aliceId, callId);
                 if (details["PEER_NUMBER"].find(bobUri) != std::string::npos)
@@ -469,16 +472,21 @@ ConferenceTest::testCreateParticipantsSinks()
     auto expectedNumberOfParticipants = 3;
 
     // Check participants number
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return pInfos_.size() == expectedNumberOfParticipants; }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
 
     if (not jami::getVideoDeviceMonitor().getDeviceList().empty()) {
         JAMI_INFO() << "Check sinks if video device available.";
         for (auto& info : pInfos_) {
             auto uri = string_remove_suffix(info["uri"], '@');
             if (uri == bobUri) {
-                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]{ return Manager::instance().getSinkClient(info["sinkId"]) != nullptr; }));
+                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] {
+                    return Manager::instance().getSinkClient(info["sinkId"]) != nullptr;
+                }));
             } else if (uri == carlaUri) {
-                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]{ return Manager::instance().getSinkClient(info["sinkId"]) != nullptr; }));
+                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] {
+                    return Manager::instance().getSinkClient(info["sinkId"]) != nullptr;
+                }));
             }
         }
     } else {
@@ -486,13 +494,16 @@ ConferenceTest::testCreateParticipantsSinks()
         for (auto& info : pInfos_) {
             auto uri = string_remove_suffix(info["uri"], '@');
             if (uri == bobUri) {
-                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]{ return Manager::instance().getSinkClient(info["sinkId"]) == nullptr; }));
+                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] {
+                    return Manager::instance().getSinkClient(info["sinkId"]) == nullptr;
+                }));
             } else if (uri == carlaUri) {
-                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]{ return Manager::instance().getSinkClient(info["sinkId"]) == nullptr; }));
+                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] {
+                    return Manager::instance().getSinkClient(info["sinkId"]) == nullptr;
+                }));
             }
         }
     }
-
 
     hangupConference();
 
@@ -560,9 +571,9 @@ ConferenceTest::testActiveStatusAfterRemove()
     daviCall.reset();
 
     auto call2 = libjami::placeCallWithMedia(aliceId,
-                                           daviUri,
-                                           MediaAttribute::mediaAttributesToMediaMaps(
-                                               {defaultAudio}));
+                                             daviUri,
+                                             MediaAttribute::mediaAttributesToMediaMaps(
+                                                 {defaultAudio}));
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
@@ -793,17 +804,20 @@ ConferenceTest::testHostAddRmSecondVideo()
     // Alice adds new media
     pInfos_.clear();
     std::vector<std::map<std::string, std::string>> mediaList
-        = {{{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+        = {{{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+             libjami::Media::MediaAttributeValue::AUDIO},
             {libjami::Media::MediaAttributeKey::ENABLED, "true"},
             {libjami::Media::MediaAttributeKey::MUTED, "false"},
             {libjami::Media::MediaAttributeKey::SOURCE, ""},
             {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}},
-           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+             libjami::Media::MediaAttributeValue::VIDEO},
             {libjami::Media::MediaAttributeKey::ENABLED, "true"},
             {libjami::Media::MediaAttributeKey::MUTED, "false"},
             {libjami::Media::MediaAttributeKey::SOURCE, "bar"},
             {libjami::Media::MediaAttributeKey::LABEL, "video_0"}},
-           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+             libjami::Media::MediaAttributeValue::VIDEO},
             {libjami::Media::MediaAttributeKey::ENABLED, "true"},
             {libjami::Media::MediaAttributeKey::MUTED, "false"},
             {libjami::Media::MediaAttributeKey::SOURCE, "foo"},
@@ -855,17 +869,20 @@ ConferenceTest::testParticipantAddRmSecondVideo()
     // Bob adds new media
     pInfos_.clear();
     std::vector<std::map<std::string, std::string>> mediaList
-        = {{{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+        = {{{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+             libjami::Media::MediaAttributeValue::AUDIO},
             {libjami::Media::MediaAttributeKey::ENABLED, "true"},
             {libjami::Media::MediaAttributeKey::MUTED, "false"},
             {libjami::Media::MediaAttributeKey::SOURCE, ""},
             {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}},
-           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+             libjami::Media::MediaAttributeValue::VIDEO},
             {libjami::Media::MediaAttributeKey::ENABLED, "true"},
             {libjami::Media::MediaAttributeKey::MUTED, "false"},
             {libjami::Media::MediaAttributeKey::SOURCE, "bar"},
             {libjami::Media::MediaAttributeKey::LABEL, "video_0"}},
-           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+             libjami::Media::MediaAttributeValue::VIDEO},
             {libjami::Media::MediaAttributeKey::ENABLED, "true"},
             {libjami::Media::MediaAttributeKey::MUTED, "false"},
             {libjami::Media::MediaAttributeKey::SOURCE, "foo"},
@@ -927,10 +944,11 @@ ConferenceTest::testBrokenParticipantAudioAndVideo()
 
     // Start conference with four participants
     startConference(false, true);
-    auto expectedNumberOfParticipants = 4;
+    auto expectedNumberOfParticipants = 4u;
 
     // Check participants number
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return pInfos_.size() == expectedNumberOfParticipants; }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
 
     // Crash participant
     auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
@@ -939,7 +957,8 @@ ConferenceTest::testBrokenParticipantAudioAndVideo()
 
     // Check participants number
     // It should have one less participant than in the conference start
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
 
     hangupConference();
 
@@ -953,10 +972,11 @@ ConferenceTest::testBrokenParticipantAudioOnly()
 
     // Start conference with four participants
     startConference(true, true);
-    auto expectedNumberOfParticipants = 4;
+    auto expectedNumberOfParticipants = 4u;
 
     // Check participants number
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return pInfos_.size() == expectedNumberOfParticipants; }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
 
     // Crash participant
     auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
@@ -965,10 +985,24 @@ ConferenceTest::testBrokenParticipantAudioOnly()
 
     // Check participants number
     // It should have one less participant than in the conference start
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
 
     hangupConference();
+    libjami::unregisterSignalHandlers();
+}
 
+void
+ConferenceTest::testRemoveConferenceInOneOne()
+{
+    registerSignalHandlers();
+    startConference();
+    // Here it's 1:1 calls we merged, so we can close the conference
+    JAMI_INFO("Hangup Bob");
+    Manager::instance().hangupCall(bobId, bobCall.callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return confId.empty() && bobCall.state == "OVER"; }));
+    Manager::instance().hangupCall(carlaId, carlaCall.callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaCall.state == "OVER"; }));
     libjami::unregisterSignalHandlers();
 }
 

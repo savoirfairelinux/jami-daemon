@@ -34,65 +34,69 @@ namespace libjami {
 // Conversation management
 LIBJAMI_PUBLIC std::string startConversation(const std::string& accountId);
 LIBJAMI_PUBLIC void acceptConversationRequest(const std::string& accountId,
-                                            const std::string& conversationId);
+                                              const std::string& conversationId);
 LIBJAMI_PUBLIC void declineConversationRequest(const std::string& accountId,
-                                             const std::string& conversationId);
+                                               const std::string& conversationId);
 LIBJAMI_PUBLIC bool removeConversation(const std::string& accountId,
-                                     const std::string& conversationId);
+                                       const std::string& conversationId);
 LIBJAMI_PUBLIC std::vector<std::string> getConversations(const std::string& accountId);
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationRequests(
     const std::string& accountId);
 
+// Calls
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getActiveCalls(
+    const std::string& accountId, const std::string& conversationId);
+
 // Conversation's infos management
 LIBJAMI_PUBLIC void updateConversationInfos(const std::string& accountId,
-                                          const std::string& conversationId,
-                                          const std::map<std::string, std::string>& infos);
-LIBJAMI_PUBLIC std::map<std::string, std::string> conversationInfos(const std::string& accountId,
-                                                                  const std::string& conversationId);
+                                            const std::string& conversationId,
+                                            const std::map<std::string, std::string>& infos);
+LIBJAMI_PUBLIC std::map<std::string, std::string> conversationInfos(
+    const std::string& accountId, const std::string& conversationId);
 LIBJAMI_PUBLIC void setConversationPreferences(const std::string& accountId,
-                                             const std::string& conversationId,
-                                             const std::map<std::string, std::string>& prefs);
+                                               const std::string& conversationId,
+                                               const std::map<std::string, std::string>& prefs);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getConversationPreferences(
     const std::string& accountId, const std::string& conversationId);
 
 // Member management
 LIBJAMI_PUBLIC void addConversationMember(const std::string& accountId,
-                                        const std::string& conversationId,
-                                        const std::string& contactUri);
+                                          const std::string& conversationId,
+                                          const std::string& contactUri);
 LIBJAMI_PUBLIC void removeConversationMember(const std::string& accountId,
-                                           const std::string& conversationId,
-                                           const std::string& contactUri);
+                                             const std::string& conversationId,
+                                             const std::string& contactUri);
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMembers(
     const std::string& accountId, const std::string& conversationId);
 
 // Message send/load
 LIBJAMI_PUBLIC void sendMessage(const std::string& accountId,
-                              const std::string& conversationId,
-                              const std::string& message,
-                              const std::string& replyTo,
-                              const int32_t& flag = 0);
+                                const std::string& conversationId,
+                                const std::string& message,
+                                const std::string& replyTo,
+                                const int32_t& flag = 0);
 LIBJAMI_PUBLIC uint32_t loadConversationMessages(const std::string& accountId,
-                                               const std::string& conversationId,
-                                               const std::string& fromMessage,
-                                               size_t n);
+                                                 const std::string& conversationId,
+                                                 const std::string& fromMessage,
+                                                 size_t n);
 LIBJAMI_PUBLIC uint32_t loadConversationUntil(const std::string& accountId,
-                                            const std::string& conversationId,
-                                            const std::string& fromMessage,
-                                            const std::string& toMessage);
+                                              const std::string& conversationId,
+                                              const std::string& fromMessage,
+                                              const std::string& toMessage);
 LIBJAMI_PUBLIC uint32_t countInteractions(const std::string& accountId,
-                                        const std::string& conversationId,
-                                        const std::string& toId,
-                                        const std::string& fromId,
-                                        const std::string& authorUri);
+                                          const std::string& conversationId,
+                                          const std::string& toId,
+                                          const std::string& fromId,
+                                          const std::string& authorUri);
 LIBJAMI_PUBLIC uint32_t searchConversation(const std::string& accountId,
-                                         const std::string& conversationId,
-                                         const std::string& author,
-                                         const std::string& lastId,
-                                         const std::string& regexSearch,
-                                         const std::string& type,
-                                         const int64_t& after,
-                                         const int64_t& before,
-                                         const uint32_t& maxResult);
+                                           const std::string& conversationId,
+                                           const std::string& author,
+                                           const std::string& lastId,
+                                           const std::string& regexSearch,
+                                           const std::string& type,
+                                           const int64_t& after,
+                                           const int64_t& before,
+                                           const uint32_t& maxResult);
 
 struct LIBJAMI_PUBLIC ConversationSignal
 {

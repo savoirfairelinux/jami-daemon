@@ -1749,9 +1749,9 @@ ConversationRepository::Impl::mode() const
     if (lastMsg.size() == 0) {
         if (auto shared = account_.lock()) {
             emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
-                                                                       id_,
-                                                                       EINVALIDMODE,
-                                                                       "No initial commit");
+                                                                         id_,
+                                                                         EINVALIDMODE,
+                                                                         "No initial commit");
         }
         throw std::logic_error("Can't retrieve first commit");
     }
@@ -1764,18 +1764,18 @@ ConversationRepository::Impl::mode() const
     if (!reader->parse(commitMsg.data(), commitMsg.data() + commitMsg.size(), &root, &err)) {
         if (auto shared = account_.lock()) {
             emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
-                                                                       id_,
-                                                                       EINVALIDMODE,
-                                                                       "No initial commit");
+                                                                         id_,
+                                                                         EINVALIDMODE,
+                                                                         "No initial commit");
         }
         throw std::logic_error("Can't retrieve first commit");
     }
     if (!root.isMember("mode")) {
         if (auto shared = account_.lock()) {
             emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
-                                                                       id_,
-                                                                       EINVALIDMODE,
-                                                                       "No mode detected");
+                                                                         id_,
+                                                                         EINVALIDMODE,
+                                                                         "No mode detected");
         }
         throw std::logic_error("No mode detected for initial commit");
     }
@@ -1797,9 +1797,9 @@ ConversationRepository::Impl::mode() const
     default:
         if (auto shared = account_.lock()) {
             emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
-                                                                       id_,
-                                                                       EINVALIDMODE,
-                                                                       "Incorrect mode detected");
+                                                                         id_,
+                                                                         EINVALIDMODE,
+                                                                         "Incorrect mode detected");
         }
         throw std::logic_error("Incorrect mode detected");
     }
@@ -2715,10 +2715,8 @@ ConversationRepository::Impl::validCommits(
                     validUserAtCommit.c_str(),
                     commit.commit_msg.c_str());
                 if (auto shared = account_.lock()) {
-                    emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
-                                                                               id_,
-                                                                               EVALIDFETCH,
-                                                                               "Malformed commit");
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(
+                        shared->getAccountID(), id_, EVALIDFETCH, "Malformed commit");
                 }
                 return false;
             }
@@ -2730,10 +2728,8 @@ ConversationRepository::Impl::validCommits(
                           "that your contact is not doing unwanted stuff.",
                           validUserAtCommit.c_str());
                 if (auto shared = account_.lock()) {
-                    emitSignal<libjami::ConversationSignal::OnConversationError>(shared->getAccountID(),
-                                                                               id_,
-                                                                               EVALIDFETCH,
-                                                                               "Malformed commit");
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(
+                        shared->getAccountID(), id_, EVALIDFETCH, "Malformed commit");
                 }
                 return false;
             }
@@ -3248,8 +3244,8 @@ ConversationRepository::leave()
     auto uri = details[libjami::Account::ConfProperties::USERNAME];
     auto name = details[libjami::Account::ConfProperties::DISPLAYNAME];
     if (name.empty())
-        name = account
-                   ->getVolatileAccountDetails()[libjami::Account::VolatileProperties::REGISTERED_NAME];
+        name = account->getVolatileAccountDetails()
+                   [libjami::Account::VolatileProperties::REGISTERED_NAME];
     if (name.empty())
         name = deviceId;
 
@@ -3706,34 +3702,37 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
         JAMI_ERR("Could not write data to %s", profilePath.c_str());
         return {};
     }
+
+    auto addKey = [&](auto property, auto key) {
+        auto it = infosMap.find(key);
+        if (it != infosMap.end()) {
+            file << property;
+            file << ":";
+            file << it->second;
+            file << vCard::Delimiter::END_LINE_TOKEN;
+        }
+    };
+
     file << vCard::Delimiter::BEGIN_TOKEN;
     file << vCard::Delimiter::END_LINE_TOKEN;
     file << vCard::Property::VCARD_VERSION;
     file << ":2.1";
     file << vCard::Delimiter::END_LINE_TOKEN;
-    auto titleIt = infosMap.find("title");
-    if (titleIt != infosMap.end()) {
-        file << vCard::Property::FORMATTED_NAME;
-        file << ":";
-        file << titleIt->second;
-        file << vCard::Delimiter::END_LINE_TOKEN;
-    }
-    auto descriptionIt = infosMap.find("description");
-    if (descriptionIt != infosMap.end()) {
-        file << vCard::Property::DESCRIPTION;
-        file << ":";
-        file << descriptionIt->second;
-        file << vCard::Delimiter::END_LINE_TOKEN;
-    }
+    addKey(vCard::Property::FORMATTED_NAME, vCard::Value::TITLE);
+    addKey(vCard::Property::DESCRIPTION, vCard::Value::DESCRIPTION);
     file << vCard::Property::PHOTO;
     file << vCard::Delimiter::SEPARATOR_TOKEN;
     file << vCard::Property::BASE64;
-    auto avatarIt = infosMap.find("avatar");
+    auto avatarIt = infosMap.find(vCard::Value::AVATAR);
     if (avatarIt != infosMap.end()) {
         // TODO type=png? store another way?
         file << ":";
         file << avatarIt->second;
     }
+    file << vCard::Delimiter::END_LINE_TOKEN;
+    addKey(vCard::Property::RDV_ACCOUNT, vCard::Value::RDV_ACCOUNT);
+    file << vCard::Delimiter::END_LINE_TOKEN;
+    addKey(vCard::Property::RDV_DEVICE, vCard::Value::RDV_DEVICE);
     file << vCard::Delimiter::END_LINE_TOKEN;
     file << vCard::Delimiter::END_TOKEN;
     file.close();
@@ -3780,6 +3779,10 @@ ConversationRepository::infosFromVCard(std::map<std::string, std::string>&& deta
             result["description"] = std::move(v);
         } else if (k.find(vCard::Property::PHOTO) == 0) {
             result["avatar"] = std::move(v);
+        } else if (k.find(vCard::Property::RDV_ACCOUNT) == 0) {
+            result["rdvAccount"] = std::move(v);
+        } else if (k.find(vCard::Property::RDV_DEVICE) == 0) {
+            result["rdvDevice"] = std::move(v);
         }
     }
     return result;
