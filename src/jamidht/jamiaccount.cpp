@@ -396,7 +396,7 @@ JamiAccount::newIncomingCall(const std::string& from,
                     auto call = Manager::instance().callFactory.newSipCall(shared(),
                                                                            Call::CallType::INCOMING,
                                                                            mediaList);
-                    call->setPeerUri(RING_URI_PREFIX + from);
+                    call->setPeerUri(JAMI_URI_PREFIX + from);
                     call->setPeerNumber(from);
 
                     call->setSipTransport(sipTransp, getContactHeader(sipTransp));
@@ -414,9 +414,6 @@ JamiAccount::newIncomingCall(const std::string& from,
 std::shared_ptr<Call>
 JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::MediaMap>& mediaList)
 {
-    auto suffix = stripPrefix(toUrl);
-    JAMI_DBG() << *this << "Calling peer " << suffix;
-
     auto& manager = Manager::instance();
     std::shared_ptr<SIPCall> call;
 
@@ -434,7 +431,8 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Me
     if (not call)
         return {};
 
-    getIceOptions([call, w = weak(), uri = std::string(toUrl)](auto&& opts) {
+    auto uri = Uri(toUrl);
+    getIceOptions([call, w = weak(), uri = std::move(uri)](auto&& opts) {
         if (call->isIceEnabled()) {
             if (not call->createIceMediaTransport(false)
                 or not call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts))) {
@@ -444,23 +442,28 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Me
         auto shared = w.lock();
         if (!shared)
             return;
-        shared->newOutgoingCallHelper(call, uri);
+        JAMI_DBG() << "New outgoing call with " << uri.toString();
+        call->setPeerNumber(uri.authority());
+        call->setPeerUri(uri.toString());
+
+        if (uri.scheme() == Uri::Scheme::SWARM)
+            shared->newSwarmOutgoingCallHelper(call, uri);
+        else
+            shared->newOutgoingCallHelper(call, uri);
     });
 
     return call;
 }
 
 void
-JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::string_view toUri)
+JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri)
 {
-    auto suffix = stripPrefix(toUri);
-    JAMI_DBG() << *this << "Calling DHT peer " << suffix;
-
+    JAMI_DBG() << this << "Calling peer " << uri.authority();
     try {
-        const std::string uri {parseJamiUri(suffix)};
-        startOutgoingCall(call, uri);
+        startOutgoingCall(call, uri.authority());
     } catch (...) {
 #if HAVE_RINGNS
+        auto suffix = stripPrefix(uri.toString());
         NameDirectory::lookupUri(suffix,
                                  nameServer_,
                                  [wthis_ = weak(), call](const std::string& result,
@@ -474,8 +477,7 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::st
                                          }
                                          if (auto sthis = wthis_.lock()) {
                                              try {
-                                                 const std::string toUri {parseJamiUri(result)};
-                                                 sthis->startOutgoingCall(call, toUri);
+                                                 sthis->startOutgoingCall(call, result);
                                              } catch (...) {
                                                  call->onFailure(ENOENT);
                                              }
@@ -487,6 +489,104 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::st
 #else
         call->onFailure(ENOENT);
 #endif
+    }
+}
+
+void
+JamiAccount::newSwarmOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri)
+{
+    JAMI_DBG("[Account %s] Calling conversation %s",
+             getAccountID().c_str(),
+             uri.authority().c_str());
+    convModule()->call(
+        uri.authority(),
+        call,
+        std::move([this, uri, call](const std::string& accountUri, const DeviceId& deviceId) {
+            std::unique_lock<std::mutex> lkSipConn(sipConnsMtx_);
+            for (auto& [key, value] : sipConns_) {
+                if (key.first != accountUri || key.second != deviceId)
+                    continue;
+                if (value.empty())
+                    continue;
+                auto& sipConn = value.back();
+
+                if (!sipConn.channel) {
+                    JAMI_WARN(
+                        "A SIP transport exists without Channel, this is a bug. Please report");
+                    continue;
+                }
+
+                auto transport = sipConn.transport;
+                if (!transport or !sipConn.channel)
+                    continue;
+                call->setState(Call::ConnectionState::PROGRESSING);
+
+                auto remoted_address = sipConn.channel->getRemoteAddress();
+                try {
+                    onConnectedOutgoingCall(call, uri.authority(), remoted_address);
+                    return;
+                } catch (const VoipLinkException&) {
+                    // In this case, the main scenario is that SIPStartCall failed because
+                    // the ICE is dead and the TLS session didn't send any packet on that dead
+                    // link (connectivity change, killed by the os, etc)
+                    // Here, we don't need to do anything, the TLS will fail and will delete
+                    // the cached transport
+                    continue;
+                }
+            }
+            lkSipConn.unlock();
+
+            {
+                std::lock_guard<std::mutex> lkP(pendingCallsMutex_);
+                pendingCalls_[deviceId].emplace_back(call);
+            }
+
+            JAMI_WARN("[call %s] No channeled socket with this peer. Send request",
+                      call->getCallId().c_str());
+            // Else, ask for a channel (for future calls/text messages)
+            auto type = call->hasVideo() ? "videoCall" : "audioCall";
+            requestSIPConnection(accountUri, deviceId, type, true);
+        }));
+}
+
+void
+JamiAccount::handleIncomingConversationCall(const std::string& callId,
+                                            const std::string& destination)
+{
+    auto split = jami::split_string(destination, '/');
+    if (split.size() != 4)
+        return;
+    auto conversationId = std::string(split[0]);
+    auto accountUri = std::string(split[1]);
+    auto deviceId = std::string(split[2]);
+    auto confId = std::string(split[3]);
+
+    if (getUsername() != accountUri || currentDeviceId() != deviceId)
+        return;
+
+    auto call = getCall(callId);
+    if (!call) {
+        JAMI_ERR("Call %s not found", callId.c_str());
+        return;
+    }
+    Manager::instance().answerCall(*call);
+
+    if (!convModule()->isHosting(conversationId, confId)) {
+        // Create conference and host it.
+        convModule()->hostConference(conversationId, confId, callId);
+        if (auto conf = getConference(confId))
+            conf->detachLocalParticipant();
+    } else {
+        auto conf = getConference(confId);
+        if (!conf) {
+            JAMI_ERR("Conference %s not found", confId.c_str());
+            return;
+        }
+
+        conf->addParticipant(callId);
+        emitSignal<DRing::CallSignal::ConferenceChanged>(getAccountID(),
+                                                         conf->getConfId(),
+                                                         conf->getStateStr());
     }
 }
 
@@ -504,11 +604,10 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         call->onFailure(ENETDOWN);
         return;
     }
+
     // TODO: for now, we automatically trust all explicitly called peers
     setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);
 
-    call->setPeerNumber(toUri + "@ring.dht");
-    call->setPeerUri(JAMI_URI_PREFIX + toUri);
     call->setState(Call::ConnectionState::TRYING);
     std::weak_ptr<SIPCall> wCall = call;
 
@@ -519,7 +618,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                                        if (response == NameDirectory::Response::found)
                                            if (auto call = wCall.lock()) {
                                                call->setPeerRegisteredName(result);
-                                               call->setPeerUri(JAMI_URI_PREFIX + result);
                                            }
                                    });
 #endif
@@ -553,7 +651,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 return;
 
             auto dev_call = createSubCall(call);
-            dev_call->setIPToIP(true);
+            dev_call->setPeerNumber(call->getPeerNumber());
             dev_call->setState(Call::ConnectionState::TRYING);
             call->addStateListener(
                 [w = weak(), deviceId](Call::CallState, Call::ConnectionState state, int) {
@@ -603,6 +701,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                   call->getCallId().c_str());
 
         auto dev_call = createSubCall(call);
+        dev_call->setPeerNumber(call->getPeerNumber());
         dev_call->setSipTransport(transport, getContactHeader(transport));
         call->addSubCall(*dev_call);
         dev_call->setIceMedia(call->getIceMedia());
@@ -715,9 +814,6 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
         JAMI_ERR("Could not send outgoing INVITE request for new call");
         return;
     }
-
-    call->setIPToIP(true);
-    call->setPeerNumber(to_id);
 
     // Note: pj_ice_strans_create can call onComplete in the same thread
     // This means that iceMutex_ in IceTransport can be locked when onInitDone is called

@@ -99,6 +99,7 @@ private:
     void testHostAddRmSecondVideo();
     void testParticipantAddRmSecondVideo();
     void testPropagateRecording();
+    void testRemoveConferenceInOneOne();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
@@ -119,6 +120,7 @@ private:
     CPPUNIT_TEST(testHostAddRmSecondVideo);
     CPPUNIT_TEST(testParticipantAddRmSecondVideo);
     CPPUNIT_TEST(testPropagateRecording);
+    CPPUNIT_TEST(testRemoveConferenceInOneOne);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -916,6 +918,20 @@ ConferenceTest::testPropagateRecording()
 
     hangupConference();
 
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testRemoveConferenceInOneOne()
+{
+    registerSignalHandlers();
+    startConference();
+    // Here it's 1:1 calls we merged, so we can close the conference
+    JAMI_INFO("Hangup Bob");
+    Manager::instance().hangupCall(bobId, bobCall.callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return confId.empty() && bobCall.state == "OVER"; }));
+    Manager::instance().hangupCall(carlaId, carlaCall.callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaCall.state == "OVER"; }));
     DRing::unregisterSignalHandlers();
 }
 
