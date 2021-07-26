@@ -21,6 +21,7 @@
 #pragma once
 
 #include "scheduled_executor.h"
+#include "jamidht/account_manager.h"
 #include "jamidht/conversation.h"
 #include "jamidht/conversationrepository.h"
 #include "jamidht/jami_contact.h"
@@ -29,6 +30,8 @@
 #include <msgpack.hpp>
 
 namespace jami {
+
+class SIPCall;
 
 struct SyncMsg
 {
@@ -328,6 +331,12 @@ public:
     void checkIfRemoveForCompat(const std::string& peerUri);
 
     void initReplay(const std::string& oldConvId, const std::string& newConvId);
+    bool isHosting(const std::string& conversationId, const std::string& confId) const;
+    std::vector<std::map<std::string, std::string>> getActiveCalls(const std::string& conversationId) const;
+    void call(const std::string& url,
+              const std::shared_ptr<SIPCall>& call,
+              std::function<void(const std::string&, const DeviceId&)>&&
+                  cb); // TODO call id or create new call
 
     // The following methods modify what is stored on the disk
     static void saveConvInfos(const std::string& accountId,
