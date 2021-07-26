@@ -22,6 +22,30 @@
       },
       "revId": "4ccd39066c2a83ad2d83c5002f9d8dc7e43846d5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c0a4cd01_1d136b87",
+        "filename": "contrib/src/pjproject/0014-fix-socket-leak.patch",
+        "patchSetId": 3
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-26T17:48:22Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "8b992f4e_6df79429",
+      "range": {
+        "startLine": 36,
+        "startChar": 1,
+        "endLine": 40,
+        "endChar": 7
+      },
+      "revId": "4ccd39066c2a83ad2d83c5002f9d8dc7e43846d5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
