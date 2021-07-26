@@ -258,6 +258,8 @@ public:
     void declineConversationRequest(const std::string& accountId, const std::string& conversationId);
     bool removeConversation(const std::string& accountId, const std::string& conversationId);
     std::vector<std::string> getConversations(const std::string& accountId);
+    std::vector<std::map<std::string, std::string>> getActiveCalls(
+        const std::string& accountId, const std::string& conversationId);
     std::vector<std::map<std::string, std::string>> getConversationRequests(
         const std::string& accountId);
     void updateConversationInfos(const std::string& accountId,
