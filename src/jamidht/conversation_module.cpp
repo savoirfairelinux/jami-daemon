@@ -1385,6 +1385,17 @@ ConversationModule::checkIfRemoveForCompat(const std::string& peerUri)
     removeConversation(convId);
 }
 
+bool
+ConversationModule::isHosting(const std::string& conversationId, const std::string& confId) const
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto conversation = pimpl_->conversations_.find(conversationId);
+    if (conversation != pimpl_->conversations_.end() && conversation->second) {
+        return conversation->second->isHosting(confId);
+    }
+    return false;
+}
+
 std::map<std::string, ConvInfo>
 ConversationModule::convInfos(const std::string& accountId)
 {

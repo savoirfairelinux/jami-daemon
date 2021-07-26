@@ -316,6 +316,8 @@ public:
      */
     void checkIfRemoveForCompat(const std::string& peerUri);
 
+    bool isHosting(const std::string& conversationId, const std::string& confId) const;
+
     // The following methods modify what is stored on the disk
     static void saveConvInfos(const std::string& accountId,
                               const std::map<std::string, ConvInfo>& conversations);

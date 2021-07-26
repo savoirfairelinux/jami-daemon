@@ -599,6 +599,7 @@ private:
     const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
 
     void startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri);
+    void callSwarm(const std::string& conversationId, const std::shared_ptr<SIPCall>& call);
 
     void onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
                                  const std::string& to_id,
