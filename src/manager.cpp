@@ -561,9 +561,16 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
                 JAMI_ERR("No account detected");
                 return;
             }
+
+            // Stay in a conference if 1 participants for swarm and rendezvous
             if (account->isRendezVous())
                 return;
 
+            if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account))
+                if (acc->convModule()->isHosting("", conf.getConfId()))
+                    return;
+
+            // Else go in 1:1
             if (current_callId != conf.getConfId())
                 base_.onHoldCall(account->getAccountID(), call->getCallId());
             else
@@ -1086,16 +1093,17 @@ Manager::answerCall(Call& call, const std::vector<DRing::MediaMap>& mediaList)
 
 // THREAD=Main
 bool
-Manager::hangupCall(const std::string&, const std::string& callId)
+Manager::hangupCall(const std::string& accountId, const std::string& callId)
 {
+    auto account = getAccount(accountId);
+    if (not account)
+        return false;
     // store the current call id
-    const auto& currentCallId(getCurrentCallId());
-
     stopTone();
     pimpl_->removeWaitingCall(callId);
 
     /* We often get here when the call was hungup before being created */
-    auto call = getCallFromCallID(callId);
+    auto call = account->getCall(callId);
     if (not call) {
         JAMI_WARN("Could not hang up non-existant call %s", callId.c_str());
         return false;
@@ -1844,24 +1852,6 @@ Manager::incomingCall(const std::string& accountId, Call& call)
         return;
     }
 
-    // Report incoming call using "CallSignal::IncomingCallWithMedia" signal.
-    auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(call.getMediaAttributeList());
-
-    if (mediaList.empty()) {
-        JAMI_WARN("Incoming call %s has an empty media list", call.getCallId().c_str());
-    }
-
-    JAMI_INFO("Incoming call %s on account %s with %lu media",
-              call.getCallId().c_str(),
-              accountId.c_str(),
-              mediaList.size());
-
-    // Report the call using new API.
-    emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
-                                                         call.getCallId(),
-                                                         call.getPeerDisplayName() + " " + from,
-                                                         mediaList);
-
     // Process the call.
     pimpl_->processIncomingCall(accountId, call);
 }
@@ -2506,6 +2496,32 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         return;
     }
 
+    auto username = incomCall.toUsername();
+    if (username.find('/') != std::string::npos) {
+        // Avoid to do heavy stuff in SIPVoIPLink's transaction_request_cb
+        dht::ThreadPool::io().run([this, account, incomCallId, username]() {
+            if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account))
+                jamiAccount->handleIncomingConversationCall(incomCallId, username);
+        });
+        return;
+    }
+
+    auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(
+        incomCall.getMediaAttributeList());
+
+    if (mediaList.empty())
+        JAMI_WARN("Incoming call %s has an empty media list", incomCallId.c_str());
+
+    JAMI_INFO("Incoming call %s on account %s with %lu media",
+              incomCallId.c_str(),
+              accountId.c_str(),
+              mediaList.size());
+
+    emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
+                                                         incomCallId,
+                                                         incomCall.getPeerNumber(),
+                                                         mediaList);
+
     if (not base_.hasCurrentCall()) {
         incomCall.setState(Call::ConnectionState::RINGING);
 #if !defined(RING_UWP) && !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
@@ -3060,10 +3076,11 @@ Manager::createSinkClient(const std::string& id, bool mixer)
 }
 
 void
-Manager::createSinkClients(const std::string& callId,
-                           const ConfInfo& infos,
-                           const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
-                           std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap)
+Manager::createSinkClients(
+    const std::string& callId,
+    const ConfInfo& infos,
+    const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
+    std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap)
 {
     std::lock_guard<std::mutex> lk(pimpl_->sinksMutex_);
     std::set<std::string> sinkIdsList {};
@@ -3087,7 +3104,7 @@ Manager::createSinkClients(const std::string& callId,
             newSink->setCrop(participant.x, participant.y, participant.w, participant.h);
             newSink->setFrameSize(participant.w, participant.h);
 
-            for (auto& videoStream: videoStreams)
+            for (auto& videoStream : videoStreams)
                 videoStream->attach(newSink.get());
 
             sinksMap.emplace(sinkId, newSink);
@@ -3100,7 +3117,7 @@ Manager::createSinkClients(const std::string& callId,
     // remove any non used video sink
     for (auto it = sinksMap.begin(); it != sinksMap.end();) {
         if (sinkIdsList.find(it->first) == sinkIdsList.end()) {
-            for (auto& videoStream: videoStreams)
+            for (auto& videoStream : videoStreams)
                 videoStream->detach(it->second.get());
             it->second->stop();
             it = sinksMap.erase(it);

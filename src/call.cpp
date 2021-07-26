@@ -117,7 +117,7 @@ Call::Call(const std::shared_ptr<Account>& account,
                 std::chrono::seconds(timeout));
         }
 
-        if (!isSubcall() && getCallType() == CallType::OUTGOING) {
+        if (!isSubcall()) {
             if (cnx_state == ConnectionState::CONNECTED && duration_start_ == time_point::min())
                 duration_start_ = clock::now();
             else if (cnx_state == ConnectionState::DISCONNECTED && call_state == CallState::OVER) {
