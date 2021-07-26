@@ -24,6 +24,7 @@
 #include "config.h"
 #endif
 
+#include <chrono>
 #include <set>
 #include <string>
 #include <memory>
@@ -187,6 +188,7 @@ struct ConfInfo : public std::vector<ParticipantInfo>
 };
 
 using ParticipantSet = std::set<std::string>;
+using clock = std::chrono::steady_clock;
 
 class Conference : public Recordable, public std::enable_shared_from_this<Conference>
 {
@@ -196,7 +198,9 @@ public:
     /**
      * Constructor for this class, increment static counter
      */
-    explicit Conference(const std::shared_ptr<Account>&, bool attachHost = true);
+    explicit Conference(const std::shared_ptr<Account>&,
+                        bool attachHost = true,
+                        const std::string& confId = "");
 
     /**
      * Destructor for this class, decrement static counter
@@ -221,6 +225,11 @@ public:
      * Set conference state
      */
     void setState(State state);
+
+    /**
+     * Set a callback that will be called when the conference will be destroyed
+     */
+    void onShutdown(std::function<void(int)> cb) { shutdownCb_ = std::move(cb); }
 
     /**
      * Return a string description of the conference state
@@ -399,6 +408,17 @@ public:
     void stopRecording() override;
     bool startRecording(const std::string& path) override;
 
+    /**
+     * @return Conference duration in milliseconds
+     */
+    std::chrono::milliseconds getDuration() const
+    {
+        return duration_start_ == clock::time_point::min()
+                   ? std::chrono::milliseconds::zero()
+                   : std::chrono::duration_cast<std::chrono::milliseconds>(clock::now()
+                                                                           - duration_start_);
+    }
+
 private:
     std::weak_ptr<Conference> weak()
     {
@@ -513,6 +533,9 @@ private:
 
     ConfProtocolParser parser_;
     std::string getRemoteId(const std::shared_ptr<jami::Call>& call) const;
+
+    std::function<void(int)> shutdownCb_;
+    clock::time_point duration_start_;
 };
 
 } // namespace jami

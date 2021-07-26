@@ -561,9 +561,16 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
                 JAMI_ERR("No account detected");
                 return;
             }
+
+            // Stay in a conference if 1 participants for swarm and rendezvous
             if (account->isRendezVous())
                 return;
 
+            if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account))
+                if (acc->convModule()->isHosting("", conf.getConfId()))
+                    return;
+
+            // Else go in 1:1
             if (current_callId != conf.getConfId())
                 base_.onHoldCall(account->getAccountID(), call->getCallId());
             else
@@ -1086,13 +1093,17 @@ Manager::answerCall(Call& call, const std::vector<DRing::MediaMap>& mediaList)
 
 // THREAD=Main
 bool
-Manager::hangupCall(const std::string&, const std::string& callId)
+Manager::hangupCall(const std::string& accountId, const std::string& callId)
 {
+    auto account = getAccount(accountId);
+    if (not account)
+        return false;
+    // store the current call id
     stopTone();
     pimpl_->removeWaitingCall(callId);
 
     /* We often get here when the call was hungup before being created */
-    auto call = getCallFromCallID(callId);
+    auto call = account->getCall(callId);
     if (not call) {
         JAMI_WARN("Could not hang up non-existant call %s", callId.c_str());
         return false;
@@ -1841,24 +1852,6 @@ Manager::incomingCall(const std::string& accountId, Call& call)
         return;
     }
 
-    // Report incoming call using "CallSignal::IncomingCallWithMedia" signal.
-    auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(call.getMediaAttributeList());
-
-    if (mediaList.empty()) {
-        JAMI_WARN("Incoming call %s has an empty media list", call.getCallId().c_str());
-    }
-
-    JAMI_DEBUG("Incoming call {:s} on account {:s} with {:d} media",
-              call.getCallId(),
-              accountId,
-              mediaList.size());
-
-    // Report the call using new API.
-    emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
-                                                         call.getCallId(),
-                                                         call.getPeerDisplayName() + " " + from,
-                                                         mediaList);
-
     // Process the call.
     pimpl_->processIncomingCall(accountId, call);
 }
@@ -2501,6 +2494,32 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         JAMI_ERR("No account detected");
         return;
     }
+
+    auto username = incomCall.toUsername();
+    if (username.find('/') != std::string::npos) {
+        // Avoid to do heavy stuff in SIPVoIPLink's transaction_request_cb
+        dht::ThreadPool::io().run([this, account, incomCallId, username]() {
+            if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account))
+                jamiAccount->handleIncomingConversationCall(incomCallId, username);
+        });
+        return;
+    }
+
+    auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(
+        incomCall.getMediaAttributeList());
+
+    if (mediaList.empty())
+        JAMI_WARN("Incoming call %s has an empty media list", incomCallId.c_str());
+
+    JAMI_INFO("Incoming call %s on account %s with %lu media",
+              incomCallId.c_str(),
+              accountId.c_str(),
+              mediaList.size());
+
+    emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
+                                                         incomCallId,
+                                                         incomCall.getPeerNumber(),
+                                                         mediaList);
 
     if (not base_.hasCurrentCall()) {
         incomCall.setState(Call::ConnectionState::RINGING);
