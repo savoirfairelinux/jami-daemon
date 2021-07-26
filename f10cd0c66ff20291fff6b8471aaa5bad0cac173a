@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9b55f596_7d63c19d",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 469,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-26T15:38:33Z",
+      "side": 1,
+      "message": "From my testing, this never block indefinitely.  Howerver, we might want to limit the number of loop?",
+      "revId": "f10cd0c66ff20291fff6b8471aaa5bad0cac173a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
