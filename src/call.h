@@ -170,6 +170,9 @@ public:
      */
     void setPeerDisplayName(const std::string& name) { peerDisplayName_ = name; }
 
+    const std::string& toUsername() const { return toUsername_; }
+    void toUsername(const std::string& newValue) { toUsername_ = newValue; }
+
     /**
      * Get the peer display name (caller in ingoing)
      * not protected by mutex (when created)
@@ -521,6 +524,7 @@ protected:
 
     /// Supported conference protocol version
     int peerConfProtocol_ {0};
+    std::string toUsername_ {};
 };
 
 // Helpers
