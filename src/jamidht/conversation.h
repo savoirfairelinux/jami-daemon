@@ -26,6 +26,8 @@
 #include <memory>
 #include <json/json.h>
 #include <msgpack.hpp>
+#include <set>
+#include <tuple>
 
 #include "jami/datatransfer_interface.h"
 #include "conversationrepository.h"
@@ -39,6 +41,8 @@ static constexpr const char* REMOVED = "removed";
 static constexpr const char* ERASED = "erased";
 static constexpr const char* MEMBERS = "members";
 static constexpr const char* LAST_DISPLAYED = "lastDisplayed";
+static constexpr const char* ACTIVE_CALLS = "activeCalls";
+static constexpr const char* HOSTED_CALLS = "hostedCalls";
 static constexpr const char* CACHED = "cached";
 static constexpr const char* RECEIVED = "received";
 static constexpr const char* DECLINED = "declined";
@@ -378,6 +382,11 @@ public:
     uint32_t countInteractions(const std::string& toId,
                                const std::string& fromId = "",
                                const std::string& authorUri = "") const;
+
+    void hostConference(Json::Value&& message, OnDoneCb&& cb = {});
+    void removeActiveConference(Json::Value&& message, OnDoneCb&& cb = {});
+    bool isHosting(const std::string& confID) const;
+    std::set<std::tuple<std::string, std::string, std::string>> currentCalls() const;
 
 private:
     std::shared_ptr<Conversation> shared()
