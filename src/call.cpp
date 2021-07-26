@@ -117,13 +117,17 @@ Call::Call(const std::shared_ptr<Account>& account,
                 std::chrono::seconds(timeout));
         }
 
-        if (!isSubcall() && getCallType() == CallType::OUTGOING) {
+        if (!isSubcall()) {
             if (cnx_state == ConnectionState::CONNECTED && duration_start_ == time_point::min())
                 duration_start_ = clock::now();
             else if (cnx_state == ConnectionState::DISCONNECTED && call_state == CallState::OVER) {
                 if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(getAccount().lock())) {
-                    jamiAccount->convModule()->addCallHistoryMessage(getPeerNumber(),
-                                                                     getCallDuration().count());
+                    // TODO: This will be removed when 1:1 swarm will have a conference.
+                    // For now, only commit for 1:1 calls
+                    if (toUsername().find('/') == std::string::npos) {
+                        jamiAccount->convModule()->addCallHistoryMessage(getPeerNumber(),
+                                                                            getCallDuration().count());
+                    }
                     monitor();
                 }
             }

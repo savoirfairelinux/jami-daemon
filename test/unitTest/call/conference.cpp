@@ -103,6 +103,7 @@ private:
     void testPropagateRecording();
     void testBrokenParticipantAudioAndVideo();
     void testBrokenParticipantAudioOnly();
+    void testRemoveConferenceInOneOne();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
@@ -125,6 +126,7 @@ private:
     CPPUNIT_TEST(testPropagateRecording);
     CPPUNIT_TEST(testBrokenParticipantAudioAndVideo);
     CPPUNIT_TEST(testBrokenParticipantAudioOnly);
+    CPPUNIT_TEST(testRemoveConferenceInOneOne);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -467,7 +469,7 @@ ConferenceTest::testCreateParticipantsSinks()
 
     auto infos = DRing::getConferenceInfos(aliceId, confId);
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
         bool sinksStatus = true;
         for (auto& info : infos) {
             if (info["uri"] == bobUri) {
@@ -912,10 +914,11 @@ ConferenceTest::testBrokenParticipantAudioAndVideo()
 
     // Start conference with four participants
     startConference(false, true);
-    auto expectedNumberOfParticipants = 4;
+    auto expectedNumberOfParticipants = 4u;
 
     // Check participants number
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return pInfos_.size() == expectedNumberOfParticipants; }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
 
     // Crash participant
     auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
@@ -924,7 +927,8 @@ ConferenceTest::testBrokenParticipantAudioAndVideo()
 
     // Check participants number
     // It should have one less participant than in the conference start
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
 
     hangupConference();
 
@@ -938,10 +942,11 @@ ConferenceTest::testBrokenParticipantAudioOnly()
 
     // Start conference with four participants
     startConference(true, true);
-    auto expectedNumberOfParticipants = 4;
+    auto expectedNumberOfParticipants = 4u;
 
     // Check participants number
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return pInfos_.size() == expectedNumberOfParticipants; }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
 
     // Crash participant
     auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
@@ -950,10 +955,24 @@ ConferenceTest::testBrokenParticipantAudioOnly()
 
     // Check participants number
     // It should have one less participant than in the conference start
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
 
     hangupConference();
+    DRing::unregisterSignalHandlers();
+}
 
+void
+ConferenceTest::testRemoveConferenceInOneOne()
+{
+    registerSignalHandlers();
+    startConference();
+    // Here it's 1:1 calls we merged, so we can close the conference
+    JAMI_INFO("Hangup Bob");
+    Manager::instance().hangupCall(bobId, bobCall.callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return confId.empty() && bobCall.state == "OVER"; }));
+    Manager::instance().hangupCall(carlaId, carlaCall.callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaCall.state == "OVER"; }));
     DRing::unregisterSignalHandlers();
 }
 
