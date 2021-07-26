@@ -25,11 +25,13 @@
 #include <opendht/thread_pool.h>
 
 #include "account_const.h"
+#include "call.h"
 #include "client/ring_signal.h"
 #include "fileutils.h"
 #include "jamidht/account_manager.h"
 #include "jamidht/jamiaccount.h"
 #include "manager.h"
+#include "sip/sipcall.h"
 #include "vcard.h"
 
 namespace jami {
@@ -1701,6 +1703,183 @@ ConversationModule::initReplay(const std::string& oldConvId, const std::string& 
             0);
         fut.wait();
     }
+}
+
+bool
+ConversationModule::isHosting(const std::string& conversationId, const std::string& confId) const
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto conversation = pimpl_->conversations_.find(conversationId);
+    if (conversation != pimpl_->conversations_.end() && conversation->second) {
+        return conversation->second->isHosting(confId);
+    }
+    return false;
+}
+
+std::vector<std::map<std::string, std::string>>
+ConversationModule::getActiveCalls(const std::string& conversationId) const
+{
+    std::vector<std::map<std::string, std::string>> result;
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto conversation = pimpl_->conversations_.find(conversationId);
+    if (conversation == pimpl_->conversations_.end() || !conversation->second) {
+        JAMI_ERR("Conversation %s not found", conversationId.c_str());
+        return result;
+    }
+    for (const auto& [id, uri, did] : conversation->second->currentCalls()) {
+        result.emplace_back(std::map<std::string, std::string> { {"id", id}, {"uri", uri}, {"device", did} });
+    }
+    return result;
+}
+
+void
+ConversationModule::call(const std::string& url,
+                         const std::shared_ptr<SIPCall>& call,
+                         std::function<void(const std::string&, const DeviceId&)>&& cb)
+{
+    std::string conversationId = "", confId = "", uri = "", deviceId = "";
+    if (url.find('/') == std::string::npos) {
+        conversationId = url;
+    } else {
+        auto parameters = jami::split_string(url, '/');
+        if (parameters.size() != 4) {
+            JAMI_ERR("Incorrect url %s", url.c_str());
+            return;
+        }
+        conversationId = parameters[0];
+        uri = parameters[1];
+        deviceId = parameters[2];
+        confId = parameters[3];
+    }
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto conversation = pimpl_->conversations_.find(conversationId);
+    if (conversation == pimpl_->conversations_.end() || !conversation->second) {
+        JAMI_ERR("Conversation %s not found", conversationId.c_str());
+        return;
+    }
+    auto& conv = conversation->second;
+    auto activeCalls = conv->currentCalls();
+    if (confId != "") {
+        JAMI_DBG() << "Join call " << url;
+        call->setPeerNumber(url);
+        call->setPeerUri("swarm:" + url);
+        call->setState(Call::ConnectionState::TRYING);
+
+        std::string callUri = fmt::format("{}/{}/{}/{}", conversationId, uri, deviceId, confId);
+        cb(callUri, DeviceId(deviceId));
+        return;
+    }
+
+    if (!activeCalls.empty()) {
+        auto& ac = *activeCalls.begin();
+        call->setPeerNumber(url);
+        call->setPeerUri("swarm:" + url);
+        call->setState(Call::ConnectionState::TRYING);
+        deviceId = std::get<2>(ac);
+        std::string callUri = fmt::format("{}/{}/{}/{}",
+                                          std::get<1>(ac),
+                                          deviceId,
+                                          conversationId,
+                                          std::get<0>(ac));
+        JAMI_ERR() << "Join call " << callUri;
+        cb(callUri, DeviceId(deviceId));
+        return;
+    }
+
+    // Create "to" (accountId/deviceId/conversationId/confId)
+    auto infos = conv->infos();
+    auto itRdvAccount = infos.find("rdvAccount");
+    auto itRdvDevice = infos.find("rdvDevice");
+    if (itRdvAccount != infos.end() && itRdvDevice != infos.end()) {
+        if (itRdvAccount->second != pimpl_->username_ || itRdvDevice->second != pimpl_->deviceId_) {
+            // TODO ask wanted device to host the conference before starting the call
+            JAMI_ERR("Not implemented.");
+            return;
+        }
+    }
+
+    // Else, we are the host.
+    auto accountUri = pimpl_->username_;
+    confId = Manager::instance().callFactory.getNewCallID();
+    uri = fmt::format("{}/{}/{}/{}", conversationId, accountUri, pimpl_->deviceId_, confId);
+
+    if (auto acc = pimpl_->account_.lock()) {
+        auto conf = acc->getConference(confId);
+        auto createConf = !conf;
+        if (createConf) {
+            conf = std::make_shared<Conference>(acc, confId);
+            acc->attach(conf);
+        }
+        conf->addParticipant(call->getCallId());
+        call->setState(Call::ConnectionState::CONNECTED);
+
+        if (createConf)
+            emitSignal<DRing::CallSignal::ConferenceCreated>(acc->getAccountID(), confId);
+        else
+            emitSignal<DRing::CallSignal::ConferenceChanged>(acc->getAccountID(),
+                                                                conf->getConfId(),
+                                                                conf->getStateStr());
+        // In this case, the call is the only one in the conference
+        // and there is no peer, so media succeeded and are shown to
+        // the client.
+        call->reportMediaNegotiationStatus();
+    }
+
+    // Add commit to conversation
+    Json::Value value;
+    value["uri"] = accountUri;
+    value["device"] = pimpl_->deviceId_;
+    value["confId"] = confId;
+    value["type"] = "application/call-history+json";
+    conv->hostConference(std::move(value),
+                         std::move([w = pimpl_->weak(),
+                                    conversationId](bool ok, const std::string& commitId) {
+                             if (ok) {
+                                 if (auto shared = w.lock())
+                                     shared->sendMessageNotification(conversationId, commitId, true);
+                             } else {
+                                 JAMI_ERR("Failed to send message to conversation %s",
+                                          conversationId.c_str());
+                             }
+                         }));
+
+    // When conf finished = remove host & commit
+    // Master call, so when it's stopped, the conference will be stopped (as we use the hold state
+    // for detaching the call)
+    call->addStateListener(
+        [w = pimpl_->weak(), accountUri, confId, conversationId, call](Call::CallState call_state,
+                                                                 Call::ConnectionState cnx_state,
+                                                                 int) {
+            auto shared = w.lock();
+            if (shared && cnx_state == Call::ConnectionState::DISCONNECTED
+                && call_state == Call::CallState::OVER) {
+                Json::Value value;
+                value["uri"] = accountUri;
+                value["device"] = shared->deviceId_;
+                value["confId"] = confId;
+                value["type"] = "application/call-history+json";
+                value["duration"] = std::to_string(call->getCallDuration().count());
+
+                std::unique_lock<std::mutex> lk(shared->conversationsMtx_);
+                auto conversation = shared->conversations_.find(conversationId);
+                if (conversation == shared->conversations_.end() || !conversation->second) {
+                    JAMI_ERR("Conversation %s not found", conversationId.c_str());
+                    return true;
+                }
+                auto& conv = conversation->second;
+                conv->removeActiveConference(
+                    std::move(value), [w, conversationId](bool ok, const std::string& commitId) {
+                        if (ok)
+                            if (auto shared = w.lock())
+                                shared->sendMessageNotification(conversationId, commitId, true);
+                        else
+                            JAMI_ERR("Failed to send message to conversation %s",
+                                     conversationId.c_str());
+                    });
+                call->monitor();
+            }
+            return true;
+        });
 }
 
 std::map<std::string, ConvInfo>
