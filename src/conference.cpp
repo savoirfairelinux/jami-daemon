@@ -54,8 +54,10 @@ using namespace std::literals;
 
 namespace jami {
 
-Conference::Conference(const std::shared_ptr<Account>& account, bool attachHost)
-    : id_(Manager::instance().callFactory.getNewCallID())
+Conference::Conference(const std::shared_ptr<Account>& account,
+                       bool attachHost,
+                       const std::string& confId)
+    : id_(confId.empty() ? Manager::instance().callFactory.getNewCallID() : confId)
     , account_(account)
 #ifdef ENABLE_VIDEO
     , videoEnabled_(account->isVideoEnabled())
@@ -672,19 +674,15 @@ Conference::addParticipant(const std::string& participant_id)
             return;
     }
 
-    // Check if participant was muted before conference
     if (auto call = getCall(participant_id)) {
-        if (call->isPeerMuted()) {
+        // Check if participant was muted before conference
+        if (call->isPeerMuted())
             participantsMuted_.emplace(call->getCallId());
-        }
 
         // NOTE:
         // When a call joins a conference, the media source of the call
         // will be set to the output of the conference mixer.
         takeOverMediaSourceControl(participant_id);
-    }
-
-    if (auto call = getCall(participant_id)) {
         auto w = call->getAccount();
         auto account = w.lock();
         if (account) {
@@ -706,9 +704,7 @@ Conference::addParticipant(const std::string& participant_id)
             if (account->isAllModerators())
                 moderators_.emplace(getRemoteId(call));
         }
-    }
 #ifdef ENABLE_VIDEO
-    if (auto call = getCall(participant_id)) {
         // In conference, if a participant joins with an audio only
         // call, it must be listed in the audioonlylist.
         auto mediaList = call->getMediaAttributeList();
@@ -728,9 +724,9 @@ Conference::addParticipant(const std::string& participant_id)
                 this->toggleRecording();
             }
         }
+#endif // ENABLE_VIDEO
     } else
         JAMI_ERR("no call associate to participant %s", participant_id.c_str());
-#endif // ENABLE_VIDEO
 #ifdef ENABLE_PLUGIN
     createConfAVStreams();
 #endif
@@ -867,6 +863,7 @@ Conference::createSinks(const ConfInfo& infos)
 void
 Conference::removeParticipant(const std::string& participant_id)
 {
+    JAMI_DBG("Remove call %s in conference %s", participant_id.c_str(), id_.c_str());
     {
         std::lock_guard<std::mutex> lk(participantsMtx_);
         if (!participants_.erase(participant_id))
