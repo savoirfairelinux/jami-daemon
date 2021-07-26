@@ -21,6 +21,7 @@
 #pragma once
 
 #include "scheduled_executor.h"
+#include "jamidht/account_manager.h"
 #include "jamidht/conversation.h"
 #include "jamidht/conversationrepository.h"
 #include "jamidht/jami_contact.h"
@@ -29,6 +30,8 @@
 #include <msgpack.hpp>
 
 namespace jami {
+
+class SIPCall;
 
 struct SyncMsg
 {
@@ -42,7 +45,8 @@ struct SyncMsg
 };
 
 using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocket>&)>;
-using NeedSocketCb = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
+using NeedSocketCb
+    = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
 using SengMsgCb
     = std::function<uint64_t(const std::string&, std::map<std::string, std::string>, uint64_t)>;
 using NeedsSyncingCb = std::function<void(std::shared_ptr<SyncMsg>&&)>;
@@ -365,6 +369,32 @@ public:
      */
     bool removeConversation(const std::string& conversationId);
     void initReplay(const std::string& oldConvId, const std::string& newConvId);
+    /**
+     * Check if we're hosting a specific conference
+     * @param conversationId (empty to search all conv)
+     * @param confId
+     * @return true if hosting this conference
+     */
+    bool isHosting(const std::string& conversationId, const std::string& confId) const;
+    /**
+     * Return active calls
+     * @param convId        Which conversation to choose
+     * @return {{"id":id}, {"uri":uri}, {"device":device}}
+     */
+    std::vector<std::map<std::string, std::string>> getActiveCalls(
+        const std::string& conversationId) const;
+    /**
+     * Call the conversation
+     * @param url       Url to call (swarm:conversation or swarm:conv/account/device/conf to join)
+     * @param call      Call to use
+     * @param cb        Callback to pass which device to call (called in the same thread)
+     */
+    void call(const std::string& url,
+              const std::shared_ptr<SIPCall>& call,
+              std::function<void(const std::string&, const DeviceId&)>&& cb);
+    void hostConference(const std::string& conversationId,
+                        const std::string& confId,
+                        const std::string& callId);
 
     // The following methods modify what is stored on the disk
     static void saveConvInfos(const std::string& accountId,

@@ -140,11 +140,11 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     }
 
     JAMI_DEBUG("[call:{:s}] Create a new [{:s}] SIP call with {:d} media",
-             getCallId(),
-             type == Call::CallType::INCOMING
-                 ? "INCOMING"
-                 : (type == Call::CallType::OUTGOING ? "OUTGOING" : "MISSED"),
-             mediaList.size());
+               getCallId(),
+               type == Call::CallType::INCOMING
+                   ? "INCOMING"
+                   : (type == Call::CallType::OUTGOING ? "OUTGOING" : "MISSED"),
+               mediaList.size());
 
     initMediaStreams(mediaAttrList);
 }
@@ -875,9 +875,9 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
     } else if (newMediaAttrList.size() != rtpStreams_.size()) {
         // Media count is not expected to change
         JAMI_ERROR("[call:{:s}] Media list size {:d} in answer does not match. Expected {:d}",
-                 getCallId(),
-                 newMediaAttrList.size(),
-                 rtpStreams_.size());
+                   getCallId(),
+                   newMediaAttrList.size(),
+                   rtpStreams_.size());
         return;
     }
 
@@ -887,10 +887,7 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
     JAMI_DBG("[call:%s] Answering incoming call with following media:", getCallId().c_str());
     for (size_t idx = 0; idx < mediaAttrList.size(); idx++) {
         auto const& mediaAttr = mediaAttrList.at(idx);
-        JAMI_DEBUG("[call:{:s}] Media @{:d} - {:s}",
-                 getCallId(),
-                 idx,
-                 mediaAttr.toString(true));
+        JAMI_DEBUG("[call:{:s}] Media @{:d} - {:s}", getCallId(), idx, mediaAttr.toString(true));
     }
 
     // Apply the media attributes.
@@ -1840,8 +1837,8 @@ SIPCall::addLocalIceAttributes()
         auto duration = std::chrono::steady_clock::now() - start;
         if (duration > EXPECTED_ICE_INIT_MAX_TIME) {
             JAMI_WARNING("[call:{:s}] ICE initialization time was unexpectedly high ({})",
-                      getCallId(),
-                      std::chrono::duration_cast<std::chrono::milliseconds>(duration));
+                         getCallId(),
+                         std::chrono::duration_cast<std::chrono::milliseconds>(duration));
         }
     }
 
@@ -2002,9 +1999,9 @@ SIPCall::initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
         createRtpSession(stream);
 
         JAMI_DEBUG("[call:{:s}] Added media @{:d}: {:s}",
-                 getCallId(),
-                 idx,
-                 stream.mediaAttribute_->toString(true));
+                   getCallId(),
+                   idx,
+                   stream.mediaAttribute_->toString(true));
     }
 
     JAMI_DEBUG("[call:{:s}] Created {:d} Media streams", getCallId(), rtpStreams_.size());
@@ -2271,9 +2268,9 @@ SIPCall::updateRemoteMedia()
             remoteMediaList[idx]);
         if (remoteMedia->type_ == MediaType::MEDIA_VIDEO) {
             JAMI_DEBUG("[call:{:s}] Remote media @ {:d}: {:s}",
-                     getCallId(),
-                     idx,
-                     remoteMedia->toString());
+                       getCallId(),
+                       idx,
+                       remoteMedia->toString());
             rtpStream.rtpSession_->setMuted(remoteMedia->muted_, RtpSession::Direction::RECV);
             // Request a key-frame if we are un-muting the video
             if (not remoteMedia->muted_)
@@ -2376,9 +2373,9 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
 
     if (mediaAttrList.size() > PJ_ICE_MAX_COMP / 2) {
         JAMI_DEBUG("[call:{:s}] Too many medias, limit it ({:d} vs {:d})",
-                 getCallId().c_str(),
-                 mediaAttrList.size(),
-                 PJ_ICE_MAX_COMP);
+                   getCallId().c_str(),
+                   mediaAttrList.size(),
+                   PJ_ICE_MAX_COMP);
         return false;
     }
 
@@ -2591,9 +2588,8 @@ SIPCall::getMediaAttributeList() const
 {
     std::vector<MediaAttribute> mediaList;
     mediaList.reserve(rtpStreams_.size());
-    for (auto const& stream : rtpStreams_) {
+    for (auto const& stream : rtpStreams_)
         mediaList.emplace_back(*stream.mediaAttribute_);
-    }
     return mediaList;
 }
 
@@ -2772,7 +2768,8 @@ SIPCall::handleMediaChangeRequest(const std::vector<DRing::MediaMap>& remoteMedi
     // If the offered media does not differ from the current local media, the
     // request is answered using the current local media.
     if (not checkMediaChangeRequest(remoteMediaList)) {
-        answerMediaChangeRequest(MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList()));
+        answerMediaChangeRequest(
+            MediaAttribute::mediaAttributesToMediaMaps(getMediaAttributeList()));
         return;
     }
 

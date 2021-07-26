@@ -323,6 +323,10 @@ public:
     {
         return std::weak_ptr<SIPCall>(shared());
     }
+    /**
+     * Announce to the client that medias are successfully negotiated
+     */
+    void reportMediaNegotiationStatus();
 
 private:
     void generateMediaPorts();
@@ -391,7 +395,6 @@ private:
     void setupNegotiatedMedia();
     void startAllMedia();
     void stopAllMedia();
-    void reportMediaNegotiationStatus();
     void updateRemoteMedia();
 
     /**
