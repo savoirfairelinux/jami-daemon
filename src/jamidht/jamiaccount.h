@@ -126,7 +126,8 @@ public:
 
     const std::string& getPath() const { return idPath_; }
 
-    const JamiAccountConfig& config() const {
+    const JamiAccountConfig& config() const
+    {
         return *static_cast<const JamiAccountConfig*>(&Account::config());
     }
 
@@ -146,7 +147,8 @@ public:
      */
     virtual std::map<std::string, std::string> getVolatileAccountDetails() const override;
 
-    std::unique_ptr<AccountConfig> buildConfig() const override {
+    std::unique_ptr<AccountConfig> buildConfig() const override
+    {
         return std::make_unique<JamiAccountConfig>(getAccountID(), idPath_);
     }
 
@@ -234,6 +236,10 @@ public:
 
     /**
      * Create outgoing SIPCall.
+     * @note Accepts several urls:
+     *          + jami:uri for calling someone
+     *          + swarm:id for calling a group (will host or join if an active call is detected)
+     *          + rdv:id/uri/device/confId to join a specific conference hosted on (uri, device)
      * @param[in] toUrl The address to call
      * @param[in] mediaList list of medias
      * @return A shared pointer on the created call.
@@ -420,10 +426,10 @@ public:
 
     void saveConfig() const override;
 
-    inline void editConfig(std::function<void(JamiAccountConfig& conf)>&& edit) {
-        Account::editConfig([&](AccountConfig& conf) {
-            edit(*static_cast<JamiAccountConfig*>(&conf));
-        });
+    inline void editConfig(std::function<void(JamiAccountConfig& conf)>&& edit)
+    {
+        Account::editConfig(
+            [&](AccountConfig& conf) { edit(*static_cast<JamiAccountConfig*>(&conf)); });
     }
 
     /**
@@ -521,8 +527,8 @@ public:
 
     // non-swarm version
     libjami::DataTransferId sendFile(const std::string& peer,
-                                   const std::string& path,
-                                   const InternalCompletionCb& icb = {});
+                                     const std::string& path,
+                                     const InternalCompletionCb& icb = {});
 
     void transferFile(const std::string& conversationId,
                       const std::string& path,
@@ -604,6 +610,13 @@ public:
     void unlinkConversations(const std::set<std::string>& removedConv);
 
     bool isValidAccountDevice(const dht::crypto::Certificate& cert) const;
+
+    /**
+     * Join incoming call to hosted conference
+     * @param callId        The call to join
+     * @param destination   conversation/uri/device/confId to join
+     */
+    void handleIncomingConversationCall(const std::string& callId, const std::string& destination);
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -706,10 +719,9 @@ private:
 
     template<class... Args>
     std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
-    void newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::string_view toUri);
+    void newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri);
+    void newSwarmOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri);
     std::shared_ptr<SIPCall> createSubCall(const std::shared_ptr<SIPCall>& mainCall);
-
-    void updateContactHeader();
 
 #if HAVE_RINGNS
     std::string registeredName_;

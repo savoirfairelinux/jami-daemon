@@ -561,9 +561,16 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
                 JAMI_ERR("No account detected");
                 return;
             }
+
+            // Stay in a conference if 1 participants for swarm and rendezvous
             if (account->isRendezVous())
                 return;
 
+            if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account))
+                if (acc->convModule()->isHosting("", conf.getConfId()))
+                    return;
+
+            // Else go in 1:1
             if (current_callId != conf.getConfId())
                 base_.onHoldCall(account->getAccountID(), call->getCallId());
             else
@@ -1083,13 +1090,17 @@ Manager::answerCall(Call& call, const std::vector<libjami::MediaMap>& mediaList)
 
 // THREAD=Main
 bool
-Manager::hangupCall(const std::string&, const std::string& callId)
+Manager::hangupCall(const std::string& accountId, const std::string& callId)
 {
+    auto account = getAccount(accountId);
+    if (not account)
+        return false;
+    // store the current call id
     stopTone();
     pimpl_->removeWaitingCall(callId);
 
     /* We often get here when the call was hungup before being created */
-    auto call = getCallFromCallID(callId);
+    auto call = account->getCall(callId);
     if (not call) {
         JAMI_WARN("Could not hang up non-existant call %s", callId.c_str());
         return false;
@@ -1261,8 +1272,8 @@ Manager::holdConference(const std::string& accountId, const std::string& confId)
         if (auto conf = account->getConference(confId)) {
             conf->detachLocalParticipant();
             emitSignal<libjami::CallSignal::ConferenceChanged>(accountId,
-                                                             conf->getConfId(),
-                                                             conf->getStateStr());
+                                                               conf->getConfId(),
+                                                               conf->getStateStr());
             return true;
         }
     }
@@ -1285,8 +1296,8 @@ Manager::unHoldConference(const std::string& accountId, const std::string& confI
                 pimpl_->switchCall(confId);
                 conf->setState(Conference::State::ACTIVE_ATTACHED);
                 emitSignal<libjami::CallSignal::ConferenceChanged>(accountId,
-                                                                 conf->getConfId(),
-                                                                 conf->getStateStr());
+                                                                   conf->getConfId(),
+                                                                   conf->getStateStr());
                 return true;
             } else if (conf->getState() == Conference::State::ACTIVE_DETACHED) {
                 pimpl_->addMainParticipant(*conf);
@@ -1352,8 +1363,8 @@ Manager::ManagerPimpl::addMainParticipant(Conference& conf)
 {
     conf.attachLocalParticipant();
     emitSignal<libjami::CallSignal::ConferenceChanged>(conf.getAccountId(),
-                                                     conf.getConfId(),
-                                                     conf.getStateStr());
+                                                       conf.getConfId(),
+                                                       conf.getStateStr());
     switchCall(conf.getConfId());
 }
 
@@ -1446,8 +1457,8 @@ Manager::joinParticipant(const std::string& accountId,
         conf->detachLocalParticipant();
     }
     emitSignal<libjami::CallSignal::ConferenceChanged>(account->getAccountID(),
-                                                     conf->getConfId(),
-                                                     conf->getStateStr());
+                                                       conf->getConfId(),
+                                                       conf->getStateStr());
 
     return true;
 }
@@ -1503,8 +1514,8 @@ Manager::detachLocalParticipant(const std::shared_ptr<Conference>& conf)
     JAMI_INFO("Detach local participant from conference %s", conf->getConfId().c_str());
     conf->detachLocalParticipant();
     emitSignal<libjami::CallSignal::ConferenceChanged>(conf->getAccountId(),
-                                                     conf->getConfId(),
-                                                     conf->getStateStr());
+                                                       conf->getConfId(),
+                                                       conf->getStateStr());
     pimpl_->unsetCurrentCall();
     return true;
 }
@@ -1544,8 +1555,8 @@ Manager::removeParticipant(Call& call)
     removeAudio(call);
 
     emitSignal<libjami::CallSignal::ConferenceChanged>(conf->getAccountId(),
-                                                     conf->getConfId(),
-                                                     conf->getStateStr());
+                                                       conf->getConfId(),
+                                                       conf->getStateStr());
 
     pimpl_->processRemainingParticipants(*conf);
 }
@@ -1822,24 +1833,6 @@ Manager::incomingCall(const std::string& accountId, Call& call)
         return;
     }
 
-    // Report incoming call using "CallSignal::IncomingCallWithMedia" signal.
-    auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(call.getMediaAttributeList());
-
-    if (mediaList.empty()) {
-        JAMI_WARN("Incoming call %s has an empty media list", call.getCallId().c_str());
-    }
-
-    JAMI_DEBUG("Incoming call {:s} on account {:s} with {:d} media",
-              call.getCallId(),
-              accountId,
-              mediaList.size());
-
-    // Report the call using new API.
-    emitSignal<libjami::CallSignal::IncomingCallWithMedia>(accountId,
-                                                         call.getCallId(),
-                                                         call.getPeerDisplayName() + " " + from,
-                                                         mediaList);
-
     // Process the call.
     pimpl_->processIncomingCall(accountId, call);
 }
@@ -1872,9 +1865,9 @@ Manager::incomingMessage(const std::string& accountId,
 
                 // in case of a conference we must notify client using conference id
                 emitSignal<libjami::CallSignal::IncomingMessage>(accountId,
-                                                               conf->getConfId(),
-                                                               from,
-                                                               messages);
+                                                                 conf->getConfId(),
+                                                                 from,
+                                                                 messages);
             } else {
                 JAMI_ERR("no conference associated to ID %s", callId.c_str());
             }
@@ -2475,6 +2468,32 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         return;
     }
 
+    auto username = incomCall.toUsername();
+    if (username.find('/') != std::string::npos) {
+        // Avoid to do heavy stuff in SIPVoIPLink's transaction_request_cb
+        dht::ThreadPool::io().run([this, account, incomCallId, username]() {
+            if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account))
+                jamiAccount->handleIncomingConversationCall(incomCallId, username);
+        });
+        return;
+    }
+
+    auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(
+        incomCall.getMediaAttributeList());
+
+    if (mediaList.empty())
+        JAMI_WARN("Incoming call %s has an empty media list", incomCallId.c_str());
+
+    JAMI_INFO("Incoming call %s on account %s with %lu media",
+              incomCallId.c_str(),
+              accountId.c_str(),
+              mediaList.size());
+
+    emitSignal<libjami::CallSignal::IncomingCallWithMedia>(accountId,
+                                                           incomCallId,
+                                                           incomCall.getPeerNumber(),
+                                                           mediaList);
+
     if (not base_.hasCurrentCall()) {
         incomCall.setState(Call::ConnectionState::RINGING);
 #if !defined(RING_UWP) && !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
@@ -2509,17 +2528,17 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
             }
 
             // First call
-            auto conf = std::make_shared<Conference>(account, false);
+            auto conf = std::make_shared<Conference>(account, "", false);
             account->attach(conf);
             emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(),
-                                                             conf->getConfId());
+                                                               conf->getConfId());
 
             // Bind calls according to their state
             bindCallToConference(*incomCall, *conf);
             conf->detachLocalParticipant();
             emitSignal<libjami::CallSignal::ConferenceChanged>(account->getAccountID(),
-                                                             conf->getConfId(),
-                                                             conf->getStateStr());
+                                                               conf->getConfId(),
+                                                               conf->getStateStr());
         });
     } else if (autoAnswer_ || account->isAutoAnswerEnabled()) {
         dht::ThreadPool::io().run(
@@ -2968,8 +2987,8 @@ Manager::setAccountActive(const std::string& accountID, bool active, bool shutdo
             }
         }
     }
-    emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(accountID,
-                                                                   acc->getVolatileAccountDetails());
+    emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        accountID, acc->getVolatileAccountDetails());
 }
 
 std::shared_ptr<AudioLayer>
@@ -3173,9 +3192,8 @@ void
 Manager::enableLocalModerators(const std::string& accountID, bool isModEnabled)
 {
     if (auto acc = getAccount(accountID))
-        acc->editConfig([&](AccountConfig& config){
-            config.localModeratorsEnabled = isModEnabled;
-        });
+        acc->editConfig(
+            [&](AccountConfig& config) { config.localModeratorsEnabled = isModEnabled; });
 }
 
 bool
@@ -3193,9 +3211,7 @@ void
 Manager::setAllModerators(const std::string& accountID, bool allModerators)
 {
     if (auto acc = getAccount(accountID))
-        acc->editConfig([&](AccountConfig& config){
-            config.allModeratorsEnabled = allModerators;
-        });
+        acc->editConfig([&](AccountConfig& config) { config.allModeratorsEnabled = allModerators; });
 }
 
 bool

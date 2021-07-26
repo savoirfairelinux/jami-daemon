@@ -2589,9 +2589,8 @@ SIPCall::getMediaAttributeList() const
 {
     std::vector<MediaAttribute> mediaList;
     mediaList.reserve(rtpStreams_.size());
-    for (auto const& stream : rtpStreams_) {
+    for (auto const& stream : rtpStreams_)
         mediaList.emplace_back(*stream.mediaAttribute_);
-    }
     return mediaList;
 }
 

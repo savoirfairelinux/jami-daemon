@@ -25,11 +25,13 @@
 #include <opendht/thread_pool.h>
 
 #include "account_const.h"
+#include "call.h"
 #include "client/ring_signal.h"
 #include "fileutils.h"
 #include "jamidht/account_manager.h"
 #include "jamidht/jamiaccount.h"
 #include "manager.h"
+#include "sip/sipcall.h"
 #include "vcard.h"
 
 namespace jami {
@@ -987,6 +989,13 @@ ConversationModule::loadConversations()
                 info.lastDisplayed = conv->infos()[ConversationMapKeys::LAST_DISPLAYED];
                 addConvInfo(info);
             }
+            auto commits = conv->refreshActiveCalls();
+            if (!commits.empty()) {
+                // Note: here, this means that some calls were actives while the
+                // daemon finished (can be a crash).
+                // Notify other in the conversation that the call is finished
+                pimpl_->sendMessageNotification(*conv, *commits.rbegin(), true);
+            }
             pimpl_->conversations_.emplace(repository, std::move(conv));
         } catch (const std::logic_error& e) {
             JAMI_WARN("[Account %s] Conversations not loaded : %s",
@@ -1017,7 +1026,7 @@ ConversationModule::loadConversations()
                              pimpl_->accountId_,
                              info.id);
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_,
-                                                                           info.id);
+                                                                             info.id);
                 itInfo = pimpl_->convInfos_.erase(itInfo);
                 continue;
             }
@@ -1120,10 +1129,10 @@ ConversationModule::onTrustRequest(const std::string& uri,
         return;
     }
     emitSignal<libjami::ConfigurationSignal::IncomingTrustRequest>(pimpl_->accountId_,
-                                                                 conversationId,
-                                                                 uri,
-                                                                 payload,
-                                                                 received);
+                                                                   conversationId,
+                                                                   uri,
+                                                                   payload,
+                                                                   received);
     ConversationRequest req;
     req.from = uri;
     req.conversationId = conversationId;
@@ -1133,8 +1142,8 @@ ConversationModule::onTrustRequest(const std::string& uri,
     auto reqMap = req.toMap();
     pimpl_->addConversationRequest(conversationId, std::move(req));
     emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
-                                                                       conversationId,
-                                                                       reqMap);
+                                                                         conversationId,
+                                                                         reqMap);
 }
 
 void
@@ -1161,8 +1170,8 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
     // the same conversation request. Will sync when the conversation will be added
 
     emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
-                                                                       convId,
-                                                                       reqMap);
+                                                                         convId,
+                                                                         reqMap);
 }
 
 void
@@ -1215,7 +1224,7 @@ ConversationModule::declineConversationRequest(const std::string& conversationId
         pimpl_->saveConvRequests();
     }
     emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
-                                                                       conversationId);
+                                                                         conversationId);
     pimpl_->needsSyncingCb_({});
 }
 
@@ -1402,9 +1411,9 @@ ConversationModule::loadConversationMessages(const std::string& conversationId,
         conversation->second->loadMessages(
             [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
                 emitSignal<libjami::ConversationSignal::ConversationLoaded>(id,
-                                                                          accountId,
-                                                                          conversationId,
-                                                                          messages);
+                                                                            accountId,
+                                                                            conversationId,
+                                                                            messages);
             },
             options);
         return id;
@@ -1429,9 +1438,9 @@ ConversationModule::loadConversationUntil(const std::string& conversationId,
         conversation->second->loadMessages(
             [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
                 emitSignal<libjami::ConversationSignal::ConversationLoaded>(id,
-                                                                          accountId,
-                                                                          conversationId,
-                                                                          messages);
+                                                                            accountId,
+                                                                            conversationId,
+                                                                            messages);
             },
             options);
         return id;
@@ -1538,7 +1547,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                 auto itConv = pimpl_->conversations_.find(convId);
                 if (itConv != pimpl_->conversations_.end() && !itConv->second->isRemoving()) {
                     emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_,
-                                                                               convId);
+                                                                                 convId);
                     itConv->second->setRemovingFlag();
                 }
             }
@@ -1575,7 +1584,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                       convId.c_str(),
                       deviceId.c_str());
             emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
-                                                                               convId);
+                                                                                 convId);
             continue;
         }
 
@@ -1585,8 +1594,8 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                   deviceId.c_str());
 
         emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_,
-                                                                           convId,
-                                                                           req.toMap());
+                                                                             convId,
+                                                                             req.toMap());
     }
 
     // Updates preferences for conversations
@@ -1897,8 +1906,8 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
         auto it = pimpl_->conversationsRequests_.begin();
         while (it != pimpl_->conversationsRequests_.end()) {
             if (it->second.from == uri) {
-                emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
-                                                                                   it->first);
+                emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(
+                    pimpl_->accountId_, it->first);
                 update = true;
                 it = pimpl_->conversationsRequests_.erase(it);
             } else {
@@ -1987,6 +1996,245 @@ ConversationModule::initReplay(const std::string& oldConvId, const std::string& 
             {});
         fut.wait();
     }
+}
+
+bool
+ConversationModule::isHosting(const std::string& conversationId, const std::string& confId) const
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    if (conversationId.empty()) {
+        return std::find_if(pimpl_->conversations_.cbegin(),
+                            pimpl_->conversations_.cend(),
+                            [&](const auto& conv) { return conv.second->isHosting(confId); })
+               != pimpl_->conversations_.cend();
+    } else {
+        auto conversation = pimpl_->conversations_.find(conversationId);
+        if (conversation != pimpl_->conversations_.end() && conversation->second) {
+            return conversation->second->isHosting(confId);
+        }
+    }
+    return false;
+}
+
+std::vector<std::map<std::string, std::string>>
+ConversationModule::getActiveCalls(const std::string& conversationId) const
+{
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto conversation = pimpl_->conversations_.find(conversationId);
+    if (conversation == pimpl_->conversations_.end() || !conversation->second) {
+        JAMI_ERR("Conversation %s not found", conversationId.c_str());
+        return {};
+    }
+    return conversation->second->currentCalls();
+}
+
+void
+ConversationModule::call(const std::string& url,
+                         const std::shared_ptr<SIPCall>& call,
+                         std::function<void(const std::string&, const DeviceId&)>&& cb)
+{
+    std::string conversationId = "", confId = "", uri = "", deviceId = "";
+    if (url.find('/') == std::string::npos) {
+        conversationId = url;
+    } else {
+        auto parameters = jami::split_string(url, '/');
+        if (parameters.size() != 4) {
+            JAMI_ERR("Incorrect url %s", url.c_str());
+            return;
+        }
+        conversationId = parameters[0];
+        JAMI_ERR("@@@ %s", conversationId.c_str());
+        uri = parameters[1];
+        JAMI_ERR("@@@ %s", uri.c_str());
+        deviceId = parameters[2];
+        JAMI_ERR("@@@ %s", deviceId.c_str());
+        confId = parameters[3];
+        JAMI_ERR("@@@ %s", confId.c_str());
+    }
+
+    std::string callUri;
+    auto sendCall = [&]() {
+        call->setState(Call::ConnectionState::TRYING);
+        call->setPeerNumber(callUri);
+        call->setPeerUri("rdv:" + callUri);
+        call->addStateListener([w = pimpl_->weak(), conversationId](Call::CallState call_state,
+                                                                    Call::ConnectionState cnx_state,
+                                                                    int) {
+            if (cnx_state == Call::ConnectionState::DISCONNECTED
+                && call_state == Call::CallState::MERROR) {
+                auto shared = w.lock();
+                if (!shared)
+                    return false;
+                if (auto acc = shared->account_.lock())
+                    emitSignal<libjami::ConfigurationSignal::NeedsHost>(acc->getAccountID(),
+                                                                        conversationId);
+                return true;
+            }
+            return true;
+        });
+        cb(callUri, DeviceId(deviceId));
+    };
+
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto conversation = pimpl_->conversations_.find(conversationId);
+    if (conversation == pimpl_->conversations_.end() || !conversation->second) {
+        JAMI_ERR("Conversation %s not found", conversationId.c_str());
+        return;
+    }
+
+    // Check if we want to join a specific conference
+    // So, if confId is specified or if there is some activeCalls
+    // or if we are the default host.
+    auto& conv = conversation->second;
+    auto activeCalls = conv->currentCalls();
+    auto infos = conv->infos();
+    auto itRdvAccount = infos.find("rdvAccount");
+    auto itRdvDevice = infos.find("rdvDevice");
+    auto sendCallRequest = false;
+    if (confId != "") {
+        sendCallRequest = true;
+        confId = confId == "0" ? Manager::instance().callFactory.getNewCallID() : confId;
+        JAMI_DBG("Calling self, join conference");
+    } else if (!activeCalls.empty()) {
+        // Else, we try to join active calls
+        sendCallRequest = true;
+        auto& ac = *activeCalls.rbegin();
+        confId = ac.at("id");
+        uri = ac.at("uri");
+        deviceId = ac.at("device");
+        JAMI_DBG("Calling last active call: %s", callUri.c_str());
+    } else if (itRdvAccount != infos.end() && itRdvDevice != infos.end()) {
+        // Else, creates "to" (accountId/deviceId/conversationId/confId) and ask remote host
+        sendCallRequest = true;
+        uri = itRdvAccount->second;
+        deviceId = itRdvDevice->second;
+        confId = call->getCallId();
+        JAMI_DBG("Remote host detected. Calling %s on device %s", uri.c_str(), deviceId.c_str());
+    }
+
+    if (sendCallRequest) {
+        callUri = fmt::format("{}/{}/{}/{}", conversationId, uri, deviceId, confId);
+        if (uri == pimpl_->username_ && deviceId == pimpl_->deviceId_) {
+            // In this case, we're probably hosting the conference.
+            call->setState(Call::ConnectionState::CONNECTED);
+            // In this case, the call is the only one in the conference
+            // and there is no peer, so media succeeded and are shown to
+            // the client.
+            call->reportMediaNegotiationStatus();
+            lk.unlock();
+            hostConference(conversationId, confId, call->getCallId());
+            return;
+        }
+        JAMI_DBG("Calling: %s", callUri.c_str());
+        sendCall();
+        return;
+    }
+
+    // Else, we are the host.
+    confId = Manager::instance().callFactory.getNewCallID();
+    call->setState(Call::ConnectionState::CONNECTED);
+    // In this case, the call is the only one in the conference
+    // and there is no peer, so media succeeded and are shown to
+    // the client.
+    call->reportMediaNegotiationStatus();
+    lk.unlock();
+    hostConference(conversationId, confId, call->getCallId());
+}
+
+void
+ConversationModule::hostConference(const std::string& conversationId,
+                                   const std::string& confId,
+                                   const std::string& callId)
+{
+    auto acc = pimpl_->account_.lock();
+    if (!acc)
+        return;
+    std::shared_ptr<Call> call;
+    call = acc->getCall(callId);
+    if (!call) {
+        JAMI_WARN("No call with id %s found", callId.c_str());
+        return;
+    }
+    auto conf = acc->getConference(confId);
+    auto createConf = !conf;
+    if (createConf) {
+        conf = std::make_shared<Conference>(acc, confId);
+        acc->attach(conf);
+    }
+    conf->addParticipant(callId);
+
+    if (createConf) {
+        emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), confId);
+    } else {
+        conf->attachLocalParticipant();
+        conf->reportMediaNegotiationStatus();
+        emitSignal<libjami::CallSignal::ConferenceChanged>(acc->getAccountID(),
+                                                           conf->getConfId(),
+                                                           conf->getStateStr());
+        return;
+    }
+
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto conversation = pimpl_->conversations_.find(conversationId);
+    if (conversation == pimpl_->conversations_.end() || !conversation->second) {
+        JAMI_ERR("Conversation %s not found", conversationId.c_str());
+        return;
+    }
+    auto& conv = conversation->second;
+    // Add commit to conversation
+    Json::Value value;
+    value["uri"] = pimpl_->username_;
+    value["device"] = pimpl_->deviceId_;
+    value["confId"] = confId;
+    value["type"] = "application/call-history+json";
+    conv->hostConference(std::move(value),
+                         std::move([w = pimpl_->weak(),
+                                    conversationId](bool ok, const std::string& commitId) {
+                             if (ok) {
+                                 if (auto shared = w.lock())
+                                     shared->sendMessageNotification(conversationId, commitId, true);
+                             } else {
+                                 JAMI_ERR("Failed to send message to conversation %s",
+                                          conversationId.c_str());
+                             }
+                         }));
+
+    // When conf finished = remove host & commit
+    // Master call, so when it's stopped, the conference will be stopped (as we use the hold state
+    // for detaching the call)
+    conf->onShutdown(
+        [w = pimpl_->weak(), accountUri = pimpl_->username_, confId, conversationId, call](
+            int duration) {
+            auto shared = w.lock();
+            if (shared) {
+                Json::Value value;
+                value["uri"] = accountUri;
+                value["device"] = shared->deviceId_;
+                value["confId"] = confId;
+                value["type"] = "application/call-history+json";
+                value["duration"] = std::to_string(duration);
+
+                std::unique_lock<std::mutex> lk(shared->conversationsMtx_);
+                auto conversation = shared->conversations_.find(conversationId);
+                if (conversation == shared->conversations_.end() || !conversation->second) {
+                    JAMI_ERR("Conversation %s not found", conversationId.c_str());
+                    return true;
+                }
+                auto& conv = conversation->second;
+                conv->removeActiveConference(
+                    std::move(value), [w, conversationId](bool ok, const std::string& commitId) {
+                        if (ok) {
+                            if (auto shared = w.lock()) {
+                                shared->sendMessageNotification(conversationId, commitId, true);
+                            }
+                        } else {
+                            JAMI_ERR("Failed to send message to conversation %s",
+                                     conversationId.c_str());
+                        }
+                    });
+            }
+            return true;
+        });
 }
 
 std::map<std::string, ConvInfo>
