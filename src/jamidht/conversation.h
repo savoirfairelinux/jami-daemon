@@ -26,6 +26,7 @@
 #include <memory>
 #include <json/json.h>
 #include <msgpack.hpp>
+#include <set>
 
 #include "jamidht/conversationrepository.h"
 #include "jami/datatransfer_interface.h"
@@ -41,6 +42,8 @@ static constexpr const char* ERASED = "erased";
 static constexpr const char* MEMBERS = "members";
 static constexpr const char* LAST_DISPLAYED = "lastDisplayed";
 static constexpr const char* PREFERENCES = "preferences";
+static constexpr const char* ACTIVE_CALLS = "activeCalls";
+static constexpr const char* HOSTED_CALLS = "hostedCalls";
 static constexpr const char* CACHED = "cached";
 static constexpr const char* RECEIVED = "received";
 static constexpr const char* DECLINED = "declined";
@@ -123,6 +126,14 @@ public:
     ~Conversation();
 
     /**
+     * Refresh active calls.
+     * @note: If the host crash during a call, when initializing, we need to update
+     * and commit all the crashed calls
+     * @return  Commits added
+     */
+    std::vector<std::string> refreshActiveCalls();
+
+    /**
      * Add a callback to update upper layers
      * @note to call after the construction (and before ConversationReady)
      * @param lastDisplayedUpdatedCb    Triggered when last displayed for account is updated
@@ -185,7 +196,10 @@ public:
                      const std::string& replyTo = "",
                      OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});
-    void sendMessage(Json::Value&& message, const std::string& replyTo = "", OnCommitCb&& onCommit = {}, OnDoneCb&& cb = {});
+    void sendMessage(Json::Value&& message,
+                     const std::string& replyTo = "",
+                     OnCommitCb&& onCommit = {},
+                     OnDoneCb&& cb = {});
     // Note: used for replay. Should not be used by clients
     void sendMessages(std::vector<Json::Value>&& messages, OnMultiDoneCb&& cb = {});
     /**
@@ -398,6 +412,33 @@ public:
     void search(uint32_t req,
                 const Filter& filter,
                 const std::shared_ptr<std::atomic_int>& flag) const;
+    /**
+     * Host a conference in the conversation
+     * @note the message must have "confId"
+     * @note Update hostedCalls_ and commit in the conversation
+     * @param message       message to commit
+     * @param cb            callback triggered when committed
+     */
+    void hostConference(Json::Value&& message, OnDoneCb&& cb = {});
+    /**
+     * Announce the end of a call
+     * @note the message must have "confId"
+     * @note called when conference is finished
+     * @param message       message to commit
+     * @param cb            callback triggered when committed
+     */
+    void removeActiveConference(Json::Value&& message, OnDoneCb&& cb = {});
+    /**
+     * Check if we're currently hosting this conference
+     * @param confId
+     * @return true if hosting
+     */
+    bool isHosting(const std::string& confId) const;
+    /**
+     * Return current detected calls
+     * @return a vector of map with the following keys: "id", "uri", "device"
+     */
+    std::vector<std::map<std::string, std::string>> currentCalls() const;
 
 private:
     std::shared_ptr<Conversation> shared()
