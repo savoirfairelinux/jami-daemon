@@ -16,6 +16,7 @@ Persistent<Function> composingStatusChangedCb;
 Persistent<Function> volatileDetailsChangedCb;
 Persistent<Function> incomingAccountMessageCb;
 Persistent<Function> accountMessageStatusChangedCb;
+Persistent<Function> needsHosterCb;
 Persistent<Function> incomingTrustRequestCb;
 Persistent<Function> contactAddedCb;
 Persistent<Function> contactRemovedCb;
@@ -66,6 +67,8 @@ getPresistentCb(std::string_view signal)
         return &incomingAccountMessageCb;
     else if (signal == "AccountMessageStatusChanged")
         return &accountMessageStatusChangedCb;
+    else if (signal == "NeedsHoster")
+        return &needsHosterCb;
     else if (signal == "IncomingTrustRequest")
         return &incomingTrustRequestCb;
     else if (signal == "ContactAdded")
@@ -408,6 +411,22 @@ accountMessageStatusChanged(const std::string& account_id,
                                             V8_STRING_NEW_LOCAL(peer),
                                             SWIGV8_INTEGER_NEW(state)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
+        }
+    });
+
+    uv_async_send(&signalAsync);
+}
+
+void
+needsHoster(const std::string& account_id, const std::string& conversationId)
+{
+    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    pendingSignals.emplace([account_id, conversationId]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), needsHosterCb);
+        if (!func.IsEmpty()) {
+            Local<Value> callback_args[] = {V8_STRING_NEW_LOCAL(account_id),
+                                            V8_STRING_NEW_LOCAL(conversationId)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 2, callback_args);
         }
     });
 
