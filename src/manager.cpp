@@ -2838,6 +2838,35 @@ Manager::ManagerPimpl::processIncomingCall(Call& incomCall, const std::string& a
             }
         }
     }
+
+    auto username = incomCall.toUsername();
+    JAMI_ERR() << "@@@ " << username << " for " << account->getUsername();
+    if (username.find('/') != std::string::npos) {
+        auto split = jami::split_string(username, '/');
+        auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account);
+        if (split.size() != 4)
+            return;
+        // TODO keep view
+        auto conversationId = std::string(split[0]);
+        auto accountUri = std::string(split[1]);
+        auto deviceId = std::string(split[2]);
+        auto confId = std::string(split[3]);
+
+        if (account->getUsername() != accountUri || jamiAccount->currentDeviceId() != deviceId
+            || !jamiAccount->convModule()->isHosting(conversationId, confId))
+            return;
+
+        if (conferenceMap_.find(confId) == conferenceMap_.end()) {
+            auto conf = std::make_shared<Conference>(confId);
+            conferenceMap_.emplace(confId, std::move(conf));
+            emitSignal<DRing::CallSignal::ConferenceCreated>(confId);
+        }
+
+        runOnMainThread([incomCallId, confId] {
+            auto& mgr = Manager::instance();
+            mgr.addParticipant(incomCallId, confId);
+        });
+    }
 }
 
 AudioFormat

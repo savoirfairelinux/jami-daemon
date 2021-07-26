@@ -30,6 +30,7 @@
 #include "jamidht/account_manager.h"
 #include "jamidht/jamiaccount.h"
 #include "manager.h"
+#include "sip/sipcall.h"
 #include "vcard.h"
 
 namespace jami {
@@ -1435,6 +1436,119 @@ ConversationModule::checkIfRemoveForCompat(const std::string& peerUri)
         return;
     lk.unlock();
     removeConversation(convId);
+}
+
+bool
+ConversationModule::isHosting(const std::string& conversationId, const std::string& confId) const
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto conversation = pimpl_->conversations_.find(conversationId);
+    if (conversation != pimpl_->conversations_.end() && conversation->second) {
+        return conversation->second->isHosting(confId);
+    }
+    return false;
+}
+
+std::vector<std::string>
+ConversationModule::getActiveCalls(const std::string& conversationId) const
+{
+    std::vector<std::string> result;
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto conversation = pimpl_->conversations_.find(conversationId);
+    if (conversation == pimpl_->conversations_.end() || !conversation->second) {
+        JAMI_ERR("Conversation %s not found", conversationId.c_str());
+        return result;
+    }
+    for (const auto& [id, uri, did] : conversation->second->currentCalls()) {
+        result.emplace_back(id);
+    }
+    return result;
+}
+
+void
+ConversationModule::call(const std::string& url,
+                         const std::shared_ptr<SIPCall>& call,
+                         std::function<void(const std::string&, const DeviceId&)> cb)
+{
+    std::string conversationId = "", confId = "", uri = "", deviceId = "";
+    if (url.find('/') == std::string::npos) {
+        conversationId = url;
+    } else {
+        auto parameters = jami::split_string(url, '/');
+        if (parameters.size() != 4) {
+            JAMI_ERR("Incorrect url %s", url.c_str());
+            return;
+        }
+        conversationId = parameters[0];
+        uri = parameters[1];
+        deviceId = parameters[2];
+        confId = parameters[3];
+    }
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto conversation = pimpl_->conversations_.find(conversationId);
+    if (conversation == pimpl_->conversations_.end() || !conversation->second) {
+        JAMI_ERR("Conversation %s not found", conversationId.c_str());
+        return;
+    }
+    auto& conv = conversation->second;
+    if (confId != "") {
+        auto activeCalls = conv->currentCalls();
+        auto itCall = activeCalls.find({confId, uri, deviceId});
+        if (itCall == activeCalls.end()) {
+            JAMI_ERR() << confId << " not an active call";
+            // TODO failed call
+            return;
+        }
+        call->setPeerNumber(url);
+        call->setPeerUri("swarm:" + url);
+        call->setState(Call::ConnectionState::TRYING);
+
+        std::string callUri = fmt::format("{}/{}/{}/{}", uri, deviceId, conversationId, confId);
+        cb(callUri, DeviceId(deviceId));
+        return;
+    }
+
+    // Create "to" (accountId/deviceId/conversationId/confId)
+    auto infos = conversationInfos(conversationId);
+    auto itRdvAccount = infos.find("rdvAccount");
+    auto itRdvDevice = infos.find("rdvDevice");
+    if (itRdvAccount != infos.end() && itRdvDevice != infos.end()) {
+        if (itRdvAccount->second != pimpl_->username_ || itRdvDevice->second != pimpl_->deviceId_) {
+            // TODO ask device to host
+            JAMI_ERR("@@@ TODO ask to host");
+            return;
+        }
+    }
+
+    auto accountUri = pimpl_->username_; // TODO get from swarm preferences
+    confId = Manager::instance().callFactory.getNewCallID();
+    uri = fmt::format("{}/{}/{}/{}", conversationId, accountUri, pimpl_->deviceId_, confId);
+
+    // Add commit to conversation
+    Json::Value value;
+    value["uri"] = accountUri;
+    value["device"] = pimpl_->deviceId_;
+    value["confId"] = confId;
+    value["type"] = "application/call-history+json";
+    conv->hostConference(value,
+                         [w = pimpl_->weak(), conversationId](bool ok, const std::string& commitId) {
+                             if (ok) {
+                                 // TODO helper
+                                 auto shared = w.lock();
+                                 if (shared) {
+                                     std::lock_guard<std::mutex> lk(shared->conversationsMtx_);
+                                     auto it = shared->conversations_.find(conversationId);
+                                     if (it != shared->conversations_.end() && it->second)
+                                         shared->sendMessageNotification(*it->second,
+                                                                         commitId,
+                                                                         true);
+                                 }
+                             } else
+                                 JAMI_ERR("Failed to send message to conversation %s",
+                                          conversationId.c_str());
+                         });
+
+    // TODO when conf finished = remove host & commit
 }
 
 std::map<std::string, ConvInfo>

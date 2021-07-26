@@ -545,6 +545,7 @@ public:
      * @return std::vector<std::string> A list of call IDs
      */
     std::vector<std::string> getConferenceList() const;
+    void addConference(std::shared_ptr<Conference>&& conf);
 
     /**
      * Get a list of participant to a conference
