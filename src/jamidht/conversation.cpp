@@ -222,6 +222,16 @@ public:
                                 shared->getAccountID(), convId, uri, action);
                         }
                     }
+                } else if (c.at("type") == "application/call-history+json") {
+                    if (c.find("confId") != c.end() && c.find("uri") != c.end()
+                        && c.find("device") != c.end()) {
+                        // TODO this update current calls, but this may not be the actual state (if
+                        // relaunched during a call)
+                        if (c.find("duration") == c.end())
+                            currentCalls_.insert({c.at("confId"), c.at("uri"), c.at("device")});
+                        else
+                            currentCalls_.erase({c.at("confId"), c.at("uri"), c.at("device")});
+                    }
                 }
 #ifdef ENABLE_PLUGIN
                 auto& pluginChatManager
@@ -289,6 +299,9 @@ public:
     std::string fetchedPath_ {};
     std::mutex fetchedDevicesMtx_ {};
     std::set<std::string> fetchedDevices_ {};
+
+    std::set<std::string> hostedCalls_ {};
+    mutable std::set<std::tuple<std::string, std::string, std::string>> currentCalls_ {};
 };
 
 bool
@@ -1068,6 +1081,31 @@ Conversation::hasFetched(const std::string& deviceId)
     std::lock_guard<std::mutex> lk(pimpl_->fetchedDevicesMtx_);
     pimpl_->fetchedDevices_.emplace(deviceId);
     pimpl_->saveFetched();
+}
+
+void
+Conversation::hostConference(const Json::Value& message, const OnDoneCb& cb)
+{
+    if (!message.isMember("confId")) {
+        JAMI_ERR() << "Malformed commit";
+        return;
+    }
+
+    pimpl_->hostedCalls_.insert(message["confId"].asString());
+
+    sendMessage(message, "", cb);
+}
+
+bool
+Conversation::isHosting(const std::string& confId) const
+{
+    return pimpl_->hostedCalls_.find(confId) != pimpl_->hostedCalls_.end();
+}
+
+std::set<std::tuple<std::string, std::string, std::string>>
+Conversation::currentCalls() const
+{
+    return pimpl_->currentCalls_;
 }
 
 } // namespace jami
