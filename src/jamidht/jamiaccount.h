@@ -630,6 +630,13 @@ public:
 
     bool isValidAccountDevice(const dht::crypto::Certificate& cert) const;
 
+    /**
+     * Join incoming call to hosted conference
+     * @param callId        The call to join
+     * @param destination   conversation/uri/device/confId to join
+     */
+    void handleIncomingConversationCall(const std::string& callId, const std::string& destination);
+
 private:
     NON_COPYABLE(JamiAccount);
 
@@ -738,10 +745,9 @@ private:
 
     template<class... Args>
     std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
-    void newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::string_view toUri);
+    void newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri);
+    void newSwarmOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri);
     std::shared_ptr<SIPCall> createSubCall(const std::shared_ptr<SIPCall>& mainCall);
-
-    void updateContactHeader();
 
 #if HAVE_RINGNS
     std::string nameServer_;
