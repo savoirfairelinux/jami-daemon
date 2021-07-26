@@ -544,8 +544,8 @@ DBusConfigurationManager::validateCertificatePath(const std::string& accountId,
                                                   const std::string& privateKey,
                                                   const std::string& privateKeyPass,
                                                   const std::string& caList)
-    -> decltype(
-        DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList))
+    -> decltype(DRing::validateCertificatePath(
+        accountId, certificate, privateKey, privateKeyPass, caList))
 {
     return DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList);
 }
@@ -856,6 +856,13 @@ std::vector<std::string>
 DBusConfigurationManager::getConversations(const std::string& accountId)
 {
     return DRing::getConversations(accountId);
+}
+
+std::vector<std::map<std::string, std::string>>
+DBusConfigurationManager::getActiveCalls(const std::string& accountId,
+                                         const std::string& conversationId)
+{
+    return DRing::getActiveCalls(accountId, conversationId);
 }
 
 std::vector<std::map<std::string, std::string>>
