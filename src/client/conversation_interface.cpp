@@ -78,6 +78,15 @@ getConversations(const std::string& accountId)
     return {};
 }
 
+std::vector<std::string>
+getActiveCalls(const std::string& accountId, const std::string& conversationId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto convModule = acc->convModule())
+            return convModule->getActiveCalls(conversationId);
+    return {};
+}
+
 std::vector<std::map<std::string, std::string>>
 getConversationRequests(const std::string& accountId)
 {

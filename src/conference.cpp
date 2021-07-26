@@ -53,8 +53,8 @@ using namespace std::literals;
 
 namespace jami {
 
-Conference::Conference(const std::shared_ptr<Account>& account)
-    : id_(Manager::instance().callFactory.getNewCallID())
+Conference::Conference(const std::shared_ptr<Account>& account, const std::string& confId)
+    : id_(confId.empty() ? Manager::instance().callFactory.getNewCallID() : confId)
     , account_(account)
 #ifdef ENABLE_VIDEO
     , videoEnabled_(account->isVideoEnabled())

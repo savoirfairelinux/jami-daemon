@@ -1701,6 +1701,17 @@
            <arg type="s" name="accountId" direction="in"/>
        </method>
 
+       <method name="getActiveCalls" tp:name-for-bindings="getActiveCalls">
+           <tp:added version="10.1.0"/>
+           <tp:docstring>
+               Get the active call list per conversation
+           </tp:docstring>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="activeCalls" direction="out"/>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="conversationId" direction="in"/>
+       </method>
+
        <method name="getConversationRequests" tp:name-for-bindings="getConversationRequests">
            <tp:added version="10.0.0"/>
            <tp:docstring>
