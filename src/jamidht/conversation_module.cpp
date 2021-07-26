@@ -30,6 +30,7 @@
 #include "jamidht/account_manager.h"
 #include "jamidht/jamiaccount.h"
 #include "manager.h"
+#include "sip/sipcall.h"
 #include "vcard.h"
 
 namespace jami {
@@ -1387,6 +1388,83 @@ ConversationModule::checkIfRemoveForCompat(const std::string& peerUri)
         return;
     lk.unlock();
     removeConversation(convId);
+}
+
+bool
+ConversationModule::isHosting(const std::string& conversationId, const std::string& confId) const
+{
+    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto conversation = pimpl_->conversations_.find(conversationId);
+    if (conversation != pimpl_->conversations_.end() && conversation->second) {
+        return conversation->second->isHosting(confId);
+    }
+    return false;
+}
+
+void
+ConversationModule::call(const std::string& conversationId,
+                         const std::shared_ptr<SIPCall>& call,
+                         std::function<void(const std::string&, const DeviceId&)>& cb)
+{
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    auto conversation = pimpl_->conversations_.find(conversationId);
+    if (conversation == pimpl_->conversations_.end() || !conversation->second)
+        return;
+    auto& conv = conversation->second;
+    auto activeCalls = conv->currentCalls();
+    if (!activeCalls.empty()) {
+        lk.unlock();
+        auto& activeCall = *activeCalls.begin();
+        auto confId = std::get<0>(activeCall);
+        auto accountUri = std::get<1>(activeCall);
+        auto deviceId = DeviceId(std::get<2>(activeCall));
+        std::string uri = fmt::format("{}/{}/{}/{}", accountUri, deviceId, conversationId, confId);
+        call->setPeerNumber(uri);
+        call->setPeerUri("swarm:" + uri);
+        call->setState(Call::ConnectionState::TRYING);
+
+        cb(accountUri, deviceId);
+        return;
+    }
+
+    // Create "to" (accountId/deviceId/conversationId/confId)
+    auto accountUri = pimpl_->username_; // TODO get from swarm preferences
+    auto confId = Manager::instance().callFactory.getNewCallID();
+    std::string uri = fmt::format("{}/{}/{}/{}",
+                                  accountUri,
+                                  pimpl_->deviceId_,
+                                  conversationId,
+                                  confId);
+
+    // Add commit to conversation
+    Json::Value value;
+    value["uri"] = accountUri;
+    value["device"] = pimpl_->deviceId_;
+    value["confId"] = confId;
+    value["type"] = "application/call-history+json";
+    conv->hostConference(value,
+                         [w = pimpl_->weak(), conversationId](bool ok, const std::string& commitId) {
+                             if (ok) {
+                                 // TODO helper
+                                 auto shared = w.lock();
+                                 if (shared) {
+                                     std::lock_guard<std::mutex> lk(shared->conversationsMtx_);
+                                     auto it = shared->conversations_.find(conversationId);
+                                     if (it != shared->conversations_.end() && it->second)
+                                         shared->sendMessageNotification(*it->second,
+                                                                         commitId,
+                                                                         true);
+                                 }
+                             } else
+                                 JAMI_ERR("Failed to send message to conversation %s",
+                                          conversationId.c_str());
+                         });
+    lk.unlock();
+
+    // TODO Call it
+    JAMI_ERR() << "@@@ " << uri;
+
+    // TODO when conf finished = remove host & commit
 }
 
 std::map<std::string, ConvInfo>
