@@ -307,6 +307,9 @@ public:
      */
     void hasFetched(const std::string& deviceId);
 
+    void hostCall(const Json::Value& message, const OnDoneCb& cb = {});
+    bool isHosting(const std::string& callId) const;
+
 private:
     std::shared_ptr<Conversation> shared()
     {

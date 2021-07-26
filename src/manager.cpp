@@ -2834,6 +2834,36 @@ Manager::ManagerPimpl::processIncomingCall(Call& incomCall, const std::string& a
             }
         }
     }
+
+    auto username = incomCall.toUsername();
+    JAMI_ERR() << "@@@ " << username << " for " << account->getUsername();
+    if (username.find('/') != std::string::npos) {
+        auto split = jami::split_string(username, '/');
+        auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account);
+        if (split.size() != 4)
+            return;
+        // TODO keep view
+        auto accountUri = std::string(split[0]);
+        auto deviceId = std::string(split[1]);
+        auto conversationId = std::string(split[2]);
+        auto callId = std::string(split[3]);
+
+        if (account->getUsername() != accountUri || jamiAccount->currentDeviceId() != deviceId
+            || !jamiAccount->isHosting(conversationId, callId))
+            return;
+
+        JAMI_ERR() << "@@@ HOSTING!";
+        dht::ThreadPool::io().run([this, incomCallId, callId] {
+            auto& mgr = Manager::instance();
+            mgr.answerCall(incomCallId);
+            auto call = mgr.getCallFromCallID(callId);
+            if (call->getConfId().empty()) {
+                mgr.joinParticipant(incomCallId, callId, false);
+            } else {
+                mgr.addParticipant(incomCallId, call->getConfId());
+            }
+        });
+    }
 }
 
 AudioFormat

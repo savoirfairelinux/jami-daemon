@@ -289,6 +289,8 @@ public:
     std::string fetchedPath_ {};
     std::mutex fetchedDevicesMtx_ {};
     std::set<std::string> fetchedDevices_ {};
+
+    std::set<std::string> hostedCalls_ {};
 };
 
 bool
@@ -1068,6 +1070,25 @@ Conversation::hasFetched(const std::string& deviceId)
     std::lock_guard<std::mutex> lk(pimpl_->fetchedDevicesMtx_);
     pimpl_->fetchedDevices_.emplace(deviceId);
     pimpl_->saveFetched();
+}
+
+void
+Conversation::hostCall(const Json::Value& message, const OnDoneCb& cb)
+{
+    if (!message.isMember("callId")) {
+        JAMI_ERR() << "Malformed commit";
+        return;
+    }
+
+    pimpl_->hostedCalls_.insert(message["callId"].asString());
+
+    sendMessage(message, "", cb);
+}
+
+bool
+Conversation::isHosting(const std::string& callId) const
+{
+    return pimpl_->hostedCalls_.find(callId) != pimpl_->hostedCalls_.end();
 }
 
 } // namespace jami
