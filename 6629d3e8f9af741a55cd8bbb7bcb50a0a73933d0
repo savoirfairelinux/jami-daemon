@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f63f2e22_de750d00",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 13
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2021-07-26T15:57:54Z",
+      "side": 1,
+      "message": "Hello, I have a question.\n\nJami uses SHA-1 addresses, deduced from a public key.\nI2P uses base32-encoded SHA256 addresses, deduced from signing and encryption public keys (with some additional info).\nYggdrasil uses IPv6-like addresses, deduced from a public key.\n\nAre Jami going to provide some abstraction for different addresses? I think the daemon should be built for a concrete network layer (IPv4/IPv6+DHT, I2P, raw IPv6), but clients should support any type of addresses to work correctly. For example, you can use URLs like \"sip:\u003c...\u003e\", \"jami:\u003c...\u003e\", \"i2p:\u003c...\u003e\", \"ygg:\u003c...\u003e\" as contact (and device) identifiers.",
+      "revId": "6629d3e8f9af741a55cd8bbb7bcb50a0a73933d0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
