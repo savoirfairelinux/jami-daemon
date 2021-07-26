@@ -26,6 +26,8 @@
 #include <memory>
 #include <json/json.h>
 #include <msgpack.hpp>
+#include <set>
+#include <tuple>
 
 #include "jami/datatransfer_interface.h"
 #include "conversationrepository.h"
@@ -378,6 +380,10 @@ public:
     uint32_t countInteractions(const std::string& toId,
                                const std::string& fromId = "",
                                const std::string& authorUri = "") const;
+
+    void hostConference(Json::Value&& message, OnDoneCb&& cb = {});
+    bool isHosting(const std::string& confID) const;
+    std::set<std::tuple<std::string, std::string, std::string>> currentCalls() const;
 
 private:
     std::shared_ptr<Conversation> shared()
