@@ -78,6 +78,7 @@ struct IceSTransDeleter
 {
     void operator()(pj_ice_strans* ptr)
     {
+        JAMI_INFO("Destroying ice_strans %p", ptr);
         pj_ice_strans_stop_ice(ptr);
         pj_ice_strans_destroy(ptr);
     }
@@ -428,6 +429,8 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
         throw std::runtime_error("pj_ice_strans_create() failed");
     }
 
+    JAMI_INFO("Using ice_strans %p", icest);
+
     // Must be created after any potential failure
     thread_ = std::thread([this] {
         sip_utils::register_thread();
@@ -435,18 +438,6 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
             // NOTE: handleEvents can return false in this case
             // but here we don't care if there is event or not.
             handleEvents(500); // limit polling to 500ms
-        }
-        // NOTE: This last handleEvents is necessary to close TURN socket.
-        // Because when destroying the TURN session pjproject creates a pj_timer
-        // to postpone the TURN destruction. This timer is only called if we poll
-        // the event queue.
-        auto started_destruction = std::chrono::system_clock::now();
-        while (handleEvents(500)) {
-            if (std::chrono::system_clock::now() - started_destruction
-                > std::chrono::seconds(MAX_DESTRUCTION_TIMEOUT)) {
-                // If the transport is not closed after 3 seconds, avoid blocking
-                break;
-            }
         }
     });
 
@@ -469,11 +460,21 @@ IceTransport::Impl::~Impl()
         icest_.reset(); // must be done before ioqueue/timer destruction
     }
 
+    // NOTE: This last handleEvents is necessary to close TURN socket.
+    // Because when destroying the TURN session pjproject creates a pj_timer
+    // to postpone the TURN destruction. This timer is only called if we poll
+    // the event queue.
+    while (handleEvents(500));
+
     if (config_.stun_cfg.ioqueue)
         pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
 
     if (config_.stun_cfg.timer_heap)
         pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
+
+    assert(not icest_);
+
+    JAMI_DBG("[ice:%p] done destroying", this);
 }
 
 bool
@@ -583,8 +584,9 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
 
     {
         std::lock_guard<std::mutex> lk(iceMutex_);
-        if (!icest_.get())
+        if (not icest_.get() and not threadTerminateFlags_) {
             icest_.reset(ice_st);
+        }
     }
 
     if (done and op == PJ_ICE_STRANS_OP_INIT) {
@@ -641,6 +643,13 @@ IceTransport::Impl::setInitiatorSession()
     JAMI_DBG("[ice:%p] as master", this);
     initiatorSession_ = true;
     if (_isInitialized()) {
+
+        std::lock_guard<std::mutex> lk(iceMutex_);
+
+        if (not icest_) {
+            return false;
+        }
+
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLING);
         if (status != PJ_SUCCESS) {
             last_errmsg_ = sip_utils::sip_strerror(status);
@@ -658,6 +667,13 @@ IceTransport::Impl::setSlaveSession()
     JAMI_DBG("[ice:%p] as slave", this);
     initiatorSession_ = false;
     if (_isInitialized()) {
+
+        std::lock_guard<std::mutex> lk(iceMutex_);
+
+        if (not icest_) {
+            return false;
+        }
+
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLED);
         if (status != PJ_SUCCESS) {
             last_errmsg_ = sip_utils::sip_strerror(status);
@@ -680,6 +696,13 @@ IceTransport::Impl::getSelectedCandidate(unsigned comp_id, bool remote) const
         JAMI_ERR("[ice:%p] ICE transport is not running", this);
         return nullptr;
     }
+
+    std::lock_guard<std::mutex> lk(iceMutex_);
+
+    if (not icest_) {
+        return nullptr;
+    }
+
     const auto* sess = pj_ice_strans_get_valid_pair(icest_.get(), comp_id);
     if (sess == nullptr) {
         JAMI_ERR("[ice:%p] Component %i has no valid pair", this, comp_id);
@@ -726,18 +749,32 @@ IceTransport::Impl::getCandidateType(const pj_ice_sess_cand* cand)
 void
 IceTransport::Impl::getUFragPwd()
 {
-    pj_str_t local_ufrag, local_pwd;
-    pj_ice_strans_get_ufrag_pwd(icest_.get(), &local_ufrag, &local_pwd, nullptr, nullptr);
-    local_ufrag_.assign(local_ufrag.ptr, local_ufrag.slen);
-    local_pwd_.assign(local_pwd.ptr, local_pwd.slen);
+    std::lock_guard<std::mutex> lk(iceMutex_);
+
+    if (icest_) {
+
+         pj_str_t local_ufrag, local_pwd;
+
+         pj_ice_strans_get_ufrag_pwd(icest_.get(), &local_ufrag, &local_pwd, nullptr, nullptr);
+         local_ufrag_.assign(local_ufrag.ptr, local_ufrag.slen);
+         local_pwd_.assign(local_pwd.ptr, local_pwd.slen);
+    }
 }
 
 bool
 IceTransport::Impl::createIceSession(pj_ice_sess_role role)
 {
-    if (pj_ice_strans_init_ice(icest_.get(), role, nullptr, nullptr) != PJ_SUCCESS) {
-        JAMI_ERR("[ice:%p] pj_ice_strans_init_ice() failed", this);
-        return false;
+    {
+        std::lock_guard<std::mutex> lk(iceMutex_);
+
+        if (not icest_) {
+            return false;
+        }
+
+        if (pj_ice_strans_init_ice(icest_.get(), role, nullptr, nullptr) != PJ_SUCCESS) {
+            JAMI_ERR("[ice:%p] pj_ice_strans_init_ice() failed", this);
+            return false;
+        }
     }
 
     // Fetch some information on local configuration
@@ -1077,7 +1114,11 @@ bool
 IceTransport::isInitiator() const
 {
     if (isInitialized()) {
-        return pj_ice_strans_get_role(pimpl_->icest_.get()) == PJ_ICE_SESS_ROLE_CONTROLLING;
+        std::lock_guard<std::mutex> lk(pimpl_->iceMutex_);
+        if (pimpl_->icest_) {
+            return pj_ice_strans_get_role(pimpl_->icest_.get()) == PJ_ICE_SESS_ROLE_CONTROLLING;
+        }
+        return false;
     }
     return pimpl_->initiatorSession_;
 }
@@ -1131,20 +1172,29 @@ IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& r
     JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)",
              pimpl_.get(),
              rem_candidates.size());
-    auto status = pj_ice_strans_start_ice(pimpl_->icest_.get(),
-                                          pj_strset(&ufrag,
-                                                    (char*) rem_attrs.ufrag.c_str(),
-                                                    rem_attrs.ufrag.size()),
-                                          pj_strset(&pwd,
-                                                    (char*) rem_attrs.pwd.c_str(),
-                                                    rem_attrs.pwd.size()),
-                                          rem_candidates.size(),
-                                          rem_candidates.data());
-    if (status != PJ_SUCCESS) {
-        pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
-        JAMI_ERR("[ice:%p] start failed: %s", pimpl_.get(), pimpl_->last_errmsg_.c_str());
-        pimpl_->is_stopped_ = true;
-        return false;
+
+    {
+        std::lock_guard<std::mutex> lk(pimpl_->iceMutex_);
+
+        if (not pimpl_->icest_) {
+            return false;
+        }
+
+        auto status = pj_ice_strans_start_ice(pimpl_->icest_.get(),
+                                              pj_strset(&ufrag,
+                                                        (char*) rem_attrs.ufrag.c_str(),
+                                                        rem_attrs.ufrag.size()),
+                                              pj_strset(&pwd,
+                                                        (char*) rem_attrs.pwd.c_str(),
+                                                        rem_attrs.pwd.size()),
+                                              rem_candidates.size(),
+                                              rem_candidates.data());
+        if (status != PJ_SUCCESS) {
+            pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
+            JAMI_ERR("[ice:%p] start failed: %s", pimpl_.get(), pimpl_->last_errmsg_.c_str());
+            pimpl_->is_stopped_ = true;
+            return false;
+        }
     }
 
     return true;
@@ -1188,21 +1238,26 @@ IceTransport::startIce(const SDP& sdp)
         if (parseIceAttributeLine(0, line, cand))
             rem_candidates.emplace_back(cand);
     }
-    std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
-    if (!pimpl_->icest_)
-        return false;
-    auto status = pj_ice_strans_start_ice(pimpl_->icest_.get(),
-                                          pj_strset(&ufrag,
-                                                    (char*) sdp.ufrag.c_str(),
-                                                    sdp.ufrag.size()),
-                                          pj_strset(&pwd, (char*) sdp.pwd.c_str(), sdp.pwd.size()),
-                                          rem_candidates.size(),
-                                          rem_candidates.data());
-    if (status != PJ_SUCCESS) {
-        pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
-        JAMI_ERR("[ice:%p] start failed: %s", pimpl_.get(), pimpl_->last_errmsg_.c_str());
-        pimpl_->is_stopped_ = true;
-        return false;
+    {
+        std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
+
+        if (not pimpl_->icest_) {
+            return false;
+        }
+
+        auto status = pj_ice_strans_start_ice(pimpl_->icest_.get(),
+                                              pj_strset(&ufrag,
+                                                        (char*) sdp.ufrag.c_str(),
+                                                        sdp.ufrag.size()),
+                                              pj_strset(&pwd, (char*) sdp.pwd.c_str(), sdp.pwd.size()),
+                                              rem_candidates.size(),
+                                              rem_candidates.data());
+        if (status != PJ_SUCCESS) {
+            pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
+            JAMI_ERR("[ice:%p] start failed: %s", pimpl_.get(), pimpl_->last_errmsg_.c_str());
+            pimpl_->is_stopped_ = true;
+            return false;
+        }
     }
 
     return true;
@@ -1214,7 +1269,7 @@ IceTransport::stop()
     pimpl_->is_stopped_ = true;
     if (isStarted()) {
         std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
-        if (!pimpl_->icest_)
+        if (not pimpl_->icest_)
             return false;
         auto status = pj_ice_strans_stop_ice(pimpl_->icest_.get());
         if (status != PJ_SUCCESS) {
@@ -1272,7 +1327,7 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
 
     {
         std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
-        if (!pimpl_->icest_)
+        if (not pimpl_->icest_)
             return res;
         if (pj_ice_strans_enum_cands(pimpl_->icest_.get(), comp_id, &cand_cnt, cand) != PJ_SUCCESS) {
             JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", pimpl_.get());
@@ -1334,7 +1389,7 @@ IceTransport::getLocalCandidates(unsigned streamIdx, unsigned compId) const
 
     {
         std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
-        if (!pimpl_->icest_)
+        if (not pimpl_->icest_)
             return res;
         // In the implementation, the component IDs are enumerated globally
         // (per SDP: 1, 2, 3, 4, ...). This is simpler because we create
@@ -1553,30 +1608,40 @@ IceTransport::send(unsigned compId, const unsigned char* buf, size_t len)
         errno = EINVAL;
         return -1;
     }
-    auto status = pj_ice_strans_sendto2(pimpl_->icest_.get(),
-                                        compId,
-                                        buf,
-                                        len,
-                                        remote.pjPtr(),
-                                        remote.getLength());
-    if (status == PJ_EPENDING && isTCPEnabled()) {
-        // NOTE; because we are in TCP, the sent size will count the header (2
-        // bytes length).
-        std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
-        pimpl_->waitDataCv_.wait(lk, [&] {
+
+    {
+        std::unique_lock lk(pimpl_->iceMutex_);
+
+        if (not pimpl_->icest_) {
+            return -1;
+        }
+
+        auto status = pj_ice_strans_sendto2(pimpl_->icest_.get(),
+                                            compId,
+                                            buf,
+                                            len,
+                                            remote.pjPtr(),
+                                            remote.getLength());
+
+        if (status == PJ_EPENDING && isTCPEnabled()) {
+
+            // NOTE; because we are in TCP, the sent size will count the header (2
+            // bytes length).
+            pimpl_->waitDataCv_.wait(lk, [&] {
             return pimpl_->lastSentLen_ >= static_cast<pj_size_t>(len)
                    or pimpl_->destroying_.load();
-        });
-        pimpl_->lastSentLen_ = 0;
-    } else if (status != PJ_SUCCESS && status != PJ_EPENDING) {
-        if (status == PJ_EBUSY) {
-            errno = EAGAIN;
-        } else {
-            pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
-            JAMI_ERR("[ice:%p] ice send failed: %s", pimpl_.get(), pimpl_->last_errmsg_.c_str());
-            errno = EIO;
+            });
+            pimpl_->lastSentLen_ = 0;
+        } else if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+            if (status == PJ_EBUSY) {
+                errno = EAGAIN;
+            } else {
+                pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
+                JAMI_ERR("[ice:%p] ice send failed: %s", pimpl_.get(), pimpl_->last_errmsg_.c_str());
+                errno = EIO;
+            }
+            return -1;
         }
-        return -1;
     }
 
     return len;
