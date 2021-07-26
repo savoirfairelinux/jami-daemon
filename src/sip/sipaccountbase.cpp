@@ -93,8 +93,11 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
         JAMI_DBG("No target provided, using 'to' as target");
     }
 
-    if (pjsip_dlg_create_uac(pjsip_ua_instance(), from, contact, to, target, dlg) != PJ_SUCCESS) {
-        JAMI_ERR("Unable to create SIP dialogs for user agent client when calling %s", to->ptr);
+    auto status = pjsip_dlg_create_uac(pjsip_ua_instance(), from, contact, to, target, dlg);
+    if (status != PJ_SUCCESS) {
+        JAMI_ERR("Unable to create SIP dialogs for user agent client when calling %s %d",
+                 to->ptr,
+                 status);
         return false;
     }
 

@@ -125,7 +125,8 @@ Call::Call(const std::shared_ptr<Account>& account,
                 duration_start_ = clock::now();
             else if (cnx_state == ConnectionState::DISCONNECTED && call_state == CallState::OVER) {
                 if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(getAccount().lock())) {
-                    jamiAccount->convModule()->addCallHistoryMessage(getPeerNumber(), getCallDuration().count());
+                    jamiAccount->convModule()->addCallHistoryMessage(getPeerNumber(),
+                                                                     getCallDuration().count());
                     monitor();
                 }
             }
@@ -239,7 +240,7 @@ Call::validStateTransition(CallState newState)
 bool
 Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 {
-    std::lock_guard<std::recursive_mutex> lock(callMutex_);
+    std::unique_lock<std::recursive_mutex> lock(callMutex_);
     JAMI_DBG("[call:%s] state change %u/%u, cnx %u/%u, code %d",
              id_.c_str(),
              (unsigned) callState_,
@@ -274,6 +275,7 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
                      id_.c_str(),
                      new_client_state.c_str(),
                      code);
+            lock.unlock();
             emitSignal<DRing::CallSignal::StateChange>(id_, new_client_state, code);
         }
     }
