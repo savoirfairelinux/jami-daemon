@@ -303,7 +303,8 @@ DBusConfigurationManager::setAudioPlugin(const std::string& audioPlugin)
 }
 
 auto
-DBusConfigurationManager::getAudioOutputDeviceList() -> decltype(libjami::getAudioOutputDeviceList())
+DBusConfigurationManager::getAudioOutputDeviceList()
+    -> decltype(libjami::getAudioOutputDeviceList())
 {
     return libjami::getAudioOutputDeviceList();
 }
@@ -547,7 +548,11 @@ DBusConfigurationManager::validateCertificatePath(const std::string& accountId,
     -> decltype(libjami::validateCertificatePath(
         accountId, certificate, privateKey, privateKeyPass, caList))
 {
-    return libjami::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList);
+    return libjami::validateCertificatePath(accountId,
+                                            certificate,
+                                            privateKey,
+                                            privateKeyPass,
+                                            caList);
 }
 
 auto
@@ -721,7 +726,8 @@ DBusConfigurationManager::setVolume(const std::string& device, const double& val
 }
 
 auto
-DBusConfigurationManager::getVolume(const std::string& device) -> decltype(libjami::getVolume(device))
+DBusConfigurationManager::getVolume(const std::string& device)
+    -> decltype(libjami::getVolume(device))
 {
     return libjami::getVolume(device);
 }
@@ -859,6 +865,13 @@ DBusConfigurationManager::getConversations(const std::string& accountId)
 }
 
 std::vector<std::map<std::string, std::string>>
+DBusConfigurationManager::getActiveCalls(const std::string& accountId,
+                                         const std::string& conversationId)
+{
+    return libjami::getActiveCalls(accountId, conversationId);
+}
+
+std::vector<std::map<std::string, std::string>>
 DBusConfigurationManager::getConversationRequests(const std::string& accountId)
 {
     return libjami::getConversationRequests(accountId);
@@ -967,14 +980,14 @@ DBusConfigurationManager::searchConversation(const std::string& accountId,
                                              const uint32_t& maxResult)
 {
     return libjami::searchConversation(accountId,
-                                     conversationId,
-                                     author,
-                                     lastId,
-                                     regexSearch,
-                                     type,
-                                     after,
-                                     before,
-                                     maxResult);
+                                       conversationId,
+                                       author,
+                                       lastId,
+                                       regexSearch,
+                                       type,
+                                       after,
+                                       before,
+                                       maxResult);
 }
 
 bool

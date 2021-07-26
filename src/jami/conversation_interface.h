@@ -43,6 +43,10 @@ LIBJAMI_PUBLIC std::vector<std::string> getConversations(const std::string& acco
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationRequests(
     const std::string& accountId);
 
+// Calls
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getActiveCalls(
+    const std::string& accountId, const std::string& conversationId);
+
 // Conversation's infos management
 LIBJAMI_PUBLIC void updateConversationInfos(const std::string& accountId,
                                           const std::string& conversationId,
