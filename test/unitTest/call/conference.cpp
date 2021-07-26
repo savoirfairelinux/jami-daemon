@@ -104,6 +104,7 @@ private:
     void testPropagateRecording();
     void testBrokenParticipantAudioAndVideo();
     void testBrokenParticipantAudioOnly();
+    void testRemoveConferenceInOneOne();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
@@ -126,6 +127,7 @@ private:
     CPPUNIT_TEST(testPropagateRecording);
     CPPUNIT_TEST(testBrokenParticipantAudioAndVideo);
     CPPUNIT_TEST(testBrokenParticipantAudioOnly);
+    CPPUNIT_TEST(testRemoveConferenceInOneOne);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
@@ -469,16 +471,21 @@ ConferenceTest::testCreateParticipantsSinks()
     auto expectedNumberOfParticipants = 3;
 
     // Check participants number
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return pInfos_.size() == expectedNumberOfParticipants; }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
 
     if (not jami::getVideoDeviceMonitor().getDeviceList().empty()) {
         JAMI_INFO() << "Check sinks if video device available.";
         for (auto& info : pInfos_) {
             auto uri = string_remove_suffix(info["uri"], '@');
             if (uri == bobUri) {
-                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]{ return Manager::instance().getSinkClient(info["sinkId"]) != nullptr; }));
+                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] {
+                    return Manager::instance().getSinkClient(info["sinkId"]) != nullptr;
+                }));
             } else if (uri == carlaUri) {
-                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]{ return Manager::instance().getSinkClient(info["sinkId"]) != nullptr; }));
+                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] {
+                    return Manager::instance().getSinkClient(info["sinkId"]) != nullptr;
+                }));
             }
         }
     } else {
@@ -486,13 +493,16 @@ ConferenceTest::testCreateParticipantsSinks()
         for (auto& info : pInfos_) {
             auto uri = string_remove_suffix(info["uri"], '@');
             if (uri == bobUri) {
-                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]{ return Manager::instance().getSinkClient(info["sinkId"]) == nullptr; }));
+                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] {
+                    return Manager::instance().getSinkClient(info["sinkId"]) == nullptr;
+                }));
             } else if (uri == carlaUri) {
-                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]{ return Manager::instance().getSinkClient(info["sinkId"]) == nullptr; }));
+                CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] {
+                    return Manager::instance().getSinkClient(info["sinkId"]) == nullptr;
+                }));
             }
         }
     }
-
 
     hangupConference();
 
@@ -927,10 +937,11 @@ ConferenceTest::testBrokenParticipantAudioAndVideo()
 
     // Start conference with four participants
     startConference(false, true);
-    auto expectedNumberOfParticipants = 4;
+    auto expectedNumberOfParticipants = 4u;
 
     // Check participants number
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return pInfos_.size() == expectedNumberOfParticipants; }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
 
     // Crash participant
     auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
@@ -939,7 +950,8 @@ ConferenceTest::testBrokenParticipantAudioAndVideo()
 
     // Check participants number
     // It should have one less participant than in the conference start
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
 
     hangupConference();
 
@@ -953,10 +965,11 @@ ConferenceTest::testBrokenParticipantAudioOnly()
 
     // Start conference with four participants
     startConference(true, true);
-    auto expectedNumberOfParticipants = 4;
+    auto expectedNumberOfParticipants = 4u;
 
     // Check participants number
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return pInfos_.size() == expectedNumberOfParticipants; }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
 
     // Crash participant
     auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
@@ -965,11 +978,29 @@ ConferenceTest::testBrokenParticipantAudioOnly()
 
     // Check participants number
     // It should have one less participant than in the conference start
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]{ return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
 
     hangupConference();
+    DRing::unregisterSignalHandlers();
+}
 
+<<<<<<< HEAD
     libjami::unregisterSignalHandlers();
+=======
+void
+ConferenceTest::testRemoveConferenceInOneOne()
+{
+    registerSignalHandlers();
+    startConference();
+    // Here it's 1:1 calls we merged, so we can close the conference
+    JAMI_INFO("Hangup Bob");
+    Manager::instance().hangupCall(bobId, bobCall.callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return confId.empty() && bobCall.state == "OVER"; }));
+    Manager::instance().hangupCall(carlaId, carlaCall.callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaCall.state == "OVER"; }));
+    DRing::unregisterSignalHandlers();
+>>>>>>> 9381be506 (swarm: add call support)
 }
 
 } // namespace test
