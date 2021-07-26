@@ -418,6 +418,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     }
 
     call->setPeerUaVersion(sip_utils::getPeerUserAgent(rdata));
+    call->toUsername(std::string(toUsername));
 
     // FIXME : for now, use the same address family as the SIP transport
     auto family = pjsip_transport_type_get_af(
