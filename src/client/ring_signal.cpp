@@ -66,6 +66,8 @@ getSignalHandlers()
         exported_callback<libjami::ConfigurationSignal::IncomingAccountMessage>(),
         exported_callback<libjami::ConfigurationSignal::ComposingStatusChanged>(),
         exported_callback<libjami::ConfigurationSignal::AccountMessageStatusChanged>(),
+        exported_callback<libjami::ConfigurationSignal::NeedsHost>(),
+        exported_callback<libjami::ConfigurationSignal::ActiveCallsChanged>(),
         exported_callback<libjami::ConfigurationSignal::ProfileReceived>(),
         exported_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(),
         exported_callback<libjami::ConfigurationSignal::ContactAdded>(),

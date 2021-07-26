@@ -386,6 +386,19 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
                              const std::string& /*message_id*/,
                              int /*state*/);
     };
+    struct LIBJAMI_PUBLIC NeedsHost
+    {
+        constexpr static const char* name = "NeedsHost";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*conversation_id*/);
+    };
+    struct LIBJAMI_PUBLIC ActiveCallsChanged
+    {
+        constexpr static const char* name = "ActiveCallsChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*conversation_id*/,
+                             const std::vector<std::map<std::string, std::string>>& /*activeCalls*/);
+    };
     struct LIBJAMI_PUBLIC ProfileReceived
     {
         constexpr static const char* name = "ProfileReceived";

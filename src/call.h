@@ -171,6 +171,18 @@ public:
     void setPeerDisplayName(const std::string& name) { peerDisplayName_ = name; }
 
     /**
+     * Get "To" from the invite
+     * @note Used to make the difference between incoming calls for accounts and for conversations
+     * @return the "To" that was present in the invite
+     */
+    const std::string& toUsername() const { return toUsername_; }
+    /**
+     * Updated by sipvoiplink, corresponds to the "To" in the invite
+     * @param username      "To"
+     */
+    void toUsername(const std::string& username) { toUsername_ = username; }
+
+    /**
      * Get the peer display name (caller in ingoing)
      * not protected by mutex (when created)
      * @return std::string The peer name
@@ -537,6 +549,7 @@ protected:
 
     /// Supported conference protocol version
     int peerConfProtocol_ {0};
+    std::string toUsername_ {};
 };
 
 // Helpers
