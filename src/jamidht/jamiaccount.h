@@ -401,11 +401,20 @@ public:
     /// further calls
     bool isMessageTreated(std::string_view id);
 
-    std::shared_ptr<dht::DhtRunner> dht() { return dht_; }
+    std::shared_ptr<dht::DhtRunner> dht()
+    {
+        return dht_;
+    }
 
-    const dht::crypto::Identity& identity() const { return id_; }
+    const dht::crypto::Identity& identity() const
+    {
+        return id_;
+    }
 
-    const std::shared_future<tls::DhParams> dhParams() const { return dhParams_; }
+    const std::shared_future<tls::DhParams> dhParams() const
+    {
+        return dhParams_;
+    }
 
     void forEachDevice(const dht::InfoHash& to,
                        std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)>&& op,
@@ -462,13 +471,19 @@ public:
     void getIceOptions(std::function<void(IceTransportOptions&&)> cb) noexcept;
 
 #ifdef DRING_TESTABLE
-    ConnectionManager& connectionManager() { return *connectionManager_; }
+    ConnectionManager& connectionManager()
+    {
+        return *connectionManager_;
+    }
 
     /**
      * Only used for tests, disable sha3sum verification for transfers.
      * @param newValue
      */
-    void noSha3sumVerification(bool newValue) { noSha3sumVerification_ = newValue; }
+    void noSha3sumVerification(bool newValue)
+    {
+        noSha3sumVerification_ = newValue;
+    }
 #endif
 
     /**
@@ -581,9 +596,15 @@ public:
 
     std::string profilePath() const;
 
-    AccountManager* accountManager() { return accountManager_.get(); }
+    AccountManager* accountManager()
+    {
+        return accountManager_.get();
+    }
 
-    bool sha3SumVerify() const { return !noSha3sumVerification_; }
+    bool sha3SumVerify() const
+    {
+        return !noSha3sumVerification_;
+    }
 
     /**
      * Change certificate's validity period
@@ -605,6 +626,13 @@ public:
     void unlinkConversations(const std::set<std::string>& removedConv);
 
     bool isValidAccountDevice(const dht::crypto::Certificate& cert) const;
+
+    /**
+     * Join incoming call to hosted conference
+     * @param callId        The call to join
+     * @param destination   conversation/uri/device/confId to join
+     */
+    void handleIncomingConversationCall(const std::string& callId, const std::string& destination);
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -714,10 +742,9 @@ private:
 
     template<class... Args>
     std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
-    void newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, std::string_view toUri);
+    void newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, Uri uri);
+    void newSwarmOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, Uri uri);
     std::shared_ptr<SIPCall> createSubCall(const std::shared_ptr<SIPCall>& mainCall);
-
-    void updateContactHeader();
 
 #if HAVE_RINGNS
     std::string nameServer_;
