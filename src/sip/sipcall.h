@@ -315,6 +315,11 @@ public:
 
     std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
 
+    /**
+     * Announce to the client that medias are successfully negotiated
+     */
+    void reportMediaNegotiationStatus();
+
 private:
     void generateMediaPorts();
 
@@ -382,7 +387,6 @@ private:
     void setupNegotiatedMedia();
     void startAllMedia();
     void stopAllMedia();
-    void reportMediaNegotiationStatus();
     void updateRemoteMedia();
 
     /**

@@ -859,6 +859,13 @@ DBusConfigurationManager::getConversations(const std::string& accountId)
 }
 
 std::vector<std::map<std::string, std::string>>
+DBusConfigurationManager::getActiveCalls(const std::string& accountId,
+                                         const std::string& conversationId)
+{
+    return DRing::getActiveCalls(accountId, conversationId);
+}
+
+std::vector<std::map<std::string, std::string>>
 DBusConfigurationManager::getConversationRequests(const std::string& accountId)
 {
     return DRing::getConversationRequests(accountId);

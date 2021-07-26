@@ -164,6 +164,13 @@ ut_conversationRepository_SOURCES = conversationRepository/conversationRepositor
 #
 check_PROGRAMS += ut_conversation
 ut_conversation_SOURCES = conversation/conversationcommon.cpp conversation/conversation.cpp common.cpp
+
+#
+# conversation_call
+#
+check_PROGRAMS += ut_conversation_call
+ut_conversation_call_SOURCES = conversation/conversationcommon.cpp conversation/call.cpp common.cpp
+
 #
 # media_negotiation
 #

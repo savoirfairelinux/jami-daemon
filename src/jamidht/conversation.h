@@ -26,6 +26,8 @@
 #include <memory>
 #include <json/json.h>
 #include <msgpack.hpp>
+#include <set>
+#include <tuple>
 
 #include "jami/datatransfer_interface.h"
 #include "conversationrepository.h"
@@ -40,6 +42,8 @@ static constexpr const char* ERASED = "erased";
 static constexpr const char* MEMBERS = "members";
 static constexpr const char* LAST_DISPLAYED = "lastDisplayed";
 static constexpr const char* PREFERENCES = "preferences";
+static constexpr const char* ACTIVE_CALLS = "activeCalls";
+static constexpr const char* HOSTED_CALLS = "hostedCalls";
 static constexpr const char* CACHED = "cached";
 static constexpr const char* RECEIVED = "received";
 static constexpr const char* DECLINED = "declined";
@@ -383,6 +387,34 @@ public:
     uint32_t countInteractions(const std::string& toId,
                                const std::string& fromId = "",
                                const std::string& authorUri = "") const;
+
+    /**
+     * Host a conference in the conversation
+     * @note the message must have "confId"
+     * @note Update hostedCalls_ and commit in the conversation
+     * @param message       message to commit
+     * @param cb            callback triggered when committed
+     */
+    void hostConference(Json::Value&& message, OnDoneCb&& cb = {});
+    /**
+     * Announce the end of a call
+     * @note the message must have "confId"
+     * @note called when conference is finished
+     * @param message       message to commit
+     * @param cb            callback triggered when committed
+     */
+    void removeActiveConference(Json::Value&& message, OnDoneCb&& cb = {});
+    /**
+     * Check if we're currently hosting this conference
+     * @param confId
+     * @return true if hosting
+     */
+    bool isHosting(const std::string& confId) const;
+    /**
+     * Return current detected calls
+     * @return a vector of tuples <ConfId, Uri, Device> (uri and device of the host)
+     */
+    std::set<std::tuple<std::string, std::string, std::string>> currentCalls() const;
 
 private:
     std::shared_ptr<Conversation> shared()
