@@ -596,6 +596,15 @@
            </arg>
        </signal>
 
+       <signal name="needsHoster" tp:name-for-bindings="needsHoster">
+           <tp:added version="13.3.0"/>
+           <tp:docstring>
+               Notify client that a conversation needs a hoster for calls
+           </tp:docstring>
+           <arg type="s" name="accountId"/>
+           <arg type="s" name="conversationId"/>
+       </signal>
+
        <signal name="profileReceived" tp:name-for-bindings="profileReceived">
            <tp:added version="9.2.0"/>
            <tp:docstring>
@@ -1686,6 +1695,17 @@
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="conversations" direction="out"/>
            <arg type="s" name="accountId" direction="in"/>
+       </method>
+
+       <method name="getActiveCalls" tp:name-for-bindings="getActiveCalls">
+           <tp:added version="13.2.0"/>
+           <tp:docstring>
+               Get the active call list per conversation
+           </tp:docstring>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+           <arg type="aa{ss}" name="activeCalls" direction="out"/>
+           <arg type="s" name="accountId" direction="in"/>
+           <arg type="s" name="conversationId" direction="in"/>
        </method>
 
        <method name="getConversationRequests" tp:name-for-bindings="getConversationRequests">
