@@ -2489,6 +2489,38 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         return;
     }
 
+    auto username = incomCall.toUsername();
+
+    if (username.find('/') != std::string::npos) {
+        auto split = jami::split_string(username, '/');
+        auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account);
+        if (split.size() != 4)
+            return;
+        // TODO keep view
+        auto conversationId = std::string(split[0]);
+        auto accountUri = std::string(split[1]);
+        auto deviceId = std::string(split[2]);
+        auto confId = std::string(split[3]);
+
+        if (account->getUsername() != accountUri || jamiAccount->currentDeviceId() != deviceId
+            || !jamiAccount->convModule()->isHosting(conversationId, confId))
+            return;
+
+        auto conf = account->getConference(confId);
+        if (!conf) {
+            conf = std::make_shared<Conference>(account, confId);
+            account->attach(conf);
+            emitSignal<DRing::CallSignal::ConferenceCreated>(account->getAccountID(), confId);
+        }
+
+        JAMI_WARN() << "Add Participant to " << confId;
+        dht::ThreadPool::io().run([this, conf, incomCall = incomCall.shared_from_this()] {
+            base_.answerCall(*incomCall);
+            conf->addParticipant(incomCall->getCallId());
+        });
+        return; // TODO move into a method
+    }
+
     if (not base_.hasCurrentCall()) {
         incomCall.setState(Call::ConnectionState::RINGING);
 #if !defined(RING_UWP) && !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)

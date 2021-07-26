@@ -53,8 +53,8 @@ using namespace std::literals;
 
 namespace jami {
 
-Conference::Conference(const std::shared_ptr<Account>& account)
-    : id_(Manager::instance().callFactory.getNewCallID())
+Conference::Conference(const std::shared_ptr<Account>& account, const std::string& confId)
+    : id_(confId.empty() ? Manager::instance().callFactory.getNewCallID() : confId)
     , account_(account)
 #ifdef ENABLE_VIDEO
     , videoEnabled_(account->isVideoEnabled())
@@ -124,18 +124,18 @@ Conference::Conference(const std::shared_ptr<Account>& account)
                     auto isModeratorMuted = shared->isMuted(peerId);
                     auto sinkId = shared->getConfId() + peerId;
                     newInfo.emplace_back(ParticipantInfo {std::move(uri),
-                                                        deviceId,
-                                                        std::move(sinkId),
-                                                        active,
-                                                        info.x,
-                                                        info.y,
-                                                        info.w,
-                                                        info.h,
-                                                        !info.hasVideo,
-                                                        isLocalMuted,
-                                                        isModeratorMuted,
-                                                        isModerator,
-                                                        isHandRaised});
+                                                          deviceId,
+                                                          std::move(sinkId),
+                                                          active,
+                                                          info.x,
+                                                          info.y,
+                                                          info.w,
+                                                          info.h,
+                                                          !info.hasVideo,
+                                                          isLocalMuted,
+                                                          isModeratorMuted,
+                                                          isModerator,
+                                                          isHandRaised});
                 } else {
                     auto it = shared->videoToCall_.find(info.source);
                     if (it == shared->videoToCall_.end())
@@ -168,18 +168,18 @@ Conference::Conference(const std::shared_ptr<Account>& account)
                     auto isModeratorMuted = shared->isMuted(peerId);
                     auto sinkId = shared->getConfId() + peerId;
                     newInfo.emplace_back(ParticipantInfo {std::move(uri),
-                                                        deviceId,
-                                                        std::move(sinkId),
-                                                        active,
-                                                        info.x,
-                                                        info.y,
-                                                        info.w,
-                                                        info.h,
-                                                        !info.hasVideo,
-                                                        isLocalMuted,
-                                                        isModeratorMuted,
-                                                        isModerator,
-                                                        isHandRaised});
+                                                          deviceId,
+                                                          std::move(sinkId),
+                                                          active,
+                                                          info.x,
+                                                          info.y,
+                                                          info.w,
+                                                          info.h,
+                                                          !info.hasVideo,
+                                                          isLocalMuted,
+                                                          isModeratorMuted,
+                                                          isModerator,
+                                                          isHandRaised});
                 }
             }
             if (auto videoMixer = shared->videoMixer_) {
