@@ -86,6 +86,7 @@ public:
     void testRemoveRequestBannedMultiDevices();
     void testBanUnbanMultiDevice();
     void testBanUnbanGotFirstConv();
+    void testBanHostWhileHosting();
 
     std::string aliceId;
     std::string bobId;
@@ -125,6 +126,7 @@ private:
     CPPUNIT_TEST(testRemoveRequestBannedMultiDevices);
     CPPUNIT_TEST(testBanUnbanMultiDevice);
     CPPUNIT_TEST(testBanUnbanGotFirstConv);
+    CPPUNIT_TEST(testBanHostWhileHosting);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -2526,6 +2528,81 @@ ConversationMembersEventTest::testBanUnbanGotFirstConv()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgReceived && bob2MsgReceived; }));
 }
 
+void
+ConversationMembersEventTest::testBanHostWhileHosting()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+    auto convId = DRing::startConversation(aliceId);
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == bobId && conversationId == convId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    bool memberMessageGenerated = false, callMessageGenerated = false,
+         voteMessageGenerated = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId && conversationId == convId && message["type"] == "vote") {
+                voteMessageGenerated = true;
+                cv.notify_one();
+            } else if (accountId == aliceId && conversationId == convId) {
+                if (message["type"] == "application/call-history+json") {
+                    callMessageGenerated = true;
+                } else if (message["type"] == "member") {
+                    memberMessageGenerated = true;
+                }
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+    DRing::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    memberMessageGenerated = false;
+    DRing::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
+
+    // Now, Bob starts a call
+    auto callId = DRing::placeCallWithMedia(bobId, "swarm:" + convId, {});
+    // should get message
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return callMessageGenerated; }));
+
+    // get active calls = 1
+    CPPUNIT_ASSERT(DRing::getActiveCalls(aliceId, convId).size() == 1);
+
+    // Now check that alice, has the only admin, can remove bob
+    memberMessageGenerated = false;
+    voteMessageGenerated = false;
+    DRing::removeConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated && voteMessageGenerated; }));
+    auto members = DRing::getConversationMembers(aliceId, convId);
+    CPPUNIT_ASSERT(members.size() == 1);
+    CPPUNIT_ASSERT(members[0]["uri"] == aliceAccount->getUsername());
+    CPPUNIT_ASSERT(members[0]["role"] == "admin");
+    CPPUNIT_ASSERT(DRing::getActiveCalls(aliceId, convId).size() == 0);
+
+    DRing::unregisterSignalHandlers();
+}
 } // namespace test
 } // namespace jami
 
