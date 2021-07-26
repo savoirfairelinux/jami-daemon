@@ -3467,25 +3467,25 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
         JAMI_ERR("Could not write data to %s", profilePath.c_str());
         return {};
     }
+
+    auto addKey =
+        [&](auto property, auto key) {
+            auto it = infosMap.find("key");
+            if (it != infosMap.end()) {
+                file << property;
+                file << ":";
+                file << it->second;
+                file << vCard::Delimiter::END_LINE_TOKEN;
+            }
+        };
+
     file << vCard::Delimiter::BEGIN_TOKEN;
     file << vCard::Delimiter::END_LINE_TOKEN;
     file << vCard::Property::VCARD_VERSION;
     file << ":2.1";
     file << vCard::Delimiter::END_LINE_TOKEN;
-    auto titleIt = infosMap.find("title");
-    if (titleIt != infosMap.end()) {
-        file << vCard::Property::FORMATTED_NAME;
-        file << ":";
-        file << titleIt->second;
-        file << vCard::Delimiter::END_LINE_TOKEN;
-    }
-    auto descriptionIt = infosMap.find("description");
-    if (descriptionIt != infosMap.end()) {
-        file << vCard::Property::DESCRIPTION;
-        file << ":";
-        file << descriptionIt->second;
-        file << vCard::Delimiter::END_LINE_TOKEN;
-    }
+    addKey(vCard::Property::FORMATTED_NAME, "title");
+    addKey(vCard::Property::DESCRIPTION, "description");
     file << vCard::Property::PHOTO;
     file << vCard::Delimiter::SEPARATOR_TOKEN;
     file << vCard::Property::BASE64;
@@ -3495,6 +3495,10 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
         file << ":";
         file << avatarIt->second;
     }
+    file << vCard::Delimiter::END_LINE_TOKEN;
+    addKey(vCard::Property::RDV_ACCOUNT, "rdvAccount");
+    file << vCard::Delimiter::END_LINE_TOKEN;
+    addKey(vCard::Property::RDV_DEVICE, "rdvDevice");
     file << vCard::Delimiter::END_LINE_TOKEN;
     file << vCard::Delimiter::END_TOKEN;
     file.close();
@@ -3541,6 +3545,10 @@ ConversationRepository::infosFromVCard(const std::map<std::string, std::string>&
             result["description"] = v;
         } else if (k.find(vCard::Property::PHOTO) == 0) {
             result["avatar"] = v;
+        } else if (k.find(vCard::Property::RDV_ACCOUNT) == 0) {
+            result["rdvAccount"] = v;
+        } else if (k.find(vCard::Property::RDV_DEVICE) == 0) {
+            result["rdvDevice"] = v;
         }
     }
     return result;
