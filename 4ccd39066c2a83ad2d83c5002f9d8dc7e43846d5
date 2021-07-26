@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8b992f4e_6df79429",
+        "filename": "contrib/src/pjproject/0014-fix-socket-leak.patch",
+        "patchSetId": 3
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-26T17:33:17Z",
+      "side": 1,
+      "message": "This is not the only case. The close should be done for all pj_turn_sock_destroy there is after pj_sock_bind_random line 1285. And this close should be moved with line 1440 if you want to fix all potential leaks.",
+      "range": {
+        "startLine": 36,
+        "startChar": 1,
+        "endLine": 40,
+        "endChar": 7
+      },
+      "revId": "4ccd39066c2a83ad2d83c5002f9d8dc7e43846d5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
