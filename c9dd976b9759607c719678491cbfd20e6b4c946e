@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b8a03798_0759a3eb",
+        "filename": "src/manager.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 3449,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-26T14:00:37Z",
+      "side": 1,
+      "message": "still trailing, you don\u0027t use clang-format?",
+      "range": {
+        "startLine": 3449,
+        "startChar": 4,
+        "endLine": 3449,
+        "endChar": 9
+      },
+      "revId": "c9dd976b9759607c719678491cbfd20e6b4c946e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
