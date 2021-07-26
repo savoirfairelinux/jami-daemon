@@ -162,6 +162,9 @@ public:
      */
     void setPeerDisplayName(const std::string& name) { peerDisplayName_ = name; }
 
+    const std::string& toUsername() const { return toUsername_; }
+    void toUsername(const std::string& newValue) { toUsername_ = newValue; }
+
     /**
      * Get the peer display name (caller in ingoing)
      * not protected by mutex (when created)
@@ -480,6 +483,8 @@ protected:
 
     ///< MultiDevice: message received by subcall to merged yet
     MsgList pendingInMessages_;
+
+    std::string toUsername_ {};
 };
 
 // Helpers
