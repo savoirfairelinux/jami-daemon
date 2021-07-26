@@ -222,6 +222,31 @@ public:
                                 shared->getAccountID(), convId, uri, action);
                         }
                     }
+                } else if (c.at("type") == "application/call-history+json") {
+                    if (c.find("confId") != c.end() && c.find("uri") != c.end()
+                        && c.find("device") != c.end()) {
+                        // TODO this update current calls, but this may not be the actual state (if
+                        // relaunched during a call)
+                        auto confId = c.at("confId");
+                        auto uri = c.at("uri");
+                        auto device = c.at("device");
+                        if (c.find("duration") == c.end()) {
+                            JAMI_DBG(
+                                "swarm:%s new current call detected: %s on device %s, account %s",
+                                convId.c_str(),
+                                confId.c_str(),
+                                device.c_str(),
+                                uri.c_str());
+                            currentCalls_.insert({confId, uri, device});
+                        } else {
+                            JAMI_DBG("swarm:%s call finished: %s on device %s, account %s",
+                                     convId.c_str(),
+                                     confId.c_str(),
+                                     device.c_str(),
+                                     uri.c_str());
+                            currentCalls_.erase({confId, uri, device});
+                        }
+                    }
                 }
 #ifdef ENABLE_PLUGIN
                 auto& pluginChatManager
@@ -289,6 +314,9 @@ public:
     std::string fetchedPath_ {};
     std::mutex fetchedDevicesMtx_ {};
     std::set<std::string> fetchedDevices_ {};
+
+    std::set<std::string> hostedCalls_ {};
+    mutable std::set<std::tuple<std::string, std::string, std::string>> currentCalls_ {};
 };
 
 bool
@@ -1068,6 +1096,31 @@ Conversation::hasFetched(const std::string& deviceId)
     std::lock_guard<std::mutex> lk(pimpl_->fetchedDevicesMtx_);
     pimpl_->fetchedDevices_.emplace(deviceId);
     pimpl_->saveFetched();
+}
+
+void
+Conversation::hostConference(const Json::Value& message, const OnDoneCb& cb)
+{
+    if (!message.isMember("confId")) {
+        JAMI_ERR() << "Malformed commit";
+        return;
+    }
+
+    pimpl_->hostedCalls_.insert(message["confId"].asString());
+
+    sendMessage(message, "", cb);
+}
+
+bool
+Conversation::isHosting(const std::string& confId) const
+{
+    return pimpl_->hostedCalls_.find(confId) != pimpl_->hostedCalls_.end();
+}
+
+std::set<std::tuple<std::string, std::string, std::string>>
+Conversation::currentCalls() const
+{
+    return pimpl_->currentCalls_;
 }
 
 } // namespace jami

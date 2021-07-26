@@ -2834,6 +2834,29 @@ Manager::ManagerPimpl::processIncomingCall(Call& incomCall, const std::string& a
             }
         }
     }
+
+    auto username = incomCall.toUsername();
+    JAMI_ERR() << "@@@ " << username << " for " << account->getUsername();
+    if (username.find('/') != std::string::npos) {
+        auto split = jami::split_string(username, '/');
+        auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account);
+        if (split.size() != 4)
+            return;
+        // TODO keep view
+        auto accountUri = std::string(split[0]);
+        auto deviceId = std::string(split[1]);
+        auto conversationId = std::string(split[2]);
+        auto confId = std::string(split[3]);
+
+        if (account->getUsername() != accountUri || jamiAccount->currentDeviceId() != deviceId
+            || !jamiAccount->isHosting(conversationId, confId))
+            return;
+
+        runOnMainThread([incomCallId, confId] {
+            auto& mgr = Manager::instance();
+            mgr.addParticipant(incomCallId, confId);
+        });
+    }
 }
 
 AudioFormat
@@ -3177,6 +3200,12 @@ std::vector<std::string>
 Manager::getConferenceList() const
 {
     return map_utils::extractKeys(pimpl_->conferenceMap_);
+}
+
+void
+Manager::addConference(std::shared_ptr<Conference>&& conf)
+{
+    pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
 }
 
 std::vector<std::string>
