@@ -386,6 +386,19 @@ struct DRING_PUBLIC ConfigurationSignal
                              const std::string& /*message_id*/,
                              int /*state*/);
     };
+    struct DRING_PUBLIC NeedsHost
+    {
+        constexpr static const char* name = "NeedsHost";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*conversation_id*/);
+    };
+    struct DRING_PUBLIC ActiveCallChanged
+    {
+        constexpr static const char* name = "ActiveCallChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*conversation_id*/,
+                             const std::vector<std::map<std::string, std::string> >& /*activeCalls*/);
+    };
     struct DRING_PUBLIC ProfileReceived
     {
         constexpr static const char* name = "ProfileReceived";
