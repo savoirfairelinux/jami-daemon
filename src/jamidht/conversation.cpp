@@ -164,9 +164,54 @@ public:
             fetchedPath_ = conversationDataPath_ + DIR_SEPARATOR_STR + "fetched";
             lastDisplayedPath_ = conversationDataPath_ + DIR_SEPARATOR_STR
                                  + ConversationMapKeys::LAST_DISPLAYED;
+            activeCallsPath_ = conversationDataPath_ + DIR_SEPARATOR_STR
+                               + ConversationMapKeys::ACTIVE_CALLS;
+            hostedCallsPath_ = conversationDataPath_ + DIR_SEPARATOR_STR
+                               + ConversationMapKeys::HOSTED_CALLS;
             loadFetched();
             loadLastDisplayed();
+            loadActiveCalls();
+            loadHostedCalls();
+            announceEndedCalls();
         }
+    }
+
+    void announceEndedCalls()
+    {
+        auto shared = account_.lock();
+        // Handle current calls
+        std::vector<std::string> commits {};
+        std::unique_lock<std::mutex> lk(writeMtx_);
+        std::unique_lock<std::mutex> lkA(activeCallsMtx_);
+        for (const auto& confId : hostedCalls_) {
+            // In this case, this means that we left
+            // the conference while still hosting it, so activeCalls
+            // will not be correctly updated
+            // We don't need to send notifications there, as peers will sync with presence
+            Json::Value value;
+            auto uri = shared->getUsername();
+            auto device = std::string(shared->currentDeviceId());
+            value["uri"] = uri;
+            value["device"] = device;
+            value["confId"] = confId;
+            value["type"] = "application/call-history+json";
+            value["duration"] = "1";
+            Json::StreamWriterBuilder wbuilder;
+            activeCalls_.erase({confId, uri, device});
+            wbuilder["commentStyle"] = "None";
+            wbuilder["indentation"] = "";
+            auto commit = repository_->commitMessage(Json::writeString(wbuilder, value));
+            commits.emplace_back(commit);
+
+            JAMI_DBG("Removing hosted conference... %s", confId.c_str());
+        }
+        hostedCalls_.clear();
+        saveActiveCalls();
+        saveHostedCalls();
+        lk.unlock();
+        lkA.unlock();
+        if (!commits.empty())
+            announce(commits);
     }
 
     ~Impl() = default;
@@ -229,6 +274,34 @@ public:
                             emitSignal<DRing::ConversationSignal::ConversationMemberEvent>(
                                 shared->getAccountID(), convId, uri, action);
                         }
+                    }
+                } else if (c.at("type") == "application/call-history+json") {
+                    if (c.find("confId") != c.end() && c.find("uri") != c.end()
+                        && c.find("device") != c.end()) {
+                        // TODO this update current calls, but this may not be the actual state (if
+                        // relaunched during a call)
+                        auto confId = c.at("confId");
+                        auto uri = c.at("uri");
+                        auto device = c.at("device");
+                        if (c.find("duration") == c.end()) {
+                            JAMI_DBG(
+                                "swarm:%s new current call detected: %s on device %s, account %s",
+                                convId.c_str(),
+                                confId.c_str(),
+                                device.c_str(),
+                                uri.c_str());
+                            std::lock_guard<std::mutex> lk(activeCallsMtx_);
+                            activeCalls_.insert({confId, uri, device});
+                        } else {
+                            JAMI_DBG("swarm:%s call finished: %s on device %s, account %s",
+                                     convId.c_str(),
+                                     confId.c_str(),
+                                     device.c_str(),
+                                     uri.c_str());
+                            std::lock_guard<std::mutex> lk(activeCallsMtx_);
+                            activeCalls_.erase({confId, uri, device});
+                        }
+                        saveActiveCalls();
                     }
                 }
 #ifdef ENABLE_PLUGIN
@@ -322,6 +395,46 @@ public:
         msgpack::pack(file, lastDisplayed_);
     }
 
+    void loadActiveCalls() const
+    {
+        try {
+            // read file
+            auto file = fileutils::loadFile(activeCallsPath_);
+            // load values
+            msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
+            std::lock_guard<std::mutex> lk {activeCallsMtx_};
+            oh.get().convert(activeCalls_);
+        } catch (const std::exception& e) {
+            return;
+        }
+    }
+
+    void saveActiveCalls() const
+    {
+        std::ofstream file(activeCallsPath_, std::ios::trunc | std::ios::binary);
+        msgpack::pack(file, activeCalls_);
+    }
+
+    void loadHostedCalls() const
+    {
+        try {
+            // read file
+            auto file = fileutils::loadFile(hostedCallsPath_);
+            // load values
+            msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
+            std::lock_guard<std::mutex> lk {hostedCallsMtx_};
+            oh.get().convert(hostedCalls_);
+        } catch (const std::exception& e) {
+            return;
+        }
+    }
+
+    void saveHostedCalls() const
+    {
+        std::ofstream file(hostedCallsPath_, std::ios::trunc | std::ios::binary);
+        msgpack::pack(file, hostedCalls_);
+    }
+
     void voteUnban(const std::string& contactUri, const std::string& type, const OnDoneCb& cb);
 
     std::string bannedType(const std::string& uri) const
@@ -368,6 +481,13 @@ public:
     mutable std::mutex lastDisplayedMtx_ {}; // for lastDisplayed_
     mutable std::map<std::string, std::string> lastDisplayed_ {};
     std::function<void(const std::string&, const std::string&)> lastDisplayedUpdatedCb_ {};
+
+    std::string hostedCallsPath_ {};
+    mutable std::mutex hostedCallsMtx_ {};
+    mutable std::set<std::string> hostedCalls_ {};
+    std::string activeCallsPath_ {};
+    mutable std::mutex activeCallsMtx_ {};
+    mutable std::set<std::tuple<std::string, std::string, std::string>> activeCalls_ {};
 };
 
 bool
@@ -1319,6 +1439,57 @@ Conversation::countInteractions(const std::string& toId,
 {
     // Log but without content to avoid costly convertions.
     return pimpl_->repository_->log(fromId, toId, false, true, authorUri).size();
+}
+
+void
+Conversation::hostConference(Json::Value&& message, OnDoneCb&& cb)
+{
+    if (!message.isMember("confId")) {
+        JAMI_ERR() << "Malformed commit";
+        return;
+    }
+
+    pimpl_->hostedCalls_.insert(message["confId"].asString());
+    pimpl_->saveHostedCalls();
+
+    sendMessage(std::move(message), "", std::move(cb));
+}
+
+bool
+Conversation::isHosting(const std::string& confId) const
+{
+    auto shared = pimpl_->account_.lock();
+    if (!shared)
+        return false;
+    auto info = infos();
+    if (info["rdvDevice"] == shared->currentDeviceId() && info["rdvHost"] == shared->getUsername())
+        return true; // We are the current device Host
+    return pimpl_->hostedCalls_.find(confId) != pimpl_->hostedCalls_.end();
+}
+
+void
+Conversation::removeActiveConference(Json::Value&& message, OnDoneCb&& cb)
+{
+    if (!message.isMember("confId")) {
+        JAMI_ERR() << "Malformed commit";
+        return;
+    }
+
+    std::unique_lock<std::mutex> lk(pimpl_->hostedCallsMtx_);
+    if (pimpl_->hostedCalls_.erase(message["confId"].asString())) {
+        lk.unlock();
+        pimpl_->saveHostedCalls();
+        sendMessage(std::move(message), "", std::move(cb));
+    }
+    else
+        cb(false, "");
+}
+
+std::set<std::tuple<std::string, std::string, std::string>>
+Conversation::currentCalls() const
+{
+    std::lock_guard<std::mutex> lk(pimpl_->activeCallsMtx_);
+    return pimpl_->activeCalls_;
 }
 
 } // namespace jami

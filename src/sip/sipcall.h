@@ -297,6 +297,8 @@ public:
 
     std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
 
+    void reportMediaNegotiationStatus(); // TODO discuss about this (update camera)
+
 private:
     void generateMediaPorts();
 
@@ -360,7 +362,6 @@ private:
     void setupNegotiatedMedia();
     void startAllMedia();
     void stopAllMedia();
-    void reportMediaNegotiationStatus();
     void updateRemoteMedia();
 
     /**
