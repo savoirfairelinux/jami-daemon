@@ -43,6 +43,10 @@ DRING_PUBLIC std::vector<std::string> getConversations(const std::string& accoun
 DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConversationRequests(
     const std::string& accountId);
 
+// Calls
+DRING_PUBLIC std::vector<std::map<std::string, std::string>> getActiveCalls(
+    const std::string& accountId, const std::string& conversationId);
+
 // Conversation's infos management
 DRING_PUBLIC void updateConversationInfos(const std::string& accountId,
                                           const std::string& conversationId,
