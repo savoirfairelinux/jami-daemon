@@ -285,7 +285,8 @@ VideoMixer::process()
     try {
         output.reserve(format_, width_, height_);
     } catch (const std::bad_alloc& e) {
-        JAMI_ERR("[mixer:%s] VideoFrame::allocBuffer() failed", id_.c_str());
+        // TODO no process if nothing to mix JAMI_ERR("[mixer:%s] VideoFrame::allocBuffer() failed",
+        // id_.c_str());
         return;
     }
 

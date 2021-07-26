@@ -3467,6 +3467,7 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
         JAMI_ERR("Could not write data to %s", profilePath.c_str());
         return {};
     }
+    // TODO reduce code
     file << vCard::Delimiter::BEGIN_TOKEN;
     file << vCard::Delimiter::END_LINE_TOKEN;
     file << vCard::Property::VCARD_VERSION;
@@ -3494,6 +3495,22 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
         // TODO type=png? store another way?
         file << ":";
         file << avatarIt->second;
+    }
+    file << vCard::Delimiter::END_LINE_TOKEN;
+    auto rdvAccountIt = infosMap.find("rdvAccount");
+    if (rdvAccountIt != infosMap.end()) {
+        file << vCard::Property::RDV_ACCOUNT;
+        file << ":";
+        file << rdvAccountIt->second;
+        file << vCard::Delimiter::END_LINE_TOKEN;
+    }
+    file << vCard::Delimiter::END_LINE_TOKEN;
+    auto rdvDeviceIt = infosMap.find("rdvDevice");
+    if (rdvDeviceIt != infosMap.end()) {
+        file << vCard::Property::RDV_DEVICE;
+        file << ":";
+        file << rdvDeviceIt->second;
+        file << vCard::Delimiter::END_LINE_TOKEN;
     }
     file << vCard::Delimiter::END_LINE_TOKEN;
     file << vCard::Delimiter::END_TOKEN;
@@ -3541,6 +3558,10 @@ ConversationRepository::infosFromVCard(const std::map<std::string, std::string>&
             result["description"] = v;
         } else if (k.find(vCard::Property::PHOTO) == 0) {
             result["avatar"] = v;
+        } else if (k.find(vCard::Property::RDV_ACCOUNT) == 0) {
+            result["rdvAccount"] = v;
+        } else if (k.find(vCard::Property::RDV_DEVICE) == 0) {
+            result["rdvDevice"] = v;
         }
     }
     return result;
