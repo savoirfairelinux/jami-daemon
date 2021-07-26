@@ -271,6 +271,8 @@ transaction_request_cb(pjsip_rx_data* rdata)
         peerNumber = sip_utils::stripSipUriPrefix(std::string_view(tmp, length));
     }
 
+    JAMI_ERR() << "@@@@@@@" << toUsername << "@" << viaHostname;
+
     auto transport = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(
         rdata->tp_info.transport);
 
