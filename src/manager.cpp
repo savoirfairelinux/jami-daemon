@@ -1840,10 +1840,14 @@ Manager::incomingCall(const std::string& accountId, Call& call)
               mediaList.size());
 
     // Report the call using new API.
-    emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
-                                                         call.getCallId(),
-                                                         call.getPeerDisplayName() + " " + from,
-                                                         mediaList);
+    if (call.toUsername().find('/') == std::string::npos) {
+        // Call for swarm
+        // TODO CLEANUP, probably move this in the processIncomingCall
+        emitSignal<DRing::CallSignal::IncomingCallWithMedia>(accountId,
+                                                             call.getCallId(),
+                                                             call.getPeerDisplayName() + " " + from,
+                                                             mediaList);
+    }
 
     // Process the call.
     pimpl_->processIncomingCall(accountId, call);
@@ -2487,6 +2491,38 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
     if (!account) {
         JAMI_ERR("No account detected");
         return;
+    }
+
+    auto username = incomCall.toUsername();
+
+    if (username.find('/') != std::string::npos) {
+        auto split = jami::split_string(username, '/');
+        auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account);
+        if (split.size() != 4)
+            return;
+        // TODO keep view
+        auto conversationId = std::string(split[0]);
+        auto accountUri = std::string(split[1]);
+        auto deviceId = std::string(split[2]);
+        auto confId = std::string(split[3]);
+
+        if (account->getUsername() != accountUri || jamiAccount->currentDeviceId() != deviceId
+            || !jamiAccount->convModule()->isHosting(conversationId, confId))
+            return;
+
+        auto conf = account->getConference(confId);
+        if (!conf) {
+            conf = std::make_shared<Conference>(account, confId);
+            account->attach(conf);
+            emitSignal<DRing::CallSignal::ConferenceCreated>(account->getAccountID(), confId);
+        }
+
+        JAMI_WARN() << "Add Participant to " << confId;
+        dht::ThreadPool::io().run([this, conf, incomCall = incomCall.shared_from_this()] {
+            base_.answerCall(*incomCall);
+            conf->addParticipant(incomCall->getCallId());
+        });
+        return; // TODO move into a method
     }
 
     if (not base_.hasCurrentCall()) {
