@@ -43,6 +43,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "7c5229c0_73ff3a2e",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 481,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-27T16:36:47Z",
+      "side": 1,
+      "message": "No this is the point.  We don\u0027t want to double reset the same pointer.  If icest_ point to something, it\u0027s because it was reset in a callback, which is a bug.  Releasing is the good way of avoiding double pj_ice_strans_destroy",
+      "parentUuid": "a84bc5b2_f3283d79",
+      "range": {
+        "startLine": 481,
+        "startChar": 8,
+        "endLine": 481,
+        "endChar": 25
+      },
+      "revId": "d6a82943dec3a23012660fb79afd768eab1a7758",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "382b8753_2e0eac26",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 9
@@ -54,6 +78,30 @@
       "writtenOn": "2021-07-27T16:27:46Z",
       "side": 1,
       "message": "errno should be set for upper layer and useful for IceSocketTransport::write",
+      "range": {
+        "startLine": 1624,
+        "startChar": 12,
+        "endLine": 1624,
+        "endChar": 22
+      },
+      "revId": "d6a82943dec3a23012660fb79afd768eab1a7758",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9f412412_b89be9e2",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1624,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-27T16:36:47Z",
+      "side": 1,
+      "message": "What should errno be set to for no transport?\n\nEGAIN, ENXIO, EIO, ENODEV?",
+      "parentUuid": "382b8753_2e0eac26",
       "range": {
         "startLine": 1624,
         "startChar": 12,
