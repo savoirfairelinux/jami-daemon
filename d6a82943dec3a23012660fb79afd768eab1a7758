@@ -115,6 +115,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "9b0de2f3_aa3c8138",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 481,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-27T19:02:19Z",
+      "side": 1,
+      "message": "It happened twice sometime yes.  This is why I put this paranoid check, it should even be an assert IMO.  It\u0027s a very rare race condition.\n\nEven with mutex it doesnt matter.  At that point, the only thread owning a reference to the transport is the one executing the destructor.  It calls the handlEvents method to close all TURN socket after reseting the transport.  Then the onComplete callback reset the transport. \n\nIt\u0027s fixed by checking the thread terminated flags in the onComplete callback, but the redundant check is paranoid I agree.\n\nProof: https://pastebin.com/P2RxSTVA\nPassword of proof: HU39fUHvDn",
+      "parentUuid": "9e58ff4a_f6b72870",
+      "range": {
+        "startLine": 481,
+        "startChar": 8,
+        "endLine": 481,
+        "endChar": 25
+      },
+      "revId": "d6a82943dec3a23012660fb79afd768eab1a7758",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "676ea393_81d0fdd2",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 9
@@ -126,6 +150,30 @@
       "writtenOn": "2021-07-27T17:52:24Z",
       "side": 1,
       "message": "This is the only use of getUFragPwd().\nSo getUFragPwd could require to be called with iceMutex_ locked by the caller.",
+      "range": {
+        "startLine": 789,
+        "startChar": 4,
+        "endLine": 789,
+        "endChar": 18
+      },
+      "revId": "d6a82943dec3a23012660fb79afd768eab1a7758",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bad55e9f_d86e02ed",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 789,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-27T19:02:19Z",
+      "side": 1,
+      "message": "I\u0027m not a big fan of this inversion of locking but okay.\n\nI think that locking should be as local as possible, around the data being accessed, not the call site.",
+      "parentUuid": "676ea393_81d0fdd2",
       "range": {
         "startLine": 789,
         "startChar": 4,
@@ -197,6 +245,30 @@
       "side": 1,
       "message": "EIO is good for me",
       "parentUuid": "9f412412_b89be9e2",
+      "range": {
+        "startLine": 1624,
+        "startChar": 12,
+        "endLine": 1624,
+        "endChar": 22
+      },
+      "revId": "d6a82943dec3a23012660fb79afd768eab1a7758",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5f6d2812_9f7e8f2e",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1624,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-27T19:02:19Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "d0a92078_4ec60f69",
       "range": {
         "startLine": 1624,
         "startChar": 12,
