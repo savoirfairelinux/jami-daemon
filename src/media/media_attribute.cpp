@@ -60,7 +60,7 @@ MediaAttribute::MediaAttribute(const DRing::MediaMap& mediaMap, bool secure)
 }
 
 std::vector<MediaAttribute>
-MediaAttribute::buildMediaAtrributesList(const std::vector<DRing::MediaMap>& mediaList, bool secure)
+MediaAttribute::buildMediaAttributesList(const std::vector<DRing::MediaMap>& mediaList, bool secure)
 {
     std::vector<MediaAttribute> mediaAttrList;
     mediaAttrList.reserve(mediaList.size());

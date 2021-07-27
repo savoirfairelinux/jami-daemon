@@ -143,7 +143,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                                     account->getActiveAccountCodecInfoList(MEDIA_VIDEO));
 #endif
 
-    auto mediaAttrList = MediaAttribute::buildMediaAtrributesList(mediaList, isSrtpEnabled());
+    auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
 
     if (mediaAttrList.size() == 0) {
         if (type_ == Call::CallType::INCOMING) {
@@ -787,7 +787,7 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
         return;
     }
 
-    auto mediaAttrList = MediaAttribute::buildMediaAtrributesList(mediaList, isSrtpEnabled());
+    auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
 
     if (mediaAttrList.empty()) {
         JAMI_DBG("[call:%s] Media list must not be empty!", getCallId().c_str());
@@ -923,7 +923,7 @@ SIPCall::answerMediaChangeRequest(const std::vector<DRing::MediaMap>& mediaList)
         return;
     }
 
-    auto mediaAttrList = MediaAttribute::buildMediaAtrributesList(mediaList, isSrtpEnabled());
+    auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
 
     if (mediaAttrList.empty()) {
         JAMI_DBG("[call:%s] Media list size is empty. Ignoring the media change request",
@@ -2201,7 +2201,7 @@ SIPCall::isReinviteRequired(const std::vector<MediaAttribute>& mediaAttrList)
 bool
 SIPCall::requestMediaChange(const std::vector<DRing::MediaMap>& mediaList)
 {
-    auto mediaAttrList = MediaAttribute::buildMediaAtrributesList(mediaList, isSrtpEnabled());
+    auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
 
     // If the peer does not support multi-stream and the size of the new
     // media list is different from the current media list, the media

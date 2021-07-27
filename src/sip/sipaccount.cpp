@@ -341,7 +341,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<DRing::Med
 
     // TODO. We should not dot his here. Move it to SIPCall.
     const bool created = sdp.createOffer(
-        MediaAttribute::buildMediaAtrributesList(mediaList, isSrtpEnabled()));
+        MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled()));
 
     if (created) {
         std::weak_ptr<SIPCall> weak_call = call;
