@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2152a9a6_0759485b",
+        "filename": "src/logger.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 359,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-27T13:32:18Z",
+      "side": 1,
+      "message": "Do we want the message header on Android?",
+      "revId": "ef6cc1bfbbc923b1ceb5a5c18f83d394afb173b6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
