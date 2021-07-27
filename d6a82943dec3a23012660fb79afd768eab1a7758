@@ -67,6 +67,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "222ec1f7_8e989829",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 481,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-27T17:44:11Z",
+      "side": 1,
+      "message": "icest_ is not checked with iceMutex_ locked here\n\nBut this can\u0027t be the same pointer.\n\nLine 459 you do icest_.reset(); which will pj_ice_strans_destroy and icest_ will be nullptr\n\nIf onComplete goes after icest_ will point to something but nothing here will manages the ice_strans. There is no reason that the up destructor is called twice with the same pointer",
+      "parentUuid": "7c5229c0_73ff3a2e",
+      "range": {
+        "startLine": 481,
+        "startChar": 8,
+        "endLine": 481,
+        "endChar": 25
+      },
+      "revId": "d6a82943dec3a23012660fb79afd768eab1a7758",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "382b8753_2e0eac26",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 9
@@ -102,6 +126,30 @@
       "side": 1,
       "message": "What should errno be set to for no transport?\n\nEGAIN, ENXIO, EIO, ENODEV?",
       "parentUuid": "382b8753_2e0eac26",
+      "range": {
+        "startLine": 1624,
+        "startChar": 12,
+        "endLine": 1624,
+        "endChar": 22
+      },
+      "revId": "d6a82943dec3a23012660fb79afd768eab1a7758",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d0a92078_4ec60f69",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 1624,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-27T17:44:11Z",
+      "side": 1,
+      "message": "EIO is good for me",
+      "parentUuid": "9f412412_b89be9e2",
       "range": {
         "startLine": 1624,
         "startChar": 12,
