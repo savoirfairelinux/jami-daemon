@@ -91,6 +91,53 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "9e58ff4a_f6b72870",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 481,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-27T17:52:24Z",
+      "side": 1,
+      "message": "* reset on a unique or shared pointer calls the destructor and also sets the pointer to null, guaranteeing it won\u0027t be destroyed twice when used properly.\n* If destruction can happen twice, it\u0027s a serious bug, likely caused by a race condition. A quick analysis showed that icest_ must always be protected by iceMutex_ which is not the case here.",
+      "parentUuid": "7c5229c0_73ff3a2e",
+      "range": {
+        "startLine": 481,
+        "startChar": 8,
+        "endLine": 481,
+        "endChar": 25
+      },
+      "revId": "d6a82943dec3a23012660fb79afd768eab1a7758",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "676ea393_81d0fdd2",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 789,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-27T17:52:24Z",
+      "side": 1,
+      "message": "This is the only use of getUFragPwd().\nSo getUFragPwd could require to be called with iceMutex_ locked by the caller.",
+      "range": {
+        "startLine": 789,
+        "startChar": 4,
+        "endLine": 789,
+        "endChar": 18
+      },
+      "revId": "d6a82943dec3a23012660fb79afd768eab1a7758",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "382b8753_2e0eac26",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 9
