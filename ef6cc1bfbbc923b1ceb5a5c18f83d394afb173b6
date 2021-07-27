@@ -3,6 +3,75 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "ab9ac76c_787af569",
+        "filename": "src/logger.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-27T13:59:33Z",
+      "side": 1,
+      "message": "not even sure we care about RING_UWP anymore",
+      "range": {
+        "startLine": 91,
+        "startChar": 4,
+        "endLine": 92,
+        "endChar": 34
+      },
+      "revId": "ef6cc1bfbbc923b1ceb5a5c18f83d394afb173b6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "369bf447_4415ddf0",
+        "filename": "src/logger.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 200,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-27T13:59:33Z",
+      "side": 1,
+      "message": "just personal opinion, avoid /* */ comments, even more if one line is used.",
+      "range": {
+        "startLine": 200,
+        "startChar": 8,
+        "endLine": 200,
+        "endChar": 13
+      },
+      "revId": "ef6cc1bfbbc923b1ceb5a5c18f83d394afb173b6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "797538bd_b76e3fb7",
+        "filename": "src/logger.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 269,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-27T13:59:33Z",
+      "side": 1,
+      "message": "avoid todo, create a ticket, else, it will just probably be forgotten and never planned",
+      "range": {
+        "startLine": 269,
+        "startChar": 8,
+        "endLine": 269,
+        "endChar": 66
+      },
+      "revId": "ef6cc1bfbbc923b1ceb5a5c18f83d394afb173b6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "2152a9a6_0759485b",
         "filename": "src/logger.cpp",
         "patchSetId": 17
@@ -14,6 +83,52 @@
       "writtenOn": "2021-07-27T13:32:18Z",
       "side": 1,
       "message": "Do we want the message header on Android?",
+      "revId": "ef6cc1bfbbc923b1ceb5a5c18f83d394afb173b6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bfa82aa6_c3ed34ac",
+        "filename": "src/logger.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 359,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-27T13:59:33Z",
+      "side": 1,
+      "message": "Btw on android I don\u0027t see any logs from the daemon anymore.",
+      "range": {
+        "startLine": 359,
+        "startChar": 19,
+        "endLine": 359,
+        "endChar": 57
+      },
+      "revId": "ef6cc1bfbbc923b1ceb5a5c18f83d394afb173b6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5a57cb54_a1090f74",
+        "filename": "src/logger.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 515,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-27T13:59:33Z",
+      "side": 1,
+      "message": "any reason to not use a fstream?",
+      "range": {
+        "startLine": 514,
+        "startChar": 0,
+        "endLine": 515,
+        "endChar": 45
+      },
       "revId": "ef6cc1bfbbc923b1ceb5a5c18f83d394afb173b6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
