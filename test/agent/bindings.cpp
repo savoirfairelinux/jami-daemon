@@ -21,16 +21,108 @@
 #include "agent/agent.h"
 #include "agent/bindings.h"
 
-static std::string(scm_to_cxx_string)(SCM value_str, const char* value_name)
+static inline SCM
+to_guile(bool b)
 {
-    AGENT_ASSERT(scm_is_string(value_str), "`%s` must be of type string", value_name);
-
-    char* str_raw = scm_to_locale_string(value_str);
-    std::string ret(str_raw);
-    free(str_raw);
-
-    return ret;
+    return scm_from_bool(b);
 }
+
+static inline SCM
+to_guile(const std::string& str)
+{
+    return scm_from_utf8_string(str.c_str());
+}
+
+template<typename T>
+static inline SCM
+to_guile(const std::vector<T>& values)
+{
+    SCM vec = scm_make_vector(values.size(), SCM_UNDEFINED);
+
+    for (size_t i = 0; i < values.size(); ++i) {
+        SCM_SIMPLE_VECTOR_SET(vec, i, to_guile(values[i]));
+    }
+
+    return vec;
+}
+
+template<typename K, typename V>
+static inline SCM
+to_guile(const std::map<K, V>& map)
+{
+    SCM assoc = SCM_EOL;
+
+    for (auto const& [key, value] : map) {
+        SCM pair = scm_cons(to_guile(key), to_guile(value));
+        assoc = scm_cons(pair, assoc);
+    }
+
+    return assoc;
+}
+
+struct from_guile
+{
+    SCM value;
+
+    from_guile(SCM val)
+        : value(val)
+    {}
+
+    operator bool()
+    {
+        AGENT_ASSERT(scm_is_bool(value), "Scheme value must be of type bool");
+
+        return scm_to_bool(value);
+    }
+
+    operator std::string()
+    {
+        AGENT_ASSERT(scm_is_string(value), "Scheme value must be of type string");
+
+        char* str_raw = scm_to_locale_string(value);
+        std::string ret(str_raw);
+        free(str_raw);
+
+        return ret;
+    }
+
+    template<typename T>
+    operator std::vector<T>()
+    {
+        AGENT_ASSERT(scm_is_simple_vector(value), "Scheme value must be a simple vector");
+
+        std::vector<T> ret;
+
+        for (size_t i = 0; i < SCM_SIMPLE_VECTOR_LENGTH(value); ++i) {
+            SCM val = SCM_SIMPLE_VECTOR_REF(value, i);
+
+            ret.emplace_back(from_guile(val));
+        }
+
+        return ret;
+    }
+
+    template<typename K, typename V>
+    operator std::map<K, V>()
+    {
+        AGENT_ASSERT(scm_is_true(scm_list_p(value)), "Scheme value mut be a list");
+
+        std::map<K, V> ret;
+
+        while (not scm_is_null(value)) {
+            SCM pair = scm_car(value);
+
+            K key = from_guile(scm_car(pair));
+            V val = from_guile(scm_cdr(pair));
+
+            ret[key] = val;
+
+            value = scm_cdr(value);
+        }
+
+        return ret;
+    }
+};
 
 static SCM
 wait_binding(SCM period_long_optional)
@@ -52,25 +144,19 @@ wait_binding(SCM period_long_optional)
 static SCM
 place_call_binding(SCM contact_str)
 {
-    AGENT_ASSERT(scm_is_string(contact_str), "Wrong type for contact");
-
-    return scm_from_bool(Agent::instance().placeCall(scm_to_cxx_string(contact_str)));
+    return to_guile(Agent::instance().placeCall(from_guile(contact_str)));
 }
 
 static SCM
 some_conversation_binding()
 {
-    auto contact = Agent::instance().someConversation();
-
-    return scm_from_utf8_string(contact.c_str());
+    return to_guile(Agent::instance().someConversation());
 }
 
 static SCM
 some_contact_binding()
 {
-    auto contact = Agent::instance().someContact();
-
-    return scm_from_utf8_string(contact.c_str());
+    return to_guile(Agent::instance().someContact());
 }
 
 static SCM
@@ -79,16 +165,9 @@ search_peer_binding(SCM peers_vector_or_str)
     std::vector<std::string> peers;
 
     if (scm_is_string(peers_vector_or_str)) {
-        peers.emplace_back(scm_to_cxx_string(peers_vector_or_str));
+        peers.emplace_back(from_guile(peers_vector_or_str));
     } else {
-        AGENT_ASSERT(scm_is_simple_vector(peers_vector_or_str),
-                     "peers_vector_or_str must be a simple vector or a string");
-    }
-
-    for (size_t i = 0; i < SCM_SIMPLE_VECTOR_LENGTH(peers_vector_or_str); ++i) {
-        SCM peer_str = SCM_SIMPLE_VECTOR_REF(peers_vector_or_str, i);
-
-        peers.emplace_back(scm_to_cxx_string(peer_str));
+        peers = from_guile(peers_vector_or_str);
     }
 
     Agent::instance().searchForPeers(peers);
@@ -99,30 +178,13 @@ search_peer_binding(SCM peers_vector_or_str)
 static SCM
 ping_binding(SCM contact_str)
 {
-    return scm_from_bool(Agent::instance().ping(scm_to_cxx_string(contact_str)));
+    return to_guile(Agent::instance().ping(from_guile(contact_str)));
 }
 
 static SCM
 set_details_binding(SCM details_alist)
 {
-    std::map<std::string, std::string> details;
-
-    AGENT_ASSERT(scm_is_true(scm_list_p(details_alist)), "Bad format of details");
-
-    while (not scm_is_null(details_alist)) {
-        SCM detail_pair = scm_car(details_alist);
-
-        AGENT_ASSERT(scm_is_pair(detail_pair), "Detail must be a pair");
-
-        auto car = scm_to_cxx_string(scm_car(detail_pair));
-        auto cdr = scm_to_cxx_string(scm_cdr(detail_pair));
-
-        details[car] = cdr;
-
-        details_alist = scm_cdr(details_alist);
-    }
-
-    Agent::instance().setDetails(details);
+    Agent::instance().setDetails(from_guile(details_alist));
 
     return SCM_UNDEFINED;
 }
@@ -138,7 +200,7 @@ ensure_account_binding()
 static SCM
 export_to_archive_binding(SCM path)
 {
-    Agent::instance().exportToArchive(scm_to_cxx_string(path));
+    Agent::instance().exportToArchive(from_guile(path));
 
     return SCM_UNDEFINED;
 }
@@ -146,7 +208,7 @@ export_to_archive_binding(SCM path)
 static SCM
 import_from_archive_binding(SCM path)
 {
-    Agent::instance().importFromArchive(scm_to_cxx_string(path));
+    Agent::instance().importFromArchive(from_guile(path));
 
     return SCM_UNDEFINED;
 }
@@ -210,6 +272,6 @@ install_scheme_primitives()
     define_primitive("agent:ensure-account", 0, 0, 0, (void*) ensure_account_binding);
     define_primitive("agent->archive", 1, 0, 0, (void*) export_to_archive_binding);
     define_primitive("archive->agent", 1, 0, 0, (void*) import_from_archive_binding);
-    define_primitive("agent:enable", 0, 0, 0, (void*)enable_binding);
-    define_primitive("agent:disable", 0, 0, 0, (void*)disable_binding);
+    define_primitive("agent:enable", 0, 0, 0, (void*) enable_binding);
+    define_primitive("agent:disable", 0, 0, 0, (void*) disable_binding);
 }
