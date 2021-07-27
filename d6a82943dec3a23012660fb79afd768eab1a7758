@@ -139,6 +139,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "40031b8e_bc1b217f",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 481,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-27T19:12:57Z",
+      "side": 1,
+      "message": "Just to be clear on my last comment.  This checks is not necessary because this patch fixes the problem.  But I think we should still put an assertion, or leave the if/release branch for production to catch future race conditions (dues to refactor for example).",
+      "parentUuid": "9b0de2f3_aa3c8138",
+      "range": {
+        "startLine": 481,
+        "startChar": 8,
+        "endLine": 481,
+        "endChar": 25
+      },
+      "revId": "d6a82943dec3a23012660fb79afd768eab1a7758",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "676ea393_81d0fdd2",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 9
