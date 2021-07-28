@@ -3060,17 +3060,13 @@ JamiAccount::addContact(const std::string& uri, bool confirmed)
 void
 JamiAccount::removeContact(const std::string& uri, bool ban)
 {
-    std::map<std::string, ConvInfo> convInfos;
-    {
-        std::lock_guard<std::mutex> lock(configurationMutex_);
-        if (accountManager_) {
-            accountManager_->removeContact(uri, ban);
-            convInfos = accountManager_->getInfo()->conversations;
-        } else {
-            JAMI_WARN("[Account %s] removeContact: account not loaded", getAccountID().c_str());
-            return;
-        }
+    std::unique_lock<std::mutex> lock(configurationMutex_);
+    if (!accountManager_) {
+        JAMI_WARN("[Account %s] removeContact: account not loaded", getAccountID().c_str());
+        return;
     }
+    accountManager_->removeContact(uri, ban);
+    auto convInfos = accountManager_->getInfo()->conversations;
 
     // Remove related conversation
     auto isSelf = uri == getUsername();
@@ -3104,6 +3100,7 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
     }
     if (updateConvInfos)
         accountManager_->setConversations(convInfos);
+    lock.unlock();
     for (const auto& id : toRm) {
         // Note, if we ban the device, we don't send the leave cause the other peer will just
         // never got the notifications, so just erase the datas
@@ -3883,6 +3880,9 @@ JamiAccount::declineConversationRequest(const std::string& conversationId)
 bool
 JamiAccount::removeConversation(const std::string& conversationId)
 {
+    std::unique_lock<std::mutex> lock(configurationMutex_);
+    if (!accountManager_)
+        return false;
     std::unique_lock<std::mutex> lk(conversationsMtx_);
     auto it = conversations_.find(conversationId);
     if (it == conversations_.end()) {
@@ -3910,6 +3910,7 @@ JamiAccount::removeConversation(const std::string& conversationId)
         });
     }
     accountManager_->setConversations(ci);
+    lock.unlock();
     auto commitId = it->second->leave();
     emitSignal<DRing::ConversationSignal::ConversationRemoved>(accountID_, conversationId);
     if (hasMembers) {
@@ -4969,9 +4970,13 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
             return len;
         }
 
+        std::unique_lock<std::mutex> lock(configurationMutex_);
+
         if (auto manager = dynamic_cast<ArchiveAccountManager*>(accountManager_.get())) {
             manager->onSyncData(std::move(msg.ds), false);
         }
+
+        std::vector<std::string> toRm;
 
         for (const auto& [key, convInfo] : msg.c) {
             auto convId = convInfo.id;
@@ -4995,16 +5000,13 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
                         itConv->second->setRemovingFlag();
                     }
                 }
-                auto infos = accountManager_->getInfo();
-                if (!infos)
-                    return len;
-                auto ci = infos->conversations;
+                auto ci = info->conversations;
                 auto itConv = ci.find(convId);
                 if (itConv != ci.end()) {
                     itConv->second.removed = std::time(nullptr);
                     if (convInfo.erased) {
                         itConv->second.erased = std::time(nullptr);
-                        removeRepository(convId, false);
+                        toRm.emplace_back(convId);
                     }
                     break;
                 }
@@ -5033,6 +5035,10 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
             emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(getAccountID(),
                                                                                convId,
                                                                                req.toMap());
+        }
+        lock.unlock();
+        for (const auto& convId : toRm) {
+            removeRepository(convId, false);
         }
         return len;
     });
@@ -5194,9 +5200,12 @@ JamiAccount::dataTransfer(const std::string& id) const
 void
 JamiAccount::removeRepository(const std::string& conversationId, bool sync, bool force)
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
     std::unique_lock<std::mutex> lk(conversationsMtx_);
     auto it = conversations_.find(conversationId);
     if (it != conversations_.end() && it->second && (force || it->second->isRemoving())) {
+        if (!accountManager_)
+            return;
         try {
             if (it->second->mode() == ConversationMode::ONE_TO_ONE) {
                 for (const auto& member : it->second->getInitialMembers()) {
