@@ -3,7 +3,7 @@ MSGPACK_VERSION := cpp-3.2.0
 MSGPACK_URL := https://github.com/msgpack/msgpack-c/archive/$(MSGPACK_VERSION).tar.gz
 
 PKGS += msgpack
-ifeq ($(call need_pkg,"msgpack >= 1.1"),)
+ifeq ($(call need_pkg,"msgpack >= 3.0.0"),)
 PKGS_FOUND += msgpack
 endif
 
