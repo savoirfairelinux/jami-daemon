@@ -210,6 +210,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "625ebe72_6b8f1597",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 789,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-28T00:32:40Z",
+      "side": 1,
+      "message": "I agree that locking should be as local as possible, however it\u0027s a useful common pattern to have private methods non-blocking and requiring to be used locked, with public methods actually locking the mutexes. This pattern allows for the whole operation to be atomic instead of unlocking-locking the mutex multiple times, which adds a risk for state changes between locks.",
+      "parentUuid": "bad55e9f_d86e02ed",
+      "range": {
+        "startLine": 789,
+        "startChar": 4,
+        "endLine": 789,
+        "endChar": 18
+      },
+      "revId": "d6a82943dec3a23012660fb79afd768eab1a7758",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "382b8753_2e0eac26",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 9
