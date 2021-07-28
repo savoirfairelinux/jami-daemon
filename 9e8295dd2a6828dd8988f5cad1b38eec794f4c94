@@ -1,6 +1,7 @@
 {
   "comments": [
     {
+      "unresolved": true,
       "key": {
         "uuid": "28ea722a_82d1e3cc",
         "filename": "src/jamidht/jamiaccount.cpp",
@@ -20,10 +21,34 @@
         "endChar": 60
       },
       "revId": "9e8295dd2a6828dd8988f5cad1b38eec794f4c94",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d471e6cf_49a32d97",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 1968,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-28T15:57:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "28ea722a_82d1e3cc",
+      "range": {
+        "startLine": 1968,
+        "startChar": 54,
+        "endLine": 1968,
+        "endChar": 60
+      },
+      "revId": "9e8295dd2a6828dd8988f5cad1b38eec794f4c94",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
       "key": {
         "uuid": "4c54259c_971d147d",
         "filename": "src/jamidht/jamiaccount.cpp",
@@ -43,8 +68,31 @@
         "endChar": 34
       },
       "revId": "9e8295dd2a6828dd8988f5cad1b38eec794f4c94",
-      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
-      "unresolved": true
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1be68f89_44dc4f4c",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 4228,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-28T15:57:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4c54259c_971d147d",
+      "range": {
+        "startLine": 4228,
+        "startChar": 26,
+        "endLine": 4228,
+        "endChar": 34
+      },
+      "revId": "9e8295dd2a6828dd8988f5cad1b38eec794f4c94",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
