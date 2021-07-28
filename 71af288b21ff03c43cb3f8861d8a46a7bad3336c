@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c2f697f1_9a8e5a89",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 597,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-28T14:15:37Z",
+      "side": 1,
+      "message": "should ice_st be destroyed, and the function return in this case ?",
+      "range": {
+        "startLine": 597,
+        "startChar": 37,
+        "endLine": 597,
+        "endChar": 58
+      },
+      "revId": "71af288b21ff03c43cb3f8861d8a46a7bad3336c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

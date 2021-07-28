@@ -163,6 +163,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "50db8425_5c789c56",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 481,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-28T14:15:37Z",
+      "side": 1,
+      "message": "Ok for an assertion. However, the reset logic itself is unnecessary.",
+      "parentUuid": "40031b8e_bc1b217f",
+      "range": {
+        "startLine": 481,
+        "startChar": 8,
+        "endLine": 481,
+        "endChar": 25
+      },
+      "revId": "d6a82943dec3a23012660fb79afd768eab1a7758",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "676ea393_81d0fdd2",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 9
