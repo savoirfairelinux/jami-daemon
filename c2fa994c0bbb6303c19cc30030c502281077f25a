@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d535e289_daa5d70e",
+        "filename": "src/logger.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 498,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-28T14:25:00Z",
+      "side": 1,
+      "message": "probably not needed: std::vector is already mostly just a pointer and has native support for std::swap.",
+      "range": {
+        "startLine": 497,
+        "startChar": 0,
+        "endLine": 498,
+        "endChar": 60
+      },
+      "revId": "c2fa994c0bbb6303c19cc30030c502281077f25a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
