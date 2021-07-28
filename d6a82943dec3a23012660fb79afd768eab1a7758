@@ -232,6 +232,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9d114da7_5c72325a",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 789,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-28T13:02:09Z",
+      "side": 1,
+      "message": "Yes I get your point.  But this add a risk of forgetting to lock before calling the private method.  I added a comment in my last patchset that says that the function needs the caller to lock the transport mutex, but someone could forget in the future.\n\nWould be nice if we could mark a private method with some attribute that says `requires this lock` and then the compiler needs to prove via static analysis that all call sites indeed have the lock.",
+      "parentUuid": "625ebe72_6b8f1597",
+      "range": {
+        "startLine": 789,
+        "startChar": 4,
+        "endLine": 789,
+        "endChar": 18
+      },
+      "revId": "d6a82943dec3a23012660fb79afd768eab1a7758",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "382b8753_2e0eac26",
