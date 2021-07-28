@@ -22,6 +22,30 @@
       },
       "revId": "4ae56569b09a8445632db605d5421e9344a07d2a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eb79c9cd_dac4b351",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 3065,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-28T20:06:25Z",
+      "side": 1,
+      "message": "yeah indeed.\n\nNot really related to removing the syncing, so I did another patch (https://review.jami.net/c/ring-daemon/+/18876)\n\nAlso there is a lot of places where accountManager_ is not checked. Ideally this will be removed soon with jamiAccount split, where setConversations() is managed by another class",
+      "parentUuid": "6f0f0eaf_d227d83b",
+      "range": {
+        "startLine": 3064,
+        "startChar": 0,
+        "endLine": 3065,
+        "endChar": 53
+      },
+      "revId": "4ae56569b09a8445632db605d5421e9344a07d2a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
