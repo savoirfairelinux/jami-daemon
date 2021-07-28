@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6f0f0eaf_d227d83b",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 3065,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2021-07-28T18:02:57Z",
+      "side": 1,
+      "message": "* configurationMutex_ not held\n* should be atomic (if convInfos changes in between, changes. would be overwritten)",
+      "range": {
+        "startLine": 3064,
+        "startChar": 0,
+        "endLine": 3065,
+        "endChar": 53
+      },
+      "revId": "4ae56569b09a8445632db605d5421e9344a07d2a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
