@@ -59,6 +59,7 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0012-ignore-down-interfaces.patch # TODO remove with 2.12 (https://github.com/pjsip/pjproject/commit/997a468a5e90f9a88a36f543bef85e0fb0af0dfc)
 	$(APPLY) $(SRC)/pjproject/0013-ignore-addresses-for-RFC7335.patch # TODO remove with 2.12 (https://github.com/pjsip/pjproject/commit/d245ffaf91120fab7bb70e3f46206faeb5b01269)
 	$(APPLY) $(SRC)/pjproject/0014-fix-socket-leak.patch
+	$(APPLY) $(SRC)/pjproject/0015-auto-register-thread.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch
 endif
