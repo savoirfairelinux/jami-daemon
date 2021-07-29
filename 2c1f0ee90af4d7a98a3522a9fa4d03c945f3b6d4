@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "39c19b07_de956f6a",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 439,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-29T23:39:00Z",
+      "side": 1,
+      "message": "not really necessary and a bit useless to lock this. there is a log a bit after",
+      "range": {
+        "startLine": 436,
+        "startChar": 4,
+        "endLine": 439,
+        "endChar": 5
+      },
+      "revId": "2c1f0ee90af4d7a98a3522a9fa4d03c945f3b6d4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
