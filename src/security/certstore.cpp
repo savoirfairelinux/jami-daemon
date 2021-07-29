@@ -68,11 +68,11 @@ CertificateStore::loadLocalCertificates()
         try {
             auto crt = std::make_shared<crypto::Certificate>(
                 fileutils::loadFile(certPath_ + DIR_SEPARATOR_CH + f));
-            auto id = crt->getId().toString();
-            auto longId = crt->getLongId().toString();
-            if (id != f && longId != f)
-                throw std::logic_error("Certificate id mismatch");
             while (crt) {
+                auto id = crt->getId().toString();
+                auto longId = crt->getLongId().toString();
+                if (id != f && longId != f)
+                    throw std::logic_error("Certificate id mismatch");
                 certs_.emplace(std::move(id), crt);
                 certs_.emplace(std::move(longId), crt);
                 loadRevocations(*crt);
@@ -80,6 +80,7 @@ CertificateStore::loadLocalCertificates()
                 ++n;
             }
         } catch (const std::exception& e) {
+            JAMI_WARN() << "Remove cert. " << e.what();
             remove((certPath_ + DIR_SEPARATOR_CH + f).c_str());
         }
     }
@@ -396,7 +397,8 @@ void
 CertificateStore::pinRevocationList(const std::string& id, const dht::crypto::RevocationList& crl)
 {
     fileutils::check_dir((crlPath_ + DIR_SEPARATOR_CH + id).c_str());
-    fileutils::saveFile(crlPath_ + DIR_SEPARATOR_CH + id + DIR_SEPARATOR_CH + dht::toHex(crl.getNumber()),
+    fileutils::saveFile(crlPath_ + DIR_SEPARATOR_CH + id + DIR_SEPARATOR_CH
+                            + dht::toHex(crl.getNumber()),
                         crl.getPacked());
 }
 
