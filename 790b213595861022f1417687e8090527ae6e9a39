@@ -120,6 +120,30 @@
     {
       "unresolved": false,
       "key": {
+        "uuid": "24d10e34_91b3636b",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 454,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-29T15:22:53Z",
+      "side": 1,
+      "message": "nvm still a up in my head.\n\nstd::swap(strans, icest_) will work in this case.",
+      "parentUuid": "584c02a2_31e6c48a",
+      "range": {
+        "startLine": 453,
+        "startChar": 15,
+        "endLine": 454,
+        "endChar": 16
+      },
+      "revId": "790b213595861022f1417687e8090527ae6e9a39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
         "uuid": "52d1694c_2f68729e",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 14
