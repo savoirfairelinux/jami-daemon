@@ -227,7 +227,6 @@ ChanneledSIPTransport::handleEvents()
         rxPending_.clear();
     }
 
-    sip_utils::register_thread();
     for (auto it = rx.begin(); it != rx.end(); ++it) {
         auto& pck = *it;
         pj_pool_reset(rdata_.tp_info.pool);
