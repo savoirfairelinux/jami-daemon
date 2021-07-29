@@ -53,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "dc3008c6_f87621b3",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 452,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-29T15:17:57Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "e0ebe364_a287bb35",
+      "revId": "790b213595861022f1417687e8090527ae6e9a39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9cc523d7_815bc04a",
@@ -66,6 +84,30 @@
       "writtenOn": "2021-07-29T13:56:45Z",
       "side": 1,
       "message": "std::move(ice_st_) will move the value and icest_ will be nullptr",
+      "range": {
+        "startLine": 453,
+        "startChar": 15,
+        "endLine": 454,
+        "endChar": 16
+      },
+      "revId": "790b213595861022f1417687e8090527ae6e9a39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "584c02a2_31e6c48a",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 454,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-29T15:17:57Z",
+      "side": 1,
+      "message": "Not true with raw pointer.  icest_ will still point to the same address.",
+      "parentUuid": "9cc523d7_815bc04a",
       "range": {
         "startLine": 453,
         "startChar": 15,
@@ -122,6 +164,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "527969e8_789176ff",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1168,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-29T15:17:57Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "c6e22040_c483e9f8",
+      "range": {
+        "startLine": 1168,
+        "startChar": 0,
+        "endLine": 1168,
+        "endChar": 5
+      },
+      "revId": "790b213595861022f1417687e8090527ae6e9a39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9699b76d_e7112683",
@@ -145,6 +211,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d69c4d87_f45db6d5",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1233,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-29T15:17:57Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "9699b76d_e7112683",
+      "range": {
+        "startLine": 1233,
+        "startChar": 4,
+        "endLine": 1233,
+        "endChar": 5
+      },
+      "revId": "790b213595861022f1417687e8090527ae6e9a39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4b037731_254615f7",
@@ -158,6 +248,30 @@
       "writtenOn": "2021-07-29T13:56:45Z",
       "side": 1,
       "message": "nitpick no need for this scope as it\u0027s the end of the method",
+      "range": {
+        "startLine": 1604,
+        "startChar": 3,
+        "endLine": 1604,
+        "endChar": 5
+      },
+      "revId": "790b213595861022f1417687e8090527ae6e9a39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d5e2aee2_f59fa433",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 1604,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-07-29T15:17:57Z",
+      "side": 1,
+      "message": "I don\u0027t agree but okay.",
+      "parentUuid": "4b037731_254615f7",
       "range": {
         "startLine": 1604,
         "startChar": 3,
