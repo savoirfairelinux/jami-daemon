@@ -72,6 +72,31 @@ public:
         return {std::move(repo), git_repository_free};
     }
 
+    void pinCertificates(bool blocking) const
+    {
+        auto repo = repository();
+        if (!repo)
+            return;
+
+        std::string repoPath = git_repository_workdir(repo.get());
+        std::vector<std::string> paths = {repoPath + "admins",
+                                          repoPath + "members",
+                                          repoPath + "devices"};
+
+        for (const auto& path : paths) {
+            if (blocking) {
+                std::promise<bool> p;
+                std::future<bool> f = p.get_future();
+                tls::CertificateStore::instance().pinCertificatePath(path, [&](auto /* certs */) {
+                    p.set_value(true);
+                });
+                f.wait();
+            } else {
+                tls::CertificateStore::instance().pinCertificatePath(path, {});
+            }
+        }
+    }
+
     GitSignature signature();
     bool mergeFastforward(const git_oid* target_oid, int is_unborn);
     std::string createMergeCommit(git_index* index, const std::string& wanted_ref);
@@ -1124,9 +1149,15 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
 {
     auto cert = tls::CertificateStore::instance().getCertificate(userDevice);
     if (not cert)
+        pinCertificates(true);
+    cert = tls::CertificateStore::instance().getCertificate(userDevice);
+    if (not cert)
         return false;
     auto userUri = cert->getIssuerUID();
     auto parentCrt = tls::CertificateStore::instance().getCertificate(userUri);
+    if (not parentCrt)
+        pinCertificates(true);
+    parentCrt = tls::CertificateStore::instance().getCertificate(userUri);
     auto repo = repository();
     if (not parentCrt or not repo)
         return false;
@@ -2955,27 +2986,7 @@ ConversationRepository::refreshMembers() const
 void
 ConversationRepository::pinCertificates(bool blocking)
 {
-    auto repo = pimpl_->repository();
-    if (!repo)
-        return;
-
-    std::string repoPath = git_repository_workdir(repo.get());
-    std::vector<std::string> paths = {repoPath + "admins",
-                                      repoPath + "members",
-                                      repoPath + "devices"};
-
-    for (const auto& path : paths) {
-        if (blocking) {
-            std::promise<bool> p;
-            std::future<bool> f = p.get_future();
-            tls::CertificateStore::instance().pinCertificatePath(path, [&](auto /* certs */) {
-                p.set_value(true);
-            });
-            f.wait();
-        } else {
-            tls::CertificateStore::instance().pinCertificatePath(path, {});
-        }
-    }
+    pimpl_->pinCertificates(true);
 }
 
 std::string
