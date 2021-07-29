@@ -258,22 +258,6 @@ sip_strerror(pj_status_t code)
 }
 
 void
-register_thread()
-{
-    if (!pj_thread_is_registered()) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined _MSC_VER
-        static thread_local pj_thread_desc desc;
-        static thread_local pj_thread_t* this_thread;
-#else
-        static __thread pj_thread_desc desc;
-        static __thread pj_thread_t* this_thread;
-#endif
-        pj_thread_register(NULL, desc, &this_thread);
-        JAMI_DBG("Registered thread %p (0x%X)", this_thread, pj_getpid());
-    }
-}
-
-void
 sockaddr_to_host_port(pj_pool_t* pool, pjsip_host_port* host_port, const pj_sockaddr* addr)
 {
     host_port->host.ptr = (char*) pj_pool_alloc(pool, PJ_INET6_ADDRSTRLEN + 4);
