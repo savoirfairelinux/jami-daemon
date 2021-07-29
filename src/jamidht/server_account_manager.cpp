@@ -167,6 +167,7 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                     if (not info->announce) {
                                         ctx->onFailure(AuthError::SERVER_ERROR,
                                                        "Can't parse announce from server");
+                                        return;
                                     }
                                     info->username = ctx->credentials->username;
 
