@@ -66,9 +66,34 @@ main_catch(void* nil, SCM key_sym, SCM rest_lst)
     return SCM_UNDEFINED;
 }
 
+static size_t jami_port_write(SCM port, SCM src, size_t start, size_t count)
+{
+    int lvl;
+
+    lvl = (int)(long)(void*)SCM_STREAM(port);
+
+    jami::Logger::log(lvl, __FILE__, __LINE__, false, "[GUILE]: %.*s",
+                      (int)count, (char*)SCM_BYTEVECTOR_CONTENTS(src) + start);
+
+    return count;
+}
+
+static SCM make_jami_port(int lvl)
+{
+    static scm_t_port_type *port_type = scm_make_port_type((char*)"jami:port",
+                                                           nullptr,
+                                                           jami_port_write);
+
+    return scm_c_make_port(port_type, SCM_WRTNG | SCM_BUFLINE, (long)lvl);
+}
+
 void*
 main_inner(void* agent_config_raw) /* In Guile context */
 {
+    scm_set_current_output_port(make_jami_port(LOG_INFO));
+    scm_set_current_warning_port(make_jami_port(LOG_WARNING));
+    scm_set_current_error_port(make_jami_port(LOG_ERR));
+
     install_scheme_primitives();
 
     Agent::instance().init();
