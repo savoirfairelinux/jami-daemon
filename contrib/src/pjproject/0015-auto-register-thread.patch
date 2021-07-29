@@ -1,0 +1,49 @@
+From 0c34362aedd9689f41b76600351e93b13b378cb3 Mon Sep 17 00:00:00 2001
+From: Olivier Dion <olivier.dion@savoirfairelinux.com>
+Date: Wed, 28 Jul 2021 17:27:29 -0400
+Subject: [PATCH] pj/os_core: Register thread if not registered
+
+---
+ pjlib/src/pj/os_core_unix.c  | 7 ++++---
+ pjlib/src/pj/os_core_win32.c | 7 ++++---
+ 2 files changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/pjlib/src/pj/os_core_unix.c b/pjlib/src/pj/os_core_unix.c
+index c9a7b6fc1..29ae903e9 100644
+--- a/pjlib/src/pj/os_core_unix.c
++++ b/pjlib/src/pj/os_core_unix.c
+@@ -695,9 +695,10 @@ PJ_DEF(pj_thread_t*) pj_thread_this(void)
+     pj_thread_t *rec = (pj_thread_t*)pj_thread_local_get(thread_tls_id);
+ 
+     if (rec == NULL) {
+-	pj_assert(!"Calling pjlib from unknown/external thread. You must "
+-		   "register external threads with pj_thread_register() "
+-		   "before calling any pjlib functions.");
++	static _Thread_local pj_thread_desc desc;
++	static _Thread_local pj_thread_t* this_thread;
++	pj_thread_register(NULL, desc, &this_thread);
++	rec = (pj_thread_t*)pj_thread_local_get(thread_tls_id);
+     }
+ 
+     /*
+diff --git a/pjlib/src/pj/os_core_win32.c b/pjlib/src/pj/os_core_win32.c
+index 09d714490..36b20929f 100644
+--- a/pjlib/src/pj/os_core_win32.c
++++ b/pjlib/src/pj/os_core_win32.c
+@@ -583,9 +583,10 @@ PJ_DEF(pj_thread_t*) pj_thread_this(void)
+     pj_thread_t *rec = pj_thread_local_get(thread_tls_id);
+ 
+     if (rec == NULL) {
+-	pj_assert(!"Calling pjlib from unknown/external thread. You must "
+-		   "register external threads with pj_thread_register() "
+-		   "before calling any pjlib functions.");
++	static _Thread_local pj_thread_desc desc;
++	static _Thread_local pj_thread_t* this_thread;
++	pj_thread_register(NULL, desc, &this_thread);
++	rec = (pj_thread_t*)pj_thread_local_get(thread_tls_id);
+     }
+ 
+     /*
+-- 
+2.32.0
+
