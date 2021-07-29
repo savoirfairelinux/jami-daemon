@@ -1937,6 +1937,10 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
                                   dev.dev,
                                   [sthis, h](const std::shared_ptr<dht::crypto::Certificate>& cert) {
                                       if (cert) {
+
+                                        if (!tls::CertificateStore::instance().getCertificate(cert->getId().toString())) {
+                                            tls::CertificateStore::instance().pinCertificate(cert);
+                                        }
                                           auto pk = std::make_shared<dht::crypto::PublicKey>(
                                               cert->getPublicKey());
                                           sthis->requestSIPConnection(h.toString(), pk->getLongId());
@@ -2185,6 +2189,9 @@ JamiAccount::doRegister_()
                 [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
                     if (!crt)
                         return;
+                    if (!tls::CertificateStore::instance().getCertificate(crt->getId().toString())) {
+                        tls::CertificateStore::instance().pinCertificate(crt);
+                    }
                     auto deviceId = crt->getLongId().toString();
                     if (accountManager_->getInfo()->deviceId == deviceId)
                         return;
@@ -2528,6 +2535,9 @@ JamiAccount::doRegister_()
                                  inboxDeviceKey,
                                  msgId](const std::shared_ptr<dht::crypto::Certificate>& cert,
                                         const dht::InfoHash& peer_account) {
+                                    if (!tls::CertificateStore::instance().getCertificate(cert->getId().toString())) {
+                                        tls::CertificateStore::instance().pinCertificate(cert);
+                                    }
                                     auto now = clock::to_time_t(clock::now());
                                     std::string datatype = utf8_make_valid(v.datatype);
                                     if (datatype.empty()) {
