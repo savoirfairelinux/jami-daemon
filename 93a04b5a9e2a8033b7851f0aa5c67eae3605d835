@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "61b33955_4488ecc1",
+        "filename": "src/ring_api.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-07-29T12:35:34Z",
+      "side": 1,
+      "message": "remove this, DRING_FLAG_DEBUG is not related to syslog, it\u0027s the console flag (./jamid -c)\n\nDRING_FLAG_DEBUG is for the level. with -d we log all logs, without we log \u003e\u003d warn",
+      "range": {
+        "startLine": 47,
+        "startChar": 8,
+        "endLine": 47,
+        "endChar": 66
+      },
+      "revId": "93a04b5a9e2a8033b7851f0aa5c67eae3605d835",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
