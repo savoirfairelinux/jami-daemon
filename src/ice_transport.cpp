@@ -296,7 +296,6 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
 IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
     : pool_(nullptr,
             [](pj_pool_t* pool) {
-                sip_utils::register_thread();
                 pj_pool_release(pool);
             })
     , on_initdone_cb_(options.onInitDone)
@@ -318,7 +317,6 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
              compCount_,
              initiatorSession_ ? "master" : "slave");
 
-    sip_utils::register_thread();
     if (options.upnpEnable)
         upnp_.reset(new upnp::Controller());
 
@@ -419,7 +417,6 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
 
     // Must be created after any potential failure
     thread_ = std::thread([this] {
-        sip_utils::register_thread();
         while (not threadTerminateFlags_) {
             // NOTE: handleEvents can return false in this case
             // but here we don't care if there is event or not.
@@ -435,7 +432,6 @@ IceTransport::Impl::~Impl()
 {
     JAMI_DBG("[ice:%p] destroying %p", this, icest_);
 
-    sip_utils::register_thread();
     threadTerminateFlags_ = true;
     iceCV_.notify_all();
 
@@ -1113,7 +1109,6 @@ IceTransport::isInitiator() const
 bool
 IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& rem_candidates)
 {
-    sip_utils::register_thread();
 
     if (not isInitialized()) {
         JAMI_ERR("[ice:%p] not initialized transport", pimpl_.get());
@@ -1188,7 +1183,6 @@ IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& r
 bool
 IceTransport::startIce(const SDP& sdp)
 {
-    sip_utils::register_thread();
 
     if (pimpl_->streamsCount_ != 1) {
         JAMI_ERR("Expected exactly one stream per SDP (found %u streams)", pimpl_->streamsCount_);
@@ -1587,7 +1581,6 @@ IceTransport::send(unsigned compId, const unsigned char* buf, size_t len)
 {
     ASSERT_COMP_ID(compId, getComponentCount());
 
-    sip_utils::register_thread();
     auto remote = getRemoteAddress(compId);
 
     if (!remote) {
@@ -1759,7 +1752,6 @@ IceTransportFactory::IceTransportFactory()
           })
     , ice_cfg_()
 {
-    sip_utils::register_thread();
 
     pj_caching_pool_init(cp_.get(), NULL, 0);
 
