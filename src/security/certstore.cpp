@@ -69,11 +69,12 @@ CertificateStore::loadLocalCertificates()
             auto crt = std::make_shared<crypto::Certificate>(
                 fileutils::loadFile(certPath_ + DIR_SEPARATOR_CH + f));
             auto id = crt->getId().toString();
-            if (id != f)
-                throw std::logic_error({});
+            auto longId = crt->getLongId().toString();
+            if (id != f && longId != f)
+                throw std::logic_error("Certificate id mismatch");
             while (crt) {
-                certs_.emplace(crt->getId().toString(), crt);
-                certs_.emplace(crt->getLongId().toString(), crt);
+                certs_.emplace(std::move(id), crt);
+                certs_.emplace(std::move(longId), crt);
                 loadRevocations(*crt);
                 crt = crt->issuer;
                 ++n;
