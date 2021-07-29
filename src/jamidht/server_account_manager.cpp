@@ -146,7 +146,8 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                     auto info = std::make_unique<AccountInfo>();
                                     info->identity.first = ctx->key.get();
                                     info->identity.second = cert;
-                                    info->devicePk = std::make_shared<dht::crypto::PublicKey>(cert->getPublicKey());
+                                    info->devicePk = std::make_shared<dht::crypto::PublicKey>(
+                                        cert->getPublicKey());
                                     info->deviceId = info->devicePk->getLongId().toString();
                                     info->accountId = accountCert->getId().toString();
                                     info->contacts = std::make_unique<ContactList>(accountCert,
@@ -159,9 +160,10 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                                                        ctx->deviceName,
                                                                        clock::now());
                                     info->ethAccount = receiptJson["eth"].asString();
-                                    info->announce = parseAnnounce(receiptJson["announce"].asString(),
-                                                                   info->accountId,
-                                                                   info->deviceId);
+                                    info->announce
+                                        = parseAnnounce(receiptJson["announce"].asString(),
+                                                        info->accountId,
+                                                        info->devicePk->getId().toString());
                                     if (not info->announce) {
                                         ctx->onFailure(AuthError::SERVER_ERROR,
                                                        "Can't parse announce from server");
@@ -178,8 +180,9 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                             if (!nameServer.empty() && nameServer[0] == '/')
                                                 nameServer = this_.managerHostname_ + nameServer;
                                             this_.nameDir_ = NameDirectory::instance(nameServer);
-                                            config.emplace(DRing::Account::ConfProperties::RingNS::URI,
-                                                        std::move(nameServer));
+                                            config
+                                                .emplace(DRing::Account::ConfProperties::RingNS::URI,
+                                                         std::move(nameServer));
                                         } else if (name == "userPhoto"sv) {
                                             this_.info_->photo = json["userPhoto"].asString();
                                         } else {
@@ -212,13 +215,15 @@ ServerAccountManager::initAuthentication(PrivateKey key,
 }
 
 void
-ServerAccountManager::onAuthEnded(const Json::Value& json, const dht::http::Response& response, TokenScope expectedScope)
+ServerAccountManager::onAuthEnded(const Json::Value& json,
+                                  const dht::http::Response& response,
+                                  TokenScope expectedScope)
 {
     if (response.status_code >= 200 && response.status_code < 300) {
         auto scopeStr = json["scope"].asString();
-        auto scope = scopeStr == "DEVICE"sv ? TokenScope::Device
-                    : (scopeStr == "USER"sv   ? TokenScope::User
-                                            : TokenScope::None);
+        auto scope = scopeStr == "DEVICE"sv
+                         ? TokenScope::Device
+                         : (scopeStr == "USER"sv ? TokenScope::User : TokenScope::None);
         auto expires_in = json["expires_in"].asLargestUInt();
         auto expiration = std::chrono::steady_clock::now() + std::chrono::seconds(expires_in);
         JAMI_WARN("[Auth] Got server response: %d %s", response.status_code, response.body.c_str());
@@ -237,11 +242,17 @@ ServerAccountManager::authenticateDevice()
     }
     const std::string url = managerHostname_ + JAMI_PATH_LOGIN;
     JAMI_WARN("[Auth] getting a device token: %s", url.c_str());
-    auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, Json::Value{Json::objectValue}, [onAsync = onAsync_](Json::Value json, const dht::http::Response& response) {
-        onAsync([=] (AccountManager& accountManager) {
-            static_cast<ServerAccountManager*>(&accountManager)->onAuthEnded(json, response, TokenScope::Device);
-        });
-    }, logger_);
+    auto request = std::make_shared<Request>(
+        *Manager::instance().ioContext(),
+        url,
+        Json::Value {Json::objectValue},
+        [onAsync = onAsync_](Json::Value json, const dht::http::Response& response) {
+            onAsync([=](AccountManager& accountManager) {
+                static_cast<ServerAccountManager*>(&accountManager)
+                    ->onAuthEnded(json, response, TokenScope::Device);
+            });
+        },
+        logger_);
     request->set_identity(info_->identity);
     // request->set_certificate_authority(info_->identity.second->issuer->issuer);
     sendRequest(request);
@@ -252,11 +263,17 @@ ServerAccountManager::authenticateAccount(const std::string& username, const std
 {
     const std::string url = managerHostname_ + JAMI_PATH_LOGIN;
     JAMI_WARN("[Auth] getting a device token: %s", url.c_str());
-    auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, Json::Value{Json::objectValue}, [onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
-        onAsync([=] (AccountManager& accountManager) {
-            static_cast<ServerAccountManager*>(&accountManager)->onAuthEnded(json, response, TokenScope::User);
-        });
-    }, logger_);
+    auto request = std::make_shared<Request>(
+        *Manager::instance().ioContext(),
+        url,
+        Json::Value {Json::objectValue},
+        [onAsync = onAsync_](Json::Value json, const dht::http::Response& response) {
+            onAsync([=](AccountManager& accountManager) {
+                static_cast<ServerAccountManager*>(&accountManager)
+                    ->onAuthEnded(json, response, TokenScope::User);
+            });
+        },
+        logger_);
     request->set_auth(username, password);
     sendRequest(request);
 }
@@ -354,7 +371,8 @@ ServerAccountManager::sendDeviceRequest(const std::shared_ptr<dht::http::Request
 }
 
 void
-ServerAccountManager::sendAccountRequest(const std::shared_ptr<dht::http::Request>& req, const std::string& pwd)
+ServerAccountManager::sendAccountRequest(const std::shared_ptr<dht::http::Request>& req,
+                                         const std::string& pwd)
 {
     std::lock_guard<std::mutex> lock(tokenLock_);
     if (hasAuthorization(TokenScope::User)) {
@@ -463,26 +481,30 @@ ServerAccountManager::revokeDevice(const std::string& password,
     }
     const std::string url = managerHostname_ + PATH_DEVICE + "/" + device;
     JAMI_WARN("[Revoke] Revoking device of %s at %s", info_->username.c_str(), url.c_str());
-    auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, [cb, onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
-        onAsync([=] (AccountManager& accountManager) {
-            JAMI_DBG("[Revoke] Got request callback with status code=%u", response.status_code);
-            auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
-            if (response.status_code >= 200 && response.status_code < 300) {
-                try {
-                    JAMI_WARN("[Revoke] Got server response");
-                    if (json["errorDetails"].empty()) {
-                        if (cb)
-                            cb(RevokeDeviceResult::SUCCESS);
-                        this_.syncDevices();
+    auto request = std::make_shared<Request>(
+        *Manager::instance().ioContext(),
+        url,
+        [cb, onAsync = onAsync_](Json::Value json, const dht::http::Response& response) {
+            onAsync([=](AccountManager& accountManager) {
+                JAMI_DBG("[Revoke] Got request callback with status code=%u", response.status_code);
+                auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
+                if (response.status_code >= 200 && response.status_code < 300) {
+                    try {
+                        JAMI_WARN("[Revoke] Got server response");
+                        if (json["errorDetails"].empty()) {
+                            if (cb)
+                                cb(RevokeDeviceResult::SUCCESS);
+                            this_.syncDevices();
+                        }
+                    } catch (const std::exception& e) {
+                        JAMI_ERR("Error when loading device list: %s", e.what());
                     }
-                } catch (const std::exception& e) {
-                    JAMI_ERR("Error when loading device list: %s", e.what());
-                }
-            } else if (cb)
-                cb(RevokeDeviceResult::ERROR_NETWORK);
-            this_.clearRequest(response.request);
-        });
-    }, logger_);
+                } else if (cb)
+                    cb(RevokeDeviceResult::ERROR_NETWORK);
+                this_.clearRequest(response.request);
+            });
+        },
+        logger_);
     request->set_method(restinio::http_method_delete());
     sendAccountRequest(request, password);
     return false;

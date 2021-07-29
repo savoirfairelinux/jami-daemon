@@ -84,7 +84,7 @@ AccountManager::loadIdentity(const std::string& crt_path,
 std::shared_ptr<dht::Value>
 AccountManager::parseAnnounce(const std::string& announceBase64,
                               const std::string& accountId,
-                              const std::string& deviceId)
+                              const std::string& deviceSha1)
 {
     auto announce_val = std::make_shared<dht::Value>();
     try {
@@ -98,7 +98,7 @@ AccountManager::parseAnnounce(const std::string& announceBase64,
         }
         DeviceAnnouncement da;
         da.unpackValue(*announce_val);
-        if (da.from.toString() != accountId or da.dev.toString() != deviceId) {
+        if (da.from.toString() != accountId or da.dev.toString() != deviceSha1) {
             JAMI_ERR("[Auth] device ID mismatch in announce");
             return {};
         }
@@ -165,7 +165,13 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
         return nullptr;
     }
 
-    auto announce = parseAnnounce(root["announce"].asString(), id, dev_id);
+    auto devicePk = identity.first->getSharedPublicKey();
+    if (!devicePk) {
+        JAMI_ERR("[Auth] No device pk found");
+        return nullptr;
+    }
+
+    auto announce = parseAnnounce(root["announce"].asString(), id, devicePk->getId().toString());
     if (not announce) {
         return nullptr;
     }
@@ -177,7 +183,7 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
     info->contacts = std::move(contactList);
     info->contacts->load();
     info->accountId = id;
-    info->devicePk = identity.first->getSharedPublicKey();
+    info->devicePk = std::move(devicePk);
     info->deviceId = info->devicePk->getLongId().toString();
     info->announce = std::move(announce);
     info->ethAccount = root["eth"].asString();
@@ -704,9 +710,7 @@ AccountManager::sendTrustRequestConfirm(const dht::InfoHash& toH, const std::str
         JAMI_WARN("sending trust request reply: %s / %s",
                   toH.toString().c_str(),
                   dev->getLongId().toString().c_str());
-        dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev->getId().toString()),
-                           dev,
-                           answer);
+        dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev->getId().toString()), dev, answer);
     });
 }
 

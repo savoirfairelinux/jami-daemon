@@ -182,7 +182,9 @@ public:
 
     using PeerCertificateCb = std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt,
                                                  const dht::InfoHash& peer_account)>;
-    void onPeerMessage(const dht::crypto::PublicKey& peer_device, bool allowPublic, PeerCertificateCb&& cb);
+    void onPeerMessage(const dht::crypto::PublicKey& peer_device,
+                       bool allowPublic,
+                       PeerCertificateCb&& cb);
     bool onPeerCertificate(const std::shared_ptr<dht::crypto::Certificate>& crt,
                            bool allowPublic,
                            dht::InfoHash& account_id);
@@ -251,7 +253,7 @@ public:
 
     static std::shared_ptr<dht::Value> parseAnnounce(const std::string& announceBase64,
                                                      const std::string& accountId,
-                                                     const std::string& deviceId);
+                                                     const std::string& deviceSha1);
 
     // Name resolver
     using LookupCallback = NameDirectory::LookupCallback;
