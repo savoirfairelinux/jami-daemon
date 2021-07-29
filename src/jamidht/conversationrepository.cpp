@@ -84,7 +84,9 @@ public:
                    const std::string& commitId,
                    const std::string& parentId) const;
     bool isValidUserAtCommit(const std::string& userDevice, const std::string& commitId) const;
-    bool checkInitialCommit(const std::string& userDevice, const std::string& commitId) const;
+    bool checkInitialCommit(const std::string& userDevice,
+                            const std::string& commitId,
+                            const std::string& commitMsg) const;
     bool checkValidAdd(const std::string& userDevice,
                        const std::string& uriMember,
                        const std::string& commitid,
@@ -1168,7 +1170,8 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
 
 bool
 ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
-                                                 const std::string& commitId) const
+                                                 const std::string& commitId,
+                                                 const std::string& commitMsg) const
 {
     auto account = account_.lock();
     if (!account)
@@ -1189,11 +1192,24 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
         return false;
     }
 
+    std::string invited = {};
+    if (mode_ == ConversationMode::ONE_TO_ONE) {
+        std::string err;
+        Json::Value cm;
+        Json::CharReaderBuilder rbuilder;
+        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+        if (reader->parse(commitMsg.data(), commitMsg.data() + commitMsg.size(), &cm, &err)) {
+            invited = cm["invited"].asString();
+        } else {
+            JAMI_WARN("%s", err.c_str());
+        }
+    }
+
     auto hasDevice = false, hasAdmin = false;
     std::string adminsFile = std::string("admins") + "/" + userUri + ".crt";
     std::string deviceFile = std::string("devices") + "/" + userDevice + ".crt";
-    std::string invitedFile = std::string("invited") + "/" + account->getUsername();
     std::string crlFile = std::string("CRLs") + "/" + userUri;
+    std::string invitedFile = std::string("invited") + "/" + invited;
     // Check that admin cert is added
     // Check that device cert is added
     // Check CRLs added
@@ -1204,13 +1220,11 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
             hasAdmin = true;
         } else if (changedFile == deviceFile) {
             hasDevice = true;
-        } else if (changedFile == crlFile) {
-            // Nothing to do
-        } else if (changedFile == invitedFile && mode_ == ConversationMode::ONE_TO_ONE) {
+        } else if (changedFile == crlFile || changedFile == invitedFile) {
             // Nothing to do
         } else {
             // Invalid file detected
-            JAMI_ERR("Invalid add file detected: %s", changedFile.c_str());
+            JAMI_ERR("Invalid add file detected: %s %u", changedFile.c_str(), (int) *mode_);
             return false;
         }
     }
@@ -1979,7 +1993,7 @@ ConversationRepository::Impl::validCommits(
         auto userDevice = commit.author.email;
         auto validUserAtCommit = commit.id;
         if (commit.parents.size() == 0) {
-            if (!checkInitialCommit(userDevice, commit.id)) {
+            if (!checkInitialCommit(userDevice, commit.id, commit.commit_msg)) {
                 JAMI_WARN("Malformed initial commit %s. Please check you use the latest "
                           "version of Jami, or that your contact is not doing unwanted stuff.",
                           commit.id.c_str());

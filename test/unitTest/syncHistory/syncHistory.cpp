@@ -67,6 +67,7 @@ private:
     void testSyncCreateAccountExportDeleteReimportOldBackup();
     void testSyncCreateAccountExportDeleteReimportWithConvId();
     void testSyncCreateAccountExportDeleteReimportWithConvReq();
+    void testSyncOneToOne();
 
     CPPUNIT_TEST_SUITE(SyncHistoryTest);
     CPPUNIT_TEST(testCreateConversationThenSync);
@@ -78,6 +79,7 @@ private:
     CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportOldBackup);
     CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvId);
     CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvReq);
+    CPPUNIT_TEST(testSyncOneToOne);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -800,6 +802,62 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
     aliceAccount->acceptConversationRequest(convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
         return conversationReady && messageBobReceived == 1;
+    }));
+    std::remove(aliceArchive.c_str());
+}
+
+void
+SyncHistoryTest::testSyncOneToOne()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    // Start conversation
+    std::string convId;
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto conversationReady = false, alice2Ready = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId)
+                convId = conversationId;
+            else if (accountId == alice2Id && conversationId == convId)
+                conversationReady = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+                if (alice2Id != accountId) {
+                    return;
+                }
+                alice2Ready = details.at(DRing::Account::VolatileProperties::DEVICE_ANNOUNCED)
+                              == "true";
+                cv.notify_one();
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    aliceAccount->addContact(bobAccount->getUsername());
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return !convId.empty(); }));
+
+    // Now create alice2
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    std::remove(aliceArchive.c_str());
+    aliceAccount->exportArchive(aliceArchive);
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "ALICE2";
+    details[ConfProperties::ALIAS] = "ALICE2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
+
+    alice2Id = Manager::instance().addAccount(details);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
+        return alice2Ready && conversationReady;
     }));
     std::remove(aliceArchive.c_str());
 }
