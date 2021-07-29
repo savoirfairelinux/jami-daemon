@@ -283,6 +283,8 @@ public:
 
     bool isRendezVous() const { return isRendezVous_; }
 
+    bool isAutoAnswerEnabled() const { return autoAnswerEnabled_; }
+
     void attachCall(const std::string& id);
     void detachCall(const std::string& id);
 
