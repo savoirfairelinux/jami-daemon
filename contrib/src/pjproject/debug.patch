@@ -1,0 +1,61 @@
+ pjnath/src/pjnath/ice_session.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index f6a34e62d..cd32728de 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1447,11 +1447,13 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
+ 	case TIMER_CONTROLLING_TCP_PASSIVE_TIMEOUT:
+ 	LOG4((ice->obj_name, 
+ 	      "Controlling agent timed-out while waiting for incoming TCP checks. Set state to failed!"));
++	printf("@@@@@@@@@@@@@@@@@@@0\n");
+ 	on_ice_complete(ice, PJNATH_EICEFAILED);
+ 	break;
+     case TIMER_CONTROLLED_WAIT_NOM:
+ 	LOG4((ice->obj_name, 
+ 	      "Controlled agent timed-out while waiting for nomination controlling agent"));
++	printf("@@@@@@@@@@@@@@@@@@@1\n");
+ 	on_ice_complete(ice, PJNATH_EICENOMTIMEOUT);
+ 	break;
+     case TIMER_COMPLETION_CALLBACK:
+@@ -1585,6 +1587,7 @@ static void on_ice_complete(pj_ice_sess *ice, pj_status_t status)
+ 	/* Call callback */
+ 	if (ice->cb.on_ice_complete) {
+ 	    pj_time_val delay = {0, 0};
++		printf("@@@@@@@@@@@@@@@@@@@TIMER!\n");
+ 
+ 	    pj_timer_heap_schedule_w_grp_lock(ice->stun_cfg.timer_heap,
+ 	                                      &ice->timer, &delay,
+@@ -1667,6 +1670,7 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+     }
+     if (i == ice->comp_cnt) {
+ 	/* All components have nominated pair */
++	printf("@@@@@@@@@@@@@@@@@@@2\n");
+ 	on_ice_complete(ice, PJ_SUCCESS);
+ 	return PJ_TRUE;
+     }
+@@ -1735,6 +1739,7 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+ 		/* This component ID doesn't have valid pair.
+ 		* Mark ICE as failed. 
+ 		*/
++		printf("@@@@@@@@@@@@@@@@@@@3\n");
+ 		on_ice_complete(ice, PJNATH_EICEFAILED);
+ 		return PJ_TRUE;
+ 	    } else {
+@@ -1806,6 +1811,7 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+ 			* there's at least one component without nominated pair (or
+ 			* more likely we don't have any nominated pairs at all).
+ 			*/
++			printf("@@@@@@@@@@@@@@@@@@@4\n");
+ 			on_ice_complete(ice, PJNATH_EICEFAILED);
+ #if PJ_HAS_TCP
+ 		}
+@@ -1826,6 +1832,7 @@ static pj_bool_t check_ice_complete(pj_ice_sess *ice)
+ 		/* At least one component doesn't have a valid check. Mark
+ 		 * ICE as failed.
+ 		 */
++		printf("@@@@@@@@@@@@@@@@@@@5\n");
+ 		on_ice_complete(ice, PJNATH_EICEFAILED);
+ 		return PJ_TRUE;
+ 	    }
