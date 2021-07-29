@@ -2798,7 +2798,7 @@ Manager::ManagerPimpl::processIncomingCall(Call& incomCall, const std::string& a
 
             emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
         });
-    } else if (autoAnswer_) {
+    } else if (autoAnswer_ || account->isAutoAnswerEnabled()) {
         dht::ThreadPool::io().run([incomCallId] { Manager::instance().answerCall(incomCallId); });
     } else if (currentCall && currentCall->getCallId() != incomCallId) {
         // Test if already calling this person
