@@ -60,6 +60,33 @@ to_guile(const std::map<K, V>& map)
     return assoc;
 }
 
+template<typename... Args>
+static inline SCM
+pack_to_guile(Args... args)
+{
+    SCM lst = SCM_EOL;
+    std::vector<SCM> values = {to_guile(args)...};
+
+    while (values.size()) {
+        lst = scm_cons(values.back(), lst);
+        values.pop_back();
+    }
+
+    return lst;
+}
+
+template<typename... Args>
+static inline SCM
+apply_to_guile(SCM body_proc, Args... args)
+{
+    AGENT_ASSERT(scm_is_true(scm_procedure_p(body_proc)),
+                 "body_proc must be a procedure");
+
+    SCM arglst = pack_to_guile(args...);
+
+    return scm_apply_0(body_proc, arglst);
+}
+
 struct from_guile
 {
     SCM value;
