@@ -1,0 +1,84 @@
+From 935495e785e79ff4ea4c266f6c4da401b4998f33 Mon Sep 17 00:00:00 2001
+From: Olivier Dion <olivier.dion@polymtl.ca>
+Date: Wed, 28 Jul 2021 17:27:29 -0400
+Subject: [PATCH] pj/os_core: Register thread if not registered
+
+---
+ pjlib/src/pj/os_core_unix.c  | 35 ++++++++++++++++++++++++++++++++---
+ pjlib/src/pj/os_core_win32.c |  7 ++++---
+ 2 files changed, 36 insertions(+), 6 deletions(-)
+
+diff --git a/pjlib/src/pj/os_core_unix.c b/pjlib/src/pj/os_core_unix.c
+index c9a7b6fc1..2c6ff7c19 100644
+--- a/pjlib/src/pj/os_core_unix.c
++++ b/pjlib/src/pj/os_core_unix.c
+@@ -686,6 +686,18 @@ PJ_DEF(pj_status_t) pj_thread_resume(pj_thread_t *p)
+     return rc;
+ }
+ 
++#if PJ_DARWINOS
++static pthread_key_t key;
++static pthread_once_t key_once = PTHREAD_ONCE_INIT;
++
++static void
++make_key()
++{
++	(void) pthread_key_create(&key, free);
++}
++#endif
++
++
+ /*
+  * pj_thread_this()
+  */
+@@ -695,9 +707,26 @@ PJ_DEF(pj_thread_t*) pj_thread_this(void)
+     pj_thread_t *rec = (pj_thread_t*)pj_thread_local_get(thread_tls_id);
+ 
+     if (rec == NULL) {
+-	pj_assert(!"Calling pjlib from unknown/external thread. You must "
+-		   "register external threads with pj_thread_register() "
+-		   "before calling any pjlib functions.");
++
++	static pj_thread_t* dummy;
++
++#if PJ_DARWINOS
++        (void) pthread_once(&key_once, make_key);
++
++        pj_thread_t* desc;
++
++	if ((desc = pthread_getspecific(key)) == NULL) {
++		desc = malloc(sizeof(pj_thread_desc));
++		pj_bzero(desc, sizeof(pj_thread_desc));
++		(void) pthread_setspecific(key, desc);
++	}
++#else
++	static __thread pj_thread_desc desc;
++#endif
++
++	pj_thread_register(NULL, (long*)desc, &dummy);
++
++	rec = (pj_thread_t*)pj_thread_local_get(thread_tls_id);
+     }
+ 
+     /*
+diff --git a/pjlib/src/pj/os_core_win32.c b/pjlib/src/pj/os_core_win32.c
+index 09d714490..10715b60f 100644
+--- a/pjlib/src/pj/os_core_win32.c
++++ b/pjlib/src/pj/os_core_win32.c
+@@ -583,9 +583,10 @@ PJ_DEF(pj_thread_t*) pj_thread_this(void)
+     pj_thread_t *rec = pj_thread_local_get(thread_tls_id);
+ 
+     if (rec == NULL) {
+-	pj_assert(!"Calling pjlib from unknown/external thread. You must "
+-		   "register external threads with pj_thread_register() "
+-		   "before calling any pjlib functions.");
++        static __declspec(thread) pj_thread_desc desc;
++	static __declspec(thread) pj_thread_t* this_thread;
++	pj_thread_register(NULL, desc, &this_thread);
++	rec = (pj_thread_t*)pj_thread_local_get(thread_tls_id);
+     }
+ 
+     /*
+-- 
+2.32.0
+
