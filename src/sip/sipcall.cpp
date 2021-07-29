@@ -695,7 +695,6 @@ SIPCall::setInviteSession(pjsip_inv_session* inviteSession)
 void
 SIPCall::terminateSipSession(int status)
 {
-    sip_utils::register_thread();
 
     JAMI_DBG("[call:%s] Terminate SIP session", getCallId().c_str());
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
