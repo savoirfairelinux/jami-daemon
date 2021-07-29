@@ -769,7 +769,9 @@ AccountManager::forEachDevice(
         [this, to, state](DeviceAnnouncement&& dev) {
             if (dev.from != to)
                 return true;
-            if (dev.pk) {
+            // Use public key if certificate is not pinned in CertStore
+            auto cert = tls::CertificateStore::instance().getCertificate(dev.dev.toString());
+            if (dev.pk && cert) {
                 state->found(std::move(dev.pk));
             } else {
                 state->remaining++;
