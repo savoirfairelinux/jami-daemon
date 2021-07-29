@@ -3270,7 +3270,6 @@ JamiAccount::sendTextMessage(const std::string& to,
 
     std::shared_ptr<std::set<DeviceId>> devices = std::make_shared<std::set<DeviceId>>();
     std::unique_lock<std::mutex> lk(sipConnsMtx_);
-    sip_utils::register_thread();
 
     for (auto it = sipConns_.begin(); it != sipConns_.end();) {
         auto& [key, value] = *it;
@@ -4805,7 +4804,6 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
         auto shared = w.lock();
         if (!shared)
             return;
-        sip_utils::register_thread();
         auto status = pjsip_endpt_send_request(shared->link_.getEndpoint(), tdata, -1, ctx, cb);
         if (status != PJ_SUCCESS)
             JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
@@ -4863,7 +4861,6 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
     }
 
     // Convert to SIP transport
-    sip_utils::register_thread();
     auto onShutdown = [w = weak(), peerId, key, socket]() {
         auto shared = w.lock();
         if (!shared)
