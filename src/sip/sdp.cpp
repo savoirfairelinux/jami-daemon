@@ -59,7 +59,6 @@ static constexpr int POOL_INCREMENT_SIZE = POOL_INITIAL_SIZE;
 Sdp::Sdp(const std::string& id)
     : memPool_(nullptr,
                [](pj_pool_t* pool) {
-                   sip_utils::register_thread();
                    pj_pool_release(pool);
                })
     , publishedIpAddr_()
@@ -67,7 +66,6 @@ Sdp::Sdp(const std::string& id)
     , telephoneEventPayload_(101) // same as asterisk
     , sessionName_("Call ID " + id)
 {
-    sip_utils::register_thread();
     memPool_.reset(pj_pool_create(&Manager::instance().sipVoIPLink().getCachingPool()->factory,
                                   id.c_str(),
                                   POOL_INITIAL_SIZE,
@@ -456,7 +454,6 @@ void
 Sdp::printSession(const pjmedia_sdp_session* session, const char* header, SdpDirection direction)
 {
     static constexpr size_t BUF_SZ = 4095;
-    sip_utils::register_thread();
     std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&>
         tmpPool_(pj_pool_create(&Manager::instance().sipVoIPLink().getCachingPool()->factory,
                                 "printSdp",
@@ -674,7 +671,6 @@ Sdp::startNegotiation()
 std::string
 Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, unsigned pt_keep)
 {
-    sip_utils::register_thread();
     static constexpr size_t BUF_SZ = 4096;
     std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&>
         tmpPool_(pj_pool_create(&Manager::instance().sipVoIPLink().getCachingPool()->factory,
