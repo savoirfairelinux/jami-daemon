@@ -704,7 +704,7 @@ AccountManager::sendTrustRequestConfirm(const dht::InfoHash& toH, const std::str
         JAMI_WARN("sending trust request reply: %s / %s",
                   toH.toString().c_str(),
                   dev->getLongId().toString().c_str());
-        dht_->putEncrypted(dht::InfoHash::get("inbox:" + info_->devicePk->getId().toString()),
+        dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev->getId().toString()),
                            dev,
                            answer);
     });
