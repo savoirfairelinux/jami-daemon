@@ -2182,7 +2182,6 @@ SIPAccount::sendTextMessage(const std::string& to,
         return;
     }
 
-    sip_utils::register_thread();
 
     auto toUri = getToUri(to);
 
