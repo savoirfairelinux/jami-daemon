@@ -58,7 +58,6 @@ RUN add-apt-repository universe && \
         libopus-dev \
         libudev-dev \
         libjsoncpp-dev \
-        libmsgpack-dev \
         libnatpmp-dev \
         libayatana-appindicator3-dev \
         libqrencode-dev \
