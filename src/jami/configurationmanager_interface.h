@@ -60,7 +60,8 @@ DRING_PUBLIC void setAccountDetails(const std::string& accountID,
                                     const std::map<std::string, std::string>& details);
 DRING_PUBLIC void setAccountActive(const std::string& accountID, bool active);
 DRING_PUBLIC std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
-DRING_PUBLIC std::string addAccount(const std::map<std::string, std::string>& details, const std::string& accountID={});
+DRING_PUBLIC std::string addAccount(const std::map<std::string, std::string>& details,
+                                    const std::string& accountID = {});
 DRING_PUBLIC void monitor(bool continuous);
 DRING_PUBLIC bool exportOnRing(const std::string& accountID, const std::string& password);
 DRING_PUBLIC bool exportToFile(const std::string& accountID,
@@ -185,40 +186,6 @@ DRING_PUBLIC void setShortcuts(const std::map<std::string, std::string>& shortcu
 
 DRING_PUBLIC void setVolume(const std::string& device, double value);
 DRING_PUBLIC double getVolume(const std::string& device);
-
-/*
- * Security
- */
-DRING_PUBLIC std::map<std::string, std::string> validateCertificate(const std::string& accountId,
-                                                                    const std::string& certificate);
-DRING_PUBLIC std::map<std::string, std::string> validateCertificatePath(
-    const std::string& accountId,
-    const std::string& certificatePath,
-    const std::string& privateKey,
-    const std::string& privateKeyPassword,
-    const std::string& caList);
-
-DRING_PUBLIC std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
-DRING_PUBLIC std::map<std::string, std::string> getCertificateDetailsPath(
-    const std::string& certificatePath,
-    const std::string& privateKey,
-    const std::string& privateKeyPassword);
-
-DRING_PUBLIC std::vector<std::string> getPinnedCertificates();
-
-DRING_PUBLIC std::vector<std::string> pinCertificate(const std::vector<uint8_t>& certificate,
-                                                     bool local);
-DRING_PUBLIC bool unpinCertificate(const std::string& certId);
-
-DRING_PUBLIC void pinCertificatePath(const std::string& path);
-DRING_PUBLIC unsigned unpinCertificatePath(const std::string& path);
-
-DRING_PUBLIC bool pinRemoteCertificate(const std::string& accountId, const std::string& certId);
-DRING_PUBLIC bool setCertificateStatus(const std::string& account,
-                                       const std::string& certId,
-                                       const std::string& status);
-DRING_PUBLIC std::vector<std::string> getCertificatesByStatus(const std::string& account,
-                                                              const std::string& status);
 
 /* contact requests */
 DRING_PUBLIC std::vector<std::map<std::string, std::string>> getTrustRequests(
@@ -455,29 +422,6 @@ struct DRING_PUBLIC ConfigurationSignal
                              int state,
                              const std::string& /*query*/,
                              const std::vector<std::map<std::string, std::string>>& /*results*/);
-    };
-    struct DRING_PUBLIC CertificatePinned
-    {
-        constexpr static const char* name = "CertificatePinned";
-        using cb_type = void(const std::string& /*certId*/);
-    };
-    struct DRING_PUBLIC CertificatePathPinned
-    {
-        constexpr static const char* name = "CertificatePathPinned";
-        using cb_type = void(const std::string& /*path*/,
-                             const std::vector<std::string>& /*certId*/);
-    };
-    struct DRING_PUBLIC CertificateExpired
-    {
-        constexpr static const char* name = "CertificateExpired";
-        using cb_type = void(const std::string& /*certId*/);
-    };
-    struct DRING_PUBLIC CertificateStateChanged
-    {
-        constexpr static const char* name = "CertificateStateChanged";
-        using cb_type = void(const std::string& /*account_id*/,
-                             const std::string& /*certId*/,
-                             const std::string& /*state*/);
     };
     struct DRING_PUBLIC MediaParametersChanged
     {

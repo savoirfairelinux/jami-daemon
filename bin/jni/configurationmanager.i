@@ -44,11 +44,6 @@ public:
     virtual void contactAdded(const std::string& /*account_id*/, const std::string& /*uri*/, bool confirmed){}
     virtual void contactRemoved(const std::string& /*account_id*/, const std::string& /*uri*/, bool banned){}
 
-    virtual void certificatePinned(const std::string& /*certId*/){}
-    virtual void certificatePathPinned(const std::string& /*path*/, const std::vector<std::string>& /*certId*/){}
-    virtual void certificateExpired(const std::string& /*certId*/){}
-    virtual void certificateStateChanged(const std::string& /*account_id*/, const std::string& /*certId*/, const std::string& /*state*/){}
-
     virtual void errorAlert(int alert){}
     virtual void getHardwareAudioFormat(std::vector<int32_t>* /*params_ret*/){}
     virtual void getAppDataPath(const std::string& /* name */, std::vector<std::string>* /*path_ret*/){}
@@ -182,32 +177,6 @@ void setShortcuts(const std::map<std::string, std::string> &shortcutsMap);
 void setVolume(const std::string& device, double value);
 double getVolume(const std::string& device);
 
-/*
- * Security
- */
-std::map<std::string, std::string> validateCertificatePath(const std::string& accountId,
-                                                       const std::string& certificate,
-                                                       const std::string& privateKey,
-                                                       const std::string& privateKeyPassword,
-                                                       const std::string& caList);
-
-std::map<std::string, std::string> validateCertificate(const std::string& accountId, const std::string& certificate);
-
-std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
-std::map<std::string, std::string> getCertificateDetailsPath(const std::string& certificate, const std::string& privateKey, const std::string& privateKeyPass);
-
-std::vector<std::string> getPinnedCertificates();
-
-std::vector<std::string> pinCertificate(const std::vector<uint8_t>& certificate, bool local);
-bool unpinCertificate(const std::string& certId);
-
-void pinCertificatePath(const std::string& path);
-unsigned unpinCertificatePath(const std::string& path);
-
-bool pinRemoteCertificate(const std::string& accountId, const std::string& certId);
-bool setCertificateStatus(const std::string& account, const std::string& certId, const std::string& status);
-std::vector<std::string> getCertificatesByStatus(const std::string& account, const std::string& status);
-
 /* contact requests */
 std::vector<std::map<std::string, std::string>> getTrustRequests(const std::string& accountId);
 bool acceptTrustRequest(const std::string& accountId, const std::string& from);
@@ -258,11 +227,6 @@ public:
     virtual void incomingTrustRequest(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*from*/, const std::vector<uint8_t>& /*payload*/, time_t received){}
     virtual void contactAdded(const std::string& /*account_id*/, const std::string& /*uri*/, bool confirmed){}
     virtual void contactRemoved(const std::string& /*account_id*/, const std::string& /*uri*/, bool banned){}
-
-    virtual void certificatePinned(const std::string& /*certId*/){}
-    virtual void certificatePathPinned(const std::string& /*path*/, const std::vector<std::string>& /*certId*/){}
-    virtual void certificateExpired(const std::string& /*certId*/){}
-    virtual void certificateStateChanged(const std::string& /*account_id*/, const std::string& /*certId*/, const std::string& /*state*/){}
 
     virtual void errorAlert(int alert){}
     virtual void getHardwareAudioFormat(std::vector<int32_t>* /*params_ret*/){}
