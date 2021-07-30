@@ -71,7 +71,6 @@ libjami_sources = files(
     'security/diffie-hellman.cpp',
     'security/memory.cpp',
     'security/tls_session.cpp',
-    'security/tlsvalidator.cpp',
     'sip/pres_sub_client.cpp',
     'sip/pres_sub_server.cpp',
     'sip/sdes_negotiator.cpp',

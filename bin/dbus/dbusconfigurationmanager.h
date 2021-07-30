@@ -180,29 +180,6 @@ public:
     void setShortcuts(const std::map<std::string, std::string>& shortcutsMap);
     void setVolume(const std::string& device, const double& value);
     double getVolume(const std::string& device);
-    std::map<std::string, std::string> validateCertificate(const std::string& accountId,
-                                                           const std::string& certificate);
-    std::map<std::string, std::string> validateCertificatePath(const std::string& accountId,
-                                                               const std::string& certificatePath,
-                                                               const std::string& privateKey,
-                                                               const std::string& privateKeyPass,
-                                                               const std::string& caList);
-    std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
-    std::map<std::string, std::string> getCertificateDetailsPath(const std::string& certificatePath,
-                                                                 const std::string& privateKey,
-                                                                 const std::string& privateKeyPass);
-    std::vector<std::string> getPinnedCertificates();
-    std::vector<std::string> pinCertificate(const std::vector<uint8_t>& certificate,
-                                            const bool& local);
-    bool unpinCertificate(const std::string& certId);
-    void pinCertificatePath(const std::string& path);
-    unsigned unpinCertificatePath(const std::string& path);
-    bool pinRemoteCertificate(const std::string& accountId, const std::string& certId);
-    bool setCertificateStatus(const std::string& account,
-                              const std::string& certId,
-                              const std::string& status);
-    std::vector<std::string> getCertificatesByStatus(const std::string& account,
-                                                     const std::string& status);
     std::vector<std::map<std::string, std::string>> getTrustRequests(const std::string& accountId);
     bool acceptTrustRequest(const std::string& accountId, const std::string& from);
     bool discardTrustRequest(const std::string& accountId, const std::string& from);
@@ -284,9 +261,9 @@ public:
                                       const std::string& fromMessage,
                                       const uint32_t& n);
     uint32_t countInteractions(const std::string& accountId,
-                                const std::string& conversationId,
-                                const std::string& toId,
-                                const std::string& fromId);
+                               const std::string& conversationId,
+                               const std::string& toId,
+                               const std::string& fromId);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__

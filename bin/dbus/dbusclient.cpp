@@ -249,14 +249,6 @@ DBusClient::initLibrary(int flags)
             bind(&DBusConfigurationManager::deviceRevocationEnded, confM, _1, _2, _3)),
         exportable_callback<ConfigurationSignal::AccountProfileReceived>(
             bind(&DBusConfigurationManager::accountProfileReceived, confM, _1, _2, _3)),
-        exportable_callback<ConfigurationSignal::CertificatePinned>(
-            bind(&DBusConfigurationManager::certificatePinned, confM, _1)),
-        exportable_callback<ConfigurationSignal::CertificatePathPinned>(
-            bind(&DBusConfigurationManager::certificatePathPinned, confM, _1, _2)),
-        exportable_callback<ConfigurationSignal::CertificateExpired>(
-            bind(&DBusConfigurationManager::certificateExpired, confM, _1)),
-        exportable_callback<ConfigurationSignal::CertificateStateChanged>(
-            bind(&DBusConfigurationManager::certificateStateChanged, confM, _1, _2, _3)),
         exportable_callback<ConfigurationSignal::MediaParametersChanged>(
             bind(&DBusConfigurationManager::mediaParametersChanged, confM, _1)),
         exportable_callback<ConfigurationSignal::MigrationEnded>(

@@ -531,100 +531,6 @@ DBusConfigurationManager::setAccountsOrder(const std::string& order)
 }
 
 auto
-DBusConfigurationManager::validateCertificate(const std::string& accountId,
-                                              const std::string& certificate)
-    -> decltype(DRing::validateCertificate(accountId, certificate))
-{
-    return DRing::validateCertificate(accountId, certificate);
-}
-
-auto
-DBusConfigurationManager::validateCertificatePath(const std::string& accountId,
-                                                  const std::string& certificate,
-                                                  const std::string& privateKey,
-                                                  const std::string& privateKeyPass,
-                                                  const std::string& caList)
-    -> decltype(
-        DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList))
-{
-    return DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList);
-}
-
-auto
-DBusConfigurationManager::getCertificateDetails(const std::string& certificate)
-    -> decltype(DRing::getCertificateDetails(certificate))
-{
-    return DRing::getCertificateDetails(certificate);
-}
-
-auto
-DBusConfigurationManager::getCertificateDetailsPath(const std::string& certificate,
-                                                    const std::string& privateKey,
-                                                    const std::string& privateKeyPass)
-    -> decltype(DRing::getCertificateDetailsPath(certificate, privateKey, privateKeyPass))
-{
-    return DRing::getCertificateDetailsPath(certificate, privateKey, privateKeyPass);
-}
-
-auto
-DBusConfigurationManager::getPinnedCertificates() -> decltype(DRing::getPinnedCertificates())
-{
-    return DRing::getPinnedCertificates();
-}
-
-auto
-DBusConfigurationManager::pinCertificate(const std::vector<uint8_t>& certificate, const bool& local)
-    -> decltype(DRing::pinCertificate(certificate, local))
-{
-    return DRing::pinCertificate(certificate, local);
-}
-
-void
-DBusConfigurationManager::pinCertificatePath(const std::string& certPath)
-{
-    return DRing::pinCertificatePath(certPath);
-}
-
-auto
-DBusConfigurationManager::unpinCertificate(const std::string& certId)
-    -> decltype(DRing::unpinCertificate(certId))
-{
-    return DRing::unpinCertificate(certId);
-}
-
-auto
-DBusConfigurationManager::unpinCertificatePath(const std::string& p)
-    -> decltype(DRing::unpinCertificatePath(p))
-{
-    return DRing::unpinCertificatePath(p);
-}
-
-auto
-DBusConfigurationManager::pinRemoteCertificate(const std::string& accountId,
-                                               const std::string& certId)
-    -> decltype(DRing::pinRemoteCertificate(accountId, certId))
-{
-    return DRing::pinRemoteCertificate(accountId, certId);
-}
-
-auto
-DBusConfigurationManager::setCertificateStatus(const std::string& accountId,
-                                               const std::string& certId,
-                                               const std::string& status)
-    -> decltype(DRing::setCertificateStatus(accountId, certId, status))
-{
-    return DRing::setCertificateStatus(accountId, certId, status);
-}
-
-auto
-DBusConfigurationManager::getCertificatesByStatus(const std::string& accountId,
-                                                  const std::string& status)
-    -> decltype(DRing::getCertificatesByStatus(accountId, status))
-{
-    return DRing::getCertificatesByStatus(accountId, status);
-}
-
-auto
 DBusConfigurationManager::getTrustRequests(const std::string& accountId)
     -> decltype(DRing::getTrustRequests(accountId))
 {
@@ -934,9 +840,9 @@ DBusConfigurationManager::loadConversationMessages(const std::string& accountId,
 
 uint32_t
 DBusConfigurationManager::countInteractions(const std::string& accountId,
-                                                 const std::string& conversationId,
-                                                 const std::string& toId,
-                                                 const std::string& fromId)
+                                            const std::string& conversationId,
+                                            const std::string& toId,
+                                            const std::string& fromId)
 {
     return DRing::countInteractions(accountId, conversationId, toId, fromId);
 }

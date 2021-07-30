@@ -264,7 +264,6 @@ CertificateStore::pinCertificatePath(const std::string& path,
         JAMI_DBG("CertificateStore: loaded %zu certificates from %s.", certs.size(), path.c_str());
         if (cb)
             cb(ids);
-        emitSignal<DRing::ConfigurationSignal::CertificatePathPinned>(path, ids);
     });
 }
 
@@ -336,8 +335,6 @@ CertificateStore::pinCertificate(const std::shared_ptr<crypto::Certificate>& cer
                 fileutils::saveFile(certPath_ + DIR_SEPARATOR_CH + ids.front(), cert->getPacked());
         }
     }
-    for (const auto& id : ids)
-        emitSignal<DRing::ConfigurationSignal::CertificatePinned>(id);
     return ids;
 }
 

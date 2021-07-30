@@ -2709,13 +2709,8 @@ JamiAccount::setCertificateStatus(const std::string& cert_id,
                                   tls::TrustStore::PermissionStatus status)
 {
     bool done = accountManager_ ? accountManager_->setCertificateStatus(cert_id, status) : false;
-    if (done) {
+    if (done)
         findCertificate(cert_id);
-        emitSignal<DRing::ConfigurationSignal::CertificateStateChanged>(getAccountID(),
-                                                                        cert_id,
-                                                                        tls::TrustStore::statusToStr(
-                                                                            status));
-    }
     return done;
 }
 
