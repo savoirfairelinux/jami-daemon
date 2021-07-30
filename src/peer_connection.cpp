@@ -280,7 +280,7 @@ TlsSocketEndpoint::Impl::verifyCertificate(gnutls_session_t session)
         return verified;
     if (peerCertificateCheckFunc) {
         if (!peerCertificateCheckFunc(crt)) {
-            JAMI_ERR() << "[TLS-SOCKET] Unexpected peer certificate";
+            JAMI_ERR() << "[TLS-SOCKET] Refusing peer certificate";
             return GNUTLS_E_CERTIFICATE_ERROR;
         }
 
