@@ -573,7 +573,7 @@ AccountManager::findCertificate(
         if (cb)
             cb(cert);
     } else {
-        dht_->findCertificate(h, [cb](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+        dht_->findCertificate(h, [cb = std::move(cb)](const std::shared_ptr<dht::crypto::Certificate>& crt) {
             if (crt)
                 tls::CertificateStore::instance().pinCertificate(crt);
             if (cb)
