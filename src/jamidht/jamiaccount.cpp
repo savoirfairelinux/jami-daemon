@@ -2189,7 +2189,7 @@ JamiAccount::doRegister_()
                     if (accountManager_->getInfo()->deviceId == deviceId)
                         return;
 
-                    std::lock_guard<std::mutex> lk(connManagerMtx_);
+                    std::unique_lock<std::mutex> lk(connManagerMtx_);
                     if (!connectionManager_)
                         connectionManager_ = std::make_unique<ConnectionManager>(*this);
                     auto channelName = "sync://" + deviceId;
@@ -2206,6 +2206,10 @@ JamiAccount::doRegister_()
                                                           if (socket)
                                                               syncWith(deviceId, socket);
                                                       });
+                    lk.unlock();
+                    requestSIPConnection(
+                        getUsername(),
+                        crt->getLongId()); // For git notifications, will use the same socket as sync
                 },
                 [this] {
                     deviceAnnounced_ = true;
