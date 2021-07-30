@@ -285,6 +285,8 @@ public:
 
     bool isAutoAnswerEnabled() const { return autoAnswerEnabled_; }
 
+    bool isSendMessageDisplayedEnabled() const { return sendMessageDisplayed_; }
+
     void attachCall(const std::string& id);
     void detachCall(const std::string& id);
 
@@ -458,6 +460,7 @@ protected:
     static const char* const HOSTNAME_KEY;
     static const char* const ACCOUNT_ENABLE_KEY;
     static const char* const ACCOUNT_AUTOANSWER_KEY;
+    static const char* const ACCOUNT_SENDDISPLAYED_KEY;
     static const char* const ACCOUNT_ISRENDEZVOUS_KEY;
     static const char* const ACCOUNT_ACTIVE_CALL_LIMIT_KEY;
     static const char* const MAILBOX_KEY;
@@ -520,6 +523,9 @@ protected:
 
     /* If true, automatically answer calls to this account */
     bool autoAnswerEnabled_;
+
+    // If true, send Displayed status (and emit to the client)
+    bool sendMessageDisplayed_;
 
     /* If true mix calls into a conference */
     bool isRendezVous_;

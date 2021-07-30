@@ -82,6 +82,7 @@ const char* const Account::PASSWORD_KEY = "password";
 const char* const Account::HOSTNAME_KEY = "hostname";
 const char* const Account::ACCOUNT_ENABLE_KEY = "enable";
 const char* const Account::ACCOUNT_AUTOANSWER_KEY = "autoAnswer";
+const char* const Account::ACCOUNT_SENDDISPLAYED_KEY = "sendDisplayed";
 const char* const Account::ACCOUNT_ISRENDEZVOUS_KEY = "rendezVous";
 const char* const Account::ACCOUNT_ACTIVE_CALL_LIMIT_KEY = "activeCallLimit";
 const char* const Account::MAILBOX_KEY = "mailbox";
@@ -96,9 +97,10 @@ const char* const Account::LOCAL_MODERATORS_ENABLED_KEY = "localModeratorsEnable
 const char* const Account::ALL_MODERATORS_ENABLED_KEY = "allModeratorsEnabled";
 
 #ifdef __ANDROID__
-constexpr const char* const DEFAULT_RINGTONE_PATH = "/data/data/cx.ring/files/ringtones/default.opus";
+constexpr const char* const DEFAULT_RINGTONE_PATH
+    = "/data/data/cx.ring/files/ringtones/default.opus";
 #else
-constexpr const char* const DEFAULT_RINGTONE_PATH =  PROGSHAREDIR "/ringtones/default.opus";
+constexpr const char* const DEFAULT_RINGTONE_PATH = PROGSHAREDIR "/ringtones/default.opus";
 #endif
 
 Account::Account(const std::string& accountID)
@@ -109,6 +111,7 @@ Account::Account(const std::string& accountID)
     , alias_()
     , enabled_(true)
     , autoAnswerEnabled_(false)
+    , sendMessageDisplayed_(true)
     , isRendezVous_(false)
     , registrationState_(RegistrationState::UNREGISTERED)
     , systemCodecContainer_(getSystemCodecContainer())
@@ -122,7 +125,8 @@ Account::Account(const std::string& accountID)
     , upnpEnabled_(true)
     , localModeratorsEnabled_(true)
     , allModeratorsEnabled_(true)
-#if (defined(__linux__) and not defined(__ANDROID__)) || defined(WIN32) || (defined(__APPLE__) && TARGET_OS_MAC)
+#if (defined(__linux__) and not defined(__ANDROID__)) || defined(WIN32) \
+    || (defined(__APPLE__) && TARGET_OS_MAC)
     , multiStreamEnabled_(true)
 #else
     , multiStreamEnabled_(false)
@@ -234,6 +238,7 @@ Account::serialize(YAML::Emitter& out) const
     out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value << activeCodecs;
     out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
     out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled_;
+    out << YAML::Key << ACCOUNT_SENDDISPLAYED_KEY << YAML::Value << sendMessageDisplayed_;
     out << YAML::Key << ACCOUNT_ISRENDEZVOUS_KEY << YAML::Value << isRendezVous_;
     out << YAML::Key << ACCOUNT_ACTIVE_CALL_LIMIT_KEY << YAML::Value << activeCallLimit_;
     out << YAML::Key << RINGTONE_ENABLED_KEY << YAML::Value << ringtoneEnabled_;
@@ -257,6 +262,7 @@ Account::unserialize(const YAML::Node& node)
     parseValue(node, ALIAS_KEY, alias_);
     parseValue(node, ACCOUNT_ENABLE_KEY, enabled_);
     parseValue(node, ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled_);
+    parseValueOptional(node, ACCOUNT_SENDDISPLAYED_KEY, sendMessageDisplayed_);
     parseValueOptional(node, ACCOUNT_ISRENDEZVOUS_KEY, isRendezVous_);
     parseValue(node, ACCOUNT_ACTIVE_CALL_LIMIT_KEY, activeCallLimit_);
     // parseValue(node, PASSWORD_KEY, password_);
@@ -314,6 +320,7 @@ Account::setAccountDetails(const std::map<std::string, std::string>& details)
     parseString(details, Conf::CONFIG_ACCOUNT_HOSTNAME, hostname_);
     parseString(details, Conf::CONFIG_ACCOUNT_MAILBOX, mailBox_);
     parseBool(details, Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
+    parseBool(details, Conf::CONFIG_ACCOUNT_SENDDISPLAYED, sendMessageDisplayed_);
     parseBool(details, Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous_);
     parseInt(details, DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, activeCallLimit_);
     parseBool(details, Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
@@ -348,6 +355,7 @@ Account::getAccountDetails() const
             {Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent_},
             {Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_ ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_ ? TRUE_STR : FALSE_STR},
+            {Conf::CONFIG_ACCOUNT_SENDDISPLAYED, sendMessageDisplayed_ ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous_ ? TRUE_STR : FALSE_STR},
             {DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, std::to_string(activeCallLimit_)},
             {Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled_ ? TRUE_STR : FALSE_STR},
@@ -712,9 +720,8 @@ bool
 Account::meetMinimumRequiredVersion(const std::vector<unsigned>& version,
                                     const std::vector<unsigned>& minRequiredVersion)
 {
-    for (size_t i=0; i<minRequiredVersion.size(); i++) {
-        if (i == version.size() or
-            version[i] < minRequiredVersion[i])
+    for (size_t i = 0; i < minRequiredVersion.size(); i++) {
+        if (i == version.size() or version[i] < minRequiredVersion[i])
             return false;
         if (version[i] > minRequiredVersion[i])
             return true;

@@ -110,6 +110,7 @@ private:
     void testPingPongMessages();
     void testIsComposing();
     void testSetMessageDisplayed();
+    void testSetMessageDisplayedPreference();
     void testRemoveMember();
     void testMemberBanNoBadFile();
     void testMemberTryToRemoveAdmin();
@@ -120,6 +121,7 @@ private:
     void testVoteNonEmpty();
     void testAdminCannotKickTheirself();
     void testCommitUnauthorizedUser();
+
     // LATER void testBanDevice();
     // LATER void testBannedDeviceCannotSendMessageButMemberCan();
     // LATER void testRevokedDeviceCannotSendMessage();
@@ -177,6 +179,7 @@ private:
     CPPUNIT_TEST(testPingPongMessages);
     CPPUNIT_TEST(testIsComposing);
     CPPUNIT_TEST(testSetMessageDisplayed);
+    CPPUNIT_TEST(testSetMessageDisplayedPreference);
     CPPUNIT_TEST(testRemoveMember);
     CPPUNIT_TEST(testMemberBanNoBadFile);
     CPPUNIT_TEST(testMemberTryToRemoveAdmin);
@@ -1291,6 +1294,96 @@ ConversationTest::testSetMessageDisplayed()
                                 })
                    != membersInfos.end());
 
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConversationTest::testSetMessageDisplayedPreference()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+    auto convId = aliceAccount->startConversation();
+    auto details = aliceAccount->getAccountDetails();
+    CPPUNIT_ASSERT(details[ConfProperties::SENDDISPLAYED] == "true");
+    details[ConfProperties::SENDDISPLAYED] = "false";
+    DRing::setAccountDetails(aliceId, details);
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false, memberMessageGenerated = false,
+         msgDisplayed = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == bobId && conversationId == convId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            std::map<std::string, std::string> message) {
+            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
+                memberMessageGenerated = true;
+                cv.notify_one();
+            }
+        }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                const std::string& peer,
+                const std::string& msgId,
+                int status) {
+                if (accountId == bobId && conversationId == convId && msgId == conversationId
+                    && peer == aliceUri && status == 3) {
+                    msgDisplayed = true;
+                    cv.notify_one();
+                }
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+    aliceAccount->addConversationMember(convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]() {
+        return requestReceived && memberMessageGenerated;
+    }));
+    memberMessageGenerated = false;
+    bobAccount->acceptConversationRequest(convId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberMessageGenerated; }));
+
+    // Last displayed messages should not be set yet
+    auto membersInfos = aliceAccount->getConversationMembers(convId);
+    CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
+                                membersInfos.end(),
+                                [&](auto infos) {
+                                    return infos["uri"] == aliceUri && infos["lastDisplayed"] == "";
+                                })
+                   != membersInfos.end());
+
+    aliceAccount->setMessageDisplayed("swarm:" + convId, convId, 3);
+    // Bob should not receive anything here, as sendMessageDisplayed is disabled for Alice
+    CPPUNIT_ASSERT(!cv.wait_for(lk, std::chrono::seconds(10), [&]() { return msgDisplayed; }));
+
+    // Assert that message is set as displayed for self (for the read status)
+    membersInfos = aliceAccount->getConversationMembers(convId);
+    CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
+                                membersInfos.end(),
+                                [&](auto infos) {
+                                    return infos["uri"] == aliceUri
+                                           && infos["lastDisplayed"] == convId;
+                                })
+                   != membersInfos.end());
     DRing::unregisterSignalHandlers();
 }
 
