@@ -532,14 +532,22 @@ AccountManager::getRequest(const std::string& id) const
     return std::nullopt;
 }
 
-void
+bool
 AccountManager::addConversationRequest(const std::string& id, const ConversationRequest& req)
 {
     if (info_) {
         std::lock_guard<std::mutex> lk(conversationsRequestsMtx);
+        auto it = info_->conversationsRequests.find(id);
+        if (it != info_->conversationsRequests.end()) {
+            // Check if updated
+            if (req == it->second)
+                return false;
+        }
         info_->conversationsRequests[id] = req;
         saveConvRequests();
+        return true;
     }
+    return false;
 }
 
 void
@@ -724,7 +732,8 @@ AccountManager::forEachDevice(
 
     struct State
     {
-        unsigned remaining {1}; // Note: state is initialized to 1, because we need to wait that the get is finished
+        unsigned remaining {
+            1}; // Note: state is initialized to 1, because we need to wait that the get is finished
         std::set<dht::PkId> treatedDevices {};
         std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)> onDevice;
         std::function<void(bool)> onEnd;
@@ -767,9 +776,7 @@ AccountManager::forEachDevice(
             });
             return true;
         },
-        [state](bool /*ok*/) {
-            state->found({});
-        });
+        [state](bool /*ok*/) { state->found({}); });
 }
 
 void

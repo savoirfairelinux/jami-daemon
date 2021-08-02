@@ -68,6 +68,7 @@ private:
     void testSyncCreateAccountExportDeleteReimportWithConvId();
     void testSyncCreateAccountExportDeleteReimportWithConvReq();
     void testSyncOneToOne();
+    void testConversationRequestRemoved();
 
     CPPUNIT_TEST_SUITE(SyncHistoryTest);
     CPPUNIT_TEST(testCreateConversationThenSync);
@@ -80,6 +81,7 @@ private:
     CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvId);
     CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvReq);
     CPPUNIT_TEST(testSyncOneToOne);
+    CPPUNIT_TEST(testConversationRequestRemoved);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -859,6 +861,93 @@ SyncHistoryTest::testSyncOneToOne()
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
         return alice2Ready && conversationReady;
     }));
+    std::remove(aliceArchive.c_str());
+}
+
+void
+SyncHistoryTest::testConversationRequestRemoved()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+
+    // Export alice
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    std::remove(aliceArchive.c_str());
+    aliceAccount->exportArchive(aliceArchive);
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto uri = aliceAccount->getUsername();
+
+    // Start conversation for Alice
+    auto convId = bobAccount->startConversation();
+
+    // Check that alice receives the request
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    auto requestReceived = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                std::map<std::string, std::string> /*metadatas*/) {
+                if (accountId == aliceId && conversationId == convId) {
+                    requestReceived = true;
+                    cv.notify_one();
+                }
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    bobAccount->addConversationMember(convId, uri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return requestReceived; }));
+    DRing::unregisterSignalHandlers();
+    confHandlers.clear();
+
+    // Now create alice2
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "ALICE2";
+    details[ConfProperties::ALIAS] = "ALICE2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
+    alice2Id = Manager::instance().addAccount(details);
+
+    requestReceived = false;
+    bool requestDeclined = false, requestDeclined2 = false;
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                std::map<std::string, std::string> /*metadatas*/) {
+                if (accountId == alice2Id && conversationId == convId) {
+                    requestReceived = true;
+                    cv.notify_one();
+                }
+            }));
+    confHandlers.insert(
+        DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestDeclined>(
+            [&](const std::string& accountId, const std::string& conversationId) {
+                if (conversationId != convId)
+                    return;
+                if (accountId == aliceId)
+                    requestDeclined = true;
+                if (accountId == alice2Id)
+                    requestDeclined2 = true;
+                cv.notify_one();
+            }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return requestReceived; }));
+    // Now decline trust request, this should trigger ConversationRequestDeclined both sides for Alice
+    aliceAccount->declineConversationRequest(convId);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
+        return requestDeclined && requestDeclined2;
+    }));
+
+    DRing::unregisterSignalHandlers();
     std::remove(aliceArchive.c_str());
 }
 

@@ -52,6 +52,13 @@ struct ConversationRequest
     Json::Value toJson() const;
     std::map<std::string, std::string> toMap() const;
 
+    bool operator==(const ConversationRequest& o) const
+    {
+        auto m = toMap();
+        auto om = o.toMap();
+        return m.size() == om.size() && std::equal(m.begin(), m.end(), om.begin());
+    }
+
     MSGPACK_DEFINE_MAP(from, conversationId, metadatas, received, declined)
 };
 

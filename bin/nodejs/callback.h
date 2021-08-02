@@ -30,6 +30,7 @@ Persistent<Function> incomingCallWithMediaCb;
 Persistent<Function> conversationLoadedCb;
 Persistent<Function> messageReceivedCb;
 Persistent<Function> conversationRequestReceivedCb;
+Persistent<Function> conversationRequestDeclinedCb;
 Persistent<Function> conversationReadyCb;
 Persistent<Function> conversationRemovedCb;
 Persistent<Function> conversationMemberEventCb;
@@ -93,6 +94,8 @@ getPresistentCb(std::string_view signal)
         return &conversationRemovedCb;
     else if (signal == "ConversationRequestReceived")
         return &conversationRequestReceivedCb;
+    else if (signal == "ConversationRequestDeclined")
+        return &conversationRequestDeclinedCb;
     else if (signal == "ConversationMemberEvent")
         return &conversationMemberEventCb;
     else if (signal == "OnConversationError")
@@ -564,6 +567,23 @@ conversationRequestReceived(const std::string& accountId, const std::string& con
                 stringMapToJsMap(message)
             };
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+conversationRequestDeclined(const std::string& accountId, const std::string& conversationId)
+{
+    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, conversationId, message]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), conversationRequestDeclinedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {
+                V8_STRING_NEW_LOCAL(accountId),
+                V8_STRING_NEW_LOCAL(conversationId)
+            };
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 2, callback_args);
         }
     });
     uv_async_send(&signalAsync);

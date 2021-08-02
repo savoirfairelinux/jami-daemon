@@ -98,6 +98,12 @@ struct DRING_PUBLIC ConversationSignal
                              const std::string& /* conversationId */,
                              std::map<std::string, std::string> /*metadatas*/);
     };
+    struct DRING_PUBLIC ConversationRequestDeclined
+    {
+        constexpr static const char* name = "ConversationRequestDeclined";
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /* conversationId */);
+    };
     struct DRING_PUBLIC ConversationReady
     {
         constexpr static const char* name = "ConversationReady";
