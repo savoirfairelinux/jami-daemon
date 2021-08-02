@@ -43,6 +43,12 @@ namespace jami {
 
 struct ConnectionInfo
 {
+    ~ConnectionInfo()
+    {
+        if (socket_)
+            socket_->join();
+    }
+
     std::mutex mutex_ {};
     std::condition_variable responseCv_ {};
     bool responseReceived_ {false};
@@ -109,7 +115,8 @@ public:
         dht::Value::Id vid;
     };
 
-    void connectDeviceStartIce(const std::shared_ptr<dht::crypto::PublicKey>& devicePk, const dht::Value::Id& vid);
+    void connectDeviceStartIce(const std::shared_ptr<dht::crypto::PublicKey>& devicePk,
+                               const dht::Value::Id& vid);
     void connectDeviceOnNegoDone(const DeviceId& deviceId,
                                  const std::string& name,
                                  const dht::Value::Id& vid,
@@ -136,7 +143,9 @@ public:
     /**
      * Triggered when a PeerConnectionRequest comes from the DHT
      */
-    void answerTo(IceTransport& ice, const dht::Value::Id& id, const std::shared_ptr<dht::crypto::PublicKey>& fromPk);
+    void answerTo(IceTransport& ice,
+                  const dht::Value::Id& id,
+                  const std::shared_ptr<dht::crypto::PublicKey>& fromPk);
     void onRequestStartIce(const PeerConnectionRequest& req);
     void onRequestOnNegoDone(const PeerConnectionRequest& req);
     void onDhtPeerRequest(const PeerConnectionRequest& req,
@@ -262,7 +271,8 @@ public:
 };
 
 void
-ConnectionManager::Impl::connectDeviceStartIce(const std::shared_ptr<dht::crypto::PublicKey>& devicePk, const dht::Value::Id& vid)
+ConnectionManager::Impl::connectDeviceStartIce(
+    const std::shared_ptr<dht::crypto::PublicKey>& devicePk, const dht::Value::Id& vid)
 {
     auto deviceId = devicePk->getLongId();
     auto info = getInfo(deviceId, vid);
@@ -582,13 +592,14 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
                                             const dht::Value::Id& vid)
 {
     auto channelSock = sock->addChannel(name);
-    channelSock->onReady([wSock = std::weak_ptr<ChannelSocket>(channelSock), name, deviceId, vid, w = weak()]() {
-        auto shared = w.lock();
-        auto channelSock = wSock.lock();
-        if (shared and channelSock)
-            for (const auto& pending : shared->extractPendingCallbacks(deviceId, vid))
-                pending.cb(channelSock, deviceId);
-    });
+    channelSock->onReady(
+        [wSock = std::weak_ptr<ChannelSocket>(channelSock), name, deviceId, vid, w = weak()]() {
+            auto shared = w.lock();
+            auto channelSock = wSock.lock();
+            if (shared and channelSock)
+                for (const auto& pending : shared->extractPendingCallbacks(deviceId, vid))
+                    pending.cb(channelSock, deviceId);
+        });
 
     ChannelRequest val;
     val.name = channelSock->name();
@@ -668,9 +679,9 @@ ConnectionManager::Impl::onDhtConnected(const dht::crypto::PublicKey& devicePk)
                             if (AccountManager::foundPeerDevice(cert, peer_h)) {
                                 shared->onDhtPeerRequest(req, cert);
                             } else {
-                                JAMI_WARN()
-                                    << shared->account
-                                    << "Rejected untrusted connection request from " << req.owner->getLongId();
+                                JAMI_WARN() << shared->account
+                                            << "Rejected untrusted connection request from "
+                                            << req.owner->getLongId();
                             }
                         });
                 }
@@ -732,7 +743,9 @@ ConnectionManager::Impl::onTlsNegotiationDone(bool ok,
 }
 
 void
-ConnectionManager::Impl::answerTo(IceTransport& ice, const dht::Value::Id& id, const std::shared_ptr<dht::crypto::PublicKey>& from)
+ConnectionManager::Impl::answerTo(IceTransport& ice,
+                                  const dht::Value::Id& id,
+                                  const std::shared_ptr<dht::crypto::PublicKey>& from)
 {
     // NOTE: This is a shortest version of a real SDP message to save some bits
     auto iceAttributes = ice.getLocalAttributes();
