@@ -3877,6 +3877,8 @@ JamiAccount::declineConversationRequest(const std::string& conversationId)
         return;
     request->declined = std::time(nullptr);
     accountManager_->addConversationRequest(conversationId, std::move(*request));
+    emitSignal<DRing::ConversationSignal::ConversationRequestDeclined>(getAccountID(),
+                                                                       conversationId);
 
     syncWithConnected();
 }
@@ -5026,10 +5028,19 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
             }
 
             // New request
-            accountManager_->addConversationRequest(convId, req);
+            if (!accountManager_->addConversationRequest(convId, req))
+                continue; // Already added
 
-            if (req.declined != 0)
-                continue; // Request removed, do not emit signal
+            if (req.declined != 0) {
+                // Request declined
+                JAMI_INFO("[Account %s] Declined request detected for conversation %s (device %s)",
+                          getAccountID().c_str(),
+                          convId.c_str(),
+                          deviceId.to_c_str());
+                emitSignal<DRing::ConversationSignal::ConversationRequestDeclined>(getAccountID(),
+                                                                                   convId);
+                continue;
+            }
 
             JAMI_INFO("[Account %s] New request detected for conversation %s (device %s)",
                       getAccountID().c_str(),

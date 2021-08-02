@@ -103,6 +103,8 @@ ConversationRequest::toMap() const
     auto result = metadatas;
     result["id"] = conversationId;
     result["from"] = from;
+    if (declined)
+        result["declined"] = std::to_string(declined);
     result["received"] = std::to_string(received);
     return result;
 }

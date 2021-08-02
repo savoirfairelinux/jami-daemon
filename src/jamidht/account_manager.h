@@ -231,7 +231,7 @@ public:
     void addConversation(const ConvInfo& info);
     void setConversationsRequests(const std::map<std::string, ConversationRequest>& newConvReq);
     std::optional<ConversationRequest> getRequest(const std::string& id) const;
-    void addConversationRequest(const std::string& id, const ConversationRequest& req);
+    bool addConversationRequest(const std::string& id, const ConversationRequest& req);
     void rmConversationRequest(const std::string& id);
     mutable std::mutex conversationsRequestsMtx;
 
