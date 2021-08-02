@@ -335,12 +335,6 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
         config_.turn.conn_type = PJ_TURN_TP_UDP;
     }
 
-    if (options.aggressive) {
-        config_.opt.aggressive = PJ_TRUE;
-    } else {
-        config_.opt.aggressive = PJ_FALSE;
-    }
-
     addDefaultCandidates();
 
     // Note: For server reflexive candidates, UPNP mappings will
@@ -1782,7 +1776,10 @@ IceTransportFactory::IceTransportFactory()
     // Using 500ms with default PJ_STUN_MAX_TRANSMIT_COUNT (7) gives around 33s before timeout.
     ice_cfg_.stun_cfg.rto_msec = 500;
 
-    ice_cfg_.opt.aggressive = PJ_TRUE;
+    // See https://tools.ietf.org/html/rfc5245#section-8.1.1.2
+    // If enabled, it may help speed-up the connectivity, but may cause
+    // the nomination of sub-optimal pairs.
+    ice_cfg_.opt.aggressive = PJ_FALSE;
 }
 
 IceTransportFactory::~IceTransportFactory() {}
