@@ -1,12 +1,38 @@
-# Compile
-To compile the agent, one has to enable it while configuring the daemon.
+# Agent build steps (linux only)
+Last revision: 2021-08-02
+
+# Requirements
+Guile library version 3.0.7 or higher is required. Guile lib may require other 
+dependencies such as libunistring-dev package.
+
+Guile can be provided by the distro if available, or built locally. Note that 
+Guile v3.0.7 is quite recent and most likely not yet provided by most linux 
+distros.
+If the required version is available on your distro, just install it using your 
+distro's package manager. Development packages must be installed as well.
+
+# Build Guile library
+To build Guile locally, you first need to enable it when building contrib, then
+recompile contrib:
 
 ```sh
-./configure --enable-agent
+cd daemon/contribu/native
+../bootstrap --enable-guile
+make list
+make fetch
+make -j
 ```
 
-then you need to recompile the contrib.  This will compile Guile, which can take
-some time.
+# Compile
+To compile the agent, one has to enable it while configuring the daemon. At this
+stage, Guile must be already available.
+
+```sh
+cd daemon
+./configure --enable-agent  # you can other options if needed such as --enable-debug
+cd test/agent
+make agent
+```
 
 # Running the agent
 The agent expects a Scheme file has its first parameter.  This scheme file will
