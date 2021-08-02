@@ -3786,7 +3786,6 @@ JamiAccount::acceptConversationRequest(const std::string& conversationId)
         if (auto shared = w.lock())
             shared->addNewConversation(info);
     });
-    syncWithConnected();
     checkConversationsEvents();
 }
 
@@ -3852,6 +3851,9 @@ JamiAccount::handlePendingConversations()
                         // Inform user that the conversation is ready
                         emitSignal<DRing::ConversationSignal::ConversationReady>(shared->accountID_,
                                                                                  conversationId);
+                        JAMI_ERR() << "@@@ SYNC!";
+                        shared
+                            ->syncWithConnected(); // This informs other devices to clone the conversation
                     }
                 } catch (const std::exception& e) {
                     emitSignal<DRing::ConversationSignal::OnConversationError>(shared->accountID_,
@@ -4986,6 +4988,7 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
 
         for (const auto& [key, convInfo] : msg.c) {
             auto convId = convInfo.id;
+            JAMI_ERR() << "@@@@@@@ GO FOR " << convId;
             auto removed = convInfo.removed;
             accountManager_->rmConversationRequest(convId);
             auto info = accountManager_->getInfo();
@@ -4995,6 +4998,7 @@ JamiAccount::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
                 auto itConv = info->conversations.find(convId);
                 if (itConv != info->conversations.end() && itConv->second.removed)
                     continue;
+                JAMI_ERR() << "@@@@@@@ CLONE!!!!";
                 cloneConversation(deviceId, peerId, convId);
             } else {
                 {
@@ -5108,6 +5112,7 @@ JamiAccount::syncInfos(const std::shared_ptr<ChannelSocket>& socket)
     msg.c = info->conversations;
     msg.cr = info->conversationsRequests;
     msgpack::pack(buffer, msg);
+    JAMI_ERR() << "@@@ WRITE SYNC!";
     socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
     if (ec)
         return;
