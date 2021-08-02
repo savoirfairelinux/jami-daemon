@@ -66,6 +66,8 @@ static constexpr uint16_t IPV4_HEADER_SIZE = 20; ///< Size in bytes of IPV4 pack
 static constexpr int MAX_CANDIDATES {32};
 static constexpr int MAX_DESTRUCTION_TIMEOUT {3};
 
+static constexpr bool ENABLE_AGGRESSIVE_NOMINATION {false};
+
 //==============================================================================
 
 using MutexGuard = std::lock_guard<std::mutex>;
@@ -135,7 +137,7 @@ public:
     IceTransportCompleteCb on_negodone_cb_ {};
     IceRecvInfo on_recv_cb_ {};
     mutable std::mutex iceMutex_ {};
-    pj_ice_strans* icest_{nullptr};
+    pj_ice_strans* icest_ {nullptr};
     unsigned streamsCount_ {0};
     unsigned compCountPerStream_ {0};
     unsigned compCount_ {0};
@@ -335,12 +337,6 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
         config_.turn.conn_type = PJ_TURN_TP_UDP;
     }
 
-    if (options.aggressive) {
-        config_.opt.aggressive = PJ_TRUE;
-    } else {
-        config_.opt.aggressive = PJ_FALSE;
-    }
-
     addDefaultCandidates();
 
     addServerReflexiveCandidates(setupGenericReflexiveCandidates());
@@ -450,8 +446,7 @@ IceTransport::Impl::~Impl()
     assert(strans);
 
     // must be done before ioqueue/timer destruction
-    JAMI_INFO("[ice:%p] Destroying ice_strans %p",
-              pj_ice_strans_get_user_data(strans), strans);
+    JAMI_INFO("[ice:%p] Destroying ice_strans %p", pj_ice_strans_get_user_data(strans), strans);
 
     pj_ice_strans_stop_ice(strans);
     pj_ice_strans_destroy(strans);
@@ -460,7 +455,8 @@ IceTransport::Impl::~Impl()
     // Because when destroying the TURN session pjproject creates a pj_timer
     // to postpone the TURN destruction. This timer is only called if we poll
     // the event queue.
-    while (handleEvents(500));
+    while (handleEvents(500))
+        ;
 
     if (config_.stun_cfg.ioqueue)
         pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
@@ -630,7 +626,6 @@ IceTransport::Impl::setInitiatorSession()
     JAMI_DBG("[ice:%p] as master", this);
     initiatorSession_ = true;
     if (_isInitialized()) {
-
         std::lock_guard<std::mutex> lk(iceMutex_);
 
         if (not icest_) {
@@ -654,7 +649,6 @@ IceTransport::Impl::setSlaveSession()
     JAMI_DBG("[ice:%p] as slave", this);
     initiatorSession_ = false;
     if (_isInitialized()) {
-
         std::lock_guard<std::mutex> lk(iceMutex_);
 
         if (not icest_) {
@@ -737,12 +731,11 @@ void
 IceTransport::Impl::getUFragPwd()
 {
     if (icest_) {
+        pj_str_t local_ufrag, local_pwd;
 
-         pj_str_t local_ufrag, local_pwd;
-
-         pj_ice_strans_get_ufrag_pwd(icest_, &local_ufrag, &local_pwd, nullptr, nullptr);
-         local_ufrag_.assign(local_ufrag.ptr, local_ufrag.slen);
-         local_pwd_.assign(local_pwd.ptr, local_pwd.slen);
+        pj_ice_strans_get_ufrag_pwd(icest_, &local_ufrag, &local_pwd, nullptr, nullptr);
+        local_ufrag_.assign(local_ufrag.ptr, local_ufrag.slen);
+        local_pwd_.assign(local_pwd.ptr, local_pwd.slen);
     }
 }
 
@@ -1382,8 +1375,7 @@ IceTransport::getLocalCandidates(unsigned streamIdx, unsigned compId) const
         // order to be compliant with the spec.
 
         auto globalCompId = streamIdx * 2 + compId;
-        if (pj_ice_strans_enum_cands(pimpl_->icest_, globalCompId, &cand_cnt, cand)
-            != PJ_SUCCESS) {
+        if (pj_ice_strans_enum_cands(pimpl_->icest_, globalCompId, &cand_cnt, cand) != PJ_SUCCESS) {
             JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", pimpl_.get());
             return res;
         }
@@ -1610,12 +1602,11 @@ IceTransport::send(unsigned compId, const unsigned char* buf, size_t len)
                                         remote.getLength());
 
     if (status == PJ_EPENDING && isTCPEnabled()) {
-
         // NOTE; because we are in TCP, the sent size will count the header (2
         // bytes length).
         pimpl_->waitDataCv_.wait(lk, [&] {
             return pimpl_->lastSentLen_ >= static_cast<pj_size_t>(len)
-                or pimpl_->destroying_.load();
+                   or pimpl_->destroying_.load();
         });
         pimpl_->lastSentLen_ = 0;
     } else if (status != PJ_SUCCESS && status != PJ_EPENDING) {
@@ -1772,7 +1763,10 @@ IceTransportFactory::IceTransportFactory()
     // Using 500ms with default PJ_STUN_MAX_TRANSMIT_COUNT (7) gives around 33s before timeout.
     ice_cfg_.stun_cfg.rto_msec = 500;
 
-    ice_cfg_.opt.aggressive = PJ_TRUE;
+    // See https://tools.ietf.org/html/rfc5245#section-8.1.1.2
+    // If enabled, it may help speed-up the connectivity, but may cause
+    // the nomination of sub-optimal pairs.
+    ice_cfg_.opt.aggressive = ENABLE_AGGRESSIVE_NOMINATION ? PJ_TRUE : PJ_FALSE;
 }
 
 IceTransportFactory::~IceTransportFactory() {}
