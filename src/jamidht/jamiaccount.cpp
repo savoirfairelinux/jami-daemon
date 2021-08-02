@@ -3786,7 +3786,6 @@ JamiAccount::acceptConversationRequest(const std::string& conversationId)
         if (auto shared = w.lock())
             shared->addNewConversation(info);
     });
-    syncWithConnected();
     checkConversationsEvents();
 }
 
@@ -3852,6 +3851,8 @@ JamiAccount::handlePendingConversations()
                         // Inform user that the conversation is ready
                         emitSignal<DRing::ConversationSignal::ConversationReady>(shared->accountID_,
                                                                                  conversationId);
+                        shared
+                            ->syncWithConnected(); // This informs other devices to clone the conversation
                     }
                 } catch (const std::exception& e) {
                     emitSignal<DRing::ConversationSignal::OnConversationError>(shared->accountID_,

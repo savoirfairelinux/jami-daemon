@@ -154,6 +154,7 @@ SyncHistoryTest::testCreateConversationThenSync()
         return alice2Ready && conversationReady;
     }));
     std::remove(aliceArchive.c_str());
+    DRing::unregisterSignalHandlers();
 }
 
 void
@@ -597,6 +598,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     aliceAccount->sendMessage(convId, std::string("hi"));
     cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageBobReceived == 1; });
     std::remove(aliceArchive.c_str());
+    DRing::unregisterSignalHandlers();
 }
 
 void
@@ -710,6 +712,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
     aliceAccount->sendMessage(convId, std::string("hi"));
     cv.wait_for(lk, std::chrono::seconds(30), [&]() { return messageBobReceived == 1; });
     std::remove(aliceArchive.c_str());
+    DRing::unregisterSignalHandlers();
 }
 
 void
@@ -806,6 +809,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
         return conversationReady && messageBobReceived == 1;
     }));
     std::remove(aliceArchive.c_str());
+    DRing::unregisterSignalHandlers();
 }
 
 void
@@ -862,6 +866,7 @@ SyncHistoryTest::testSyncOneToOne()
         return alice2Ready && conversationReady;
     }));
     std::remove(aliceArchive.c_str());
+    DRing::unregisterSignalHandlers();
 }
 
 void

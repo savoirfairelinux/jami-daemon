@@ -125,7 +125,8 @@ public:
             channelSocket = std::make_shared<ChannelSocket>(parent_.weak(), name, channel);
         else {
             JAMI_WARN("A channel is already present on that socket, accepting "
-                      "the request will close the previous one");
+                      "the request will close the previous one %s",
+                      name.c_str());
         }
         return channelSocket;
     }
