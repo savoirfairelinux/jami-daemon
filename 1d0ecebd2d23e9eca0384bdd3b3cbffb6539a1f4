@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "bc2b1919_8d45c428",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 412,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-02T16:55:38Z",
+      "side": 1,
+      "message": "This is the typical value for rtcp port (rtp + 1), unless we decide otherwise (e.g. through setting).\nWe were already doing this (see removed code in sdp.h). I just moved the logic from sdp to sipcall. The sdp must stay generic. The rtcp port setting could be moved to a higher level (account ?), but I think it should do for now.",
+      "parentUuid": "9e6cdd54_e4188a48",
+      "range": {
+        "startLine": 412,
+        "startChar": 60,
+        "endLine": 412,
+        "endChar": 82
+      },
+      "revId": "1d0ecebd2d23e9eca0384bdd3b3cbffb6539a1f4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a0ef6e21_641de229",
@@ -37,6 +61,30 @@
       "writtenOn": "2021-07-23T16:49:56Z",
       "side": 1,
       "message": "why +1 ?",
+      "range": {
+        "startLine": 423,
+        "startChar": 60,
+        "endLine": 423,
+        "endChar": 82
+      },
+      "revId": "1d0ecebd2d23e9eca0384bdd3b3cbffb6539a1f4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4b970d84_8499c043",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 423,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-02T16:55:38Z",
+      "side": 1,
+      "message": "same as audio.",
+      "parentUuid": "a0ef6e21_641de229",
       "range": {
         "startLine": 423,
         "startChar": 60,
