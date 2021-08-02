@@ -26,9 +26,11 @@
 
 #include "security/certstore.h"
 
-namespace jami { namespace test {
+namespace jami {
+namespace test {
 
-class CertStoreTest : public CppUnit::TestFixture {
+class CertStoreTest : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "certstore"; }
 
@@ -46,28 +48,66 @@ void
 CertStoreTest::trustStoreTest()
 {
     jami::tls::TrustStore trustStore;
+    auto& certStore = jami::tls::CertificateStore::instance();
 
     auto ca = dht::crypto::generateIdentity("test CA");
     auto account = dht::crypto::generateIdentity("test account", ca, 4096, true);
     auto device = dht::crypto::generateIdentity("test device", account);
     auto device2 = dht::crypto::generateIdentity("test device 2", account);
+    auto storeSize = certStore.getPinnedCertificates().size();
+    auto id = ca.second->getId().toString();
+    auto pinned = certStore.getPinnedCertificates();
+    CPPUNIT_ASSERT(std::find_if(pinned.begin(), pinned.end(), [&](auto v) { return v == id; })
+                   == pinned.end());
 
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::UNDEFINED);
+    // Test certificate status
+    auto certAllowed = trustStore.getCertificatesByStatus(
+        jami::tls::TrustStore::PermissionStatus::ALLOWED);
+    CPPUNIT_ASSERT(
+        std::find_if(certAllowed.begin(), certAllowed.end(), [&](auto v) { return v == id; })
+        == certAllowed.end());
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(id)
+                   == jami::tls::TrustStore::PermissionStatus::UNDEFINED);
     trustStore.setCertificateStatus(ca.second, jami::tls::TrustStore::PermissionStatus::ALLOWED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::ALLOWED);
+    certAllowed = trustStore.getCertificatesByStatus(
+        jami::tls::TrustStore::PermissionStatus::ALLOWED);
+    CPPUNIT_ASSERT(
+        std::find_if(certAllowed.begin(), certAllowed.end(), [&](auto v) { return v == id; })
+        != certAllowed.end());
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(id)
+                   == jami::tls::TrustStore::PermissionStatus::ALLOWED);
     trustStore.setCertificateStatus(ca.second, jami::tls::TrustStore::PermissionStatus::UNDEFINED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::UNDEFINED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(id)
+                   == jami::tls::TrustStore::PermissionStatus::UNDEFINED);
     trustStore.setCertificateStatus(ca.second, jami::tls::TrustStore::PermissionStatus::ALLOWED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::ALLOWED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(id)
+                   == jami::tls::TrustStore::PermissionStatus::ALLOWED);
 
+    // Test getPinnedCertificates
+    pinned = certStore.getPinnedCertificates();
+    CPPUNIT_ASSERT(pinned.size() == storeSize + 2 /* account + device */);
+    CPPUNIT_ASSERT(std::find_if(pinned.begin(), pinned.end(), [&](auto v) { return v == id; })
+                   != pinned.end());
+
+    // Test findCertificateByUID & findIssuer
+    CPPUNIT_ASSERT(!certStore.findCertificateByUID("NON_EXISTING_ID"));
+    auto cert = certStore.findCertificateByUID(id);
+    CPPUNIT_ASSERT(cert);
+    auto issuer = certStore.findIssuer(cert);
+    CPPUNIT_ASSERT(issuer);
+    CPPUNIT_ASSERT(issuer->getId().toString() == id);
+
+    // Test is allowed
     CPPUNIT_ASSERT(trustStore.isAllowed(*ca.second));
     CPPUNIT_ASSERT(trustStore.isAllowed(*account.second));
     CPPUNIT_ASSERT(trustStore.isAllowed(*device.second));
 
     // Ban device
     trustStore.setCertificateStatus(device.second, jami::tls::TrustStore::PermissionStatus::BANNED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(device.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::BANNED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::ALLOWED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(device.second->getId().toString())
+                   == jami::tls::TrustStore::PermissionStatus::BANNED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(id)
+                   == jami::tls::TrustStore::PermissionStatus::ALLOWED);
 
     CPPUNIT_ASSERT(trustStore.isAllowed(*ca.second));
     CPPUNIT_ASSERT(trustStore.isAllowed(*account.second));
@@ -75,29 +115,49 @@ CertStoreTest::trustStoreTest()
 
     // Ban account
     trustStore.setCertificateStatus(account.second, jami::tls::TrustStore::PermissionStatus::BANNED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(account.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::BANNED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(account.second->getId().toString())
+                   == jami::tls::TrustStore::PermissionStatus::BANNED);
     CPPUNIT_ASSERT(trustStore.isAllowed(*ca.second));
     CPPUNIT_ASSERT(not trustStore.isAllowed(*account.second));
     CPPUNIT_ASSERT(not trustStore.isAllowed(*device2.second));
 
     // Unban account
-    trustStore.setCertificateStatus(account.second, jami::tls::TrustStore::PermissionStatus::ALLOWED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(account.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::ALLOWED);
+    trustStore.setCertificateStatus(account.second,
+                                    jami::tls::TrustStore::PermissionStatus::ALLOWED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(account.second->getId().toString())
+                   == jami::tls::TrustStore::PermissionStatus::ALLOWED);
     CPPUNIT_ASSERT(trustStore.isAllowed(*ca.second));
     CPPUNIT_ASSERT(trustStore.isAllowed(*account.second));
     CPPUNIT_ASSERT(trustStore.isAllowed(*device2.second));
 
     // Ban CA
     trustStore.setCertificateStatus(ca.second, jami::tls::TrustStore::PermissionStatus::BANNED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::BANNED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString())
+                   == jami::tls::TrustStore::PermissionStatus::BANNED);
     CPPUNIT_ASSERT(not trustStore.isAllowed(*ca.second));
     CPPUNIT_ASSERT(not trustStore.isAllowed(*account.second));
     CPPUNIT_ASSERT(not trustStore.isAllowed(*device2.second));
 
     trustStore.setCertificateStatus(ca.second, jami::tls::TrustStore::PermissionStatus::BANNED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::BANNED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString())
+                   == jami::tls::TrustStore::PermissionStatus::BANNED);
+
+    // Test unpin
+    certStore.unpinCertificate(id);
+    pinned = certStore.getPinnedCertificates();
+    CPPUNIT_ASSERT(std::find_if(pinned.begin(), pinned.end(), [&](auto v) { return v == id; })
+                   == pinned.end());
+
+    // Test statusToStr
+    CPPUNIT_ASSERT(strcmp(jami::tls::statusToStr(jami::tls::TrustStatus::TRUSTED),
+                          DRing::Certificate::TrustStatus::TRUSTED)
+                   == 0);
+    CPPUNIT_ASSERT(strcmp(jami::tls::statusToStr(jami::tls::TrustStatus::UNTRUSTED),
+                          DRing::Certificate::TrustStatus::UNTRUSTED)
+                   == 0);
 }
 
-}} // namespace jami::test
+} // namespace test
+} // namespace jami
 
 RING_TEST_RUNNER(jami::test::CertStoreTest::name());
