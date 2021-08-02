@@ -52,7 +52,7 @@
 
 #ifdef __ANDROID__
 #ifndef APP_NAME
-#define APP_NAME "libjami"
+#define APP_NAME "libdring"
 #endif /* APP_NAME */
 #endif
 
@@ -83,7 +83,7 @@
 #define LIGHT_GREEN      FOREGROUND_GREEN + 0x0008
 #endif // _WIN32
 
-#define LOGFILE "jami"
+#define LOGFILE "dring"
 
 #ifdef RING_UWP
 static constexpr auto ENDL = "";
@@ -94,6 +94,7 @@ static constexpr auto ENDL = "\n";
 static int consoleLog;
 static std::atomic_bool monitorLog;
 static int debugMode;
+static int wallClockTime {1};
 static std::mutex logMutex;
 
 // extract the last component of a pathname (extract a filename from its dirname)
@@ -107,8 +108,31 @@ stripDirName(const char* path)
 #endif
 }
 
+// Convert the epoch time to human readable format.
+static std::ostringstream
+timeofdayToString(const timeval& tv, const bool fullDate = false)
+{
+    struct tm* ptm;
+    char time_string[40];
+    long milliseconds;
+    std::ostringstream date;
+
+    ptm = localtime(&tv.tv_sec);
+
+    if (fullDate) {
+        strftime(time_string, sizeof(time_string), "%Y-%m-%d %H:%M:%S", ptm);
+    } else {
+        strftime(time_string, sizeof(time_string), "%H:%M:%S", ptm);
+    }
+
+    milliseconds = tv.tv_usec / 1000;
+    date << time_string << "." << milliseconds;
+
+    return date;
+}
+
 static std::string
-contextHeader(const char* const file, int line)
+contextHeader(const char* const file, int line, int level)
 {
 #ifdef __linux__
     auto tid = syscall(__NR_gettid) & 0xffff;
@@ -129,8 +153,17 @@ contextHeader(const char* const file, int line)
 
     std::ostringstream out;
     const auto prev_fill = out.fill();
-    out << '[' << secs << '.' << std::right << std::setw(3) << std::setfill('0') << milli
-        << std::left << '|' << std::right << std::setw(5) << std::setfill(' ') << tid << std::left;
+    // Add timestamp
+    if (wallClockTime) {
+        out << '[' << timeofdayToString(tv).str();
+    } else {
+        out << '[' << secs << '.' << std::right << std::setw(3) << std::setfill('0') << milli;
+    }
+    // Add thread id
+    out << std::left << '|' << std::right << std::setw(5) << std::setfill(' ') << tid << std::left;
+    // Add trace level
+    out << std::left << '|' << std::right << std::setw(1) << level << std::left;
+    // Put back original string.
     out.fill(prev_fill);
 
     // Context
@@ -186,6 +219,12 @@ bool
 getMonitorLog(void)
 {
     return monitorLog.load();
+}
+
+void
+useWallClockTime(int mode)
+{
+    wallClockTime = mode;
 }
 
 static const char*
@@ -249,7 +288,7 @@ Logger::log(int level, const char* file, int line, bool linefeed, const char* co
     if (withMonitor) {
         std::array<char, 4096> tmp;
         vsnprintf(tmp.data(), tmp.size(), format, cp);
-        jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(contextHeader(file, line)
+        jami::emitSignal<DRing::ConfigurationSignal::MessageSend>(contextHeader(file, line, level)
                                                                   + tmp.data());
     }
     va_end(ap);
@@ -301,7 +340,7 @@ Logger::vlog(
         saved_attributes = consoleInfo.wAttributes;
         SetConsoleTextAttribute(hConsole, color_header);
 #endif
-        fputs(contextHeader(file, line).c_str(), stderr);
+        fputs(contextHeader(file, line, level).c_str(), stderr);
 #ifndef _WIN32
         fputs(END_COLOR, stderr);
         fputs(color_prefix, stderr);
