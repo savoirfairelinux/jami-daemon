@@ -568,7 +568,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
     // Call connected devices
     std::set<DeviceId> devices;
-    std::unique_lock<std::mutex> lk(sipConnsMtx_);
+    std::unique_lock<std::mutex> lkSipConn(sipConnsMtx_);
     // NOTE: dummyCall is a call used to avoid to mark the call as failed if the
     // cached connection is failing with ICE (close event still not detected).
     auto dummyCall = createSubCall(call);
@@ -614,6 +614,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             requestSIPConnection(toUri, deviceId);
         };
 
+    std::vector<std::shared_ptr<ChannelSocket>> channels;
     for (auto& [key, value] : sipConns_) {
         if (key.first != toUri)
             continue;
@@ -631,7 +632,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         if (!transport or !ice)
             continue;
 
-        sipConn.channel->sendBeacon();
+        channels.emplace_back(sipConn.channel);
 
         JAMI_WARN("[call %s] A channeled socket is detected with this peer.",
                   call->getCallId().c_str());
@@ -673,6 +674,12 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         }
         devices.emplace(key.second);
     }
+
+    lkSipConn.unlock();
+    // Note: Send beacon can destroy the socket (if storing last occurence of shared_ptr)
+    // causing sipConn to be destroyed. So, do it while sipConns_ not locked.
+    for (const auto& channel : channels)
+        channel->sendBeacon();
 
     // Find listening devices for this account
     accountManager_->forEachDevice(
