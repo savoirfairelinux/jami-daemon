@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a114aefa_db46c537",
+        "filename": "src/jami/account_const.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 114,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-08-02T16:34:34Z",
+      "side": 1,
+      "message": "I really think this name should include some more context, like sendMsgDisplayed or something to let the reader know a bit more about what it means. \"Enable read receipts\" is used at the client level. Why not use that?",
+      "range": {
+        "startLine": 114,
+        "startChar": 55,
+        "endLine": 114,
+        "endChar": 68
+      },
+      "revId": "de5b8c51dc48db5f3ebd08227f29232e4bf372e6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
