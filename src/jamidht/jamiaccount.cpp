@@ -3786,7 +3786,6 @@ JamiAccount::acceptConversationRequest(const std::string& conversationId)
         if (auto shared = w.lock())
             shared->addNewConversation(info);
     });
-    syncWithConnected();
     checkConversationsEvents();
 }
 
@@ -3860,6 +3859,7 @@ JamiAccount::handlePendingConversations()
                                                                                e.what());
                     JAMI_WARN("Something went wrong when cloning conversation: %s", e.what());
                 }
+                shared->syncWithConnected(); // This informs other devices to clone the conversation
             });
             it = pendingConversationsFetch_.erase(it);
         } else {
