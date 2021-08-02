@@ -1,0 +1,90 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "20946664_9566e09b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-08-02T16:03:17Z",
+      "side": 1,
+      "message": "LGTM, with the following nitpicks.",
+      "revId": "f6217f1c241a6e533288b400b126493e6e30da63",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a72b7dd7_f688b0f5",
+        "filename": "test/agent/README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-08-02T16:03:17Z",
+      "side": 1,
+      "message": "s,linux,GNU/Linux, (we\u0027re a GNU project after all :-)).",
+      "range": {
+        "startLine": 1,
+        "startChar": 21,
+        "endLine": 1,
+        "endChar": 26
+      },
+      "revId": "f6217f1c241a6e533288b400b126493e6e30da63",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7ba0b71b_ca612161",
+        "filename": "test/agent/README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-08-02T16:03:17Z",
+      "side": 1,
+      "message": "I\u0027d remove this; git already tracks such information.",
+      "range": {
+        "startLine": 2,
+        "startChar": 0,
+        "endLine": 2,
+        "endChar": 25
+      },
+      "revId": "f6217f1c241a6e533288b400b126493e6e30da63",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "96bb2e5c_6c973d9c",
+        "filename": "test/agent/README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 915
+      },
+      "writtenOn": "2021-08-02T16:03:17Z",
+      "side": 1,
+      "message": "s/distros/distributions/",
+      "range": {
+        "startLine": 9,
+        "startChar": 70,
+        "endLine": 10,
+        "endChar": 7
+      },
+      "revId": "f6217f1c241a6e533288b400b126493e6e30da63",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
