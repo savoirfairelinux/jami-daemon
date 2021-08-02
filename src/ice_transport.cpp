@@ -66,6 +66,8 @@ static constexpr uint16_t IPV4_HEADER_SIZE = 20; ///< Size in bytes of IPV4 pack
 static constexpr int MAX_CANDIDATES {32};
 static constexpr int MAX_DESTRUCTION_TIMEOUT {3};
 
+static constexpr bool ENABLE_AGGRESSIVE_NOMINATION {false};
+
 //==============================================================================
 
 using MutexGuard = std::lock_guard<std::mutex>;
@@ -331,12 +333,6 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
         config_.protocol = PJ_ICE_TP_UDP;
         config_.stun.conn_type = PJ_STUN_TP_UDP;
         config_.turn.conn_type = PJ_TURN_TP_UDP;
-    }
-
-    if (options.aggressive) {
-        config_.opt.aggressive = PJ_TRUE;
-    } else {
-        config_.opt.aggressive = PJ_FALSE;
     }
 
     addDefaultCandidates();
@@ -1774,7 +1770,10 @@ IceTransportFactory::IceTransportFactory()
     // Using 500ms with default PJ_STUN_MAX_TRANSMIT_COUNT (7) gives around 33s before timeout.
     ice_cfg_.stun_cfg.rto_msec = 500;
 
-    ice_cfg_.opt.aggressive = PJ_TRUE;
+    // See https://tools.ietf.org/html/rfc5245#section-8.1.1.2
+    // If enabled, it may help speed-up the connectivity, but may cause
+    // the nomination of sub-optimal pairs.
+    ice_cfg_.opt.aggressive = ENABLE_AGGRESSIVE_NOMINATION ? PJ_TRUE : PJ_FALSE;
 }
 
 IceTransportFactory::~IceTransportFactory() {}

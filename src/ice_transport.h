@@ -103,10 +103,7 @@ struct IceTransportOptions
     IceTransportCompleteCb onNegoDone {};
     std::vector<StunServerInfo> stunServers;
     std::vector<TurnServerInfo> turnServers;
-    bool tcpEnable {false}; // If we want to use TCP
-    // See https://tools.ietf.org/html/rfc5245#section-8.1.1.2
-    // Make negotiation aggressive by default to avoid latencies.
-    bool aggressive {true};
+    bool tcpEnable {false};
     // Addresses used by the account owning the transport instance.
     IpAddr accountLocalAddr {};
     IpAddr accountPublicAddr {};
