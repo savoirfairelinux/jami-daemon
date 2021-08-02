@@ -72,7 +72,9 @@ public:
         }}
     {}
 
-    ~Impl()
+    ~Impl() {}
+
+    void join()
     {
         if (!isShutdown_) {
             if (endpoint)
@@ -604,6 +606,12 @@ void
 MultiplexedSocket::shutdown()
 {
     pimpl_->shutdown();
+}
+
+void
+MultiplexedSocket::join()
+{
+    pimpl_->join();
 }
 
 void

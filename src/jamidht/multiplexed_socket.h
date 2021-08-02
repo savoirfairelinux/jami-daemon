@@ -108,6 +108,10 @@ public:
      */
     void shutdown();
     /**
+     * This will wait that eventLoop is stopped and stop it if necessary
+     */
+    void join();
+    /**
      * Will trigger that callback when shutdown() is called
      */
     void onShutdown(OnShutdownCb&& cb);
