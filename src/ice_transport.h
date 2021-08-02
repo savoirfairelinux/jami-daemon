@@ -105,8 +105,11 @@ struct IceTransportOptions
     std::vector<TurnServerInfo> turnServers;
     bool tcpEnable {false}; // If we want to use TCP
     // See https://tools.ietf.org/html/rfc5245#section-8.1.1.2
-    // Make negotiation aggressive by default to avoid latencies.
-    bool aggressive {true};
+    // If enabled, the first successful canddate pair will be selected
+    // instead of checking all the candidates.
+    // It will speed-up the connectivity, but may cause the nomination of
+    // a sub-optimal pair.
+    bool aggressive {false};
     // Addresses used by the account owning the transport instance.
     IpAddr accountLocalAddr {};
     IpAddr accountPublicAddr {};
