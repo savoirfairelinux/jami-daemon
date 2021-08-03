@@ -2009,10 +2009,10 @@ JamiAccount::syncConversations(const std::string& peer, const DeviceId& deviceId
             for (const auto& [key, ci] : infos->conversations) {
                 auto it = conversations_.find(key);
                 if (it != conversations_.end() && it->second) {
-                    if (it->second->isMember(peer, false))
+                    if (!it->second->isRemoving() && it->second->isMember(peer, false))
                         toFetch.emplace(key);
-                } else if (std::find(ci.members.begin(), ci.members.end(), peer)
-                           != ci.members.end()) {
+                } else if (std::find(ci.members.begin(), ci.members.end(), peer) != ci.members.end()
+                           && !ci.removed) {
                     // In this case the conversation was never cloned (can be after an import)
                     toClone.emplace(key);
                 }
