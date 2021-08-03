@@ -135,7 +135,7 @@ public:
     IceTransportCompleteCb on_negodone_cb_ {};
     IceRecvInfo on_recv_cb_ {};
     mutable std::mutex iceMutex_ {};
-    pj_ice_strans* icest_{nullptr};
+    pj_ice_strans* icest_ {nullptr};
     unsigned streamsCount_ {0};
     unsigned compCountPerStream_ {0};
     unsigned compCount_ {0};
@@ -450,8 +450,7 @@ IceTransport::Impl::~Impl()
     assert(strans);
 
     // must be done before ioqueue/timer destruction
-    JAMI_INFO("[ice:%p] Destroying ice_strans %p",
-              pj_ice_strans_get_user_data(strans), strans);
+    JAMI_INFO("[ice:%p] Destroying ice_strans %p", pj_ice_strans_get_user_data(strans), strans);
 
     pj_ice_strans_stop_ice(strans);
     pj_ice_strans_destroy(strans);
@@ -460,7 +459,8 @@ IceTransport::Impl::~Impl()
     // Because when destroying the TURN session pjproject creates a pj_timer
     // to postpone the TURN destruction. This timer is only called if we poll
     // the event queue.
-    while (handleEvents(500));
+    while (handleEvents(500))
+        ;
 
     if (config_.stun_cfg.ioqueue)
         pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
@@ -557,9 +557,9 @@ IceTransport::Impl::handleEvents(unsigned max_msec)
 void
 IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_status_t status)
 {
-    const char* opname = op == PJ_ICE_STRANS_OP_INIT
-                             ? "initialization"
-                             : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
+    const char* opname = op == PJ_ICE_STRANS_OP_INIT          ? "initialization"
+                         : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation"
+                                                              : "unknown_op";
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
@@ -630,7 +630,6 @@ IceTransport::Impl::setInitiatorSession()
     JAMI_DBG("[ice:%p] as master", this);
     initiatorSession_ = true;
     if (_isInitialized()) {
-
         std::lock_guard<std::mutex> lk(iceMutex_);
 
         if (not icest_) {
@@ -654,7 +653,6 @@ IceTransport::Impl::setSlaveSession()
     JAMI_DBG("[ice:%p] as slave", this);
     initiatorSession_ = false;
     if (_isInitialized()) {
-
         std::lock_guard<std::mutex> lk(iceMutex_);
 
         if (not icest_) {
@@ -737,12 +735,11 @@ void
 IceTransport::Impl::getUFragPwd()
 {
     if (icest_) {
+        pj_str_t local_ufrag, local_pwd;
 
-         pj_str_t local_ufrag, local_pwd;
-
-         pj_ice_strans_get_ufrag_pwd(icest_, &local_ufrag, &local_pwd, nullptr, nullptr);
-         local_ufrag_.assign(local_ufrag.ptr, local_ufrag.slen);
-         local_pwd_.assign(local_pwd.ptr, local_pwd.slen);
+        pj_ice_strans_get_ufrag_pwd(icest_, &local_ufrag, &local_pwd, nullptr, nullptr);
+        local_ufrag_.assign(local_ufrag.ptr, local_ufrag.slen);
+        local_pwd_.assign(local_pwd.ptr, local_pwd.slen);
     }
 }
 
@@ -1382,8 +1379,7 @@ IceTransport::getLocalCandidates(unsigned streamIdx, unsigned compId) const
         // order to be compliant with the spec.
 
         auto globalCompId = streamIdx * 2 + compId;
-        if (pj_ice_strans_enum_cands(pimpl_->icest_, globalCompId, &cand_cnt, cand)
-            != PJ_SUCCESS) {
+        if (pj_ice_strans_enum_cands(pimpl_->icest_, globalCompId, &cand_cnt, cand) != PJ_SUCCESS) {
             JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", pimpl_.get());
             return res;
         }
@@ -1528,6 +1524,7 @@ IceTransport::parseIceAttributeLine(unsigned streamIdx,
 ssize_t
 IceTransport::recv(unsigned compId, unsigned char* buf, size_t len, std::error_code& ec)
 {
+    JAMI_ERR() << "@@@ recv" << compId;
     ASSERT_COMP_ID(compId, getComponentCount());
     auto& io = pimpl_->compIO_[compId - 1];
     std::lock_guard<std::mutex> lk(io.mutex);
@@ -1565,13 +1562,18 @@ IceTransport::setOnRecv(unsigned compId, IceRecvCb cb)
     ASSERT_COMP_ID(compId, getComponentCount());
 
     auto& io = pimpl_->compIO_[compId - 1];
+    JAMI_ERR() << "@@@";
     std::lock_guard<std::mutex> lk(io.mutex);
+    JAMI_ERR() << "@@@2";
     io.cb = std::move(cb);
 
     if (io.cb) {
         // Flush existing queue using the callback
-        for (const auto& packet : io.queue)
+        for (const auto& packet : io.queue) {
+            JAMI_ERR() << "@@@";
+
             io.cb((uint8_t*) packet.data.data(), packet.data.size());
+        }
         io.queue.clear();
     }
 }
@@ -1610,12 +1612,11 @@ IceTransport::send(unsigned compId, const unsigned char* buf, size_t len)
                                         remote.getLength());
 
     if (status == PJ_EPENDING && isTCPEnabled()) {
-
         // NOTE; because we are in TCP, the sent size will count the header (2
         // bytes length).
         pimpl_->waitDataCv_.wait(lk, [&] {
             return pimpl_->lastSentLen_ >= static_cast<pj_size_t>(len)
-                or pimpl_->destroying_.load();
+                   or pimpl_->destroying_.load();
         });
         pimpl_->lastSentLen_ = 0;
     } else if (status != PJ_SUCCESS && status != PJ_EPENDING) {
