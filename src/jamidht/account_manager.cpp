@@ -252,10 +252,12 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
                       true,
                       [this, v](const std::shared_ptr<dht::crypto::Certificate>&,
                                 dht::InfoHash peer_account) mutable {
-                          JAMI_WARN("Got trust request from: %s / %s. ConversationId: %s",
-                                    peer_account.toString().c_str(),
-                                    v.from.toString().c_str(),
-                                    v.conversationId.c_str());
+                          JAMI_WARN(
+                              "Got trust request (confirm: %u) from: %s / %s. ConversationId: %s",
+                              v.confirm,
+                              peer_account.toString().c_str(),
+                              v.from.toString().c_str(),
+                              v.conversationId.c_str());
                           if (info_)
                               if (info_->contacts->onTrustRequest(peer_account,
                                                                   v.owner,
@@ -732,8 +734,8 @@ AccountManager::forEachDevice(
 
     struct State
     {
-        unsigned remaining {
-            1}; // Note: state is initialized to 1, because we need to wait that the get is finished
+        // Note: state is initialized to 1, because we need to wait that the get is finished
+        unsigned remaining {1};
         std::set<dht::PkId> treatedDevices {};
         std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)> onDevice;
         std::function<void(bool)> onEnd;
