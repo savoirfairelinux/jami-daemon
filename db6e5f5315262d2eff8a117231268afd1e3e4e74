@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "860221e7_82dba842",
+        "filename": "src/logger.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-03T13:25:19Z",
+      "side": 1,
+      "message": "seems there is a lot of non related changes there",
+      "range": {
+        "startLine": 54,
+        "startChar": 16,
+        "endLine": 55,
+        "endChar": 27
+      },
+      "revId": "db6e5f5315262d2eff8a117231268afd1e3e4e74",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
