@@ -329,6 +329,8 @@ public:
     std::mutex requestsMtx_;
     std::set<std::shared_ptr<dht::http::Request>> requests_;
     std::shared_ptr<dht::crypto::Certificate> pCert_ {};
+
+    bool reliable_;
 };
 
 TlsSession::TlsSessionImpl::TlsSessionImpl(std::unique_ptr<SocketType>&& transport,
@@ -345,9 +347,12 @@ TlsSession::TlsSessionImpl::TlsSessionImpl(std::unique_ptr<SocketType>&& transpo
     , xcred_(nullptr)
     , thread_([this] { return setup(); }, [this] { process(); }, [this] { cleanup(); })
 {
-    if (not transport_->isReliable()) {
-        transport_->setOnRecv([this](const ValueType* buf, size_t len) {
-            std::lock_guard<std::mutex> lk {rxMutex_};
+    reliable_ = transport_->isReliable();
+    transport_->setOnRecv([this](const ValueType* buf, size_t len) {
+        std::lock_guard<std::mutex> lk {rxMutex_};
+        if (not transport_)
+            return len;
+        if (not reliable_) {
             if (rxQueue_.size() == INPUT_MAX_SIZE) {
                 rxQueue_.pop_front(); // drop oldest packet if input buffer is full
                 ++stRxRawPacketDropCnt_;
@@ -355,10 +360,16 @@ TlsSession::TlsSessionImpl::TlsSessionImpl(std::unique_ptr<SocketType>&& transpo
             rxQueue_.emplace_back(buf, buf + len);
             ++stRxRawPacketCnt_;
             stRxRawBytesCnt_ += len;
-            rxCv_.notify_one();
-            return len;
-        });
-    }
+        } else {
+            // Reliable
+            if (rxQueue_.empty())
+                rxQueue_.emplace_back(buf, buf + len);
+            else
+                rxQueue_.front().insert(rxQueue_.front().end(), buf, buf + len);
+        }
+        rxCv_.notify_one();
+        return len;
+    });
 
     // Run FSM into dedicated thread
     thread_.start();
@@ -370,8 +381,7 @@ TlsSession::TlsSessionImpl::~TlsSessionImpl()
     stateCondition_.notify_all();
     rxCv_.notify_all();
     thread_.join();
-    if (not transport_->isReliable())
-        transport_->setOnRecv(nullptr);
+    transport_->setOnRecv(nullptr);
 }
 
 const char*
@@ -395,7 +405,7 @@ TlsSession::TlsSessionImpl::setupClient()
 {
     int ret;
 
-    if (not transport_->isReliable()) {
+    if (not reliable_) {
         ret = gnutls_init(&session_, GNUTLS_CLIENT | GNUTLS_DATAGRAM);
         // uncoment to reactivate PMTUD
         // JAMI_DBG("[TLS] set heartbeat reception for retrocompatibility check on server");
@@ -421,7 +431,7 @@ TlsSession::TlsSessionImpl::setupServer()
 {
     int ret;
 
-    if (not transport_->isReliable()) {
+    if (not reliable_) {
         ret = gnutls_init(&session_, GNUTLS_SERVER | GNUTLS_DATAGRAM);
 
         // uncoment to reactivate PMTUD
@@ -545,8 +555,8 @@ TlsSession::TlsSessionImpl::commonSessionInit()
     if (anonymous_) {
         // Force anonymous connection, see handleStateHandshake how we handle failures
         ret = gnutls_priority_set_direct(session_,
-                                         transport_->isReliable() ? TLS_FULL_PRIORITY_STRING
-                                                                  : DTLS_FULL_PRIORITY_STRING,
+                                         reliable_ ? TLS_FULL_PRIORITY_STRING
+                                                   : DTLS_FULL_PRIORITY_STRING,
                                          nullptr);
         if (ret != GNUTLS_E_SUCCESS) {
             JAMI_ERR("[TLS] TLS priority set failed: %s", gnutls_strerror(ret));
@@ -566,8 +576,8 @@ TlsSession::TlsSessionImpl::commonSessionInit()
     } else {
         // Use a classic non-encrypted CERTIFICATE exchange method (less anonymous)
         ret = gnutls_priority_set_direct(session_,
-                                         transport_->isReliable() ? TLS_CERT_PRIORITY_STRING
-                                                                  : DTLS_CERT_PRIORITY_STRING,
+                                         reliable_ ? TLS_CERT_PRIORITY_STRING
+                                                   : DTLS_CERT_PRIORITY_STRING,
                                          nullptr);
         if (ret != GNUTLS_E_SUCCESS) {
             JAMI_ERR("[TLS] TLS priority set failed: %s", gnutls_strerror(ret));
@@ -583,7 +593,7 @@ TlsSession::TlsSessionImpl::commonSessionInit()
     }
     gnutls_certificate_send_x509_rdn_sequence(session_, 0);
 
-    if (not transport_->isReliable()) {
+    if (not reliable_) {
         // DTLS hanshake timeouts
         auto re_tx_timeout = duration2ms(DTLS_RETRANSMIT_TIMEOUT);
         gnutls_dtls_set_timeouts(session_,
@@ -616,8 +626,7 @@ TlsSession::TlsSessionImpl::commonSessionInit()
                                                        std::chrono::milliseconds(ms));
                                                });
     // TODO -1 = default else set value
-    if (transport_->isReliable())
-        gnutls_handshake_set_timeout(session_, duration2ms(params_.timeout));
+    gnutls_handshake_set_timeout(session_, duration2ms(params_.timeout));
     return true;
 }
 
@@ -834,7 +843,7 @@ TlsSession::TlsSessionImpl::send(const ValueType* tx_data, std::size_t tx_size, 
     std::size_t total_written = 0;
     std::size_t max_tx_sz;
 
-    if (transport_->isReliable())
+    if (reliable_)
         max_tx_sz = tx_size;
     else
         max_tx_sz = gnutls_dtls_get_data_mtu(session_);
@@ -921,25 +930,31 @@ TlsSession::TlsSessionImpl::sendRawVec(const giovec_t* iov, int iovcnt)
 ssize_t
 TlsSession::TlsSessionImpl::recvRaw(void* buf, size_t size)
 {
-    if (transport_->isReliable()) {
-        std::error_code ec;
-        auto count = transport_->read(reinterpret_cast<ValueType*>(buf), size, ec);
-        if (!ec)
-            return count;
-        gnutls_transport_set_errno(session_, ec.value());
-        return -1;
+    std::unique_lock<std::mutex> lk {rxMutex_};
+    if (reliable_) {
+        // In this case gnutls_transport_set_pull_timeout_function is not called, just check for changes
+        rxCv_.wait(lk, [this] { return !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN; });
+        if (state_ == TlsSessionState::SHUTDOWN) {
+            gnutls_transport_set_errno(session_, EINTR);
+            return -1;
+        }
     }
 
-    std::lock_guard<std::mutex> lk {rxMutex_};
     if (rxQueue_.empty()) {
         gnutls_transport_set_errno(session_, EAGAIN);
         return -1;
     }
 
-    const auto& pkt = rxQueue_.front();
+    auto& pkt = rxQueue_.front();
     const std::size_t count = std::min(pkt.size(), size);
     std::copy_n(pkt.begin(), count, reinterpret_cast<ValueType*>(buf));
-    rxQueue_.pop_front();
+    if (!reliable_) {
+        rxQueue_.pop_front();
+    } else {
+        pkt.erase(pkt.begin(), pkt.begin() + count);
+        if (pkt.empty())
+            rxQueue_.pop_front();
+    }
     return count;
 }
 
@@ -949,24 +964,6 @@ TlsSession::TlsSessionImpl::recvRaw(void* buf, size_t size)
 int
 TlsSession::TlsSessionImpl::waitForRawData(std::chrono::milliseconds timeout)
 {
-    if (transport_->isReliable()) {
-        std::error_code ec;
-        auto err = transport_->waitForData(timeout, ec);
-        if (err <= 0) {
-            // shutdown?
-            if (state_ == TlsSessionState::SHUTDOWN) {
-                gnutls_transport_set_errno(session_, EINTR);
-                return -1;
-            }
-            if (ec) {
-                gnutls_transport_set_errno(session_, ec.value());
-                return -1;
-            }
-            return 0;
-        }
-        return 1;
-    }
-
     // non-reliable uses callback installed with setOnRecv()
     std::unique_lock<std::mutex> lk {rxMutex_};
     rxCv_.wait_for(lk, timeout, [this] {
@@ -1036,7 +1033,7 @@ TlsSession::TlsSessionImpl::cleanup()
         std::lock_guard<std::mutex> lk1(sessionReadMutex_);
         std::lock_guard<std::mutex> lk2(sessionWriteMutex_);
         if (session_) {
-            if (transport_->isReliable())
+            if (reliable_)
                 gnutls_bye(session_, GNUTLS_SHUT_RDWR);
             else
                 gnutls_bye(session_, GNUTLS_SHUT_WR); // not wait for a peer answer
@@ -1069,7 +1066,7 @@ TlsSession::TlsSessionImpl::handleStateSetup(UNUSED TlsSessionState state)
         return setupClient();
 
     // Extra step for DTLS-like transports
-    if (transport_ and not transport_->isReliable()) {
+    if (!reliable_) {
         gnutls_key_generate(&cookie_key_, GNUTLS_COOKIE_KEY_SIZE);
         return TlsSessionState::COOKIE;
     }
@@ -1197,9 +1194,8 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
 
         // Re-setup TLS algorithms priority list with only certificate based cipher suites
         ret = gnutls_priority_set_direct(session_,
-                                         transport_ and transport_->isReliable()
-                                             ? TLS_CERT_PRIORITY_STRING
-                                             : DTLS_CERT_PRIORITY_STRING,
+                                         reliable_ ? TLS_CERT_PRIORITY_STRING
+                                                   : DTLS_CERT_PRIORITY_STRING,
                                          nullptr);
         if (ret != GNUTLS_E_SUCCESS) {
             JAMI_ERR("[TLS] session TLS cert-only priority set failed: %s", gnutls_strerror(ret));
@@ -1229,8 +1225,7 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
         callbacks_.onCertificatesUpdate(local, remote, remote_count);
     }
 
-    return transport_ and transport_->isReliable() ? TlsSessionState::ESTABLISHED
-                                                   : TlsSessionState::MTU_DISCOVERY;
+    return reliable_ ? TlsSessionState::ESTABLISHED : TlsSessionState::MTU_DISCOVERY;
 }
 
 TlsSessionState
@@ -1446,7 +1441,7 @@ TlsSessionState
 TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
 {
     // Nothing to do in reliable mode, so just wait for state change
-    if (transport_ and transport_->isReliable()) {
+    if (reliable_) {
         auto disconnected = [this]() -> bool {
             return state_.load() != TlsSessionState::ESTABLISHED
                    or newState_.load() != TlsSessionState::NONE;
@@ -1585,9 +1580,7 @@ TlsSession::isInitiator() const
 bool
 TlsSession::isReliable() const
 {
-    if (!pimpl_->transport_)
-        return false;
-    return pimpl_->transport_->isReliable();
+    return pimpl_->reliable_;
 }
 
 int
