@@ -82,21 +82,16 @@ class IceLock
 
 public:
     IceLock(pj_ice_strans* strans)
-        : lk_(pj_ice_strans_get_grp_lock(strans)) {
+        : lk_(pj_ice_strans_get_grp_lock(strans))
+    {
         lock();
     }
 
-    ~IceLock() {
-        unlock();
-    }
+    ~IceLock() { unlock(); }
 
-    void lock() {
-        pj_grp_lock_acquire(lk_);
-    }
+    void lock() { pj_grp_lock_acquire(lk_); }
 
-    void unlock() {
-        pj_grp_lock_release(lk_);
-    }
+    void unlock() { pj_grp_lock_release(lk_); }
 };
 
 class IceTransport::Impl
@@ -697,9 +692,9 @@ IceTransport::Impl::checkEventQueue(int maxEventToPoll)
 void
 IceTransport::Impl::onComplete(pj_ice_strans*, pj_ice_strans_op op, pj_status_t status)
 {
-    const char* opname = op == PJ_ICE_STRANS_OP_INIT
-                             ? "initialization"
-                             : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
+    const char* opname = op == PJ_ICE_STRANS_OP_INIT          ? "initialization"
+                         : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation"
+                                                              : "unknown_op";
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
@@ -747,7 +742,7 @@ IceTransport::Impl::link() const
     std::ostringstream out;
     for (unsigned strm = 1; strm <= streamsCount_ * compCountPerStream_; strm++) {
         auto absIdx = strm;
-        auto comp = (strm+1)/compCountPerStream_;
+        auto comp = (strm + 1) / compCountPerStream_;
         auto laddr = getLocalAddress(absIdx);
         auto raddr = getRemoteAddress(absIdx);
 
@@ -769,7 +764,6 @@ IceTransport::Impl::setInitiatorSession()
     JAMI_DBG("[ice:%p] as master", this);
     initiatorSession_ = true;
     if (_isInitialized()) {
-
         auto status = pj_ice_strans_change_role(icest_, PJ_ICE_SESS_ROLE_CONTROLLING);
         if (status != PJ_SUCCESS) {
             last_errmsg_ = sip_utils::sip_strerror(status);
@@ -787,7 +781,6 @@ IceTransport::Impl::setSlaveSession()
     JAMI_DBG("[ice:%p] as slave", this);
     initiatorSession_ = false;
     if (_isInitialized()) {
-
         auto status = pj_ice_strans_change_role(icest_, PJ_ICE_SESS_ROLE_CONTROLLED);
         if (status != PJ_SUCCESS) {
             last_errmsg_ = sip_utils::sip_strerror(status);
@@ -1101,7 +1094,8 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void* pkt, pj_size_t size)
 
     jami_tracepoint_if_enabled(ice_transport_recv,
                                reinterpret_cast<uint64_t>(this),
-                               comp_id, size,
+                               comp_id,
+                               size,
                                getRemoteAddress(comp_id).toString().c_str());
     if (size == 0)
         return;
@@ -1129,8 +1123,8 @@ IceTransport::Impl::_waitForInitialization(std::chrono::milliseconds timeout)
     IceLock lk(icest_);
 
     if (not iceCV_.wait_for(lk, timeout, [this] {
-        return threadTerminateFlags_ or _isInitialized() or _isFailed();
-    })) {
+            return threadTerminateFlags_ or _isInitialized() or _isFailed();
+        })) {
         JAMI_WARN("[ice:%p] waitForInitialization: timeout", this);
         return false;
     }
@@ -1155,8 +1149,7 @@ IceTransport::initIceInstance(const IceTransportOptions& options)
 {
     pimpl_->initIceInstance(options);
 
-    jami_tracepoint(ice_transport_context,
-                    reinterpret_cast<uint64_t>(this));
+    jami_tracepoint(ice_transport_context, reinterpret_cast<uint64_t>(this));
 }
 
 bool
@@ -1691,7 +1684,9 @@ IceTransport::send(unsigned compId, const unsigned char* buf, size_t len)
 
     jami_tracepoint(ice_transport_send,
                     reinterpret_cast<uint64_t>(this),
-                    compId, len, remote.toString().c_str());
+                    compId,
+                    len,
+                    remote.toString().c_str());
 
     auto status = pj_ice_strans_sendto2(pimpl_->icest_,
                                         compId,
