@@ -677,9 +677,9 @@ IceTransport::Impl::checkEventQueue(int maxEventToPoll)
 void
 IceTransport::Impl::onComplete(pj_ice_strans*, pj_ice_strans_op op, pj_status_t status)
 {
-    const char* opname = op == PJ_ICE_STRANS_OP_INIT
-                             ? "initialization"
-                             : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
+    const char* opname = op == PJ_ICE_STRANS_OP_INIT          ? "initialization"
+                         : op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation"
+                                                              : "unknown_op";
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
@@ -1621,6 +1621,7 @@ IceTransport::parseIceAttributeLine(unsigned streamIdx,
 ssize_t
 IceTransport::recv(unsigned compId, unsigned char* buf, size_t len, std::error_code& ec)
 {
+    JAMI_ERR() << "@@@ recv" << compId;
     ASSERT_COMP_ID(compId, getComponentCount());
     auto& io = pimpl_->compIO_[compId - 1];
     std::lock_guard<std::mutex> lk(io.mutex);
@@ -1656,13 +1657,18 @@ IceTransport::setOnRecv(unsigned compId, IceRecvCb cb)
     ASSERT_COMP_ID(compId, getComponentCount());
 
     auto& io = pimpl_->compIO_[compId - 1];
+    JAMI_ERR() << "@@@";
     std::lock_guard<std::mutex> lk(io.mutex);
+    JAMI_ERR() << "@@@2";
     io.cb = std::move(cb);
 
     if (io.cb) {
         // Flush existing queue using the callback
-        for (const auto& packet : io.queue)
+        for (const auto& packet : io.queue) {
+            JAMI_ERR() << "@@@";
+
             io.cb((uint8_t*) packet.data.data(), packet.data.size());
+        }
         io.queue.clear();
     }
 }
