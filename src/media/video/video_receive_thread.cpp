@@ -85,7 +85,6 @@ VideoReceiveThread::setup()
     videoDecoder_->setResolutionChangedCallback([this] (int width, int height){
         dstWidth_ = width;
         dstHeight_ = height;
-        sink_->setFrameSize(dstWidth_, dstHeight_);
     });
 
     dstWidth_ = args_.width;
