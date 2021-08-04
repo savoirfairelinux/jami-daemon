@@ -72,21 +72,25 @@ private:
     void testModeratorMuteUpdateParticipantsInfos();
     void testAudioVideoMutedStates();
     void testCreateParticipantsSinks();
+    void testMuteStatusAfterRemove();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
     CPPUNIT_TEST(testGetConference);
     CPPUNIT_TEST(testModeratorMuteUpdateParticipantsInfos);
     CPPUNIT_TEST(testAudioVideoMutedStates);
     CPPUNIT_TEST(testCreateParticipantsSinks);
+    CPPUNIT_TEST(testMuteStatusAfterRemove);
     CPPUNIT_TEST_SUITE_END();
 
     // Common parts
     std::string aliceId;
     std::string bobId;
     std::string carlaId;
+    std::string daviId;
     std::string confId {};
     CallData bobCall {};
     CallData carlaCall {};
+    CallData daviCall {};
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -102,20 +106,22 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConferenceTest, ConferenceTest::name());
 void
 ConferenceTest::setUp()
 {
-    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob-carla.yml");
+    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob-carla-davi.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
     carlaId = actors["carla"];
+    daviId = actors["davi"];
 
     bobCall.reset();
     carlaCall.reset();
+    daviCall.reset();
     confId = {};
 }
 
 void
 ConferenceTest::tearDown()
 {
-    wait_for_removal_of({aliceId, bobId, carlaId});
+    wait_for_removal_of({aliceId, bobId, carlaId, daviId});
 }
 
 void
@@ -124,9 +130,11 @@ ConferenceTest::registerSignalHandlers()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
     auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
     auto carlaUri = carlaAccount->getUsername();
+    auto daviUri = daviAccount->getUsername();
 
     std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
     // Watch signals
@@ -139,6 +147,8 @@ ConferenceTest::registerSignalHandlers()
                 bobCall.callId = callId;
             } else if (accountId == carlaId) {
                 carlaCall.callId = callId;
+            } else if (accountId == daviId) {
+                daviCall.callId = callId;
             }
             cv.notify_one();
         }));
@@ -148,6 +158,8 @@ ConferenceTest::registerSignalHandlers()
                 bobCall.state = state;
             else if (carlaCall.callId == callId)
                 carlaCall.state = state;
+            else if (daviCall.callId == callId)
+                daviCall.state = state;
             cv.notify_one();
         }));
     confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::ConferenceCreated>(
@@ -169,6 +181,8 @@ ConferenceTest::registerSignalHandlers()
                     bobCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                 } else if (infos.at("uri").find(carlaUri) != std::string::npos) {
                     carlaCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
+                } else if (infos.at("uri").find(daviUri) != std::string::npos) {
+                    daviCall.moderatorMuted = infos.at("audioModeratorMuted") == "true";
                 }
             }
             cv.notify_one();
@@ -212,9 +226,13 @@ ConferenceTest::hangupConference()
 {
     JAMI_INFO("Stop conference");
     Manager::instance().hangupConference(confId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] {
-        return carlaCall.state == "OVER" && bobCall.state == "OVER" && confId.empty();
-    }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(30), [&] { return carlaCall.state == "OVER"; }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(30), [&] { return bobCall.state == "OVER"; }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(30), [&] { return daviCall.state == "OVER"; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return confId.empty(); }));
     std::this_thread::sleep_for(std::chrono::seconds(10));
 }
 
@@ -325,18 +343,64 @@ ConferenceTest::testCreateParticipantsSinks()
 
     auto infos = Manager::instance().getConferenceInfos(confId);
 
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(5), [&] {
-            bool sinksStatus = true;
-            for (auto& info : infos) {
-                if (info["uri"] == bobUri) {
-                    sinksStatus &= (Manager::instance().getSinkClient(info["sinkId"]) != nullptr);
-                } else if (info["uri"] == carlaUri) {
-                    sinksStatus &= (Manager::instance().getSinkClient(info["sinkId"]) != nullptr);
-                }
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(5), [&] {
+        bool sinksStatus = true;
+        for (auto& info : infos) {
+            if (info["uri"] == bobUri) {
+                sinksStatus &= (Manager::instance().getSinkClient(info["sinkId"]) != nullptr);
+            } else if (info["uri"] == carlaUri) {
+                sinksStatus &= (Manager::instance().getSinkClient(info["sinkId"]) != nullptr);
             }
-            return sinksStatus;
-        }));
+        }
+        return sinksStatus;
+    }));
+
+    hangupConference();
+
+    DRing::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testMuteStatusAfterRemove()
+{
+    registerSignalHandlers();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
+    auto daviUri = daviAccount->getUsername();
+
+    startConference();
+
+    JAMI_INFO("Start call between Alice and Davi");
+    auto call1 = aliceAccount->newOutgoingCall(daviUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return !daviCall.callId.empty(); }));
+    Manager::instance().answerCall(daviCall.callId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return daviCall.state == "CURRENT"; }));
+    Manager::instance().addParticipant(daviCall.callId, confId);
+
+    Manager::instance().muteParticipant(confId, bobUri, true);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(5), [&] { return bobCall.moderatorMuted.load(); }));
+
+    Manager::instance().hangupCall(bobCall.callId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return bobCall.state == "OVER"; }));
+    bobCall.reset();
+
+    auto call2 = aliceAccount->newOutgoingCall(bobUri);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return !bobCall.callId.empty(); }));
+    Manager::instance().answerCall(bobCall.callId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return bobCall.state == "CURRENT"; }));
+    Manager::instance().addParticipant(bobCall.callId, confId);
+
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, std::chrono::seconds(20), [&] { return !bobCall.moderatorMuted.load(); }));
 
     hangupConference();
 

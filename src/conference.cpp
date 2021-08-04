@@ -532,7 +532,6 @@ Conference::sendConferenceInfos()
         }
     }
 
-
     auto confInfo = getConfInfoHostUri("", "");
     createSinks(confInfo);
 
@@ -580,13 +579,14 @@ void
 Conference::remove(const std::string& participant_id)
 {
     if (participants_.erase(participant_id)) {
-#ifdef ENABLE_VIDEO
         if (auto call = getCall(participant_id)) {
+            participantsMuted_.erase(std::string(string_remove_suffix(call->getPeerNumber(), '@')));
+#ifdef ENABLE_VIDEO
             call->exitConference();
             if (call->isPeerRecording())
                 call->peerRecording(false);
-        }
 #endif // ENABLE_VIDEO
+        }
     }
 }
 
