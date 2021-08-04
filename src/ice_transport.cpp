@@ -1771,8 +1771,6 @@ IceTransportFactory::IceTransportFactory()
     // This solves too long ICE exchange by DHT.
     // Using 500ms with default PJ_STUN_MAX_TRANSMIT_COUNT (7) gives around 33s before timeout.
     ice_cfg_.stun_cfg.rto_msec = 500;
-
-    ice_cfg_.opt.aggressive = PJ_TRUE;
 }
 
 IceTransportFactory::~IceTransportFactory() {}
