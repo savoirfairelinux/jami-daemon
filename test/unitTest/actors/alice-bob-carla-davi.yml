@@ -18,3 +18,7 @@ accounts:
   carla:
     displayName: CARLA
     alias: CARLA
+
+  davi:
+    displayName: DAVI
+    alias: DAVI
