@@ -3414,12 +3414,8 @@ Manager::createSinkClients(const std::string& callId,
         if (participant.w && participant.h) {
             auto currentSink = getSinkClient(sinkId);
             if (currentSink) {
-                videoStream->detach(currentSink.get());
-                currentSink->stop();
-                currentSink->start();
                 currentSink->setFramePosition(participant.x, participant.y);
                 currentSink->setFrameSize(participant.w, participant.h);
-                videoStream->attach(currentSink.get());
                 sinkIdsList.emplace(sinkId);
                 continue;
             }
