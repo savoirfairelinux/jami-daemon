@@ -5289,7 +5289,7 @@ JamiAccount::getOneToOneConversation(const std::string& uri) const
             continue;
         try {
             if (conv->mode() == ConversationMode::ONE_TO_ONE) {
-                auto initMembers = conv->getInitialMembers();
+                auto initMembers = conv->getMembers(true);
                 if (isSelf && initMembers.size() == 1)
                     return key;
                 if (std::find(initMembers.begin(), initMembers.end(), uri) != initMembers.end())
