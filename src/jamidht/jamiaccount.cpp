@@ -5287,10 +5287,12 @@ JamiAccount::getOneToOneConversation(const std::string& uri) const
             continue;
         try {
             if (conv->mode() == ConversationMode::ONE_TO_ONE) {
-                auto initMembers = conv->getInitialMembers();
-                if (isSelf && initMembers.size() == 1)
+                auto members = conv->getMembers(true);
+                if (isSelf && members.size() == 1)
                     return key;
-                if (std::find(initMembers.begin(), initMembers.end(), uri) != initMembers.end())
+                if (std::find(members.begin(), members.end(), [&](auto m) {
+                    return m.at("uri") == uri;
+                }) != members.end())
                     return key;
             }
         } catch (const std::exception& e) {
