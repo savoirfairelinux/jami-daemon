@@ -60,16 +60,16 @@ index 85cf2ed..fe65725 100644
 +#define PJ_HAS_SSL_SOCK                         1
 +#define PJ_SSL_SOCK_IMP                         PJ_SSL_SOCK_IMP_GNUTLS
 diff --git a/pjmedia/build/pjmedia.vcxproj b/pjmedia/build/pjmedia.vcxproj
-index e596939..0c7108b 100644
+index 1f91cb599..e28b8c68e 100644
 --- a/pjmedia/build/pjmedia.vcxproj
 +++ b/pjmedia/build/pjmedia.vcxproj
 @@ -307,14 +307,17 @@
    </ItemDefinitionGroup>
    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
      <ClCompile>
--      <AdditionalIncludeDirectories>../include;../../pjlib/include;../../pjlib-util/include;../../pjnath/include;../../third_party/portaudio/include;../../third_party/speex/include;../../third_party/build/srtp;../../third_party/srtp/include;../../third_party/srtp/crypto/include;../../third_party/yuv/include;../../third_party/webrtc/src;../..;$(DXSDK_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+-      <AdditionalIncludeDirectories>../include;../../pjlib/include;../../pjlib-util/include;../../pjnath/include;../../third_party/portaudio/include;../../third_party/speex/include;../../third_party/build/srtp;../../third_party/srtp/include;../../third_party/srtp/crypto/include;../../third_party/yuv/include;../../third_party/webrtc/src;../../third_party/webrtc_aec3/src;../..;$(DXSDK_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 +      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\msvc\include;../include;../../pjlib/include;../../pjlib-util/include;../../pjnath/include;../../third_party/portaudio/include;../../third_party/speex/include;../../third_party/build/srtp;../../third_party/srtp/include;../../third_party/srtp/crypto/include;../../third_party/yuv/include;../../third_party/webrtc/src;../..;$(DXSDK_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-       <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <PreprocessorDefinitions>_LIB;WEBRTC_WIN;WEBRTC_APM_DEBUG_DUMP=0;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
        <PrecompiledHeaderOutputFile />
      </ClCompile>
 +    <Lib>
@@ -78,18 +78,18 @@ index e596939..0c7108b 100644
    </ItemDefinitionGroup>
    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
      <ClCompile>
--      <AdditionalIncludeDirectories>../include;../../pjlib/include;../../pjlib-util/include;../../pjnath/include;../../third_party/portaudio/include;../../third_party/speex/include;../../third_party/build/srtp;../../third_party/srtp/include;../../third_party/srtp/crypto/include;../../third_party/yuv/include;../../third_party/webrtc/src;../..;$(DXSDK_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+-      <AdditionalIncludeDirectories>../include;../../pjlib/include;../../pjlib-util/include;../../pjnath/include;../../third_party/portaudio/include;../../third_party/speex/include;../../third_party/build/srtp;../../third_party/srtp/include;../../third_party/srtp/crypto/include;../../third_party/yuv/include;../../third_party/webrtc/src;../../third_party/webrtc_aec3/src;../..;$(DXSDK_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 +      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\msvc\include;../include;../../pjlib/include;../../pjlib-util/include;../../pjnath/include;../../third_party/portaudio/include;../../third_party/speex/include;../../third_party/build/srtp;../../third_party/srtp/include;../../third_party/srtp/crypto/include;../../third_party/yuv/include;../../third_party/webrtc/src;../..;$(DXSDK_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-       <PreprocessorDefinitions>_LIB;__ARMEL__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <PreprocessorDefinitions>_LIB;__ARMEL__;WEBRTC_WIN;WEBRTC_APM_DEBUG_DUMP=0;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
        <PrecompiledHeaderOutputFile>
        </PrecompiledHeaderOutputFile>
 @@ -325,10 +328,13 @@
        <TargetEnvironment>X64</TargetEnvironment>
      </Midl>
      <ClCompile>
--      <AdditionalIncludeDirectories>../include;../../pjlib/include;../../pjlib-util/include;../../pjnath/include;../../third_party/portaudio/include;../../third_party/speex/include;../../third_party/build/srtp;../../third_party/srtp/include;../../third_party/srtp/crypto/include;../../third_party/yuv/include;../../third_party/webrtc/src;../..;$(DXSDK_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+-      <AdditionalIncludeDirectories>../include;../../pjlib/include;../../pjlib-util/include;../../pjnath/include;../../third_party/portaudio/include;../../third_party/speex/include;../../third_party/build/srtp;../../third_party/srtp/include;../../third_party/srtp/crypto/include;../../third_party/yuv/include;../../third_party/webrtc/src;../../third_party/webrtc_aec3/src;../..;$(DXSDK_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 +      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\msvc\include;../include;../../pjlib/include;../../pjlib-util/include;../../pjnath/include;../../third_party/portaudio/include;../../third_party/speex/include;../../third_party/build/srtp;../../third_party/srtp/include;../../third_party/srtp/crypto/include;../../third_party/yuv/include;../../third_party/webrtc/src;../..;$(DXSDK_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-       <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <PreprocessorDefinitions>_LIB;WEBRTC_WIN;WEBRTC_APM_DEBUG_DUMP=0;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
        <PrecompiledHeaderOutputFile />
      </ClCompile>
 +    <Lib>

@@ -1,6 +1,6 @@
 {
     "name": "pjproject",
-    "version": "2.11",
+    "version": "2feee8db77ed47e7b574367295d4f03f9aea67f8",
     "url": "https://github.com/pjsip/pjproject/archive/__VERSION__.tar.gz",
     "deps": ["gnutls"],
     "patches": [
