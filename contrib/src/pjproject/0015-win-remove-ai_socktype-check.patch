@@ -1,0 +1,19 @@
+---
+diff --git a/pjlib/src/pj/addr_resolv_sock.c b/pjlib/src/pj/addr_resolv_sock.c
+index f68c4b177..e151a41e5 100644
+--- a/pjlib/src/pj/addr_resolv_sock.c
++++ b/pjlib/src/pj/addr_resolv_sock.c
+@@ -197,11 +197,6 @@ PJ_DEF(pj_status_t) pj_getaddrinfo(int af, const pj_str_t *nodename,
+ 	if (af!=PJ_AF_UNSPEC && res->ai_family != af)
+ 	    continue;
+ 
+-	if (res->ai_socktype != pj_SOCK_DGRAM()
+-                    && res->ai_socktype != pj_SOCK_STREAM()) {
+-	        continue;
+-	}
+-
+ 	/* Add current address in the resulting list if there
+ 	 * is no duplicates only. */
+ 	for (j = 0; j < i; j++) {
+--
+2.25.4
