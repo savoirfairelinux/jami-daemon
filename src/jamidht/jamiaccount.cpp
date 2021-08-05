@@ -3833,8 +3833,8 @@ JamiAccount::handlePendingConversations()
                         auto removeRepo = false;
                         {
                             std::lock_guard<std::mutex> lk(shared->conversationsMtx_);
-                            // Note: a removeContact while cloning. In this case, the conversation must
-                            // not be announced and removed.
+                            // Note: a removeContact while cloning. In this case, the conversation
+                            // must not be announced and removed.
                             auto& ci = info->conversations;
                             auto itConv = ci.find(conversationId);
                             if (itConv != ci.end() && itConv->second.removed)
@@ -5288,25 +5288,10 @@ JamiAccount::sendMessageNotification(const Conversation& conversation,
 std::string
 JamiAccount::getOneToOneConversation(const std::string& uri) const
 {
-    auto isSelf = uri == getUsername();
-    std::lock_guard<std::mutex> lk(conversationsMtx_);
-    for (const auto& [key, conv] : conversations_) {
-        // Note it's important to check getUsername(), else
-        // removing self can remove all conversations
-        if (!conv)
-            continue;
-        try {
-            if (conv->mode() == ConversationMode::ONE_TO_ONE) {
-                auto initMembers = conv->getInitialMembers();
-                if (isSelf && initMembers.size() == 1)
-                    return key;
-                if (std::find(initMembers.begin(), initMembers.end(), uri) != initMembers.end())
-                    return key;
-            }
-        } catch (const std::exception& e) {
-            JAMI_ERR() << e.what();
-        }
-    }
+    auto details = getContactDetails(uri);
+    auto it = details.find(DRing::Account::TrustRequest::CONVERSATIONID);
+    if (it != details.end())
+        return it->second;
     return {};
 }
 
