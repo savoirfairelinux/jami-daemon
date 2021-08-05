@@ -162,7 +162,8 @@ ContactList::setContacts(const std::map<dht::InfoHash, Contact>& contacts)
     saveContacts();
     // Set contacts is used when creating a new device, so just announce new contacts
     for (auto& peer : contacts)
-        callbacks_.contactAdded(peer.first.toString(), peer.second.confirmed);
+        if (peer.second.isActive())
+            callbacks_.contactAdded(peer.first.toString(), peer.second.confirmed);
 }
 
 void
