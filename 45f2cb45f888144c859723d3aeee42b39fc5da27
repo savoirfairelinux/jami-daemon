@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b3f880c3_78a145a7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-05T18:50:39Z",
+      "side": 1,
+      "message": "Seems good, just prefer to wait for the duplication issue mentioned by pjproject and wait for an answer.",
+      "revId": "45f2cb45f888144c859723d3aeee42b39fc5da27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
