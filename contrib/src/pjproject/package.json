@@ -18,6 +18,7 @@
         "0012-ignore-down-interfaces.patch",
         "0013-ignore-addresses-for-RFC7335.patch",
         "0014-fix-socket-leak.patch",
+        "0015-win-remove-ai_socktype-check.patch",
         "0001-win-config.patch",
         "0002-win-vs-gnutls.patch",
         "0003-win-vs2017-props.patch"
