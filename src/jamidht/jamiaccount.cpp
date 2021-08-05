@@ -3834,8 +3834,8 @@ JamiAccount::handlePendingConversations()
                         auto removeRepo = false;
                         {
                             std::lock_guard<std::mutex> lk(shared->conversationsMtx_);
-                            // Note: a removeContact while cloning. In this case, the conversation must
-                            // not be announced and removed.
+                            // Note: a removeContact while cloning. In this case, the conversation
+                            // must not be announced and removed.
                             auto& ci = info->conversations;
                             auto itConv = ci.find(conversationId);
                             if (itConv != ci.end() && itConv->second.removed)
@@ -5287,10 +5287,13 @@ JamiAccount::getOneToOneConversation(const std::string& uri) const
             continue;
         try {
             if (conv->mode() == ConversationMode::ONE_TO_ONE) {
-                auto initMembers = conv->getInitialMembers();
-                if (isSelf && initMembers.size() == 1)
+                auto members = conv->getMembers(true);
+                if (isSelf && members.size() == 1)
                     return key;
-                if (std::find(initMembers.begin(), initMembers.end(), uri) != initMembers.end())
+                if (std::find_if(members.begin(),
+                                 members.end(),
+                                 [&](auto m) { return m.at("uri") == uri; })
+                    != members.end())
                     return key;
             }
         } catch (const std::exception& e) {
