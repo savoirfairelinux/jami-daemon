@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6312fcf8_02a159e7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-05T18:18:39Z",
+      "side": 1,
+      "message": "Sorry for the delay. In fact discussed with @aberaud and the behavior we really want is the one currently documented\n\nSo I created https://git.jami.net/savoirfairelinux/ring-daemon/-/issues/606\n\n\n\n",
+      "revId": "7d070c9d46b5d36d20f3c23e22f33bae130ae549",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
