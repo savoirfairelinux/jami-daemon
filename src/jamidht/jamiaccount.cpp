@@ -3831,11 +3831,24 @@ JamiAccount::handlePendingConversations()
                         return;
                     }
                     if (conversation) {
-                        auto commitId = conversation->join();
+                        auto removeRepo = false;
                         {
                             std::lock_guard<std::mutex> lk(shared->conversationsMtx_);
+                            // Note: a removeContact while cloning. In this case, the conversation must
+                            // not be announced and removed.
+                            if (auto infos = shared->accountManager_->getInfo()) {
+                                auto ci = infos->conversations;
+                                auto itConv = ci.find(conversationId);
+                                if (itConv != ci.end() && itConv->second.removed)
+                                    removeRepo = true;
+                            }
                             shared->conversations_.emplace(conversationId, std::move(conversation));
                         }
+                        if (removeRepo) {
+                            shared->removeRepository(conversationId, false, true);
+                            return;
+                        }
+                        auto commitId = conversation->join();
                         if (!commitId.empty()) {
                             runOnMainThread([w, conversationId, commitId]() {
                                 if (auto shared = w.lock()) {
