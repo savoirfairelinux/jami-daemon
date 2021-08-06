@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7131fe25_bc3e1187",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-06T15:36:08Z",
+      "side": 1,
+      "message": "No need to bump, just apply the fix to our stack, we will bump to 2.12, this avoids to re-do all the checks",
+      "revId": "c8b6f47ce24ab87bfed2f7f94d585f30553a1a75",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d151e874_919db4e3",
