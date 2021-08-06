@@ -61,6 +61,7 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0013-ignore-addresses-for-RFC7335.patch # TODO remove with 2.12 (https://github.com/pjsip/pjproject/commit/d245ffaf91120fab7bb70e3f46206faeb5b01269)
 	$(APPLY) $(SRC)/pjproject/0014-fix-socket-leak.patch
 	$(APPLY) $(SRC)/pjproject/0015-fix-socktype-and-duplicate-checking.patch # TODO remove with 2.12 (https://github.com/pjsip/pjproject/commits/2feee8db77ed47e7b574367295d4f03f9aea67f8)
+	$(APPLY) $(SRC)/pjproject/0016-use-larger-Ta-interval.patch
 	$(APPLY) $(SRC)/pjproject/0017-auto-register-thread.patch
 	$(APPLY) $(SRC)/pjproject/0018-fix-ioqueue-lock-acquire.patch
 	$(APPLY) $(SRC)/pjproject/0019-resort-check-list-after-adding-prflx.patch

@@ -1,0 +1,138 @@
+From f448e54047b49938218f120e72d34563a94c3078 Mon Sep 17 00:00:00 2001
+From: Mohamed Chibani <mohamed.chibani@savoirfairelinux.com>
+Date: Thu, 26 Aug 2021 10:41:39 -0400
+Subject: [PATCH 1/2] pjproject/0016-use-larger-Ta-interval
+
+---
+ pjnath/include/pjnath/config.h  |  2 +-
+ pjnath/src/pjnath/ice_session.c | 31 ++++++++++++++++++++-----------
+ 2 files changed, 21 insertions(+), 12 deletions(-)
+
+diff --git a/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h
+index 89b421c51..fe58be9c9 100644
+--- a/pjnath/include/pjnath/config.h
++++ b/pjnath/include/pjnath/config.h
+@@ -340,7 +340,7 @@
+  * Default: 20
+  */
+ #ifndef PJ_ICE_TA_VAL
+-#   define PJ_ICE_TA_VAL			    20
++#   define PJ_ICE_TA_VAL			    50
+ #endif
+ 
+ 
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 77d014d62..2e35d930e 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -2704,9 +2704,8 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+     return status;
+ }
+ 
+-
+ /* Start periodic check for the specified checklist.
+- * This callback is called by timer on every Ta (20msec by default)
++ * This callback is called by timer on every Ta
+  */
+ static pj_status_t start_periodic_check(pj_timer_heap_t *th, 
+ 					pj_timer_entry *te)
+@@ -2734,8 +2733,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+     /* Set checklist state to Running */
+     clist_set_state(ice, clist, PJ_ICE_SESS_CHECKLIST_ST_RUNNING);
+ 
+-    LOG5((ice->obj_name, "Starting checklist periodic check"));
+-    pj_log_push_indent();
++    pj_ice_sess_check *check = NULL;
+ 
+     /* Send STUN Binding request for check with highest priority on
+      * Retry state.
+@@ -2743,9 +2741,11 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 
+     if (start_count == 0) {
+ 	for (i = 0; i < clist->count; ++i) {
+-	    pj_ice_sess_check *check = &clist->checks[i];
++	    check = &clist->checks[i];
+ 	    // Reconnect closed TURN sockets
+ 	    if (check->state == PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY) {
++		LOG5((ice->obj_name, "re-Starting periodic check for check %i (needs retry)", i));
++	    pj_log_push_indent();
+ 		status = perform_check(ice, clist, i, ice->is_nominating);
+ 		if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+ 		    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
+@@ -2762,13 +2762,15 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 	// TODO (sblin) remove - https://github.com/coturn/coturn/issues/408
+ 	pj_bool_t inc_counter = PJ_TRUE;
+ 	for (i = 0; i < clist->count; ++i) {
+-	    pj_ice_sess_check *check = &clist->checks[i];
++	    check = &clist->checks[i];
+ 	    if (check->state == PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET) {
+ 		if (inc_counter) {
+ 		    td->first_packet_counter += 1;
+ 		    inc_counter = PJ_FALSE;
+ 		}
+ 		if (td->first_packet_counter % 50 == 0) {
++		    LOG5((ice->obj_name, "re-Starting periodic check for check %i (needs 1st packet)", i));
++		    pj_log_push_indent();
+ 		    status = perform_check(ice, clist, i, ice->is_nominating);
+ 		    if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+ 			check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
+@@ -2788,9 +2790,12 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 
+     if (start_count == 0) {
+ 	for (i = 0; i < clist->count; ++i) {
+-	    pj_ice_sess_check *check = &clist->checks[i];
++	    check = &clist->checks[i];
+ 
+ 	    if (check->state == PJ_ICE_SESS_CHECK_STATE_WAITING) {
++		LOG5((ice->obj_name, "Starting periodic check for check %i (was waiting)", i));
++		pj_log_push_indent();
++
+ 		status = perform_check(ice, clist, i, ice->is_nominating);
+ 		if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+ 		    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
+@@ -2808,9 +2813,11 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+      */
+     if (start_count == 0) {
+ 	for (i = 0; i < clist->count; ++i) {
+-	    pj_ice_sess_check *check = &clist->checks[i];
++	    check = &clist->checks[i];
+ 
+ 	    if (check->state == PJ_ICE_SESS_CHECK_STATE_FROZEN) {
++	    LOG5((ice->obj_name, "Starting periodic check for check %i (was frozen)", i));
++	    pj_log_push_indent();
+ 		status = perform_check(ice, clist, i, ice->is_nominating);
+ 		if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+ 		    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+@@ -2825,7 +2832,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+     if (start_count == 0) {
+ 	// If all sockets are pending, do nothing
+ 	for (i = 0; i < clist->count; ++i) {
+-	    pj_ice_sess_check *check = &clist->checks[i];
++	    check = &clist->checks[i];
+ 	    if (check->state == PJ_ICE_SESS_CHECK_STATE_PENDING) {
+ 		++start_count;
+ 		break;
+@@ -2833,8 +2840,11 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+ 	}
+     }
+ 
+-    // Cannot start check because there's no suitable candidate pair.
++    // The checks are performed at the rate of 1 check per Ta
++    // interval. If a new check was started, we need to re-schedule
++    // for the next one (if any).
+     if (start_count!=0) {
++	pj_assert(check != NULL);
+ 	pj_time_val timeout = {0, PJ_ICE_TA_VAL};
+ 
+ 	pj_time_val_normalize(&timeout);
+@@ -2847,7 +2857,6 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+     return PJ_SUCCESS;
+ }
+ 
+-
+ /* Start sending connectivity check with USE-CANDIDATE */
+ static void start_nominated_check(pj_ice_sess *ice)
+ {
+-- 
+2.25.1
+
