@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e13d5519_a412c59f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-08-06T15:42:32Z",
+      "side": 1,
+      "message": "ACK",
+      "parentUuid": "7131fe25_bc3e1187",
+      "revId": "c8b6f47ce24ab87bfed2f7f94d585f30553a1a75",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d151e874_919db4e3",
@@ -31,6 +49,24 @@
       "writtenOn": "2021-08-06T15:35:15Z",
       "side": 1,
       "message": "why this change?",
+      "revId": "c8b6f47ce24ab87bfed2f7f94d585f30553a1a75",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c46318bb_a32158a5",
+        "filename": "contrib/src/pjproject/0002-win-vs-gnutls.patch",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 633
+      },
+      "writtenOn": "2021-08-06T15:42:32Z",
+      "side": 1,
+      "message": "Yeah, not needed anymore, that that was because of the bump, new commits change the lib include",
+      "parentUuid": "d151e874_919db4e3",
       "revId": "c8b6f47ce24ab87bfed2f7f94d585f30553a1a75",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
