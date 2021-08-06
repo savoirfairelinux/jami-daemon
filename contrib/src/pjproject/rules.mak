@@ -61,6 +61,7 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0014-fix-socket-leak.patch
 	$(APPLY) $(SRC)/pjproject/0015-fix-socktype-and-duplicate-checking.patch # TODO remove with 2.12 (https://github.com/pjsip/pjproject/commits/2feee8db77ed47e7b574367295d4f03f9aea67f8)
 	$(APPLY) $(SRC)/pjproject/0017-auto-register-thread.patch
+	$(APPLY) $(SRC)/pjproject/0016-use-larger-Ta-interval
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch
 endif
