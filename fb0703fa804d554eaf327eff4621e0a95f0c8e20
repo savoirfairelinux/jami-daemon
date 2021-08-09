@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3ed20271_501f36c0",
+        "filename": "contrib/src/pjproject/0016-auto-register-thread.patch",
+        "patchSetId": 6
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-09T14:14:48Z",
+      "side": 1,
+      "message": "prefix 0016- already taken by another patch (in review)",
+      "revId": "fb0703fa804d554eaf327eff4621e0a95f0c8e20",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
