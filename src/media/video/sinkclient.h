@@ -53,7 +53,7 @@ class SinkClient : public VideoFramePassiveReader
 public:
     SinkClient(const std::string& id = "", bool mixer = false);
 
-    const std::string& getId() const noexcept { return id_; }
+    const std::string getId(size_t len = 16) const noexcept;
 
     std::string openedName() const noexcept;
 
@@ -74,15 +74,19 @@ public:
     bool stop() noexcept;
 
     void setFrameSize(int width, int height);
+    void setFramePosition(int x, int y);
 
     void registerTarget(const DRing::SinkTarget& target) noexcept { target_ = target; }
     void registerAVTarget(const DRing::AVSinkTarget& target) noexcept { avTarget_ = target; }
 
 private:
     const std::string id_;
-    const bool mixer_;
+    // True if the instance is used by a mixer.
+    const bool mixer_ {false};
     int width_ {0};
     int height_ {0};
+    int x_ {0};
+    int y_ {0};
     bool started_ {false}; // used to arbitrate client's stop signal.
     int rotation_ {0};
     DRing::SinkTarget target_;
