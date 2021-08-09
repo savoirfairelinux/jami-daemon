@@ -315,7 +315,7 @@ AccountManager::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>&
 
     // Device certificate can't be self-signed
     if (top_issuer == crt) {
-        JAMI_WARN("Found invalid peer device: %s", crt->getId().toString().c_str());
+        JAMI_WARN("Found invalid peer device: %s", crt->getLongId().toString().c_str());
         return false;
     }
 
@@ -324,19 +324,19 @@ AccountManager::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>&
     dht::crypto::TrustList peer_trust;
     peer_trust.add(*top_issuer);
     if (not peer_trust.verify(*crt)) {
-        JAMI_WARN("Found invalid peer device: %s", crt->getId().toString().c_str());
+        JAMI_WARN("Found invalid peer device: %s", crt->getLongId().toString().c_str());
         return false;
     }
 
     // Check cached OCSP response
     if (crt->ocspResponse and crt->ocspResponse->getCertificateStatus() != GNUTLS_OCSP_CERT_GOOD) {
-        JAMI_ERR("Certificate %s is disabled by cached OCSP response", crt->getId().to_c_str());
+        JAMI_ERR("Certificate %s is disabled by cached OCSP response", crt->getLongId().to_c_str());
         return false;
     }
 
     account_id = crt->issuer->getId();
     JAMI_WARN("Found peer device: %s account:%s CA:%s",
-              crt->getId().toString().c_str(),
+              crt->getLongId().toString().c_str(),
               account_id.toString().c_str(),
               top_issuer->getId().toString().c_str());
     return true;
