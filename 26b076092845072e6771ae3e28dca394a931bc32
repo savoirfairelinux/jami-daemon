@@ -52,6 +52,24 @@
       "parentUuid": "4648506e_8caeb604",
       "revId": "26b076092845072e6771ae3e28dca394a931bc32",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8b884f83_bfb612a1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-08-09T15:32:36Z",
+      "side": 1,
+      "message": "The goal here is to not have the failed assertion anymore.\n\nI had this assertion after hours of stress testing, trying to reproduce a very rare race condition.  Imagine my disappointment when I comeback to see that Jami crashed because of unregistered thread.\n\nThus, this is not about thread usage in Jami, it\u0027s about improving debugging workflow. \n\nI have this patch rebased on all my branches now to speed up my workflow, knowing I won\u0027t get this assertion, while keeping _all_ debug informations and other useful assertions in PJSIP.",
+      "parentUuid": "a3c4b442_3e7856ff",
+      "revId": "26b076092845072e6771ae3e28dca394a931bc32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
