@@ -34,16 +34,16 @@ struct StreamData
      * @param callId
      * @param isReceived False if local audio/video streams
      * @param mediaType
-     * @param peerId
+     * @param accountId
      */
     StreamData(const std::string& callId,
                bool isReceived,
                const StreamType& mediaType,
-               const std::string& peerId)
+               const std::string& accountId)
         : id {std::move(callId)}
         , direction {isReceived}
         , type {mediaType}
-        , source {std::move(peerId)}
+        , source {std::move(accountId)}
     {}
     // callId
     const std::string id;
@@ -51,7 +51,7 @@ struct StreamData
     const bool direction;
     // StreamType -> audio or video.
     const StreamType type;
-    // peerId
+    // accountId
     const std::string source;
 };
 
