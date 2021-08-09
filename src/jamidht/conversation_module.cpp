@@ -363,6 +363,7 @@ ConversationModule::Impl::handlePendingConversations()
                     return;
                 // Clone and store conversation
                 try {
+                    JAMI_ERR() << "@@@@@@ CLONE " << conversationId;
                     auto conversation = std::make_shared<Conversation>(sthis->account_,
                                                                        deviceId,
                                                                        conversationId);
@@ -394,6 +395,7 @@ ConversationModule::Impl::handlePendingConversations()
                                                                                  conversationId);
                         sthis->needsSyncingCb_();
                     }
+                    JAMI_ERR() << "@@@@@@ CLONE DONE " << conversationId;
                 } catch (const std::exception& e) {
                     emitSignal<DRing::ConversationSignal::OnConversationError>(sthis->accountId_,
                                                                                conversationId,
