@@ -53,6 +53,7 @@
 #include "jami/videomanager_interface.h"
 #include <chrono>
 #include <libavutil/display.h>
+#include <video/sinkclient.h>
 #endif
 #include "audio/ringbufferpool.h"
 #include "jamidht/channeled_transport.h"
@@ -2059,6 +2060,20 @@ SIPCall::stopAllMedia()
         audioRtp->stop();
 #ifdef ENABLE_VIDEO
     auto const& videoRtp = getVideoRtp();
+
+    {
+        std::lock_guard<std::mutex> lk(sinksMtx_);
+        for (auto it = callSinksMap_.begin(); it != callSinksMap_.end();) {
+            auto& videoReceive = videoRtp->getVideoReceive();
+            if (videoReceive) {
+                videoReceive->detach(it->second.get());
+            }
+
+            it->second->stop();
+            it = callSinksMap_.erase(it);
+        }
+    }
+
     if (videoRtp)
         videoRtp->stop();
 #endif
@@ -2730,6 +2745,27 @@ SIPCall::addDummyVideoRtpSession()
 #endif
 
     return {};
+}
+
+void
+SIPCall::createSinks(const ConfInfo& infos)
+{
+#ifdef ENABLE_VIDEO
+    if (!hasVideo())
+        return;
+
+    std::lock_guard<std::mutex> lk(sinksMtx_);
+    auto videoRtp = getVideoRtp();
+    auto& videoReceive = videoRtp->getVideoReceive();
+    if (!videoReceive)
+        return;
+    auto id = getConfId().empty() ? getCallId() : getConfId();
+    Manager::instance().createSinkClients(id,
+                                          infos,
+                                          std::static_pointer_cast<video::VideoGenerator>(
+                                              videoReceive),
+                                          callSinksMap_);
+#endif
 }
 
 std::shared_ptr<AudioRtpSession>
