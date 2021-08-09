@@ -102,7 +102,7 @@ private:
     void unMapShmArea() noexcept
     {
         if (area_ != MAP_FAILED and ::munmap(area_, areaSize_) < 0) {
-            JAMI_ERR("ShmHolder[%s]: munmap(%zu) failed with errno %d",
+            JAMI_ERR("ShmHolder[%s] munmap(%zu) failed with errno %d",
                      openedName_.c_str(),
                      areaSize_,
                      errno);
@@ -155,7 +155,7 @@ ShmHolder::ShmHolder(const std::string& name)
     if (::sem_init(&area_->frameGenMutex, 1, 0) < 0)
         shmFailedWithErrno("sem_init(frameGenMutex)");
 
-    JAMI_DBG("ShmHolder: new holder '%s'", openedName_.c_str());
+    JAMI_DBG("ShmHolder[%s] New holder created", openedName_.c_str());
 }
 
 ShmHolder::~ShmHolder()
@@ -188,12 +188,12 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
 
     // full area size: +15 to take care of maximum padding size
     const auto areaSize = sizeof(SHMHeader) + 2 * frameSize + 15;
-    JAMI_DBG("ShmHolder[%s]: new sizes: f=%zu, a=%zu", openedName_.c_str(), frameSize, areaSize);
+    JAMI_DBG("ShmHolder[%s] New size: f=%zu, a=%zu", openedName_.c_str(), frameSize, areaSize);
 
     unMapShmArea();
 
     if (::ftruncate(fd_, areaSize) < 0) {
-        JAMI_ERR("ShmHolder[%s]: ftruncate(%zu) failed with errno %d",
+        JAMI_ERR("ShmHolder[%s] ftruncate(%zu) failed with errno %d",
                  openedName_.c_str(),
                  areaSize,
                  errno);
@@ -205,7 +205,7 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
 
     if (area_ == MAP_FAILED) {
         areaSize_ = 0;
-        JAMI_ERR("ShmHolder[%s]: mmap(%zu) failed with errno %d",
+        JAMI_ERR("ShmHolder[%s] mmap(%zu) failed with errno %d",
                  openedName_.c_str(),
                  areaSize,
                  errno);
@@ -240,7 +240,11 @@ ShmHolder::renderFrame(const VideoFrame& src) noexcept
     const auto frameSize = videoFrameSize(format, width, height);
 
     if (!resizeArea(frameSize)) {
-        JAMI_ERR("ShmHolder[%s]: could not resize area", openedName_.c_str());
+        JAMI_ERR("ShmHolder[%s] Could not resize area size: %dx%d, format: %d",
+                 openedName_.c_str(),
+                 width,
+                 height,
+                 format);
         return;
     }
 
@@ -276,7 +280,10 @@ SinkClient::start() noexcept
         try {
             shm_ = std::make_shared<ShmHolder>();
         } catch (const std::runtime_error& e) {
-            JAMI_ERR("SHMHolder ctor failure: %s", e.what());
+            JAMI_ERR("[Sink:<%s/%s>] ctor failure: %s",
+                     getId().c_str(),
+                     openedName().c_str(),
+                     e.what());
         }
     }
     return static_cast<bool>(shm_);
@@ -286,6 +293,7 @@ bool
 SinkClient::stop() noexcept
 {
     setFrameSize(0, 0);
+    setFramePosition(0, 0);
     shm_.reset();
     return true;
 }
@@ -308,6 +316,7 @@ bool
 SinkClient::stop() noexcept
 {
     setFrameSize(0, 0);
+    setFramePosition(0, 0);
     return true;
 }
 
@@ -327,6 +336,10 @@ void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
+    int width = width_;
+    int height = height_;
+    int x = x_;
+    int y = y_;
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();
     const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
@@ -343,6 +356,17 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     if (avTarget_.push) {
         auto outFrame = std::make_unique<VideoFrame>();
         outFrame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
+        if (y + height <= outFrame->pointer()->height) {
+            outFrame->pointer()->crop_top = y;
+            outFrame->pointer()->crop_bottom = outFrame->pointer()->height - y - height;
+        }
+        if (x + width <= outFrame->pointer()->width) {
+            outFrame->pointer()->crop_left = x;
+            outFrame->pointer()->crop_right = outFrame->pointer()->width - x - width;
+        }
+        if (height && width)
+            av_frame_apply_cropping(outFrame->pointer(), AV_FRAME_CROP_UNALIGNED);
+
         avTarget_.push(std::move(outFrame));
     }
 
@@ -352,7 +376,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #endif
 
     if (doTransfer) {
-        std::shared_ptr<VideoFrame> frame;
+        std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
 #ifdef RING_ACCEL
         auto desc = av_pix_fmt_desc_get(
             (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
@@ -362,21 +386,29 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                                                                 frame_p),
                                                             AV_PIX_FMT_NV12);
             } catch (const std::runtime_error& e) {
-                JAMI_ERR("Accel failure: %s", e.what());
+                JAMI_ERR("[Sink:<%s/%s>] Accel failure: %s",
+                         getId().c_str(),
+                         openedName().c_str(),
+                         e.what());
                 return;
             }
-        }
-        else
+        } else
 #endif
-        frame = std::static_pointer_cast<VideoFrame>(frame_p);
+            frame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
+
         int angle = frame->getOrientation();
+
         if (angle != rotation_) {
             filter_ = getTransposeFilter(angle,
                                          FILTER_INPUT_NAME,
                                          frame->width(),
                                          frame->height(),
-                                         AV_PIX_FMT_RGB32,
+                                         frame->format(),
                                          false);
+            if (std::abs(rotation_ - angle) == 90) {
+                width = height_;
+                height = width_;
+            }
             rotation_ = angle;
         }
         if (filter_) {
@@ -384,6 +416,18 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             frame = std::static_pointer_cast<VideoFrame>(
                 std::shared_ptr<MediaFrame>(filter_->readOutput()));
         }
+
+        if (height < frame->height()) {
+            frame->pointer()->crop_top = y;
+            frame->pointer()->crop_bottom = (size_t) frame->height() - y - height;
+        }
+        if (width < frame->width()) {
+            frame->pointer()->crop_left = x;
+            frame->pointer()->crop_right = (size_t) frame->width() - x - width;
+        }
+        if (height < frame->height() || width < frame->width())
+            av_frame_apply_cropping(frame->pointer(), AV_FRAME_CROP_UNALIGNED);
+
         if (frame->height() != height_ || frame->width() != width_) {
             setFrameSize(0, 0);
             setFrameSize(frame->width(), frame->height());
@@ -393,8 +437,8 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #endif
         if (target_.pull) {
             VideoFrame dst;
-            const int width = frame->width();
-            const int height = frame->height();
+            width = frame->width();
+            height = frame->height();
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
             const int format = AV_PIX_FMT_RGBA;
 #else
@@ -421,19 +465,38 @@ SinkClient::setFrameSize(int width, int height)
     width_ = width;
     height_ = height;
     if (width > 0 and height > 0) {
-        JAMI_WARN("Start sink <%s / %s>, size=%dx%d, mixer=%u",
-                  getId().c_str(),
-                  openedName().c_str(),
-                  width,
-                  height,
-                  mixer_);
+        JAMI_DBG("[Sink:<%s/%s>] Started - size=%dx%d, mixer=%u",
+                 getId().c_str(),
+                 openedName().c_str(),
+                 width,
+                 height,
+                 mixer_);
         emitSignal<DRing::VideoSignal::DecodingStarted>(getId(), openedName(), width, height, mixer_);
         started_ = true;
     } else if (started_) {
-        JAMI_ERR("Stop sink <%s / %s>, mixer=%u", getId().c_str(), openedName().c_str(), mixer_);
+        JAMI_DBG("[Sink <%s/%s>] Stopped - size=%dx%d, mixer=%u",
+                 getId().c_str(),
+                 openedName().c_str(),
+                 width,
+                 height,
+                 mixer_);
         emitSignal<DRing::VideoSignal::DecodingStopped>(getId(), openedName(), mixer_);
         started_ = false;
     }
+}
+
+void
+SinkClient::setFramePosition(int x, int y)
+{
+    JAMI_DBG("[Sink <%s/%s>] Change frame postion from [%d, %d] to [%d, %d]",
+             getId().c_str(),
+             openedName().c_str(),
+             x_,
+             y_,
+             x,
+             y);
+    x_ = x;
+    y_ = y;
 }
 
 } // namespace video
