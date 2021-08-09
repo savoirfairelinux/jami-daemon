@@ -34,6 +34,8 @@
             <tp:added version="9.2.0"/>
             <arg type="s" name="path" direction="in">
             </arg>
+            <arg type="s" name="accountId" direction="in">
+            </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="PluginPreferences" direction="out" tp:type="String_String_Map">
             </arg>
@@ -42,6 +44,8 @@
         <method name="setPluginPreference" tp:name-for-bindings="setPluginPreference">
             <tp:added version="9.2.0"/>
             <arg type="s" name="path" direction="in">
+            </arg>
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="s" name="key" direction="in">
             </arg>
@@ -56,6 +60,8 @@
             <tp:added version="9.2.0"/>
             <arg type="s" name="path" direction="in">
             </arg>
+            <arg type="s" name="accountId" direction="in">
+            </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="a{ss}" name="preferencesValues" direction="out" tp:type="String_String_Map">
             </arg>
@@ -64,6 +70,8 @@
        <method name="resetPluginPreferencesValues" tp:name-for-bindings="resetPluginPreferencesValues">
             <tp:added version="9.2.0"/>
             <arg type="s" name="path" direction="in">
+            </arg>
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="b" name="reset" direction="out">
             </arg>

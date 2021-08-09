@@ -26,19 +26,29 @@
 #include <fstream>
 #include "logger.h"
 #include "fileutils.h"
+#include <filesystem>
 
 namespace jami {
 
 std::string
-PluginPreferencesUtils::getPreferencesConfigFilePath(const std::string& rootPath)
+PluginPreferencesUtils::getPreferencesConfigFilePath(const std::string& rootPath,
+                                                     const std::string& accountId)
 {
-    return rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "preferences.json";
+    if (accountId.empty())
+        return rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "preferences.json";
+    else
+        return rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "accountpreferences.json";
 }
 
 std::string
-PluginPreferencesUtils::valuesFilePath(const std::string& rootPath)
+PluginPreferencesUtils::valuesFilePath(const std::string& rootPath, const std::string& accountId)
 {
-    return rootPath + DIR_SEPARATOR_CH + "preferences.msgpack";
+    if (accountId.empty())
+        return rootPath + DIR_SEPARATOR_CH + "preferences.msgpack";
+    auto dir = fileutils::get_data_dir() + DIR_SEPARATOR_CH + accountId + DIR_SEPARATOR_CH
+               + "plugins" + DIR_SEPARATOR_CH + std::filesystem::path(rootPath).filename();
+    fileutils::check_dir(dir.c_str());
+    return dir + DIR_SEPARATOR_CH + "preferences.msgpack";
 }
 
 std::string
@@ -89,9 +99,9 @@ PluginPreferencesUtils::parsePreferenceConfig(const Json::Value& jsonPreference)
 }
 
 std::vector<std::map<std::string, std::string>>
-PluginPreferencesUtils::getPreferences(const std::string& rootPath)
+PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::string& accountId)
 {
-    std::string preferenceFilePath = getPreferencesConfigFilePath(rootPath);
+    std::string preferenceFilePath = getPreferencesConfigFilePath(rootPath, accountId);
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferenceFilePath));
     std::ifstream file(preferenceFilePath);
     Json::Value root;
@@ -142,9 +152,10 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath)
 }
 
 std::map<std::string, std::string>
-PluginPreferencesUtils::getUserPreferencesValuesMap(const std::string& rootPath)
+PluginPreferencesUtils::getUserPreferencesValuesMap(const std::string& rootPath,
+                                                    const std::string& accountId)
 {
-    const std::string preferencesValuesFilePath = valuesFilePath(rootPath);
+    const std::string preferencesValuesFilePath = valuesFilePath(rootPath, accountId);
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
     std::ifstream file(preferencesValuesFilePath, std::ios::binary);
     std::map<std::string, std::string> rmap;
@@ -177,12 +188,17 @@ PluginPreferencesUtils::getUserPreferencesValuesMap(const std::string& rootPath)
 }
 
 std::map<std::string, std::string>
-PluginPreferencesUtils::getPreferencesValuesMap(const std::string& rootPath)
+PluginPreferencesUtils::getPreferencesValuesMap(const std::string& rootPath,
+                                                const std::string& accountId)
 {
     std::map<std::string, std::string> rmap;
 
     // Read all preferences values
     std::vector<std::map<std::string, std::string>> preferences = getPreferences(rootPath);
+    auto accPrefs = getPreferences(rootPath, accountId);
+    for (const auto& item : accPrefs) {
+        preferences.push_back(item);
+    }
     for (auto& preference : preferences) {
         rmap[preference["key"]] = preference["defaultValue"];
     }
@@ -192,16 +208,24 @@ PluginPreferencesUtils::getPreferencesValuesMap(const std::string& rootPath)
         rmap[pair.first] = pair.second;
     }
 
+    if (!accountId.empty()) {
+        // If any of these preferences were modified, its value is changed before return
+        for (const auto& pair : getUserPreferencesValuesMap(rootPath, accountId)) {
+            rmap[pair.first] = pair.second;
+        }
+    }
+
     return rmap;
 }
 
 bool
-PluginPreferencesUtils::resetPreferencesValuesMap(const std::string& rootPath)
+PluginPreferencesUtils::resetPreferencesValuesMap(const std::string& rootPath,
+                                                  const std::string& accountId)
 {
     bool returnValue = true;
     std::map<std::string, std::string> pluginPreferencesMap {};
 
-    const std::string preferencesValuesFilePath = valuesFilePath(rootPath);
+    const std::string preferencesValuesFilePath = valuesFilePath(rootPath, accountId);
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
     std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
     if (!fs.good()) {
@@ -270,7 +294,31 @@ void
 PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerName,
                                                    const std::string& rootPath)
 {
-    std::string filePath = getPreferencesConfigFilePath(rootPath);
+    {
+        std::string filePath = getPreferencesConfigFilePath(rootPath);
+        Json::Value root;
+
+        std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
+        std::ifstream file(filePath);
+        Json::CharReaderBuilder rbuilder;
+        Json::Value preference;
+        rbuilder["collectComments"] = false;
+        std::string errs;
+        std::set<std::string> keys;
+        std::vector<std::map<std::string, std::string>> preferences;
+        if (file) {
+            bool ok = Json::parseFromStream(rbuilder, file, &root, &errs);
+            if (ok && root.isArray()) {
+                // Return if preference already exists
+                for (const auto& child : root)
+                    if (child.get("key", "None").asString() == handlerName + "Always")
+                        return;
+            }
+            file.close();
+        }
+    }
+
+    std::string filePath = getPreferencesConfigFilePath(rootPath, "acc");
     Json::Value root;
     {
         std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
@@ -289,15 +337,16 @@ PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerNam
                     if (child.get("key", "None").asString() == handlerName + "Always")
                         return;
             }
-            // Create preference structure otherwise
-            preference["key"] = handlerName + "Always";
-            preference["type"] = "Switch";
-            preference["defaultValue"] = "0";
-            preference["title"] = "Automatically turn " + handlerName + " on";
-            preference["summary"] = handlerName + " will take effect immediately";
-            root.append(preference);
             file.close();
         }
+        // Create preference structure otherwise
+        preference["key"] = handlerName + "Always";
+        preference["type"] = "Switch";
+        preference["defaultValue"] = "0";
+        preference["title"] = "Automatically turn " + handlerName + " on";
+        preference["summary"] = handlerName + " will take effect immediately";
+        preference["scope"] = "accountId";
+        root.append(preference);
     }
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(filePath));
     std::ofstream outFile(filePath);
@@ -309,10 +358,16 @@ PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerNam
 }
 
 bool
-PluginPreferencesUtils::getAlwaysPreference(const std::string& rootPath, std::string& handlerName)
+PluginPreferencesUtils::getAlwaysPreference(const std::string& rootPath,
+                                            const std::string& handlerName,
+                                            const std::string& accountId)
 {
     auto preferences = getPreferences(rootPath);
-    auto preferencesValues = getPreferencesValuesMap(rootPath);
+    auto accPrefs = getPreferences(rootPath, accountId);
+    for (const auto& item : accPrefs) {
+        preferences.push_back(item);
+    }
+    auto preferencesValues = getPreferencesValuesMap(rootPath, accountId);
 
     for (const auto& preference : preferences) {
         auto key = preference.at("key");

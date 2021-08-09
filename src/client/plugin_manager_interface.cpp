@@ -52,26 +52,35 @@ getPluginDetails(const std::string& path)
 }
 
 std::vector<std::map<std::string, std::string>>
-getPluginPreferences(const std::string& path)
+getPluginPreferences(const std::string& path, const std::string& accountId)
 {
-    return jami::Manager::instance().getJamiPluginManager().getPluginPreferences(path);
+    return jami::Manager::instance().getJamiPluginManager().getPluginPreferences(path, accountId);
 }
 
 bool
-setPluginPreference(const std::string& path, const std::string& key, const std::string& value)
+setPluginPreference(const std::string& path,
+                    const std::string& accountId,
+                    const std::string& key,
+                    const std::string& value)
 {
-    return jami::Manager::instance().getJamiPluginManager().setPluginPreference(path, key, value);
+    return jami::Manager::instance().getJamiPluginManager().setPluginPreference(path,
+                                                                                accountId,
+                                                                                key,
+                                                                                value);
 }
 
 std::map<std::string, std::string>
-getPluginPreferencesValues(const std::string& path)
+getPluginPreferencesValues(const std::string& path, const std::string& accountId)
 {
-    return jami::Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(path);
+    return jami::Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(path,
+                                                                                          accountId);
 }
 bool
-resetPluginPreferencesValues(const std::string& path)
+resetPluginPreferencesValues(const std::string& path, const std::string& accountId)
 {
-    return jami::Manager::instance().getJamiPluginManager().resetPluginPreferencesValuesMap(path);
+    return jami::Manager::instance()
+        .getJamiPluginManager()
+        .resetPluginPreferencesValuesMap(path, accountId);
 }
 
 std::vector<std::string>
