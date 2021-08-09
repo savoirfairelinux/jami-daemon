@@ -16,6 +16,24 @@
       "message": "I like the idea. sip_utils::register_thread is imho useless and we use it too much. If asserts are ok with you, jenkins pass, and if you can rebase, for me it\u0027s ok (Just -1 because it will be visible for me)",
       "revId": "26b076092845072e6771ae3e28dca394a931bc32",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4648506e_8caeb604",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-09T13:56:42Z",
+      "side": 1,
+      "message": "Yeah ... but looks like we are saying we completely lost control of which thread is accessing the lib, so let register every thread ... hmm",
+      "parentUuid": "66c6995c_43f3d13e",
+      "revId": "26b076092845072e6771ae3e28dca394a931bc32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
