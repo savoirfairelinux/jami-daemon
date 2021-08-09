@@ -260,10 +260,6 @@ public:
     // Get the list of current RTP sessions
     std::vector<std::shared_ptr<RtpSession>> getRtpSessionList() const;
 
-    void generateMediaPorts();
-
-    void openPortsUPnP();
-
     void setPeerRegisteredName(const std::string& name) { peerRegisteredName_ = name; }
 
     void setPeerUri(const std::string& peerUri) { peerUri_ = peerUri; }
@@ -271,9 +267,20 @@ public:
     bool initIceMediaTransport(bool master,
                                std::optional<IceTransportOptions> options = std::nullopt);
 
+    void setInviteSession(pjsip_inv_session* inviteSession = nullptr);
+
+    std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
+
+private:
+    void generateMediaPorts();
+
+    void openPortsUPnP();
+
     bool isIceRunning() const;
 
     std::unique_ptr<IceSocket> newIceSocket(unsigned compId);
+
+    IpAddr getPublicAddress() const;
 
     void deinitRecorder();
 
@@ -281,11 +288,6 @@ public:
 
     void setMute(bool state);
 
-    void setInviteSession(pjsip_inv_session* inviteSession = nullptr);
-
-    std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
-
-private:
     /**
      * Send device orientation through SIP INFO
      * @param rotation Device orientation (0/90/180/270) (counterclockwise)
