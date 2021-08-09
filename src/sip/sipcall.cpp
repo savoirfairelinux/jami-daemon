@@ -863,13 +863,7 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
 
             auto opts = account->getIceOptions();
 
-            auto publicAddr = account->getPublishedIpAddress();
-            if (not publicAddr) {
-                // If the published address is unknown, just use the local address. Not
-                // optimal, but may work just fine if both endpoints are in the same
-                // local network.
-                publicAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), pj_AF_INET());
-            }
+            auto publicAddr = getPublicAddress();
 
             if (publicAddr) {
                 opts.accountPublicAddr = publicAddr;
@@ -3014,6 +3008,11 @@ SIPCall::setupIceResponse()
 {
     JAMI_DBG("[call:%s] Setup ICE response", getCallId().c_str());
 
+    auto account = getSIPAccount();
+    if (not account) {
+        JAMI_ERR("No account detected");
+    }
+
     if (not remoteHasValidIceAttributes()) {
         // If ICE attributes are not present, skip the ICE initialization
         // step (most likely ICE is not used).
@@ -3021,7 +3020,24 @@ SIPCall::setupIceResponse()
         return;
     }
 
-    if (not initIceMediaTransport(false)) {
+    auto opt = account->getIceOptions();
+    opt.accountPublicAddr = getPublicAddress();
+    if (not opt.accountPublicAddr) {
+        JAMI_ERR("[call:%s] No public address, ICE can't be initialized", getCallId().c_str());
+        onFailure(EIO);
+        return;
+    }
+
+    opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
+                                                      opt.accountPublicAddr.getFamily());
+
+    if (not opt.accountLocalAddr) {
+        JAMI_ERR("[call:%s] No local address, ICE can't be initialized", getCallId().c_str());
+        onFailure(EIO);
+        return;
+    }
+
+    if (not initIceMediaTransport(false, opt)) {
         JAMI_ERR("[call:%s] ICE initialization failed", getCallId().c_str());
         // Fatal condition
         // TODO: what's SIP rfc says about that?
@@ -3044,6 +3060,28 @@ std::unique_ptr<IceSocket>
 SIPCall::newIceSocket(unsigned compId)
 {
     return std::unique_ptr<IceSocket> {new IceSocket(mediaTransport_, compId)};
+}
+
+IpAddr
+SIPCall::getPublicAddress() const
+{
+    auto account = getSIPAccount();
+    if (not account) {
+        JAMI_ERR("No account detected");
+        return {};
+    }
+
+    auto publicAddr = account->getPublishedIpAddress();
+    if (not publicAddr) {
+        // If the published address is unknown, just use the local address. Not
+        // optimal, but may work just fine if both endpoints are in the same
+        // local network.
+        publicAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), pj_AF_INET());
+        JAMI_WARN("[call:%s] Missing public address, using local address instead",
+                  getCallId().c_str());
+    }
+
+    return publicAddr;
 }
 
 void
