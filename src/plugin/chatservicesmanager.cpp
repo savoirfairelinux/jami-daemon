@@ -64,7 +64,8 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
             for (auto& toggledList : chatHandlerToggled_) {
                 auto handlerId = std::find_if(toggledList.second.begin(),
                                               toggledList.second.end(),
-                                              [id = (uintptr_t) handlerIt->get()](uintptr_t handlerId) {
+                                              [id = (uintptr_t) handlerIt->get()](
+                                                  uintptr_t handlerId) {
                                                   return (handlerId == id);
                                               });
                 // If ChatHandler we're trying to destroy is currently in use, we deactivate it.

@@ -51,9 +51,11 @@ public:
      * The preference.msgpack file saves the actuall preferences values
      * if they were modified.
      * @param rootPath
+     * @param accountId
      * @return preference.msgpack file path.
      */
-    static std::string valuesFilePath(const std::string& rootPath);
+    static std::string valuesFilePath(const std::string& rootPath,
+                                      const std::string& accountId = "");
 
     /**
      * @brief Returns the path to allowdeny.msgpack file.
@@ -89,25 +91,29 @@ public:
     /**
      * @brief Reads preferences values which were modified from defaultValue
      * @param rootPath
+     * @param accountId
      * @return Map with preference keys and actuall values.
      */
     static std::map<std::string, std::string> getUserPreferencesValuesMap(
-        const std::string& rootPath);
+        const std::string& rootPath, const std::string& accountId = "");
 
     /**
      * @brief Reads preferences values
      * @param rootPath
+     * @param accountId
      * @return Map with preference keys and actuall values.
      */
-    static std::map<std::string, std::string> getPreferencesValuesMap(const std::string& rootPath);
+    static std::map<std::string, std::string> getPreferencesValuesMap(
+        const std::string& rootPath, const std::string& accountId = "");
 
     /**
      * @brief Resets all preferences values to their defaultValues
      * by erasing all data saved in preferences.msgpack.
      * @param rootPath
+     * @param accountId
      * @return True if preferences were reset.
      */
-    static bool resetPreferencesValuesMap(const std::string& rootPath);
+    static bool resetPreferencesValuesMap(const std::string& rootPath, const std::string& accountId);
 
     /**
      * @brief Saves ChantHandlers status provided by list.

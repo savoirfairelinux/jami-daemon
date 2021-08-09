@@ -79,9 +79,11 @@ JamiPluginManager::getInstalledPlugins()
     std::for_each(pluginsPaths.begin(), pluginsPaths.end(), [&pluginsPath](std::string& x) {
         x = pluginsPath + DIR_SEPARATOR_CH + x;
     });
-    auto returnIterator = std::remove_if(pluginsPaths.begin(), pluginsPaths.end(), [](const std::string& path) {
-        return !PluginUtils::checkPluginValidity(path);
-    });
+    auto returnIterator = std::remove_if(pluginsPaths.begin(),
+                                         pluginsPaths.end(),
+                                         [](const std::string& path) {
+                                             return !PluginUtils::checkPluginValidity(path);
+                                         });
     pluginsPaths.erase(returnIterator, std::end(pluginsPaths));
 
     // Gets plugins installed in non standard path
@@ -106,8 +108,8 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
             if (name.empty())
                 return 0;
             const std::string& version = manifestMap["version"];
-            std::string destinationDir {fileutils::get_data_dir() + DIR_SEPARATOR_CH
-                                              + "plugins" + DIR_SEPARATOR_CH + name};
+            std::string destinationDir {fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins"
+                                        + DIR_SEPARATOR_CH + name};
             // Find if there is an existing version of this plugin
             const auto alreadyInstalledManifestMap = PluginUtils::parseManifestFile(
                 PluginUtils::manifestPath(destinationDir));
@@ -229,14 +231,15 @@ JamiPluginManager::getPluginPreferences(const std::string& rootPath)
 }
 
 bool
-JamiPluginManager::setPluginPreference(const std::string& rootPath,
+JamiPluginManager::setPluginPreference(const std::string& accountId,
+                                       const std::string& rootPath,
                                        const std::string& key,
                                        const std::string& value)
 {
     std::map<std::string, std::string> pluginUserPreferencesMap
-        = PluginPreferencesUtils::getUserPreferencesValuesMap(rootPath);
+        = PluginPreferencesUtils::getUserPreferencesValuesMap(rootPath, accountId);
     std::map<std::string, std::string> pluginPreferencesMap
-        = PluginPreferencesUtils::getPreferencesValuesMap(rootPath);
+        = PluginPreferencesUtils::getPreferencesValuesMap(rootPath, accountId);
 
     std::vector<std::map<std::string, std::string>> preferences
         = PluginPreferencesUtils::getPreferences(rootPath);
@@ -246,6 +249,7 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
     // We check if the preference is modified without having to reload plugin
     for (auto& preference : preferences) {
         if (!preference["key"].compare(key)) {
+            force &= preferencesm_.setPreference(accountId, key, value, rootPath);
             force &= callsm_.setPreference(key, value, rootPath);
             force &= chatsm_.setPreference(key, value, rootPath);
             break;
@@ -258,8 +262,8 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
     auto find = pluginPreferencesMap.find(key);
     if (find != pluginPreferencesMap.end()) {
         pluginUserPreferencesMap[key] = value;
-        const std::string preferencesValuesFilePath = PluginPreferencesUtils::valuesFilePath(
-            rootPath);
+        const std::string preferencesValuesFilePath
+            = PluginPreferencesUtils::valuesFilePath(rootPath, accountId);
         std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
         if (!fs.good()) {
@@ -285,19 +289,22 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
 }
 
 std::map<std::string, std::string>
-JamiPluginManager::getPluginPreferencesValuesMap(const std::string& rootPath)
+JamiPluginManager::getPluginPreferencesValuesMap(const std::string& rootPath,
+                                                 const std::string& accountId)
 {
-    return PluginPreferencesUtils::getPreferencesValuesMap(rootPath);
+    return PluginPreferencesUtils::getPreferencesValuesMap(rootPath, accountId);
 }
 
 bool
-JamiPluginManager::resetPluginPreferencesValuesMap(const std::string& rootPath)
+JamiPluginManager::resetPluginPreferencesValuesMap(const std::string& rootPath,
+                                                   const std::string& accountId)
 {
+    bool acc {accountId.empty()};
     bool loaded {pm_.checkLoadedPlugin(rootPath)};
-    if (loaded)
+    if (loaded && acc)
         unloadPlugin(rootPath);
-    auto status = PluginPreferencesUtils::resetPreferencesValuesMap(rootPath);
-    if (loaded) {
+    auto status = PluginPreferencesUtils::resetPreferencesValuesMap(rootPath, accountId);
+    if (loaded && acc) {
         loadPlugin(rootPath);
     }
     return status;
