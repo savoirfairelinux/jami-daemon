@@ -568,6 +568,10 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     call->setState(Call::ConnectionState::RINGING);
 
+    // Here the plugins should receive call infos (accountId, peerUri) and check is uri is enabled
+    // for specific account Call should be automatically refused and a message should be sent, both
+    // actions from inside the plugin, if uri is not is permission list.
+
     Manager::instance().incomingCall(*call, account->getAccountID());
 
     if (replaced_dlg) {
