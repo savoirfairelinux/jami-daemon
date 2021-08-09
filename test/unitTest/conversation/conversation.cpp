@@ -1599,10 +1599,10 @@ ConversationTest::testMemberTryToRemoveAdmin()
         [&](const std::string& accountId,
             const std::string& conversationId,
             std::map<std::string, std::string> message) {
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
+            JAMI_ERR() << "@@@@@@2 NEW MESSAGE FOR " << accountId << " " << message["type"];
+            if (accountId == aliceId && conversationId == convId && message["type"] == "member")
                 memberMessageGenerated = true;
-                cv.notify_one();
-            }
+            cv.notify_one();
         }));
     DRing::registerSignalHandlers(confHandlers);
     DRing::addConversationMember(aliceId, convId, bobUri);
@@ -1610,6 +1610,7 @@ ConversationTest::testMemberTryToRemoveAdmin()
         return requestReceived && memberMessageGenerated;
     }));
     memberMessageGenerated = false;
+    JAMI_ERR() << "@@@@@@2 ACCEPTS";
     DRing::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberMessageGenerated; }));
@@ -1655,6 +1656,7 @@ ConversationTest::testBannedMemberCannotSendMessage()
         [&](const std::string& accountId,
             const std::string& conversationId,
             std::map<std::string, std::string> message) {
+            JAMI_ERR() << "@@@@@@2 NEW MESSAGE FOR " << accountId << " " << message["type"];
             if (accountId == aliceId && conversationId == convId && message["type"] == "vote") {
                 voteMessageGenerated = true;
             } else if (accountId == aliceId && conversationId == convId
@@ -1672,6 +1674,7 @@ ConversationTest::testBannedMemberCannotSendMessage()
         return requestReceived && memberMessageGenerated;
     }));
     memberMessageGenerated = false;
+    JAMI_ERR() << "@@@@@@2 ACCEPTS";
     DRing::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, std::chrono::seconds(30), [&]() { return memberMessageGenerated; }));

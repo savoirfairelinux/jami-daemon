@@ -355,6 +355,7 @@ ConversationModule::Impl::handlePendingConversations()
     std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
     for (auto it = pendingConversationsFetch_.begin(); it != pendingConversationsFetch_.end();) {
         if (it->second.ready) {
+            JAMI_ERR() << "@@@@@@ READY FOR " << it->first;
             dht::ThreadPool::io().run([w = weak(),
                                        conversationId = it->first,
                                        deviceId = it->second.deviceId]() {
@@ -363,6 +364,7 @@ ConversationModule::Impl::handlePendingConversations()
                     return;
                 // Clone and store conversation
                 try {
+                    JAMI_ERR() << "@@@@@@ CLONE " << conversationId;
                     auto conversation = std::make_shared<Conversation>(sthis->account_,
                                                                        deviceId,
                                                                        conversationId);
@@ -394,6 +396,7 @@ ConversationModule::Impl::handlePendingConversations()
                                                                                  conversationId);
                         sthis->needsSyncingCb_();
                     }
+                    JAMI_ERR() << "@@@@@@ CLONE DONE " << conversationId;
                 } catch (const std::exception& e) {
                     emitSignal<DRing::ConversationSignal::OnConversationError>(sthis->accountId_,
                                                                                conversationId,
@@ -933,8 +936,9 @@ ConversationModule::syncConversations(const std::string& peer, const std::string
             if (it != pimpl_->conversations_.end() && it->second) {
                 if (!it->second->isRemoving() && it->second->isMember(peer, false))
                     toFetch.emplace(key);
-            } else if (std::find(ci.members.begin(), ci.members.end(), peer) != ci.members.end()
-                       && !ci.removed) {
+            } else if (!ci.removed
+                       && std::find(ci.members.begin(), ci.members.end(), peer)
+                              != ci.members.end()) {
                 // In this case the conversation was never cloned (can be after an import)
                 toClone.emplace(key);
             }
