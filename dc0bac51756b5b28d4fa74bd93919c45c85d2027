@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "607cabc8_34da928f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2462,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-08-09T15:02:06Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nforwarding reference passed to std::move(), which may unexpectedly cause lvalues to be moved; use std::forward() instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-move-forwarding-reference",
+      "revId": "dc0bac51756b5b28d4fa74bd93919c45c85d2027",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "99ddb5bd_15445450",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2486,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-08-09T15:02:06Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nforwarding reference passed to std::move(), which may unexpectedly cause lvalues to be moved; use std::forward() instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-move-forwarding-reference",
+      "revId": "dc0bac51756b5b28d4fa74bd93919c45c85d2027",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "86f1fc43_150ce50a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 2988,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2021-08-09T15:02:06Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe variable \u0027uid\u0027 is copy-constructed from a const reference but is only used as const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-copy-initialization",
+      "revId": "dc0bac51756b5b28d4fa74bd93919c45c85d2027",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
