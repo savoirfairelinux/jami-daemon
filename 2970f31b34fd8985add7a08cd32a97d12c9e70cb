@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b4e2bfb2_3827834a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3070,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-09T17:36:10Z",
+      "side": 1,
+      "message": "Not related to this line:\nNote that a test should be created for this whole patch",
+      "range": {
+        "startLine": 3069,
+        "startChar": 22,
+        "endLine": 3070,
+        "endChar": 33
+      },
+      "revId": "2970f31b34fd8985add7a08cd32a97d12c9e70cb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
