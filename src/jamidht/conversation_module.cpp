@@ -127,6 +127,20 @@ public:
     std::map<std::string, std::shared_ptr<Conversation>> conversations_;
     std::mutex pendingConversationsFetchMtx_ {};
     std::map<std::string, PendingConversationFetch> pendingConversationsFetch_;
+
+    bool startFetch(const std::string& convId)
+    {
+        JAMI_ERR() << "@@@ START FETCH " << convId;
+        std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+        auto it = pendingConversationsFetch_.find(convId);
+        if (it == pendingConversationsFetch_.end()) {
+            JAMI_ERR() << "@@@ NEW FETCH " << convId;
+            pendingConversationsFetch_[convId] = PendingConversationFetch {};
+            return true;
+        }
+        return it->second.ready;
+    }
+
     // The following informations are stored on the disk
     mutable std::mutex convInfosMtx_;
     std::map<std::string, ConvInfo> convInfos_;
@@ -177,20 +191,17 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                                             const std::string&,
                                             const std::string& convId)
 {
-    JAMI_DBG("[Account %s] Clone conversation on device %s", accountId_.c_str(), deviceId.c_str());
+    JAMI_ERR("@@@ [Account %s] Clone conversation on device %s", accountId_.c_str(), deviceId.c_str());
 
     if (!isConversation(convId)) {
-        {
-            std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-            auto it = pendingConversationsFetch_.find(convId);
-            // Note: here we don't return and connect to all members
-            // the first that will successfully connect will be used for
-            // cloning.
-            // This avoid the case when we receives conversations from sync +
-            // clone from infos. Both will be used
-            if (it == pendingConversationsFetch_.end()) {
-                pendingConversationsFetch_[convId] = PendingConversationFetch {};
-            }
+        // Note: here we don't return and connect to all members
+        // the first that will successfully connect will be used for
+        // cloning.
+        // This avoid the case when we receives conversations from sync +
+        // clone from infos. Both will be used
+        if (!startFetch(convId)) {
+            JAMI_WARN("[Account %s] Already fetching", accountId_.c_str(), convId.c_str());
+            return;
         }
         onNeedGitSocket_(convId, deviceId, [=](const auto& channel) {
             auto acc = account_.lock();
@@ -253,9 +264,9 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             return;
         }
 
-        {
-            std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-            pendingConversationsFetch_[conversationId] = PendingConversationFetch {};
+        if (!startFetch(conversationId)) {
+            JAMI_WARN("[Account %s] Already fetching", accountId_.c_str(), conversationId.c_str());
+            return;
         }
         onNeedGitSocket_(conversationId,
                          deviceId,
@@ -317,6 +328,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                 return;
         }
         if (conversation != conversations_.end()) {
+            JAMI_ERR() << "@@@ LAUNCH CLONE " << conversationId;
             cloneConversation(deviceId, peer, conversationId);
             return;
         }
@@ -355,6 +367,7 @@ ConversationModule::Impl::handlePendingConversations()
     std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
     for (auto it = pendingConversationsFetch_.begin(); it != pendingConversationsFetch_.end();) {
         if (it->second.ready) {
+            JAMI_ERR() << "@@@@@@ READY FOR " << it->first;
             dht::ThreadPool::io().run([w = weak(),
                                        conversationId = it->first,
                                        deviceId = it->second.deviceId]() {
@@ -363,6 +376,7 @@ ConversationModule::Impl::handlePendingConversations()
                     return;
                 // Clone and store conversation
                 try {
+                    JAMI_ERR() << "@@@@@@ CLONE " << conversationId;
                     auto conversation = std::make_shared<Conversation>(sthis->account_,
                                                                        deviceId,
                                                                        conversationId);
@@ -394,6 +408,7 @@ ConversationModule::Impl::handlePendingConversations()
                                                                                  conversationId);
                         sthis->needsSyncingCb_();
                     }
+                    JAMI_ERR() << "@@@@@@ CLONE DONE " << conversationId;
                 } catch (const std::exception& e) {
                     emitSignal<DRing::ConversationSignal::OnConversationError>(sthis->accountId_,
                                                                                conversationId,
@@ -704,9 +719,9 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId)
                   conversationId.c_str());
         return;
     }
-    {
-        std::lock_guard<std::mutex> lk(pimpl_->pendingConversationsFetchMtx_);
-        pimpl_->pendingConversationsFetch_[conversationId] = PendingConversationFetch {};
+    if (!pimpl_->startFetch(conversationId)) {
+        JAMI_WARN("[Account %s] Already fetching", pimpl_->accountId_.c_str(), conversationId.c_str());
+        return;
     }
     auto memberHash = dht::InfoHash(request->from);
     if (!memberHash) {
@@ -933,8 +948,9 @@ ConversationModule::syncConversations(const std::string& peer, const std::string
             if (it != pimpl_->conversations_.end() && it->second) {
                 if (!it->second->isRemoving() && it->second->isMember(peer, false))
                     toFetch.emplace(key);
-            } else if (std::find(ci.members.begin(), ci.members.end(), peer) != ci.members.end()
-                       && !ci.removed) {
+            } else if (!ci.removed
+                       && std::find(ci.members.begin(), ci.members.end(), peer)
+                              != ci.members.end()) {
                 // In this case the conversation was never cloned (can be after an import)
                 toClone.emplace(key);
             }
@@ -942,8 +958,11 @@ ConversationModule::syncConversations(const std::string& peer, const std::string
     }
     for (const auto& cid : toFetch)
         pimpl_->fetchNewCommits(peer, deviceId, cid);
-    for (const auto& cid : toClone)
+    for (const auto& cid : toClone) {
+        JAMI_ERR() << "@@@ LAUNCH CLONE " << cid;
+
         pimpl_->cloneConversation(deviceId, peer, cid);
+    }
 }
 
 void
@@ -961,6 +980,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
             auto itConv = pimpl_->convInfos_.find(convId);
             if (itConv != pimpl_->convInfos_.end() && itConv->second.removed)
                 continue;
+            JAMI_ERR() << "@@@ LAUNCH CLONE " << convId;
             pimpl_->cloneConversation(deviceId, peerId, convId);
         } else {
             {
