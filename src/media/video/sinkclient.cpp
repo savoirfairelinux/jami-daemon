@@ -286,6 +286,7 @@ bool
 SinkClient::stop() noexcept
 {
     setFrameSize(0, 0);
+    setFramePosition(0, 0);
     shm_.reset();
     return true;
 }
@@ -308,6 +309,7 @@ bool
 SinkClient::stop() noexcept
 {
     setFrameSize(0, 0);
+    setFramePosition(0, 0);
     return true;
 }
 
@@ -327,6 +329,10 @@ void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
+    int width = width_;
+    int height = height_;
+    int x = x_;
+    int y = y_;
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();
     const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
@@ -343,6 +349,17 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     if (avTarget_.push) {
         auto outFrame = std::make_unique<VideoFrame>();
         outFrame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
+        if (y + height <= outFrame->pointer()->height) {
+            outFrame->pointer()->crop_top = y;
+            outFrame->pointer()->crop_bottom = outFrame->pointer()->height - y - height;
+        }
+        if (x + width <= outFrame->pointer()->width) {
+            outFrame->pointer()->crop_left = x;
+            outFrame->pointer()->crop_right = outFrame->pointer()->width - x - width;
+        }
+        if (height && width)
+            av_frame_apply_cropping(outFrame->pointer(), AV_FRAME_CROP_UNALIGNED);
+
         avTarget_.push(std::move(outFrame));
     }
 
@@ -352,7 +369,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #endif
 
     if (doTransfer) {
-        std::shared_ptr<VideoFrame> frame;
+        std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
 #ifdef RING_ACCEL
         auto desc = av_pix_fmt_desc_get(
             (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
@@ -365,18 +382,23 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                 JAMI_ERR("Accel failure: %s", e.what());
                 return;
             }
-        }
-        else
+        } else
 #endif
-        frame = std::static_pointer_cast<VideoFrame>(frame_p);
+            frame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p));
+
         int angle = frame->getOrientation();
+
         if (angle != rotation_) {
             filter_ = getTransposeFilter(angle,
                                          FILTER_INPUT_NAME,
                                          frame->width(),
                                          frame->height(),
-                                         AV_PIX_FMT_RGB32,
+                                         frame->format(),
                                          false);
+            if (std::abs(rotation_ - angle) == 90) {
+                width = height_;
+                height = width_;
+            }
             rotation_ = angle;
         }
         if (filter_) {
@@ -384,6 +406,18 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             frame = std::static_pointer_cast<VideoFrame>(
                 std::shared_ptr<MediaFrame>(filter_->readOutput()));
         }
+
+        if (height < frame->height()) {
+            frame->pointer()->crop_top = y;
+            frame->pointer()->crop_bottom = (size_t) frame->height() - y - height;
+        }
+        if (width < frame->width()) {
+            frame->pointer()->crop_left = x;
+            frame->pointer()->crop_right = (size_t) frame->width() - x - width;
+        }
+        if (height < frame->height() || width < frame->width())
+            av_frame_apply_cropping(frame->pointer(), AV_FRAME_CROP_UNALIGNED);
+
         if (frame->height() != height_ || frame->width() != width_) {
             setFrameSize(0, 0);
             setFrameSize(frame->width(), frame->height());
@@ -393,8 +427,8 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #endif
         if (target_.pull) {
             VideoFrame dst;
-            const int width = frame->width();
-            const int height = frame->height();
+            width = frame->width();
+            height = frame->height();
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
             const int format = AV_PIX_FMT_RGBA;
 #else
@@ -434,6 +468,13 @@ SinkClient::setFrameSize(int width, int height)
         emitSignal<DRing::VideoSignal::DecodingStopped>(getId(), openedName(), mixer_);
         started_ = false;
     }
+}
+
+void
+SinkClient::setFramePosition(int x, int y)
+{
+    x_ = x;
+    y_ = y;
 }
 
 } // namespace video
