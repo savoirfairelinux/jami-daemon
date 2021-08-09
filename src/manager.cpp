@@ -86,6 +86,7 @@ using random_device = dht::crypto::random_device;
 
 #include "libav_utils.h"
 #include "video/sinkclient.h"
+#include "video/video_base.h"
 #include "media/video/video_mixer.h"
 #include "audio/tonecontrol.h"
 
@@ -378,6 +379,9 @@ struct Manager::ManagerPimpl
 
     /** Protected current call access */
     std::mutex currentCallMutex_;
+
+    /** Protected sinks access */
+    std::mutex sinksMutex_;
 
     /** Audio layer */
     std::shared_ptr<AudioLayer> audiodriver_ {nullptr};
@@ -3393,6 +3397,56 @@ Manager::createSinkClient(const std::string& id, bool mixer)
     auto sink = std::make_shared<video::SinkClient>(id, mixer);
     pimpl_->sinkMap_.emplace(id, sink);
     return sink;
+}
+
+void
+Manager::createSinkClients(const std::string& callId,
+                           const ConfInfo& infos,
+                           const std::shared_ptr<video::VideoGenerator>& videoStream,
+                           std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->sinksMutex_);
+    std::set<std::string> sinkIdsList {};
+
+    // create video sinks
+    for (const auto& participant : infos) {
+        std::string sinkId = participant.sinkId;
+        if (sinkId.empty()) {
+            sinkId = callId;
+            sinkId += string_remove_suffix(participant.uri, '@') + participant.device;
+        }
+        if (participant.w && participant.h) {
+            auto currentSink = getSinkClient(sinkId);
+            if (currentSink) {
+                currentSink->setFramePosition(participant.x, participant.y);
+                currentSink->setFrameSize(participant.w, participant.h);
+                sinkIdsList.emplace(sinkId);
+                continue;
+            }
+            auto newSink = createSinkClient(sinkId);
+            newSink->start();
+            newSink->setFramePosition(participant.x, participant.y);
+            newSink->setFrameSize(participant.w, participant.h);
+
+            videoStream->attach(newSink.get());
+
+            sinksMap.emplace(sinkId, newSink);
+            sinkIdsList.emplace(sinkId);
+        } else {
+            sinkIdsList.erase(sinkId);
+        }
+    }
+
+    // remove any non used video sink
+    for (auto it = sinksMap.begin(); it != sinksMap.end();) {
+        if (sinkIdsList.find(it->first) == sinkIdsList.end()) {
+            videoStream->detach(it->second.get());
+            it->second->stop();
+            it = sinksMap.erase(it);
+        } else {
+            it++;
+        }
+    }
 }
 
 std::shared_ptr<video::SinkClient>
