@@ -3,7 +3,9 @@ include $(top_srcdir)/globals.mk
 noinst_LTLIBRARIES = libplugin.la
 
 noinst_HEADERS = \
+	preferenceservicesmanager.h \
 	callservicesmanager.h \
+	preferencehandler.h \
 	chathandler.h \
 	chatservicesmanager.h \
 	jamiplugin.h \
@@ -22,4 +24,5 @@ libplugin_la_SOURCES = \
 	pluginpreferencesutils.cpp \
 	pluginsutils.cpp \
 	chatservicesmanager.cpp \
-	callservicesmanager.cpp
+	callservicesmanager.cpp \
+	preferenceservicesmanager.cpp

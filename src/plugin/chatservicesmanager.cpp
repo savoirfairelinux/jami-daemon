@@ -64,7 +64,8 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
             for (auto& toggledList : chatHandlerToggled_) {
                 auto handlerId = std::find_if(toggledList.second.begin(),
                                               toggledList.second.end(),
-                                              [id = (uintptr_t) handlerIt->get()](uintptr_t handlerId) {
+                                              [id = (uintptr_t) handlerIt->get()](
+                                                  uintptr_t handlerId) {
                                                   return (handlerId == id);
                                               });
                 // If ChatHandler we're trying to destroy is currently in use, we deactivate it.
@@ -138,7 +139,8 @@ ChatServicesManager::publishMessage(pluginMessagePtr& message)
         std::size_t found = chatHandler->id().find_last_of(DIR_SEPARATOR_CH);
         // toggle is true if we should automatically activate the ChatHandler.
         bool toggle = PluginPreferencesUtils::getAlwaysPreference(chatHandler->id().substr(0, found),
-                                                                  chatHandlerName);
+                                                                  chatHandlerName,
+                                                                  message->accountId);
         // toggle is overwritten if we have previously activated/deactivated the ChatHandler
         // for the given conversation.
         auto allowedIt = chatAllowDenySet.find(chatHandlerName);
