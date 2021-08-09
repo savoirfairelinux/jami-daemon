@@ -36,9 +36,9 @@ PluginPreferencesUtils::getPreferencesConfigFilePath(const std::string& rootPath
 }
 
 std::string
-PluginPreferencesUtils::valuesFilePath(const std::string& rootPath)
+PluginPreferencesUtils::valuesFilePath(const std::string& rootPath, const std::string& accountId)
 {
-    return rootPath + DIR_SEPARATOR_CH + "preferences.msgpack";
+    return rootPath + DIR_SEPARATOR_CH + "preferences" + accountId + ".msgpack";
 }
 
 std::string
@@ -142,9 +142,10 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath)
 }
 
 std::map<std::string, std::string>
-PluginPreferencesUtils::getUserPreferencesValuesMap(const std::string& rootPath)
+PluginPreferencesUtils::getUserPreferencesValuesMap(const std::string& rootPath,
+                                                    const std::string& accountId)
 {
-    const std::string preferencesValuesFilePath = valuesFilePath(rootPath);
+    const std::string preferencesValuesFilePath = valuesFilePath(rootPath, accountId);
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
     std::ifstream file(preferencesValuesFilePath, std::ios::binary);
     std::map<std::string, std::string> rmap;
@@ -177,7 +178,8 @@ PluginPreferencesUtils::getUserPreferencesValuesMap(const std::string& rootPath)
 }
 
 std::map<std::string, std::string>
-PluginPreferencesUtils::getPreferencesValuesMap(const std::string& rootPath)
+PluginPreferencesUtils::getPreferencesValuesMap(const std::string& rootPath,
+                                                const std::string& accountId)
 {
     std::map<std::string, std::string> rmap;
 
@@ -192,16 +194,24 @@ PluginPreferencesUtils::getPreferencesValuesMap(const std::string& rootPath)
         rmap[pair.first] = pair.second;
     }
 
+    if (!accountId.empty()) {
+        // If any of these preferences were modified, its value is changed before return
+        for (const auto& pair : getUserPreferencesValuesMap(rootPath, accountId)) {
+            rmap[pair.first] = pair.second;
+        }
+    }
+
     return rmap;
 }
 
 bool
-PluginPreferencesUtils::resetPreferencesValuesMap(const std::string& rootPath)
+PluginPreferencesUtils::resetPreferencesValuesMap(const std::string& rootPath,
+                                                  const std::string& accountId)
 {
     bool returnValue = true;
     std::map<std::string, std::string> pluginPreferencesMap {};
 
-    const std::string preferencesValuesFilePath = valuesFilePath(rootPath);
+    const std::string preferencesValuesFilePath = valuesFilePath(rootPath, accountId);
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
     std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
     if (!fs.good()) {
@@ -295,6 +305,7 @@ PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerNam
             preference["defaultValue"] = "0";
             preference["title"] = "Automatically turn " + handlerName + " on";
             preference["summary"] = handlerName + " will take effect immediately";
+            preference["scope"] = "plugin";
             root.append(preference);
             file.close();
         }

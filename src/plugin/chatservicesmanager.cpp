@@ -64,7 +64,8 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
             for (auto& toggledList : chatHandlerToggled_) {
                 auto handlerId = std::find_if(toggledList.second.begin(),
                                               toggledList.second.end(),
-                                              [id = (uintptr_t) handlerIt->get()](uintptr_t handlerId) {
+                                              [id = (uintptr_t) handlerIt->get()](
+                                                  uintptr_t handlerId) {
                                                   return (handlerId == id);
                                               });
                 // If ChatHandler we're trying to destroy is currently in use, we deactivate it.
@@ -212,7 +213,8 @@ ChatServicesManager::getChatHandlerDetails(const std::string& chatHandlerIdStr)
 }
 
 bool
-ChatServicesManager::setPreference(const std::string& key,
+ChatServicesManager::setPreference(const std::string& accountId,
+                                   const std::string& key,
                                    const std::string& value,
                                    const std::string& rootPath)
 {
@@ -220,7 +222,18 @@ ChatServicesManager::setPreference(const std::string& key,
     for (auto& chatHandler : chatHandlers_) {
         if (chatHandler->id().find(rootPath) != std::string::npos) {
             if (chatHandler->preferenceMapHasKey(key)) {
-                chatHandler->setPreferenceAttribute(key, value);
+                std::string effectiveAcc = "default";
+                if (!accountId.empty())
+                    effectiveAcc = accountId;
+                JAMI_INFO() << "BEFORE SETACCOUNTPREFERENCEATTRIBUTE";
+                try {
+                    if (!chatHandler->setAccountPreferenceAttribute(key, value, effectiveAcc))
+                        chatHandler->setPreferenceAttribute(key, value);
+                } catch (...) {
+                    JAMI_INFO() << "CATCH!!!!";
+                    chatHandler->setPreferenceAttribute(key, value);
+                }
+                JAMI_INFO() << "AFTER SETACCOUNTPREFERENCEATTRIBUTE";
                 status &= false;
             }
         }

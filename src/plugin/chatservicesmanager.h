@@ -100,12 +100,14 @@ public:
 
     /**
      * @brief Sets a preference that may be changed while ChatHandler is active.
+     * @param accountId
      * @param key
      * @param value
      * @param rootPath
      * @return False if preference was changed.
      */
-    bool setPreference(const std::string& key,
+    bool setPreference(const std::string& accountId,
+                       const std::string& key,
                        const std::string& value,
                        const std::string& rootPath);
 

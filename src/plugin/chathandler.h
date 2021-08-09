@@ -86,6 +86,13 @@ public:
      */
     virtual void setId(const std::string& id) final { id_ = id; }
 
+    virtual bool setAccountPreferenceAttribute(const std::string& key,
+                                               const std::string& value,
+                                               const std::string& accountId = "")
+    {
+        return false;
+    }
+
 private:
     // Is the dataPath of the plugin that created this ChatHandler.
     std::string id_;
