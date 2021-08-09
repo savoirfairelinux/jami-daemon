@@ -150,6 +150,7 @@ PluginManager::callPluginInitFunction(const std::string& path)
 
         if (!exitFunc) {
             JAMI_ERR() << "Plugin: init failed";
+            // emit signal with error message to let user know that jamid could not load plugin
             returnValue = false;
         } else {
             returnValue = true;

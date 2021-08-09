@@ -38,12 +38,15 @@ DRING_PUBLIC bool loadPlugin(const std::string& path);
 DRING_PUBLIC bool unloadPlugin(const std::string& path);
 DRING_PUBLIC std::map<std::string, std::string> getPluginDetails(const std::string& path);
 DRING_PUBLIC std::vector<std::map<std::string, std::string>> getPluginPreferences(
-    const std::string& path);
+    const std::string& path, const std::string& accountId);
 DRING_PUBLIC bool setPluginPreference(const std::string& path,
+                                      const std::string& accountId,
                                       const std::string& key,
                                       const std::string& value);
-DRING_PUBLIC std::map<std::string, std::string> getPluginPreferencesValues(const std::string& path);
-DRING_PUBLIC bool resetPluginPreferencesValues(const std::string& path);
+DRING_PUBLIC std::map<std::string, std::string> getPluginPreferencesValues(
+    const std::string& path, const std::string& accountId);
+DRING_PUBLIC bool resetPluginPreferencesValues(const std::string& path,
+                                               const std::string& accountId);
 DRING_PUBLIC std::vector<std::string> getInstalledPlugins();
 DRING_PUBLIC std::vector<std::string> getLoadedPlugins();
 DRING_PUBLIC int installPlugin(const std::string& jplPath, bool force);
