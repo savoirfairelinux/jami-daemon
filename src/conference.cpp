@@ -197,6 +197,15 @@ Conference::setState(State state)
 void
 Conference::createConfAVStreams()
 {
+    std::string accountId {};
+    if (auto call = getCall(*(participants_.begin()))) {
+        auto w = call->getAccount();
+        auto account = w.lock();
+        if (account) {
+            accountId = account->getAccountID();
+        }
+    }
+
     auto audioMap = [](const std::shared_ptr<jami::MediaFrame>& m) -> AVFrame* {
         return std::static_pointer_cast<AudioFrame>(m)->pointer();
     };
@@ -204,9 +213,9 @@ Conference::createConfAVStreams()
     // Preview and Received
     if ((audioMixer_ = jami::getAudioInput(getConfID()))) {
         auto audioSubject = std::make_shared<MediaStreamSubject>(audioMap);
-        StreamData previewStreamData {getConfID(), false, StreamType::audio, getConfID()};
+        StreamData previewStreamData {getConfID(), false, StreamType::audio, accountId};
         createConfAVStream(previewStreamData, *audioMixer_, audioSubject);
-        StreamData receivedStreamData {getConfID(), true, StreamType::audio, getConfID()};
+        StreamData receivedStreamData {getConfID(), true, StreamType::audio, accountId};
         createConfAVStream(receivedStreamData, *audioMixer_, audioSubject);
     }
 
@@ -215,13 +224,13 @@ Conference::createConfAVStreams()
     if (videoMixer_) {
         // Review
         auto receiveSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
-        StreamData receiveStreamData {getConfID(), true, StreamType::video, getConfID()};
+        StreamData receiveStreamData {getConfID(), true, StreamType::video, accountId};
         createConfAVStream(receiveStreamData, *videoMixer_, receiveSubject);
 
         // Preview
         if (auto& videoPreview = videoMixer_->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
-            StreamData previewStreamData {getConfID(), false, StreamType::video, getConfID()};
+            StreamData previewStreamData {getConfID(), false, StreamType::video, accountId};
             createConfAVStream(previewStreamData, *videoPreview, previewSubject);
         }
     }
@@ -727,10 +736,18 @@ Conference::switchInput(const std::string& input)
     if (auto mixer = getVideoMixer()) {
         mixer->switchInput(input);
 #ifdef ENABLE_PLUGIN
+        std::string accountId {};
+        if (auto call = getCall(*(participants_.begin()))) {
+            auto w = call->getAccount();
+            auto account = w.lock();
+            if (account) {
+                accountId = account->getAccountID();
+            }
+        }
         // Preview
         if (auto& videoPreview = mixer->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
-            StreamData previewStreamData {getConfID(), false, StreamType::video, getConfID()};
+            StreamData previewStreamData {getConfID(), false, StreamType::video, accountId};
             createConfAVStream(previewStreamData, *videoPreview, previewSubject, true);
         }
 #endif
@@ -1098,13 +1115,18 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
                 JAMI_DBG("Un-muting local video source");
                 mixer->switchInput(mediaInput_);
 #ifdef ENABLE_PLUGIN
+                std::string accountId {};
+                if (auto call = getCall(*(participants_.begin()))) {
+                    auto w = call->getAccount();
+                    auto account = w.lock();
+                    if (account) {
+                        accountId = account->getAccountID();
+                    }
+                }
                 // Preview
                 if (auto& videoPreview = mixer->getVideoLocal()) {
                     auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
-                    StreamData previewStreamData {getConfID(),
-                                                  false,
-                                                  StreamType::video,
-                                                  getConfID()};
+                    StreamData previewStreamData {getConfID(), false, StreamType::video, accountId};
                     createConfAVStream(previewStreamData, *videoPreview, previewSubject, true);
                 }
 #endif

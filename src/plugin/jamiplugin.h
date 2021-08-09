@@ -38,8 +38,8 @@
 #define JAMI_PLUGIN_ABI_VERSION 1 // 0 doesn't exist, considered as error
 
 // JAMI_PLUGIN_API_VERSION reflects changes in Services Managers
-// (CallServicesManager and ChatServicesMangers) and in JAMI_PluginAPI.
-#define JAMI_PLUGIN_API_VERSION 1 // 0 doesn't exist, considered as error
+// (CallServicesManager, ChatServicesMansge, and PreferenceServicesManagers) and in JAMI_PluginAPI.
+#define JAMI_PLUGIN_API_VERSION 2 // 0 doesn't exist, considered as error
 
 C_INTERFACE_START;
 
