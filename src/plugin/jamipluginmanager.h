@@ -26,6 +26,7 @@
 
 #include "callservicesmanager.h"
 #include "chatservicesmanager.h"
+#include "preferenceservicesmanager.h"
 
 #include <vector>
 #include <map>
@@ -45,6 +46,7 @@ public:
     JamiPluginManager()
         : callsm_ {pm_}
         , chatsm_ {pm_}
+        , preferencesm_ {pm_}
     {
         registerServices();
     }
@@ -102,38 +104,47 @@ public:
     /**
      * @brief Returns contents of plugin's preferences.json file
      * @param rootPath
+     * @param accountId
      */
-    std::vector<std::map<std::string, std::string>> getPluginPreferences(const std::string& rootPath);
+    std::vector<std::map<std::string, std::string>> getPluginPreferences(
+        const std::string& rootPath, const std::string& accountId);
 
     /**
      * @brief Returns a Map with preferences keys and values.
      * @param rootPath
+     * @param accountId
      */
-    std::map<std::string, std::string> getPluginPreferencesValuesMap(const std::string& rootPath);
+    std::map<std::string, std::string> getPluginPreferencesValuesMap(const std::string& rootPath,
+                                                                     const std::string& accountId);
 
     /**
      * @brief Modifies a preference value by saving it to a preferences.msgpack.
      * Plugin is reloaded only if the preference cannot take effect immediately.
      * In other words, if we have to reload plugin so that preference may take effect.
      * @param rootPath
+     * @param accountId
      * @param key
      * @param value
      * @return True if success
      */
     bool setPluginPreference(const std::string& rootPath,
+                             const std::string& accountId,
                              const std::string& key,
                              const std::string& value);
 
     /**
      * @brief Reset plugin's preferences values to their defaultValues
      * @param rootPath
+     * @param accountId
      * @return True if success.
      */
-    bool resetPluginPreferencesValuesMap(const std::string& rootPath);
+    bool resetPluginPreferencesValuesMap(const std::string& rootPath, const std::string& accountId);
 
     CallServicesManager& getCallServicesManager() { return callsm_; }
 
     ChatServicesManager& getChatServicesManager() { return chatsm_; }
+
+    PreferenceServicesManager& getPreferenceServicesManager() { return preferencesm_; }
 
 private:
     NON_COPYABLE(JamiPluginManager);
@@ -152,5 +163,6 @@ private:
     // Services instances
     CallServicesManager callsm_;
     ChatServicesManager chatsm_;
+    PreferenceServicesManager preferencesm_;
 };
 } // namespace jami

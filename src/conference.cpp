@@ -271,6 +271,8 @@ Conference::setLocalHostDefaultMediaSource()
 void
 Conference::createConfAVStreams()
 {
+    std::string accountId = getAccountId();
+
     auto audioMap = [](const std::shared_ptr<jami::MediaFrame>& m) -> AVFrame* {
         return std::static_pointer_cast<AudioFrame>(m)->pointer();
     };
@@ -278,9 +280,9 @@ Conference::createConfAVStreams()
     // Preview and Received
     if ((audioMixer_ = jami::getAudioInput(getConfId()))) {
         auto audioSubject = std::make_shared<MediaStreamSubject>(audioMap);
-        StreamData previewStreamData {getConfId(), false, StreamType::audio, getConfId()};
+        StreamData previewStreamData {getConfId(), false, StreamType::audio, getConfId(), accountId};
         createConfAVStream(previewStreamData, *audioMixer_, audioSubject);
-        StreamData receivedStreamData {getConfId(), true, StreamType::audio, getConfId()};
+        StreamData receivedStreamData {getConfId(), true, StreamType::audio, getConfId(), accountId};
         createConfAVStream(receivedStreamData, *audioMixer_, audioSubject);
     }
 
@@ -289,13 +291,13 @@ Conference::createConfAVStreams()
     if (videoMixer_) {
         // Review
         auto receiveSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
-        StreamData receiveStreamData {getConfId(), true, StreamType::video, getConfId()};
+        StreamData receiveStreamData {getConfId(), true, StreamType::video, getConfId(), accountId};
         createConfAVStream(receiveStreamData, *videoMixer_, receiveSubject);
 
         // Preview
         if (auto& videoPreview = videoMixer_->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
-            StreamData previewStreamData {getConfId(), false, StreamType::video, getConfId()};
+            StreamData previewStreamData {getConfId(), false, StreamType::video, getConfId(), accountId};
             createConfAVStream(previewStreamData, *videoPreview, previewSubject);
         }
     }
@@ -951,7 +953,7 @@ Conference::switchInput(const std::string& input)
         // Preview
         if (auto& videoPreview = mixer->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
-            StreamData previewStreamData {getConfId(), false, StreamType::video, getConfId()};
+            StreamData previewStreamData {getConfId(), false, StreamType::video, getConfId(), getAccountId()};
             createConfAVStream(previewStreamData, *videoPreview, previewSubject, true);
         }
 #endif
