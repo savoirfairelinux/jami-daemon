@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dad87d8e_585f7a77",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 919
+      },
+      "writtenOn": "2021-08-10T15:41:08Z",
+      "side": 1,
+      "message": "I can\u0027t really say if this fixed the race condition I had, since it\u0027s extremely rare to reproduce.  But from what I can see, this makes sens.",
+      "revId": "e014830cb1e64a7912d8e3ad1fd9e33300118777",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
