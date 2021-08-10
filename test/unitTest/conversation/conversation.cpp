@@ -232,7 +232,7 @@ ConversationTest::setUp()
     if (not Manager::instance().initialized)
         CPPUNIT_ASSERT(DRing::start("jami-sample.yml"));
 
-    auto actors = load_actors("actors/alice-bob-carla-davi.yml");
+    auto actors = load_actors("actors/alice-bob-carla.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
     carlaId = actors["carla"];
