@@ -341,13 +341,25 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
 
     addDefaultCandidates();
 
-    addServerReflexiveCandidates(setupGenericReflexiveCandidates());
+    // For server reflexive candidates, UPNP mappings will be used
+    // if available. Otherwise, public address learnt during the
+    // account registration process will be used instead.
+
+    std::vector<std::pair<IpAddr, IpAddr>> srflxCand;
 
     if (upnp_) {
         requestUpnpMappings();
-        auto const& upnpMaps = setupUpnpReflexiveCandidates();
-        if (not upnpMaps.empty())
-            addServerReflexiveCandidates(upnpMaps);
+        srflxCand = setupUpnpReflexiveCandidates();
+    }
+
+    if (srflxCand.empty()) {
+        srflxCand = setupGenericReflexiveCandidates();
+    }
+
+    if (not srflxCand.empty()) {
+        addServerReflexiveCandidates(srflxCand);
+    } else {
+        JAMI_DBG("[ice:%p] Failed to add server reflexive candidates", this);
     }
 
     pool_.reset(
@@ -794,7 +806,7 @@ IceTransport::Impl::addStunConfig(int af)
 void
 IceTransport::Impl::addDefaultCandidates()
 {
-    JAMI_DBG("[ice:%p]: Setup default candidates", this);
+    JAMI_DBG("[ice:%p] Setup default candidates", this);
 
     // STUN configs layout:
     // - index 0 : host IPv4
@@ -842,7 +854,7 @@ IceTransport::Impl::requestUpnpMappings()
                           mapPtr->toString().c_str());
             }
         } else {
-            JAMI_WARN("[ice:%p]: UPNP mapping request failed!", this);
+            JAMI_WARN("[ice:%p] UPNP mapping request failed!", this);
             upnp_->releaseMapping(requestedMap);
         }
     }
@@ -859,7 +871,7 @@ IceTransport::Impl::addServerReflexiveCandidates(
     const std::vector<std::pair<IpAddr, IpAddr>>& addrList)
 {
     if (addrList.size() != compCount_) {
-        JAMI_WARN("[ice:%p]: Provided addr list size %lu does not match component count %u",
+        JAMI_WARN("[ice:%p] Provided addr list size %lu does not match component count %u",
                   this,
                   addrList.size(),
                   compCount_);
@@ -900,12 +912,12 @@ std::vector<std::pair<IpAddr, IpAddr>>
 IceTransport::Impl::setupGenericReflexiveCandidates()
 {
     if (not accountLocalAddr_) {
-        JAMI_WARN("[ice:%p]: Local address needed for reflexive candidates!", this);
+        JAMI_WARN("[ice:%p] Local address needed for reflexive candidates!", this);
         return {};
     }
 
     if (not accountPublicAddr_) {
-        JAMI_WARN("[ice:%p]: Public address needed for reflexive candidates!", this);
+        JAMI_WARN("[ice:%p] Public address needed for reflexive candidates!", this);
         return {};
     }
 
@@ -931,7 +943,7 @@ IceTransport::Impl::setupGenericReflexiveCandidates()
         accountPublicAddr_.setPort(port);
         addrList.emplace_back(accountLocalAddr_, accountPublicAddr_);
 
-        JAMI_DBG("[ice:%p]: Add generic local reflexive candidates [%s : %s]",
+        JAMI_DBG("[ice:%p] Add generic local reflexive candidates [%s : %s]",
                  this,
                  accountLocalAddr_.toString(true).c_str(),
                  accountPublicAddr_.toString(true).c_str());
@@ -950,7 +962,7 @@ IceTransport::Impl::setupUpnpReflexiveCandidates()
     std::lock_guard<std::mutex> lock(upnpMappingsMutex_);
 
     if (static_cast<unsigned>(upnpMappings_.size()) < compCount_) {
-        JAMI_WARN("[ice:%p]: Not enough mappings %lu. Expected %u",
+        JAMI_WARN("[ice:%p] Not enough mappings %lu. Expected %u",
                   this,
                   upnpMappings_.size(),
                   compCount_);
@@ -969,7 +981,7 @@ IceTransport::Impl::setupUpnpReflexiveCandidates()
         publicAddr.setPort(map.getExternalPort());
         addrList.emplace_back(localAddr, publicAddr);
 
-        JAMI_DBG("[ice:%p]: Add UPNP local reflexive candidates [%s : %s] for comp %u",
+        JAMI_DBG("[ice:%p] Add UPNP local reflexive candidates [%s : %s] for comp %u",
                  this,
                  localAddr.toString(true).c_str(),
                  publicAddr.toString(true).c_str(),
