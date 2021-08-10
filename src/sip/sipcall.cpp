@@ -695,8 +695,6 @@ SIPCall::setInviteSession(pjsip_inv_session* inviteSession)
 void
 SIPCall::terminateSipSession(int status)
 {
-    sip_utils::register_thread();
-
     JAMI_DBG("[call:%s] Terminate SIP session", getCallId().c_str());
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     if (inviteSession_ and inviteSession_->state != PJSIP_INV_STATE_DISCONNECTED) {
@@ -863,7 +861,7 @@ SIPCall::answer(const std::vector<DRing::MediaMap>& mediaList)
 
             auto opts = account->getIceOptions();
 
-            auto publicAddr = getPublicAddress();
+            auto publicAddr = account->getPublishedIpAddress();
 
             if (publicAddr) {
                 opts.accountPublicAddr = publicAddr;
@@ -1624,6 +1622,7 @@ SIPCall::setPeerUaVersion(std::string_view ua)
 void
 SIPCall::onPeerRinging()
 {
+    JAMI_DBG("[call:%s] Peer ringing", getCallId().c_str());
     setState(ConnectionState::RINGING);
 }
 
@@ -2936,6 +2935,17 @@ SIPCall::initIceMediaTransport(bool master, std::optional<IceTransportOptions> o
     return static_cast<bool>(tmpMediaTransport_);
 }
 
+std::vector<std::string>
+SIPCall::getLocalIceCandidates(unsigned compId) const
+{
+    auto iceTransp = getIceMediaTransport();
+    if (not iceTransp) {
+        JAMI_WARN("[call:%s] no media ICE transport", getCallId().c_str());
+        return {};
+    }
+    return iceTransp->getLocalCandidates(compId);
+}
+
 void
 SIPCall::resetTransport(std::shared_ptr<IceTransport>&& transport)
 {
@@ -3021,12 +3031,6 @@ SIPCall::setupIceResponse()
     }
 
     auto opt = account->getIceOptions();
-    opt.accountPublicAddr = getPublicAddress();
-    if (not opt.accountPublicAddr) {
-        JAMI_ERR("[call:%s] No public address, ICE can't be initialized", getCallId().c_str());
-        onFailure(EIO);
-        return;
-    }
 
     opt.accountLocalAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(),
                                                       opt.accountPublicAddr.getFamily());
@@ -3036,6 +3040,8 @@ SIPCall::setupIceResponse()
         onFailure(EIO);
         return;
     }
+
+    opt.accountPublicAddr = account->getPublishedIpAddress();
 
     if (not initIceMediaTransport(false, opt)) {
         JAMI_ERR("[call:%s] ICE initialization failed", getCallId().c_str());
@@ -3060,28 +3066,6 @@ std::unique_ptr<IceSocket>
 SIPCall::newIceSocket(unsigned compId)
 {
     return std::unique_ptr<IceSocket> {new IceSocket(mediaTransport_, compId)};
-}
-
-IpAddr
-SIPCall::getPublicAddress() const
-{
-    auto account = getSIPAccount();
-    if (not account) {
-        JAMI_ERR("No account detected");
-        return {};
-    }
-
-    auto publicAddr = account->getPublishedIpAddress();
-    if (not publicAddr) {
-        // If the published address is unknown, just use the local address. Not
-        // optimal, but may work just fine if both endpoints are in the same
-        // local network.
-        publicAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), pj_AF_INET());
-        JAMI_WARN("[call:%s] Missing public address, using local address instead",
-                  getCallId().c_str());
-    }
-
-    return publicAddr;
 }
 
 void

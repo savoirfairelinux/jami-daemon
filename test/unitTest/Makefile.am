@@ -177,6 +177,9 @@ ut_ice_SOURCES = ice/ice.cpp common.cpp
 check_PROGRAMS += ut_ice_sdp_parser
 ut_ice_sdp_parser_SOURCES = ice/ice_sdp_parser.cpp common.cpp
 
+check_PROGRAMS += ut_ice_media_cand_exchange
+ut_ice_media_cand_exchange_SOURCES = ice/ice_media_cand_exchange.cpp common.cpp
+
 #
 # Calls using SIP accounts
 #

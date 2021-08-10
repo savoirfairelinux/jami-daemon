@@ -267,11 +267,19 @@ public:
     bool initIceMediaTransport(bool master,
                                std::optional<IceTransportOptions> options = std::nullopt);
 
+    std::vector<std::string> getLocalIceCandidates(unsigned compId) const;
+
     void setInviteSession(pjsip_inv_session* inviteSession = nullptr);
 
     std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
 
 private:
+    IceTransport* getIceMediaTransport() const
+    {
+        std::lock_guard<std::mutex> lk(transportMtx_);
+        return tmpMediaTransport_ ? tmpMediaTransport_.get() : mediaTransport_.get();
+    }
+
     void generateMediaPorts();
 
     void openPortsUPnP();
@@ -279,8 +287,6 @@ private:
     bool isIceRunning() const;
 
     std::unique_ptr<IceSocket> newIceSocket(unsigned compId);
-
-    IpAddr getPublicAddress() const;
 
     void deinitRecorder();
 
@@ -295,11 +301,6 @@ private:
     void setVideoOrientation(int rotation);
 
     mutable std::mutex transportMtx_ {};
-    IceTransport* getIceMediaTransport() const
-    {
-        std::lock_guard<std::mutex> lk(transportMtx_);
-        return tmpMediaTransport_ ? tmpMediaTransport_.get() : mediaTransport_.get();
-    }
 
 #ifdef ENABLE_PLUGIN
     /**
