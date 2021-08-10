@@ -135,7 +135,7 @@ public:
     IceTransportCompleteCb on_negodone_cb_ {};
     IceRecvInfo on_recv_cb_ {};
     mutable std::mutex iceMutex_ {};
-    pj_ice_strans* icest_{nullptr};
+    pj_ice_strans* icest_ {nullptr};
     unsigned streamsCount_ {0};
     unsigned compCountPerStream_ {0};
     unsigned compCount_ {0};
@@ -294,11 +294,7 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
 //==============================================================================
 
 IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
-    : pool_(nullptr,
-            [](pj_pool_t* pool) {
-                sip_utils::register_thread();
-                pj_pool_release(pool);
-            })
+    : pool_(nullptr, [](pj_pool_t* pool) { pj_pool_release(pool); })
     , on_initdone_cb_(options.onInitDone)
     , on_negodone_cb_(options.onNegoDone)
     , streamsCount_(options.streamsCount)
@@ -318,7 +314,6 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
              compCount_,
              initiatorSession_ ? "master" : "slave");
 
-    sip_utils::register_thread();
     if (options.upnpEnable)
         upnp_.reset(new upnp::Controller());
 
@@ -343,13 +338,35 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
 
     addDefaultCandidates();
 
-    addServerReflexiveCandidates(setupGenericReflexiveCandidates());
+    // Note: For server reflexive candidates, UPNP mappings will
+    // be used if available. Then, the public address learnt during
+    // the account registration process will be added only if it
+    // differs from the UPNP public address.
+    // Also note that UPNP candidates should be added first in order
+    // to have a higher priority when performing the connectivity
+    // checks.
 
+    std::vector<std::pair<IpAddr, IpAddr>> upnpSrflxCand;
     if (upnp_) {
         requestUpnpMappings();
-        auto const& upnpMaps = setupUpnpReflexiveCandidates();
-        if (not upnpMaps.empty())
-            addServerReflexiveCandidates(upnpMaps);
+        upnpSrflxCand = setupUpnpReflexiveCandidates();
+        if (not upnpSrflxCand.empty()) {
+            JAMI_DBG("[ice:%p] Add UPNP srflx candidates:", this);
+            addServerReflexiveCandidates(upnpSrflxCand);
+        }
+    }
+
+    auto genericSrflxCand = setupGenericReflexiveCandidates();
+    if (not genericSrflxCand.empty()) {
+        if (upnpSrflxCand.empty()
+            or (upnpSrflxCand[0].second.toString() != genericSrflxCand[0].second.toString())) {
+            JAMI_DBG("[ice:%p] Add generic srflx candidates:", this);
+            addServerReflexiveCandidates(genericSrflxCand);
+        }
+    }
+
+    if (upnpSrflxCand.empty() and genericSrflxCand.empty()) {
+        JAMI_WARN("[ice:%p] No server reflexive candidates added", this);
     }
 
     pool_.reset(
@@ -419,7 +436,6 @@ IceTransport::Impl::Impl(const char* name, const IceTransportOptions& options)
 
     // Must be created after any potential failure
     thread_ = std::thread([this] {
-        sip_utils::register_thread();
         while (not threadTerminateFlags_) {
             // NOTE: handleEvents can return false in this case
             // but here we don't care if there is event or not.
@@ -435,7 +451,6 @@ IceTransport::Impl::~Impl()
 {
     JAMI_DBG("[ice:%p] destroying %p", this, icest_);
 
-    sip_utils::register_thread();
     threadTerminateFlags_ = true;
     iceCV_.notify_all();
 
@@ -450,8 +465,7 @@ IceTransport::Impl::~Impl()
     assert(strans);
 
     // must be done before ioqueue/timer destruction
-    JAMI_INFO("[ice:%p] Destroying ice_strans %p",
-              pj_ice_strans_get_user_data(strans), strans);
+    JAMI_INFO("[ice:%p] Destroying ice_strans %p", pj_ice_strans_get_user_data(strans), strans);
 
     pj_ice_strans_stop_ice(strans);
     pj_ice_strans_destroy(strans);
@@ -460,7 +474,8 @@ IceTransport::Impl::~Impl()
     // Because when destroying the TURN session pjproject creates a pj_timer
     // to postpone the TURN destruction. This timer is only called if we poll
     // the event queue.
-    while (handleEvents(500));
+    while (handleEvents(500))
+        ;
 
     if (config_.stun_cfg.ioqueue)
         pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
@@ -630,7 +645,6 @@ IceTransport::Impl::setInitiatorSession()
     JAMI_DBG("[ice:%p] as master", this);
     initiatorSession_ = true;
     if (_isInitialized()) {
-
         std::lock_guard<std::mutex> lk(iceMutex_);
 
         if (not icest_) {
@@ -654,7 +668,6 @@ IceTransport::Impl::setSlaveSession()
     JAMI_DBG("[ice:%p] as slave", this);
     initiatorSession_ = false;
     if (_isInitialized()) {
-
         std::lock_guard<std::mutex> lk(iceMutex_);
 
         if (not icest_) {
@@ -737,12 +750,10 @@ void
 IceTransport::Impl::getUFragPwd()
 {
     if (icest_) {
-
-         pj_str_t local_ufrag, local_pwd;
-
-         pj_ice_strans_get_ufrag_pwd(icest_, &local_ufrag, &local_pwd, nullptr, nullptr);
-         local_ufrag_.assign(local_ufrag.ptr, local_ufrag.slen);
-         local_pwd_.assign(local_pwd.ptr, local_pwd.slen);
+        pj_str_t local_ufrag, local_pwd;
+        pj_ice_strans_get_ufrag_pwd(icest_, &local_ufrag, &local_pwd, nullptr, nullptr);
+        local_ufrag_.assign(local_ufrag.ptr, local_ufrag.slen);
+        local_pwd_.assign(local_pwd.ptr, local_pwd.slen);
     }
 }
 
@@ -798,7 +809,7 @@ IceTransport::Impl::addStunConfig(int af)
 void
 IceTransport::Impl::addDefaultCandidates()
 {
-    JAMI_DBG("[ice:%p]: Setup default candidates", this);
+    JAMI_DBG("[ice:%p] Setup default candidates", this);
 
     // STUN configs layout:
     // - index 0 : host IPv4
@@ -846,7 +857,7 @@ IceTransport::Impl::requestUpnpMappings()
                           mapPtr->toString().c_str());
             }
         } else {
-            JAMI_WARN("[ice:%p]: UPNP mapping request failed!", this);
+            JAMI_WARN("[ice:%p] UPNP mapping request failed!", this);
             upnp_->releaseMapping(requestedMap);
         }
     }
@@ -863,7 +874,7 @@ IceTransport::Impl::addServerReflexiveCandidates(
     const std::vector<std::pair<IpAddr, IpAddr>>& addrList)
 {
     if (addrList.size() != compCount_) {
-        JAMI_WARN("[ice:%p]: Provided addr list size %lu does not match component count %u",
+        JAMI_WARN("[ice:%p] Provided addr list size %lu does not match component count %u",
                   this,
                   addrList.size(),
                   compCount_);
@@ -881,6 +892,12 @@ IceTransport::Impl::addServerReflexiveCandidates(
         auto idx = id - 1;
         auto& localAddr = addrList[idx].first;
         auto& publicAddr = addrList[idx].second;
+
+        JAMI_DBG("[ice:%p] Add srflx reflexive candidates [%s : %s] for comp %u",
+                 this,
+                 localAddr.toString(true).c_str(),
+                 publicAddr.toString(true).c_str(),
+                 id);
 
         pj_sockaddr_cp(&stun.cfg.user_mapping[idx].local_addr, localAddr.pjPtr());
         pj_sockaddr_cp(&stun.cfg.user_mapping[idx].mapped_addr, publicAddr.pjPtr());
@@ -904,12 +921,14 @@ std::vector<std::pair<IpAddr, IpAddr>>
 IceTransport::Impl::setupGenericReflexiveCandidates()
 {
     if (not accountLocalAddr_) {
-        JAMI_WARN("[ice:%p]: Local address needed for reflexive candidates!", this);
+        JAMI_WARN("[ice:%p] Missing local address, generic srflx candidates wont be generated!",
+                  this);
         return {};
     }
 
     if (not accountPublicAddr_) {
-        JAMI_WARN("[ice:%p]: Public address needed for reflexive candidates!", this);
+        JAMI_WARN("[ice:%p] Missing public address, generic srflx candidates wont be generated!",
+                  this);
         return {};
     }
 
@@ -934,11 +953,6 @@ IceTransport::Impl::setupGenericReflexiveCandidates()
         accountLocalAddr_.setPort(port);
         accountPublicAddr_.setPort(port);
         addrList.emplace_back(accountLocalAddr_, accountPublicAddr_);
-
-        JAMI_DBG("[ice:%p]: Add generic local reflexive candidates [%s : %s]",
-                 this,
-                 accountLocalAddr_.toString(true).c_str(),
-                 accountPublicAddr_.toString(true).c_str());
     }
 
     return addrList;
@@ -954,7 +968,7 @@ IceTransport::Impl::setupUpnpReflexiveCandidates()
     std::lock_guard<std::mutex> lock(upnpMappingsMutex_);
 
     if (static_cast<unsigned>(upnpMappings_.size()) < compCount_) {
-        JAMI_WARN("[ice:%p]: Not enough mappings %lu. Expected %u",
+        JAMI_WARN("[ice:%p] Not enough mappings %lu. Expected %u",
                   this,
                   upnpMappings_.size(),
                   compCount_);
@@ -963,7 +977,6 @@ IceTransport::Impl::setupUpnpReflexiveCandidates()
 
     std::vector<std::pair<IpAddr, IpAddr>> addrList;
 
-    unsigned compId = 1;
     addrList.reserve(upnpMappings_.size());
     for (auto const& [_, map] : upnpMappings_) {
         assert(map.getMapKey());
@@ -972,13 +985,6 @@ IceTransport::Impl::setupUpnpReflexiveCandidates()
         IpAddr publicAddr {map.getExternalAddress()};
         publicAddr.setPort(map.getExternalPort());
         addrList.emplace_back(localAddr, publicAddr);
-
-        JAMI_DBG("[ice:%p]: Add UPNP local reflexive candidates [%s : %s] for comp %u",
-                 this,
-                 localAddr.toString(true).c_str(),
-                 publicAddr.toString(true).c_str(),
-                 compId);
-        compId++;
     }
 
     return addrList;
@@ -1113,8 +1119,6 @@ IceTransport::isInitiator() const
 bool
 IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& rem_candidates)
 {
-    sip_utils::register_thread();
-
     if (not isInitialized()) {
         JAMI_ERR("[ice:%p] not initialized transport", pimpl_.get());
         pimpl_->is_stopped_ = true;
@@ -1188,8 +1192,6 @@ IceTransport::startIce(const Attribute& rem_attrs, std::vector<IceCandidate>&& r
 bool
 IceTransport::startIce(const SDP& sdp)
 {
-    sip_utils::register_thread();
-
     if (pimpl_->streamsCount_ != 1) {
         JAMI_ERR("Expected exactly one stream per SDP (found %u streams)", pimpl_->streamsCount_);
         return false;
@@ -1382,8 +1384,7 @@ IceTransport::getLocalCandidates(unsigned streamIdx, unsigned compId) const
         // order to be compliant with the spec.
 
         auto globalCompId = streamIdx * 2 + compId;
-        if (pj_ice_strans_enum_cands(pimpl_->icest_, globalCompId, &cand_cnt, cand)
-            != PJ_SUCCESS) {
+        if (pj_ice_strans_enum_cands(pimpl_->icest_, globalCompId, &cand_cnt, cand) != PJ_SUCCESS) {
             JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", pimpl_.get());
             return res;
         }
@@ -1560,8 +1561,6 @@ IceTransport::recvfrom(unsigned compId, char* buf, size_t len, std::error_code& 
 void
 IceTransport::setOnRecv(unsigned compId, IceRecvCb cb)
 {
-    JAMI_DBG("Setting 'on recv' callback for comp %i", compId);
-
     ASSERT_COMP_ID(compId, getComponentCount());
 
     auto& io = pimpl_->compIO_[compId - 1];
@@ -1587,7 +1586,6 @@ IceTransport::send(unsigned compId, const unsigned char* buf, size_t len)
 {
     ASSERT_COMP_ID(compId, getComponentCount());
 
-    sip_utils::register_thread();
     auto remote = getRemoteAddress(compId);
 
     if (!remote) {
@@ -1610,12 +1608,11 @@ IceTransport::send(unsigned compId, const unsigned char* buf, size_t len)
                                         remote.getLength());
 
     if (status == PJ_EPENDING && isTCPEnabled()) {
-
         // NOTE; because we are in TCP, the sent size will count the header (2
         // bytes length).
         pimpl_->waitDataCv_.wait(lk, [&] {
             return pimpl_->lastSentLen_ >= static_cast<pj_size_t>(len)
-                or pimpl_->destroying_.load();
+                   or pimpl_->destroying_.load();
         });
         pimpl_->lastSentLen_ = 0;
     } else if (status != PJ_SUCCESS && status != PJ_EPENDING) {
@@ -1759,8 +1756,6 @@ IceTransportFactory::IceTransportFactory()
           })
     , ice_cfg_()
 {
-    sip_utils::register_thread();
-
     pj_caching_pool_init(cp_.get(), NULL, 0);
 
     pj_ice_strans_cfg_default(&ice_cfg_);
