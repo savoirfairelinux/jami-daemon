@@ -113,7 +113,7 @@ FileTransferTest::compare(const std::string& fileA, const std::string& fileB) co
 void
 FileTransferTest::setUp()
 {
-    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob-carla-davi.yml");
+    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob-carla.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
     carlaId = actors["carla"];
