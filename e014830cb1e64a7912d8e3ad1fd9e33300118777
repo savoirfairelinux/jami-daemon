@@ -35,6 +35,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b719be92_061a7850",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-11T13:38:12Z",
+      "side": 1,
+      "message": "yeah will do when people we agree. For now, waiting the review",
+      "parentUuid": "1e1bd09d_f357854b",
+      "revId": "e014830cb1e64a7912d8e3ad1fd9e33300118777",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "75dbd1c5_7366d097",
@@ -48,6 +66,24 @@
       "writtenOn": "2021-08-11T13:29:47Z",
       "side": 1,
       "message": "may be not completly related, but IMHO, it have been better not to shutdown the socket in sendBeacon on failure. Instead, sendBeacon will return an error code to trigger the shutdown.",
+      "revId": "e014830cb1e64a7912d8e3ad1fd9e33300118777",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b37febb7_3579fb99",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 678,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-11T13:38:12Z",
+      "side": 1,
+      "message": "sendBeacon doesn\u0027t shutdown the socket. The whole point of this patch is that ChannelSocket got a weak_ptr of the multiplexed socket. So, if it\u0027s the last to decrement the counter, it will call the destructor. That\u0027s why join() is added. Now sendBeacon can be done in the loop, but it\u0027s not related to the content of the loop and there is no need to risk a future lock if the destructor changes.",
+      "parentUuid": "75dbd1c5_7366d097",
       "revId": "e014830cb1e64a7912d8e3ad1fd9e33300118777",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
