@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e8454371_140bfa30",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-11T15:16:35Z",
+      "side": 1,
+      "message": "This also removes the public ip if the router is behind a router. Because the srflx of upnp will not match the public ip. Eg. Before the patch:\n\n[1628694646.216|46731|connectionmanager.cpp:295  ] Added local ICE candidate Hc0a800cb 1 TCP 2130706431 192.168.0.203 60317 typ host tcptype passive\n[1628694646.216|46731|connectionmanager.cpp:295  ] Added local ICE candidate Hc0a800cb 1 TCP 2130706175 192.168.0.203 9 typ host tcptype active\n[1628694646.216|46731|connectionmanager.cpp:295  ] Added local ICE candidate Hb5299490 1 TCP 2130706431 fe80::1099:ef12:76f5:908d 38441 typ host tcptype passive\n[1628694646.216|46731|connectionmanager.cpp:295  ] Added local ICE candidate Hb5299490 1 TCP 2130706175 fe80::1099:ef12:76f5:908d 9 typ host tcptype active\n[1628694646.216|46731|connectionmanager.cpp:295  ] Added local ICE candidate Sc0a800cb 1 TCP 1694498303 208.88.110.46 9 typ srflx tcptype active\n[1628694646.216|46731|connectionmanager.cpp:295  ] Added local ICE candidate Hc0a800cb 1 TCP 2130706431 192.168.0.203 9 typ host tcptype active\n[1628694646.216|46731|connectionmanager.cpp:295  ] Added local ICE candidate Sc0a800cb 1 TCP 1694498047 192.168.48.211 10730 typ srflx tcptype passive\n[1628694646.216|46731|connectionmanager.cpp:295  ] Added local ICE candidate Hc0a800cb 1 TCP 2130706431 192.168.0.203 10730 typ host tcptype passive\n[1628694646.216|46731|connectionmanager.cpp:295  ] Added local ICE candidate Rc0fc8cec 1 TCP 16777215 192.252.140.236 29900 typ relay tcptype passive\n\nAfter:\n[1628694826.164|48950|ice_transport.cpp :771  ] [ice:0x62400013c100] (local) ufrag\u003d0dc29942, pwd\u003d307a423955b0b315506241aa\n[1628694826.164|48843|connectionmanager.cpp:295  ] Added local ICE candidate Hc0a800cb 1 TCP 2130706431 192.168.0.203 54719 typ host tcptype passive\n[1628694826.164|48843|connectionmanager.cpp:295  ] Added local ICE candidate Hc0a800cb 1 TCP 2130706175 192.168.0.203 9 typ host tcptype active\n[1628694826.164|48843|connectionmanager.cpp:295  ] Added local ICE candidate Hb5299490 1 TCP 2130706431 fe80::1099:ef12:76f5:908d 49073 typ host tcptype passive\n[1628694826.164|48843|connectionmanager.cpp:295  ] Added local ICE candidate Hb5299490 1 TCP 2130706175 fe80::1099:ef12:76f5:908d 9 typ host tcptype active\n[1628694826.164|48843|connectionmanager.cpp:295  ] Added local ICE candidate Sc0a800cb 1 TCP 1694498303 192.168.48.211 11820 typ srflx tcptype passive\n[1628694826.164|48843|connectionmanager.cpp:295  ] Added local ICE candidate Hc0a800cb 1 TCP 2130706431 192.168.0.203 11820 typ host tcptype passive\n[1628694826.164|48843|connectionmanager.cpp:295  ] Added local ICE candidate Rc0fc8ceb 1 TCP 16777215 192.252.140.235 26579 typ relay tcptype passive\n\n208.88.110.46 is missing in this case. This means that any connection to the outside world will fail",
+      "revId": "d647a6591e0da080b4f6cbaba0a98ea48b903a83",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
