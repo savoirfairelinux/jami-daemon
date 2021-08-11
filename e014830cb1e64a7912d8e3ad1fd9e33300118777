@@ -16,6 +16,63 @@
       "message": "I can\u0027t really say if this fixed the race condition I had, since it\u0027s extremely rare to reproduce.  But from what I can see, this makes sens.",
       "revId": "e014830cb1e64a7912d8e3ad1fd9e33300118777",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1e1bd09d_f357854b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-11T13:29:47Z",
+      "side": 1,
+      "message": "Needs to resolve merge conflict",
+      "revId": "e014830cb1e64a7912d8e3ad1fd9e33300118777",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "75dbd1c5_7366d097",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 678,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-11T13:29:47Z",
+      "side": 1,
+      "message": "may be not completly related, but IMHO, it have been better not to shutdown the socket in sendBeacon on failure. Instead, sendBeacon will return an error code to trigger the shutdown.",
+      "revId": "e014830cb1e64a7912d8e3ad1fd9e33300118777",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ce492617_d3ac8abe",
+        "filename": "src/jamidht/multiplexed_socket.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 856
+      },
+      "writtenOn": "2021-08-11T13:29:47Z",
+      "side": 1,
+      "message": "stop it ...",
+      "range": {
+        "startLine": 111,
+        "startChar": 57,
+        "endLine": 111,
+        "endChar": 59
+      },
+      "revId": "e014830cb1e64a7912d8e3ad1fd9e33300118777",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
