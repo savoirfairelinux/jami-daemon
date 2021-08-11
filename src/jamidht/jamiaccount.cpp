@@ -645,7 +645,9 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         // is already ready. Note that this line should be after
         // addSubcall() to change the state of the main call
         // and avoid to get an active call in a TRYING state.
+        JAMI_ERR() << "@@@ SET CONNECTING START";
         dev_call->setState(Call::ConnectionState::PROGRESSING);
+        JAMI_ERR() << "@@@ SET CONNECTING END";
 
         {
             std::lock_guard<std::mutex> lk(onConnectionClosedMtx_);
@@ -663,6 +665,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         auto remoted_address = ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT);
         try {
+            JAMI_ERR() << "@@@ onConnectedOutgoingCall FROM startOutgoingCall";
             onConnectedOutgoingCall(dev_call, toUri, remoted_address);
         } catch (const VoipLinkException&) {
             // In this case, the main scenario is that SIPStartCall failed because
@@ -4910,10 +4913,13 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
             and pc->getConnectionState() != Call::ConnectionState::PROGRESSING)
             return;
         pc->setTransport(sip_tr);
+        JAMI_ERR() << "@@@ SET CONNECTING START";
         pc->setState(Call::ConnectionState::PROGRESSING);
+        JAMI_ERR() << "@@@ SET CONNECTING END";
         if (auto ice = socket->underlyingICE()) {
             auto remoted_address = ice->getRemoteAddress(ICE_COMP_ID_SIP_TRANSPORT);
             try {
+                JAMI_ERR() << "@@@ onConnectedOutgoingCall";
                 onConnectedOutgoingCall(pc, peerId, remoted_address);
             } catch (const VoipLinkException&) {
                 // In this case, the main scenario is that SIPStartCall failed because
