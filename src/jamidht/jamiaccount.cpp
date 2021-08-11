@@ -1450,11 +1450,11 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     parseString(details, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
 #endif
 
-    loadAccount(archive_password, archive_pin, archive_path);
-
     // update device name if necessary
     if (accountManager_)
         accountManager_->setAccountDeviceName(deviceName_);
+
+    loadAccount(archive_password, archive_pin, archive_path);
 }
 
 std::map<std::string, std::string>
@@ -2011,7 +2011,9 @@ JamiAccount::syncConversations(const std::string& peer, const DeviceId& deviceId
                 if (it != conversations_.end() && it->second) {
                     if (!it->second->isRemoving() && it->second->isMember(peer, false))
                         toFetch.emplace(key);
-                } else if (!ci.removed && std::find(ci.members.begin(), ci.members.end(), peer) != ci.members.end()) {
+                } else if (!ci.removed
+                           && std::find(ci.members.begin(), ci.members.end(), peer)
+                                  != ci.members.end()) {
                     // In this case the conversation was never cloned (can be after an import)
                     toClone.emplace(key);
                 }
