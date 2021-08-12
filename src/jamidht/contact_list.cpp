@@ -81,6 +81,10 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::strin
     else if (c->second.isActive() and c->second.confirmed == confirmed)
         return false;
     c->second.added = std::time(nullptr);
+    // NOTE: because we can re-add a contact after removing it
+    // we should reset removed (as not removed anymore). This fix isActive()
+    // if addContact is called just after removeContact during the same second
+    c->second.removed = 0;
     c->second.conversationId = conversationId;
     c->second.confirmed |= confirmed;
     auto hStr = h.toString();
