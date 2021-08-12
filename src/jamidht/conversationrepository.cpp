@@ -2961,8 +2961,7 @@ ConversationRepository::pinCertificates(bool blocking)
 
     std::string repoPath = git_repository_workdir(repo.get());
     std::vector<std::string> paths = {repoPath + "admins",
-                                      repoPath + "members",
-                                      repoPath + "devices"};
+                                      repoPath + "members"};
 
     for (const auto& path : paths) {
         if (blocking) {
