@@ -284,6 +284,7 @@ TlsSocketEndpoint::Impl::verifyCertificate(gnutls_session_t session)
 
         null_cert = std::move(crt);
     } else {
+        JAMI_ERR() << "@@@" << std::string(crt.getPacked().begin(), crt.getPacked().end());
         if (crt.getPacked() != peerCertificate.getPacked()) {
             JAMI_ERR() << "[TLS-SOCKET] Unexpected peer certificate";
             return GNUTLS_E_CERTIFICATE_ERROR;
