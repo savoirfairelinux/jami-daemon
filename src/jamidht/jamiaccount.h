@@ -565,8 +565,8 @@ public:
      * @return number of interactions since interactionId
      */
     uint32_t countInteractions(const std::string& convId,
-                                const std::string& toId,
-                                const std::string& fromId) const;
+                               const std::string& toId,
+                               const std::string& fromId) const;
 
     // Received a new commit notification
     void onNewGitCommit(const std::string& peer,
@@ -1023,6 +1023,7 @@ private:
     // Conversations
     std::mutex pendingConversationsFetchMtx_ {};
     std::map<std::string, PendingConversationFetch> pendingConversationsFetch_;
+    bool startFetch(const std::string& convId);
 
     std::mutex gitServersMtx_ {};
     std::map<dht::Value::Id, std::unique_ptr<GitServer>> gitServers_ {};
