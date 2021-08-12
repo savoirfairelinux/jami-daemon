@@ -3699,7 +3699,15 @@ std::string
 JamiAccount::startConversation(ConversationMode mode, const std::string& otherMember)
 {
     // Create the conversation object
-    auto conversation = std::make_shared<Conversation>(weak(), mode, otherMember);
+    std::shared_ptr<Conversation> conversation;
+    try {
+        conversation = std::make_shared<Conversation>(weak(), mode, otherMember);
+    } catch (const std::exception& e) {
+        JAMI_ERR("[Account %s] Error while generating a conversation %s",
+                 getAccountID().c_str(),
+                 e.what());
+        return {};
+    }
     auto convId = conversation->id();
     {
         std::lock_guard<std::mutex> lk(conversationsMtx_);
