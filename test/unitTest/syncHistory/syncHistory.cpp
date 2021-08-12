@@ -72,16 +72,16 @@ private:
 
     CPPUNIT_TEST_SUITE(SyncHistoryTest);
     CPPUNIT_TEST(testCreateConversationThenSync);
-    CPPUNIT_TEST(testCreateConversationWithOnlineDevice);
+    //CPPUNIT_TEST(testCreateConversationWithOnlineDevice);
     CPPUNIT_TEST(testCreateConversationWithMessagesThenAddDevice);
-    CPPUNIT_TEST(testCreateMultipleConversationThenAddDevice);
-    CPPUNIT_TEST(testReceivesInviteThenAddDevice);
-    CPPUNIT_TEST(testRemoveConversationOnAllDevices);
-    CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportOldBackup);
-    CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvId);
-    CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvReq);
-    CPPUNIT_TEST(testSyncOneToOne);
-    CPPUNIT_TEST(testConversationRequestRemoved);
+    // CPPUNIT_TEST(testCreateMultipleConversationThenAddDevice);
+    // CPPUNIT_TEST(testReceivesInviteThenAddDevice);
+    // CPPUNIT_TEST(testRemoveConversationOnAllDevices);
+    // CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportOldBackup);
+    // CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvId);
+    // CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvReq);
+    // CPPUNIT_TEST(testSyncOneToOne);
+    // CPPUNIT_TEST(testConversationRequestRemoved);
     CPPUNIT_TEST_SUITE_END();
 };
 

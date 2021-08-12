@@ -62,10 +62,10 @@ private:
     void testCompleteOnFailure();
 
     CPPUNIT_TEST_SUITE(IceTest);
-    CPPUNIT_TEST(testRawIceConnection);
-    CPPUNIT_TEST(testTurnMasterIceConnection);
-    CPPUNIT_TEST(testTurnSlaveIceConnection);
-    CPPUNIT_TEST(testReceiveTooManyCandidates);
+    //CPPUNIT_TEST(testRawIceConnection);
+    //CPPUNIT_TEST(testTurnMasterIceConnection);
+    //CPPUNIT_TEST(testTurnSlaveIceConnection);
+    //CPPUNIT_TEST(testReceiveTooManyCandidates);
     CPPUNIT_TEST(testCompleteOnFailure);
     CPPUNIT_TEST_SUITE_END();
 };
