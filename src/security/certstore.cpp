@@ -151,7 +151,23 @@ CertificateStore::getCertificate(const std::string& k) const
     if (cit == certs_.cend()) {
         return {};
     }
-    return cit->second;
+    auto crt = cit->second;
+    lock_.unlock();
+    auto top_issuer = crt;
+    auto finalCert = crt;
+    while (top_issuer && top_issuer->getUID() != top_issuer->getIssuerUID()) {
+        if (top_issuer->issuer) {
+            top_issuer = top_issuer->issuer;
+        } else if (auto cert = tls::CertificateStore::instance().getCertificate(
+                       top_issuer->getIssuerUID())) { // Certificate in certstore can be splitted
+            top_issuer = cert;
+            finalCert = std::make_shared<dht::crypto::Certificate>(top_issuer->toString()
+                                                                   + finalCert->toString());
+        } else {
+            break;
+        }
+    }
+    return finalCert;
 }
 
 std::shared_ptr<crypto::Certificate>
