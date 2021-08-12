@@ -1846,29 +1846,6 @@ JamiAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
     }
     auto h = dht::InfoHash(buddyUri);
 
-    if (!track && dht_ && dht_->isRunning()) {
-        // Remove current connections with contact
-        std::set<DeviceId> devices;
-        {
-            std::unique_lock<std::mutex> lk(sipConnsMtx_);
-            for (auto it = sipConns_.begin(); it != sipConns_.end();) {
-                const auto& [key, value] = *it;
-                if (key.first == buddyUri) {
-                    devices.emplace(key.second);
-                    it = sipConns_.erase(it);
-                } else {
-                    ++it;
-                }
-            }
-        }
-
-        std::lock_guard<std::mutex> lk(connManagerMtx_);
-        for (const auto& device : devices) {
-            if (connectionManager_)
-                connectionManager_->closeConnectionsWith(device);
-        }
-    }
-
     std::lock_guard<std::mutex> lock(buddyInfoMtx);
     if (track) {
         auto buddy = trackedBuddies_.emplace(h, BuddyInfo {h});
@@ -3114,19 +3091,31 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
     }
 
     // Remove current connections with contact
-    std::set<DeviceId> devices;
-    {
-        std::unique_lock<std::mutex> lk(sipConnsMtx_);
-        for (auto it = sipConns_.begin(); it != sipConns_.end();) {
-            const auto& [key, value] = *it;
-            if (key.first == uri) {
-                devices.emplace(key.second);
-                it = sipConns_.erase(it);
-            } else {
-                ++it;
+    dht::ThreadPool::io().run([w = weak(), uri] {
+        auto shared = w.lock();
+        if (!shared)
+            return;
+        // Remove current connections with contact
+        std::set<DeviceId> devices;
+        {
+            std::unique_lock<std::mutex> lk(shared->sipConnsMtx_);
+            for (auto it = shared->sipConns_.begin(); it != shared->sipConns_.end();) {
+                const auto& [key, value] = *it;
+                if (key.first == uri) {
+                    devices.emplace(key.second);
+                    it = shared->sipConns_.erase(it);
+                } else {
+                    ++it;
+                }
             }
         }
-    }
+
+        std::lock_guard<std::mutex> lk(shared->connManagerMtx_);
+        if (!shared->connectionManager_)
+            return;
+        for (const auto& device : devices)
+            shared->connectionManager_->closeConnectionsWith(device);
+    });
 }
 
 std::map<std::string, std::string>
