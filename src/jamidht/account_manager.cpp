@@ -310,12 +310,21 @@ AccountManager::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>&
         return false;
 
     auto top_issuer = crt;
-    while (top_issuer->issuer)
-        top_issuer = top_issuer->issuer;
+    while (top_issuer->getUID() != top_issuer->getIssuerUID()) {
+        if (top_issuer->issuer) {
+            top_issuer = top_issuer->issuer;
+        } else if (auto cert = tls::CertificateStore::instance().getCertificate(
+                       top_issuer->getIssuerUID())) { // Certificate in certstore can be splitted
+            top_issuer = cert;
+        } else {
+            break;
+        }
+    }
 
     // Device certificate can't be self-signed
     if (top_issuer == crt) {
-        JAMI_WARN("Found invalid peer device: %s", crt->getLongId().toString().c_str());
+        JAMI_WARN("Device certificate can't be self-signed: %s",
+                  crt->getLongId().toString().c_str());
         return false;
     }
 
@@ -334,7 +343,7 @@ AccountManager::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>&
         return false;
     }
 
-    account_id = crt->issuer->getId();
+    account_id = dht::InfoHash(crt->getIssuerUID());
     JAMI_WARN("Found peer device: %s account:%s CA:%s",
               crt->getLongId().toString().c_str(),
               account_id.toString().c_str(),
@@ -583,12 +592,14 @@ AccountManager::findCertificate(
         if (cb)
             cb(cert);
     } else {
-        dht_->findCertificate(h, [cb = std::move(cb)](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-            if (crt)
-                tls::CertificateStore::instance().pinCertificate(crt);
-            if (cb)
-                cb(crt);
-        });
+        dht_->findCertificate(h,
+                              [cb = std::move(cb)](
+                                  const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                                  if (crt)
+                                      tls::CertificateStore::instance().pinCertificate(crt);
+                                  if (cb)
+                                      cb(crt);
+                              });
     }
     return true;
 }
