@@ -207,6 +207,7 @@ struct JamiAccount::PendingCall
 struct JamiAccount::PendingConversationFetch
 {
     bool ready {false};
+    bool cloning {false};
     std::string deviceId {};
 };
 
@@ -1988,7 +1989,9 @@ JamiAccount::syncConversations(const std::string& peer, const DeviceId& deviceId
                 if (it != conversations_.end() && it->second) {
                     if (!it->second->isRemoving() && it->second->isMember(peer, false))
                         toFetch.emplace(key);
-                } else if (!ci.removed && std::find(ci.members.begin(), ci.members.end(), peer) != ci.members.end()) {
+                } else if (!ci.removed
+                           && std::find(ci.members.begin(), ci.members.end(), peer)
+                                  != ci.members.end()) {
                     // In this case the conversation was never cloned (can be after an import)
                     toClone.emplace(key);
                 }
@@ -3737,10 +3740,8 @@ JamiAccount::acceptConversationRequest(const std::string& conversationId)
                   conversationId.c_str());
         return;
     }
-    {
-        std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-        pendingConversationsFetch_[conversationId] = PendingConversationFetch {};
-    }
+    if (!startFetch(conversationId))
+        return;
     auto memberHash = dht::InfoHash(request->from);
     if (!memberHash) {
         JAMI_WARN("Invalid member detected: %s", request->from.c_str());
@@ -3809,7 +3810,8 @@ JamiAccount::handlePendingConversations()
 {
     std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
     for (auto it = pendingConversationsFetch_.begin(); it != pendingConversationsFetch_.end();) {
-        if (it->second.ready) {
+        if (it->second.ready && !it->second.cloning) {
+            it->second.cloning = true;
             dht::ThreadPool::io().run([w = weak(),
                                        conversationId = it->first,
                                        deviceId = it->second.deviceId]() {
@@ -3820,9 +3822,15 @@ JamiAccount::handlePendingConversations()
                 // Clone and store conversation
                 try {
                     auto conversation = std::make_shared<Conversation>(w, deviceId, conversationId);
+                    auto erasePending = [&] {
+                        std::lock_guard<std::mutex> lk(shared->pendingConversationsFetchMtx_);
+                        shared->pendingConversationsFetch_.erase(conversationId);
+                    };
+
                     if (!conversation->isMember(shared->getUsername(), true)) {
                         JAMI_ERR("Conversation cloned but doesn't seems to be a valid member");
                         conversation->erase();
+                        erasePending();
                         return;
                     }
                     if (conversation) {
@@ -3839,6 +3847,7 @@ JamiAccount::handlePendingConversations()
                         }
                         if (removeRepo) {
                             shared->removeRepository(conversationId, false, true);
+                            erasePending();
                             return;
                         }
                         auto commitId = conversation->join();
@@ -3855,6 +3864,7 @@ JamiAccount::handlePendingConversations()
                                 }
                             });
                         }
+                        erasePending();
                         // Inform user that the conversation is ready
                         emitSignal<DRing::ConversationSignal::ConversationReady>(shared->accountID_,
                                                                                  conversationId);
@@ -3869,10 +3879,8 @@ JamiAccount::handlePendingConversations()
                     JAMI_WARN("Something went wrong when cloning conversation: %s", e.what());
                 }
             });
-            it = pendingConversationsFetch_.erase(it);
-        } else {
-            ++it;
         }
+        ++it;
     }
     return !pendingConversationsFetch_.empty();
 }
@@ -4362,12 +4370,8 @@ JamiAccount::fetchNewCommits(const std::string& peer,
         } else {
             lk.unlock();
             // Else we need to add a new gitSocket
-            {
-                std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-                pendingConversationsFetch_[conversationId] = PendingConversationFetch {};
-            }
             std::lock_guard<std::mutex> lkCM(connManagerMtx_);
-            if (!connectionManager_)
+            if (!connectionManager_ || !startFetch(conversationId))
                 return;
             connectionManager_->connectDevice(
                 deviceId,
@@ -4720,6 +4724,18 @@ JamiAccount::needToSendProfile(const std::string& deviceId)
         return true;
     }
     return not fileutils::isFile(vCardPath + DIR_SEPARATOR_STR + deviceId);
+}
+
+bool
+JamiAccount::startFetch(const std::string& convId)
+{
+    std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
+    auto it = pendingConversationsFetch_.find(convId);
+    if (it == pendingConversationsFetch_.end()) {
+        pendingConversationsFetch_[convId] = PendingConversationFetch {};
+        return true;
+    }
+    return it->second.ready;
 }
 
 bool
@@ -5322,20 +5338,8 @@ JamiAccount::cloneConversation(const DeviceId& deviceId,
              deviceId.to_c_str());
 
     if (!isConversation(convId)) {
-        {
-            std::lock_guard<std::mutex> lk(pendingConversationsFetchMtx_);
-            auto it = pendingConversationsFetch_.find(convId);
-            // Note: here we don't return and connect to all members
-            // the first that will successfully connect will be used for
-            // cloning.
-            // This avoid the case when we receives conversations from sync +
-            // clone from infos. Both will be used
-            if (it == pendingConversationsFetch_.end()) {
-                pendingConversationsFetch_[convId] = PendingConversationFetch {};
-            }
-        }
         std::lock_guard<std::mutex> lkCM(connManagerMtx_);
-        if (!connectionManager_)
+        if (!connectionManager_ || !startFetch(convId))
             return;
         connectionManager_->connectDevice(deviceId,
                                           fmt::format("git://{}/{}", deviceId, convId),
