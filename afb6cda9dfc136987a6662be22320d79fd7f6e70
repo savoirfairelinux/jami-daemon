@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2bf2daf9_589f60bd",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 155,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-13T14:08:28Z",
+      "side": 1,
+      "message": "yeah indeed",
+      "parentUuid": "b673c80c_5e56e1e6",
+      "revId": "afb6cda9dfc136987a6662be22320d79fd7f6e70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f0aedef9_2ee109a7",
@@ -53,6 +71,42 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3387f080_0e9d3b82",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-13T14:08:28Z",
+      "side": 1,
+      "message": "true.",
+      "parentUuid": "5b7ba9e2_88c92c08",
+      "revId": "afb6cda9dfc136987a6662be22320d79fd7f6e70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "55e7c1b6_5609c2e8",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-13T14:08:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5b7ba9e2_88c92c08",
+      "revId": "afb6cda9dfc136987a6662be22320d79fd7f6e70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "58442ac4_22d06dc4",
@@ -66,6 +120,24 @@
       "writtenOn": "2021-08-13T13:54:17Z",
       "side": 1,
       "message": "this is this function !\nshould be just \"getCertificate\" (or the unlocked \"getCertificate_\").\nAlso no need for a loop since recursion will make the job.",
+      "revId": "afb6cda9dfc136987a6662be22320d79fd7f6e70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "93c851e0_b3c96669",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-13T14:08:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "58442ac4_22d06dc4",
       "revId": "afb6cda9dfc136987a6662be22320d79fd7f6e70",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -89,6 +161,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "21e1c71d_f202c83e",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-13T14:08:28Z",
+      "side": 1,
+      "message": "In fact I did this in purpose. AccountManager::foundPeerDevice iterates over the \u003eissuer, and if incomplete it will fail as self signed even it\u0027s not the case. But it\u0027s ok if it\u0027s wanted",
+      "parentUuid": "bbd09724_c4a1931b",
+      "revId": "afb6cda9dfc136987a6662be22320d79fd7f6e70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "3d9585f5_22fb2421",
         "filename": "src/security/certstore.cpp",
         "patchSetId": 1
@@ -100,6 +190,24 @@
       "writtenOn": "2021-08-13T13:54:17Z",
       "side": 1,
       "message": "not needed since finalCert is always crt which is already in the store. We just need to set its \"issuer\" field correctly.",
+      "revId": "afb6cda9dfc136987a6662be22320d79fd7f6e70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1d5223b8_7a2977f6",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2021-08-13T14:08:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3d9585f5_22fb2421",
       "revId": "afb6cda9dfc136987a6662be22320d79fd7f6e70",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
