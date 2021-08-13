@@ -4,7 +4,10 @@
 ;;;
 ;;; You should change this to the Jami ID of an other agent or one of your
 ;;; account.
+
 (define my-peer "358d385fc78edde27981caac4ec40fb963c8a066")
+;;(define my-peer "d21bba3b6f5d894431b1b99a3829bad1f1ecaa10")
+(define sfl:ios "aa64a2135eb3af24493f70f1f5446206dfbb9b73")
 
 ;;; Here we define a variable named `details-matrix` that references a list of
 ;;; association lists.
@@ -12,13 +15,16 @@
 ;;; An association list is a list that has pairs of (key . value).
 (define details-matrix
   '((("Account.upnpEnabled" . "true")
-     ("TURN.enable" . "true"))
+     ("TURN.enable"         . "true"))
 
     (("Account.upnpEnabled" . "false")
-     ("TURN.enable" . "true"))
+     ("TURN.enable"         . "true"))
+
+    (("Account.upnpEnabled" . "true")
+     ("TURN.enable"         . "false"))
 
     (("Account.upnpEnabled" . "false")
-     ("TURN.enable" . "false"))))
+     ("TURN.enable"         . "false"))))
 
 (define (scenario/call:details someone)
   "
@@ -48,7 +54,9 @@
   NOTE!  This is an example of a recursive procedure.  In Scheme, tail
   recursions are free."
   (when (agent:place-call someone)
-    (scenario/call:periodic someone)))
+        (when pause
+      (agent:wait pause))
+    (scenario/call:periodic someone pause)))
 
 (define (scenario/call:nth someone cnt)
   "
@@ -95,4 +103,15 @@
 (agent:ensure-account)
 (agent:search-for-peers my-peer)
 
-(format #t "Failed ~a calls out of 1000" (scenario/call:nth my-peer 100))
+(agent:set-details '(("Account.upnpEnabled" . "false")
+                     ("TURN.enable"         . "false")))
+
+(while #t
+  (for-each (lambda (details)
+              (agent:set-details details)
+              (display details)
+              (newline)
+              (agent:place-call sfl:ios)
+              (agent:wait 10)
+              )
+            details-matrix))
