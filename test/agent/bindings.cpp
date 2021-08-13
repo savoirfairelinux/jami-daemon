@@ -217,6 +217,12 @@ set_details_binding(SCM details_alist)
 }
 
 static SCM
+get_details_binding()
+{
+    return to_guile(Agent::instance().getDetails());
+}
+
+static SCM
 ensure_account_binding()
 {
     Agent::instance().ensureAccount();
@@ -304,6 +310,7 @@ install_scheme_primitives()
     define_primitive("agent:wait", 0, 1, 0, (void*) wait_binding);
     define_primitive("agent:ping", 1, 0, 0, (void*) ping_binding);
     define_primitive("agent:set-details", 1, 0, 0, (void*) set_details_binding);
+    define_primitive("agent:get-details", 0, 0, 0, (void*) get_details_binding);
     define_primitive("agent:ensure-account", 0, 0, 0, (void*) ensure_account_binding);
     define_primitive("agent->archive", 1, 0, 0, (void*) export_to_archive_binding);
     define_primitive("archive->agent", 1, 0, 0, (void*) import_from_archive_binding);

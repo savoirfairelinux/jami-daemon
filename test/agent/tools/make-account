@@ -1,0 +1,5 @@
+#!/bin/sh
+
+./agent - <<EOF 2>&1 | awk '$0 ~ /^Using account.+/ { print $5 }'
+(agent:ensure-account)
+EOF
