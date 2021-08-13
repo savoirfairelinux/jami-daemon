@@ -176,14 +176,15 @@ Agent::placeCall(const std::string& contact)
 
     callID = DRing::placeCall(accountID_, contact);
 
-    std::unique_lock lk (mtx);
-
     AGENT_INFO("Waiting for call %s", callID.c_str());
 
     /* TODO - Parametize me */
-    cv.wait_for(lk, std::chrono::seconds(30), [&]{
-        return success or over;
-    });
+    {
+        std::unique_lock lk (mtx);
+        cv.wait_for(lk, std::chrono::seconds(30), [&]{
+            return success or over;
+        });
+    }
 
     if (success) {
         AGENT_INFO("[call:%s] to %s: SUCCESS", callID.c_str(), contact.c_str());
@@ -193,6 +194,7 @@ Agent::placeCall(const std::string& contact)
     }
 
     if (not over) {
+        std::unique_lock lk (mtx);
         cv.wait_for(lk, std::chrono::seconds(30), [&] { return over; });
     }
 
@@ -293,9 +295,9 @@ Agent::importFromArchive(const std::string& path)
 
     AGENT_ASSERT(accountID_ == DRing::addAccount(details, accountID_), "Bad accountID");
 
-    details = DRing::getAccountDetails(accountID_);
-
     waitForAnnouncement();
+
+    details = DRing::getAccountDetails(accountID_);
 
     AGENT_ASSERT("AGENT" == details.at(DRing::Account::ConfProperties::DISPLAYNAME),
                  "Bad display name");
@@ -337,6 +339,15 @@ Agent::ensureAccount()
     conversations_ = DRing::getConversations(accountID_);
 
     AGENT_INFO("Using account %s - %s", accountID_.c_str(), peerID_.c_str());
+}
+
+void
+Agent::waitForEvent()
+{
+    std::mutex mtx;
+    std::unique_lock lk(mtx);
+
+    eventsCV_.wait(lk);
 }
 
 

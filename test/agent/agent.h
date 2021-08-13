@@ -25,6 +25,7 @@
 #include "jami/jami.h"
 
 /* std */
+#include <condition_variable>
 #include <chrono>
 #include <map>
 #include <memory>
@@ -60,6 +61,8 @@ class Agent
         {
             std::vector<std::function<bool(Args...)>> to_keep;
             std::unique_lock<std::mutex> lck(mutex_);
+
+            Agent::instance().notify();
 
             for (auto& cb : callbacks_) {
                 if (cb(args...)) {
@@ -104,8 +107,15 @@ class Agent
     std::string peerID_;
     const std::string accountID_ {"afafafafafafafaf"};
     std::vector<std::string> conversations_;
+    std::condition_variable eventsCV_;
 
 public:
+
+    /* Events */
+    void notify() {
+        eventsCV_.notify_one();
+    }
+
     /* Behavior */
     bool ping(const std::string& conversation);
     bool placeCall(const std::string& contact);
@@ -121,6 +131,7 @@ public:
     void ensureAccount();
     void waitForAnnouncement(std::chrono::seconds timeout=std::chrono::seconds(30));
     void activate(bool state);
+    void waitForEvent();
 
     void init();
     void fini();
