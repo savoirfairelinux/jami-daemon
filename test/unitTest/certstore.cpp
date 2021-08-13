@@ -36,9 +36,11 @@ public:
 
 private:
     void trustStoreTest();
+    void getCertificateWithSplitted();
 
     CPPUNIT_TEST_SUITE(CertStoreTest);
     CPPUNIT_TEST(trustStoreTest);
+    CPPUNIT_TEST(getCertificateWithSplitted);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -155,6 +157,28 @@ CertStoreTest::trustStoreTest()
     CPPUNIT_ASSERT(strcmp(jami::tls::statusToStr(jami::tls::TrustStatus::UNTRUSTED),
                           DRing::Certificate::TrustStatus::UNTRUSTED)
                    == 0);
+}
+
+void
+CertStoreTest::getCertificateWithSplitted()
+{
+    jami::tls::TrustStore trustStore;
+    auto& certStore = jami::tls::CertificateStore::instance();
+
+    auto ca = dht::crypto::generateIdentity("test CA");
+    auto account = dht::crypto::generateIdentity("test account", ca, 4096, true);
+    auto device = dht::crypto::generateIdentity("test device", account);
+
+    auto accountCert = account.second;
+    auto devicePartialCert = std::make_shared<dht::crypto::Certificate>(device.second->toString(false));
+
+    certStore.pinCertificate(devicePartialCert);
+    auto fullCert = certStore.getCertificate(device.second->getId().toString());
+    CPPUNIT_ASSERT(!fullCert); // Missing account
+
+    certStore.pinCertificate(accountCert);
+    fullCert = certStore.getCertificate(device.second->getId().toString());
+    CPPUNIT_ASSERT(fullCert->issuer && fullCert->issuer->getUID() == accountCert->getUID());
 }
 
 } // namespace test

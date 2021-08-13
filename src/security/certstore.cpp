@@ -143,7 +143,7 @@ CertificateStore::getPinnedCertificates() const
 }
 
 std::shared_ptr<crypto::Certificate>
-CertificateStore::getCertificate(const std::string& k) const
+CertificateStore::getCertificate(const std::string& k)
 {
     std::unique_lock<std::mutex> l(lock_);
 
@@ -151,7 +151,32 @@ CertificateStore::getCertificate(const std::string& k) const
     if (cit == certs_.cend()) {
         return {};
     }
-    return cit->second;
+    auto crt = cit->second;
+    l.unlock();
+    // Check if certificate is complete
+    // If the certificate is splitted, reconstruct it
+    auto finalCert = crt;
+    auto top_issuer = crt;
+    auto replaceCert = false;
+    while (top_issuer->getUID() != top_issuer->getIssuerUID()) {
+        if (top_issuer->issuer) {
+            top_issuer = top_issuer->issuer;
+        } else if (auto cert = tls::CertificateStore::instance().getCertificate(top_issuer->getIssuerUID())) {
+            finalCert->issuer = cert;
+            top_issuer = cert;
+            replaceCert = true;
+        } else {
+            // In this case, a certificate was not found
+            JAMI_WARN("Incomplete certificate detected %s", k.c_str());
+            return {};
+        }
+    }
+    if (replaceCert) {
+        // For next lookup
+        l.lock();
+        certs_[k] = finalCert;
+    }
+    return finalCert;
 }
 
 std::shared_ptr<crypto::Certificate>

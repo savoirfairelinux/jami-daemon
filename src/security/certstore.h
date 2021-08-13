@@ -53,7 +53,10 @@ public:
     CertificateStore();
 
     std::vector<std::string> getPinnedCertificates() const;
-    std::shared_ptr<crypto::Certificate> getCertificate(const std::string& cert_id) const;
+    /**
+     * Return certificate (with full chain)
+     */
+    std::shared_ptr<crypto::Certificate> getCertificate(const std::string& cert_id);
 
     std::shared_ptr<crypto::Certificate> findCertificateByName(
         const std::string& name, crypto::NameType type = crypto::NameType::UNKNOWN) const;
