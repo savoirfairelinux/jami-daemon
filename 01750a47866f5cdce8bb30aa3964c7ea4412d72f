@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "df14745b_ab4184d3",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2021-08-13T19:32:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4aa328e2_6667f0b4",
+      "range": {
+        "startLine": 149,
+        "startChar": 15,
+        "endLine": 149,
+        "endChar": 30
+      },
+      "revId": "01750a47866f5cdce8bb30aa3964c7ea4412d72f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ada3f0ff_f1dfaa7f",
