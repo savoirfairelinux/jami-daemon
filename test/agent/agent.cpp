@@ -339,6 +339,15 @@ Agent::ensureAccount()
     AGENT_INFO("Using account %s - %s", accountID_.c_str(), peerID_.c_str());
 }
 
+void
+Agent::waitForEvent()
+{
+    std::mutex mtx;
+    std::unique_lock lk(mtx);
+
+    eventsCV_.wait(lk);
+}
+
 
 Agent&
 Agent::instance()
