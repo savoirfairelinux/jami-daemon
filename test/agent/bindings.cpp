@@ -256,6 +256,14 @@ disable_binding()
     return SCM_UNDEFINED;
 }
 
+static SCM
+wait_event_binding()
+{
+    Agent::instance().waitForEvent();
+
+    return SCM_UNDEFINED;
+}
+
 /*
  * Register Guile bindings here.
  *
@@ -301,4 +309,5 @@ install_scheme_primitives()
     define_primitive("archive->agent", 1, 0, 0, (void*) import_from_archive_binding);
     define_primitive("agent:enable", 0, 0, 0, (void*) enable_binding);
     define_primitive("agent:disable", 0, 0, 0, (void*) disable_binding);
+    define_primitive("agent:wait-event", 0, 0, 0, (void*) wait_event_binding);
 }
