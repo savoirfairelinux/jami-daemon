@@ -32,40 +32,6 @@
 /* std */
 #include <fstream>
 
-/* Guile helpers */
-
-static SCM
-main_body(void* path_raw)
-{
-    const char* path = (const char*)path_raw;
-
-    if (0 == strcmp("-", path)) {
-        scm_c_primitive_load("/dev/stdin");
-    } else {
-        scm_c_primitive_load(path);
-    }
-
-    return SCM_UNDEFINED;
-}
-
-static SCM
-main_catch(void* nil, SCM key_sym, SCM rest_lst)
-{
-    (void) nil;
-
-    SCM fmt_str = scm_from_utf8_string("Guile exception `~a`: ~a");
-    SCM args_lst = scm_list_2(key_sym, rest_lst);
-    SCM to_print_str = scm_simple_format(SCM_BOOL_F, fmt_str, args_lst);
-
-    char* to_print_raw = scm_to_locale_string(to_print_str);
-
-    AGENT_ERR("%s\n", to_print_raw);
-
-    free(to_print_raw);
-
-    return SCM_UNDEFINED;
-}
-
 void*
 main_inner(void* agent_config_raw) /* In Guile context */
 {
@@ -73,9 +39,17 @@ main_inner(void* agent_config_raw) /* In Guile context */
 
     Agent::instance().init();
 
-    scm_internal_catch(SCM_BOOL_T, main_body, agent_config_raw, main_catch, nullptr);
+    atexit(fini);
 
-    Agent::instance().fini();
+    char *argv[] = {
+        (char*)"guile",
+        (char*)"-l",
+        (char*)agent_config_raw,
+        (char*)"--",
+        NULL,
+    };
+
+    scm_shell(4, argv);
 
     return nullptr;
 }
@@ -91,12 +65,10 @@ main(int argc, char* argv[])
     setenv("GUILE_LOAD_PATH", ".", 1);
 
     /* NOTE!  It's very important to initialize the daemon before entering Guile!!! */
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG));
 
     AGENT_ASSERT(DRing::start(""), "Failed to start daemon");
 
     /* Entering guile context */
     scm_with_guile(main_inner, argv[1]);
-
-    DRing::fini();
 }
