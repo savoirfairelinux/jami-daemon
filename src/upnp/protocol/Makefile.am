@@ -1,30 +1,21 @@
-include $(top_srcdir)/globals.mk
-
-noinst_LTLIBRARIES = libupnpprotocol.la
-
-SUBDIRS = 
-
-if BUILD_PUPNP
-SUBDIRS += pupnp
-endif
-if BUILD_NATPMP
-SUBDIRS += natpmp
-endif
+noinst_LTLIBRARIES += libupnpprotocol.la
 
 libupnpprotocol_la_SOURCES = \
-        igd.h \
-        igd.cpp \
-        mapping.h \
-        mapping.cpp \
-        global_mapping.h \
-        upnp_protocol.h
+	./upnp/protocol/igd.h \
+	./upnp/protocol/igd.cpp \
+	./upnp/protocol/mapping.h \
+	./upnp/protocol/mapping.cpp \
+	./upnp/protocol/global_mapping.h \
+	./upnp/protocol/upnp_protocol.h
 
-libupnpprotocol_la_LIBADD = 
+libupnpprotocol_la_LIBADD =
 
 if BUILD_PUPNP
-libupnpprotocol_la_LIBADD += ./pupnp/libpupnp.la
+include ./upnp/protocol/pupnp/Makefile.am
 endif
 
 if BUILD_NATPMP
-libupnpprotocol_la_LIBADD += ./natpmp/libnat_pmp.la
+include ./upnp/protocol/natpmp/Makefile.am
 endif
+
+libupnpcontrol_la_LIBADD += libupnpprotocol.la
