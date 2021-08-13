@@ -1,12 +1,10 @@
-include $(top_srcdir)/globals.mk
-
-noinst_LTLIBRARIES = libv4l2.la
+noinst_LTLIBRARIES += libv4l2.la
 
 libv4l2_la_SOURCES = \
-	video_device_impl.cpp \
-	video_device_monitor_impl.cpp
+	./media/video/v4l2/video_device_impl.cpp \
+	./media/video/v4l2/video_device_monitor_impl.cpp
 
-AM_CXXFLAGS += \
+libv4l2_la_AM_CXXFLAGS = \
 	@LIBAVCODEC_CFLAGS@ \
 	@LIBAVFORMAT_CFLAGS@ \
 	@LIBAVDEVICE_CFLAGS@ \
@@ -21,3 +19,5 @@ libv4l2_la_LIBADD = \
 	@LIBSWSCALE_LIBS@ \
 	@LIBAVUTIL_LIBS@ \
 	@UDEV_LIBS@
+
+libvideo_la_LIBADD += libv4l2.la
